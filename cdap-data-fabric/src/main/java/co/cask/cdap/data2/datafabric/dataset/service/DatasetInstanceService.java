@@ -54,7 +54,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -64,6 +63,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -251,7 +251,7 @@ public class DatasetInstanceService {
     // privileges for the dataset. Revoke them first, so no users unintentionally get privileges on the dataset.
     privilegesManager.revoke(datasetId);
     // grant all privileges on the dataset to be created
-    privilegesManager.grant(datasetId, principal, ImmutableSet.of(Action.ALL));
+    privilegesManager.grant(datasetId, principal, EnumSet.allOf(Action.class));
 
     LOG.info("Creating dataset {}.{}, type name: {}, properties: {}",
              namespaceId, name, props.getTypeName(), props.getProperties());

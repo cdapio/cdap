@@ -65,7 +65,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -82,6 +81,7 @@ import org.slf4j.LoggerFactory;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -406,7 +406,7 @@ public class FileStreamAdmin implements StreamAdmin {
     privilegesManager.revoke(streamId.toEntityId());
     try {
       // Grant All access to the stream created to the User
-      privilegesManager.grant(streamId.toEntityId(), authenticationContext.getPrincipal(), ImmutableSet.of(Action.ALL));
+      privilegesManager.grant(streamId.toEntityId(), authenticationContext.getPrincipal(), EnumSet.allOf(Action.class));
       final UserGroupInformation ugi = impersonator.getUGI(new NamespaceId(streamId.getNamespaceId()));
       final Location streamLocation = ImpersonationUtils.doAs(ugi, new Callable<Location>() {
         @Override

@@ -211,7 +211,7 @@ public class AuthorizationTest extends TestBase {
     Authorizer authorizer = getAuthorizer();
     ApplicationManager appManager = deployApplication(AUTH_NAMESPACE.toId(), StreamAuthApp.class);
     // After deploy, change Alice from ALL to ADMIN on the namespace
-    authorizer.revoke(AUTH_NAMESPACE, ALICE, EnumSet.of(Action.ALL));
+    authorizer.revoke(AUTH_NAMESPACE, ALICE, EnumSet.allOf(Action.class));
     authorizer.grant(AUTH_NAMESPACE, ALICE, EnumSet.of(Action.ADMIN));
 
     final FlowManager flowManager = appManager.getFlowManager(StreamAuthApp.FLOW);
@@ -231,8 +231,8 @@ public class AuthorizationTest extends TestBase {
     flowManager.waitForFinish(5, TimeUnit.SECONDS);
 
     // Now revoke read permission for Alice on that stream (revoke ALL and then grant everything other than READ)
-    authorizer.revoke(streamId, ALICE, ImmutableSet.of(Action.ALL));
-    authorizer.grant(streamId, ALICE, ImmutableSet.of(Action.WRITE, Action.ADMIN, Action.EXECUTE));
+    authorizer.revoke(streamId, ALICE, EnumSet.allOf(Action.class));
+    authorizer.grant(streamId, ALICE, EnumSet.of(Action.WRITE, Action.ADMIN, Action.EXECUTE));
     streamManager.send("Security");
     streamManager2.send("Safety");
     try {
@@ -264,7 +264,7 @@ public class AuthorizationTest extends TestBase {
     Authorizer authorizer = getAuthorizer();
     ApplicationManager appManager = deployApplication(AUTH_NAMESPACE.toId(), StreamAuthApp.class);
     // After deploy, change Alice from ALL to ADMIN on the namespace
-    authorizer.revoke(AUTH_NAMESPACE, ALICE, EnumSet.of(Action.ALL));
+    authorizer.revoke(AUTH_NAMESPACE, ALICE, EnumSet.allOf(Action.class));
     authorizer.grant(AUTH_NAMESPACE, ALICE, EnumSet.of(Action.ADMIN));
 
     WorkerManager workerManager = appManager.getWorkerManager(StreamAuthApp.WORKER);
@@ -281,8 +281,8 @@ public class AuthorizationTest extends TestBase {
     Assert.assertEquals(5, streamManager.getEvents(0, Long.MAX_VALUE, Integer.MAX_VALUE).size());
 
     // Now revoke write permission for Alice on that stream (revoke ALL and then grant everything other than WRITE)
-    authorizer.revoke(streamId, ALICE, ImmutableSet.of(Action.ALL));
-    authorizer.grant(streamId, ALICE, ImmutableSet.of(Action.READ, Action.ADMIN, Action.EXECUTE));
+    authorizer.revoke(streamId, ALICE, EnumSet.allOf(Action.class));
+    authorizer.grant(streamId, ALICE, EnumSet.of(Action.READ, Action.ADMIN, Action.EXECUTE));
     workerManager.start();
     workerManager.waitForFinish(5, TimeUnit.SECONDS);
     try {
@@ -292,7 +292,7 @@ public class AuthorizationTest extends TestBase {
       Assert.assertTrue(e.getCause() instanceof BadRequestException);
     }
     // Give permissions back so that we can fetch the stream events
-    authorizer.grant(streamId, ALICE, ImmutableSet.of(Action.ALL));
+    authorizer.grant(streamId, ALICE, EnumSet.allOf(Action.class));
     Assert.assertEquals(5, streamManager.getEvents(0, Long.MAX_VALUE, Integer.MAX_VALUE).size());
     appManager.delete();
     assertNoAccess(AUTH_NAMESPACE.app(StreamAuthApp.APP));
@@ -306,7 +306,7 @@ public class AuthorizationTest extends TestBase {
     StreamId streamId = AUTH_NAMESPACE.stream(StreamAuthApp.STREAM);
     ApplicationManager appManager = deployApplication(AUTH_NAMESPACE.toId(), StreamAuthApp.class);
     // After deploy, change Alice from ALL to ADMIN on the namespace
-    authorizer.revoke(AUTH_NAMESPACE, ALICE, EnumSet.of(Action.ALL));
+    authorizer.revoke(AUTH_NAMESPACE, ALICE, EnumSet.allOf(Action.class));
     authorizer.grant(AUTH_NAMESPACE, ALICE, EnumSet.of(Action.ADMIN));
 
     StreamManager streamManager = getStreamManager(AUTH_NAMESPACE.toId(), StreamAuthApp.STREAM);
@@ -328,8 +328,8 @@ public class AuthorizationTest extends TestBase {
 
     streamManager.send("World");
     // Revoke READ permission on STREAM for Alice
-    authorizer.revoke(streamId, ALICE, ImmutableSet.of(Action.ALL));
-    authorizer.grant(streamId, ALICE, ImmutableSet.of(Action.WRITE, Action.ADMIN, Action.EXECUTE));
+    authorizer.revoke(streamId, ALICE, EnumSet.allOf(Action.class));
+    authorizer.grant(streamId, ALICE, EnumSet.of(Action.WRITE, Action.ADMIN, Action.EXECUTE));
     sparkManager.start();
     sparkManager.waitForFinish(1, TimeUnit.MINUTES);
     try {
@@ -385,7 +385,7 @@ public class AuthorizationTest extends TestBase {
     Authorizer authorizer = getAuthorizer();
     ApplicationManager appManager = deployApplication(AUTH_NAMESPACE.toId(), StreamAuthApp.class);
     // After deploy, change Alice from ALL to ADMIN on the namespace
-    authorizer.revoke(AUTH_NAMESPACE, ALICE, EnumSet.of(Action.ALL));
+    authorizer.revoke(AUTH_NAMESPACE, ALICE, EnumSet.allOf(Action.class));
     authorizer.grant(AUTH_NAMESPACE, ALICE, EnumSet.of(Action.ADMIN));
 
     StreamManager streamManager = getStreamManager(AUTH_NAMESPACE.toId(), StreamAuthApp.STREAM);
@@ -417,11 +417,11 @@ public class AuthorizationTest extends TestBase {
     ArtifactSummary artifactSummary = appManager.getInfo().getArtifact();
 
     ArtifactId artifactId = AUTH_NAMESPACE.artifact(artifactSummary.getName(), artifactSummary.getVersion());
-    authorizer.grant(artifactId, BOB, ImmutableSet.of(Action.ALL));
-    authorizer.grant(mrId.getParent(), BOB, ImmutableSet.of(Action.ALL));
-    authorizer.grant(mrId, BOB, ImmutableSet.of(Action.ALL));
-    authorizer.grant(AUTH_NAMESPACE.stream(StreamAuthApp.STREAM), BOB, ImmutableSet.of(Action.ADMIN));
-    authorizer.grant(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE), BOB, ImmutableSet.of(Action.ALL));
+    authorizer.grant(artifactId, BOB, EnumSet.allOf(Action.class));
+    authorizer.grant(mrId.getParent(), BOB, EnumSet.allOf(Action.class));
+    authorizer.grant(mrId, BOB, EnumSet.allOf(Action.class));
+    authorizer.grant(AUTH_NAMESPACE.stream(StreamAuthApp.STREAM), BOB, EnumSet.of(Action.ADMIN));
+    authorizer.grant(AUTH_NAMESPACE.dataset(StreamAuthApp.KVTABLE), BOB, EnumSet.allOf(Action.class));
     streamManager.send("World");
 
     // Switch user to Bob. Note that he doesn't have READ access on the stream.
@@ -496,18 +496,7 @@ public class AuthorizationTest extends TestBase {
     ProgramId greetingServiceId = dummyAppId.service(DummyApp.Greeting.SERVICE_NAME);
     DatasetId dsId = AUTH_NAMESPACE.dataset("whom");
     StreamId streamId = AUTH_NAMESPACE.stream("who");
-    Assert.assertEquals(
-      ImmutableSet.of(
-        new Privilege(instance, Action.ADMIN),
-        new Privilege(AUTH_NAMESPACE, Action.ALL),
-        new Privilege(dummyAppId, Action.ALL),
-        new Privilege(dummyArtifact, Action.ALL),
-        new Privilege(greetingServiceId, Action.ALL),
-        new Privilege(dsId, Action.ALL),
-        new Privilege(streamId, Action.ALL)
-      ),
-      authorizer.listPrivileges(ALICE)
-    );
+    assertAllAccess(ALICE, AUTH_NAMESPACE, dummyAppId, dummyArtifact, greetingServiceId, dsId, streamId);
     // Bob should not have any privileges on Alice's app
     Assert.assertTrue("Bob should not have any privileges on alice's app", authorizer.listPrivileges(BOB).isEmpty());
     // This is necessary because in tests, artifacts have auto-generated versions when an app is deployed without
@@ -544,16 +533,8 @@ public class AuthorizationTest extends TestBase {
     appManager.delete();
 
     // All privileges on the app should have been revoked
-    Assert.assertEquals(
-      ImmutableSet.of(
-        new Privilege(instance, Action.ADMIN),
-        new Privilege(AUTH_NAMESPACE, Action.ALL),
-        new Privilege(dummyArtifact, Action.ALL),
-        new Privilege(dsId, Action.ALL),
-        new Privilege(streamId, Action.ALL)
-      ),
-      authorizer.listPrivileges(ALICE)
-    );
+    Assert.assertFalse(getAuthorizer().createFilter(BOB).apply(dummyAppId));
+    assertAllAccess(ALICE, AUTH_NAMESPACE, dummyArtifact, dsId, streamId);
 
     authorizer.revoke(AUTH_NAMESPACE, BOB, ImmutableSet.of(Action.READ));
     Assert.assertTrue("Bob should not have any privileges because all privileges on the app have been revoked " +
@@ -582,32 +563,10 @@ public class AuthorizationTest extends TestBase {
     DatasetId dsWithSchema = AUTH_NAMESPACE.dataset(AllProgramsApp.DS_WITH_SCHEMA_NAME);
     StreamId sId = AUTH_NAMESPACE.stream(AllProgramsApp.STREAM_NAME);
 
-    Assert.assertEquals(
-      ImmutableSet.of(
-        new Privilege(instance, Action.ADMIN),
-        new Privilege(AUTH_NAMESPACE, Action.ALL),
-        new Privilege(dummyArtifact, Action.ALL),
-        new Privilege(updatedDummyArtifact, Action.ALL),
-        new Privilege(workflowArtifact, Action.ALL),
-        new Privilege(dummyAppId, Action.ALL),
-        new Privilege(streamId, Action.ALL),
-        new Privilege(workflowAppId, Action.ALL),
-        new Privilege(greetingServiceId, Action.ALL),
-        new Privilege(flowId, Action.ALL),
-        new Privilege(classicMapReduceId, Action.ALL),
-        new Privilege(mapReduceId, Action.ALL),
-        new Privilege(sparkId, Action.ALL),
-        new Privilege(workflowId, Action.ALL),
-        new Privilege(serviceId, Action.ALL),
-        new Privilege(workerId, Action.ALL),
-        new Privilege(dsId, Action.ALL),
-        new Privilege(kvt, Action.ALL),
-        new Privilege(kvt2, Action.ALL),
-        new Privilege(kvt3, Action.ALL),
-        new Privilege(dsWithSchema, Action.ALL),
-        new Privilege(sId, Action.ALL)
-      ),
-      authorizer.listPrivileges(ALICE)
+    assertAllAccess(
+      ALICE, AUTH_NAMESPACE, dummyArtifact, updatedDummyArtifact, workflowArtifact, dummyAppId, streamId, workflowAppId,
+      greetingServiceId, flowId, classicMapReduceId, mapReduceId, sparkId, workflowId, serviceId, workerId, dsId,
+      kvt, kvt2, kvt3, dsWithSchema, sId
     );
     // revoke all privileges on an app.
     authorizer.revoke(workflowAppId);
@@ -620,24 +579,9 @@ public class AuthorizationTest extends TestBase {
     authorizer.revoke(serviceId);
     authorizer.revoke(workerId);
 
-    Assert.assertEquals(
-      ImmutableSet.of(
-        new Privilege(instance, Action.ADMIN),
-        new Privilege(AUTH_NAMESPACE, Action.ALL),
-        new Privilege(dummyArtifact, Action.ALL),
-        new Privilege(updatedDummyArtifact, Action.ALL),
-        new Privilege(workflowArtifact, Action.ALL),
-        new Privilege(dummyAppId, Action.ALL),
-        new Privilege(streamId, Action.ALL),
-        new Privilege(greetingServiceId, Action.ALL),
-        new Privilege(dsId, Action.ALL),
-        new Privilege(kvt, Action.ALL),
-        new Privilege(kvt2, Action.ALL),
-        new Privilege(kvt3, Action.ALL),
-        new Privilege(dsWithSchema, Action.ALL),
-        new Privilege(sId, Action.ALL)
-      ),
-      authorizer.listPrivileges(ALICE)
+    assertAllAccess(
+      ALICE, AUTH_NAMESPACE, dummyArtifact, updatedDummyArtifact, workflowArtifact, dummyAppId, streamId,
+      greetingServiceId, dsId, kvt, kvt2, kvt3, dsWithSchema, sId
     );
 
     // Revoke Alice all access, but granting her READ, WRITE and EXECUTE
@@ -656,24 +600,9 @@ public class AuthorizationTest extends TestBase {
     grantAndAssertSuccess(workflowAppId, ALICE, ImmutableSet.of(Action.ADMIN));
     deleteAllApplications(AUTH_NAMESPACE);
     // deleting all apps should remove all privileges on all apps, but the privilege on the namespace should still exist
-    Assert.assertEquals(
-      ImmutableSet.of(
-        new Privilege(instance, Action.ADMIN),
-        new Privilege(AUTH_NAMESPACE, Action.READ),
-        new Privilege(AUTH_NAMESPACE, Action.WRITE),
-        new Privilege(AUTH_NAMESPACE, Action.EXECUTE),
-        new Privilege(dummyArtifact, Action.ALL),
-        new Privilege(streamId, Action.ALL),
-        new Privilege(updatedDummyArtifact, Action.ALL),
-        new Privilege(workflowArtifact, Action.ALL),
-        new Privilege(dsId, Action.ALL),
-        new Privilege(kvt, Action.ALL),
-        new Privilege(kvt2, Action.ALL),
-        new Privilege(kvt3, Action.ALL),
-        new Privilege(dsWithSchema, Action.ALL),
-        new Privilege(sId, Action.ALL)
-      ),
-      authorizer.listPrivileges(ALICE)
+    getAuthorizer().enforce(AUTH_NAMESPACE, ALICE, EnumSet.of(Action.READ, Action.WRITE, Action.EXECUTE));
+    assertAllAccess(
+      ALICE, dummyArtifact, updatedDummyArtifact, workflowArtifact, streamId, dsId, kvt, kvt2, kvt3, dsWithSchema, sId
     );
   }
 
@@ -701,21 +630,12 @@ public class AuthorizationTest extends TestBase {
     }
     // create a new namespace, alice should get ALL privileges on the namespace
     createAuthNamespace();
-    Authorizer authorizer = getAuthorizer();
     // artifact deployment in this namespace should now succeed, and alice should have ALL privileges on the artifacts
     ArtifactId appArtifactId = AUTH_NAMESPACE.artifact(appArtifactName, appArtifactVersion);
     ArtifactManager appArtifactManager = addAppArtifact(appArtifactId, ConfigTestApp.class);
     ArtifactId pluginArtifactId = AUTH_NAMESPACE.artifact(pluginArtifactName, pluginArtifactVersion);
     ArtifactManager pluginArtifactManager = addPluginArtifact(pluginArtifactId, appArtifactId, ToStringPlugin.class);
-    Assert.assertEquals(
-      ImmutableSet.of(
-        new Privilege(instance, Action.ADMIN),
-        new Privilege(AUTH_NAMESPACE, Action.ALL),
-        new Privilege(appArtifactId, Action.ALL),
-        new Privilege(pluginArtifactId, Action.ALL)
-      ),
-      authorizer.listPrivileges(ALICE)
-    );
+    assertAllAccess(ALICE, AUTH_NAMESPACE, appArtifactId, pluginArtifactId);
     // Bob should not be able to delete artifacts that he does not have ADMIN permission on
     SecurityRequestContext.setUserId(BOB.getName());
     try {
@@ -769,7 +689,6 @@ public class AuthorizationTest extends TestBase {
   @Test
   public void testPrograms() throws Exception {
     createAuthNamespace();
-    Authorizer authorizer = getAuthorizer();
     final ApplicationManager dummyAppManager = deployApplication(AUTH_NAMESPACE.toId(), DummyApp.class);
     ArtifactSummary dummyArtifactSummary = dummyAppManager.getInfo().getArtifact();
     ArtifactId dummyArtifact = AUTH_NAMESPACE.artifact(dummyArtifactSummary.getName(),
@@ -778,18 +697,7 @@ public class AuthorizationTest extends TestBase {
     final ProgramId serviceId = appId.service(DummyApp.Greeting.SERVICE_NAME);
     DatasetId dsId = AUTH_NAMESPACE.dataset("whom");
     StreamId streamId = AUTH_NAMESPACE.stream("who");
-    Assert.assertEquals(
-      ImmutableSet.of(
-        new Privilege(instance, Action.ADMIN),
-        new Privilege(AUTH_NAMESPACE, Action.ALL),
-        new Privilege(dummyArtifact, Action.ALL),
-        new Privilege(appId, Action.ALL),
-        new Privilege(serviceId, Action.ALL),
-        new Privilege(dsId, Action.ALL),
-        new Privilege(streamId, Action.ALL)
-      ),
-      authorizer.listPrivileges(ALICE)
-    );
+    assertAllAccess(ALICE, AUTH_NAMESPACE, dummyArtifact, appId, serviceId, dsId, streamId);
     // alice should be able to start and stop programs in the app she deployed
     dummyAppManager.startProgram(serviceId.toId());
 
@@ -867,7 +775,7 @@ public class AuthorizationTest extends TestBase {
     ApplicationManager appManager = deployApplication(AUTH_NAMESPACE.toId(), CrossNsDatasetAccessApp.class);
 
     // give BOB ALL permissions on the auth namespace so he can execute programs and also read the stream.
-    grantAndAssertSuccess(AUTH_NAMESPACE, BOB, EnumSet.of(Action.ALL));
+    grantAndAssertSuccess(AUTH_NAMESPACE, BOB, EnumSet.allOf(Action.class));
 
     // switch to BOB
     SecurityRequestContext.setUserId(BOB.getName());
@@ -951,17 +859,17 @@ public class AuthorizationTest extends TestBase {
     MapReduceManager mrManager = appManager.getMapReduceManager(DatasetCrossNSAccessWithMAPApp.MAPREDUCE_PROGRAM);
 
     // give BOB ALL permission in the
-    grantAndAssertSuccess(AUTH_NAMESPACE, BOB, EnumSet.of(Action.ALL));
+    grantAndAssertSuccess(AUTH_NAMESPACE, BOB, EnumSet.allOf(Action.class));
 
     // Switch to BOB and run the  mapreduce job. The job will fail at the runtime since BOB does not have permission
     // on the input and output datasets in another namespaces.
     SecurityRequestContext.setUserId(BOB.getName());
-    verifyProgramFailure(argsForMR, mrManager);
+    assertProgramFailure(argsForMR, mrManager);
 
     // Switch back to Alice
     SecurityRequestContext.setUserId(ALICE.getName());
     // Verify nothing write to the output dataset
-    verifyDatasetIsEmpty(datasetOutputSpace, "table2");
+    assertDatasetIsEmpty(datasetOutputSpace, "table2");
 
     // give privilege to BOB on the input dataset
     grantAndAssertSuccess(new DatasetId(DatasetCrossNSAccessWithMAPApp.DATASET_INPUT_SPACE, "table1"), BOB,
@@ -970,12 +878,12 @@ public class AuthorizationTest extends TestBase {
     // switch back to bob and try running again. this will still fail since bob does not have access on the output
     // dataset
     SecurityRequestContext.setUserId(BOB.getName());
-    verifyProgramFailure(argsForMR, mrManager);
+    assertProgramFailure(argsForMR, mrManager);
 
     // Switch back to Alice
     SecurityRequestContext.setUserId(ALICE.getName());
     // Verify nothing write to the output dataset
-    verifyDatasetIsEmpty(datasetOutputSpace, "table2");
+    assertDatasetIsEmpty(datasetOutputSpace, "table2");
 
     // give privilege to BOB on the output dataset
     grantAndAssertSuccess(new DatasetId(DatasetCrossNSAccessWithMAPApp.DATASET_OUTPUT_SPACE, "table2"), BOB,
@@ -1014,7 +922,7 @@ public class AuthorizationTest extends TestBase {
     SparkManager sparkManager = spark.getSparkManager("SparkCrossNSDatasetProgram");
 
     // give BOB ALL permission on the auth namespace
-    grantAndAssertSuccess(AUTH_NAMESPACE, BOB, EnumSet.of(Action.ALL));
+    grantAndAssertSuccess(AUTH_NAMESPACE, BOB, EnumSet.allOf(Action.class));
 
     // Switch to Bob and run the spark program. this will fail because bob does not have access to either input or
     // output dataset
@@ -1028,11 +936,11 @@ public class AuthorizationTest extends TestBase {
       TestSparkCrossNSDatasetApp.SparkCrossNSDatasetProgram.OUTPUT_DATASET_NAME, "output"
     );
 
-    verifyProgramFailure(args, sparkManager);
+    assertProgramFailure(args, sparkManager);
 
     SecurityRequestContext.setUserId(ALICE.getName());
     // Verify nothing write to the output dataset
-    verifyDatasetIsEmpty(outputDatasetNSMeta.getNamespaceId(), "output");
+    assertDatasetIsEmpty(outputDatasetNSMeta.getNamespaceId(), "output");
 
     // give privilege to BOB on the input dataset
     grantAndAssertSuccess(new DatasetId(inputDatasetNSMeta.getNamespaceId().getNamespace(), "input"), BOB,
@@ -1041,12 +949,12 @@ public class AuthorizationTest extends TestBase {
     // switch back to bob and try running again. this will still fail since bob does not have access on the output
     // dataset
     SecurityRequestContext.setUserId(BOB.getName());
-    verifyProgramFailure(args, sparkManager);
+    assertProgramFailure(args, sparkManager);
 
     // Switch back to Alice
     SecurityRequestContext.setUserId(ALICE.getName());
     // Verify nothing write to the output dataset
-    verifyDatasetIsEmpty(outputDatasetNSMeta.getNamespaceId(), "output");
+    assertDatasetIsEmpty(outputDatasetNSMeta.getNamespaceId(), "output");
 
     // give privilege to BOB on the output dataset
     grantAndAssertSuccess(new DatasetId(outputDatasetNSMeta.getNamespaceId().getNamespace(), "output"), BOB,
@@ -1071,7 +979,7 @@ public class AuthorizationTest extends TestBase {
   public void cleanupTest() throws Exception {
     Authorizer authorizer = getAuthorizer();
 
-    grantAndAssertSuccess(AUTH_NAMESPACE, SecurityRequestContext.toPrincipal(), EnumSet.of(Action.ALL));
+    grantAndAssertSuccess(AUTH_NAMESPACE, SecurityRequestContext.toPrincipal(), EnumSet.allOf(Action.class));
     // clean up. remove the namespace. all privileges on the namespace should be revoked
     getNamespaceAdmin().delete(AUTH_NAMESPACE.toId());
     Assert.assertEquals(ImmutableSet.of(new Privilege(instance, Action.ADMIN)), authorizer.listPrivileges(ALICE));
@@ -1092,7 +1000,9 @@ public class AuthorizationTest extends TestBase {
     grantAndAssertSuccess(instance, ALICE, ImmutableSet.of(Action.ADMIN));
     getNamespaceAdmin().create(AUTH_NAMESPACE_META);
     Assert.assertEquals(
-      ImmutableSet.of(new Privilege(instance, Action.ADMIN), new Privilege(AUTH_NAMESPACE, Action.ALL)),
+      ImmutableSet.of(new Privilege(instance, Action.ADMIN), new Privilege(AUTH_NAMESPACE, Action.ADMIN),
+                      new Privilege(AUTH_NAMESPACE, Action.READ), new Privilege(AUTH_NAMESPACE, Action.WRITE),
+                      new Privilege(AUTH_NAMESPACE, Action.EXECUTE)),
       authorizer.listPrivileges(ALICE)
     );
   }
@@ -1127,14 +1037,14 @@ public class AuthorizationTest extends TestBase {
     Assert.assertTrue(Sets.filter(authorizer.listPrivileges(BOB), entityFilter).isEmpty());
   }
 
-  private void verifyDatasetIsEmpty(NamespaceId namespaceId, String datasetName) throws Exception {
+  private void assertDatasetIsEmpty(NamespaceId namespaceId, String datasetName) throws Exception {
     DataSetManager<KeyValueTable> outTableManager = getDataset(namespaceId.toId(), datasetName);
     KeyValueTable outputTable = outTableManager.get();
     Assert.assertFalse(outputTable.scan(null, null).hasNext());
   }
 
-  private void verifyProgramFailure(Map<String, String> programArgs, ProgramManager programManager)
-    throws TimeoutException, InterruptedException {
+  private <T extends ProgramManager> void assertProgramFailure(
+    Map<String, String> programArgs, ProgramManager<T> programManager) throws TimeoutException, InterruptedException {
     programManager.start(programArgs);
     programManager.waitForFinish(5, TimeUnit.MINUTES);
 
@@ -1142,6 +1052,12 @@ public class AuthorizationTest extends TestBase {
     List<RunRecord> history = programManager.getHistory();
     for (RunRecord runRecord : history) {
       Assert.assertEquals(ProgramRunStatus.FAILED, runRecord.getStatus());
+    }
+  }
+
+  private void assertAllAccess(Principal principal, EntityId... entityIds) throws Exception {
+    for (EntityId entityId : entityIds) {
+      getAuthorizer().enforce(entityId, principal, EnumSet.allOf(Action.class));
     }
   }
 }

@@ -76,7 +76,6 @@ import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicates;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -91,6 +90,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -529,7 +529,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     ApplicationWithPrograms applicationWithPrograms = manager.deploy(deploymentInfo).get();
     // Deployment successful. Grant all privileges on this app to the current principal.
     privilegesManager.grant(applicationWithPrograms.getApplicationId(),
-                            authenticationContext.getPrincipal(), ImmutableSet.of(Action.ALL));
+                            authenticationContext.getPrincipal(), EnumSet.allOf(Action.class));
     return applicationWithPrograms;
   }
 

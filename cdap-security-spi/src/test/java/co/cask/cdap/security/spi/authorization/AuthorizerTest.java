@@ -17,7 +17,6 @@ package co.cask.cdap.security.spi.authorization;
 
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
@@ -37,7 +36,7 @@ import java.util.Set;
  */
 public abstract class AuthorizerTest {
 
-  private final NamespaceId namespace = Ids.namespace("foo");
+  private final NamespaceId namespace = new NamespaceId("foo");
   private final Principal user = new Principal("alice", Principal.PrincipalType.USER);
 
   protected abstract Authorizer get();
@@ -81,7 +80,7 @@ public abstract class AuthorizerTest {
 
     verifyAuthFailure(namespace, user, Action.READ);
 
-    authorizer.grant(namespace, user, Collections.singleton(Action.ALL));
+    authorizer.grant(namespace, user, EnumSet.allOf(Action.class));
     authorizer.enforce(namespace, user, Action.READ);
     authorizer.enforce(namespace, user, Action.WRITE);
     authorizer.enforce(namespace, user, Action.ADMIN);
@@ -92,10 +91,13 @@ public abstract class AuthorizerTest {
 
     Principal role = new Principal("admins", Principal.PrincipalType.ROLE);
     authorizer.grant(namespace, user, Collections.singleton(Action.READ));
-    authorizer.grant(namespace, role, Collections.singleton(Action.ALL));
+    authorizer.grant(namespace, role, EnumSet.allOf(Action.class));
     authorizer.revoke(namespace);
     verifyAuthFailure(namespace, user, Action.READ);
-    verifyAuthFailure(namespace, role, Action.ALL);
+    verifyAuthFailure(namespace, role, Action.ADMIN);
+    verifyAuthFailure(namespace, role, Action.READ);
+    verifyAuthFailure(namespace, role, Action.WRITE);
+    verifyAuthFailure(namespace, role, Action.EXECUTE);
   }
 
   @Test

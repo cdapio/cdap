@@ -184,7 +184,7 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
       authorizer.grant(ds11, BOB, Collections.singleton(Action.ADMIN));
       authorizer.grant(ds21, ALICE, Collections.singleton(Action.WRITE));
       authorizer.grant(ds12, BOB, Collections.singleton(Action.WRITE));
-      authorizer.grant(ds12, BOB, Collections.singleton(Action.ALL));
+      authorizer.grant(ds12, BOB, EnumSet.allOf(Action.class));
       authorizer.grant(ds21, ALICE, Collections.singleton(Action.WRITE));
       authorizer.grant(ds23, ALICE, Collections.singleton(Action.ADMIN));
       authorizer.grant(ds22, BOB, Collections.singleton(Action.ADMIN));
@@ -262,7 +262,7 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
       try {
         waitForBootstrap(authorizationEnforcementService);
         authorizationEnforcementService.enforce(instanceId, systemUser, Action.ADMIN);
-        authorizationEnforcementService.enforce(NamespaceId.SYSTEM, systemUser, Action.ALL);
+        authorizationEnforcementService.enforce(NamespaceId.SYSTEM, systemUser, EnumSet.allOf(Action.class));
         Predicate<EntityId> filter = authorizationEnforcementService.createFilter(systemUser);
         Assert.assertFalse(filter.apply(ns1));
         Assert.assertTrue(filter.apply(instanceId));

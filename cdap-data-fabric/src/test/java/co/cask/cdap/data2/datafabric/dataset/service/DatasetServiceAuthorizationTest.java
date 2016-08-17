@@ -285,8 +285,8 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
                      NamespaceId.DEFAULT, BOB));
 
     // Grant all permission for cleanup
-    grantAndAssertSuccess(NamespaceId.DEFAULT, ALICE, EnumSet.of(Action.ALL));
-    grantAndAssertSuccess(NamespaceId.DEFAULT, BOB, EnumSet.of(Action.ALL));
+    grantAndAssertSuccess(NamespaceId.DEFAULT, ALICE, EnumSet.allOf(Action.class));
+    grantAndAssertSuccess(NamespaceId.DEFAULT, BOB, EnumSet.allOf(Action.class));
 
     // delete all instances so modules can be deleted
     dsFramework.deleteAllInstances(NamespaceId.DEFAULT.toId());
@@ -319,7 +319,8 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     dsFramework.addInstance(Table.class.getName(), dsId.toId(), DatasetProperties.EMPTY);
     Set<Privilege> after = authorizer.listPrivileges(principal);
     Assert.assertTrue(after.containsAll(before));
-    Assert.assertEquals(ImmutableSet.of(new Privilege(dsId, Action.ALL)),
+    Assert.assertEquals(ImmutableSet.of(new Privilege(dsId, Action.ADMIN), new Privilege(dsId, Action.READ),
+                                        new Privilege(dsId, Action.WRITE), new Privilege(dsId, Action.EXECUTE)),
                         Sets.difference(after, before).immutableCopy());
   }
 

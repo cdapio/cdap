@@ -134,21 +134,21 @@ public class RemotePrivilegesTest {
     // In this test, grants and revokes happen via PrivilegesManager, privilege listing and enforcement happens via
     // Authorizer. Also, since grants and revokes go directly to master and don't need a proxy, the
     // RemoteSystemOperationsService does not need to be started in this release.
-    privilegesManager.grant(NS, ALICE, Collections.singleton(Action.ALL));
+    privilegesManager.grant(NS, ALICE, EnumSet.allOf(Action.class));
     privilegesManager.grant(APP, ALICE, Collections.singleton(Action.ADMIN));
     privilegesManager.grant(PROGRAM, ALICE, Collections.singleton(Action.EXECUTE));
-    authorizer.enforce(NS, ALICE, Action.ALL);
+    authorizer.enforce(NS, ALICE, EnumSet.allOf(Action.class));
     authorizer.enforce(APP, ALICE, Action.ADMIN);
     authorizer.enforce(PROGRAM, ALICE, Action.EXECUTE);
     try {
-      authorizer.enforce(APP, ALICE, Action.ALL);
+      authorizer.enforce(APP, ALICE, EnumSet.allOf(Action.class));
       Assert.fail("Expected alice to not have all privileges on the app");
     } catch (UnauthorizedException e) {
       // expected
     }
     privilegesManager.revoke(PROGRAM);
     privilegesManager.revoke(APP, ALICE, EnumSet.allOf(Action.class));
-    privilegesManager.revoke(NS, ALICE, Collections.singleton(Action.ALL));
+    privilegesManager.revoke(NS, ALICE, EnumSet.allOf(Action.class));
     Set<Privilege> privileges = authorizer.listPrivileges(ALICE);
     Assert.assertTrue(String.format("Expected all of alice's privileges to be revoked, but found %s", privileges),
                       privileges.isEmpty());

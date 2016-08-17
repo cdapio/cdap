@@ -67,7 +67,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
@@ -84,10 +83,10 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
@@ -536,8 +535,7 @@ public class DatasetTypeService extends AbstractIdleService {
 
   private void grantAllPrivilegesOnModule(DatasetModuleId moduleId, Principal principal,
                                           @Nullable DatasetModuleMeta moduleMeta) throws Exception {
-    Set<Action> allActions = ImmutableSet.of(Action.ALL);
-    privilegesManager.grant(moduleId, principal, allActions);
+    privilegesManager.grant(moduleId, principal, EnumSet.allOf(Action.class));
     if (moduleMeta == null) {
       moduleMeta = typeManager.getModule(moduleId.toId());
     }
@@ -547,7 +545,7 @@ public class DatasetTypeService extends AbstractIdleService {
     }
     for (String type : moduleMeta.getTypes()) {
       DatasetTypeId datasetTypeId = moduleId.getParent().datasetType(type);
-      privilegesManager.grant(datasetTypeId, principal, allActions);
+      privilegesManager.grant(datasetTypeId, principal, EnumSet.allOf(Action.class));
     }
   }
 
