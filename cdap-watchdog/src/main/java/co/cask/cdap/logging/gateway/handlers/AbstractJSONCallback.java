@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * LogReader callback that sends JSON objects.
  */
 public abstract class AbstractJSONCallback extends AbstractChunkedCallback {
-  private static final Gson GSON = new Gson();
+  protected static final Gson GSON = new Gson();
   private final AtomicBoolean started = new AtomicBoolean();
 
   AbstractJSONCallback(HttpResponder responder) {
@@ -65,6 +65,7 @@ public abstract class AbstractJSONCallback extends AbstractChunkedCallback {
       } else {
         encodeSend(CharBuffer.wrap(","), false);
       }
+
       encodeSend(CharBuffer.wrap(GSON.toJson(encodeSend(logEvent))), false);
     } catch (IOException e) {
       // Just propagate the exception, the caller of this Callback should be handling it.
