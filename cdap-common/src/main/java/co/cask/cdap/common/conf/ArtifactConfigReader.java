@@ -104,7 +104,7 @@ public class ArtifactConfigReader {
   private static class ArtifactRangeDeserializer implements JsonDeserializer<ArtifactRange> {
     private final Id.Namespace namespace;
 
-    public ArtifactRangeDeserializer(Id.Namespace namespace) {
+    ArtifactRangeDeserializer(Id.Namespace namespace) {
       this.namespace = namespace;
     }
 

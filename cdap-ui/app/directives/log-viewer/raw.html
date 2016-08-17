@@ -1,0 +1,53 @@
+<!--
+  Copyright © 2016 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="modal-header clearfix logs-raw-modal">
+  <h4 class="modal-title pull-left">
+    {{RawLogsModalCtrl.applicationName}} - {{RawLogsModalCtrl.startTime}}
+  </h4>
+  <div class="btn-group pull-right">
+    <a class="btn"
+        ng-if="RawLogsModalCtrl.windowMode === 'expand'"
+        ng-click="RawLogsModalCtrl.toggleMaximizedView(false)">
+        <span class="fa fa-compress"></span>
+        <span class="sr-only"> Compress </span>
+    </a>
+    <a class="btn"
+        ng-if="RawLogsModalCtrl.windowMode === 'regular'"
+        ng-click="RawLogsModalCtrl.toggleMaximizedView(true)">
+        <span class="fa fa-expand"></span>
+        <span class="sr-only"> Expand </span>
+    </a>
+    <a class="btn" ng-click="$close()">
+      <span class="fa fa-remove"></span>
+      <span class="sr-only"> Close </span>
+    </a>
+  </div>
+</div>
+<div class="modal-body logs-raw-modal">
+  <div class="well well-sm spinner-container text-center"
+         ng-if="(!RawLogsModalCtrl.rawIsLoaded && !RawLogsModalCtrl.noRawData)">
+    <h4 >
+      <i class="fa fa-spinner fa-spin"></i>
+    </h4>
+  </div>
+  <div class="well well-sm text-center"
+         ng-if="::RawLogsModalCtrl.noRawData">
+    <h4>No Raw Data to Show</h4>
+  </div>
+  <pre ng-if="::(RawLogsModalCtrl.rawDataResponse && !RawLogsModalCtrl.noRawData)"
+       ng-bind="::RawLogsModalCtrl.rawDataResponse"></pre>
+</div>

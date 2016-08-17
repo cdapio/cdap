@@ -45,25 +45,29 @@ body.theme-cdap {
       }
 
       div.btn {
-        position: relative;
         .cask-btn(@border: 0, @border-radius: 0, @color: #666, @padding: 5px 15px);
+        border-top: 1px solid transparent;
         border-right: 1px solid transparent;
         border-bottom: 1px solid transparent;
         border-left: 1px solid @table-border-color;
         .transition(all 0.2s ease);
         span {
           line-height: 29px;
+          &.icon-logview { font-size: 21px; }
         }
         &:hover,
-        &:focus {
+        &:focus,
+        &.btn-select {
           background-color: #ebebeb;
+          border-top: 1px solid #ebebeb;
           border-right: 1px solid #ebebeb;
           border-left: 1px solid @table-border-color;
           border-bottom: 1px solid @table-border-color;
         }
         &:active {
           background-color: #828da0;
-          border-right: #828da0;
+          border-top: 1px solid #828da0;
+          border-right: 1px solid #828da0;
           border-bottom: 1px solid #828da0;
           color: white;
           .box-shadow(inset 0 0 20px 0 rgba(0, 0, 0, 0.25));
@@ -116,15 +120,96 @@ body.theme-cdap {
       }
     }
 
+    .error-tooltip {
+      z-index: 1029;
+      &.top {
+        .tooltip-arrow {
+          border-top: 5px solid @brand-danger;
+        }
+      }
+      &.right {
+        width: 100%;
+        .tooltip-arrow {
+          border-right: 5px solid @brand-danger;
+        }
+      }
+      &.bottom {
+        .tooltip-arrow {
+          border-bottom: 5px solid @brand-danger;
+        }
+      }
+
+      .tooltip-inner {
+        background-color: @brand-danger;
+        border: 1px solid @brand-danger;
+      }
+    }
+
     .pipeline-settings {
       background: lightgray;
       position: fixed;
       top: 93px;
+      max-height: ~"calc(100vh - 143px)";
+      max-height: ~"-moz-calc(100vh - 143px)";
+      max-height: ~"-webkit-calc(100vh - 143px)";
+      overflow: auto;
       right: 0;
       z-index: 1039;
-      > div {
-        padding: 20px;
+      @box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
+      .box-shadow(@box-shadow);
+      h5 {
+        margin: 10px;
+        margin-bottom: 0;
+      }
+      .arguments-container {
+        padding: 5px 10px;
         width: 100%;
+        // This is 100vh - (header (90px) + footer (43px) + Run time arguments title (36px) + Startnow/Schedule buttons (42px))
+        max-height: ~"calc(100vh - 216px)";
+        max-height: ~"-moz-calc(100vh - 216px)";
+        max-height: ~"-webkit-calc(100vh - 216px)";
+        overflow-y: auto;
+        overflow-x: hidden;
+        // FIXME: Everything below. What follows is a custom styling for hydrator
+        // key-value widget was specifically meant for hydrator plugin configuration
+        // Tweaking it for run configuration is messy. Either fix keyvalue to occupy
+        // max space available or build a new widget for hydrator run configuration.
+        my-key-value {
+          .keyvalue-container {
+            padding: 0;
+            border: 0;
+            .row {
+              margin: 5px 0;
+              input.form-control {
+                height: 28px;
+                padding-top: 5px;
+                &:first-child {
+                  width: 30%;
+                }
+                &:nth-child(2) {
+                  width: 69%;
+                }
+              }
+              .col-xs-10.col-lg-8 {
+                padding: 0;
+                width: ~"calc(100% - 60px)";
+                width: ~"-webkit-calc(100% - 60px)";
+                width: ~"-moz-calc(100% - 60px)";
+              }
+              .col-xs-2.col-lg-4 {
+                padding: 0;
+                width: 60px;
+              }
+            }
+            .btn.btn-danger,
+            .btn.btn-info {
+              padding: 5px;
+            }
+          }
+        }
+      }
+      .clearfix {
+        padding: 0 10px 5px 10px;
       }
     }
     .pipeline-settings-backdrop {
@@ -156,6 +241,10 @@ body.theme-cdap {
       max-height: ~"-moz-calc(100vh - 143px)";
       max-height: ~"-webkit-calc(100vh - 143px)";
       overflow: auto;
+      > div {
+        width: 100%;
+        padding: 10px;
+      }
     }
     div.side-panel.top,
     .pipeline-settings {
@@ -223,6 +312,7 @@ body.theme-cdap {
           }
           .pipeline-name {
             &.error {
+              color: @brand-danger;
               &:before {
                 color: @brand-danger;
                 font-weight: bold;
@@ -343,8 +433,9 @@ body.theme-cdap {
         border-right: 0;
         .hydrator-detail-metadata {
           display: flex;
+          align-items: center;
           overflow: hidden;
-          padding: 2px 10px;
+          padding: 0 10px;
 
           /*
             - Two buttons for schedule & start now
@@ -362,16 +453,15 @@ body.theme-cdap {
           max-width: ~"-moz-calc(100% - 410px)";
           max-width: ~"-webkit-calc(100% - 410px)";
           div.pipeline-type {
+            line-height: 1;
             text-decoration: none;
             padding: 0 10px 0 0;
-            span {
-              line-height: 1.3;
-            }
           }
           div.pipeline-name {
             text-align: left;
             overflow: hidden;
             width: 100%;
+            height: 42px;
           }
           h1,
           p {
@@ -379,21 +469,23 @@ body.theme-cdap {
             overflow: hidden;
             text-overflow: ellipsis;
             max-width: 100%;
+            height: 21px;
           }
           h1 {
             font-size: 16px;
             font-weight: 500;
-            margin-top: 0;
-            margin-bottom: 0;
-            line-height: 20px;
-            display: inline-block;
+            margin: 0;
+            &.name-only {
+              height: 42px;
+              line-height: 2.5;
+            }
+            &:not(.name-only) { padding-top: 2px; }
           }
           p {
             color: #666666;
             font-size: 12px;
             font-weight: 400;
             margin: 0;
-            line-height: 1.1;
           }
         }
         .next-run,
@@ -446,19 +538,18 @@ body.theme-cdap {
         }
         .app-status-container {
           display: flex;
+          min-width: 400px;
           position: relative;
+          border-right: 1px solid #dddddd;
+          .btn {
+            &.log-viewer {
+              border-left: 0;
+            }
+          }
         }
       }
       .btn {
-        flex-grow: 0;
-        padding: inherit;
-        padding: 7px 15px 0 15px;
-        display: block;
         align-items: center;
-        position: relative;
-        span {
-          line-height: 48px;
-        }
         .fa.fa-caret-down {
           position: absolute;
           top: 17px;
@@ -483,12 +574,34 @@ body.theme-cdap {
       }
       .pipeline-settings {
         width: 100%;
+        > div {
+          width: 100%;
+          padding: 10px;
+        }
         &.pipeline-run-section {
           position: absolute;
           left: 0;
           top: 43px;
           background: #ebebeb;
-          max-height: 400px;
+          width: 700px;
+          .macro-error-container {
+            width: 70%;
+          }
+        }
+        &.pipeline-logs-section {
+          height: ~"calc(100vh - 147px)";
+          height: ~"-moz-calc(100vh - 147px)";
+          height: ~"-webkit-calc(100vh - 147px)";
+          box-shadow: none;
+
+          .logs-table {
+            height: ~"calc(100vh - 263px)";
+            height: ~"-moz-calc(100vh - 263px)";
+            height: ~"-webkit-calc(100vh - 263px)";
+          }
+          .fa.fa-expand {
+            display: none;
+          }
         }
       }
     }

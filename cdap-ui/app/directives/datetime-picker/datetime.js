@@ -54,7 +54,7 @@ function DatetimeController($scope) {
         hour = vm.hour,
         minutes = vm.minutes;
 
-    $scope.dateObject = !hour || !minutes ? null : new Date(year, month, day, hour, minutes, 0);
+    $scope.dateObject = (!hour && hour !== 0) || (!minutes && minutes !== 0) ? null : new Date(year, month, day, hour, minutes, 0);
   }
 
 }

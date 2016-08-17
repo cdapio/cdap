@@ -14,18 +14,36 @@
  * the License.
  */
 
+// One place to edit the group label.
+var pluginLabels = {
+  'source': 'Source',
+  'transform': 'Transform',
+  'sink': 'Sink',
+  'action': 'Action'
+};
 angular.module(PKG.name + '.services')
   .constant('GLOBALS', {
     // Should be under property called 'artifactTypes' to be consistent. GLOBALS.etlBatch doesn't make much sense.
     etlBatch: 'cdap-etl-batch',
     etlRealtime: 'cdap-etl-realtime',
+    etlDataStreams: 'cdap-data-streams',
     etlDataPipeline: 'cdap-data-pipeline',
     etlBatchPipelines: ['cdap-etl-batch', 'cdap-data-pipeline'],
+    // Map defines what plugin types to surface for each artifact in UI.
     pluginTypes: {
       'cdap-etl-batch': {
         'source': 'batchsource',
         'sink': 'batchsink',
         'transform': 'transform',
+      },
+      'cdap-data-streams':{
+        'transform': 'transform',
+        'source': 'streamingsource',
+        'sparkcompute': 'sparkcompute',
+        'batchaggregator': 'batchaggregator',
+        'sink': 'batchsink',
+        'batchjoiner': 'batchjoiner',
+        'windower': 'windower'
       },
       'cdap-etl-realtime': {
         'source': 'realtimesource',
@@ -48,8 +66,27 @@ angular.module(PKG.name + '.services')
         'httpcallback': 'Make HTTP Call'
       }
     },
+    'pluginTypeToLabel': {
+      'transform': pluginLabels['transform'],
+      'batchsource': pluginLabels['source'],
+      'batchsink': pluginLabels['sink'],
+      'batchaggregator': pluginLabels['transform'],
+      'realtimesink': pluginLabels['sink'],
+      'realtimesource': pluginLabels['source'],
+      'sparksink': pluginLabels['sink'],
+      'sparkcompute': pluginLabels['transform'],
+      'batchjoiner': pluginLabels['transform'],
+      'action': 'Action',
+      'streamingsource': pluginLabels['source'],
+      'windower': pluginLabels['transform']
+    },
+    pluginLabels: pluginLabels,
+    // understand what plugin type is what.
+    // if we get batchaggregator from backend it is marked as transform here.
     pluginConvert: {
       'batchaggregator': 'transform',
+      'streamingsource': 'source',
+      'windower': 'transform',
       'batchsource': 'source',
       'realtimesource': 'source',
       'batchsink': 'sink',
@@ -63,8 +100,9 @@ angular.module(PKG.name + '.services')
 
     artifactConvert: {
       'cdap-etl-batch': 'Batch (Deprecated)',
-      'cdap-etl-realtime': 'Realtime',
-      'cdap-data-pipeline': 'Data Pipeline'
+      'cdap-etl-realtime': 'Realtime (Deprecated)',
+      'cdap-data-pipeline': 'Data Pipeline - Batch',
+      'cdap-data-streams': 'Data Pipeline - Realtime'
     },
 
     iconArtifact: {
@@ -93,6 +131,10 @@ angular.module(PKG.name + '.services')
             'NO-SOURCE-FOUND': 'Please add a source to your pipeline',
             'MISSING-NAME': 'Pipeline name is missing.',
             'INVALID-NAME': 'Pipeline names can only contain alphanumeric (\'a-z A-Z 0-9\'), underscore (\'_\'), and hyphen (\'-\') characters. Please remove any other characters.',
+            'MISSING-RESOURCES': 'Pipeline resources missing value (Memory MB)',
+            'MISSING-DRIVERRESOURCES': 'Pipeline driver resources missing value (Memory MB)',
+            'INVALID-RESOURCES': 'Pipeline resources (Memory MB) should be positive numbers',
+            'INVALID-DRIVERRESOURCES': 'Pipeline driver resources (Memory MB) should be positive numbers',
             'NO-SINK-FOUND': 'Please add a sink to your pipeline',
             'NAME-ALREADY-EXISTS': 'A pipeline with this name already exists. Please choose a different name.',
             'DUPLICATE-NODE-NAMES': 'Every node should have a unique name to be exported/published.',

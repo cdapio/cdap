@@ -29,16 +29,28 @@ class TrackerResultsController {
     this.searchResults = [];
     this.sortByOptions = [
       {
-        name: 'Create Date',
+        name: 'Oldest First',
         sort: 'createDate'
       },
       {
-        name: 'A-Z',
+        name: 'Newest First',
+        sort: '-createDate'
+      },
+      {
+        name: 'A → Z',
         sort: 'name'
       },
       {
-        name: 'Z-A',
+        name: 'Z → A',
         sort: '-name'
+      },
+      {
+        name: 'Highest Score',
+        sort: '-meter'
+      },
+      {
+        name: 'Lowest Score',
+        sort: 'meter'
       }
     ];
 
@@ -130,7 +142,9 @@ class TrackerResultsController {
       .then( (res) => {
         this.fullResults = res.map(this.parseResult.bind(this));
         this.searchResults = angular.copy(this.fullResults);
-        this.fetchTruthMeter();
+        if (this.searchResults.length) {
+          this.fetchTruthMeter();
+        }
         this.loading = false;
       }, (err) => {
         console.log('error', err);
@@ -323,7 +337,14 @@ class TrackerResultsController {
     })
       .$promise
       .then((response) => {
+        if (!response) { return; }
         this.truthMeterMap = response;
+
+        angular.forEach(this.fullResults, (entity) => {
+          if (!response[entity.entityTypeState]) { return; }
+          entity.meter = response[entity.entityTypeState][entity.name];
+        });
+        this.filterResults();
       }, (err) => {
         console.log('error', err);
       });

@@ -15,20 +15,12 @@
  */
 
 class HydratorPlusPlusCreateCanvasCtrl {
-  constructor(HydratorPlusPlusBottomPanelStore, DAGPlusPlusNodesStore, HydratorPlusPlusConfigStore, HydratorPlusPlusHydratorService, $uibModal, GLOBALS, DAGPlusPlusNodesActionsFactory) {
+  constructor(DAGPlusPlusNodesStore, HydratorPlusPlusConfigStore, HydratorPlusPlusHydratorService, $uibModal, GLOBALS, DAGPlusPlusNodesActionsFactory) {
     this.DAGPlusPlusNodesStore = DAGPlusPlusNodesStore;
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
     this.GLOBALS = GLOBALS;
-
-    this.setState = () => {
-      this.state = {
-        setScroll: (HydratorPlusPlusBottomPanelStore.getPanelState() === 0? false: true)
-      };
-    };
-    this.setState();
-    HydratorPlusPlusBottomPanelStore.registerOnChangeListener(this.setState.bind(this));
 
     this.nodes = [];
     this.connections = [];
@@ -66,7 +58,7 @@ class HydratorPlusPlusCreateCanvasCtrl {
           windowTemplateUrl: '/assets/features/hydratorplusplus/templates/partial/node-config-modal/popover-template.html',
           templateUrl: '/assets/features/hydratorplusplus/templates/partial/node-config-modal/popover.html',
           size: 'lg',
-          windowClass: 'node-config-modal cdap-modal',
+          windowClass: 'node-config-modal hydrator-modal',
           controller: 'HydratorPlusPlusNodeConfigCtrl',
           bindToController: true,
           controllerAs: 'HydratorPlusPlusNodeConfigCtrl',
@@ -82,8 +74,9 @@ class HydratorPlusPlusCreateCanvasCtrl {
               let sourceConn = HydratorPlusPlusConfigStore
                 .getSourceNodes(pluginId)
                 .filter( node => typeof node.outputSchema === 'string');
+              let artifactVersion = HydratorPlusPlusConfigStore.getArtifact().version;
               return HydratorPlusPlusNodeService
-                .getPluginInfo(pluginNode, appType, sourceConn)
+                .getPluginInfo(pluginNode, appType, sourceConn, artifactVersion)
                 .then((nodeWithInfo) => (
                   {
                     node: nodeWithInfo,
@@ -113,6 +106,6 @@ class HydratorPlusPlusCreateCanvasCtrl {
 }
 
 
-HydratorPlusPlusCreateCanvasCtrl.$inject = ['HydratorPlusPlusBottomPanelStore', 'DAGPlusPlusNodesStore', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusHydratorService', '$uibModal', 'GLOBALS', 'DAGPlusPlusNodesActionsFactory'];
+HydratorPlusPlusCreateCanvasCtrl.$inject = ['DAGPlusPlusNodesStore', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusHydratorService', '$uibModal', 'GLOBALS', 'DAGPlusPlusNodesActionsFactory'];
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusCreateCanvasCtrl', HydratorPlusPlusCreateCanvasCtrl);

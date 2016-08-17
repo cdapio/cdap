@@ -175,7 +175,7 @@
   </property>
 
   <property>
-    <name>kafka.log.dir</name>
+    <name>kafka.server.log.dirs</name>
     <value>${local.data.dir}/kafka-logs</value>
     <description>
       Log directory for Kafka server
@@ -198,10 +198,10 @@
   </property>
 
   <property>
-    <name>security.store.provider</name>
-    <value>file</value>
+    <name>kerberos.auth.enabled</name>
+    <value>false</value>
     <description>
-      Backend provider for the secure store
+      Determines if Kerberos authentication is enabled
     </description>
   </property>
 

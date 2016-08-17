@@ -33,10 +33,11 @@ public class MapReduceBatchWritableOutputFormat<KEY, VALUE> extends AbstractBatc
 
   @Override
   protected CloseableBatchWritable<KEY, VALUE> createBatchWritable(TaskAttemptContext context,
+                                                                   String namespace,
                                                                    String datasetName,
                                                                    Map<String, String> datasetArgs) {
     MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(context.getConfiguration());
     BasicMapReduceTaskContext<?, ?> taskContext = classLoader.getTaskContextProvider().get(context);
-    return taskContext.getBatchWritable(datasetName, datasetArgs);
+    return taskContext.getBatchWritable(namespace, datasetName, datasetArgs);
   }
 }

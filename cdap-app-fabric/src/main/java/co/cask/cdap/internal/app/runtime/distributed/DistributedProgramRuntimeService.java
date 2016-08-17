@@ -19,7 +19,6 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.queue.QueueSpecification;
 import co.cask.cdap.app.queue.QueueSpecificationGenerator;
@@ -51,38 +50,30 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.tephra.TransactionExecutorFactory;
-import com.google.common.base.Charsets;
 import com.google.common.base.Predicate;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.hadoop.yarn.api.records.NodeReport;
+import org.apache.hadoop.yarn.api.records.NodeState;
+import org.apache.hadoop.yarn.api.records.Resource;
+import org.apache.hadoop.yarn.client.api.YarnClient;
 import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunResources;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.internal.yarn.YarnUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -383,65 +374,27 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
    * Reports resource usage of the cluster and all the app masters of running twill programs.
    */
   private class ClusterResourceReporter extends AbstractResourceReporter {
-    private static final String RM_CLUSTER_METRICS_PATH = "/ws/v1/cluster/metrics";
-    private final List<URL> rmUrls;
+
+    private final YarnClient yarnClient;
 
     ClusterResourceReporter(MetricsCollectionService metricsCollectionService, Configuration hConf) {
       super(metricsCollectionService.getContext(ImmutableMap.<String, String>of()));
 
-      List<URL> rmUrls = Collections.emptyList();
-      try {
-        rmUrls = getResourceManagerURLs(hConf);
-      } catch (MalformedURLException e) {
-        LOG.error("webapp address for the resourcemanager is malformed." +
-                    " Cluster memory metrics will not be collected.", e);
-      }
-      LOG.trace("RM urls determined... {}", rmUrls);
-      this.rmUrls = rmUrls;
+      YarnClient yarnClient = YarnClient.createYarnClient();
+      yarnClient.init(hConf);
+      this.yarnClient = yarnClient;
     }
 
-    // if ha resourcemanager is being used, need to read the config differently
-    // HA rm has a setting for the rm ids, which is a comma separated list of ids.
-    // it then has a separate webapp.address.<id> setting for each rm.
-    private List<URL> getResourceManagerURLs(Configuration hConf) throws MalformedURLException {
-      List<URL> urls = Lists.newArrayList();
-
-      // if HA resource manager is enabled
-      if (hConf.getBoolean(YarnConfiguration.RM_HA_ENABLED, false)) {
-        LOG.trace("HA RM is enabled, determining webapp urls...");
-        // for each resource manager
-        for (String rmID : hConf.getStrings(YarnConfiguration.RM_HA_IDS)) {
-          urls.add(getResourceURL(hConf, rmID));
-        }
-      } else {
-        LOG.trace("HA RM is not enabled, determining webapp url...");
-        urls.add(getResourceURL(hConf, null));
-      }
-      return urls;
+    @Override
+    protected void startUp() throws Exception {
+      super.startUp();
+      yarnClient.start();
     }
 
-    // get the url for resource manager cluster metrics, given the id of the resource manager.
-    private URL getResourceURL(Configuration hConf, String rmID) throws MalformedURLException {
-      String setting = YarnConfiguration.RM_WEBAPP_ADDRESS;
-      if (rmID != null) {
-        setting += "." + rmID;
-      }
-      String addrStr = hConf.get(setting);
-      // in HA mode, you can either set yarn.resourcemanager.hostname.<rm-id>,
-      // or you can set yarn.resourcemanager.webapp.address.<rm-id>. In non-HA mode, the webapp address
-      // is populated based on the resourcemanager hostname, but this is not the case in HA mode.
-      // Therefore, if the webapp address is null, check for the resourcemanager hostname to derive the webapp address.
-      if (addrStr == null) {
-        // this setting is not a constant for some reason...
-        setting = YarnConfiguration.RM_PREFIX + "hostname";
-        if (rmID != null) {
-          setting += "." + rmID;
-        }
-        addrStr = hConf.get(setting) + ":" + YarnConfiguration.DEFAULT_RM_WEBAPP_PORT;
-      }
-      addrStr = "http://" + addrStr + RM_CLUSTER_METRICS_PATH;
-      LOG.trace("Adding {} as a rm address.", addrStr);
-      return new URL(addrStr);
+    @Override
+    protected void shutDown() throws Exception {
+      yarnClient.stop();
+      super.shutDown();
     }
 
     @Override
@@ -468,64 +421,41 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
           sendMetrics(runContext, 1, memory, vcores);
         }
       }
-      boolean reported = false;
-      // if we have HA resourcemanager, need to cycle through possible webapps in case one is down.
-      for (URL url : rmUrls) {
-        // if we were able to hit the resource manager webapp, we don't have to try the others.
-        if (reportClusterMemory(url)) {
-          reported = true;
-          break;
-        }
-      }
-      if (!reported) {
-        LOG.warn("unable to get resource manager metrics, cluster memory metrics will be unavailable");
-      }
+      reportYarnResources();
     }
 
-    // YARN api is unstable, hit the webservice instead
-    // returns whether or not it was able to hit the webservice.
-    private boolean reportClusterMemory(URL url) {
-      Reader reader = null;
-      HttpURLConnection conn = null;
-      LOG.trace("getting cluster memory from url {}", url);
+    private void reportYarnResources() {
       try {
-        conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("GET");
+        long totalMemory = 0L;
+        long totalVCores = 0L;
+        long usedMemory = 0L;
+        long usedVCores = 0L;
 
-        reader = new InputStreamReader(conn.getInputStream(), Charsets.UTF_8);
-        JsonObject response;
-        try {
-          response = new Gson().fromJson(reader, JsonObject.class);
-        } catch (JsonParseException e) {
-          // this is normal if this is not the active RM
-          return false;
+        for (NodeReport nodeReport : yarnClient.getNodeReports(NodeState.RUNNING)) {
+          Resource capability = nodeReport.getCapability();
+          Resource used = nodeReport.getUsed();
+
+          totalMemory += capability.getMemory();
+          totalVCores += YarnUtils.getVirtualCores(capability);
+
+          usedMemory += used.getMemory();
+          usedVCores += YarnUtils.getVirtualCores(used);
         }
 
-        if (response != null) {
-          JsonObject clusterMetrics = response.getAsJsonObject("clusterMetrics");
-          long totalMemory = clusterMetrics.get("totalMB").getAsLong();
-          long availableMemory = clusterMetrics.get("availableMB").getAsLong();
-          MetricsContext collector = getCollector();
-          LOG.trace("resource manager, total memory = " + totalMemory + " available = " + availableMemory);
-          collector.gauge("resources.total.memory", totalMemory);
-          collector.gauge("resources.available.memory", availableMemory);
-          return true;
-        }
-        return false;
+        MetricsContext collector = getCollector();
+
+        LOG.trace("YARN Cluster memory total={}MB, used={}MB", totalMemory, usedMemory);
+        collector.gauge("resources.total.memory", totalMemory);
+        collector.gauge("resources.used.memory", usedMemory);
+        collector.gauge("resources.available.memory", totalMemory - usedMemory);
+
+        LOG.trace("YARN Cluster vcores total={}, used={}", totalVCores, usedVCores);
+        collector.gauge("resources.total.vcores", totalVCores);
+        collector.gauge("resources.used.vcores", usedVCores);
+        collector.gauge("resources.available.vcores", totalVCores - usedVCores);
+
       } catch (Exception e) {
-        LOG.warn("Exception getting cluster memory from ", e);
-        return false;
-      } finally {
-        if (reader != null) {
-          try {
-            reader.close();
-          } catch (IOException e) {
-            LOG.warn("Exception closing reader", e);
-          }
-        }
-        if (conn != null) {
-          conn.disconnect();
-        }
+        LOG.warn("Failed to gather YARN NodeReports", e);
       }
     }
 

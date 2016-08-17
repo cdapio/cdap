@@ -35,6 +35,8 @@ import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -44,7 +46,6 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.Closeable;
-import java.util.Collections;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -59,6 +60,8 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
   private final StreamAdmin streamAdmin;
   private final WorkflowProgramInfo workflowProgramInfo;
   private final LoggingContext loggingContext;
+  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   SparkRuntimeContext(Configuration hConf, Program program, ProgramOptions programOptions,
                       TransactionSystemClient txClient,
@@ -69,16 +72,20 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
                       @Nullable WorkflowProgramInfo workflowProgramInfo,
                       @Nullable PluginInstantiator pluginInstantiator,
                       SecureStore secureStore,
-                      SecureStoreManager secureStoreManager) {
-    super(program, programOptions, Collections.<String>emptySet(), datasetFramework, txClient, discoveryServiceClient,
-          true, metricsCollectionService, createMetricsTags(workflowProgramInfo), secureStore, secureStoreManager,
-          pluginInstantiator);
+                      SecureStoreManager secureStoreManager,
+                      AuthorizationEnforcer authorizationEnforcer,
+                      AuthenticationContext authenticationContext) {
+    super(program, programOptions, getSparkSpecification(program).getDatasets(), datasetFramework, txClient,
+          discoveryServiceClient, true, metricsCollectionService, createMetricsTags(workflowProgramInfo),
+          secureStore, secureStoreManager, pluginInstantiator);
 
     this.hConf = hConf;
     this.txClient = txClient;
     this.streamAdmin = streamAdmin;
     this.workflowProgramInfo = workflowProgramInfo;
     this.loggingContext = createLoggingContext(program.getId().toEntityId(), getRunId(), workflowProgramInfo);
+    this.authorizationEnforcer = authorizationEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   private LoggingContext createLoggingContext(ProgramId programId, RunId runId,
@@ -93,7 +100,7 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
 
     return new WorkflowProgramLoggingContext(workflowProramId.getNamespace(), workflowProramId.getApplication(),
                                              workflowProramId.getProgram(), workflowProgramInfo.getRunId().getId(),
-                                             ProgramType.SPARK, programId.getProgram());
+                                             ProgramType.SPARK, programId.getProgram(), runId.getId());
   }
 
   @Override
@@ -110,9 +117,13 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
    * Returns the {@link SparkSpecification} of the spark program of this context.
    */
   public SparkSpecification getSparkSpecification() {
-    SparkSpecification spec = getApplicationSpecification().getSpark().get(getProgram().getName());
+    return getSparkSpecification(getProgram());
+  }
+
+  private static SparkSpecification getSparkSpecification(Program program) {
+    SparkSpecification spec = program.getApplicationSpecification().getSpark().get(program.getName());
     // Spec shouldn't be null, otherwise the spark program won't even get started
-    Preconditions.checkState(spec != null, "SparkSpecification not found for %s", getProgram().getId());
+    Preconditions.checkState(spec != null, "SparkSpecification not found for %s", program.getId());
     return spec;
   }
 
@@ -150,6 +161,20 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
    */
   StreamAdmin getStreamAdmin() {
     return streamAdmin;
+  }
+
+  /**
+   * Returns the {@link AuthorizationEnforcer} that can be used for this program.
+   */
+  public AuthorizationEnforcer getAuthorizationEnforcer() {
+    return authorizationEnforcer;
+  }
+
+  /**
+   * Returns the {@link AuthenticationContext} that can be used for this program.
+   */
+  public AuthenticationContext getAuthenticationContext() {
+    return authenticationContext;
   }
 
   @Override

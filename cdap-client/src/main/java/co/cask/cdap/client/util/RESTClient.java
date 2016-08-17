@@ -20,6 +20,7 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.DisconnectedException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.security.authentication.client.AccessToken;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
@@ -64,12 +65,12 @@ public class RESTClient {
   }
 
   public HttpResponse execute(HttpRequest request, AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException, DisconnectedException {
+    throws IOException, UnauthenticatedException, DisconnectedException, UnauthorizedException {
     return execute(HttpRequest.builder(request).addHeaders(getAuthHeaders(accessToken)).build(), allowedErrorCodes);
   }
 
   public HttpResponse execute(HttpMethod httpMethod, URL url, AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException, DisconnectedException {
+    throws IOException, UnauthenticatedException, DisconnectedException, UnauthorizedException {
     return execute(HttpRequest.builder(httpMethod, url)
                      .addHeaders(getAuthHeaders(accessToken))
                      .build(), allowedErrorCodes);
@@ -77,7 +78,7 @@ public class RESTClient {
 
   public HttpResponse execute(HttpMethod httpMethod, URL url, Map<String, String> headers, AccessToken accessToken,
                               int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException, DisconnectedException {
+    throws IOException, UnauthenticatedException, DisconnectedException, UnauthorizedException {
     return execute(HttpRequest.builder(httpMethod, url)
                      .addHeaders(headers)
                      .addHeaders(getAuthHeaders(accessToken))
@@ -86,7 +87,7 @@ public class RESTClient {
 
   public HttpResponse execute(HttpMethod httpMethod, URL url, String body, Map<String, String> headers,
                               AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException, DisconnectedException {
+    throws IOException, UnauthenticatedException, DisconnectedException, UnauthorizedException {
     return execute(HttpRequest.builder(httpMethod, url)
                      .addHeaders(headers)
                      .addHeaders(getAuthHeaders(accessToken))
@@ -94,15 +95,19 @@ public class RESTClient {
   }
 
   private HttpResponse execute(HttpRequest request, int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException, DisconnectedException {
+    throws IOException, UnauthenticatedException, DisconnectedException, UnauthorizedException {
 
     int currentTry = 0;
     HttpResponse response;
+    int responseCode;
+    boolean allowUnavailable = ArrayUtils.contains(allowedErrorCodes, HttpURLConnection.HTTP_UNAVAILABLE);
+
     do {
       onRequest(request, currentTry);
       response = HttpRequests.execute(request, clientConfig.getDefaultRequestConfig());
+      responseCode = response.getResponseCode();
 
-      if (response.getResponseCode() != HttpURLConnection.HTTP_UNAVAILABLE) {
+      if (responseCode != HttpURLConnection.HTTP_UNAVAILABLE || allowUnavailable) {
         // only retry if unavailable
         break;
       }
@@ -117,9 +122,11 @@ public class RESTClient {
 
     onResponse(request, response, currentTry);
 
-    int responseCode = response.getResponseCode();
     if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
       throw new UnauthenticatedException("Unauthorized status code received from the server.");
+    }
+    if (responseCode == HttpURLConnection.HTTP_FORBIDDEN) {
+      throw new UnauthorizedException(response.getResponseBodyAsString());
     }
     if (!isSuccessful(responseCode) && !ArrayUtils.contains(allowedErrorCodes, responseCode)) {
       throw new IOException(responseCode + ": " + response.getResponseBodyAsString());

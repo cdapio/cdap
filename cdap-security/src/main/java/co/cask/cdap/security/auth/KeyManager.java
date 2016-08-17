@@ -30,7 +30,7 @@ public interface KeyManager extends Service {
    * Represents the combination of a digest computed on a message using a secret key, and the ID of the secret key
    * used to compute the digest.  Both elements are needed in order to later recompute (validate) the digest.
    */
-  public static class DigestId {
+  class DigestId {
     private final int id;
     private final byte[] digest;
 

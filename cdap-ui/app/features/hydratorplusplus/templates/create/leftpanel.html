@@ -18,7 +18,7 @@
   <select class="form-control"
           ng-change="HydratorPlusPlusLeftPanelCtrl.onArtifactChange()"
           ng-model="HydratorPlusPlusLeftPanelCtrl.selectedArtifact"
-          ng-options="artifact as artifact.label for artifact in HydratorPlusPlusLeftPanelCtrl.artifacts | orderBy: 'label'">
+          ng-options="artifact as artifact.label for artifact in HydratorPlusPlusLeftPanelCtrl.artifacts">
   </select>
 
   <div class="import-section">

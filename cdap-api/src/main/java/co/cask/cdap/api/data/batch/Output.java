@@ -21,6 +21,7 @@ import co.cask.cdap.api.common.RuntimeArguments;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Defines output of a program, such as MapReduce.
@@ -30,6 +31,7 @@ public abstract class Output {
   private final String name;
 
   private String alias;
+  private String namespace;
 
   private Output(String name) {
     this.name = name;
@@ -40,6 +42,25 @@ public abstract class Output {
    */
   public String getName() {
     return name;
+  }
+
+  /**
+   * Sets the namespace of the output.
+   *
+   * @param namespace the namespace of the output
+   * @return the Output being operated on
+   */
+  public Output fromNamespace(String namespace) {
+    this.namespace = namespace;
+    return this;
+  }
+
+  /**
+   * @return the namespace of the output.
+   */
+  @Nullable
+  public String getNamespace() {
+    return namespace;
   }
 
   /**
@@ -72,8 +93,7 @@ public abstract class Output {
 
   /**
    * Returns an Output defined by a dataset.
-   *
-   * @param datasetName the name of the output dataset
+   *  @param datasetName the name of the output dataset
    * @param arguments the arguments to use when instantiating the dataset
    */
   public static Output ofDataset(String datasetName, Map<String, String> arguments) {
@@ -101,8 +121,18 @@ public abstract class Output {
       this.arguments = Collections.unmodifiableMap(new HashMap<>(arguments));
     }
 
+    private DatasetOutput(String name, Map<String, String> arguments, String namespace) {
+      this(name, arguments);
+      super.fromNamespace(namespace);
+    }
+
     public Map<String, String> getArguments() {
       return arguments;
+    }
+
+    @Override
+    public DatasetOutput fromNamespace(String namespace) {
+      return new DatasetOutput(super.name, arguments, namespace);
     }
   }
 
@@ -120,6 +150,11 @@ public abstract class Output {
 
     public OutputFormatProvider getOutputFormatProvider() {
       return outputFormatProvider;
+    }
+
+    @Override
+    public Output fromNamespace(String namespace) {
+      throw new UnsupportedOperationException("OutputFormatProviderOutput does not support setting namespace.");
     }
   }
 }

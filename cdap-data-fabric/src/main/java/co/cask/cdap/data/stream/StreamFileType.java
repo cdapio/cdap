@@ -25,7 +25,7 @@ public enum StreamFileType {
 
   private final String suffix;
 
-  private StreamFileType(String suffix) {
+  StreamFileType(String suffix) {
     this.suffix = suffix;
   }
 

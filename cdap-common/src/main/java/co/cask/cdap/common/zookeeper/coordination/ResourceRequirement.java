@@ -202,7 +202,7 @@ public final class ResourceRequirement {
      */
     public Builder addPartition(Partition partition) {
       Preconditions.checkArgument(!partitions.containsKey(partition.getName()),
-                                  "Partition {} already added.", partition);
+                                  "Partition %s already added.", partition);
       partitions.put(partition.getName(), partition);
       return this;
     }

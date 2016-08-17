@@ -19,6 +19,7 @@ package co.cask.cdap.security.spi.authorization;
 import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 
@@ -36,7 +37,7 @@ import java.util.Properties;
  *   <li>Determine the authentication details of the {@link Principal} making the authorization request.</li>
  * </ol>
  */
-public interface AuthorizationContext extends DatasetContext, Admin, Transactional, AuthenticationContext {
+public interface AuthorizationContext extends DatasetContext, Admin, Transactional, AuthenticationContext, SecureStore {
   /**
    * Returns the properties for the authorization extension. These properties are composed of all the properties
    * defined in {@code cdap-site.xml} with the prefix {@code security.authorization.extension.config.}.

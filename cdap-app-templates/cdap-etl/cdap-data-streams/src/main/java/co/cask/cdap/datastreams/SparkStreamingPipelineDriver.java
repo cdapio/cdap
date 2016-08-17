@@ -24,6 +24,7 @@ import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.SparkCompute;
+import co.cask.cdap.etl.api.streaming.StreamingContext;
 import co.cask.cdap.etl.api.streaming.StreamingSource;
 import co.cask.cdap.etl.api.streaming.Windower;
 import co.cask.cdap.etl.common.Constants;
@@ -33,6 +34,7 @@ import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPipelineDriver;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
 import co.cask.cdap.etl.spark.streaming.DStreamCollection;
+import co.cask.cdap.etl.spark.streaming.DefaultStreamingContext;
 import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.collect.ImmutableSet;
@@ -63,7 +65,8 @@ public class SparkStreamingPipelineDriver extends SparkPipelineDriver implements
   protected SparkCollection<Object> getSource(String stageName,
                                               PluginFunctionContext pluginFunctionContext) throws Exception {
     StreamingSource<Object> source = sec.getPluginContext().newPluginInstance(stageName);
-    return new DStreamCollection<>(sec, sparkContext, source.getStream(streamingContext));
+    StreamingContext context = new DefaultStreamingContext(stageName, sec, streamingContext);
+    return new DStreamCollection<>(sec, sparkContext, source.getStream(context));
   }
 
   @Override

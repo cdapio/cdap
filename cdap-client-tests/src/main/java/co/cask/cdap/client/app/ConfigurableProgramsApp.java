@@ -79,7 +79,7 @@ public class ConfigurableProgramsApp extends AbstractApplication<ConfigurablePro
     private final String stream;
     private final String dataset;
 
-    public Floh(String name, String stream, String dataset) {
+    Floh(String name, String stream, String dataset) {
       this.name = name;
       this.stream = stream;
       this.dataset = dataset;
@@ -100,7 +100,7 @@ public class ConfigurableProgramsApp extends AbstractApplication<ConfigurablePro
 
     private KeyValueTable keyValueTable;
 
-    public Flohlet(String datasetName) {
+    Flohlet(String datasetName) {
       this.datasetName = datasetName;
     }
 
@@ -122,7 +122,7 @@ public class ConfigurableProgramsApp extends AbstractApplication<ConfigurablePro
     private final String streamName;
     private volatile boolean running;
 
-    public Wurker(String streamName) {
+    Wurker(String streamName) {
       this.streamName = streamName;
     }
 

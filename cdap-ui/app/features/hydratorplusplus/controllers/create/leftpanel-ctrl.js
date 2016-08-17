@@ -63,17 +63,25 @@ class HydratorPlusPlusLeftPanelCtrl {
       this.leftpanelActions.fetchDefaultVersion()
     );
 
+    // FIXME: We need to refactor this subscriber to be more efficient. Perform less computation in controller & more in store.
     var sub = this.leftpanelStore.subscribe( () => {
       let extensions = this.leftpanelStore.getState().extensions;
       extensions.forEach( (ext) => {
-        let isPluginAlreadyExist = (ext) => {
+        let fetchPluginsFromMap = (ext) => {
           return this.pluginsMap.filter( pluginObj => pluginObj.name === this.HydratorPlusPlusOrderingFactory.getPluginTypeDisplayName(ext));
         };
-        if (!isPluginAlreadyExist(ext).length) {
+        let isPluginTypeAlreadyFetched = (ext) => {
+          return fetchPluginsFromMap(ext).filter(plugin => plugin.pluginTypes.indexOf(ext) !== -1);
+        };
+        if (!fetchPluginsFromMap(ext).length) {
           this.pluginsMap.push({
             name: this.HydratorPlusPlusOrderingFactory.getPluginTypeDisplayName(ext),
-            plugins: []
+            plugins: [],
+            pluginTypes: [] // Since we group plugin types now under one label we need ot keep track of fetchPlugins call for each plugin type.
           });
+        }
+        if (!isPluginTypeAlreadyFetched(ext).length) {
+          fetchPluginsFromMap(ext).forEach(matchedObj => matchedObj.pluginTypes.push(ext));
           let params = {
             namespace: this.$stateParams.namespace,
             pipelineType: this.HydratorPlusPlusConfigStore.getArtifact().name,
@@ -83,14 +91,13 @@ class HydratorPlusPlusLeftPanelCtrl {
           };
           this.leftpanelStore.dispatch(this.leftpanelActions.fetchPlugins(ext, params));
         } else {
-          this.pluginsMap
-              .filter( pluginObj => pluginObj.name === this.HydratorPlusPlusOrderingFactory.getPluginTypeDisplayName(ext))
-              .forEach( matchedObj => {
-                let getPluginTemplateNode = (ext) => {
-                  return this.leftpanelStore.getState().plugins.pluginTypes[ext];
-                };
-                matchedObj.plugins = getPluginTemplateNode(ext);
-              });
+          fetchPluginsFromMap(ext)
+            .forEach( matchedObj => {
+              matchedObj.plugins = matchedObj
+                .pluginTypes
+                .map(pluginType => this.leftpanelStore.getState().plugins.pluginTypes[pluginType] || [])
+                .reduce((prev, curr) => prev.concat(curr), []);
+            });
         }
       });
       if (!extensions.length) {

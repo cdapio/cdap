@@ -29,7 +29,7 @@ public final class StartStandaloneAndDeployApplicationHelper {
   public static final String ARG_APPFABRIC_STANDALONE_DEPLOY_COMMAND =
     "appfabric.standalone.deploy.command";
 
-  public static void main(String[] args) throws IOException, InterruptedException {
+  public static void main(String[] args) throws Exception {
     // Starting Standalone
     StandaloneMain.main(args);
 

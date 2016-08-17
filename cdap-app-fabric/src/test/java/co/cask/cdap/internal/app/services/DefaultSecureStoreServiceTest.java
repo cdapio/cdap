@@ -18,8 +18,12 @@ package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.guice.AppFabricTestModule;
+import co.cask.cdap.common.conf.SConfiguration;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.test.AppJarHelper;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.SecureKeyId;
@@ -28,6 +32,7 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.proto.security.SecureKeyCreateRequest;
 import co.cask.cdap.proto.security.SecureKeyListEntry;
+import co.cask.cdap.security.auth.context.MasterAuthenticationContext;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
@@ -36,23 +41,25 @@ import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.google.inject.Guice;
+import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 public class DefaultSecureStoreServiceTest {
   private static final Principal ALICE = new Principal("alice", Principal.PrincipalType.USER);
@@ -63,30 +70,57 @@ public class DefaultSecureStoreServiceTest {
 
   private static SecureStoreService secureStoreService;
   private static Authorizer authorizer;
+  private static AppFabricServer appFabricServer;
 
   @ClassRule
   public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
 
   @BeforeClass
   public static void setup() throws Exception {
-    Injector injector = Guice.createInjector(new AppFabricTestModule(createCConf()));
+    SConfiguration sConf = SConfiguration.create();
+    sConf.set(Constants.Security.Store.FILE_PASSWORD, "secret");
+    final Injector injector = AppFabricTestHelper.getInjector(createCConf(), sConf, new AbstractModule() {
+      @Override
+      protected void configure() {
+        // no overrides
+      }
+    });
+    appFabricServer = injector.getInstance(AppFabricServer.class);
+    appFabricServer.startAndWait();
     secureStoreService = injector.getInstance(SecureStoreService.class);
     authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
+    secureStoreService = injector.getInstance(SecureStoreService.class);
+    authorizer.grant(NamespaceId.DEFAULT, ALICE, Collections.singleton(Action.READ));
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return injector.getInstance(NamespaceAdmin.class).exists(Id.Namespace.DEFAULT);
+      }
+    }, 5, TimeUnit.SECONDS);
+    authorizer.revoke(NamespaceId.DEFAULT, ALICE, Collections.singleton(Action.READ));
   }
 
-  private static CConfiguration createCConf() throws IOException {
-    File rootLocationFactoryPath = TEMPORARY_FOLDER.newFolder();
-    String secureStoreLocation = TEMPORARY_FOLDER.newFolder().getAbsolutePath();
+  @AfterClass
+  public static void cleanup() {
+    appFabricServer.stopAndWait();
+  }
+
+  private static CConfiguration createCConf() throws Exception {
     CConfiguration cConf = CConfiguration.create();
-    cConf.setStrings(Constants.Security.Store.FILE_PATH, secureStoreLocation);
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMPORARY_FOLDER.newFolder().getAbsolutePath());
     cConf.setBoolean(Constants.Security.ENABLED, true);
     cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
     // we only want to test authorization, but we don't specify principal/keytab, so disable kerberos
     cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
     cConf.setBoolean(Constants.Security.Authorization.CACHE_ENABLED, false);
-    LocationFactory locationFactory = new LocalLocationFactory(rootLocationFactoryPath);
+    cConf.set(Constants.Security.Authorization.SYSTEM_USER, new MasterAuthenticationContext().getPrincipal().getName());
+
+    LocationFactory locationFactory = new LocalLocationFactory(TEMPORARY_FOLDER.newFolder());
     Location authorizerJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, authorizerJar.toURI().getPath());
+
+    // set secure store provider
+    cConf.set(Constants.Security.Store.PROVIDER, "file");
     return cConf;
   }
 
@@ -103,24 +137,26 @@ public class DefaultSecureStoreServiceTest {
       // expected
     }
 
-
     // Grant ALICE write access to the namespace
-    grantAndAssertSuccess(NamespaceId.DEFAULT, ALICE, ImmutableSet.of(Action.WRITE));
+    grantAndAssertSuccess(NamespaceId.DEFAULT, ALICE, EnumSet.of(Action.WRITE));
     // Write should succeed
     secureStoreService.put(secureKeyId1, createRequest);
     // Listing should return the value just written
     List<SecureKeyListEntry> secureKeyListEntries = secureStoreService.list(NamespaceId.DEFAULT);
-    Assert.assertEquals(secureKeyListEntries.size(), 1);
-    Assert.assertEquals(secureKeyListEntries.get(0).getName(), KEY1);
-    Assert.assertEquals(secureKeyListEntries.get(0).getDescription(), DESCRIPTION1);
-    revokeAndAssertSuccess(secureKeyId1, ALICE, ImmutableSet.of(Action.ALL));
+    Assert.assertEquals(1, secureKeyListEntries.size());
+    Assert.assertEquals(KEY1, secureKeyListEntries.get(0).getName());
+    Assert.assertEquals(DESCRIPTION1, secureKeyListEntries.get(0).getDescription());
+    revokeAndAssertSuccess(secureKeyId1, ALICE, EnumSet.allOf(Action.class));
+
+    // Should still be able to list the keys since ALICE has namespace access privilege
     secureKeyListEntries = secureStoreService.list(NamespaceId.DEFAULT);
-    Assert.assertEquals(0, secureKeyListEntries.size());
+    Assert.assertEquals(1, secureKeyListEntries.size());
 
     // Give BOB read access and verify that he can read the stored data
     SecurityRequestContext.setUserId(BOB.getName());
-    grantAndAssertSuccess(secureKeyId1, BOB, ImmutableSet.of(Action.READ));
-    Assert.assertArrayEquals(secureStoreService.get(secureKeyId1).get(), VALUE1.getBytes());
+    grantAndAssertSuccess(NamespaceId.DEFAULT, BOB, EnumSet.of(Action.READ));
+    grantAndAssertSuccess(secureKeyId1, BOB, EnumSet.of(Action.READ));
+    Assert.assertArrayEquals(VALUE1.getBytes(), secureStoreService.get(secureKeyId1).get());
     secureKeyListEntries = secureStoreService.list(NamespaceId.DEFAULT);
     Assert.assertEquals(1, secureKeyListEntries.size());
 
@@ -160,9 +196,10 @@ public class DefaultSecureStoreServiceTest {
   private void revokeAndAssertSuccess(EntityId entityId, Principal principal, Set<Action> actions) throws Exception {
     Set<Privilege> existingPrivileges = authorizer.listPrivileges(principal);
     authorizer.revoke(entityId, principal, actions);
+    Set<Privilege> revokedPrivileges = new HashSet<>();
     for (Action action : actions) {
-      existingPrivileges.remove(new Privilege(entityId, action));
+      revokedPrivileges.add(new Privilege(entityId, action));
     }
-    Assert.assertEquals(existingPrivileges, authorizer.listPrivileges(principal));
+    Assert.assertEquals(Sets.difference(existingPrivileges, revokedPrivileges), authorizer.listPrivileges(principal));
   }
 }

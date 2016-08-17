@@ -92,7 +92,15 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
       return;
     }
 
-    var schema = JSON.parse(vm.model);
+    var schema;
+    try {
+      schema = JSON.parse(vm.model);
+    } catch(e) {
+      console.log('ERROR: ', e);
+      schema = {
+        fields: []
+      };
+    }
     schema = schema.fields;
 
     if (vm.pluginName === 'Stream') {

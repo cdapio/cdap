@@ -27,6 +27,9 @@ import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.utils.ExploreTableNaming;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -58,9 +61,13 @@ public class Hive13ExploreService extends BaseHiveExploreService {
                               @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir,
                               StreamAdmin streamAdmin, NamespaceQueryAdmin namespaceQueryAdmin,
                               SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
-                              ExploreTableNaming tableNaming) {
+                              ExploreTableNaming tableNaming,
+                              AuthorizationEnforcementService authorizationEnforcementService,
+                              AuthorizationEnforcer authorizationEnforcer,
+                              AuthenticationContext authenticationContext) {
     super(txClient, datasetFramework, cConf, hConf, previewsDir, streamAdmin, namespaceQueryAdmin,
-          datasetInstantiatorFactory, tableNaming);
+          datasetInstantiatorFactory, tableNaming, authorizationEnforcementService, authorizationEnforcer,
+          authenticationContext);
     // This config sets the time Hive CLI getOperationStatus method will wait for the status of
     // a running query.
     System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_LONG_POLLING_TIMEOUT.toString(), "50");

@@ -57,6 +57,9 @@ import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -150,6 +153,9 @@ public abstract class HBaseQueueTest extends QueueTest {
       new NamespaceClientUnitTestModule().getModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new TransactionMetricsModule(),
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
+      new AuthenticationContextModules().getMasterModule(),
       new DataSetsModules().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getDistributedModules(),
       new AbstractModule() {

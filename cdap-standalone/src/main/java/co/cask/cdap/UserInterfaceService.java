@@ -62,7 +62,7 @@ final class UserInterfaceService extends AbstractExecutionThreadService {
   private File sConfJsonFile;
 
   @Inject
-  public UserInterfaceService(CConfiguration cConf, SConfiguration sConf) {
+  UserInterfaceService(CConfiguration cConf, SConfiguration sConf) {
     this.cConf = cConf;
     this.sConf = sConf;
   }

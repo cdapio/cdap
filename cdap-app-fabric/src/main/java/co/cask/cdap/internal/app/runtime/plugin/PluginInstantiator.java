@@ -61,6 +61,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -206,11 +207,12 @@ public class PluginInstantiator implements Closeable {
       TypeToken<?> configFieldType = pluginType.resolveType(field.getGenericType());
       Object config = instantiatorFactory.get(configFieldType).create();
 
-      // perform macro substitution if an evaluator is provided
+      // perform macro substitution if an evaluator is provided, collect fields with macros only at configure time
       PluginProperties pluginProperties = substituteMacros(plugin, macroEvaluator);
+      Set<String> macroFields = (macroEvaluator == null) ? getFieldsWithMacro(plugin) : Collections.<String>emptySet();
+
       Reflections.visit(config, configFieldType.getType(),
-                        new ConfigFieldSetter(pluginClass, plugin.getArtifactId(), pluginProperties,
-                                              getFieldsWithMacro(plugin)));
+                        new ConfigFieldSetter(pluginClass, plugin.getArtifactId(), pluginProperties, macroFields));
 
       // Create the plugin instance
       return newInstance(pluginType, field, configFieldType, config);
@@ -377,7 +379,7 @@ public class PluginInstantiator implements Closeable {
     private final ArtifactId artifactId;
     private final Set<String> macroFields;
 
-    public ConfigFieldSetter(PluginClass pluginClass, ArtifactId artifactId,
+    ConfigFieldSetter(PluginClass pluginClass, ArtifactId artifactId,
                              PluginProperties properties, Set<String> macroFields) {
       this.pluginClass = pluginClass;
       this.artifactId = artifactId;

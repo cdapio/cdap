@@ -102,7 +102,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     .create();
 
   private String name;
-  private ProgramRunner programRunner;
+  private T programRunner;
   private Program program;
   private ProgramOptions programOpts;
   private ProgramController controller;
@@ -222,8 +222,12 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   public void stop() {
     try {
       LOG.info("Stopping runnable: {}.", name);
-      controller.stop().get();
-      logAppenderInitializer.close();
+      if (controller != null) {
+        controller.stop().get();
+      }
+      if (logAppenderInitializer != null) {
+        logAppenderInitializer.close();
+      }
     } catch (InterruptedException e) {
       LOG.debug("Interrupted while stopping runnable: {}.", name, e);
       Thread.currentThread().interrupt();
@@ -245,7 +249,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   /**
    * Creates a {@link ProgramRunner} for the running the program in this {@link TwillRunnable}.
    */
-  protected ProgramRunner createProgramRunner(Injector injector) {
+  protected T createProgramRunner(Injector injector) {
     Type type = TypeToken.of(getClass()).getSupertype(AbstractProgramTwillRunnable.class).getType();
     // Must be ParameterizedType
     Preconditions.checkState(type instanceof ParameterizedType,
@@ -257,7 +261,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
                              "ProgramRunner type is not a class: %s", programRunnerType);
 
     @SuppressWarnings("unchecked")
-    Class<ProgramRunner> programRunnerClass = (Class<ProgramRunner>) programRunnerType;
+    Class<T> programRunnerClass = (Class<T>) programRunnerType;
     return injector.getInstance(programRunnerClass);
   }
 
@@ -371,7 +375,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     Map<String, String> arguments = Maps.newHashMap(original.getArguments().asMap());
     arguments.put(ProgramOptionConstants.INSTANCE_ID, Integer.toString(context.getInstanceId()));
     arguments.put(ProgramOptionConstants.INSTANCES, Integer.toString(context.getInstanceCount()));
-    arguments.put(ProgramOptionConstants.RUN_ID, original.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     arguments.put(ProgramOptionConstants.TWILL_RUN_ID, context.getApplicationRunId().getId());
     arguments.put(ProgramOptionConstants.HOST, context.getHost().getCanonicalHostName());
     arguments.putAll(configs);

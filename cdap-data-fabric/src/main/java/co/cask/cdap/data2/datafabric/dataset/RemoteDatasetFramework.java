@@ -194,11 +194,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
 
   @Override
   public void deleteAllInstances(Id.Namespace namespaceId) throws DatasetManagementException, IOException {
-    // delete all one by one
-    for (DatasetSpecificationSummary metaSummary : getInstances(namespaceId)) {
-      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, metaSummary.getName());
-      deleteInstance(datasetInstanceId);
-    }
+    clientCache.getUnchecked(namespaceId).deleteInstances();
   }
 
   @Override
@@ -226,29 +222,10 @@ public class RemoteDatasetFramework implements DatasetFramework {
   @Override
   public <T extends Dataset> T getDataset(
     Id.DatasetInstance datasetInstanceId, Map<String, String> arguments,
-    @Nullable ClassLoader classLoader,
-    @Nullable Iterable<? extends Id> owners) throws DatasetManagementException, IOException {
-
-    return getDataset(datasetInstanceId, arguments, classLoader, new ConstantClassLoaderProvider(classLoader), owners);
-  }
-
-  @Override
-  public <T extends Dataset> T getDataset(
-    Id.DatasetInstance datasetInstanceId, Map<String, String> arguments,
     @Nullable ClassLoader classLoader) throws DatasetManagementException, IOException {
 
-    return getDataset(datasetInstanceId, arguments, classLoader, null);
-  }
-
-  @Nullable
-  @Override
-  public <T extends Dataset> T getDataset(
-    Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
-    @Nullable ClassLoader classLoader,
-    DatasetClassLoaderProvider classLoaderProvider,
-    @Nullable Iterable<? extends Id> owners) throws DatasetManagementException, IOException {
-
-    return getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider, owners, AccessType.UNKNOWN);
+    return getDataset(datasetInstanceId, arguments, classLoader,
+                      new ConstantClassLoaderProvider(classLoader), null, AccessType.UNKNOWN);
   }
 
   @Nullable

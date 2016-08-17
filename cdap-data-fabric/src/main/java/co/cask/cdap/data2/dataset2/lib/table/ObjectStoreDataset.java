@@ -17,6 +17,8 @@
 package co.cask.cdap.data2.dataset2.lib.table;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.RecordScanner;
 import co.cask.cdap.api.data.batch.Scannables;
@@ -77,21 +79,25 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
     this(name, kvTable, typeRep, schema, null);
   }
 
+  @WriteOnly
   @Override
   public void write(String key, T object) {
     kvTable.write(Bytes.toBytes(key), encode(object));
   }
 
+  @WriteOnly
   @Override
   public void write(byte[] key, T object) {
     kvTable.write(key, encode(object));
   }
 
+  @ReadOnly
   @Override
   public T read(String key) {
     return decode(kvTable.read(Bytes.toBytes(key)));
   }
 
+  @ReadOnly
   @Override
   public CloseableIterator<KeyValue<byte[], T>> scan(byte[] startRow, byte[] stopRow) {
     final CloseableIterator<KeyValue<byte[], byte[]>> keyValueIterator = kvTable.scan(startRow, stopRow);
@@ -117,12 +123,14 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
     };
   }
 
+  @ReadOnly
   @Override
   public T read(byte[] key) {
     byte[] read = kvTable.read(key);
     return decode(read);
   }
 
+  @WriteOnly
   @Override
   public void delete(byte[] key) {
     kvTable.delete(key);
@@ -181,10 +189,12 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
     return kvTable.getSplits();
   }
 
+  @Override
   public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) {
     return kvTable.getSplits(numSplits, start, stop);
   }
 
+  @ReadOnly
   @Override
   public SplitReader<byte[], T> createSplitReader(Split split) {
     return new ObjectScanner(kvTable.createSplitReader(split));

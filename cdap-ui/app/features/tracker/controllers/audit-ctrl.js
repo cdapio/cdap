@@ -90,6 +90,11 @@ class TrackerAuditController {
     this.$state.go('tracker.detail.entity.audit', { start: startTime, end: endTime });
   }
 
+  selectCustom() {
+    this.isCustom = true;
+    this.selectedTimeRange.label = 'Custom';
+  }
+
   fetchAuditLogs(currentPage) {
     this.enableTrackerLoading = false;
     let params = {

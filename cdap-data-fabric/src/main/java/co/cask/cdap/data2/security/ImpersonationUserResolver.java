@@ -17,13 +17,10 @@
 package co.cask.cdap.data2.security;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.proto.NamespaceConfig;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedId;
-import com.google.common.base.Objects;
 import com.google.inject.Inject;
 
 /**
@@ -33,14 +30,12 @@ import com.google.inject.Inject;
 public class ImpersonationUserResolver {
 
   private final NamespaceQueryAdmin namespaceQueryAdmin;
-  private final String defaultPrincipal;
-  private final String defaultKeytabPath;
+  private final CConfiguration cConf;
 
   @Inject
   ImpersonationUserResolver(NamespaceQueryAdmin namespaceQueryAdmin, CConfiguration cConf) {
     this.namespaceQueryAdmin = namespaceQueryAdmin;
-    this.defaultPrincipal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
-    this.defaultKeytabPath = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH);
+    this.cConf = cConf;
   }
 
   /**
@@ -52,7 +47,7 @@ public class ImpersonationUserResolver {
   public ImpersonationInfo getImpersonationInfo(NamespacedId namespacedId) {
     NamespaceMeta meta;
     try {
-      meta = namespaceQueryAdmin.get(new NamespaceId(namespacedId.getNamespace()).toId());
+      meta = namespaceQueryAdmin.get(Id.Namespace.from(namespacedId.getNamespace()));
     } catch (Exception e) {
       throw new RuntimeException(
         String.format("Failed to retrieve namespace meta for namespace id %s", namespacedId.getNamespace()));
@@ -67,10 +62,6 @@ public class ImpersonationUserResolver {
    * @return configured {@link ImpersonationInfo}.
    */
   public ImpersonationInfo getImpersonationInfo(NamespaceMeta meta) {
-    NamespaceConfig namespaceConfig = meta.getConfig();
-
-    String principal = Objects.firstNonNull(namespaceConfig.getPrincipal(), defaultPrincipal);
-    String keytabURI = Objects.firstNonNull(namespaceConfig.getKeytabURI(), defaultKeytabPath);
-    return new ImpersonationInfo(principal, keytabURI);
+    return new ImpersonationInfo(meta, cConf);
   }
 }

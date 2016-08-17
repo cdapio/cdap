@@ -17,10 +17,8 @@
 package co.cask.cdap.metrics.runtime;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.junit.Assert;
 import org.junit.Test;
 
 /**

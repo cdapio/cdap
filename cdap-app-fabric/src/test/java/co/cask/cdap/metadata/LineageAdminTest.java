@@ -120,24 +120,32 @@ public class LineageAdminTest extends AppFabricTestBase {
     metadataStore.addTags(MetadataScope.USER, dataset2, run1Data2Meta.getTags().toArray(new String[0]));
     TimeUnit.MILLISECONDS.sleep(1);
 
-    // Add accesses for D3 -> P2 -> D2 -> P1 -> D1
+    // Add accesses for D3 -> P2 -> D2 -> P1 -> D1 <-> P3
     // We need to use current time here as metadata store stores access time using current time
     Id.Run run1 = new Id.Run(program1, RunIds.generate(System.currentTimeMillis()).getId());
     Id.Run run2 = new Id.Run(program2, RunIds.generate(System.currentTimeMillis()).getId());
-    addRuns(store, run1, run2);
+    Id.Run run3 = new Id.Run(program3, RunIds.generate(System.currentTimeMillis()).getId());
+
+    addRuns(store, run1, run2, run3);
     // It is okay to use current time here since access time is ignore during assertions
+    lineageStore.addAccess(run1, dataset1, AccessType.UNKNOWN, System.currentTimeMillis(), flowlet1);
     lineageStore.addAccess(run1, dataset1, AccessType.WRITE, System.currentTimeMillis(), flowlet1);
     lineageStore.addAccess(run1, dataset2, AccessType.READ, System.currentTimeMillis(), flowlet1);
 
     lineageStore.addAccess(run2, dataset2, AccessType.WRITE, System.currentTimeMillis(), flowlet2);
     lineageStore.addAccess(run2, dataset3, AccessType.READ, System.currentTimeMillis(), flowlet2);
 
+    lineageStore.addAccess(run3, dataset1, AccessType.UNKNOWN, System.currentTimeMillis());
+
+    // The UNKNOWN access type will get filtered out if there is READ/WRITE. It will be preserved if it is the
+    // only access type
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
         new Relation(dataset1, program1, AccessType.WRITE, twillRunId(run1), toSet(flowlet1)),
         new Relation(dataset2, program1, AccessType.READ, twillRunId(run1), toSet(flowlet1)),
         new Relation(dataset2, program2, AccessType.WRITE, twillRunId(run2), toSet(flowlet2)),
-        new Relation(dataset3, program2, AccessType.READ, twillRunId(run2), toSet(flowlet2))
+        new Relation(dataset3, program2, AccessType.READ, twillRunId(run2), toSet(flowlet2)),
+        new Relation(dataset1, program3, AccessType.UNKNOWN, twillRunId(run3))
       )
     );
 
@@ -149,13 +157,14 @@ public class LineageAdminTest extends AppFabricTestBase {
     Assert.assertEquals(expectedLineage,
                         lineageAdmin.computeLineage(dataset2, 500, System.currentTimeMillis() + 10000, 100));
 
-    // Lineage for D1 for one level should be D2 -> P1 -> D1
+    // Lineage for D1 for one level should be D2 -> P1 -> D1 <-> P3
     Lineage oneLevelLineage = lineageAdmin.computeLineage(dataset1, 500, System.currentTimeMillis() + 10000, 1);
 
     Assert.assertEquals(
       ImmutableSet.of(
         new Relation(dataset1, program1, AccessType.WRITE, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset2, program1, AccessType.READ, twillRunId(run1), toSet(flowlet1))
+        new Relation(dataset2, program1, AccessType.READ, twillRunId(run1), toSet(flowlet1)),
+        new Relation(dataset1, program3, AccessType.UNKNOWN, twillRunId(run3))
       ),
       oneLevelLineage.getRelations());
 

@@ -81,9 +81,11 @@ public class LocalQueueTest extends QueueTest {
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new TransactionMetricsModule(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
+      new AuthenticationContextModules().getMasterModule(),
       new DataSetsModules().getStandaloneModules(),
-      new DataFabricLocalModule(),
-      new AuthenticationContextModules().getMasterModule());
+      new DataFabricLocalModule());
     // transaction manager is a "service" and must be started
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();

@@ -38,7 +38,6 @@ import com.google.common.base.Throwables;
 import org.apache.spark.SparkConf;
 import org.apache.twill.api.RunId;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -249,12 +248,12 @@ final class BasicSparkClientContext implements SparkClientContext {
   }
 
   @Override
-  public List<SecureStoreMetadata> listSecureData(String namespace) throws IOException {
+  public List<SecureStoreMetadata> listSecureData(String namespace) throws Exception {
     return sparkRuntimeContext.listSecureData(namespace);
   }
 
   @Override
-  public SecureStoreData getSecureData(String namespace, String name) throws IOException {
+  public SecureStoreData getSecureData(String namespace, String name) throws Exception {
     return sparkRuntimeContext.getSecureData(namespace, name);
   }
 }

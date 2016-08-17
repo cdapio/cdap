@@ -121,7 +121,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
   private static final class ExploreLocalModule extends PrivateModule {
     private final boolean isInMemory;
 
-    public ExploreLocalModule(boolean isInMemory) {
+    ExploreLocalModule(boolean isInMemory) {
       this.isInMemory = isInMemory;
     }
 
@@ -141,7 +141,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
       private final CConfiguration cConf;
 
       @Inject
-      public PreviewsDirProvider(CConfiguration cConf) {
+      PreviewsDirProvider(CConfiguration cConf) {
         this.cConf = cConf;
       }
 
@@ -162,7 +162,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
       private final boolean isInMemory;
 
       @Inject
-      public ExploreServiceProvider(CConfiguration cConf, Configuration hConf,
+      ExploreServiceProvider(CConfiguration cConf, Configuration hConf,
                                     @Named("explore.service.impl") ExploreService exploreService,
                                     @Named("explore.inmemory") boolean isInMemory) {
         this.exploreService = exploreService;

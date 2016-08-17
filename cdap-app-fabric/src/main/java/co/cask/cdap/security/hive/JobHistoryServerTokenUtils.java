@@ -83,7 +83,7 @@ public final class JobHistoryServerTokenUtils {
    */
   private static class MRClientCache extends ClientCache {
 
-    public MRClientCache(Configuration conf, ResourceMgrDelegate rm) {
+    MRClientCache(Configuration conf, ResourceMgrDelegate rm) {
       super(conf, rm);
     }
 

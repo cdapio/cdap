@@ -19,11 +19,14 @@ import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.customaction.CustomActionContext;
 import co.cask.cdap.api.macro.InvalidMacroException;
 import co.cask.cdap.api.macro.MacroEvaluator;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.security.store.SecureStoreMetadata;
+import co.cask.cdap.etl.api.StageContext;
 import co.cask.cdap.etl.api.action.ActionContext;
 import co.cask.cdap.etl.api.action.SettableArguments;
+import co.cask.cdap.etl.common.AbstractStageContext;
 import co.cask.tephra.TransactionFailureException;
 
 import java.io.IOException;
@@ -33,12 +36,13 @@ import java.util.Map;
 /**
  * Default implementation for the {@link ActionContext}.
  */
-public class BasicActionContext implements ActionContext {
+public class BasicActionContext extends AbstractStageContext implements ActionContext  {
 
   private final CustomActionContext context;
   private final BasicSettableArguments arguments;
 
-  public BasicActionContext(CustomActionContext context) {
+  public BasicActionContext(CustomActionContext context, Metrics metrics, String stageName) {
+    super(context, metrics, stageName);
     this.context = context;
     this.arguments = new BasicSettableArguments(context.getRuntimeArguments());
   }
@@ -54,49 +58,28 @@ public class BasicActionContext implements ActionContext {
   }
 
   @Override
-  public PluginProperties getPluginProperties(String pluginId) {
-    return context.getPluginProperties(pluginId);
-  }
-
-  @Override
-  public <T> Class<T> loadPluginClass(String pluginId) {
-    return context.loadPluginClass(pluginId);
-  }
-
-  @Override
-  public <T> T newPluginInstance(String pluginId) throws InstantiationException {
-    return context.newPluginInstance(pluginId);
-  }
-
-  @Override
-  public <T> T newPluginInstance(String pluginId, MacroEvaluator evaluator)
-    throws InstantiationException, InvalidMacroException {
-    return context.newPluginInstance(pluginId, evaluator);
-  }
-
-  @Override
   public void execute(TxRunnable runnable) throws TransactionFailureException {
     context.execute(runnable);
   }
 
   @Override
-  public List<SecureStoreMetadata> listSecureData(String namespace) throws IOException {
+  public List<SecureStoreMetadata> listSecureData(String namespace) throws Exception {
     return context.listSecureData(namespace);
   }
 
   @Override
-  public SecureStoreData getSecureData(String namespace, String name) throws IOException {
+  public SecureStoreData getSecureData(String namespace, String name) throws Exception {
     return context.getSecureData(namespace, name);
   }
 
   @Override
-  public void putSecureData(String namespace, String name, byte[] data, String description,
-                            Map<String, String> properties) throws IOException {
+  public void putSecureData(String namespace, String name, String data, String description,
+                            Map<String, String> properties) throws Exception {
     context.getAdmin().putSecureData(namespace, name, data, description, properties);
   }
 
   @Override
-  public void deleteSecureData(String namespace, String name) throws IOException {
+  public void deleteSecureData(String namespace, String name) throws Exception {
     context.getAdmin().deleteSecureData(namespace, name);
   }
 
@@ -104,4 +87,5 @@ public class BasicActionContext implements ActionContext {
   public String getNamespace() {
     return context.getNamespace();
   }
+
 }

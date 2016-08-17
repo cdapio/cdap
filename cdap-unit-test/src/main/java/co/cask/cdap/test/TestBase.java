@@ -33,11 +33,14 @@ import co.cask.cdap.app.guice.InMemoryProgramRunnerModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.EndpointStrategy;
+import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.test.TestRunner;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -87,7 +90,9 @@ import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InvalidAuthorizerException;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
@@ -118,6 +123,7 @@ import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -125,6 +131,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -136,6 +143,7 @@ import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.jar.Manifest;
 
 /**
@@ -148,6 +156,7 @@ import java.util.jar.Manifest;
  *
  * @see TestConfiguration
  */
+@RunWith(TestRunner.class)
 public class TestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(TestBase.class);
@@ -176,6 +185,8 @@ public class TestBase {
   private static AuthorizerInstantiator authorizerInstantiator;
   private static SecureStore secureStore;
   private static SecureStoreManager secureStoreManager;
+  private static AuthorizationEnforcementService authorizationEnforcementService;
+  private static AuthorizationBootstrapper authorizationBootstrapper;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = new ArrayList<>();
@@ -260,6 +271,10 @@ public class TestBase {
       }
     );
 
+    authorizationBootstrapper = injector.getInstance(AuthorizationBootstrapper.class);
+    authorizationBootstrapper.run();
+    authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
+    authorizationEnforcementService.startAndWait();
     txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
@@ -275,6 +290,12 @@ public class TestBase {
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
       exploreExecutorService.startAndWait();
+      // wait for explore service to be discoverable
+      DiscoveryServiceClient discoveryService = injector.getInstance(DiscoveryServiceClient.class);
+      EndpointStrategy endpointStrategy = new RandomEndpointStrategy(
+        discoveryService.discover(Constants.Service.EXPLORE_HTTP_USER_SERVICE));
+      Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
+                                 "%s service is not up after 5 seconds", Constants.Service.EXPLORE_HTTP_USER_SERVICE);
       exploreClient = injector.getInstance(ExploreClient.class);
     }
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
@@ -282,6 +303,7 @@ public class TestBase {
     testManager = injector.getInstance(UnitTestManager.class);
     metricsManager = injector.getInstance(MetricsManager.class);
     authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
+
     // This is needed so the logged-in user can successfully create the default namespace
     if (cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
       String user = System.getProperty("user.name");
@@ -423,7 +445,7 @@ public class TestBase {
     authorizerInstantiator.close();
     streamCoordinatorClient.stopAndWait();
     metricsQueryService.stopAndWait();
-    metricsCollectionService.startAndWait();
+    metricsCollectionService.stopAndWait();
     schedulerService.stopAndWait();
     if (exploreClient != null) {
       Closeables.closeQuietly(exploreClient);
@@ -434,6 +456,7 @@ public class TestBase {
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txService.stopAndWait();
+    authorizationEnforcementService.stopAndWait();
   }
 
   protected MetricsManager getMetricsManager() {

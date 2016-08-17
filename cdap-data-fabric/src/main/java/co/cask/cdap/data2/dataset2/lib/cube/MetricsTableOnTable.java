@@ -36,7 +36,7 @@ import javax.annotation.Nullable;
 class MetricsTableOnTable implements MetricsTable {
   private final Table table;
 
-  public MetricsTableOnTable(Table table) {
+  MetricsTableOnTable(Table table) {
     this.table = table;
   }
 

@@ -33,7 +33,7 @@
                href="#"
                ng-click="caskConfirm()"
                cask-confirmable="deleteStream()"
-               data-confirmable-content="Are you sure you want to delete this stream?"
+               data-confirmable-content="Are you sure you want to delete the stream '<strong>{{$stateParams.streamId}}</strong>'?"
             >
               <span class="fa fa-fw fa-trash pull-right"></span>
               <span> Delete </span>

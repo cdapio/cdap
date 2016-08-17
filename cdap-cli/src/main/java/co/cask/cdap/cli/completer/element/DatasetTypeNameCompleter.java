@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012-2014 Cask Data, Inc.
+ * Copyright © 2012-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,12 +21,14 @@ import co.cask.cdap.cli.completer.StringsCompleter;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.DatasetTypeMeta;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import javax.inject.Inject;
@@ -52,10 +54,8 @@ public class DatasetTypeNameCompleter extends StringsCompleter {
               }
             })
           );
-        } catch (IOException e) {
-          return Lists.newArrayList();
-        } catch (UnauthenticatedException e) {
-          return Lists.newArrayList();
+        } catch (IOException | UnauthenticatedException | UnauthorizedException e) {
+          return new ArrayList<>();
         }
       }
     });

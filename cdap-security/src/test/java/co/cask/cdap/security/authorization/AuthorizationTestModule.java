@@ -21,6 +21,7 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.security.spi.authorization.AuthorizationContext;
+import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 
@@ -38,5 +39,7 @@ public class AuthorizationTestModule extends PrivateModule {
     bind(AuthorizationContextFactory.class).to(NoOpAuthorizationContextFactory.class);
     bind(AuthorizerInstantiator.class).in(Scopes.SINGLETON);
     expose(AuthorizerInstantiator.class);
+    bind(PrivilegesManager.class).to(AuthorizerAsPrivilegesManager.class).in(Scopes.SINGLETON);
+    expose(PrivilegesManager.class);
   }
 }

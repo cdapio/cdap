@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .controller('HydratorPlusPlusDetailCanvasCtrl', function(rPipelineDetail, HydratorPlusPlusBottomPanelStore, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, DAGPlusPlusNodesStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailMetricsStore, $uibModal) {
+  .controller('HydratorPlusPlusDetailCanvasCtrl', function(rPipelineDetail, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, DAGPlusPlusNodesStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailMetricsStore, $uibModal) {
     this.$uibModal = $uibModal;
     this.DAGPlusPlusNodesStore = DAGPlusPlusNodesStore;
     this.HydratorPlusPlusDetailNonRunsStore = HydratorPlusPlusDetailNonRunsStore;
@@ -29,11 +29,6 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       console.log('ERROR in configuration from backend: ', e);
       return;
     }
-    this.setState = function() {
-      this.setScroll = (HydratorPlusPlusBottomPanelStore.getPanelState() === 0 ? false: true);
-    };
-    this.setState();
-    HydratorPlusPlusBottomPanelStore.registerOnChangeListener(this.setState.bind(this));
     var obj = HydratorPlusPlusDetailNonRunsStore.getCloneConfig();
 
     this.DAGPlusPlusNodesActionsFactory.createGraphFromConfig(obj.__ui__.nodes, obj.config.connections, obj.config.comments);
@@ -59,7 +54,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
             templateUrl: '/assets/features/hydratorplusplus/templates/partial/node-config-modal/popover.html',
             size: 'lg',
             backdrop: 'static',
-            windowTopClass: 'node-config-modal cdap-modal',
+            windowTopClass: 'node-config-modal hydrator-modal',
             controller: 'HydratorPlusPlusNodeConfigCtrl',
             controllerAs: 'HydratorPlusPlusNodeConfigCtrl',
             resolve: {
@@ -69,11 +64,12 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
               rPlugin: ['HydratorPlusPlusNodeService', 'HydratorPlusPlusDetailNonRunsStore', 'GLOBALS', function(HydratorPlusPlusNodeService, HydratorPlusPlusDetailNonRunsStore, GLOBALS) {
                 let pluginId = pluginNode.name;
                 let appType = HydratorPlusPlusDetailNonRunsStore.getAppType();
+                let artifactVersion = HydratorPlusPlusDetailNonRunsStore.getArtifact().version;
                 let sourceConn = HydratorPlusPlusDetailNonRunsStore
                   .getSourceNodes(pluginId)
                   .filter( node => typeof node.outputSchema === 'string');
                 return HydratorPlusPlusNodeService
-                  .getPluginInfo(pluginNode, appType, sourceConn)
+                  .getPluginInfo(pluginNode, appType, sourceConn, artifactVersion)
                   .then((nodeWithInfo) => (
                     {
                       node: nodeWithInfo,

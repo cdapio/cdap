@@ -244,6 +244,14 @@
   </property>
 
   <property>
+    <name>app.bind.port</name>
+    <value>0</value>
+    <description>
+      App Fabric service bind port
+    </description>
+  </property>
+
+  <property>
     <name>app.output.dir</name>
     <value>/programs</value>
     <description>
@@ -586,6 +594,14 @@
   </property>
 
   <property>
+    <name>dataset.executor.bind.port</name>
+    <value>0</value>
+    <description>
+      Dataset executor bind port
+    </description>
+  </property>
+
+  <property>
     <name>dataset.extensions.dir</name>
     <value>/opt/cdap/ext/lib</value>
     <description>
@@ -598,6 +614,14 @@
     <value>0.0.0.0</value>
     <description>
       Dataset service bind address
+    </description>
+  </property>
+
+  <property>
+    <name>dataset.service.bind.port</name>
+    <value>0</value>
+    <description>
+      Dataset service bind port
     </description>
   </property>
 
@@ -713,6 +737,14 @@
     <description>
       Determines if writing to a table through the CDAP Explore Service (ad-
       hoc SQL queries) is enabled
+    </description>
+  </property>
+
+  <property>
+    <name>explore.service.bind.port</name>
+    <value>0</value>
+    <description>
+      Explore service bind port
     </description>
   </property>
 
@@ -1048,6 +1080,14 @@
     <value>0.0.0.0</value>
     <description>
       Metadata HTTP service bind address
+    </description>
+  </property>
+
+  <property>
+    <name>metadata.service.bind.port</name>
+    <value>0</value>
+    <description>
+      Metadata HTTP service bind port
     </description>
   </property>
 
@@ -1594,6 +1634,17 @@
   </property>
 
   <property>
+    <name>security.authorization.admin.users</name>
+    <value></value>
+    <description>
+      Determines a comma-separated list of users for whom admin privileges are granted on the CDAP instance
+      during CDAP startup, so these users can create namespaces and in-effect bootstrap CDAP on an authorization
+      enabled cluster. Defaults to empty, in which case no users have access to create namespaces. In this scenario, it
+      may be impossible to bootstrap CDAP, so it is recommended that at least one user be provided as the admin user.
+    </description>
+  </property>
+
+  <property>
     <name>security.authorization.cache.enabled</name>
     <value>true</value>
     <description>
@@ -1646,6 +1697,18 @@
       containing the extension code. This jar is only used when
       authorization is enabled by setting ${security.authorization.enabled}
       to true.
+    </description>
+  </property>
+
+  <property>
+    <name>security.authorization.system.user</name>
+    <value>cdap</value>
+    <description>
+      Determines a user for whom specific privileges are granted during CDAP startup.
+      This is the user used for creating the default namespace, deploying system artifacts and deploying dataset
+      modules. This user is also granted ALL privileges on the system namespace, so it can access datasets and other
+      entities in the system namespace. This user does not get any other privileges on user namespaces. Defaults to
+      'cdap'. Please set this to the user that the CDAP Master runs as in a secure, authorization-enabled environment.
     </description>
   </property>
 
@@ -1710,14 +1773,6 @@
   </property>
 
   <property>
-    <name>security.store.file.password</name>
-    <value>cdapsecret</value>
-    <description>
-      Password to access the key store
-    </description>
-  </property>
-
-  <property>
     <name>security.store.file.path</name>
     <value>${local.data.dir}/store</value>
     <description>
@@ -1727,9 +1782,9 @@
 
   <property>
     <name>security.store.provider</name>
-    <value>kms</value>
+    <value>none</value>
     <description>
-      Backend provider for the secure store
+      Backend provider for the secure store; use 'none' if no secure store
     </description>
   </property>
 
@@ -1817,6 +1872,14 @@
     <value>0.0.0.0</value>
     <description>
       Stream HTTP service bind address
+    </description>
+  </property>
+
+  <property>
+    <name>stream.bind.port</name>
+    <value>0</value>
+    <description>
+      Stream HTTP service bind port
     </description>
   </property>
 
@@ -1991,7 +2054,15 @@
     <name>http.client.connection.timeout.ms</name>
     <value>60000</value>
     <description>
-      Timeout in milliseconds for internal HTTP requests
+      Connection timeout in milliseconds for internal HTTP requests
+    </description>
+  </property>
+
+  <property>
+    <name>http.client.read.timeout.ms</name>
+    <value>60000</value>
+    <description>
+      Read timeout in milliseconds for internal HTTP requests
     </description>
   </property>
 

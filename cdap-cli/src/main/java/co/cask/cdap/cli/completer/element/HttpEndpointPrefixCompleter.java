@@ -24,6 +24,7 @@ import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.cli.completers.PrefixCompleter;
 import com.google.common.collect.Lists;
 
@@ -76,7 +77,7 @@ public class HttpEndpointPrefixCompleter extends PrefixCompleter {
           httpEndpoints.add(endpoint.getPath());
         }
       }
-    } catch (IOException | NotFoundException | UnauthenticatedException ignored) {
+    } catch (IOException | NotFoundException | UnauthenticatedException | UnauthorizedException ignored) {
     }
     return httpEndpoints;
   }

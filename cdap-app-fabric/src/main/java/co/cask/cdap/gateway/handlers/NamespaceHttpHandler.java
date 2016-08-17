@@ -105,8 +105,24 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     NamespaceMeta.Builder builder = metadata == null ? new NamespaceMeta.Builder() :
       new NamespaceMeta.Builder(metadata);
     builder.setName(namespace);
+
+    NamespaceMeta finalMetadata = builder.build();
+
+    // check that the user has configured either both of none of the following configuration: principal and keytab URI
+    if (finalMetadata.getConfig() != null) {
+      String configuredPrincipal = finalMetadata.getConfig().getPrincipal();
+      String configuredKeytabURI = finalMetadata.getConfig().getKeytabURI();
+      if (configuredPrincipal != null && configuredKeytabURI == null ||
+        configuredPrincipal == null && configuredKeytabURI != null) {
+        throw new BadRequestException(
+          String.format("Either neither or both of the following two configurations must be configured. " +
+                          "Configured principal: %s, Configured keytabURI: %s",
+                        configuredPrincipal, configuredKeytabURI));
+      }
+    }
+
     try {
-      namespaceAdmin.create(builder.build());
+      namespaceAdmin.create(finalMetadata);
       responder.sendString(HttpResponseStatus.OK,
                            String.format("Namespace '%s' created successfully.", namespaceId));
     } catch (AlreadyExistsException e) {

@@ -30,7 +30,6 @@ import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.sql.SQLException;
@@ -58,19 +57,21 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
   }
 
   /**
-   * Create a namespace in the File System and Hive.
+   * Create a namespace in the File System and Hive. The hive database is only created for non-default namespaces.
    *
    * @param namespaceMeta {@link NamespaceMeta} for the namespace to create
    * @throws IOException if there are errors while creating the namespace in the File System
-   * @throws ExploreException if there are errors while deleting the namespace in Hive
-   * @throws SQLException if there are errors while deleting the namespace in Hive
+   * @throws ExploreException if there are errors while creating the namespace in Hive
+   * @throws SQLException if there are errors while creating the namespace in Hive
    */
   @Override
   public void create(NamespaceMeta namespaceMeta) throws IOException, ExploreException, SQLException {
 
     createLocation(namespaceMeta);
 
-    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
+    // only create non-default namespaces in Hive
+    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED) &&
+      !NamespaceId.DEFAULT.equals(namespaceMeta.getNamespaceId())) {
       try {
         exploreFacade.createNamespace(namespaceMeta);
       } catch (ExploreException | SQLException e) {
@@ -94,7 +95,7 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
 
     deleteLocation(namespaceId);
 
-    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
+    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED) && !NamespaceId.DEFAULT.equals(namespaceId)) {
       exploreFacade.removeNamespace(namespaceId.toId());
     }
   }
@@ -145,14 +146,6 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
   }
 
   private void validateCustomLocation(NamespaceMeta namespaceMeta) throws IOException {
-    // a custom location was provided
-    // check that its an absolute path
-    File customLocation = new File(namespaceMeta.getConfig().getRootDirectory());
-    if (!customLocation.isAbsolute()) {
-      throw new IOException(String.format(
-        "Cannot create the namespace '%s' with the given custom location %s. Custom location must be absolute path.",
-        namespaceMeta.getName(), customLocation));
-    }
     // since this is a custom location we expect it to exist. Get the custom location for the namespace from
     // namespaceLocationFactory since the location needs to be aware of local/distributed fs.
     Location customNamespacedLocation = namespacedLocationFactory.get(namespaceMeta);
@@ -160,6 +153,13 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
       throw new IOException(String.format(
         "The provided home directory '%s' for namespace '%s' does not exist. Please create it on filesystem " +
           "with sufficient privileges for the user %s and then try creating a namespace.",
+        customNamespacedLocation.toString(), namespaceMeta.getNamespaceId(),
+        namespaceMeta.getConfig().getPrincipal()));
+    }
+    if (!customNamespacedLocation.isDirectory()) {
+      throw new IOException(String.format(
+        "The provided home directory '%s' for namespace '%s' is not a directory. Please specify a directory for the " +
+          "namespace with sufficient privileges for the user %s and then try creating a namespace.",
         customNamespacedLocation.toString(), namespaceMeta.getNamespaceId(),
         namespaceMeta.getConfig().getPrincipal()));
     }

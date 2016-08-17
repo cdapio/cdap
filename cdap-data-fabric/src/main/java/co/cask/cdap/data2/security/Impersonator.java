@@ -23,6 +23,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,7 +100,7 @@ public class Impersonator {
    * @return {@link UserGroupInformation}
    * @throws IOException if there was any error fetching the {@link UserGroupInformation}
    */
-  public UserGroupInformation getUGI(NamespaceMeta namespaceMeta) throws IOException {
+  private UserGroupInformation getUGI(NamespaceMeta namespaceMeta) throws IOException {
     // don't impersonate if kerberos isn't enabled OR if the operation is in the system namespace
     if (!kerberosEnabled || NamespaceId.SYSTEM.equals(namespaceMeta.getNamespaceId())) {
       return UserGroupInformation.getCurrentUser();
@@ -109,9 +110,10 @@ public class Impersonator {
 
   private UserGroupInformation getUGI(ImpersonationInfo impersonationInfo) throws IOException {
     // no need to get a UGI if the current UGI is the one we're requesting; simply return it
-    if (UserGroupInformation.getCurrentUser().getUserName().equals(impersonationInfo.getPrincipal())) {
-      LOG.debug("Requested UGI is same as calling UGI. Simply returning current user: {}",
-                UserGroupInformation.getCurrentUser());
+    String configuredPrincipalShortName = new KerberosName(impersonationInfo.getPrincipal()).getShortName();
+    if (UserGroupInformation.getCurrentUser().getShortUserName().equals(configuredPrincipalShortName)) {
+      LOG.debug("Requested UGI {} is same as calling UGI. Simply returning current user: {}",
+                impersonationInfo.getPrincipal(), UserGroupInformation.getCurrentUser());
       return UserGroupInformation.getCurrentUser();
     }
     return ugiProvider.getConfiguredUGI(impersonationInfo);

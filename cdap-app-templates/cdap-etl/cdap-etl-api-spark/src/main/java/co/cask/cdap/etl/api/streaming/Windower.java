@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.api.streaming;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 
@@ -24,6 +25,7 @@ import java.io.Serializable;
 /**
  * Windowing plugin.
  */
+@Beta
 public abstract class Windower implements PipelineConfigurable, Serializable {
 
   public static final String PLUGIN_TYPE = "windower";

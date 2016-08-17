@@ -34,7 +34,8 @@
       <div class="fields-actions" ng-if="!EnumSchema.isDisabled">
         <div class="actions-buttons no-checkbox text-right">
           <button class="btn btn-link"
-                  ng-click="EnumSchema.removeSymbol($index)">
+                  ng-click="EnumSchema.removeSymbol($index)"
+                  ng-if="EnumSchema.symbols.length > 1">
             <i class="text-danger fa fa-trash"></i>
           </button>
           <button class="btn btn-link"

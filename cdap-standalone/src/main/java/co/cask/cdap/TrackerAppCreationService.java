@@ -53,9 +53,9 @@ public class TrackerAppCreationService extends AbstractExecutionThreadService {
   private static final ProgramId AUDIT_FLOWID = new ProgramId(TRACKER_APPID.getNamespace(),
                                                               TRACKER_APPID.getApplication(), ProgramType.FLOW,
                                                               "AuditLogFlow");
-  private static final ProgramId AUDIT_SERVICEID = new ProgramId(TRACKER_APPID.getNamespace(),
+  private static final ProgramId TRACKER_SERVICEID = new ProgramId(TRACKER_APPID.getNamespace(),
                                                                  TRACKER_APPID.getApplication(), ProgramType.SERVICE,
-                                                                 "AuditLog");
+                                                                 "TrackerService");
 
   private final CConfiguration cConf;
   private final ArtifactRepository artifactRepository;
@@ -137,7 +137,7 @@ public class TrackerAppCreationService extends AbstractExecutionThreadService {
       LOG.debug("Error while trying to start Tracker's AuditFlow. {}", ex.getMessage());
     }
     try {
-      programLifecycleService.start(AUDIT_SERVICEID, ImmutableMap.<String, String>of(), false);
+      programLifecycleService.start(TRACKER_SERVICEID, ImmutableMap.<String, String>of(), false);
     } catch (IOException ex) {
       // Might happen if the program is being started in parallel through UI
       LOG.debug("Error while trying to start Tracker's AuditService. {}", ex.getMessage());
@@ -158,7 +158,7 @@ public class TrackerAppCreationService extends AbstractExecutionThreadService {
           programLifecycleService.stop(AUDIT_FLOWID);
           break;
         case SERVICE:
-          programLifecycleService.stop(AUDIT_SERVICEID);
+          programLifecycleService.stop(TRACKER_SERVICEID);
           break;
         default:
           LOG.warn("Found an unexpected program {} in TrackerApp.", programId);

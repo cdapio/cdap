@@ -32,6 +32,48 @@
 @error-color: #f65454;
 @warning-color: #f6b354;
 @selected-row-color: #e4e4e4;
+@application-primary-color: #43b82f;
+@application-secondary-color: #d15668;
+@application-completed-color: #5a84e4;
+@application-default-color: #969696;
+
+body.theme-cdap {
+  .modal.cdap-modal {
+    &.node-config-modal.raw-modal {
+      .modal-dialog.raw-modal-modal {
+        margin-top: 120px;
+        &.expand {
+          margin-bottom: 0;
+          height: ~"calc(100vh - 120px)";
+          height: ~"-moz-calc(100vh - 120px)";
+          height: ~"-webkit-calc(100vh - 120px)";
+        }
+      }
+    }
+  }
+}
+
+.modal.cdap-modal {
+  &.node-config-modal,
+  &.raw-modal {
+    .modal-dialog.raw-modal-dialog {
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+}
+
+.logs-raw-modal {
+  .modal-title {
+    padding-top: 16px;
+  }
+
+  pre {
+    max-height: ~"-moz-calc(100vh - 190px)";
+    max-height: ~"-webkit-calc(100vh - 190px)";
+    max-height: ~"calc(100vh - 190px)";
+  }
+}
 
 body {
 
@@ -92,12 +134,36 @@ my-log-viewer {
     display: none;
   }
 
+  .row-expanded {
+    td,
+    span {
+      white-space: normal;
+    }
+
+    td.source {
+      white-space: normal;
+      word-break: break-all;
+      text-overflow: inherit;
+    }
+
+    background-color: @selected-row-color;
+  }
+
+  .dropdown-menu {
+    min-width: 80px;
+  }
+
   .log-viewer-container.full-screen {
     position: absolute;
     left: 0;
     right: 0;
     top: 50px;
     z-index: 1000;
+
+    .log-stats {
+      position: relative;
+      bottom: 9px;
+    }
 
     .empty-buffer {
       display: block;
@@ -116,7 +182,6 @@ my-log-viewer {
       height: ~"-webkit-calc(100vh - 166px)";
       height: ~"calc(100vh - 166px)";
     }
-
   }
 
   .highlighted-text {
@@ -192,6 +257,64 @@ my-log-viewer {
       .justify-content(@justify: space-between);
       .align-items(@align: center);
 
+      .logs-status-container {
+        display: inline-block;
+        height: 100%;
+        margin-left: 11px;
+        font-weight: bold;
+        margin-right: 105px;
+
+        .application-name {
+          display: block;
+          color: white;
+          font-size: 14px;
+        }
+
+        .application-status {
+
+          &.program-primary {
+            .status-circle.program-primary-circle {
+              background-color: @application-primary-color;
+            }
+            color: @application-primary-color;
+          }
+
+          &.program-secondary {
+            .status-circle.program-secondary-circle {
+              background-color: @application-secondary-color;
+            }
+            color: @application-secondary-color;
+          }
+
+          &.program-completed {
+            .status-circle.program-completed-circle {
+              background-color: @application-completed-color;
+            }
+            color: @application-completed-color;
+          }
+
+          &.program-default {
+            .status-circle.program-default-circle {
+              background-color: @application-default-color;
+            }
+            color: @application-default-color;
+          }
+
+          .status-circle {
+            display: inline-block;
+            border-radius: 50%;
+            width: 8px;
+            height: 8px;
+            margin-right: 1px;
+            background-color: grey;
+          }
+
+          display: block;
+          color: grey;
+          font-size: 10px;
+        }
+      }
+
       .log-stats-container {
         background-color: @headerbar-background-color;
         margin: 0;
@@ -235,13 +358,13 @@ my-log-viewer {
           margin-right: 3px;
           outline: grey;
         }
-
-        .download-all {
-          margin-left: 3px;
-          max-width: 100px;
-        }
         .view-raw {
-          max-width: 80px;
+          max-width: 110px;
+          text-decoration: none;
+          line-height: 13px;
+        }
+        .download-all {
+          max-width: 130px;
           text-decoration: none;
           line-height: 13px;
         }
@@ -376,9 +499,15 @@ my-log-viewer {
           top: -9px;
         }
 
-        td {
+        td,
+        span {
           white-space: normal;
           border-bottom: none;
+
+          .source {
+            word-break: break-all;
+            text-overflow: inherit;
+          }
         }
       }
       tr.well i {
@@ -431,7 +560,8 @@ my-log-viewer {
         td {
           padding-left: 0;
           .well.well-sm {
-            margin: 10px;
+            margin: 5px;
+            padding: 5px;
             &.spinner-container {
               margin: 0;
               padding: 0;
@@ -535,8 +665,15 @@ my-log-viewer {
       .level-header {
         padding-right: 10px;
         padding-left: 15px;
-        width: 5%;
-        min-width: 90px;
+        min-width: 80px;
+
+        .dropdown-menu {
+          min-width: 88px;
+          margin-left: 42px;
+          padding-top: 4px;
+          padding-left: 2px;
+          padding-bottom: 5px;
+        }
       }
 
       .source,

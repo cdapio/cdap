@@ -29,6 +29,7 @@ import co.cask.cdap.proto.BatchProgram;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -70,7 +71,7 @@ public abstract class BaseBatchCommand<T extends BatchProgram> extends AbstractA
    * Reads arguments to get app id, program types, and list of input programs.
    */
   protected Args<T> readArgs(Arguments arguments)
-    throws ApplicationNotFoundException, UnauthenticatedException, IOException {
+    throws ApplicationNotFoundException, UnauthenticatedException, IOException, UnauthorizedException {
 
     String appName = arguments.get(ArgumentName.APP.getName());
     Id.Application appId = Id.Application.from(cliConfig.getCurrentNamespace(), appName);

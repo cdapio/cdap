@@ -44,7 +44,7 @@ public interface StreamEventDecoder<K, V>  {
    * @param <V> Type of value.
    */
   @NotThreadSafe
-  static final class DecodeResult<K, V> {
+  final class DecodeResult<K, V> {
     private K key;
     private V value;
 

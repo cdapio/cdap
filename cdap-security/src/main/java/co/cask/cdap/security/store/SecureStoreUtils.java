@@ -24,9 +24,14 @@ import co.cask.cdap.common.conf.Constants;
  */
 public class SecureStoreUtils {
   private static final String KMS_BACKED = "kms";
+  private static final String FILE_BACKED = "file";
 
   public static boolean isKMSBacked(final CConfiguration cConf) {
     return KMS_BACKED.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER));
+  }
+
+  public static boolean isFileBacked(final CConfiguration cConf) {
+    return FILE_BACKED.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER));
   }
 
   public static boolean isKMSCapable() {
@@ -37,6 +42,16 @@ public class SecureStoreUtils {
     } catch (ClassNotFoundException ex) {
       // KMS is not supported.
       return false;
+    }
+  }
+
+  public static Class<?> getKMSSecureStore() {
+    try {
+      return Class.forName("co.cask.cdap.security.store.KMSSecureStore");
+    } catch (ClassNotFoundException e) {
+      // KMSSecureStore could not be loaded
+      throw new RuntimeException("CDAP KMS classes could not be loaded. " +
+                                   "Please verify that CDAP is correctly installed");
     }
   }
 }

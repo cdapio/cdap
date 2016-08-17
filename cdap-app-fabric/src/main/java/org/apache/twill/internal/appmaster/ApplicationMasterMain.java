@@ -255,7 +255,7 @@ public final class ApplicationMasterMain extends ServiceMain {
     private static final Logger LOG = LoggerFactory.getLogger(AppMasterTwillZKPathService.class);
     private final ZKClient zkClient;
 
-    public AppMasterTwillZKPathService(ZKClient zkClient, RunId runId) {
+    AppMasterTwillZKPathService(ZKClient zkClient, RunId runId) {
       super(zkClient, runId);
       this.zkClient = zkClient;
     }

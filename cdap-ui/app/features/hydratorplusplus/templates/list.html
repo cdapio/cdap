@@ -118,13 +118,13 @@
                 ng-if="pipeline.isDraft"
                 ng-click="caskConfirm()"
                 cask-confirmable="ListController.deleteDraft(pipeline.id)"
-                data-confirmable-content="Are you sure you want to delete the draft '{{ pipeline.name }}'?"
+                data-confirmable-content="Are you sure you want to delete the draft '<strong>{{ pipeline.name }}</strong>'?"
               ></span>
               <span class="fa fa-trash text-danger delete-draft"
                 ng-if="!pipeline.isDraft"
                 ng-click="caskConfirm()"
                 cask-confirmable="ListController.deleteApp(pipeline.name)"
-                data-confirmable-content="Are you sure you want to delete the pipeline '{{ pipeline.name }}'?"
+                data-confirmable-content="Are you sure you want to delete the pipeline '<strong>{{ pipeline.name }}</strong>'?"
               ></span>
             </td>
           </tr>
@@ -133,7 +133,10 @@
     </div>
 
     <div class="text-center" ng-if="ListController.pipelineList.length > 10">
-      <uib-pagination total-items="ListController.pipelineList.length" ng-model="ListController.currentPage"></uib-pagination>
+      <uib-pagination
+        total-items="ListController.pipelineList.length"
+        ng-change="ListController.goToPage()"
+        ng-model="ListController.currentPage"></uib-pagination>
     </div>
 
   </div>

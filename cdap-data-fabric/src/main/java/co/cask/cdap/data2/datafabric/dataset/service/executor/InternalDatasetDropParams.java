@@ -27,7 +27,7 @@ final class InternalDatasetDropParams {
   private final DatasetTypeMeta typeMeta;
   private final DatasetSpecification instanceSpec;
 
-  public InternalDatasetDropParams(DatasetTypeMeta typeMeta, DatasetSpecification instanceSpec) {
+  InternalDatasetDropParams(DatasetTypeMeta typeMeta, DatasetSpecification instanceSpec) {
     this.typeMeta = typeMeta;
     this.instanceSpec = instanceSpec;
   }

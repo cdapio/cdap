@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
@@ -37,7 +38,6 @@ import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.inject.Inject;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -64,30 +64,33 @@ public class RemoteOpsClient {
 
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
   private final HttpRequestConfig httpRequestConfig;
+  private final String discoverableServiceName;
 
-  @Inject
-  protected RemoteOpsClient(CConfiguration cConf, final DiscoveryServiceClient discoveryClient) {
+  protected RemoteOpsClient(CConfiguration cConf, final DiscoveryServiceClient discoveryClient,
+                            final String discoverableServiceName) {
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {
-        return new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.REMOTE_SYSTEM_OPERATION));
+        return new RandomEndpointStrategy(discoveryClient.discover(discoverableServiceName));
       }
     });
 
-    int httpClientTimeoutMs = cConf.getInt(Constants.HTTP_CLIENT_TIMEOUT_MS);
-    this.httpRequestConfig = new HttpRequestConfig(httpClientTimeoutMs, httpClientTimeoutMs);
+    this.httpRequestConfig = new DefaultHttpRequestConfig();
+    this.discoverableServiceName = discoverableServiceName;
   }
 
   protected HttpResponse executeRequest(String methodName, Object... arguments) {
-    return doRequest("execute/" + methodName, HttpMethod.POST, ImmutableMap.<String, String>of(),
-                     GSON.toJson(createArguments(arguments)));
+    return executeRequest(methodName, ImmutableMap.<String, String>of(), arguments);
+  }
+
+  protected HttpResponse executeRequest(String methodName, Map<String, String> headers, Object... arguments) {
+    return doRequest("execute/" + methodName, HttpMethod.POST, headers, GSON.toJson(createArguments(arguments)));
   }
 
   private String resolve(String resource) {
     Discoverable discoverable = endpointStrategySupplier.get().pick(3L, TimeUnit.SECONDS);
     if (discoverable == null) {
-      throw new RuntimeException(
-        String.format("Cannot discover service %s", Constants.Service.REMOTE_SYSTEM_OPERATION));
+      throw new RuntimeException(String.format("Cannot discover service %s", discoverableServiceName));
     }
     InetSocketAddress addr = discoverable.getSocketAddress();
 
@@ -130,10 +133,10 @@ public class RemoteOpsClient {
   }
 
   // creates error message, encoding details about the request
-  private static String createErrorMessage(String resolvedUrl, HttpMethod requestMethod,
-                                           @Nullable Map<String, String> headers, @Nullable String body) {
+  private String createErrorMessage(String resolvedUrl, HttpMethod requestMethod,
+                                    @Nullable Map<String, String> headers, @Nullable String body) {
     return String.format("Error making request to %s service at %s while doing %s with headers %s and body %s.",
-                         Constants.Service.REMOTE_SYSTEM_OPERATION, resolvedUrl, requestMethod,
+                         discoverableServiceName, resolvedUrl, requestMethod,
                          headers == null ? "null" : Joiner.on(",").withKeyValueSeparator("=").join(headers),
                          body == null ? "null" : body);
   }

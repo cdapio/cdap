@@ -17,11 +17,11 @@
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .service('HydratorPlusPlusDetailActions', function(HydratorPlusPlusDetailDispatcher, myPipelineApi) {
     var dispatcher = HydratorPlusPlusDetailDispatcher.getDispatcher();
-    this.startPipeline = function (api, params) {
-      return api.start(params, {}).$promise;
+    this.startPipeline = function (api, params, postParams) {
+      return api.start(params, postParams || {}).$promise;
     };
-    this.schedulePipeline = function(api, scheduleParams) {
-      return api.schedule(scheduleParams, {}).$promise;
+    this.schedulePipeline = function(api, scheduleParams, postParams) {
+      return api.schedule(scheduleParams, postParams || {}).$promise;
     };
 
     this.stopPipeline = function (api, params) {

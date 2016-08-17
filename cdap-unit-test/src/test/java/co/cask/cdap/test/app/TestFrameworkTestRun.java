@@ -17,7 +17,6 @@
 package co.cask.cdap.test.app;
 
 import co.cask.cdap.AppUsingNamespace;
-import co.cask.cdap.AppUsingSecureStore;
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.common.Bytes;
@@ -80,6 +79,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -308,52 +308,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   @Test
-  public void testSecureStoreRuntimeApis() throws Exception {
-    ApplicationManager applicationManager = deployApplication(testSpace, AppUsingSecureStore.class);
-    ServiceManager serviceManager = applicationManager.getServiceManager(AppUsingSecureStore.SERVICE_NAME);
-    serviceManager.start();
-    serviceManager.waitForStatus(true, 1, 10);
-
-    URL serviceURL = serviceManager.getServiceURL(10, TimeUnit.SECONDS);
-
-    // Put a value in the store
-    callServicePut(serviceURL, "put", "value");
-    // Test get
-    Assert.assertEquals("value", callServiceGet(serviceURL, "get"));
-    // Test put
-    Assert.assertEquals(AppUsingSecureStore.KEY, callServiceGet(serviceURL, "list"));
-    // Test delete
-    callServiceGet(serviceURL, "delete");
-    try {
-      callServiceGet(serviceURL, "get");
-      Assert.fail("Key not deleted in secure store");
-    } catch (IOException e) {
-      // Expect key not found IOExcpetion
-    }
-    serviceManager.stop();
-    serviceManager.waitForStatus(false, 1, 10);
-
-    // Test access in spark program
-    StreamManager streamManager = getStreamManager(testSpace, AppUsingSecureStore.STREAM_NAME);
-    streamManager.createStream();
-    for (int i = 0; i < 10; i++) {
-      streamManager.send(String.valueOf(i));
-    }
-
-    SparkManager sparkManager = applicationManager.getSparkManager(AppUsingSecureStore.SPARK_NAME);
-    sparkManager.start();
-    sparkManager.waitForFinish(1, TimeUnit.MINUTES);
-
-    // Verify results
-    DataSetManager<KeyValueTable> datasetManager = getDataset(testSpace, "result");
-    KeyValueTable results = datasetManager.get();
-    for (int i = 0; i < 10; i++) {
-      byte[] key = String.valueOf(i).getBytes(Charsets.UTF_8);
-      Assert.assertEquals(AppUsingSecureStore.VALUE, new String(results.read(key)));
-    }
-  }
-
-  @Test
   public void testAppConfigWithNull() throws Exception {
     testAppConfig(ConfigTestApp.NAME, deployApplication(ConfigTestApp.class), null);
   }
@@ -484,34 +438,42 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     MapReduceManager mrManager = appManager.getMapReduceManager(DatasetWithMRApp.MAPREDUCE_PROGRAM).start(argsForMR);
     mrManager.waitForFinish(5, TimeUnit.MINUTES);
     appManager.stopAll();
-    verifyMapperJobOutput(DatasetWithMRApp.class);
+
+    DataSetManager<KeyValueTable> outTableManager = getDataset("table2");
+    verifyMapperJobOutput(DatasetWithMRApp.class, outTableManager);
   }
 
   @Category(SlowTests.class)
   @Test
-  public void testMapperDatasetFromOtherSpaceAccess() throws Exception {
-    NamespaceId datasetSpace = new NamespaceId(DatasetFromOtherSpaceWithMPApp.DATASETSPACE);
-    createNamespace(datasetSpace.toId());
-    addDatasetInstance(datasetSpace.toId(), "keyValueTable", "table1").create();
-    addDatasetInstance("keyValueTable", "table2").create();
-    DataSetManager<KeyValueTable> tableManager = getDataset(datasetSpace.toId(), "table1");
+  public void testCrossNSMapperDatasetAccess() throws Exception {
+    getNamespaceAdmin().create(new NamespaceMeta.Builder()
+                                 .setName(DatasetCrossNSAccessWithMAPApp.DATASET_INPUT_SPACE).build());
+    getNamespaceAdmin().create(new NamespaceMeta.Builder()
+                                 .setName(DatasetCrossNSAccessWithMAPApp.DATASET_OUTPUT_SPACE).build());
+    NamespaceId datasetInputSpace = new NamespaceId(DatasetCrossNSAccessWithMAPApp.DATASET_INPUT_SPACE);
+    NamespaceId datasetOutputSpace = new NamespaceId(DatasetCrossNSAccessWithMAPApp.DATASET_OUTPUT_SPACE);
+
+    addDatasetInstance(datasetInputSpace.toId(), "keyValueTable", "table1").create();
+    addDatasetInstance(datasetOutputSpace.toId(), "keyValueTable", "table2").create();
+    DataSetManager<KeyValueTable> tableManager = getDataset(datasetInputSpace.toId(), "table1");
     KeyValueTable inputTable = tableManager.get();
     inputTable.write("hello", "world");
     tableManager.flush();
 
-    ApplicationManager appManager = deployApplication(DatasetFromOtherSpaceWithMPApp.class);
-    Map<String, String> argsForMR = ImmutableMap.of(DatasetFromOtherSpaceWithMPApp.INPUT_KEY, "table1",
-                                                    DatasetFromOtherSpaceWithMPApp.OUTPUT_KEY, "table2");
-    MapReduceManager mrManager = appManager.getMapReduceManager(DatasetFromOtherSpaceWithMPApp.MAPREDUCE_PROGRAM)
+    ApplicationManager appManager = deployApplication(DatasetCrossNSAccessWithMAPApp.class);
+    Map<String, String> argsForMR = ImmutableMap.of(DatasetCrossNSAccessWithMAPApp.INPUT_KEY, "table1",
+                                                    DatasetCrossNSAccessWithMAPApp.OUTPUT_KEY, "table2");
+    MapReduceManager mrManager = appManager.getMapReduceManager(DatasetCrossNSAccessWithMAPApp.MAPREDUCE_PROGRAM)
       .start(argsForMR);
     mrManager.waitForFinish(5, TimeUnit.MINUTES);
     appManager.stopAll();
 
-    verifyMapperJobOutput(DatasetFromOtherSpaceWithMPApp.class);
+    DataSetManager<KeyValueTable> outTableManager = getDataset(datasetOutputSpace.toId(), "table2");
+    verifyMapperJobOutput(DatasetCrossNSAccessWithMAPApp.class, outTableManager);
   }
 
-  private void verifyMapperJobOutput(Class<?> appClass) throws Exception {
-    DataSetManager<KeyValueTable> outTableManager = getDataset("table2");
+  private void verifyMapperJobOutput(Class<?> appClass,
+                                     DataSetManager<KeyValueTable> outTableManager) throws Exception {
     KeyValueTable outputTable = outTableManager.get();
     Assert.assertEquals("world", Bytes.toString(outputTable.read("hello")));
 
@@ -1596,7 +1558,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       return reader.readLine();
     }
   }
-
   private String callServicePut(URL serviceURL, String path, String body) throws IOException {
     HttpURLConnection connection = (HttpURLConnection) new URL(serviceURL.toString() + path).openConnection();
     connection.setDoOutput(true);

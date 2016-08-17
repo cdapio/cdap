@@ -340,7 +340,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
    * Trigger and state.
    * New version of TriggerStatus which supports custom serialization from CDAP 3.3 release.
    */
-  private static class TriggerStatusV2 implements Externalizable {
+  public static class TriggerStatusV2 implements Externalizable {
     private static final long serialVersionUID = -2972207194129529281L;
     private OperableTrigger trigger;
     private Trigger.TriggerState state;

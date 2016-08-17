@@ -29,7 +29,11 @@ import com.google.common.base.Charsets;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
+import org.apache.hadoop.security.Credentials;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.Command;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -37,6 +41,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -45,6 +50,7 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -56,7 +62,7 @@ import javax.ws.rs.PathParam;
 
 /**
  * The HTTP service for communicating with the {@link SparkMainWrapper} running in the driver
- * for controlling lifecycle as well as the {@link WorkflowToken}.
+ * for controlling lifecycle management.
  */
 public final class SparkExecutionService extends AbstractIdleService {
 
@@ -65,6 +71,7 @@ public final class SparkExecutionService extends AbstractIdleService {
   private static final Type TOKEN_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final long SHUTDOWN_WAIT_SECONDS = 30L;
 
+  private final LocationFactory locationFactory;
   private final NettyHttpService httpServer;
   private final ProgramRunId programRunId;
   @Nullable
@@ -72,7 +79,9 @@ public final class SparkExecutionService extends AbstractIdleService {
   private final AtomicBoolean stopping;
   private final CountDownLatch stopLatch;
 
-  public SparkExecutionService(String host, ProgramRunId programRunId, @Nullable WorkflowToken workflowToken) {
+  public SparkExecutionService(LocationFactory locationFactory, String host,
+                               ProgramRunId programRunId, @Nullable WorkflowToken workflowToken) {
+    this.locationFactory = locationFactory;
     this.httpServer = NettyHttpService.builder()
       .addHttpHandlers(Collections.singletonList(new SparkControllerHandler()))
       .setHost(host)
@@ -162,6 +171,45 @@ public final class SparkExecutionService extends AbstractIdleService {
     }
 
     /**
+     * Handles request for {@link Credentials}. This method will write the {@link Credentials} of the current user
+     * to a location provided by the caller with permission only accessible by the current user. It expects the request
+     * body is a JSON object with the target location URI to write to.
+     */
+    @POST
+    @Path("/v1/spark/{programName}/runs/{runId}/credentials")
+    public void writeCredentials(HttpRequest request, HttpResponder responder,
+                                 @PathParam("programName") String programName,
+                                 @PathParam("runId") String runId) throws Exception {
+      CredentialsRequest credentialsRequest = GSON.fromJson(request.getContent().toString(Charsets.UTF_8),
+                                                            CredentialsRequest.class);
+      if (credentialsRequest == null || credentialsRequest.getUri() == null) {
+        throw new BadRequestException("Expected request body a JSON object with an 'uri' field");
+      }
+
+      URI targetURI = credentialsRequest.getUri();
+      URI homeURI = locationFactory.getHomeLocation().toURI();
+
+      // The target URI scheme and authority must match with the one provided by the location factory
+      if (!Objects.equals(homeURI.getScheme(), targetURI.getScheme())) {
+        throw new BadRequestException("Target URI expected to have '" + homeURI.getScheme() + "' as the scheme");
+      }
+      if (!Objects.equals(targetURI.getAuthority(), homeURI.getAuthority())) {
+        throw new BadRequestException("Target URI expected to have '" + homeURI.getAuthority() + "' as the authority");
+      }
+
+      Location targetLocation = locationFactory.create(targetURI);
+      Credentials credentials = UserGroupInformation.getCurrentUser().getCredentials();
+      try (DataOutputStream os = new DataOutputStream(targetLocation.getOutputStream("600"))) {
+        credentials.writeTokenStorageToStream(os);
+      }
+
+      LOG.debug("Credentials written for {} of run {} to {}: {}",
+                programName, runId, targetURI, credentials.getAllTokens());
+
+      responder.sendStatus(HttpResponseStatus.OK);
+    }
+
+    /**
      * Verifies the call is from the right client.
      */
     private void validateRequest(String programName, String runId) throws Exception {
@@ -202,4 +250,5 @@ public final class SparkExecutionService extends AbstractIdleService {
       }
     }
   }
+
 }

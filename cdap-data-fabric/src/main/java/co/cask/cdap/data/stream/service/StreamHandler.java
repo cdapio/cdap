@@ -19,6 +19,7 @@ import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.format.RecordFormat;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.BadRequestException;
@@ -37,7 +38,9 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.format.RecordFormats;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.StreamDetail;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
@@ -74,6 +77,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -174,6 +179,20 @@ public final class StreamHandler extends AbstractHttpHandler {
   public void destroy(HandlerContext context) {
     Closeables.closeQuietly(streamWriter);
     asyncExecutor.shutdownNow();
+  }
+
+  @GET
+  @Path("/")
+  public void listStreams(HttpRequest request, HttpResponder responder,
+                          @PathParam("namespace-id") String namespaceId) throws Exception {
+    // Check for namespace existence. Throws NotFoundException if namespace doesn't exist
+    namespaceQueryAdmin.get(new NamespaceId(namespaceId).toId());
+    List<StreamSpecification> specifications = streamAdmin.listStreams(new NamespaceId(namespaceId));
+    List<StreamDetail> streamDetails = new ArrayList<>(specifications.size());
+    for (StreamSpecification specification : specifications) {
+      streamDetails.add(new StreamDetail(specification.getName()));
+    }
+    responder.sendJson(HttpResponseStatus.OK, streamDetails);
   }
 
   @GET

@@ -27,7 +27,7 @@ import java.util.Set;
 public class Lineage {
   private final Set<Relation> relations;
 
-  public Lineage(Set<Relation> relations) {
+  public Lineage(Iterable<? extends Relation> relations) {
     this.relations = ImmutableSet.copyOf(relations);
   }
 

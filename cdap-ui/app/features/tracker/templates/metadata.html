@@ -29,18 +29,6 @@
         <h4>User Tags</h4>
         <div class="tags-container">
 
-          <div class="add-tag" ng-if="!MetadataController.inputOpen">
-            <a class="btn add" ng-click="MetadataController.inputOpen = true">
-              <span class="fa fa-plus"></span>
-            </a>
-          </div>
-          <div class="tag-input" ng-if="MetadataController.inputOpen">
-            <div my-escape-close="MetadataController.escapeInput()" ng-keypress="$event.keyCode === 13 && MetadataController.addTag()">
-              <my-typeahead-tracker-tags list="MetadataController.tags.availableTags"
-                                        model="MetadataController.newTag"></my-typeahead-tracker-tags>
-            </div>
-          </div>
-
           <div ng-if="MetadataController.tags.preferredTags.length > 0"
               ng-repeat="tag in MetadataController.tags.preferredTags"
               class="tag preferred">
@@ -75,6 +63,31 @@
             <span ng-click="MetadataController.deleteTag(tag.name)"
                   class="fa fa-times pull-right"></span>
           </div>
+
+          <div class="add-tag" ng-if="!MetadataController.inputOpen">
+            <a class="btn add" ng-click="MetadataController.openTagInput($event)">
+              <span class="fa fa-plus"></span>
+            </a>
+          </div>
+          <div class="tag-input"
+              ng-if="MetadataController.inputOpen"
+              ng-class="{'invalid': MetadataController.invalidFormat || MetadataController.duplicateTag}">
+            <div my-escape-close="MetadataController.escapeInput()">
+              <my-typeahead-tracker-tags
+                list="MetadataController.tags.availableTags"
+                on-select="MetadataController.addTag(input)"
+                on-change="MetadataController.invalidFormat = false">
+              </my-typeahead-tracker-tags>
+            </div>
+          </div>
+          <p ng-if="MetadataController.invalidFormat"
+            class="text-danger">
+            <span class="fa fa-exclamation-triangle"></span> No special characters allowed.
+          </p>
+          <p ng-if="MetadataController.duplicateTag"
+            class="text-danger">
+            <span class="fa fa-exclamation-triangle"></span> Tag already exist.
+          </p>
         </div>
 
       </div>
@@ -150,43 +163,41 @@
            ng-if="MetadataController.activePropertyTab === 0">
         <table class="table table-bordered">
           <tbody>
+            <tr ng-repeat="(key, value) in MetadataController.externalDatasetProperties">
+              <td>{{ key }}</td>
+              <td>{{ value }}</td>
+              <td></td>
+            </tr>
+
             <tr ng-repeat="(key, value) in MetadataController.properties.user">
               <td>{{ key }}</td>
               <td>{{ value }}</td>
-              <td class="text-center">
-                <span class="fa fa-trash text-danger"
-                      ng-click="MetadataController.deleteProperty(key)">
-                </span>
-              </td>
-            </tr>
-
-            <tr class="input-row"
-                ng-if="MetadataController.addPropertyEnable"
-                ng-keydown="MetadataController.propertyKeypress($event)">
-              <td>
-                <input type="text" class="form-control" id="property-key-input"
-                       ng-model="MetadataController.propertyInput.key"
-                       placeholder="key">
-              </td>
-              <td>
-                <input type="text" class="form-control"
-                       ng-model="MetadataController.propertyInput.value"
-                       placeholder="value">
-              </td>
-              <td class="text-center">
+              <td class="action text-center">
                 <button class="btn btn-default"
-                        ng-click="MetadataController.addProperty()">
-                  <i class="fa fa-plus"></i>
+                        ng-click="MetadataController.deleteProperty(key)">
+                  <i class="fa fa-trash text-danger"></i>
                 </button>
               </td>
             </tr>
 
-            <tr class="empty-row"
-                ng-if="!MetadataController.addPropertyEnable"
-                ng-click="MetadataController.enableAddProperty()">
-              <td></td>
-              <td></td>
-              <td></td>
+            <tr class="input-row"
+                ng-keydown="MetadataController.propertyKeypress($event)">
+              <td>
+                <input type="text" class="form-control" id="property-key-input"
+                       ng-model="MetadataController.propertyInput.key"
+                       placeholder="Name">
+              </td>
+              <td>
+                <input type="text" class="form-control"
+                       ng-model="MetadataController.propertyInput.value"
+                       placeholder="Value">
+              </td>
+              <td class="action text-center">
+                <button class="btn btn-default plus"
+                        ng-click="MetadataController.addProperty()">
+                  <i class="fa fa-plus"></i>
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>

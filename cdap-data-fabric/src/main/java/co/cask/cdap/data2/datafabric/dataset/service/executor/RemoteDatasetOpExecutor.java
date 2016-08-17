@@ -24,6 +24,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.common.service.UncaughtExceptionIdleService;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DatasetTypeMeta;
@@ -74,8 +75,7 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
         return new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_EXECUTOR));
       }
     });
-    int httpTimeoutMs = cConf.getInt(Constants.HTTP_CLIENT_TIMEOUT_MS);
-    this.httpRequestConfig = new HttpRequestConfig(httpTimeoutMs, httpTimeoutMs);
+    this.httpRequestConfig = new DefaultHttpRequestConfig();
   }
 
   @Override

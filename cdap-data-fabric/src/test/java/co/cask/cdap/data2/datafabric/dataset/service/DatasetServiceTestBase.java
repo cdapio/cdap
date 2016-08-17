@@ -33,7 +33,6 @@ import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data.runtime.DynamicTransactionExecutorFactory;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -66,9 +65,9 @@ import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
-import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -112,7 +111,6 @@ import java.net.URL;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -131,6 +129,7 @@ public abstract class DatasetServiceTestBase {
   protected static DatasetDefinitionRegistryFactory registryFactory;
   protected static Injector injector;
 
+  private static AuthorizationEnforcementService authEnforcementService;
   private static DiscoveryServiceClient discoveryServiceClient;
   private static DatasetOpExecutorService opExecutorService;
   private static DatasetService service;
@@ -144,7 +143,7 @@ public abstract class DatasetServiceTestBase {
 
   @AfterClass
   public static void tearDown() throws Exception {
-    Services.chainStop(service, opExecutorService, txManager);
+    Services.chainStop(service, opExecutorService, txManager, authEnforcementService);
     namespaceAdmin.delete(Id.Namespace.DEFAULT);
     Locations.deleteQuietly(locationFactory.create(Id.Namespace.DEFAULT.getId()));
   }
@@ -174,9 +173,9 @@ public abstract class DatasetServiceTestBase {
       });
 
     AuthorizationEnforcer authEnforcer = injector.getInstance(AuthorizationEnforcer.class);
-    AuthorizationEnforcementService authEnforcementService =
-      injector.getInstance(AuthorizationEnforcementService.class);
-    AuthorizerInstantiator authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
+    authEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
+    authEnforcementService.startAndWait();
+
     AuthenticationContext authenticationContext = injector.getInstance(AuthenticationContext.class);
 
     DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
@@ -223,24 +222,22 @@ public abstract class DatasetServiceTestBase {
     NamespaceQueryAdmin namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
     TransactionExecutorFactory txExecutorFactory = new DynamicTransactionExecutorFactory(txSystemClient);
     DatasetTypeManager typeManager = new DatasetTypeManager(cConf, locationFactory, txSystemClientService,
-                                                            txExecutorFactory,
-                                                            inMemoryDatasetFramework, defaultModules,
-                                                            impersonator);
+                                                            txExecutorFactory, inMemoryDatasetFramework, impersonator);
     DatasetOpExecutor opExecutor = new InMemoryDatasetOpExecutor(dsFramework);
     DatasetInstanceManager instanceManager =
       new DatasetInstanceManager(txSystemClientService, txExecutorFactory, inMemoryDatasetFramework);
-    instanceService = new DatasetInstanceService(
-      typeManager, instanceManager, opExecutor, exploreFacade, namespaceQueryAdmin, authEnforcer,
-      authorizerInstantiator, authenticationContext
-    );
+    PrivilegesManager privilegesManager = injector.getInstance(PrivilegesManager.class);
 
     DatasetTypeService typeService = new DatasetTypeService(
-      typeManager, namespaceAdmin, namespacedLocationFactory, authEnforcer, authorizerInstantiator,
-      authenticationContext, cConf, impersonator
-    );
-    service = new DatasetService(cConf, discoveryService, discoveryServiceClient, typeManager, metricsCollectionService,
-                                 opExecutor, new HashSet<DatasetMetricsReporter>(), typeService, instanceService,
-                                 authEnforcementService);
+      typeManager, namespaceAdmin, namespacedLocationFactory, authEnforcer, privilegesManager, authenticationContext,
+      cConf, impersonator, txSystemClientService, inMemoryDatasetFramework, txExecutorFactory, defaultModules);
+
+    instanceService = new DatasetInstanceService(typeService, instanceManager, opExecutor, exploreFacade,
+                                                 namespaceQueryAdmin, authEnforcer, privilegesManager,
+                                                 authenticationContext);
+
+    service = new DatasetService(cConf, discoveryService, discoveryServiceClient, metricsCollectionService,
+                                 opExecutor, new HashSet<DatasetMetricsReporter>(), typeService, instanceService);
 
     // Start dataset service, wait for it to be discoverable
     service.startAndWait();
@@ -372,16 +369,5 @@ public abstract class DatasetServiceTestBase {
   protected void assertNamespaceNotFound(HttpResponse response, Id.Namespace namespaceId) {
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, response.getResponseCode());
     Assert.assertTrue(response.getResponseBodyAsString().contains(namespaceId.toString()));
-  }
-
-  protected void ensureDefaultNamespace() throws Exception {
-    final NamespaceQueryAdmin namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return namespaceQueryAdmin.get(Id.Namespace.DEFAULT) != null;
-      }
-    }, 5, TimeUnit.SECONDS, "Could not ensure existence of default namespace in 5 seconds");
-    System.out.println("##### ensured default ########## " + namespaceQueryAdmin);
   }
 }

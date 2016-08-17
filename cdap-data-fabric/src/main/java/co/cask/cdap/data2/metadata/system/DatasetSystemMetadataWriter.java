@@ -26,6 +26,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
@@ -47,6 +48,7 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
   public static final String EXPLORE_TAG = "explore";
   public static final String BATCH_TAG = "batch";
   public static final String TYPE = "type";
+  public static final String LOCAL_DATASET_TAG = "local-dataset";
 
   @VisibleForTesting
   static final String FILESET_AVRO_SCHEMA_PROPERTY = "avro.schema.literal";
@@ -113,6 +115,13 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
     if (dataset instanceof BatchReadable || dataset instanceof BatchWritable ||
       dataset instanceof InputFormatProvider || dataset instanceof OutputFormatProvider) {
       tags.add(BATCH_TAG);
+    }
+
+    boolean isLocalDataset
+      = Boolean.parseBoolean(dsProperties.getProperties().get(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY));
+
+    if (isLocalDataset) {
+      tags.add(LOCAL_DATASET_TAG);
     }
     return tags.toArray(new String[tags.size()]);
   }

@@ -15,12 +15,35 @@
  */
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
-  .controller('HydratorPlusPlusListController', function($scope, myPipelineApi, $stateParams, GLOBALS, mySettings, $state, myHelpers, myWorkFlowApi, myWorkersApi, MyCDAPDataSource, myAppsApi, myAlertOnValium, myLoadingService) {
+  .controller('HydratorPlusPlusListController', function($scope, myPipelineApi, $stateParams, GLOBALS, mySettings, $state, myHelpers, myWorkFlowApi, myWorkersApi, MyCDAPDataSource, myAppsApi, myAlertOnValium, myLoadingService, mySparkApi) {
     var dataSrc = new MyCDAPDataSource($scope);
     var vm = this;
-
+    const checkForValidPage = (pageNumber) => {
+      return (
+        !Number.isNaN(pageNumber) &&
+        Array.isArray(vm.pipelineList) &&
+        Math.floor(vm.pipelineList.length) >= pageNumber
+      );
+    };
     vm.pipelineList = [];
-    vm.currentPage = 1;
+    const setCurrentPage = () => {
+      let pageNumber = parseInt($stateParams.page, 10);
+      if (pageNumber&& checkForValidPage(pageNumber)) {
+        vm.currentPage = pageNumber;
+      } else {
+        vm.currentPage = 1;
+      }
+      vm.goToPage();
+    };
+
+    vm.goToPage = function () {
+      if (!vm.currentPage) {
+        return;
+      }
+      $stateParams.page = vm.currentPage;
+      $state.go('hydratorplusplus.list', $stateParams, {notify: false});
+    };
+
     vm.statusCount = {
       running: 0,
       scheduled: 0,
@@ -43,7 +66,8 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
       .then(function success(res) {
         vm.pipelineList = res;
 
-        fetchDrafts();
+        fetchDrafts()
+          .then(setCurrentPage);
 
         angular.forEach(vm.pipelineList, function (app) {
           app._stats = {};
@@ -52,7 +76,6 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
         });
 
         fetchStatus();
-
       });
 
 
@@ -76,6 +99,15 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
           programType: 'Workflow',
           programId: workflowId
         });
+      } else if (app.artifact.name === GLOBALS.etlDataStreams) {
+        api = mySparkApi;
+
+        realtime.push({
+          appId: app.id,
+          programType: 'Spark',
+          programId: 'DataStreamsSparkStreaming'
+        });
+
       } else {
         api = myWorkersApi;
         params.workerId = 'ETLWorker';
@@ -175,7 +207,7 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
     }
 
     function fetchDrafts() {
-      mySettings.get('hydratorDrafts')
+      return mySettings.get('hydratorDrafts')
         .then(function(res) {
           let draftsList = myHelpers.objectQuery(res, $stateParams.namespace);
           if (!angular.isObject(draftsList)) {

@@ -16,8 +16,10 @@
 
 package co.cask.cdap.app.runtime.spark
 
+import java.io.DataInputStream
 import java.lang.reflect.{Method, Modifier}
 import java.net.URI
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{Executors, TimeUnit}
 
@@ -26,7 +28,12 @@ import co.cask.cdap.api.spark.{JavaSparkMain, SparkMain}
 import co.cask.cdap.app.runtime.spark.distributed.{SparkCommand, SparkExecutionClient}
 import co.cask.cdap.common.BadRequestException
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken
+import com.google.common.base.Supplier
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.security.{Credentials, UserGroupInformation}
+import org.apache.spark.SparkConf
 import org.apache.twill.common.{Cancellable, Threads}
+import org.apache.twill.filesystem.{FileContextLocationFactory, Location}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
@@ -45,7 +52,7 @@ object SparkMainWrapper {
   private val LOG = LoggerFactory.getLogger(SparkMainWrapper.getClass)
 
   @volatile
-  private var stopped: Boolean = false
+  private var stopped = false
   @volatile
   private var mainThread: Option[Thread] = None
 
@@ -157,37 +164,50 @@ object SparkMainWrapper {
       val workflowToken = Option(runtimeContext.getWorkflowInfo).map(_.getWorkflowToken).orNull
       val executor = Executors.newSingleThreadScheduledExecutor(
         Threads.createDaemonThreadFactory("heartbeat-" + programRunId.getRun))
+      val credentialsUpdater = createCredentialsUpdater(runtimeContext.getConfiguration, client)
 
       // Make the first heartbeat. If it fails, we will not start the spark execution.
       heartbeat(client, stopFunc)
 
-      // Schedule the next heartbeat
-      executor.schedule(new Runnable() {
-        val failureCount = new AtomicInteger
-        override def run() = {
-          try {
-            heartbeat(client, stopFunc, workflowToken)
-            failureCount.set(0)
-            if (!SparkRuntimeEnv.isStopped) {
-              executor.schedule(this, HEARTBEAT_INTERVAL_SECONDS, TimeUnit.SECONDS)
-            }
-          } catch {
-            case badRequest : BadRequestException =>
-              LOG.error("Invalid spark program heartbeat. Terminating the execution.", badRequest)
-              stopFunc()
-            case t: Throwable =>
-              if (failureCount.getAndIncrement() < 10) {
-                LOG.warn("Failed to make heartbeat for {} times", failureCount.get, t)
-              } else {
-                LOG.error("Failed to make heartbeat for {} times. Terminating the execution", failureCount.get);
-                stopFunc()
+      if (!SparkRuntimeEnv.isStopped) {
+        // Schedule the credentials update if necessary
+        credentialsUpdater.foreach(_.startAndWait())
+
+        // Schedule the next heartbeat
+        executor.schedule(new Runnable() {
+          val failureCount = new AtomicInteger
+
+          override def run() = {
+            try {
+              heartbeat(client, stopFunc, workflowToken)
+              failureCount.set(0)
+              if (!SparkRuntimeEnv.isStopped) {
+                executor.schedule(this, HEARTBEAT_INTERVAL_SECONDS, TimeUnit.SECONDS)
               }
+            } catch {
+              case badRequest: BadRequestException =>
+                LOG.error("Invalid spark program heartbeat. Terminating the execution.", badRequest)
+                stopFunc()
+              case t: Throwable =>
+                if (failureCount.getAndIncrement() < 10) {
+                  LOG.warn("Failed to make heartbeat for {} times", failureCount.get, t)
+                } else {
+                  LOG.error("Failed to make heartbeat for {} times. Terminating the execution", failureCount.get)
+                  stopFunc()
+                }
+            }
           }
-        }
-      }, HEARTBEAT_INTERVAL_SECONDS, TimeUnit.SECONDS)
+        }, HEARTBEAT_INTERVAL_SECONDS, TimeUnit.SECONDS)
+      }
 
       new Cancellable {
         override def cancel() = {
+          credentialsUpdater.foreach(updater => {
+            if (updater.isRunning) {
+              updater.stopAndWait()
+            }
+          })
+
           executor.shutdownNow
           // Wait for the last heartbeat to complete
           executor.awaitTermination(5L, TimeUnit.SECONDS)
@@ -210,6 +230,84 @@ object SparkMainWrapper {
         LOG.info("Stopping Spark program upon receiving stop command")
         stopFunc()
       case notSupported => LOG.warn("Ignoring unsupported command {}", notSupported)
+    }
+  }
+
+  /**
+    * Creates a [[co.cask.cdap.app.runtime.spark.SparkCredentialsUpdater]] for user Credentials updates.
+    */
+  private def createCredentialsUpdater(hConf: Configuration,
+                                       client: SparkExecutionClient): Option[SparkCredentialsUpdater] = {
+    try {
+      // This env variable is set by Spark for all known Spark versions
+      // If it is missing, exception will be thrown
+      val stagingDir = sys.env("SPARK_YARN_STAGING_DIR")
+      val lf = new FileContextLocationFactory(hConf)
+      val credentialsDir =
+        if (stagingDir.startsWith("/")) {
+          lf.create(stagingDir)
+        } else {
+          lf.getHomeLocation.append(stagingDir)
+        }
+
+      val sparkConf = new SparkConf
+      val updateIntervalMs = sparkConf.getLong("spark.yarn.token.renewal.interval", -1L)
+      if (updateIntervalMs <= 0) {
+        return None
+      }
+
+      val daysToKeepFiles = sparkConf.getInt("spark.yarn.credentials.file.retention.days", 5)
+      val numFilesToKeep = sparkConf.getInt("spark.yarn.credentials.file.retention.count", 5)
+      val credentialsFile = credentialsDir.append("credentials-" + UUID.randomUUID().toString)
+
+      // Update this property so that the executor will pick it up. It can't get set from the client side,
+      // otherwise the AM process will try to look for keytab file
+      SparkRuntimeEnv.setProperty("spark.yarn.credentials.file", credentialsFile.toURI.toString)
+      Some(new SparkCredentialsUpdater(createCredentialsSupplier(client, credentialsDir), credentialsDir,
+                                       credentialsFile.getName, updateIntervalMs,
+                                       TimeUnit.DAYS.toMillis(daysToKeepFiles), numFilesToKeep))
+    } catch {
+      case t: Throwable => {
+        LOG.warn("Failed to create credentials updater. Credentials update disabled", t)
+        None
+      }
+    }
+  }
+
+  /**
+    * Creates a [[com.google.common.base.Supplier]] to supply [[org.apache.hadoop.security.Credentials]] for update.
+    */
+  private def createCredentialsSupplier(client: SparkExecutionClient,
+                                        credentialsDir: Location): Supplier[Credentials] = {
+    new Supplier[Credentials] {
+      override def get() = {
+        // Request for the credentials to be written to a temp location
+        val tmpLocation = credentialsDir.append("fetch-credentials-" + UUID.randomUUID().toString + ".tmp")
+        try {
+          client.writeCredentials(tmpLocation)
+
+          // Decode the credentials, update the credentials of the current user and return it
+          val credentials = new Credentials()
+          val input = new DataInputStream(tmpLocation.getInputStream)
+          try {
+            credentials.readTokenStorageStream(input)
+            UserGroupInformation.getCurrentUser.addCredentials(credentials)
+            LOG.debug("Credentials updated: {}", credentials.getAllTokens)
+            credentials
+          } finally {
+            input.close()
+          }
+        } finally {
+          try {
+            if (!tmpLocation.delete()) {
+              LOG.warn("Failed to delete temporary location {}", tmpLocation)
+            }
+          } catch {
+            case t: Throwable => LOG.warn("Exception raised when deleting temporary location {}",
+                                          tmpLocation.asInstanceOf[Any], t.asInstanceOf[Any])
+          }
+        }
+      }
     }
   }
 }

@@ -285,6 +285,15 @@ li.versions {
     top: 6px;
 }
 
+/* -- Fix menu display on Firefox ------------------------- */
+
+@-moz-document url-prefix() { 
+    li.versions {
+        margin-left: -165px;
+        top: -1px;
+    }
+}
+
 div.topic {
     background-color: #eee;
 }

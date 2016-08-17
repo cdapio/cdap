@@ -51,7 +51,7 @@ public class AppUsingSecureStore extends AbstractApplication {
   public static final String STREAM_NAME = "testStream";
   public static final String KEY = "key";
   public static final String VALUE = "value";
-  private static final String NAMESPACE = "namespace";
+  private static final String NAMESPACE = "testspace";
 
   @Override
   public void configure() {
@@ -62,7 +62,7 @@ public class AppUsingSecureStore extends AbstractApplication {
     addSpark(new SparkSecureStoreProgram());
   }
 
-  public static class SecureStoreService extends AbstractService {
+  private static class SecureStoreService extends AbstractService {
     @Override
     protected void configure() {
       setName(SERVICE_NAME);
@@ -81,34 +81,34 @@ public class AppUsingSecureStore extends AbstractApplication {
 
     @Path("/put")
     @PUT
-    public void put(HttpServiceRequest request, HttpServiceResponder responder) throws IOException {
+    public void put(HttpServiceRequest request, HttpServiceResponder responder) throws Exception {
       byte[] value = new byte[request.getContent().remaining()];
       request.getContent().get(value);
-      getContext().getAdmin().putSecureData(namespace, KEY, value, "", new HashMap<String, String>());
+      getContext().getAdmin().putSecureData(namespace, KEY, new String(value), "", new HashMap<String, String>());
       responder.sendStatus(200);
     }
 
     @Path("/get")
     @GET
-    public void get(HttpServiceRequest request, HttpServiceResponder responder) throws IOException {
+    public void get(HttpServiceRequest request, HttpServiceResponder responder) {
       try {
         byte[] bytes = getContext().getSecureData(namespace, KEY).get();
         responder.sendString(new String(bytes));
-      } catch (IOException e) {
+      } catch (Exception e) {
         responder.sendError(500, e.getMessage());
       }
     }
 
     @Path("/list")
     @GET
-    public void list(HttpServiceRequest request, HttpServiceResponder responder) throws IOException {
+    public void list(HttpServiceRequest request, HttpServiceResponder responder) throws Exception {
       String name = getContext().listSecureData(namespace).get(0).getName();
       responder.sendString(name);
     }
 
     @Path("/delete")
     @GET
-    public void delete(HttpServiceRequest request, HttpServiceResponder responder) throws IOException {
+    public void delete(HttpServiceRequest request, HttpServiceResponder responder) throws Exception {
       getContext().getAdmin().deleteSecureData(namespace, KEY);
       responder.sendStatus(200);
     }
@@ -127,7 +127,7 @@ public class AppUsingSecureStore extends AbstractApplication {
     public void run(JavaSparkExecutionContext sec) throws Exception {
       final SecureStore secureStore = sec.getSecureStore();
       // Test secure store apis
-      sec.getAdmin().putSecureData(NAMESPACE, KEY, VALUE.getBytes(), "", new HashMap<String, String>());
+      sec.getAdmin().putSecureData(NAMESPACE, KEY, VALUE, "", new HashMap<String, String>());
       Assert.assertEquals(new String(sec.getSecureData(NAMESPACE, KEY).get()), VALUE);
       Assert.assertEquals(new String(secureStore.getSecureData(NAMESPACE, KEY).get()), VALUE);
       sec.listSecureData(NAMESPACE);

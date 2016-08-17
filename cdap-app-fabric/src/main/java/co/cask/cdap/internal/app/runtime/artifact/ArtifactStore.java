@@ -998,7 +998,7 @@ public class ArtifactStore {
     private final NamespaceId namespace;
     private final String className;
 
-    public AppClassKey(NamespaceId namespace, String className) {
+    AppClassKey(NamespaceId namespace, String className) {
       this.namespace = namespace;
       this.className = className;
     }
@@ -1088,7 +1088,7 @@ public class ArtifactStore {
     private final URI locationURI;
     private final ArtifactMeta meta;
 
-    public ArtifactData(Location location, ArtifactMeta meta) {
+    ArtifactData(Location location, ArtifactMeta meta) {
       this.locationURI = location.toURI();
       this.meta = meta;
     }
@@ -1100,7 +1100,7 @@ public class ArtifactStore {
     private final ArtifactRange usableBy;
     private final URI artifactLocationURI;
 
-    public PluginData(PluginClass pluginClass, ArtifactRange usableBy, Location artifactLocation) {
+    PluginData(PluginClass pluginClass, ArtifactRange usableBy, Location artifactLocation) {
       this.pluginClass = pluginClass;
       this.usableBy = usableBy;
       this.artifactLocationURI = artifactLocation.toURI();
@@ -1112,7 +1112,7 @@ public class ArtifactStore {
     private final ApplicationClass appClass;
     private final URI artifactLocationURI;
 
-    public AppData(ApplicationClass appClass, Location artifactLocation) {
+    AppData(ApplicationClass appClass, Location artifactLocation) {
       this.appClass = appClass;
       this.artifactLocationURI = artifactLocation.toURI();
     }

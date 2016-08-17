@@ -122,7 +122,7 @@ class HydratorPlusPlusHydratorService {
       connections: connections
     };
   }
-  fetchBackendProperties(node, appType) {
+  fetchBackendProperties(node, appType, artifactVersion) {
     var defer = this.$q.defer();
 
     // This needs to pass on a scope always. Right now there is no cleanup
@@ -130,7 +130,7 @@ class HydratorPlusPlusHydratorService {
     var params = {
       namespace: this.$state.params.namespace,
       pipelineType: appType,
-      version: this.$rootScope.cdapVersion,
+      version: artifactVersion || this.$rootScope.cdapVersion,
       extensionType: node.type,
       pluginName: node.plugin.name
     };
@@ -290,6 +290,8 @@ class HydratorPlusPlusHydratorService {
         console.log('ERROR: Parsing schema JSON ', e);
         return schema;
       }
+    } else if (schema === null || typeof schema === 'undefined' ) {
+      return '';
     } else {
       outputSchema = angular.copy(schema);
     }

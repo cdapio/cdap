@@ -182,7 +182,7 @@ public class UpgradeTool {
             // the DataSetsModules().getDistributedModules() binds to RemoteDatasetFramework so override that to
             // the same InMemoryDatasetFramework
             bind(DatasetFramework.class)
-              .annotatedWith(Names.named(DataSetsModules.BASIC_DATASET_FRAMEWORK))
+              .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
               .to(DatasetFramework.class);
             install(new FactoryModuleBuilder()
                       .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
@@ -208,7 +208,7 @@ public class UpgradeTool {
       new NamespaceStoreModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),
       new AuthorizationModule(),
-      new AuthorizationEnforcementModule().getDistributedModules(),
+      new AuthorizationEnforcementModule().getMasterModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

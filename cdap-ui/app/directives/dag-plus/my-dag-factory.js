@@ -60,6 +60,13 @@ angular.module(PKG.name + '.commons')
       connectorStyle: connectorStyle
     }, commonSettings);
 
+    var rectEndpoint = {
+      width: 7,
+      height: 7,
+      fillStyle: '#666e82',
+      strokeStyle: '#666e82'
+    };
+
     function getSettings() {
       var settings = {
         default: defaultSettings,
@@ -76,18 +83,25 @@ angular.module(PKG.name + '.commons')
 
       settings.sourceOrigin.anchor.push('sourceAnchor');
       settings.sourceTarget.anchor.push('sourceAnchor');
+      settings.sourceTarget.endpoint = 'Rectangle';
+      settings.sourceTarget.endpointStyle = angular.copy(rectEndpoint);
 
       settings.transformOrigin.anchor.push('transformAnchor');
       settings.transformTarget.anchor.push('transformAnchor');
 
       settings.sinkOrigin.anchor.push('sinkAnchor');
       settings.sinkTarget.anchor.push('sinkAnchor');
+      settings.sinkOrigin.endpoint = 'Rectangle';
+      settings.sinkOrigin.endpointStyle = angular.copy(rectEndpoint);
 
       settings.actionOrigin.anchor.push('actionAnchor');
       settings.actionTarget.anchor.push('actionAnchor');
-
       settings.actionOrigin.connectorStyle['stroke-dasharray'] = [2,2];
       settings.sinkOrigin.connectorStyle['stroke-dasharray'] = [2,2];
+      settings.actionOrigin.endpoint = 'Rectangle';
+      settings.actionOrigin.endpointStyle = angular.copy(rectEndpoint);
+      settings.actionTarget.endpoint = 'Rectangle';
+      settings.actionTarget.endpointStyle = angular.copy(rectEndpoint);
 
       return settings;
     }

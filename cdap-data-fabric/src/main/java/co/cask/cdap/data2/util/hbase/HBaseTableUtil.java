@@ -116,9 +116,7 @@ public abstract class HBaseTableUtil {
   protected NamespaceQueryAdmin namespaceQueryAdmin;
 
   public void setCConf(CConfiguration cConf) {
-    if (cConf != null) {
-      this.tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
-    }
+    this.tablePrefix = getTablePrefix(cConf);
   }
 
   public void setNamespaceQueryAdmin(NamespaceQueryAdmin namespaceQueryAdmin) {
@@ -302,6 +300,14 @@ public abstract class HBaseTableUtil {
 
   // For simplicity we allow max 255 splits per bucket for now
   private static final int MAX_SPLIT_COUNT_PER_BUCKET = 0xff;
+
+  public static void setTablePrefix(HTableDescriptorBuilder tableDescriptorBuilder, CConfiguration cConf) {
+    tableDescriptorBuilder.setValue(Constants.Dataset.TABLE_PREFIX, getTablePrefix(cConf));
+  }
+
+  private static String getTablePrefix(@Nullable CConfiguration cConf) {
+    return cConf == null ? null : cConf.get(Constants.Dataset.TABLE_PREFIX);
+  }
 
   public static void setVersion(HTableDescriptorBuilder tableDescriptorBuilder) {
     tableDescriptorBuilder.setValue(CDAP_VERSION, ProjectInfo.getVersion().toString());

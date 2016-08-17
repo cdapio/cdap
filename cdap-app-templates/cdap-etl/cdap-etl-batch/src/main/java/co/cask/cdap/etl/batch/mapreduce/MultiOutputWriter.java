@@ -31,7 +31,7 @@ class MultiOutputWriter<KEY_OUT, VAL_OUT> extends OutputWriter<KEY_OUT, VAL_OUT>
   // sink name -> outputs for that sink
   private final Map<String, SinkOutput> sinkOutputs;
 
-  public MultiOutputWriter(MapReduceTaskContext<KEY_OUT, VAL_OUT> context, Map<String, SinkOutput> sinkOutputs) {
+  MultiOutputWriter(MapReduceTaskContext<KEY_OUT, VAL_OUT> context, Map<String, SinkOutput> sinkOutputs) {
     super(context);
     this.sinkOutputs = sinkOutputs;
   }

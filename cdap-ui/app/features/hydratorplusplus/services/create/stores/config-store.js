@@ -15,9 +15,10 @@
  */
 
 class HydratorPlusPlusConfigStore {
-  constructor(HydratorPlusPlusConfigDispatcher, HydratorPlusPlusCanvasFactory, GLOBALS, mySettings, HydratorPlusPlusConsoleActions, $stateParams, NonStorePipelineErrorFactory, HydratorPlusPlusHydratorService, $q, HydratorPlusPlusPluginConfigFactory, uuid, $state, HYDRATOR_DEFAULT_VALUES){
+  constructor(HydratorPlusPlusConfigDispatcher, HydratorPlusPlusCanvasFactory, GLOBALS, mySettings, HydratorPlusPlusConsoleActions, $stateParams, NonStorePipelineErrorFactory, HydratorPlusPlusHydratorService, $q, HydratorPlusPlusPluginConfigFactory, uuid, $state, HYDRATOR_DEFAULT_VALUES, myHelpers){
     this.state = {};
     this.mySettings = mySettings;
+    this.myHelpers = myHelpers;
     this.HydratorPlusPlusConsoleActions = HydratorPlusPlusConsoleActions;
     this.HydratorPlusPlusCanvasFactory = HydratorPlusPlusCanvasFactory;
     this.GLOBALS = GLOBALS;
@@ -38,6 +39,11 @@ class HydratorPlusPlusConfigStore {
     this.hydratorPlusPlusConfigDispatcher.register('onPluginEdit', this.editNodeProperties.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSetSchedule', this.setSchedule.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSetInstance', this.setInstance.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onSetBatchInterval', this.setBatchInterval.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onSetVirtualCores', this.setVirtualCores.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onSetMemoryMB', this.setMemoryMB.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onSetDriverVirtualCores', this.setDriverVirtualCores.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onSetDriverMemoryMB', this.setDriverMemoryMB.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSaveAsDraft', this.saveAsDraft.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onInitialize', this.init.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSchemaPropagationDownStream', this.propagateIOSchemas.bind(this));
@@ -46,10 +52,11 @@ class HydratorPlusPlusConfigStore {
     this.hydratorPlusPlusConfigDispatcher.register('onDeletePostAction', this.deletePostAction.bind(this));
   }
   registerOnChangeListener(callback) {
-    let index = this.changeListeners.push(callback);
-    // un-subscribe for listners.
+    // index of the listener to be removed while un-subscribing
+    let index = this.changeListeners.push(callback) - 1;
+    // un-subscribe for listeners.
     return () => {
-      this.changeListeners.splice(index-1, 1);
+      this.changeListeners.splice(index, 1);
     };
   }
   emitChange() {
@@ -69,13 +76,15 @@ class HydratorPlusPlusConfigStore {
       description: '',
       name: '',
     };
-    angular.extend(this.state, {config: this.getDefaultConfig()});
+    Object.assign(this.state, { config: this.getDefaultConfig() });
 
     // This will be eventually used when we just pass on a config to the store to draw the dag.
     if (config) {
       angular.extend(this.state, config);
       this.setArtifact(this.state.artifact);
       this.setEngine(this.state.config.engine);
+      this.setDriverResources(this.state.config.driverResources);
+      this.setResources(this.state.config.resources);
     }
     this.__defaultState = angular.copy(this.state);
   }
@@ -87,6 +96,8 @@ class HydratorPlusPlusConfigStore {
   }
   getDefaultConfig() {
     return {
+      resources: angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources),
+      driverResources: angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources),
       connections: [],
       comments: [],
       postActions: []
@@ -147,7 +158,7 @@ class HydratorPlusPlusConfigStore {
       node.plugin.properties = stripFormatSchemas(node.watchProperty, node.outputSchemaProperty, angular.copy(node.plugin.properties));
 
       let configObj = {
-        name: node.plugin.label,
+        name: node.plugin.label || node.name || node.plugin.name,
         plugin: {
           // Solely adding id and _backendProperties for validation.
           // Should be removed while saving it to backend.
@@ -179,20 +190,24 @@ class HydratorPlusPlusConfigStore {
 
     connections.forEach( connection => {
       let fromConnectionName, toConnectionName;
+      let fromPluginName, toPluginName;
 
       if (nodesMap[connection.from]) {
-        fromConnectionName = nodesMap[connection.from].plugin.label;
+        fromPluginName = nodesMap[connection.from].plugin.label || nodesMap[connection.from].name;
+        fromConnectionName = fromPluginName;
         addPluginToConfig(nodesMap[connection.from], connection.from);
       } else {
         fromConnectionName = this.state.__ui__.nodes.filter( n => n.name === connection.from)[0];
-        fromConnectionName = fromConnectionName.plugin.label;
+        fromPluginName = fromConnectionName.plugin.label || fromConnectionName.name;
+        fromConnectionName = fromPluginName;
       }
       if (nodesMap[connection.to]) {
-        toConnectionName = nodesMap[connection.to].plugin.label;
+        toConnectionName = nodesMap[connection.to].plugin.label || nodesMap[connection.to].name;
         addPluginToConfig(nodesMap[connection.to], connection.to);
       } else {
         toConnectionName = this.state.__ui__.nodes.filter( n => n.name === connection.to)[0];
-        toConnectionName = toConnectionName.plugin.label;
+        toPluginName = toConnectionName.plugin.label || toConnectionName.name;
+        toConnectionName = toPluginName;
       }
       connection.from = fromConnectionName;
       connection.to = toConnectionName;
@@ -203,8 +218,26 @@ class HydratorPlusPlusConfigStore {
     if ( this.GLOBALS.etlBatchPipelines.indexOf(appType) !== -1) {
       config.schedule = this.getSchedule();
       config.engine = this.getEngine();
+      config.resources = {
+        memoryMB: this.getMemoryMB(),
+        virtualCores: this.getVirtualCores()
+      };
+      config.driverResources = {
+        memoryMB: this.getDriverMemoryMB(),
+        virtualCores: this.getDriverVirtualCores()
+      };
     } else if (appType === this.GLOBALS.etlRealtime) {
       config.instances = this.getInstance();
+    } else if (this.GLOBALS.etlDataStreams) {
+      config.batchInterval = this.getBatchInterval();
+      config.resources = {
+        memoryMB: this.getMemoryMB(),
+        virtualCores: this.getVirtualCores()
+      };
+      config.driverResources = {
+        memoryMB: this.getDriverMemoryMB(),
+        virtualCores: this.getDriverVirtualCores()
+      };
     }
 
     if (this.state.description) {
@@ -525,7 +558,7 @@ class HydratorPlusPlusConfigStore {
       return this.GLOBALS.pluginConvert[node.type] === 'action';
     }).length;
 
-    if (countActions !== nodes.length) {
+    if (countActions !== nodes.length || nodes.length === 0) {
       daglevelvalidation.forEach( validationFn => {
         validationFn(nodes, (err, node) => {
           if (err) {
@@ -592,16 +625,75 @@ class HydratorPlusPlusConfigStore {
       });
     }
 
+    errorFactory.hasValidResources(this.state.config, (err) => {
+      if (err) {
+        isStateValid = false;
+        errors.push({
+          type: 'error',
+          content: this.GLOBALS.en.hydrator.studio.error[err]
+        });
+      }
+    });
+    errorFactory.hasValidDriverResources(this.state.config, (err) => {
+      if (err) {
+        isStateValid = false;
+        errors.push({
+          type: 'error',
+          content: this.GLOBALS.en.hydrator.studio.error[err]
+        });
+      }
+    });
+
     if (errors.length && isShowConsoleMessage) {
       this.HydratorPlusPlusConsoleActions.addMessage(errors);
     }
     return isStateValid;
+  }
+  getBatchInterval() {
+    return this.getState().config.batchInterval;
+  }
+  setBatchInterval(interval) {
+    this.state.config.batchInterval = interval;
   }
   getInstance() {
     return this.getState().config.instances;
   }
   setInstance(instances) {
     this.state.config.instances = instances;
+  }
+  setDriverResources(driverResources) {
+    this.state.config.driverResources = driverResources || angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources);
+  }
+  setResources(resources) {
+    this.state.config.resources = resources || angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources);
+  }
+  setDriverVirtualCores(virtualCores) {
+    this.state.config.driverResources = this.state.config.driverResources || {};
+    this.state.config.driverResources.virtualCores = virtualCores;
+  }
+  getDriverVirtualCores() {
+    return this.myHelpers.objectQuery(this.state, 'config', 'driverResources', 'virtualCores');
+  }
+  getDriverMemoryMB() {
+    return this.myHelpers.objectQuery(this.state, 'config', 'driverResources', 'memoryMB');
+  }
+  setDriverMemoryMB(memoryMB) {
+    this.state.config.driverResources = this.state.config.driverResources || {};
+    this.state.config.driverResources.memoryMB = memoryMB;
+  }
+  setVirtualCores(virtualCores) {
+    this.state.config.resources = this.state.config.resources || {};
+    this.state.config.resources.virtualCores = virtualCores;
+  }
+  getVirtualCores() {
+    return this.myHelpers.objectQuery(this.state, 'config', 'resources', 'virtualCores');
+  }
+  getMemoryMB() {
+    return this.myHelpers.objectQuery(this.state, 'config', 'resources', 'memoryMB');
+  }
+  setMemoryMB(memoryMB) {
+    this.state.config.resources = this.state.config.resources || {};
+    this.state.config.resources.memoryMB = memoryMB;
   }
 
   setComments(comments) {
@@ -696,6 +788,6 @@ class HydratorPlusPlusConfigStore {
   }
 }
 
-HydratorPlusPlusConfigStore.$inject = ['HydratorPlusPlusConfigDispatcher', 'HydratorPlusPlusCanvasFactory', 'GLOBALS', 'mySettings', 'HydratorPlusPlusConsoleActions', '$stateParams', 'NonStorePipelineErrorFactory', 'HydratorPlusPlusHydratorService', '$q', 'HydratorPlusPlusPluginConfigFactory', 'uuid', '$state', 'HYDRATOR_DEFAULT_VALUES'];
+HydratorPlusPlusConfigStore.$inject = ['HydratorPlusPlusConfigDispatcher', 'HydratorPlusPlusCanvasFactory', 'GLOBALS', 'mySettings', 'HydratorPlusPlusConsoleActions', '$stateParams', 'NonStorePipelineErrorFactory', 'HydratorPlusPlusHydratorService', '$q', 'HydratorPlusPlusPluginConfigFactory', 'uuid', '$state', 'HYDRATOR_DEFAULT_VALUES', 'myHelpers'];
 angular.module(`${PKG.name}.feature.hydratorplusplus`)
   .service('HydratorPlusPlusConfigStore', HydratorPlusPlusConfigStore);

@@ -31,7 +31,7 @@
   </div>
   <div class="col-xs-10">
     <div class="text-center" ng-if="loadingPrev">
-      <span class="fa fa-refresh fa-spin"></span> Loading Logs
+      <span class="fa fa-refresh fa-spin"></span> Loading Logs...
     </div>
     <div class="terminal" infinite-scroll-next="next()"
     infinite-scroll-prev="prev()" infinite-scroll>
@@ -41,10 +41,10 @@
         </li>
       </ul>
       <div ng-if="!activeFilter.entries.length && !loading">
-        No logs to display
+        No logs to display.
       </div>
       <div class="text-center" ng-if="loadingNext">
-        <span class="fa fa-refresh fa-spin"></span> Loading Logs
+        <span class="fa fa-refresh fa-spin"></span> Loading Logs...
       </div>
     </div>
 

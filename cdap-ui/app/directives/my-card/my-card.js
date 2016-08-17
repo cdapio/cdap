@@ -19,7 +19,8 @@ angular.module(PKG.name + '.commons')
     return {
       restrict: 'E',
       scope: {
-        'title': '@'
+        'title': '@',
+        'tooltip': '=?'
       },
       transclude: true,
       bindToController: true,

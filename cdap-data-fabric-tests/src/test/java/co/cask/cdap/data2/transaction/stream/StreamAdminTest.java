@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -38,6 +39,7 @@ import co.cask.cdap.proto.audit.payload.access.AccessPayload;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
@@ -55,6 +57,7 @@ import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -62,6 +65,8 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -97,6 +102,12 @@ public abstract class StreamAdminTest {
     LocationFactory locationFactory = new LocalLocationFactory(rootLocationFactoryPath);
     Location authorizerJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, authorizerJar.toURI().getPath());
+  }
+
+  @Before
+  public void beforeTest() throws Exception {
+    revokeAndAssertSuccess(new NamespaceId(FOO_NAMESPACE), USER, EnumSet.allOf(Action.class));
+    revokeAndAssertSuccess(new NamespaceId(OTHER_NAMESPACE), USER, EnumSet.allOf(Action.class));
   }
 
   @Test
@@ -183,7 +194,8 @@ public abstract class StreamAdminTest {
     streamAdmin.getConfig(stream);
     streamAdmin.getProperties(stream);
 
-    // Now revoke access to the user to the stream
+    // Now revoke access to the user to the stream and to the namespace
+    revokeAndAssertSuccess(new NamespaceId(FOO_NAMESPACE), USER, ImmutableSet.of(Action.WRITE));
     revokeAndAssertSuccess(stream.toEntityId(), USER, ImmutableSet.of(Action.ALL));
     streamAdmin.getConfig(stream);
 
@@ -242,6 +254,48 @@ public abstract class StreamAdminTest {
   }
 
   @Test
+  public void testListStreams() throws Exception {
+    StreamAdmin streamAdmin = getStreamAdmin();
+    NamespaceId nsId = new NamespaceId(FOO_NAMESPACE);
+    grantAndAssertSuccess(nsId, USER, EnumSet.allOf(Action.class));
+    StreamId s1 = nsId.stream("s1");
+    StreamId s2 = nsId.stream("s2");
+    List<StreamSpecification> specifications = streamAdmin.listStreams(nsId);
+    Assert.assertTrue(specifications.isEmpty());
+    streamAdmin.create(s1.toId());
+    streamAdmin.create(s2.toId());
+    specifications = streamAdmin.listStreams(nsId);
+    Assert.assertEquals(2, specifications.size());
+
+    // Revoke all privileges on s1.
+    revokeAndAssertSuccess(s1, USER, EnumSet.allOf(Action.class));
+
+    // User should still be able to list both streams because it has all privilege on the parent
+    specifications = streamAdmin.listStreams(nsId);
+    Assert.assertEquals(2, specifications.size());
+    Assert.assertEquals(s2.getStream(), specifications.get(0).getName());
+
+    // Revoke all privileges on s2.
+    revokeAndAssertSuccess(s2, USER, EnumSet.allOf(Action.class));
+
+    // User should still be able to list both streams because it has all privilege on the parent
+    specifications = streamAdmin.listStreams(nsId);
+    Assert.assertEquals(2, specifications.size());
+
+    // Revoke all privileges on the namespace
+    revokeAndAssertSuccess(nsId, USER, EnumSet.allOf(Action.class));
+
+    // User shouldn't be able to see any streams
+    specifications = streamAdmin.listStreams(nsId);
+    Assert.assertTrue(specifications.isEmpty());
+
+    grantAndAssertSuccess(s1, USER, ImmutableSet.of(Action.ALL));
+    grantAndAssertSuccess(s2, USER, ImmutableSet.of(Action.ALL));
+    streamAdmin.drop(s1.toId());
+    streamAdmin.drop(s2.toId());
+  }
+
+  @Test
   public void testDropAllInNamespace() throws Exception {
     StreamAdmin streamAdmin = getStreamAdmin();
     grantAndAssertSuccess(new NamespaceId(FOO_NAMESPACE), USER, ImmutableSet.of(Action.WRITE, Action.ADMIN));
@@ -281,6 +335,8 @@ public abstract class StreamAdminTest {
 
   @Test
   public void testAuditPublish() throws Exception {
+    grantAndAssertSuccess(new NamespaceId(FOO_NAMESPACE), USER, EnumSet.of(Action.ALL));
+
     // clear existing all messages
     getInMemoryAuditPublisher().popMessages();
 
@@ -366,9 +422,10 @@ public abstract class StreamAdminTest {
     Authorizer authorizer = getAuthorizer();
     Set<Privilege> existingPrivileges = authorizer.listPrivileges(principal);
     authorizer.revoke(entityId, principal, actions);
+    Set<Privilege> revokedPrivileges = new HashSet<>();
     for (Action action : actions) {
-      existingPrivileges.remove(new Privilege(entityId, action));
+      revokedPrivileges.add(new Privilege(entityId, action));
     }
-    Assert.assertEquals(existingPrivileges, authorizer.listPrivileges(principal));
+    Assert.assertEquals(Sets.difference(existingPrivileges, revokedPrivileges), authorizer.listPrivileges(principal));
   }
 }

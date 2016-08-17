@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,7 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.proto.SystemServiceLiveInfo;
+import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.SystemServiceMeta;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.Assert;
@@ -50,10 +50,12 @@ public class MonitorClientTestRun extends ClientTestBase {
     String serviceStatus = monitorClient.getSystemServiceStatus(someService);
     Assert.assertEquals("OK", serviceStatus);
 
-    SystemServiceLiveInfo systemServiceLiveInfo = monitorClient.getSystemServiceLiveInfo(someService);
-    int systemServiceInstances = monitorClient.getSystemServiceInstances(someService);
+    List<Containers.ContainerInfo> containers = monitorClient.getSystemServiceLiveInfo(someService).getContainers();
+    Assert.assertNotNull(containers);
+    Assert.assertTrue(containers.isEmpty());
+    Assert.assertEquals(0, monitorClient.getSystemServiceInstances(someService));
     monitorClient.setSystemServiceInstances(someService, 1);
-
-    Assert.assertEquals(true, monitorClient.allSystemServicesOk());
+    monitorClient.getSystemServiceInstances(someService);
+    Assert.assertTrue(monitorClient.allSystemServicesOk());
   }
 }

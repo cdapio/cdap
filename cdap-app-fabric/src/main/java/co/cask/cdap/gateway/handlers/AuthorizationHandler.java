@@ -34,7 +34,9 @@ import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.proto.security.RevokeRequest;
 import co.cask.cdap.proto.security.Role;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Objects;
@@ -67,19 +69,25 @@ import javax.ws.rs.PathParam;
 public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
 
   private static final Logger AUDIT_LOG = LoggerFactory.getLogger("authorization-access");
-  private final AuthorizerInstantiator authorizerInstantiator;
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
     .create();
   private static final Type PRIVILEGE_SET_TYPE = new TypeToken<Set<Privilege>>() { }.getType();
+
   private final boolean authenticationEnabled;
   private final boolean authorizationEnabled;
+  private final Authorizer authorizer;
+  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AuthenticationContext authenticationContext;
   private final EntityExistenceVerifier entityExistenceVerifier;
 
   @Inject
   AuthorizationHandler(AuthorizerInstantiator authorizerInstantiator, CConfiguration cConf,
+                       AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
                        EntityExistenceVerifier entityExistenceVerifier) {
-    this.authorizerInstantiator = authorizerInstantiator;
+    this.authorizer = authorizerInstantiator.get();
+    this.authorizationEnforcer = authorizationEnforcer;
+    this.authenticationContext = authenticationContext;
     this.authenticationEnabled = cConf.getBoolean(Constants.Security.ENABLED);
     this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
     this.entityExistenceVerifier = entityExistenceVerifier;
@@ -95,9 +103,8 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
 
     Set<Action> actions = request.getActions() == null ? EnumSet.allOf(Action.class) : request.getActions();
     // enforce that the user granting access has admin privileges on the entity
-    authorizerInstantiator.get().enforce(request.getEntity(), SecurityRequestContext.toPrincipal(),
-                                                Action.ADMIN);
-    authorizerInstantiator.get().grant(request.getEntity(), request.getPrincipal(), actions);
+    authorizationEnforcer.enforce(request.getEntity(), authenticationContext.getPrincipal(), Action.ADMIN);
+    authorizer.grant(request.getEntity(), request.getPrincipal(), actions);
 
     httpResponder.sendStatus(HttpResponseStatus.OK);
     createLogEntry(httpRequest, request, HttpResponseStatus.OK);
@@ -112,13 +119,12 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     verifyAuthRequest(request);
 
     // enforce that the user revoking access has admin privileges on the entity
-    authorizerInstantiator.get().enforce(request.getEntity(), SecurityRequestContext.toPrincipal(),
-                                                Action.ADMIN);
+    authorizationEnforcer.enforce(request.getEntity(), authenticationContext.getPrincipal(), Action.ADMIN);
     if (request.getPrincipal() == null && request.getActions() == null) {
-      authorizerInstantiator.get().revoke(request.getEntity());
+      authorizer.revoke(request.getEntity());
     } else {
       Set<Action> actions = request.getActions() == null ? EnumSet.allOf(Action.class) : request.getActions();
-      authorizerInstantiator.get().revoke(request.getEntity(), request.getPrincipal(), actions);
+      authorizer.revoke(request.getEntity(), request.getPrincipal(), actions);
     }
 
     httpResponder.sendStatus(HttpResponseStatus.OK);
@@ -132,8 +138,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("principal-name") String principalName) throws Exception {
     ensureSecurityEnabled();
     Principal principal = new Principal(principalName, Principal.PrincipalType.valueOf(principalType.toUpperCase()));
-    httpResponder.sendJson(HttpResponseStatus.OK, authorizerInstantiator.get().listPrivileges(principal),
-                           PRIVILEGE_SET_TYPE, GSON);
+    httpResponder.sendJson(HttpResponseStatus.OK, authorizer.listPrivileges(principal), PRIVILEGE_SET_TYPE, GSON);
     createLogEntry(httpRequest, null, HttpResponseStatus.OK);
   }
 
@@ -147,7 +152,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   public void createRole(HttpRequest httpRequest, HttpResponder httpResponder,
                          @PathParam("role-name") String roleName) throws Exception {
     ensureSecurityEnabled();
-    authorizerInstantiator.get().createRole(new Role(roleName));
+    authorizer.createRole(new Role(roleName));
     httpResponder.sendStatus(HttpResponseStatus.OK);
     createLogEntry(httpRequest, null, HttpResponseStatus.OK);
   }
@@ -157,7 +162,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   public void dropRole(HttpRequest httpRequest, HttpResponder httpResponder,
                        @PathParam("role-name") String roleName) throws Exception {
     ensureSecurityEnabled();
-    authorizerInstantiator.get().dropRole(new Role(roleName));
+    authorizer.dropRole(new Role(roleName));
     httpResponder.sendStatus(HttpResponseStatus.OK);
     createLogEntry(httpRequest, null, HttpResponseStatus.OK);
   }
@@ -166,7 +171,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void listAllRoles(HttpRequest httpRequest, HttpResponder httpResponder) throws Exception {
     ensureSecurityEnabled();
-    httpResponder.sendJson(HttpResponseStatus.OK, authorizerInstantiator.get().listAllRoles());
+    httpResponder.sendJson(HttpResponseStatus.OK, authorizer.listAllRoles());
     createLogEntry(httpRequest, null, HttpResponseStatus.OK);
   }
 
@@ -177,7 +182,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("principal-name") String principalName) throws Exception {
     ensureSecurityEnabled();
     Principal principal = new Principal(principalName, Principal.PrincipalType.valueOf(principalType.toUpperCase()));
-    httpResponder.sendJson(HttpResponseStatus.OK, authorizerInstantiator.get().listRoles(principal));
+    httpResponder.sendJson(HttpResponseStatus.OK, authorizer.listRoles(principal));
     createLogEntry(httpRequest, null, HttpResponseStatus.OK);
   }
 
@@ -188,9 +193,8 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("principal-name") String principalName,
                                  @PathParam("role-name") String roleName) throws Exception {
     ensureSecurityEnabled();
-    authorizerInstantiator.get().addRoleToPrincipal(new Role(roleName),
-                                  new Principal(principalName,
-                                                Principal.PrincipalType.valueOf(principalType.toUpperCase())));
+    Principal principal = new Principal(principalName, Principal.PrincipalType.valueOf(principalType.toUpperCase()));
+    authorizer.addRoleToPrincipal(new Role(roleName), principal);
     httpResponder.sendStatus(HttpResponseStatus.OK);
     createLogEntry(httpRequest, null, HttpResponseStatus.OK);
   }
@@ -202,9 +206,8 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
                                       @PathParam("principal-name") String principalName,
                                       @PathParam("role-name") String roleName) throws Exception {
     ensureSecurityEnabled();
-    authorizerInstantiator.get().removeRoleFromPrincipal(new Role(roleName),
-                                       new Principal(principalName,
-                                                     Principal.PrincipalType.valueOf(principalType.toUpperCase())));
+    Principal principal = new Principal(principalName, Principal.PrincipalType.valueOf(principalType.toUpperCase()));
+    authorizer.removeRoleFromPrincipal(new Role(roleName), principal);
     httpResponder.sendStatus(HttpResponseStatus.OK);
     createLogEntry(httpRequest, null, HttpResponseStatus.OK);
   }
@@ -232,7 +235,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   private void createLogEntry(HttpRequest httpRequest, @Nullable AuthorizationRequest request,
                               HttpResponseStatus responseStatus) throws UnknownHostException {
     AuditLogEntry logEntry = new AuditLogEntry();
-    logEntry.setUserName(Objects.firstNonNull(SecurityRequestContext.getUserId(), "-"));
+    logEntry.setUserName(Objects.firstNonNull(authenticationContext.getPrincipal().getName(), "-"));
     logEntry.setClientIP(InetAddress.getByName(Objects.firstNonNull(SecurityRequestContext.getUserIP(), "0.0.0.0")));
     logEntry.setRequestLine(httpRequest.getMethod(), httpRequest.getUri(), httpRequest.getProtocolVersion());
     if (request != null) {

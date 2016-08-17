@@ -29,6 +29,10 @@ public class NamespaceAlreadyExistsException extends AlreadyExistsException {
     super(id);
     this.id = id;
   }
+  public NamespaceAlreadyExistsException(Id.Namespace id, String message) {
+    super(id, message);
+    this.id = id;
+  }
 
   public Id.Namespace getId() {
     return id;

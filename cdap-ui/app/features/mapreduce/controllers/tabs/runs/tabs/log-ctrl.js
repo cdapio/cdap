@@ -16,15 +16,12 @@
 
 angular.module(PKG.name + '.feature.mapreduce')
   .controller('MapreduceRunDetailLogsController', function ($scope, $state) {
-    if (!$scope.RunsController.runs.length) {
-      return;
-    }
 
     this.params = {
       namespace: $state.params.namespace,
       appId: $state.params.appId,
       programType: 'mapreduce',
       programId: $state.params.programId,
-      runId: $scope.RunsController.runs.selected.runid
+      runId: $scope.RunsController.runs.length ? $scope.RunsController.runs.selected.runid : ''
     };
   });

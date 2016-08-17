@@ -38,9 +38,8 @@ import java.util.Set;
  * Default implementation of the {@link CustomActionConfigurer}.
  */
 public final class DefaultCustomActionConfigurer extends DefaultPluginConfigurer implements CustomActionConfigurer {
-  private final String className;
-  private final Map<String, String> propertyFields;
-  private final Set<String> datasetFields;
+
+  private final CustomAction customAction;
 
   private String name;
   private String description;
@@ -49,16 +48,10 @@ public final class DefaultCustomActionConfigurer extends DefaultPluginConfigurer
   private DefaultCustomActionConfigurer(CustomAction customAction, Id.Namespace deployNamespace, Id.Artifact artifactId,
                                        ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
     super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
+    this.customAction = customAction;
     this.name = customAction.getClass().getSimpleName();
     this.description = "";
-    this.className = customAction.getClass().getName();
     this.properties = new HashMap<>();
-    this.propertyFields = new HashMap<>();
-    this.datasetFields = new HashSet<>();
-
-    Reflections.visit(customAction, customAction.getClass(), new PropertyFieldExtractor(propertyFields),
-                      new DataSetFieldExtractor(datasetFields));
-
   }
 
   @Override
@@ -80,10 +73,11 @@ public final class DefaultCustomActionConfigurer extends DefaultPluginConfigurer
   }
 
   private DefaultCustomActionSpecification createSpecification() {
-    Map<String, String> properties = new HashMap<>(this.properties);
-    properties.putAll(propertyFields);
-    Set<String> datasets = new HashSet<>(datasetFields);
-    return new DefaultCustomActionSpecification(className, name, description, properties, datasets);
+    Set<String> datasets = new HashSet<>();
+    Reflections.visit(customAction, customAction.getClass(), new PropertyFieldExtractor(properties),
+                      new DataSetFieldExtractor(datasets));
+    return new DefaultCustomActionSpecification(customAction.getClass().getName(), name,
+                                                description, properties, datasets);
   }
 
   public static CustomActionSpecification configureAction(CustomAction action, Id.Namespace deployNamespace,
