@@ -104,7 +104,7 @@ public class ArtifactRepository {
                             AuthenticationContext authenticationContext) {
     this.artifactStore = artifactStore;
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, programRunnerFactory);
-    this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory, impersonator);
+    this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory);
     this.systemArtifactDirs = new ArrayList<>();
     for (String dir : cConf.get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR).split(";")) {
       File file = new File(dir);
