@@ -20,7 +20,10 @@ import co.cask.cdap.api.annotation.Batch;
 import co.cask.cdap.api.annotation.Output;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.Tick;
+import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.InputContext;
@@ -40,6 +43,7 @@ public final class GenSinkApp2 extends AbstractApplication {
   public void configure() {
     setName("GenSinkApp");
     setDescription("GenSinkApp desc");
+    createDataset("table", KeyValueTable.class);
     addFlow(new GenSinkFlow());
   }
 
@@ -142,12 +146,20 @@ public final class GenSinkApp2 extends AbstractApplication {
   public static final class BatchSinkFlowlet extends AbstractFlowlet {
     private static final Logger LOG = LoggerFactory.getLogger(BatchSinkFlowlet.class);
 
-    @Batch(10)
+    @UseDataSet("table")
+    private KeyValueTable table;
+
+    @Batch(value = 10, key = "batch.size")
     @ProcessInput("batch")
     public void processBatch(Iterator<Integer> events) {
+      int batchSize = 0;
       while (events.hasNext()) {
         LOG.info("Iterator batch: {}", events.next().toString());
+        batchSize++;
       }
+
+      // Write the batch size to the table
+      table.write(Bytes.toBytes(batchSize), Bytes.toBytes(batchSize));
     }
   }
 }

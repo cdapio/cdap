@@ -29,9 +29,11 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.internal.app.queue.SingleItemQueueReader;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -152,9 +154,14 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
           Uninterruptibles.getUninterruptibly(processFuture, 30, TimeUnit.SECONDS);
         } catch (ExecutionException e) {
           LOG.error("Unexpected execution exception.", e);
+          // If the root cause is due to authorization error, then propagate the exception
+          Throwable rootCause = Throwables.getRootCause(e);
+          if (rootCause instanceof UnauthorizedException) {
+            throw (UnauthorizedException) rootCause;
+          }
         } catch (TimeoutException e) {
           // If in shutdown sequence, cancel the task by interrupting it.
-          // Otherwise, just keep waiting until it completess
+          // Otherwise, just keep waiting until it completes
           if (!isRunning()) {
             LOG.info("Flowlet {} takes longer than 30 seconds to quit. Force quitting.", flowletContext.getFlowletId());
             processFuture.cancel(true);
@@ -247,9 +254,16 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         } catch (Throwable e) {
           LOG.error("Fail to abort transaction: {}", flowletContext, e);
         }
+
+        if (Throwables.getRootCause(t) instanceof UnauthorizedException) {
+          throw t;
+        }
       }
     } catch (Throwable t) {
       LOG.error("Failed to start transaction.", t);
+      if (Throwables.getRootCause(t) instanceof UnauthorizedException) {
+        Throwables.propagate(t);
+      }
     }
 
     return false;

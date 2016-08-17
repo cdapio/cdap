@@ -32,7 +32,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -77,7 +76,7 @@ public class DefaultAuthorizationEnforcementService extends AbstractAuthorizatio
       return ALLOW_ALL;
     }
     Map<EntityId, Set<Action>> privileges = getPrivileges(principal);
-    final Set<EntityId> allowedEntities = privileges != null ? privileges.keySet() : new HashSet<EntityId>();
+    final Set<EntityId> allowedEntities = privileges != null ? privileges.keySet() : Collections.<EntityId>emptySet();
 
     return new Predicate<EntityId>() {
       @Override

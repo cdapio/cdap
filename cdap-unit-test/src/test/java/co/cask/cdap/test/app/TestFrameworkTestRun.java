@@ -79,7 +79,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -101,6 +100,7 @@ import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -1065,8 +1065,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     DataSetManager<KeyValueTable> datasetManager =
       getDataset(testSpace, AppUsingGetServiceURL.WORKER_INSTANCES_DATASET);
     KeyValueTable instancesTable = datasetManager.get();
-    CloseableIterator<KeyValue<byte[], byte[]>> instancesIterator = instancesTable.scan(startRow, endRow);
-    try {
+    try (CloseableIterator<KeyValue<byte[], byte[]>> instancesIterator = instancesTable.scan(startRow, endRow)) {
       List<KeyValue<byte[], byte[]>> workerInstances = Lists.newArrayList(instancesIterator);
       // Assert that the worker starts with expectedCount instances
       Assert.assertEquals(expectedCount, workerInstances.size());
@@ -1074,8 +1073,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       for (KeyValue<byte[], byte[]> keyValue : workerInstances) {
         Assert.assertEquals(expectedTotalCount, Bytes.toInt(keyValue.getValue()));
       }
-    } finally {
-      instancesIterator.close();
     }
   }
 
@@ -1372,6 +1369,33 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(0L, batchSinkMetrics.getException());
 
     Assert.assertEquals(1L, genMetrics.getException());
+  }
+
+  @Category(SlowTests.class)
+  @Test
+  public void testDynamicBatchSize() throws Exception {
+    ApplicationManager applicationManager = deployApplication(testSpace, GenSinkApp2.class);
+
+    DataSetManager<KeyValueTable> table = getDataset(testSpace, "table");
+
+    // Start the flow with runtime argument. It should set the batch size to 1.
+    FlowManager flowManager = applicationManager.getFlowManager("GenSinkFlow").start(Collections.singletonMap(
+      "flowlet.BatchSinkFlowlet.batch.size", "1"
+    ));
+
+    RuntimeMetrics batchSinkMetrics = flowManager.getFlowletMetrics("BatchSinkFlowlet");
+
+    // Batch sink only get the 99 batch events
+    batchSinkMetrics.waitForProcessed(99, 5, TimeUnit.SECONDS);
+    flowManager.stop();
+    flowManager.waitForFinish(10, TimeUnit.SECONDS);
+
+    try (CloseableIterator<KeyValue<byte[], byte[]>> itor = table.get().scan(null, null)) {
+      // Should only see batch size of 1.
+      while (itor.hasNext()) {
+        Assert.assertEquals(1, Bytes.toInt(itor.next().getKey()));
+      }
+    }
   }
 
   @Test

@@ -735,7 +735,7 @@ The response will be the same JSON array as submitted with additional parameters
        ``{"appId":"MyApp3","programType":"Service","programId":"MySvc1,``
        ``"runnableId":"MyHandler1","statusCode":404,"error":"Runnable: MyHandler1 not found"}]``
    * - Description
-     - Try to get the instances of the flowlet *MyFlowlet5* in the flow *MyFlow1* in the
+     - Attempt to retrieve the instances of the flowlet *MyFlowlet5* in the flow *MyFlow1* in the
        application *MyApp1*, and the service handler *MyHandler1* in the user service
        *MySvc1* in the application *MyApp3*, all in the namespace *default*
 
@@ -772,32 +772,20 @@ with the arguments as a JSON string in the body::
 
 .. rubric:: Examples
 
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
+- Retrieve the number of instances of the flowlet *saver* in the flow *WhoFlow* of the
+  application *HelloWorld* in the namespace *default*::
 
-   * - HTTP Method
-     - ``GET /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/flowlets/saver/``
-       ``instances``
-   * - Description
-     - Find out the number of instances of the flowlet *saver*
-       in the flow *WhoFlow* of the application *HelloWorld* in the namespace *default*
+    GET /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances
 
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
+- Set the number of instances of the flowlet *saver* in the flow *WhoFlow* of the
+  application *HelloWorld* in the namespace *default*::
 
-   * - HTTP Method
-     - ``PUT /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/flowlets/saver/``
-       ``instances``
+    PUT /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow/flowlets/saver/instances
 
-       with the arguments as a JSON string in the body::
+  with the arguments as a JSON string in the body::
 
-         { "instances" : 2 }
+    { "instances" : 2 }
 
-   * - Description
-     - Change the number of instances of the flowlet *saver* in the flow *WhoFlow* of the
-       application *HelloWorld* in the namespace *default*
 
 Scaling Services
 ----------------
@@ -826,16 +814,31 @@ with the arguments as a JSON string in the body::
    * - ``quantity``
      - Number of instances to be used
 
-.. rubric:: Example
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
+**Note:** You can scale system services using the Monitor HTTP RESTful API 
+:ref:`Scaling System Services <http-restful-api-monitor-scaling-system-services>`.
 
-   * - HTTP Method
-     - ``GET /v3/namespaces/default/apps/PurchaseHistory/services/CatalogLookup/instances``
-   * - Description
-     - Retrieve the number of instances of the service *CatalogLookup* in the application
-       *PurchaseHistory* in the namespace *default*
+.. rubric:: Examples
+
+- Retrieve the number of instances of the service *CatalogLookup* in the application
+  *PurchaseHistory* in the namespace *default*::
+
+    GET /v3/namespaces/default/apps/PurchaseHistory/services/CatalogLookup/instances
+
+- Set the number of handler instances of the service *RetrieveCounts*
+  of the application *WordCount*::
+
+    PUT /v3/namespaces/default/apps/WordCount/services/RetrieveCounts/instances
+
+  with the arguments as a JSON string in the body::
+
+    { "instances" : 2 }
+  
+- Using ``curl`` and the :ref:`CDAP Standalone SDK <standalone-index>`:
+
+  .. tabbed-parsed-literal::
+
+    $ curl -w"\n" -X PUT "http://localhost:10000/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/instances" \
+      -d '{ "instances" : 2 }'
 
 Scaling Workers
 ---------------
@@ -866,16 +869,10 @@ with the arguments as a JSON string in the body::
 
 .. rubric:: Example
 
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
+Retrieve the number of instances of the worker *DataWorker* in the application
+*HelloWorld* in the namespace *default*::
 
-   * - HTTP Method
-     - ``GET /v3/namespaces/default/apps/HelloWorld/workers/DataWorker/instances``
-       ``instances``
-   * - Description
-     - Retrieve the number of instances of the worker *DataWorker*
-       in the application *HelloWorld* in the namespace *default*
+  GET /v3/namespaces/default/apps/HelloWorld/workers/DataWorker/instances
 
 .. _rest-program-runs:
 
