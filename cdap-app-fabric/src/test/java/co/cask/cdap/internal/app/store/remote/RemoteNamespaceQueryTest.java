@@ -20,6 +20,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.RemoteNamespaceQueryClient;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.gateway.handlers.meta.RemoteNamespaceQueryHandler;
@@ -28,12 +30,12 @@ import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.store.NamespaceStore;
 import com.google.common.base.Preconditions;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.tephra.TransactionManager;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.Location;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -54,12 +56,14 @@ public class RemoteNamespaceQueryTest {
   private static DatasetService datasetService;
   private static RemoteSystemOperationsService remoteSysOpService;
 
-  private static NamespaceStore namespaceStore;
+  private static NamespaceAdmin namespaceAdmin;
   private static RemoteNamespaceQueryClient queryClient;
+  private static NamespacedLocationFactory namespacedLocationFactory;
 
   @BeforeClass
   public static void setup() throws Exception {
     CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMPORARY_FOLDER.newFolder().getAbsolutePath());
     Injector injector = Guice.createInjector(new AppFabricTestModule(cConf));
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
@@ -70,8 +74,9 @@ public class RemoteNamespaceQueryTest {
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     waitForService(discoveryServiceClient, Constants.Service.DATASET_MANAGER);
     waitForService(discoveryServiceClient, Constants.Service.REMOTE_SYSTEM_OPERATION);
-    namespaceStore = injector.getInstance(NamespaceStore.class);
+    namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     queryClient = injector.getInstance(RemoteNamespaceQueryClient.class);
+    namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
   }
 
   @AfterClass
@@ -98,20 +103,24 @@ public class RemoteNamespaceQueryTest {
     String description = "Namespace with custom HBase mapping";
     NamespaceConfig namespaceConfig = new NamespaceConfig(schedulerQueue, rootDirectory, hbaseNamespace, hiveDb,
                                                           null, null);
-    namespaceStore.create(new NamespaceMeta.Builder()
-                            .setName(cdapNamespace)
-                            .setDescription(description)
-                            .setSchedulerQueueName(schedulerQueue)
-                            .setRootDirectory(rootDirectory)
-                            .setHBaseNamespace(hbaseNamespace)
-                            .setHiveDatabase(hiveDb)
-                            .build());
+    NamespaceMeta meta = new NamespaceMeta.Builder()
+      .setName(cdapNamespace)
+      .setDescription(description)
+      .setSchedulerQueueName(schedulerQueue)
+      .setRootDirectory(rootDirectory)
+      .setHBaseNamespace(hbaseNamespace)
+      .setHiveDatabase(hiveDb)
+      .build();
+    // create the ns location since admin expect it to exists
+    Location nsLocation = namespacedLocationFactory.get(meta);
+    nsLocation.mkdirs();
+    namespaceAdmin.create(meta);
     NamespaceId namespaceId = new NamespaceId(cdapNamespace);
     Assert.assertTrue(queryClient.exists(namespaceId.toId()));
     NamespaceMeta resultMeta = queryClient.get(namespaceId.toId());
     Assert.assertEquals(namespaceConfig, resultMeta.getConfig());
 
-    namespaceStore.delete(namespaceId.toId());
+    namespaceAdmin.delete(namespaceId.toId());
     Assert.assertTrue(!queryClient.exists(namespaceId.toId()));
   }
 }

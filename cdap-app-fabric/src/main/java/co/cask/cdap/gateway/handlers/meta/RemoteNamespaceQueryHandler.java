@@ -16,7 +16,7 @@
 
 package co.cask.cdap.gateway.handlers.meta;
 
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.http.HttpHandler;
@@ -35,24 +35,24 @@ import javax.ws.rs.PathParam;
 @Path(AbstractRemoteSystemOpsHandler.VERSION + "/execute")
 public class RemoteNamespaceQueryHandler extends AbstractRemoteSystemOpsHandler {
 
-  private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final NamespaceAdmin namespaceAdmin;
 
   @Inject
-  RemoteNamespaceQueryHandler(NamespaceQueryAdmin namespaceQueryAdmin) {
-    this.namespaceQueryAdmin = namespaceQueryAdmin;
+  RemoteNamespaceQueryHandler(NamespaceAdmin namespaceAdmin) {
+    this.namespaceAdmin = namespaceAdmin;
   }
 
   @GET
   @Path("/namespaces")
   public void getAllNamespaces(HttpRequest request, HttpResponder responder) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK,  namespaceQueryAdmin.list());
+    responder.sendJson(HttpResponseStatus.OK,  namespaceAdmin.list());
   }
 
   @GET
   @Path("/namespaces/{namespace-id}")
   public void getNamespace(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId)
     throws Exception {
-    NamespaceMeta meta = namespaceQueryAdmin.get(Id.Namespace.from(namespaceId));
+    NamespaceMeta meta = namespaceAdmin.get(Id.Namespace.from(namespaceId));
     if (meta == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s was not found.", namespaceId));
       return;
