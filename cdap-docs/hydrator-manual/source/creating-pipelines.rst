@@ -27,11 +27,12 @@ Studio, specified in-memory.
 CDAP currently provides two artifacts (referred to as *system artifacts*):
 
 - ``cdap-data-pipeline`` (for batch pipelines)
-- ``cdap-etl-realtime`` (for realtime pipelines)
+- ``cdap-data-streams`` (for real-time pipelines)
 
-which are used to create the different kinds of data pipeline applications. (**Note:** *A third
-system artifact,* ``cdap-etl-batch`` *has been deprecated and replaced by the*
-``cdap-data-pipeline`` *artifact, as of CDAP 3.5.0.*)
+which are used to create the different kinds of data pipeline applications.
+
+**Note:** *Two system artifacts,* ``cdap-etl-batch`` *and* ``cdap-etl-realtime``, *have
+been deprecated and replaced by the above artifacts, as of CDAP 3.5.0.*
 
 An additional system artifact (``core-plugins``) provides common resources for the other
 system artifacts, and can be used by developers of custom plugins.
