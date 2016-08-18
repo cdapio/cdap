@@ -125,6 +125,8 @@ function link (scope, element) {
       .tickPadding(7)
       .ticks(8)
       .tickFormat(customTimeFormat);
+
+    getLogStats();
     generateEventCircles();
     renderBrushAndSlider();
   };
@@ -283,6 +285,34 @@ function link (scope, element) {
   }
 
   scope.updateSlider = updateSlider;
+  
+  const getLogStats = () => {
+    let totalCount = 0;
+    let errorCount = 0;
+    let warningCount = 0;
+
+    if(timelineData.qid.series.length > 0){
+      for(let i = 0; i < timelineData.qid.series.length; i++){
+
+        for(let j = 0; j < timelineData.qid.series[i].data.length; j++){
+          let currentItem = timelineData.qid.series[i].data[j];
+          let numEvents = currentItem.value;
+
+          totalCount += numEvents;
+
+          if(timelineData.qid.series[i].metricName === 'system.app.log.error'){
+            errorCount += numEvents;
+          } else if(timelineData.qid.series[i].metricName === 'system.app.log.warn'){
+            warningCount += numEvents;
+          }
+        }
+      }
+    }
+
+    scope.Timeline.updateTotalLogsInStore(totalCount);
+    scope.Timeline.updateTotalErrorsInStore(errorCount);
+    scope.Timeline.updateTotalWarningsInStore(warningCount);
+  };
 
   const generateEventCircles = () => {
 
@@ -421,11 +451,14 @@ function link (scope, element) {
             warningCount--;
           }
         }
+
       }
     }
 
     scope.renderSearchCircles(scope.searchResultTimes);
   };
+
+
   scope.generateEventCircles = generateEventCircles;
 }
 
