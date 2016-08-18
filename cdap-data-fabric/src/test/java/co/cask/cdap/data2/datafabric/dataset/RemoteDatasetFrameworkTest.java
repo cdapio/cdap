@@ -27,6 +27,7 @@ import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.common.security.DefaultImpersonator;
 import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data.runtime.DynamicTransactionExecutorFactory;
@@ -109,7 +110,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     CConfigurationUtil.copyTxProperties(cConf, txConf);
 
     // ok to pass null, since the impersonator won't actually be called, if kerberos security is not enabled
-    Impersonator impersonator = new Impersonator(cConf, null, null);
+    Impersonator impersonator = new DefaultImpersonator(cConf, null, null);
 
     // TODO: Refactor to use injector for everything
     Injector injector = Guice.createInjector(

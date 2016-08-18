@@ -32,6 +32,7 @@ import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
+import co.cask.cdap.common.security.DefaultImpersonator;
 import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
@@ -193,7 +194,7 @@ public abstract class DatasetServiceTestBase {
       new SystemDatasetInstantiatorFactory(locationFactory, dsFramework, cConf);
 
     // ok to pass null, since the impersonator won't actually be called, if kerberos security is not enabled
-    Impersonator impersonator = new Impersonator(cConf, null, null);
+    Impersonator impersonator = new DefaultImpersonator(cConf, null, null);
     DatasetAdminService datasetAdminService =
       new DatasetAdminService(dsFramework, cConf, locationFactory, datasetInstantiatorFactory, new NoOpMetadataStore(),
                               impersonator);

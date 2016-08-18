@@ -21,6 +21,7 @@ import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.security.DefaultImpersonator;
 import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.common.security.UnsupportedUGIProvider;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
@@ -70,7 +71,7 @@ public abstract class ConcurrentStreamWriterTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(ConcurrentStreamWriterTestBase.class);
   private static final CConfiguration cConf = CConfiguration.create();
-  private static final Impersonator impersonator = new Impersonator(cConf, new UnsupportedUGIProvider(), null);
+  private static final Impersonator impersonator = new DefaultImpersonator(cConf, new UnsupportedUGIProvider(), null);
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();

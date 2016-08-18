@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.security.DefaultImpersonator;
 import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.common.security.UnsupportedUGIProvider;
 import co.cask.cdap.data.file.FileWriter;
@@ -72,7 +73,7 @@ public abstract class StreamFileJanitorTestBase {
     // Simulate namespace create, since its an inmemory-namespace admin
     getNamespaceAdmin().create(NamespaceMeta.DEFAULT);
     getNamespacedLocationFactory().get(Id.Namespace.DEFAULT).mkdirs();
-    impersonator = new Impersonator(cConf, new UnsupportedUGIProvider(), null);
+    impersonator = new DefaultImpersonator(cConf, new UnsupportedUGIProvider(), null);
   }
 
   @Test

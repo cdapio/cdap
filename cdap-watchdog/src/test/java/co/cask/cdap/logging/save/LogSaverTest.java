@@ -28,6 +28,7 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.NamespaceLoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
+import co.cask.cdap.common.security.DefaultImpersonator;
 import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -108,7 +109,7 @@ public class LogSaverTest extends KafkaTestBase {
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
 
     injector = KAFKA_TESTER.getInjector();
-    impersonator = injector.getInstance(Impersonator.class);
+    impersonator = injector.getInstance(DefaultImpersonator.class);
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
 

@@ -16,44 +16,22 @@
 
 package co.cask.cdap.common.security;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.kerberos.SecurityUtil;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
-import com.google.inject.Inject;
+import com.google.inject.ImplementedBy;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.security.authentication.util.KerberosName;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
 /**
  * Responsible for executing code for a user, configurable at the namespace level.
+ *
+ * TODO: CDAP-1698. Ideally there should be an explicit binding in some Module. However, adding that is too complicate
+ * now, due to the poor organization of Guice usage in CDAP.
  */
-public class Impersonator {
-
-  private static final Logger LOG = LoggerFactory.getLogger(Impersonator.class);
-
-  private final CConfiguration cConf;
-  private final NamespaceQueryAdmin namespaceQueryAdmin;
-  private final boolean kerberosEnabled;
-  private final UGIProvider ugiProvider;
-
-  @Inject
-  @VisibleForTesting
-  public Impersonator(CConfiguration cConf, UGIProvider ugiProvider,
-                      NamespaceQueryAdmin namespaceQueryAdmin) {
-    this.cConf = cConf;
-    this.namespaceQueryAdmin = namespaceQueryAdmin;
-    this.ugiProvider = ugiProvider;
-    this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
-  }
-
+@ImplementedBy(DefaultImpersonator.class)
+public interface Impersonator {
   /**
    * Executes a callable as the user, configurable at a namespace level
    *
@@ -64,9 +42,7 @@ public class Impersonator {
    * @return the return value of the callable
    * @throws Exception if the callable throws any exception
    */
-  public <T> T doAs(NamespaceId namespaceId, final Callable<T> callable) throws Exception {
-    return ImpersonationUtils.doAs(getUGI(namespaceId), callable);
-  }
+  <T> T doAs(NamespaceId namespaceId, Callable<T> callable) throws Exception;
 
   /**
    * Executes a callable as the user, configurable at a namespace level
@@ -78,9 +54,7 @@ public class Impersonator {
    * @return the return value of the callable
    * @throws Exception if the callable throws any exception
    */
-  public <T> T doAs(NamespaceMeta namespaceMeta, final Callable<T> callable) throws Exception {
-    return ImpersonationUtils.doAs(getUGI(namespaceMeta), callable);
-  }
+  <T> T doAs(NamespaceMeta namespaceMeta, Callable<T> callable) throws Exception;
 
   /**
    * Retrieve the {@link UserGroupInformation} for the given {@link NamespaceId}
@@ -89,42 +63,5 @@ public class Impersonator {
    * @return {@link UserGroupInformation}
    * @throws IOException if there was any error fetching the {@link UserGroupInformation}
    */
-  public UserGroupInformation getUGI(NamespaceId namespaceId) throws IOException {
-    // don't impersonate if kerberos isn't enabled OR if the operation is in the system namespace
-    if (!kerberosEnabled || NamespaceId.SYSTEM.equals(namespaceId)) {
-      return UserGroupInformation.getCurrentUser();
-    }
-    try {
-      return getUGI(namespaceQueryAdmin.get(namespaceId.toId()));
-    } catch (Exception e) {
-      Throwables.propagateIfInstanceOf(e, IOException.class);
-      throw Throwables.propagate(e);
-    }
-  }
-
-  /**
-   * Retrieve the {@link UserGroupInformation} for the given {@link NamespaceMeta}
-   *
-   * @param namespaceMeta the {@link NamespaceMeta metadata} of the namespace to lookup the user
-   * @return {@link UserGroupInformation}
-   * @throws IOException if there was any error fetching the {@link UserGroupInformation}
-   */
-  private UserGroupInformation getUGI(NamespaceMeta namespaceMeta) throws IOException {
-    // don't impersonate if kerberos isn't enabled OR if the operation is in the system namespace
-    if (!kerberosEnabled || NamespaceId.SYSTEM.equals(namespaceMeta.getNamespaceId())) {
-      return UserGroupInformation.getCurrentUser();
-    }
-    return getUGI(new ImpersonationInfo(namespaceMeta, cConf));
-  }
-
-  private UserGroupInformation getUGI(ImpersonationInfo impersonationInfo) throws IOException {
-    // no need to get a UGI if the current UGI is the one we're requesting; simply return it
-    String configuredPrincipalShortName = new KerberosName(impersonationInfo.getPrincipal()).getShortName();
-    if (UserGroupInformation.getCurrentUser().getShortUserName().equals(configuredPrincipalShortName)) {
-      LOG.debug("Requested UGI {} is same as calling UGI. Simply returning current user: {}",
-                impersonationInfo.getPrincipal(), UserGroupInformation.getCurrentUser());
-      return UserGroupInformation.getCurrentUser();
-    }
-    return ugiProvider.getConfiguredUGI(impersonationInfo);
-  }
+  UserGroupInformation getUGI(NamespaceId namespaceId) throws IOException;
 }
