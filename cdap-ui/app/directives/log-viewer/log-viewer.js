@@ -24,6 +24,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   var collapseCount = 0;
   this.viewLimit = 100;
   this.$uibModal = $uibModal;
+  this.errorRetrievingLogs = false;
+
   var rawLogs = {
     log: '',
     startTime: ''
@@ -374,6 +376,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       'fromOffset' : this.fromOffset
     }).$promise.then(
       (res) => {
+        this.errorRetrievingLogs = false;
 
         if(res.length === 0){
           getStatus();
@@ -397,6 +400,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       },
       (err) => {
         console.log('ERROR: ', err);
+        this.errorRetrievingLogs = true;
       });
   };
 
@@ -433,20 +437,22 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     },
     (res) => {
       //We have recieved more logs, append to current dataset
-    if(res.length > 0){
-      this.fromOffset = res[res.length-1].offset;
+      this.errorRetrievingLogs = false;
 
-      angular.forEach(res, (element, index) => {
-        //Format dates properly for rendering and computing
-        let formattedDate = new Date(res[index].log.timestamp);
-        res[index].log.timestamp = formattedDate;
-        res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + ((formattedDate.getMinutes()<10) ? '0'+formattedDate.getMinutes() : formattedDate.getMinutes()) + ':' + formattedDate.getSeconds());
-        res[index].log.stackTrace = res[index].log.stackTrace.trim();
-      });
+      if(res.length > 0){
+        this.fromOffset = res[res.length-1].offset;
 
-      this.data = this.data.concat(res);
-      this.renderData();
-    }
+        angular.forEach(res, (element, index) => {
+          //Format dates properly for rendering and computing
+          let formattedDate = new Date(res[index].log.timestamp);
+          res[index].log.timestamp = formattedDate;
+          res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + ((formattedDate.getMinutes()<10) ? '0'+formattedDate.getMinutes() : formattedDate.getMinutes()) + ':' + formattedDate.getSeconds());
+          res[index].log.stackTrace = res[index].log.stackTrace.trim();
+        });
+
+        this.data = this.data.concat(res);
+        this.renderData();
+      }
 
       if(this.displayData.length >= this.viewLimit){
         dataSrc.stopPoll(pollPromise.__pollId__);
@@ -457,6 +463,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
     }, (err) => {
       console.log('ERROR: ', err);
+      this.errorRetrievingLogs = true;
     });
   };
 
@@ -549,6 +556,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     }).$promise.then(
       (res) => {
 
+        this.errorRetrievingLogs = false;
         this.fromOffset = res[res.length-1].offset;
         this.loading = false;
         this.data = [];
@@ -587,6 +595,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       },
       (err) => {
         this.setDefault();
+        this.errorRetrievingLogs = true;
         console.log('ERROR: ', err);
       });
   };

@@ -30,6 +30,7 @@ function link (scope, element) {
       pinOffset,
       circleTooltip,
       handleWidth,
+      totalCount,
       firstRun = true;
 
   //Components
@@ -74,12 +75,16 @@ function link (scope, element) {
     pinX = 0;
     timelineStack = {};
     timelineData = scope.metadata;
-
+    totalCount = 0;
     scope.plot();
   };
 
   /* ------------------- Plot Function ------------------- */
   scope.plot = function(){
+
+    if(typeof timelineData.qid === 'undefined'){
+      return;
+    }
 
     startTime = timelineData.qid.startTime*1000;
     endTime = timelineData.qid.endTime*1000;
@@ -265,13 +270,19 @@ function link (scope, element) {
   }
 
   scope.updateSliderHandle = (startTime) => {
-    updateSlider(xScale(startTime));
+    if(typeof xScale !== 'undefined'){
+      updateSlider(xScale(startTime));
+    }
   };
 
   scope.updatePin = function () {
     let xPositionVal = xScale(scope.pinScrollingPosition);
 
     if(typeof pinHandle !== 'undefined'){
+
+      if(totalCount === 0){
+        xPositionVal = 0;
+      }
 
       pinHandle.attr('x', xPositionVal - pinOffset + 1);
       scrollNeedle.attr('x1', xPositionVal + 8)
@@ -293,7 +304,7 @@ function link (scope, element) {
 
     angular.forEach(searchTimes, (value) => {
       timescaleSvg.append('circle')
-        .attr('cx', xScale(value))
+        .attr('cx', xScale(value) + handleWidth)
         .attr('cy', 35)
         .attr('r', 2)
         .attr('class', 'search-circle');
@@ -326,7 +337,6 @@ function link (scope, element) {
   scope.updateSlider = updateSlider;
 
   const getLogStats = () => {
-    let totalCount = 0;
     let errorCount = 0;
     let warningCount = 0;
 
@@ -446,7 +456,6 @@ function link (scope, element) {
           warningCount = timelineHash[keyThree].warnings;
         }
 
-        let eventCount = errorCount + warningCount;
         let circleTooltipHover = circleTooltipHoverOn.bind(
           this, keyThree,
           timelineHash[keyThree].errors,
@@ -455,42 +464,25 @@ function link (scope, element) {
 
         for(var verticalStackSize = 4; verticalStackSize >= 0 && (errorCount > 0 || warningCount > 0); verticalStackSize--){
           if(errorCount > 0){
-            if(eventCount >= 5){
               timescaleSvg.append('circle')
                 .attr('cx', xScale(keyThree) + handleWidth)
-                .attr('cy', (verticalStackSize+1) * 7)
+                .attr('cy', (verticalStackSize+1) * 7 - 2)
                 .attr('r', 2)
                 .attr('class', 'red-circle')
                 .on('mouseover', circleTooltipHover)
                 .on('mouseout', circleTooltipHoverOff);
-            } else {
-              timescaleSvg.append('circle')
-                .attr('cx', xScale(keyThree) + handleWidth)
-                .attr('cy', (verticalStackSize+1) * 7)
-                .attr('r', 2)
-                .attr('class', 'red-circle');
-            }
-            errorCount--;
+                errorCount--;
           } else if(warningCount > 0){
-            if(eventCount >= 5){
               timescaleSvg.append('circle')
                 .attr('cx', xScale(keyThree) + handleWidth)
-                .attr('cy', (verticalStackSize+1) * 7)
+                .attr('cy', (verticalStackSize+1) * 7 - 2)
                 .attr('r', 2)
                 .attr('class', 'yellow-circle')
                 .on('mouseover', circleTooltipHover)
                 .on('mouseout', circleTooltipHoverOff);
-            } else {
-              timescaleSvg.append('circle')
-                .attr('cx', xScale(keyThree) + handleWidth)
-                .attr('cy', (verticalStackSize+1) * 7)
-                .attr('r', 2)
-                .attr('class', 'yellow-circle');
-            }
-            warningCount--;
+                warningCount--;
           }
         }
-
       }
     }
 

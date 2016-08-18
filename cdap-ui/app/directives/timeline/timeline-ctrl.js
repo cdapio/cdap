@@ -119,17 +119,20 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     }
 
     //Keep the slider handle in sync with the api call
-    $scope.updateSliderHandle(LogViewerStore.getState().startTime);
-    //Check if the pinScrollPosition is less than the value of the query handle
-    this.pinScrollPosition = LogViewerStore.getState().scrollPosition;
-    if(typeof $scope.updatePin !== 'undefined'){
-      $scope.pinScrollingPosition = this.pinScrollPosition;
-      $scope.updatePin();
-    }
+    if(typeof $scope.updateSliderHandle !== 'undefined'){
+      $scope.updateSliderHandle(LogViewerStore.getState().startTime);
 
-    if($scope.searchResultTimes !== LogViewerStore.getState().searchResults){
-      $scope.searchResultTimes = LogViewerStore.getState().searchResults;
-      $scope.renderSearchCircles($scope.searchResultTimes);
+      //Check if the pinScrollPosition is less than the value of the query handle
+      this.pinScrollPosition = LogViewerStore.getState().scrollPosition;
+      if(typeof $scope.updatePin !== 'undefined'){
+        $scope.pinScrollingPosition = this.pinScrollPosition;
+        $scope.updatePin();
+      }
+
+      if($scope.searchResultTimes !== LogViewerStore.getState().searchResults){
+        $scope.searchResultTimes = LogViewerStore.getState().searchResults;
+        $scope.renderSearchCircles($scope.searchResultTimes);
+      }
     }
   });
 

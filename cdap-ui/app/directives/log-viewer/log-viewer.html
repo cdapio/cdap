@@ -181,13 +181,19 @@
         <tr class="message-holder">
           <td colspan="4">
             <div class="well well-sm text-center"
-                 ng-if="!LogViewer.loading && !LogViewer.displayData.length && LogViewer.statusType !== 0">
+                 ng-if="!LogViewer.errorRetrievingLogs && !LogViewer.loading && !LogViewer.displayData.length && LogViewer.statusType !== 0">
               <h4>
                 No logs to display.
               </h4>
             </div>
             <div class="well well-sm text-center"
-                 ng-if="LogViewer.statusType === 0 || LogViewer.loading">
+                 ng-if="LogViewer.errorRetrievingLogs && !LogViewer.loading">
+              <h4>
+                Error Retrieving Logs.
+              </h4>
+            </div>
+            <div class="well well-sm text-center"
+                 ng-if="!LogViewer.errorRetrievingLogs && LogViewer.statusType === 0 || LogViewer.loading">
               <h4 ng-if="!LogViewer.displayData.length">Loading ...</h4>
               <h6 ng-if="LogViewer.displayData.length">
                 <span class="fa fa-spin fa-refresh"></span>
