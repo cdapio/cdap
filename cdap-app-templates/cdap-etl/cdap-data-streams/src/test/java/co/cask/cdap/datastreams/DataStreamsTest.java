@@ -39,9 +39,11 @@ import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
+import co.cask.cdap.test.MetricsManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.TestConfiguration;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -51,9 +53,11 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  *
@@ -132,6 +136,13 @@ public class DataStreamsTest extends HydratorTestBase {
 
     sparkManager.stop();
     sparkManager.waitForStatus(false, 10, 1);
+
+    validateMetric(appId, "source.records.out", 4);
+    validateMetric(appId, "jacksonFilter.records.in", 4);
+    validateMetric(appId, "jacksonFilter.records.out", 3);
+    validateMetric(appId, "dwayneFilter.records.in", 3);
+    validateMetric(appId, "dwayneFilter.records.out", 2);
+    validateMetric(appId, "sink.records.in", 2);
   }
 
   @Test
@@ -239,6 +250,15 @@ public class DataStreamsTest extends HydratorTestBase {
 
     sparkManager.stop();
     sparkManager.waitForStatus(false, 10, 1);
+
+    validateMetric(appId, "source1.records.out", 2);
+    validateMetric(appId, "source2.records.out", 3);
+    validateMetric(appId, "agg1.records.in", 5);
+    validateMetric(appId, "agg1.records.out", 3);
+    validateMetric(appId, "agg2.records.in", 5);
+    validateMetric(appId, "agg2.records.out", 5);
+    validateMetric(appId, "sink1.records.in", 3);
+    validateMetric(appId, "sink2.records.in", 5);
   }
 
   @Test
@@ -446,5 +466,32 @@ public class DataStreamsTest extends HydratorTestBase {
 
     sparkManager.stop();
     sparkManager.waitForStatus(false, 10, 1);
+
+    validateMetric(appId, "source1.records.out", 3);
+    validateMetric(appId, "source2.records.out", 2);
+    validateMetric(appId, "source3.records.out", 3);
+    validateMetric(appId, "t1.records.in", 3);
+    validateMetric(appId, "t1.records.out", 3);
+    validateMetric(appId, "t2.records.in", 2);
+    validateMetric(appId, "t2.records.out", 2);
+    validateMetric(appId, "t3.records.in", 3);
+    validateMetric(appId, "t3.records.out", 3);
+    validateMetric(appId, "t4.records.in", 2);
+    validateMetric(appId, "t4.records.out", 2);
+    validateMetric(appId, "innerjoin.records.in", 5);
+    validateMetric(appId, "innerjoin.records.out", 2);
+    validateMetric(appId, "outerjoin.records.in", 5);
+    validateMetric(appId, "outerjoin.records.out", 3);
+    validateMetric(appId, "multijoinSink.records.in", 3);
+  }
+
+  private void validateMetric(Id.Application appId, String metric,
+                              long expected) throws TimeoutException, InterruptedException {
+    MetricsManager metricsManager = getMetricsManager();
+    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, appId.getNamespaceId(),
+                                               Constants.Metrics.Tag.APP, appId.getId(),
+                                               Constants.Metrics.Tag.SPARK, DataStreamsSparkLauncher.NAME);
+    metricsManager.waitForTotalMetricCount(tags, "user." + metric, expected, 10, TimeUnit.SECONDS);
+    metricsManager.waitForTotalMetricCount(tags, "user." + metric, expected, 10, TimeUnit.SECONDS);
   }
 }
