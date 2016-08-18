@@ -14,10 +14,12 @@
  * the License.
  */
 
-function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myLogsApi, MyMetricsQueryHelper, MyCDAPDataSource) {
+function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myLogsApi, MyMetricsQueryHelper, MyCDAPDataSource, ProgramsHelpers, moment, $timeout, caskWindowManager) {
 
   var dataSrc = new MyCDAPDataSource($scope);
   this.pinScrollPosition = 0;
+  $scope.moment = moment;
+  let screenSize;
 
   this.updateStartTimeInStore = function(val) {
     LogViewerStore.dispatch({
@@ -28,17 +30,22 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     });
   };
 
-  var pollPromise = null;
+  $scope.$on(caskWindowManager.event.resize, () => {
+    $timeout($scope.initialize);
+  });
 
+  var pollPromise = null;
+  var programType = ProgramsHelpers.getSingularName(this.programType);
   var apiSettings = {
     metric : {
-      context: `namespace.${this.namespaceId}.app.${this.appId}.flow.${this.programId}.run.${this.runId}`,
+      context: `namespace.${this.namespaceId}.app.${this.appId}.${programType}.${this.programId}.run.${this.runId}`,
       names: ['system.app.log.error', 'system.app.log.warn', 'system.app.log.info', 'system.app.log.debug'],
       startTime : '',
       endTime : '',
       resolution: '1m'
     }
   };
+
   this.setDefaultTimeWindow = () => {
     apiSettings.metric.startTime = '';
     apiSettings.metric.endTime = '';
@@ -60,21 +67,38 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
       $scope.sliderBarPositionRefresh = LogViewerStore.getState().startTime;
       $scope.initialize();
     }, (err) => {
+      // FIXME: We need to fix this. Right now this fails and we need to handle this more gracefully.
+      $scope.initialize();
       console.log('ERROR: ', err);
     });
   };
 
   LogViewerStore.subscribe(() => {
+
+    if(screenSize !== LogViewerStore.getState().fullScreen){
+      screenSize = LogViewerStore.getState().fullScreen;
+      $timeout($scope.initialize);
+    }
+
     this.pinScrollPosition = LogViewerStore.getState().scrollPosition;
+
     if($scope.updatePinScale !== undefined){
       $scope.updatePinScale(this.pinScrollPosition);
     }
+
+    if($scope.searchResultTimes !== LogViewerStore.getState().searchResults){
+      $scope.searchResultTimes = LogViewerStore.getState().searchResults;
+      $scope.renderSearchCircles($scope.searchResultTimes);
+    }
   });
+
+  screenSize = LogViewerStore.getState().fullScreen;
 
   if (!this.namespaceId || !this.appId || !this.programType || !this.programId || !this.runId) {
     this.setDefaultTimeWindow();
     return;
   }
+
   myLogsApi.getLogsMetadata({
     namespace : this.namespaceId,
     appId : this.appId,
@@ -83,8 +107,10 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     runId : this.runId,
   }).$promise.then(
     (res) => {
+      $scope.metadata = res;
       apiSettings.metric.startTime = res.start;
       apiSettings.metric.endTime = 'now';
+      $scope.renderSearchCircles([]);
       pollForMetadata();
     },
     (err) => {

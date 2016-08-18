@@ -22,6 +22,8 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
           return state;
         }
         return action.payload.startTime;
+      case LOGVIEWERSTORE_ACTIONS.RESET:
+        return new Date();
       default:
         return state;
     }
@@ -35,6 +37,34 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
           return state;
         }
         return action.payload.scrollPosition;
+      case LOGVIEWERSTORE_ACTIONS.RESET:
+        return Date.now();
+      default:
+        return state;
+    }
+  };
+
+  //Scroll Position Reducer
+  const fullScreen = (state = false, action = {}) => {
+    switch(action.type) {
+      case LOGVIEWERSTORE_ACTIONS.FULL_SCREEN:
+        return action.payload.fullScreen;
+      case LOGVIEWERSTORE_ACTIONS.RESET:
+        return false;
+      default:
+        return state;
+    }
+  };
+
+  const searchResults = (state = [], action = {}) => {
+    switch(action.type) {
+      case LOGVIEWERSTORE_ACTIONS.SEARCH_RESULTS:
+        if(!action.payload.searchResults) {
+          return state;
+        }
+        return action.payload.searchResults;
+      case LOGVIEWERSTORE_ACTIONS.RESET:
+        return [];
       default:
         return state;
     }
@@ -44,12 +74,16 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
   let {combineReducers, applyMiddleware} = Redux;
   let combinedReducers = combineReducers({
     startTime,
-    scrollPosition
+    scrollPosition,
+    fullScreen,
+    searchResults
   });
   let getInitialState = () => {
     return {
       startTime: Date.now(),
-      scrollPosition: Date.now()
+      scrollPosition: Date.now(),
+      fullScreen: false,
+      searchResults: []
     };
   };
 
@@ -67,6 +101,9 @@ LogViewerStore.$inject = ['LOGVIEWERSTORE_ACTIONS', 'Redux', 'ReduxThunk'];
 angular.module(`${PKG.name}.commons`)
   .constant('LOGVIEWERSTORE_ACTIONS', {
     'START_TIME' : 'START_TIME',
-    'SCROLL_POSITION' : 'SCROLL_POSITION'
+    'SCROLL_POSITION' : 'SCROLL_POSITION',
+    'SEARCH_RESULTS' : 'SEARCH_RESULTS',
+    'FULL_SCREEN' : 'FULL_SCREEN',
+    'RESET': 'RESET'
   })
   .factory('LogViewerStore', LogViewerStore);

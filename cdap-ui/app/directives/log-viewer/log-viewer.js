@@ -185,6 +185,11 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   this.toggleExpandAll = false;
 
   let unsub = LogViewerStore.subscribe(() => {
+    this.fullScreen = LogViewerStore.getState().fullScreen;
+    if(this.logStartTime === LogViewerStore.getState().startTime){
+      return;
+    }
+
     this.logStartTime = LogViewerStore.getState().startTime;
     if (typeof this.logStartTime !== 'object') {
       this.setDefault();
@@ -217,12 +222,21 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     this.renderData();
     //If the search query is blank, otherwise filter
     if(this.searchText.length === 0){
+      this.updateSearchResultsInStore([]);
       return;
     }
 
+    let searchResults = [];
+
     this.displayData = this.displayData.filter( data => {
-      return data.log.message.toLowerCase().indexOf(this.searchText.toLowerCase()) !== -1;
+      if(data.log.message.toLowerCase().indexOf(this.searchText.toLowerCase()) !== -1){
+        searchResults.push(data.log.timestamp);
+        return true;
+      }
+      return false;
     });
+
+    this.updateSearchResultsInStore(searchResults);
   };
 
   this.toggleStackTrace = (index) => {
@@ -271,11 +285,30 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     }
   };
 
-  this.updateScrollPositionInStore = function(val) {
+  this.updateScrollPositionInStore = (val) => {
     LogViewerStore.dispatch({
       type: LOGVIEWERSTORE_ACTIONS.SCROLL_POSITION,
       payload: {
         scrollPosition: val
+      }
+    });
+  };
+
+  this.updateScreenChangeInStore = (state) => {
+
+    LogViewerStore.dispatch({
+      type: LOGVIEWERSTORE_ACTIONS.FULL_SCREEN,
+      payload: {
+        fullScreen: state
+      }
+    });
+  };
+
+  this.updateSearchResultsInStore = (results) => {
+    LogViewerStore.dispatch({
+      type: LOGVIEWERSTORE_ACTIONS.SEARCH_RESULTS,
+      payload: {
+        searchResults: results
       }
     });
   };
@@ -472,12 +505,12 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     this.rawUrl = url;
 
     myLogsApi.getLogsStartAsJson({
-        namespace : this.namespaceId,
-        appId : this.appId,
-        programType : this.programType,
-        programId : this.programId,
-        runId : this.runId,
-        start : this.startTimeSec
+      namespace : this.namespaceId,
+      appId : this.appId,
+      programType : this.programType,
+      programId : this.programId,
+      runId : this.runId,
+      start : this.startTimeSec
     }).$promise.then(
       (res) => {
 
@@ -639,6 +672,10 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   };
 
   $scope.$on('$destroy', function() {
+
+    LogViewerStore.dispatch({
+      type: 'RESET'
+    });
     if (unsub) {
       unsub();
     }
