@@ -115,7 +115,25 @@
     </description>
   </property>
 
- <property>
+  <property>
+    <name>log.saver.run.memory.megs</name>
+    <value>1024</value>
+    <description>
+      Memory in megabytes allocated for log saver instances to run in YARN
+      (deprecated: use ${log.saver.container.memory.mb} instead)
+    </description>
+  </property>
+
+  <property>
+    <name>log.saver.run.num.cores</name>
+    <value>2</value>
+    <description>
+      Number of cores for each log saver instance in YARN (deprecated: use
+      ${log.saver.container.num.cores} instead)
+    </description>
+  </property>
+
+  <property>
     <name>router.ssl.webapp.bind.port</name>
     <value>20443</value>
     <description>
