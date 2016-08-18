@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2015 Cask Data, Inc.
+# Copyright © 2015-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -15,11 +15,12 @@
 # the License.
 
 #
-# Install and configure fluxbox
+# Install and configure lxde
 #
 
 # Install
-apt-get install -y lxde
+apt-get install -y --no-install-recommends lxde
+apt-get install -y --no-install-recommends chromium-browser
 
 # Symlink idea
 ln -sf /opt/idea* /opt/idea || (echo "Unable to symlink IDEA" && exit 1)
@@ -78,10 +79,34 @@ Icon=cdap
 Categories=GNOME;GTK;Development;
 EOF
 
+# CDAP SDK Menu Entry
+cat > /usr/share/applications/cdap-sdk.desktop << EOF
+[Desktop Entry]
+Encoding=UTF-8
+Name=CDAP SDK
+Comment=CDAP SDK directory
+Exec=xdg-open /opt/cdap/sdk
+Type=Application
+Icon=cdap
+Categories=GNOME;GTK;Development;
+EOF
+
+# CDAP Examples Menu Entry
+cat > /usr/share/applications/cdap-examples.desktop << EOF
+[Desktop Entry]
+Encoding=UTF-8
+Name=CDAP Examples
+Comment=CDAP Examples directory
+Exec=xdg-open /opt/cdap/sdk/examples
+Type=Application
+Icon=cdap
+Categories=GNOME;GTK;Development;
+EOF
+
 # Copy welcome.txt and some icons to the desktop
 mkdir -p ~cdap/Desktop
 cp /etc/welcome.txt ~cdap/Desktop
-for i in cdap-ui cdap-docs eclipse idea lxterminal ; do
+for i in cdap-ui cdap-sdk cdap-examples cdap-docs eclipse idea lxterminal ; do
   cp /usr/share/applications/${i}.desktop ~cdap/Desktop
 done
 
