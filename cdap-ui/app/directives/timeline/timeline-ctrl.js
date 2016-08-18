@@ -14,7 +14,7 @@
  * the License.
  */
 
-function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myLogsApi, MyMetricsQueryHelper, MyCDAPDataSource, ProgramsHelpers, moment, $timeout) {
+function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myLogsApi, MyMetricsQueryHelper, MyCDAPDataSource, ProgramsHelpers, moment, $timeout, caskWindowManager) {
 
   var dataSrc = new MyCDAPDataSource($scope);
   this.pinScrollPosition = 0;
@@ -29,6 +29,10 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
       }
     });
   };
+
+  $scope.$on(caskWindowManager.event.resize, () => {
+    $timeout($scope.initialize);
+  });
 
   var pollPromise = null;
   var programType = ProgramsHelpers.getSingularName(this.programType);
