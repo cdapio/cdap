@@ -28,6 +28,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.PercentileInformation;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowStatistics;
+import co.cask.cdap.proto.id.ApplicationId;
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Longs;
 import com.google.gson.Gson;
@@ -80,6 +81,19 @@ public class WorkflowDataset extends AbstractDataset {
     table.put(rowKey, RUNID, Bytes.toBytes(runRecordMeta.getPid()));
     table.put(rowKey, TIME_TAKEN, Bytes.toBytes(timeTaken));
     table.put(rowKey, NODES, Bytes.toBytes(value));
+  }
+
+  public void delete(ApplicationId id) {
+    MDSKey mdsKey = new MDSKey.Builder().add(id.getNamespace()).add(id.getApplication()).build();
+    Scanner scanner = table.scan(mdsKey.getKey(), Bytes.stopKeyForPrefix(mdsKey.getKey()));
+    Row row;
+    try {
+      while ((row = scanner.next()) != null) {
+        table.delete(row.getRow());
+      }
+    } finally {
+      scanner.close();
+    }
   }
 
   /**
