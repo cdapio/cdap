@@ -212,6 +212,9 @@ embedded FileSet becomes read-only. You can still add partitions for locations t
 external process. But dropping a partition will only delete the partition's metadata, whereas the actual file
 remains intact. Similarly, if you drop or truncate an external PartitionedFileSet, its files will not be deleted.
 
+In order to make the PartitionedFileSet explorable, additional properties are needed, as described
+in :ref:`exploring-partitionedfilesets`.
+
 Reading and Writing PartitionedFileSets
 =======================================
 
@@ -459,6 +462,7 @@ It can then be used as::
   // return only partitions, to process up to 500MB of data
   partitions = consumer.consumePartitions(new SizeLimitingAcceptor(500));
 
+.. _exploring-partitionedfilesets:
 
 Exploring PartitionedFileSets
 =============================
