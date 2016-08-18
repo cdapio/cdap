@@ -90,9 +90,7 @@ class DatasetServiceClient {
   private final boolean kerberosEnabled;
   private final boolean authorizationEnabled;
   private final AuthenticationContext authenticationContext;
-  private final String masterPrincipal;
-  private final boolean isMasterUser;
-  private final String systemUser;
+  private final String masterShortUserName;
 
   DatasetServiceClient(final DiscoveryServiceClient discoveryClient, NamespaceId namespaceId,
                        CConfiguration cConf, AuthenticationContext authenticationContext) {
@@ -108,16 +106,12 @@ class DatasetServiceClient {
     this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
     this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
     this.authenticationContext = authenticationContext;
-    this.masterPrincipal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
-    this.systemUser = cConf.get(Constants.Security.Authorization.SYSTEM_USER);
+    String masterPrincipal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
     try {
       if (securityEnabled && kerberosEnabled) {
-        // we compare short name, because in some YARN containers launched by CDAP, the current username isn't the full
-        // configured principal
-        String currUserShortName = UserGroupInformation.getCurrentUser().getShortUserName();
-        this.isMasterUser = currUserShortName.equals(new KerberosName(masterPrincipal).getShortName());
+        this.masterShortUserName = new KerberosName(masterPrincipal).getShortName();
       } else {
-        this.isMasterUser = false;
+        this.masterShortUserName = null;
       }
     } catch (IOException e) {
       throw Throwables.propagate(e);
@@ -356,25 +350,36 @@ class DatasetServiceClient {
     if (!securityEnabled || !authorizationEnabled) {
       return builder;
     }
-    String userId;
-    if (NamespaceId.SYSTEM.equals(namespaceId) && (!kerberosEnabled || isMasterUser)) {
+
+    String currUserShortName;
+    try {
+      currUserShortName = UserGroupInformation.getCurrentUser().getShortUserName();
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+
+    // If the request originated from the router and was forwarded to any service other than dataset service, before
+    // going to dataset service via dataset service client, the userId could be set in the SecurityRequestContext.
+    // e.g. deploying an app that contains a dataset.
+    // For user datasets, if a dataset call originates from a program runtime, then find the userId from
+    // UserGroupInformation#getCurrentUser()
+    String userId = authenticationContext.getPrincipal().getName();
+    if (NamespaceId.SYSTEM.equals(namespaceId)) {
       // For getting a system dataset like MDS, use the system principal, if the current user is the same as the
       // CDAP kerberos principal. If a user tries to access a system dataset from an app, either:
       // 1. The request will go through if the user is impersonating as the cdap principal - which means that
       // impersonation has specifically been configured in this namespace to use the cdap principal; or
       // 2. The request will fail, if kerberos is enabled and the user is impersonating as a non-cdap user; or
-      // 3. The request will go through, if kerberos is disabled
-      LOG.trace("Acessing dataset in system namespace using the system principal because the current user's " +
-                  "kerberos principal {} is the same as the CDAP master's kerberos principal {}.",
-                masterPrincipal, UserGroupInformation.getCurrentUser().getUserName());
-      userId = systemUser;
-    } else {
-      // If the request originated from the router and was forwarded to any service other than dataset service, before
-      // going to dataset service via dataset service client, the userId could be set in the SecurityRequestContext.
-      // e.g. deploying an app that contains a dataset.
-      // For user datasets, if a dataset call originates from a program runtime, then find the userId from
-      // UserGroupInformation#getCurrentUser()
-      userId = authenticationContext.getPrincipal().getName();
+      // 3. The request will go through, if kerberos is disabled, since the impersonating user will be cdap
+
+      // we compare short name, because in some YARN containers launched by CDAP, the current username isn't the full
+      // configured principal
+      if (!kerberosEnabled || currUserShortName.equals(masterShortUserName)) {
+        LOG.trace("Acessing dataset in system namespace using the system principal because the current user " +
+                    "{} is the same as the CDAP master user {}.",
+                  UserGroupInformation.getCurrentUser().getUserName(), masterShortUserName);
+        userId = currUserShortName;
+      }
     }
     return builder.addHeader(Constants.Security.Headers.USER_ID, userId);
   }

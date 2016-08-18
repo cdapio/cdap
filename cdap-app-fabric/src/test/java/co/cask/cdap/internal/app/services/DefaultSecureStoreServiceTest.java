@@ -32,7 +32,6 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.proto.security.SecureKeyCreateRequest;
 import co.cask.cdap.proto.security.SecureKeyListEntry;
-import co.cask.cdap.security.auth.context.MasterAuthenticationContext;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
@@ -113,7 +112,6 @@ public class DefaultSecureStoreServiceTest {
     // we only want to test authorization, but we don't specify principal/keytab, so disable kerberos
     cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
     cConf.setBoolean(Constants.Security.Authorization.CACHE_ENABLED, false);
-    cConf.set(Constants.Security.Authorization.SYSTEM_USER, new MasterAuthenticationContext().getPrincipal().getName());
 
     LocationFactory locationFactory = new LocalLocationFactory(TEMPORARY_FOLDER.newFolder());
     Location authorizerJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class);
