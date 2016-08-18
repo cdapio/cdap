@@ -193,18 +193,17 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
     this.logStartTime = LogViewerStore.getState().startTime;
 
-    if(this.startTimeSec === Math.floor(this.logStartTime.getTime()/1000)){
+
+    if(this.startTimeSec === Math.floor(this.logStartTime/1000)){
       return;
     }
 
-    if (typeof this.logStartTime !== 'object') {
-      this.setDefault();
-      return;
-    }
     this.totalCount = LogViewerStore.getState().totalLogs;
     this.warningCount = LogViewerStore.getState().totalWarnings;
     this.errorCount = LogViewerStore.getState().totalErrors;
-    this.startTimeSec = Math.floor(this.logStartTime.getTime()/1000);
+
+    this.startTimeSec = (this.logStartTime instanceof Date) ? (Math.floor(this.logStartTime.getTime()/1000)) : (this.logStartTime/1000);
+    this.fromOffset = -1 + '.' + this.startTimeSec*1000;
     startTimeRequest();
   });
 
@@ -549,13 +548,14 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         programType : this.programType,
         programId : this.programId,
         runId : this.runId,
-        fromOffset: -1 + '.' + this.startTimeSec*1000
+        fromOffset: this.fromOffset
     }).$promise.then(
       (res) => {
 
         this.fromOffset = res[res.length-1].offset;
         this.loading = false;
         this.data = [];
+        this.displayData = [];
         this.renderData();
 
         angular.forEach(res, (element, index) => {

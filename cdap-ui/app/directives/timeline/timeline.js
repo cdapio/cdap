@@ -240,7 +240,14 @@ function link (scope, element) {
           .duration(200)
           .style('opacity', 0.9)
           .attr('class', 'timeline-tooltip');
-        tooltipDiv.html(scope.pinScrollingPosition)
+
+        let tooltipTime = scope.pinScrollingPosition;
+
+        if(!(tooltipTime instanceof Date)){
+          tooltipTime = new Date(tooltipTime);
+        }
+
+        tooltipDiv.html(tooltipTime)
           .style('left', (d3.event.pageX - overflowOffset) + 'px')
           .style('top', (d3.event.pageY - 28) + 'px');
       })
@@ -450,7 +457,7 @@ function link (scope, element) {
           if(errorCount > 0){
             if(eventCount >= 5){
               timescaleSvg.append('circle')
-                .attr('cx', xScale(keyThree))
+                .attr('cx', xScale(keyThree) + handleWidth)
                 .attr('cy', (verticalStackSize+1) * 7)
                 .attr('r', 2)
                 .attr('class', 'red-circle')
@@ -458,7 +465,7 @@ function link (scope, element) {
                 .on('mouseout', circleTooltipHoverOff);
             } else {
               timescaleSvg.append('circle')
-                .attr('cx', xScale(keyThree))
+                .attr('cx', xScale(keyThree) + handleWidth)
                 .attr('cy', (verticalStackSize+1) * 7)
                 .attr('r', 2)
                 .attr('class', 'red-circle');
@@ -467,7 +474,7 @@ function link (scope, element) {
           } else if(warningCount > 0){
             if(eventCount >= 5){
               timescaleSvg.append('circle')
-                .attr('cx', xScale(keyThree))
+                .attr('cx', xScale(keyThree) + handleWidth)
                 .attr('cy', (verticalStackSize+1) * 7)
                 .attr('r', 2)
                 .attr('class', 'yellow-circle')
@@ -475,7 +482,7 @@ function link (scope, element) {
                 .on('mouseout', circleTooltipHoverOff);
             } else {
               timescaleSvg.append('circle')
-                .attr('cx', xScale(keyThree))
+                .attr('cx', xScale(keyThree) + handleWidth)
                 .attr('cy', (verticalStackSize+1) * 7)
                 .attr('r', 2)
                 .attr('class', 'yellow-circle');
