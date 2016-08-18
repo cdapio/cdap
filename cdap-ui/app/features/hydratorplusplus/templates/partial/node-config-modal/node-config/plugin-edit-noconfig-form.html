@@ -41,6 +41,11 @@
                 <small class="text-danger" ng-if="!HydratorPlusPlusNodeConfigCtrl.state.node.warning && HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[name].required && !HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[name]">{{::HydratorPlusPlusNodeConfigCtrl.requiredPropertyError}}</small>
               </label>
               <input type="text" class="form-control" ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[name]" ng-disabled="HydratorPlusPlusNodeConfigCtrl.state.node.pluginTemplate && plugin.lock[name]">
+
+              <span class="badge macro-indicator pull-right"
+                    ng-if="HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[name].macroSupported">
+                Macro
+              </span>
             </div>
           </div>
         </div>
