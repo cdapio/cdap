@@ -800,8 +800,7 @@ public class MasterServiceMain extends DaemonMain {
 
           // Add secure tokens
           if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
-            // TokenSecureStoreUpdater.update() ignores parameters
-            preparer.addSecureStore(secureStoreUpdater.update(null, null));
+            preparer.addSecureStore(secureStoreUpdater.update());
           }
 
           // add hadoop classpath to application classpath and exclude hadoop classes from bundle jar.
