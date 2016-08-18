@@ -466,6 +466,7 @@ function link (scope, element) {
           if(errorCount > 0){
               timescaleSvg.append('circle')
                 .attr('cx', xScale(keyThree) + handleWidth)
+                //Value '-2' prevents circles from overlapping with timestamps
                 .attr('cy', (verticalStackSize+1) * 7 - 2)
                 .attr('r', 2)
                 .attr('class', 'red-circle')

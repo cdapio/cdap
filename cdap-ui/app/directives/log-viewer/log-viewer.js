@@ -14,7 +14,7 @@
  * the License.
  */
 
-function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout, $uibModal, $q) {
+function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout, $uibModal, $q, moment) {
   'ngInject';
 
   var dataSrc = new MyCDAPDataSource($scope);
@@ -388,7 +388,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
           //Format dates properly for rendering and computing
           let formattedDate = new Date(res[index].log.timestamp);
           res[index].log.timestamp = formattedDate;
-          res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + ((formattedDate.getMinutes()<10) ? '0'+formattedDate.getMinutes() : formattedDate.getMinutes()) + ':' + ((formattedDate.getSeconds()<10) ? '0'+formattedDate.getSeconds() : formattedDate.getSeconds()));
+          res[index].log.displayTime = moment(formattedDate).format('L H:mm:ss');
           res[index].log.stackTrace = res[index].log.stackTrace.trim();
         });
 
@@ -446,7 +446,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
           //Format dates properly for rendering and computing
           let formattedDate = new Date(res[index].log.timestamp);
           res[index].log.timestamp = formattedDate;
-          res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + ((formattedDate.getMinutes()<10) ? '0'+formattedDate.getMinutes() : formattedDate.getMinutes()) + ':' + formattedDate.getSeconds());
+          res[index].log.displayTime = moment(formattedDate).format('L H:mm:ss');
           res[index].log.stackTrace = res[index].log.stackTrace.trim();
         });
 
@@ -566,7 +566,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         angular.forEach(res, (element, index) => {
           let formattedDate = new Date(res[index].log.timestamp);
           res[index].log.timestamp = formattedDate;
-          res[index].log.displayTime = formatDate(formattedDate);
+          res[index].log.displayTime = moment(formattedDate).format('L H:mm:ss');
           res[index].log.stackTrace = res[index].log.stackTrace.trim();
         });
 
