@@ -65,7 +65,7 @@ public class ArtifactInspectorTest {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
 
     classLoaderFactory = new ArtifactClassLoaderFactory(cConf, new DummyProgramRunnerFactory());
-    artifactInspector = new ArtifactInspector(cConf, classLoaderFactory, new Impersonator(cConf, null, null));
+    artifactInspector = new ArtifactInspector(cConf, classLoaderFactory);
   }
 
   @Test(expected = InvalidArtifactException.class)

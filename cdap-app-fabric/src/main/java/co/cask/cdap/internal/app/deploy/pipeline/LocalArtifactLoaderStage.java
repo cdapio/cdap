@@ -95,7 +95,6 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     InMemoryConfigurator inMemoryConfigurator = new InMemoryConfigurator(cConf, deploymentInfo.getNamespaceId().toId(),
                                                                          artifactId.toId(), appClassName,
                                                                          artifactRepository, artifactClassLoader,
-                                                                         impersonator,
                                                                          deploymentInfo.getApplicationName(),
                                                                          configString);
 
