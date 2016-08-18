@@ -50,10 +50,14 @@ body.theme-cdap {
         border-right: 1px solid transparent;
         border-bottom: 1px solid transparent;
         border-left: 1px solid @table-border-color;
-        .transition(all 0.2s ease);
+        transition: all 0.2s ease;
         span {
           line-height: 29px;
           &.icon-logview { font-size: 21px; }
+          &.icon-runtimestart,
+          &.icon-runtimestop { font-size: 24px; }
+          &.icon-runtimestarttime,
+          &.icon-runtimestoptime { font-size: 13px; }
         }
         &:hover,
         &:focus,
@@ -62,7 +66,7 @@ body.theme-cdap {
           border-top: 1px solid #ebebeb;
           border-right: 1px solid #ebebeb;
           border-left: 1px solid @table-border-color;
-          border-bottom: 1px solid @table-border-color;
+          border-bottom: 1px solid #ebebeb;
         }
         &:active {
           background-color: #828da0;
@@ -70,19 +74,11 @@ body.theme-cdap {
           border-right: 1px solid #828da0;
           border-bottom: 1px solid #828da0;
           color: white;
-          .box-shadow(inset 0 0 20px 0 rgba(0, 0, 0, 0.25));
+          box-shadow: inset 0 0 20px 0 rgba(0, 0, 0, 0.25);
         }
-        + .btn {
-          margin-left: 0;
-        }
-
-        [class*="fa-"] {
-          font-size: 16px;
-        }
-
-        .fa-sliders {
-          transform: rotate(90deg);
-        }
+        + .btn { margin-left: 0; }
+        [class*="fa-"] { font-size: 16px; }
+        .fa-sliders { transform: rotate(90deg); }
 
         @media (max-width: @screen-xs-max) {
           display: none;
@@ -90,28 +86,18 @@ body.theme-cdap {
       }
     }
     .toppanel-tooltip {
-      &.in {
-        .opacity(1);
-      }
+      &.in { opacity: 1; }
       &.top {
-        .tooltip-arrow {
-          border-top: 5px solid #666666;
-        }
+        .tooltip-arrow { border-top: 5px solid #666666; }
       }
       &.right {
         width: 100%;
-        .tooltip-arrow {
-          border-right: 5px solid #666666;
-        }
+        .tooltip-arrow { border-right: 5px solid #666666; }
       }
       &.bottom {
-        .tooltip-arrow {
-          border-bottom: 5px solid #666666;
-        }
+        .tooltip-arrow { border-bottom: 5px solid #666666; }
       }
-      &.icon-tooltip {
-        width: auto;
-      }
+      &.icon-tooltip { width: auto; }
       .tooltip-inner {
         background-color: #666666;
         border: 1px solid #666666;
@@ -123,20 +109,14 @@ body.theme-cdap {
     .error-tooltip {
       z-index: 1029;
       &.top {
-        .tooltip-arrow {
-          border-top: 5px solid @brand-danger;
-        }
+        .tooltip-arrow { border-top: 5px solid @brand-danger; }
       }
       &.right {
         width: 100%;
-        .tooltip-arrow {
-          border-right: 5px solid @brand-danger;
-        }
+        .tooltip-arrow { border-right: 5px solid @brand-danger; }
       }
       &.bottom {
-        .tooltip-arrow {
-          border-bottom: 5px solid @brand-danger;
-        }
+        .tooltip-arrow { border-bottom: 5px solid @brand-danger; }
       }
 
       .tooltip-inner {
@@ -155,12 +135,8 @@ body.theme-cdap {
       overflow: auto;
       right: 0;
       z-index: 1039;
-      @box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
-      .box-shadow(@box-shadow);
-      h5 {
-        margin: 10px;
-        margin-bottom: 0;
-      }
+      box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
+      h5 { margin: 10px 10px 0; }
       .arguments-container {
         padding: 5px 10px;
         width: 100%;
@@ -183,12 +159,8 @@ body.theme-cdap {
               input.form-control {
                 height: 28px;
                 padding-top: 5px;
-                &:first-child {
-                  width: 30%;
-                }
-                &:nth-child(2) {
-                  width: 69%;
-                }
+                &:first-child { width: 30%; }
+                &:nth-child(2) { width: 69%; }
               }
               .col-xs-10.col-lg-8 {
                 padding: 0;
@@ -202,15 +174,11 @@ body.theme-cdap {
               }
             }
             .btn.btn-danger,
-            .btn.btn-info {
-              padding: 5px;
-            }
+            .btn.btn-info { padding: 5px; }
           }
         }
       }
-      .clearfix {
-        padding: 0 10px 5px 10px;
-      }
+      .clearfix { padding: 0 10px 5px 10px; }
     }
     .pipeline-settings-backdrop {
       position: fixed;
@@ -252,7 +220,7 @@ body.theme-cdap {
       max-width: ~"-webkit-calc(100% - 130px)";
       max-width: ~"calc(100% - 130px)";
       left: 130px;
-      .transition(all 0.2s ease);
+      transition: all 0.2s ease;
       display: flex;
     }
     .side-panel.top {
@@ -264,13 +232,11 @@ body.theme-cdap {
         background-color: transparent;
         min-width: 0;
         z-index: 1021;
-        .box-shadow(none);
-        .transition(all 0.2s ease);
+        box-shadow: none;
+        transition: all 0.2s ease;
 
         &:hover,
-        &:focus {
-          cursor: pointer;
-        }
+        &:focus { cursor: pointer; }
         div.pipeline-type {
           display: inline-block;
           padding-left: 7px;
@@ -296,17 +262,13 @@ body.theme-cdap {
               line-height: 17px;
 
               &.placeholder {
-                &:before {
-                  content: "Name your pipeline";
-                }
+                &:before { content: "Name your pipeline"; }
               }
             }
             &:last-child {
               font-size: 12px;
               &.placeholder {
-                &:before {
-                  content: "Enter a description for your pipeline";
-                }
+                &:before { content: "Enter a description for your pipeline"; }
               }
             }
           }
@@ -325,24 +287,17 @@ body.theme-cdap {
           background-color: transparent;
           display: inline-block;
           font-size: 12px;
-          padding: 0;
           border: 1px solid @table-border-color;
           padding: 10px 12px;
           width: 100%;
           max-width: 100%;
-          .border-radius(6px);
+          border-radius: 6px;
           .placeholder-color(@color: gray);
           &:hover,
-          &:focus {
-            cursor: auto;
-          }
-          &:focus {
-            outline: 0;
-          }
+          &:focus { cursor: auto; }
+          &:focus { outline: 0; }
         }
-        input {
-          height: @height-of-toppanel;
-        }
+        input { height: @height-of-toppanel; }
         textarea {
           font-weight: 400;
           resize: none;
@@ -356,9 +311,9 @@ body.theme-cdap {
           &.btn {
             width: 0;
             height: 0;
-            .opacity(0);
+            opacity: 0;
             visibility: hidden;
-            .transition(all 0.5s ease);
+            transition: all 0.5s ease;
           }
         }
         &.expanded {
@@ -368,19 +323,14 @@ body.theme-cdap {
           padding: 10px;
           width: 100%;
           position: absolute;
-          @box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
-          .box-shadow(@box-shadow);
+          box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
           div.pipeline-type {
-            span {
-              line-height: 1;
-            }
+            span { line-height: 1; }
           }
           div.pipeline-name {
             padding: 10px;
 
-            &:after {
-              content: none;
-            }
+            &:after { content: none; }
           }
           div.btn-group {
             .btn {
@@ -388,13 +338,16 @@ body.theme-cdap {
               width: auto;
               height: 32px;
               padding: 0 10px;
-              .border-radius(4px);
-              .opacity(1);
-              .transition(all 0.2s ease);
+              border-radius: 4px;
+              opacity: 1;
+              transition: all 0.2s ease;
               visibility: visible;
-              &:last-child {
-                margin-left: 5px;
+              &:first-child {
+                background-color: @body-bg;
+                &:hover,
+                &:focus { background-color: darken(@body-bg, 10%); }
               }
+              &:last-child { margin-left: 5px; }
             }
           }
         }
@@ -441,10 +394,14 @@ body.theme-cdap {
             but based on the browser size. We need to dynamically have more space for description
             and still be able to have run specific section stick to metadata section.
           */
+          max-width: ~"calc(100% - 412px)";
+          max-width: ~"-moz-calc(100% - 412px)";
+          max-width: ~"-webkit-calc(100% - 412px)";
 
-          max-width: ~"calc(100% - 410px)";
-          max-width: ~"-moz-calc(100% - 410px)";
-          max-width: ~"-webkit-calc(100% - 410px)";
+          @media (min-width: @screen-md-min) {
+            min-width: 200px;
+          }
+
           div.pipeline-type {
             line-height: 1;
             text-decoration: none;
@@ -497,56 +454,53 @@ body.theme-cdap {
           }
           .last-run-container {
             .metric {
-              h5 {
-                margin: 0;
-              }
-              &:first-child {
-                margin-right: 10px;
-              }
+              h5 { margin: 0; }
+              &:first-child { margin-right: 10px; }
             }
           }
         }
-        .last-run {
-          margin-right: 1px solid #dddddd;
-        }
+        .app-status,
+        .last-run { background-color: #ebebeb; }
+
         .app-status {
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 5px;
+          margin: 3px 0 3px 3px;
+          padding-left: 5px;
           border-right: 0;
-          border-left: 1px solid #dddddd;
-          &.status-green span {
-            color: @brand-success;
-          }
-          &.status-red span {
-            color: @brand-danger;
-          }
-          span {
-            line-height: inherit;
-          }
-          .metric-value {
-            margin-right: 5px;
-          }
+          &.status-green span { color: @brand-success; }
+          &.status-red span { color: @brand-danger; }
+          span { line-height: inherit; }
+          .metric-value { margin-right: 5px; }
         }
         .app-status-container {
           display: flex;
           min-width: 400px;
           position: relative;
-          border-right: 1px solid #dddddd;
-          .btn {
-            &.log-viewer {
-              border-left: 0;
-            }
-          }
+          .btn.log-viewer,
+          .btn.scheduler { border-right: 1px solid #dddddd; }
         }
+        .last-run { margin: 3px 3px 3px 0; }
       }
-      .btn {
+      div.btn {
         align-items: center;
+        height: 45px;
         .fa.fa-caret-down {
           position: absolute;
           top: 17px;
           left: 18px;
+        }
+        .icon-double {
+          position: relative;
+          span {
+            &:last-child {
+              position: absolute;
+              top: -6px;
+            }
+            &.icon-runtimestarttime { left: 7px; }
+            &.icon-runtimestoptime { left: 13px; }
+          }
         }
       }
       .pipeline-specific-section {
@@ -577,9 +531,7 @@ body.theme-cdap {
           top: 43px;
           background: #ebebeb;
           width: 700px;
-          .macro-error-container {
-            width: 70%;
-          }
+          .macro-error-container { width: 70%; }
         }
         &.pipeline-logs-section {
           height: ~"calc(100vh - 147px)";
@@ -592,9 +544,7 @@ body.theme-cdap {
             height: ~"-moz-calc(100vh - 263px)";
             height: ~"-webkit-calc(100vh - 263px)";
           }
-          .fa.fa-expand {
-            display: none;
-          }
+          .fa.fa-expand { display: none; }
         }
       }
     }
@@ -605,7 +555,7 @@ body.theme-cdap {
       left: 0;
       z-index: 1028;
       height: 60px;
-      .box-shadow(0 7px 7px fade(black, 10%), 0 10px 59px fade(black, 25%););
+      box-shadow: 0 7px 7px fade(black, 10%), 0 10px 59px fade(black, 25%);
       h1 {
         border-right: 1px solid @table-border-color;
         display: inline-block;
@@ -618,12 +568,8 @@ body.theme-cdap {
         padding: 7px 15px;
         span {
           display: block;
-          &:first-child {
-            font-size: 15px;
-          }
-          &:last-child {
-            font-size: 18px;
-          }
+          &:first-child { font-size: 15px; }
+          &:last-child { font-size: 18px; }
         }
       }
       ul {
@@ -638,9 +584,7 @@ body.theme-cdap {
           }
           span {
             font-size: 15px;
-            &:first-child {
-              padding-right: 5px;
-            }
+            &:first-child { padding-right: 5px; }
           }
         }
       }
@@ -649,7 +593,7 @@ body.theme-cdap {
         right: 40px;
         top: 35px;
         padding: 12px 16px;
-        .border-radius(50%);
+        border-radius: 50%;
         span.fa {
           font-size: 24px;
           vertical-align: middle;
