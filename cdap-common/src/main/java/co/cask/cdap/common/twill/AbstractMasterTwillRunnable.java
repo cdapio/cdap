@@ -70,6 +70,7 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
 
   @Override
   public final void initialize(TwillContext context) {
+    LOG.info("Initializing runnable {}", name);
     super.initialize(context);
 
     name = context.getSpecification().getName();
@@ -93,7 +94,7 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
       services = Lists.newArrayList();
       getServices(services);
       Preconditions.checkArgument(!services.isEmpty(), "Should have at least one service");
-
+      LOG.info("Runnable initialized {}", name);
     } catch (Throwable t) {
       throw Throwables.propagate(t);
     }

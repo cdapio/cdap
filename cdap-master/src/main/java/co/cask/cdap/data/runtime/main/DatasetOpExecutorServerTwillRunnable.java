@@ -139,10 +139,10 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
   protected void getServices(List<? super Service> services) {
     services.add(injector.getInstance(ZKClientService.class));
     services.add(injector.getInstance(KafkaClientService.class));
+    services.add(injector.getInstance(AuthorizationEnforcementService.class));
     services.add(injector.getInstance(MetricsCollectionService.class));
     services.add(injector.getInstance(DatasetOpExecutorService.class));
     services.add(injector.getInstance(MetadataService.class));
     services.add(injector.getInstance(RemoteSystemOperationsService.class));
-    services.add(injector.getInstance(AuthorizationEnforcementService.class));
   }
 }

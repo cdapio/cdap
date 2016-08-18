@@ -42,6 +42,7 @@ import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
@@ -62,10 +63,7 @@ import java.util.List;
 public class MetricsTwillRunnable extends AbstractMasterTwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsTwillRunnable.class);
 
-  private MetricsQueryService metricsQueryService;
-  private ZKClientService zkClient;
-  private KafkaClientService kafkaClient;
-  private MetricsCollectionService metricsCollectionService;
+  private Injector injector;
 
   public MetricsTwillRunnable(String name, String cConfName, String hConfName) {
     super(name, cConfName, hConfName);
@@ -77,24 +75,14 @@ public class MetricsTwillRunnable extends AbstractMasterTwillRunnable {
       // Set the hostname of the machine so that cConf can be used to start internal services
       getCConfiguration().set(Constants.Metrics.ADDRESS, context.getHost().getCanonicalHostName());
 
-      Injector injector = createGuiceInjector(getCConfiguration(), getConfiguration());
+      injector = createGuiceInjector(getCConfiguration(), getConfiguration());
       injector.getInstance(LogAppenderInitializer.class).initialize();
 
       LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                                          Constants.Logging.COMPONENT_NAME,
                                                                          Constants.Service.METRICS));
 
-      LOG.info("Initializing runnable {}", name);
       LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
-
-      zkClient = injector.getInstance(ZKClientService.class);
-      kafkaClient = injector.getInstance(KafkaClientService.class);
-
-      // Get the Metric Services
-      metricsQueryService = injector.getInstance(MetricsQueryService.class);
-      metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-
-      LOG.info("Runnable initialized {}", name);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
       throw Throwables.propagate(t);
@@ -103,10 +91,11 @@ public class MetricsTwillRunnable extends AbstractMasterTwillRunnable {
 
   @Override
   public void getServices(List<? super Service> services) {
-    services.add(zkClient);
-    services.add(kafkaClient);
-    services.add(metricsCollectionService);
-    services.add(metricsQueryService);
+    services.add(injector.getInstance(ZKClientService.class));
+    services.add(injector.getInstance(KafkaClientService.class));
+    services.add(injector.getInstance(AuthorizationEnforcementService.class));
+    services.add(injector.getInstance(MetricsQueryService.class));
+    services.add(injector.getInstance(MetricsCollectionService.class));
   }
 
   @VisibleForTesting

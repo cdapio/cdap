@@ -40,8 +40,7 @@ import java.util.Set;
  * the master so every request for privileges does not have to go through the master. The cache is updated periodically
  * using {@link Authorizer}.
  */
-@Singleton
-public class DefaultPrivilegesFetcherProxyService extends AbstractAuthorizationService
+class DefaultPrivilegesFetcherProxyService extends AbstractAuthorizationService
   implements PrivilegesFetcherProxyService {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultPrivilegesFetcherProxyService.class);
 
@@ -60,8 +59,9 @@ public class DefaultPrivilegesFetcherProxyService extends AbstractAuthorizationS
         privileges.add(new Privilege(entry.getKey(), action));
       }
     }
-    LOG.debug("Fetched privileges for principal {} as {}", privileges.build());
-    return privileges.build();
+    Set<Privilege> result = privileges.build();
+    LOG.debug("Fetched privileges for principal {} as {}", principal, result);
+    return result;
   }
 
   @Override
