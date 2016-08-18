@@ -83,7 +83,7 @@ public class ReducerWrapper extends Reducer {
 
     ClassLoader oldClassLoader;
     if (delegate instanceof ProgramLifecycle) {
-      oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
+      oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
       try {
         ((ProgramLifecycle) delegate).initialize(new MapReduceLifecycleContext(basicMapReduceContext));
       } catch (Exception e) {
@@ -94,7 +94,7 @@ public class ReducerWrapper extends Reducer {
       }
     }
 
-    oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
+    oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
     try {
       delegate.run(flushingContext);
     } finally {
@@ -114,7 +114,7 @@ public class ReducerWrapper extends Reducer {
     basicMapReduceContext.closeMultiOutputs();
 
     if (delegate instanceof ProgramLifecycle) {
-      oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
+      oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
       try {
         ((ProgramLifecycle<? extends RuntimeContext>) delegate).destroy();
       } catch (Exception e) {
