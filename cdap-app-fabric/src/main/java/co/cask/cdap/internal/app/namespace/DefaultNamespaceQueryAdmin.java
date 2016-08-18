@@ -100,11 +100,11 @@ public class DefaultNamespaceQueryAdmin implements NamespaceQueryAdmin {
       return namespaceMetaCache.get(namespaceId.toEntityId());
     } catch (ExecutionException e) {
       if (e.getCause() instanceof NamespaceNotFoundException) {
-        throw new NamespaceNotFoundException(namespaceId);
+        throw (NamespaceNotFoundException) e.getCause();
       } else if (e.getCause() instanceof IOException) {
-        throw new IOException(e.getCause());
+        throw (IOException) e.getCause();
       } else if (e.getCause() instanceof UnauthorizedException) {
-        throw new UnauthorizedException(e.getMessage());
+        throw (UnauthorizedException) e.getCause();
       }
       throw e;
     }
