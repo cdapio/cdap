@@ -199,10 +199,8 @@ public class ArtifactRepository {
   /**
    * Get all artifacts that match artifacts in the given ranges.
    *
-   * @namespace namespace
    * @param range the range to match artifacts in
-   * @return an unmodifiable list of all artifacts that match the given ranges. If none exist, an empty list
-   *         is returned
+   * @return an unmodifiable list of all artifacts that match the given ranges. If none exist, an empty list is returned
    */
   public List<ArtifactDetail> getArtifacts(final ArtifactRange range) throws Exception {
     List<ArtifactDetail> artifacts = artifactStore.getArtifacts(range);
