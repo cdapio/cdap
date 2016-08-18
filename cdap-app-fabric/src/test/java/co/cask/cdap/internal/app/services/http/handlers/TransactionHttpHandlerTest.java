@@ -17,13 +17,13 @@
 package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.tephra.Transaction;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionSystemClient;
 import org.junit.Assert;
 import org.junit.Test;
 

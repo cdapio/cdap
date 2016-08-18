@@ -24,7 +24,6 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.DatasetNotFoundException;
 import co.cask.cdap.format.StructuredRecordStringConverter;
-import co.cask.tephra.TransactionAware;
 import com.google.gson.Gson;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.io.Text;
@@ -33,6 +32,7 @@ import org.apache.hadoop.mapred.OutputFormat;
 import org.apache.hadoop.mapred.RecordWriter;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.util.Progressable;
+import org.apache.tephra.TransactionAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

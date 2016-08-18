@@ -16,9 +16,9 @@
 package co.cask.cdap.data.runtime.main;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.tephra.TransactionManager;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.TransactionManager;
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;

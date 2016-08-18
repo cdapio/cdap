@@ -21,10 +21,10 @@ import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV1;
 import co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV2;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
-import co.cask.tephra.coprocessor.TransactionStateCache;
-import co.cask.tephra.snapshot.SnapshotCodecV3;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.tephra.coprocessor.TransactionStateCache;
+import org.apache.tephra.snapshot.SnapshotCodecV3;
 
 import java.io.IOException;
 

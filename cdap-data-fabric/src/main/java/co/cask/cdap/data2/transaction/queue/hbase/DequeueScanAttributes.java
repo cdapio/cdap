@@ -18,13 +18,13 @@ package co.cask.cdap.data2.transaction.queue.hbase;
 
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.DequeueStrategy;
-import co.cask.tephra.Transaction;
-import co.cask.tephra.TransactionType;
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.io.WritableUtils;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionType;
 
 import java.io.DataInput;
 import java.io.DataOutput;

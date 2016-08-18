@@ -26,8 +26,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.tephra.TransactionContext;
-import co.cask.tephra.TransactionSystemClient;
+import org.apache.tephra.TransactionContext;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.util.Collections;

@@ -16,12 +16,12 @@
 
 package co.cask.cdap.data.runtime;
 
-import co.cask.tephra.TransactionManager;
-import co.cask.tephra.metrics.TxMetricsCollector;
-import co.cask.tephra.persist.TransactionStateStorage;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.TransactionManager;
+import org.apache.tephra.metrics.TxMetricsCollector;
+import org.apache.tephra.persist.TransactionStateStorage;
 
 /**
  * Google Guice Provider for {@link TransactionManager} instances.  Each call to {@link #get()} will

@@ -21,7 +21,6 @@ import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.transaction.queue.AbstractQueueProducer;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.queue.QueueMetrics;
-import co.cask.tephra.Transaction;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -30,6 +29,7 @@ import com.google.common.collect.Sets;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.tephra.Transaction;
 
 import java.io.Closeable;
 import java.io.IOException;

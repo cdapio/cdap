@@ -22,11 +22,11 @@ import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryQueueClientFactory;
-import co.cask.tephra.metrics.TxMetricsCollector;
-import co.cask.tephra.runtime.TransactionModules;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
+import org.apache.tephra.metrics.TxMetricsCollector;
+import org.apache.tephra.runtime.TransactionModules;
 
 /**
  * The Guice module of data fabric bindings for in memory execution.

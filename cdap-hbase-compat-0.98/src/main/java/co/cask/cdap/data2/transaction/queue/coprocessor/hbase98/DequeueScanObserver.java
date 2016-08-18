@@ -18,7 +18,6 @@ package co.cask.cdap.data2.transaction.queue.coprocessor.hbase98;
 
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.transaction.queue.hbase.DequeueScanAttributes;
-import co.cask.tephra.Transaction;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.coprocessor.BaseRegionObserver;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
@@ -26,6 +25,7 @@ import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.regionserver.RegionScanner;
+import org.apache.tephra.Transaction;
 
 import java.io.IOException;
 

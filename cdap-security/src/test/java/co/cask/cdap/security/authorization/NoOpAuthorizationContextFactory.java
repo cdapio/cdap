@@ -28,7 +28,7 @@ import co.cask.cdap.api.dataset.InstanceNotFoundException;
 import co.cask.cdap.security.auth.context.AuthenticationTestContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationContext;
 import co.cask.cdap.security.store.DummySecureStore;
-import co.cask.tephra.TransactionFailureException;
+import org.apache.tephra.TransactionFailureException;
 
 import java.util.Map;
 import java.util.Properties;

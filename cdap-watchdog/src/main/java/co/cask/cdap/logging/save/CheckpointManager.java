@@ -20,10 +20,10 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.tephra.TransactionAware;
-import co.cask.tephra.TransactionExecutor;
-import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.collect.ImmutableMap;
+import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionExecutor;
+import org.apache.tephra.TransactionExecutorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

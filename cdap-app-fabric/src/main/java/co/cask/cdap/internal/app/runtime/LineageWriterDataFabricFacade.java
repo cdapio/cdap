@@ -34,11 +34,11 @@ import co.cask.cdap.data2.transaction.stream.ForwardingStreamConsumer;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.proto.Id;
-import co.cask.tephra.TransactionAware;
-import co.cask.tephra.TransactionContext;
-import co.cask.tephra.TransactionExecutor;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionContext;
+import org.apache.tephra.TransactionExecutor;
 
 import java.io.IOException;
 

@@ -27,12 +27,12 @@ import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.tephra.TransactionAware;
-import co.cask.tephra.TransactionContext;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
 import com.google.common.io.Closeables;
+import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionContext;
+import org.apache.tephra.TransactionSystemClient;
 
 import java.util.Map;
 import javax.annotation.Nullable;

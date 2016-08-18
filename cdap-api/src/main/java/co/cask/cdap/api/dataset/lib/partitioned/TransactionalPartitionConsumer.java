@@ -24,7 +24,7 @@ import co.cask.cdap.api.dataset.lib.DatasetStatePersistor;
 import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
-import co.cask.tephra.TransactionFailureException;
+import org.apache.tephra.TransactionFailureException;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;

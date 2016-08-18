@@ -19,7 +19,6 @@ package co.cask.cdap.data2.transaction.queue.coprocessor.hbase11;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.queue.hbase.DequeueScanAttributes;
-import co.cask.tephra.Transaction;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import org.apache.hadoop.hbase.Cell;
@@ -28,6 +27,7 @@ import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.tephra.Transaction;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

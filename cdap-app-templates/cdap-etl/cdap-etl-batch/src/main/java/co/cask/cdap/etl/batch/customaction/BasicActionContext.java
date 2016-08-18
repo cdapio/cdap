@@ -17,19 +17,14 @@ package co.cask.cdap.etl.batch.customaction;
 
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.customaction.CustomActionContext;
-import co.cask.cdap.api.macro.InvalidMacroException;
-import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.security.store.SecureStoreMetadata;
-import co.cask.cdap.etl.api.StageContext;
 import co.cask.cdap.etl.api.action.ActionContext;
 import co.cask.cdap.etl.api.action.SettableArguments;
 import co.cask.cdap.etl.common.AbstractStageContext;
-import co.cask.tephra.TransactionFailureException;
+import org.apache.tephra.TransactionFailureException;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 

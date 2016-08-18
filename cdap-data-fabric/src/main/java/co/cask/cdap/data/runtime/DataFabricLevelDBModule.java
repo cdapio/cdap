@@ -23,11 +23,11 @@ import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.leveldb.LevelDBQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.leveldb.LevelDBQueueClientFactory;
-import co.cask.tephra.metrics.TxMetricsCollector;
-import co.cask.tephra.runtime.TransactionModules;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
+import org.apache.tephra.metrics.TxMetricsCollector;
+import org.apache.tephra.runtime.TransactionModules;
 
 /**
  * DataFabricLocalModule defines the Local/HyperSQL bindings for the data fabric.

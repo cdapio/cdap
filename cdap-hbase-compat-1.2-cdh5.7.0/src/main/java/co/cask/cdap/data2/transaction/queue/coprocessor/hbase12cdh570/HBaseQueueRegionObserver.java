@@ -28,8 +28,6 @@ import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerInstance;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.QueueConsumerConfig;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HTable12CDH570NameConverter;
-import co.cask.tephra.coprocessor.TransactionStateCache;
-import co.cask.tephra.persist.TransactionVisibilityState;
 import com.google.common.base.Supplier;
 import com.google.common.io.InputSupplier;
 import org.apache.commons.logging.Log;
@@ -50,6 +48,8 @@ import org.apache.hadoop.hbase.regionserver.ScannerContext;
 import org.apache.hadoop.hbase.regionserver.Store;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.tephra.coprocessor.TransactionStateCache;
+import org.apache.tephra.persist.TransactionVisibilityState;
 
 import java.io.IOException;
 import java.util.Iterator;

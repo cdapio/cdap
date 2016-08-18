@@ -17,8 +17,8 @@
 package co.cask.cdap.data2.transaction.queue;
 
 import co.cask.cdap.data2.queue.ConsumerGroupConfig;
-import co.cask.tephra.Transaction;
 import com.google.common.collect.ImmutableList;
+import org.apache.tephra.Transaction;
 
 import java.io.IOException;
 import java.util.Collection;

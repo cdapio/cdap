@@ -56,7 +56,7 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>co.cask.tephra</groupId>
+      <groupId>org.apache.tephra</groupId>
       <artifactId>tephra-hbase-compat-0.98</artifactId>
     </dependency>
     <dependency>

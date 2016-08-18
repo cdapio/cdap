@@ -33,10 +33,10 @@ import co.cask.http.BodyProducer;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
-import co.cask.tephra.TransactionContext;
-import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import org.apache.tephra.TransactionContext;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.common.Cancellable;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 
