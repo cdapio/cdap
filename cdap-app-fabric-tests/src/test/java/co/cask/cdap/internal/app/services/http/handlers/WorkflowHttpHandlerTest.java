@@ -121,12 +121,22 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     return null;
   }
 
+  private void waitForStatusCode(final String path, final Id.Program program, final int expectedStatusCode)
+    throws Exception {
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        HttpResponse response = doPost(getVersionedAPIPath(path, Constants.Gateway.API_VERSION_3_TOKEN,
+                                                           program.getNamespaceId()));
+        return expectedStatusCode == response.getStatusLine().getStatusCode();
+      }
+    }, 60, TimeUnit.SECONDS);
+  }
+
   private void suspendWorkflow(Id.Program program, String runId, int expectedStatusCode) throws Exception {
     String path = String.format("apps/%s/workflows/%s/runs/%s/suspend", program.getApplicationId(), program.getId(),
                                 runId);
-    HttpResponse response = doPost(getVersionedAPIPath(path, Constants.Gateway.API_VERSION_3_TOKEN,
-                                                       program.getNamespaceId()));
-    Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
+    waitForStatusCode(path, program, expectedStatusCode);
   }
 
   private void setAndTestRuntimeArgs(Id.Program programId, Map<String, String> args) throws Exception {
@@ -155,9 +165,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
   private void resumeWorkflow(Id.Program program, String runId, int expectedStatusCode) throws Exception {
     String path = String.format("apps/%s/workflows/%s/runs/%s/resume", program.getApplicationId(), program.getId(),
                                 runId);
-    HttpResponse response = doPost(getVersionedAPIPath(path, Constants.Gateway.API_VERSION_3_TOKEN,
-                                                       program.getNamespaceId()));
-    Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
+
+    waitForStatusCode(path, program, expectedStatusCode);
   }
 
   private HttpResponse getWorkflowCurrentStatus(Id.Program program, String runId) throws Exception {
