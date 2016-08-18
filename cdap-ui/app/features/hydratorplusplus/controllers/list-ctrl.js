@@ -107,7 +107,6 @@ angular.module(PKG.name + '.feature.hydratorplusplus')
           programType: 'Spark',
           programId: 'DataStreamsSparkStreaming'
         });
-        console.log('realtime: ', realtime);
 
       } else {
         api = myWorkersApi;
