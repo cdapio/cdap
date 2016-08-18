@@ -58,7 +58,7 @@ angular.module(PKG.name + '.commons')
         vm.openModal = function () {
           var modal = $uibModal.open({
             templateUrl: 'plugin-functions/functions/output-schema/output-schema-modal.html',
-            windowClass: 'hydrator-modal node-config-modal',
+            windowClass: 'hydrator-modal node-config-modal layered-modal',
             keyboard: true,
             controller: function ($scope, nodeInfo, $state, HydratorPlusPlusHydratorService) {
               var mvm = this;
@@ -111,20 +111,10 @@ angular.module(PKG.name + '.commons')
                   .$promise
                   .then(function (res) {
                     mvm.error = null;
-
-                    mvm.resolvedSchema = angular.copy(res.fields);
-                    mvm.schema = res.fields.filter(function (field) {
-                      if (angular.isArray(field.type)) {
-                        field.type = field.type[0];
-                        field.nullable = true;
-                      }
-                      return field;
-                    });
+                    mvm.schema = res;
                     mvm.showLoading = false;
                   }, function (err) {
-                    mvm.resolvedSchema = null;
                     mvm.schema = null;
-
                     mvm.error = err.data;
                     mvm.showLoading = false;
                   });
@@ -134,7 +124,7 @@ angular.module(PKG.name + '.commons')
 
               mvm.apply = function () {
                 $scope.$close({
-                  schema: mvm.resolvedSchema
+                  schema: mvm.schema
                 });
               };
 
