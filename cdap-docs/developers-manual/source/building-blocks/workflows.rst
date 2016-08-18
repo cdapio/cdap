@@ -90,7 +90,7 @@ the ``configure`` method::
     public void destroy() {
       // Invoked after the execution of the Workflow
       // Determine the status of the Workflow
-      boolean isWorkflowSuccessful = getContext().isSuccessful();
+      boolean isWorkflowSuccessful = getContext().getState().getStatus() == ProgramStatus.COMPLETED;
 
       // Get the state of all nodes that were executed as a part of this Workflow run.
       Map<String, WorkflowNodeState> nodeStates = getContext().getNodeStates();

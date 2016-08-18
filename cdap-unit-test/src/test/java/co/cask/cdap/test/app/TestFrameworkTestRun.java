@@ -519,6 +519,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     File workflowSuccess = new File(TMP_FOLDER.newFolder() + "/workflow.success");
     File actionSuccess = new File(TMP_FOLDER.newFolder() + "/action.success");
+    File workflowKilled = new File(TMP_FOLDER.newFolder() + "/workflow.killed");
+    File firstFile = new File(TMP_FOLDER.newFolder() + "/first");
+    File firstFileDone = new File(TMP_FOLDER.newFolder() + "/first.done");
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(WorkflowStatusTestApp.WORKFLOW_NAME);
     workflowManager.start(ImmutableMap.of("workflow.success.file", workflowSuccess.getAbsolutePath(),
@@ -533,9 +536,18 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     workflowManager.start(ImmutableMap.of("workflow.success.file", workflowSuccess.getAbsolutePath(),
                                           "action.success.file", actionSuccess.getAbsolutePath()));
     workflowManager.waitForFinish(1, TimeUnit.MINUTES);
-
     Assert.assertTrue(workflowSuccess.exists());
     Assert.assertTrue(actionSuccess.exists());
+
+    // Test the killed status
+    workflowManager.start(ImmutableMap.of("workflow.killed.file", workflowKilled.getAbsolutePath(),
+                                          "first.file", firstFile.getAbsolutePath(),
+                                          "first.done.file", firstFileDone.getAbsolutePath(),
+                                          "test.killed", "true"));
+    verifyFileExists(Lists.newArrayList(firstFile));
+    workflowManager.stop();
+    workflowManager.waitForStatus(false);
+    Assert.assertTrue(workflowKilled.exists());
   }
 
   @Category(SlowTests.class)
@@ -597,6 +609,21 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     for (RunRecord record : history) {
       Assert.assertEquals(ProgramRunStatus.COMPLETED, record.getStatus());
     }
+  }
+
+  private void verifyFileExists(final List<File> fileList)
+    throws Exception {
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        for (File file : fileList) {
+          if (!file.exists()) {
+            return false;
+          }
+        }
+        return true;
+      }
+    }, 100, TimeUnit.SECONDS);
   }
 
   private void verifyWorkflowRun(String runId, boolean shouldKeepWordCountDataset, boolean shouldKeepCSVFilesetDataset,

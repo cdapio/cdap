@@ -16,6 +16,7 @@
 package co.cask.cdap.api.workflow;
 
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.annotation.Beta;
@@ -64,11 +65,11 @@ public interface WorkflowContext extends RuntimeContext, ServiceDiscoverer, Data
   Map<String, WorkflowNodeState> getNodeStates();
 
   /**
-   * Return true if the execution was successful, false otherwise. This method can be
-   * used from {@link AbstractWorkflow#destroy} to determine the status of the {@link Workflow}.
-   * It can also be used from {@link WorkflowAction#destroy} method to determine the status
-   * of the {@link WorkflowAction}. If it is called before the execution is completed, false is returned.
+   * Return the state of the workflow. This method can be used from {@link AbstractWorkflow#destroy}
+   * to determine the status of the {@link Workflow}. It can also be used from {@link WorkflowAction#destroy} method
+   * to determine the status of the {@link WorkflowAction}.
+   * @return a {@link ProgramState}
    */
   @Beta
-  boolean isSuccessful();
+  ProgramState getState();
 }

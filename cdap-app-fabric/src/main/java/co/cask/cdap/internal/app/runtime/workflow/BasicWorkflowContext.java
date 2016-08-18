@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
+import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
@@ -49,7 +50,7 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
   private final ProgramWorkflowRunner programWorkflowRunner;
   private final WorkflowToken token;
   private final Map<String, WorkflowNodeState> nodeStates;
-  private boolean success = false;
+  private ProgramState state;
 
   BasicWorkflowContext(WorkflowSpecification workflowSpec, @Nullable WorkflowActionSpecification spec,
                        @Nullable ProgramWorkflowRunner programWorkflowRunner,
@@ -103,14 +104,14 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
   }
 
   /**
-   * Sets the success flag if execution of the program associated with current context succeeds.
+   * Sets the current state of the program.
    */
-  void setSuccess() {
-    success = true;
+  void setState(ProgramState state) {
+    this.state = state;
   }
 
   @Override
-  public boolean isSuccessful() {
-    return success;
+  public ProgramState getState() {
+    return state;
   }
 }
