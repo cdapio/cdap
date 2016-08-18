@@ -1240,6 +1240,10 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
         new MetadataSearchResultRecord(Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME)),
         new MetadataSearchResultRecord(Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME2)),
         new MetadataSearchResultRecord(Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME3)),
+        new MetadataSearchResultRecord(Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME4)),
+        new MetadataSearchResultRecord(Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME5)),
+        new MetadataSearchResultRecord(Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME6)),
+        new MetadataSearchResultRecord(Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME7)),
         new MetadataSearchResultRecord(
           Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DS_WITH_SCHEMA_NAME)),
         new MetadataSearchResultRecord(myds)
@@ -1316,6 +1320,10 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME);
     Id.DatasetInstance datasetInstance2 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME2);
     Id.DatasetInstance datasetInstance3 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME3);
+    Id.DatasetInstance datasetInstance4 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME4);
+    Id.DatasetInstance datasetInstance5 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME5);
+    Id.DatasetInstance datasetInstance6 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME6);
+    Id.DatasetInstance datasetInstance7 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME7);
     Id.DatasetInstance dsWithSchema = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DS_WITH_SCHEMA_NAME);
     Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, AllProgramsApp.STREAM_NAME);
     Id.Stream.View view = Id.Stream.View.from(streamId, "view");
@@ -1377,12 +1385,21 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       new MetadataSearchResultRecord(datasetInstance), new MetadataSearchResultRecord(datasetInstance2),
       new MetadataSearchResultRecord(datasetInstance3), new MetadataSearchResultRecord(myds)
     );
-    ImmutableSet<MetadataSearchResultRecord> expectedAllDatasets = ImmutableSet.<MetadataSearchResultRecord>builder()
+
+    ImmutableSet<MetadataSearchResultRecord> expectedExplorableDatasets =
+      ImmutableSet.<MetadataSearchResultRecord>builder()
       .addAll(expectedKvTables)
+      .add(new MetadataSearchResultRecord(datasetInstance4))
+      .add(new MetadataSearchResultRecord(datasetInstance5))
       .add(new MetadataSearchResultRecord(dsWithSchema))
       .build();
+    ImmutableSet<MetadataSearchResultRecord> expectedAllDatasets = ImmutableSet.<MetadataSearchResultRecord>builder()
+      .addAll(expectedExplorableDatasets)
+      .add(new MetadataSearchResultRecord(datasetInstance6))
+      .add(new MetadataSearchResultRecord(datasetInstance7))
+      .build();
     metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "explore");
-    Assert.assertEquals(expectedAllDatasets, metadataSearchResultRecords);
+    Assert.assertEquals(expectedExplorableDatasets, metadataSearchResultRecords);
     metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, KeyValueTable.class.getName());
     Assert.assertEquals(expectedKvTables, metadataSearchResultRecords);
     metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "type:*");
