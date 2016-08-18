@@ -14,6 +14,8 @@
  * the License.
  */
 
+@import "../../../styles/variables.less";
+
 my-function-dropdown-with-alias {
   .row {
     margin-bottom: 5px;
@@ -42,6 +44,11 @@ my-function-dropdown-with-alias {
       &:first-child {
         padding-right: 0;
         padding-left: 15px;
+      }
+    }
+    .btn-info {
+      @media(min-width: @screen-lg-min) {
+        margin-top: 5px;
       }
     }
   }
