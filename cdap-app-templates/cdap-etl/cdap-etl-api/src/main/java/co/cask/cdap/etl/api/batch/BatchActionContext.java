@@ -16,7 +16,6 @@
 
 package co.cask.cdap.etl.api.batch;
 
-import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -42,7 +41,8 @@ public interface BatchActionContext extends BatchRuntimeContext {
   Map<String, WorkflowNodeState> getNodeStates();
 
   /**
-   * Return the state of the execution. This method can be used to determine the status of the pipeline run.
+   * Return true if the execution was successful, false otherwise. This method can be
+   * used to determine the status of the pipeline run.
    */
-  ProgramState getState();
+  boolean isSuccessful();
 }

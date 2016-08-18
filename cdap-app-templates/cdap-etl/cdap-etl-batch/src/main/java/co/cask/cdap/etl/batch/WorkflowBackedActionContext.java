@@ -16,7 +16,7 @@
 
 package co.cask.cdap.etl.batch;
 
-import co.cask.cdap.api.ProgramState;
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowNodeState;
@@ -54,8 +54,8 @@ public class WorkflowBackedActionContext extends AbstractBatchContext implements
   }
 
   @Override
-  public ProgramState getState() {
-    return workflowContext.getState();
+  public boolean isSuccessful() {
+    return workflowContext.getState().getStatus() == ProgramStatus.COMPLETED;
   }
 
   @Override

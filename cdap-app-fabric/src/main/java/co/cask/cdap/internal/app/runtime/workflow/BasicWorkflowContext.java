@@ -16,6 +16,7 @@
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.ProgramState;
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
@@ -101,6 +102,12 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
   @Override
   public Map<String, WorkflowNodeState> getNodeStates() {
     return ImmutableMap.copyOf(nodeStates);
+  }
+
+  @Override
+  @Deprecated
+  public boolean isSuccessful() {
+    return state.getStatus() == ProgramStatus.COMPLETED;
   }
 
   /**
