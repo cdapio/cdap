@@ -163,7 +163,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     InMemoryDatasetFramework mdsFramework = new InMemoryDatasetFramework(registryFactory, modules);
 
-    ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(cConf, discoveryServiceClient), cConf);
+    DiscoveryExploreClient exploreClient = new DiscoveryExploreClient(discoveryServiceClient, authenticationContext);
+    ExploreFacade exploreFacade = new ExploreFacade(exploreClient, cConf);
     TransactionExecutorFactory txExecutorFactory = new DynamicTransactionExecutorFactory(txSystemClient);
     AuthorizationEnforcer authorizationEnforcer = injector.getInstance(AuthorizationEnforcer.class);
 
@@ -177,7 +178,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                                             authenticationContext, cConf, impersonator,
                                                             txSystemClientService, mdsFramework, txExecutorFactory,
                                                             DEFAULT_MODULES);
-    DatasetOpExecutor opExecutor = new LocalDatasetOpExecutor(cConf, discoveryServiceClient, opExecutorService);
+    DatasetOpExecutor opExecutor = new LocalDatasetOpExecutor(cConf, discoveryServiceClient, opExecutorService,
+                                                              authenticationContext);
     DatasetInstanceService instanceService = new DatasetInstanceService(
       typeService, instanceManager, opExecutor, exploreFacade, namespaceQueryAdmin, authorizationEnforcer,
       privilegesManager, authenticationContext);

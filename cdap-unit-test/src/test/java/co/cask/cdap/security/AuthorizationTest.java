@@ -68,6 +68,9 @@ import co.cask.cdap.test.app.DatasetCrossNSAccessWithMAPApp;
 import co.cask.cdap.test.app.DummyApp;
 import co.cask.cdap.test.app.StreamAuthApp;
 import co.cask.cdap.test.artifacts.plugins.ToStringPlugin;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
+import co.cask.common.http.HttpResponse;
 import com.google.common.base.Charsets;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
@@ -92,6 +95,7 @@ import org.junit.runners.model.Statement;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -950,7 +954,7 @@ public class AuthorizationTest extends TestBase {
     // cleanup
     deleteDatasetInstance(NamespaceId.SYSTEM, "table1");
     deleteDatasetInstance(NamespaceId.SYSTEM, "table2");
-    deleteNamespace(otherNS.getNamespaceId().toId());
+    getNamespaceAdmin().delete(otherNS.getNamespaceId().toId());
   }
 
   private void testCrossNSDatasetAccessWithAuthMapReduce(MapReduceManager mrManager) throws Exception {
@@ -1072,7 +1076,7 @@ public class AuthorizationTest extends TestBase {
     // cleanup
     deleteDatasetInstance(NamespaceId.SYSTEM, "table1");
     deleteDatasetInstance(NamespaceId.SYSTEM, "table2");
-    deleteNamespace(otherNS.getNamespaceId().toId());
+    getNamespaceAdmin().delete(otherNS.getNamespaceId().toId());
   }
 
   private void testCrossNSDatasetAccessWithAuthSpark(SparkManager sparkManager) throws Exception {
@@ -1130,6 +1134,59 @@ public class AuthorizationTest extends TestBase {
     verifyDummyData(outputDatasetNSMeta.getNamespaceId(), "output");
     getNamespaceAdmin().delete(inputDatasetNSMeta.getNamespaceId().toId());
     getNamespaceAdmin().delete(outputDatasetNSMeta.getNamespaceId().toId());
+  }
+
+  @Test
+  public void testAddDropPartitions() throws Exception {
+    createAuthNamespace();
+    ApplicationManager appMgr = deployApplication(AUTH_NAMESPACE.toId(), PartitionTestApp.class);
+    grantAndAssertSuccess(AUTH_NAMESPACE, BOB, EnumSet.of(Action.READ, Action.EXECUTE));
+    SecurityRequestContext.setUserId(BOB.getName());
+    String partition = "p1";
+    String subPartition = "1";
+    String text = "some random text for pfs";
+    ServiceManager pfsService = appMgr.getServiceManager(PartitionTestApp.PFS_SERVICE_NAME);
+    pfsService.start();
+    pfsService.waitForStatus(true);
+    URL pfsURL = pfsService.getServiceURL();
+    String apiPath = String.format("partitions/%s/subpartitions/%s", partition, subPartition);
+    URL url = new URL(pfsURL, apiPath);
+    HttpRequest request;
+    HttpResponse response;
+    try {
+      request = HttpRequest.post(url).withBody(text).build();
+      response = HttpRequests.execute(request);
+      // should fail because bob does not have write privileges on the dataset
+      Assert.assertEquals(500, response.getResponseCode());
+    } finally {
+      pfsService.stop();
+      pfsService.waitForFinish(5, TimeUnit.SECONDS);
+    }
+    // grant write on dataset and restart
+    grantAndAssertSuccess(AUTH_NAMESPACE.dataset(PartitionTestApp.PFS_NAME), BOB, EnumSet.of(Action.WRITE));
+    pfsService.start();
+    pfsService.waitForStatus(true);
+    pfsURL = pfsService.getServiceURL();
+    url = new URL(pfsURL, apiPath);
+    try  {
+      request = HttpRequest.post(url).withBody(text).build();
+      response = HttpRequests.execute(request);
+      // should succeed now because bob was granted write privileges on the dataset
+      Assert.assertEquals(200, response.getResponseCode());
+      // make sure that the partition was added
+      request = HttpRequest.get(url).build();
+      response = HttpRequests.execute(request);
+      Assert.assertEquals(200, response.getResponseCode());
+      Assert.assertEquals(text, response.getResponseBodyAsString());
+      // drop the partition
+      request = HttpRequest.delete(url).build();
+      response = HttpRequests.execute(request);
+      Assert.assertEquals(200, response.getResponseCode());
+    } finally {
+      pfsService.stop();
+      pfsService.waitForFinish(5, TimeUnit.SECONDS);
+      SecurityRequestContext.setUserId(ALICE.getName());
+    }
   }
 
   @After

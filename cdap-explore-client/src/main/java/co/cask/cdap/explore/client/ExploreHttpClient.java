@@ -49,6 +49,7 @@ import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -96,6 +97,13 @@ abstract class ExploreHttpClient implements Explore {
   protected abstract boolean isSSLEnabled();
 
   protected abstract boolean verifySSLCert();
+
+  @Nullable
+  protected String getUserId() {
+    // by default, return null, it is only required to be set by DiscoveryExploreClient
+    // for other explore clients, the userid will be handled via auth tokens
+    return null;
+  }
 
   protected boolean isAvailable() {
     try {
@@ -149,7 +157,7 @@ abstract class ExploreHttpClient implements Explore {
     PartitionedFileSetArguments.setOutputPartitionKey(args, key);
     HttpResponse response = doPost(String.format("namespaces/%s/data/explore/datasets/%s/deletePartition",
                                                  datasetInstance.getNamespaceId(), datasetInstance.getId()),
-                                     GSON.toJson(args), null);
+                                   GSON.toJson(args), null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
@@ -303,8 +311,7 @@ abstract class ExploreHttpClient implements Explore {
   @Override
   public QueryHandle getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern)
     throws ExploreException, SQLException {
-    String body = GSON.toJson(new ColumnsArgs(catalog, schemaPattern,
-                                                                tableNamePattern, columnNamePattern));
+    String body = GSON.toJson(new ColumnsArgs(catalog, schemaPattern, tableNamePattern, columnNamePattern));
     String resource = String.format("namespaces/%s/data/explore/jdbc/columns", schemaPattern);
     HttpResponse response = doPost(resource, body, null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
@@ -384,8 +391,7 @@ abstract class ExploreHttpClient implements Explore {
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new TableNotFoundException("Table " + database + table + " not found.");
     }
-    throw new ExploreException("Cannot get the schema of table " + database + table +
-                               ". Reason: " + response);
+    throw new ExploreException("Cannot get the schema of table " + database + table + ". Reason: " + response);
   }
 
   @Override
@@ -449,33 +455,29 @@ abstract class ExploreHttpClient implements Explore {
   }
 
   private HttpResponse doGet(String resource) throws ExploreException {
-    return doRequest(resource, "GET", null, null);
+    return doRequest(resource, HttpMethod.GET, null, null);
   }
 
   private HttpResponse doPost(String resource, String body, Map<String, String> headers) throws ExploreException {
-    return doRequest(resource, "POST", headers, body);
+    return doRequest(resource, HttpMethod.POST, headers, body);
   }
 
   private HttpResponse doPut(String resource, String body, Map<String, String> headers) throws ExploreException {
-    return doRequest(resource, "PUT", headers, body);
+    return doRequest(resource, HttpMethod.PUT, headers, body);
   }
 
   private HttpResponse doDelete(String resource) throws ExploreException {
-    return doRequest(resource, "DELETE", null, null);
+    return doRequest(resource, HttpMethod.DELETE, null, null);
   }
 
-  private HttpResponse doRequest(String resource, String requestMethod,
+  private HttpResponse doRequest(String resource, HttpMethod requestMethod,
                                  @Nullable Map<String, String> headers,
                                  @Nullable String body) throws ExploreException {
-    Map<String, String> newHeaders = headers;
-    if (getAuthToken() != null && !getAuthToken().isEmpty()) {
-      newHeaders = (headers != null) ? Maps.newHashMap(headers) : Maps.<String, String>newHashMap();
-      newHeaders.put("Authorization", "Bearer " + getAuthToken());
-    }
+    Map<String, String> newHeaders = addSecurityHeaders(headers);
     String resolvedUrl = resolve(resource);
     try {
       URL url = new URL(resolvedUrl);
-      HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.valueOf(requestMethod), url).addHeaders(newHeaders);
+      HttpRequest.Builder builder = HttpRequest.builder(requestMethod, url).addHeaders(newHeaders);
       if (body != null) {
         builder.withBody(body);
       }
@@ -487,6 +489,22 @@ abstract class ExploreHttpClient implements Explore {
                       newHeaders == null ? "null" : Joiner.on(",").withKeyValueSeparator("=").join(newHeaders),
                       body == null ? "null" : body), e);
     }
+  }
+
+  private Map<String, String> addSecurityHeaders(@Nullable Map<String, String> headers) {
+    Map<String, String> newHeaders = headers;
+    String authToken = getAuthToken();
+    String userId = getUserId();
+    if (Strings.isNullOrEmpty(authToken) && Strings.isNullOrEmpty(userId)) {
+      return newHeaders;
+    }
+    newHeaders = (headers != null) ? Maps.newHashMap(headers) : Maps.<String, String>newHashMap();
+    if (!Strings.isNullOrEmpty(authToken)) {
+      newHeaders.put("Authorization", "Bearer " + authToken);
+    } else {
+      newHeaders.put(Constants.Security.Headers.USER_ID, userId);
+    }
+    return newHeaders;
   }
 
   private HttpRequestConfig createRequestConfig() {
