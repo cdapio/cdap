@@ -103,8 +103,6 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.EXPLORE_HTTP_USER_SERVICE));
-    LOG.info("Initializing runnable {}", name);
-
     // Set the host name to the one provided by Twill
     cConf.set(Constants.Explore.SERVER_ADDRESS, context.getHost().getHostName());
   }
@@ -113,8 +111,8 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
   protected void getServices(List<? super Service> services) {
     services.add(injector.getInstance(ZKClientService.class));
     services.add(injector.getInstance(KafkaClientService.class));
-    services.add(injector.getInstance(ExploreExecutorService.class));
     services.add(injector.getInstance(AuthorizationEnforcementService.class));
+    services.add(injector.getInstance(ExploreExecutorService.class));
   }
 
   @VisibleForTesting

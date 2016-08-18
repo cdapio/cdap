@@ -104,10 +104,10 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
   protected void getServices(List<? super Service> services) {
     services.add(injector.getInstance(ZKClientService.class));
     services.add(injector.getInstance(KafkaClientService.class));
+    services.add(injector.getInstance(AuthorizationEnforcementService.class));
     services.add(injector.getInstance(MetricsCollectionService.class));
     services.add(injector.getInstance(StreamHttpService.class));
     services.add(injector.getInstance(StreamService.class));
-    services.add(injector.getInstance(AuthorizationEnforcementService.class));
   }
 
   @VisibleForTesting
