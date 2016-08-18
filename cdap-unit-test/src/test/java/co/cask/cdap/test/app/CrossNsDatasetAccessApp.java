@@ -32,7 +32,8 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 public class CrossNsDatasetAccessApp extends AbstractApplication {
   public static final String STREAM_NAME = "dataStream";
   public static final String FLOW_NAME = "dataFlow";
-  public static final String DATASET_OUTPUT_SPACE = "datasetOutputSpace";
+  public static final String OUTPUT_DATASET_NS = "output.dataset.ns";
+  public static final String OUTPUT_DATASET_NAME = "output.dataset.name";
 
   @Override
   public void configure() {
@@ -72,7 +73,8 @@ public class CrossNsDatasetAccessApp extends AbstractApplication {
     @Override
     public void initialize(FlowletContext context) throws Exception {
       super.initialize(context);
-      whom = context.getDataset(DATASET_OUTPUT_SPACE, "store");
+      whom = context.getDataset(context.getRuntimeArguments().get(OUTPUT_DATASET_NS),
+                                context.getRuntimeArguments().get(OUTPUT_DATASET_NAME));
     }
   }
 }

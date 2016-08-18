@@ -878,6 +878,16 @@ public class TestBase {
   }
 
   /**
+   * Deletes an instance of dataset.
+   *
+   * @param namespaceId namespace for the dataset
+   * @param datasetInstanceName instance name
+   */
+  protected void deleteDatasetInstance(NamespaceId namespaceId, String datasetInstanceName) throws Exception {
+    getTestManager().deleteDatasetInstance(namespaceId, datasetInstanceName);
+  }
+
+  /**
    * Gets Dataset manager of Dataset instance of type {@literal <}T>.
    *
    * @param namespace namespace for the dataset
