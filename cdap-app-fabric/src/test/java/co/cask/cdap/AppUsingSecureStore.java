@@ -34,7 +34,6 @@ import org.apache.spark.api.java.function.PairFunction;
 import org.junit.Assert;
 import scala.Tuple2;
 
-import java.io.IOException;
 import java.util.HashMap;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;

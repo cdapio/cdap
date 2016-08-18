@@ -29,7 +29,6 @@ import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.internal.app.runtime.DefaultAdmin;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.authorization.AuthorizationContextFactory;
-import co.cask.cdap.security.authorization.AuthorizerAsPrivilegesManager;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.DefaultAuthorizationContext;
 import co.cask.cdap.security.authorization.DefaultPrivilegesManager;

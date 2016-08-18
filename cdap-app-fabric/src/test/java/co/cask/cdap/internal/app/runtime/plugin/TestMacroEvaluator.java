@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.runtime.plugin;
 
 import co.cask.cdap.api.macro.InvalidMacroException;
 import co.cask.cdap.api.macro.MacroEvaluator;
-import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
 

@@ -29,7 +29,7 @@ import co.cask.cdap.app.runtime.spark.SparkRuntimeUtils;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.lang.FilterClassLoader;
-import co.cask.cdap.data2.security.Impersonator;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.distributed.AbstractDistributedProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
