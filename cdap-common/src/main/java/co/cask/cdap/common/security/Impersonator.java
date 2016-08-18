@@ -18,9 +18,11 @@ package co.cask.cdap.common.security;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.kerberos.SecurityUtil;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosName;
@@ -37,17 +39,19 @@ public class Impersonator {
 
   private static final Logger LOG = LoggerFactory.getLogger(Impersonator.class);
 
+  private final CConfiguration cConf;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final boolean kerberosEnabled;
   private final UGIProvider ugiProvider;
-  private final ImpersonationUserResolver impersonationUserResolver;
 
   @Inject
   @VisibleForTesting
   public Impersonator(CConfiguration cConf, UGIProvider ugiProvider,
-                      ImpersonationUserResolver impersonationUserResolver) {
-    this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
+                      NamespaceQueryAdmin namespaceQueryAdmin) {
+    this.cConf = cConf;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.ugiProvider = ugiProvider;
-    this.impersonationUserResolver = impersonationUserResolver;
+    this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
   }
 
   /**
@@ -90,7 +94,12 @@ public class Impersonator {
     if (!kerberosEnabled || NamespaceId.SYSTEM.equals(namespaceId)) {
       return UserGroupInformation.getCurrentUser();
     }
-    return getUGI(impersonationUserResolver.getImpersonationInfo(namespaceId));
+    try {
+      return getUGI(namespaceQueryAdmin.get(namespaceId.toId()));
+    } catch (Exception e) {
+      Throwables.propagateIfInstanceOf(e, IOException.class);
+      throw Throwables.propagate(e);
+    }
   }
 
   /**
@@ -105,7 +114,7 @@ public class Impersonator {
     if (!kerberosEnabled || NamespaceId.SYSTEM.equals(namespaceMeta.getNamespaceId())) {
       return UserGroupInformation.getCurrentUser();
     }
-    return getUGI(impersonationUserResolver.getImpersonationInfo(namespaceMeta));
+    return getUGI(new ImpersonationInfo(namespaceMeta, cConf));
   }
 
   private UserGroupInformation getUGI(ImpersonationInfo impersonationInfo) throws IOException {
