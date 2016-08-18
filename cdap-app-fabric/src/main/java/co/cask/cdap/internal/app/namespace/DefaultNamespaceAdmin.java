@@ -189,8 +189,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
       // if hbase namespace is provided validate no other existing namespace is mapped to it
       if (!Strings.isNullOrEmpty(metadata.getConfig().getHbaseNamespace()) &&
         metadata.getConfig().getHbaseNamespace().equals(existingConfig.getHbaseNamespace())) {
-        throw new NamespaceAlreadyExistsException(existingNamespaceMeta.getNamespaceId().toId(),
-                                                  String.format("A namespace '%s' already exists with the given " +
+        throw new BadRequestException(String.format("A namespace '%s' already exists with the given " +
                                                                   "namespace mapping for hbase namespace '%s'",
                                                                 existingNamespaceMeta.getName(),
                                                                 existingConfig.getHbaseNamespace()));
@@ -198,8 +197,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
       // if hive database is provided validate no other existing namespace is mapped to it
       if (!Strings.isNullOrEmpty(metadata.getConfig().getHiveDatabase()) &&
         metadata.getConfig().getHiveDatabase().equals(existingConfig.getHiveDatabase())) {
-        throw new NamespaceAlreadyExistsException(existingNamespaceMeta.getNamespaceId().toId(),
-                                                  String.format("A namespace '%s' already exists with the given " +
+        throw new BadRequestException(String.format("A namespace '%s' already exists with the given " +
                                                                   "namespace mapping for hive database '%s'",
                                                                 existingNamespaceMeta.getName(),
                                                                 existingConfig.getHiveDatabase()));
@@ -210,8 +208,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
         // make sure that this new location is not same as some already mapped location or subdir of the existing
         // location or vice versa.
         if (hasSubDirRelationship(existingConfig.getRootDirectory(), metadata.getConfig().getRootDirectory())) {
-          throw new NamespaceAlreadyExistsException(existingNamespaceMeta.getNamespaceId().toId(),
-                                                    String.format("Failed to create namespace %s with custom " +
+          throw new BadRequestException(String.format("Failed to create namespace %s with custom " +
                                                                     "location %s. A namespace '%s' already exists " +
                                                                     "with location '%s' and these two locations are " +
                                                                     "have a subdirectory relationship.",
