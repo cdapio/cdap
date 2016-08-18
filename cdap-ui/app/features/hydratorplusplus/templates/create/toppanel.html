@@ -69,7 +69,16 @@
     </div>
   </div>
 
-  <div class="btn-group action-buttons">
+  <div class="btn-group action-buttons"
+       ng-if="!HydratorPlusPlusTopPanelCtrl.previewMode">
+    <div class="btn"
+         ng-click="HydratorPlusPlusTopPanelCtrl.togglePreviewMode()"
+         ng-if="HydratorPlusPlusTopPanelCtrl.isPreviewEnabled"
+         uib-tooltip="Preview"
+         tooltip-placement="bottom"
+         tooltip-class="toppanel-tooltip">
+      <span class="fa icon-eye"></span>
+    </div>
     <div class="btn"
          ng-click="HydratorPlusPlusTopPanelCtrl.showSettings()"
          uib-tooltip="Settings"
@@ -105,6 +114,31 @@
          tooltip-placement="bottom"
          tooltip-class="toppanel-tooltip">
       <span class="fa icon-publish"></span>
+    </div>
+  </div>
+
+  <!-- PREVIEW MODE BUTTONS -->
+  <div class="btn-group action-buttons"
+     ng-if="HydratorPlusPlusTopPanelCtrl.previewMode">
+    <div class="btn active"
+         ng-click="HydratorPlusPlusTopPanelCtrl.togglePreviewMode()">
+      <span class="fa icon-eye"></span>
+    </div>
+    <div class="btn"
+         ng-click="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.runPreview()"
+         ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading">
+      <span class="fa fa-play"
+            ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading">
+      </span>
+
+      <span ng-if="HydratorPlusPlusTopPanelCtrl.previewLoading">
+        <span class="fa fa-refresh fa-spin"></span>
+      </span>
+    </div>
+    <div class="btn run-time">
+      <span>
+        {{ HydratorPlusPlusTopPanelCtrl.displayDuration.minutes }}:{{ HydratorPlusPlusTopPanelCtrl.displayDuration.seconds }}
+      </span>
     </div>
   </div>
 

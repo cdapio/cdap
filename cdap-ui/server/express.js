@@ -76,6 +76,9 @@ function makeApp (authAddress, cdapConfig) {
         routerServerPort: cdapConfig['router.server.port'],
         routerSSLServerPort: cdapConfig['router.ssl.bind.port']
       },
+      hydrator: {
+        previewEnabled: cdapConfig['enable.alpha.preview'] === 'true'
+      },
       sslEnabled: cdapConfig['ssl.enabled'] === 'true',
       securityEnabled: authAddress.enabled,
       isEnterprise: process.env.NODE_ENV === 'production'

@@ -15,19 +15,31 @@
  */
 
 class HydratorPlusPlusCreateCanvasCtrl {
-  constructor(DAGPlusPlusNodesStore, HydratorPlusPlusConfigStore, HydratorPlusPlusHydratorService, $uibModal, GLOBALS, DAGPlusPlusNodesActionsFactory) {
+  constructor(DAGPlusPlusNodesStore, HydratorPlusPlusConfigStore, HydratorPlusPlusHydratorService, $uibModal, GLOBALS, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusPreviewStore, $scope) {
     this.DAGPlusPlusNodesStore = DAGPlusPlusNodesStore;
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
     this.GLOBALS = GLOBALS;
+    this.previewStore = HydratorPlusPlusPreviewStore;
+    this.$uibModal = $uibModal;
 
     this.nodes = [];
     this.connections = [];
-    this.$uibModal = $uibModal;
+    this.previewMode = false;
+
     DAGPlusPlusNodesStore.registerOnChangeListener(() => {
       this.setActiveNode();
       this.setStateAndUpdateConfigStore();
+    });
+
+    let unsub = this.previewStore.subscribe(() => {
+      let state = this.previewStore.getState().preview;
+      this.previewMode = state.isPreviewModeEnabled;
+    });
+
+    $scope.$on('$destroy', () => {
+      unsub();
     });
   }
 
@@ -53,6 +65,7 @@ class HydratorPlusPlusCreateCanvasCtrl {
       nodeFromNodesStore = this.DAGPlusPlusNodesStore.getNodes().filter(node => node.name === nodeId);
       pluginNode = nodeFromNodesStore[0];
     }
+
     this.$uibModal
         .open({
           windowTemplateUrl: '/assets/features/hydratorplusplus/templates/partial/node-config-modal/popover-template.html',
@@ -64,6 +77,9 @@ class HydratorPlusPlusCreateCanvasCtrl {
           controllerAs: 'HydratorPlusPlusNodeConfigCtrl',
           animation: false,
           resolve: {
+            rIsStudioMode: function () {
+              return true;
+            },
             rDisabled: function() {
               return false;
             },
@@ -105,7 +121,5 @@ class HydratorPlusPlusCreateCanvasCtrl {
   }
 }
 
-
-HydratorPlusPlusCreateCanvasCtrl.$inject = ['DAGPlusPlusNodesStore', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusHydratorService', '$uibModal', 'GLOBALS', 'DAGPlusPlusNodesActionsFactory'];
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusCreateCanvasCtrl', HydratorPlusPlusCreateCanvasCtrl);
