@@ -33,7 +33,6 @@ import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.security.store.SecureStoreManager;
-import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -56,7 +55,6 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -330,7 +328,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   @Override
-  public List<SecureStoreMetadata> listSecureData(String namespace) throws Exception {
+  public Map<String, String> listSecureData(String namespace) throws Exception {
     return secureStore.listSecureData(namespace);
   }
 

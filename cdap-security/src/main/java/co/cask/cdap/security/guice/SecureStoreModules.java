@@ -22,6 +22,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.runtime.RuntimeModule;
+import co.cask.cdap.security.store.DefaultSecureStoreService;
 import co.cask.cdap.security.store.DummySecureStore;
 import co.cask.cdap.security.store.FileSecureStore;
 import co.cask.cdap.security.store.SecureStoreUtils;
@@ -29,13 +30,12 @@ import com.google.common.base.Strings;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import com.google.inject.Key;
 import com.google.inject.Module;
+import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
-
-import java.io.IOException;
+import com.google.inject.name.Names;
 
 /**
  * Guice bindings for security store related classes.
@@ -59,36 +59,62 @@ import java.io.IOException;
  *
  */
 public class SecureStoreModules extends RuntimeModule {
+  public static final String DELEGATE_SECURE_STORE = "delegateSecureStore";
+  public static final String DELEGATE_SECURE_STORE_MANAGER = "delegateSecureStoreManager";
 
   @Override
   public final Module getInMemoryModules() {
-    return new AbstractModule() {
+    return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(SecureStore.class).toProvider(new TypeLiteral<StoreProvider<SecureStore>>() { });
-        bind(SecureStoreManager.class).toProvider(new TypeLiteral<StoreProvider<SecureStoreManager>>() { });
+        bind(SecureStore.class)
+          .annotatedWith(Names.named(DELEGATE_SECURE_STORE))
+          .toProvider(new TypeLiteral<StoreProvider<SecureStore>>() { });
+        bind(SecureStoreManager.class)
+          .annotatedWith(Names.named(DELEGATE_SECURE_STORE_MANAGER))
+          .toProvider(new TypeLiteral<StoreProvider<SecureStoreManager>>() { });
+        bind(SecureStore.class).to(DefaultSecureStoreService.class);
+        bind(SecureStoreManager.class).to(DefaultSecureStoreService.class);
+        expose(SecureStore.class);
+        expose(SecureStoreManager.class);
       }
     };
   }
 
   @Override
   public final Module getStandaloneModules() {
-    return new AbstractModule() {
+    return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(SecureStore.class).toProvider(new TypeLiteral<StoreProvider<SecureStore>>() { });
-        bind(SecureStoreManager.class).toProvider(new TypeLiteral<StoreProvider<SecureStoreManager>>() { });
+        bind(SecureStore.class)
+          .annotatedWith(Names.named(DELEGATE_SECURE_STORE))
+          .toProvider(new TypeLiteral<StoreProvider<SecureStore>>() { });
+        bind(SecureStoreManager.class)
+          .annotatedWith(Names.named(DELEGATE_SECURE_STORE_MANAGER))
+          .toProvider(new TypeLiteral<StoreProvider<SecureStoreManager>>() { });
+        bind(SecureStore.class).to(DefaultSecureStoreService.class);
+        expose(SecureStore.class);
+        bind(SecureStoreManager.class).to(DefaultSecureStoreService.class);
+        expose(SecureStoreManager.class);
       }
     };
   }
 
   @Override
   public final Module getDistributedModules() {
-    return new AbstractModule() {
+    return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(SecureStore.class).toProvider(new TypeLiteral<DistributedStoreProvider<SecureStore>>() { });
-        bind(SecureStoreManager.class).toProvider(new TypeLiteral<DistributedStoreProvider<SecureStoreManager>>() { });
+        bind(SecureStore.class)
+          .annotatedWith(Names.named(DELEGATE_SECURE_STORE))
+          .toProvider(new TypeLiteral<DistributedStoreProvider<SecureStore>>() { });
+        bind(SecureStoreManager.class)
+          .annotatedWith(Names.named(DELEGATE_SECURE_STORE_MANAGER))
+          .toProvider(new TypeLiteral<DistributedStoreProvider<SecureStoreManager>>() { });
+        bind(SecureStore.class).to(DefaultSecureStoreService.class);
+        bind(SecureStoreManager.class).to(DefaultSecureStoreService.class);
+        expose(SecureStore.class);
+        expose(SecureStoreManager.class);
       }
     };
   }

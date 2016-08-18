@@ -102,7 +102,7 @@ public class AppUsingSecureStore extends AbstractApplication {
     @Path("/list")
     @GET
     public void list(HttpServiceRequest request, HttpServiceResponder responder) throws Exception {
-      String name = getContext().listSecureData(namespace).get(0).getName();
+      String name = (String) getContext().listSecureData(namespace).keySet().toArray()[0];
       responder.sendString(name);
     }
 

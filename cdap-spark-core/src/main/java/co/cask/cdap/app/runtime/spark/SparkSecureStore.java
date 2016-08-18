@@ -18,13 +18,12 @@ package co.cask.cdap.app.runtime.spark;
 
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
-import co.cask.cdap.api.security.store.SecureStoreMetadata;
 
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.List;
+import java.util.Map;
 
 /**
  * A {@link Externalizable} implementation of {@link SecureStore} used in Spark program execution.
@@ -50,7 +49,7 @@ public class SparkSecureStore implements SecureStore, Externalizable {
   }
 
   @Override
-  public List<SecureStoreMetadata> listSecureData(String namespace) throws Exception {
+  public Map<String, String> listSecureData(String namespace) throws Exception {
     return delegate.listSecureData(namespace);
   }
 

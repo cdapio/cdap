@@ -14,13 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.services;
+package co.cask.cdap.security.store;
 
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.security.store.SecureStoreManager;
-import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NamespaceNotFoundException;
@@ -30,36 +29,37 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.SecureKeyId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.proto.security.SecureKeyCreateRequest;
-import co.cask.cdap.proto.security.SecureKeyListEntry;
-import co.cask.cdap.security.authorization.AuthorizerInstantiator;
+import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.security.spi.authorization.Authorizer;
+import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Default implementation of the service that manages access to the Secure Store,
  */
-public class DefaultSecureStoreService implements SecureStoreService {
+public class DefaultSecureStoreService implements SecureStore, SecureStoreManager {
   private final AuthorizationEnforcer authorizationEnforcer;
-  private final Authorizer authorizer;
+  private final PrivilegesManager privilegesManager;
   private final AuthenticationContext authenticationContext;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
 
   @Inject
-  DefaultSecureStoreService(AuthorizerInstantiator authorizerInstantiator, AuthorizationEnforcer authorizationEnforcer,
+  DefaultSecureStoreService(PrivilegesManager privilegesManager, AuthorizationEnforcer authorizationEnforcer,
                             AuthenticationContext authenticationContext,
-                            SecureStore secureStore, SecureStoreManager secureStoreManager) {
-    this.authorizer = authorizerInstantiator.get();
+                            @Named(SecureStoreModules.DELEGATE_SECURE_STORE) SecureStore secureStore,
+                            @Named(SecureStoreModules.DELEGATE_SECURE_STORE_MANAGER)
+                              SecureStoreManager secureStoreManager) {
+    this.privilegesManager = privilegesManager;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
     this.secureStore = secureStore;
@@ -69,24 +69,20 @@ public class DefaultSecureStoreService implements SecureStoreService {
   /**
    * Lists all the secure keys in the given namespace that the user has access to. Returns an empty list if the user
    * does not have access to the namespace or any of the keys in the namespace.
-   * @param namespaceId Id of the namespace we want the key list for.
-   * @return A list of {@link SecureKeyListEntry} for all the keys visible to the user under the given namespace.
+   * @return A map of key names accessible by the user and their descriptions.
    * @throws NamespaceNotFoundException If the specified namespace does not exist.
    * @throws IOException If there was a problem reading from the store.
    *
    */
   @Override
-  public List<SecureKeyListEntry> list(NamespaceId namespaceId) throws Exception {
+  public final Map<String, String> listSecureData(String namespace) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
-    final Predicate<EntityId> filter;
-    filter = authorizationEnforcer.createFilter(principal);
-    List<SecureStoreMetadata> metadatas = secureStore.listSecureData(namespaceId.getNamespace());
-    List<SecureKeyListEntry> result = new ArrayList<>(metadatas.size());
-    String namespace = namespaceId.getNamespace();
-    for (SecureStoreMetadata metadata : metadatas) {
-      String name = metadata.getName();
+    final Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
+    Map<String, String> metadatas = secureStore.listSecureData(namespace);
+    Map<String, String> result = new HashMap<>(metadatas.size());
+    for (String name : metadatas.keySet()) {
       if (filter.apply(new SecureKeyId(namespace, name))) {
-        result.add(new SecureKeyListEntry(name, metadata.getDescription()));
+        result.put(name, metadatas.get(name));
       }
     }
     return result;
@@ -95,7 +91,6 @@ public class DefaultSecureStoreService implements SecureStoreService {
   /**
    * Checks if the user has access to read the secure key and returns the {@link SecureStoreData} associated
    * with the key if they do.
-   * @param secureKeyId Id of the key that the user is trying to read.
    * @return Data associated with the key if the user has read access.
    * @throws NamespaceNotFoundException If the specified namespace does not exist.
    * @throws NotFoundException If the key is not found in the store.
@@ -103,13 +98,12 @@ public class DefaultSecureStoreService implements SecureStoreService {
    * @throws UnauthorizedException If the user does not have READ permissions on the secure key.
    */
   @Override
-  public SecureStoreData get(SecureKeyId secureKeyId) throws Exception {
+  public final SecureStoreData getSecureData(String namespace, String name) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
-    final Predicate<EntityId> filter;
-    filter = authorizationEnforcer.createFilter(principal);
-
+    final Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
+    SecureKeyId secureKeyId = new SecureKeyId(namespace, name);
     if (filter.apply(secureKeyId)) {
-      return secureStore.getSecureData(secureKeyId.getNamespace(), secureKeyId.getName());
+      return secureStore.getSecureData(namespace, name);
     }
     throw new UnauthorizedException(principal, Action.READ, secureKeyId);
   }
@@ -117,8 +111,6 @@ public class DefaultSecureStoreService implements SecureStoreService {
   /**
    * Puts the user provided data in the secure store, if the user has write access to the namespace. Grants the user
    * all access to the newly created entity.
-   * @param secureKeyId The Id for the key that needs to be stored.
-   * @param secureKeyCreateRequest The request containing the data to be stored in the secure store.
    * @throws BadRequestException If the request does not contain the value to be stored.
    * @throws UnauthorizedException If the user does not have write permissions on the namespace.
    * @throws NamespaceNotFoundException If the specified namespace does not exist.
@@ -126,37 +118,34 @@ public class DefaultSecureStoreService implements SecureStoreService {
    * @throws IOException If there was a problem storing the key to underlying provider.
    */
   @Override
-  public synchronized void put(SecureKeyId secureKeyId,
-                               SecureKeyCreateRequest secureKeyCreateRequest) throws Exception {
+  public final synchronized void putSecureData(String namespace, String name, String value, String description,
+                                               Map<String, String> properties) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
-    NamespaceId namespaceId = new NamespaceId(secureKeyId.getNamespace());
+    NamespaceId namespaceId = new NamespaceId(namespace);
     authorizationEnforcer.enforce(namespaceId, principal, Action.WRITE);
 
-    String description = secureKeyCreateRequest.getDescription();
-    String value = secureKeyCreateRequest.getData();
     if (Strings.isNullOrEmpty(value)) {
       throw new BadRequestException("The data field should not be empty. This is the data that will be stored " +
                                       "securely.");
     }
 
-    secureStoreManager.putSecureData(secureKeyId.getNamespace(), secureKeyId.getName(), value, description,
-                           secureKeyCreateRequest.getProperties());
-    authorizer.grant(secureKeyId, principal, EnumSet.allOf(Action.class));
+    privilegesManager.grant(new SecureKeyId(namespace, name), principal, EnumSet.allOf(Action.class));
+    secureStoreManager.putSecureData(namespace, name, value, description, properties);
   }
 
   /**
    * Deletes the key if the user has ADMIN privileges to the key. Clears all the privileges associated with the key.
-   * @param secureKeyId Id of the key to be deleted.
    * @throws UnauthorizedException If the user does not have admin privileges required to delete the secure key.
    * @throws NamespaceNotFoundException If the specified namespace does not exist.
    * @throws NotFoundException If the key to be deleted is not found.
    * @throws IOException If there was a problem deleting it from the underlying provider.
    */
   @Override
-  public void delete(SecureKeyId secureKeyId) throws Exception {
+  public final void deleteSecureData(String namespace, String name) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
+    SecureKeyId secureKeyId = new SecureKeyId(namespace, name);
     authorizationEnforcer.enforce(secureKeyId, principal, Action.ADMIN);
-    secureStoreManager.deleteSecureData(secureKeyId.getNamespace(), secureKeyId.getName());
-    authorizer.revoke(secureKeyId);
+    secureStoreManager.deleteSecureData(namespace, name);
+    privilegesManager.revoke(secureKeyId);
   }
 }

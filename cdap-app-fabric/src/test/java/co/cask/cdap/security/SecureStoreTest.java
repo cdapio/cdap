@@ -22,7 +22,6 @@ import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.guava.reflect.TypeToken;
 import co.cask.cdap.proto.security.SecureKeyCreateRequest;
-import co.cask.cdap.proto.security.SecureKeyListEntry;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import org.apache.http.HttpResponse;
@@ -30,15 +29,13 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
 public class SecureStoreTest extends AppFabricTestBase {
   private static final Gson GSON = new Gson();
-  private static Type listType = new TypeToken<ArrayList<SecureKeyListEntry>>() { }.getType();
+  private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final String KEY = "key1";
   private static final String DESCRIPTION = "This is Key1";
   private static final String DATA = "Secret1";
@@ -92,7 +89,7 @@ public class SecureStoreTest extends AppFabricTestBase {
     // Test empty list
     HttpResponse response = doGet("/v3/namespaces/default/securekeys/");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    Assert.assertEquals("[]", readResponse(response));
+    Assert.assertEquals("{}", readResponse(response));
 
     // One element
     SecureKeyCreateRequest secureKeyCreateRequest = new SecureKeyCreateRequest(DESCRIPTION, DATA,
@@ -101,11 +98,11 @@ public class SecureStoreTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     response = doGet("/v3/namespaces/default/securekeys/");
     String result = readResponse(response);
-    List<SecureKeyListEntry> expected = new ArrayList<>();
-    expected.add(new SecureKeyListEntry(KEY, DESCRIPTION));
-    List<SecureKeyListEntry> list = GSON.fromJson(result, listType);
-    for (SecureKeyListEntry entry : list) {
-      Assert.assertTrue(expected.contains(entry));
+    Map<String, String> expected = new HashMap<>();
+    expected.put(KEY, DESCRIPTION);
+    Map<String, String> returned = GSON.fromJson(result, MAP_TYPE);
+    for (String entry : returned.keySet()) {
+      Assert.assertTrue(expected.containsKey(entry));
     }
 
     // Two elements
@@ -114,20 +111,20 @@ public class SecureStoreTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     response = doGet("/v3/namespaces/default/securekeys/");
     String result2 = readResponse(response);
-    list = GSON.fromJson(result2, listType);
-    expected.add(new SecureKeyListEntry(KEY2, DESCRIPTION2));
-    for (SecureKeyListEntry entry : list) {
-      Assert.assertTrue(expected.contains(entry));
+    returned = GSON.fromJson(result2, MAP_TYPE);
+    expected.put(KEY2, DESCRIPTION2);
+    for (String entry : returned.keySet()) {
+      Assert.assertTrue(expected.containsKey(entry));
     }
 
     // After deleting an element
     delete(KEY);
     response = doGet("/v3/namespaces/default/securekeys/");
     String result3 = readResponse(response);
-    list = GSON.fromJson(result3, listType);
-    expected.remove(new SecureKeyListEntry(KEY, DESCRIPTION));
-    for (SecureKeyListEntry entry : list) {
-      Assert.assertTrue(expected.contains(entry));
+    returned = GSON.fromJson(result3, MAP_TYPE);
+    expected.remove(KEY);
+    for (String entry : returned.keySet()) {
+      Assert.assertTrue(expected.containsKey(entry));
     }
   }
 

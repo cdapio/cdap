@@ -69,6 +69,7 @@ import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.NamespaceStore;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.inject.AbstractModule;
@@ -209,6 +210,7 @@ public class UpgradeTool {
       new AuthenticationContextModules().getMasterModule(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
+      new SecureStoreModules().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
