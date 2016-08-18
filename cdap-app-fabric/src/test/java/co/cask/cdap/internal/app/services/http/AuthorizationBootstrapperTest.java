@@ -46,7 +46,6 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.auth.context.MasterAuthenticationContext;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
@@ -59,6 +58,7 @@ import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -95,7 +95,6 @@ public class AuthorizationBootstrapperTest {
   private static ArtifactRepository artifactRepository;
   private static DatasetFramework dsFramework;
   private static DiscoveryServiceClient discoveryServiceClient;
-  private static Principal systemUser;
   private static InstanceId instanceId;
 
   @BeforeClass
@@ -109,8 +108,6 @@ public class AuthorizationBootstrapperTest {
     Location deploymentJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
                                                               InMemoryAuthorizer.class);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, deploymentJar.toURI().getPath());
-    systemUser = new MasterAuthenticationContext().getPrincipal();
-    cConf.set(Constants.Security.Authorization.SYSTEM_USER, systemUser.getName());
     // make Alice an admin user, so she can create namespaces
     cConf.set(Constants.Security.Authorization.ADMIN_USERS, "alice");
     instanceId = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
@@ -136,6 +133,9 @@ public class AuthorizationBootstrapperTest {
   @Test
   public void test() throws Exception {
     authorizationBootstrapper.run();
+    final Principal systemUser = new Principal(
+      UserGroupInformation.getCurrentUser().getShortUserName(), Principal.PrincipalType.USER
+    );
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {

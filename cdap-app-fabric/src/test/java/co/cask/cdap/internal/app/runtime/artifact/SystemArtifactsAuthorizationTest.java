@@ -34,7 +34,6 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
-import co.cask.cdap.security.auth.context.AuthenticationTestContext;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
@@ -77,7 +76,6 @@ public class SystemArtifactsAuthorizationTest {
   private static AuthorizationEnforcementService authEnforcerService;
   private static InstanceId instance;
   private static NamespaceAdmin namespaceAdmin;
-  private static String systemUser;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -95,8 +93,6 @@ public class SystemArtifactsAuthorizationTest {
     File systemArtifactsDir = TMP_FOLDER.newFolder();
     cConf.set(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR, systemArtifactsDir.getAbsolutePath());
     createSystemArtifact(systemArtifactsDir);
-    systemUser = new AuthenticationTestContext().getPrincipal().getName();
-    cConf.set(Constants.Security.Authorization.SYSTEM_USER, systemUser);
     Injector injector = AppFabricTestHelper.getInjector(cConf);
     artifactRepository = injector.getInstance(ArtifactRepository.class);
     AuthorizerInstantiator instantiatorService = injector.getInstance(AuthorizerInstantiator.class);
@@ -109,8 +105,6 @@ public class SystemArtifactsAuthorizationTest {
 
   @Test
   public void testAuthorizationForSystemArtifacts() throws Exception {
-    // the system user must be able to add system artifacts
-    SecurityRequestContext.setUserId(systemUser);
     artifactRepository.addSystemArtifacts();
     // alice should not be able to refresh system artifacts because she does not have write privileges on the
     // CDAP instance

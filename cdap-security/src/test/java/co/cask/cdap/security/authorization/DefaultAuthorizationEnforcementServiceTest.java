@@ -33,6 +33,7 @@ import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Service;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -247,8 +248,8 @@ public class DefaultAuthorizationEnforcementServiceTest extends AuthorizationTes
   @Test
   public void testSystemUser() throws Exception {
     CConfiguration cConfCopy = CConfiguration.copy(CCONF);
-    Principal systemUser = AUTH_CONTEXT.getPrincipal();
-    cConfCopy.set(Constants.Security.Authorization.SYSTEM_USER, systemUser.getName());
+    Principal systemUser =
+      new Principal(UserGroupInformation.getCurrentUser().getShortUserName(), Principal.PrincipalType.USER);
     cConfCopy.setInt(Constants.Security.Authorization.CACHE_REFRESH_INTERVAL_SECS, 1);
     try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
       Authorizer authorizer = authorizerInstantiator.get();
