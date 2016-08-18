@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2015 Cask Data, Inc.
+# Copyright © 2015-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,7 @@
 #
 
 # Install xorg
-apt-get install -y xorg
+apt-get install -y --no-install-recommends xorg
 
 # Remove X11 video drivers
 for i in ati cirrus fbdev intel mach64 mga neomagic nouveau openchrome qxl r128 radeon s3 savage siliconmotion sis sisusb tdfx trident ; do 
