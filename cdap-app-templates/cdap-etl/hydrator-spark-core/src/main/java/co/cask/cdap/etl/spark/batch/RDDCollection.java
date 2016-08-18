@@ -85,6 +85,7 @@ public class RDDCollection<T> implements SparkCollection<T> {
   public <U> SparkCollection<U> compute(String stageName, SparkCompute<T, U> compute) throws Exception {
     SparkExecutionPluginContext sparkPluginContext =
       new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, stageName);
+    compute.initialize(sparkPluginContext);
 
     // TODO:(Hydra-364) figure out how to do this in a better way...
     long recordsIn = rdd.cache().count();
