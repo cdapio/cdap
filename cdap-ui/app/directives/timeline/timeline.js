@@ -127,7 +127,6 @@ function link (scope, element) {
       .tickPadding(7)
       .ticks(8)
       .tickFormat(customTimeFormat);
-
     generateEventCircles();
     renderBrushAndSlider();
   };

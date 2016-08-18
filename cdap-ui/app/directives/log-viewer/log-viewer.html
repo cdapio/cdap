@@ -66,7 +66,7 @@
           <input type="text" class="log-searchbar" placeholder="Search" ng-model="LogViewer.searchText" ng-model-options="{ debounce: 500 }" ng-change="LogViewer.filterSearch()">
           <span class="fa fa-search"></span>
         </div>
-        <i class="fa fa-expand" aria-hidden="true" ng-click="LogViewer.fullScreen = !LogViewer.fullScreen"></i>
+        <i class="fa fa-expand" aria-hidden="true" ng-click="LogViewer.updateScreenChangeInStore(!LogViewer.fullScreen)"></i>
       </div>
     </div>
   </div>

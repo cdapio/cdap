@@ -14,11 +14,12 @@
  * the License.
  */
 
-function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myLogsApi, MyMetricsQueryHelper, MyCDAPDataSource, ProgramsHelpers, moment) {
+function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myLogsApi, MyMetricsQueryHelper, MyCDAPDataSource, ProgramsHelpers, moment, $timeout) {
 
   var dataSrc = new MyCDAPDataSource($scope);
   this.pinScrollPosition = 0;
   $scope.moment = moment;
+  let screenSize;
 
   this.updateStartTimeInStore = function(val) {
     LogViewerStore.dispatch({
@@ -69,6 +70,12 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
   };
 
   LogViewerStore.subscribe(() => {
+
+    if(screenSize !== LogViewerStore.getState().fullScreen){
+      screenSize = LogViewerStore.getState().fullScreen;
+      $timeout($scope.initialize);
+    }
+
     this.pinScrollPosition = LogViewerStore.getState().scrollPosition;
 
     if($scope.updatePinScale !== undefined){
@@ -80,6 +87,8 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
       $scope.renderSearchCircles($scope.searchResultTimes);
     }
   });
+
+  screenSize = LogViewerStore.getState().fullScreen;
 
   if (!this.namespaceId || !this.appId || !this.programType || !this.programId || !this.runId) {
     this.setDefaultTimeWindow();

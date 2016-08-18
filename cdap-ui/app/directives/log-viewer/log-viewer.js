@@ -185,12 +185,12 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   this.toggleExpandAll = false;
 
   let unsub = LogViewerStore.subscribe(() => {
+    this.fullScreen = LogViewerStore.getState().fullScreen;
     if(this.logStartTime === LogViewerStore.getState().startTime){
       return;
     }
 
     this.logStartTime = LogViewerStore.getState().startTime;
-
     if (typeof this.logStartTime !== 'object') {
       this.setDefault();
       return;
@@ -290,6 +290,16 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       type: LOGVIEWERSTORE_ACTIONS.SCROLL_POSITION,
       payload: {
         scrollPosition: val
+      }
+    });
+  };
+
+  this.updateScreenChangeInStore = (state) => {
+
+    LogViewerStore.dispatch({
+      type: LOGVIEWERSTORE_ACTIONS.FULL_SCREEN,
+      payload: {
+        fullScreen: state
       }
     });
   };
