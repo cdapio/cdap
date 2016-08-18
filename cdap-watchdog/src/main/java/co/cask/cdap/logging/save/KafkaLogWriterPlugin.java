@@ -112,7 +112,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
                                 "Checkpoint interval is invalid: %s", checkpointIntervalMs);
 
     long inactiveIntervalMs = cConf.getLong(LoggingConfiguration.LOG_SAVER_INACTIVE_FILE_INTERVAL_MS,
-                                              LoggingConfiguration.DEFAULT_LOG_SAVER_INACTIVE_FILE_INTERVAL_MS);
+                                            LoggingConfiguration.DEFAULT_LOG_SAVER_INACTIVE_FILE_INTERVAL_MS);
     Preconditions.checkArgument(inactiveIntervalMs > 0,
                                 "Inactive interval is invalid: %s", inactiveIntervalMs);
 
