@@ -88,6 +88,11 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     if(cols['time']){
       columnsList.push('time');
     }
+    // FIXME: This should have been defaulted from LogViewerStore but since we didn't plan for having a store for logviewer
+    // we are having this adhoc assignment.
+    this.totalCount = 0;
+    this.warningCount = 0;
+    this.errorCount = 0;
   };
 
   this.openRaw = () => {
@@ -193,18 +198,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     this.totalCount = LogViewerStore.getState().totalLogs;
     this.warningCount = LogViewerStore.getState().totalWarnings;
     this.errorCount = LogViewerStore.getState().totalErrors;
-
-    if(this.logStartTime !== LogViewerStore.getState().startTime){
-      this.logStartTime = LogViewerStore.getState().startTime;
-      if (typeof this.logStartTime !== 'object') {
-        this.setDefault();
-        return;
-      }
-
-      this.startTimeSec = Math.floor(this.logStartTime.getTime()/1000);
-      startTimeRequest();
-    }
-
+    this.startTimeSec = Math.floor(this.logStartTime.getTime()/1000);
+    startTimeRequest();
   });
 
   if (this.runId) {
@@ -539,7 +534,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       },
       (err) => {
         this.setDefault();
-        this.loading = false;
         console.log('ERROR: ', err);
       });
   };

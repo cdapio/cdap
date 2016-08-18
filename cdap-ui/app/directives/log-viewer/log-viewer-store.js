@@ -77,6 +77,8 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
           return state;
         }
         return action.payload.totalLogs;
+      case LOGVIEWERSTORE_ACTIONS.RESET:
+        return 0;
       default:
         return state;
     }
@@ -89,6 +91,8 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
           return state;
         }
         return action.payload.totalErrors;
+      case LOGVIEWERSTORE_ACTIONS.RESET:
+        return 0;
       default:
         return state;
     }
@@ -101,6 +105,8 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
           return state;
         }
         return action.payload.totalWarnings;
+      case LOGVIEWERSTORE_ACTIONS.RESET:
+          return 0;
       default:
         return state;
     }
