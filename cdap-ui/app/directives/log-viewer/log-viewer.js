@@ -381,9 +381,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         }
 
         this.fromOffset = res[res.length-1].offset;
-
         angular.forEach(res, (element, index) => {
-
           //Format dates properly for rendering and computing
           let formattedDate = new Date(res[index].log.timestamp);
           res[index].log.timestamp = formattedDate;
@@ -396,7 +394,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         if(this.displayData.length < this.viewLimit){
           getStatus();
         }
-
       },
       (err) => {
         console.log('ERROR: ', err);
@@ -583,8 +580,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         if(this.displayData.length > 0){
           this.updateScrollPositionInStore(this.displayData[0].log.timestamp);
         }
-
-        this.cacheSize = res.length - this.cacheDecrement;
 
         if(res.length < this.viewLimit){
           getStatus();
