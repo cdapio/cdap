@@ -28,6 +28,7 @@ import co.cask.cdap.etl.api.streaming.Windower;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPairCollection;
+import co.cask.cdap.etl.spark.batch.BasicSparkExecutionPluginContext;
 import co.cask.cdap.etl.spark.batch.SparkBatchSinkContext;
 import co.cask.cdap.etl.spark.batch.SparkBatchSinkFactory;
 import org.apache.spark.api.java.JavaRDD;
@@ -87,6 +88,14 @@ public class DStreamCollection<T> implements SparkCollection<T> {
 
   @Override
   public <U> SparkCollection<U> compute(final String stageName, final SparkCompute<T, U> compute) throws Exception {
+    sec.execute(new TxRunnable() {
+      @Override
+      public void run(DatasetContext datasetContext) throws Exception {
+        SparkExecutionPluginContext sparkPluginContext =
+          new BasicSparkExecutionPluginContext(sec, sparkContext, datasetContext, stageName);
+        compute.initialize(sparkPluginContext);
+      }
+    });
     return wrap(stream.transform(new Function2<JavaRDD<T>, Time, JavaRDD<U>>() {
                   @Override
                   public JavaRDD<U> call(JavaRDD<T> data, Time batchTime) throws Exception {

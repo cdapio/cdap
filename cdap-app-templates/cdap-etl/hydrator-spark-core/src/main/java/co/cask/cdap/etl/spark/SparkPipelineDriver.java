@@ -25,11 +25,13 @@ import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchJoinerRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.SparkCompute;
+import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.streaming.Windower;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.etl.spark.batch.BasicSparkExecutionPluginContext;
 import co.cask.cdap.etl.spark.function.AggregatorAggregateFunction;
 import co.cask.cdap.etl.spark.function.AggregatorGroupByFunction;
 import co.cask.cdap.etl.spark.function.BatchSinkFunction;
@@ -119,6 +121,7 @@ public abstract class SparkPipelineDriver {
 
         SparkCompute<Object, Object> sparkCompute =
           sec.getPluginContext().newPluginInstance(stageName, macroEvaluator);
+
         stageData = stageData.compute(stageName, sparkCompute);
 
       } else if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
