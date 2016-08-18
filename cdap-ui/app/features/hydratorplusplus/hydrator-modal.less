@@ -193,7 +193,9 @@
                   div.config-table {
                     display: table;
                     width: 100%;
-                    height: 59vh;
+                    height: ~"calc(100vh - 220px)";
+                    height: ~"-moz-calc(100vh - 220px)";
+                    height: ~"-webkit-calc(100vh - 220px)";
 
                     > div {
                       display: table-cell;
@@ -271,6 +273,11 @@ body.theme-cdap {
               .console-type {
                 .node-config {
                   .bottompanel-body {
+                    height: ~"calc(100vh - 250px)";
+                    height: ~"-moz-calc(100vh - 250px)";
+                    height: ~"-webkit-calc(100vh - 250px)";
+                  }
+                  div.config-table {
                     height: ~"calc(100vh - 250px)";
                     height: ~"-moz-calc(100vh - 250px)";
                     height: ~"-webkit-calc(100vh - 250px)";
