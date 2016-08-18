@@ -287,16 +287,18 @@ class HydratorDetailTopPanelController {
       .$promise
       .then(
         () => {
-          this.HydratorPlusPlusDetailActions.schedulePipeline(
+          return this.HydratorPlusPlusDetailActions.schedulePipeline(
             this.HydratorPlusPlusDetailRunsStore.getApi(),
             this.HydratorPlusPlusDetailRunsStore.getScheduleParams()
-          );
-          if (this.scheduleTimeout) {
-            this.$timeout.cancel(this.scheduleTimeout);
-          }
-          this.scheduleTimeout = this.$timeout(() => {
-            this.scheduleLoading = false;
-          }, 1000);
+          )
+            .then(() => {
+              if (this.scheduleTimeout) {
+                this.$timeout.cancel(this.scheduleTimeout);
+              }
+              this.scheduleTimeout = this.$timeout(() => {
+                this.scheduleLoading = false;
+              }, 1000);
+            });
         },
         (err) => {
           this.scheduleLoading = false;
