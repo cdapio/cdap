@@ -91,15 +91,7 @@ class ConfigurationCheck extends AbstractMasterCheck {
 
   private void checkBindAddresses() {
     // check if service bind addresses are loopback addresses
-    Set<String> bindAddressKeys = ImmutableSet.of(
-      Constants.AppFabric.SERVER_ADDRESS,
-      Constants.Dataset.Executor.ADDRESS,
-      Constants.Stream.ADDRESS,
-      Constants.Router.ADDRESS,
-      Constants.Metrics.ADDRESS,
-      Constants.LogSaver.ADDRESS,
-      Constants.Explore.SERVER_ADDRESS,
-      Constants.Metadata.SERVICE_BIND_ADDRESS);
+    Set<String> bindAddressKeys = ImmutableSet.of(Constants.AppFabric.SERVER_ADDRESS, Constants.Router.ADDRESS);
 
     for (String bindAddressKey : bindAddressKeys) {
       String bindAddress = cConf.get(bindAddressKey);
