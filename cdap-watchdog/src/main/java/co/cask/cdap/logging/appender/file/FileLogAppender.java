@@ -68,7 +68,7 @@ public class FileLogAppender extends LogAppender {
   private final int syncIntervalBytes;
   private final long retentionDurationMs;
   private final long maxLogFileSizeBytes;
-  private final long inactiveIntervalMs;
+  private final long maxFileLifetimeMs;
   private final long checkpointIntervalMs;
   private final int logCleanupIntervalMins;
   private final ListeningScheduledExecutorService scheduledExecutor;
@@ -110,10 +110,16 @@ public class FileLogAppender extends LogAppender {
     Preconditions.checkArgument(maxLogFileSizeBytes > 0,
                                 "Max log file size is invalid: %s", maxLogFileSizeBytes);
 
-    inactiveIntervalMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_INACTIVE_FILE_INTERVAL_MS,
-                                              LoggingConfiguration.DEFAULT_LOG_SAVER_INACTIVE_FILE_INTERVAL_MS);
-    Preconditions.checkArgument(inactiveIntervalMs > 0,
-                                "Inactive interval is invalid: %s", inactiveIntervalMs);
+    maxFileLifetimeMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_MAX_FILE_LIFETIME,
+                                        LoggingConfiguration.DEFAULT_LOG_SAVER_MAX_FILE_LIFETIME_MS);
+    Preconditions.checkArgument(maxFileLifetimeMs > 0,
+                                "Max file lifetime is invalid: %s", maxFileLifetimeMs);
+
+    if (cConf.get(LoggingConfiguration.LOG_SAVER_INACTIVE_FILE_INTERVAL_MS) != null) {
+      LOG.warn("Parameter '{}' is no longer supported. Instead, use '{}'.",
+               LoggingConfiguration.LOG_SAVER_INACTIVE_FILE_INTERVAL_MS,
+               LoggingConfiguration.LOG_SAVER_MAX_FILE_LIFETIME);
+    }
 
     checkpointIntervalMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_CHECKPOINT_INTERVAL_MS,
                                                 LoggingConfiguration.DEFAULT_LOG_SAVER_CHECKPOINT_INTERVAL_MS);
@@ -141,7 +147,7 @@ public class FileLogAppender extends LogAppender {
 
       AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager, namespacedLocationFactory, logBaseDir,
                                                          logSchema, maxLogFileSizeBytes, syncIntervalBytes,
-                                                         inactiveIntervalMs, impersonator);
+                                                         maxFileLifetimeMs, impersonator);
       logFileWriter = new SimpleLogFileWriter(avroFileWriter, checkpointIntervalMs);
 
       LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, rootLocationFactory, retentionDurationMs,
