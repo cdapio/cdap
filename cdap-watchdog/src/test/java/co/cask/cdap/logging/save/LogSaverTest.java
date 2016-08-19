@@ -109,7 +109,7 @@ public class LogSaverTest extends KafkaTestBase {
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
 
     injector = KAFKA_TESTER.getInjector();
-    impersonator = injector.getInstance(DefaultImpersonator.class);
+    impersonator = injector.getInstance(Impersonator.class);
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
 

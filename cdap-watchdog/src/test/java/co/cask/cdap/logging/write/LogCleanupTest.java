@@ -135,7 +135,7 @@ public class LogCleanupTest {
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
     rootLocationFactory = injector.getInstance(RootLocationFactory.class);
-    impersonator = injector.getInstance(DefaultImpersonator.class);
+    impersonator = injector.getInstance(Impersonator.class);
   }
 
   @AfterClass
