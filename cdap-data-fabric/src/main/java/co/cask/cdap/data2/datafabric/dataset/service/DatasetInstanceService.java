@@ -199,7 +199,7 @@ public class DatasetInstanceService {
    * @param instance the id of the dataset
    * @return The original properties as stored in the dataset's spec, or if they are not available, a best effort
    *   to derive the original properties from the top-level properties of the spec
-   * @throws UnauthorizedException if permimeter security and authorization are enabled, and the current user does not
+   * @throws UnauthorizedException if perimeter security and authorization are enabled, and the current user does not
    *   have any privileges on the #instance
    */
   Map<String, String> getOriginalProperties(Id.DatasetInstance instance) throws Exception {

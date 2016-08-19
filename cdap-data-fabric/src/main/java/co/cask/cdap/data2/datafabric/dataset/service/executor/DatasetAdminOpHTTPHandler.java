@@ -25,8 +25,10 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
@@ -54,6 +56,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   private final DatasetAdminService datasetAdminService;
 
   @Inject
+  @VisibleForTesting
   public DatasetAdminOpHTTPHandler(DatasetAdminService datasetAdminService) {
     this.datasetAdminService = datasetAdminService;
   }
@@ -63,6 +66,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   public void exists(HttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("name") String instanceName) {
+    propagateUserId(request);
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
     try {
       Id.DatasetInstance instanceId = Id.DatasetInstance.from(namespace, instanceName);
@@ -82,6 +86,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   public void create(HttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("name") String name) {
+    propagateUserId(request);
     InternalDatasetCreationParams params = GSON.fromJson(request.getContent().toString(Charsets.UTF_8),
                                                          InternalDatasetCreationParams.class);
     Preconditions.checkArgument(params.getProperties() != null, "Missing required 'instanceProps' parameter.");
@@ -106,6 +111,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   public void update(HttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("name") String name) {
+    propagateUserId(request);
     InternalDatasetUpdateParams params = GSON.fromJson(request.getContent().toString(Charsets.UTF_8),
                                                        InternalDatasetUpdateParams.class);
     Preconditions.checkArgument(params.getProperties() != null, "Missing required 'instanceProps' parameter.");
@@ -137,7 +143,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   public void drop(HttpRequest request, HttpResponder responder,
                    @PathParam("namespace-id") String namespaceId,
                    @PathParam("name") String instanceName) throws Exception {
-
+    propagateUserId(request);
     InternalDatasetDropParams params = GSON.fromJson(request.getContent().toString(Charsets.UTF_8),
                                                      InternalDatasetDropParams.class);
     Preconditions.checkArgument(params.getInstanceSpec() != null, "Missing required 'instanceSpec' parameter.");
@@ -159,6 +165,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   public void truncate(HttpRequest request, HttpResponder responder,
                        @PathParam("namespace-id") String namespaceId,
                        @PathParam("name") String instanceName) {
+    propagateUserId(request);
     try {
       Id.DatasetInstance instanceId = Id.DatasetInstance.from(namespaceId, instanceName);
       datasetAdminService.truncate(instanceId);
@@ -177,6 +184,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   public void upgrade(HttpRequest request, HttpResponder responder,
                       @PathParam("namespace-id") String namespaceId,
                       @PathParam("name") String instanceName) {
+    propagateUserId(request);
     try {
       Id.DatasetInstance instanceId = Id.DatasetInstance.from(namespaceId, instanceName);
       datasetAdminService.upgrade(instanceId);
@@ -192,5 +200,14 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
 
   private String getAdminOpErrorMessage(String opName, String instanceName) {
     return String.format("Error executing admin operation %s for dataset instance %s", opName, instanceName);
+  }
+
+  // propagate userid from the HTTP Request in the current thread
+  private void propagateUserId(HttpRequest request) {
+    String userId = request.getHeader(Constants.Security.Headers.USER_ID);
+    if (userId != null) {
+      LOG.debug("Propagating userId as {}", userId);
+      SecurityRequestContext.setUserId(userId);
+    }
   }
 }

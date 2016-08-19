@@ -16,13 +16,13 @@
 
 package co.cask.cdap.explore.client;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.explore.service.Explore;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.common.http.HttpRequestConfig;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.inject.Inject;
@@ -41,9 +41,12 @@ import static co.cask.cdap.common.conf.Constants.Service;
 public class DiscoveryExploreClient extends AbstractExploreClient {
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
   private final HttpRequestConfig httpRequestConfig;
+  private final AuthenticationContext authenticationContext;
 
   @Inject
-  public DiscoveryExploreClient(CConfiguration cConf, final DiscoveryServiceClient discoveryClient) {
+  @VisibleForTesting
+  public DiscoveryExploreClient(final DiscoveryServiceClient discoveryClient,
+                                AuthenticationContext authenticationContext) {
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {
@@ -52,6 +55,7 @@ public class DiscoveryExploreClient extends AbstractExploreClient {
     });
 
     this.httpRequestConfig = new DefaultHttpRequestConfig();
+    this.authenticationContext = authenticationContext;
   }
 
   @Override
@@ -65,8 +69,7 @@ public class DiscoveryExploreClient extends AbstractExploreClient {
     if (discoverable != null) {
       return discoverable.getSocketAddress();
     }
-    throw new RuntimeException(
-      String.format("Cannot discover service %s", Service.EXPLORE_HTTP_USER_SERVICE));
+    throw new RuntimeException(String.format("Cannot discover service %s", Service.EXPLORE_HTTP_USER_SERVICE));
   }
 
   // This class is only used internally.
@@ -77,7 +80,6 @@ public class DiscoveryExploreClient extends AbstractExploreClient {
     return null;
   }
 
-
   @Override
   protected boolean isSSLEnabled() {
     return false;
@@ -86,5 +88,11 @@ public class DiscoveryExploreClient extends AbstractExploreClient {
   @Override
   protected boolean verifySSLCert() {
     return false;
+  }
+
+  // when run from programs, the user id will be set in the authentication context
+  @Override
+  protected String getUserId() {
+    return authenticationContext.getPrincipal().getName();
   }
 }
