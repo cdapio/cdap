@@ -21,6 +21,7 @@ import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.app.stream.DefaultStreamWriter;
 import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
@@ -132,6 +133,7 @@ public class DistributedProgramRunnableModule {
   // TODO(terence) make this works for different mode
   // usable from anywhere a TwillContext is exposed
   public Module createModule(final TwillContext context) {
+    cConf.set(Constants.AppFabric.SERVER_ADDRESS, context.getHost().getCanonicalHostName());
     return Modules.combine(createModule(),
                            new AbstractModule() {
                              @Override
