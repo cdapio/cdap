@@ -1637,10 +1637,12 @@
     <name>security.authorization.admin.users</name>
     <value></value>
     <description>
-      Determines a comma-separated list of users for whom admin privileges are granted on the CDAP instance
-      during CDAP startup, so these users can create namespaces and in-effect bootstrap CDAP on an authorization
-      enabled cluster. Defaults to empty, in which case no users have access to create namespaces. In this scenario, it
-      may be impossible to bootstrap CDAP, so it is recommended that at least one user be provided as the admin user.
+      A comma-separated list of users for whom admin privileges are to be granted on the
+      CDAP instance during CDAP startup, so these these users can create namespaces, and
+      in effect bootstrap CDAP on an authorization-enabled cluster. The default is empty,
+      in which case no users have access to creating namespaces. In that scenario it may
+      be impossible to bootstrap CDAP, so it is recommended that at least one user be
+      provided as the administrative user.
     </description>
   </property>
 
