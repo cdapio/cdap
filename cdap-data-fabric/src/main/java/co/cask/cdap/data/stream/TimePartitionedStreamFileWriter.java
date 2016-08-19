@@ -21,6 +21,7 @@ import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.file.PartitionedFileWriter;
 import co.cask.cdap.data.stream.TimePartitionedStreamFileWriter.TimePartition;
 import co.cask.cdap.proto.id.StreamId;
+import com.google.common.base.Throwables;
 import com.google.common.io.OutputSupplier;
 import com.google.common.primitives.Longs;
 import org.apache.twill.filesystem.Location;
@@ -29,6 +30,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
@@ -63,8 +67,6 @@ public class TimePartitionedStreamFileWriter extends PartitionedFileWriter<Strea
 
   private final long partitionDuration;
   private TimePartition timePartition = new TimePartition(-1L);
-
-  // TODO: Add a timer task to close file after duration has passed even there is no writer.
 
   public TimePartitionedStreamFileWriter(Location streamLocation, long partitionDuration,
                                          String fileNamePrefix, long indexInterval, StreamId streamId,
@@ -129,12 +131,14 @@ public class TimePartitionedStreamFileWriter extends PartitionedFileWriter<Strea
     private final long partitionDuration;
     private final String fileNamePrefix;
     private final long indexInterval;
+    private final Timer timer;
 
     StreamWriterFactory(Location streamLocation, long partitionDuration, String fileNamePrefix, long indexInterval) {
       this.streamLocation = streamLocation;
       this.partitionDuration = partitionDuration;
       this.fileNamePrefix = fileNamePrefix;
       this.indexInterval = indexInterval;
+      this.timer = new Timer();
     }
 
     @Override
@@ -162,7 +166,25 @@ public class TimePartitionedStreamFileWriter extends PartitionedFileWriter<Strea
       }
 
       LOG.debug("New stream file created at {}", eventFile);
-      return new StreamDataFileWriter(createOutputSupplier(eventFile), createOutputSupplier(indexFile), indexInterval);
+
+      final StreamDataFileWriter streamDataFileWriter =
+        new StreamDataFileWriter(createOutputSupplier(eventFile), createOutputSupplier(indexFile), indexInterval);
+
+      timer.schedule(new TimerTask() {
+        @Override
+        public void run() {
+          try {
+            // NOTE: this doesn't remove it from PartitionedFileWriter map of writers
+            // it will get removed from there when the next event comes
+            streamDataFileWriter.close();
+          } catch (IOException e) {
+            Throwables.propagate(e);
+          }
+        }
+         // add a 5 minute buffer, to ensure that all events for this time partition are enqueued to the writer
+         // before closing it
+      }, partitionDuration + TimeUnit.MINUTES.toMillis(5));
+      return streamDataFileWriter;
     }
 
     private OutputSupplier<OutputStream> createOutputSupplier(final Location location) {
