@@ -1,6 +1,6 @@
 {
   "variables": {
-    "sdk_version": "3.3.7"
+    "sdk_version": "DEFINE ME ON COMMAND LINE"
   },
   "builders": [
     {
@@ -29,7 +29,8 @@
         "initrd=/install/initrd.gz -- <enter>"
       ],
       "vboxmanage": [
-        ["modifyvm", "{{ .Name }}", "--memory", "4096"]
+        ["modifyvm", "{{ .Name }}", "--memory", "4096"],
+        ["modifyvm", "{{ .Name }}", "--nictype1", "virtio"]
       ],
       "vboxmanage_post": [
         ["modifyvm", "{{ .Name }}", "--clipboard", "bidirectional"],
@@ -59,8 +60,8 @@
     },
     {
       "type": "chef-solo",
-      "remote_cookbook_paths": "/var/chef/cookbooks",
       "install_command": "curl -L https://www.chef.io/chef/install.sh | {{if .Sudo}}sudo{{end}} bash -s -- -v 12.4.3",
+      "remote_cookbook_paths": "/var/chef/cookbooks",
       "pause_before": "10s"
     },
     {
@@ -126,8 +127,10 @@
       "skip_install": true,
       "json": {
         "cdap": {
+          "comment": "DO NOT PUT SNAPHOT IN THE VERSION BELOW, THIS CONTROLS CDAP COOKBOOK CODE",
           "version": "3.3.7-1",
           "sdk": {
+            "comment": "COPY SDK ZIP TO files/cdap-sdk.zip BEFORE RUNNING ME",
             "url": "file:///tmp/cdap-sdk.zip"
           }
         }
