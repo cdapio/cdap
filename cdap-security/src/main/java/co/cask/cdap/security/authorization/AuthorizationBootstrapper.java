@@ -80,9 +80,11 @@ public class AuthorizationBootstrapper {
       // grant ALL on the system namespace, so the system user can create and access tables in the system namespace
       // also required by SystemArtifactsLoader to add system artifacts
       privilegesManager.grant(NamespaceId.SYSTEM, systemUser, EnumSet.allOf(Action.class));
-      // also grant admin privileges on the CDAP instance to the admin users, so they can create namespaces
       for (Principal adminUser : adminUsers) {
+        // grant admin privileges on the CDAP instance to the admin users, so they can create namespaces
         privilegesManager.grant(instanceId, adminUser, Collections.singleton(Action.ADMIN));
+        // also grant admin on the default namespace, so admins can also manage privileges on them
+        privilegesManager.grant(NamespaceId.DEFAULT, adminUser, Collections.singleton(Action.ADMIN));
       }
       LOG.info("Successfully bootstrapped authorization for CDAP instance {}, system user {} and admin users: {}",
                instanceId, systemUser, adminUsers);
