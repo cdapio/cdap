@@ -308,7 +308,7 @@ def process_cdap_ui(options):
     #   cdap-ui/package.json
     # Create and print to standard out the list of the references
     # Make a list of the references for which links are missing and need to be added to the master
-    # Currently does not create a new master list
+    # Creates a new master list
     # Return a list:
     #   'Dependency','Version','homepage','License','License URL','type'
     # Versioning syntax: see https://nodesource.com/blog/semver-tilde-and-caret
@@ -319,6 +319,7 @@ def process_cdap_ui(options):
     
     import json
     from pprint import pprint
+    print
 
     for type in CDAP_UI_SOURCES.keys():
         source = CDAP_UI_SOURCES[type][0]
@@ -333,7 +334,7 @@ def process_cdap_ui(options):
                     version = data[CDAP_UI_DEPENDENCIES_KEY][dependency]
                     if master_libs_dict.has_key(dependency):
                         # Look up reference in dictionary
-                        cdap_ui_dict[dependency] = master_libs_dict[dependency]
+#                         cdap_ui_dict[dependency] = master_libs_dict[dependency]
                         # Compare versions
                         # TO-DO: if versions differ by a prefix (~ or ^) this comparison fails
                         # need to strip off the prefix for the comparison but retain it
@@ -345,6 +346,9 @@ def process_cdap_ui(options):
                             else:
                                 print "New version: %s for %s (old %s)" % (version, dependency, master_libs_dict[dependency].version)
                                 new_versions_dict[dependency]=version
+                                master_libs_dict[dependency].version = version
+                        cdap_ui_dict[dependency] = master_libs_dict[dependency]
+                        
                     else:
                         missing_libs_dict[dependency] = (type, version)
 
@@ -419,6 +423,23 @@ def process_cdap_ui(options):
         cdap_ui_data.append(row)
         print "%s : %s" % (dependency, row)
         
+        
+    # Print new master entries
+    print "\nNew Master Versions\n"
+    keys = master_libs_dict.keys()
+    keys.sort()
+    for type in ['bower', 'npm']:
+        print "# %s Dependencies\n# dependency,version,type,license,license_url,homepage,license_page" % type
+        for dependency in keys:
+            lib = master_libs_dict[dependency]
+            row = list(lib.get_row())
+            if row[2] == type:
+                print "%s : %s" % (dependency, row)
+
+    # Write out a new master csv file, only if not already exists 
+    if count_new or count_missing:
+        write_new_master_csv_file(master_libs_dict)
+    
     return cdap_ui_data
 
 def process_level_1(input_file, options):
@@ -593,6 +614,8 @@ def write_new_master_csv_file(lib_dict):
         finally:
             if csv_file is not None:
                 csv_file.close()
+            else:
+                print "Unable to close New Master CSV: %s" % csv_path
             
         print "New Master CSV: wrote %s records of %s to: %s" % (i, len(keys), csv_path)
 
@@ -632,6 +655,7 @@ def print_rst_cdap_ui(options):
     header = '"Dependency","Version","Type","License","License URL"'
     widths = '20, 10, 10, 20, 40'
     data_list = process_cdap_ui(options)
+    print
     _print_dependencies(title, file_base, header, widths, data_list)
 
 def _print_dependencies(title, file_base, header, widths, data_list):

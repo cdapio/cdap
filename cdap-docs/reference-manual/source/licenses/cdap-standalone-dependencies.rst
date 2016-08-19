@@ -131,6 +131,8 @@ Cask Data Application Platform Standalone Dependencies
    "org.apache.ivy.ivy-2.4.0.jar","2.4.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.kafka.kafka-clients-0.8.2.2.jar","0.8.2.2","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.kafka.kafka_2.10-0.8.2.2.jar","0.8.2.2","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.tephra.tephra-api-0.8.0-incubating.jar","0.8.0","incubating","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.tephra.tephra-core-0.8.0-incubating.jar","0.8.0","incubating","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.thrift.libfb303-0.9.2.jar","0.9.2","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.thrift.libthrift-0.9.3.jar","0.9.3","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.twill.twill-api-0.7.0-incubating.jar","0.7.0","incubating","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
