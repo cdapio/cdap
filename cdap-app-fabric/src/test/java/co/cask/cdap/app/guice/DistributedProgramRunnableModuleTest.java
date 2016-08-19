@@ -19,7 +19,16 @@ package co.cask.cdap.app.guice;
 import co.cask.cdap.common.conf.CConfiguration;
 import com.google.inject.Guice;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.api.ElectionHandler;
+import org.apache.twill.api.RunId;
+import org.apache.twill.api.TwillContext;
+import org.apache.twill.api.TwillRunnableSpecification;
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.discovery.ServiceDiscovered;
 import org.junit.Test;
+
+import java.net.InetAddress;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Test case that simple creates a Guice injector from the {@link DistributedProgramRunnableModule}, to ensure
@@ -31,5 +40,76 @@ public class DistributedProgramRunnableModuleTest {
     DistributedProgramRunnableModule distributedProgramRunnableModule =
       new DistributedProgramRunnableModule(CConfiguration.create(), new Configuration());
     Guice.createInjector(distributedProgramRunnableModule.createModule());
+    Guice.createInjector(distributedProgramRunnableModule.createModule(new TwillContext() {
+      @Override
+      public RunId getRunId() {
+        return null;
+      }
+
+      @Override
+      public RunId getApplicationRunId() {
+        return null;
+      }
+
+      @Override
+      public int getInstanceCount() {
+        return 0;
+      }
+
+      @Override
+      public InetAddress getHost() {
+        return null;
+      }
+
+      @Override
+      public String[] getArguments() {
+        return new String[0];
+      }
+
+      @Override
+      public String[] getApplicationArguments() {
+        return new String[0];
+      }
+
+      @Override
+      public TwillRunnableSpecification getSpecification() {
+        return null;
+      }
+
+      @Override
+      public int getInstanceId() {
+        return 0;
+      }
+
+      @Override
+      public int getVirtualCores() {
+        return 0;
+      }
+
+      @Override
+      public int getMaxMemoryMB() {
+        return 0;
+      }
+
+      @Override
+      public ServiceDiscovered discover(String name) {
+        return null;
+      }
+
+      @Override
+      public Cancellable electLeader(String name, ElectionHandler participantHandler) {
+        return null;
+      }
+
+      @Override
+      public Lock createLock(String name) {
+        return null;
+      }
+
+      @Override
+      public Cancellable announce(String serviceName, int port) {
+        return null;
+      }
+    }));
   }
 }
