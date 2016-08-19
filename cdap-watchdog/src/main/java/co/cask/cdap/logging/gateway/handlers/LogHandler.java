@@ -116,8 +116,13 @@ public class LogHandler extends AbstractHttpHandler {
       readRange = adjustReadRange(readRange, runRecord, fromTimeSecsParam != -1);
 
       ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern, escape);
-      logReader.getLog(loggingContext, readRange.getFromMillis(), readRange.getToMillis(), filter, logCallback);
-      logCallback.close();
+      try {
+        logReader.getLog(loggingContext, readRange.getFromMillis(), readRange.getToMillis(), filter, logCallback);
+      } catch (Exception ex) {
+        LOG.debug("Exception while reading logs for logging context {}", loggingContext, ex);
+      } finally {
+        logCallback.close();
+      }
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
@@ -167,8 +172,13 @@ public class LogHandler extends AbstractHttpHandler {
       LogOffset logOffset = FormattedLogEvent.parseLogOffset(fromOffsetStr);
       ReadRange readRange = ReadRange.createFromRange(logOffset);
       readRange = adjustReadRange(readRange, runRecord, true);
-      logReader.getLogNext(loggingContext, readRange, maxEvents, filter, logCallback);
-      logCallback.close();
+      try {
+        logReader.getLogNext(loggingContext, readRange, maxEvents, filter, logCallback);
+      } catch (Exception ex) {
+        LOG.debug("Exception while reading logs for logging context {}", loggingContext, ex);
+      } finally {
+        logCallback.close();
+      }
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
@@ -256,9 +266,13 @@ public class LogHandler extends AbstractHttpHandler {
       LogOffset logOffset = FormattedLogEvent.parseLogOffset(fromOffsetStr);
       ReadRange readRange = ReadRange.createToRange(logOffset);
       readRange = adjustReadRange(readRange, runRecord, true);
-      logReader.getLogPrev(loggingContext, readRange,
-                           maxEvents, filter, logCallback);
-      logCallback.close();
+      try {
+        logReader.getLogPrev(loggingContext, readRange, maxEvents, filter, logCallback);
+      } catch (Exception ex) {
+        LOG.debug("Exception while reading logs for logging context {}", loggingContext, ex);
+      } finally {
+        logCallback.close();
+      }
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
@@ -284,8 +298,13 @@ public class LogHandler extends AbstractHttpHandler {
       LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Id.Namespace.SYSTEM.getId(), componentId,
                                                                              serviceId);
       ChunkedLogReaderCallback logCallback = new ChunkedLogReaderCallback(responder, logPattern, escape);
-      logReader.getLog(loggingContext, timeRange.getFromMillis(), timeRange.getToMillis(), filter, logCallback);
-      logCallback.close();
+      try {
+        logReader.getLog(loggingContext, timeRange.getFromMillis(), timeRange.getToMillis(), filter, logCallback);
+      } catch (Exception ex) {
+        LOG.debug("Exception while reading logs for logging context {}", loggingContext, ex);
+      } finally {
+        logCallback.close();
+      }
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     }
@@ -306,9 +325,13 @@ public class LogHandler extends AbstractHttpHandler {
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
       LogOffset logOffset = FormattedLogEvent.parseLogOffset(fromOffsetStr);
       ReadRange readRange = ReadRange.createFromRange(logOffset);
-      logReader.getLogNext(loggingContext, readRange,
-                           maxEvents, filter, logCallback);
-      logCallback.close();
+      try {
+        logReader.getLogNext(loggingContext, readRange, maxEvents, filter, logCallback);
+      } catch (Exception ex) {
+        LOG.debug("Exception while reading logs for logging context {}", loggingContext, ex);
+      } finally {
+        logCallback.close();
+      }
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     }
@@ -329,9 +352,13 @@ public class LogHandler extends AbstractHttpHandler {
       LogReaderCallback logCallback = new LogReaderCallback(responder, logPattern, escape);
       LogOffset logOffset = FormattedLogEvent.parseLogOffset(fromOffsetStr);
       ReadRange readRange = ReadRange.createToRange(logOffset);
-      logReader.getLogPrev(loggingContext, readRange,
-                           maxEvents, filter, logCallback);
-      logCallback.close();
+      try {
+        logReader.getLogPrev(loggingContext, readRange, maxEvents, filter, logCallback);
+      } catch (Exception ex) {
+        LOG.debug("Exception while reading logs for logging context {}", loggingContext, ex);
+      } finally {
+        logCallback.close();
+      }
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     }

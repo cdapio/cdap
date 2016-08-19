@@ -38,6 +38,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CoderResult;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -53,6 +54,7 @@ class ChunkedLogReaderCallback implements Callback {
   private final PatternLayout patternLayout;
   private final boolean escape;
   private final AtomicInteger count = new AtomicInteger();
+  private final AtomicBoolean initialized = new AtomicBoolean();
   private ChunkResponder chunkResponder;
 
   ChunkedLogReaderCallback(HttpResponder responder, String logPattern, boolean escape) {
@@ -70,6 +72,10 @@ class ChunkedLogReaderCallback implements Callback {
 
   @Override
   public void init() {
+    // if initialized already, then return
+    if (!initialized.compareAndSet(false, true)) {
+      return;
+    }
     patternLayout.start();
     chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK,
                                               ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE,
