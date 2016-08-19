@@ -22,7 +22,6 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
@@ -62,7 +61,6 @@ public abstract class DynamicDatasetCache implements DatasetContext, Supplier<Tr
   protected final TransactionSystemClient txClient;
   protected final NamespaceId namespace;
   protected final Map<String, String> runtimeArguments;
-  protected final MetricsContext metricsContext;
 
   /**
    * Create a dynamic dataset factory.
@@ -72,19 +70,15 @@ public abstract class DynamicDatasetCache implements DatasetContext, Supplier<Tr
    * @param runtimeArguments all runtime arguments that are available to datasets in the context. Runtime arguments
    *                         are expected to be scoped so that arguments for one dataset do not override arguments
    *                         of other datasets.
-   * @param metricsContext if non-null, this context is used as the context for dataset metrics,
-   *                       with an additional tag for the dataset name.
    */
   public DynamicDatasetCache(SystemDatasetInstantiator instantiator,
                              TransactionSystemClient txClient,
                              NamespaceId namespace,
-                             Map<String, String> runtimeArguments,
-                             @Nullable MetricsContext metricsContext) {
+                             Map<String, String> runtimeArguments) {
     this.instantiator = instantiator;
     this.txClient = txClient;
     this.namespace = namespace;
     this.runtimeArguments = runtimeArguments;
-    this.metricsContext = metricsContext;
   }
 
   @Override

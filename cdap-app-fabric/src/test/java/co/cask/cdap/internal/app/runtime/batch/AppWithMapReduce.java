@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
@@ -27,8 +28,14 @@ import co.cask.cdap.api.dataset.lib.TimeseriesTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
+import org.apache.hadoop.conf.Configurable;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.partition.HashPartitioner;
 
 /**
  *
@@ -51,7 +58,7 @@ public class AppWithMapReduce extends AbstractApplication {
    *
    */
   public static final class ClassicWordCount extends AbstractMapReduce {
-    public static final int MEMORY_MB = 1024;
+    static final int MEMORY_MB = 1024;
 
     @UseDataSet("jobConfig")
     private KeyValueTable table;
@@ -66,7 +73,15 @@ public class AppWithMapReduce extends AbstractApplication {
     public void initialize() throws Exception {
       String inputPath = Bytes.toString(table.read(Bytes.toBytes("inputPath")));
       String outputPath = Bytes.toString(table.read(Bytes.toBytes("outputPath")));
-      WordCount.configureJob((Job) getContext().getHadoopJob(), inputPath, outputPath);
+      Job hadoopJob = getContext().getHadoopJob();
+      WordCount.configureJob(hadoopJob, inputPath, outputPath);
+
+      hadoopJob.setPartitionerClass(SimplePartitioner.class);
+      hadoopJob.setNumReduceTasks(2);
+
+      hadoopJob.setGroupingComparatorClass(SimpleComparator.class);
+      hadoopJob.setSortComparatorClass(SimpleComparator.class);
+      hadoopJob.setCombinerKeyGroupingComparatorClass(SimpleComparator.class);
     }
   }
 
@@ -110,6 +125,66 @@ public class AppWithMapReduce extends AbstractApplication {
       metrics.count("onFinish", 1);
       onFinishTable.write(Bytes.toBytes("onFinish"), Bytes.toBytes("onFinish:done"));
       metrics.count("onFinish", 1);
+    }
+  }
+
+  /**
+   * Simple Partitioner that simply tests that its initialize and destroy methods are called.
+   */
+  public static final class SimplePartitioner extends HashPartitioner<Text, IntWritable>
+    implements ProgramLifecycle<MapReduceTaskContext>, Configurable {
+
+    private Configuration conf;
+
+    @Override
+    public void initialize(MapReduceTaskContext context) throws Exception {
+      System.setProperty("partitioner.initialize", "true");
+    }
+
+    @Override
+    public void destroy() {
+      System.setProperty("partitioner.destroy", "true");
+    }
+
+    @Override
+    public void setConf(Configuration conf) {
+      System.setProperty("partitioner.set.conf", "true");
+      this.conf = conf;
+    }
+
+    @Override
+    public Configuration getConf() {
+      return conf;
+    }
+  }
+
+  /**
+   * Simple Comparator that simply tests that its initialize and destroy methods are called.
+   */
+  public static class SimpleComparator extends Text.Comparator
+    implements ProgramLifecycle<MapReduceTaskContext>, Configurable {
+
+    private Configuration conf;
+
+    @Override
+    public void initialize(MapReduceTaskContext context) throws Exception {
+      System.setProperty("comparator.initialize", "true");
+    }
+
+    @Override
+    public void destroy() {
+      System.setProperty("comparator.destroy", "true");
+    }
+
+    @Override
+    public void setConf(Configuration conf) {
+      System.setProperty("comparator.set.conf", "true");
+      this.conf = conf;
+    }
+
+    @Override
+    public Configuration getConf() {
+      return conf;
     }
   }
 }

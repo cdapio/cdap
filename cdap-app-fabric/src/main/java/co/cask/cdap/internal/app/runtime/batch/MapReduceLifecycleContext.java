@@ -312,4 +312,11 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   public SecureStoreData getSecureData(String namespace, String name) throws Exception {
     return delegate.getSecureData(namespace, name);
   }
+
+  @Override
+  public String toString() {
+    return "MapReduceLifecycleContext{" +
+      "delegate=" + delegate +
+      '}';
+  }
 }

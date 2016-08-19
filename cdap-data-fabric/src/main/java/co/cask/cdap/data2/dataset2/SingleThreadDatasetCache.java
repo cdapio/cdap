@@ -85,7 +85,7 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
                                   Map<String, String> runtimeArguments,
                                   @Nullable final MetricsContext metricsContext,
                                   @Nullable Map<String, Map<String, String>> staticDatasets) {
-    super(instantiator, txClient, namespace, runtimeArguments, metricsContext);
+    super(instantiator, txClient, namespace, runtimeArguments);
     this.datasetLoader = new CacheLoader<DatasetCacheKey, Dataset>() {
       @Override
       @ParametersAreNonnullByDefault

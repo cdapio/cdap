@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
@@ -52,6 +53,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.Nullable;
 
 /**
  * Provides access to MapReduceTaskContext for mapreduce job tasks.
@@ -111,12 +113,23 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
    * Returns the {@link BasicMapReduceTaskContext} for the given task.
    */
   public final <K, V> BasicMapReduceTaskContext<K, V> get(TaskAttemptContext taskAttemptContext) {
-    ContextCacheKey key = new ContextCacheKey(taskAttemptContext);
+    return get(new ContextCacheKey(taskAttemptContext));
+  }
 
+  /**
+   * Returns the {@link BasicMapReduceTaskContext} for the given configuration. Since TaskAttemptContext is not
+   * provided, the returned MapReduceTaskContext will not have Metrics available.
+   * */
+  public final <K, V> BasicMapReduceTaskContext<K, V> get(Configuration configuration) {
+    return get(new ContextCacheKey(null, configuration));
+  }
+
+  private <K, V> BasicMapReduceTaskContext<K, V> get(ContextCacheKey key) {
     @SuppressWarnings("unchecked")
     BasicMapReduceTaskContext<K, V> context = (BasicMapReduceTaskContext<K, V>) taskContexts.getUnchecked(key);
     return context;
   }
+
 
   /**
    * Creates a {@link Program} instance based on the information from the {@link MapReduceContextConfig}, using
@@ -177,18 +190,27 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
         }
 
         MapReduceSpecification spec = program.getApplicationSpecification().getMapReduce().get(program.getName());
+
+        MetricsCollectionService metricsCollectionService = null;
         MapReduceMetrics.TaskType taskType = null;
-        if (MapReduceMetrics.TaskType.hasType(key.getTaskAttemptID().getTaskType())) {
-          taskType = MapReduceMetrics.TaskType.from(key.getTaskAttemptID().getTaskType());
+        String taskId = null;
+
+        TaskAttemptID taskAttemptId = key.getTaskAttemptID();
+        // taskAttemptId can be null, if used from a org.apache.hadoop.mapreduce.Partitioner or
+        // from a org.apache.hadoop.io.RawComparator
+        if (taskAttemptId != null) {
+          taskId = taskAttemptId.getTaskID().toString();
+          if (MapReduceMetrics.TaskType.hasType(taskAttemptId.getTaskType())) {
+            taskType = MapReduceMetrics.TaskType.from(taskAttemptId.getTaskType());
+            // if this is not for a mapper or a reducer, we don't need the metrics collection service
+            metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+          }
         }
-        // if this is not for a mapper or a reducer, we don't need the metrics collection service
-        MetricsCollectionService metricsCollectionService =
-          (taskType == null) ? null : injector.getInstance(MetricsCollectionService.class);
 
         TransactionSystemClient txClient = injector.getInstance(TransactionSystemClient.class);
 
         return new BasicMapReduceTaskContext(
-          program, contextConfig.getProgramOptions(), taskType, key.getTaskAttemptID().getTaskID().toString(),
+          program, contextConfig.getProgramOptions(), taskType, taskId,
           spec, workflowInfo, discoveryServiceClient, metricsCollectionService, txClient,
           contextConfig.getTx(), programDatasetFramework, classLoader.getPluginInstantiator(),
           contextConfig.getLocalizedResources(), secureStore, secureStoreManager,
@@ -207,10 +229,15 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
     private final Configuration configuration;
 
     private ContextCacheKey(TaskAttemptContext context) {
-      this.taskAttemptID = context.getTaskAttemptID();
-      this.configuration = context.getConfiguration();
+      this(context.getTaskAttemptID(), context.getConfiguration());
     }
 
+    private ContextCacheKey(@Nullable TaskAttemptID taskAttemptID, Configuration configuration) {
+      this.taskAttemptID = taskAttemptID;
+      this.configuration = configuration;
+    }
+
+    @Nullable
     TaskAttemptID getTaskAttemptID() {
       return taskAttemptID;
     }
