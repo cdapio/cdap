@@ -24,12 +24,13 @@ function link (scope, element) {
       maxRange,
       sliderLimit,
       pinX,
-      sliderX,
       timelineStack,
       startTime,
       endTime,
       pinOffset,
       circleTooltip,
+      handleWidth,
+      totalCount,
       firstRun = true;
 
   //Components
@@ -45,7 +46,8 @@ function link (scope, element) {
       scrollPinSvg,
       xAxis,
       sliderBar,
-      scrollNeedle;
+      scrollNeedle,
+      tooltipDiv;
 
   //Initialize charting
   scope.initialize = () => {
@@ -65,30 +67,24 @@ function link (scope, element) {
     paddingLeft = 15;
     paddingRight = 15;
     maxRange = width - paddingRight + 8;
+    handleWidth = 8;
+    // maxRange = width - width of handle - width of needle;
+    maxRange = width - 12;
     sliderLimit = maxRange;
     pinOffset = 13;
     pinX = 0;
-    sliderX = 0;
     timelineStack = {};
-    sliderHandle = undefined;
-    pinHandle = undefined;
-    sliderBrush = undefined;
-    scrollPinBrush = undefined;
-    scrollNeedle = undefined;
-    xScale = undefined;
-    slide = undefined;
-    slider = undefined;
-    timescaleSvg = undefined;
-    scrollPinSvg = undefined;
-    xAxis = undefined;
-    sliderBar = undefined;
     timelineData = scope.metadata;
-
+    totalCount = 0;
     scope.plot();
   };
 
   /* ------------------- Plot Function ------------------- */
   scope.plot = function(){
+
+    if(typeof timelineData.qid === 'undefined'){
+      return;
+    }
 
     startTime = timelineData.qid.startTime*1000;
     endTime = timelineData.qid.endTime*1000;
@@ -136,7 +132,7 @@ function link (scope, element) {
 
     timescaleSvg.append('g')
       .attr('class', 'xaxis-bottom')
-      .attr('transform', 'translate(' + 0 + ',' + (height - 20) + ')')
+      .attr('transform', 'translate(' + handleWidth + ', ' + (height - 20) + ')')
       .call(xAxis);
 
     //attach handler to brush
@@ -145,17 +141,8 @@ function link (scope, element) {
         .on('brush', function(){
           if(d3.event.sourceEvent) {
             let val = d3.mouse(this)[0];
-            if(val < 0){
-              val = 0;
-            }
-            if(val > maxRange){
-              val = maxRange;
-            }
-            sliderHandle.attr('x', val);
-            sliderBar.attr('d', 'M0,0V0H' + val + 'V0');
-            pinHandle.attr('x', val-pinOffset+1);
-            scrollNeedle.attr('x1', val + 8)
-                        .attr('x2', val + 8);
+
+            updateSlider(val);
           }
         })
         .on('brushend', function() {
@@ -167,10 +154,14 @@ function link (scope, element) {
             if(val > maxRange){
               val = maxRange;
             }
+
+            //Snap the slider into place
+            val = xScale(Math.floor(xScale.invert(val)/1000)*1000);
             updateSlider(val);
-            pinHandle.attr('x', val-pinOffset+1);
-            scrollNeedle.attr('x1', val + 8)
-                        .attr('x2', val + 8);
+
+            //Update scroll position before updating starttime
+            scope.Timeline.updateScrollPositionInStore(Math.floor(xScale.invert(val)));
+            scope.Timeline.updateStartTimeInStore(Math.floor(xScale.invert(val)));
           }
        });
 
@@ -202,7 +193,7 @@ function link (scope, element) {
     sliderBar.attr('d', 'M0,0V0H' + xValue + 'V0');
 
     sliderHandle = slide.append('svg:image')
-      .attr('width', 8)
+      .attr('width', handleWidth)
       .attr('height', 52)
       .attr('xlink:href', '/assets/img/sliderHandle.svg')
       .attr('x', xValue-1)
@@ -234,26 +225,76 @@ function link (scope, element) {
     slider.select('.background')
       .attr('height', 15);
 
+    let thePinScrollPosition = xScale(scope.pinScrollingPosition);
+
     pinHandle = slider.append('svg:image')
       .attr('width', 40)
       .attr('height', 60)
       .attr('xlink:href', '/assets/img/scrollPin.svg')
-      .attr('x', xValue - pinOffset)
-      .attr('y', 0);
+      .attr('x', thePinScrollPosition - pinOffset)
+      .attr('y', 0)
+      .on('mouseover', function() {
+        tooltipDiv = d3.select('body').append('div')
+          .attr('class', 'tooltip')
+          .style('opacity', 0);
+
+        //Reposition tooltip if overflows on the side of the page ; tooltip width is 250
+        let overflowOffset = xScale(scope.pinScrollingPosition) + 250 > maxRange ? 250 : 0;
+
+        tooltipDiv.transition()
+          .duration(200)
+          .style('opacity', 0.9)
+          .attr('class', 'timeline-tooltip');
+
+        let tooltipTime = scope.pinScrollingPosition;
+
+        if(!(tooltipTime instanceof Date)){
+          tooltipTime = new Date(tooltipTime);
+        }
+
+        tooltipDiv.html(tooltipTime)
+          .style('left', (d3.event.pageX - overflowOffset) + 'px')
+          .style('top', (d3.event.pageY - 28) + 'px');
+      })
+      .on('mouseout', function() {
+        d3.selectAll('.timeline-tooltip').remove();
+      });
 
     scrollNeedle = slide.append('line')
-      .attr('x1', xValue + pinOffset - 6)
-      .attr('x2', xValue + pinOffset - 6)
+      .attr('x1', thePinScrollPosition + pinOffset - 6)
+      .attr('x2', thePinScrollPosition + pinOffset - 6)
       .attr('y1', -10)
       .attr('y2', 40)
       .attr('stroke-width', 1)
       .attr('stroke', 'grey');
   }
 
-  scope.updatePinScale = function (val) {
-    if(pinHandle !== undefined){
-      pinHandle.attr('x', xScale(Math.floor(val/1000)));
-      scrollNeedle.attr('x', xScale(Math.floor(val/1000)));
+  scope.updateSliderHandle = (startTime) => {
+    if(typeof xScale !== 'undefined'){
+      updateSlider(xScale(startTime));
+    }
+  };
+
+  scope.updatePin = function () {
+    let xPositionVal = xScale(scope.pinScrollingPosition);
+
+    if(typeof pinHandle !== 'undefined'){
+
+      if(totalCount === 0){
+        xPositionVal = 0;
+      }
+
+      pinHandle.attr('x', xPositionVal - pinOffset + 1);
+      scrollNeedle.attr('x1', xPositionVal + 8)
+        .attr('x2', xPositionVal + 8);
+    }
+  };
+
+  const movePin = (val) => {
+    if(typeof pinHandle !== 'undefined'){
+      pinHandle.attr('x', val - pinOffset + 1);
+      scrollNeedle.attr('x1', val + 8)
+                  .attr('x2', val + 8);
     }
   };
 
@@ -263,7 +304,7 @@ function link (scope, element) {
 
     angular.forEach(searchTimes, (value) => {
       timescaleSvg.append('circle')
-        .attr('cx', xScale(value))
+        .attr('cx', xScale(value) + handleWidth)
         .attr('cy', 35)
         .attr('r', 2)
         .attr('class', 'search-circle');
@@ -271,23 +312,31 @@ function link (scope, element) {
   };
 
   function updateSlider(val) {
+
+    if(typeof sliderHandle === 'undefined'){
+      return;
+    }
+
     if(val < 0){
       val = 0;
     }
-    if(val > sliderLimit){
-      val = sliderLimit;
+    if(val > maxRange){
+      val = maxRange;
     }
-    sliderX = val;
 
+    //Keep the pin current
+    if(typeof pinHandle !== 'undefined'){
+      if(pinHandle.attr('x') < val){
+        movePin(val);
+      }
+    }
     sliderHandle.attr('x', val);
     sliderBar.attr('d', 'M0,0V0H' + val + 'V0');
-    scope.Timeline.updateStartTimeInStore(xScale.invert(val));
   }
 
   scope.updateSlider = updateSlider;
-  
+
   const getLogStats = () => {
-    let totalCount = 0;
     let errorCount = 0;
     let warningCount = 0;
 
@@ -407,7 +456,6 @@ function link (scope, element) {
           warningCount = timelineHash[keyThree].warnings;
         }
 
-        let eventCount = errorCount + warningCount;
         let circleTooltipHover = circleTooltipHoverOn.bind(
           this, keyThree,
           timelineHash[keyThree].errors,
@@ -416,42 +464,26 @@ function link (scope, element) {
 
         for(var verticalStackSize = 4; verticalStackSize >= 0 && (errorCount > 0 || warningCount > 0); verticalStackSize--){
           if(errorCount > 0){
-            if(eventCount >= 5){
               timescaleSvg.append('circle')
-                .attr('cx', xScale(keyThree))
-                .attr('cy', (verticalStackSize+1) * 7)
+                .attr('cx', xScale(keyThree) + handleWidth)
+                //Value '-2' prevents circles from overlapping with timestamps
+                .attr('cy', (verticalStackSize+1) * 7 - 2)
                 .attr('r', 2)
                 .attr('class', 'red-circle')
                 .on('mouseover', circleTooltipHover)
                 .on('mouseout', circleTooltipHoverOff);
-            } else {
-              timescaleSvg.append('circle')
-                .attr('cx', xScale(keyThree))
-                .attr('cy', (verticalStackSize+1) * 7)
-                .attr('r', 2)
-                .attr('class', 'red-circle');
-            }
-            errorCount--;
+                errorCount--;
           } else if(warningCount > 0){
-            if(eventCount >= 5){
               timescaleSvg.append('circle')
-                .attr('cx', xScale(keyThree))
-                .attr('cy', (verticalStackSize+1) * 7)
+                .attr('cx', xScale(keyThree) + handleWidth)
+                .attr('cy', (verticalStackSize+1) * 7 - 2)
                 .attr('r', 2)
                 .attr('class', 'yellow-circle')
                 .on('mouseover', circleTooltipHover)
                 .on('mouseout', circleTooltipHoverOff);
-            } else {
-              timescaleSvg.append('circle')
-                .attr('cx', xScale(keyThree))
-                .attr('cy', (verticalStackSize+1) * 7)
-                .attr('r', 2)
-                .attr('class', 'yellow-circle');
-            }
-            warningCount--;
+                warningCount--;
           }
         }
-
       }
     }
 

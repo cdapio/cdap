@@ -20,6 +20,7 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
   this.pinScrollPosition = 0;
   $scope.moment = moment;
   let screenSize;
+  $scope.pinScrollingPosition = 0;
 
   this.updateStartTimeInStore = function(val) {
     LogViewerStore.dispatch({
@@ -38,6 +39,14 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
       type: LOGVIEWERSTORE_ACTIONS.TOTAL_LOGS,
       payload: {
         totalLogs: val
+      }
+    });
+  };
+  this.updateScrollPositionInStore = function(val) {
+    LogViewerStore.dispatch({
+      type: LOGVIEWERSTORE_ACTIONS.SCROLL_POSITION,
+      payload: {
+        scrollPosition: val
       }
     });
   };
@@ -92,6 +101,10 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
       $scope.metadata = res;
       $scope.sliderBarPositionRefresh = LogViewerStore.getState().startTime;
       $scope.initialize();
+      if (res.status === 'KILLED' || res.status==='COMPLETED' || res.status === 'FAILED' || res.status === 'STOPPED') {
+        dataSrc.stopPoll(pollPromise.__pollId__);
+        pollPromise = null;
+      }
     }, (err) => {
       // FIXME: We need to fix this. Right now this fails and we need to handle this more gracefully.
       $scope.initialize();
@@ -100,21 +113,26 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
   };
 
   LogViewerStore.subscribe(() => {
-
     if(screenSize !== LogViewerStore.getState().fullScreen){
       screenSize = LogViewerStore.getState().fullScreen;
       $timeout($scope.initialize);
     }
 
-    this.pinScrollPosition = LogViewerStore.getState().scrollPosition;
+    //Keep the slider handle in sync with the api call
+    if(typeof $scope.updateSliderHandle !== 'undefined'){
+      $scope.updateSliderHandle(LogViewerStore.getState().startTime);
 
-    if($scope.updatePinScale !== undefined){
-      $scope.updatePinScale(this.pinScrollPosition);
-    }
+      //Check if the pinScrollPosition is less than the value of the query handle
+      this.pinScrollPosition = LogViewerStore.getState().scrollPosition;
+      if(typeof $scope.updatePin !== 'undefined'){
+        $scope.pinScrollingPosition = this.pinScrollPosition;
+        $scope.updatePin();
+      }
 
-    if($scope.searchResultTimes !== LogViewerStore.getState().searchResults){
-      $scope.searchResultTimes = LogViewerStore.getState().searchResults;
-      $scope.renderSearchCircles($scope.searchResultTimes);
+      if($scope.searchResultTimes !== LogViewerStore.getState().searchResults){
+        $scope.searchResultTimes = LogViewerStore.getState().searchResults;
+        $scope.renderSearchCircles($scope.searchResultTimes);
+      }
     }
   });
 
@@ -134,8 +152,11 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
   }).$promise.then(
     (res) => {
       $scope.metadata = res;
+      if(res.start === res.end){
+        res.end++;
+      }
       apiSettings.metric.startTime = res.start;
-      apiSettings.metric.endTime = 'now';
+      apiSettings.metric.endTime = res.end;
       $scope.renderSearchCircles([]);
       pollForMetadata();
     },

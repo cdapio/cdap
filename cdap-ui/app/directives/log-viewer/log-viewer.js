@@ -14,7 +14,7 @@
  * the License.
  */
 
-function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout, $uibModal, $q) {
+function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout, $uibModal, $q, moment) {
   'ngInject';
 
   var dataSrc = new MyCDAPDataSource($scope);
@@ -24,6 +24,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   var collapseCount = 0;
   this.viewLimit = 100;
   this.$uibModal = $uibModal;
+  this.errorRetrievingLogs = false;
+
   var rawLogs = {
     log: '',
     startTime: ''
@@ -55,6 +57,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         break;
     }
   };
+  let page = angular.element(window);
 
   this.setDefault = () => {
     this.textFile = null;
@@ -191,16 +194,58 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     }
 
     this.logStartTime = LogViewerStore.getState().startTime;
-    if (typeof this.logStartTime !== 'object') {
-      this.setDefault();
+
+
+    if(this.startTimeSec === Math.floor(this.logStartTime/1000)){
       return;
     }
+
     this.totalCount = LogViewerStore.getState().totalLogs;
     this.warningCount = LogViewerStore.getState().totalWarnings;
     this.errorCount = LogViewerStore.getState().totalErrors;
-    this.startTimeSec = Math.floor(this.logStartTime.getTime()/1000);
+
+    this.startTimeSec = (this.logStartTime instanceof Date) ? (Math.floor(this.logStartTime.getTime()/1000)) : (this.logStartTime/1000);
+    this.fromOffset = -1 + '.' + this.startTimeSec*1000;
     startTimeRequest();
   });
+
+  let proximityVal = Number.MAX_VALUE;
+  let newTime;
+
+  this.inViewScrollUpdate = (index, isInview, event) => {
+
+      if(isInview) {
+
+        //tbody extends beyond the viewport when scrolling down the table
+        let topOfTable = event.inViewTarget.parentElement.getBoundingClientRect().top;
+
+        //measures the scroll position of the window within the viewport
+        let pageScrollPosition = page[0].scrollY;
+
+        //gives the offsetTop property for a row that is within the viewport
+        let rowTopVal = event.inViewTarget.offsetTop;
+
+        //Adjusted val combines the tbody absolute offset that may extend beyond the viewport, with it's relatively positioned table row, giving us an absolute positioning for the row
+        let adjustedVal = topOfTable + pageScrollPosition + rowTopVal;
+
+        //Difference accounts for the difference between the top of the logviewer table container and the table rows
+        let difference = adjustedVal - $scope.tableEl[0].offsetTop;
+
+        //Offset the height of the bottom timeline and scrollpin row (55 + 15) if in full-screen
+        if(this.fullScreen){
+          difference-=70;
+        }
+
+        //By taking the smallest non-negative value, we have found the top-most row
+        if(difference > 0 && (proximityVal > difference || proximityVal < 0)){
+          index++;
+          newTime = this.displayData[index].log.timestamp;
+          this.updateScrollPositionInStore(newTime);
+        }
+
+        proximityVal = difference;
+    }
+  };
 
   if (this.runId) {
     //Get Initial Status
@@ -315,7 +360,16 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     });
   };
 
+  const validUrl = () => {
+    return this.namespaceId && this.appId && this.programType && this.runId && this.fromOffset;
+  };
+
   const requestWithOffset = () => {
+
+    if(!validUrl()){
+       this.loading = false;
+       return;
+    }
 
     if(pollPromise){
       dataSrc.stopPoll(pollPromise.__pollId__);
@@ -331,6 +385,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       'fromOffset' : this.fromOffset
     }).$promise.then(
       (res) => {
+        this.errorRetrievingLogs = false;
 
         if(res.length === 0){
           getStatus();
@@ -338,13 +393,11 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         }
 
         this.fromOffset = res[res.length-1].offset;
-
         angular.forEach(res, (element, index) => {
-
           //Format dates properly for rendering and computing
           let formattedDate = new Date(res[index].log.timestamp);
           res[index].log.timestamp = formattedDate;
-          res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + ((formattedDate.getMinutes()<10) ? '0'+formattedDate.getMinutes() : formattedDate.getMinutes()) + ':' + ((formattedDate.getSeconds()<10) ? '0'+formattedDate.getSeconds() : formattedDate.getSeconds()));
+          res[index].log.displayTime = moment(formattedDate).format('L H:mm:ss');
           res[index].log.stackTrace = res[index].log.stackTrace.trim();
         });
 
@@ -353,10 +406,10 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         if(this.displayData.length < this.viewLimit){
           getStatus();
         }
-
       },
       (err) => {
         console.log('ERROR: ', err);
+        this.errorRetrievingLogs = true;
       });
   };
 
@@ -393,20 +446,22 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     },
     (res) => {
       //We have recieved more logs, append to current dataset
-    if(res.length > 0){
-      this.fromOffset = res[res.length-1].offset;
+      this.errorRetrievingLogs = false;
 
-      angular.forEach(res, (element, index) => {
-        //Format dates properly for rendering and computing
-        let formattedDate = new Date(res[index].log.timestamp);
-        res[index].log.timestamp = formattedDate;
-        res[index].log.displayTime = ((formattedDate.getMonth() + 1) + '/' + formattedDate.getDate() + '/' + formattedDate.getFullYear() + ' ' + formattedDate.getHours() + ':' + ((formattedDate.getMinutes()<10) ? '0'+formattedDate.getMinutes() : formattedDate.getMinutes()) + ':' + formattedDate.getSeconds());
-        res[index].log.stackTrace = res[index].log.stackTrace.trim();
-      });
+      if(res.length > 0){
+        this.fromOffset = res[res.length-1].offset;
 
-      this.data = this.data.concat(res);
-      this.renderData();
-    }
+        angular.forEach(res, (element, index) => {
+          //Format dates properly for rendering and computing
+          let formattedDate = new Date(res[index].log.timestamp);
+          res[index].log.timestamp = formattedDate;
+          res[index].log.displayTime = moment(formattedDate).format('L H:mm:ss');
+          res[index].log.stackTrace = res[index].log.stackTrace.trim();
+        });
+
+        this.data = this.data.concat(res);
+        this.renderData();
+      }
 
       if(this.displayData.length >= this.viewLimit){
         dataSrc.stopPoll(pollPromise.__pollId__);
@@ -417,6 +472,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
     }, (err) => {
       console.log('ERROR: ', err);
+      this.errorRetrievingLogs = true;
     });
   };
 
@@ -483,12 +539,19 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
     this.data = [];
     this.renderData();
-
     this.loading = true;
     if(pollPromise){
       dataSrc.stopPoll(pollPromise.__pollId__);
       pollPromise = null;
     }
+
+    if(!validUrl()){
+       this.loading = false;
+       return;
+    }
+
+    //Scroll table to the top
+    angular.element(document.getElementsByClassName('logs-table'))[0].scrollTop = 0;
 
     // FIXME: This should be provided by $resource or MyCdapResource. Thank you $resource & angular
     const url = myCdapUrl.constructUrl({
@@ -503,30 +566,42 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         programType : this.programType,
         programId : this.programId,
         runId : this.runId,
-        fromOffset: -1 + '.' + this.startTimeSec*1000
+        fromOffset: this.fromOffset
     }).$promise.then(
       (res) => {
 
+        this.errorRetrievingLogs = false;
         this.fromOffset = res[res.length-1].offset;
         this.loading = false;
         this.data = [];
+        this.displayData = [];
         this.renderData();
 
         angular.forEach(res, (element, index) => {
           let formattedDate = new Date(res[index].log.timestamp);
           res[index].log.timestamp = formattedDate;
-          res[index].log.displayTime = formatDate(formattedDate);
+          res[index].log.displayTime = moment(formattedDate).format('L H:mm:ss');
           res[index].log.stackTrace = res[index].log.stackTrace.trim();
         });
 
         this.data = res;
+
         if(res.length === 0){
+          //Update with start-time
           this.renderData();
           getStatus();
+          if(this.statusType !== 0){
+            this.loading = false;
+            this.displayData = [];
+          }
           return;
         }
 
         this.renderData();
+        //Update the scroll needle to be positioned at the first element in the rendered data
+        if(this.displayData.length > 0){
+          this.updateScrollPositionInStore(this.displayData[0].log.timestamp);
+        }
 
         if(res.length < this.viewLimit){
           getStatus();
@@ -534,6 +609,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       },
       (err) => {
         this.setDefault();
+        this.errorRetrievingLogs = true;
         console.log('ERROR: ', err);
       });
   };
@@ -606,7 +682,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   this.renderData = () => {
     //Clean slate
     this.displayData = [];
-
     if(numEvents === 0){
       angular.forEach(this.data, (value, key) => {
         this.displayData.push(this.data[key]);
@@ -658,6 +733,10 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   });
 }
 
+const link = (scope) => {
+  scope.tableEl = document.getElementsByClassName('logs-table');
+};
+
 angular.module(PKG.name + '.commons')
   .directive('myLogViewer', function () {
     return {
@@ -674,6 +753,7 @@ angular.module(PKG.name + '.commons')
         getDownloadFilename: '&',
         entityName: '@'
       },
+      link: link,
       bindToController: true
     };
   });
