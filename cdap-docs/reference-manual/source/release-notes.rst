@@ -23,6 +23,35 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 3.3.7 <http://docs.cask.co/cdap/3.3.7/index.html>`__
+=============================================================
+
+Bug Fixes
+---------
+
+- `CDAP-1545 <https://issues.cask.co/browse/CDAP-1545>`__ - Created a Docker-specific
+  ENTRYPOINT script to easily support arguments.
+
+- `CDAP-6623 <https://issues.cask.co/browse/CDAP-6623>`__ - Fixed a problem with a race
+  condition in the LogSaverPluginTest.
+
+- `CDAP-6643 <https://issues.cask.co/browse/CDAP-6643>`__ - Fixed a problem with the log
+  saver spamming the master logs if there was an underlying issue.
+
+- `CDAP-6829 <https://issues.cask.co/browse/CDAP-6829>`__ - Fixed a problem with the log
+  saver failing to cleanup log files when file metadata is present for a non-existent file.
+
+- `CDAP-6852 <https://issues.cask.co/browse/CDAP-6852>`__ - Fixed a problem with the log
+  save failing to handle exceptions while checkpointing.
+
+- `CDAP-6860 <https://issues.cask.co/browse/CDAP-6860>`__ - Improved performance in cube
+  datasets when querying for more than one measure in a query. This will also improve
+  metrics query performance.
+
+- `CDAP-7016 <https://issues.cask.co/browse/CDAP-7016>`__ - Fixed a problem with building
+  the CDAP SDK under Java 8.
+
+
 `Release 3.3.6 <http://docs.cask.co/cdap/3.3.6/index.html>`__
 =============================================================
 
