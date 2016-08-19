@@ -116,7 +116,8 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
 
     LOG.info("Launching distributed workflow: " + program.getName() + ":" + workflowSpec.getName());
     TwillController controller = launcher.launch(
-      new WorkflowTwillApplication(program, workflowSpec, localizeResources, eventHandler, driverMeta.resources),
+      new WorkflowTwillApplication(program, options.getUserArguments(),
+                                   workflowSpec, localizeResources, eventHandler, driverMeta.resources),
       extraClassPaths, extraDependencies
     );
     RunId runId = ProgramRunners.getRunId(options);
@@ -151,7 +152,7 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
           Resources driverResources;
           if (programType == SchedulableProgramType.SPARK) {
             hasSpark = true;
-            driverResources = sparkSpecs.get(programInfo.getProgramName()).getDriverResources();
+            driverResources = sparkSpecs.get(programInfo.getProgramName()).getClientResources();
           } else {
             driverResources = mrSpecs.get(programInfo.getProgramName()).getDriverResources();
           }

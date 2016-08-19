@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package co.cask.cdap;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.Test;
@@ -79,7 +80,8 @@ public class RuntimeArgumentsTest {
     runtimeArguments.put("dataset.unknown.dataset", "false");
     runtimeArguments.put("dataset.*.read.timeout", "60");
 
-    Map<String, String> oneMRArguments = RuntimeArguments.extractScope(Scope.MAPREDUCE, "OneMR", runtimeArguments);
+    Map<String, String> oneMRArguments = RuntimeArguments.extractScope(ProgramType.MAPREDUCE.getScope(),
+                                                                       "OneMR", runtimeArguments);
     Assert.assertTrue(oneMRArguments.size() == 16);
     Assert.assertTrue(oneMRArguments.get("debug").equals("true"));
     Assert.assertTrue(oneMRArguments.get("mapreduce.*.debug").equals("false"));
@@ -102,8 +104,8 @@ public class RuntimeArgumentsTest {
     Assert.assertTrue(oneMRArguments.get("dataset.unknown.dataset").equals("false"));
     Assert.assertTrue(oneMRArguments.get("dataset.*.read.timeout").equals("60"));
 
-    Map<String, String> anotherMRArguments = RuntimeArguments.extractScope(Scope.MAPREDUCE, "AnotherMR",
-                                                                           runtimeArguments);
+    Map<String, String> anotherMRArguments = RuntimeArguments.extractScope(ProgramType.MAPREDUCE.getScope(),
+                                                                           "AnotherMR", runtimeArguments);
     Assert.assertTrue(anotherMRArguments.size() == 16);
     Assert.assertTrue(anotherMRArguments.get("debug").equals("false"));
     Assert.assertTrue(anotherMRArguments.get("mapreduce.*.debug").equals("false"));
@@ -126,7 +128,8 @@ public class RuntimeArgumentsTest {
     Assert.assertTrue(anotherMRArguments.get("dataset.unknown.dataset").equals("false"));
     Assert.assertTrue(anotherMRArguments.get("dataset.*.read.timeout").equals("60"));
 
-    Map<String, String> oneSparkArguments = RuntimeArguments.extractScope(Scope.SPARK, "OneSpark", runtimeArguments);
+    Map<String, String> oneSparkArguments = RuntimeArguments.extractScope(ProgramType.SPARK.getScope(),
+                                                                          "OneSpark", runtimeArguments);
     Assert.assertTrue(oneSparkArguments.size() == 15);
     Assert.assertTrue(oneSparkArguments.get("debug").equals("true"));
     Assert.assertTrue(oneSparkArguments.get("mapreduce.*.debug").equals("false"));
@@ -148,8 +151,8 @@ public class RuntimeArgumentsTest {
     Assert.assertTrue(oneSparkArguments.get("dataset.unknown.dataset").equals("false"));
     Assert.assertTrue(oneSparkArguments.get("dataset.*.read.timeout").equals("60"));
 
-    Map<String, String> anotherSparkArguments = RuntimeArguments.extractScope(Scope.SPARK, "AnotherSpark",
-                                                                              runtimeArguments);
+    Map<String, String> anotherSparkArguments = RuntimeArguments.extractScope(ProgramType.SPARK.getScope(),
+                                                                              "AnotherSpark", runtimeArguments);
     Assert.assertTrue(anotherSparkArguments.size() == 15);
     Assert.assertTrue(anotherSparkArguments.get("debug").equals("true"));
     Assert.assertTrue(anotherSparkArguments.get("mapreduce.*.debug").equals("false"));

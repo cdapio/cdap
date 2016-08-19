@@ -73,7 +73,8 @@ public class DistributedServiceProgramRunner extends AbstractDistributedProgramR
     // Launch service runnables program runners
     LOG.info("Launching distributed service: {}:{}", program.getName(), serviceSpec.getName());
 
-    TwillController controller = launcher.launch(new ServiceTwillApplication(program, serviceSpec,
+    TwillController controller = launcher.launch(new ServiceTwillApplication(program, options.getUserArguments(),
+                                                                             serviceSpec,
                                                                              localizeResources, eventHandler));
 
     DistributedServiceRunnableInstanceUpdater instanceUpdater =

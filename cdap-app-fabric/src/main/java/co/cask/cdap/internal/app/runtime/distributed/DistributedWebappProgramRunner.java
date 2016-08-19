@@ -63,7 +63,8 @@ public final class DistributedWebappProgramRunner extends AbstractDistributedPro
     Preconditions.checkArgument(processorType == ProgramType.WEBAPP, "Only WEBAPP process type is supported.");
 
     LOG.info("Launching distributed webapp: " + program.getName());
-    TwillController controller = launcher.launch(new WebappTwillApplication(program, localizeResources, eventHandler));
+    TwillController controller = launcher.launch(new WebappTwillApplication(program, options.getUserArguments(),
+                                                                            localizeResources, eventHandler));
     RunId runId = ProgramRunners.getRunId(options);
     return new WebappTwillProgramController(program.getId(), controller, runId).startListen();
   }

@@ -83,8 +83,9 @@ import javax.annotation.Nullable;
  */
 public final class FlowUtils {
 
-  private static final Logger LOG = LoggerFactory.getLogger(FlowUtils.class);
+  public static final String FLOWLET_SCOPE = "flowlet";
 
+  private static final Logger LOG = LoggerFactory.getLogger(FlowUtils.class);
 
   /**
    * Generates a queue consumer groupId for the given flowlet in the given program id.
