@@ -16,15 +16,15 @@
 
 package co.cask.cdap.data2.dataset2.tx;
 
-import co.cask.tephra.TransactionAware;
-import co.cask.tephra.TransactionExecutor;
-import co.cask.tephra.TransactionExecutorFactory;
-import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
+import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionExecutor;
+import org.apache.tephra.TransactionExecutorFactory;
+import org.apache.tephra.TransactionFailureException;
 
 import java.io.Closeable;
 import java.io.IOException;

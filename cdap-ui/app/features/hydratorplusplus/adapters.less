@@ -82,29 +82,17 @@ body.theme-cdap {
     // Complex Schema styling
     .tab-header-inner { background-color: white; }
 
+    my-complex-schema my-embedded-schema-selector div.tab-toggle.expanded:before { background-color: white; }
+
   }
 
   &.state-hydratorplusplus-detail,
   &.state-hydratorplusplus-create {
-    .btn {
-      &.btn-orange,
-      &.btn-grey {
-        color: white;
-      }
-      &.btn-orange {
-        background-color: @cdap-orange;
-      }
-
-      &.btn-grey {
-        background-color: #cccccc;
-      }
-
-      &.btn-default.dropdown-toggle {
-        background-color: white;
-        color: #666666;
-        border: 1px solid #999999;
-        padding: 5px 15px;
-      }
+    .btn.btn-default.dropdown-toggle {
+      background-color: white;
+      color: #666666;
+      border: 1px solid #999999;
+      padding: 5px 15px;
     }
 
     .dropdown-menu.output-schema-actions {
@@ -252,6 +240,7 @@ body.theme-cdap {
 
     .start-well {
       background-color: white;
+      border-radius: 6px;
       font-weight: 500;
       margin-right: auto;
       margin-left: auto;
@@ -262,7 +251,6 @@ body.theme-cdap {
       flex-direction: column;
       justify-content: center;
 
-      .border-radius(6px);
       h4,
       a {
         font-weight: 500;
@@ -330,7 +318,7 @@ body.theme-cdap {
           width: 10px;
           height: 10px;
           margin-right: 5px;
-          .border-radius(25px);
+          border-radius: 25px;
           &.status-green { background-color: @brand-success; }
           &.status-red { background-color: @brand-danger; }
           &.status-grey { background-color: @cdap-gray; }

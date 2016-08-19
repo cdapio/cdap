@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.service.http.HttpServiceContext;
-import co.cask.tephra.TransactionContext;
+import org.apache.tephra.TransactionContext;
 
 /**
  * Defines a {@link HttpServiceContext} that supports transactions.

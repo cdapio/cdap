@@ -1,3 +1,5 @@
+.. |my_username| replace:: ``my_username``
+
 .. _|distribution|-configuration:
 
 .. _|distribution|-configuration-central:
@@ -47,6 +49,14 @@ for CDAP to run successfully.
    
      $ sudo cp -f /etc/cdap/conf.mycdap/cdap-site.xml.example /etc/cdap/conf.mycdap/cdap-site.xml
      $ sudo vi /etc/cdap/conf.mycdap/cdap-site.xml
+
+#. If necessary, customize the file ``cdap-env.sh`` after you have installed the CDAP packages.
+
+   Environment variables that will be included in the environment used when launching CDAP and
+   can be set in the ``cdap-env.sh`` file, usually at ``/etc/cdap/conf/cdap-env.sh``.
+   
+   This is only necessary if you need to customize the environment launching CDAP, such
+   as described below under :ref:`|distribution|-configuration-local-storage`.
 
    .. _|distribution|-configuration-options-may-need:
 
@@ -101,7 +111,7 @@ for CDAP to run successfully.
   
       #. Check that the default HDFS user |hdfs-user| owns that HDFS directory.
   
-   #. If you want to use **an HDFS user** other than |hdfs-user|:
+   #. If you want to use **an HDFS user** other than |hdfs-user|, such as |my_username|:
 
       1. Check that there is |---| and create if necessary |---| a corresponding user on all machines
          in the cluster on which YARN is running (typically, all of the machines).
@@ -114,7 +124,22 @@ for CDAP to run successfully.
            </property>
   
       #. Check that the HDFS user owns the HDFS directory described by ``hdfs.namespace`` on all machines.
-      #. Check that there exists in HDFS a ``/user/`` directory for that HDFS user, as described above.
+      #. Check that there exists in HDFS a ``/user/`` directory for that HDFS user, as described above, such as:
+      
+         .. container:: highlight
+       
+           .. parsed-literal::
+         
+             |$| su hdfs
+             |$| hdfs dfs -mkdir -p /user/|my_username| && hadoop fs -chown |my_username| /user/|my_username| && hadoop fs -chgrp |my_username| /user/|my_username|
+      
+      #. If you use an HDFS user other than |hdfs-user|, you must use either a secure
+         cluster or use the `LinuxContainerExecutor
+         <https://hadoop.apache.org/docs/stable/hadoop-yarn/hadoop-yarn-site/SecureContainer.html>`__ 
+         instead of the ``DefaultContainerExecutor``. (Because of how ``DefaultContainerExecutor``
+         works, other containers will launch as |hdfs-user| rather than the specified
+         ``hdfs.user``.) On Kerberos-enabled clusters, you must use ``LinuxContainerExecutor``
+         as the ``DefaultContainerExecutor`` will not work correctly.
    
    #. To use the **ad-hoc querying capabilities of CDAP,** ensure the cluster has a
       compatible version of Hive installed. See the section on :ref:`Hadoop Compatibility
@@ -162,28 +187,56 @@ Guide <https://hbase.apache.org/book.html#ulimit>`__.
 
 .. highlight:: console
 
+.. _|distribution|-configuration-local-storage:
 .. _|distribution|-configuration-tmp-files:
 
-Writing to Temp Files
----------------------
-Temp directories, depending on the distribution, are utilized by CDAP (the first two of
-this set of directories are properties specified in the ``cdap-site.xml`` file, as
-described in the :ref:`appendix-cdap-site.xml`):
+Local Storage Configuration
+---------------------------
+Local storage directories |---| depending on the distribution |---| are utilized
+by CDAP for deploying applications and operating CDAP.
 
-- ``app.temp.dir`` (default: ``/tmp``)
-- ``kafka.log.dir`` (default: ``/tmp/kafka-logs``)
-- ``/var/cdap/run``
-- ``/var/log/cdap``
-- ``/var/run/cdap``
-- ``/var/tmp/cdap`` 
+The CDAP user (the ``cdap`` system user) **must** be able to write to **all** of these
+directories, as they are used for deploying applications and for operating CDAP.
+  
+- **List of local storage directories**
 
-The CDAP user (the ``cdap`` system user) **must** be able to write to these directories, as they
-are used for deploying applications and for operating CDAP.
+  - Properties specified in the ``cdap-site.xml`` file, as described in the :ref:`appendix-cdap-site.xml`:
 
-As in all installations, the ``kafka.log.dir`` may need to be created locally. If you
-configure ``kafka.log.dir`` (or any of the other settable parameters) to a particular
-directory, you need to make sure that **the directory exists** and that it **is writable**
-by the CDAP user.
+    - ``app.temp.dir`` (default: ``/tmp``)
+    - ``kafka.server.log.dirs`` (default: ``/tmp/kafka-logs``)
+    - ``local.data.dir`` (default: ``data``; if this is instead an absolute path, needs to be writable)
+
+  - Additional directories:
+
+    - ``/var/cdap/run`` (used as a PID directory, created by the packages)
+    - ``/var/log/cdap`` (used as log directory, created by the packages)
+    - ``/var/run/cdap`` (default CDAP user's home directory, created by the packages)
+    - ``/var/tmp/cdap`` (default ``LOCAL_DIR`` |---| see below |---| defined and created in the CDAP init scripts)
+
+- Note that ``local.data.dir`` |---| which defines the directory for program jar storage
+  when deploying to YARN |---| is set in the ``cdap-site.xml`` and defaults to the
+  relative path ``data``. If the value of ``local.data.dir`` is *relative,* it is put
+  under ``LOCAL_DIR``, such as ``/var/tmp/cdap/data``. However, if instead it is an
+  *absolute* path, that alone is used as the value. This is desirable so you can easily
+  configure this directory to be elsewhere.
+
+- The CDAP Master service is governed by environment variables, which set the
+  directories it uses:
+
+  - ``TEMP_DIR`` (default: ``/tmp``): The directory serving as the ``java.io.tmpdir``
+    directory
+
+  - ``LOCAL_DIR`` (default: ``/var/tmp/cdap``): The directory serving as the user directory
+    for CDAP Master
+
+  These variables can be set in the file ``/etc/cdap/conf/cdap-env.sh`` and will be included in
+  the environment when launching CDAP. See :ref:`|distribution|-configuration-central` 
+  for details of the central configuration used by CDAP and how to implement this.
+
+- As in all installations, the ``kafka.server.log.dirs`` may need to be created locally.
+  If you configure ``kafka.server.log.dirs`` (or any of the other settable parameters) to
+  a particular directory or directories, you need to make sure that **the directories
+  exist** and that they **are writable** by the CDAP user.
 
 .. _|distribution|-configuration-hdp:
 

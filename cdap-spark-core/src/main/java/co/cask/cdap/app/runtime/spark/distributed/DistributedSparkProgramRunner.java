@@ -27,8 +27,9 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeContextConfig;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeUtils;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.lang.FilterClassLoader;
-import co.cask.cdap.data2.security.Impersonator;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.distributed.AbstractDistributedProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
@@ -61,7 +62,8 @@ public final class DistributedSparkProgramRunner extends AbstractDistributedProg
   DistributedSparkProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
                                 TokenSecureStoreUpdater tokenSecureStoreUpdater,
                                 Impersonator impersonator) {
-    super(twillRunner, createConfiguration(hConf), cConf, tokenSecureStoreUpdater, impersonator);
+    super(twillRunner, createConfiguration(hConf, cConf, tokenSecureStoreUpdater),
+          cConf, tokenSecureStoreUpdater, impersonator);
   }
 
   @Override
@@ -92,9 +94,18 @@ public final class DistributedSparkProgramRunner extends AbstractDistributedProg
     return new SparkTwillProgramController(program.getId().toEntityId(), controller, runId).startListen();
   }
 
-  private static YarnConfiguration createConfiguration(YarnConfiguration hConf) {
+  private static YarnConfiguration createConfiguration(YarnConfiguration hConf, CConfiguration cConf,
+                                                       TokenSecureStoreUpdater secureStoreUpdater) {
     YarnConfiguration configuration = new YarnConfiguration(hConf);
     configuration.setBoolean(SparkRuntimeContextConfig.HCONF_ATTR_CLUSTER_MODE, true);
+
+    if (SecurityUtil.isKerberosEnabled(cConf)) {
+      // Need to divide the interval by 0.8 because Spark logic has a 0.8 discount on the interval
+      // If we don't offset it, it will look for the new credentials too soon
+      // Also add 5 seconds to the interval to give master time to push the changes to the Spark client container
+      configuration.setLong(SparkRuntimeContextConfig.HCONF_ATTR_CREDENTIALS_UPDATE_INTERVAL_MS,
+                            (long) ((secureStoreUpdater.getUpdateInterval() + 5000) / 0.8));
+    }
     return configuration;
   }
 

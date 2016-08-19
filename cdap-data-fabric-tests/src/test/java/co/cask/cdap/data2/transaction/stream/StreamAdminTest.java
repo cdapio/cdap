@@ -155,7 +155,7 @@ public abstract class StreamAdminTest {
     Assert.assertFalse(streamAdmin.exists(otherStreamId));
 
     // revoke the permission for the user on the stream in foo_namespace
-    revokeAndAssertSuccess(streamId.toEntityId(), USER, ImmutableSet.of(Action.ADMIN, Action.ALL));
+    revokeAndAssertSuccess(streamId.toEntityId(), USER, EnumSet.allOf(Action.class));
 
     try {
       streamAdmin.drop(streamId);
@@ -196,7 +196,7 @@ public abstract class StreamAdminTest {
 
     // Now revoke access to the user to the stream and to the namespace
     revokeAndAssertSuccess(new NamespaceId(FOO_NAMESPACE), USER, ImmutableSet.of(Action.WRITE));
-    revokeAndAssertSuccess(stream.toEntityId(), USER, ImmutableSet.of(Action.ALL));
+    revokeAndAssertSuccess(stream.toEntityId(), USER, EnumSet.allOf(Action.class));
     streamAdmin.getConfig(stream);
 
     try {
@@ -273,7 +273,9 @@ public abstract class StreamAdminTest {
     // User should still be able to list both streams because it has all privilege on the parent
     specifications = streamAdmin.listStreams(nsId);
     Assert.assertEquals(2, specifications.size());
-    Assert.assertEquals(s2.getStream(), specifications.get(0).getName());
+    Set<String> streamNames = ImmutableSet.of(s1.getStream(), s2.getStream());
+    Assert.assertTrue(streamNames.contains(specifications.get(0).getName()));
+    Assert.assertTrue(streamNames.contains(specifications.get(1).getName()));
 
     // Revoke all privileges on s2.
     revokeAndAssertSuccess(s2, USER, EnumSet.allOf(Action.class));
@@ -281,6 +283,8 @@ public abstract class StreamAdminTest {
     // User should still be able to list both streams because it has all privilege on the parent
     specifications = streamAdmin.listStreams(nsId);
     Assert.assertEquals(2, specifications.size());
+    Assert.assertTrue(streamNames.contains(specifications.get(0).getName()));
+    Assert.assertTrue(streamNames.contains(specifications.get(1).getName()));
 
     // Revoke all privileges on the namespace
     revokeAndAssertSuccess(nsId, USER, EnumSet.allOf(Action.class));
@@ -289,8 +293,8 @@ public abstract class StreamAdminTest {
     specifications = streamAdmin.listStreams(nsId);
     Assert.assertTrue(specifications.isEmpty());
 
-    grantAndAssertSuccess(s1, USER, ImmutableSet.of(Action.ALL));
-    grantAndAssertSuccess(s2, USER, ImmutableSet.of(Action.ALL));
+    grantAndAssertSuccess(s1, USER, EnumSet.allOf(Action.class));
+    grantAndAssertSuccess(s2, USER, EnumSet.allOf(Action.class));
     streamAdmin.drop(s1.toId());
     streamAdmin.drop(s2.toId());
   }
@@ -335,7 +339,7 @@ public abstract class StreamAdminTest {
 
   @Test
   public void testAuditPublish() throws Exception {
-    grantAndAssertSuccess(new NamespaceId(FOO_NAMESPACE), USER, EnumSet.of(Action.ALL));
+    grantAndAssertSuccess(new NamespaceId(FOO_NAMESPACE), USER, EnumSet.allOf(Action.class));
 
     // clear existing all messages
     getInMemoryAuditPublisher().popMessages();

@@ -26,16 +26,14 @@ import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
-import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationContext;
-import co.cask.tephra.TransactionFailureException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import org.apache.tephra.TransactionFailureException;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -158,7 +156,7 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
   }
 
   @Override
-  public List<SecureStoreMetadata> listSecureData(String namespace) throws Exception {
+  public Map<String, String> listSecureData(String namespace) throws Exception {
     return delegateSecureStore.listSecureData(namespace);
   }
 

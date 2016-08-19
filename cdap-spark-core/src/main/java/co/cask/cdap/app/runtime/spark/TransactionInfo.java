@@ -16,9 +16,9 @@
 
 package co.cask.cdap.app.runtime.spark;
 
-import co.cask.tephra.Transaction;
-import co.cask.tephra.TransactionFailureException;
 import org.apache.spark.scheduler.SparkListener;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionFailureException;
 
 import javax.annotation.Nullable;
 

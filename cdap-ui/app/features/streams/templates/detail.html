@@ -49,7 +49,7 @@
              href=""
              ng-click="caskConfirm()"
              cask-confirmable="DetailController.truncate()"
-             data-confirmable-content="Are you sure you want to truncate this stream?">
+             data-confirmable-content="Are you sure you want to truncate the stream '<strong>{{$state.params.streamId}}</strong>'?">
              Truncate
           </a>
         </li>

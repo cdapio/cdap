@@ -16,6 +16,8 @@
 
 package co.cask.cdap.internal.app.services;
 
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
@@ -23,9 +25,7 @@ import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
-import co.cask.cdap.internal.guice.AppFabricTestModule;
+import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.EntityId;
@@ -34,20 +34,17 @@ import co.cask.cdap.proto.id.SecureKeyId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
-import co.cask.cdap.proto.security.SecureKeyCreateRequest;
-import co.cask.cdap.proto.security.SecureKeyListEntry;
-import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import co.cask.tephra.TransactionManager;
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.google.inject.Guice;
+import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -63,7 +60,7 @@ import org.junit.rules.TemporaryFolder;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -75,10 +72,10 @@ public class DefaultSecureStoreServiceTest {
   private static final String DESCRIPTION1 = "This is the first key";
   private static final String VALUE1 = "caskisgreat";
 
-  private static SecureStoreService secureStoreService;
-  private static Authorizer authorizer;
-  private static AuthorizationEnforcementService authorizationEnforcementService;
+  private static SecureStore secureStore;
+  private static SecureStoreManager secureStoreManager;
   private static AppFabricServer appFabricServer;
+  private static Authorizer authorizer;
   private static DiscoveryServiceClient discoveryServiceClient;
 
   @ClassRule
@@ -88,22 +85,19 @@ public class DefaultSecureStoreServiceTest {
   public static void setup() throws Exception {
     SConfiguration sConf = SConfiguration.create();
     sConf.set(Constants.Security.Store.FILE_PASSWORD, "secret");
-    final Injector injector = Guice.createInjector(new AppFabricTestModule(createCConf(), sConf));
-    injector.getInstance(TransactionManager.class).startAndWait();
-    injector.getInstance(DatasetOpExecutor.class).startAndWait();
+    final Injector injector = AppFabricTestHelper.getInjector(createCConf(), sConf, new AbstractModule() {
+      @Override
+      protected void configure() {
+        // no overrides
+      }
+    });
     discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
-    DatasetService datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
-    waitForService(Constants.Service.DATASET_EXECUTOR);
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
-    authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
-    authorizationEnforcementService.startAndWait();
-    secureStoreService = injector.getInstance(SecureStoreService.class);
+    waitForService(Constants.Service.DATASET_MANAGER);
+    secureStore = injector.getInstance(SecureStore.class);
+    secureStoreManager = injector.getInstance(SecureStoreManager.class);
     authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
-    SecurityRequestContext.setUserId(ALICE.getName());
-
-    secureStoreService = injector.getInstance(SecureStoreService.class);
     authorizer.grant(NamespaceId.DEFAULT, ALICE, Collections.singleton(Action.READ));
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
@@ -114,10 +108,15 @@ public class DefaultSecureStoreServiceTest {
     authorizer.revoke(NamespaceId.DEFAULT, ALICE, Collections.singleton(Action.READ));
   }
 
+  private static void waitForService(String service) {
+    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(service));
+    Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
+                               "%s service is not up after 5 seconds", service);
+  }
+
   @AfterClass
   public static void cleanup() {
     appFabricServer.stopAndWait();
-    authorizationEnforcementService.stopAndWait();
   }
 
   private static CConfiguration createCConf() throws Exception {
@@ -128,7 +127,6 @@ public class DefaultSecureStoreServiceTest {
     // we only want to test authorization, but we don't specify principal/keytab, so disable kerberos
     cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
     cConf.setBoolean(Constants.Security.Authorization.CACHE_ENABLED, false);
-    cConf.set(Constants.Security.Authorization.SUPERUSERS, "hulk");
 
     LocationFactory locationFactory = new LocalLocationFactory(TEMPORARY_FOLDER.newFolder());
     Location authorizerJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class);
@@ -143,10 +141,9 @@ public class DefaultSecureStoreServiceTest {
   public void testSecureStoreAccess() throws Exception {
     final SecureKeyId secureKeyId1 = NamespaceId.DEFAULT.secureKey(KEY1);
     SecurityRequestContext.setUserId(ALICE.getName());
-    final SecureKeyCreateRequest createRequest = new SecureKeyCreateRequest(DESCRIPTION1, VALUE1,
-                                                                            Collections.<String, String>emptyMap());
     try {
-      secureStoreService.put(secureKeyId1, createRequest);
+      secureStoreManager.putSecureData(NamespaceId.DEFAULT.getNamespace(), KEY1, VALUE1, DESCRIPTION1,
+                                       Collections.<String, String>emptyMap());
       Assert.fail("Alice should not be able to store a key since she does not have WRITE privileges on the namespace");
     } catch (UnauthorizedException expected) {
       // expected
@@ -155,29 +152,31 @@ public class DefaultSecureStoreServiceTest {
     // Grant ALICE write access to the namespace
     grantAndAssertSuccess(NamespaceId.DEFAULT, ALICE, EnumSet.of(Action.WRITE));
     // Write should succeed
-    secureStoreService.put(secureKeyId1, createRequest);
+    secureStoreManager.putSecureData(NamespaceId.DEFAULT.getNamespace(), KEY1, VALUE1, DESCRIPTION1,
+                                     Collections.<String, String>emptyMap());
     // Listing should return the value just written
-    List<SecureKeyListEntry> secureKeyListEntries = secureStoreService.list(NamespaceId.DEFAULT);
+    Map<String, String> secureKeyListEntries = secureStore.listSecureData(NamespaceId.DEFAULT.getNamespace());
     Assert.assertEquals(1, secureKeyListEntries.size());
-    Assert.assertEquals(KEY1, secureKeyListEntries.get(0).getName());
-    Assert.assertEquals(DESCRIPTION1, secureKeyListEntries.get(0).getDescription());
+    Assert.assertTrue(secureKeyListEntries.containsKey(KEY1));
+    Assert.assertEquals(DESCRIPTION1, secureKeyListEntries.get(KEY1));
     revokeAndAssertSuccess(secureKeyId1, ALICE, EnumSet.allOf(Action.class));
 
     // Should still be able to list the keys since ALICE has namespace access privilege
-    secureKeyListEntries = secureStoreService.list(NamespaceId.DEFAULT);
+    secureKeyListEntries = secureStore.listSecureData(NamespaceId.DEFAULT.getNamespace());
     Assert.assertEquals(1, secureKeyListEntries.size());
 
     // Give BOB read access and verify that he can read the stored data
     SecurityRequestContext.setUserId(BOB.getName());
     grantAndAssertSuccess(NamespaceId.DEFAULT, BOB, EnumSet.of(Action.READ));
     grantAndAssertSuccess(secureKeyId1, BOB, EnumSet.of(Action.READ));
-    Assert.assertArrayEquals(VALUE1.getBytes(), secureStoreService.get(secureKeyId1).get());
-    secureKeyListEntries = secureStoreService.list(NamespaceId.DEFAULT);
+    Assert.assertEquals(VALUE1, new String(secureStore.getSecureData(NamespaceId.DEFAULT.getNamespace(), KEY1).get(),
+                                           Charsets.UTF_8));
+    secureKeyListEntries = secureStore.listSecureData(NamespaceId.DEFAULT.getNamespace());
     Assert.assertEquals(1, secureKeyListEntries.size());
 
     // BOB should not be able to delete the key
     try {
-      secureStoreService.delete(secureKeyId1);
+      secureStoreManager.deleteSecureData(NamespaceId.DEFAULT.getNamespace(), KEY1);
       Assert.fail("Bob should not be able to delete a key since he does not have ADMIN privileges on the key");
     } catch (UnauthorizedException expected) {
       // expected
@@ -185,8 +184,8 @@ public class DefaultSecureStoreServiceTest {
 
     // Grant Bob ADMIN access and he should be able to delete the key
     grantAndAssertSuccess(secureKeyId1, BOB, ImmutableSet.of(Action.ADMIN));
-    secureStoreService.delete(secureKeyId1);
-    Assert.assertEquals(0, secureStoreService.list(NamespaceId.DEFAULT).size());
+    secureStoreManager.deleteSecureData(NamespaceId.DEFAULT.getNamespace(), KEY1);
+    Assert.assertEquals(0, secureStore.listSecureData(NamespaceId.DEFAULT.getNamespace()).size());
     Predicate<Privilege> secureKeyIdFilter = new Predicate<Privilege>() {
       @Override
       public boolean apply(Privilege input) {
@@ -195,12 +194,6 @@ public class DefaultSecureStoreServiceTest {
     };
     Assert.assertTrue(Sets.filter(authorizer.listPrivileges(ALICE), secureKeyIdFilter).isEmpty());
     Assert.assertTrue(Sets.filter(authorizer.listPrivileges(BOB), secureKeyIdFilter).isEmpty());
-  }
-
-  private static void waitForService(String service) {
-    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(service));
-    Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
-                               "%s service is not up after 5 seconds", service);
   }
 
   private void grantAndAssertSuccess(EntityId entityId, Principal principal, Set<Action> actions) throws Exception {

@@ -16,6 +16,9 @@
 
 package co.cask.cdap.app.runtime.spark;
 
+import co.cask.cdap.api.ProgramLifecycle;
+import co.cask.cdap.api.ProgramState;
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.spark.SparkExecutionContext;
@@ -38,13 +41,12 @@ import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGene
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.lang.Fields;
 import co.cask.cdap.internal.lang.Reflections;
-import co.cask.tephra.TransactionContext;
-import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
@@ -56,6 +58,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ShutdownHookManager;
 import org.apache.spark.SparkConf;
 import org.apache.spark.deploy.SparkSubmit;
+import org.apache.tephra.TransactionContext;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
@@ -96,10 +100,10 @@ import javax.annotation.Nullable;
 /**
  * Performs the actual execution of Spark job.
  * <p/>
- * Service start -> Performs job setup, and beforeSubmit call.
+ * Service start -> Performs job setup, and initialize call.
  * Service run -> Submits the spark job through {@link SparkSubmit}
  * Service triggerStop -> kill job
- * Service stop -> Commit/invalidate transaction, onFinish, cleanup
+ * Service stop -> Commit/invalidate transaction, destroy, cleanup
  */
 final class SparkRuntimeService extends AbstractExecutionThreadService {
 
@@ -115,6 +119,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private final SparkSubmitter sparkSubmitter;
   private final AtomicReference<ListenableFuture<RunId>> completion;
   private final String hostname;
+  private final BasicSparkClientContext context;
+
   private Callable<ListenableFuture<RunId>> submitSpark;
   private Runnable cleanupTask;
 
@@ -128,6 +134,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     this.sparkSubmitter = sparkSubmitter;
     this.completion = new AtomicReference<>();
     this.hostname = hostname;
+    this.context = new BasicSparkClientContext(runtimeContext);
   }
 
   @Override
@@ -149,8 +156,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
                       new DataSetFieldSetter(runtimeContext.getDatasetCache()),
                       new MetricsFieldSetter(runtimeContext));
 
-    BasicSparkClientContext context = new BasicSparkClientContext(runtimeContext);
-    beforeSubmit(context);
+    beforeSubmit();
 
     // Creates a temporary directory locally for storing all generated files.
     File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
@@ -223,7 +229,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         localizeResources.add(new LocalizeResource(saveHConf(hConf, tempDir)));
       }
 
-      final Map<String, String> configs = createSubmitConfigs(context, tempDir, metricsConfPath, logbackJarName,
+      final Map<String, String> configs = createSubmitConfigs(tempDir, metricsConfPath, logbackJarName,
                                                               contextConfig.isLocal());
       submitSpark = new Callable<ListenableFuture<RunId>>() {
         @Override
@@ -274,15 +280,23 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   protected void shutDown() throws Exception {
     // Try to get from the submission future to see if the job completed successfully.
     ListenableFuture<RunId> jobCompletion = completion.get();
-    boolean succeeded = true;
+    ProgramState state = new ProgramState(ProgramStatus.COMPLETED, null);
     try {
       jobCompletion.get();
     } catch (Exception e) {
-      succeeded = false;
+      if (jobCompletion.isCancelled()) {
+        state = new ProgramState(ProgramStatus.KILLED, null);
+      } else {
+        state = new ProgramState(ProgramStatus.FAILED, Throwables.getRootCause(e).getMessage());
+      }
     }
 
     try {
-      onFinish(succeeded, new BasicSparkClientContext(runtimeContext));
+      if (spark instanceof ProgramLifecycle) {
+        destroy(state);
+      } else {
+        onFinish(state);
+      }
     } finally {
       cleanupTask.run();
       LOG.debug("Spark program completed: {}", runtimeContext);
@@ -324,9 +338,12 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   }
 
   /**
-   * Calls the {@link Spark#beforeSubmit(SparkClientContext)} method.
+   * Calls the {@link Spark#beforeSubmit(SparkClientContext)} for the pre 3.5 Spark programs, calls
+   * the {@link ProgramLifecycle#initialize} otherwise.
    */
-  private void beforeSubmit(final SparkClientContext context) throws TransactionFailureException, InterruptedException {
+  @SuppressWarnings("unchecked")
+  private void beforeSubmit() throws TransactionFailureException,
+    InterruptedException {
     DynamicDatasetCache datasetCache = runtimeContext.getDatasetCache();
     TransactionContext txContext = datasetCache.newTransactionContext();
     Transactions.execute(txContext, spark.getClass().getName() + ".beforeSubmit()", new Callable<Void>() {
@@ -334,7 +351,12 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       public Void call() throws Exception {
         Cancellable cancellable = SparkRuntimeUtils.setContextClassLoader(new SparkClassLoader(runtimeContext));
         try {
-          spark.beforeSubmit(context);
+          context.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
+          if (spark instanceof ProgramLifecycle) {
+            ((ProgramLifecycle) spark).initialize(context);
+          } else {
+            spark.beforeSubmit(context);
+          }
           return null;
         } finally {
           cancellable.cancel();
@@ -346,8 +368,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   /**
    * Calls the {@link Spark#onFinish(boolean, SparkClientContext)} method.
    */
-  private void onFinish(final boolean succeeded,
-                        final SparkClientContext context) throws TransactionFailureException, InterruptedException {
+  private void onFinish(final ProgramState state)
+    throws TransactionFailureException, InterruptedException {
     DynamicDatasetCache datasetCache = runtimeContext.getDatasetCache();
     TransactionContext txContext = datasetCache.newTransactionContext();
 
@@ -356,13 +378,40 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       public Void call() throws Exception {
         Cancellable cancellable = SparkRuntimeUtils.setContextClassLoader(new SparkClassLoader(runtimeContext));
         try {
-          spark.onFinish(succeeded, context);
+          context.setState(state);
+          spark.onFinish(state.getStatus() == ProgramStatus.COMPLETED, context);
           return null;
         } finally {
           cancellable.cancel();
         }
       }
     });
+  }
+
+  /**
+   * Calls the destroy method of {@link ProgramLifecycle}.
+   */
+  private void destroy(final ProgramState state) {
+    DynamicDatasetCache datasetCache = runtimeContext.getDatasetCache();
+    TransactionContext txContext = datasetCache.newTransactionContext();
+    try {
+      Transactions.execute(txContext, spark.getClass().getName() + ".destroy()", new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          Cancellable cancellable = SparkRuntimeUtils.setContextClassLoader(new SparkClassLoader(runtimeContext));
+          try {
+            context.setState(state);
+            ((ProgramLifecycle) spark).destroy();
+            return null;
+          } finally {
+            cancellable.cancel();
+          }
+        }
+      });
+    } catch (Throwable e) {
+      LOG.warn("Error executing the destroy method of the Spark program {}",
+               context.getApplicationSpecification().getName(), e);
+    }
   }
 
   /**
@@ -395,7 +444,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   /**
    * Creates the configurations for the spark submitter.
    */
-  private Map<String, String> createSubmitConfigs(BasicSparkClientContext context, File localDir,
+  private Map<String, String> createSubmitConfigs(File localDir,
                                                   String metricsConfPath, @Nullable String logbackJarName,
                                                   boolean localMode) {
     Map<String, String> configs = new HashMap<>();

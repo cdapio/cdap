@@ -119,7 +119,7 @@ installation and its security configuration.
     .. |scaling-instances| replace:: **Scaling Instances:**
     .. _scaling-instances: operations/scaling-instances.html
 
-    - |scaling-instances|_ Covers **querying and setting the number of instances of flowlets and services.** 
+    - |scaling-instances|_ Covers **querying and setting the number of instances of flowlets, services, and workers.** 
 
     .. |resource-guarantees| replace:: **Resource Guarantees:**
     .. _resource-guarantees: operations/resource-guarantees.html

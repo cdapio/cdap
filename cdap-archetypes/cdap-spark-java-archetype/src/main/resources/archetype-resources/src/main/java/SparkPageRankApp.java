@@ -186,8 +186,8 @@ public class SparkPageRankApp extends AbstractApplication {
   public static class RanksCounter extends AbstractMapReduce {
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
-      Job job = context.getHadoopJob();
+    public void initialize() throws Exception {
+      Job job = getContext().getHadoopJob();
       job.setMapperClass(Emitter.class);
       job.setReducerClass(Counter.class);
       job.setNumReduceTasks(1);

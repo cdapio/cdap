@@ -22,35 +22,21 @@ angular.module(PKG.name + '.services')
     var SUCCESS_ALERT_DURATION = 3; // duration amount in seconds
 
     function show(obj) {
-      if (!isAnAlertOpened) {
-        isAnAlertOpened = true;
-
-        obj.duration = obj.type === 'success' ? SUCCESS_ALERT_DURATION : false;
-
-        alertObj = $alert(obj);
-        if (obj.templateUrl) {
-          alertObj.$scope.templateScope = obj.templateScope;
-        }
-        alertObj.$scope
-        .$on('alert.hide', function() {
-          isAnAlertOpened = false;
-        });
-      } else {
-        if (obj.templateUrl) {
-          alertObj.$scope.templateScope = obj.templateScope;
-        }
-        alertObj.$scope.type = obj.type;
-        alertObj.$scope.content = obj.content;
-        alertObj.$scope.title = obj.title;
+      if (alertObj) {
+        alertObj.hide();
       }
+
+      obj.duration = obj.type === 'success' ? SUCCESS_ALERT_DURATION : false;
+      alertObj = $alert(obj);
+      if (obj.templateUrl) {
+        alertObj.$scope.templateScope = obj.templateScope;
+      }
+
        // Scroll to top so that user doesn't miss an alert
       $window.scrollTo(0, 0);
     }
     function destroy() {
-      if(isAnAlertOpened) {
-        alertObj.hide();
-        isAnAlertOpened = false;
-      }
+      alertObj.hide();
     }
     function getisAnAlertOpened() {
       return isAnAlertOpened;

@@ -27,18 +27,18 @@
       <div class="form-horizontal resource-container">
         <div>
           <div>
+            <span class="title">
+              Master Resource
+            </span>
             <i class="fa fa-info-circle"
                uib-tooltip="Resources don't take any effect in standalone environment."
                ng-if="!MyDataStreamsPipelineSettingsCtrl.isDistributed"></i>
-            <span class="title">
-              Executor Resource
-            </span>
           </div>
           <div class="resource-holder">
             <div
               action-creator="MyDataStreamsPipelineSettingsCtrl.actionCreator"
               store="MyDataStreamsPipelineSettingsCtrl.store"
-              resource-type="executorResource"
+              resource-type="driverResource"
               data-is-disabled="{{MyDataStreamsPipelineSettingsCtrl._isDisabled}}"
               my-pipeline-resource-factory
             ></div>
@@ -46,18 +46,18 @@
         </div>
         <div>
           <div>
+            <span class="title">
+              Worker Resource
+            </span>
             <i class="fa fa-info-circle"
                uib-tooltip="Resources don't take any effect in standalone environment."
                ng-if="!MyDataStreamsPipelineSettingsCtrl.isDistributed"></i>
-            <span class="title">
-              Driver Resource
-            </span>
           </div>
           <div class="resource-holder">
             <div
               action-creator="MyDataStreamsPipelineSettingsCtrl.actionCreator"
               store="MyDataStreamsPipelineSettingsCtrl.store"
-              resource-type="driverResource"
+              resource-type="executorResource"
               data-is-disabled="{{MyDataStreamsPipelineSettingsCtrl._isDisabled}}"
               my-pipeline-resource-factory
             ></div>

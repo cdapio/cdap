@@ -337,7 +337,7 @@ Data Exploration: Attaching a Schema
             | remote_host               | string                  | from deserializer     |
             | remote_login              | string                  | from deserializer     |
             | auth_user                 | string                  | from deserializer     |
-            | date                      | string                  | from deserializer     |
+            | request_time              | string                  | from deserializer     |
             | request                   | string                  | from deserializer     |
             | status                    | int                     | from deserializer     |
             | content_length            | int                     | from deserializer     |
@@ -373,10 +373,10 @@ Data Exploration: Attaching a Schema
             +========================================================================================================================+
             | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l |
             | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents |
-            | tream.ts | tream.he | tream.re | tream.re | tream.au | tream.da | tream.re | tream.st | tream.co | tream.re | tream.us |
-            | : BIGINT | aders: m | mote_hos | mote_log | th_user: | te: STRI | quest: S | atus: IN | ntent_le | ferrer:  | er_agent |
-            |          | ap<strin | t: STRIN | in: STRI |  STRING  | NG       | TRING    | T        | ngth: IN | STRING   | : STRING |
-            |          | g,string | G        | NG       |          |          |          |          | T        |          |          |
+            | tream.ts | tream.he | tream.re | tream.re | tream.au | tream.re | tream.re | tream.st | tream.co | tream.re | tream.us |
+            | : BIGINT | aders: m | mote_hos | mote_log | th_user: | quest_ti | quest: S | atus: IN | ntent_le | ferrer:  | er_agent |
+            |          | ap<strin | t: STRIN | in: STRI |  STRING  | me: STRI | TRING    | T        | ngth: IN | STRING   | : STRING |
+            |          | g,string | G        | NG       |          | NG       |          |          | T        |          |          |
             |          | >        |          |          |          |          |          |          |          |          |          |
             +========================================================================================================================+
             | 14437238 | {"conten | 69.181.1 |          |          | 08/Feb/2 | GET /aja | 200      | 508      | http://b | Mozilla/ |
@@ -447,7 +447,7 @@ Data Exploration: Attaching a Schema
             column: stream_logeventstream.auth_user, type: STRING
             Unique elements: 0
  
-            column: stream_logeventstream.date, type: STRING
+            column: stream_logeventstream.request_time, type: STRING
             Unique elements: 750
  
             column: stream_logeventstream.request, type: STRING
@@ -813,17 +813,22 @@ Advanced Data Exploration
             Fetched 10 rows
 
 
+.. _introduction-to-cdap-transforming-your-data:
+
 Transforming Your Data
 ======================
-- CDAP :ref:`Included Applications <cdap-apps-index>` are applications that are
+- CDAP Extensions such as :ref:`Cask Hydrator <cask-hydrator>` create applications that are
   reusable through the configuration of artifacts and can be used to create an application
   without writing any code at all
-- Built-in ETL (Extract, Transform, Load) and Data Quality applications
-- ETL includes over 30 Plugins to build applications merely through configuration of parameters
+- Built-in ETL (Extract, Transform, Load) and data pipeline applications
+- Hydrator includes over 30 plugins to build applications merely through configuration of parameters
 - Build your own custom plugins, using simple APIs
-- ETL Transformations provide pre-defined transformations to be applied on streams or other datasets
-- In this example, we will use the ETL batch system artifact to convert data in a stream to
+- Hydrator Transformations provide pre-defined transformations to be applied on streams or other datasets
+- In this example, we will use the data pipeline system artifact to create a batch application to convert data in a stream to
   Avro-formatted files in a ``TimePartitionedFileSet`` that can be queried using either Hive or Impala
+
+..        - .. code:: json
+..            :class: copyable copyable-text
 
 .. container:: table-block
 
@@ -962,14 +967,12 @@ Transforming Your Data
  
             |cdap >| list apps
  
-            +============================================================================================+
-            | id                      | descripti | artifactName       | artifactVersion | artifactScope |
-            |                         | on        |                    |                 |               |
-            +============================================================================================+
-            | logEventStreamConverter | Data Pipe | cdap-data-pipeline | |version|           | SYSTEM        |
-            |                         | line Appl |                    |                 |               |
-            |                         | ication   |                    |                 |               |
-            +============================================================================================+
+            +====================================================================================================+
+            | id                      | description       | artifactName       | artifactVersion | artifactScope |
+            +====================================================================================================+
+            | logEventStreamConverter | Data Pipeline App | cdap-data-pipeline | |version|           | SYSTEM        |
+            |                         | lication          |                    |                 |               |
+            +====================================================================================================+
  
          .. tabbed-parsed-literal::
             :tabs: "CDAP CLI"
@@ -988,30 +991,31 @@ Transforming Your Data
 
             |cdap >| describe stream logEventStream
  
-            +==================================================================================+
-            | ttl              | format | schema                   | notification.threshold.mb |
-            +==================================================================================+
-            | 9223372036854775 | clf    | {"type":"record","name": | 1024                      |
-            |                  |        | "streamEvent","fields":[ |                           |
-            |                  |        | {"name":"remote_host","t |                           |
-            |                  |        | ype":["string","null"]}, |                           |
-            |                  |        | {"name":"remote_login"," |                           |
-            |                  |        | type":["string","null"]} |                           |
-            |                  |        | ,{"name":"auth_user","ty |                           |
-            |                  |        | pe":["string","null"]},{ |                           |
-            |                  |        | "name":"date","type":["s |                           |
-            |                  |        | tring","null"]},{"name": |                           |
-            |                  |        | "request","type":["strin |                           |
-            |                  |        | g","null"]},{"name":"sta |                           |
-            |                  |        | tus","type":["int","null |                           |
-            |                  |        | "]},{"name":"content_len |                           |
-            |                  |        | gth","type":["int","null |                           |
-            |                  |        | "]},{"name":"referrer"," |                           |
-            |                  |        | type":["string","null"]} |                           |
-            |                  |        | ,{"name":"user_agent","t |                           |
-            |                  |        | ype":["string","null"]}] |                           |
-            |                  |        | }                        |                           |
-            +==================================================================================+
+            +===============================================================================================+
+            | ttl              | format | schema                  | notification.threshold.mb | description |
+            +===============================================================================================+
+            | 9223372036854775 | clf    | {"type":"record","name" | 1024                      |             |
+            |                  |        | :"streamEvent","fields" |                           |             |
+            |                  |        | :[{"name":"remote_host" |                           |             |
+            |                  |        | ,"type":["string","null |                           |             |
+            |                  |        | "]},{"name":"remote_log |                           |             |
+            |                  |        | in","type":["string","n |                           |             |
+            |                  |        | ull"]},{"name":"auth_us |                           |             |
+            |                  |        | er","type":["string","n |                           |             |
+            |                  |        | ull"]},{"name":"request |                           |             |
+            |                  |        | _time","type":["string" |                           |             |
+            |                  |        | ,"null"]},{"name":"requ |                           |             |
+            |                  |        | est","type":["string"," |                           |             |
+            |                  |        | null"]},{"name":"status |                           |             |
+            |                  |        | ","type":["int","null"] |                           |             |
+            |                  |        | },{"name":"content_leng |                           |             |
+            |                  |        | th","type":["int","null |                           |             |
+            |                  |        | "]},{"name":"referrer", |                           |             |
+            |                  |        | "type":["string","null" |                           |             |
+            |                  |        | ]},{"name":"user_agent" |                           |             |
+            |                  |        | ,"type":["string","null |                           |             |
+            |                  |        | "]}]}                   |                           |             |
+            +===============================================================================================+
  
          .. tabbed-parsed-literal::
             :tabs: "CDAP CLI"
@@ -1119,7 +1123,7 @@ Transforming Your Data
             | remote_host             | string               | from deserializer    |
             | remote_login            | string               | from deserializer    |
             | auth_user               | string               | from deserializer    |
-            | date                    | string               | from deserializer    |
+            | request_time            | string               | from deserializer    |
             | request                 | string               | from deserializer    |
             | status                  | int                  | from deserializer    |
             | content_length          | int                  | from deserializer    |

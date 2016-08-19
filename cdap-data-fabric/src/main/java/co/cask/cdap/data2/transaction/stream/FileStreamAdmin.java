@@ -25,6 +25,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.security.ImpersonationUtils;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.stream.CoordinatorStreamProperties;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
@@ -40,8 +42,6 @@ import co.cask.cdap.data2.metadata.system.StreamSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.SystemMetadataWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
-import co.cask.cdap.data2.security.ImpersonationUtils;
-import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.explore.utils.ExploreTableNaming;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -65,7 +65,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -82,6 +81,7 @@ import org.slf4j.LoggerFactory;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -406,7 +406,7 @@ public class FileStreamAdmin implements StreamAdmin {
     privilegesManager.revoke(streamId.toEntityId());
     try {
       // Grant All access to the stream created to the User
-      privilegesManager.grant(streamId.toEntityId(), authenticationContext.getPrincipal(), ImmutableSet.of(Action.ALL));
+      privilegesManager.grant(streamId.toEntityId(), authenticationContext.getPrincipal(), EnumSet.allOf(Action.class));
       final UserGroupInformation ugi = impersonator.getUGI(new NamespaceId(streamId.getNamespaceId()));
       final Location streamLocation = ImpersonationUtils.doAs(ugi, new Callable<Location>() {
         @Override
@@ -806,7 +806,7 @@ public class FileStreamAdmin implements StreamAdmin {
   private <T extends EntityId> void ensureAccess(T entityId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    if (!Principal.SYSTEM.equals(principal) && !filter.apply(entityId)) {
+    if (!filter.apply(entityId)) {
       throw new UnauthorizedException(principal, entityId);
     }
   }

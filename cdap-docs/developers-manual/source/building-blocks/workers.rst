@@ -125,7 +125,7 @@ When uploading events in batch, there are two options: either uploading a ``File
 through a ``StreamBatchWriter``. In batch mode, the content type of the data must be specified. Refer
 to the :ref:`Stream RESTful API <http-restful-api-stream>` for information on the content type specification.
 
-With a ``StreamBatchWriter``, the ``close`` method` needs to be called after all the writes have been performed::
+With a ``StreamBatchWriter``, the ``close`` method needs to be called after all the writes have been performed::
 
   @Override
   public void run() {

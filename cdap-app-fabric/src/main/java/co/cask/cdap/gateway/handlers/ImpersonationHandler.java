@@ -17,10 +17,9 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.data2.security.ImpersonationInfo;
-import co.cask.cdap.data2.security.ImpersonationUtils;
-import co.cask.cdap.data2.security.UGIProvider;
-import co.cask.cdap.security.DefaultUGIProvider;
+import co.cask.cdap.common.security.ImpersonationInfo;
+import co.cask.cdap.common.security.ImpersonationUtils;
+import co.cask.cdap.common.security.UGIProvider;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
@@ -82,7 +81,7 @@ public class ImpersonationHandler extends AbstractHttpHandler {
     Credentials credentials = ImpersonationUtils.doAs(ugi, new Callable<Credentials>() {
       @Override
       public Credentials call() throws Exception {
-        SecureStore update = tokenSecureStoreUpdater.update(null, null);
+        SecureStore update = tokenSecureStoreUpdater.update();
         return update.getStore();
       }
     });

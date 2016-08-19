@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.Test;
@@ -58,14 +59,15 @@ public class AuthorizerClassLoaderTest {
     // classes from cdap-security-spi should be available
     parent.loadClass(Authorizer.class.getName());
     parent.loadClass(UnauthorizedException.class.getName());
+    // classes from hadoop should be available
+    parent.loadClass(Configuration.class.getName());
+    parent.loadClass(UserGroupInformation.class.getName());
   }
 
   @Test
   public void testAuthorizerClassLoaderParentUnavailableClasses() {
     // classes from guava should not be available
     assertClassUnavailable(ImmutableList.class);
-    // classes from hadoop should not be available
-    assertClassUnavailable(Configuration.class);
     // classes from hbase should not be available
     assertClassUnavailable(HTable.class);
     // classes from spark should not be available

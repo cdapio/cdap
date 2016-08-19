@@ -73,9 +73,10 @@ public class StandaloneTester extends ExternalResource {
     cConf.setInt(Constants.Router.ROUTER_PORT, Networks.getRandomPort());
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
-    cConf.setBoolean(Constants.Explore.START_ON_DEMAND, true);
+    cConf.setBoolean(Constants.Explore.START_ON_DEMAND, false);
     cConf.setBoolean(StandaloneMain.DISABLE_UI, true);
     cConf.setBoolean(Constants.Audit.ENABLED, false);
+    cConf.setBoolean(Constants.Preview.ENABLED, false);
 
     for (int i = 0; i < configs.length; i += 2) {
       cConf.set(configs[i].toString(), configs[i + 1].toString());

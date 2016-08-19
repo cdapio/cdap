@@ -59,11 +59,6 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.tephra.Transaction;
-import co.cask.tephra.TransactionConflictException;
-import co.cask.tephra.TransactionContext;
-import co.cask.tephra.TransactionFailureException;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -86,6 +81,11 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionConflictException;
+import org.apache.tephra.TransactionContext;
+import org.apache.tephra.TransactionFailureException;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -244,9 +244,13 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       TaskType.MAP.setResources(mapredConf, context.getMapperResources());
       TaskType.REDUCE.setResources(mapredConf, context.getReducerResources());
 
-      // replace user's Mapper & Reducer's with our wrappers in job config
+      // replace user's Mapper, Reducer, Partitioner, and Comparator classes with our wrappers in job config
       MapperWrapper.wrap(job);
       ReducerWrapper.wrap(job);
+      PartitionerWrapper.wrap(job);
+      RawComparatorWrapper.CombinerGroupComparatorWrapper.wrap(job);
+      RawComparatorWrapper.GroupComparatorWrapper.wrap(job);
+      RawComparatorWrapper.KeyComparatorWrapper.wrap(job);
 
       // packaging job jar which includes cdap classes with dependencies
       File jobJar = buildJobJar(job, tempDir);

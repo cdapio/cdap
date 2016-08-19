@@ -21,6 +21,13 @@ import co.cask.cdap.data.file.ReadFilter;
 import co.cask.cdap.data.stream.PositionStreamEvent;
 import co.cask.cdap.data.stream.StreamDataFileReader;
 import co.cask.cdap.data.stream.TimeRangeReadFilter;
+import co.cask.cdap.hive.context.ContextManager;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.io.ObjectWritable;
@@ -45,12 +52,22 @@ final class StreamRecordReader implements RecordReader<Void, ObjectWritable> {
   private final StreamDataFileReader reader;
   private final StreamInputSplit inputSplit;
   private final ReadFilter readFilter;
+  private final Principal principal;
+  private final StreamId streamId;
+  private final AuthorizationEnforcer authorizationEnforcer;
 
   StreamRecordReader(InputSplit split, JobConf conf) throws IOException {
+    ContextManager.Context context = ContextManager.getContext(conf);
     this.inputSplit = (StreamInputSplit) split;
     this.events = Lists.newArrayListWithCapacity(1);
     this.reader = createReader(FileSystem.get(conf), inputSplit);
     this.readFilter = new TimeRangeReadFilter(inputSplit.getStartTime(), inputSplit.getEndTime());
+    Preconditions.checkArgument(context != null, "ContextManager should not be null in a Hive job.");
+    Preconditions.checkArgument(context.getAuthenticationContext() != null,
+                                "AuthenticationContext in Hive's StreamRecordReader should not be null.");
+    this.principal = context.getAuthenticationContext().getPrincipal();
+    this.authorizationEnforcer = context.getAuthorizationEnforcer();
+    this.streamId = HiveStreamInputFormat.getStreamId(conf).toEntityId();
   }
 
   @Override
@@ -65,6 +82,14 @@ final class StreamRecordReader implements RecordReader<Void, ObjectWritable> {
 
   @Override
   public boolean next(Void key, ObjectWritable value) throws IOException {
+    // Make sure that the user has read access to the stream.
+    try {
+      authorizationEnforcer.enforce(streamId, principal, Action.READ);
+    } catch (Exception e) {
+      Throwables.propagateIfPossible(e, IOException.class);
+      throw new IOException(e);
+    }
+
     events.clear();
     try {
       if (reader.read(events, 1, 0, TimeUnit.SECONDS, readFilter) <= 0) {

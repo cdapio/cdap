@@ -20,9 +20,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.services.AppFabricServer;
-import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -37,10 +36,8 @@ import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import co.cask.tephra.TransactionManager;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
-import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -78,8 +75,6 @@ public class RemotePrivilegesTest {
   private static PrivilegesFetcher privilegesFetcher;
   private static PrivilegesManager privilegesManager;
   private static DiscoveryServiceClient discoveryService;
-  private static TransactionManager txManager;
-  private static DatasetService datasetService;
   private static AppFabricServer appFabricServer;
 
   @BeforeClass
@@ -95,13 +90,8 @@ public class RemotePrivilegesTest {
     LocationFactory locationFactory = new LocalLocationFactory(TEMPORARY_FOLDER.newFolder());
     Location externalAuthJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class, manifest);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
-    Injector injector = Guice.createInjector(new AppFabricTestModule(cConf));
+    Injector injector = AppFabricTestHelper.getInjector(cConf);
     discoveryService = injector.getInstance(DiscoveryServiceClient.class);
-    txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
-    datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
-    waitForService(Constants.Service.DATASET_MANAGER);
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
     waitForService(Constants.Service.APP_FABRIC_HTTP);
@@ -142,21 +132,21 @@ public class RemotePrivilegesTest {
     // In this test, grants and revokes happen via PrivilegesManager, privilege listing and enforcement happens via
     // Authorizer. Also, since grants and revokes go directly to master and don't need a proxy, the
     // RemoteSystemOperationsService does not need to be started in this release.
-    privilegesManager.grant(NS, ALICE, Collections.singleton(Action.ALL));
+    privilegesManager.grant(NS, ALICE, EnumSet.allOf(Action.class));
     privilegesManager.grant(APP, ALICE, Collections.singleton(Action.ADMIN));
     privilegesManager.grant(PROGRAM, ALICE, Collections.singleton(Action.EXECUTE));
-    authorizer.enforce(NS, ALICE, Action.ALL);
+    authorizer.enforce(NS, ALICE, EnumSet.allOf(Action.class));
     authorizer.enforce(APP, ALICE, Action.ADMIN);
     authorizer.enforce(PROGRAM, ALICE, Action.EXECUTE);
     try {
-      authorizer.enforce(APP, ALICE, Action.ALL);
+      authorizer.enforce(APP, ALICE, EnumSet.allOf(Action.class));
       Assert.fail("Expected alice to not have all privileges on the app");
     } catch (UnauthorizedException e) {
       // expected
     }
     privilegesManager.revoke(PROGRAM);
     privilegesManager.revoke(APP, ALICE, EnumSet.allOf(Action.class));
-    privilegesManager.revoke(NS, ALICE, Collections.singleton(Action.ALL));
+    privilegesManager.revoke(NS, ALICE, EnumSet.allOf(Action.class));
     Set<Privilege> privileges = authorizer.listPrivileges(ALICE);
     Assert.assertTrue(String.format("Expected all of alice's privileges to be revoked, but found %s", privileges),
                       privileges.isEmpty());
@@ -165,7 +155,5 @@ public class RemotePrivilegesTest {
   @AfterClass
   public static void tearDown() {
     appFabricServer.stopAndWait();
-    datasetService.stopAndWait();
-    txManager.stopAndWait();
   }
 }

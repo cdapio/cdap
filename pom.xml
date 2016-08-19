@@ -133,7 +133,7 @@
     <snappy.version>1.1.1.7</snappy.version>
     <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
-    <tephra.version>0.7.1</tephra.version>
+    <tephra.version>0.8.0-incubating</tephra.version>
     <thrift.version>0.9.3</thrift.version>
     <twill.version>0.7.0-incubating</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
@@ -194,12 +194,12 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>co.cask.tephra</groupId>
+        <groupId>org.apache.tephra</groupId>
         <artifactId>tephra-api</artifactId>
         <version>${tephra.version}</version>
       </dependency>
       <dependency>
-        <groupId>co.cask.tephra</groupId>
+        <groupId>org.apache.tephra</groupId>
         <artifactId>tephra-core</artifactId>
         <version>${tephra.version}</version>
         <exclusions>
@@ -210,7 +210,7 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>co.cask.tephra</groupId>
+        <groupId>org.apache.tephra</groupId>
         <artifactId>tephra-hbase-compat-0.96</artifactId>
         <version>${tephra.version}</version>
         <exclusions>
@@ -221,7 +221,7 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>co.cask.tephra</groupId>
+        <groupId>org.apache.tephra</groupId>
         <artifactId>tephra-hbase-compat-0.98</artifactId>
         <version>${tephra.version}</version>
         <exclusions>
@@ -232,7 +232,7 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>co.cask.tephra</groupId>
+        <groupId>org.apache.tephra</groupId>
         <artifactId>tephra-hbase-compat-1.0-cdh</artifactId>
         <version>${tephra.version}</version>
         <exclusions>
@@ -243,7 +243,7 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>co.cask.tephra</groupId>
+        <groupId>org.apache.tephra</groupId>
         <artifactId>tephra-hbase-compat-1.0</artifactId>
         <version>${tephra.version}</version>
         <exclusions>
@@ -254,7 +254,7 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>co.cask.tephra</groupId>
+        <groupId>org.apache.tephra</groupId>
         <artifactId>tephra-hbase-compat-1.1</artifactId>
         <version>${tephra.version}</version>
         <exclusions>
@@ -1087,6 +1087,10 @@
             <artifactId>hive-exec</artifactId>
           </exclusion>
           <exclusion>
+            <groupId>com.twitter</groupId>
+            <artifactId>parquet-hadoop-bundle</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
           </exclusion>
@@ -1148,6 +1152,10 @@
         <artifactId>hive-service</artifactId>
         <version>${hive.version}</version>
         <exclusions>
+          <exclusion>
+            <groupId>com.twitter</groupId>
+            <artifactId>parquet-hadoop-bundle</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-exec</artifactId>
@@ -1225,7 +1233,7 @@
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>co.cask.tephra</groupId>
+        <groupId>org.apache.tephra</groupId>
         <artifactId>tephra-core</artifactId>
         <version>${tephra.version}</version>
         <type>test-jar</type>
@@ -1771,7 +1779,7 @@
                 </bottom>
                 <doctitle>${project.name} ${project.version}</doctitle>
                 <links>
-                  <link>http://jsr-305.googlecode.com/svn/trunk/javadoc/</link>
+                  <link>https://caskdata.github.io/docs-site/hosted-javadocs/jsr305-${findbugs.jsr305.version}-javadoc/</link>
                   <link>http://avro.apache.org/docs/${avro.version}/api/java/</link>
                   <link>http://docs.oracle.com/javaee/${jee.version}/api/</link>
                   <link>http://hadoop.apache.org/docs/r${hadoop.version}/api/</link>
@@ -2535,7 +2543,7 @@
           </bottom>
           <doctitle>${project.name} ${project.version}</doctitle>
           <links>
-            <link>http://jsr-305.googlecode.com/svn/trunk/javadoc/</link>
+            <link>https://caskdata.github.io/docs-site/hosted-javadocs/jsr305-${findbugs.jsr305.version}-javadoc/</link>
             <link>http://avro.apache.org/docs/${avro.version}/api/java/</link>
             <link>http://docs.oracle.com/javaee/${jee.version}/api/</link>
             <link>http://hadoop.apache.org/docs/r${hadoop.version}/api/</link>

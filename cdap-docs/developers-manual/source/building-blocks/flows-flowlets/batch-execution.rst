@@ -28,3 +28,21 @@ as the method argument::
 
 In this case, the **process** will be called once per transaction and the **Iterator**
 will contain up to 100 data objects read from the input.
+
+The batch size can also be controlled through flowlet properties or runtime arguments. You can specify the *key*
+to use for looking up the batch size value with a ``@Batch`` annotation::
+
+  @Batch(key = "batch.size", value = 100)
+  @ProcessInput
+  public void process(String word) {
+    ...
+  }
+
+By specifying the **key** element in the ``@Batch`` annotation, the runtime system will resolve the
+batch size in this order (highest precedence first):
+
+1. Runtime argument with name = **flowlet.<flowletName>.<key>**
+#. Runtime argument with name = **flowlet.\*.<key>**
+#. Runtime argument with name = **<key>**
+#. Flowlet properties with name = **<key>**
+#. The **value** element specified in the ``@Batch`` annotation

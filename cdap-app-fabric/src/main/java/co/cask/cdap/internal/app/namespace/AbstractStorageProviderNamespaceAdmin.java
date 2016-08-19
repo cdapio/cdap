@@ -61,8 +61,8 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
    *
    * @param namespaceMeta {@link NamespaceMeta} for the namespace to create
    * @throws IOException if there are errors while creating the namespace in the File System
-   * @throws ExploreException if there are errors while deleting the namespace in Hive
-   * @throws SQLException if there are errors while deleting the namespace in Hive
+   * @throws ExploreException if there are errors while creating the namespace in Hive
+   * @throws SQLException if there are errors while creating the namespace in Hive
    */
   @Override
   public void create(NamespaceMeta namespaceMeta) throws IOException, ExploreException, SQLException {

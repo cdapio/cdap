@@ -20,6 +20,8 @@ import co.cask.cdap.api.annotation.Batch;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.Tick;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.common.RuntimeArguments;
+import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -82,10 +84,7 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.FlowletMethod;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.common.io.ByteBufferInputStream;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -100,6 +99,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
@@ -141,8 +141,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final RuntimeUsageRegistry runtimeUsageRegistry;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
-  private final AuthenticationContext authenticationContext;
-  private final AuthorizationEnforcer authorizationEnforcer;
 
   @Inject
   public FlowletProgramRunner(SchemaGenerator schemaGenerator,
@@ -156,9 +154,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                               DatasetFramework dsFramework,
                               RuntimeUsageRegistry runtimeUsageRegistry,
                               SecureStore secureStore,
-                              SecureStoreManager secureStoreManager,
-                              AuthenticationContext authenticationContext,
-                              AuthorizationEnforcer authorizationEnforcer) {
+                              SecureStoreManager secureStoreManager) {
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
@@ -171,8 +167,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.runtimeUsageRegistry = runtimeUsageRegistry;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
-    this.authenticationContext = authenticationContext;
-    this.authorizationEnforcer = authorizationEnforcer;
   }
 
   @SuppressWarnings("unused")
@@ -267,8 +261,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                    processMethodFactory(flowlet),
                                    processSpecificationFactory(flowletContext, dataFabricFacade, queueReaderFactory,
                                                                flowletName, queueSpecs, queueConsumerSupplierBuilder,
-                                                               createSchemaCache(program), authenticationContext,
-                                                               authorizationEnforcer),
+                                                               createSchemaCache(program)),
                                    Lists.<ProcessSpecification<?>>newLinkedList());
       List<ConsumerSupplier<?>> consumerSuppliers = queueConsumerSupplierBuilder.build();
 
@@ -314,7 +307,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private <T extends Collection<ProcessSpecification<?>>> T createProcessSpecification(
     BasicFlowletContext flowletContext, TypeToken<? extends Flowlet> flowletType,
     ProcessMethodFactory processMethodFactory, ProcessSpecificationFactory processSpecFactory, T result)
-    throws NoSuchMethodException {
+    throws Exception {
 
     Set<FlowletMethod> seenMethods = Sets.newHashSet();
 
@@ -367,7 +360,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
           // If batch mode then generate schema for Iterator's parameter type
           dataType = flowletType.resolveType(method.getGenericParameterTypes()[0]);
           consumerConfig = getConsumerConfig(flowletContext, method);
-          Integer processBatchSize = getBatchSize(method);
+          Integer processBatchSize = getBatchSize(method, flowletContext);
 
           if (processBatchSize != null) {
             if (dataType.getRawType().equals(Iterator.class)) {
@@ -415,11 +408,38 @@ public final class FlowletProgramRunner implements ProgramRunner {
   /**
    * Returns the user specify batch size or {@code null} if not specified.
    */
-  private Integer getBatchSize(Method method) {
+  private Integer getBatchSize(Method method, BasicFlowletContext flowletContext) {
     // Determine queue batch size, if any
     Batch batch = method.getAnnotation(Batch.class);
     if (batch != null) {
       int batchSize = batch.value();
+      String key = batch.key();
+      if (!key.isEmpty()) {
+        // Try to lookup the value from runtime arguments
+        Map<String, String> args = RuntimeArguments.extractScope(Scope.FLOWLET, flowletContext.getName(),
+                                                                 flowletContext.getRuntimeArguments());
+        String value = args.get(key);
+        String sourceName = "runtime arguments";
+        if (value == null) {
+          // Try to lookup the value from the flowlet properties
+          value = flowletContext.getSpecification().getProperty(key);
+          sourceName = "flowlet properties";
+        }
+
+        if (value != null) {
+          try {
+            batchSize = Integer.parseInt(value);
+            LOG.debug("Using batch size {} from {} with key={} for flowlet={}, method={}",
+                      batchSize, sourceName, key, flowletContext, method);
+          } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Failed to parse batch size from " + sourceName + " with key=" + key);
+          }
+        } else {
+          LOG.debug("No batch size value provided from runtime arguments or flowlet properties. " +
+                      "Key={}, Flowlet={}, Method={}", key, flowletContext, method);
+        }
+      }
+
       Preconditions.checkArgument(batchSize > 0, "Batch size should be > 0: %s", method.getName());
       return batchSize;
     }
@@ -534,14 +554,13 @@ public final class FlowletProgramRunner implements ProgramRunner {
     final QueueReaderFactory queueReaderFactory, final String flowletName,
     final Table<Node, String, Set<QueueSpecification>> queueSpecs,
     final ImmutableList.Builder<ConsumerSupplier<?>> queueConsumerSupplierBuilder,
-    final SchemaCache schemaCache, final AuthenticationContext authenticationContext,
-    final AuthorizationEnforcer authorizationEnforcer) {
+    final SchemaCache schemaCache) {
 
     return new ProcessSpecificationFactory() {
       @Override
       public <T> ProcessSpecification create(Set<String> inputNames, Schema schema, TypeToken<T> dataType,
                                              ProcessMethod<T> method, ConsumerConfig consumerConfig, int batchSize,
-                                             Tick tickAnnotation) {
+                                             Tick tickAnnotation) throws Exception {
         List<QueueReader<T>> queueReaders = Lists.newLinkedList();
 
         for (Map.Entry<Node, Set<QueueSpecification>> entry : queueSpecs.column(flowletName).entrySet()) {
@@ -569,8 +588,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
                   }
                 });
 
-                queueReaders.add(queueReaderFactory.createStreamReader(consumerSupplier, batchSize, decoder,
-                                                                       authenticationContext, authorizationEnforcer));
+                queueReaders.add(queueReaderFactory.createStreamReader(queueName.toStreamId().toEntityId(),
+                                                                       consumerSupplier, batchSize, decoder));
 
               } else {
                 int numGroups = getNumGroups(Iterables.concat(queueSpecs.row(entry.getKey()).values()), queueName);
@@ -710,7 +729,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
      */
     <T> ProcessSpecification create(Set<String> inputNames, Schema schema, TypeToken<T> dataType,
                                     ProcessMethod<T> method, ConsumerConfig consumerConfig, int batchSize,
-                                    Tick tickAnnotation);
+                                    Tick tickAnnotation) throws Exception;
   }
 
   /**

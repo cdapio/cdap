@@ -27,7 +27,9 @@ import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.utils.ExploreTableNaming;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
-import co.cask.tephra.TransactionSystemClient;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -43,6 +45,7 @@ import org.apache.hive.service.cli.SessionHandle;
 import org.apache.hive.service.cli.thrift.TColumnValue;
 import org.apache.hive.service.cli.thrift.TRow;
 import org.apache.hive.service.cli.thrift.TRowSet;
+import org.apache.tephra.TransactionSystemClient;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -64,9 +67,13 @@ public class Hive12CDH5ExploreService extends BaseHiveExploreService {
                                      @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir,
                                      StreamAdmin streamAdmin, NamespaceQueryAdmin namespaceQueryAdmin,
                                      SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
-                                     ExploreTableNaming tableNaming) {
+                                     ExploreTableNaming tableNaming,
+                                     AuthorizationEnforcementService authorizationEnforcementService,
+                                     AuthorizationEnforcer authorizationEnforcer,
+                                     AuthenticationContext authenticationContext) {
     super(txClient, datasetFramework, cConf, hConf, previewsDir, streamAdmin, namespaceQueryAdmin,
-          datasetInstantiatorFactory, tableNaming);
+          datasetInstantiatorFactory, tableNaming, authorizationEnforcementService, authorizationEnforcer,
+          authenticationContext);
   }
 
   @Override

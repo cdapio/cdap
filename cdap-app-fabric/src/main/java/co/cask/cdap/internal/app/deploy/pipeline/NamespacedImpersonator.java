@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.deploy.pipeline;
 
-import co.cask.cdap.data2.security.Impersonator;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.proto.id.NamespaceId;
 
 import java.util.concurrent.Callable;

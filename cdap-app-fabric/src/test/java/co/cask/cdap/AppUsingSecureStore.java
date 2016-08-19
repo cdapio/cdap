@@ -34,7 +34,6 @@ import org.apache.spark.api.java.function.PairFunction;
 import org.junit.Assert;
 import scala.Tuple2;
 
-import java.io.IOException;
 import java.util.HashMap;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -102,7 +101,7 @@ public class AppUsingSecureStore extends AbstractApplication {
     @Path("/list")
     @GET
     public void list(HttpServiceRequest request, HttpServiceResponder responder) throws Exception {
-      String name = getContext().listSecureData(namespace).get(0).getName();
+      String name = (String) getContext().listSecureData(namespace).keySet().toArray()[0];
       responder.sendString(name);
     }
 

@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Beta;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Provides read access to the secure store.
@@ -35,7 +36,7 @@ public interface SecureStore {
    * @throws IOException If there was a problem reading from the keystore.
    * @throws Exception If the specified namespace does not exist.
    */
-  List<SecureStoreMetadata> listSecureData(String namespace) throws Exception;
+  Map<String, String> listSecureData(String namespace) throws Exception;
 
   /**
    * Returns the data stored in the secure store.

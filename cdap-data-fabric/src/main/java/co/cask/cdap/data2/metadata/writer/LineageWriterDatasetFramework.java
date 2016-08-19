@@ -16,6 +16,9 @@
 
 package co.cask.cdap.data2.metadata.writer;
 
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.ReadWrite;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -41,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
@@ -161,7 +165,8 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
       }
 
       return DefaultDatasetRuntimeContext.execute(enforcer, accessRecorder, principal,
-                                                  datasetInstanceId.toEntityId(), new Callable<T>() {
+                                                  datasetInstanceId.toEntityId(),
+                                                  getConstructorDefaultAnnotation(accessType), new Callable<T>() {
           @Override
           public T call() throws Exception {
             return LineageWriterDatasetFramework.super.getDataset(datasetInstanceId, arguments, classLoader,
@@ -212,6 +217,25 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
         LOG.debug("Cause for audit writing failure for {} {} {}",
                   datasetInstanceId, accessType, programRunId, t);
       }
+    }
+  }
+
+  /**
+   * Returns the default authorization annotation for dataset constructor based on the access type.
+   */
+  @Nullable
+  private Class<? extends Annotation> getConstructorDefaultAnnotation(AccessType accessType) {
+    switch (accessType) {
+      case READ:
+        return ReadOnly.class;
+      case WRITE:
+        return WriteOnly.class;
+      case READ_WRITE:
+        return ReadWrite.class;
+      case UNKNOWN:
+        return null;
+      default:
+        throw new IllegalArgumentException("Unsupported access type " + accessType);
     }
   }
 

@@ -27,6 +27,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
+import co.cask.cdap.common.guice.FileContextProvider;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
@@ -64,9 +65,11 @@ import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModu
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
+import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
+import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
@@ -87,7 +90,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileAlreadyExistsException;
 import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.fs.ParentNotDirectoryException;
-import org.apache.hadoop.fs.UnsupportedFileSystemException;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -238,17 +240,15 @@ public class MasterServiceMain extends DaemonMain {
   /**
    * CDAP-6644 for secure impersonation to work,
    * we want other users to be able to write to the "path" directory,
-   * currently only cdap.user has read-write permissions while other users can only read the "/cdap/{path}" dir,
+   * currently only cdap.user has read-write permissions
+   * while other users can only read the "{hdfs.namespace}/{path}" dir,
    * we want to let others to be able to write to "path" directory, till we have a better solution.
    */
   private void createDirectory(String path) {
-    try {
-      String namespacedPath = String.format("/%s/%s", cConf.get(Constants.ROOT_NAMESPACE), path);
-      FileContext fileContext = FileContext.getFileContext(hConf);
-      createDirectory(fileContext, namespacedPath);
-    }  catch (UnsupportedFileSystemException e) {
-      LOG.error("Unsupported FileSystem Exception while trying to create directory", e);
-    }
+    String hdfsNamespace = cConf.get(Constants.CFG_HDFS_NAMESPACE);
+    String pathPrefix = hdfsNamespace.startsWith("/") ? hdfsNamespace : "/" + hdfsNamespace;
+    String namespacedPath = String.format("%s/%s", pathPrefix, path);
+    createDirectory(new FileContextProvider(cConf, hConf).get(), namespacedPath);
   }
 
   private void createDirectory(FileContext fileContext, String path) {
@@ -506,8 +506,9 @@ public class MasterServiceMain extends DaemonMain {
       new TwillModule(),
       new ServiceStoreModules().getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
-      new ProgramRunnerRuntimeModule().getDistributedModules()
-    );
+      new ProgramRunnerRuntimeModule().getDistributedModules(),
+      new SecureStoreModules().getDistributedModules()
+      );
   }
 
   /**
@@ -550,7 +551,9 @@ public class MasterServiceMain extends DaemonMain {
       }
 
       authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
-
+      // Authorization bootstrapping is a blocking call, because CDAP will not start successfully if it does not
+      // succeed on an authorization-enabled cluster
+      injector.getInstance(AuthorizationBootstrapper.class).run();
       services.add(getAndStart(injector, KafkaClientService.class));
       services.add(getAndStart(injector, MetricsCollectionService.class));
       services.add(getAndStart(injector, AuthorizationEnforcementService.class));
@@ -797,8 +800,7 @@ public class MasterServiceMain extends DaemonMain {
 
           // Add secure tokens
           if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
-            // TokenSecureStoreUpdater.update() ignores parameters
-            preparer.addSecureStore(secureStoreUpdater.update(null, null));
+            preparer.addSecureStore(secureStoreUpdater.update());
           }
 
           // add hadoop classpath to application classpath and exclude hadoop classes from bundle jar.

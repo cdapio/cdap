@@ -17,10 +17,10 @@
 package co.cask.cdap.hive.context;
 
 import co.cask.cdap.common.io.Codec;
-import co.cask.tephra.Transaction;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
+import org.apache.tephra.Transaction;
 
 import java.io.IOException;
 

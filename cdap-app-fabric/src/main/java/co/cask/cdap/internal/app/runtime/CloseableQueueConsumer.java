@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.runtime;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.queue.ForwardingQueueConsumer;
 import co.cask.cdap.data2.queue.QueueConsumer;
-import co.cask.tephra.TransactionAware;
+import org.apache.tephra.TransactionAware;
 
 import java.io.IOException;
 

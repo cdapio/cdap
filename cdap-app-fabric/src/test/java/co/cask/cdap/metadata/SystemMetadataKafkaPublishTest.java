@@ -34,7 +34,6 @@ import co.cask.cdap.proto.metadata.MetadataChangeRecord;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
-import co.cask.tephra.runtime.TransactionInMemoryModule;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
@@ -42,6 +41,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.util.Modules;
+import org.apache.tephra.runtime.TransactionInMemoryModule;
 import org.junit.ClassRule;
 import org.junit.Test;
 

@@ -15,9 +15,9 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
+import co.cask.cdap.api.ProgramState;
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
@@ -32,8 +32,8 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableMap;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.util.Collections;
@@ -51,7 +51,7 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
   private final ProgramWorkflowRunner programWorkflowRunner;
   private final WorkflowToken token;
   private final Map<String, WorkflowNodeState> nodeStates;
-  private boolean success = false;
+  private ProgramState state;
 
   BasicWorkflowContext(WorkflowSpecification workflowSpec, @Nullable WorkflowActionSpecification spec,
                        @Nullable ProgramWorkflowRunner programWorkflowRunner,
@@ -104,15 +104,21 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
     return ImmutableMap.copyOf(nodeStates);
   }
 
+  @Override
+  @Deprecated
+  public boolean isSuccessful() {
+    return state.getStatus() == ProgramStatus.COMPLETED;
+  }
+
   /**
-   * Sets the success flag if execution of the program associated with current context succeeds.
+   * Sets the current state of the program.
    */
-  void setSuccess() {
-    success = true;
+  void setState(ProgramState state) {
+    this.state = state;
   }
 
   @Override
-  public boolean isSuccessful() {
-    return success;
+  public ProgramState getState() {
+    return state;
   }
 }

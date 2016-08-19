@@ -46,8 +46,8 @@ function download_includes() {
   local includes_dir=${1}
   set_version
 
-  local clients_branch="release/${CDAP_CLIENTS_RELEASE_VERSION}"
-  local ingest_branch="release/${CDAP_INGEST_RELEASE_VERSION}"
+  local clients_branch="release/${GIT_BRANCH_CDAP_CLIENTS}"
+  local ingest_branch="release/${GIT_BRANCH_CDAP_INGEST}"
 
   if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
     clients_branch="develop"
@@ -58,7 +58,7 @@ function download_includes() {
 # https://raw.githubusercontent.com/caskdata/cdap-clients/develop/cdap-authentication-clients/java/README.rst
   local clients_url="${github_url}/cdap-clients/${clients_branch}"
 
-  download_readme_file_and_test ${includes_dir} ${clients_url} 25b715da9e3f65e93204a9663d19c90b cdap-authentication-clients/java
+  download_readme_file_and_test ${includes_dir} ${clients_url} f99720412e7085fdc3e350205ce21bcc cdap-authentication-clients/java
 #   download_readme_file_and_test ${includes_dir} ${clients_url} f075935545e48a132d014c6a8d32122a cdap-authentication-clients/javascript
   download_readme_file_and_test ${includes_dir} ${clients_url} 1f8330e0370b3895c38452f9af72506a cdap-authentication-clients/python
 #   download_readme_file_and_test ${includes_dir} ${clients_url} c16bf5ce7c1f0a2a4a680974a848cdd0 cdap-authentication-clients/ruby
@@ -80,7 +80,7 @@ function download_includes() {
   test_an_include 80216a08a2b3d480e4a081722408222f ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryService.java
   test_an_include 29fe1471372678115e643b0ad431b28d ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
 
-  test_an_include 2d854c9e6b473a05617913040018dd36 ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
+  test_an_include 41def2cbfc75bc0156a10564cf4ed0ad ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
 
   test_an_include 95092c8859fd97b6b327d774255e5dac ../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/TopNMapReduce.java
 

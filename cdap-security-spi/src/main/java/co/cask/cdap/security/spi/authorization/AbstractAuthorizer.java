@@ -63,10 +63,6 @@ public abstract class AbstractAuthorizer implements Authorizer {
 
   @Override
   public Predicate<EntityId> createFilter(Principal principal) throws Exception {
-    if (Principal.SYSTEM.equals(principal)) {
-      return ALLOW_ALL;
-    }
-
     Set<Privilege> privileges = listPrivileges(principal);
     final Set<EntityId> allowedEntities = new HashSet<>();
     for (Privilege privilege : privileges) {

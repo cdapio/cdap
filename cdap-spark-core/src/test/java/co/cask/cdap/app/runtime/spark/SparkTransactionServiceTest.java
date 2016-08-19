@@ -16,14 +16,14 @@
 
 package co.cask.cdap.app.runtime.spark;
 
-import co.cask.tephra.Transaction;
-import co.cask.tephra.TransactionFailureException;
-import co.cask.tephra.TransactionManager;
-import co.cask.tephra.TransactionSystemClient;
-import co.cask.tephra.inmemory.InMemoryTxSystemClient;
-import co.cask.tephra.persist.TransactionSnapshot;
 import com.google.common.collect.ImmutableSet;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionFailureException;
+import org.apache.tephra.TransactionManager;
+import org.apache.tephra.TransactionSystemClient;
+import org.apache.tephra.inmemory.InMemoryTxSystemClient;
+import org.apache.tephra.persist.TransactionSnapshot;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;

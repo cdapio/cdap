@@ -20,7 +20,7 @@ import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.transaction.queue.AbstractQueueProducer;
 import co.cask.cdap.data2.transaction.queue.QueueMetrics;
-import co.cask.tephra.Transaction;
+import org.apache.tephra.Transaction;
 
 /**
  * Producer for an in-memory queue.

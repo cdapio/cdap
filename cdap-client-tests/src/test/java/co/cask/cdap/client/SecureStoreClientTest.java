@@ -25,7 +25,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.SecureKeyId;
 import co.cask.cdap.proto.security.SecureKeyCreateRequest;
-import co.cask.cdap.proto.security.SecureKeyListEntry;
 import co.cask.cdap.test.SingletonExternalResource;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;
@@ -113,7 +112,7 @@ public class SecureStoreClientTest extends AbstractClientTest {
   @Test
   public void testSecureKeys() throws Exception {
     // no secure keys to begin with
-    List<SecureKeyListEntry> secureKeys = client.listKeys(NamespaceId.DEFAULT);
+    Map<String, String> secureKeys = client.listKeys(NamespaceId.DEFAULT);
     Assert.assertTrue(secureKeys.isEmpty());
 
     // create a key

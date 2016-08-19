@@ -17,6 +17,7 @@
 package co.cask.cdap.app.runtime.spark;
 
 import co.cask.cdap.api.Admin;
+import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.DatasetInstantiationException;
@@ -25,7 +26,6 @@ import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.security.store.SecureStoreData;
-import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.spark.SparkSpecification;
@@ -42,7 +42,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -57,6 +56,7 @@ final class BasicSparkClientContext implements SparkClientContext {
   private Resources driverResources;
   private Resources executorResources;
   private SparkConf sparkConf;
+  private ProgramState state;
 
   BasicSparkClientContext(SparkRuntimeContext sparkRuntimeContext) {
     this.sparkRuntimeContext = sparkRuntimeContext;
@@ -248,12 +248,21 @@ final class BasicSparkClientContext implements SparkClientContext {
   }
 
   @Override
-  public List<SecureStoreMetadata> listSecureData(String namespace) throws Exception {
+  public Map<String, String> listSecureData(String namespace) throws Exception {
     return sparkRuntimeContext.listSecureData(namespace);
   }
 
   @Override
   public SecureStoreData getSecureData(String namespace, String name) throws Exception {
     return sparkRuntimeContext.getSecureData(namespace, name);
+  }
+
+  @Override
+  public ProgramState getState() {
+    return state;
+  }
+
+  void setState(ProgramState state) {
+    this.state = state;
   }
 }

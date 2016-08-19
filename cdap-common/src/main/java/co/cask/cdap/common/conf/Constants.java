@@ -84,6 +84,7 @@ public final class Constants {
     /** Scheduler queue name to submit the master service app. */
     public static final String SCHEDULER_QUEUE = "master.services.scheduler.queue";
     public static final String METADATA_SERVICE = "metadata.service";
+    public static final String PREVIEW_HTTP = "preview";
   }
 
   /**
@@ -183,6 +184,17 @@ public final class Constants {
     public static final String WORKFLOW_LOCAL_DATASET_PROPERTY = "workflow.local.dataset";
   }
 
+  /**
+   * Preview Configurations
+   */
+  public class Preview {
+    public static final String ENABLED = "enable.alpha.preview";
+
+    /**
+     * Guice named bindings.
+     */
+    public static final String HANDLERS_BINDING = "preview.http.handler";
+  }
   /**
    * Scheduler options.
    */
@@ -707,11 +719,10 @@ public final class Constants {
       /** Prefix for extension properties */
       public static final String EXTENSION_CONFIG_PREFIX =
         "security.authorization.extension.config.";
-      // Currently, superusers is used both by CDAP (for caching) and by extensions.
-      public static final String SUPERUSERS = EXTENSION_CONFIG_PREFIX + "superusers";
       public static final String CACHE_ENABLED = "security.authorization.cache.enabled";
       public static final String CACHE_TTL_SECS = "security.authorization.cache.ttl.secs";
       public static final String CACHE_REFRESH_INTERVAL_SECS = "security.authorization.cache.refresh.interval.secs";
+      public static final String ADMIN_USERS = "security.authorization.admin.users";
     }
 
     /**

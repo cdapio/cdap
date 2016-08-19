@@ -28,11 +28,14 @@ import co.cask.cdap.etl.api.streaming.Windower;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPairCollection;
+import co.cask.cdap.etl.spark.batch.BasicSparkExecutionPluginContext;
 import co.cask.cdap.etl.spark.batch.SparkBatchSinkContext;
 import co.cask.cdap.etl.spark.batch.SparkBatchSinkFactory;
+import co.cask.cdap.etl.spark.function.CountingFunction;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.streaming.Durations;
@@ -87,12 +90,23 @@ public class DStreamCollection<T> implements SparkCollection<T> {
 
   @Override
   public <U> SparkCollection<U> compute(final String stageName, final SparkCompute<T, U> compute) throws Exception {
+    sec.execute(new TxRunnable() {
+      @Override
+      public void run(DatasetContext datasetContext) throws Exception {
+        SparkExecutionPluginContext sparkPluginContext =
+          new BasicSparkExecutionPluginContext(sec, sparkContext, datasetContext, stageName);
+        compute.initialize(sparkPluginContext);
+      }
+    });
     return wrap(stream.transform(new Function2<JavaRDD<T>, Time, JavaRDD<U>>() {
                   @Override
                   public JavaRDD<U> call(JavaRDD<T> data, Time batchTime) throws Exception {
                     SparkExecutionPluginContext sparkPluginContext =
                       new SparkStreamingExecutionContext(sec, sparkContext, stageName, batchTime.milliseconds());
-                    return compute.transform(sparkPluginContext, data);
+
+                    data = data.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in"));
+                    return compute.transform(sparkPluginContext, data)
+                      .map(new CountingFunction<U>(stageName, sec.getMetrics(), "records.out"));
                   }
                 }));
   }
@@ -126,6 +140,7 @@ public class DStreamCollection<T> implements SparkCollection<T> {
           });
           isPrepared = true;
 
+          data = data.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in"));
           sinkFactory.writeFromRDD(data.flatMapToPair(sinkFunction), sec, stageName, Object.class, Object.class);
           isDone = true;
           sec.execute(new TxRunnable() {
@@ -162,8 +177,21 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public SparkCollection<T> window(Windower windower) {
-    return wrap(stream.window(Durations.seconds(windower.getWidth()), Durations.seconds(windower.getSlideInterval())));
+  public SparkCollection<T> window(final String stageName, Windower windower) {
+    return wrap(stream
+                  .transform(new Function<JavaRDD<T>, JavaRDD<T>>() {
+                    @Override
+                    public JavaRDD<T> call(JavaRDD<T> in) throws Exception {
+                      return in.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in"));
+                    }
+                  })
+                  .window(Durations.seconds(windower.getWidth()), Durations.seconds(windower.getSlideInterval()))
+                  .transform(new Function<JavaRDD<T>, JavaRDD<T>>() {
+                    @Override
+                    public JavaRDD<T> call(JavaRDD<T> in) throws Exception {
+                      return in.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.out"));
+                    }
+                  }));
   }
 
   private <U> SparkCollection<U> wrap(JavaDStream<U> stream) {

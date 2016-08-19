@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,7 +28,6 @@ import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.api.TwillSpecification.Builder;
-import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,6 +58,9 @@ public abstract class AbstractProgramTwillApplication implements TwillApplicatio
     this.program = program;
     this.localizeResources = ImmutableMap.copyOf(localizeResources);
     this.eventHandler = eventHandler;
+    // sanity check, that should not fail, unless there's a bug elsewhere in the code
+    Preconditions.checkArgument(getType().equals(program.getType()),
+                                "Expected=%s, actual=%s", getType(), program.getType());
   }
 
   /**
@@ -97,9 +99,7 @@ public abstract class AbstractProgramTwillApplication implements TwillApplicatio
     addRunnables(runnables);
 
     Builder.MoreRunnable moreRunnable = Builder.with()
-      .setName(String.format("%s.%s.%s.%s",
-                             getType().name().toLowerCase(),
-                             program.getNamespaceId(), program.getApplicationId(), program.getName()))
+      .setName(TwillAppNames.toTwillAppName(program.getId().toEntityId()))
       .withRunnable();
 
     Builder.RunnableSetter runnableSetter = null;

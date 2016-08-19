@@ -62,41 +62,6 @@ my-dag-plus {
       padding: 0;
       height: 66px;
       width: 105px;
-      &.selected {
-        &.realtimesource,
-        &.streamingsource,
-        &.batchsource {
-          .node {
-            background-color: #48c038;
-            border-width: 6px;
-          }
-        }
-        &:not(.realtimesource):not(.streamingsource):not(.batchsource):not(.realtimesink):not(.batchsink):not(.sparksink) {
-          .node {
-            background-color: #4586f3;
-            border-width: 6px;
-          }
-        }
-        &.realtimesink,
-        &.batchsink,
-        &.sparksink {
-          .node {
-            background-color: #8367df;
-            border-width: 6px;
-          }
-        }
-
-        .icon.fa,
-        .fa.fa-close {
-          color: white;
-        }
-        .icon.fa {
-          line-height: 34px;
-        }
-        .fa.fa-close {
-          top: 3px;
-        }
-      }
       .node {
         background-color: white;
         margin: 0 auto;

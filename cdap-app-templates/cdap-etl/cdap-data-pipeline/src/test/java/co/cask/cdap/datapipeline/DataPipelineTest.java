@@ -1278,16 +1278,16 @@ public class DataPipelineTest extends HydratorTestBase {
      * source --------- sink
      */
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(new ETLStage("source", MockRuntimeDatasetSource.getPlugin("input", "${secure(" + prefix + "Source)}")))
-      .addStage(new ETLStage("sink", MockRuntimeDatasetSink.getPlugin("output", "${secure(" + prefix + "Sink)}")))
+      .addStage(new ETLStage("source", MockRuntimeDatasetSource.getPlugin("input", "${secure(" + prefix + "source)}")))
+      .addStage(new ETLStage("sink", MockRuntimeDatasetSink.getPlugin("output", "${secure(" + prefix + "sink)}")))
       .addConnection("source", "sink")
       .setEngine(engine)
       .build();
 
     // place dataset names into secure storage
-    getSecureStoreManager().putSecureData("default", prefix + "Source", prefix + "MockSecureSourceDataset",
+    getSecureStoreManager().putSecureData("default", prefix + "source", prefix + "MockSecureSourceDataset",
                                           "secure source dataset name", new HashMap<String, String>());
-    getSecureStoreManager().putSecureData("default", prefix + "Sink", prefix + "MockSecureSinkDataset",
+    getSecureStoreManager().putSecureData("default", prefix + "sink", prefix + "MockSecureSinkDataset",
                                           "secure dataset name", new HashMap<String, String>());
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);

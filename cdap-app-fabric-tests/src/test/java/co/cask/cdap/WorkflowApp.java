@@ -108,7 +108,8 @@ public class WorkflowApp extends AbstractApplication {
     }
 
     @Override
-    public void beforeSubmit(SparkClientContext context) throws Exception {
+    public void initialize() throws Exception {
+      SparkClientContext context = getContext();
       Preconditions.checkState(context.getWorkflowInfo() != null && context.getWorkflowToken() != null,
                                "WorkflowInfo and WorkflowToken shouldn't be null");
     }

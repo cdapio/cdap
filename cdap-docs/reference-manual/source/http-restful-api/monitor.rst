@@ -233,6 +233,7 @@ The response body will contain a JSON-formatted status of the last restart attem
    * - ``500 Internal error``
      - Internal error encountered when processing the request
 
+.. _http-restful-api-monitor-scaling-system-services:
 
 Scaling System Services
 =======================

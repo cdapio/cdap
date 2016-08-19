@@ -38,13 +38,11 @@ import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.CannotBeDeletedException;
 import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.registry.UsageRegistry;
-import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
@@ -71,14 +69,13 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicates;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -86,7 +83,6 @@ import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,6 +90,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -118,10 +115,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * Store manages non-runtime lifecycle.
    */
   private final Store store;
-  private final CConfiguration configuration;
   private final Scheduler scheduler;
   private final QueueAdmin queueAdmin;
-  private final NamespacedLocationFactory namespacedLocationFactory;
   private final StreamConsumerFactory streamConsumerFactory;
   private final UsageRegistry usageRegistry;
   private final PreferencesStore preferencesStore;
@@ -129,29 +124,24 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final ArtifactRepository artifactRepository;
   private final ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory;
   private final MetadataStore metadataStore;
-  private final AuthorizerInstantiator authorizerInstantiator;
+  private final PrivilegesManager privilegesManager;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
   private final Impersonator impersonator;
 
   @Inject
-  ApplicationLifecycleService(ProgramRuntimeService runtimeService, Store store, CConfiguration configuration,
-                              Scheduler scheduler, QueueAdmin queueAdmin,
-                              NamespacedLocationFactory namespacedLocationFactory,
-                              StreamConsumerFactory streamConsumerFactory, UsageRegistry usageRegistry,
-                              PreferencesStore preferencesStore, MetricStore metricStore,
+  ApplicationLifecycleService(ProgramRuntimeService runtimeService, Store store, Scheduler scheduler,
+                              QueueAdmin queueAdmin, StreamConsumerFactory streamConsumerFactory,
+                              UsageRegistry usageRegistry, PreferencesStore preferencesStore, MetricStore metricStore,
                               ArtifactRepository artifactRepository,
                               ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
-                              MetadataStore metadataStore,
-                              AuthorizerInstantiator authorizerInstantiator,
-                              AuthorizationEnforcer authorizationEnforcer,
-                              AuthenticationContext authenticationContext, Impersonator impersonator) {
+                              MetadataStore metadataStore, PrivilegesManager privilegesManager,
+                              AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
+                              Impersonator impersonator) {
     this.runtimeService = runtimeService;
     this.store = store;
-    this.configuration = configuration;
     this.scheduler = scheduler;
     this.queueAdmin = queueAdmin;
-    this.namespacedLocationFactory = namespacedLocationFactory;
     this.streamConsumerFactory = streamConsumerFactory;
     this.usageRegistry = usageRegistry;
     this.preferencesStore = preferencesStore;
@@ -159,7 +149,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.artifactRepository = artifactRepository;
     this.managerFactory = managerFactory;
     this.metadataStore = metadataStore;
-    this.authorizerInstantiator = authorizerInstantiator;
+    this.privilegesManager = privilegesManager;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
     this.impersonator = impersonator;
@@ -538,8 +528,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.
     ApplicationWithPrograms applicationWithPrograms = manager.deploy(deploymentInfo).get();
     // Deployment successful. Grant all privileges on this app to the current principal.
-    authorizerInstantiator.get().grant(applicationWithPrograms.getApplicationId(),
-                                       authenticationContext.getPrincipal(), ImmutableSet.of(Action.ALL));
+    privilegesManager.grant(applicationWithPrograms.getApplicationId(),
+                            authenticationContext.getPrincipal(), EnumSet.allOf(Action.class));
     return applicationWithPrograms;
   }
 
@@ -553,7 +543,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception
    */
   private void deleteApp(final Id.Application appId, ApplicationSpecification spec) throws Exception {
-    // enfore ADMIN privileges on the app
+    // enforce ADMIN privileges on the app
     authorizationEnforcer.enforce(appId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
     // first remove all privileges on the app
     revokePrivileges(appId.toEntityId(), spec);
@@ -602,7 +592,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     ApplicationSpecification appSpec = store.getApplication(appId);
     deleteAppMetadata(appId, appSpec);
-
+    store.deleteWorkflowStats(appId.toEntityId());
     store.removeApplication(appId);
 
     try {
@@ -615,9 +605,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   // TODO: CDAP-5427 - This should be a single operation
   private void revokePrivileges(ApplicationId appId, ApplicationSpecification appSpec) throws Exception {
     for (ProgramId programId : getAllPrograms(appId, appSpec)) {
-      authorizerInstantiator.get().revoke(programId);
+      privilegesManager.revoke(programId);
     }
-    authorizerInstantiator.get().revoke(appId);
+    privilegesManager.revoke(appId);
   }
 
   /**
@@ -679,7 +669,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private void ensureAccess(ApplicationId appId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    if (!Principal.SYSTEM.equals(principal) && !filter.apply(appId)) {
+    if (!filter.apply(appId)) {
       throw new UnauthorizedException(principal, appId);
     }
   }

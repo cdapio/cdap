@@ -57,13 +57,37 @@ import java.lang.annotation.Target;
  *   ...
  * }
  * </code></pre>
- * </p>
- * 
- * <p>
+ *
  * By doing so, the process method will be called repeatedly by the system for each input in the dequeued batch within
  * single transaction.
  * </p>
  *
+ * <p>
+ * The batch size can also be controlled through flowlet properties or runtime arguments. You can specify the key to use
+ * for looking up the batch size value with a {@code @Batch} annotation.
+ * </p>
+ *
+ * <p>
+ * <pre><code>
+ * {@literal @}Batch(key = "batch.size", value = 100)
+ * {@literal @}ProcessInput
+ * public void process(String word) {
+ *   ...
+ * }
+ * </code></pre>
+ *
+ * By specifying the {@code key} element in the {@code @Batch} annotation, the runtime system will resolve the
+ * batch size in this order (highest precedence first):
+ *
+ * <ol>
+ *   <li>Runtime argument with name = {@code flowlet.<flowletName>.<key>}</li>
+ *   <li>Runtime argument with name = {@code flowlet.*.<key>}</li>
+ *   <li>Runtime argument with name = {@code <key>}</li>
+ *   <li>Flowlet properties with name = {@code <key>}</li>
+ *   <li>The {@code value} element specified in the {@code @Batch} annotation</li>
+ * </ol>
+ * </p>
+ * 
  * <p>
  * If you use batch processing, your transactions can take longer and the probability of a conflict due
  * to a failed process increases (see {@link HashPartition hash partitioning}).
@@ -83,4 +107,11 @@ public @interface Batch {
    * Declare the maximum number of objects that can be processed in a batch.
    */
   int value();
+
+  /**
+   * Declare the key to use for looking up batch size value from the runtime arguments or the flowlet properties.
+   * If the given key cannot be found in neither of them, then the value returned by
+   * {@link #value()} will be used.
+   */
+  String key() default "";
 }

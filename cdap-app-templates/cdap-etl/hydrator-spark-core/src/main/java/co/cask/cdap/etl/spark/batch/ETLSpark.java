@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.spark.batch;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.spark.AbstractSpark;
@@ -90,7 +91,8 @@ public class ETLSpark extends AbstractSpark {
   }
 
   @Override
-  public void beforeSubmit(SparkClientContext context) throws Exception {
+  public void initialize() throws Exception {
+    SparkClientContext context = getContext();
     cleanupFiles = new ArrayList<>();
     CompositeFinisher.Builder finishers = CompositeFinisher.builder();
 
@@ -158,8 +160,8 @@ public class ETLSpark extends AbstractSpark {
   }
 
   @Override
-  public void onFinish(boolean succeeded, SparkClientContext context) throws Exception {
-    finisher.onFinish(succeeded);
+  public void destroy() {
+    finisher.onFinish(getContext().getState().getStatus() == ProgramStatus.COMPLETED);
     for (File file : cleanupFiles) {
       if (!file.delete()) {
         LOG.warn("Failed to clean up resource {} ", file);

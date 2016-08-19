@@ -26,9 +26,19 @@ import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.proto.security.Privilege;
+import co.cask.cdap.security.authorization.AuthorizerInstantiator;
+import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.avro.generic.GenericDatumWriter;
@@ -49,8 +59,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -58,6 +71,8 @@ import java.util.concurrent.ExecutionException;
  */
 @Category(SlowTests.class)
 public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
+  private static final Principal USER = new Principal(System.getProperty("user.name"), Principal.PrincipalType.USER);
+
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
@@ -71,11 +86,16 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
   private static final Map<String, String> headers = ImmutableMap.of("header1", "val1", "header2", "val2");
   private static final Type headerType = new TypeToken<Map<String, String>>() { }.getType();
 
+  private static Authorizer authorizer;
+
   @BeforeClass
   public static void start() throws Exception {
     // use leveldb implementations, since stream input format examines the filesystem
-    // to determine input splits.
-    initialize(CConfiguration.create(), tmpFolder, true);
+    // to determine input splits. also enable authorization.
+    initialize(CConfiguration.create(), tmpFolder, true, true);
+    authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
+    SecurityRequestContext.setUserId(USER.getName());
+    grantAndAssertSuccess(NAMESPACE_ID.toEntityId(), USER, EnumSet.allOf(Action.class));
 
     Id.Stream streamId = Id.Stream.from(NAMESPACE_ID, streamName);
     createStream(streamId);
@@ -87,6 +107,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
   @AfterClass
   public static void finish() throws Exception {
     dropStream(Id.Stream.from(NAMESPACE_ID, streamName));
+    revokeAndAssertSuccess(NAMESPACE_ID.toEntityId(), USER, EnumSet.allOf(Action.class));
   }
 
   @Test
@@ -108,7 +129,33 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
   }
 
   @Test
-  public void testSelectStarOnStream() throws Exception {
+  public void testStreamAuthorization() throws Exception {
+    StreamId streamId = NAMESPACE_ID.toEntityId().stream(streamName);
+    revokeAndAssertSuccess(NAMESPACE_ID.toEntityId(), USER, EnumSet.allOf(Action.class));
+    grantAndAssertSuccess(NAMESPACE_ID.toEntityId(), USER, EnumSet.of(Action.ADMIN, Action.WRITE, Action.EXECUTE));
+    revokeAndAssertSuccess(streamId, USER, EnumSet.allOf(Action.class));
+    grantAndAssertSuccess(streamId, USER, EnumSet.of(Action.ADMIN, Action.WRITE));
+    // without READ privilege, explore test should fail
+    try {
+      testSelectStarOnStream();
+      Assert.fail("Without READ privilege, explore on stream should have failed.");
+    } catch (Exception e) {
+      Assert.assertTrue(e.getCause() instanceof ExploreException);
+    }
+
+    // now grant READ privilege and the test should pass
+    revokeAndAssertSuccess(streamId, USER, EnumSet.of(Action.ADMIN, Action.WRITE));
+    grantAndAssertSuccess(streamId, USER, EnumSet.of(Action.READ));
+    testSelectStarOnStream();
+    // now grant ALL privilege as
+    grantAndAssertSuccess(streamId, USER, EnumSet.of(Action.ADMIN));
+    // revert the permissions on NAMESPACE to the original value
+    revokeAndAssertSuccess(NAMESPACE_ID.toEntityId(), USER, EnumSet.of(Action.ADMIN, Action.WRITE,
+                                                                            Action.EXECUTE));
+    grantAndAssertSuccess(NAMESPACE_ID.toEntityId(), USER, EnumSet.allOf(Action.class));
+  }
+
+  private void testSelectStarOnStream() throws Exception {
     ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID, "select * from " + streamTableName).get();
     // check schema
     List<ColumnDesc> expectedSchema = Lists.newArrayList(
@@ -313,5 +360,27 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
     encoder.flush();
     out.close();
     return out.toByteArray();
+  }
+
+  private static void grantAndAssertSuccess(EntityId entityId, Principal principal, Set<Action> actions)
+    throws Exception {
+    Set<Privilege> existingPrivileges = new HashSet<>(authorizer.listPrivileges(principal));
+    authorizer.grant(entityId, principal, actions);
+    ImmutableSet.Builder<Privilege> expectedPrivilegesAfterGrant = ImmutableSet.builder();
+    for (Action action : actions) {
+      expectedPrivilegesAfterGrant.add(new Privilege(entityId, action));
+    }
+    Assert.assertEquals(Sets.union(existingPrivileges, expectedPrivilegesAfterGrant.build()),
+                        authorizer.listPrivileges(principal));
+  }
+
+  private static void revokeAndAssertSuccess(EntityId entityId, Principal principal, Set<Action> actions)
+    throws Exception {
+    Set<Privilege> existingPrivileges = new HashSet<>(authorizer.listPrivileges(principal));
+    authorizer.revoke(entityId, principal, actions);
+    for (Action action : actions) {
+      existingPrivileges.remove(new Privilege(entityId, action));
+    }
+    Assert.assertEquals(existingPrivileges, authorizer.listPrivileges(principal));
   }
 }

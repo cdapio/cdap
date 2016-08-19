@@ -40,6 +40,7 @@ function usage() {
   echo 
   echo "    docs-github-only  Clean build of HTML, zipped, with GitHub code, skipping Javadocs"
   echo "    docs-web-only     Clean build of HTML, zipped, with docs.cask.co code, skipping Javadocs"
+  echo "    docs-local        Clean build of docs (no Javadocs), using local copies of downloaded files"
   echo "    docs-outer        Dirty build of HTML with docs.cask.co code, skipping re-building inner doc, zipping, and Javadocs"
   echo "    docs              Dirty build of HTML with docs.cask.co code, skipping zipping and Javadocs"
   echo 
@@ -110,6 +111,7 @@ function run_command() {
     clean )             clean_targets;;
     docs-all )          build_all;;
     docs )              build_docs ${DOCS};;
+    docs-local )        build_docs ${DOCS_LOCAL};;
     docs-outer )        build_docs ${DOCS_OUTER};;
     docs-github-only )  build_docs ${GITHUB_ONLY};;
     docs-web-only )     build_docs ${WEB_ONLY};;
@@ -147,7 +149,7 @@ function build_all() {
   stash_github_zip 
   run_command docs-web-part ${ARG_2} 
   restore_github_zip
-  display_version
+  set_display_version
   display_messages_file
   warnings=$?
   cleanup_messages_file
@@ -171,7 +173,11 @@ function build_docs() {
   fi
   if [ "${doc_type}" == "${WEB_ONLY}" -o "${doc_type}" == "${GITHUB_ONLY}" ]; then
     cli_docs="${WITH}"
-  fi  
+  fi
+  if [ "${doc_type}" == "${DOCS_LOCAL}" ]; then
+    DOCS_LOCAL="true"
+    export DOCS_LOCAL
+  fi
   echo "========================================================"
   echo "========================================================"
   echo "Building \"${doc_type}\""
@@ -209,7 +215,7 @@ function build_docs() {
   elif [ "${doc_type}" == "${WEB}" -o "${doc_type}" == "${WEB_ONLY}" ]; then
     run_command docs-web-part ${source_path}
   fi
-  display_version
+  set_display_version
   display_messages_file
   warnings=$?
   cleanup_messages_file
@@ -245,16 +251,20 @@ function build_javadocs() {
 function build_javadocs_api() {
   local javadoc_type=${1}
   set_mvn_environment
+  echo "JAVA_HOME: ${JAVA_HOME}"
+  echo "JAVA Version:"
+  java -version
   local javadoc_run="mvn javadoc:aggregate -P release"
   if [ "${javadoc_type}" == "${DOCS}" ]; then
     javadoc_run="mvn clean site -P templates"
   fi
-  local debug_flag=""
+  local debug_flag=''
   if [ "${DEBUG}" == "${TRUE}" ]; then
     debug_flag="-X"
   fi
   local start=`date`
   MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true && ${javadoc_run} -DskipTests -DisOffline=false ${debug_flag}
+  echo
   echo "Javadocs Build Start: ${start}"
   echo "                 End: `date`"
 }
@@ -486,6 +496,11 @@ function build_license_dependency_pdfs() {
 function print_version() {
   cd ${SCRIPT_PATH}/developers-manual
   ./build.sh display-version ${ARG_2} 
+}
+
+function set_display_version() {
+  set_version
+  display_version
 }
 
 function ring_bell() {

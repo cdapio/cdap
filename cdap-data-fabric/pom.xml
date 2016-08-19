@@ -83,7 +83,7 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>co.cask.tephra</groupId>
+      <groupId>org.apache.tephra</groupId>
       <artifactId>tephra-core</artifactId>
     </dependency>
     <dependency>

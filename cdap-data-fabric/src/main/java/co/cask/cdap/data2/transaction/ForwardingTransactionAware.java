@@ -16,9 +16,9 @@
 
 package co.cask.cdap.data2.transaction;
 
-import co.cask.tephra.Transaction;
-import co.cask.tephra.TransactionAware;
 import com.google.common.collect.ForwardingObject;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionAware;
 
 import java.util.Collection;
 

@@ -15,7 +15,8 @@
 -->
 <div class="modal-header clearfix">
 
-  <h4 class="modal-title pull-left">
+  <h4 class="modal-title pull-left"
+      ng-class="{'with-jump': HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.jumpConfig.datasets.length}">
     <span>
       {{HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name}} Properties
       <small>{{ HydratorPlusPlusNodeConfigCtrl.state.node.plugin.artifact.version }}</small>

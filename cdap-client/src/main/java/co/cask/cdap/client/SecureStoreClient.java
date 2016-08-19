@@ -27,7 +27,6 @@ import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.SecureKeyId;
 import co.cask.cdap.proto.security.SecureKeyCreateRequest;
-import co.cask.cdap.proto.security.SecureKeyListEntry;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpResponse;
@@ -40,6 +39,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Provides ways to get/set Secure keys.
@@ -146,12 +146,12 @@ public class SecureStoreClient {
   /**
    * List all the secure keys in the namespace
    * @param namespaceId {@link NamespaceId} namespace id
-   * @return list of {@link SecureKeyListEntry}s
+   * @return list of key names and descriptions
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws NamespaceNotFoundException if the given namespace is not found
    */
-  public List<SecureKeyListEntry> listKeys(NamespaceId namespaceId) throws IOException, UnauthenticatedException,
+  public Map<String, String> listKeys(NamespaceId namespaceId) throws IOException, UnauthenticatedException,
     NamespaceNotFoundException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(namespaceId.toId(), SECURE_KEYS);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
@@ -159,7 +159,7 @@ public class SecureStoreClient {
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NamespaceNotFoundException(namespaceId.toId());
     }
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<SecureKeyListEntry>>() { }).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, new TypeToken<Map<String, String>>() { }).getResponseObject();
   }
 
   private static String getSecureKeyPath(SecureKeyId secureKeyId) {

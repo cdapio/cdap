@@ -80,14 +80,16 @@ public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> 
     return new StreamRecordReader(split, conf);
   }
 
+  public static Id.Stream getStreamId(JobConf conf) {
+    String streamName = conf.get(Constants.Explore.STREAM_NAME);
+    String streamNamespace = conf.get(Constants.Explore.STREAM_NAMESPACE);
+    return Id.Stream.from(streamNamespace, streamName);
+  }
+
   private StreamInputSplitFinder<InputSplit> getSplitFinder(JobConf conf) throws IOException {
     // first get the context we are in
     ContextManager.Context context = ContextManager.getContext(conf);
-
-    String streamName = conf.get(Constants.Explore.STREAM_NAME);
-    String streamNamespace = conf.get(Constants.Explore.STREAM_NAMESPACE);
-    Id.Stream streamId = Id.Stream.from(streamNamespace, streamName);
-    StreamConfig streamConfig = context.getStreamConfig(streamId);
+    StreamConfig streamConfig = context.getStreamConfig(getStreamId(conf));
     // make sure we get the current generation so we don't read events that occurred before a truncate.
     Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
                                                                StreamUtils.getGeneration(streamConfig));

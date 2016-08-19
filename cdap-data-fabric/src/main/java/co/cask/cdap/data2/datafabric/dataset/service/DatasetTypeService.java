@@ -32,6 +32,7 @@ import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
@@ -43,7 +44,6 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
-import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.proto.DatasetModuleMeta;
@@ -61,19 +61,18 @@ import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
-import co.cask.tephra.TransactionExecutor;
-import co.cask.tephra.TransactionFailureException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.tephra.TransactionExecutor;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.filesystem.Location;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -84,10 +83,10 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
@@ -204,7 +203,7 @@ public class DatasetTypeService extends AbstractIdleService {
     }
     Principal principal = authenticationContext.getPrincipal();
     final Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    if (!Principal.SYSTEM.equals(principal) && !filter.apply(datasetModuleId)) {
+    if (!filter.apply(datasetModuleId)) {
       throw new UnauthorizedException(principal, datasetModuleId);
     }
     return moduleMeta;
@@ -343,6 +342,7 @@ public class DatasetTypeService extends AbstractIdleService {
     }
 
     // All principals can access system dataset types
+    // TODO: Test if this can be removed
     if (NamespaceId.SYSTEM.equals(datasetTypeId.getParent())) {
       return typeMeta;
     }
@@ -350,7 +350,7 @@ public class DatasetTypeService extends AbstractIdleService {
     // only return the type if the user has some privileges on it
     Principal principal = authenticationContext.getPrincipal();
     Predicate<EntityId> authFilter = authorizationEnforcer.createFilter(principal);
-    if (!Principal.SYSTEM.equals(principal) && !authFilter.apply(datasetTypeId)) {
+    if (!authFilter.apply(datasetTypeId)) {
       throw new UnauthorizedException(principal, datasetTypeId);
     }
     return typeMeta;
@@ -535,8 +535,7 @@ public class DatasetTypeService extends AbstractIdleService {
 
   private void grantAllPrivilegesOnModule(DatasetModuleId moduleId, Principal principal,
                                           @Nullable DatasetModuleMeta moduleMeta) throws Exception {
-    Set<Action> allActions = ImmutableSet.of(Action.ALL);
-    privilegesManager.grant(moduleId, principal, allActions);
+    privilegesManager.grant(moduleId, principal, EnumSet.allOf(Action.class));
     if (moduleMeta == null) {
       moduleMeta = typeManager.getModule(moduleId.toId());
     }
@@ -546,7 +545,7 @@ public class DatasetTypeService extends AbstractIdleService {
     }
     for (String type : moduleMeta.getTypes()) {
       DatasetTypeId datasetTypeId = moduleId.getParent().datasetType(type);
-      privilegesManager.grant(datasetTypeId, principal, allActions);
+      privilegesManager.grant(datasetTypeId, principal, EnumSet.allOf(Action.class));
     }
   }
 

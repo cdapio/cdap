@@ -144,7 +144,6 @@
     </description>
   </property>
 
-
   <!-- Zookeeper Configuration (only used when Zookeeper server is started in Standalone) -->
 
   <property>
@@ -161,6 +160,14 @@
     <description>
       ZooKeeper quorum string; specifies the ZooKeeper host:port; substitute the quorum
       (FQDN1:2181,FQDN2:2181,...) for the components shown here
+    </description>
+  </property>
+
+  <property>
+    <name>enable.alpha.preview</name>
+    <value>false</value>
+    <description>
+      Determines whether to enable preview in standalone
     </description>
   </property>
 
@@ -194,6 +201,14 @@
     </value>
     <description>
       Application configuration for Tracker
+    </description>
+  </property>
+
+  <property>
+    <name>kerberos.auth.enabled</name>
+    <value>false</value>
+    <description>
+      Determines if Kerberos authentication is enabled
     </description>
   </property>
 

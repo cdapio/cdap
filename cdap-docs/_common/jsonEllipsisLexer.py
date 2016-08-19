@@ -3,7 +3,7 @@
     json-ellipsis-lexer
     ~~~~~~~~~~~~~~~~~~~~
 
-    JSON Lexer thta handles an ellipsis in the form of
+    JSON Lexer that handles an ellipsis in the form of
     three periods on a line of its own.
 
     :copyright: Copyright 2016 Cask Data.

@@ -24,7 +24,7 @@ import co.cask.cdap.logging.appender.LoggingTester;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.read.KafkaLogReader;
 import co.cask.cdap.test.SlowTests;
-import co.cask.tephra.TransactionManager;
+import org.apache.tephra.TransactionManager;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;

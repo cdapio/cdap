@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,9 @@ import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.security.DefaultImpersonator;
+import co.cask.cdap.common.security.Impersonator;
+import co.cask.cdap.common.security.UnsupportedUGIProvider;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.InMemoryStreamCoordinatorClient;
 import co.cask.cdap.data.stream.NoopStreamAdmin;
@@ -32,8 +35,6 @@ import co.cask.cdap.data.stream.StreamFileType;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data.stream.TimestampCloseable;
-import co.cask.cdap.data2.security.Impersonator;
-import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
@@ -70,7 +71,7 @@ public abstract class ConcurrentStreamWriterTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(ConcurrentStreamWriterTestBase.class);
   private static final CConfiguration cConf = CConfiguration.create();
-  private static final Impersonator impersonator = new Impersonator(cConf, new UnsupportedUGIProvider(), null);
+  private static final Impersonator impersonator = new DefaultImpersonator(cConf, new UnsupportedUGIProvider(), null);
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();

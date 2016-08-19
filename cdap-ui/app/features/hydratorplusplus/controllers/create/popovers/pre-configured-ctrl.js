@@ -28,9 +28,12 @@ class HydratorPlusPlusPreConfiguredCtrl {
     this.myAlertOnValium = myAlertOnValium;
 
     this.typeFilter = rTemplateType;
+    this.templateContext = this.GLOBALS.artifactConvert[rTemplateType];
+
     this.fetchTemplates().then((plugins) => {
       this.templates = plugins;
     });
+
   }
 
   selectTemplate(template) {

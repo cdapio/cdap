@@ -21,8 +21,8 @@ import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.proto.Id;
-import co.cask.tephra.TransactionContext;
-import co.cask.tephra.TransactionExecutor;
+import org.apache.tephra.TransactionContext;
+import org.apache.tephra.TransactionExecutor;
 
 import java.io.IOException;
 

@@ -33,6 +33,8 @@ import co.cask.cdap.app.guice.InMemoryProgramRunnerModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.EndpointStrategy;
+import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
@@ -88,10 +90,12 @@ import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InvalidAuthorizerException;
+import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
@@ -102,7 +106,6 @@ import co.cask.cdap.test.internal.DefaultArtifactManager;
 import co.cask.cdap.test.internal.DefaultStreamManager;
 import co.cask.cdap.test.internal.LocalStreamWriter;
 import co.cask.cdap.test.internal.StreamManagerFactory;
-import co.cask.tephra.TransactionManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
@@ -120,6 +123,8 @@ import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
+import org.apache.tephra.TransactionManager;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -139,6 +144,7 @@ import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.jar.Manifest;
 
 /**
@@ -181,6 +187,7 @@ public class TestBase {
   private static SecureStore secureStore;
   private static SecureStoreManager secureStoreManager;
   private static AuthorizationEnforcementService authorizationEnforcementService;
+  private static AuthorizationBootstrapper authorizationBootstrapper;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = new ArrayList<>();
@@ -225,6 +232,7 @@ public class TestBase {
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
       new ServiceStoreModules().getInMemoryModules(),
       new InMemoryProgramRunnerModule(LocalStreamWriter.class),
+      new SecureStoreModules().getInMemoryModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -265,6 +273,8 @@ public class TestBase {
       }
     );
 
+    authorizationBootstrapper = injector.getInstance(AuthorizationBootstrapper.class);
+    authorizationBootstrapper.run();
     authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
     authorizationEnforcementService.startAndWait();
     txService = injector.getInstance(TransactionManager.class);
@@ -282,6 +292,12 @@ public class TestBase {
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
       exploreExecutorService.startAndWait();
+      // wait for explore service to be discoverable
+      DiscoveryServiceClient discoveryService = injector.getInstance(DiscoveryServiceClient.class);
+      EndpointStrategy endpointStrategy = new RandomEndpointStrategy(
+        discoveryService.discover(Constants.Service.EXPLORE_HTTP_USER_SERVICE));
+      Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
+                                 "%s service is not up after 5 seconds", Constants.Service.EXPLORE_HTTP_USER_SERVICE);
       exploreClient = injector.getInstance(ExploreClient.class);
     }
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
@@ -353,7 +369,7 @@ public class TestBase {
 
     // Setup defaults that can be overridden by user
     cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
-    cConf.setBoolean(Constants.Explore.START_ON_DEMAND, true);
+    cConf.setBoolean(Constants.Explore.START_ON_DEMAND, false);
 
     // Setup test case specific configurations.
     // The system properties are usually setup by TestConfiguration class using @ClassRule
@@ -861,6 +877,16 @@ public class TestBase {
                                                                 String datasetInstanceName) throws Exception {
     return addDatasetInstance(Id.Namespace.DEFAULT, datasetTypeName, datasetInstanceName,
                               DatasetProperties.EMPTY);
+  }
+
+  /**
+   * Deletes an instance of dataset.
+   *
+   * @param namespaceId namespace for the dataset
+   * @param datasetInstanceName instance name
+   */
+  protected void deleteDatasetInstance(NamespaceId namespaceId, String datasetInstanceName) throws Exception {
+    getTestManager().deleteDatasetInstance(namespaceId, datasetInstanceName);
   }
 
   /**

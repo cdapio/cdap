@@ -24,8 +24,8 @@ import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTableTest;
 import co.cask.cdap.proto.Id;
-import co.cask.tephra.TransactionAware;
-import co.cask.tephra.TransactionExecutor;
+import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionExecutor;
 import org.junit.ClassRule;
 
 import java.io.IOException;

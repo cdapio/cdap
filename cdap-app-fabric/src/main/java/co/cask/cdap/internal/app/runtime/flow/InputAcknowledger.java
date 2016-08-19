@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.internal.app.runtime.flow;
 
-import co.cask.tephra.TransactionFailureException;
+import org.apache.tephra.TransactionFailureException;
 
 /**
  * Interface to represent sending an ack on a input.

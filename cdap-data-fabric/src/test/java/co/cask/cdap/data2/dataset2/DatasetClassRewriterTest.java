@@ -17,6 +17,9 @@
 package co.cask.cdap.data2.dataset2;
 
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.annotation.ReadOnly;
+import co.cask.cdap.api.annotation.ReadWrite;
+import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.common.dataset.DatasetClassRewriter;
@@ -30,18 +33,22 @@ import co.cask.cdap.data2.dataset2.customds.TopLevelExtendsDataset;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.internal.asm.ByteCodeClassLoader;
 import co.cask.cdap.internal.asm.ClassDefinition;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;
 import org.objectweb.asm.Type;
 
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -55,6 +62,8 @@ import javax.annotation.Nullable;
  * data-fabric.
  */
 public class DatasetClassRewriterTest {
+
+  private static final DatasetId DATASET_ID = NamespaceId.DEFAULT.dataset("custom");
 
   @Test
   public void testDatasetAccessRecorder() throws Exception {
@@ -153,6 +162,58 @@ public class DatasetClassRewriterTest {
                                       new Object[] { new CustomDatasetApp()}));
   }
 
+  @Test
+  public void testConstructorDefaultAnnotation() throws Exception {
+    ByteCodeClassLoader classLoader = new ByteCodeClassLoader(getClass().getClassLoader());
+    classLoader.addClass(rewrite(TopLevelDirectDataset.class));
+
+    InMemoryAccessRecorder accessRecorder = new InMemoryAccessRecorder();
+    AuthorizationRecorder authorizationRecorder = new AuthorizationRecorder();
+
+    // Test constructor no default
+    createDataset(accessRecorder, authorizationRecorder, TopLevelDirectDataset.class.getName(), classLoader,
+                  new Class<?>[0], new Object[0], null);
+    Assert.assertEquals(ImmutableList.of(AccessType.UNKNOWN), accessRecorder.getLineageRecorded());
+    Assert.assertEquals(ImmutableList.of(AccessType.UNKNOWN), accessRecorder.getAuditRecorded());
+    Assert.assertEquals(1, authorizationRecorder.getPrivileges().size());
+    // Expects the enforcer still get called
+    Assert.assertNull(authorizationRecorder.getPrivileges().get(0));
+
+    accessRecorder.clear();
+    authorizationRecorder.clear();
+
+    // Test constructor default ReadOnly
+    createDataset(accessRecorder, authorizationRecorder, TopLevelDirectDataset.class.getName(), classLoader,
+                  new Class<?>[0], new Object[0], ReadOnly.class);
+    Assert.assertEquals(ImmutableList.of(AccessType.READ), accessRecorder.getLineageRecorded());
+    Assert.assertEquals(ImmutableList.of(AccessType.READ), accessRecorder.getAuditRecorded());
+    Assert.assertEquals(ImmutableList.of(new Privilege(DATASET_ID, Action.READ)),
+                        authorizationRecorder.getPrivileges());
+
+    accessRecorder.clear();
+    authorizationRecorder.clear();
+
+    // Test constructor default WriteOnly
+    createDataset(accessRecorder, authorizationRecorder, TopLevelDirectDataset.class.getName(), classLoader,
+                  new Class<?>[0], new Object[0], WriteOnly.class);
+    Assert.assertEquals(ImmutableList.of(AccessType.WRITE), accessRecorder.getLineageRecorded());
+    Assert.assertEquals(ImmutableList.of(AccessType.WRITE), accessRecorder.getAuditRecorded());
+    Assert.assertEquals(ImmutableList.of(new Privilege(DATASET_ID, Action.WRITE)),
+                        authorizationRecorder.getPrivileges());
+
+    accessRecorder.clear();
+    authorizationRecorder.clear();
+
+    // Test constructor default ReadWrite
+    createDataset(accessRecorder, authorizationRecorder, TopLevelDirectDataset.class.getName(), classLoader,
+                  new Class<?>[0], new Object[0], ReadWrite.class);
+    Assert.assertEquals(ImmutableList.of(AccessType.READ_WRITE), accessRecorder.getLineageRecorded());
+    Assert.assertEquals(ImmutableList.of(AccessType.READ_WRITE), accessRecorder.getAuditRecorded());
+    Assert.assertTrue(ImmutableSet.of(new Privilege(DATASET_ID, Action.READ),
+                                      new Privilege(DATASET_ID, Action.WRITE))
+                        .containsAll(authorizationRecorder.getPrivileges()));
+  }
+
   private <T extends Dataset & CustomOperations> T createDataset(InMemoryAccessRecorder accessRecorder,
                                                                  AuthorizationEnforcer authEnforcer,
                                                                  final String className,
@@ -166,10 +227,22 @@ public class DatasetClassRewriterTest {
                                                                  final ClassLoader classLoader,
                                                                  final Class<?>[] paramTypes,
                                                                  final Object[] constructorParams) throws Exception {
+    return createDataset(accessRecorder, authEnforcer, className, classLoader, paramTypes, constructorParams, null);
+  }
+
+  private <T extends Dataset & CustomOperations> T createDataset(InMemoryAccessRecorder accessRecorder,
+                                                                 AuthorizationEnforcer authEnforcer,
+                                                                 final String className,
+                                                                 final ClassLoader classLoader,
+                                                                 final Class<?>[] paramTypes,
+                                                                 final Object[] constructorParams,
+                                                                 @Nullable Class<? extends Annotation> defaultAnno)
+    throws Exception {
+
     return DefaultDatasetRuntimeContext.execute(authEnforcer,
                                                 accessRecorder,
                                                 new Principal("cdap", Principal.PrincipalType.USER),
-                                                NamespaceId.DEFAULT.dataset("custom"), new Callable<T>() {
+                                                DATASET_ID, defaultAnno, new Callable<T>() {
         @Override
         public T call() throws Exception {
           Class<?> cls = classLoader.loadClass(className);
@@ -338,6 +411,46 @@ public class DatasetClassRewriterTest {
           return true;
         }
       };
+    }
+  }
+
+  private static final class AuthorizationRecorder implements AuthorizationEnforcer {
+
+    private final List<Privilege> privileges = new ArrayList<>();
+
+    @Override
+    public void enforce(EntityId entity, Principal principal, Action action) throws Exception {
+      enforce(entity, principal, EnumSet.of(action));
+    }
+
+    @Override
+    public void enforce(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
+      if (actions.isEmpty()) {
+        // Put a null to the list so that we know this method has been called.
+        privileges.add(null);
+        return;
+      }
+      for (Action action : actions) {
+        privileges.add(new Privilege(entity, action));
+      }
+    }
+
+    @Override
+    public Predicate<EntityId> createFilter(Principal principal) throws Exception {
+      return new Predicate<EntityId>() {
+        @Override
+        public boolean apply(EntityId input) {
+          return true;
+        }
+      };
+    }
+
+    List<Privilege> getPrivileges() {
+      return privileges;
+    }
+
+    void clear() {
+      privileges.clear();
     }
   }
 

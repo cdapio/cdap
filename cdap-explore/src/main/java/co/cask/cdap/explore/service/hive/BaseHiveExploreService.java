@@ -51,8 +51,9 @@ import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.proto.TableNameInfo;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.tephra.Transaction;
-import co.cask.tephra.TransactionSystemClient;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -93,6 +94,8 @@ import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.SessionHandle;
 import org.apache.hive.service.cli.TableSchema;
 import org.apache.hive.service.cli.thrift.TColumnValue;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.thrift.TException;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
@@ -165,6 +168,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
   private final ExploreTableNaming tableNaming;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final AuthorizationEnforcementService authorizationEnforcementService;
+  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   private final ThreadLocal<Supplier<IMetaStoreClient>> metastoreClientLocal;
 
@@ -194,7 +200,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
                                    CConfiguration cConf, Configuration hConf,
                                    File previewsDir, StreamAdmin streamAdmin, NamespaceQueryAdmin namespaceQueryAdmin,
                                    SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
-                                   ExploreTableNaming tableNaming) {
+                                   ExploreTableNaming tableNaming,
+                                   AuthorizationEnforcementService authorizationEnforcementService,
+                                   AuthorizationEnforcer authorizationEnforcer,
+                                   AuthenticationContext authenticationContext) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.schedulerQueueResolver = new SchedulerQueueResolver(cConf, namespaceQueryAdmin);
@@ -230,7 +239,12 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.cliService = createCLIService();
 
     this.txClient = txClient;
-    ContextManager.saveContext(datasetFramework, streamAdmin, datasetInstantiatorFactory);
+    this.authenticationContext = authenticationContext;
+    this.authorizationEnforcementService = authorizationEnforcementService;
+    this.authorizationEnforcer = authorizationEnforcer;
+
+    ContextManager.saveContext(datasetFramework, streamAdmin, datasetInstantiatorFactory, authorizationEnforcer,
+                               authenticationContext);
 
     cleanupJobSchedule = cConf.getLong(Constants.Explore.CLEANUP_JOB_SCHEDULE_SECS);
 
@@ -315,6 +329,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       setupSparkConf();
     }
 
+    authorizationEnforcementService.startAndWait();
     cliService.init(hiveConf);
     cliService.start();
 
@@ -361,6 +376,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     scheduledExecutorService.awaitTermination(10, TimeUnit.SECONDS);
     scheduledExecutorService.shutdown();
 
+    authorizationEnforcementService.stopAndWait();
     metastoreClientsExecutorService.shutdownNow();
     // Go through all non-cleanup'ed clients and call close() upon them
     for (IMetaStoreClient client : metastoreClientReferences.values()) {

@@ -241,9 +241,16 @@ cdap_set_hive_classpath() {
         cdap_kinit || return 1
       fi
 
-      if [[ $(which hive 2>/dev/null) ]]; then
+      # Use ${HIVE_HOME} if set
+      if [ -n "${HIVE_HOME}" ]; then
+        HIVE_CMD=${HIVE_HOME}/bin/hive
+      else
+        HIVE_CMD=hive
+      fi
+
+      if [[ $(which ${HIVE_CMD} 2>/dev/null) ]]; then
         ERR_FILE=$(mktemp)
-        HIVE_VAR_OUT=$(hive -e 'set -v' 2>${ERR_FILE})
+        HIVE_VAR_OUT=$(${HIVE_CMD} -e 'set -v' 2>${ERR_FILE})
         __ret=$?
         HIVE_ERR_MSG=$(< ${ERR_FILE})
         rm ${ERR_FILE}

@@ -492,8 +492,8 @@
     <value>
       co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV1,
       co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV2,
-      co.cask.tephra.snapshot.SnapshotCodecV3,
-      co.cask.tephra.snapshot.SnapshotCodecV4
+      org.apache.tephra.snapshot.SnapshotCodecV3,
+      org.apache.tephra.snapshot.SnapshotCodecV4
     </value>
     <description>
       Specifies the class names of all supported transaction state codecs
@@ -1634,6 +1634,17 @@
   </property>
 
   <property>
+    <name>security.authorization.admin.users</name>
+    <value></value>
+    <description>
+      Determines a comma-separated list of users for whom admin privileges are granted on the CDAP instance
+      during CDAP startup, so these users can create namespaces and in-effect bootstrap CDAP on an authorization
+      enabled cluster. Defaults to empty, in which case no users have access to create namespaces. In this scenario, it
+      may be impossible to bootstrap CDAP, so it is recommended that at least one user be provided as the admin user.
+    </description>
+  </property>
+
+  <property>
     <name>security.authorization.cache.enabled</name>
     <value>true</value>
     <description>
@@ -1686,16 +1697,6 @@
       containing the extension code. This jar is only used when
       authorization is enabled by setting ${security.authorization.enabled}
       to true.
-    </description>
-  </property>
-
-  <property>
-    <name>security.authorization.extension.config.superusers</name>
-    <value>test</value>
-    <description>
-      Determines a comma-separated list of users for whom authorization is bypassed.
-      This is necessary for bootstrapping authorization in CDAP, hence it is required
-      that at least one super user be defined.
     </description>
   </property>
 

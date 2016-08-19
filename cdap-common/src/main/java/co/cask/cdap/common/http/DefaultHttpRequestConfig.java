@@ -28,9 +28,10 @@ import java.net.HttpURLConnection;
  */
 public class DefaultHttpRequestConfig extends HttpRequestConfig {
 
-  private static final int DEFAULT_TIMEOUT = 60000;
   private static final Logger LOG = LoggerFactory.getLogger(DefaultHttpRequestConfig.class);
   private static final String SYSTEM_PROPERTY_PREFIX = "cdap.";
+
+  public static final int DEFAULT_TIMEOUT = 60000;
 
   // System property names
   public static final String CONNECTION_TIMEOUT_PROPERTY_NAME =

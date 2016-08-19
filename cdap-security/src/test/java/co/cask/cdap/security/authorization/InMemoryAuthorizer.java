@@ -69,7 +69,7 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
     }
     // actions allowed for this principal
     Set<Action> allowed = getActions(entity, principal);
-    if (allowed.contains(Action.ALL) || allowed.containsAll(actions)) {
+    if (allowed.containsAll(actions)) {
       return;
     }
     Set<Action> allowedForRoles = new HashSet<>();
@@ -79,7 +79,7 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
         allowedForRoles.addAll(getActions(entity, role));
       }
     }
-    if (!(allowedForRoles.contains(Action.ALL) || allowedForRoles.containsAll(actions))) {
+    if (!allowedForRoles.containsAll(actions)) {
       throw new UnauthorizedException(principal, Sets.difference(actions, allowed), entity);
     }
   }

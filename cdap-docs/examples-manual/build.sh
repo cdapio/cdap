@@ -20,6 +20,7 @@
 # running it through sed to modify all image links to be relative to the build/_includes directory.
 # This modified README is included in the source RST files, and is used by Sphinx to build the HTML.
 
+source ../vars
 source ../_common/common-build.sh
 
 CHECK_INCLUDES=${TRUE}
@@ -104,8 +105,8 @@ function download_includes() {
   local project_test=$project_source/src/test/java/co/cask/cdap/apps/wise
   local project_img=$project_source/docs/img
 
-  # 1:Includes directory 2:GitHub directory 3:Java filename   4:MD5 hash of file
-  download_file $includes $project_main BounceCountsMapReduce.java 2f7baace8dd452825e8d47bb54b5e11e
+  # 1:Includes directory  2:GitHub directory 3:Java filename       4:MD5 hash of file
+  download_file $includes $project_main BounceCountsMapReduce.java 4474e5437a15d341572842613ba712bd
   download_file $includes $project_main BounceCountStore.java      d476c15655c6a6c6cd7fe682dea4a8b7
   download_file $includes $project_main PageViewStore.java         7dc8d2fec04ce89fae4f0356db17e19d
   download_file $includes $project_main WiseApp.java               23371436b588c3262fec14ec5d7aa6df
@@ -166,7 +167,7 @@ function download_includes() {
 
   test_an_include 3f25e035b2de8bd2d127733df1c58ff1 ../../cdap-examples/SparkKMeans/src/main/java/co/cask/cdap/examples/sparkkmeans/SparkKMeansApp.java
   
-  test_an_include 2d854c9e6b473a05617913040018dd36 ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
+  test_an_include 41def2cbfc75bc0156a10564cf4ed0ad ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
 
   test_an_include 1dff2aa10d09f384965e343be7f83f76 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/SportResults.java
   test_an_include c488b6ad3b5708977a8a913460e4e650 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java

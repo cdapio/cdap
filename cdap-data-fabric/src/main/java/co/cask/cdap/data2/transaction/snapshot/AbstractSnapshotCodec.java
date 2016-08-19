@@ -16,16 +16,16 @@
 
 package co.cask.cdap.data2.transaction.snapshot;
 
-import co.cask.tephra.ChangeId;
-import co.cask.tephra.TransactionManager;
-import co.cask.tephra.persist.TransactionSnapshot;
-import co.cask.tephra.persist.TransactionVisibilityState;
-import co.cask.tephra.snapshot.BinaryDecoder;
-import co.cask.tephra.snapshot.BinaryEncoder;
-import co.cask.tephra.snapshot.SnapshotCodec;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import org.apache.tephra.ChangeId;
+import org.apache.tephra.TransactionManager;
+import org.apache.tephra.persist.TransactionSnapshot;
+import org.apache.tephra.persist.TransactionVisibilityState;
+import org.apache.tephra.snapshot.BinaryDecoder;
+import org.apache.tephra.snapshot.BinaryEncoder;
+import org.apache.tephra.snapshot.SnapshotCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +40,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 /**
- * Handles serialization/deserialization of a {@link co.cask.tephra.persist.TransactionSnapshot} and
+ * Handles serialization/deserialization of a {@link org.apache.tephra.persist.TransactionSnapshot} and
  * its elements to {@code byte[]}.
  */
 public abstract class AbstractSnapshotCodec implements SnapshotCodec {

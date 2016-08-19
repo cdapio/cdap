@@ -27,10 +27,10 @@ import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.tephra.TransactionExecutor;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.tephra.TransactionExecutor;
 
 import java.util.Collection;
 import java.util.Collections;

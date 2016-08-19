@@ -18,7 +18,7 @@ package co.cask.cdap.api;
 
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.tephra.TransactionFailureException;
+import org.apache.tephra.TransactionFailureException;
 
 /**
  * An object that executes submitted {@link TxRunnable} tasks. Each task submitted will be executed inside

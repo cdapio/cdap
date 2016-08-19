@@ -16,8 +16,8 @@
 
 package co.cask.cdap.logging.save;
 
-import co.cask.tephra.TransactionExecutorFactory;
 import com.google.inject.Inject;
+import org.apache.tephra.TransactionExecutorFactory;
 
 /**
  * Creates {@link CheckpointManager}s.

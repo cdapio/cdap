@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.batch.dataset.output;
 
 import co.cask.cdap.app.metrics.MapReduceMetrics;
-import co.cask.cdap.app.verification.AbstractVerifier;
 import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.proto.id.EntityId;

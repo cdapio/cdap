@@ -176,14 +176,19 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
 
   override def saveAsDataset[K, V](rdd: JavaPairRDD[K, V], datasetName: String,
                                    arguments: util.Map[String, String]): Unit = {
+    saveAsDataset(rdd, getNamespace, datasetName, arguments)
+  }
+
+  override def saveAsDataset[K, V](rdd: JavaPairRDD[K, V], namespace: String, datasetName: String,
+                                   arguments: util.Map[String, String]): Unit = {
     // Create the implicit fake ClassTags to satisfy scala type system at compilation time.
     implicit val kTag: ClassTag[K] = createClassTag
     implicit val vTag: ClassTag[V] = createClassTag
-    sec.saveAsDataset(JavaPairRDD.toRDD(rdd), datasetName, arguments.toMap)
+    sec.saveAsDataset(JavaPairRDD.toRDD(rdd), namespace, datasetName, arguments.toMap)
   }
 
   @throws[IOException]
-  override def listSecureData(namespace: String): util.List[SecureStoreMetadata] = {
+  override def listSecureData(namespace: String): util.Map[String, String] = {
     return sec.getSecureStore.listSecureData(namespace)
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,7 @@ import co.cask.cdap.app.runtime.DummyProgramRunnerFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.data2.security.Impersonator;
+import co.cask.cdap.common.security.DefaultImpersonator;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.pipeline.NamespacedImpersonator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -39,6 +39,7 @@ import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import co.cask.cdap.security.spi.authorization.Authorizer;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.inject.Guice;
@@ -68,7 +69,7 @@ public class ConfiguratorTest {
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   private static CConfiguration conf;
-  private static AuthorizerInstantiator authorizerInstantiator;
+  private static Authorizer authorizer;
   private static AuthorizationEnforcer authEnforcer;
   private static AuthenticationContext authenticationContext;
 
@@ -80,8 +81,9 @@ public class ConfiguratorTest {
                                              new AuthorizationTestModule(),
                                              new AuthorizationEnforcementModule().getInMemoryModules(),
                                              new AuthenticationContextModules().getNoOpModule());
-    authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
+    authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
     authEnforcer = injector.getInstance(AuthorizationEnforcer.class);
+    authenticationContext = injector.getInstance(AuthenticationContext.class);
   }
 
   @Test
@@ -89,17 +91,17 @@ public class ConfiguratorTest {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, WordCountApp.class);
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, WordCountApp.class.getSimpleName(), "1.0.0");
-    ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, authorizerInstantiator,
+    CConfiguration cConf = CConfiguration.create();
+    ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, authorizer,
                                                              new DummyProgramRunnerFactory(),
-                                                             new Impersonator(CConfiguration.create(), null, null),
+                                                             new DefaultImpersonator(cConf, null, null),
                                                              authEnforcer, authenticationContext);
 
     // Create a configurator that is testable. Provide it a application.
     try (CloseableClassLoader artifactClassLoader =
-           artifactRepo.createArtifactClassLoader(appJar,
-                                                  new NamespacedImpersonator(artifactId.getNamespace().toEntityId(),
-                                                                             new Impersonator(CConfiguration.create(),
-                                                                                              null, null)))) {
+           artifactRepo.createArtifactClassLoader(
+             appJar, new NamespacedImpersonator(artifactId.getNamespace().toEntityId(),
+                                                new DefaultImpersonator(cConf, null, null)))) {
       Configurator configurator = new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId,
                                                            WordCountApp.class.getName(), artifactRepo,
                                                            artifactClassLoader, null, "");
@@ -122,18 +124,18 @@ public class ConfiguratorTest {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, ConfigTestApp.class);
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, ConfigTestApp.class.getSimpleName(), "1.0.0");
-    ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, authorizerInstantiator,
+    CConfiguration cConf = CConfiguration.create();
+    ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, authorizer,
                                                              new DummyProgramRunnerFactory(),
-                                                             new Impersonator(CConfiguration.create(), null, null),
+                                                             new DefaultImpersonator(cConf, null, null),
                                                              authEnforcer, authenticationContext);
 
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myStream", "myTable");
     // Create a configurator that is testable. Provide it a application.
     try (CloseableClassLoader artifactClassLoader =
-           artifactRepo.createArtifactClassLoader(appJar,
-                                                  new NamespacedImpersonator(artifactId.getNamespace().toEntityId(),
-                                                                             new Impersonator(CConfiguration.create(),
-                                                                                              null, null)))) {
+           artifactRepo.createArtifactClassLoader(
+             appJar, new NamespacedImpersonator(artifactId.getNamespace().toEntityId(),
+                                                new DefaultImpersonator(cConf, null, null)))) {
       Configurator configuratorWithConfig =
         new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId, ConfigTestApp.class.getName(),
                                  artifactRepo, artifactClassLoader, null, new Gson().toJson(config));

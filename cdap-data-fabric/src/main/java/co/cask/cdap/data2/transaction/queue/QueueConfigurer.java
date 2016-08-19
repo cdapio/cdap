@@ -17,7 +17,7 @@
 package co.cask.cdap.data2.transaction.queue;
 
 import co.cask.cdap.data2.queue.ConsumerGroupConfig;
-import co.cask.tephra.TransactionAware;
+import org.apache.tephra.TransactionAware;
 
 import java.io.Closeable;
 

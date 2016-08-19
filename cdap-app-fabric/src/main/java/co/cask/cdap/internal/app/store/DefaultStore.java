@@ -54,12 +54,9 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowStatistics;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.tephra.TransactionAware;
-import co.cask.tephra.TransactionExecutor;
-import co.cask.tephra.TransactionExecutorFactory;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -74,6 +71,10 @@ import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionExecutor;
+import org.apache.tephra.TransactionExecutorFactory;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -342,6 +343,17 @@ public class DefaultStore implements Store {
       @Override
       public Void apply(WorkflowDataset dataset) {
         dataset.write(id, run, programRunsList);
+        return null;
+      }
+    }, workflows.get());
+  }
+
+  @Override
+  public void deleteWorkflowStats(final ApplicationId id) {
+    workflowsTx.get().executeUnchecked(new TransactionExecutor.Function<WorkflowDataset, Void>() {
+      @Override
+      public Void apply(WorkflowDataset dataset) {
+        dataset.delete(id);
         return null;
       }
     }, workflows.get());

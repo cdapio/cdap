@@ -212,6 +212,9 @@ embedded FileSet becomes read-only. You can still add partitions for locations t
 external process. But dropping a partition will only delete the partition's metadata, whereas the actual file
 remains intact. Similarly, if you drop or truncate an external PartitionedFileSet, its files will not be deleted.
 
+In order to make the PartitionedFileSet explorable, additional properties are needed, as described
+in :ref:`exploring-partitionedfilesets`.
+
 Reading and Writing PartitionedFileSets
 =======================================
 
@@ -296,7 +299,8 @@ reads as input all partitions for the league given in its runtime arguments, and
 a partition with that league as the only key::
 
   @Override
-  public void beforeSubmit(MapReduceContext context) throws Exception {
+  public void initialize() throws Exception {
+    MapReduceContext context = getContext();
     ...
     String league = context.getRuntimeArguments().get("league");
 
@@ -316,10 +320,10 @@ a partition with that league as the only key::
     context.setOutput("totals", outputFileSet);
   }
 
-Here, the ``beforeSubmit()`` method of the MapReduce generates the runtime arguments for the
+Here, the ``initialize`` method of the MapReduce generates the runtime arguments for the
 partitioned file sets that specify the input partition filter and output partition key. This
 is convenient for starting the MapReduce, because only a single argument has to be given for
-the MapReduce run. If that code was not in the ``beforeSubmit()``, you could still achieve the
+the MapReduce run. If that code was not in the ``initialize()``, you could still achieve the
 same result by specifying the partition filter and key explicitly in the MapReduce runtime arguments.
 For example, give these arguments when starting the MapReduce through a RESTful call::
 
@@ -380,11 +384,13 @@ An easy way is to use the ``PartitionBatchInput``, an experimental feature intro
 Your MapReduce program is responsible for providing an implementation of ``DatasetStatePersistor`` to
 persist and then read back its state. In this example, the state is persisted to a row in a
 KeyValue Table, using the convenience class ``KVTableStatePersistor``; however, other types of
-Datasets can also be used. In the ``beforeSubmit()`` method of the MapReduce, specify the
+Datasets can also be used. In the ``initialize`` method of the MapReduce, specify the
 partitioned file set to be used as input as well as the ``DatasetStatePersistor`` to be used::
 
     @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
+    public void initialize() throws Exception {
+      MapReduceContext context = getContext();
+      ...
       partitionCommitter =
         PartitionBatchInput.setInput(context, DataCleansing.RAW_RECORDS,
                                      new KVTableStatePersistor(DataCleansing.CONSUMING_STATE, "state.key"));
@@ -404,7 +410,7 @@ This ensures that the next time the MapReduce job runs, it processes only the ne
     partitionCommitter.onFinish(succeeded);
   }
 
-Processing using other Programs
+Processing using Other Programs
 -------------------------------
 Partitions of a partitioned file set can also be incrementally processed from other program types
 using the generic ``PartitionConsumer`` APIs. The implementation of these APIs that can be used from multiple instances
@@ -459,6 +465,7 @@ It can then be used as::
   // return only partitions, to process up to 500MB of data
   partitions = consumer.consumePartitions(new SizeLimitingAcceptor(500));
 
+.. _exploring-partitionedfilesets:
 
 Exploring PartitionedFileSets
 =============================
@@ -478,10 +485,21 @@ A partitioned file set can be explored with ad-hoc queries if you enable it at c
       .setExploreSchema("date STRING, winner STRING, loser STRING, winnerpoints INT, loserpoints INT")
       .build());
 
+The essential part (to enable exploration) of the above sample are these lines::
+
+      . . .
+      // Properties for Explore (to create a partitioned Hive table)
+      .setEnableExploreOnCreate(true)
+      .setExploreFormat("csv")
+      .setExploreSchema("date STRING, winner STRING, loser STRING, winnerpoints INT, loserpoints INT")
+      . . .
+
 This results in the creation of an external table in Hive with the schema given in the
-``setExploreSchema()``. The supported format are ``text`` and ``csv``. Both mean that the
-format is text. For ``csv``, the field delimiter is a comma, whereas for ``text``, you can
-specify the field delimiter. For example, to use a colon as the field separator::
+``setExploreSchema()``. The supported formats (set by ``setExploreFormat()``) are ``csv``
+and ``text``. Both define that the format is text. For ``csv``, the field delimiter is a
+comma, whereas for ``text``, you can specify the field delimiter using ``setExploreFormatProperty()``.
+
+For example, to use a colon as the field separator::
 
       .setExploreFormat("text")
       .setExploreFormatProperty("delimiter", ":");
@@ -539,7 +557,7 @@ Using TimePartitionedFileSets in MapReduce
 
 Using time-partitioned file sets in MapReduce is similar to partitioned file sets; however, instead of
 setting an input partition filter and an output partition key, you configure an input time range and an
-output partition time in the ``beforeSubmit()`` of the MapReduce::
+output partition time in the ``initialize()`` of the MapReduce::
 
     TimePartitionedFileSetArguments.setInputStartTime(inputArgs, startTime);
     TimePartitionedFileSetArguments.setInputEndTime(inputArgs, endTime);

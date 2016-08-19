@@ -42,7 +42,6 @@ import co.cask.cdap.internal.app.runtime.DefaultTaskLocalizationContext
 import co.cask.cdap.proto.Id
 import co.cask.cdap.proto.id.StreamId
 import co.cask.cdap.proto.security.Action
-import co.cask.tephra.TransactionAware
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.LongWritable
 import org.apache.hadoop.mapreduce.MRJobConfig
@@ -51,6 +50,7 @@ import org.apache.spark.executor.{DataWriteMethod, OutputMetrics}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.scheduler._
 import org.apache.spark.{SparkContext, TaskContext}
+import org.apache.tephra.TransactionAware
 import org.apache.twill.api.RunId
 import org.slf4j.LoggerFactory
 
@@ -234,10 +234,15 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
 
   override def saveAsDataset[K: ClassTag, V: ClassTag](rdd: RDD[(K, V)], datasetName: String,
                                                        arguments: Map[String, String]): Unit = {
+    saveAsDataset(rdd, getNamespace, datasetName, arguments)
+  }
+
+  override def saveAsDataset[K: ClassTag, V: ClassTag](rdd: RDD[(K, V)], namespace: String, datasetName: String,
+                                                       arguments: Map[String, String]): Unit = {
     transactional.execute(new SparkTxRunnable {
       override def run(context: SparkDatasetContext) = {
         val sc = rdd.sparkContext
-        val dataset: Dataset = context.getDataset(datasetName, arguments, AccessType.WRITE)
+        val dataset: Dataset = context.getDataset(namespace, datasetName, arguments, AccessType.WRITE)
         val outputCommitter = dataset match {
           case outputCommitter: DatasetOutputCommitter => Some(outputCommitter)
           case _ => None
@@ -261,7 +266,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
 
             case batchWritable: BatchWritable[K, V] =>
               val txServiceBaseURI = getTxServiceBaseURI(sc, sparkTxService.getBaseURI)
-              sc.runJob(rdd, createBatchWritableFunc(datasetName, arguments, txServiceBaseURI))
+              sc.runJob(rdd, createBatchWritableFunc(namespace, datasetName, arguments, txServiceBaseURI))
 
             case _ =>
               throw new IllegalArgumentException("Dataset is neither a OutputFormatProvider nor a BatchWritable")
@@ -277,7 +282,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
   }
 
   @throws[IOException]
-  def list(namespace: String): util.List[SecureStoreMetadata] = {
+  def list(namespace: String): util.Map[String, String] = {
     return runtimeContext.listSecureData(namespace)
   }
 
@@ -379,7 +384,8 @@ object DefaultSparkExecutionContext {
     * will be executed in executor nodes.
     */
   private def createBatchWritableFunc[K, V]
-      (datasetName: String,
+      (namespace: String,
+       datasetName: String,
        arguments: Map[String, String],
        txServiceBaseURI: Broadcast[URI]) = (context: TaskContext, itor: Iterator[(K, V)]) => {
 
@@ -388,7 +394,7 @@ object DefaultSparkExecutionContext {
 
     val sparkTxClient = new SparkTransactionClient(txServiceBaseURI.value)
     val datasetCache = SparkRuntimeContextProvider.get().getDatasetCache
-    val dataset: Dataset = datasetCache.getDataset(datasetName, arguments, true, AccessType.WRITE)
+    val dataset: Dataset = datasetCache.getDataset(namespace, datasetName, arguments, true, AccessType.WRITE)
 
     try {
       // Creates an Option[TransactionAware] if the dataset is a TransactionAware

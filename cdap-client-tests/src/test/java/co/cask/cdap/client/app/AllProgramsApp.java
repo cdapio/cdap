@@ -31,9 +31,13 @@ import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
@@ -80,6 +84,10 @@ public class AllProgramsApp extends AbstractApplication {
   public static final String DATASET_NAME = "kvt";
   public static final String DATASET_NAME2 = "kvt2";
   public static final String DATASET_NAME3 = "kvt3";
+  public static final String DATASET_NAME4 = "fileSet";
+  public static final String DATASET_NAME5 = "partitionedFileSet";
+  public static final String DATASET_NAME6 = "fileSetNotExplorable";
+  public static final String DATASET_NAME7 = "partitionedFileSetNotExplorable";
   public static final String PLUGIN_DESCRIPTION = "test plugin";
   public static final String PLUGIN_NAME = "mytestplugin";
   public static final String PLUGIN_TYPE = "testplugin";
@@ -96,6 +104,36 @@ public class AllProgramsApp extends AbstractApplication {
                   DatasetProperties.builder().setDescription("test dataset").build());
     createDataset(DATASET_NAME2, KeyValueTable.class);
     createDataset(DATASET_NAME3, KeyValueTable.class);
+    createDataset(DATASET_NAME4, FileSet.class,
+                  FileSetProperties.builder()
+                    .setEnableExploreOnCreate(true)
+                    .setExploreFormat("text")
+                    .setExploreFormatProperty("delimiter", "\n")
+                    .setExploreSchema("record STRING")
+                    .setDescription("fileSet")
+                    .build());
+    createDataset(DATASET_NAME5, PartitionedFileSet.class,
+                  PartitionedFileSetProperties.builder()
+                    .setEnableExploreOnCreate(true)
+                    .setExploreFormat("text")
+                    .setExploreFormatProperty("delimiter", "\n")
+                    .setExploreSchema("record STRING")
+                    .setDescription("partitonedFileSet")
+                    .add("partitioning.fields.", "field1")
+                    .add("partitioning.field.field1", "STRING")
+                    .build());
+    createDataset(DATASET_NAME6, FileSet.class,
+                  FileSetProperties.builder()
+                    .setEnableExploreOnCreate(false)
+                    .setDescription("fileSet")
+                    .build());
+    createDataset(DATASET_NAME7, PartitionedFileSet.class,
+                  PartitionedFileSetProperties.builder()
+                    .setEnableExploreOnCreate(false)
+                    .setDescription("partitonedFileSet")
+                    .add("partitioning.fields.", "field1")
+                    .add("partitioning.field.field1", "STRING")
+                    .build());
     addFlow(new NoOpFlow());
     addMapReduce(new NoOpMR());
     addMapReduce(new NoOpMR2());

@@ -10,13 +10,13 @@
  */
  
 var manuals = {
-  {% for manual in theme_manuals -%}
+  {% for manual in theme_manual_dirs -%}
       "{{ manual }}":"{{ theme_manual_titles[loop.index0] }}"{% if not loop.last -%},{%- endif %}
   {%- endfor %} 
 };
 
 var manualsArray = new Array(
-  {% for manual in theme_manuals -%}
+  {% for manual in theme_manual_dirs -%}
       "{{ manual }}"{% if not loop.last -%},{%- endif %}
   {%- endfor %} 
 );

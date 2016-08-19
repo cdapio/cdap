@@ -27,6 +27,8 @@ import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
+import co.cask.cdap.common.security.UGIProvider;
+import co.cask.cdap.common.security.UnsupportedUGIProvider;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -42,8 +44,6 @@ import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.security.UGIProvider;
-import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
@@ -52,6 +52,7 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
@@ -66,14 +67,12 @@ import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.http.HttpHandler;
-import co.cask.tephra.TransactionManager;
-import co.cask.tephra.TxConstants;
-import co.cask.tephra.persist.LocalFileTransactionStateStorage;
-import co.cask.tephra.persist.TransactionStateStorage;
-import co.cask.tephra.runtime.TransactionStateStorageProvider;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -90,6 +89,14 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.TransactionManager;
+import org.apache.tephra.TxConstants;
+import org.apache.tephra.persist.LocalFileTransactionStateStorage;
+import org.apache.tephra.persist.TransactionStateStorage;
+import org.apache.tephra.runtime.TransactionStateStorageProvider;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -149,6 +156,7 @@ public class BaseHiveExploreServiceTest {
   private static StreamAdmin streamAdmin;
   private static StreamMetaStore streamMetaStore;
   private static NamespacedLocationFactory namespacedLocationFactory;
+  private static AuthorizationEnforcementService authorizationEnforcementService;
 
   protected static Injector injector;
 
@@ -157,19 +165,34 @@ public class BaseHiveExploreServiceTest {
   }
 
   protected static void initialize(CConfiguration cConf, TemporaryFolder tmpFolder) throws Exception {
-    initialize(cConf, tmpFolder, false);
+    initialize(cConf, tmpFolder, false, false);
   }
 
-  protected static void initialize(CConfiguration cConf, TemporaryFolder tmpFolder, boolean useStandalone)
+  protected static void initialize(CConfiguration cConf, TemporaryFolder tmpFolder, boolean useStandalone,
+                                   boolean enableAuthorization)
     throws Exception {
     if (!runBefore) {
       return;
     }
 
     Configuration hConf = new Configuration();
+    if (enableAuthorization) {
+      LocationFactory locationFactory = new LocalLocationFactory(tmpFolder.newFolder());
+      Location authExtensionJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class);
+      cConf.setBoolean(Constants.Security.ENABLED, true);
+      cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
+      cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, authExtensionJar.toURI().getPath());
+      cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
+      cConf.setBoolean(Constants.Security.Authorization.CACHE_ENABLED, false);
+    }
     List<Module> modules = useStandalone ? createStandaloneModules(cConf, hConf, tmpFolder)
       : createInMemoryModules(cConf, hConf, tmpFolder);
     injector = Guice.createInjector(modules);
+    authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
+    if (enableAuthorization) {
+      injector.getInstance(AuthorizationBootstrapper.class).run();
+      authorizationEnforcementService.startAndWait();
+    }
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
 
@@ -230,6 +253,7 @@ public class BaseHiveExploreServiceTest {
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     transactionManager.stopAndWait();
+    authorizationEnforcementService.stopAndWait();
   }
 
 

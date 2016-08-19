@@ -18,14 +18,13 @@ package co.cask.cdap.etl.spark.batch;
 
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.streaming.Windower;
-import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPairCollection;
+import co.cask.cdap.etl.spark.function.CountingFunction;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -85,16 +84,12 @@ public class RDDCollection<T> implements SparkCollection<T> {
   public <U> SparkCollection<U> compute(String stageName, SparkCompute<T, U> compute) throws Exception {
     SparkExecutionPluginContext sparkPluginContext =
       new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, stageName);
+    compute.initialize(sparkPluginContext);
 
-    // TODO:(Hydra-364) figure out how to do this in a better way...
-    long recordsIn = rdd.cache().count();
-    StageMetrics stageMetrics = new DefaultStageMetrics(sec.getMetrics(), stageName);
-    stageMetrics.gauge("records.in", recordsIn);
+    JavaRDD<T> countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in")).cache();
 
-    JavaRDD<U> computedRDD = compute.transform(sparkPluginContext, rdd).cache();
-    long recordsOut = computedRDD.count();
-    stageMetrics.gauge("records.out", recordsOut);
-    return wrap(computedRDD);
+    return wrap(compute.transform(sparkPluginContext, countedInput)
+                  .map(new CountingFunction<U>(stageName, sec.getMetrics(), "records.out")));
   }
 
   @Override
@@ -108,16 +103,12 @@ public class RDDCollection<T> implements SparkCollection<T> {
     SparkExecutionPluginContext sparkPluginContext =
       new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, stageName);
 
-    // TODO:(Hydra-364) figure out how to do this in a better way...
-    long recordsIn = rdd.cache().count();
-    StageMetrics stageMetrics = new DefaultStageMetrics(sec.getMetrics(), stageName);
-    stageMetrics.gauge("records.in", recordsIn);
-
-    sink.run(sparkPluginContext, rdd);
+    JavaRDD<T> countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in")).cache();
+    sink.run(sparkPluginContext, countedRDD);
   }
 
   @Override
-  public SparkCollection<T> window(Windower windower) {
+  public SparkCollection<T> window(String stageName, Windower windower) {
     throw new UnsupportedOperationException("Windowing is not supported on RDDs.");
   }
 

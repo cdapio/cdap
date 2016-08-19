@@ -59,7 +59,7 @@
     <a role="menuitem" tabindex="-1" href=""
       ng-click="caskConfirm()"
       cask-confirmable="removeDashboard()"
-      data-confirmable-content="Are you sure you want to delete this dashboard?"
+      data-confirmable-content="Are you sure you want to delete the dashboard '<strong>{{dashboards[dashboards.activeIndex].title}}</strong>'?"
     >
       <span class="fa fa-fw fa-trash pull-right"></span>
       Delete

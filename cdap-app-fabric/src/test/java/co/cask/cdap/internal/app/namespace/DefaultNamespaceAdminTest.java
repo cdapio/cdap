@@ -164,6 +164,24 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
       //expected
     }
 
+    // updating the principal for an existing namespace should fail
+    try {
+      namespaceAdmin.updateProperties(nsMeta.getNamespaceId().toId(),
+                                      new NamespaceMeta.Builder(nsMeta).setPrincipal("newPrincipal").build());
+      Assert.fail();
+    } catch (BadRequestException e) {
+      // expected
+    }
+
+    // updating the keytabURI for an existing namespace should fail
+    try {
+      namespaceAdmin.updateProperties(nsMeta.getNamespaceId().toId(),
+                                      new NamespaceMeta.Builder(nsMeta).setKeytabURI("/new/keytab/uri").build());
+      Assert.fail();
+    } catch (BadRequestException e) {
+      // expected
+    }
+
     //clean up
     namespaceAdmin.delete(namespaceId);
     Locations.deleteQuietly(customlocation);
@@ -220,8 +238,8 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     try {
       namespaceAdmin.create(namespaceMeta);
       Assert.fail(String.format("Namespace '%s' should not have been created", namespaceMeta.getName()));
-    } catch (NamespaceAlreadyExistsException e) {
-      Assert.assertEquals(existingNamespace, e.getId());
+    } catch (BadRequestException e) {
+      Assert.assertTrue(e.getMessage().contains(existingNamespace.getId()));
     }
   }
 

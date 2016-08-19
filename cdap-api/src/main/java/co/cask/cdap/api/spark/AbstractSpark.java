@@ -16,9 +16,13 @@
 
 package co.cask.cdap.api.spark;
 
+import co.cask.cdap.api.ProgramLifecycle;
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.internal.api.AbstractPluginConfigurable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -26,9 +30,12 @@ import java.util.Map;
  * This abstract class provides a default implementation of {@link Spark} methods for easy extension.
  */
 @Beta
-public abstract class AbstractSpark extends AbstractPluginConfigurable<SparkConfigurer> implements Spark {
+public abstract class AbstractSpark extends AbstractPluginConfigurable<SparkConfigurer>
+  implements Spark, ProgramLifecycle<SparkClientContext> {
 
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractSpark.class);
   private SparkConfigurer configurer;
+  private SparkClientContext context;
 
   @Override
   public final void configure(SparkConfigurer configurer) {
@@ -110,12 +117,48 @@ public abstract class AbstractSpark extends AbstractPluginConfigurable<SparkConf
   }
 
   @Override
+  @Deprecated
   public void beforeSubmit(SparkClientContext context) throws Exception {
     // Do nothing by default
   }
 
   @Override
+  @Deprecated
   public void onFinish(boolean succeeded, SparkClientContext context) throws Exception {
     // Do nothing by default
   }
+
+  @Override
+  public final void initialize(SparkClientContext context) throws Exception {
+    this.context = context;
+    initialize();
+  }
+
+  /**
+   * Classes derived from {@link AbstractSpark} can override this method to initialize the {@link Spark}.
+   * {@link SparkClientContext} will be available in this method using {@link AbstractSpark#getContext}.
+   * Default implementation of this method calls the deprecated {@link AbstractSpark#beforeSubmit} method.
+   * @throws Exception if there is any error in initializing the Spark
+   */
+  protected void initialize() throws Exception {
+    beforeSubmit(context);
+  }
+
+
+  @Override
+  public void destroy() {
+    try {
+      onFinish(context.getState().getStatus() == ProgramStatus.COMPLETED, context);
+    } catch (Throwable t) {
+      LOG.warn("Error executing the onFinish method of the Spark program {}",
+               context.getSpecification().getName(), t);
+    }
+  }
+
+  /**
+   * Return an instance of the {@link SparkClientContext}.
+   */
+   protected final SparkClientContext getContext() {
+     return context;
+   }
 }

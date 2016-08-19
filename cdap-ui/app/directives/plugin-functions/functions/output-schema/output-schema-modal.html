@@ -15,10 +15,12 @@
 -->
 
 <div class="modal-header clearfix">
-  <h3 class="modal-title">
-    <span>Output schema:</span>
-    <span class="fa fa-times pull-right" ng-click="$dismiss()"></span>
-  </h3>
+  <h3 class="modal-title pull-left">Output schema</h3>
+  <div class="btn-group pull-right">
+    <a class="btn" ng-click="$dismiss()">
+      <span class="fa fa-times"></span>
+    </a>
+  </div>
 </div>
 
 <div class="modal-body">
@@ -28,22 +30,11 @@
 
   <div class="row">
     <div class="col-xs-12">
-      <table class="table" ng-if="GetSchemaModalController.schema && !GetSchemaModalController.error">
-        <thead>
-          <th>Name</th>
-          <th>Type</th>
-          <th class="text-center">Null</th>
-        </thead>
-        <tbody>
-          <tr ng-repeat="field in GetSchemaModalController.schema">
-            <td>{{ field.name }}</td>
-            <td>{{ field.type }}</td>
-            <td class="text-center nullable">
-              <input type="checkbox" ng-model="field.nullable" disabled>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <my-complex-schema
+        ng-model="GetSchemaModalController.schema"
+        is-disabled="true"
+        ng-if="GetSchemaModalController.schema && !GetSchemaModalController.error">
+      </my-complex-schema>
 
       <p class="text-danger" ng-if="GetSchemaModalController.error">
         Error: {{ GetSchemaModalController.error }}

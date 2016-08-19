@@ -755,6 +755,41 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   }
 
   @Test
+  public void testExploreSystemTags() throws Exception {
+    appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(AllProgramsApp.class));
+    
+    // verify fileSet is explorable
+    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME4);
+    Set<String> dsSystemTags = getTags(datasetInstance, MetadataScope.SYSTEM);
+    Assert.assertEquals(
+      ImmutableSet.of(AllProgramsApp.DATASET_NAME4,
+                      DatasetSystemMetadataWriter.BATCH_TAG,
+                      DatasetSystemMetadataWriter.EXPLORE_TAG),
+      dsSystemTags);
+
+    //verify partitionedFileSet is explorable
+    Id.DatasetInstance datasetInstance2 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME5);
+    Set<String> dsSystemTags2 = getTags(datasetInstance2, MetadataScope.SYSTEM);
+    Assert.assertEquals(
+      ImmutableSet.of(AllProgramsApp.DATASET_NAME5,
+                        DatasetSystemMetadataWriter.BATCH_TAG,
+                        DatasetSystemMetadataWriter.EXPLORE_TAG),
+      dsSystemTags2);
+
+    //verify that fileSet that isn't set to explorable does not have explore tag
+    Id.DatasetInstance datasetInstance3 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME6);
+    Set<String> dsSystemTags3 = getTags(datasetInstance3, MetadataScope.SYSTEM);
+    Assert.assertFalse(dsSystemTags3.contains(DatasetSystemMetadataWriter.EXPLORE_TAG));
+    Assert.assertTrue(dsSystemTags3.contains(DatasetSystemMetadataWriter.BATCH_TAG));
+
+    //verify that partitioned fileSet that isn't set to explorable does not have explore tag
+    Id.DatasetInstance datasetInstance4 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME7);
+    Set<String> dsSystemTags4 = getTags(datasetInstance4, MetadataScope.SYSTEM);
+    Assert.assertFalse(dsSystemTags4.contains(DatasetSystemMetadataWriter.EXPLORE_TAG));
+    Assert.assertTrue(dsSystemTags4.contains(DatasetSystemMetadataWriter.BATCH_TAG));
+  }
+
+  @Test
   public void testSearchUsingSystemMetadata() throws Exception {
     appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(AllProgramsApp.class));
     Id.Application app = Id.Application.from(Id.Namespace.DEFAULT, AllProgramsApp.NAME);
@@ -1205,6 +1240,10 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
         new MetadataSearchResultRecord(Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME)),
         new MetadataSearchResultRecord(Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME2)),
         new MetadataSearchResultRecord(Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME3)),
+        new MetadataSearchResultRecord(Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME4)),
+        new MetadataSearchResultRecord(Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME5)),
+        new MetadataSearchResultRecord(Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME6)),
+        new MetadataSearchResultRecord(Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME7)),
         new MetadataSearchResultRecord(
           Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DS_WITH_SCHEMA_NAME)),
         new MetadataSearchResultRecord(myds)
@@ -1281,6 +1320,10 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME);
     Id.DatasetInstance datasetInstance2 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME2);
     Id.DatasetInstance datasetInstance3 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME3);
+    Id.DatasetInstance datasetInstance4 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME4);
+    Id.DatasetInstance datasetInstance5 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME5);
+    Id.DatasetInstance datasetInstance6 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME6);
+    Id.DatasetInstance datasetInstance7 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME7);
     Id.DatasetInstance dsWithSchema = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DS_WITH_SCHEMA_NAME);
     Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, AllProgramsApp.STREAM_NAME);
     Id.Stream.View view = Id.Stream.View.from(streamId, "view");
@@ -1342,12 +1385,21 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       new MetadataSearchResultRecord(datasetInstance), new MetadataSearchResultRecord(datasetInstance2),
       new MetadataSearchResultRecord(datasetInstance3), new MetadataSearchResultRecord(myds)
     );
-    ImmutableSet<MetadataSearchResultRecord> expectedAllDatasets = ImmutableSet.<MetadataSearchResultRecord>builder()
+
+    ImmutableSet<MetadataSearchResultRecord> expectedExplorableDatasets =
+      ImmutableSet.<MetadataSearchResultRecord>builder()
       .addAll(expectedKvTables)
+      .add(new MetadataSearchResultRecord(datasetInstance4))
+      .add(new MetadataSearchResultRecord(datasetInstance5))
       .add(new MetadataSearchResultRecord(dsWithSchema))
       .build();
+    ImmutableSet<MetadataSearchResultRecord> expectedAllDatasets = ImmutableSet.<MetadataSearchResultRecord>builder()
+      .addAll(expectedExplorableDatasets)
+      .add(new MetadataSearchResultRecord(datasetInstance6))
+      .add(new MetadataSearchResultRecord(datasetInstance7))
+      .build();
     metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "explore");
-    Assert.assertEquals(expectedAllDatasets, metadataSearchResultRecords);
+    Assert.assertEquals(expectedExplorableDatasets, metadataSearchResultRecords);
     metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, KeyValueTable.class.getName());
     Assert.assertEquals(expectedKvTables, metadataSearchResultRecords);
     metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "type:*");

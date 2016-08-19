@@ -16,15 +16,21 @@
 
 package co.cask.cdap.test.app;
 
+import co.cask.cdap.api.ProgramState;
+import co.cask.cdap.api.ProgramStatus;
+import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.Workflow;
+import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Application to test the status of the {@link Workflow}.
@@ -56,8 +62,17 @@ public class WorkflowStatusTestApp extends AbstractApplication {
 
     @Override
     public void destroy() {
-      if (getContext().isSuccessful()) {
+      ProgramStatus status = getContext().getState().getStatus();
+      if (status == ProgramStatus.COMPLETED) {
         File successFile = new File(getContext().getRuntimeArguments().get("workflow.success.file"));
+        try {
+          successFile.createNewFile();
+        } catch (IOException e) {
+          LOG.error("Error occurred while creating file {}", successFile.getAbsolutePath(), e);
+        }
+      }
+      if (status == ProgramStatus.KILLED) {
+        File successFile = new File(getContext().getRuntimeArguments().get("workflow.killed.file"));
         try {
           successFile.createNewFile();
         } catch (IOException e) {
@@ -78,11 +93,29 @@ public class WorkflowStatusTestApp extends AbstractApplication {
       if (getContext().getRuntimeArguments().containsKey("throw.exception")) {
         throw new RuntimeException("Exception is thrown");
       }
+      Map<String, String> runtimeArguments = getContext().getRuntimeArguments();
+      if (runtimeArguments.containsKey("test.killed")) {
+        File firstFile = new File(runtimeArguments.get("first.file"));
+        try {
+          firstFile.createNewFile();
+        } catch (IOException e) {
+          LOG.error("Error occurred while creating file {}", firstFile.getAbsolutePath(), e);
+        }
+        File firstFileDone = new File(runtimeArguments.get("first.done.file"));
+        try {
+          while (!firstFileDone.exists()) {
+            TimeUnit.MILLISECONDS.sleep(50);
+          }
+        } catch (InterruptedException e) {
+          LOG.warn("Interrupted while waiting for done file {}", firstFileDone);
+          throw Throwables.propagate(e);
+        }
+      }
     }
 
     @Override
     public void destroy() {
-      if (getContext().isSuccessful()) {
+        if (getContext().getState().getStatus() == ProgramStatus.COMPLETED) {
         File successFile = new File(getContext().getRuntimeArguments().get("action.success.file"));
         try {
           successFile.createNewFile();

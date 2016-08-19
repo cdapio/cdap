@@ -17,7 +17,9 @@
 package co.cask.cdap.security.authorization;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.Service;
 
 /**
@@ -26,4 +28,8 @@ import com.google.common.util.concurrent.Service;
  * A thread refreshes the cached policies periodically.
  */
 public interface AuthorizationEnforcementService extends Service, AuthorizationEnforcer {
+  /**
+   * Invalidates cached privileges of all principals that satisfy the specified {@link Predicate}.
+   */
+  void invalidate(Predicate<Principal> predicate);
 }

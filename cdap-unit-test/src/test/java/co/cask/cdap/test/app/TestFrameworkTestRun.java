@@ -50,7 +50,6 @@ import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
@@ -79,7 +78,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -101,6 +99,7 @@ import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -446,29 +445,30 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Category(SlowTests.class)
   @Test
   public void testCrossNSMapperDatasetAccess() throws Exception {
-    getNamespaceAdmin().create(new NamespaceMeta.Builder()
-                                 .setName(DatasetCrossNSAccessWithMAPApp.DATASET_INPUT_SPACE).build());
-    getNamespaceAdmin().create(new NamespaceMeta.Builder()
-                                 .setName(DatasetCrossNSAccessWithMAPApp.DATASET_OUTPUT_SPACE).build());
-    NamespaceId datasetInputSpace = new NamespaceId(DatasetCrossNSAccessWithMAPApp.DATASET_INPUT_SPACE);
-    NamespaceId datasetOutputSpace = new NamespaceId(DatasetCrossNSAccessWithMAPApp.DATASET_OUTPUT_SPACE);
+    NamespaceMeta inputNS = new NamespaceMeta.Builder().setName("inputNS").build();
+    NamespaceMeta outputNS = new NamespaceMeta.Builder().setName("outputNS").build();
+    getNamespaceAdmin().create(inputNS);
+    getNamespaceAdmin().create(outputNS);
 
-    addDatasetInstance(datasetInputSpace.toId(), "keyValueTable", "table1").create();
-    addDatasetInstance(datasetOutputSpace.toId(), "keyValueTable", "table2").create();
-    DataSetManager<KeyValueTable> tableManager = getDataset(datasetInputSpace.toId(), "table1");
+    addDatasetInstance(inputNS.getNamespaceId().toId(), "keyValueTable", "table1").create();
+    addDatasetInstance(outputNS.getNamespaceId().toId(), "keyValueTable", "table2").create();
+    DataSetManager<KeyValueTable> tableManager = getDataset(inputNS.getNamespaceId().toId(), "table1");
     KeyValueTable inputTable = tableManager.get();
     inputTable.write("hello", "world");
     tableManager.flush();
 
     ApplicationManager appManager = deployApplication(DatasetCrossNSAccessWithMAPApp.class);
-    Map<String, String> argsForMR = ImmutableMap.of(DatasetCrossNSAccessWithMAPApp.INPUT_KEY, "table1",
-                                                    DatasetCrossNSAccessWithMAPApp.OUTPUT_KEY, "table2");
+    Map<String, String> argsForMR = ImmutableMap.of(
+      DatasetCrossNSAccessWithMAPApp.INPUT_DATASET_NS, inputNS.getName(),
+      DatasetCrossNSAccessWithMAPApp.INPUT_DATASET_NAME, "table1",
+      DatasetCrossNSAccessWithMAPApp.OUTPUT_DATASET_NS, outputNS.getName(),
+      DatasetCrossNSAccessWithMAPApp.OUTPUT_DATASET_NAME, "table2");
     MapReduceManager mrManager = appManager.getMapReduceManager(DatasetCrossNSAccessWithMAPApp.MAPREDUCE_PROGRAM)
       .start(argsForMR);
     mrManager.waitForFinish(5, TimeUnit.MINUTES);
     appManager.stopAll();
 
-    DataSetManager<KeyValueTable> outTableManager = getDataset(datasetOutputSpace.toId(), "table2");
+    DataSetManager<KeyValueTable> outTableManager = getDataset(outputNS.getNamespaceId().toId(), "table2");
     verifyMapperJobOutput(DatasetCrossNSAccessWithMAPApp.class, outTableManager);
   }
 
@@ -519,6 +519,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     File workflowSuccess = new File(TMP_FOLDER.newFolder() + "/workflow.success");
     File actionSuccess = new File(TMP_FOLDER.newFolder() + "/action.success");
+    File workflowKilled = new File(TMP_FOLDER.newFolder() + "/workflow.killed");
+    File firstFile = new File(TMP_FOLDER.newFolder() + "/first");
+    File firstFileDone = new File(TMP_FOLDER.newFolder() + "/first.done");
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(WorkflowStatusTestApp.WORKFLOW_NAME);
     workflowManager.start(ImmutableMap.of("workflow.success.file", workflowSuccess.getAbsolutePath(),
@@ -533,9 +536,18 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     workflowManager.start(ImmutableMap.of("workflow.success.file", workflowSuccess.getAbsolutePath(),
                                           "action.success.file", actionSuccess.getAbsolutePath()));
     workflowManager.waitForFinish(1, TimeUnit.MINUTES);
-
     Assert.assertTrue(workflowSuccess.exists());
     Assert.assertTrue(actionSuccess.exists());
+
+    // Test the killed status
+    workflowManager.start(ImmutableMap.of("workflow.killed.file", workflowKilled.getAbsolutePath(),
+                                          "first.file", firstFile.getAbsolutePath(),
+                                          "first.done.file", firstFileDone.getAbsolutePath(),
+                                          "test.killed", "true"));
+    verifyFileExists(Lists.newArrayList(firstFile));
+    workflowManager.stop();
+    workflowManager.waitForStatus(false);
+    Assert.assertTrue(workflowKilled.exists());
   }
 
   @Category(SlowTests.class)
@@ -597,6 +609,21 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     for (RunRecord record : history) {
       Assert.assertEquals(ProgramRunStatus.COMPLETED, record.getStatus());
     }
+  }
+
+  private void verifyFileExists(final List<File> fileList)
+    throws Exception {
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        for (File file : fileList) {
+          if (!file.exists()) {
+            return false;
+          }
+        }
+        return true;
+      }
+    }, 100, TimeUnit.SECONDS);
   }
 
   private void verifyWorkflowRun(String runId, boolean shouldKeepWordCountDataset, boolean shouldKeepCSVFilesetDataset,
@@ -1065,8 +1092,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     DataSetManager<KeyValueTable> datasetManager =
       getDataset(testSpace, AppUsingGetServiceURL.WORKER_INSTANCES_DATASET);
     KeyValueTable instancesTable = datasetManager.get();
-    CloseableIterator<KeyValue<byte[], byte[]>> instancesIterator = instancesTable.scan(startRow, endRow);
-    try {
+    try (CloseableIterator<KeyValue<byte[], byte[]>> instancesIterator = instancesTable.scan(startRow, endRow)) {
       List<KeyValue<byte[], byte[]>> workerInstances = Lists.newArrayList(instancesIterator);
       // Assert that the worker starts with expectedCount instances
       Assert.assertEquals(expectedCount, workerInstances.size());
@@ -1074,8 +1100,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       for (KeyValue<byte[], byte[]> keyValue : workerInstances) {
         Assert.assertEquals(expectedTotalCount, Bytes.toInt(keyValue.getValue()));
       }
-    } finally {
-      instancesIterator.close();
     }
   }
 
@@ -1372,6 +1396,33 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(0L, batchSinkMetrics.getException());
 
     Assert.assertEquals(1L, genMetrics.getException());
+  }
+
+  @Category(SlowTests.class)
+  @Test
+  public void testDynamicBatchSize() throws Exception {
+    ApplicationManager applicationManager = deployApplication(testSpace, GenSinkApp2.class);
+
+    DataSetManager<KeyValueTable> table = getDataset(testSpace, "table");
+
+    // Start the flow with runtime argument. It should set the batch size to 1.
+    FlowManager flowManager = applicationManager.getFlowManager("GenSinkFlow").start(Collections.singletonMap(
+      "flowlet.BatchSinkFlowlet.batch.size", "1"
+    ));
+
+    RuntimeMetrics batchSinkMetrics = flowManager.getFlowletMetrics("BatchSinkFlowlet");
+
+    // Batch sink only get the 99 batch events
+    batchSinkMetrics.waitForProcessed(99, 5, TimeUnit.SECONDS);
+    flowManager.stop();
+    flowManager.waitForFinish(10, TimeUnit.SECONDS);
+
+    try (CloseableIterator<KeyValue<byte[], byte[]>> itor = table.get().scan(null, null)) {
+      // Should only see batch size of 1.
+      while (itor.hasNext()) {
+        Assert.assertEquals(1, Bytes.toInt(itor.next().getKey()));
+      }
+    }
   }
 
   @Test

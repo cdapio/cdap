@@ -47,7 +47,7 @@ public abstract class DatasetRuntimeContext {
     // For user dataset, there is always one being set.
     return new DatasetRuntimeContext() {
       @Override
-      public void onMethodEntry(@Nullable Class<? extends Annotation> annotation) {
+      public void onMethodEntry(boolean constructor, @Nullable Class<? extends Annotation> annotation) {
         // no-op
       }
 
@@ -94,11 +94,12 @@ public abstract class DatasetRuntimeContext {
   /**
    * Method to call when a dataset method is invoked.
    *
+   * @param constructor true if the call comes from constructor
    * @param annotation one of the {@link ReadOnly}, {@link WriteOnly} or {@link ReadWrite} annotation
    *                   on the method. Use {@code null} for method that is not annotated,
    */
   @SuppressWarnings("unused")
-  public abstract void onMethodEntry(@Nullable Class<? extends Annotation> annotation);
+  public abstract void onMethodEntry(boolean constructor, @Nullable Class<? extends Annotation> annotation);
 
   /**
    * Method to call when a dataset method is about to return.

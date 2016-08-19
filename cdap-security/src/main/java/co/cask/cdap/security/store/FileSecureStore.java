@@ -52,6 +52,7 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
@@ -193,21 +194,21 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
    * @throws IOException If there was a problem reading from the keystore.
    */
   @Override
-  public List<SecureStoreMetadata> listSecureData(String namespace) throws Exception {
+  public Map<String, String> listSecureData(String namespace) throws Exception {
     checkNamespaceExists(namespace);
     readLock.lock();
     try {
       Enumeration<String> aliases = keyStore.aliases();
-      List<SecureStoreMetadata> list = new ArrayList<>();
+      Map<String, String> data = new HashMap<>();
       String prefix = namespace + NAME_SEPARATOR;
       while (aliases.hasMoreElements()) {
         String alias = aliases.nextElement();
         // Filter out elements not in this namespace.
         if (alias.startsWith(prefix)) {
-          list.add(getSecureStoreMetadata(alias));
+          data.put(alias.substring(prefix.length()), getSecureStoreMetadata(alias).getDescription());
         }
       }
-      return list;
+      return data;
     } catch (KeyStoreException e) {
       throw new IOException("Failed to get the list of elements from the secure store.", e);
     } finally {

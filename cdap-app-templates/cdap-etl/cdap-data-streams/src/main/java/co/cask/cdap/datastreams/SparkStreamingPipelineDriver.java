@@ -19,6 +19,7 @@ package co.cask.cdap.datastreams;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
+import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
@@ -28,10 +29,12 @@ import co.cask.cdap.etl.api.streaming.StreamingContext;
 import co.cask.cdap.etl.api.streaming.StreamingSource;
 import co.cask.cdap.etl.api.streaming.Windower;
 import co.cask.cdap.etl.common.Constants;
+import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPipelineDriver;
+import co.cask.cdap.etl.spark.function.CountingFunction;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
 import co.cask.cdap.etl.spark.streaming.DStreamCollection;
 import co.cask.cdap.etl.spark.streaming.DefaultStreamingContext;
@@ -40,7 +43,9 @@ import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.Function;
 import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 
@@ -62,11 +67,17 @@ public class SparkStreamingPipelineDriver extends SparkPipelineDriver implements
   private JavaStreamingContext streamingContext;
 
   @Override
-  protected SparkCollection<Object> getSource(String stageName,
+  protected SparkCollection<Object> getSource(final String stageName,
                                               PluginFunctionContext pluginFunctionContext) throws Exception {
     StreamingSource<Object> source = sec.getPluginContext().newPluginInstance(stageName);
     StreamingContext context = new DefaultStreamingContext(stageName, sec, streamingContext);
-    return new DStreamCollection<>(sec, sparkContext, source.getStream(context));
+    return new DStreamCollection<>(sec, sparkContext, source.getStream(context)
+      .transform(new Function<JavaRDD<Object>, JavaRDD<Object>>() {
+        @Override
+        public JavaRDD<Object> call(JavaRDD<Object> input) throws Exception {
+          return input.map(new CountingFunction<>(stageName, sec.getMetrics(), "records.out"));
+        }
+      }));
   }
 
   @Override

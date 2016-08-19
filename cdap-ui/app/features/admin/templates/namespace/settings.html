@@ -31,7 +31,7 @@
              href="#"
              ng-click="caskConfirm()"
              cask-confirmable="deleteNamespace()"
-             data-confirmable-content="Are you sure you want to delete this namespace?"
+             data-confirmable-content="Are you sure you want to delete the namespace '<strong>{{$state.params.nsadmin}}</strong>'?"
              ng-if="$state.params.nsadmin !== 'default'"
           >
             <span class="fa fa-fw fa-trash pull-right"></span>

@@ -20,10 +20,13 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.app.queue.QueueReader;
 import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
+import com.google.inject.Inject;
 
 import java.nio.ByteBuffer;
 
@@ -32,16 +35,24 @@ import java.nio.ByteBuffer;
  */
 public final class QueueReaderFactory {
 
+  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AuthenticationContext authenticationContext;
+
+  @Inject
+  public QueueReaderFactory(AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext) {
+    this.authorizationEnforcer = authorizationEnforcer;
+    this.authenticationContext = authenticationContext;
+  }
+
   public <T> QueueReader<T> createQueueReader(Supplier<QueueConsumer> consumerSupplier,
                                               int batchSize, Function<ByteBuffer, T> decoder) {
     return new SingleQueue2Reader<>(consumerSupplier, batchSize, decoder);
   }
 
-  public <T> QueueReader<T> createStreamReader(Supplier<StreamConsumer> consumerSupplier,
-                                               int batchSize, Function<StreamEvent, T> transformer,
-                                               AuthenticationContext authenticationContext,
-                                               AuthorizationEnforcer authorizationEnforcer) {
-    return new StreamQueueReader<>(consumerSupplier, batchSize, transformer, authenticationContext,
+  public <T> QueueReader<T> createStreamReader(StreamId streamId, Supplier<StreamConsumer> consumerSupplier,
+                                               int batchSize, Function<StreamEvent, T> transformer) throws Exception {
+    authorizationEnforcer.enforce(streamId, authenticationContext.getPrincipal(), Action.READ);
+    return new StreamQueueReader<>(streamId, consumerSupplier, batchSize, transformer, authenticationContext,
                                    authorizationEnforcer);
   }
 }
