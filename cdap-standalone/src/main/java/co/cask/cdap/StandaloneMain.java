@@ -21,6 +21,7 @@ import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
+import co.cask.cdap.app.preview.PreviewServer;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.ServiceBindException;
 import co.cask.cdap.common.app.MainClassLoader;
@@ -86,6 +87,7 @@ import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.counters.Limits;
 import org.apache.tephra.inmemory.InMemoryTransactionService;
+import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.apache.zookeeper.server.ZooKeeperServerMain;
@@ -132,6 +134,7 @@ public class StandaloneMain {
   private final ExternalJavaProcessExecutor kafkaProcessExecutor;
   private final ExternalJavaProcessExecutor zookeeperProcessExecutor;
   private final TrackerAppCreationService trackerAppCreationService;
+  private final PreviewServer previewServer;
   private final AuthorizerInstantiator authorizerInstantiator;
   private final RemoteSystemOperationsService remoteSystemOperationsService;
   private final AuthorizationEnforcementService authorizationEnforcementService;
@@ -203,6 +206,12 @@ public class StandaloneMain {
     exploreClient = injector.getInstance(ExploreClient.class);
     metadataService = injector.getInstance(MetadataService.class);
     remoteSystemOperationsService = injector.getInstance(RemoteSystemOperationsService.class);
+
+    if (cConf.getBoolean(Constants.Preview.ENABLED)) {
+      previewServer = injector.getInstance(PreviewServer.class);
+    } else {
+      previewServer = null;
+    }
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -294,6 +303,14 @@ public class StandaloneMain {
       trackerAppCreationService.startAndWait();
     }
 
+    if (previewServer != null) {
+      state = previewServer.startAndWait();
+      if (state != Service.State.RUNNING) {
+        throw new Exception("Failed to start Preview");
+      }
+      System.out.println("CDAP Preview started successfully");
+    }
+
     remoteSystemOperationsService.startAndWait();
 
     String protocol = sslEnabled ? "https" : "http";
@@ -311,6 +328,10 @@ public class StandaloneMain {
     LOG.info("Shutting down Standalone CDAP");
     boolean halt = false;
     try {
+      if (previewServer != null) {
+        previewServer.stopAndWait();
+      }
+
       // order matters: first shut down UI 'cause it will stop working after router is down
       if (userInterfaceService != null) {
         userInterfaceService.stopAndWait();
@@ -390,7 +411,6 @@ public class StandaloneMain {
   private void cleanupTempDir() {
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-
     if (!tmpDir.isDirectory()) {
       return;
     }

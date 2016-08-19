@@ -67,6 +67,34 @@ public class RouterPathTest {
   }
 
   @Test
+  public void testPreviewServicePath() {
+    String path = "/v3/namespaces/default/previews/preview123";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    String result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
+    Assert.assertEquals(Constants.Service.PREVIEW_HTTP, result);
+
+    path = "/v3/namespaces/default/previews/preview123/stages/stage1";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
+    Assert.assertEquals(Constants.Service.PREVIEW_HTTP, result);
+
+    path = "/v3/namespaces/default/previews/preview123/logs";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
+    Assert.assertEquals(Constants.Service.PREVIEW_HTTP, result);
+
+    path = "/v3/namespaces/default/previews/preview123/metrics";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
+    Assert.assertEquals(Constants.Service.PREVIEW_HTTP, result);
+
+    path = "/v3/namespaces/default/preview";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), path);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
+    Assert.assertEquals(Constants.Service.PREVIEW_HTTP, result);
+  }
+
+  @Test
   public void testMetricsPath() throws Exception {
     //Following URIs might not give actual results but we want to test resilience of Router Path Lookup
     String flowPath = "/v3///metrics/system/apps/InvalidApp//";
