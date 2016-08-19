@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,19 +17,17 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
-import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.kerberos.SecurityUtil;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
+import co.cask.cdap.common.security.ImpersonationInfo;
 import co.cask.cdap.config.PreferencesStore;
-import co.cask.cdap.data2.security.ImpersonationInfo;
-import co.cask.cdap.data2.security.ImpersonationUserResolver;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 
-import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -38,18 +36,18 @@ import java.util.Map;
 public class PropertiesResolver {
 
   private final PreferencesStore prefStore;
+  private final CConfiguration cConf;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final SchedulerQueueResolver queueResolver;
-  private final ImpersonationUserResolver impersonationUserResolver;
-  private final boolean kerberosEnabled;
 
   @Inject
   PropertiesResolver(PreferencesStore prefStore, CConfiguration cConf,
-                     SchedulerQueueResolver schedulerQueueResolver,
-                     ImpersonationUserResolver impersonationUserResolver) {
+                     NamespaceQueryAdmin namespaceQueryAdmin,
+                     SchedulerQueueResolver schedulerQueueResolver) {
     this.prefStore = prefStore;
+    this.cConf = cConf;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.queueResolver = schedulerQueueResolver;
-    this.impersonationUserResolver = impersonationUserResolver;
-    this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
   }
 
   public Map<String, String> getUserProperties(Id.Program id) {
@@ -59,12 +57,11 @@ public class PropertiesResolver {
     return userArgs;
   }
 
-  public Map<String, String> getSystemProperties(Id.Program id) throws IOException, NamespaceNotFoundException {
+  public Map<String, String> getSystemProperties(Id.Program id) throws Exception {
     Map<String, String> systemArgs = Maps.newHashMap();
     systemArgs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, queueResolver.getQueue(id.getNamespace()));
-    if (kerberosEnabled) {
-      ImpersonationInfo impersonationInfo =
-        impersonationUserResolver.getImpersonationInfo(id.getNamespace().toEntityId());
+    if (SecurityUtil.isKerberosEnabled(cConf)) {
+      ImpersonationInfo impersonationInfo = new ImpersonationInfo(namespaceQueryAdmin.get(id.getNamespace()), cConf);
       systemArgs.put(ProgramOptionConstants.PRINCIPAL, impersonationInfo.getPrincipal());
       systemArgs.put(ProgramOptionConstants.KEYTAB_URI, impersonationInfo.getKeytabURI());
     }

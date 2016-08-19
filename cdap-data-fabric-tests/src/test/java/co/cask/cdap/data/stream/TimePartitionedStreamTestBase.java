@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,8 +18,9 @@ package co.cask.cdap.data.stream;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.data2.security.Impersonator;
-import co.cask.cdap.data2.security.UnsupportedUGIProvider;
+import co.cask.cdap.common.security.DefaultImpersonator;
+import co.cask.cdap.common.security.Impersonator;
+import co.cask.cdap.common.security.UnsupportedUGIProvider;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.Lists;
@@ -46,7 +47,7 @@ public abstract class TimePartitionedStreamTestBase {
 
   protected abstract LocationFactory getLocationFactory();
 
-  private static final Impersonator impersonator = new Impersonator(cConf, new UnsupportedUGIProvider(), null);
+  private static final Impersonator impersonator = new DefaultImpersonator(cConf, new UnsupportedUGIProvider(), null);
 
   @Test
   public void testTimePartition() throws IOException {

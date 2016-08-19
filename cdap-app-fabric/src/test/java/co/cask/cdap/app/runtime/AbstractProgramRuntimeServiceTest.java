@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,8 +25,8 @@ import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.security.DefaultImpersonator;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
@@ -74,7 +74,7 @@ public class AbstractProgramRuntimeServiceTest {
 
     final ProgramRuntimeService runtimeService =
       new AbstractProgramRuntimeService(CConfiguration.create(), runnerFactory, null,
-                                        new Impersonator(CConfiguration.create(), null, null)) {
+                                        new DefaultImpersonator(CConfiguration.create(), null, null)) {
       @Override
       public ProgramLiveInfo getLiveInfo(Id.Program programId) {
         return new ProgramLiveInfo(programId, "runtime") { };
@@ -282,7 +282,8 @@ public class AbstractProgramRuntimeServiceTest {
 
     protected TestProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
                                         @Nullable ArtifactRepository artifactRepository, RuntimeInfo extraInfo) {
-      super(cConf, programRunnerFactory, artifactRepository, new Impersonator(CConfiguration.create(), null, null));
+      super(cConf, programRunnerFactory, artifactRepository,
+            new DefaultImpersonator(CConfiguration.create(), null, null));
       this.extraInfo = extraInfo;
     }
 

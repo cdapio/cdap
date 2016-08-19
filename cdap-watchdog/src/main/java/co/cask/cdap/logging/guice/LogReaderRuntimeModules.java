@@ -17,8 +17,8 @@
 package co.cask.cdap.logging.guice;
 
 import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.data2.security.RemoteUGIProvider;
-import co.cask.cdap.data2.security.UGIProvider;
+import co.cask.cdap.common.security.RemoteUGIProvider;
+import co.cask.cdap.common.security.UGIProvider;
 import co.cask.cdap.logging.read.DistributedLogReader;
 import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogReader;

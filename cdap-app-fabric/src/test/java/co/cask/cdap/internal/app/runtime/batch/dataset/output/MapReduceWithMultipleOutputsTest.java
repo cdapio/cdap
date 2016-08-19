@@ -21,7 +21,6 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceRunnerTestBase;
-import co.cask.cdap.internal.app.runtime.batch.dataset.input.AppWithMapReduceUsingMultipleInputs;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;

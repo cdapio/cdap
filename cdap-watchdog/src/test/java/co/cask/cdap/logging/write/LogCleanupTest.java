@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,12 +27,13 @@ import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactoryTestClient;
 import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
+import co.cask.cdap.common.security.DefaultImpersonator;
+import co.cask.cdap.common.security.Impersonator;
+import co.cask.cdap.common.security.UGIProvider;
+import co.cask.cdap.common.security.UnsupportedUGIProvider;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionExecutorModule;
-import co.cask.cdap.data2.security.Impersonator;
-import co.cask.cdap.data2.security.UGIProvider;
-import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.proto.Id;

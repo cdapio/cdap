@@ -14,13 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.data2.security;
+package co.cask.cdap.common.security;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.kerberos.SecurityUtil;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosName;
@@ -31,66 +33,49 @@ import java.io.IOException;
 import java.util.concurrent.Callable;
 
 /**
- * Responsible for executing code for a user, configurable at the namespace level.
+ * Default implementation of {@link Impersonator} that impersonate using {@link UGIProvider}.
  */
-public class Impersonator {
+public class DefaultImpersonator implements Impersonator {
 
-  private static final Logger LOG = LoggerFactory.getLogger(Impersonator.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultImpersonator.class);
 
+  private final CConfiguration cConf;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final boolean kerberosEnabled;
   private final UGIProvider ugiProvider;
-  private final ImpersonationUserResolver impersonationUserResolver;
 
   @Inject
   @VisibleForTesting
-  public Impersonator(CConfiguration cConf, UGIProvider ugiProvider,
-                      ImpersonationUserResolver impersonationUserResolver) {
-    this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
+  public DefaultImpersonator(CConfiguration cConf, UGIProvider ugiProvider,
+                             NamespaceQueryAdmin namespaceQueryAdmin) {
+    this.cConf = cConf;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.ugiProvider = ugiProvider;
-    this.impersonationUserResolver = impersonationUserResolver;
+    this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
   }
 
-  /**
-   * Executes a callable as the user, configurable at a namespace level
-   *
-   * @param namespaceId the namespace to use to lookup the user
-   * @param callable the callable to execute
-   * @param <T> return type of the callable
-   *
-   * @return the return value of the callable
-   * @throws Exception if the callable throws any exception
-   */
+  @Override
   public <T> T doAs(NamespaceId namespaceId, final Callable<T> callable) throws Exception {
     return ImpersonationUtils.doAs(getUGI(namespaceId), callable);
   }
 
-  /**
-   * Executes a callable as the user, configurable at a namespace level
-   *
-   * @param namespaceMeta the metadata of the namespace to use to lookup the user
-   * @param callable the callable to execute
-   * @param <T> return type of the callable
-   *
-   * @return the return value of the callable
-   * @throws Exception if the callable throws any exception
-   */
+  @Override
   public <T> T doAs(NamespaceMeta namespaceMeta, final Callable<T> callable) throws Exception {
     return ImpersonationUtils.doAs(getUGI(namespaceMeta), callable);
   }
 
-  /**
-   * Retrieve the {@link UserGroupInformation} for the given {@link NamespaceId}
-   *
-   * @param namespaceId namespace to lookup the user
-   * @return {@link UserGroupInformation}
-   * @throws IOException if there was any error fetching the {@link UserGroupInformation}
-   */
+  @Override
   public UserGroupInformation getUGI(NamespaceId namespaceId) throws IOException {
     // don't impersonate if kerberos isn't enabled OR if the operation is in the system namespace
     if (!kerberosEnabled || NamespaceId.SYSTEM.equals(namespaceId)) {
       return UserGroupInformation.getCurrentUser();
     }
-    return getUGI(impersonationUserResolver.getImpersonationInfo(namespaceId));
+    try {
+      return getUGI(namespaceQueryAdmin.get(namespaceId.toId()));
+    } catch (Exception e) {
+      Throwables.propagateIfInstanceOf(e, IOException.class);
+      throw Throwables.propagate(e);
+    }
   }
 
   /**
@@ -105,7 +90,7 @@ public class Impersonator {
     if (!kerberosEnabled || NamespaceId.SYSTEM.equals(namespaceMeta.getNamespaceId())) {
       return UserGroupInformation.getCurrentUser();
     }
-    return getUGI(impersonationUserResolver.getImpersonationInfo(namespaceMeta));
+    return getUGI(new ImpersonationInfo(namespaceMeta, cConf));
   }
 
   private UserGroupInformation getUGI(ImpersonationInfo impersonationInfo) throws IOException {

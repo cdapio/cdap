@@ -21,7 +21,6 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.DefaultApplicationContext;
 import co.cask.cdap.internal.DefaultId;
-import co.cask.cdap.proto.Id;
 
 /**
  * Util for building app spec for tests.

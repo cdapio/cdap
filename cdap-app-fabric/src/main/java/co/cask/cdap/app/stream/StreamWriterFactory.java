@@ -20,8 +20,6 @@ import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.proto.Id;
 import com.google.inject.assistedinject.Assisted;
 
-import java.util.List;
-
 /**
  * Factory to create {@link StreamWriter} objects
  */

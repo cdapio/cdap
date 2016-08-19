@@ -14,21 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.data2.security;
+package co.cask.cdap.common.security;
 
 import org.apache.hadoop.security.UserGroupInformation;
 
 import java.io.IOException;
 
 /**
- * An implementation of {@link UGIProvider} that is used when Kerberos is never enabled, and so should never be called.
+ * Facilitates getting UserGroupInformation configured for a given user.
  */
-public class UnsupportedUGIProvider implements UGIProvider {
-  @Override
-  public UserGroupInformation getConfiguredUGI(ImpersonationInfo impersonationInfo) throws IOException {
-    // If this implementation's method is called, then some guice binding is done improperly.
-    // For instance, we don't call this method if Kerberos is not enabled, and we only bind this implementation
-    // in-memory and for Standalone, where Kerberos is not enabled.
-    throw new UnsupportedOperationException(".");
-  }
+public interface UGIProvider {
+
+  /**
+   * Looks up the Kerberos principal to be impersonated for a given user and returns a {@link UserGroupInformation}
+   * for that principal.
+   *
+   * @param impersonationInfo information specifying how to create the UGI
+   * @return the {@link UserGroupInformation} for the configured user
+   */
+  UserGroupInformation getConfiguredUGI(ImpersonationInfo impersonationInfo) throws IOException;
 }

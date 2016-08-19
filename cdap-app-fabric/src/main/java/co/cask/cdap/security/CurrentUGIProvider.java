@@ -16,8 +16,8 @@
 
 package co.cask.cdap.security;
 
-import co.cask.cdap.data2.security.ImpersonationInfo;
-import co.cask.cdap.data2.security.UGIProvider;
+import co.cask.cdap.common.security.ImpersonationInfo;
+import co.cask.cdap.common.security.UGIProvider;
 import org.apache.hadoop.security.UserGroupInformation;
 
 import java.io.IOException;

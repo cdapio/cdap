@@ -17,16 +17,13 @@
 package co.cask.cdap.data2.datafabric.dataset.service.executor;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.data2.security.ImpersonationUtils;
-import co.cask.cdap.data2.security.Impersonator;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Throwables;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.security.PrivilegedExceptionAction;
 import java.util.concurrent.Callable;
 
 /**
