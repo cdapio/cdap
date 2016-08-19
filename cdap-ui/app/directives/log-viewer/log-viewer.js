@@ -360,7 +360,16 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     });
   };
 
+  const validUrl = () => {
+    return this.namespaceId && this.appId && this.programType && this.runId && this.fromOffset;
+  };
+
   const requestWithOffset = () => {
+
+    if(!validUrl()){
+       this.loading = false;
+       return;
+    }
 
     if(pollPromise){
       dataSrc.stopPoll(pollPromise.__pollId__);
@@ -534,6 +543,11 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     if(pollPromise){
       dataSrc.stopPoll(pollPromise.__pollId__);
       pollPromise = null;
+    }
+
+    if(!validUrl()){
+       this.loading = false;
+       return;
     }
 
     //Scroll table to the top
