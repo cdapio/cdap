@@ -19,6 +19,7 @@ package co.cask.cdap.gateway.handlers.log;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.metrics.MetricsSuiteTestBase;
 import co.cask.cdap.logging.gateway.handlers.FormattedTextLogEvent;
+import co.cask.cdap.logging.gateway.handlers.LogData;
 import co.cask.cdap.logging.gateway.handlers.LogHandler;
 import co.cask.cdap.logging.read.LogOffset;
 import co.cask.cdap.proto.Id;
@@ -27,7 +28,10 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.ProgramId;
+import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -41,6 +45,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,8 +74,11 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testNextFilter("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
     testNextNoFrom("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
     testNext("testApp1", "flows", "testFlow1", false, MockLogReader.TEST_NAMESPACE);
-    testNextRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "text");
-    testNextRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "json");
+    testNextRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "text", ImmutableList.<String>of());
+    testNextRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "json",
+                  ImmutableList.<String>of());
+    testNextRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "json",
+                  ImmutableList.of("logLevel", "lineNumber"));
   }
 
   @Test
@@ -80,8 +88,12 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testNextFilter("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE);
     testNextNoFrom("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE);
     testNext("testApp4", "services", "testService1", false, MockLogReader.TEST_NAMESPACE);
-    testNextRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, "text");
-    testNextRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, "json");
+    testNextRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, "text",
+                  ImmutableList.<String>of());
+    testNextRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, "json",
+                  ImmutableList.<String>of());
+    testNextRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, "json",
+                  ImmutableList.of("logLevel", "lineNumber"));
   }
 
   @Test
@@ -96,8 +108,12 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testNextNoMax("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
     testNextFilter("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
     testNextNoFrom("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
-    testNextRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "text");
-    testNextRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "json");
+    testNextRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "text",
+                  ImmutableList.<String>of());
+    testNextRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "json",
+                  ImmutableList.<String>of());
+    testNextRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "json",
+                  ImmutableList.of("logLevel", "lineNumber"));
   }
 
   @Test
@@ -106,8 +122,11 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testPrevNoMax("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
     testPrevFilter("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
     testPrevNoFrom("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
-    testPrevRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "text");
-    testPrevRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "json");
+    testPrevRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "text", ImmutableList.<String>of());
+    testPrevRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "json",
+                  ImmutableList.<String>of());
+    testPrevRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "json",
+                  ImmutableList.of("logLevel", "lineNumber"));
   }
 
   @Test
@@ -116,8 +135,12 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testPrevNoMax("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE);
     testPrevFilter("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE);
     testPrevNoFrom("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE);
-    testPrevRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, "text");
-    testPrevRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, "json");
+    testPrevRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, "text",
+                  ImmutableList.<String>of());
+    testPrevRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, "json",
+                  ImmutableList.<String>of());
+    testPrevRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, "json",
+                  ImmutableList.of("logLevel", "lineNumber"));
   }
 
   @Test
@@ -126,8 +149,12 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testPrevNoMax("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
     testPrevFilter("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
     testPrevNoFrom("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
-    testPrevRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "text");
-    testPrevRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "json");
+    testPrevRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "text",
+                  ImmutableList.<String>of());
+    testPrevRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "json",
+                  ImmutableList.<String>of());
+    testPrevRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "json",
+                  ImmutableList.of("logLevel", "lineNumber"));
     try {
       testPrevNoMax("testApp3", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE);
     } catch (AssertionError e) {
@@ -141,8 +168,12 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
   public void testFlowLogs() throws Exception {
     testLogs("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
     testLogsFilter("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
-    testLogsRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "text");
-    testLogsRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "json");
+    testLogsRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "text",
+                  ImmutableList.<String>of());
+    testLogsRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "json",
+                  ImmutableList.<String>of());
+    testLogsRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "json",
+                  ImmutableList.of("logLevel", "lineNumber"));
     try {
       testLogs("testApp1", "flows", "testFlow1", Id.Namespace.DEFAULT.getId());
     } catch (AssertionError e) {
@@ -156,16 +187,24 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
   public void testServiceLogs() throws Exception {
     testLogs("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE);
     testLogsFilter("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE);
-    testLogsRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, "text");
-    testLogsRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, "json");
+    testLogsRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, "text",
+                  ImmutableList.<String>of());
+    testLogsRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, "json",
+                  ImmutableList.<String>of());
+    testLogsRunId("testApp4", "services", "testService1", MockLogReader.TEST_NAMESPACE, "json",
+                  ImmutableList.of("logLevel", "lineNumber"));
   }
 
   @Test
   public void testMapReduceLogs() throws Exception {
     testLogs("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
     testLogsFilter("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
-    testLogsRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "text");
-    testLogsRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "json");
+    testLogsRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "text",
+                  ImmutableList.<String>of());
+    testLogsRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "json",
+                  ImmutableList.<String>of());
+    testLogsRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "json",
+                  ImmutableList.of("logLevel", "lineNumber"));
     try {
       testLogsFilter("testApp3", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE);
     } catch (AssertionError e) {
@@ -195,8 +234,15 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testPrevNoMax("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE);
     testPrevFilter("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE);
     testPrevNoFrom("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE);
-    testPrevRunId("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE, "text");
-    testPrevRunId("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE, "json");
+    testPrevRunId("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE, "text",
+                  ImmutableList.<String>of());
+    testPrevRunId("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE, "json",
+                  ImmutableList.of("timestamp", "logLevel", "threadName", "className", "simpleClassName",
+                                   "lineNumber", "message", "stackTrace"));
+    testPrevRunId("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE, "json",
+                  ImmutableList.<String>of());
+    testPrevRunId("testTemplate1", "workflows", "testWorkflow1", MockLogReader.TEST_NAMESPACE, "json",
+                  ImmutableList.of("logLevel", "threadName"));
   }
 
   private List<LogLine> getLogs(String namespaceId, String appId, String programType, String programName, String runId,
@@ -294,7 +340,8 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     verifyLogs(response, entityId, "text", false, false, true, 50, 30);
   }
 
-  private void testNextRunId(String appId, String entityType, String entityId, String namespace, String format)
+  private void testNextRunId(String appId, String entityType, String entityId, String namespace, String format,
+                             List<String> suppress)
     throws Exception {
     Id.Program id = Id.Program.from(namespace, appId, ProgramType.valueOfCategoryName(entityType), entityId);
     RunRecord runRecord = mockLogReader.getRunRecord(id);
@@ -302,10 +349,17 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     if (runRecord.getStatus() == ProgramRunStatus.RUNNING || runRecord.getStatus() == ProgramRunStatus.SUSPENDED) {
       expectedEvents = 30;
     }
-    String nextNoFromUrl = String.format("apps/%s/%s/%s/runs/%s/logs/next?format=%s&max=100",
-                                         appId, entityType, entityId, runRecord.getPid(), format);
+    String nextNoFromUrl;
+    if (suppress.isEmpty()) {
+      nextNoFromUrl = String.format("apps/%s/%s/%s/runs/%s/logs/next?format=%s&max=100",
+                                    appId, entityType, entityId, runRecord.getPid(), format);
+    } else {
+      String fieldsToSuppress = getSuppressStr(suppress);
+      nextNoFromUrl = String.format("apps/%s/%s/%s/runs/%s/logs/next?format=%s&max=100&suppress=%s",
+                                    appId, entityType, entityId, runRecord.getPid(), format, fieldsToSuppress);
+    }
     HttpResponse response = doGet(getVersionedAPIPath(nextNoFromUrl, namespace));
-    verifyLogs(response, entityId, format, true, false, true, expectedEvents, 20);
+    verifyLogs(response, entityId, format, true, false, true, expectedEvents, 20, suppress);
   }
 
   private void testPrev(String appId, String entityType, String entityId, String namespace) throws Exception {
@@ -315,7 +369,8 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     verifyLogs(response, entityId, "text", false, false, true, 10, 15);
   }
 
-  private void testPrevRunId(String appId, String entityType, String entityId, String namespace, String format)
+  private void testPrevRunId(String appId, String entityType, String entityId, String namespace, String format,
+                             List<String> suppress)
     throws Exception {
     Id.Program id = Id.Program.from(namespace, appId, ProgramType.valueOfCategoryName(entityType), entityId);
     RunRecord runRecord = mockLogReader.getRunRecord(id);
@@ -323,10 +378,18 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     if (runRecord.getStatus() == ProgramRunStatus.RUNNING || runRecord.getStatus() == ProgramRunStatus.SUSPENDED) {
       expectedEvents = 30;
     }
-    String prevRunIdUrl = String.format("apps/%s/%s/%s/runs/%s/logs/prev?format=%s&max=100",
-                                        appId, entityType, entityId, runRecord.getPid(), format);
+    String prevRunIdUrl;
+    if (suppress.isEmpty()) {
+      prevRunIdUrl = String.format("apps/%s/%s/%s/runs/%s/logs/prev?format=%s&max=100",
+                                   appId, entityType, entityId, runRecord.getPid(), format);
+    } else {
+      String fieldsToSuppress = getSuppressStr(suppress);
+      prevRunIdUrl = String.format("apps/%s/%s/%s/runs/%s/logs/prev?format=%s&max=100&suppress=%s",
+                      appId, entityType, entityId, runRecord.getPid(), format, fieldsToSuppress);
+    }
+
     HttpResponse response = doGet(getVersionedAPIPath(prevRunIdUrl, namespace));
-    verifyLogs(response, entityId, format, true, false, true, expectedEvents, 20);
+    verifyLogs(response, entityId, format, true, false, true, expectedEvents, 20, suppress);
   }
 
   private void testNextSystemLogs(String serviceName) throws Exception {
@@ -363,8 +426,8 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     verifyLogs(response, entityId, "text", false, false, true, 50, 30);
   }
 
-  private void testLogsRunId(String appId, String entityType, String entityId, String namespace, String format)
-    throws Exception {
+  private void testLogsRunId(String appId, String entityType, String entityId, String namespace, String format,
+                             List<String> suppress) throws Exception {
     Id.Program id = Id.Program.from(namespace, appId, ProgramType.valueOfCategoryName(entityType), entityId);
     RunRecord runRecord = mockLogReader.getRunRecord(id);
     int expectedEvents = 20;
@@ -373,10 +436,18 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     }
     long startTime = MockLogReader.getMockTimeSecs(0);
     long stopTime = MockLogReader.getMockTimeSecs(100);
-    String nextNoFromUrl = String.format("apps/%s/%s/%s/runs/%s/logs?format=%s&start=%s&stop=%s",
-                                         appId, entityType, entityId, runRecord.getPid(), format, startTime, stopTime);
+    String nextNoFromUrl;
+    if (suppress.isEmpty()) {
+      nextNoFromUrl = String.format("apps/%s/%s/%s/runs/%s/logs?format=%s&start=%s&stop=%s",
+                                    appId, entityType, entityId, runRecord.getPid(), format, startTime, stopTime);
+    } else {
+      String fieldsToSuppress = getSuppressStr(suppress);
+      nextNoFromUrl = String.format("apps/%s/%s/%s/runs/%s/logs?format=%s&start=%s&stop=%s&suppress=%s",
+                                    appId, entityType, entityId, runRecord.getPid(), format, startTime,
+                                    stopTime, fieldsToSuppress);
+    }
     HttpResponse response = doGet(getVersionedAPIPath(nextNoFromUrl, namespace));
-    verifyLogs(response, entityId, format, true, true, true, expectedEvents, 20);
+    verifyLogs(response, entityId, format, true, true, true, expectedEvents, 20, suppress);
   }
 
   private void testLogs(String appId, String entityType, String entityId, String namespace) throws Exception {
@@ -420,6 +491,28 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
   private void verifyLogs(HttpResponse response, String entityId, String format, boolean runIdOrFilter,
                           boolean fullLogs, boolean escapeChoice, int expectedEvents, int expectedStartValue)
     throws IOException {
+    verifyLogs(response, entityId, format, runIdOrFilter, fullLogs, escapeChoice, expectedEvents, expectedStartValue,
+    ImmutableList.<String>of());
+  }
+
+  /**
+   * Verify the logs returned in the {@link HttpResponse}.
+   *
+   * @param response {@link HttpResponse}
+   * @param entityId Entity for which the logs were fetched
+   * @param format {@link LogHandler.LogFormatType}
+   * @param runIdOrFilter true if the log is fetched for a runId or a filter was used
+   * @param fullLogs true if /logs endpoint was used (this is because the response format is different
+   *                 for /logs vs /next or /prev)
+   * @param escapeChoice true if the response was chosen to be escaped
+   * @param expectedEvents number of expected logs events
+   * @param expectedStartValue expected value in the log message
+   * @param suppress log fields to suppress
+   * @throws IOException
+   */
+  private void verifyLogs(HttpResponse response, String entityId, String format, boolean runIdOrFilter,
+                          boolean fullLogs, boolean escapeChoice, int expectedEvents, int expectedStartValue,
+                          List<String> suppress) throws IOException {
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     String out = EntityUtils.toString(response.getEntity());
     List<String> logMessages = new ArrayList<>();
@@ -431,6 +524,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
         escape = false;
         List<LogDataOffset> logDataOffsetList = GSON.fromJson(out, LIST_LOGDATA_OFFSET_TYPE);
         for (LogDataOffset logDataOffset : logDataOffsetList) {
+          verifyFieldsToSuppress(logDataOffset.getLog(), suppress);
           logMessages.add(logDataOffset.getLog().getMessage());
         }
         break;
@@ -456,9 +550,27 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
       } else {
         expectedStr += "&lt;img&gt;-" + expected;
       }
-      Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
+      if (!Strings.isNullOrEmpty(log)) {
+        Assert.assertEquals(expectedStr, log.substring(log.length() - expectedStr.length()));
+      }
       // Figure out what is the next expected integer value in the log message
       expected = expected + (runIdOrFilter ? 2 : 1);
+    }
+  }
+
+  private void verifyFieldsToSuppress(LogData logData, List<String> suppress) {
+    for (String field : suppress) {
+      try {
+        Field declaredField = logData.getClass().getDeclaredField(field);
+        declaredField.setAccessible(true);
+        if (declaredField.get(logData) != null) {
+          Assert.fail(String.format("The field %s should not be present in LogData", field));
+        }
+      } catch (IllegalAccessException e) {
+        Assert.fail(String.format("The field %s is not accessible in LogData", field));
+      } catch (NoSuchFieldException e) {
+        Assert.fail(String.format("The field %s is not present in LogData", field));
+      }
     }
   }
 
@@ -468,5 +580,9 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
 
   private String getToOffset(long offset) throws UnsupportedEncodingException {
     return FormattedTextLogEvent.formatLogOffset(new LogOffset(offset, Long.MAX_VALUE));
+  }
+
+  private String getSuppressStr(List<String> suppress) {
+    return Joiner.on("&suppress=").join(suppress);
   }
 }
