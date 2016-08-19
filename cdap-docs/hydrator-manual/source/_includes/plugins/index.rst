@@ -14,8 +14,9 @@ Plugin Reference
    :maxdepth: 2
    
     Action Plugins <actions/index>
-    Batch Plugins <batch/index>
-    Real-time Plugins <realtime/index>
+    Source Plugins <sources/index>
+    Transform Plugins <transforms/index>
+    Sink Plugins <sinks/index>
     Shared Plugins <shared-plugins/index>
     Post-run Plugins <post-run-plugins/index>
 
@@ -24,42 +25,31 @@ These plugins (from Hydrator Version |cask-hydrator-version|) are shipped with C
 SDK and Distributed CDAP:
 
 - :doc:`Action Plugins <actions/index>`
-- :doc:`Batch Plugins <batch/index>`
-
-  - :doc:`Source Plugins <batch/sources/index>`
-  - :doc:`Transform Plugins <batch/transforms/index>`
-  - :doc:`Sink Plugins <batch/sinks/index>`
-
-- :doc:`Real-time Plugins<realtime/index>`
-
-  - :doc:`Source Plugins <realtime/sources/index>`
-  - :doc:`Transform Plugins <realtime/transforms/index>`
-  - :doc:`Sink Plugins <realtime/sinks/index>`
-
+- :doc:`Source Plugins <sources/index>`
+- :doc:`Transform Plugins <transforms/index>`
+- :doc:`Sink Plugins <sinks/index>`
 - :doc:`Shared Plugins <shared-plugins/index>`
 
   - :doc:`CoreValidator Plugin <shared-plugins/core>`
-
+  
 - :doc:`Post-run Plugins <post-run-plugins/index>`
 
 .. rubric:: Plugin Notes
 
-- Additional types of plugins are under development, and developers can create and
-  add their own plugins and plugin types.
-  
 - Plugins are grouped here based on how they are displayed in the Hydrator Studio UI.
   Each plugin is of a particular type, and all plugins that are not sources, sinks, or
-  actions are grouped in *transform* plugins. Each page describing a plugin shows it type
+  actions are grouped in *transform* plugins. Each page describing a plugin shows its type
   and version at the bottom of the page.
 
 - The *batch sources* can write to any *batch sinks* that are available and *real-time sources*
   can write to any *real-time sinks*. *Transformations* work with either *sinks* or *sources*.
   Transformations can use *validators* to test data and check that it follows user-specified
-  rules. Other plugin types may be restricted as to which plugin (and artifact) that they
-  work with, depending on the particular functionality they provide.
-
-  For instance, certain *model* (the *NaiveBayesTrainer*) and *compute* (the
-  *NaiveBayesClassifier*) plugins (found in *batch/transforms*) only work with batch pipelines.
+  rules. 
+  
+  Other plugin types may be restricted as to which plugin (and artifact) that they work
+  with, depending on the particular functionality they provide. For instance, certain
+  *model* (the *NaiveBayesTrainer*) and *compute* (the *NaiveBayesClassifier*) plugins
+  (found in *transforms*) only work with batch pipelines.
 
 - Certain plugins |---| such as the *JavaScript*, *Python Evaluator*, and *Validator*
   transforms |---| are designed to be customized by end-users with their own code, either
@@ -71,6 +61,8 @@ SDK and Distributed CDAP:
   be added to run either before a source or after a sink. A "post-run" action plugin can be
   specified that runs after the entire pipeline has run.
 
+- Additional types of plugins are under development, and developers can create and
+  add their own plugins and plugin types.
 
 .. rubric:: Exploring Plugin Details
 

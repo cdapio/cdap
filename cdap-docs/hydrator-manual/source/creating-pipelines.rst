@@ -111,7 +111,7 @@ Batch pipelines, based on the ``cdap-data-pipeline`` application template, can i
 
 - :ref:`Batch Source Plugins <cask-hydrator-plugins-batch-sources>`
 
-- :ref:`Batch Transformation Plugins <cask-hydrator-plugins-batch-transformations>`
+- :ref:`Transformation Plugins <cask-hydrator-plugins-transformations>`
 
 - :ref:`Batch Sink Plugins <cask-hydrator-plugins-batch-sinks>`
 
@@ -123,8 +123,7 @@ appropriate CDAP programs to implement the configuration.
 
 The programs used will depend on the engine chosen (MapReduce or Spark) and the plugins
 used to build the pipeline. The available plugins are determined by those plugins that will
-work with the *Data Pipeline* (the ``cdap-data-pipeline`` artifact), and listed
-as :ref:`batch plugins <cask-hydrator-plugins-batch>`.
+work with the *Data Pipeline* (the ``cdap-data-pipeline`` artifact), as listed above.
 
 Building a Pipeline
 -------------------
@@ -136,8 +135,10 @@ To use Hydrator Studio to create a batch pipeline:
   template for your pipeline.
 
 - Click the icons in the left-sidebar to select the plugins you would like included in
-  your pipeline. In addition to the :ref:`action plugins <cask-hydrator-action-plugins>`,
-  you can use any of the :ref:`batch plugins <cask-hydrator-plugins-batch>`.
+  your pipeline. In addition to the :ref:`action plugins <cask-hydrator-action-plugins>`
+  and the :ref:`transform plugins <cask-hydrator-plugins-transformations>`, you can use
+  any of the :ref:`batch source plugins <cask-hydrator-plugins-batch-sources>` or the
+  :ref:`batch sink plugins <cask-hydrator-plugins-batch-sinks>`.
 
 - Typically, you will need at a minimum a source, a sink, and any optional transformations
   that are needed being the source and sink stages.
@@ -289,7 +290,7 @@ Real-time pipelines, based on the ``cdap-etl-realtime`` application template, ca
 
 - :ref:`Real-time Sink Source Plugins <cask-hydrator-plugins-real-time-sources>`
 
-- :ref:`Real-time Transformation Plugins <cask-hydrator-plugins-real-time-transformations>`
+- :ref:`Transformation Plugins <cask-hydrator-plugins-transformations>`
 
 - :ref:`Real-time Sink Plugins <cask-hydrator-plugins-real-time-sinks>`
 
@@ -301,8 +302,7 @@ appropriate CDAP programs to implement the configuration.
 
 The programs used will depend on the plugins used to build the pipeline. The available
 plugins are determined by those plugins that will work with the *ETL Realtime* (the
-``cdap-etl-realtime`` artifact), and listed as :ref:`real-time plugins
-<cask-hydrator-plugins-real-time>`.
+``cdap-etl-realtime`` artifact), as listed above.
 
 The application created will consist of a worker to be run continuously, polling as required.
 
@@ -316,8 +316,10 @@ To use Hydrator Studio to create a real-time pipeline:
   template for your pipeline.
 
 - Click the icons in the left-sidebar to select the plugins you would like included in
-  your pipeline. In addition to the :ref:`action plugins <cask-hydrator-action-plugins>`,
-  you can use any of the :ref:`real-time plugins <cask-hydrator-plugins-real-time>`.
+  your pipeline. In addition to the :ref:`action plugins <cask-hydrator-action-plugins>`
+  and the :ref:`transform plugins <cask-hydrator-plugins-transformations>`, you can use
+  any of the :ref:`real-time source plugins <cask-hydrator-plugins-real-time-sources>` or the
+  :ref:`real-time sink plugins <cask-hydrator-plugins-real-time-sinks>`.
 
 - Typically, you will need at a minimum a source, a sink, and any optional transformations
   that are needed being the source and sink stages.

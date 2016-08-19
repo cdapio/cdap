@@ -36,6 +36,7 @@ RULE="${SINGLE_RETURN_STRING}---${DOUBLE_RETURN_STRING}"
 
 # PRE_POST_RUN="pre-post-run"
 PRE_POST_RUN="post-run-plugin"
+NON_TRANSFORM_TYPES="action source sink ${PRE_POST_RUN}"
 PLUGIN_TYPE_STRING="Hydrator Plugin Type:"
 VERSION_STRING="Hydrator Version:"
 
@@ -65,7 +66,8 @@ function download_md_file() {
   type="${type%.md}" # strip suffix
   
   local type_capital="$(echo ${type:0:1} | tr [:lower:] [:upper:])${type:1}"
-  local target_file_name=$(echo "${source_file_name%-*}.md" | tr [:upper:] [:lower:]) # cassandra
+#   local target_file_name=$(echo "${source_file_name%-*}.md" | tr [:upper:] [:lower:]) # cassandra
+  local target_file_name=$(echo "${source_file_name}" | tr [:upper:] [:lower:]) # cassandra-batchsink.md
 
   # Determine from name of the plugin file the:
   # category (batch, realtime, shared-plugin, postaction) and 
@@ -103,22 +105,33 @@ function download_md_file() {
       plugin_type="transform"
     fi
   fi
-    
-  if [[ "x${plugin_category}" != "x" ]]; then
-    if [[ ( "${plugin_type}" == "sink" ) || ( "${plugin_type}" == "source" ) ]]; then
-      local target_dir="${plugin_category}/${plugin_type}s"
-    else
-      local target_dir="${plugin_category}/transforms"
-    fi
-    local target_dir_extra=''
-  elif [[ "${plugin_type}" == "transform" ]]; then
-    # Directories are plural, though types are singular
-    local target_dir="batch/${plugin_type}s"
-    local target_dir_extra="realtime/${plugin_type}s"
-  elif [[ ( "${plugin_type}" == "action" ) || ( "${plugin_type}" == "${PRE_POST_RUN}" ) ]]; then
+  
+  local target_dir="${plugin_type}s"
+#   if [[ "x${plugin_category}" != "x" ]]; then
+#     local target_dir="${plugin_type}s"
+#   elif [[ "${plugin_type}" == "transform" ]]; then
+#     # Directories are plural, though types are singular
+#     local target_dir="batch/${plugin_type}s"
+# #     local target_dir_extra="realtime/${plugin_type}s"
+#     local target_dir_extra="${plugin_type}s"
+#   elif [[ ( "${plugin_type}" == "action" ) || ( "${plugin_type}" == "${PRE_POST_RUN}" ) ]]; then
+#     local target_dir="${plugin_type}s"
+#     local target_dir_extra='' 
+#   fi
+
+  echo ${NON_TRANSFORM_TYPES} | grep -q ${plugin_type}
+  # local check=$?
+  if [ "$?" == "0" ]; then
     local target_dir="${plugin_type}s"
-    local target_dir_extra='' 
+  else
+    local target_dir="transforms"
   fi
+
+# if [[ ( "${plugin_type}" == "action" ) || ( "${plugin_type}" == "${PRE_POST_RUN}" ) ]]; then
+#   local target_dir="${plugin_type}s"
+# else
+#   local target_dir="transforms"
+# fi
   
   local target="${BASE_TARGET}/${target_dir}/${target_file_name}"
   local target_extra=''
@@ -151,12 +164,12 @@ function download_md_file() {
         cat ${BASE_TARGET}/${append_file} >> ${target}
       fi
       echo "${DOUBLE_RETURN_STRING}${RULE}- ${PLUGIN_TYPE_STRING} ${type}${DOUBLE_RETURN_STRING}- ${VERSION_STRING} ${HYDRATOR_VERSION}" >> ${target}
-      if [[ "x${target_dir_extra}" != "x" ]]; then
-        cp ${target} ${target_extra}
-        echo "  Copied    ${display_source_file_name} from ${display_source_dir} to ${target_dir_extra}/${target_file_name}"
-      fi
+#       if [[ "x${target_dir_extra}" != "x" ]]; then
+#         cp ${target} ${target_extra}
+#         echo "  Copied    ${display_source_file_name} from ${display_source_dir} to ${target_dir_extra}/${target_file_name}"
+#       fi
     else
-      local m="File does not exist: ${target}"
+      local m="File does not exist for ${target}"
       echo_red_bold "From ${source_url}"
       echo_red_bold "${m}"
       set_message "${m}"
@@ -313,7 +326,7 @@ function download_includes() {
   download_md_file transform-plugins XMLParser-transform.md
   download_md_file transform-plugins XMLToJSON-transform.md
 
-  extract_table ${BASE_TARGET} "batch/transforms/validator.md" _includes/validator-extract.txt
+  extract_table ${BASE_TARGET} "transforms/validator-transform.md" _includes/validator-extract.txt
 }
 
 run_command ${1}
