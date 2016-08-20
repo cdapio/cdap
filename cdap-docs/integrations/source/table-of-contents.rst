@@ -11,6 +11,7 @@ CDAP Integrations Table of Contents
 
     Introduction <index>
     Cloudera <partners/cloudera/index>
+    Apache Sentry <apache-sentry>
     CDAP JDBC Driver <jdbc>
     CDAP ODBC Driver <odbc>
     Pentaho Data Integration <pentaho>

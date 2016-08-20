@@ -31,6 +31,9 @@ BUILD_RST_HASH="039fc5b9a1decc5c67f17c332413f5d9"
 # This needs to be explicitly set as Git has trouble identifying it
 GIT_BRANCH_PARENT="release/3.5"
 
+# Used by admin-manual
+GIT_BRANCH_CDAP_SECURITY_EXTN="release/0.2"
+
 # Used by developers-manual
 GIT_BRANCH_CDAP_CLIENTS="1.2.0"
 GIT_BRANCH_CDAP_INGEST="1.3.0"

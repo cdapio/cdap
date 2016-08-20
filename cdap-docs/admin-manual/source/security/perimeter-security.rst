@@ -2,46 +2,19 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
-.. _admin-security:
-.. _configuration-security:
+.. _configuration-perimeter-security:
 
-=============
-CDAP Security
-=============
+==================
+Perimeter Security
+==================
 
-Cask Data Application Platform (CDAP) supports securing clusters using perimeter
-security. Here, we’ll discuss how to setup a secure CDAP instance.
+.. _enabling-perimeter-security:
 
-Additional security information, including client APIs and the authentication process, is covered
-in the Developers’ Manual :ref:`security-index` section.
+Enabling Perimeter Security
+===========================
 
-.. _admin-security-summary-start:
-.. NOTE: INCLUDED IN OTHER FILES
-
-We recommend that in order for CDAP to be secure, CDAP security should always be used in conjunction with
-`secure Hadoop clusters <http://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/SecureMode.html>`__.
-In cases where secure Hadoop is not or cannot be used, it is inherently insecure and any applications
-running on the cluster are effectively "trusted”. Though there is still value in having the perimeter access
-be authenticated in that situation, whenever possible a secure Hadoop cluster should be employed with CDAP security.
-
-.. _admin-security-summary-end:
-
-CDAP Security is configured in ``cdap-site.xml`` and ``cdap-security.xml``:
-
-* ``cdap-site.xml`` has non-sensitive information, such as the type of authentication mechanism and their configuration.
-* ``cdap-security.xml`` is used to store sensitive information such as keystore passwords and
-  SSL certificate keys. It should be owned and readable only by the CDAP user.
-  
-These files are shown in :ref:`appendix-cdap-site.xml` and :ref:`appendix-cdap-security.xml`.
-
-File paths can either be absolute paths or, in the case of 
-:ref:`standalone CDAP <standalone-index>`, relative to the CDAP SDK installation directory.
-
-.. _enabling-security:
-
-
-Enabling Security (Standalone CDAP)
------------------------------------
+Enabling Perimeter Security (Standalone CDAP)
+---------------------------------------------
 
 To enable security in :term:`Standalone CDAP <standalone cdap>`, add these properties to ``cdap-site.xml``:
 
@@ -60,8 +33,8 @@ Client Authentication then needs to be configured, as described below under
 With Standalone CDAP, the simplest is :ref:`Basic Authentication <installation-basic-authentication>`.
 
 
-Enabling Security (Distributed CDAP)
-------------------------------------
+Enabling Perimeter Security (Distributed CDAP)
+----------------------------------------------
 To enable security in :term:`Distributed CDAP <distributed cdap>`, add these properties to ``cdap-site.xml``:
 
 ================================================= ===================== =====================================================
@@ -248,10 +221,11 @@ To enable access logging, add the following to ``logback.xml`` (typically under 
 
 You may also configure the file being logged to by changing the path under ``<file>...</file>``.
 
+
 .. _installation-configuring-authentication-mechanisms:
 
 Configuring Authentication Mechanisms
--------------------------------------
+=====================================
 CDAP provides several ways to authenticate a client’s identity:
 
 - :ref:`installation-basic-authentication`
@@ -262,7 +236,7 @@ CDAP provides several ways to authenticate a client’s identity:
 .. _installation-basic-authentication:
 
 Basic Authentication
-....................
+--------------------
 The simplest way to identity a client is to authenticate against a realm file.
 To configure basic authentication add the following properties to ``cdap-site.xml``:
 
@@ -288,7 +262,7 @@ authentication. In production, we recommend using any of the other methods descr
 .. _installation-ldap-authentication:
 
 LDAP Authentication
-...................
+-------------------
 You can configure CDAP to authenticate against an LDAP instance by adding these
 properties to ``cdap-site.xml``:
 
@@ -354,7 +328,7 @@ Property                                                   Default Value     Val
 .. _installation-jaspi-authentication:
 
 JASPI Authentication
-....................
+--------------------
 To authenticate a user using JASPI (Java Authentication Service Provider Interface) add 
 the following properties to ``cdap-site.xml``:
 
@@ -377,7 +351,7 @@ These properties, stripped of the prefix, will be used to instantiate the
 .. _installation-custom-authentication:
 
 Custom Authentication
-.....................
+---------------------
 
 To use a Custom Authentication mechanism, set the
 ``security.authentication.handlerClassName`` in ``cdap-site.xml`` with the custom
@@ -394,7 +368,7 @@ how to create a Custom Authentication Mechanism.
 .. _configuring-auth-exemptions:
 
 Configuring Exemptions from Authentication
-..........................................
+------------------------------------------
 
 Sometimes you need to exempt certain URLs from authentication. For example, you may want to secure
 your entire application, except that you want to allow sending data to a stream by unauthenticated clients.
@@ -418,10 +392,12 @@ posting to all streams in the default namespace::
 
 This must be configured on every node that runs the CDAP Router.
 
-.. _testing-security:
 
-Testing Security
-----------------
+.. _testing-security:
+.. _testing-perimeter-security:
+
+Testing Perimeter Security
+==========================
 
 .. highlight:: console
 
