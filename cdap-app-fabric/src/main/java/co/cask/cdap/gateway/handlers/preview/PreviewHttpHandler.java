@@ -19,6 +19,7 @@ package co.cask.cdap.gateway.handlers.preview;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.app.preview.PreviewManager;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -33,6 +34,9 @@ import com.google.inject.Singleton;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -47,10 +51,12 @@ public class PreviewHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Gson GSON = new GsonBuilder().registerTypeAdapter(Schema.class,
                                                                          new SchemaTypeAdapter()).create();
   private final PreviewManager previewManager;
+  private final int limit;
 
   @Inject
-  PreviewHttpHandler(PreviewManager previewManager) {
+  PreviewHttpHandler(CConfiguration cConf, PreviewManager previewManager) {
     this.previewManager = previewManager;
+    limit = cConf.getInt("preview.records.limit", 50);
   }
 
   @POST
@@ -77,7 +83,14 @@ public class PreviewHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("preview-id") String previewId,
                              @PathParam("stage-name") String stageName) throws NotFoundException {
-    responder.sendString(HttpResponseStatus.OK,
-                         GSON.toJson(previewManager.getData(new PreviewId(namespaceId, previewId), stageName)));
+    Map<String, List<String>> data = previewManager.getData(new PreviewId(namespaceId, previewId), stageName);
+    Map<String, List<String>> result = new HashMap<>();
+    for (Map.Entry<String, List<String>> entry : data.entrySet()) {
+      String stage = entry.getKey();
+      List<String> stageData = entry.getValue();
+      List<String> values = stageData.size() <= limit ? stageData : stageData.subList(0, limit);
+      result.put(stage, values);
+    }
+    responder.sendString(HttpResponseStatus.OK, GSON.toJson(result));
   }
 }
