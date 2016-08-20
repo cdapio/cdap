@@ -80,6 +80,29 @@ body.theme-cdap {
         [class*="fa-"] { font-size: 16px; }
         .fa-sliders { transform: rotate(90deg); }
 
+        &.active {
+          background-color: #cdcdcd;
+          border-top-color: #cdcdcd;
+          border-bottom-color: #cdcdcd;
+          border-right-color: #cdcdcd;
+        }
+
+        &.run-time {
+          cursor: default;
+          color: @hydrator-blue;
+          font-size: 20px;
+          font-weight: 500;
+          &:hover { background-color: white; }
+          &:active,
+          &:focus {
+            box-shadow: none;
+            border-top-color: transparent;
+            border-bottom-color: transparent;
+            border-right-color: transparent;
+            background-color: white;
+          }
+        }
+
         @media (max-width: @screen-xs-max) {
           display: none;
         }

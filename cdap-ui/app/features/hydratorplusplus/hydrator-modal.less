@@ -244,6 +244,67 @@
                   }
                 }
               }
+
+              .row.preview-tab {
+                margin-left: 0;
+                margin-right: 0;
+                height: 100%;
+              }
+
+              .preview-records {
+                padding: 0;
+                height: 100%;
+                overflow: auto;
+
+                &:first-child {
+                  border-right: 2px solid @table-border-color;
+                }
+
+                h4 {
+                  padding-left: 5px;
+                  margin-top: 20px;
+                  font-size: 18px;
+                }
+                .schema-toggle {
+                  padding-left: 15px;
+                  cursor: pointer;
+                }
+
+                h5.stage-title {
+                  margin-left: 5px;
+                  margin-top: 20px;
+                  font-size: 15px;
+                  font-weight: 500;
+                }
+
+                table.table {
+                  margin-top: 10px;
+                  border: 0;
+
+                  th {
+                    &:hover,
+                    &:focus { cursor: default; }
+
+                    font-size: 13px;
+                    padding-left: 5px;
+                    padding-bottom: 5px;
+                    max-width: initial;
+                    overflow: initial;
+                    text-overflow: initial;
+                    white-space: initial;
+                  }
+
+                  tr > td {
+                    max-width: initial;
+                    overflow: initial;
+                    text-overflow: initial;
+                    white-space: initial;
+
+                    &:first-child { border-left: 0; }
+                    &:last-child { border-right: 0; }
+                  }
+                }
+              }
             }
           }
           .control-label { font-weight: bold; }

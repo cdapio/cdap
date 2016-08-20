@@ -296,7 +296,6 @@ gulp.task('watch:js:app:babel', function() {
 
   return gulp.src(source)
     .pipe(plug.plumber())
-    .pipe(plug.ngAnnotate())
     // .pipe(plug.sourcemaps.init())
     .pipe(plug.wrapper({
        header: '\n(function (PKG){ /* ${filename} */\n',
@@ -305,6 +304,7 @@ gulp.task('watch:js:app:babel', function() {
     .pipe(plug.babel({
       presets: ['es2015']
     }))
+    .pipe(plug.ngAnnotate())
     .pipe(plug.concat('app.es6.js'))
     // .pipe(plug.sourcemaps.write("."))
     .pipe(gulp.dest('./dist/assets/bundle'))
@@ -327,7 +327,6 @@ gulp.task('js:app', function() {
   ])
     .pipe(plug.plumber())
     .pipe(plug.replace('/* !! DISABLE DEBUG INFO !! */', '$compileProvider.debugInfoEnabled(false);'))
-    .pipe(plug.ngAnnotate())
     // .pipe(plug.sourcemaps.init())
     .pipe(plug.wrapper({
        header: '\n(function (PKG){ /* ${filename} */\n',
@@ -336,6 +335,7 @@ gulp.task('js:app', function() {
     .pipe(plug.babel({
       presets: ['es2015']
     }))
+    .pipe(plug.ngAnnotate())
     .pipe(plug.concat('app.js'))
     // .pipe(plug.sourcemaps.write("."))
     .pipe(gulp.dest('./dist/assets/bundle'));

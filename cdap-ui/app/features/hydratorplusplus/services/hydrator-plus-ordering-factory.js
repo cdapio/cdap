@@ -31,11 +31,15 @@ function HydratorPlusPlusOrderingFactory(GLOBALS) {
     let source = pluginsMap.filter( p => { return p.name === GLOBALS.pluginLabels['source']; });
     let transform = pluginsMap.filter( p => { return p.name === GLOBALS.pluginLabels['transform']; });
     let sink = pluginsMap.filter( p => { return p.name === GLOBALS.pluginLabels['sink']; });
+    let analytics = pluginsMap.filter( p => { return p.name === GLOBALS.pluginLabels['analytics']; });
     if (source.length) {
       orderedTypes.push(source[0]);
     }
     if (transform.length) {
       orderedTypes.push(transform[0]);
+    }
+    if (analytics.length) {
+      orderedTypes.push(analytics[0]);
     }
     if (sink.length) {
       orderedTypes.push(sink[0]);
