@@ -76,7 +76,6 @@ final class WorkflowProgramController extends ProgramControllerServiceAdapter {
         InetSocketAddress endpoint = driver.getServiceEndpoint();
         cancelAnnounce = serviceAnnouncer.announce(serviceName, endpoint.getPort());
         LOG.info("Workflow service {} announced at {}", serviceName, endpoint);
-        started();
       }
 
       @Override
@@ -87,13 +86,6 @@ final class WorkflowProgramController extends ProgramControllerServiceAdapter {
           cancelAnnounce.cancel();
         }
         LOG.info("Service {} unregistered.", serviceName);
-        if (from != Service.State.STOPPING) {
-          // service completed itself.
-          complete();
-        } else {
-          // service was terminated
-          stop();
-        }
       }
 
       @Override
@@ -105,7 +97,6 @@ final class WorkflowProgramController extends ProgramControllerServiceAdapter {
           cancelAnnounce.cancel();
         }
         LOG.info("Service {} unregistered.", serviceName);
-        error(failure);
       }
     }, Threads.SAME_THREAD_EXECUTOR);
   }
