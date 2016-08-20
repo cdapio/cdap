@@ -25,6 +25,7 @@ import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
@@ -102,6 +103,7 @@ public class ServiceHttpServer extends AbstractIdleService {
   private final DataFabricFacadeFactory dataFabricFacadeFactory;
   private final List<HandlerDelegatorContext> handlerContexts;
   private final NettyHttpService service;
+  private final PreviewStore previewStore;
 
   private Cancellable cancelDiscovery;
   private Timer timer;
@@ -112,7 +114,7 @@ public class ServiceHttpServer extends AbstractIdleService {
                            DataFabricFacadeFactory dataFabricFacadeFactory, TransactionSystemClient txClient,
                            DiscoveryServiceClient discoveryServiceClient,
                            @Nullable PluginInstantiator pluginInstantiator,
-                           SecureStore secureStore, SecureStoreManager secureStoreManager) {
+                           SecureStore secureStore, SecureStoreManager secureStoreManager, PreviewStore previewStore) {
     this.program = program;
     this.instanceCount = new AtomicInteger(instanceCount);
     this.serviceAnnouncer = serviceAnnouncer;
@@ -126,6 +128,7 @@ public class ServiceHttpServer extends AbstractIdleService {
     this.handlerContexts = createHandlerDelegatorContexts(program, spec, contextFactory);
     this.context = contextFactory.create(null);
     this.service = createNettyHttpService(program, host, handlerContexts, context.getProgramMetrics());
+    this.previewStore = previewStore;
   }
 
   private List<HandlerDelegatorContext> createHandlerDelegatorContexts(Program program, ServiceSpecification spec,
@@ -209,7 +212,7 @@ public class ServiceHttpServer extends AbstractIdleService {
       public BasicHttpServiceContext create(@Nullable HttpServiceHandlerSpecification spec) {
         return new BasicHttpServiceContext(program, programOptions, spec, instanceId, instanceCount,
                                            metricsCollectionService, datasetFramework, discoveryServiceClient,
-                                           txClient, pluginInstantiator, secureStore, secureStoreManager);
+                                           txClient, pluginInstantiator, secureStore, secureStoreManager, previewStore);
       }
     };
   }

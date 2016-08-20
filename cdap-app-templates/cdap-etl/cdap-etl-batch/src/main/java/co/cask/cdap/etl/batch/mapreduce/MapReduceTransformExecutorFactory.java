@@ -70,7 +70,8 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
                                            String sourceStageName) {
     super((JobContext) taskContext.getHadoopContext(), pluginInstantiator, metrics, sourceStageName,
           new DefaultMacroEvaluator(taskContext.getWorkflowToken(), taskContext.getRuntimeArguments(),
-                                    taskContext.getLogicalStartTime(), taskContext, taskContext.getNamespace()));
+                                    taskContext.getLogicalStartTime(), taskContext, taskContext.getNamespace()),
+          taskContext);
     this.taskContext = taskContext;
     this.pluginRuntimeArgs = pluginRuntimeArgs;
     JobContext hadoopContext = (JobContext) taskContext.getHadoopContext();
@@ -117,14 +118,14 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
                                                 new MapperAggregatorTransformation(batchAggregator,
                                                                                    mapOutputKeyClassName,
                                                                                    mapOutputValClassName)),
-          stageMetrics);
+          stageMetrics, stageName, debugger);
       } else {
         return getTrackedAggregateStep(
           KVTransformations.getKVTransformation(stageName, pluginType, isMapPhase,
                                                 new ReducerAggregatorTransformation(batchAggregator,
                                                                                     mapOutputKeyClassName,
                                                                                     mapOutputValClassName)),
-          stageMetrics);
+          stageMetrics, stageName, debugger);
       }
     } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
       BatchJoiner<?, ?, ?> batchJoiner = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
@@ -135,7 +136,8 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
         return getTrackedEmitKeyStep(
           KVTransformations.getKVTransformation(stageName, pluginType, isMapPhase,
                                                 new MapperJoinerTransformation(batchJoiner, mapOutputKeyClassName,
-                                                                               mapOutputValClassName)), stageMetrics);
+                                                                               mapOutputValClassName)), stageMetrics,
+          stageName, debugger);
       } else {
         return getTrackedMergeStep(
           KVTransformations.getKVTransformation(stageName, pluginType, isMapPhase,
@@ -143,7 +145,7 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
                                                                                 mapOutputValClassName,
                                                                                 runtimeContext.getInputSchemas()
                                                                                   .size()))
-          , stageMetrics);
+          , stageMetrics, stageName, debugger);
       }
     }
     return super.getTransformation(pluginType, stageName);
