@@ -28,6 +28,7 @@ import org.apache.twill.discovery.ServiceDiscovered;
 import org.junit.Test;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -58,7 +59,8 @@ public class DistributedProgramRunnableModuleTest {
 
       @Override
       public InetAddress getHost() {
-        return null;
+        // used by DistributedProgramRunnableModule#createModule(TwillContext)
+        return new InetSocketAddress("localhost", 0).getAddress();
       }
 
       @Override

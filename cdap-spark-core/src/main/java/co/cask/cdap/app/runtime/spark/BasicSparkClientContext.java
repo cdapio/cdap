@@ -20,20 +20,23 @@ import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.api.preview.PreviewLogger;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowInfo;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.internal.app.preview.NoopPreviewLogger;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
-import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import org.apache.spark.SparkConf;
 import org.apache.twill.api.RunId;
@@ -61,10 +64,13 @@ final class BasicSparkClientContext implements SparkClientContext {
   BasicSparkClientContext(SparkRuntimeContext sparkRuntimeContext) {
     this.sparkRuntimeContext = sparkRuntimeContext;
     this.localizeResources = new HashMap<>();
-    this.driverResources = Optional.fromNullable(
-      sparkRuntimeContext.getSparkSpecification().getDriverResources()).or(new Resources());
-    this.executorResources = Optional.fromNullable(
-      sparkRuntimeContext.getSparkSpecification().getExecutorResources()).or(new Resources());
+
+    SparkSpecification spec = sparkRuntimeContext.getSparkSpecification();
+    Map<String, String> runtimeArgs = sparkRuntimeContext.getRuntimeArguments();
+    this.driverResources = SystemArguments.getResources(
+      RuntimeArguments.extractScope("task", "driver", runtimeArgs), spec.getDriverResources());
+    this.executorResources = SystemArguments.getResources(
+      RuntimeArguments.extractScope("task", "executor", runtimeArgs), spec.getExecutorResources());
   }
 
   @Override
@@ -264,5 +270,15 @@ final class BasicSparkClientContext implements SparkClientContext {
 
   void setState(ProgramState state) {
     this.state = state;
+  }
+
+  @Override
+  public boolean isPreviewEnabled() {
+    return false;
+  }
+
+  @Override
+  public PreviewLogger getPreviewLogger(String loggerName) {
+    return new NoopPreviewLogger();
   }
 }

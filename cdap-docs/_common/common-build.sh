@@ -316,6 +316,35 @@ function test_an_include() {
   printf "${m}\n"
 }
 
+function download_file() {
+  # Downloads a file to the includes directory, and checks that it hasn't changed.
+  # Uses md5 hashes to monitor if any files have changed.
+  # Example:
+  #               1:Target dir  2:Source dir  3:Filename                 4:MD5 hash of file               5: Target filename (optional)
+  # download_file $includes     $project_main BounceCountsMapReduce.java 4474e5437a15d341572842613ba712bd BCMR.java
+
+  local includes_dir=${1}
+  local source_dir=${2}
+  local file_name=${3}
+  local md5_hash=${4}
+  local target_filename=${5}
+  if [[ "x${target_filename}" == "x" ]]; then
+    local target=${includes_dir}/${file_name}
+  else
+    local target=${includes_dir}/${target_filename}
+  fi
+  
+  if [ ! -d "${includes_dir}" ]; then
+    mkdir ${includes_dir}
+    echo "Creating Includes Directory: ${includes_dir}"
+  fi
+
+  echo "Downloading using curl ${file_name}"
+  echo "from ${source_dir}"
+  curl --silent ${source_dir}/${file_name} --output ${target}
+  test_an_include ${md5_hash} ${target}
+}
+
 function set_version() {
   OIFS="${IFS}"
   local current_directory=$(pwd)

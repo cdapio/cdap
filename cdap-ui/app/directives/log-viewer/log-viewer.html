@@ -119,7 +119,7 @@
           <span>Message</span>
           <button class="btn btn-default pull-right"
                   ng-click="LogViewer.toggleLogExpansion()"
-                  ng-disabled="LogViewer.displayData.length === 0 || (LogViewer.warningCount + LogViewer.errorCount === 0)">
+                  ng-disabled="LogViewer.displayData.length === 0">
             <span ng-if="!LogViewer.toggleExpandAll">Expand All</span>
             <span ng-if="LogViewer.toggleExpandAll">Collapse All</span>
           </button>

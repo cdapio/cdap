@@ -217,7 +217,8 @@ public abstract class DatasetServiceTestBase {
     registryFactory = injector.getInstance(DatasetDefinitionRegistryFactory.class);
     inMemoryDatasetFramework = new InMemoryDatasetFramework(registryFactory, modules);
 
-    ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(cConf, discoveryServiceClient), cConf);
+    DiscoveryExploreClient exploreClient = new DiscoveryExploreClient(discoveryServiceClient, authenticationContext);
+    ExploreFacade exploreFacade = new ExploreFacade(exploreClient, cConf);
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(NamespaceMeta.DEFAULT);
     NamespaceQueryAdmin namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);

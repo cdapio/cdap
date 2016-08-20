@@ -16,6 +16,8 @@
 
 package co.cask.cdap.etl.spark.function;
 
+import co.cask.cdap.api.Debugger;
+import co.cask.cdap.api.preview.PreviewLogger;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.Transformation;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
@@ -45,7 +47,23 @@ public class AggregatorGroupByFunction implements PairFlatMapFunction<Object, Ob
       groupByFunction = new TrackedTransform<>(new GroupByTransform<>(aggregator),
                                                pluginFunctionContext.createStageMetrics(),
                                                TrackedTransform.RECORDS_IN,
-                                               null);
+                                               null, pluginFunctionContext.getStageName(),
+                                               new Debugger() {
+                                                 @Override
+                                                 public boolean isPreviewEnabled() {
+                                                   return false;
+                                                 }
+
+                                                 @Override
+                                                 public PreviewLogger getPreviewLogger(String loggerName) {
+                                                   return new PreviewLogger() {
+                                                     @Override
+                                                     public void log(String propertyName, Object propertyValue) {
+                                                       // no-op
+                                                     }
+                                                   };
+                                                 }
+                                               });
       emitter = new DefaultEmitter<>();
     }
     emitter.reset();

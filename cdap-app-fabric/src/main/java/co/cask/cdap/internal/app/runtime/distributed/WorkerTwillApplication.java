@@ -16,9 +16,12 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.proto.ProgramType;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.TwillApplication;
@@ -31,12 +34,14 @@ import java.util.Map;
 public class WorkerTwillApplication extends AbstractProgramTwillApplication {
 
   private final WorkerSpecification spec;
+  private final Resources resources;
 
-  public WorkerTwillApplication(Program program, WorkerSpecification spec,
+  public WorkerTwillApplication(Program program, Arguments runtimeArgs, WorkerSpecification spec,
                                 Map<String, LocalizeResource> localizeResources,
                                 EventHandler eventHandler) {
     super(program, localizeResources, eventHandler);
     this.spec = spec;
+    this.resources = SystemArguments.getResources(runtimeArgs, spec.getResources());
   }
 
   @Override
@@ -46,9 +51,8 @@ public class WorkerTwillApplication extends AbstractProgramTwillApplication {
 
   @Override
   protected void addRunnables(Map<String, RunnableResource> runnables) {
-    runnables.put(spec.getName(), new RunnableResource(
-      new WorkerTwillRunnable(spec.getName()),
-      createResourceSpec(spec.getResources(), spec.getInstances())
+    runnables.put(spec.getName(), new RunnableResource(new WorkerTwillRunnable(spec.getName()),
+                                                       createResourceSpec(resources, spec.getInstances())
     ));
   }
 }

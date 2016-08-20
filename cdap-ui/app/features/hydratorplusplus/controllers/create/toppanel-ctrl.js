@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl{
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope) {
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS ) {
     this.consoleStore = HydratorPlusPlusConsoleStore;
     this.myPipelineExportModalService = myPipelineExportModalService;
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
@@ -27,34 +27,15 @@ class HydratorPlusPlusTopPanelCtrl{
     this.parsedDescription = this.HydratorPlusPlusConfigStore.getDescription();
     this.myHelpers = myHelpers;
     this.$timeout = $timeout;
+    this.PREVIEWSTORE_ACTIONS = PREVIEWSTORE_ACTIONS;
+    this.previewStore = HydratorPlusPlusPreviewStore;
+    this.previewActions = HydratorPlusPlusPreviewActions;
+    this.$interval = $interval;
+    this.myPipelineApi = myPipelineApi;
+    this.$state = $state;
+    this.dataSrc = new MyCDAPDataSource($scope);
+    this.myAlertOnValium = myAlertOnValium;
 
-    this.canvasOperations = [
-      {
-        name: 'Settings',
-        icon: 'fa-sliders',
-        fn: this.showSettings.bind(this)
-      },
-      {
-        name: 'Export',
-        icon: 'icon-export',
-        fn: this.onExport.bind(this)
-      },
-      {
-        name: 'Save',
-        icon: 'icon-savedraft',
-        fn: this.onSaveDraft.bind(this)
-      },
-      {
-        name: 'Validate',
-        icon: 'icon-validate',
-        fn: this.onValidate.bind(this)
-      },
-      {
-        name: 'Publish',
-        icon: 'icon-publish',
-        fn: this.onPublish.bind(this)
-      }
-    ];
     this.$stateParams = $stateParams;
     this.setState();
     this.HydratorPlusPlusConfigStore.registerOnChangeListener(this.setState.bind(this));
@@ -64,8 +45,30 @@ class HydratorPlusPlusTopPanelCtrl{
       this.openMetadata();
     }
 
+    this.isPreviewEnabled = angular.isObject(MY_CONFIG.hydrator) &&
+                            MY_CONFIG.hydrator.previewEnabled === true &&
+                            this.state.artifact.name === this.GLOBALS.etlDataPipeline;
+
+    this.previewMode = false;
+    this.previewStartTime = null;
+    this.displayDuration = {
+      minutes: '--',
+      seconds: '--'
+    };
+    this.previewTimerInterval = null;
+    this.previewLoading = false;
+
+    let unsub = this.previewStore.subscribe(() => {
+      let state = this.previewStore.getState().preview;
+      this.previewMode = state.isPreviewModeEnabled;
+    });
+
     $scope.$on('$destroy', () => {
+      unsub();
+      this.$interval.cancel(this.previewTimerInterval);
       this.$timeout.cancel(this.focusTimeout);
+
+      this.previewStore.dispatch({ type: this.PREVIEWSTORE_ACTIONS.PREVIEW_RESET });
     });
   }
   setMetadata(metadata) {
@@ -157,9 +160,139 @@ class HydratorPlusPlusTopPanelCtrl{
   showSettings() {
     this.state.viewSettings = !this.state.viewSettings;
   }
-}
 
-HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory', 'GLOBALS', 'myHelpers', 'HydratorPlusPlusConsoleStore', 'myPipelineExportModalService', '$timeout', '$scope'];
+  // PREVIEW
+  startTimer() {
+    this.previewTimerInterval = this.$interval(() => {
+      let duration = (new Date() - this.previewStartTime) / 1000;
+      duration = duration >= 0 ? duration : 0;
+
+      let minutes = Math.floor(duration / 60);
+      let seconds = Math.floor(duration % 60);
+      seconds = seconds < 10 ? '0' + seconds : seconds;
+      minutes = minutes < 10 ? '0' + minutes : minutes;
+
+      this.displayDuration = {
+        minutes: minutes,
+        seconds: seconds
+      };
+    }, 500);
+  }
+  stopTimer() {
+    this.$interval.cancel(this.previewTimerInterval);
+  }
+
+  runPreview() {
+    this.previewLoading = true;
+    this.displayDuration = {
+      minutes: '--',
+      seconds: '--'
+    };
+
+    let params = {
+      namespace: this.$state.params.namespace,
+      scope: this.$scope
+    };
+
+    // GENERATING PREVIEW CONFIG
+    // This might/should be extracted out to a factory
+
+    let pipelineConfig = this.HydratorPlusPlusConfigStore.getConfigForExport();
+    /**
+     *  This is a cheat way for generating preview for the entire pipeline
+     **/
+
+    let previewConfig = {
+      startStages: [],
+      endStages: [],
+      // useSinks: [], // we are not using sinks for now
+      numOfRecords: 25
+    };
+
+    // Get start stages and end stages
+    // Current implementation:
+    //    - start stages mean sources
+    //    - end stages mean sinks
+    angular.forEach(pipelineConfig.config.stages, (node) => {
+      if (this.GLOBALS.pluginConvert[node.plugin.type] === 'source') {
+        previewConfig.startStages.push(node.name);
+      } else if (this.GLOBALS.pluginConvert[node.plugin.type] === 'sink') {
+        previewConfig.endStages.push(node.name);
+      }
+    });
+    pipelineConfig.config.preview = previewConfig;
+
+    if (previewConfig.startStages.length === 0 || previewConfig.endStages.length === 0) {
+      this.myAlertOnValium.show({
+        type: 'danger',
+        content: this.GLOBALS.en.hydrator.studio.error.PREVIEW['NO-SOURCE-SINK']
+      });
+      this.previewLoading = false;
+      return;
+    }
+
+    this.myPipelineApi.runPreview(params, pipelineConfig).$promise
+      .then((res) => {
+        this.previewStore.dispatch(
+          this.previewActions.setPreviewId(res.preview)
+        );
+        let startTime = new Date();
+        this.previewStartTime = startTime;
+        this.startTimer();
+        this.previewStore.dispatch(
+          this.previewActions.setPreviewStartTime(startTime)
+        );
+
+        this.startPollPreviewStatus(res.preview);
+      }, (err) => {
+        this.previewLoading = false;
+        this.myAlertOnValium.show({
+          type: 'danger',
+          content: err.data
+        });
+      });
+  }
+
+  startPollPreviewStatus(previewId) {
+    let poll = this.dataSrc.poll({
+      _cdapNsPath: '/previews/' + previewId + '/status',
+      interval: 5000
+    }, (res) => {
+      if (res.status !== 'RUNNING') {
+        this.stopTimer();
+        this.previewLoading = false;
+        this.dataSrc.stopPoll(res.__pollId__);
+
+        if (res.status === 'COMPLETED') {
+          this.myAlertOnValium.show({
+            type: 'success',
+            content: 'Pipeline preview is finished.'
+          });
+        } else {
+          this.myAlertOnValium.show({
+            type: 'danger',
+            content: 'Pipeline preview failed with status: ' + res.status
+          });
+        }
+      }
+    }, (err) => {
+      this.previewLoading = false;
+      this.stopTimer();
+      this.myAlertOnValium.show({
+        type: 'danger',
+        content: err
+      });
+
+      this.dataSrc.stopPoll(poll.__pollId__);
+    });
+  }
+
+  togglePreviewMode() {
+    this.previewStore.dispatch(
+      this.previewActions.togglePreviewMode(!this.previewMode)
+    );
+  }
+}
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusTopPanelCtrl', HydratorPlusPlusTopPanelCtrl);

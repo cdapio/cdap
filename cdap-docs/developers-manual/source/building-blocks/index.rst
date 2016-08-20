@@ -22,6 +22,7 @@ Building Blocks
     MapReduce Programs<mapreduce-programs>
     Plugins <plugins>
     Schedules <schedules>
+    Secure Keys <secure-keys>
     Services <services>
     Spark Programs <spark-programs>
     Workers <workers>
@@ -77,6 +78,9 @@ write data through the data abstraction layer in CDAP.
 - The :doc:`Transaction System <transaction-system>` is an essential service
   that provides ACID (*atomicity, consistency, isolation,* and *durability*) guarantees,
   critical in applications where data accuracy is required.
+
+- The :doc:`Secure Keys <secure-keys>` allows users to store sensitive information such 
+  as passwords in secure, encrypted storage.
 
 For a **high-level view of the concepts** of the Cask Data Application Platform, see the
 platform :doc:`overview. </overview/index>`

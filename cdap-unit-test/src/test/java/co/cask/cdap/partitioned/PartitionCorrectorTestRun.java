@@ -111,6 +111,4 @@ public class PartitionCorrectorTestRun extends TestFrameworkTestBase {
     output.addPartition();
     tpfsManager.flush();
   }
-
-
 }

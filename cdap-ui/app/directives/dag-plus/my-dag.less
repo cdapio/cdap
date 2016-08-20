@@ -20,11 +20,24 @@
 
 @light-yellow: lighten(#ffff99, 10%);
 @brown: #988470;
+@yellow-shadow: lighten(#f1c40f, 20%);
 
 my-dag-plus {
   .zoom-control {
     z-index: 1023;
     right: 15px;
+  }
+
+  .my-js-dag.preview-mode {
+    .box.action {
+      .node {
+        box-shadow: none;
+        filter: drop-shadow(0 0 10px @yellow-shadow);
+      }
+    }
+    .box .node {
+      box-shadow: 0 -1px 0 6px @yellow-shadow;
+    }
   }
 
   .my-js-dag {

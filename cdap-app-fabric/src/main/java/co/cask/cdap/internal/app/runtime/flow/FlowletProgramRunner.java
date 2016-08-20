@@ -21,7 +21,6 @@ import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.Tick;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
-import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -47,6 +46,7 @@ import co.cask.cdap.app.queue.QueueSpecificationGenerator.Node;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.common.async.ExecutorUtils;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.BinaryDecoder;
@@ -141,7 +141,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final RuntimeUsageRegistry runtimeUsageRegistry;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
-
+  private final PreviewStore previewStore;
+  
   @Inject
   public FlowletProgramRunner(SchemaGenerator schemaGenerator,
                               DatumWriterFactory datumWriterFactory,
@@ -154,7 +155,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                               DatasetFramework dsFramework,
                               RuntimeUsageRegistry runtimeUsageRegistry,
                               SecureStore secureStore,
-                              SecureStoreManager secureStoreManager) {
+                              SecureStoreManager secureStoreManager, PreviewStore previewStore) {
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
@@ -167,6 +168,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.runtimeUsageRegistry = runtimeUsageRegistry;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
+    this.previewStore = previewStore;
   }
 
   @SuppressWarnings("unused")
@@ -223,7 +225,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       flowletContext = new BasicFlowletContext(program, options, flowletName, instanceId, instanceCount,
                                                flowletDef.getDatasets(), flowletDef.getFlowletSpec(),
                                                metricsCollectionService, discoveryServiceClient, txClient,
-                                               dsFramework, secureStore, secureStoreManager);
+                                               dsFramework, secureStore, secureStoreManager, previewStore);
 
       // Creates tx related objects
       DataFabricFacade dataFabricFacade =
@@ -416,7 +418,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       String key = batch.key();
       if (!key.isEmpty()) {
         // Try to lookup the value from runtime arguments
-        Map<String, String> args = RuntimeArguments.extractScope(Scope.FLOWLET, flowletContext.getName(),
+        Map<String, String> args = RuntimeArguments.extractScope(FlowUtils.FLOWLET_SCOPE, flowletContext.getName(),
                                                                  flowletContext.getRuntimeArguments());
         String value = args.get(key);
         String sourceName = "runtime arguments";

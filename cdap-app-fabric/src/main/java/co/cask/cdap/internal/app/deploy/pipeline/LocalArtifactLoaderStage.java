@@ -57,18 +57,20 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
   private final ApplicationSpecificationAdapter adapter;
   private final ArtifactRepository artifactRepository;
   private final Impersonator impersonator;
+  private final boolean isPreviewRun;
 
   /**
    * Constructor with hit for handling type.
    */
   public LocalArtifactLoaderStage(CConfiguration cConf, Store store, ArtifactRepository artifactRepository,
-                                  Impersonator impersonator) {
+                                  Impersonator impersonator, boolean isPreviewRun) {
     super(TypeToken.of(AppDeploymentInfo.class));
     this.cConf = cConf;
     this.store = store;
     this.adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     this.artifactRepository = artifactRepository;
     this.impersonator = impersonator;
+    this.isPreviewRun = isPreviewRun;
   }
 
   /**
@@ -96,7 +98,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
                                                                          artifactId.toId(), appClassName,
                                                                          artifactRepository, artifactClassLoader,
                                                                          deploymentInfo.getApplicationName(),
-                                                                         configString);
+                                                                         configString, isPreviewRun);
 
     ListenableFuture<ConfigResponse> result = inMemoryConfigurator.config();
     ConfigResponse response = result.get(120, TimeUnit.SECONDS);

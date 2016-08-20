@@ -22,7 +22,7 @@ package co.cask.cdap.logging.gateway.handlers;
 public final class LogData {
 
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
-  private final long timestamp;
+  private final Long timestamp;
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
   private final String logLevel;
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
@@ -32,14 +32,14 @@ public final class LogData {
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
   private final String simpleClassName;
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
-  private final int lineNumber;
+  private final Integer lineNumber;
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
   private final String message;
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
   private final String stackTrace;
 
-  LogData(long timestamp, String logLevel, String threadName, String className, String simpleClassName,
-          int lineNumber, String message, String stackTrace) {
+  LogData(Long timestamp, String logLevel, String threadName, String className, String simpleClassName,
+          Integer lineNumber, String message, String stackTrace) {
     this.timestamp = timestamp;
     this.logLevel = logLevel;
     this.threadName = threadName;
@@ -50,7 +50,7 @@ public final class LogData {
     this.stackTrace = stackTrace;
   }
 
-  public long getTimestamp() {
+  public Long getTimestamp() {
     return timestamp;
   }
 
@@ -70,7 +70,7 @@ public final class LogData {
     return simpleClassName;
   }
 
-  public int getLineNumber() {
+  public Integer getLineNumber() {
     return lineNumber;
   }
 

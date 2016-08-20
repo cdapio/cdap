@@ -59,6 +59,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -154,14 +155,17 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     Principal principal = authenticationContext.getPrincipal();
     authorizationEnforcer.enforce(instanceId, principal, Action.ADMIN);
     privilegesManager.grant(namespace, principal, EnumSet.allOf(Action.class));
-    // Also grant the namespace user all privileges on the namespace, if kerberos is enabled
+    // Also grant the user who will execute programs in this namespace all privileges on the namespace
+    String executionUserName;
     if (SecurityUtil.isKerberosEnabled(cConf)) {
       ImpersonationInfo impersonationInfo = new ImpersonationInfo(metadata, cConf);
       String namespacePrincipal = impersonationInfo.getPrincipal();
-      String namespaceUserName = new KerberosName(namespacePrincipal).getShortName();
-      Principal namespaceUser = new Principal(namespaceUserName, Principal.PrincipalType.USER);
-      privilegesManager.grant(namespace, namespaceUser, EnumSet.allOf(Action.class));
+      executionUserName = new KerberosName(namespacePrincipal).getShortName();
+    } else {
+      executionUserName = UserGroupInformation.getCurrentUser().getShortUserName();
     }
+    Principal executionUser = new Principal(executionUserName, Principal.PrincipalType.USER);
+    privilegesManager.grant(namespace, executionUser, EnumSet.allOf(Action.class));
 
     // store the meta first in the namespace store because namespacedlocationfactory need to look up location
     // mapping from namespace config

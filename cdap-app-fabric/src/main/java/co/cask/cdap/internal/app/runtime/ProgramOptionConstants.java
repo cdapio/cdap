@@ -75,4 +75,6 @@ public final class ProgramOptionConstants {
   public static final String PRINCIPAL = "principal";
 
   public static final String KEYTAB_URI = "keytabURI";
+
+  public static final String PREVIEW_ID = "previewId";
 }

@@ -177,6 +177,7 @@ public class PreviewServer extends AbstractIdleService {
     Path tmpDir = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                             cConf.get(Constants.AppFabric.TEMP_DIR)).toAbsolutePath();
     try {
+      Files.createDirectories(tmpDir);
       File previewDir = Files.createTempDirectory(tmpDir, "preview").toFile();
       previewcConf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.getAbsolutePath());
       previewcConf.set(Constants.Dataset.DATA_DIR, previewDir.getAbsolutePath());

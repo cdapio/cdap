@@ -88,7 +88,8 @@ public final class DistributedSparkProgramRunner extends AbstractDistributedProg
 
     LOG.info("Launching Spark program: {}", program.getId());
     TwillController controller = launcher.launch(
-      new SparkTwillApplication(program, spec, localizeResources, eventHandler), sparkAssemblyJarName);
+      new SparkTwillApplication(program, options.getUserArguments(),
+                                spec, localizeResources, eventHandler), sparkAssemblyJarName);
 
     RunId runId = ProgramRunners.getRunId(options);
     return new SparkTwillProgramController(program.getId().toEntityId(), controller, runId).startListen();

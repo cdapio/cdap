@@ -46,12 +46,9 @@ public final class SparkSpecificationCodec extends AbstractSpecificationCodec<Sp
     jsonObj.add("datasets", serializeSet(src.getDatasets(), context, String.class));
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
 
-    if (src.getDriverResources() != null) {
-      jsonObj.add("driverResources", context.serialize(src.getDriverResources()));
-    }
-    if (src.getExecutorResources() != null) {
-      jsonObj.add("executorResources", context.serialize(src.getExecutorResources()));
-    }
+    serializeResources(jsonObj, "client", context, src.getClientResources());
+    serializeResources(jsonObj, "driver", context, src.getDriverResources());
+    serializeResources(jsonObj, "executor", context, src.getExecutorResources());
 
     return jsonObj;
   }
@@ -68,11 +65,24 @@ public final class SparkSpecificationCodec extends AbstractSpecificationCodec<Sp
     Set<String> datasets = deserializeSet(jsonObj.get("datasets"), context, String.class);
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
 
+    Resources clientResources = deserializeResources(jsonObj, "client", context);
     Resources driverResources = deserializeResources(jsonObj, "driver", context);
     Resources executorResources = deserializeResources(jsonObj, "executor", context);
 
     return new SparkSpecification(className, name, description, mainClassName,
-                                  datasets, properties, driverResources, executorResources);
+                                  datasets, properties, clientResources, driverResources, executorResources);
+  }
+
+  /**
+   * Serialize the {@link Resources} object if it is not null.
+   */
+  private void serializeResources(JsonObject jsonObj, String prefix,
+                                  JsonSerializationContext context, @Nullable Resources resources) {
+    if (resources == null) {
+      return;
+    }
+    String name = prefix + "Resources";
+    jsonObj.add(name, context.serialize(resources));
   }
 
   /**

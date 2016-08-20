@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
-import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
@@ -126,7 +125,7 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
     final ProgramOptions options = new SimpleProgramOptions(
       program.getName(),
       new BasicArguments(Collections.unmodifiableMap(systemArgumentsMap)),
-      new BasicArguments(RuntimeArguments.extractScope(Scope.scopeFor(program.getType().getCategoryName()), name,
+      new BasicArguments(RuntimeArguments.extractScope(program.getType().getScope(), name,
                                                        workflowProgramOptions.getUserArguments().asMap()))
     );
 

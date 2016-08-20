@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service.executor;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.ConflictException;
@@ -29,6 +30,7 @@ import co.cask.cdap.common.service.UncaughtExceptionIdleService;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequestConfig;
 import co.cask.common.http.HttpRequests;
@@ -53,6 +55,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 
 /**
  * Executes Dataset operations by querying a {@link DatasetOpExecutorService} via REST.
@@ -65,10 +68,13 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
   private final CConfiguration cConf;
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
   private final HttpRequestConfig httpRequestConfig;
+  private final AuthenticationContext authenticationContext;
 
   @Inject
-  public RemoteDatasetOpExecutor(CConfiguration cConf, final DiscoveryServiceClient discoveryClient) {
+  RemoteDatasetOpExecutor(CConfiguration cConf, final DiscoveryServiceClient discoveryClient,
+                          AuthenticationContext authenticationContext) {
     this.cConf = cConf;
+    this.authenticationContext = authenticationContext;
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {
@@ -109,34 +115,22 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
 
   @Override
   public boolean exists(Id.DatasetInstance datasetInstanceId) throws Exception {
-    return (Boolean) executeAdminOp(datasetInstanceId, "exists").getResult();
+    return (Boolean) executeAdminOp(datasetInstanceId, "exists", null).getResult();
   }
 
   @Override
   public DatasetSpecification create(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta,
                                      DatasetProperties props) throws Exception {
-
     InternalDatasetCreationParams creationParams = new InternalDatasetCreationParams(typeMeta, props);
-    HttpRequest request = HttpRequest.post(resolve(datasetInstanceId, "create"))
-      .withBody(GSON.toJson(creationParams))
-      .build();
-    HttpResponse response = HttpRequests.execute(request, httpRequestConfig);
-    verifyResponse(response);
-
+    HttpResponse response = doRequest(datasetInstanceId, "create", GSON.toJson(creationParams));
     return ObjectResponse.fromJsonBody(response, DatasetSpecification.class).getResponseObject();
   }
 
   @Override
   public DatasetSpecification update(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta,
                                      DatasetProperties props, DatasetSpecification existing) throws Exception {
-
     InternalDatasetCreationParams updateParams = new InternalDatasetUpdateParams(typeMeta, existing, props);
-    HttpRequest request = HttpRequest.post(resolve(datasetInstanceId, "update"))
-      .withBody(GSON.toJson(updateParams))
-      .build();
-    HttpResponse response = HttpRequests.execute(request, httpRequestConfig);
-    verifyResponse(response);
-
+    HttpResponse response = doRequest(datasetInstanceId, "update", GSON.toJson(updateParams));
     return ObjectResponse.fromJsonBody(response, DatasetSpecification.class).getResponseObject();
   }
 
@@ -144,30 +138,39 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
   public void drop(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta, DatasetSpecification spec)
     throws Exception {
     InternalDatasetDropParams dropParams = new InternalDatasetDropParams(typeMeta, spec);
-    HttpRequest request = HttpRequest.post(resolve(datasetInstanceId, "drop"))
-      .withBody(GSON.toJson(dropParams)).build();
-    HttpResponse response = HttpRequests.execute(request, httpRequestConfig);
-    verifyResponse(response);
+    doRequest(datasetInstanceId, "drop", GSON.toJson(dropParams));
   }
 
   @Override
   public void truncate(Id.DatasetInstance datasetInstanceId) throws Exception {
-    executeAdminOp(datasetInstanceId, "truncate");
+    executeAdminOp(datasetInstanceId, "truncate", null);
   }
 
   @Override
   public void upgrade(Id.DatasetInstance datasetInstanceId) throws Exception {
-    executeAdminOp(datasetInstanceId, "upgrade");
+    executeAdminOp(datasetInstanceId, "upgrade", null);
   }
 
-  private DatasetAdminOpResponse executeAdminOp(Id.DatasetInstance datasetInstanceId, String opName)
-    throws IOException, HandlerException, ConflictException {
+  private DatasetAdminOpResponse executeAdminOp(
+    Id.DatasetInstance datasetInstanceId, String opName,
+    @Nullable String body) throws IOException, HandlerException, ConflictException {
+    HttpResponse httpResponse = doRequest(datasetInstanceId, opName, body);
+    return GSON.fromJson(Bytes.toString(httpResponse.getResponseBody()), DatasetAdminOpResponse.class);
+  }
 
-    HttpResponse httpResponse = HttpRequests.execute(HttpRequest.post(resolve(datasetInstanceId, opName)).build(),
-                                                      httpRequestConfig);
+  private HttpResponse doRequest(Id.DatasetInstance datasetInstanceId, String opName,
+                                 @Nullable String body) throws IOException, ConflictException {
+    HttpRequest.Builder builder = HttpRequest.post(resolve(datasetInstanceId, opName));
+    if (body != null) {
+      builder.withBody(body);
+    }
+    String userId = authenticationContext.getPrincipal().getName();
+    if (userId != null) {
+      builder.addHeader(Constants.Security.Headers.USER_ID, userId);
+    }
+    HttpResponse httpResponse = HttpRequests.execute(builder.build(), httpRequestConfig);
     verifyResponse(httpResponse);
-
-    return GSON.fromJson(new String(httpResponse.getResponseBody()), DatasetAdminOpResponse.class);
+    return httpResponse;
   }
 
   private URL resolve(Id.DatasetInstance datasetInstanceId, String opName) throws MalformedURLException {
@@ -181,10 +184,8 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
       throw new IllegalStateException("No endpoint for " + Constants.Service.DATASET_EXECUTOR);
     }
     InetSocketAddress addr = endpoint.getSocketAddress();
-    return new URL(String.format("http://%s:%s%s/%s",
-                         addr.getHostName(), addr.getPort(),
-                         Constants.Gateway.API_VERSION_3,
-                         path));
+    return new URL(String.format("http://%s:%s%s/%s", addr.getHostName(), addr.getPort(),
+                                 Constants.Gateway.API_VERSION_3, path));
   }
 
   private void verifyResponse(HttpResponse httpResponse) throws ConflictException {

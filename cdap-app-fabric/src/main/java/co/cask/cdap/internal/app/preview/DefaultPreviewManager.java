@@ -22,10 +22,12 @@ import co.cask.cdap.app.preview.PreviewManager;
 import co.cask.cdap.app.preview.PreviewStatus;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
+import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.proto.Id;
@@ -37,6 +39,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.PreviewId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.twill.api.logging.LogEntry;
@@ -58,12 +61,14 @@ public class DefaultPreviewManager implements PreviewManager {
   private final ApplicationLifecycleService applicationLifecycleService;
   private final ProgramLifecycleService programLifecycleService;
   private final Map<PreviewId, PreviewStatus> previewStatusMap = new ConcurrentHashMap<>();
+  private final PreviewStore previewStore;
 
   @Inject
   DefaultPreviewManager(ApplicationLifecycleService applicationLifecycleService,
-                        ProgramLifecycleService programLifecycleService) {
+                        ProgramLifecycleService programLifecycleService, PreviewStore previewStore) {
     this.applicationLifecycleService = applicationLifecycleService;
     this.programLifecycleService = programLifecycleService;
+    this.previewStore = previewStore;
   }
 
   @Override
@@ -94,8 +99,10 @@ public class DefaultPreviewManager implements PreviewManager {
     // Assume that we are starting the SmartWorkflow in the DatapipelineApp
     ProgramId programId = new ProgramId(namespaceId.getNamespace(), previewId.getPreview(), ProgramType.WORKFLOW,
                                         "DataPipelineWorkflow");
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = programLifecycleService.start(programId,
-                                                                                  new HashMap<String, String>(),
+
+    Map<String, String> systemArgs = new HashMap<>();
+    systemArgs.put(ProgramOptionConstants.PREVIEW_ID, GSON.toJson(previewId));
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = programLifecycleService.start(programId, systemArgs,
                                                                                   new HashMap<String, String>(), false);
 
     runtimeInfo.getController().addListener(new AbstractListener() {
@@ -137,8 +144,13 @@ public class DefaultPreviewManager implements PreviewManager {
   }
 
   @Override
-  public Map<String, Map<String, List<Object>>> getData(PreviewId previewId) throws NotFoundException {
+  public Map<String, Map<String, List<String>>> getData(PreviewId previewId) throws NotFoundException {
     return new HashMap<>();
+  }
+
+  @Override
+  public Map<String, List<String>> getData(PreviewId previewId, String stageName) throws NotFoundException {
+    return previewStore.get(previewId, stageName);
   }
 
   @Override

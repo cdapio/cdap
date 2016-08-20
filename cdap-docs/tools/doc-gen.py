@@ -6,6 +6,8 @@
 #
 # Used to generate documentation media files from .rst sources.
 #
+# REQUIRES PYTHON 2.7.x
+#
 # Currently, uses rst2pdf to generate PDFs. 
 # To be enhanced later to include using landslide to generate slides.
 # 
@@ -235,6 +237,9 @@ def get_absolute_path(file_path, name, input_file, func):
             raise Exception(func, '"%s" not a valid path: %s' % (name, file_path))
     return file_path
 
+def startup_checks():
+    if sys.version_info < (2, 7):
+        raise "Must use python 2.7 or greater"
 
 #
 # Main function
@@ -243,6 +248,7 @@ def get_absolute_path(file_path, name, input_file, func):
 def main():
     """ Main program entry point.
     """
+    startup_checks()
     options, input_file = parse_options()
 
     try:

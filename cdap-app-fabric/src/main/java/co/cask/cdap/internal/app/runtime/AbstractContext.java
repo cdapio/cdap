@@ -30,6 +30,7 @@ import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.api.preview.PreviewLogger;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.security.store.SecureStoreManager;
@@ -37,6 +38,7 @@ import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.services.AbstractServiceDiscoverer;
+import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -44,10 +46,13 @@ import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.internal.app.preview.DefaultPreviewLogger;
+import co.cask.cdap.internal.app.preview.NoopPreviewLogger;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.PreviewId;
 import com.google.common.collect.Maps;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
@@ -78,6 +83,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final Admin admin;
   private final long logicalStartTime;
   private final SecureStore secureStore;
+  private final PreviewId previewId;
+  private final PreviewStore previewStore;
   protected final DynamicDatasetCache datasetCache;
 
   /**
@@ -87,9 +94,11 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             Set<String> datasets, DatasetFramework dsFramework, TransactionSystemClient txClient,
                             DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded,
                             @Nullable MetricsCollectionService metricsService, Map<String, String> metricsTags,
-                            SecureStore secureStore, SecureStoreManager secureStoreManager) {
+                            SecureStore secureStore, SecureStoreManager secureStoreManager, PreviewStore previewStore,
+                            @Nullable PreviewId previewId) {
     this(program, programOptions, datasets, dsFramework, txClient,
-         discoveryServiceClient, multiThreaded, metricsService, metricsTags, secureStore, secureStoreManager, null);
+         discoveryServiceClient, multiThreaded, metricsService, metricsTags, secureStore, secureStoreManager, null,
+         previewStore, previewId);
   }
 
   /**
@@ -100,7 +109,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded,
                             @Nullable MetricsCollectionService metricsService, Map<String, String> metricsTags,
                             SecureStore secureStore, SecureStoreManager secureStoreManager,
-                            @Nullable PluginInstantiator pluginInstantiator) {
+                            @Nullable PluginInstantiator pluginInstantiator, PreviewStore previewStore,
+                            @Nullable PreviewId previewId) {
     super(program.getId().toEntityId());
 
     this.program = program;
@@ -131,6 +141,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                                                   program.getApplicationSpecification().getPlugins());
     this.admin = new DefaultAdmin(dsFramework, program.getId().getNamespace().toEntityId(), secureStoreManager);
     this.secureStore = secureStore;
+    this.previewStore = previewStore;
+    this.previewId = previewId;
   }
 
   private Iterable<? extends Id> createOwners(Id.Program programId) {
@@ -336,5 +348,18 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   public SecureStoreData getSecureData(String namespace, String name) throws Exception {
     return secureStore.getSecureData(namespace, name);
   }
+  @Override
+  public boolean isPreviewEnabled() {
+    return previewId != null;
+  }
 
+  @Override
+  public PreviewLogger getPreviewLogger(String loggerName) {
+    return previewId == null ? new NoopPreviewLogger() : new DefaultPreviewLogger(previewStore, previewId, loggerName);
+  }
+
+  @Nullable
+  public PreviewId getPreviewId() {
+    return previewId;
+  }
 }

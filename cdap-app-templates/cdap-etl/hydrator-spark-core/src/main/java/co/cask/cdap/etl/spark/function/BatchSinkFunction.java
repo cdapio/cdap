@@ -16,7 +16,9 @@
 
 package co.cask.cdap.etl.spark.function;
 
+import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.dataset.lib.KeyValue;
+import co.cask.cdap.api.preview.PreviewLogger;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.common.TrackedTransform;
 import co.cask.cdap.etl.common.TransformingEmitter;
@@ -42,7 +44,22 @@ public class BatchSinkFunction implements PairFlatMapFunction<Object, Object, Ob
     if (transform == null) {
       BatchSink<Object, Object, Object> batchSink = pluginFunctionContext.createPlugin();
       batchSink.initialize(pluginFunctionContext.createBatchRuntimeContext());
-      transform = new TrackedTransform<>(batchSink, pluginFunctionContext.createStageMetrics());
+      transform = new TrackedTransform<>(batchSink, pluginFunctionContext.createStageMetrics(), null, new Debugger() {
+        @Override
+        public boolean isPreviewEnabled() {
+          return false;
+        }
+
+        @Override
+        public PreviewLogger getPreviewLogger(String loggerName) {
+          return new PreviewLogger() {
+            @Override
+            public void log(String propertyName, Object propertyValue) {
+              // no-op
+            }
+          };
+        }
+      });
       emitter = new TransformingEmitter<>(new Function<KeyValue<Object, Object>, Tuple2<Object, Object>>() {
         @Override
         public Tuple2<Object, Object> apply(KeyValue<Object, Object> input) {

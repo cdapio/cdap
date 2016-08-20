@@ -103,6 +103,13 @@ public abstract class AbstractSpark extends AbstractPluginConfigurable<SparkConf
   }
 
   /**
+   * Sets the resources requirement for the Spark client process.
+   */
+  protected final void setClientResources(Resources resources) {
+    configurer.setClientResources(resources);
+  }
+
+  /**
    * Sets the resources requirement for the Spark driver process.
    */
   protected final void setDriverResources(Resources resources) {

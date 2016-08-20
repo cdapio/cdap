@@ -153,5 +153,6 @@
   "security.token.digest.keylength": "128",
   "zookeeper.session.timeout.millis": "40000",
   "security.token.digest.key.expiration.ms": "3600000",
-  "app.output.dir": "/programs"
+  "app.output.dir": "/programs",
+  "enable.alpha.preview": "false"
 }
