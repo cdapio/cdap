@@ -30,7 +30,7 @@ import sys
 
 VERSION = '0.1.0'
 
-COPYRIGHT_YEAR = '2015'
+COPYRIGHT_YEAR = '2016'
 
 MASTER_CSV = 'cdap-dependencies-master.csv'
 MASTER_CSV_COMMENTS = {'bower': """# Bower Dependencies
@@ -70,16 +70,28 @@ SCRIPT_DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 
 DEBUG = False
 
+def startup_checks():
+    from datetime import date
+    current_year = str(date.today().year)
+    if current_year != COPYRIGHT_YEAR:
+        print "\nWARNING: COPYRIGHT_YEAR of %s does not match current year of %s\n" % (COPYRIGHT_YEAR, current_year)
+
 def get_sdk_version():
     # Sets the Build Version
     grep_version_cmd = "grep '<version>' ../../../pom.xml | awk 'NR==1;START{print $1}'"
     version = None
     try:
-        full_version = subprocess.check_output(grep_version_cmd, shell=True).strip().replace('<version>', '').replace('</version>', '')
+        # Python 2.6 commands
+        p1 = subprocess.Popen(['grep' , '<version>', '../../../pom.xml' ], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(['awk', 'NR==1;START{print $1}'], stdin=p1.stdout, stdout=subprocess.PIPE)
+        full_version_temp = p2.communicate()[0]
+        # Python 2.6 command end
+#         full_version = subprocess.check_output(grep_version_cmd, shell=True).strip().replace('<version>', '').replace('</version>', '')
+        full_version = full_version_temp.strip().replace('<version>', '').replace('</version>', '')
         version = full_version.replace('-SNAPSHOT', '')
     except:
-        print 'Could not get version using grep'
-        sys.exit(1)
+        print '\nWARNING: Could not get version using grep\n'
+        raise
     return version
 
 def parse_options():
@@ -275,14 +287,18 @@ def master_print_terminal():
 
 
 def test_for_application(app):
-    import subprocess
-    try: 
-        subprocess.call(['which', app])
+    results = subprocess.call(['which', app])
+    if results == 0:
         print "Found executable for '%s'" % app
-        return 1
-    except: 
-        print "No executable of '%s'" % app
-        return 0
+    else: 
+        message = "No executable for '%s'" % app
+        if app == 'bower':
+            print "%s; install bower using: npm install -g bower" % message
+        elif app == 'npm':
+            print "%s; need to install npm to run license software" % message
+        else:
+            print message
+    return not results
 
 
 def process_cdap_ui(options):
@@ -292,7 +308,7 @@ def process_cdap_ui(options):
     #   cdap-ui/package.json
     # Create and print to standard out the list of the references
     # Make a list of the references for which links are missing and need to be added to the master
-    # Currently does not create a new master list
+    # Creates a new master list
     # Return a list:
     #   'Dependency','Version','homepage','License','License URL','type'
     # Versioning syntax: see https://nodesource.com/blog/semver-tilde-and-caret
@@ -303,6 +319,7 @@ def process_cdap_ui(options):
     
     import json
     from pprint import pprint
+    print
 
     for type in CDAP_UI_SOURCES.keys():
         source = CDAP_UI_SOURCES[type][0]
@@ -317,7 +334,7 @@ def process_cdap_ui(options):
                     version = data[CDAP_UI_DEPENDENCIES_KEY][dependency]
                     if master_libs_dict.has_key(dependency):
                         # Look up reference in dictionary
-                        cdap_ui_dict[dependency] = master_libs_dict[dependency]
+#                         cdap_ui_dict[dependency] = master_libs_dict[dependency]
                         # Compare versions
                         # TO-DO: if versions differ by a prefix (~ or ^) this comparison fails
                         # need to strip off the prefix for the comparison but retain it
@@ -329,6 +346,9 @@ def process_cdap_ui(options):
                             else:
                                 print "New version: %s for %s (old %s)" % (version, dependency, master_libs_dict[dependency].version)
                                 new_versions_dict[dependency]=version
+                                master_libs_dict[dependency].version = version
+                        cdap_ui_dict[dependency] = master_libs_dict[dependency]
+                        
                     else:
                         missing_libs_dict[dependency] = (type, version)
 
@@ -351,7 +371,6 @@ def process_cdap_ui(options):
                 all_apps_available = False
                 
         if all_apps_available: 
-            import subprocess
             keys.sort()
             missing_list = []
             for dependency in keys:
@@ -371,7 +390,7 @@ def process_cdap_ui(options):
                 else:
                     print "Unknown type: '%s' for dependency '%s', version '%s'" % (type, dependency, version)
         
-            print '\nCDAP UI: Missing Artifacts List: \n'
+            print '\nCDAP UI: Missing Artifacts List:'
             for row in missing_list:
                 print row
         
@@ -404,6 +423,23 @@ def process_cdap_ui(options):
         cdap_ui_data.append(row)
         print "%s : %s" % (dependency, row)
         
+        
+    # Print new master entries
+    print "\nNew Master Versions\n"
+    keys = master_libs_dict.keys()
+    keys.sort()
+    for type in ['bower', 'npm']:
+        print "# %s Dependencies\n# dependency,version,type,license,license_url,homepage,license_page" % type
+        for dependency in keys:
+            lib = master_libs_dict[dependency]
+            row = list(lib.get_row())
+            if row[2] == type:
+                print "%s : %s" % (dependency, row)
+
+    # Write out a new master csv file, only if not already exists 
+    if count_new or count_missing:
+        write_new_master_csv_file(master_libs_dict)
+    
     return cdap_ui_data
 
 def process_level_1(input_file, options):
@@ -578,6 +614,8 @@ def write_new_master_csv_file(lib_dict):
         finally:
             if csv_file is not None:
                 csv_file.close()
+            else:
+                print "Unable to close New Master CSV: %s" % csv_path
             
         print "New Master CSV: wrote %s records of %s to: %s" % (i, len(keys), csv_path)
 
@@ -617,6 +655,7 @@ def print_rst_cdap_ui(options):
     header = '"Dependency","Version","Type","License","License URL"'
     widths = '20, 10, 10, 20, 40'
     data_list = process_cdap_ui(options)
+    print
     _print_dependencies(title, file_base, header, widths, data_list)
 
 def _print_dependencies(title, file_base, header, widths, data_list):
@@ -645,21 +684,24 @@ Cask Data Application Platform %(title)s Dependencies
    :widths: %(widths)s
 
 """
-    sdk_version = get_sdk_version()        
-    RST_HEADER = RST_HEADER % {'version': sdk_version, 'title': title, 'header': header, 'widths': widths, 'year': COPYRIGHT_YEAR}
-    rst_path = os.path.join(SCRIPT_DIR_PATH, file_base + '.rst')
+    sdk_version = get_sdk_version()
+    if sdk_version:
+        RST_HEADER = RST_HEADER % {'version': sdk_version, 'title': title, 'header': header, 'widths': widths, 'year': COPYRIGHT_YEAR}
+        rst_path = os.path.join(SCRIPT_DIR_PATH, file_base + '.rst')
 
-    try:
-        with open(rst_path,'w') as f:
-            f.write(RST_HEADER)
-            for row in data_list:
-                # Need to substitute quotes for double quotes in reST's csv table format
-                row = map(lambda x: x.replace('\"', '\"\"'), row)
-                f.write(SPACE + '"' + '","'.join(row) + '"\n')
-    except:
-        raise
-    print "Wrote rst file:\n%s" % rst_path
-
+        try:
+            with open(rst_path,'w') as f:
+                f.write(RST_HEADER)
+                for row in data_list:
+                    # Need to substitute quotes for double quotes in reST's csv table format
+                    row = map(lambda x: x.replace('\"', '\"\"'), row)
+                    f.write(SPACE + '"' + '","'.join(row) + '"\n')
+        except:
+            raise
+        print "Wrote rst file:\n%s" % rst_path
+    else:
+        print "Unable to get SDK Version from Grep"
+        
 def print_debug(message):
     if DEBUG:
         print message
@@ -780,6 +822,7 @@ class UI_Library(Library):
 def main():
     """ Main program entry point.
     """
+    startup_checks()
     options, input_file = parse_options()
 
     try:
