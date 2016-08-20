@@ -19,7 +19,7 @@ package co.cask.cdap.logging.save;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.data2.security.Impersonator;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.logging.write.FileMetaDataManager;
 import com.google.inject.Inject;
 

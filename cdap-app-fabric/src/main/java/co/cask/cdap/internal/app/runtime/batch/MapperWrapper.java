@@ -101,7 +101,7 @@ public class MapperWrapper extends Mapper {
 
     ClassLoader oldClassLoader;
     if (delegate instanceof ProgramLifecycle) {
-      oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
+      oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
       try {
         ((ProgramLifecycle) delegate).initialize(new MapReduceLifecycleContext(basicMapReduceContext));
       } catch (Exception e) {
@@ -112,7 +112,7 @@ public class MapperWrapper extends Mapper {
       }
     }
 
-    oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
+    oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
     try {
       delegate.run(flushingContext);
     } finally {
@@ -132,7 +132,7 @@ public class MapperWrapper extends Mapper {
     basicMapReduceContext.closeMultiOutputs();
 
     if (delegate instanceof ProgramLifecycle) {
-      oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
+      oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
       try {
         ((ProgramLifecycle<? extends RuntimeContext>) delegate).destroy();
       } catch (Exception e) {

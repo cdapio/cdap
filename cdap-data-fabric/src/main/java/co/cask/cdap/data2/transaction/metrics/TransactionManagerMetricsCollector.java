@@ -20,9 +20,9 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
-import co.cask.tephra.metrics.TxMetricsCollector;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
+import org.apache.tephra.metrics.TxMetricsCollector;
 
 /**
  * Implementation for TxMetricsCollector that delegate the the underlying {@link MetricsContext}.

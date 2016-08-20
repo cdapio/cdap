@@ -165,7 +165,21 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
     response = doGet(request);
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(),
                         response.getStatusLine().getStatusCode());
+    Id.Application appId = new Id.Application(Id.Namespace.DEFAULT, WorkflowApp.class.getSimpleName());
+    deleteApp(appId, HttpResponseStatus.OK.getCode());
+
+    request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/statistics?start=%s&end=%s" +
+                              "&percentile=%s",
+                            Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(),
+                            WorkflowApp.class.getSimpleName(), workflowProgram.getId(),
+                            0,
+                            System.currentTimeMillis(),
+                            "99");
+    response = doGet(request);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    Assert.assertTrue(readResponse(response).startsWith("There are no statistics associated with this workflow : "));
   }
+
 
   @Test
   public void testDetails() throws Exception {

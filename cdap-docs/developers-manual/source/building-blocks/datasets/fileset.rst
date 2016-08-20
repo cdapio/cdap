@@ -212,6 +212,9 @@ embedded FileSet becomes read-only. You can still add partitions for locations t
 external process. But dropping a partition will only delete the partition's metadata, whereas the actual file
 remains intact. Similarly, if you drop or truncate an external PartitionedFileSet, its files will not be deleted.
 
+In order to make the PartitionedFileSet explorable, additional properties are needed, as described
+in :ref:`exploring-partitionedfilesets`.
+
 Reading and Writing PartitionedFileSets
 =======================================
 
@@ -462,6 +465,7 @@ It can then be used as::
   // return only partitions, to process up to 500MB of data
   partitions = consumer.consumePartitions(new SizeLimitingAcceptor(500));
 
+.. _exploring-partitionedfilesets:
 
 Exploring PartitionedFileSets
 =============================
@@ -481,10 +485,21 @@ A partitioned file set can be explored with ad-hoc queries if you enable it at c
       .setExploreSchema("date STRING, winner STRING, loser STRING, winnerpoints INT, loserpoints INT")
       .build());
 
+The essential part (to enable exploration) of the above sample are these lines::
+
+      . . .
+      // Properties for Explore (to create a partitioned Hive table)
+      .setEnableExploreOnCreate(true)
+      .setExploreFormat("csv")
+      .setExploreSchema("date STRING, winner STRING, loser STRING, winnerpoints INT, loserpoints INT")
+      . . .
+
 This results in the creation of an external table in Hive with the schema given in the
-``setExploreSchema()``. The supported format are ``text`` and ``csv``. Both mean that the
-format is text. For ``csv``, the field delimiter is a comma, whereas for ``text``, you can
-specify the field delimiter. For example, to use a colon as the field separator::
+``setExploreSchema()``. The supported formats (set by ``setExploreFormat()``) are ``csv``
+and ``text``. Both define that the format is text. For ``csv``, the field delimiter is a
+comma, whereas for ``text``, you can specify the field delimiter using ``setExploreFormatProperty()``.
+
+For example, to use a colon as the field separator::
 
       .setExploreFormat("text")
       .setExploreFormatProperty("delimiter", ":");

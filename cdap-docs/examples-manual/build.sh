@@ -75,26 +75,6 @@ function guide_rewrite_sed() {
   fi  
 }
 
-function download_file() {
-  # Downloads a file to the includes directory, and checks that it hasn't changed.
-  # Uses md5 hashes to monitor if any files have changed.
-  local includes_dir=${1}
-  local source_dir=${2}
-  local file_name=${3}
-  local md5_hash=${4}
-  local target=${includes_dir}/${file_name}
-  
-  if [ ! -d "${includes_dir}" ]; then
-    mkdir ${includes_dir}
-    echo "Creating Includes Directory: ${includes_dir}"
-  fi
-
-  echo "Downloading using curl ${file_name}"
-  echo "from ${source_dir}"
-  curl --silent ${source_dir}/${file_name} --output ${target}
-  test_an_include ${md5_hash} ${target}
-}
-
 function download_includes() { 
   echo_red_bold "Downloading source files includes from GitHub..."
   set_version
@@ -176,7 +156,7 @@ function download_includes() {
 
   test_an_include 3f25e035b2de8bd2d127733df1c58ff1 ../../cdap-examples/SparkKMeans/src/main/java/co/cask/cdap/examples/sparkkmeans/SparkKMeansApp.java
   
-  test_an_include 2d854c9e6b473a05617913040018dd36 ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
+  test_an_include 41def2cbfc75bc0156a10564cf4ed0ad ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
 
   test_an_include 1dff2aa10d09f384965e343be7f83f76 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/SportResults.java
   test_an_include c488b6ad3b5708977a8a913460e4e650 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java

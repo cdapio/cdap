@@ -40,6 +40,7 @@ import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
@@ -279,6 +280,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   public void addPartition(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespace, @PathParam("dataset") String datasetName) {
     DatasetId datasetId = new DatasetId(namespace, datasetName);
+    propagateUserId(request);
     Dataset dataset;
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
       dataset = datasetInstantiator.getDataset(datasetId.toId());
@@ -345,6 +347,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
                             @PathParam("namespace-id") String namespace,
                             @PathParam("dataset") String datasetName) {
     DatasetId datasetId = new DatasetId(namespace, datasetName);
+    propagateUserId(request);
     Dataset dataset;
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
       dataset = datasetInstantiator.getDataset(datasetId.toId());
@@ -361,8 +364,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return;
       }
       LOG.error("Exception instantiating dataset {}.", datasetId, e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-        "Exception instantiating dataset " + datasetId);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Exception instantiating dataset " + datasetId);
       return;
     }
 
@@ -408,5 +410,14 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       return isClassNotFoundException(e.getCause());
     }
     return null;
+  }
+
+  // propagate userid from the HTTP Request in the current thread
+  private void propagateUserId(HttpRequest request) {
+    String userId = request.getHeader(Constants.Security.Headers.USER_ID);
+    if (userId != null) {
+      LOG.debug("Propagating userId as {}", userId);
+      SecurityRequestContext.setUserId(userId);
+    }
   }
 }

@@ -35,6 +35,7 @@
           <div class="form-group">
             <label class="control-label">
               <span>{{::field.label}}</span>
+
               <span class="fa fa-info-circle" uib-tooltip="{{::field.description}}" tooltip-placement="right" tooltip-append-to-body="true">
               </span>
               <span class="fa fa-asterisk" ng-if="HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[field.name].required"></span>
@@ -63,6 +64,7 @@
                      widget-container>
                 </div>
               </fieldset>
+
               <!--
                 We have a separate div for javascript editor and the reason for it as follows,
 
@@ -81,6 +83,15 @@
                      widget-container>
                 </div>
               </div>
+
+              <span class="badge macro-indicator pull-right"
+                    ng-if="HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[field.name].macroSupported"
+                    uib-tooltip="A placeholder that will be substituted at runtime. eg. ${placeholder} or ${secure(key)}"
+                    tooltip-append-to-body="true"
+                    tooltip-popup-delay="300"
+                    tooltip-placement="left">
+                Macro
+              </span>
 
               <span class="plugin-function-bottom"
                 ng-if="field['plugin-function'] && field['plugin-function']['position'] === 'bottom' && !isDisabled">

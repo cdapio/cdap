@@ -21,13 +21,13 @@ import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.DequeueStrategy;
 import co.cask.cdap.data2.queue.QueueEntry;
-import co.cask.tephra.Transaction;
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.hash.Hashing;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.tephra.Transaction;
 
 import java.io.IOException;
 import java.util.Arrays;

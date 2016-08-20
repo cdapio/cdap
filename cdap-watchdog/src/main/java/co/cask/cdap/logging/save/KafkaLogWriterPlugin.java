@@ -21,7 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.data2.security.Impersonator;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
@@ -111,10 +111,16 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
     Preconditions.checkArgument(checkpointIntervalMs > 0,
                                 "Checkpoint interval is invalid: %s", checkpointIntervalMs);
 
-    long inactiveIntervalMs = cConf.getLong(LoggingConfiguration.LOG_SAVER_INACTIVE_FILE_INTERVAL_MS,
-                                              LoggingConfiguration.DEFAULT_LOG_SAVER_INACTIVE_FILE_INTERVAL_MS);
-    Preconditions.checkArgument(inactiveIntervalMs > 0,
-                                "Inactive interval is invalid: %s", inactiveIntervalMs);
+    long maxFileLifetimeMs = cConf.getLong(LoggingConfiguration.LOG_SAVER_MAX_FILE_LIFETIME,
+                                           LoggingConfiguration.DEFAULT_LOG_SAVER_MAX_FILE_LIFETIME_MS);
+    Preconditions.checkArgument(maxFileLifetimeMs > 0,
+                                "Max file lifetime is invalid: %s", maxFileLifetimeMs);
+
+    if (cConf.get(LoggingConfiguration.LOG_SAVER_INACTIVE_FILE_INTERVAL_MS) != null) {
+      LOG.warn("Parameter '{}' is no longer supported. Instead, use '{}'.",
+               LoggingConfiguration.LOG_SAVER_INACTIVE_FILE_INTERVAL_MS,
+               LoggingConfiguration.LOG_SAVER_MAX_FILE_LIFETIME);
+    }
 
     this.eventBucketIntervalMs = cConf.getLong(LoggingConfiguration.LOG_SAVER_EVENT_BUCKET_INTERVAL_MS,
                                                  LoggingConfiguration.DEFAULT_LOG_SAVER_EVENT_BUCKET_INTERVAL_MS);
@@ -134,13 +140,13 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
                                 "Topic creation wait sleep is invalid: %s", topicCreationSleepMs);
 
     logCleanupIntervalMins = cConf.getInt(LoggingConfiguration.LOG_CLEANUP_RUN_INTERVAL_MINS,
-                                            LoggingConfiguration.DEFAULT_LOG_CLEANUP_RUN_INTERVAL_MINS);
+                                          LoggingConfiguration.DEFAULT_LOG_CLEANUP_RUN_INTERVAL_MINS);
     Preconditions.checkArgument(logCleanupIntervalMins > 0,
                                 "Log cleanup run interval is invalid: %s", logCleanupIntervalMins);
 
     AvroFileWriter avroFileWriter = new AvroFileWriter(fileMetaDataManager, namespacedLocationFactory, logBaseDir,
                                                        serializer.getAvroSchema(), maxLogFileSizeBytes,
-                                                       syncIntervalBytes, inactiveIntervalMs, impersonator);
+                                                       syncIntervalBytes, maxFileLifetimeMs, impersonator);
 
     checkpointManager = checkpointManagerFactory.create(cConf.get(Constants.Logging.KAFKA_TOPIC),
                                                         CHECKPOINT_ROW_KEY_PREFIX);

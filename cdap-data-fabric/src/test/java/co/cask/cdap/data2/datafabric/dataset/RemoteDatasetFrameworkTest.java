@@ -27,6 +27,8 @@ import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.common.security.DefaultImpersonator;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data.runtime.DynamicTransactionExecutorFactory;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
@@ -51,7 +53,6 @@ import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
-import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.data2.transaction.DelegatingTransactionSystemClientService;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
@@ -66,9 +67,6 @@ import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.http.HttpHandler;
-import co.cask.tephra.TransactionManager;
-import co.cask.tephra.inmemory.InMemoryTxSystemClient;
-import co.cask.tephra.runtime.TransactionInMemoryModule;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -80,6 +78,9 @@ import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.tephra.TransactionManager;
+import org.apache.tephra.inmemory.InMemoryTxSystemClient;
+import org.apache.tephra.runtime.TransactionInMemoryModule;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.Services;
@@ -109,7 +110,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     CConfigurationUtil.copyTxProperties(cConf, txConf);
 
     // ok to pass null, since the impersonator won't actually be called, if kerberos security is not enabled
-    Impersonator impersonator = new Impersonator(cConf, null, null);
+    Impersonator impersonator = new DefaultImpersonator(cConf, null, null);
 
     // TODO: Refactor to use injector for everything
     Injector injector = Guice.createInjector(
@@ -163,7 +164,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     InMemoryDatasetFramework mdsFramework = new InMemoryDatasetFramework(registryFactory, modules);
 
-    ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(cConf, discoveryServiceClient), cConf);
+    DiscoveryExploreClient exploreClient = new DiscoveryExploreClient(discoveryServiceClient, authenticationContext);
+    ExploreFacade exploreFacade = new ExploreFacade(exploreClient, cConf);
     TransactionExecutorFactory txExecutorFactory = new DynamicTransactionExecutorFactory(txSystemClient);
     AuthorizationEnforcer authorizationEnforcer = injector.getInstance(AuthorizationEnforcer.class);
 
@@ -177,7 +179,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                                             authenticationContext, cConf, impersonator,
                                                             txSystemClientService, mdsFramework, txExecutorFactory,
                                                             DEFAULT_MODULES);
-    DatasetOpExecutor opExecutor = new LocalDatasetOpExecutor(cConf, discoveryServiceClient, opExecutorService);
+    DatasetOpExecutor opExecutor = new LocalDatasetOpExecutor(cConf, discoveryServiceClient, opExecutorService,
+                                                              authenticationContext);
     DatasetInstanceService instanceService = new DatasetInstanceService(
       typeService, instanceManager, opExecutor, exploreFacade, namespaceQueryAdmin, authorizationEnforcer,
       privilegesManager, authenticationContext);

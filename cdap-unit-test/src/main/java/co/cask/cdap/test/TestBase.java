@@ -95,6 +95,7 @@ import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InvalidAuthorizerException;
+import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
@@ -105,7 +106,6 @@ import co.cask.cdap.test.internal.DefaultArtifactManager;
 import co.cask.cdap.test.internal.DefaultStreamManager;
 import co.cask.cdap.test.internal.LocalStreamWriter;
 import co.cask.cdap.test.internal.StreamManagerFactory;
-import co.cask.tephra.TransactionManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
@@ -123,6 +123,7 @@ import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
+import org.apache.tephra.TransactionManager;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -231,6 +232,7 @@ public class TestBase {
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
       new ServiceStoreModules().getInMemoryModules(),
       new InMemoryProgramRunnerModule(LocalStreamWriter.class),
+      new SecureStoreModules().getInMemoryModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -367,7 +369,7 @@ public class TestBase {
 
     // Setup defaults that can be overridden by user
     cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
-    cConf.setBoolean(Constants.Explore.START_ON_DEMAND, true);
+    cConf.setBoolean(Constants.Explore.START_ON_DEMAND, false);
 
     // Setup test case specific configurations.
     // The system properties are usually setup by TestConfiguration class using @ClassRule
@@ -875,6 +877,16 @@ public class TestBase {
                                                                 String datasetInstanceName) throws Exception {
     return addDatasetInstance(Id.Namespace.DEFAULT, datasetTypeName, datasetInstanceName,
                               DatasetProperties.EMPTY);
+  }
+
+  /**
+   * Deletes an instance of dataset.
+   *
+   * @param namespaceId namespace for the dataset
+   * @param datasetInstanceName instance name
+   */
+  protected void deleteDatasetInstance(NamespaceId namespaceId, String datasetInstanceName) throws Exception {
+    getTestManager().deleteDatasetInstance(namespaceId, datasetInstanceName);
   }
 
   /**

@@ -50,5 +50,5 @@ public interface SparkCollection<T> {
 
   void store(String stageName, SparkSink<T> sink) throws Exception;
 
-  SparkCollection<T> window(Windower windower);
+  SparkCollection<T> window(String stageName, Windower windower);
 }

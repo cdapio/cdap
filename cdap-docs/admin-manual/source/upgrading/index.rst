@@ -6,9 +6,9 @@
 
 .. _upgrading-index:
 
-============
+=========
 Upgrading
-============
+=========
 
 .. toctree::
    

@@ -18,8 +18,8 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.AbstractInMemoryMasterServiceManager;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.inject.Inject;
+import org.apache.tephra.TransactionSystemClient;
 
 /**
  *

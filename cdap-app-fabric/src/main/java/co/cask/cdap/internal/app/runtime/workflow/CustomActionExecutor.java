@@ -32,12 +32,12 @@ import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.customaction.BasicCustomActionContext;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.tephra.TransactionContext;
-import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
+import org.apache.tephra.TransactionContext;
+import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -125,9 +125,18 @@ class CustomActionExecutor {
     }
     ClassLoader oldClassLoader = setContextCombinedClassLoader(action.getClass().getClassLoader());
     try {
+      workflowContext.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
       initializeInTransaction();
       runInTransaction();
-      workflowContext.setSuccess();
+      workflowContext.setState(new ProgramState(ProgramStatus.COMPLETED, null));
+    } catch (Throwable t) {
+      Throwable rootCause = Throwables.getRootCause(t);
+      if (rootCause instanceof InterruptedException) {
+        workflowContext.setState(new ProgramState(ProgramStatus.KILLED, rootCause.getMessage()));
+      } else {
+        workflowContext.setState(new ProgramState(ProgramStatus.FAILED, rootCause.getMessage()));
+      }
+      throw Throwables.propagate(rootCause);
     } finally {
       destroyInTransaction();
       ClassLoaders.setContextClassLoader(oldClassLoader);

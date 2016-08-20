@@ -28,6 +28,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.runtime.RuntimeModule;
+import co.cask.cdap.common.security.UGIProvider;
+import co.cask.cdap.common.security.UnsupportedUGIProvider;
 import co.cask.cdap.common.twill.MasterServiceManager;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.config.guice.ConfigStoreModule;
@@ -38,8 +40,6 @@ import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
 import co.cask.cdap.data2.datafabric.dataset.MetadataServiceManager;
 import co.cask.cdap.data2.datafabric.dataset.RemoteSystemOperationServiceManager;
-import co.cask.cdap.data2.security.UGIProvider;
-import co.cask.cdap.data2.security.UnsupportedUGIProvider;
 import co.cask.cdap.explore.service.ExploreServiceManager;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.ArtifactHttpHandler;
@@ -80,9 +80,7 @@ import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
 import co.cask.cdap.internal.app.services.AppFabricServer;
-import co.cask.cdap.internal.app.services.DefaultSecureStoreService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
-import co.cask.cdap.internal.app.services.SecureStoreService;
 import co.cask.cdap.internal.app.services.StandaloneAppFabricServer;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
@@ -100,7 +98,6 @@ import co.cask.cdap.metrics.runtime.MetricsServiceManager;
 import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.cdap.security.DefaultUGIProvider;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
-import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -144,7 +141,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              StreamHandler.class, StreamFetchHandler.class,
                              StreamViewHttpHandler.class),
                            new ConfigStoreModule().getInMemoryModule(),
-                           new SecureStoreModules().getInMemoryModules(),
                            new EntityVerifierModule(),
                            new AuthenticationContextModules().getMasterModule(),
                            new AbstractModule() {
@@ -180,7 +176,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              StreamHandler.class, StreamFetchHandler.class,
                              StreamViewHttpHandler.class),
                            new ConfigStoreModule().getStandaloneModule(),
-                           new SecureStoreModules().getStandaloneModules(),
                            new EntityVerifierModule(),
                            new AuthenticationContextModules().getMasterModule(),
                            new AbstractModule() {
@@ -238,7 +233,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
     return Modules.combine(new AppFabricServiceModule(ImpersonationHandler.class),
                            new ConfigStoreModule().getDistributedModule(),
-                           new SecureStoreModules().getDistributedModules(),
                            new EntityVerifierModule(),
                            new AuthenticationContextModules().getMasterModule(),
                            new AbstractModule() {
@@ -320,7 +314,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
       bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
       bind(NamespaceQueryAdmin.class).to(DefaultNamespaceQueryAdmin.class).in(Scopes.SINGLETON);
-      bind(SecureStoreService.class).to(DefaultSecureStoreService.class);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
         binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
@@ -348,14 +341,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);
       }
-    }
-
-    @Provides
-    @Named(Constants.AppFabric.SERVER_ADDRESS)
-    @SuppressWarnings("unused")
-    public InetAddress providesHostname(CConfiguration cConf) {
-      String address = cConf.get(Constants.AppFabric.SERVER_ADDRESS);
-      return Networks.resolve(address, new InetSocketAddress("localhost", 0).getAddress());
     }
 
     /**

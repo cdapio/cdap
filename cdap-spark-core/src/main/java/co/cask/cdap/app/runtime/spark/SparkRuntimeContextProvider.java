@@ -39,9 +39,9 @@ import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractService;
@@ -50,6 +50,7 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.Services;
 import org.apache.twill.kafka.client.KafkaClientService;
@@ -130,18 +131,21 @@ public final class SparkRuntimeContextProvider {
       final KafkaClientService kafkaClientService = injector.getInstance(KafkaClientService.class);
       final MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
       final StreamCoordinatorClient streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
+      final AuthorizationEnforcementService enforcementService =
+        injector.getInstance(AuthorizationEnforcementService.class);
 
       // Use the shutdown hook to shutdown services, since this class should only be loaded from System classloader
       // of the spark executor, hence there should be exactly one instance only.
       // The problem with not shutting down nicely is that some logs/metrics might be lost
       Services.chainStart(logAppenderService, zkClientService,
-                          kafkaClientService, metricsCollectionService, streamCoordinatorClient);
+                          kafkaClientService, metricsCollectionService, streamCoordinatorClient, enforcementService);
       Runtime.getRuntime().addShutdownHook(new Thread() {
         @Override
         public void run() {
           // The logger may already been shutdown. Use System.out/err instead
           System.out.println("Shutting SparkClassLoader services");
-          Future<List<ListenableFuture<Service.State>>> future = Services.chainStop(logAppenderService,
+          Future<List<ListenableFuture<Service.State>>> future = Services.chainStop(enforcementService,
+                                                                                    logAppenderService,
                                                                                     streamCoordinatorClient,
                                                                                     metricsCollectionService,
                                                                                     kafkaClientService,

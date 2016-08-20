@@ -42,6 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class AbstractChunkedCallback implements Callback {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractChunkedCallback.class);
 
+  private final AtomicBoolean initialized = new AtomicBoolean();
   private final AtomicBoolean closed = new AtomicBoolean();
   private final HttpResponder responder;
   private final ByteBuffer chunkBuffer = ByteBuffer.allocate(8 * 1024);
@@ -55,6 +56,10 @@ public abstract class AbstractChunkedCallback implements Callback {
 
   @Override
   public void init() {
+    // if initialized already, then return
+    if (!initialized.compareAndSet(false, true)) {
+      return;
+    }
     chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK, getResponseHeaders());
   }
 

@@ -43,6 +43,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -162,7 +163,7 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager, Delegati
   // Unfortunately KeyProvider does not specify the underlying cause except in the message, so we can not throw a
   // more specific exception.
   @Override
-  public List<SecureStoreMetadata> listSecureData(String namespace) throws Exception {
+  public Map<String, String> listSecureData(String namespace) throws Exception {
     checkNamespaceExists(namespace);
     String prefix = namespace + NAME_SEPARATOR;
     List<String> keysInNamespace = new ArrayList<>();
@@ -181,13 +182,11 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager, Delegati
     if (metadatas.length != keysInNamespace.size()) {
       throw new ConcurrentModificationException("A key was deleted while listing was in progress. Please try again.");
     }
-    List<SecureStoreMetadata> secureStoreMetadatas = new ArrayList<>(metadatas.length);
+
+    Map<String, String> secureStoreMetadatas = new HashMap<>(metadatas.length);
     for (int i = 0; i < metadatas.length; i++) {
       KeyProvider.Metadata metadata = metadatas[i];
-      SecureStoreMetadata meta = SecureStoreMetadata.of(keysInNamespace.get(i).substring(prefix.length()),
-                                                        metadata.getDescription(),
-                                                        metadata.getAttributes());
-      secureStoreMetadatas.add(meta);
+      secureStoreMetadatas.put(keysInNamespace.get(i).substring(prefix.length()), metadata.getDescription());
     }
     return secureStoreMetadatas;
   }

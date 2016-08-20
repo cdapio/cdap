@@ -20,11 +20,17 @@ import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
+import co.cask.cdap.common.utils.Networks;
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 /**
  * Guice module to provide bindings for configurations.
@@ -66,14 +72,17 @@ public final class ConfigModule extends AbstractModule {
     String readTimeout = cConf.get(Constants.HTTP_CLIENT_READ_TIMEOUT_MS);
 
     if (connectionTimeout != null) {
+      System.setProperty(DefaultHttpRequestConfig.CONNECTION_TIMEOUT_PROPERTY_NAME, connectionTimeout);
+    } else {
       LOG.warn("Configuration for {} not found. Falling back to default value of {}",
                Constants.HTTP_CLIENT_CONNECTION_TIMEOUT_MS, DefaultHttpRequestConfig.DEFAULT_TIMEOUT);
-      System.setProperty(DefaultHttpRequestConfig.CONNECTION_TIMEOUT_PROPERTY_NAME, connectionTimeout);
     }
+
     if (readTimeout != null) {
+      System.setProperty(DefaultHttpRequestConfig.READ_TIMEOUT_PROPERTY_NAME, readTimeout);
+    } else {
       LOG.warn("Configuration for {} not found. Falling back to default value of {}",
                Constants.HTTP_CLIENT_READ_TIMEOUT_MS, DefaultHttpRequestConfig.DEFAULT_TIMEOUT);
-      System.setProperty(DefaultHttpRequestConfig.READ_TIMEOUT_PROPERTY_NAME, readTimeout);
     }
   }
 
@@ -83,5 +92,13 @@ public final class ConfigModule extends AbstractModule {
     bind(Configuration.class).toInstance(hConf);
     bind(SConfiguration.class).toInstance(sConf);
     bind(YarnConfiguration.class).toInstance(new YarnConfiguration(hConf));
+  }
+
+  @Provides
+  @Named(Constants.AppFabric.SERVER_ADDRESS)
+  @SuppressWarnings("unused")
+  public InetAddress providesHostname(CConfiguration cConf) {
+    return Networks.resolve(cConf.get(Constants.AppFabric.SERVER_ADDRESS),
+                            new InetSocketAddress("localhost", 0).getAddress());
   }
 }

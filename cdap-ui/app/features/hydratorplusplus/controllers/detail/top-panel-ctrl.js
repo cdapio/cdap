@@ -23,6 +23,7 @@ class HydratorDetailTopPanelController {
     this.moment = moment;
     this.$scope = $scope;
     this.$timeout = $timeout;
+    this.scheduleTimeout = null;
     this.HydratorPlusPlusDetailNonRunsStore = HydratorPlusPlusDetailNonRunsStore;
     this.HydratorPlusPlusDetailRunsStore = HydratorPlusPlusDetailRunsStore;
     this.HydratorPlusPlusDetailActions = HydratorPlusPlusDetailActions;
@@ -69,6 +70,10 @@ class HydratorDetailTopPanelController {
       }
     };
     this.fetchMacros();
+
+    this.$scope.$on('$destroy', () => {
+      this.$timeout.cancel(this.scheduleTimeout);
+    });
   }
   fetchMacros() {
     const macroReducer = (prev, curr) => {
@@ -271,6 +276,7 @@ class HydratorDetailTopPanelController {
   }
   schedulePipeline() {
     this.scheduleStatus = 'SCHEDULING';
+    this.scheduleLoading = true;
     let preferenceParams = {
       namespace: this.$state.params.namespace,
       appId: this.$state.params.pipelineId,
@@ -281,12 +287,21 @@ class HydratorDetailTopPanelController {
       .$promise
       .then(
         () => {
-          this.HydratorPlusPlusDetailActions.schedulePipeline(
+          return this.HydratorPlusPlusDetailActions.schedulePipeline(
             this.HydratorPlusPlusDetailRunsStore.getApi(),
             this.HydratorPlusPlusDetailRunsStore.getScheduleParams()
-          );
+          )
+            .then(() => {
+              if (this.scheduleTimeout) {
+                this.$timeout.cancel(this.scheduleTimeout);
+              }
+              this.scheduleTimeout = this.$timeout(() => {
+                this.scheduleLoading = false;
+              }, 1000);
+            });
         },
         (err) => {
+          this.scheduleLoading = false;
           this.macroError = angular.isObject(err) ? (err.data || 'Error saving runtime arguments in preferences store') : err;
           this.setScheduleStatus();
           return this.$q.reject();
@@ -320,6 +335,7 @@ class HydratorDetailTopPanelController {
       );
   }
   suspendPipeline() {
+    this.scheduleLoading = true;
     this.HydratorPlusPlusDetailActions.suspendSchedule(
       this.HydratorPlusPlusDetailRunsStore.getApi(),
       this.HydratorPlusPlusDetailRunsStore.getScheduleParams()
@@ -330,6 +346,13 @@ class HydratorDetailTopPanelController {
             this.HydratorPlusPlusDetailRunsStore.getApi(),
             this.HydratorPlusPlusDetailRunsStore.getScheduleParams()
           );
+
+          if (this.scheduleTimeout) {
+            this.$timeout.cancel(this.scheduleTimeout);
+          }
+          this.scheduleTimeout = this.$timeout(() => {
+            this.scheduleLoading = false;
+          }, 1000);
         },
         (err) => {
           this.myAlertOnValium.show({
@@ -337,6 +360,7 @@ class HydratorDetailTopPanelController {
             title: 'Unable to suspend the pipeline',
             content: angular.isObject(err) ? err.data: err
           });
+          this.scheduleLoading = false;
         }
       );
   }

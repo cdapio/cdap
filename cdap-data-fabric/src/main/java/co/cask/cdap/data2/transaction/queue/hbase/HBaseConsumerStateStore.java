@@ -30,7 +30,6 @@ import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.ConsumerGroupConfig;
 import co.cask.cdap.data2.transaction.queue.QueueConfigurer;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
-import co.cask.tephra.Transaction;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
@@ -43,6 +42,7 @@ import com.google.common.collect.Sets;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import com.google.gson.Gson;
+import org.apache.tephra.Transaction;
 
 import java.util.ArrayList;
 import java.util.Arrays;

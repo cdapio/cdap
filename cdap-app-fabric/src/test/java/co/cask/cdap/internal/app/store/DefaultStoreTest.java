@@ -781,7 +781,7 @@ public class DefaultStoreTest {
 
     // remove all
     store.removeAll(namespaceId);
-
+    
     verifyRunHistory(flowProgramId2, 0);
   }
 

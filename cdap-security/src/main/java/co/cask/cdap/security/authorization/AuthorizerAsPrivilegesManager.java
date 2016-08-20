@@ -30,25 +30,25 @@ import java.util.Set;
  */
 public class AuthorizerAsPrivilegesManager implements PrivilegesManager {
 
-  private final Authorizer authorizer;
+  private final AuthorizerInstantiator authorizerInstantiator;
 
   @Inject
   AuthorizerAsPrivilegesManager(AuthorizerInstantiator authorizerInstantiator) {
-    this.authorizer = authorizerInstantiator.get();
+    this.authorizerInstantiator = authorizerInstantiator;
   }
 
   @Override
   public void grant(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
-    authorizer.grant(entity, principal, actions);
+    authorizerInstantiator.get().grant(entity, principal, actions);
   }
 
   @Override
   public void revoke(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
-    authorizer.revoke(entity, principal, actions);
+    authorizerInstantiator.get().revoke(entity, principal, actions);
   }
 
   @Override
   public void revoke(EntityId entity) throws Exception {
-    authorizer.revoke(entity);
+    authorizerInstantiator.get().revoke(entity);
   }
 }

@@ -62,6 +62,13 @@
           max-width: 70%;
         }
 
+        // Adjust max-width of modal title when my-jump-link is present
+        &.with-jump {
+          max-width: ~"calc(100% - 215px)";
+          max-width: ~"-moz-calc(100% - 215px)";
+          max-width: ~"-webkit-calc(100% - 215px)";
+        }
+
         p {
           min-width: 100%;
           text-overflow: ellipsis;
@@ -108,7 +115,10 @@
     }
 
     .modal-body { padding: 10px 20px 0; }
-
+    textarea.query-input {
+      margin-bottom: 10px;
+      + button { margin-bottom: 10px; }
+    }
     .modal-footer {
       padding-left: 20px;
       padding-right: 20px;
@@ -193,7 +203,9 @@
                   div.config-table {
                     display: table;
                     width: 100%;
-                    height: 59vh;
+                    height: ~"calc(100vh - 220px)";
+                    height: ~"-moz-calc(100vh - 220px)";
+                    height: ~"-webkit-calc(100vh - 220px)";
 
                     > div {
                       display: table-cell;
@@ -236,8 +248,13 @@
           }
           .control-label { font-weight: bold; }
           table.table {
-            border: 0;
             .control-label { font-weight: bold; }
+          }
+          div.header > h4,
+          div.nullable-header > h4 {
+            color: #666666;
+            font-size: 14px;
+            font-weight: 500;
           }
         }
       }
@@ -250,6 +267,13 @@
           .modal-body { max-height: 75vh; }
         }
       }
+    }
+  }
+
+  &.layered-modal {
+    .modal-dialog {
+      margin: 90px auto 0;
+      width: 50%;
     }
   }
 }
@@ -271,6 +295,11 @@ body.theme-cdap {
               .console-type {
                 .node-config {
                   .bottompanel-body {
+                    height: ~"calc(100vh - 250px)";
+                    height: ~"-moz-calc(100vh - 250px)";
+                    height: ~"-webkit-calc(100vh - 250px)";
+                  }
+                  div.config-table {
                     height: ~"calc(100vh - 250px)";
                     height: ~"-moz-calc(100vh - 250px)";
                     height: ~"-webkit-calc(100vh - 250px)";

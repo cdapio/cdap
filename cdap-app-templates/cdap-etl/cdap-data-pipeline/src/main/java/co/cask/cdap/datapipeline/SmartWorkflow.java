@@ -58,7 +58,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 /**
  * Data Pipeline Smart Workflow.
@@ -85,6 +84,8 @@ public class SmartWorkflow extends AbstractWorkflow {
   // injected by cdap
   @SuppressWarnings("unused")
   private Metrics workflowMetrics;
+
+  private int connectorNum = 0;
 
   public SmartWorkflow(BatchPipelineSpec spec,
                        Set<String> supportedPluginTypes,
@@ -250,7 +251,7 @@ public class SmartWorkflow extends AbstractWorkflow {
       String connectorName = connectorInfo.getName();
       String datasetName = connectorDatasets.get(connectorName);
       if (datasetName == null) {
-        datasetName = UUID.randomUUID().toString();
+        datasetName = "conn-" + connectorNum++;
         connectorDatasets.put(connectorName, datasetName);
         // add the local dataset
         ConnectorSource connectorSource = new ConnectorSource(datasetName, null);

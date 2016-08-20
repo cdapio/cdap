@@ -23,14 +23,14 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
-import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -53,11 +53,18 @@ public class AuthorizationBootstrapper {
   AuthorizationBootstrapper(CConfiguration cConf, PrivilegesManager privilegesManager) {
     this.enabled =
       cConf.getBoolean(Constants.Security.ENABLED) && cConf.getBoolean(Constants.Security.Authorization.ENABLED);
-    this.systemUser =
-      new Principal(cConf.get(Constants.Security.Authorization.SYSTEM_USER), Principal.PrincipalType.USER);
+    String currentUser;
+    try {
+      currentUser = UserGroupInformation.getCurrentUser().getShortUserName();
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+    this.systemUser = new Principal(currentUser, Principal.PrincipalType.USER);
     this.adminUsers = getAdminUsers(cConf);
+    if (enabled && adminUsers.isEmpty()) {
+      LOG.info("Admin users specified by {} is empty.", Constants.Security.Authorization.ADMIN_USERS);
+    }
     this.instanceId = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
-    validateConfiguration();
     this.privilegesManager = privilegesManager;
   }
 
@@ -73,9 +80,11 @@ public class AuthorizationBootstrapper {
       // grant ALL on the system namespace, so the system user can create and access tables in the system namespace
       // also required by SystemArtifactsLoader to add system artifacts
       privilegesManager.grant(NamespaceId.SYSTEM, systemUser, EnumSet.allOf(Action.class));
-      // also grant admin privileges on the CDAP instance to the admin users, so they can create namespaces
       for (Principal adminUser : adminUsers) {
+        // grant admin privileges on the CDAP instance to the admin users, so they can create namespaces
         privilegesManager.grant(instanceId, adminUser, Collections.singleton(Action.ADMIN));
+        // also grant admin on the default namespace, so admins can also manage privileges on them
+        privilegesManager.grant(NamespaceId.DEFAULT, adminUser, Collections.singleton(Action.ADMIN));
       }
       LOG.info("Successfully bootstrapped authorization for CDAP instance {}, system user {} and admin users: {}",
                instanceId, systemUser, adminUsers);
@@ -93,22 +102,5 @@ public class AuthorizationBootstrapper {
       }
     }
     return admins;
-  }
-
-  private void validateConfiguration() {
-    if (!enabled) {
-      return;
-    }
-    Preconditions.checkArgument(
-      !Strings.isNullOrEmpty(systemUser.getName()),
-      "The CDAP system user specified by %s is null or empty. Without this setting, CDAP will not be able to " +
-        "create a default namespace, system artifacts or initialize its metadata. It is recommended to set this to " +
-        "the user that the CDAP Master runs as.", Constants.Security.Authorization.SYSTEM_USER);
-    if (adminUsers.isEmpty()) {
-      LOG.warn("Admin users specified by {} is empty. It may not be possible to bootstrap CDAP without this setting. " +
-                 "To get rid of this warning, please set {} to a comma-separated list of users who will be granted " +
-                 "admin privileges on the CDAP instance so that they can create namespaces in CDAP.",
-               Constants.Security.Authorization.ADMIN_USERS, Constants.Security.Authorization.ADMIN_USERS);
-    }
   }
 }

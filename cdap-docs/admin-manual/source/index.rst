@@ -85,11 +85,11 @@ installation and its security configuration.
 
 
 .. |security| replace:: **Security:**
-.. _security: security.html
+.. _security: security/index.html
 
-- |security|_ CDAP supports **securing clusters using a perimeter security model.** This
-  section describes enabling security, configuring authentication, testing security, and 
-  includes an example configuration file.
+- |security|_ CDAP supports securing clusters using a **perimeter security**,
+  **authorization**, **impersonation** and **secure storage**. This section describes
+  enabling, configuring, and testing security. It also provides example configuration files.
 
 
 .. |operations| replace:: **Operations:**

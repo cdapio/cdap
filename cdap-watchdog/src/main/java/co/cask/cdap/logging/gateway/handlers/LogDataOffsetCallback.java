@@ -20,14 +20,21 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.http.HttpResponder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
+import java.util.List;
 
 /**
  * LogReader callback to encode log events, as {@link LogData} objects.
  */
 public class LogDataOffsetCallback extends AbstractJSONCallback {
+  private final List<String> fieldsToSuppress;
 
-  LogDataOffsetCallback(HttpResponder responder) {
+  LogDataOffsetCallback(HttpResponder responder, List<String> fieldsToSuppress) {
     super(responder);
+    this.fieldsToSuppress = fieldsToSuppress;
+    validate();
   }
 
   @Override
@@ -48,6 +55,34 @@ public class LogDataOffsetCallback extends AbstractJSONCallback {
     LogData logData = new LogData(event.getTimeStamp(), event.getLevel().toString(), event.getThreadName(),
                                   className, simpleClassName, lineNumber, event.getFormattedMessage(),
                                   ThrowableProxyUtil.asString(event.getThrowableProxy()));
-    return new FormattedLogDataEvent(logData, logEvent.getOffset());
+    return modifyLogJsonElememnt(GSON.toJsonTree(new FormattedLogDataEvent(logData, logEvent.getOffset())));
+  }
+
+  private Object modifyLogJsonElememnt(JsonElement jsonElement) {
+    JsonObject jsonLogData = (JsonObject) jsonElement;
+    JsonObject logData = jsonLogData.getAsJsonObject("log");
+
+    if (!fieldsToSuppress.isEmpty()) {
+      for (String field : fieldsToSuppress) {
+        logData.remove(field);
+      }
+    }
+
+    return jsonLogData;
+  }
+
+  private void validate() {
+    if (fieldsToSuppress.isEmpty()) {
+      return;
+    }
+
+    for (String fieldToSuppress : fieldsToSuppress) {
+      try {
+        LogData.class.getDeclaredField(fieldToSuppress);
+      } catch (NoSuchFieldException e) {
+        throw new IllegalArgumentException(String.format("Field %s is not supported as suppress field",
+                                                         fieldToSuppress));
+      }
+    }
   }
 }

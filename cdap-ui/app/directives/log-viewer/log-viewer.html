@@ -13,9 +13,7 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-
 <div class="log-viewer-container" ng-class="{'full-screen': LogViewer.fullScreen}">
-
   <!-- LOGS HEADERBAR -->
   <div class="logs-headerbar">
     <div class="log-stats-container">
@@ -66,7 +64,7 @@
           <input type="text" class="log-searchbar" placeholder="Search" ng-model="LogViewer.searchText" ng-model-options="{ debounce: 500 }" ng-change="LogViewer.filterSearch()">
           <span class="fa fa-search"></span>
         </div>
-        <i class="fa fa-expand" aria-hidden="true" ng-click="LogViewer.fullScreen = !LogViewer.fullScreen"></i>
+        <i class="fa fa-expand" aria-hidden="true" ng-click="LogViewer.updateScreenChangeInStore(!LogViewer.fullScreen)"></i>
       </div>
     </div>
   </div>
@@ -83,7 +81,8 @@
   </my-timeline>
 
   <!-- LOGS TABLE -->
-  <div class="logs-table">
+  <div class="logs-table"
+       in-view-container>
     <table class="table table-bordered scroll scroll-table">
       <thead>
         <th class="time time-header log-header"
@@ -120,20 +119,22 @@
           <span>Message</span>
           <button class="btn btn-default pull-right"
                   ng-click="LogViewer.toggleLogExpansion()"
-                  ng-disabled="LogViewer.displayData.length === 0 || (LogViewer.warningCount + LogViewer.errorCount === 0)">
+                  ng-disabled="LogViewer.displayData.length === 0">
             <span ng-if="!LogViewer.toggleExpandAll">Expand All</span>
             <span ng-if="LogViewer.toggleExpandAll">Collapse All</span>
           </button>
         </th>
       </thead>
       <tbody infinite-scroll="LogViewer.scrollFn()"
-             infinite-scroll-disabled="LogViewer.viewLimit >= LogViewer.displayData.length"
              infinite-scroll-container="'.logs-table'"
+             infinite-scroll-disabled="(LogViewer.statusType === 0 || LogViewer.statusType === 1) && LogViewer.displayData.length === LogViewer.totalCount"
              >
 
         <tr ng-class="{'has-stack-trace' : entry.log.stackTrace.length > 0, 'row-selected' : $index+1  < LogViewer.displayData.length && LogViewer.displayData[$index + 1].stackTrace, 'row-expanded' : !entry.stackTrace && entry.selected }"
-            ng-repeat="entry in LogViewer.displayData | limitTo: LogViewer.viewLimit track by $index"
-            ng-click="LogViewer.toggleStackTrace($index)">
+            ng-repeat="entry in LogViewer.displayData track by $index"
+            ng-click="LogViewer.toggleStackTrace($index)"
+            in-view="LogViewer.inViewScrollUpdate($index, $inview, $event)"
+            in-view-options="{ debounce : 500}">
 
           <td class="time time-stack-trace"
               ng-if="!entry.stackTrace && entry.log.stackTrace.length > 0 && LogViewer.configOptions.time && !LogViewer.hiddenColumns.time">
@@ -180,13 +181,19 @@
         <tr class="message-holder">
           <td colspan="4">
             <div class="well well-sm text-center"
-                 ng-if="!LogViewer.loading && !LogViewer.displayData.length && LogViewer.statusType !== 0">
+                 ng-if="!LogViewer.errorRetrievingLogs && !LogViewer.loading && !LogViewer.displayData.length && LogViewer.statusType !== 0">
               <h4>
                 No logs to display.
               </h4>
             </div>
             <div class="well well-sm text-center"
-                 ng-if="LogViewer.statusType === 0 || LogViewer.loading">
+                 ng-if="LogViewer.errorRetrievingLogs && !LogViewer.loading">
+              <h4>
+                Error Retrieving Logs.
+              </h4>
+            </div>
+            <div class="well well-sm text-center"
+                 ng-if="!LogViewer.errorRetrievingLogs && LogViewer.statusType === 0 || LogViewer.loading">
               <h4 ng-if="!LogViewer.displayData.length">Loading ...</h4>
               <h6 ng-if="LogViewer.displayData.length">
                 <span class="fa fa-spin fa-refresh"></span>

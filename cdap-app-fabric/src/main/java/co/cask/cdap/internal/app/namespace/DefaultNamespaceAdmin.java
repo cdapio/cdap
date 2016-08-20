@@ -30,11 +30,11 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.security.ImpersonationInfo;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.config.DashboardStore;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.security.ImpersonationInfo;
-import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.service.ExploreException;
@@ -59,6 +59,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -154,14 +155,17 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
     Principal principal = authenticationContext.getPrincipal();
     authorizationEnforcer.enforce(instanceId, principal, Action.ADMIN);
     privilegesManager.grant(namespace, principal, EnumSet.allOf(Action.class));
-    // Also grant the namespace user all privileges on the namespace, if kerberos is enabled
+    // Also grant the user who will execute programs in this namespace all privileges on the namespace
+    String executionUserName;
     if (SecurityUtil.isKerberosEnabled(cConf)) {
       ImpersonationInfo impersonationInfo = new ImpersonationInfo(metadata, cConf);
       String namespacePrincipal = impersonationInfo.getPrincipal();
-      String namespaceUserName = new KerberosName(namespacePrincipal).getShortName();
-      Principal namespaceUser = new Principal(namespaceUserName, Principal.PrincipalType.USER);
-      privilegesManager.grant(namespace, namespaceUser, EnumSet.allOf(Action.class));
+      executionUserName = new KerberosName(namespacePrincipal).getShortName();
+    } else {
+      executionUserName = UserGroupInformation.getCurrentUser().getShortUserName();
     }
+    Principal executionUser = new Principal(executionUserName, Principal.PrincipalType.USER);
+    privilegesManager.grant(namespace, executionUser, EnumSet.allOf(Action.class));
 
     // store the meta first in the namespace store because namespacedlocationfactory need to look up location
     // mapping from namespace config
@@ -189,8 +193,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
       // if hbase namespace is provided validate no other existing namespace is mapped to it
       if (!Strings.isNullOrEmpty(metadata.getConfig().getHbaseNamespace()) &&
         metadata.getConfig().getHbaseNamespace().equals(existingConfig.getHbaseNamespace())) {
-        throw new NamespaceAlreadyExistsException(existingNamespaceMeta.getNamespaceId().toId(),
-                                                  String.format("A namespace '%s' already exists with the given " +
+        throw new BadRequestException(String.format("A namespace '%s' already exists with the given " +
                                                                   "namespace mapping for hbase namespace '%s'",
                                                                 existingNamespaceMeta.getName(),
                                                                 existingConfig.getHbaseNamespace()));
@@ -198,8 +201,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
       // if hive database is provided validate no other existing namespace is mapped to it
       if (!Strings.isNullOrEmpty(metadata.getConfig().getHiveDatabase()) &&
         metadata.getConfig().getHiveDatabase().equals(existingConfig.getHiveDatabase())) {
-        throw new NamespaceAlreadyExistsException(existingNamespaceMeta.getNamespaceId().toId(),
-                                                  String.format("A namespace '%s' already exists with the given " +
+        throw new BadRequestException(String.format("A namespace '%s' already exists with the given " +
                                                                   "namespace mapping for hive database '%s'",
                                                                 existingNamespaceMeta.getName(),
                                                                 existingConfig.getHiveDatabase()));
@@ -210,8 +212,7 @@ public final class DefaultNamespaceAdmin extends DefaultNamespaceQueryAdmin impl
         // make sure that this new location is not same as some already mapped location or subdir of the existing
         // location or vice versa.
         if (hasSubDirRelationship(existingConfig.getRootDirectory(), metadata.getConfig().getRootDirectory())) {
-          throw new NamespaceAlreadyExistsException(existingNamespaceMeta.getNamespaceId().toId(),
-                                                    String.format("Failed to create namespace %s with custom " +
+          throw new BadRequestException(String.format("Failed to create namespace %s with custom " +
                                                                     "location %s. A namespace '%s' already exists " +
                                                                     "with location '%s' and these two locations are " +
                                                                     "have a subdirectory relationship.",

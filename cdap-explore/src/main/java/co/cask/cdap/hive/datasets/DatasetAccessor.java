@@ -26,11 +26,11 @@ import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.context.TxnCodec;
 import co.cask.cdap.proto.Id;
-import co.cask.tephra.Transaction;
-import co.cask.tephra.TransactionAware;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionAware;
 
 import java.io.Closeable;
 import java.io.IOException;

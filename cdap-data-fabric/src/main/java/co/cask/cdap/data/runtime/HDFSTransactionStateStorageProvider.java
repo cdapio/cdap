@@ -16,12 +16,12 @@
 
 package co.cask.cdap.data.runtime;
 
-import co.cask.tephra.metrics.TxMetricsCollector;
-import co.cask.tephra.persist.HDFSTransactionStateStorage;
-import co.cask.tephra.snapshot.SnapshotCodecProvider;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.metrics.TxMetricsCollector;
+import org.apache.tephra.persist.HDFSTransactionStateStorage;
+import org.apache.tephra.snapshot.SnapshotCodecProvider;
 
 /**
  * Google Guice Provider for the {@link HDFSTransactionStateStorage} class.  Each call to {@link #get()} will return

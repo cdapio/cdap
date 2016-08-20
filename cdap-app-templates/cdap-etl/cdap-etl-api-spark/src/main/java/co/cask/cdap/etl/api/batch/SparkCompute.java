@@ -19,6 +19,7 @@ package co.cask.cdap.etl.api.batch;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.StageLifecycle;
 import org.apache.spark.api.java.JavaRDD;
 
 import java.io.Serializable;
@@ -37,7 +38,7 @@ public abstract class SparkCompute<IN, OUT> implements PipelineConfigurable, Ser
 
 
   /**
-   * Configure an ETL pipeline.
+   * Configure a pipeline.
    *
    * @param pipelineConfigurer the configurer used to add required datasets and streams
    * @throws IllegalArgumentException if the given config is invalid
@@ -48,11 +49,22 @@ public abstract class SparkCompute<IN, OUT> implements PipelineConfigurable, Ser
   }
 
   /**
+   * Initialize the plugin. Will be called before any calls to {@link #transform(SparkExecutionPluginContext, JavaRDD)}
+   * are made.
+   *
+   * @param context {@link SparkExecutionPluginContext} for this job
+   * @throws Exception if there is an error initializing
+   */
+  public void initialize(SparkExecutionPluginContext context) throws Exception {
+    //no-op
+  }
+
+  /**
    * Transform the input and return the output to be sent to the next stage in the pipeline.
    *
    * @param context {@link SparkExecutionPluginContext} for this job
    * @param input input data to be transformed
-   * @throws Exception if there's an error during this method invocation
+   * @throws Exception if there is an error during this method invocation
    */
   public abstract JavaRDD<OUT> transform(SparkExecutionPluginContext context, JavaRDD<IN> input) throws Exception;
 

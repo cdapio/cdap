@@ -19,10 +19,8 @@ package co.cask.cdap.security.store;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.security.store.SecureStoreManager;
-import co.cask.cdap.api.security.store.SecureStoreMetadata;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -42,7 +40,7 @@ public class DummySecureStore implements SecureStore, SecureStoreManager {
     "\"security.store.file.password\" property in cdap-security.xml. ";
 
   @Override
-  public List<SecureStoreMetadata> listSecureData(String namespace) throws IOException {
+  public Map<String, String> listSecureData(String namespace) throws IOException {
     throw new UnsupportedOperationException(SECURE_STORE_SETUP);
   }
 

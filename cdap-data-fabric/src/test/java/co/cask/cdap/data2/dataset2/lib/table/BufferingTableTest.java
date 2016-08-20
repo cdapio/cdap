@@ -24,10 +24,10 @@ import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.TableAssert;
-import co.cask.tephra.Transaction;
-import co.cask.tephra.TransactionAware;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionAware;
 import org.junit.Assert;
 import org.junit.Test;
 

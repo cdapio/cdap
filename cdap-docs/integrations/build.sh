@@ -19,4 +19,14 @@
 source ../vars
 source ../_common/common-build.sh
 
+CHECK_INCLUDES=${TRUE}
+
+function download_includes() {
+  local target_includes_dir=${1}
+  
+  # Download Apache Sentry File
+  local github_source="https://raw.githubusercontent.com/caskdata/cdap-security-extn/${GIT_BRANCH_CDAP_SECURITY_EXTN}/cdap-sentry/cdap-sentry-extension/"
+  download_file ${target_includes_dir} ${github_source} README.rst 526e77d7f3176dc3da0a331209359075 cdap-sentry-extension-readme.txt
+}
+
 run_command ${1}

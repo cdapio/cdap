@@ -18,14 +18,14 @@ package co.cask.cdap.data.runtime;
 
 import co.cask.cdap.data2.transaction.DynamicTransactionExecutor;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
-import co.cask.tephra.DefaultTransactionExecutor;
-import co.cask.tephra.TransactionAware;
-import co.cask.tephra.TransactionContext;
-import co.cask.tephra.TransactionExecutor;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.inject.Inject;
+import org.apache.tephra.DefaultTransactionExecutor;
+import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionContext;
+import org.apache.tephra.TransactionExecutor;
+import org.apache.tephra.TransactionSystemClient;
 
 /**
  * Implementation of {@link TransactionExecutorFactory} that supports dynamic creation of {@link TransactionContext}

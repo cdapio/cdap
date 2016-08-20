@@ -14,10 +14,13 @@
  * the License.
  */
 
-function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myLogsApi, MyMetricsQueryHelper, MyCDAPDataSource) {
+function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myLogsApi, MyMetricsQueryHelper, MyCDAPDataSource, ProgramsHelpers, moment, $timeout, caskWindowManager) {
 
   var dataSrc = new MyCDAPDataSource($scope);
   this.pinScrollPosition = 0;
+  $scope.moment = moment;
+  let screenSize;
+  $scope.pinScrollingPosition = 0;
 
   this.updateStartTimeInStore = function(val) {
     LogViewerStore.dispatch({
@@ -28,17 +31,56 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     });
   };
 
-  var pollPromise = null;
+  $scope.$on(caskWindowManager.event.resize, () => {
+    $timeout($scope.initialize);
+  });
+  this.updateTotalLogsInStore = function(val) {
+    LogViewerStore.dispatch({
+      type: LOGVIEWERSTORE_ACTIONS.TOTAL_LOGS,
+      payload: {
+        totalLogs: val
+      }
+    });
+  };
+  this.updateScrollPositionInStore = function(val) {
+    LogViewerStore.dispatch({
+      type: LOGVIEWERSTORE_ACTIONS.SCROLL_POSITION,
+      payload: {
+        scrollPosition: val
+      }
+    });
+  };
 
+  this.updateTotalErrorsInStore = function(val) {
+    LogViewerStore.dispatch({
+      type: LOGVIEWERSTORE_ACTIONS.TOTAL_ERRORS,
+      payload: {
+        totalErrors: val
+      }
+    });
+  };
+
+  this.updateTotalWarningsInStore = function(val) {
+    LogViewerStore.dispatch({
+      type: LOGVIEWERSTORE_ACTIONS.TOTAL_WARNINGS,
+      payload: {
+        totalWarnings: val
+      }
+    });
+  };
+
+  var pollPromise = null;
+  var programType = ProgramsHelpers.getSingularName(this.programType);
   var apiSettings = {
     metric : {
-      context: `namespace.${this.namespaceId}.app.${this.appId}.flow.${this.programId}.run.${this.runId}`,
+      context: `namespace.${this.namespaceId}.app.${this.appId}.${programType}.${this.programId}.run.${this.runId}`,
       names: ['system.app.log.error', 'system.app.log.warn', 'system.app.log.info', 'system.app.log.debug'],
       startTime : '',
       endTime : '',
       resolution: '1m'
     }
   };
+
   this.setDefaultTimeWindow = () => {
     apiSettings.metric.startTime = '';
     apiSettings.metric.endTime = '';
@@ -59,22 +101,48 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
       $scope.metadata = res;
       $scope.sliderBarPositionRefresh = LogViewerStore.getState().startTime;
       $scope.initialize();
+      if (res.status === 'KILLED' || res.status==='COMPLETED' || res.status === 'FAILED' || res.status === 'STOPPED') {
+        dataSrc.stopPoll(pollPromise.__pollId__);
+        pollPromise = null;
+      }
     }, (err) => {
+      // FIXME: We need to fix this. Right now this fails and we need to handle this more gracefully.
+      $scope.initialize();
       console.log('ERROR: ', err);
     });
   };
 
   LogViewerStore.subscribe(() => {
-    this.pinScrollPosition = LogViewerStore.getState().scrollPosition;
-    if($scope.updatePinScale !== undefined){
-      $scope.updatePinScale(this.pinScrollPosition);
+    if(screenSize !== LogViewerStore.getState().fullScreen){
+      screenSize = LogViewerStore.getState().fullScreen;
+      $timeout($scope.initialize);
+    }
+
+    //Keep the slider handle in sync with the api call
+    if(typeof $scope.updateSliderHandle !== 'undefined'){
+      $scope.updateSliderHandle(LogViewerStore.getState().startTime);
+
+      //Check if the pinScrollPosition is less than the value of the query handle
+      this.pinScrollPosition = LogViewerStore.getState().scrollPosition;
+      if(typeof $scope.updatePin !== 'undefined'){
+        $scope.pinScrollingPosition = this.pinScrollPosition;
+        $scope.updatePin();
+      }
+
+      if($scope.searchResultTimes !== LogViewerStore.getState().searchResults){
+        $scope.searchResultTimes = LogViewerStore.getState().searchResults;
+        $scope.renderSearchCircles($scope.searchResultTimes);
+      }
     }
   });
+
+  screenSize = LogViewerStore.getState().fullScreen;
 
   if (!this.namespaceId || !this.appId || !this.programType || !this.programId || !this.runId) {
     this.setDefaultTimeWindow();
     return;
   }
+
   myLogsApi.getLogsMetadata({
     namespace : this.namespaceId,
     appId : this.appId,
@@ -83,8 +151,13 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     runId : this.runId,
   }).$promise.then(
     (res) => {
+      $scope.metadata = res;
+      if(res.start === res.end){
+        res.end++;
+      }
       apiSettings.metric.startTime = res.start;
-      apiSettings.metric.endTime = 'now';
+      apiSettings.metric.endTime = res.end;
+      $scope.renderSearchCircles([]);
       pollForMetadata();
     },
     (err) => {

@@ -26,11 +26,11 @@ import co.cask.cdap.data2.queue.DequeueResult;
 import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.proto.Id;
 import co.cask.common.io.ByteBufferInputStream;
-import co.cask.tephra.Transaction;
-import co.cask.tephra.TransactionAware;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionAware;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

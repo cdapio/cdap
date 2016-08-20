@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,7 @@ import co.cask.cdap.app.runtime.DummyProgramRunnerFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.data2.security.Impersonator;
+import co.cask.cdap.common.security.DefaultImpersonator;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.pipeline.NamespacedImpersonator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -91,19 +91,20 @@ public class ConfiguratorTest {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, WordCountApp.class);
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, WordCountApp.class.getSimpleName(), "1.0.0");
-    Impersonator impersonator = new Impersonator(CConfiguration.create(), null, null);
+    CConfiguration cConf = CConfiguration.create();
     ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, authorizer,
-                                                             new DummyProgramRunnerFactory(), impersonator,
+                                                             new DummyProgramRunnerFactory(),
+                                                             new DefaultImpersonator(cConf, null, null),
                                                              authEnforcer, authenticationContext);
 
     // Create a configurator that is testable. Provide it a application.
     try (CloseableClassLoader artifactClassLoader =
-           artifactRepo.createArtifactClassLoader(appJar,
-                                                  new NamespacedImpersonator(artifactId.getNamespace().toEntityId(),
-                                                                             impersonator))) {
+           artifactRepo.createArtifactClassLoader(
+             appJar, new NamespacedImpersonator(artifactId.getNamespace().toEntityId(),
+                                                new DefaultImpersonator(cConf, null, null)))) {
       Configurator configurator = new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId,
                                                            WordCountApp.class.getName(), artifactRepo,
-                                                           artifactClassLoader, impersonator, null, "");
+                                                           artifactClassLoader, null, "");
       // Extract response from the configurator.
       ListenableFuture<ConfigResponse> result = configurator.config();
       ConfigResponse response = result.get(10, TimeUnit.SECONDS);
@@ -123,20 +124,21 @@ public class ConfiguratorTest {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, ConfigTestApp.class);
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, ConfigTestApp.class.getSimpleName(), "1.0.0");
-    Impersonator impersonator = new Impersonator(CConfiguration.create(), null, null);
+    CConfiguration cConf = CConfiguration.create();
     ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, authorizer,
-                                                             new DummyProgramRunnerFactory(), impersonator,
+                                                             new DummyProgramRunnerFactory(),
+                                                             new DefaultImpersonator(cConf, null, null),
                                                              authEnforcer, authenticationContext);
 
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myStream", "myTable");
     // Create a configurator that is testable. Provide it a application.
     try (CloseableClassLoader artifactClassLoader =
-           artifactRepo.createArtifactClassLoader(appJar,
-                                                  new NamespacedImpersonator(artifactId.getNamespace().toEntityId(),
-                                                                             impersonator))) {
+           artifactRepo.createArtifactClassLoader(
+             appJar, new NamespacedImpersonator(artifactId.getNamespace().toEntityId(),
+                                                new DefaultImpersonator(cConf, null, null)))) {
       Configurator configuratorWithConfig =
         new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId, ConfigTestApp.class.getName(),
-                                 artifactRepo, artifactClassLoader, impersonator, null, new Gson().toJson(config));
+                                 artifactRepo, artifactClassLoader, null, new Gson().toJson(config));
 
       ListenableFuture<ConfigResponse> result = configuratorWithConfig.config();
       ConfigResponse response = result.get(10, TimeUnit.SECONDS);
@@ -152,7 +154,7 @@ public class ConfiguratorTest {
 
       Configurator configuratorWithoutConfig = new InMemoryConfigurator(
         conf, Id.Namespace.DEFAULT, artifactId, ConfigTestApp.class.getName(),
-        artifactRepo, artifactClassLoader, impersonator, null, null);
+        artifactRepo, artifactClassLoader, null, null);
       result = configuratorWithoutConfig.config();
       response = result.get(10, TimeUnit.SECONDS);
       Assert.assertNotNull(response);

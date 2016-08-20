@@ -210,7 +210,7 @@ public abstract class SparkPipelineDriver {
       } else if (Windower.PLUGIN_TYPE.equals(pluginType)) {
 
         Windower windower = sec.getPluginContext().newPluginInstance(stageName, macroEvaluator);
-        stageData = stageData.window(windower);
+        stageData = stageData.window(stageName, windower);
 
       } else {
         throw new IllegalStateException(String.format("Stage %s is of unsupported plugin type %s.",

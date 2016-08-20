@@ -31,11 +31,11 @@ import co.cask.cdap.common.conf.ArtifactConfigReader;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.system.ArtifactSystemMetadataWriter;
-import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.internal.app.deploy.pipeline.NamespacedImpersonator;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.proto.Id;
@@ -104,7 +104,7 @@ public class ArtifactRepository {
                             AuthenticationContext authenticationContext) {
     this.artifactStore = artifactStore;
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, programRunnerFactory);
-    this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory, impersonator);
+    this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory);
     this.systemArtifactDirs = new ArrayList<>();
     for (String dir : cConf.get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR).split(";")) {
       File file = new File(dir);
@@ -199,10 +199,8 @@ public class ArtifactRepository {
   /**
    * Get all artifacts that match artifacts in the given ranges.
    *
-   * @namespace namespace
    * @param range the range to match artifacts in
-   * @return an unmodifiable list of all artifacts that match the given ranges. If none exist, an empty list
-   *         is returned
+   * @return an unmodifiable list of all artifacts that match the given ranges. If none exist, an empty list is returned
    */
   public List<ArtifactDetail> getArtifacts(final ArtifactRange range) throws Exception {
     List<ArtifactDetail> artifacts = artifactStore.getArtifacts(range);

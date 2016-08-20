@@ -16,13 +16,13 @@
 
 package co.cask.cdap.data2.transaction;
 
-import co.cask.tephra.InvalidTruncateTimeException;
-import co.cask.tephra.Transaction;
-import co.cask.tephra.TransactionCouldNotTakeSnapshotException;
-import co.cask.tephra.TransactionNotInProgressException;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import org.apache.tephra.InvalidTruncateTimeException;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionCouldNotTakeSnapshotException;
+import org.apache.tephra.TransactionNotInProgressException;
+import org.apache.tephra.TransactionSystemClient;
 
 import java.io.InputStream;
 import java.util.Collection;

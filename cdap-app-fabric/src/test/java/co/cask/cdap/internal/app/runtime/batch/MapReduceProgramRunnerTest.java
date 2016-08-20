@@ -42,11 +42,6 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.XSlowTests;
-import co.cask.tephra.TransactionAware;
-import co.cask.tephra.TransactionExecutor;
-import co.cask.tephra.TransactionExecutorFactory;
-import co.cask.tephra.TransactionFailureException;
-import co.cask.tephra.TxConstants;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -54,6 +49,11 @@ import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionExecutor;
+import org.apache.tephra.TransactionExecutorFactory;
+import org.apache.tephra.TransactionFailureException;
+import org.apache.tephra.TxConstants;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -387,6 +387,13 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
       });
 
     runProgram(app, AppWithMapReduce.ClassicWordCount.class, false, true);
+
+    Assert.assertEquals("true", System.getProperty("partitioner.initialize"));
+    Assert.assertEquals("true", System.getProperty("partitioner.destroy"));
+    Assert.assertEquals("true", System.getProperty("partitioner.set.conf"));
+    Assert.assertEquals("true", System.getProperty("comparator.initialize"));
+    Assert.assertEquals("true", System.getProperty("comparator.destroy"));
+    Assert.assertEquals("true", System.getProperty("comparator.set.conf"));
 
     File[] outputFiles = outputDir.listFiles(new FilenameFilter() {
       @Override

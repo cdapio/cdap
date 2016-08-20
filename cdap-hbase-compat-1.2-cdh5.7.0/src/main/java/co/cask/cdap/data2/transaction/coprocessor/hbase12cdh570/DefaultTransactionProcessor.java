@@ -20,15 +20,15 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.increment.hbase12cdh570.IncrementTxFilter;
 import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
 import co.cask.cdap.data2.util.hbase.HTable12CDH570NameConverter;
-import co.cask.tephra.Transaction;
-import co.cask.tephra.coprocessor.TransactionStateCache;
-import co.cask.tephra.hbase11.coprocessor.CellSkipFilter;
-import co.cask.tephra.hbase11.coprocessor.TransactionProcessor;
 import com.google.common.base.Supplier;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.regionserver.ScanType;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.coprocessor.TransactionStateCache;
+import org.apache.tephra.hbase.coprocessor.CellSkipFilter;
+import org.apache.tephra.hbase.coprocessor.TransactionProcessor;
 
 /**
  * Implementation of the {@link TransactionProcessor}

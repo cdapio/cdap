@@ -40,10 +40,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.tephra.TransactionManager;
-import co.cask.tephra.distributed.TransactionService;
-import co.cask.tephra.persist.TransactionStateStorage;
-import co.cask.tephra.runtime.TransactionStateStorageProvider;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -53,6 +50,10 @@ import com.google.inject.Module;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.TransactionManager;
+import org.apache.tephra.distributed.TransactionService;
+import org.apache.tephra.persist.TransactionStateStorage;
+import org.apache.tephra.runtime.TransactionStateStorageProvider;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -67,10 +68,7 @@ import java.util.List;
 public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionServiceTwillRunnable.class);
 
-  private ZKClientService zkClient;
-  private KafkaClientService kafkaClient;
-  private MetricsCollectionService metricsCollectionService;
-  private TransactionService txService;
+  private Injector injector;
 
   public TransactionServiceTwillRunnable(String name, String cConfName, String hConfName) {
     super(name, cConfName, hConfName);
@@ -81,28 +79,14 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
     try {
       getCConfiguration().set(Constants.Transaction.Container.ADDRESS, context.getHost().getCanonicalHostName());
 
-      Injector injector = createGuiceInjector(getCConfiguration(), getConfiguration());
+      injector = createGuiceInjector(getCConfiguration(), getConfiguration());
       injector.getInstance(LogAppenderInitializer.class).initialize();
       LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                                          Constants.Logging.COMPONENT_NAME,
                                                                          Constants.Service.TRANSACTION));
 
-      LOG.info("Initializing runnable {}", name);
       // Set the hostname of the machine so that cConf can be used to start internal services
       LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
-
-
-      //Get ZooKeeper and Kafka Client Instances
-      zkClient = injector.getInstance(ZKClientService.class);
-      kafkaClient = injector.getInstance(KafkaClientService.class);
-
-      // Get the metrics collection service
-      metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-
-      // Get the Transaction Service
-      txService = injector.getInstance(TransactionService.class);
-
-      LOG.info("Runnable initialized {}", name);
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
       throw Throwables.propagate(t);
@@ -111,10 +95,11 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
 
   @Override
   public void getServices(List<? super Service> services) {
-    services.add(zkClient);
-    services.add(kafkaClient);
-    services.add(metricsCollectionService);
-    services.add(txService);
+    services.add(injector.getInstance(ZKClientService.class));
+    services.add(injector.getInstance(KafkaClientService.class));
+    services.add(injector.getInstance(AuthorizationEnforcementService.class));
+    services.add(injector.getInstance(MetricsCollectionService.class));
+    services.add(injector.getInstance(TransactionService.class));
   }
 
   static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {

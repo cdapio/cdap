@@ -188,7 +188,7 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
   }
 
   @throws[IOException]
-  override def listSecureData(namespace: String): util.List[SecureStoreMetadata] = {
+  override def listSecureData(namespace: String): util.Map[String, String] = {
     return sec.getSecureStore.listSecureData(namespace)
   }
 

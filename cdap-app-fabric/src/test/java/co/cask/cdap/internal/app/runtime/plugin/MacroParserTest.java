@@ -20,7 +20,6 @@ package co.cask.cdap.internal.app.runtime.plugin;
 import co.cask.cdap.api.macro.InvalidMacroException;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.HashMap;

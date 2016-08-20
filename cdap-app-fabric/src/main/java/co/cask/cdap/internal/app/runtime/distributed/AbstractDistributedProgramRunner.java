@@ -26,10 +26,10 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.data2.security.Impersonator;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -259,7 +259,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
               // Add secure tokens
               if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
                 // TokenSecureStoreUpdater.update() ignores parameters
-                twillPreparer.addSecureStore(secureStoreUpdater.update(null, null));
+                twillPreparer.addSecureStore(secureStoreUpdater.update());
               }
 
               Iterable<Class<?>> dependencies = Iterables.concat(

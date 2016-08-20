@@ -51,8 +51,8 @@
         </div>
       </my-card>
       <my-card data-title="Engine" class="engine">
-        <form role="form">
-          <label>
+        <form role="form" class="form-inline">
+          <label class="radio-inline">
             <input type="radio"
               name="mapreduce"
               value="mapreduce"
@@ -60,7 +60,7 @@
               ng-model="MyBatchPipelineSettingsCtrl.engine">
             MapReduce
           </label>
-          <label>
+          <label class="radio-inline">
             <input type="radio"
                name="spark"
                value="spark"
@@ -69,21 +69,23 @@
               Spark
           </label>
         </form>
+
+        <hr/>
         <div class="form-horizontal resource-container">
           <div>
             <div>
+              <span class="title">
+                Master Resource
+              </span>
               <i class="fa fa-info-circle"
                  uib-tooltip="Resources don't take any effect in standalone environment."
                  ng-if="!MyBatchPipelineSettingsCtrl.isDistributed"></i>
-              <span class="title">
-                Executor Resource
-              </span>
             </div>
             <div class="resource-holder">
               <div
                 action-creator="MyBatchPipelineSettingsCtrl.actionCreator"
                 store="MyBatchPipelineSettingsCtrl.store"
-                resource-type="executorResource"
+                resource-type="driverResource"
                 data-is-disabled="{{MyBatchPipelineSettingsCtrl._isDisabled}}"
                 my-pipeline-resource-factory
               ></div>
@@ -91,18 +93,18 @@
           </div>
           <div>
             <div>
+              <span class="title">
+                Worker Resource
+              </span>
               <i class="fa fa-info-circle"
                  uib-tooltip="Resources don't take any effect in standalone environment."
                  ng-if="!MyBatchPipelineSettingsCtrl.isDistributed"></i>
-              <span class="title">
-                Driver Resource
-              </span>
             </div>
             <div class="resource-holder">
               <div
                 action-creator="MyBatchPipelineSettingsCtrl.actionCreator"
                 store="MyBatchPipelineSettingsCtrl.store"
-                resource-type="driverResource"
+                resource-type="executorResource"
                 data-is-disabled="{{MyBatchPipelineSettingsCtrl._isDisabled}}"
                 my-pipeline-resource-factory
               ></div>

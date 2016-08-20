@@ -41,7 +41,7 @@ Integrations
 .. - |cloudera-faq|_ for Cloudera and Impala
 
 
-.. rubric:: Ambari
+.. rubric:: Ambari *(Administration Manual)*
 
 .. |ambari| replace:: **Configuring and Installing:**
 .. _ambari: ../admin-manual/installation/ambari.html
@@ -49,12 +49,20 @@ Integrations
 - |ambari|_ Configuring and installing CDAP using **Ambari** *(Administration Manual)*
 
 
-.. rubric:: MapR
+.. rubric:: MapR *(Administration Manual)*
 
 .. |mapr| replace:: **Configuring and Installing:**
 .. _mapr: ../admin-manual/installation/mapr.html
 
 - |mapr|_ Configuring and installing CDAP on **MapR** *(Administration Manual)*
+
+
+.. rubric:: Apache Sentry
+
+.. |apache-sentry| replace:: **Integrations:**
+.. _apache-sentry: apache-sentry.html
+
+- |apache-sentry|_ Configuring and integrating CDAP with **Apache Sentry**
 
 
 .. rubric:: Accessing CDAP Datasets through JDBC and ODBC

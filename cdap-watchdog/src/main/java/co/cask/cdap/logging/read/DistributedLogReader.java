@@ -55,7 +55,7 @@ public final class DistributedLogReader implements LogReader {
 
   @Override
   public void getLogNext(final LoggingContext loggingContext, final ReadRange readRange, final int maxEvents,
-                              final Filter filter, final Callback callback) {
+                         final Filter filter, final Callback callback) {
     // If latest logs are not requested, try reading from file.
     if (readRange != ReadRange.LATEST) {
       long checkpointTime = getCheckpointTime(loggingContext);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,9 +21,6 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.tephra.TransactionAware;
-import co.cask.tephra.TransactionContext;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
@@ -31,6 +28,9 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
+import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionContext;
+import org.apache.tephra.TransactionSystemClient;
 
 import java.util.Collection;
 import java.util.Map;
@@ -61,7 +61,7 @@ public class MultiThreadDatasetCache extends DynamicDatasetCache {
                                  final Map<String, String> runtimeArguments,
                                  @Nullable final MetricsContext metricsContext,
                                  @Nullable final Map<String, Map<String, String>> staticDatasets) {
-    super(instantiator, txClient, namespace, runtimeArguments, metricsContext);
+    super(instantiator, txClient, namespace, runtimeArguments);
     this.perThreadMap = CacheBuilder.newBuilder()
       .weakKeys()
       .removalListener(new RemovalListener<Thread, DynamicDatasetCache>() {

@@ -46,19 +46,19 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.cdap.security.auth.context.MasterAuthenticationContext;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import co.cask.tephra.TransactionManager;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.tephra.TransactionManager;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -83,6 +83,7 @@ public class AuthorizationBootstrapperTest {
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
   private static final ArtifactId SYSTEM_ARTIFACT = NamespaceId.SYSTEM.artifact("system-artifact", "1.0.0");
+  private static final Principal ADMIN_USER = new Principal("alice", Principal.PrincipalType.USER);
 
   private static AuthorizationBootstrapper authorizationBootstrapper;
   private static TransactionManager txManager;
@@ -95,7 +96,6 @@ public class AuthorizationBootstrapperTest {
   private static ArtifactRepository artifactRepository;
   private static DatasetFramework dsFramework;
   private static DiscoveryServiceClient discoveryServiceClient;
-  private static Principal systemUser;
   private static InstanceId instanceId;
 
   @BeforeClass
@@ -109,10 +109,8 @@ public class AuthorizationBootstrapperTest {
     Location deploymentJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
                                                               InMemoryAuthorizer.class);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, deploymentJar.toURI().getPath());
-    systemUser = new MasterAuthenticationContext().getPrincipal();
-    cConf.set(Constants.Security.Authorization.SYSTEM_USER, systemUser.getName());
     // make Alice an admin user, so she can create namespaces
-    cConf.set(Constants.Security.Authorization.ADMIN_USERS, "alice");
+    cConf.set(Constants.Security.Authorization.ADMIN_USERS, ADMIN_USER.getName());
     instanceId = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
     // setup a system artifact
     File systemArtifactsDir = TMP_FOLDER.newFolder();
@@ -135,14 +133,28 @@ public class AuthorizationBootstrapperTest {
 
   @Test
   public void test() throws Exception {
+    final Principal systemUser = new Principal(
+      UserGroupInformation.getCurrentUser().getShortUserName(), Principal.PrincipalType.USER
+    );
+    // initial state: no privileges for system or admin users
+    Predicate<EntityId> systemUserFilter = authorizationEnforcementService.createFilter(systemUser);
+    Predicate<EntityId> adminUserFilter = authorizationEnforcementService.createFilter(ADMIN_USER);
+    Assert.assertFalse(systemUserFilter.apply(instanceId));
+    Assert.assertFalse(systemUserFilter.apply(NamespaceId.SYSTEM));
+    Assert.assertFalse(adminUserFilter.apply(NamespaceId.DEFAULT));
+
+    // privileges should be granted after running bootstrap
     authorizationBootstrapper.run();
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
         Predicate<EntityId> systemUserFilter = authorizationEnforcementService.createFilter(systemUser);
-        return systemUserFilter.apply(instanceId) && systemUserFilter.apply(NamespaceId.SYSTEM);
+        Predicate<EntityId> adminUserFilter = authorizationEnforcementService.createFilter(ADMIN_USER);
+        return systemUserFilter.apply(instanceId) && systemUserFilter.apply(NamespaceId.SYSTEM) &&
+          adminUserFilter.apply(NamespaceId.DEFAULT);
       }
     }, 10, TimeUnit.SECONDS);
+
     txManager.startAndWait();
     datasetService.startAndWait();
     waitForService(Constants.Service.DATASET_MANAGER);
@@ -184,7 +196,7 @@ public class AuthorizationBootstrapperTest {
     Assert.assertNotNull(systemDataset);
     // as part of bootstrapping, admin users were also granted admin privileges on the CDAP instance, so they can
     // create namespaces
-    SecurityRequestContext.setUserId("alice");
+    SecurityRequestContext.setUserId(ADMIN_USER.getName());
     namespaceAdmin.create(new NamespaceMeta.Builder().setName("success").build());
     SecurityRequestContext.setUserId("bob");
     try {
@@ -213,8 +225,8 @@ public class AuthorizationBootstrapperTest {
 
   private void waitForService(String discoverableName) throws InterruptedException {
     EndpointStrategy endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(discoverableName));
-    Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
-                               "%s service is not up after 5 seconds", discoverableName);
+    Preconditions.checkNotNull(endpointStrategy.pick(10, TimeUnit.SECONDS),
+                               "%s service is not up after 10 seconds", discoverableName);
   }
 
   private static File createAppJar(Class<?> cls, File destFile, Manifest manifest) throws IOException {

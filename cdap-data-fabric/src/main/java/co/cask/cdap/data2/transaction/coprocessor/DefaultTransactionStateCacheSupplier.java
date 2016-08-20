@@ -16,9 +16,9 @@
 
 package co.cask.cdap.data2.transaction.coprocessor;
 
-import co.cask.tephra.coprocessor.TransactionStateCache;
-import co.cask.tephra.coprocessor.TransactionStateCacheSupplier;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.coprocessor.TransactionStateCache;
+import org.apache.tephra.coprocessor.TransactionStateCacheSupplier;
 
 /**
  * Provides a single shared instance of

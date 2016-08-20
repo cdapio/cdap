@@ -21,13 +21,13 @@ import co.cask.cdap.data2.dataset2.lib.table.IncrementValue;
 import co.cask.cdap.data2.dataset2.lib.table.PutValue;
 import co.cask.cdap.data2.dataset2.lib.table.Update;
 import co.cask.cdap.data2.dataset2.lib.table.Updates;
-import co.cask.tephra.Transaction;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.google.common.primitives.Longs;
+import org.apache.tephra.Transaction;
 
 import java.util.Arrays;
 import java.util.Collection;
