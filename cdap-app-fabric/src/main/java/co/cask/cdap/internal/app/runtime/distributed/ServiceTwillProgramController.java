@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,8 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  *  A ProgramController for Services that are launched through Twill.
@@ -34,14 +32,8 @@ final class ServiceTwillProgramController extends AbstractTwillProgramController
 
   private static final Logger LOG = LoggerFactory.getLogger(ServiceTwillProgramController.class);
 
-  private final Lock lock;
-  private final DistributedServiceRunnableInstanceUpdater instanceUpdater;
-
-  ServiceTwillProgramController(Id.Program programId, TwillController controller,
-                                DistributedServiceRunnableInstanceUpdater instanceUpdater, RunId runId) {
+  ServiceTwillProgramController(Id.Program programId, TwillController controller, RunId runId) {
     super(programId, controller, runId);
-    this.lock = new ReentrantLock();
-    this.instanceUpdater = instanceUpdater;
   }
 
   @SuppressWarnings("unchecked")
@@ -52,7 +44,6 @@ final class ServiceTwillProgramController extends AbstractTwillProgramController
     }
 
     Map<String, String> command = (Map<String, String>) value;
-    lock.lock();
     try {
       changeInstances(command.get("runnable"),
                       Integer.valueOf(command.get("newInstances")),
@@ -60,13 +51,14 @@ final class ServiceTwillProgramController extends AbstractTwillProgramController
     } catch (Throwable t) {
       LOG.error(String.format("Failed to change instances: %s", command), t);
       throw t;
-    } finally {
-      lock.unlock();
     }
   }
 
-  private synchronized void changeInstances(String runnableId, int newInstanceCount, int oldInstanceCount)
-    throws Exception {
-    instanceUpdater.update(runnableId, newInstanceCount, oldInstanceCount);
+  private synchronized void changeInstances(String runnableId,
+                                            int newInstanceCount, int oldInstanceCount) throws Exception {
+    LOG.info("Changing instances of {} from {} to {}", getProgramId(), oldInstanceCount, newInstanceCount);
+    getTwillController().changeInstances(runnableId, newInstanceCount).get();
+    LOG.info("Completed changing instances of {} from {} to {}", getProgramId(), oldInstanceCount, newInstanceCount);
+
   }
 }
