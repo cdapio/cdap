@@ -37,7 +37,7 @@ public class Principal {
 
   private final String name;
   private final PrincipalType type;
-  private final int hashCode;
+  private final transient int hashCode;
 
   public Principal(String name, PrincipalType type) {
     this.name = name;
