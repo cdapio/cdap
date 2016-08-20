@@ -26,6 +26,12 @@ Cask Data Application Platform Release Notes
 `Release 3.3.7 <http://docs.cask.co/cdap/3.3.7/index.html>`__
 =============================================================
 
+Improvements
+------------
+
+- `CDAP-7021 <https://issues.cask.co/browse/CDAP-7021>`__ - Improved program launch
+ performance to avoid large CPU spikes when multiple programs are launched at the same time.
+
 Bug Fixes
 ---------
 
@@ -50,9 +56,6 @@ Bug Fixes
 
 - `CDAP-7016 <https://issues.cask.co/browse/CDAP-7016>`__ - Fixed a problem with building
   the CDAP SDK under Java 8.
-
-- `CDAP-7021 <https://issues.cask.co/browse/CDAP-7021>`__ - Fixed a problem with CPU usage
-  spiking whenever programs were launched.
 
 
 `Release 3.3.6 <http://docs.cask.co/cdap/3.3.6/index.html>`__
