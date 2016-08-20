@@ -130,6 +130,8 @@ public class LogWriter implements Runnable {
           it.remove();
         }
 
+        logFileWriter.flush(false);
+
         // Reset backoff after a successful save
         exponentialBackoff.reset();
       } catch (Throwable e) {

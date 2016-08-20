@@ -70,7 +70,6 @@ public class CheckpointingLogFileWriter implements LogFileWriter<KafkaLogEvent> 
     partitionCheckpointMap.put(partition, maxCheckpoint);
 
     avroFileWriter.append(events);
-    flush(false);
   }
 
   @Override
@@ -85,24 +84,25 @@ public class CheckpointingLogFileWriter implements LogFileWriter<KafkaLogEvent> 
 
   @Override
   public void flush() throws IOException {
+    flush(true);
+  }
+
+  @Override
+  public void flush(boolean force) throws IOException {
     try {
-      flush(true);
+      long currentTs = System.currentTimeMillis();
+      if (!force && currentTs - lastCheckpointTime < flushIntervalMs) {
+        return;
+      }
+
+      avroFileWriter.flush();
+
+      // Save the max checkpoint seen for each partition
+      checkpointManager.saveCheckpoint(partitionCheckpointMap);
+      lastCheckpointTime = currentTs;
     } catch (Exception e) {
       LOG.error("Got exception: ", e);
       throw new IOException(e);
     }
-  }
-
-  private void flush(boolean force) throws Exception {
-    long currentTs = System.currentTimeMillis();
-    if (!force && currentTs - lastCheckpointTime < flushIntervalMs) {
-      return;
-    }
-
-    avroFileWriter.flush();
-
-    // Save the max checkpoint seen for each partition
-    checkpointManager.saveCheckpoint(partitionCheckpointMap);
-    lastCheckpointTime = currentTs;
   }
 }

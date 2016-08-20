@@ -57,7 +57,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
   private final int syncIntervalBytes;
   private final Map<String, AvroFile> fileMap;
   private final long maxFileSize;
-  private final long inactiveIntervalMs;
+  private final long maxFileLifetimeMs;
   private final Impersonator impersonator;
 
   private final AtomicBoolean closed = new AtomicBoolean(false);
@@ -70,11 +70,11 @@ public final class AvroFileWriter implements Closeable, Flushable {
    * @param schema schema of the Avro data to be written.
    * @param maxFileSize Avro files greater than maxFileSize will get rotated.
    * @param syncIntervalBytes the approximate number of uncompressed bytes to write in each block.
-   * @param inactiveIntervalMs files that have no data written for more than inactiveIntervalMs will be closed.
+   * @param maxFileLifetimeMs files that are older than maxFileLifetimeMs will be closed.
    */
   public AvroFileWriter(FileMetaDataManager fileMetaDataManager, NamespacedLocationFactory namespacedLocationFactory,
                         String logBaseDir, Schema schema, long maxFileSize, int syncIntervalBytes,
-                        long inactiveIntervalMs, Impersonator impersonator) {
+                        long maxFileLifetimeMs, Impersonator impersonator) {
     this.fileMetaDataManager = fileMetaDataManager;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.logBaseDir = logBaseDir;
@@ -82,7 +82,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
     this.syncIntervalBytes = syncIntervalBytes;
     this.fileMap = Maps.newHashMap();
     this.maxFileSize = maxFileSize;
-    this.inactiveIntervalMs = inactiveIntervalMs;
+    this.maxFileLifetimeMs = maxFileLifetimeMs;
     this.impersonator = impersonator;
   }
 
@@ -155,8 +155,9 @@ public final class AvroFileWriter implements Closeable, Flushable {
       } else {
         avroFile.sync();
 
-        // Close inactive files
-        if (currentTs - avroFile.getLastModifiedTs() > inactiveIntervalMs) {
+        // Close old files
+        long timeSinceFileCreate = currentTs - avroFile.getCreateTime();
+        if (timeSinceFileCreate > maxFileLifetimeMs) {
           avroFile.close();
           it.remove();
         }
@@ -269,7 +270,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
     private final Location location;
     private FSDataOutputStream outputStream;
     private DataFileWriter<GenericRecord> dataFileWriter;
-    private long lastModifiedTs;
+    private long createTime;
     private boolean isOpen = false;
 
     public AvroFile(Location location) {
@@ -288,7 +289,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
         this.dataFileWriter = new DataFileWriter<>(new GenericDatumWriter<GenericRecord>(schema));
         this.dataFileWriter.create(schema, this.outputStream);
         this.dataFileWriter.setSyncInterval(syncIntervalBytes);
-        this.lastModifiedTs = System.currentTimeMillis();
+        this.createTime = System.currentTimeMillis();
       } catch (Exception e) {
         close();
         throw new IOException("Exception while creating file " + location, e);
@@ -307,7 +308,6 @@ public final class AvroFileWriter implements Closeable, Flushable {
     public void append(LogWriteEvent event) throws IOException {
       try {
         dataFileWriter.append(event.getGenericRecord());
-        lastModifiedTs = System.currentTimeMillis();
       } catch (Exception e) {
         close();
         throw new IOException("Exception while appending to file " + location, e);
@@ -323,8 +323,8 @@ public final class AvroFileWriter implements Closeable, Flushable {
       }
     }
 
-    public long getLastModifiedTs() {
-      return lastModifiedTs;
+    public long getCreateTime() {
+      return createTime;
     }
 
     public void flush() throws IOException {

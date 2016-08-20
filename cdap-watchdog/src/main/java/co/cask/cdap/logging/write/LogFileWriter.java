@@ -18,6 +18,7 @@ package co.cask.cdap.logging.write;
 
 import java.io.Closeable;
 import java.io.Flushable;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -30,8 +31,18 @@ public interface LogFileWriter<T extends LogWriteEvent> extends Closeable, Flush
   /**
    * Appends a log event to an appropriate Avro file based on LoggingContext. If the log event does not contain
    * LoggingContext then the event will be dropped.
+   *
    * @param events Log event
    * @throws java.io.IOException
    */
   void append(List<T> events) throws Exception;
+
+  /**
+   * Flushes this stream by writing any buffered output to the underlying
+   * stream.
+   *
+   * @param force if false, will avoid flushing if it has already flushed recently
+   * @throws IOException If an I/O error occurs
+   */
+  void flush(boolean force) throws IOException;
 }
