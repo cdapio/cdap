@@ -15,22 +15,32 @@
  */
 package co.cask.cdap.api;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.preview.PreviewLogger;
 
 /**
  * Interface used by CDAP applications to log the data useful for debugging during runtime.
+ *
+ * WARN: This is an experimental API and will change in future.
  */
+@Beta
 public interface Debugger {
 
   /**
    * Returns {@code true} if application is running in preview mode otherwise false is returned.
+   *
+   * WARN: This is an experimental API and will change in future.
    */
+  @Beta
   boolean isPreviewEnabled();
 
   /**
    * Get the {@link PreviewLogger} used to log the data.
    * @param loggerName the name of the logger with which the log data to be associated
    * @return the instance of the PreviewLogger
+   *
+   * WARN: This is an experimental API and will change in future.
    */
+  @Beta
   PreviewLogger getPreviewLogger(String loggerName);
 }

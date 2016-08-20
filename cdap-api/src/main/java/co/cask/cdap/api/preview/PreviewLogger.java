@@ -16,9 +16,14 @@
 
 package co.cask.cdap.api.preview;
 
+import co.cask.cdap.api.annotation.Beta;
+
 /**
  * Interface used by the CDAP applications to log the preview data.
+ *
+ * NOTE: Preview feature is experimental and will change in future.
  */
+@Beta
 public interface PreviewLogger {
 
   /**

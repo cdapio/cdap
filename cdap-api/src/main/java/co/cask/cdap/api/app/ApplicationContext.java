@@ -36,7 +36,10 @@ public interface ApplicationContext<T extends Config> {
 
   /**
    * Returns {@code true} if application is going to run in preview mode.
+   *
+   * NOTE: Preview feature is experimental and will change in future.
    */
+  @Beta
   boolean isPreviewEnabled();
 }
 
