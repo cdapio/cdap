@@ -270,7 +270,7 @@
     <name>app.program.max.start.seconds</name>
     <value>300</value>
     <description>
-      The maximum number of seconds to wait for a program to start before killing it.
+      The maximum number of seconds to wait for a program to start before killing it
     </description>
   </property>
 
@@ -278,7 +278,7 @@
     <name>app.program.max.stop.seconds</name>
     <value>300</value>
     <description>
-      The maximum number of seconds to wait for a program to stop before killing it.
+      The maximum number of seconds to wait for a program to stop before killing it
     </description>
   </property>
 
