@@ -20,7 +20,7 @@ import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data.file.FileWriter;
-import co.cask.cdap.data.file.FileWriters;
+import co.cask.cdap.data.stream.Refreshable;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamDataFileConstants;
 import co.cask.cdap.data.stream.StreamFileType;
@@ -34,10 +34,13 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
+import com.google.common.util.concurrent.AbstractScheduledService;
+import com.google.common.util.concurrent.Service;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -55,6 +58,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -99,6 +103,7 @@ public final class ConcurrentStreamWriter implements Closeable {
   private final Set<Id.Stream> generationWatched;
   private final List<Cancellable> cancellables;
   private final Lock createLock;
+  private final Service eventQueueRefreshService;
 
   ConcurrentStreamWriter(StreamCoordinatorClient streamCoordinatorClient, StreamAdmin streamAdmin,
                          StreamFileWriterFactory writerFactory, int workerThreads,
@@ -112,9 +117,32 @@ public final class ConcurrentStreamWriter implements Closeable {
     this.generationWatched = Sets.newHashSet();
     this.cancellables = Lists.newArrayList();
     this.createLock = new ReentrantLock();
+    this.eventQueueRefreshService = scheduleWriterRefresh();
   }
 
-  public void close(Id.Stream streamId) throws IOException, NotFoundException {
+  private Service scheduleWriterRefresh() {
+    AbstractScheduledService scheduledService = new AbstractScheduledService() {
+      @Override
+      protected void runOneIteration() throws Exception {
+        for (EventQueue eventQueue : eventQueues.values()) {
+          try {
+            eventQueue.refresh();
+          } catch (Throwable t) {
+            LOG.error("Error while refreshing event queue.", t);
+          }
+        }
+      }
+
+      @Override
+      protected Scheduler scheduler() {
+        return Scheduler.newFixedDelaySchedule(5, 5, TimeUnit.MINUTES);
+      }
+    };
+    scheduledService.startAndWait();
+    return scheduledService;
+  }
+
+  public void close(Id.Stream streamId) throws IOException {
     createLock.lock();
     try {
       closeEventQueue(streamId);
@@ -131,7 +159,7 @@ public final class ConcurrentStreamWriter implements Closeable {
    * @param body content of the event
    *
    * @throws IOException if failed to write to stream
-   * @throws IllegalArgumentException If the stream doesn't exists
+   * @throws NotFoundException If the stream doesn't exists
    */
   public void enqueue(Id.Stream streamId,
                       Map<String, String> headers, ByteBuffer body) throws IOException, NotFoundException {
@@ -146,7 +174,7 @@ public final class ConcurrentStreamWriter implements Closeable {
    * @param streamId identifier of the stream
    * @param events list of events to write
    * @throws IOException if failed to write to stream
-   * @throws IllegalArgumentException If the stream doesn't exists
+   * @throws NotFoundException If the stream doesn't exists
    */
   public void enqueue(Id.Stream streamId,
                       Iterator<? extends StreamEventData> events) throws IOException, NotFoundException {
@@ -164,7 +192,7 @@ public final class ConcurrentStreamWriter implements Closeable {
    * @param body content of the event
    * @param executor The executor for performing the async write flush operation
    * @throws IOException if fails to get stream information
-   * @throws IllegalArgumentException If the stream doesn't exists
+   * @throws NotFoundException If the stream doesn't exists
    */
   public void asyncEnqueue(final Id.Stream streamId,
                            Map<String, String> headers, ByteBuffer body,
@@ -218,6 +246,8 @@ public final class ConcurrentStreamWriter implements Closeable {
         LOG.warn("Failed to close writer.", e);
       }
     }
+
+    eventQueueRefreshService.stopAndWait();
   }
 
   private EventQueue getEventQueue(Id.Stream streamId) throws IOException, NotFoundException {
@@ -321,14 +351,21 @@ public final class ConcurrentStreamWriter implements Closeable {
      * @return A {@link FileWriter} for writing {@link StreamEvent} to the given stream
      * @throws IOException if failed to create the file writer
      */
-    FileWriter<StreamEvent> create(Id.Stream streamId) throws Exception {
+    private FileWriter<StreamEvent> create(Id.Stream streamId) throws IOException {
       final StreamConfig streamConfig = streamAdmin.getConfig(streamId);
-      int generation = impersonator.doAs(new NamespaceId(streamId.getNamespaceId()), new Callable<Integer>() {
-        @Override
-        public Integer call() throws Exception {
-          return StreamUtils.getGeneration(streamConfig);
-        }
-      });
+      int generation;
+      try {
+        generation = impersonator.doAs(new NamespaceId(streamId.getNamespaceId()), new Callable<Integer>() {
+          @Override
+          public Integer call() throws Exception {
+            return StreamUtils.getGeneration(streamConfig);
+          }
+        });
+      } catch (Exception e) {
+        // IOException is the only checked exception being thrown in the above Callable
+        Throwables.propagateIfInstanceOf(e, IOException.class);
+        throw Throwables.propagate(e);
+      }
 
       LOG.info("Create stream writer for {} with generation {}", streamId, generation);
       return writerFactory.create(streamConfig, generation);
@@ -536,15 +573,34 @@ public final class ConcurrentStreamWriter implements Closeable {
     }
 
     /**
+     * Attempts to refresh the underlying FileWriter, if it is {@link Refreshable}.
+     */
+    boolean refresh() throws Exception {
+      if (!writerFlag.compareAndSet(false, true)) {
+        return false;
+      }
+
+      try {
+        FileWriter fileWriter = this.getFileWriter();
+        if (fileWriter instanceof Refreshable) {
+          ((Refreshable) fileWriter).refresh();
+        }
+      } finally {
+        writerFlag.set(false);
+      }
+      return true;
+    }
+
+    /**
      * Returns the current {@link FileWriter}. A new {@link FileWriter} will be created
      * if none existed yet. This method should only be called from the writer leader thread.
      */
-    private FileWriter<StreamEventData> getFileWriter() throws Exception {
+    private FileWriter<StreamEventData> getFileWriter() throws IOException {
       if (closed) {
         throw new IOException("Stream writer already closed");
       }
       if (fileWriter == null) {
-        fileWriter = FileWriters.transform(streamFileFactory.create(streamId), eventTransformer);
+        fileWriter = transform(streamFileFactory.create(streamId), eventTransformer);
       }
       return fileWriter;
     }
@@ -584,6 +640,59 @@ public final class ConcurrentStreamWriter implements Closeable {
         data = queue.poll();
       }
       closed = true;
+    }
+
+
+    /**
+     * Creates a {@link FileWriter} that writes to the given {@link FileWriter} with each event transformed by the
+     * given transformation function.
+     *
+     * @param writer the {@link FileWriter} to write to
+     * @param transform the transformation function for each individual event
+     * @param <U> source type
+     * @param <V> target type
+     * @return a new instance of {@link FileWriter}
+     */
+    public <U, V> FileWriter<U> transform(final FileWriter<V> writer, final Function<U, V> transform) {
+      return new TransformingFileWriter<>(writer, transform);
+    }
+
+    class TransformingFileWriter<U, V> implements FileWriter<U>, Refreshable {
+
+      private final FileWriter<V> writer;
+      private final Function<U, V> transform;
+
+      TransformingFileWriter(FileWriter<V> writer, Function<U, V> transform) {
+        this.writer = writer;
+        this.transform = transform;
+      }
+
+      @Override
+      public void append(U event) throws IOException {
+        writer.append(transform.apply(event));
+      }
+
+      @Override
+      public void appendAll(Iterator<? extends U> events) throws IOException {
+        writer.appendAll(Iterators.transform(events, transform));
+      }
+
+      @Override
+      public void close() throws IOException {
+        writer.close();
+      }
+
+      @Override
+      public void flush() throws IOException {
+        writer.flush();
+      }
+
+      @Override
+      public void refresh() throws Exception {
+        if (writer instanceof Refreshable) {
+          ((Refreshable) writer).refresh();
+        }
+      }
     }
   }
 

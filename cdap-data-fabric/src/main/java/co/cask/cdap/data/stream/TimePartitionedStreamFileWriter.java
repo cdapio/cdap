@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
@@ -29,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
@@ -57,14 +59,13 @@ import javax.annotation.concurrent.NotThreadSafe;
  * {@code bucketId}.
  */
 @NotThreadSafe
-public class TimePartitionedStreamFileWriter extends PartitionedFileWriter<StreamEvent, TimePartition> {
+public class TimePartitionedStreamFileWriter extends PartitionedFileWriter<StreamEvent, TimePartition>
+  implements Refreshable {
 
   private static final Logger LOG = LoggerFactory.getLogger(TimePartitionedStreamFileWriter.class);
 
   private final long partitionDuration;
   private TimePartition timePartition = new TimePartition(-1L);
-
-  // TODO: Add a timer task to close file after duration has passed even there is no writer.
 
   public TimePartitionedStreamFileWriter(Location streamLocation, long partitionDuration,
                                          String fileNamePrefix, long indexInterval, StreamId streamId,
@@ -86,6 +87,26 @@ public class TimePartitionedStreamFileWriter extends PartitionedFileWriter<Strea
   @Override
   protected void partitionChanged(TimePartition oldPartition, TimePartition newPartition) throws IOException {
     closePartitionWriter(oldPartition);
+  }
+
+
+  /**
+   * Close the current partition if it is older than its duration.
+   *
+   * @throws IOException if fail to refresh
+   */
+  public void refresh() throws Exception {
+    if (timePartition.getStartTimestamp() == -1) {
+      // timePartition hasn't been overridden yet
+      return;
+    }
+
+    long partitionEndTimeStamp = timePartition.getStartTimestamp() + partitionDuration;
+    if (System.currentTimeMillis() > partitionEndTimeStamp) {
+      LOG.debug("Closing FileWriter for {} due to its partition start time {} being older than {}.",
+                streamId, timePartition.getStartTimestamp(), partitionDuration);
+      closePartitionWriter(timePartition);
+    }
   }
 
   /**
