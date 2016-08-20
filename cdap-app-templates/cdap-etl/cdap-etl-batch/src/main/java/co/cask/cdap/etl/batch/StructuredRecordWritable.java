@@ -54,12 +54,13 @@ public class StructuredRecordWritable implements WritableComparable<StructuredRe
   @SuppressWarnings("ConstantConditions")
   @Override
   public void write(DataOutput out) throws IOException {
-    String schemaStr = record.getSchema().toString();
-    String recordStr = StructuredRecordStringConverter.toJsonString(record);
-    out.writeInt(schemaStr.length());
-    out.write(Bytes.toBytes(schemaStr));
-    out.writeInt(recordStr.length());
-    out.write(Bytes.toBytes(recordStr));
+    byte[] schemaBytes = Bytes.toBytes(record.getSchema().toString());
+    out.writeInt(schemaBytes.length);
+    out.write(schemaBytes);
+
+    byte[] recordBytes = Bytes.toBytes(StructuredRecordStringConverter.toJsonString(record));
+    out.writeInt(recordBytes.length);
+    out.write(recordBytes);
   }
 
   @Override
