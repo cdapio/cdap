@@ -151,11 +151,22 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
           }
           runtimeStore.setStart(program.getId(), runId.getId(), startTimeInSeconds, twillRunId,
                                 options.getUserArguments().asMap(), options.getArguments().asMap());
-          if (state == ProgramController.State.COMPLETED) {
-            completed();
-          }
-          if (state == ProgramController.State.ERROR) {
-            error(controller.getFailureCause());
+
+          switch (state) {
+            case COMPLETED:
+              completed();
+              break;
+            case ERROR:
+              error(controller.getFailureCause());
+              break;
+            case SUSPENDED:
+              suspended();
+              break;
+            case RESUMING:
+              alive();
+              break;
+            default:
+              //no-op
           }
         }
 

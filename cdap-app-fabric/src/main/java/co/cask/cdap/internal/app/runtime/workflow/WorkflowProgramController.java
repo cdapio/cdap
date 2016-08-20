@@ -16,7 +16,7 @@
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.internal.app.runtime.AbstractProgramController;
+import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
@@ -31,7 +31,7 @@ import java.net.InetSocketAddress;
 /**
  *
  */
-final class WorkflowProgramController extends AbstractProgramController {
+final class WorkflowProgramController extends ProgramControllerServiceAdapter {
 
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowProgramController.class);
 
@@ -41,7 +41,7 @@ final class WorkflowProgramController extends AbstractProgramController {
   private Cancellable cancelAnnounce;
 
   WorkflowProgramController(Program program, WorkflowDriver driver, ServiceAnnouncer serviceAnnouncer, RunId runId) {
-    super(program.getId(), runId);
+    super(driver, program.getId(), runId);
     this.driver = driver;
     this.serviceName = getServiceName(program, runId);
     this.serviceAnnouncer = serviceAnnouncer;
