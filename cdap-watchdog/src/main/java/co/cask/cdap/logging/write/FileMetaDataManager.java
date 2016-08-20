@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.io.Processor;
 import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -44,9 +45,11 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
+import javax.annotation.Nullable;
 
 /**
  * Handles reading/writing of file metadata.
@@ -147,6 +150,63 @@ public final class FileMetaDataManager {
           }
         });
         return files;
+      }
+    });
+  }
+
+  /**
+   * Scans meta data and gathers all the files older than tillTime
+   * @param startRowKey start key for scan
+   * @param tillTime time till the meta data will be deleted.
+   * @param processor processor to process files
+   * @return next row key, returns null if end of table
+   */
+  @Nullable
+  public String scanFiles(final String startRowKey, final long tillTime,
+                          final Processor<Location, Set<Location>> processor) {
+    return execute(new TransactionExecutor.Function<Table, String>() {
+      @Override
+      public String apply(Table table) throws Exception {
+        byte[] startKey = getRowKey(startRowKey);
+        byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
+
+        try (Scanner scanner = table.scan(startKey, stopKey)) {
+          Row row;
+          long fileCount = 0;
+          while ((row = scanner.next()) != null) {
+            // Get the next logging context
+            byte[] rowKey = row.getRow();
+
+            // if the previous logging context has some files to handle then return
+            if (fileCount > 0) {
+              return getLogPartition(rowKey);
+            }
+
+            final NamespaceId namespaceId = getNamespaceId(rowKey);
+            // Go thorough files for a logging context
+            for (final Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
+              byte[] colName = entry.getKey();
+              URI file = new URI(Bytes.toString(entry.getValue()));
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Got file {} with start time {}", file, Bytes.toLong(colName));
+              }
+
+              Location fileLocation = impersonator.doAs(namespaceId, new Callable<Location>() {
+                @Override
+                public Location call() throws Exception {
+                  return rootLocationFactory.create(new URI(Bytes.toString(entry.getValue())));
+                }
+              });
+              if (fileLocation.lastModified() < tillTime) {
+                ++fileCount;
+                processor.process(fileLocation);
+              } else {
+                break;
+              }
+            }
+          }
+        }
+        return null;
       }
     });
   }
