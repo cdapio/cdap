@@ -125,6 +125,8 @@ public final class Constants {
     public static final String PROGRAM_RUNID_CORRECTOR_INTERVAL_SECONDS = "app.program.runid.corrector.interval";
     public static final String SYSTEM_ARTIFACTS_DIR = "app.artifact.dir";
     public static final String PROGRAM_EXTRA_CLASSPATH = "app.program.extra.classpath";
+    public static final String PROGRAM_MAX_START_SECONDS = "app.program.max.start.seconds";
+    public static final String PROGRAM_MAX_STOP_SECONDS = "app.program.max.stop.seconds";
 
     /**
      * Guice named bindings.

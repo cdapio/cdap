@@ -89,6 +89,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
     .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
     .create();
+  private static final JarCacheTracker jarCacheTracker = JarCacheTracker.INSTANCE;
 
   private final TwillRunner twillRunner;
   private final LocationFactory locationFactory;
@@ -229,6 +230,22 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
             // TokenSecureStoreUpdater.update() ignores parameters
             twillPreparer.addSecureStore(secureStoreUpdater.update(null, null));
           }
+
+          // Hack for CDAP-7021. Interacts with the patched YarnTwillPreparer class to cache
+          // appmaster and container jars.
+          File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), cConf.get(Constants.AppFabric.TEMP_DIR));
+          File jarCacheDir = new File(tmpDir, "twillcache");
+          File programTypeDir = new File(jarCacheDir, program.getType().name().toLowerCase());
+          DirUtils.mkdirs(programTypeDir);
+          twillPreparer.withApplicationArguments("cdap.jar.cache.dir=" + programTypeDir.getAbsolutePath());
+          jarCacheTracker.registerLaunch(programTypeDir, program.getType());
+
+          // Hacks for TWILL-187
+          twillPreparer.withApplicationArguments(
+            "app.max.start.seconds=" + cConf.get(Constants.AppFabric.PROGRAM_MAX_START_SECONDS),
+            "app.max.stop.seconds=" + cConf.get(Constants.AppFabric.PROGRAM_MAX_STOP_SECONDS));
+
+          LOG.debug("Launching twill job for program {}.", program.getName());
           TwillController twillController = twillPreparer
             .withDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass())
             .withClassPaths(Iterables.concat(extraClassPaths, Splitter.on(',').trimResults()

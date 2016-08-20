@@ -67,6 +67,9 @@ final class YarnTwillController extends AbstractTwillController implements Twill
   // Only used by the instanceUpdate/Delete method, which is from serialized call from ZK callback.
   private Thread statusPollingThread;
 
+  private Integer maxStartSeconds = Constants.APPLICATION_MAX_START_SECONDS;
+  private Integer maxStopSeconds = Constants.APPLICATION_MAX_STOP_SECONDS;
+
   /**
    * Creates an instance without any {@link LogHandler}.
    */
@@ -82,6 +85,15 @@ final class YarnTwillController extends AbstractTwillController implements Twill
     this.startUp = startUp;
   }
 
+  // HACK to work around TWILL-187
+  void setMaxStartSeconds(int maxStartSeconds) {
+    this.maxStartSeconds = maxStartSeconds;
+  }
+
+  // HACK to work around TWILL-187
+  void setMaxStopSeconds(int maxStopSeconds) {
+    this.maxStopSeconds = maxStopSeconds;
+  }
 
   /**
    * Sends a message to application to notify the secure store has be updated.
@@ -106,7 +118,7 @@ final class YarnTwillController extends AbstractTwillController implements Twill
       StopWatch stopWatch = new StopWatch();
       stopWatch.start();
       stopWatch.split();
-      long maxTime = TimeUnit.MILLISECONDS.convert(Constants.APPLICATION_MAX_START_SECONDS, TimeUnit.SECONDS);
+      long maxTime = TimeUnit.MILLISECONDS.convert(maxStartSeconds, TimeUnit.SECONDS);
 
       LOG.debug("Checking yarn application status for {} {}", appName, appId);
       while (!hasRun(state) && stopWatch.getSplitTime() < maxTime) {
@@ -161,7 +173,7 @@ final class YarnTwillController extends AbstractTwillController implements Twill
       StopWatch stopWatch = new StopWatch();
       stopWatch.start();
       stopWatch.split();
-      long maxTime = TimeUnit.MILLISECONDS.convert(Constants.APPLICATION_MAX_STOP_SECONDS, TimeUnit.SECONDS);
+      long maxTime = TimeUnit.MILLISECONDS.convert(maxStopSeconds, TimeUnit.SECONDS);
 
       YarnApplicationReport report = processController.getReport();
       finalStatus = report.getFinalApplicationStatus();
