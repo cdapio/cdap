@@ -70,14 +70,15 @@ public class WorkflowStatusTestApp extends AbstractApplication {
         } catch (IOException e) {
           LOG.error("Error occurred while creating file {}", successFile.getAbsolutePath(), e);
         }
-      }
-      if (status == ProgramStatus.KILLED) {
+      } else if (status == ProgramStatus.KILLED) {
         File successFile = new File(getContext().getRuntimeArguments().get("workflow.killed.file"));
         try {
           successFile.createNewFile();
         } catch (IOException e) {
           LOG.error("Error occurred while creating file {}", successFile.getAbsolutePath(), e);
         }
+      } else {
+        LOG.error("State of the Workflow in destroy is {}, {}", status, getContext().getState().getStatus());
       }
     }
   }
