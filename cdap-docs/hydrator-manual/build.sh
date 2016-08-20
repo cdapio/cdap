@@ -56,7 +56,6 @@ function download_md_file() {
   local source_dir="${1}"
   local source_file_name="${2}"
   local append_file="${3}"
-#   local plugin_category="${4}"
   local plugin_type="${4}" # NOTE: singular types: "sink", not "sinks"
   local target_file_name="${5}"
   
@@ -67,80 +66,48 @@ function download_md_file() {
   type="${type%.md}" # strip suffix
   
   local type_capital="$(echo ${type:0:1} | tr [:lower:] [:upper:])${type:1}"
-#   local target_file_name=$(echo "${source_file_name%-*}.md" | tr [:upper:] [:lower:]) # cassandra
   if [[ "x${target_file_name}" == "x" ]]; then
     local target_file_name=$(echo "${source_file_name}" | tr [:upper:] [:lower:]) # cassandra-batchsink.md
   fi
   
   # Determine from name of the plugin file the:
-  # category (batch, realtime, shared-plugin, postaction) and 
-  # type (source, sink, transform, aggregator)
-  # Defining these in the parameters overrides this
+  # type (source, sink, transform, shared-plugin, postaction)
+  # Defining this in the parameters overrides this
   if [[ "x${plugin_type}" == "x" ]]; then
     if [[ "x${type:0:5}" == "xbatch" ]]; then
-#       plugin_category="batch"
       plugin_type="${type:5}"
     elif [[ "x${type:0:8}" == "xrealtime" ]]; then
-#       plugin_category="realtime"
       plugin_type="${type:8}"
       
     # FIXME: this type "postaction" is going away
     elif [[ "x${type}" == "xpostaction" ]]; then
-#       plugin_category="${PRE_POST_RUN}"
-#       plugin_category=''
       plugin_type="post-run-plugin"
     # END FIXME
     
     # FIXME: these types "prerun" and  "postrun" are currently not used
 #     elif [[ "x${type}" == "xprerun" ]]; then
-#       plugin_category="${PRE_POST_RUN}"
 #       plugin_type="pre-run"
 #     elif [[ "x${type}" == "xpostrun" ]]; then
-#       plugin_category=''
 #       plugin_type="post-run"
     # END FIXME
     elif [[ "x${type}" == "xaction" ]]; then
-#       plugin_category=''
       plugin_type="action"
     else
       # assume of type transform; to be copied to both batch and realtime
-#       plugin_category=''
       plugin_type="transform"
     fi
   fi
   
   local target_dir="${plugin_type}s"
-#   if [[ "x${plugin_category}" != "x" ]]; then
-#     local target_dir="${plugin_type}s"
-#   elif [[ "${plugin_type}" == "transform" ]]; then
-#     # Directories are plural, though types are singular
-#     local target_dir="batch/${plugin_type}s"
-# #     local target_dir_extra="realtime/${plugin_type}s"
-#     local target_dir_extra="${plugin_type}s"
-#   elif [[ ( "${plugin_type}" == "action" ) || ( "${plugin_type}" == "${PRE_POST_RUN}" ) ]]; then
-#     local target_dir="${plugin_type}s"
-#     local target_dir_extra='' 
-#   fi
 
   echo ${NON_TRANSFORM_TYPES} | grep -q ${plugin_type}
-  # local check=$?
   if [ "$?" == "0" ]; then
     local target_dir="${plugin_type}s"
   else
     local target_dir="transforms"
   fi
 
-# if [[ ( "${plugin_type}" == "action" ) || ( "${plugin_type}" == "${PRE_POST_RUN}" ) ]]; then
-#   local target_dir="${plugin_type}s"
-# else
-#   local target_dir="transforms"
-# fi
-  
   local target="${BASE_TARGET}/${target_dir}/${target_file_name}"
-#   local target_extra=''
-#   if [[ "x${target_dir_extra}" != "x" ]]; then
-#     target_extra="${BASE_TARGET}/${target_dir_extra}/${target_file_name}"
-#   fi
 
   # Create display names for log output
   local fifty_spaces="                                                  "
@@ -167,10 +134,6 @@ function download_md_file() {
         cat ${BASE_TARGET}/${append_file} >> ${target}
       fi
       echo "${DOUBLE_RETURN_STRING}${RULE}- ${PLUGIN_TYPE_STRING} ${type}${DOUBLE_RETURN_STRING}- ${VERSION_STRING} ${HYDRATOR_VERSION}" >> ${target}
-#       if [[ "x${target_dir_extra}" != "x" ]]; then
-#         cp ${target} ${target_extra}
-#         echo "  Copied    ${display_source_file_name} from ${display_source_dir} to ${target_dir_extra}/${target_file_name}"
-#       fi
     else
       local m="File does not exist for ${target}"
       echo_red_bold "From ${source_url}"
