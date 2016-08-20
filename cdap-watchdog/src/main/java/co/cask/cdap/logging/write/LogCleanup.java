@@ -121,6 +121,13 @@ public final class LogCleanup implements Runnable {
     }
   }
 
+  /**
+   * Clean log files which does not have corresponding meta data
+   * @param tillTime time till the meta data will be deleted.
+   * @param namespacedLogBaseDirMap namespace to directory map
+   * @param parentDirs parent directories for deleted files
+   * @throws Exception
+   */
   private void cleanFilesWithoutMeta(final long tillTime, final Map<String, NamespaceId> namespacedLogBaseDirMap,
                                      final SetMultimap<String, Location> parentDirs) throws Exception {
     LOG.info("Starting deletion of log files older than {} without metadata", tillTime);

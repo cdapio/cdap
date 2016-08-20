@@ -157,9 +157,7 @@ public class LogCleanupTest {
     // Setup directories
     LoggingContext dummyContext = new FlowletLoggingContext("ns", "app", "flw", "flwt", "run", "instance");
 
-    NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
-    builder.setName("ns");
-    NamespaceMeta finalMetadata = builder.build();
+    NamespaceMeta finalMetadata = new NamespaceMeta.Builder().setName("ns").build();
     namespaceQueryAdmin.create(finalMetadata);
 
     Location namespacedLogsDir = namespacedLocationFactory.get(Id.Namespace.from("ns")).append(logBaseDir);
@@ -179,6 +177,7 @@ public class LogCleanupTest {
     for (Location location : toDelete) {
       long modTime = deletionBoundary - counter - 10000;
       Location file = createFile(location, modTime);
+      // dont add meta data for some log files
       if (counter % 2 == 0) {
         fileMetaDataManager.writeMetaData(dummyContext, modTime, file);
       }
@@ -187,7 +186,6 @@ public class LogCleanupTest {
 
     LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, rootLocationFactory, namespaceQueryAdmin,
                                            namespacedLocationFactory, logBaseDir, RETENTION_DURATION_MS, impersonator);
-    logCleanup.run();
     logCleanup.run();
 
     for (Location location : toDelete) {
