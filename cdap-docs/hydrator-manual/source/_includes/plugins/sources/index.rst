@@ -32,13 +32,6 @@ These plugins work with:
 
 These plugins work with:
 
-  - *Data Pipeline - Realtime* (``cdap-data-streams`` artifact)
-
-- `Kafka Real-time Source <kafka-realtimesource.html>`__
-- `Twitter Real-time Source <twitter-realtimesource.html>`__
-
-These plugins work with:
-
   - *Realtime Pipeline* (``cdap-etl-realtime`` artifact, deprecated as of CDAP 3.5.0)
 
 .. toctree::
@@ -46,3 +39,10 @@ These plugins work with:
     :glob:
 
     *realtime*
+
+These plugins work with:
+
+  - *Data Pipeline - Realtime* (``cdap-data-streams`` artifact)
+
+- `Kafka Real-time Source <kafka-realtimesource.html>`__
+- `Twitter Real-time Source <twitter-realtimesource.html>`__

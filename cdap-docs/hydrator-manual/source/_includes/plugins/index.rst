@@ -11,7 +11,7 @@ Plugin Reference
 ================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    
     Action Plugins <actions/index>
     Source Plugins <sources/index>
@@ -72,8 +72,13 @@ Details on the available plugins and the required properties for sources, transf
 - :ref:`Hydrator Studio <cask-hydrator-studio>`
 - :ref:`CDAP CLI <cli>`
 - :ref:`Artifact HTTP RESTful API <http-restful-api-artifact>`
-- Plugin detailed documentation, through the links above
-
+- Individual plugin documentation for
+  :doc:`actions <actions/index>`,
+  :doc:`sources <sources/index>`,
+  :doc:`transforms <transforms/index>`,
+  :doc:`sinks <sinks/index>`,
+  :doc:`shared <shared-plugins/index>` and
+  :doc:`post-run plugins <post-run-plugins/index>`
 
 .. rubric:: Creating Custom Plugins
 
