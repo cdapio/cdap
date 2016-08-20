@@ -250,6 +250,22 @@
   </property>
 
   <property>
+    <name>app.program.max.start.seconds</name>
+    <value>300</value>
+    <description>
+      The maximum number of seconds to wait for a program to start before killing it
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.max.stop.seconds</name>
+    <value>300</value>
+    <description>
+      The maximum number of seconds to wait for a program to stop before killing it
+    </description>
+  </property>
+
+  <property>
     <name>app.program.runid.corrector.interval</name>
     <value>180</value>
     <description>
@@ -263,22 +279,6 @@
     <value>/tmp</value>
     <description>
       Temp directory
-    </description>
-  </property>
-
-  <property>
-    <name>app.program.max.start.seconds</name>
-    <value>300</value>
-    <description>
-      The maximum number of seconds to wait for a program to start before killing it
-    </description>
-  </property>
-
-  <property>
-    <name>app.program.max.stop.seconds</name>
-    <value>300</value>
-    <description>
-      The maximum number of seconds to wait for a program to stop before killing it
     </description>
   </property>
 
