@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Utility class to convert String array to Map<String, String>.
+ * Utility class for manipulating runtime arguments.
  */
 public final class RuntimeArguments {
 
@@ -79,6 +79,20 @@ public final class RuntimeArguments {
   /**
    * Identifies arguments with a given scope prefix and adds them back without the scope prefix.
    *
+   * This method calls {@link #extractScope(String, String, Map)} with {@link Scope#toString()} as the first argument.
+   *
+   * @param scope The type of the scope
+   * @param name The name of the scope, e.g. "myTable"
+   * @param arguments the runtime arguments of the enclosing scope
+   * @return a new map that contains the arguments with and without prefix, never null
+   */
+  public static Map<String, String> extractScope(Scope scope, String name, Map<String, String> arguments) {
+    return extractScope(scope.toString(), name, arguments);
+  }
+
+  /**
+   * Identifies arguments with a given scope prefix and adds them back without the scope prefix.
+   *
    * 1. An argument can be prefixed by "&lt;scope>.&lt;name>.". e.g. mapreduce.myMapReduce.read.timeout=30. In this case
    * the MapReduce program named 'myMapReduce' will receive two arguments - mapreduce.myMapReduce.read.timeout=30 and
    * read.timeout=30. However MapReduce programs other than 'myMapReduce' will receive only one argument -
@@ -87,12 +101,12 @@ public final class RuntimeArguments {
    * underlying MapReduce programs will receive the arguments mapreduce.*.read.timeout=30 and read.timeout=30.
    * 3. An argument not prefixed with any scope is passed further without any changes. e.g. read.timeout=30
    *
-   * @param scope The type of the scope
+   * @param scope The scope prefix
    * @param name The name of the scope, e.g. "myTable"
    * @param arguments the runtime arguments of the enclosing scope
    * @return a new map that contains the arguments with and without prefix, never null
    */
-  public static Map<String, String> extractScope(Scope scope, String name, Map<String, String> arguments) {
+  public static Map<String, String> extractScope(String scope, String name, Map<String, String> arguments) {
     if (arguments == null || arguments.isEmpty()) {
       return new HashMap<>();
     }

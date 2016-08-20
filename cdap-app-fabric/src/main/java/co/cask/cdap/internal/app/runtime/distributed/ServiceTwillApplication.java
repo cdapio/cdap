@@ -16,9 +16,12 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.proto.ProgramType;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.TwillApplication;
@@ -31,12 +34,14 @@ import java.util.Map;
 public class ServiceTwillApplication extends AbstractProgramTwillApplication {
 
   private final ServiceSpecification spec;
+  private final Resources resources;
 
-  public ServiceTwillApplication(Program program, ServiceSpecification spec,
+  public ServiceTwillApplication(Program program, Arguments runtimeArgs, ServiceSpecification spec,
                                  Map<String, LocalizeResource> localizeResources,
                                  EventHandler eventHandler) {
     super(program, localizeResources, eventHandler);
     this.spec = spec;
+    this.resources = SystemArguments.getResources(runtimeArgs, spec.getResources());
   }
 
   @Override
@@ -49,7 +54,7 @@ public class ServiceTwillApplication extends AbstractProgramTwillApplication {
     // Add a runnable for the service handler
     runnables.put(spec.getName(), new RunnableResource(
       new ServiceTwillRunnable(spec.getName()),
-      createResourceSpec(spec.getResources(), spec.getInstances())
+      createResourceSpec(resources, spec.getInstances())
     ));
   }
 }

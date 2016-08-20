@@ -17,13 +17,15 @@
 package co.cask.cdap.app.runtime.spark.distributed;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.distributed.AbstractProgramTwillApplication;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.proto.ProgramType;
-import com.google.common.base.Objects;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.TwillApplication;
 
@@ -35,12 +37,16 @@ import java.util.Map;
 final class SparkTwillApplication extends AbstractProgramTwillApplication {
 
   private final SparkSpecification spec;
+  private final Resources resources;
 
-  SparkTwillApplication(Program program, SparkSpecification spec,
+  SparkTwillApplication(Program program, Arguments runtimeArgs, SparkSpecification spec,
                         Map<String, LocalizeResource> localizeResources,
                         EventHandler eventHandler) {
     super(program, localizeResources, eventHandler);
     this.spec = spec;
+
+    Map<String, String> clientArgs = RuntimeArguments.extractScope("task", "client", runtimeArgs.asMap());
+    this.resources = SystemArguments.getResources(clientArgs, spec.getClientResources());
   }
 
   @Override
@@ -50,9 +56,7 @@ final class SparkTwillApplication extends AbstractProgramTwillApplication {
 
   @Override
   protected void addRunnables(Map<String, RunnableResource> runnables) {
-    runnables.put(spec.getName(), new RunnableResource(
-      new SparkTwillRunnable(spec.getName()),
-      createResourceSpec(Objects.firstNonNull(spec.getDriverResources(), new Resources()), 1)
-    ));
+    runnables.put(spec.getName(),
+                  new RunnableResource(new SparkTwillRunnable(spec.getName()), createResourceSpec(resources, 1)));
   }
 }

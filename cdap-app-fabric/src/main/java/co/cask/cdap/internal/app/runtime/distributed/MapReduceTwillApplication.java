@@ -16,11 +16,13 @@
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.proto.ProgramType;
-import com.google.common.base.Objects;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.TwillApplication;
 
@@ -32,12 +34,17 @@ import java.util.Map;
 public final class MapReduceTwillApplication extends AbstractProgramTwillApplication {
 
   private final MapReduceSpecification spec;
+  private final Resources resources;
 
-  public MapReduceTwillApplication(Program program, MapReduceSpecification spec,
+  public MapReduceTwillApplication(Program program, Arguments runtimeArgs, MapReduceSpecification spec,
                                    Map<String, LocalizeResource> localizeResources,
                                    EventHandler eventHandler) {
     super(program, localizeResources, eventHandler);
     this.spec = spec;
+
+    // These resources are for the container that runs the mapred client that will launch the actual mapred job.
+    Map<String, String> clientArgs = RuntimeArguments.extractScope("task", "client", runtimeArgs.asMap());
+    this.resources = SystemArguments.getResources(clientArgs, spec.getDriverResources());
   }
 
   @Override
@@ -47,10 +54,7 @@ public final class MapReduceTwillApplication extends AbstractProgramTwillApplica
 
   @Override
   protected void addRunnables(Map<String, RunnableResource> runnables) {
-    // These resources are for the container that runs the mapred client that will launch the actual mapred job.
-    runnables.put(spec.getName(), new RunnableResource(
-      new MapReduceTwillRunnable(spec.getName()),
-      createResourceSpec(Objects.firstNonNull(spec.getDriverResources(), new Resources()), 1)
-    ));
+    runnables.put(spec.getName(),
+                  new RunnableResource(new MapReduceTwillRunnable(spec.getName()), createResourceSpec(resources, 1)));
   }
 }

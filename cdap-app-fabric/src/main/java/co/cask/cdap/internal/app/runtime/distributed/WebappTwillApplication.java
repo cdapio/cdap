@@ -15,12 +15,14 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.webapp.WebappProgramRunner;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Throwables;
 import org.apache.twill.api.EventHandler;
-import org.apache.twill.api.ResourceSpecification;
 
 import java.util.Map;
 
@@ -31,12 +33,14 @@ import java.util.Map;
 public final class WebappTwillApplication extends AbstractProgramTwillApplication {
 
   private final Program program;
+  private final Resources resources;
 
-  protected WebappTwillApplication(Program program,
+  protected WebappTwillApplication(Program program, Arguments runtimeArgs,
                                    Map<String, LocalizeResource> localizeResources,
                                    EventHandler eventHandler) {
     super(program, localizeResources, eventHandler);
     this.program = program;
+    this.resources = SystemArguments.getResources(runtimeArgs, null);
   }
 
   @Override
@@ -46,17 +50,11 @@ public final class WebappTwillApplication extends AbstractProgramTwillApplicatio
 
   @Override
   protected void addRunnables(Map<String, RunnableResource> runnables) {
-    ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
-      .setVirtualCores(1)
-      .setMemory(512, ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(1)
-      .build();
-
     try {
       String serviceName = WebappProgramRunner.getServiceName(ProgramType.WEBAPP, program);
       runnables.put(serviceName, new RunnableResource(
         new WebappTwillRunnable(serviceName),
-        resourceSpec
+        createResourceSpec(resources, 1)
       ));
     } catch (Exception e) {
       throw Throwables.propagate(e);

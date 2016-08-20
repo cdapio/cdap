@@ -27,6 +27,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.security.DefaultImpersonator;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
@@ -38,6 +39,7 @@ import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.ArtifactClasses;
 import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
@@ -50,7 +52,13 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -141,13 +149,100 @@ public class AbstractProgramRuntimeServiceTest {
     runtimeService.stopAndWait();
   }
 
+  @Test
+  public void testScopingRuntimeArguments() throws Exception {
+    Map<ProgramId, Arguments> argumentsMap = new ConcurrentHashMap<>();
+    ProgramRunnerFactory runnerFactory = createProgramRunnerFactory(argumentsMap);
+
+    final Program program = createDummyProgram();
+    final ProgramRuntimeService runtimeService =
+      new AbstractProgramRuntimeService(CConfiguration.create(), runnerFactory, null,
+                                        new DefaultImpersonator(CConfiguration.create(), null, null)) {
+      @Override
+      public ProgramLiveInfo getLiveInfo(Id.Program programId) {
+        return new ProgramLiveInfo(programId, "runtime") { };
+      }
+
+      @Override
+      protected Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
+                                      ProgramDescriptor programDescriptor,
+                                      ArtifactDetail artifactDetail, File tempDir) throws IOException {
+        return program;
+      }
+
+      @Override
+      protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
+        co.cask.cdap.api.artifact.ArtifactId id = new co.cask.cdap.api.artifact.ArtifactId(
+          "dummy", new ArtifactVersion("1.0"), ArtifactScope.USER);
+        return new ArtifactDetail(new ArtifactDescriptor(id, Locations.toLocation(TEMP_FOLDER.newFile())),
+                                  new ArtifactMeta(ArtifactClasses.builder().build()));
+      }
+    };
+
+    runtimeService.startAndWait();
+    try {
+      try {
+        ProgramDescriptor descriptor = new ProgramDescriptor(program.getId().toEntityId(), null, null);
+
+        // Set of scopes to test
+        String programScope = program.getType().getScope();
+        List<String> scopes = Arrays.asList(
+          "app.*.",
+          "app." + program.getApplicationId() + ".",
+          "app." + program.getApplicationId() + "." + programScope + ".*.",
+          "app." + program.getApplicationId() + "." + programScope + "." + program.getName() + ".",
+          programScope + ".*.",
+          programScope + "." + program.getName() + ".",
+          ""
+        );
+
+        for (String scope : scopes) {
+          ProgramOptions programOptions = new SimpleProgramOptions(
+            program.getName(), new BasicArguments(),
+            new BasicArguments(Collections.singletonMap(scope + "size", Integer.toString(scope.length()))));
+
+          final ProgramController controller = runtimeService.run(descriptor, programOptions).getController();
+          Tasks.waitFor(ProgramController.State.COMPLETED, new Callable<ProgramController.State>() {
+            @Override
+            public ProgramController.State call() throws Exception {
+              return controller.getState();
+            }
+          }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
+          // Should get an argument
+          Arguments args = argumentsMap.get(program.getId().toEntityId());
+          Assert.assertNotNull(args);
+          Assert.assertEquals(scope.length(), Integer.parseInt(args.getOption("size")));
+        }
+
+      } finally {
+        runtimeService.stopAndWait();
+      }
+
+    } finally {
+      runtimeService.stopAndWait();
+    }
+  }
+
   private ProgramRunnerFactory createProgramRunnerFactory() {
+    return createProgramRunnerFactory(new HashMap<ProgramId, Arguments>());
+  }
+
+  /**
+   * Creates a {@link ProgramRunnerFactory} for creating {@link ProgramRunner}
+   * that always run with a {@link FastService}.
+   *
+   * @param argumentsMap the map to be populated with the user arguments for each run.
+   */
+  private ProgramRunnerFactory createProgramRunnerFactory(final Map<ProgramId, Arguments> argumentsMap) {
     return new ProgramRunnerFactory() {
       @Override
       public ProgramRunner create(ProgramType programType) {
         return new ProgramRunner() {
           @Override
           public ProgramController run(Program program, ProgramOptions options) {
+            argumentsMap.put(program.getId().toEntityId(), options.getUserArguments());
+
             Service service = new FastService();
             ProgramController controller = new ProgramControllerServiceAdapter(service, program.getId(),
                                                                                RunIds.generate());
@@ -281,7 +376,8 @@ public class AbstractProgramRuntimeServiceTest {
     private final RuntimeInfo extraInfo;
 
     protected TestProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
-                                        @Nullable ArtifactRepository artifactRepository, RuntimeInfo extraInfo) {
+                                        @Nullable ArtifactRepository artifactRepository,
+                                        @Nullable RuntimeInfo extraInfo) {
       super(cConf, programRunnerFactory, artifactRepository,
             new DefaultImpersonator(CConfiguration.create(), null, null));
       this.extraInfo = extraInfo;
@@ -299,8 +395,11 @@ public class AbstractProgramRuntimeServiceTest {
         return info;
       }
 
-      updateRuntimeInfo(programId.getType(), runId, extraInfo);
-      return extraInfo;
+      if (extraInfo != null) {
+        updateRuntimeInfo(programId.getType(), runId, extraInfo);
+        return extraInfo;
+      }
+      return null;
     }
   }
 }
