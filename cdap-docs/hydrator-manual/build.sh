@@ -132,12 +132,15 @@ function download_md_file() {
       else
         # Remove title suffixes
         tail -n +2 "${target}" > "${target}.tmp" && mv "${target}.tmp" "${target}"
+        # Strip trailing whitespace
         first="${first%"${first##*[![:space:]]}"}"
+        # Strip trailing items of interest
         first=${first% Batch Sink}
         first=${first% Batch Source}
         first=${first% Post Action}
         first=${first% Real-time Sink}
         first=${first% Real-time Source}
+        first=${first% Action}
         first=${first% Source}
         first=${first% Transform}
         echo "${first}${DOUBLE_RETURN_STRING}$(cat ${target})" > ${target}
