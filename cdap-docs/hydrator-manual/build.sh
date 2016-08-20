@@ -127,7 +127,20 @@ function download_md_file() {
         local m="Markdown file missing initial title: ${source_file_name}: ${source_name} ${type_capital}"
         echo_red_bold "${m}"
         set_message "${m}"
-        echo "# ${source_name} ${type_capital}${DOUBLE_RETURN_STRING}$(cat ${target})" > ${target}
+#         echo "# ${source_name} ${type_capital}${DOUBLE_RETURN_STRING}$(cat ${target})" > ${target}
+        echo "# ${source_name}${DOUBLE_RETURN_STRING}$(cat ${target})" > ${target}
+      else
+        # Remove title suffixes
+        tail -n +2 "${target}" > "${target}.tmp" && mv "${target}.tmp" "${target}"
+        first="${first%"${first##*[![:space:]]}"}"
+        first=${first% Batch Sink}
+        first=${first% Batch Source}
+        first=${first% Post Action}
+        first=${first% Real-time Sink}
+        first=${first% Real-time Source}
+        first=${first% Source}
+        first=${first% Transform}
+        echo "${first}${DOUBLE_RETURN_STRING}$(cat ${target})" > ${target}
       fi
       if [[ "x${append_file}" != "x" ]]; then
         echo "  Appending ${append_file} to ${target_file_name}"
