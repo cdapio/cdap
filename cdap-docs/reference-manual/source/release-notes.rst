@@ -30,7 +30,8 @@ Improvements
 ------------
 
 - `CDAP-7021 <https://issues.cask.co/browse/CDAP-7021>`__ - Improved program launch
- performance to avoid large CPU spikes when multiple programs are launched at the same time.
+  performance to avoid large CPU spikes when multiple programs are launched at the same
+  time.
 
 Bug Fixes
 ---------
