@@ -44,5 +44,8 @@ These plugins work with:
 
   - *Data Pipeline - Realtime* (``cdap-data-streams`` artifact)
 
-- `Kafka <kafka-realtimesource.html>`__
-- `Twitter <twitter-realtimesource.html>`__
+.. toctree::
+    :maxdepth: 1
+    :glob:
+    
+    *streamingsource*

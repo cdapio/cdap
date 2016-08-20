@@ -74,16 +74,10 @@ function download_md_file() {
   # type (source, sink, transform, shared-plugin, postaction)
   # Defining this in the parameters overrides this
   if [[ "x${plugin_type}" == "x" ]]; then
-    if [[ "x${type:0:5}" == "xbatch" ]]; then
-      plugin_type="${type:5}"
-    elif [[ "x${type:0:8}" == "xrealtime" ]]; then
-      plugin_type="${type:8}"
-      
-    # FIXME: this type "postaction" is going away
-    elif [[ "x${type}" == "xpostaction" ]]; then
+    # FIXME: this type "postaction" maybe going away
+    if [[ "x${type}" == "xpostaction" ]]; then
       plugin_type="post-run-plugin"
     # END FIXME
-    
     # FIXME: these types "prerun" and  "postrun" are currently not used
 #     elif [[ "x${type}" == "xprerun" ]]; then
 #       plugin_type="pre-run"
@@ -91,7 +85,13 @@ function download_md_file() {
 #       plugin_type="post-run"
     # END FIXME
     elif [[ "x${type}" == "xaction" ]]; then
-      plugin_type="action"
+      plugin_type="${type}"
+    elif [[ "x${type}" == "xtransform" ]]; then
+      plugin_type="${type}"
+    elif [[ "x${type: -6}" == "xsource" ]]; then
+      plugin_type="${type: -6}"
+    elif [[ "x${type: -4}" == "xsink" ]]; then
+      plugin_type="${type: -  4}"
     else
       # assume of type transform; to be copied to both batch and realtime
       plugin_type="transform"
@@ -213,9 +213,7 @@ function download_includes() {
   download_md_file cassandra-plugins Cassandra-batchsink.md
   download_md_file cassandra-plugins Cassandra-batchsource.md 
   download_md_file cassandra-plugins Cassandra-realtimesink.md 
-
   download_md_file copybookreader-plugins CopybookReader-batchsource.md 
-
   download_md_file core-plugins AmazonSQS-realtimesource.md
   download_md_file core-plugins AzureBlobStore-batchsource.md
   download_md_file core-plugins Cube-batchsink.md
@@ -228,6 +226,7 @@ function download_includes() {
   download_md_file core-plugins File-batchsource.md
   download_md_file core-plugins FTP-batchsource.md
   download_md_file core-plugins GroupByAggregate-batchaggregator.md
+  download_md_file core-plugins HDFSFileDeleteAction-action.md
   download_md_file core-plugins HDFSFileMoveAction-action.md
   download_md_file core-plugins JavaScript-transform.md
   download_md_file core-plugins JMS-realtimesource.md
@@ -255,50 +254,45 @@ function download_includes() {
   download_md_file core-plugins Table-realtimesink.md
   download_md_file core-plugins TPFSAvro-batchsink.md
   download_md_file core-plugins TPFSAvro-batchsource.md
+  download_md_file core-plugins TPFSOrc-batchsink.md
   download_md_file core-plugins TPFSParquet-batchsink.md
   download_md_file core-plugins TPFSParquet-batchsource.md
   download_md_file core-plugins Twitter-realtimesource.md
   download_md_file core-plugins Validator-transform.md
+  download_md_file core-plugins Window-windower.md
   download_md_file core-plugins XMLReader-batchsource.md
-
   download_md_file database-plugins Database-batchsink.md _includes/database-batchsink-append.md.txt
   download_md_file database-plugins Database-batchsource.md _includes/database-batchsource-append.md.txt
+  download_md_file database-plugins DatabaseAction-action.md
   download_md_file database-plugins DatabaseQuery-postaction.md
-
   download_md_file elasticsearch-plugins Elasticsearch-batchsink.md
   download_md_file elasticsearch-plugins Elasticsearch-batchsource.md
   download_md_file elasticsearch-plugins Elasticsearch-realtimesink.md
-  
   download_md_file hbase-plugins HBase-batchsink.md
   download_md_file hbase-plugins HBase-batchsource.md
-  
   download_md_file hdfs-plugins HDFS-batchsink.md
-  
   download_md_file hive-plugins Hive-batchsink.md
   download_md_file hive-plugins Hive-batchsource.md
-  
   download_md_file http-plugins HTTPCallback-postaction.md
   download_md_file http-plugins HTTPPoller-realtimesource.md
-
   download_md_file kafka-plugins Kafka-realtimesource.md
   download_md_file kafka-plugins KafkaProducer-realtimesink.md
-  
   download_md_file mongodb-plugins MongoDB-batchsink.md
   download_md_file mongodb-plugins MongoDB-batchsource.md
   download_md_file mongodb-plugins MongoDB-realtimesink.md
-  
   download_md_file spark-plugins Kafka-streamingsource.md
-  # Currently only for batch
-  download_md_file spark-plugins NaiveBayesClassifier-sparkcompute.md '' "transform" "DPB-naivebayesclassifier-sparkcompute.md"
-  download_md_file spark-plugins NaiveBayesTrainer-sparksink.md       '' "sink"
-  
+  download_md_file spark-plugins Twitter-streamingsource.md
+  download_md_file spark-plugins NaiveBayesClassifier-sparkcompute.md '' "transform" "DPB-naivebayesclassifier-sparkcompute.md" # Currently only for batch
+  download_md_file spark-plugins NaiveBayesTrainer-sparksink.md       '' "sink" # Currently only for batch
   download_md_file transform-plugins CloneRecord-transform.md
   download_md_file transform-plugins Compressor-transform.md
   download_md_file transform-plugins CSVFormatter-transform.md
   download_md_file transform-plugins CSVParser-transform.md
   download_md_file transform-plugins Decoder-transform.md
   download_md_file transform-plugins Decompressor-transform.md
+  download_md_file transform-plugins Decryptor-transform.md
   download_md_file transform-plugins Encoder-transform.md
+  download_md_file transform-plugins Encryptor-transform.md
   download_md_file transform-plugins Hasher-transform.md
   download_md_file transform-plugins JSONFormatter-transform.md
   download_md_file transform-plugins JSONParser-transform.md
