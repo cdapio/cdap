@@ -1,0 +1,601 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Cask Data Application Platform Wikipedia Pipeline Application" name="description" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.3.7">
+    <meta name="git_hash" content="d5ecf211dda1dc11a0accdecf4b6a308ef54b128">
+    <meta name="git_timestamp" content="2016-08-20 17:11:44 -0700">
+    <title>Wikipedia Pipeline &mdash; Cask Data Application Platform 3.3.7 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.3.7',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    
+    <!-- Google Tag Manager start -->
+    <script>dataLayer = [];</script>
+    <noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-PBZ3JL"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-PBZ3JL');</script>
+    <!-- Google Tag Manager end -->
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.3.7 Documentation" href="../index.html" />
+    <link rel="up" title="Examples" href="index.html" />
+    <link rel="next" title="Word Count" href="word-count.html" />
+    <link rel="prev" title="Web Analytics Application" href="web-analytics.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="word-count.html" title="Word Count"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="web-analytics.html" title="Web Analytics Application"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.3.7');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Examples, Guides, and Tutorials</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="wikipedia-pipeline">
+<span id="examples-wikipedia-data-pipeline"></span><h1>Wikipedia Pipeline<a class="headerlink" href="#wikipedia-pipeline" title="Permalink to this headline">¶</a></h1>
+<p>A Cask Data Application Platform (CDAP) example demonstrating a typical batch data
+processing pipeline using CDAP Workflows.</p>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>This example demonstrates a CDAP application performing analysis on Wikipedia data using MapReduce and Spark programs
+running within a CDAP Workflow: <em>WikipediaPipelineWorkflow</em>.</p>
+<p>This example can be run in both online and offline modes.</p>
+<ul class="simple">
+<li>In the <strong>online mode</strong>, the MapReduceProgram <em>WikipediaDataDownloader</em> reads the stream
+<em>pageTitleStream</em>, each event of which is an element from the output of the <a class="reference external" href="https://developers.facebook.com/docs/graph-api/reference/v2.4/object/likes">Facebook
+&#8220;Likes&#8221; API</a>. For
+each event, it downloads Wikipedia data for the page using the <a class="reference external" href="https://www.mediawiki.org/wiki/API:Main_page">MediaWiki
+Wikipedia API</a>. It stores the
+downloaded data in the <code class="docutils literal"><span class="pre">KeyValueTable</span></code> dataset <em>wikiData</em>.</li>
+</ul>
+<ul class="simple">
+<li>In the <strong>offline mode</strong>, it expects Wikipedia data formatted following the output of the
+MediaWiki API in the stream <em>wikiStream</em>. The MapReduce program <em>wikiDataToDataset</em>
+consumes this stream and stores it in the same <code class="docutils literal"><span class="pre">KeyValueTable</span></code> dataset <em>wikiData</em>.
+Data can be uploaded to the <em>wikiStream</em> using the CDAP CLI.</li>
+</ul>
+<p>Once raw Wikipedia data is available from using either the online or offline modes, the
+<em>WikipediaPipelineWorkflow</em> runs a MapReduce program <em>WikiContentValidatorAndNormalizer</em> that filters bad records from
+the raw data, as well as normalizes it by converting the wikitext-formatted data to plain text. It then stores the
+output in another <code class="docutils literal"><span class="pre">KeyValueTable</span></code> dataset called <em>normalized</em>.</p>
+<p>The <em>WikipediaPipelineWorkflow</em> then contains a fork, with two branches:</p>
+<ul class="simple">
+<li>One branch runs the Apache Spark program <em>SparkWikipediaClustering</em>. This program can be configured to either run
+<a class="reference external" href="http://spark.apache.org/docs/latest/mllib-clustering.html#latent-dirichlet-allocation-lda">Latent Dirichlet Allocation (LDA)</a>, or
+<a class="reference external" href="http://spark.apache.org/docs/latest/mllib-clustering.html#k-means">K-Means</a>. The algorithm can be chosen by
+setting the field <em>clusteringAlgorithm</em> in an application config. By default, the workflow is configured to use
+<em>LDA</em>, if the <em>clusteringAlgorithm</em> field is not specified. This program consumes normalized
+data and runs clustering on it using the configured algorithm. It stores its output in the CDAP Table dataset
+<em>clustering</em>, with one row for each iteration, and a column per topic containing the score for that topic.</li>
+<li>The other branch contains a MapReduce program <em>TopNMapReduce</em> that consumes the
+normalized data and produces the top &#8220;N&#8221; words in the dataset <em>topn</em>.</li>
+</ul>
+<p>Let&#8217;s look at some of these components, and then run the application and see the results.</p>
+<div class="section" id="the-wikipediapipeline-application">
+<h3>The WikipediaPipeline Application<a class="headerlink" href="#the-wikipediapipeline-application" title="Permalink to this headline">¶</a></h3>
+<p>As in the other <a class="reference external" href="index.html">examples</a>, the components
+of the application are tied together by the class <code class="docutils literal"><span class="pre">WikipediaPipelineApp</span></code>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="cm">/**</span>
+<span class="cm"> * App to demonstrate a data pipeline that processes Wikipedia data using a CDAP Workflow.</span>
+<span class="cm"> */</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">WikipediaPipelineApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span><span class="o">&lt;</span><span class="n">WikipediaPipelineApp</span><span class="o">.</span><span class="na">WikipediaAppConfig</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">PAGE_TITLES_STREAM</span> <span class="o">=</span> <span class="s">&quot;pageTitleStream&quot;</span><span class="o">;</span>
+  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">RAW_WIKIPEDIA_STREAM</span> <span class="o">=</span> <span class="s">&quot;wikiStream&quot;</span><span class="o">;</span>
+  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">PAGE_TITLES_DATASET</span> <span class="o">=</span> <span class="s">&quot;pages&quot;</span><span class="o">;</span>
+  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">RAW_WIKIPEDIA_DATASET</span> <span class="o">=</span> <span class="s">&quot;wikidata&quot;</span><span class="o">;</span>
+  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">NORMALIZED_WIKIPEDIA_DATASET</span> <span class="o">=</span> <span class="s">&quot;normalized&quot;</span><span class="o">;</span>
+  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">SPARK_CLUSTERING_OUTPUT_DATASET</span> <span class="o">=</span> <span class="s">&quot;clustering&quot;</span><span class="o">;</span>
+  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">MAPREDUCE_TOPN_OUTPUT</span> <span class="o">=</span> <span class="s">&quot;topn&quot;</span><span class="o">;</span>
+  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">LIKES_TO_DATASET_MR_NAME</span> <span class="o">=</span> <span class="s">&quot;LikesToDataset&quot;</span><span class="o">;</span>
+  <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">WIKIPEDIA_TO_DATASET_MR_NAME</span> <span class="o">=</span> <span class="s">&quot;WikiDataToDataset&quot;</span><span class="o">;</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">configure</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">addStream</span><span class="o">(</span><span class="k">new</span> <span class="n">Stream</span><span class="o">(</span><span class="n">PAGE_TITLES_STREAM</span><span class="o">));</span>
+    <span class="n">addStream</span><span class="o">(</span><span class="k">new</span> <span class="n">Stream</span><span class="o">(</span><span class="n">RAW_WIKIPEDIA_STREAM</span><span class="o">));</span>
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">StreamToDataset</span><span class="o">(</span><span class="n">LIKES_TO_DATASET_MR_NAME</span><span class="o">));</span>
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">StreamToDataset</span><span class="o">(</span><span class="n">WIKIPEDIA_TO_DATASET_MR_NAME</span><span class="o">));</span>
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">WikipediaDataDownloader</span><span class="o">());</span>
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">WikiContentValidatorAndNormalizer</span><span class="o">());</span>
+    <span class="n">addMapReduce</span><span class="o">(</span><span class="k">new</span> <span class="n">TopNMapReduce</span><span class="o">());</span>
+    <span class="n">addSpark</span><span class="o">(</span><span class="k">new</span> <span class="n">SparkWikipediaClustering</span><span class="o">(</span><span class="n">getConfig</span><span class="o">()));</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="n">PAGE_TITLES_DATASET</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="n">RAW_WIKIPEDIA_DATASET</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="n">NORMALIZED_WIKIPEDIA_DATASET</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="n">SPARK_CLUSTERING_OUTPUT_DATASET</span><span class="o">,</span> <span class="n">Table</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="n">createDataset</span><span class="o">(</span><span class="n">MAPREDUCE_TOPN_OUTPUT</span><span class="o">,</span> <span class="n">KeyValueTable</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    <span class="n">addWorkflow</span><span class="o">(</span><span class="k">new</span> <span class="n">WikipediaPipelineWorkflow</span><span class="o">(</span><span class="n">getConfig</span><span class="o">()));</span>
+    <span class="n">addService</span><span class="o">(</span><span class="k">new</span> <span class="n">WikipediaService</span><span class="o">());</span>
+  <span class="o">}</span>
+
+  <span class="cm">/**</span>
+<span class="cm">   * Config for Wikipedia App.</span>
+<span class="cm">   */</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">WikipediaAppConfig</span> <span class="kd">extends</span> <span class="n">Config</span> <span class="o">{</span>
+
+    <span class="nd">@Nullable</span>
+    <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">clusteringAlgorithm</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nf">WikipediaAppConfig</span><span class="o">()</span> <span class="o">{</span>
+      <span class="k">this</span><span class="o">(</span><span class="kc">null</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="nf">WikipediaAppConfig</span><span class="o">(</span><span class="nd">@Nullable</span> <span class="n">String</span> <span class="n">clusteringAlgorithm</span><span class="o">)</span> <span class="o">{</span>
+      <span class="k">this</span><span class="o">.</span><span class="na">clusteringAlgorithm</span> <span class="o">=</span> <span class="n">clusteringAlgorithm</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">?</span> <span class="s">&quot;lda&quot;</span> <span class="o">:</span> <span class="n">clusteringAlgorithm</span><span class="o">;</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>This application demonstrates:</p>
+<ul class="simple">
+<li><strong>The use of assigning unique names,</strong> as the same MapReduce (<em>StreamToDataset</em>) is used twice in the workflow
+(<em>WikipediaPipelineWorkflow</em>) under two different names. Also, depending on the chosen <em>clusteringAlgorithm</em>, the
+name of the <em>SparkWikipediaClustering</em> will either be <em>SparkWikipediaClustering-LDA</em> or
+<em>SparkWikipediaClustering-KMEANS</em>.</li>
+<li><strong>The use of Workflow Tokens</strong> in:<ul>
+<li>Condition Predicates</li>
+<li>Setting MapReduce program configuration (setting it based on values in the token)</li>
+<li><code class="docutils literal"><span class="pre">map()</span></code> and <code class="docutils literal"><span class="pre">reduce()</span></code> functions (read-only, no updates)</li>
+<li>Spark Programs (reading from—and writing to—the workflow token; adding
+Spark Accumulators to the workflow token)</li>
+<li>Assertions in application unit tests</li>
+</ul>
+</li>
+<li><strong>The use of application configs</strong> to create—from the same artifact—different applications. Depending on the
+value chosen for the <em>clusteringAlgorithm</em>, there can be two different applications, one using LDA for clustering,
+and the other using K-Means. The application is packaged with the two possible application config JSON files at
+<em>resources/wikipedia-kmeans.json</em> and <em>resources/wikipedia-lda.json</em> in the application directory.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="building-and-starting">
+<h2>Building and Starting<a class="headerlink" href="#building-and-starting" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p class="first">You can either build the example (as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-example" title="(in Cask Data Application Platform v3.3.7)"><span class="xref std std-ref">Building an Example Application</span></a>) or use the pre-built JAR file included in the CDAP SDK
+(as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-deploying" title="(in Cask Data Application Platform v3.3.7)"><span class="xref std std-ref">Deploying an Application</span></a>):</p>
+<pre class="literal-block">
+examples/WikipediaPipeline/target/WikipediaPipeline-3.3.7.jar
+</pre>
+</li>
+<li><p class="first">Start CDAP (as described in <a class="reference external" href="../source/../../developers-manual/getting-started/start-stop-cdap.html#start-stop-cdap" title="(in Cask Data Application Platform v3.3.7)"><span class="xref std std-ref">Starting and Stopping CDAP</span></a>).</p>
+</li>
+<li><p class="first">Deploy the application, as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-deploying" title="(in Cask Data Application Platform v3.3.7)"><span class="xref std std-ref">Deploying an Application</span></a>.
+For example, from the Standalone CDAP SDK directory, use the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.3.7)"><span class="xref std std-ref">Command Line Interface (CLI)</span></a>:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> cdap-cli.sh load artifact examples/WikipediaPipeline/target/WikipediaPipeline-3.3.7.jar
+Successfully added artifact with name 'WikipediaPipeline'
+
+<span class="gp">$</span> cdap-cli.sh create app WikipediaPipeline WikipediaPipeline 3.3.7 user
+Successfully created application
+</pre>
+</div>
+</li>
+<li><p class="first">Once the application has been deployed, you can start its components, as described in
+<a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-starting-application" title="(in Cask Data Application Platform v3.3.7)"><span class="xref std std-ref">Starting an Application</span></a>, and detailed at the
+start of <a class="reference external" href="#running-the-example">running the example</a>.</p>
+</li>
+<li><p class="first">Once all components are started, <a class="reference external" href="#running-the-example">run the example</a>.</p>
+</li>
+<li><p class="first">When finished, you can <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-stopping" title="(in Cask Data Application Platform v3.3.7)"><span class="xref std std-ref">stop</span></a>
+and <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-removing" title="(in Cask Data Application Platform v3.3.7)"><span class="xref std std-ref">remove the application</span></a>.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="deploying-the-example">
+<h2>Deploying the Example<a class="headerlink" href="#deploying-the-example" title="Permalink to this headline">¶</a></h2>
+<p>Since deploying the WikipediaPipelineApp involves loading an artifact and creating two applications from it, the
+preferred method of deploying it is to use the CDAP CLI.</p>
+<ul>
+<li><p class="first">Load the Artifact:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> cdap-cli.sh load artifact examples/WikipediaPipeline/target/WikipediaPipeline-3.3.7.jar name WikipediaPipelineApp version 3.3.7
+Successfully added artifact with name 'WikipediaPipelineApp'
+</pre>
+</div>
+</li>
+<li><p class="first">Create an application using LDA as the clustering algorithm:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> cdap-cli.sh create app wiki-lda WikipediaPipelineApp 3.3.7 user examples/WikipediaPipeline/resources/wikipedia-lda.json
+Successfully created application
+</pre>
+</div>
+</li>
+<li><p class="first">Create an application using K-Means as the clustering algorithm:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> cdap-cli.sh create app wiki-kmeans WikipediaPipelineApp 3.3.7 user examples/WikipediaPipeline/resources/wikipedia-kmeans.json
+Successfully created application
+</pre>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="running-the-example">
+<h2>Running the Example<a class="headerlink" href="#running-the-example" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="injecting-data">
+<h3>Injecting data<a class="headerlink" href="#injecting-data" title="Permalink to this headline">¶</a></h3>
+<p>The <em>pageTitleStream</em> consumes events in the format returned by the Facebook &#8220;Likes&#8221; Graph API.</p>
+<ul>
+<li><p class="first">Inject a file of Facebook &#8220;Likes&#8221; data to the stream <em>pageTitleStream</em> by running this command from the Standalone
+CDAP SDK directory, using the CDAP Command Line Interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh load stream pageTitleStream examples/WikipediaPipeline/resources/fb-likes-data.txt
+<span class="go">Successfully sent stream event to stream &#39;pageTitleStream&#39;</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>The <em>wikiStream</em> consumes events in the format returned by the MediaWiki Wikipedia API.</p>
+<ul>
+<li><p class="first">Inject a file of &#8220;Wikipedia&#8221; data to the stream <em>wikiStream</em> by running this command from the Standalone
+CDAP SDK directory, using the Command Line Interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh load stream wikiStream examples/WikipediaPipeline/resources/wikipedia-data.txt
+<span class="go">Successfully sent stream event to stream &#39;wikiStream&#39;</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="starting-the-workflow">
+<h3>Starting the Workflow<a class="headerlink" href="#starting-the-workflow" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">Using the CDAP-UI, go to the <em>WikipediaPipeline</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/WikipediaPipeline/overview/programs">application overview page, programs tab</a>,
+click <em>WikipediaPipelineWorkflow</em> to get to the workflow detail page, then click the <em>Start</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> cdap-cli.sh start workflow WikipediaPipeline.WikipediaPipelineWorkflow
+Successfully started workflow 'WikipediaPipelineWorkflow' of application 'WikipediaPipeline' with stored runtime arguments '{}'
+</pre>
+</div>
+</li>
+<li><p class="first">Or, send a query via an HTTP request using the <code class="docutils literal"><span class="pre">curl</span></code> command:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> curl -w'\n' -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/WikipediaPipeline/workflows/WikipediaPipelineWorkflow/start'
+</pre>
+</div>
+</li>
+</ul>
+<p>These runtime arguments can be set for the <em>WikipediaPipelineWorkflow</em>:</p>
+<ul class="simple">
+<li><em>min.pages.threshold</em>: Threshold for the number of pages to exist in the <em>pageTitleStream</em> for the workflow to proceed.
+Defaults to 10.</li>
+<li><em>mode</em>: Set this to &#8216;online&#8217; when you wish to download Wikipedia data over the Internet.
+Defaults to &#8216;offline&#8217;, in which case the workflow expects Wikipedia data to be in the <em>wikiStream</em>.</li>
+<li><em>stopwords.file</em>: The path to the file containing stopwords to filter in the <em>SparkWikipediaAnalyzer</em> program.
+If unspecified, no words are considered as stopwords.</li>
+<li><em>vocab.size</em>: The size of the vocabulary for the <em>SparkWikipediaAnalyzer</em> program. Defaults to 1000.</li>
+<li><em>topn.rank</em>: The number of top words to produce in the <em>TopNMapReduce</em> program. Defaults to 10.</li>
+<li><em>num.reduce.tasks</em>: The number of reduce tasks to set for the <em>TopNMapReduce</em> program. Defaults to 1.</li>
+</ul>
+<p>If you run with the default arguments, you will find that the pipeline starts but then
+stops after the first node, as the number of pages is less than the <em>min.pages.threshold</em>:</p>
+<a class="reference internal image-reference" href="../_images/wikipedia-data-pipeline-1.png"><img alt="../_images/wikipedia-data-pipeline-1.png" src="../_images/wikipedia-data-pipeline-1.png" style="width: 8in;" /></a>
+<p>Reduce the number of minimum number of pages to zero, and change the mode to <em>online</em>, by
+setting either the runtime arguments (which changes the <em>next</em> run) or the preferences
+(which changes <em>all</em> subsequent runs):</p>
+<a class="reference internal image-reference" href="../_images/wikipedia-data-pipeline-2.png"><img alt="../_images/wikipedia-data-pipeline-2.png" src="../_images/wikipedia-data-pipeline-2.png" style="width: 8in;" /></a>
+<p>Once the pipeline has run through to the end (below), you can start the service and query the results.</p>
+<a class="reference internal image-reference" href="../_images/wikipedia-data-pipeline-3.png"><img alt="../_images/wikipedia-data-pipeline-3.png" src="../_images/wikipedia-data-pipeline-3.png" style="width: 8in;" /></a>
+</div>
+<div class="section" id="starting-the-service">
+<h3>Starting the Service<a class="headerlink" href="#starting-the-service" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">Using the CDAP-UI, go to the <em>WikipediaPipeline</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/WikipediaPipeline/overview/programs">application overview page, programs tab</a>,
+click <em>WikipediaService</em> to get to the service detail page, then click the <em>Start</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> cdap-cli.sh start service WikipediaPipeline.WikipediaService
+Successfully started service 'WikipediaService' of application 'WikipediaPipeline' with stored runtime arguments '{}'
+</pre>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="retrieving-the-results">
+<h3>Retrieving the Results<a class="headerlink" href="#retrieving-the-results" title="Permalink to this headline">¶</a></h3>
+<p>The <em>WikipediaService</em> can retrieve results from the analysis performed by the <em>WikipediaPipelineWorkflow</em>.
+The service exposes these REST APIs, which can be accessed either with the CDAP-CLI or <code class="docutils literal"><span class="pre">curl</span></code>.</p>
+<ul>
+<li><p class="first">Retrieve the list of topics generated by the <em>SparkWikipediaAnalyzer</em> program:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> cdap-cli.sh call service WikipediaPipeline.WikipediaService GET /v1/functions/lda/topics
+
+<span class="gp">$</span> curl -w'\n' -v 'localhost:10000/v3/namespaces/default/apps/WikipediaPipeline/services/WikipediaService/methods/v1/functions/lda/topics'
+
+[0,1,2,3,4,5,6,7,8,9]
+</pre>
+</div>
+</li>
+<li><p class="first">Retrieve the details (terms and term weights) for a given (integer) topic:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> cdap-cli.sh call service WikipediaPipeline.WikipediaService GET /v1/functions/lda/topics/0
+
+<span class="gp">$</span> curl -w'\n' -v 'localhost:10000/v3/namespaces/default/apps/WikipediaPipeline/services/WikipediaService/methods/v1/functions/lda/topics/0'
+
+[{&quot;name&quot;:&quot;and&quot;,&quot;weight&quot;:0.038682279584092004},{&quot;name&quot;:&quot;company&quot;,&quot;weight&quot;:0.011716155714206075},
+{&quot;name&quot;:&quot;facebook&quot;,&quot;weight&quot;:0.03279816812913312},{&quot;name&quot;:&quot;for&quot;,&quot;weight&quot;:0.0236260327332555},
+{&quot;name&quot;:&quot;google&quot;,&quot;weight&quot;:0.03240608486488011},{&quot;name&quot;:&quot;its&quot;,&quot;weight&quot;:0.01541806996121385},
+{&quot;name&quot;:&quot;that&quot;,&quot;weight&quot;:0.032277216101403945},{&quot;name&quot;:&quot;the&quot;,&quot;weight&quot;:0.08955250785732792},
+{&quot;name&quot;:&quot;users&quot;,&quot;weight&quot;:0.013512787321319556},{&quot;name&quot;:&quot;was&quot;,&quot;weight&quot;:0.014201825107197289}]
+</pre>
+</div>
+</li>
+<li><p class="first">Retrieve the output of the <em>TopNMapReduce</em> program:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> cdap-cli.sh call service WikipediaPipeline.WikipediaService GET /v1/functions/topn/words
+
+<span class="gp">$</span> curl -w'\n' -v 'localhost:10000/v3/namespaces/default/apps/WikipediaPipeline/services/WikipediaService/methods/v1/functions/topn/words'
+
+[{&quot;The&quot;:627},{&quot;a&quot;:1466},{&quot;and&quot;:1844},{&quot;in&quot;:1415},{&quot;of&quot;:2076},{&quot;on&quot;:604},{&quot;that&quot;:644},{&quot;the&quot;:3857},{&quot;to&quot;:1620},{&quot;was&quot;:740}]
+</pre>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="stopping-and-removing-the-application">
+<h2>Stopping and Removing the Application<a class="headerlink" href="#stopping-and-removing-the-application" title="Permalink to this headline">¶</a></h2>
+<p>Once done, you can stop the application as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-stopping" title="(in Cask Data Application Platform v3.3.7)"><span class="xref std std-ref">Stopping an Application</span></a>. Here is an example-specific description of the steps:</p>
+<p><strong>Stopping the Workflow</strong></p>
+<ul>
+<li><p class="first">Using the CDAP-UI, go to the <em>WikipediaPipeline</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/WikipediaPipeline/overview/programs">application overview page, programs tab</a>,
+click <em>WikipediaPipelineWorkflow</em> to get to the workflow detail page, then click the <em>Stop</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> cdap-cli.sh stop workflow WikipediaPipeline.WikipediaPipelineWorkflow
+Successfully stopped workflow 'WikipediaPipelineWorkflow' of application 'WikipediaPipeline'
+</pre>
+</div>
+</li>
+</ul>
+<p><strong>Stopping the Service</strong></p>
+<ul>
+<li><p class="first">Using the CDAP-UI, go to the <em>WikipediaPipeline</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/WikipediaPipeline/overview/programs">application overview page, programs tab</a>,
+click <em>WikipediaService</em> to get to the service detail page, then click the <em>Stop</em> button; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> cdap-cli.sh stop service WikipediaPipeline.WikipediaService
+Successfully stopped service 'WikipediaService' of application 'WikipediaPipeline'
+</pre>
+</div>
+</li>
+</ul>
+<p><strong>Removing the Application</strong></p>
+<p>You can now remove the application as described in <a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-removing" title="(in Cask Data Application Platform v3.3.7)"><span class="xref std std-ref">Removing an Application</span></a>, or:</p>
+<ul>
+<li><p class="first">Using the CDAP-UI, go to the <em>WikipediaPipeline</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/WikipediaPipeline/overview/programs">application overview page, programs tab</a>,
+click the <em>Actions</em> menu on the right side and select <em>Manage</em> to go to the Management
+pane for the application, then click the <em>Actions</em> menu on the right side and select
+<em>Delete</em> to delete the application; or</p>
+</li>
+<li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> cdap-cli.sh delete app WikipediaPipeline
+</pre>
+</div>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.3.7</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html" rel="nofollow">Overview</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../cdap-apps/index.html" rel="nofollow">CDAP Applications</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+  </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">Examples, Guides, and Tutorials:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="hello-world.html">Hello World</a></li>
+<li class="toctree-l2"><a class="reference internal" href="count-random.html">Count Random</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data-cleansing.html">Data Cleansing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fileset-example.html">FileSet Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="log-analysis.html">Log Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="purchase.html">Purchase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-k-means.html">Spark K-Means</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spark-page-rank.html">Spark Page Rank</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sport-results.html">Sport Results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream-conversion.html">Stream Conversion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user-profiles.html">User Profiles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="web-analytics.html">Web Analytics</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Wikipedia Pipeline</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#building-and-starting">Building and Starting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deploying-the-example">Deploying the Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-the-example">Running the Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stopping-and-removing-the-application">Stopping and Removing the Application</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="word-count.html">Word Count</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to-guides/index.html">How-To Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apps-packs.html">Apps and Packs</a></li>
+</ul>
+ 
+    </nav>
+  <h4>Topics</h4>
+  <ul>
+  <li class="topless"><i>Previous:</i> <a href="web-analytics.html"
+                        title="Previous Topic">Web Analytics Application</a></li>
+  <li class="topless"><i>Next:</i> <a href="word-count.html"
+                        title="Next Topic">Word Count</a></li>
+  </ul>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.3.7/cdap-docs-3.3.7-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tephra/index.html" target="_blank">Tephra</em></a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Web Analytics Application" href="web-analytics.html" />Web Analytics Application</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Word Count" href="word-count.html" />Word Count</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>
