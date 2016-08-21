@@ -18,13 +18,11 @@ package co.cask.cdap.app.runtime.spark;
 
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.preview.PreviewLogger;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -36,7 +34,6 @@ import co.cask.cdap.logging.context.SparkLoggingContext;
 import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.Ids;
-import co.cask.cdap.proto.id.PreviewId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
@@ -77,11 +74,10 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
                       SecureStore secureStore,
                       SecureStoreManager secureStoreManager,
                       AuthorizationEnforcer authorizationEnforcer,
-                      AuthenticationContext authenticationContext, PreviewStore previewStore,
-                      @Nullable PreviewId previewId) {
+                      AuthenticationContext authenticationContext) {
     super(program, programOptions, getSparkSpecification(program).getDatasets(), datasetFramework, txClient,
           discoveryServiceClient, true, metricsCollectionService, createMetricsTags(workflowProgramInfo),
-          secureStore, secureStoreManager, pluginInstantiator, previewStore, previewId);
+          secureStore, secureStoreManager, pluginInstantiator);
 
     this.hConf = hConf;
     this.txClient = txClient;

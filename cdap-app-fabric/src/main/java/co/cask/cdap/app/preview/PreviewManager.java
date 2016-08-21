@@ -60,16 +60,7 @@ public interface PreviewManager {
    * @return the {@link Map} of logger name to properties associated with the logger for a given preview
    * @throws NotFoundException if the previewId is not found
    */
-  Map<String, Map<String, List<String>>> getData(PreviewId previewId) throws NotFoundException;
-
-  /**
-   * Get the data associated with the specified logger name of the preview.
-   * @param previewId id of the preview
-   * @param loggerName the name of the logger for which data is to be returned
-   * @return the {@link Map} of property name to property value associated with the given logger for a given preview
-   * @throws NotFoundException if the previewId is not found
-   */
-  Map<String, List<String>> getData(PreviewId previewId, String loggerName) throws NotFoundException;
+  Map<String, Map<String, List<Object>>> getData(PreviewId previewId) throws NotFoundException;
 
   /**
    * Get metric associated with the preview.

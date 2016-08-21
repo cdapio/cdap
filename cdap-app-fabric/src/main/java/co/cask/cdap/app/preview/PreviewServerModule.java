@@ -18,7 +18,6 @@ package co.cask.cdap.app.preview;
 
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
-import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
@@ -39,7 +38,6 @@ import co.cask.cdap.internal.app.runtime.schedule.NoopScheduler;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
-import co.cask.cdap.internal.app.store.DefaultPreviewStore;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
 import co.cask.cdap.pipeline.PipelineFactory;
@@ -97,8 +95,6 @@ public class PreviewServerModule extends PrivateModule {
     expose(PreviewServer.class);
 
     bind(PreviewManager.class).to(DefaultPreviewManager.class).in(Scopes.SINGLETON);
-    bind(PreviewStore.class).to(DefaultPreviewStore.class);
-    expose(PreviewStore.class);
 
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
       binder(), HttpHandler.class, Names.named(Constants.Preview.HANDLERS_BINDING));
