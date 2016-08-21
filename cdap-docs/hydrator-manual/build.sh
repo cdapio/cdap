@@ -137,6 +137,7 @@ function download_md_file() {
         # Strip trailing items of interest
         first=${first% Batch Sink}
         first=${first% Batch Source}
+        first=${first% Post-run Action}
         first=${first% Post Action}
         first=${first% Real-time Sink}
         first=${first% Real-time Source}
