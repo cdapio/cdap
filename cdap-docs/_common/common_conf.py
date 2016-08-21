@@ -228,7 +228,7 @@ extlinks = {
     'cask-hydrator-studio': ('http://localhost:9999/ns/default/hydrator/studio/%s', None),
     'cask-hydrator-studio-artifact': ('http://localhost:9999/ns/default/hydrator/studio?artifactType=%s', None),
     'cdap-java-source-github': (cdap_java_source_github_pattern , None),
-    'release-note': ('https://issues.cask.co/browse/%s', ''),
+    'cask-issue': ('https://issues.cask.co/browse/%s', ''),
 }
 
 # A string of reStructuredText that will be included at the end of every source file that
