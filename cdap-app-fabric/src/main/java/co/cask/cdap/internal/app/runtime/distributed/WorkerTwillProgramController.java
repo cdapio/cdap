@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,11 +32,8 @@ public class WorkerTwillProgramController extends AbstractTwillProgramController
 
   private static final Logger LOG = LoggerFactory.getLogger(WorkerTwillProgramController.class);
 
-  private final TwillController controller;
-
   WorkerTwillProgramController(Id.Program programId, TwillController controller, RunId runId) {
     super(programId, controller, runId);
-    this.controller = controller;
   }
 
   @SuppressWarnings("unchecked")
@@ -48,19 +45,19 @@ public class WorkerTwillProgramController extends AbstractTwillProgramController
 
     Map<String, String> command = (Map<String, String>) value;
     try {
-      for (Map.Entry<String, String> entry : command.entrySet()) {
-        LOG.info("Changing worker instance count: {} new count is: {}", entry.getKey(), entry.getValue());
-        changeInstances(entry.getKey(), Integer.valueOf(entry.getValue()));
-        LOG.info("Worker instance count changed: {} new count is {}", entry.getKey(), entry.getValue());
-      }
+      changeInstances(command.get("runnable"),
+                      Integer.valueOf(command.get("newInstances")),
+                      Integer.valueOf(command.get("oldInstances")));
     } catch (Throwable t) {
-      LOG.error("Failed to change worker instances : {}", command, t);
+      LOG.error(String.format("Failed to change instances: %s", command), t);
       throw t;
     }
   }
 
-  private synchronized void changeInstances(String runnableId, int newInstanceCount)
-    throws Exception {
-    controller.changeInstances(runnableId, newInstanceCount).get();
+  private synchronized void changeInstances(String runnableId,
+                                            int newInstanceCount, int oldInstanceCount) throws Exception {
+    LOG.info("Changing instances of {} from {} to {}", getProgramId(), oldInstanceCount, newInstanceCount);
+    getTwillController().changeInstances(runnableId, newInstanceCount).get();
+    LOG.info("Completed changing instances of {} from {} to {}", getProgramId(), oldInstanceCount, newInstanceCount);
   }
 }

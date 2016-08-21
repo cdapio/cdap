@@ -71,6 +71,8 @@ public final class YarnTwillController extends AbstractTwillController implement
   // begin change CDAP-5135
   private FinalApplicationStatus terminationStatus;
   // end change CDAP-5135
+  private Integer maxStartSeconds = Constants.APPLICATION_MAX_START_SECONDS;
+  private Integer maxStopSeconds = Constants.APPLICATION_MAX_STOP_SECONDS;
 
   /**
    * Creates an instance without any {@link LogHandler}.
@@ -85,6 +87,16 @@ public final class YarnTwillController extends AbstractTwillController implement
     super(runId, zkClient, logHandlers);
     this.appName = appName;
     this.startUp = startUp;
+  }
+
+  // HACK to work around TWILL-187
+  void setMaxStartSeconds(int maxStartSeconds) {
+    this.maxStartSeconds = maxStartSeconds;
+  }
+
+  // HACK to work around TWILL-187
+  void setMaxStopSeconds(int maxStopSeconds) {
+    this.maxStopSeconds = maxStopSeconds;
   }
 
   /**
@@ -110,7 +122,7 @@ public final class YarnTwillController extends AbstractTwillController implement
       StopWatch stopWatch = new StopWatch();
       stopWatch.start();
       stopWatch.split();
-      long maxTime = TimeUnit.MILLISECONDS.convert(Constants.APPLICATION_MAX_START_SECONDS, TimeUnit.SECONDS);
+      long maxTime = TimeUnit.MILLISECONDS.convert(maxStartSeconds, TimeUnit.SECONDS);
 
       LOG.debug("Checking yarn application status for {} {}", appName, appId);
       while (!hasRun(state) && stopWatch.getSplitTime() < maxTime) {
@@ -152,7 +164,7 @@ public final class YarnTwillController extends AbstractTwillController implement
     // Wait for the stop message being processed
     try {
       Uninterruptibles.getUninterruptibly(getStopMessageFuture(),
-                                          Constants.APPLICATION_MAX_STOP_SECONDS, TimeUnit.SECONDS);
+                                          maxStopSeconds, TimeUnit.SECONDS);
     } catch (Exception e) {
       LOG.error("Failed to wait for stop message being processed.", e);
       // Kill the application through yarn
@@ -165,7 +177,7 @@ public final class YarnTwillController extends AbstractTwillController implement
       StopWatch stopWatch = new StopWatch();
       stopWatch.start();
       stopWatch.split();
-      long maxTime = TimeUnit.MILLISECONDS.convert(Constants.APPLICATION_MAX_STOP_SECONDS, TimeUnit.SECONDS);
+      long maxTime = TimeUnit.MILLISECONDS.convert(maxStopSeconds, TimeUnit.SECONDS);
 
       YarnApplicationReport report = processController.getReport();
       finalStatus = report.getFinalApplicationStatus();

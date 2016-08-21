@@ -99,6 +99,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
   private static final String HADOOP_CONF_FILE_NAME = "hConf.xml";
   private static final String CDAP_CONF_FILE_NAME = "cConf.xml";
   private static final String APP_SPEC_FILE_NAME = "appSpec.json";
+  private static final JarCacheTracker jarCacheTracker = JarCacheTracker.INSTANCE;
 
   protected final YarnConfiguration hConf;
   protected final CConfiguration cConf;
@@ -286,6 +287,20 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
                   "--" + RunnableOptions.PROGRAM_OPTIONS, programOptions,
                   "--" + RunnableOptions.PROGRAM_ID, GSON.toJson(program.getId().toEntityId())
                 );
+
+              // Hack for CDAP-7021. Interacts with the patched YarnTwillPreparer class to cache
+              // appmaster and container jars.
+              File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), cConf.get(Constants.AppFabric.TEMP_DIR));
+              File jarCacheDir = new File(tmpDir, "twillcache");
+              File programTypeDir = new File(jarCacheDir, program.getType().name().toLowerCase());
+              DirUtils.mkdirs(programTypeDir);
+              twillPreparer.withApplicationArguments("cdap.jar.cache.dir=" + programTypeDir.getAbsolutePath());
+              jarCacheTracker.registerLaunch(programTypeDir, program.getType());
+
+              // Hacks for TWILL-187
+              twillPreparer.withApplicationArguments(
+                "app.max.start.seconds=" + cConf.get(Constants.AppFabric.PROGRAM_MAX_START_SECONDS),
+                "app.max.stop.seconds=" + cConf.get(Constants.AppFabric.PROGRAM_MAX_STOP_SECONDS));
 
               TwillController twillController;
               // Change the context classloader to the combine classloader of this ProgramRunner and

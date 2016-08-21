@@ -45,8 +45,9 @@ public abstract class PartitionedFileWriter<T, P> implements FileWriter<T> {
 
   private static final Logger LOG = LoggerFactory.getLogger(PartitionedFileWriter.class);
 
+  protected final StreamId streamId;
+
   private final PartitionedFileWriterFactory<T, P> fileWriterFactory;
-  private final StreamId streamId;
   private final Impersonator impersonator;
   private final Map<P, FileWriter<T>> writers;
   private P currentPartition;
