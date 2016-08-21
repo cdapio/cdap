@@ -25,7 +25,6 @@ import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
-import co.cask.cdap.proto.id.PreviewId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -60,8 +59,7 @@ final class MapReduceContextConfig {
     .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
     .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
     .create();
-  private static final Type PLUGIN_MAP_TYPE = new TypeToken<Map<String, Plugin>>() {
-  }.getType();
+  private static final Type PLUGIN_MAP_TYPE = new TypeToken<Map<String, Plugin>>() { }.getType();
 
   private static final String HCONF_ATTR_APP_SPEC = "cdap.mapreduce.app.spec";
   private static final String HCONF_ATTR_PROGRAM_ID = "cdap.mapreduce.program.id";
@@ -72,7 +70,6 @@ final class MapReduceContextConfig {
   private static final String HCONF_ATTR_NEW_TX = "cdap.mapreduce.newtx";
   private static final String HCONF_ATTR_LOCAL_FILES = "cdap.mapreduce.local.files";
   private static final String HCONF_ATTR_PROGRAM_OPTIONS = "cdap.mapreduce.program.options";
-  private static final String HCONF_ATTR_PREVIEW_ID = "hconf.preview.id";
 
   private final Configuration hConf;
 
@@ -87,10 +84,10 @@ final class MapReduceContextConfig {
   /**
    * Updates the {@link Configuration} of this class with the given paramters.
    *
-   * @param context                the context for the MapReduce program
-   * @param conf                   the CDAP configuration
-   * @param tx                     the long transaction created for the MapReduce program
-   * @param programJarURI          The URI of the program JAR
+   * @param context the context for the MapReduce program
+   * @param conf the CDAP configuration
+   * @param tx the long transaction created for the MapReduce program
+   * @param programJarURI The URI of the program JAR
    * @param localizedUserResources the localized resources for the MapReduce program
    */
   public void set(BasicMapReduceContext context, CConfiguration conf, Transaction tx, URI programJarURI,
@@ -104,7 +101,6 @@ final class MapReduceContextConfig {
     setConf(conf);
     setTx(tx);
     setLocalizedResources(localizedUserResources);
-    setPreviewId(context.getPreviewId());
   }
 
   private void setProgramId(ProgramId programId) {
@@ -191,8 +187,7 @@ final class MapReduceContextConfig {
 
   Map<String, File> getLocalizedResources() {
     Map<String, String> nameToPath = GSON.fromJson(hConf.get(HCONF_ATTR_LOCAL_FILES),
-                                                   new TypeToken<Map<String, String>>() {
-                                                   }.getType());
+                                                 new TypeToken<Map<String, String>>() { }.getType());
     Map<String, File> nameToFile = new HashMap<>();
     for (Map.Entry<String, String> entry : nameToPath.entrySet()) {
       nameToFile.put(entry.getKey(), new File(entry.getValue()));
@@ -240,20 +235,5 @@ final class MapReduceContextConfig {
    */
   public Transaction getTx() {
     return GSON.fromJson(hConf.get(HCONF_ATTR_NEW_TX), Transaction.class);
-  }
-
-  private void setPreviewId(@Nullable PreviewId previewId) {
-    if (previewId != null) {
-      hConf.set(HCONF_ATTR_PREVIEW_ID, GSON.toJson(previewId));
-    }
-  }
-
-  @Nullable
-  public PreviewId getPreviewId() {
-    String previewIdJson = hConf.get(HCONF_ATTR_PREVIEW_ID);
-    if (previewIdJson == null) {
-      return null;
-    }
-    return GSON.fromJson(previewIdJson, PreviewId.class);
   }
 }
