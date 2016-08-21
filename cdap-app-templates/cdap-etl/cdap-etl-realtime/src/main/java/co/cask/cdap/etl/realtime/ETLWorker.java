@@ -16,7 +16,6 @@
 
 package co.cask.cdap.etl.realtime;
 
-import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
@@ -29,7 +28,6 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.preview.PreviewLogger;
 import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.etl.api.Emitter;
@@ -264,22 +262,7 @@ public class ETLWorker extends AbstractWorker {
       TrackedTransform trackedTransform = new TrackedTransform(identityTransformation,
                                                                new DefaultStageMetrics(metrics, sinkName),
                                                                TrackedTransform.RECORDS_IN,
-                                                               null, sinkName, new Debugger() {
-        @Override
-        public boolean isPreviewEnabled() {
-          return false;
-        }
-
-        @Override
-        public PreviewLogger getPreviewLogger(String loggerName) {
-          return new PreviewLogger() {
-            @Override
-            public void log(String propertyName, Object propertyValue) {
-              // no-op
-            }
-          };
-        }
-      });
+                                                               null);
       transformationMap.put(sinkInfo.getName(), new TransformDetail(trackedTransform, new HashSet<String>()));
       sinks.put(sinkInfo.getName(), sink);
     }
@@ -303,22 +286,7 @@ public class ETLWorker extends AbstractWorker {
         transform.initialize(transformContext);
         StageMetrics stageMetrics = new DefaultStageMetrics(metrics, transformName);
         transformDetailMap.put(transformName, new TransformDetail(
-          new TrackedTransform<>(transform, stageMetrics, transformName, new Debugger() {
-            @Override
-            public boolean isPreviewEnabled() {
-              return false;
-            }
-
-            @Override
-            public PreviewLogger getPreviewLogger(String loggerName) {
-              return new PreviewLogger() {
-                @Override
-                public void log(String propertyName, Object propertyValue) {
-                  // no-op
-                }
-              };
-            }
-          }),
+          new TrackedTransform<>(transform, stageMetrics),
           pipeline.getStageOutputs(transformName)));
         if (transformInfo.getErrorDatasetName() != null) {
           tranformIdToDatasetName.put(transformName, transformInfo.getErrorDatasetName());
@@ -356,22 +324,7 @@ public class ETLWorker extends AbstractWorker {
     TrackedEmitter<Object> trackedSourceEmitter =
       new TrackedEmitter<>(sourceEmitter,
                            new DefaultStageMetrics(metrics, sourceStageName),
-                           TrackedTransform.RECORDS_OUT, sourceStageName, new Debugger() {
-        @Override
-        public boolean isPreviewEnabled() {
-          return false;
-        }
-
-        @Override
-        public PreviewLogger getPreviewLogger(String loggerName) {
-          return new PreviewLogger() {
-            @Override
-            public void log(String propertyName, Object propertyValue) {
-              // no-op
-            }
-          };
-        }
-      });
+                           TrackedTransform.RECORDS_OUT);
     while (!stopped) {
       // Invoke poll method of the source to fetch data
       try {

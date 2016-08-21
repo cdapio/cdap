@@ -33,7 +33,6 @@ import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -55,7 +54,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.PreviewId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.mapreduce.Job;
@@ -105,11 +103,10 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
                         @Nullable File pluginArchive,
                         @Nullable PluginInstantiator pluginInstantiator,
                         SecureStore secureStore,
-                        SecureStoreManager secureStoreManager, PreviewStore previewStore,
-                        @Nullable PreviewId previewId) {
+                        SecureStoreManager secureStoreManager) {
     super(program, programOptions, spec.getDataSets(), dsFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, createMetricsTags(workflowProgramInfo), secureStore, secureStoreManager,
-          pluginInstantiator, previewStore, previewId);
+          pluginInstantiator);
 
     this.workflowProgramInfo = workflowProgramInfo;
     this.loggingContext = createLoggingContext(program.getId(), getRunId(), workflowProgramInfo);

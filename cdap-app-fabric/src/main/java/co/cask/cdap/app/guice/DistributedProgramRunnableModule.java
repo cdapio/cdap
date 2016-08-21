@@ -17,7 +17,6 @@
 package co.cask.cdap.app.guice;
 
 import co.cask.cdap.api.data.stream.StreamWriter;
-import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.app.stream.DefaultStreamWriter;
 import co.cask.cdap.app.stream.StreamWriterFactory;
@@ -40,7 +39,6 @@ import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
-import co.cask.cdap.internal.app.store.DefaultPreviewStore;
 import co.cask.cdap.internal.app.store.remote.RemoteLineageWriter;
 import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
 import co.cask.cdap.internal.app.store.remote.RemoteRuntimeUsageRegistry;
@@ -58,11 +56,14 @@ import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.common.Cancellable;
+
+import java.net.InetAddress;
 
 /**
  * Defines guice modules for distributed program runnables. For instance, AbstractProgramTwillRunnable, as well as
@@ -110,7 +111,6 @@ public class DistributedProgramRunnableModule {
           install(new DataFabricFacadeModule());
 
           bind(RuntimeStore.class).to(RemoteRuntimeStore.class);
-          bind(PreviewStore.class).to(DefaultPreviewStore.class);
 
           // For binding StreamWriter
           install(createStreamFactoryModule());
@@ -136,11 +136,14 @@ public class DistributedProgramRunnableModule {
   // TODO(terence) make this works for different mode
   // usable from anywhere a TwillContext is exposed
   public Module createModule(final TwillContext context) {
-    cConf.set(Constants.AppFabric.SERVER_ADDRESS, context.getHost().getCanonicalHostName());
     return Modules.combine(createModule(),
                            new AbstractModule() {
                              @Override
                              protected void configure() {
+
+                               bind(InetAddress.class).annotatedWith(Names.named(Constants.AppFabric.SERVER_ADDRESS))
+                                 .toInstance(context.getHost());
+
                                bind(ServiceAnnouncer.class).toInstance(new ServiceAnnouncer() {
                                  @Override
                                  public Cancellable announce(String serviceName, int port) {

@@ -21,7 +21,6 @@ import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.mapreduce.DistributedMRJobInfoFetcher;
 import co.cask.cdap.app.mapreduce.LocalMRJobInfoFetcher;
 import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
-import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -32,6 +31,7 @@ import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.common.security.UGIProvider;
 import co.cask.cdap.common.security.UnsupportedUGIProvider;
 import co.cask.cdap.common.twill.MasterServiceManager;
+import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.stream.StreamServiceManager;
 import co.cask.cdap.data.stream.StreamViewHttpHandler;
@@ -83,7 +83,6 @@ import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeSchedule
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.StandaloneAppFabricServer;
-import co.cask.cdap.internal.app.store.DefaultPreviewStore;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
 import co.cask.cdap.logging.run.InMemoryAppFabricServiceManager;
@@ -114,6 +113,7 @@ import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.quartz.SchedulerException;
@@ -128,6 +128,8 @@ import org.quartz.simpl.CascadingClassLoadHelper;
 import org.quartz.spi.ClassLoadHelper;
 import org.quartz.spi.JobStore;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.List;
 
 /**
@@ -313,8 +315,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(ArtifactStore.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
 
-      bind(PreviewStore.class).to(DefaultPreviewStore.class);
-
       install(new PrivateModule() {
         @Override
         protected void configure() {
@@ -354,6 +354,14 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);
       }
+    }
+
+    @Provides
+    @Named(Constants.AppFabric.SERVER_ADDRESS)
+    @SuppressWarnings("unused")
+    public InetAddress providesHostname(CConfiguration cConf) {
+      String address = cConf.get(Constants.AppFabric.SERVER_ADDRESS);
+      return Networks.resolve(address, new InetSocketAddress("localhost", 0).getAddress());
     }
 
     /**

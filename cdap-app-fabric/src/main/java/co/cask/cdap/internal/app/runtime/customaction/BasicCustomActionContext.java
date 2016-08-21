@@ -25,12 +25,10 @@ import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
-import co.cask.cdap.proto.id.PreviewId;
 import com.google.common.base.Throwables;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionFailureException;
@@ -59,13 +57,12 @@ public class BasicCustomActionContext extends AbstractContext implements CustomA
                                   DatasetFramework datasetFramework, TransactionSystemClient txClient,
                                   DiscoveryServiceClient discoveryServiceClient,
                                   @Nullable PluginInstantiator pluginInstantiator,
-                                  SecureStore secureStore, SecureStoreManager secureStoreManager,
-                                  PreviewStore previewStore, @Nullable PreviewId previewId) {
+                                  SecureStore secureStore, SecureStoreManager secureStoreManager) {
 
     super(workflow, programOptions, customActionSpecification.getDatasets(),
           datasetFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, workflowProgramInfo.updateMetricsTags(new HashMap<String, String>()), secureStore,
-          secureStoreManager, pluginInstantiator, previewStore, previewId);
+          secureStoreManager, pluginInstantiator);
 
     this.customActionSpecification = customActionSpecification;
     this.workflowProgramInfo = workflowProgramInfo;
