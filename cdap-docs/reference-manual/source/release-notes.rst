@@ -23,6 +23,579 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 3.5.0 <http://docs.cask.co/cdap/3.5.0/index.html>`__
+=============================================================
+
+API Changes
+-----------
+
+Changes
+-------
+
+- :release-note:`CDAP-5263` - The "CDAP Applications" section in the documentation has been
+  split into two separate sections now included under "CDAP Extensions": "Cask Hydrator" and
+  "Cask Tracker".
+
+- :release-note:`CDAP-5833` - Eliminated some misleading warnings in the Purchase example.
+
+- :release-note:`CDAP-6143` - Added metadata tag for the local datasets.
+
+- :release-note:`CDAP-6596` - CDAP Security Extensions are packaged with CDAP Master
+  packages and CDAP Parcel.
+
+- :release-note:`HYDRA-527` - The Script Transform (previously deprecated) has been removed,
+  and is replaced with the JavaScript Transform.
+
+- :release-note:`HYDRA-528` - Secure Store APIs in Hydrator Actions are now exposed.
+
+- :release-note:`HYDRA-649` - A widget textbox can have a configurable placeholder.
+
+- :release-note:`HYDRA-653` - Additional Custom Action Hydrator Plugins have been added.
+
+- :release-note:`HYDRA-682` - The directory containing the Spark Streaming Hydrator plugins has
+  been renamed from ``batch.spark`` to ``spark``.
+
+- :release-note:`TRAC-155` - An upgrade process has been added to the UI for Tracker.
+
+- :release-note:`CDAP-886` - Access to CDAP Streams via the RESTful API, CDAP-CLI, or programmatic API can
+  be authorized through the Security Authorization feature.
+
+- :release-note:`CDAP-882` - Stream authorization.
+
+- :release-note:`CDAP-888` - Enforced authorization in Dataset RESTful APIs. Dataset modules,
+  types, and instances are now governed by authorization policies.
+
+- :release-note:`CDAP-882` - Dataset authorization.
+
+- :release-note:`CDAP-5691` - Improved the performance of the Dataset Service.
+
+- :release-note:`CDAP-5685` - Server-side caching of ``getDataset()`` in DatasetService.
+
+- :release-note:`CDAP-6154` - CDAP Namespaces can now use an existing custom HDFS directory.
+  The custom HDFS directory, whose creation/deletion is managed by the user, can be
+  specified during the creation of a CDAP Namespace as part of its configuration.
+
+- :release-note:`CDAP-6153` - Custom namespace mapping for HDFS.
+
+- :release-note:`CDAP-6155` - CDAP Namespaces can now use an existing custom HBase namespace.
+  The custom HBase namespace, whose creation/deletion is managed by the user, can be
+  specified during the creation of a CDAP Namespace as part of its configuration.
+
+- :release-note:`CDAP-6153` - Custom namespace mapping for HBase.
+
+- :release-note:`CDAP-6156` - CDAP Namespaces can now use an existing custom Hive
+  database. The custom Hive database, whose creation/deletion is managed by the user, can
+  be specified during the creation of a CDAP Namespace as part of its configuration.
+
+- :release-note:`CDAP-6153` - Custom namespace mapping for Hive.
+
+- :release-note:`CDAP-6158` - Added support for accessing (read/write) dataset across
+  namespaces in CDAP Spark and MapReduce programs.
+
+- :release-note:`CDAP-6157` - Support for cross-namespace dataset access.
+
+- :release-note:`CDAP-6159` - Added support for accessing streams (read only) across
+  namespaces in CDAP Spark and MapReduce programs.
+
+- :release-note:`CDAP-6157` - Support for cross-namespace stream access.
+
+- :release-note:`HYDRA-174` - Refactored the Spark engine in data pipelines to run all
+  non-action pipeline stages in a single Spark program.
+
+- :release-note:`HYDRA-157` - Refactored Hydrator Spark program.
+
+- :release-note:`HYDRA-175` - Added a streaming pipeline type to Hydrator for realtime
+  pipelines run using Spark Streaming.
+
+- :release-note:`HYDRA-157` - Add a Data Streams artifact.
+
+- :release-note:`HYDRA-177` - Added a Kafka source for streaming pipelines.
+
+- :release-note:`HYDRA-157` - Add a Kafka streaming source.
+
+- :release-note:`HYDRA-178` - Added a window plugin that enables the creation of sliding
+  windows in a streaming pipeline.
+
+- :release-note:`HYDRA-157` - Add a window plugin.
+
+- :release-note:`HYDRA-181` - Added experimental feature which allows user to preview the
+  Hydrator pipelines.
+
+- :release-note:`HYDRA-158` - Preview Service Implementation (in SDK).
+
+- :release-note:`HYDRA-182` - Hydrator MapReduce or Spark jobs now support multiple inputs.
+  This will enable more efficient physical workflow generation due to the reduction in the
+  number of MapReduce or Spark programs required for a logical pipeline.
+
+- :release-note:`HYDRA-165` - Support multiple sources as input to a stage.
+
+- :release-note:`HYDRA-748` - Re-organizes batch pipeline settings to a top panel to schedule a
+  batch pipeline, add post-run actions and set pipeline resources and the engine used.
+
+- :release-note:`HYDRA-712` - Hydrator ++: Batch Pipeline Configuration, Schedule.
+
+- :release-note:`TRAC-108` - Adds tracker meter widget in UI. A metric that determines the
+  'truthfulness' of a dataset/stream being used in CDAP/Hydrator.
+
+- :release-note:`TRAC-98` - Add the Truth O Meter widget to the search results page and
+  details page.
+
+- :release-note:`TRAC-109` - Adds a separate section for tags in tracker. This lists all
+  available tags in CDAP.
+
+- :release-note:`TRAC-100` - Add a Tags Tab to the main Tracker UI.
+
+- :release-note:`TRAC-149` - Adds a histogram for Audit log in tracker for easier
+  visualization of usage of a dataset.
+
+- :release-note:`TRAC-105` - Add UI widget for displaying an audit log histogram.
+
+New Features
+------------
+
+- :release-note:`CDAP-2963` - All HBase Tables created through CDAP will now have a key
+  'cdap.version' in the HTableDescriptor.
+
+- :release-note:`CDAP-3368` - Add location for cdap-cli.sh to PATH in distributed CDAP
+  packages.
+
+- :release-note:`CDAP-3890` - Improved performance of Dataset Service.
+
+- :release-note:`CDAP-4106` - Created pre-defined alert definitions in Ambari Service.
+
+- :release-note:`CDAP-4107` - Support HA CDAP installations in Ambari Service.
+
+- :release-note:`CDAP-4109` - Support Kerberos-enabled clusters via Ambari service.
+
+- :release-note:`CDAP-4110` - CDAP Auth Server is now supported in the CDAP Ambari Service
+  on Ambari clusters which have Kerberos enabled.
+
+- :release-note:`CDAP-4288` - Added an authorization extension backed by Apache Sentry to
+  enforce authorization on CDAP entities.
+
+- :release-note:`CDAP-4913` - Added a way to cache authorization policies so every
+  authorization enforcement request does not have to make a remote call. Caching is
+  configurable |---| it can be enabled by setting security.authorization.cache.enabled to true.
+  TTL for cache entries (``security.authorization.cache.ttl.secs``) as well as refresh interval
+  (``security.authorization.cache.refresh.interval.secs``) is also configurable.
+
+- :release-note:`CDAP-5740` - Provide access to Partitioner and Comparator classes to
+  MapReduceTaskContext by implementing ProgramLifeCycle.
+
+- :release-note:`CDAP-5770` - Allow setting of YARN container resources requirements for all
+  program types via preferences and runtime arguments.
+
+- :release-note:`CDAP-6052` - Fixed a bug that allows setting ``local.data.dir`` in
+  ``cdap-site.xml`` to absolute path.
+
+- :release-note:`CDAP-6062` - Added protection for a partition of a file set from being
+  deleted while a query is reading the partition.
+
+- :release-note:`CDAP-6153` - CDAP namespaces can now be mapped to custom namespaces in
+  storage providers. While creating a namespace, users can specify the Filesystem directory,
+  HBase namespace and Hive database for that namespace. These settings cannot be changed
+  once the namespace has been created successfully.
+
+- :release-note:`CDAP-6168` - Enable authorization, lineage and audit log at the data
+  operation level for all Datasets.
+
+- :release-note:`CDAP-6174` - Adds new log viewer across CDAP, Hydrator & Tracker wherever
+  necessary. Provides much easier navigation & debugging functionalities for logs to
+  different entities.
+
+- :release-note:`CDAP-6235` - Add UI indicator for CDAP mode (distributed vs standalone and
+  secure vs insecure).
+
+- :release-note:`CDAP-6393` - Added authorization to secure key RESTful APIs. To create a
+  secure key, a user needs WRITE privileges on the namespace in which the key is being
+  created. Users can only view keys that they have access to. To delete a key, ADMIN
+  privilege is required.
+
+- :release-note:`CDAP-6456` - Expose secure store APIs to Programs.
+
+- :release-note:`CDAP-6516` - Added authorization for listing and viewing CDAP entities.  
+
+- :release-note:`CDAP-7002` - Fixes an issue where the UI would ignore the configured port
+  to connect to Router.
+
+- :release-note:`HYDRA-156` - Add alpha feature: Hydrator Data Pipeline preview  New
+  Feature
+
+- :release-note:`HYDRA-162` - Added support for executing the custom actions in the hydrator
+  pipelines.
+
+- :release-note:`HYDRA-168` - Re-organizes bottom panel in hydrator to be in context.
+  Pipeline level information are moved to top panel and plugin level information is moved to
+  a modal.
+
+- :release-note:`HYDRA-379` - Re-organizes left panel in hydrator studio view to have at the
+  max 4 categories of plugin types - Source, Transform, Sink & Actions. All other types are
+  consolidated into one of the types mentioned above.
+
+- :release-note:`HYDRA-501` - Implemented the Value Mapper plugin for Cask Hydrator plugins.
+  This is a type of transform that maps string values of a field in the input record to
+  another value.
+
+- :release-note:`HYDRA-502` - Added the XML Parser Transform plugin to Cask Hydrator
+  plugins. This plugin uses XPath to extract field from a complex XML Event. It is generally
+  used in conjunction with the XML Source Reader.
+
+- :release-note:`HYDRA-503` - Added an XML Reader Source Plugin to Cask Hydrator plugins.
+  This plugin allows users to read XML files stored on HDFS.
+
+- :release-note:`HYDRA-506` - Implemented the Cask Hydrator plugin for Row Denormalizer
+  aggregator. This plugin converts raw data into de-normalized data based on the key column.
+  Denormalized data is easier to query.
+
+- :release-note:`HYDRA-507` - Added the Cobol Copybook source plugin to Cask Hydrator
+  plugins. This source plugin allows users to read and process mainframe files defined using
+  COBOL Copybook.
+
+- :release-note:`HYDRA-514` - Added Excel Reader Source plugin to Cask Hydrator Plugins.
+  This plugin provides the ability to read data from one or more Excel file(s).  New
+  Feature
+
+- :release-note:`HYDRA-629` - Adds macros to pipeline plugin configurations which allows
+  users to set macros for plugin properties which can be provided as run time arguments
+  while scheduling/running the pipeline.
+
+- :release-note:`HYDRA-634` - Adds a new Run Configuration player for published pipeline
+  views.This allows users to set run time argument while scheduling or running a pipeline.  
+
+- :release-note:`HYDRA-685` - Added Twitter source for spark streaming pipelines.  New
+  Feature
+
+- :release-note:`TRAC-96` - Adds the ability to edit user properties for a dataset directly
+  in Tracker.
+
+- :release-note:`TRAC-98` - Adds the Tracker Meter to measure how active a dataset is in
+  your cluster on a scale of 0 - 100.
+
+- :release-note:`TRAC-100` - Adds the ability to add, remove, and manage a common dictionary
+  of Preferred Tags in Tracker and apply them to datasets.
+
+- :release-note:`TRAC-104` - Adds the ability to preview your data directly in the Tracker
+  UI.
+
+- :release-note:`TRAC-105` - Adds the ability to view usage metrics about datasets in
+  Tracker. View how many applications and programs are accessing each dataset via service
+  endpoints and the UI.
+
+Improvements
+------------
+
+- :release-note:`CDAP-4065` - Improved the way that MapReduce failures are reported.
+
+- :release-note:`CDAP-4775` - Warns if app-fabric or router bind address is configured with
+  a loopback address.
+
+- :release-note:`CDAP-5000` - The number of containers for the explore service is no longer
+  configurable and will be ignored upon specification. It will always be set to 1.
+
+- :release-note:`CDAP-5135` - Fixed an issue where the status of a program that was killed
+  through YARN showed as completed successfully.
+
+- :release-note:`CDAP-5336` - Publish ``stdout`` and ``stderr`` logs for MapReduce
+  containers to CDAP.
+
+- :release-note:`CDAP-5601` - Allow setting of batch size for flowlet process methods via
+  preferences and runtime arguments.
+
+- :release-note:`CDAP-5794` - Support running long-running Spark jobs in a Kerberos-enabled
+  cluster.
+
+- :release-note:`CDAP-5874` - Support starting extensions in distributed mode.
+
+- :release-note:`CDAP-5959` - Setting JAVA_LIBRARY_PATH causes CDAP Master to load Hadoop
+  native libraries at startup.
+
+- :release-note:`CDAP-6034` - CDAP's Tephra dependency has been changed to depend on the
+  Apache Incubator Tephra project.
+
+- :release-note:`CDAP-6170` - Fixed an issue that caused an error if an application/program
+  attempted to override input/output format properties that were already defined in the
+  dataset properties.
+
+- :release-note:`CDAP-6206` - Improve error message on application deployment failure due to
+  missing Spark library.
+
+- :release-note:`CDAP-6216` - Added support in log api for field suppression in json
+  format.
+
+- :release-note:`CDAP-6246` - Added ability to specify cdap-master temporary directory  
+  Improvement
+
+- :release-note:`CDAP-6276` - Introduced new experimental dataset APIs for updating a
+  dataset's properties.
+
+- :release-note:`CDAP-6327` - Allow specifying individual Java heap sizes for Java services
+  in ``cdap-env.sh``.
+
+- :release-note:`CDAP-6350` - Declared startup script contants as readonly to prevent them
+  from being overridden by a user in cdap-env.sh accidentally.
+
+- :release-note:`CDAP-6361` - Quick Links for CDAP UI in Ambari 2.3+ UI.
+
+- :release-note:`CDAP-6362` - Support CDAP services over SSL in Ambari.
+
+- :release-note:`CDAP-6363` - Provide service dependencies for Ambari (requires Ambari
+  2.2+).
+
+- :release-note:`CDAP-6573` - Added a tool that allows to bring Hive in sync with the
+  partitions of a (time-)partitioned file set.
+
+- :release-note:`CDAP-6880` - Users can configure timeouts for internal HTTP connections and
+  reads in cdap-site.xml. These are used for all internal HTTP calls.
+
+- :release-note:`CDAP-6913` - Use YarnClient instead of the YARN Http API to fetch node
+  reports.
+
+- :release-note:`CDAP-7021` - Improved program launch performance to avoid large cpu spikes
+  when multiple programs are launched at the same time.
+
+- :release-note:`CDAP-7046` - At configure time, "containsMacro(.)" on plugin properties
+  that were provided macro syntax will return true. At runtime, all properties will have
+  "containsMacro(.)" return false.
+
+- :release-note:`HYDRA-219` - New Complex Schema editor in UI.
+
+- :release-note:`HYDRA-244` - Added Feature to support Macros in Plugins. This allows
+  hydrator plugins fields to accept macros.
+
+- :release-note:`HYDRA-289` - Adding support to join data from multiple sources in
+  hydrator.
+
+- :release-note:`HYDRA-392` - Enhanced the Hydrator upgrade tool to upgrade 3.4.x pipelines
+  to 3.5.x pipelines.
+
+- :release-note:`HYDRA-560` - NaiveBayesTrainer and NaiveBayesClassifier now have an
+  optional configurable number of features. If ``none`` is specified, ``100`` is used.
+
+- :release-note:`HYDRA-578` - Snapshot sinks now allow users to specify a property
+  "cleanPartitionsOlderThan" that cleans up any snapshots older than x days.
+
+- :release-note:`HYDRA-606` - Changed DBSource to override user specified output schema 
+  Improvement
+
+- :release-note:`HYDRA-607` - Fixed an issue that prevented TPFS sources and sinks created
+  by Hydrator pipelines from being used as input or output for MapReduce or Spark.
+
+- :release-note:`HYDRA-713` - Added Encryptor and Decryptor plugins to Hydrator that can
+  encrypt or decrypt record fields.
+
+Bug Fixes
+---------
+- :release-note:`CDAP-1545` - Created a Docker-specific ENTRYPOINT script to easily support
+  arguments.
+
+- :release-note:`CDAP-2501` - CDAP Router and UI no longer need to be colocated using
+  Cloudera Manager.
+
+- :release-note:`CDAP-3131` - Runs endpoint of program lifecycle now returns ``404``
+  instead of an empty list if the specified application is not found.
+
+- :release-note:`CDAP-3732` - Fixed issue where deploying an application was trying to
+  enable explore on system tables.
+
+- :release-note:`CDAP-3750` - Datasets that use reserved Hive keywords will now have their
+  column names properly escaped when executing Hive DDL commands.
+
+- :release-note:`CDAP-4007` - Fixed an issue when running multiple unit tests in the same
+  JVM.
+
+- :release-note:`CDAP-4434` - CDAP startup scripts return success (exit 0) if called service
+  is already running.
+
+- :release-note:`CDAP-4860` - Introduced a /available endpoint for Services to check their
+  availability.
+
+- :release-note:`CDAP-5279` - Some changes to the API:
+
+  - 1. AbstractMapReduce or AbstractSpark now implements ProgramLifeCycle
+
+  - 2. AbstractMapReduce or AbstractSpark will have final initialize(context) method
+
+  - 3. AbstractMapReduce or AbstractSpark will have protected initialize()
+       method default implementation of which will call beforeSubmit
+
+  - 4. User program will override the no arg initialize method
+
+  - 5. Driver will call both versions of the initialize method
+
+- :release-note:`CDAP-5291` - Fix fit to screen functionality on flow diagram.
+
+- :release-note:`CDAP-5536` - Allow user to put back partitions to PartitionConsumer,
+  without processing it.
+
+- :release-note:`CDAP-5643` - Fixed some test cases to not depend on US as the system
+  locale.
+
+- :release-note:`CDAP-5676` - Upgraded the Hive version used by the SDK to Hive-1.2.1 in
+  order to pick up a fix for parquet tables.
+
+- :release-note:`CDAP-5875` - Require Spark on clusters configured for Hive on Spark and
+  CDAP Explore service.
+
+- :release-note:`CDAP-5882` - Removed conditional restart on distributed CDAP package
+  upgrades.
+
+- :release-note:`CDAP-5969` - CDAP Upgrade tasks available in Ambari Service.
+
+- :release-note:`CDAP-6026` - Fixed issue where exception thrown in the initialize method of
+  the Workflow was causing Workflow container to be not terminated.
+
+- :release-note:`CDAP-6035` - Correctly set the context classloader for the Workflow
+  initialize() and destroy() methods to provide a consistent classloading behavior across
+  all program types.
+
+- :release-note:`CDAP-6045` - Fixed issue where application deployment was failing on
+  Windows because of character <:> in the file name.
+
+- :release-note:`CDAP-6109` - Fixed a NullPointerException issue in Spark when saving RDD to
+  PartitionedFileSet dataset.
+
+- :release-note:`CDAP-6115` - Fixed a bug in the Flow system that usage of the primitive
+  ``byte``, ``short`` and ``char`` types causes exception.
+
+- :release-note:`CDAP-6121` - Fixed a bug in Spark that using @UseDataset causes
+  NullPointException.
+
+- :release-note:`CDAP-6127` - Allows transaction service to bind to a configurable port.
+
+- :release-note:`CDAP-6147` - Improve error message in authorization client and linage
+  client when 404` - is returned from the server side.
+
+- :release-note:`CDAP-6150` - isSuccessful() method of the WorkflowContext is replaced by
+  method getState() which returns the state of the workflow.
+
+- :release-note:`CDAP-6280` - Allows FileSets and PartitionedFileSets to be tagged as
+  explorable in CDAP UI.
+
+- :release-note:`CDAP-6311` - Fixed a bug that the program run record was not correctly
+  reflected in CDAP if the corresponding YARN application failed to start.
+
+- :release-note:`CDAP-6378` - Fixed the classpath of the MapReduce program launched by CDAP,
+  to include CDAP classes before Apache Twill classes.
+
+- :release-note:`CDAP-6384` - Update CDAP Standalone VM version of IntelliJ IDE to
+  2016.1.3.
+
+- :release-note:`CDAP-6386` - Fixed an issue where updating the properties of a dataset
+  deleted all of its partitions in Hive.
+
+- :release-note:`CDAP-6452` - Add check for environment variable to disable UI compression.
+- :release-note:`CDAP-6455` - Fixed the classpath of the MapReduce program launched by the
+  explore service to include cdap-common.jar at the beginning.
+
+- :release-note:`CDAP-6486` - Fixed an issue that caused a zookeeper watch to leak every
+  time a program is started.
+
+- :release-note:`CDAP-6510` - Fixed an issue where ExploreService was attempting (with no
+  effect except for a slow down) to run the upgrade procedure for all explorable datasets.
+
+- :release-note:`CDAP-6515` - Fixed classloading issues related to guava's Optional class in
+  Spark, allowing programs to perform left outer and full outer joins on RDDs.
+
+- :release-note:`CDAP-6524` - Plugins now support the "char" primitive as a property type.
+
+- :release-note:`CDAP-6643` - Fixed an issue that caused massive log message when there are
+  underlying HDFS issues.
+
+- :release-note:`CDAP-6783` - Fixed the classpath ordering in Spark to load the classes from
+  the cdap-common first.
+
+- :release-note:`CDAP-6829` - Fixes issues that prevents log saver from performing cleanup
+  when metadata is present for a non-existing file.
+
+- :release-note:`CDAP-6852` - Fixes issues that makes Log Saver more resilient to errors
+  while checkpointing.
+
+- :release-note:`CDAP-6860` - Improved performance in cube datasets when querying for more
+  than one measure in a query. This will also improve metrics query performance.
+
+- :release-note:`CDAP-6901` - Added a bootstrap step for authorization in CDAP. As part of
+  this step:
+
+- 1. The user that CDAP runs as gets admin privileges on the CDAP instance,
+  as well has all privileges on the system namespace
+
+- 2. A list of users specified as the parameter
+  security.authorization.admin.users in cdap-site.xml get admin privileges on the CDAP
+  instance, so they can create namespaces.
+
+- :release-note:`CDAP-6929` - Logs from Spark driver and executors are now collected.
+
+- :release-note:`CDAP-6930` - Incompatible change: Updated cdap-clients to throw
+  UnauthorizedExceptions when operations return 403` - Forbidden from CDAP. Users of
+  cdap-clients may have to update their code to handle these exceptions.
+
+- :release-note:`CDAP-6935` - Fix a bug where the live-info endpoint was not working for
+  Workflows, MapReduce, Worker, and Spark.
+
+- :release-note:`CDAP-6939` - Fixes support for chrome < 44 version. UI is using Ecmascript
+  2015` - that older browsers doesn't implement. Added proper transpilation to support older
+  browsers in VMs.
+
+- :release-note:`CDAP-7026` - Upon namespace creation, all privileges are granted to both -
+  the user who created the namespace as well as the user that programs will run as in the
+  namespace.
+
+- :release-note:`CDAP-7066` - Restart of system services kills containers if the containers
+  are un-responsive thereby not leaving stray containers.
+
+- :release-note:`CDAP-7082` - Removed bundling the parquet jar from com.twitter package with
+  CDAP master.
+
+- :release-note:`CDAP-7128` - Fixed a bug on changing number of Worker instances in
+  distributed mode.
+
+- :release-note:`HYDRA-47` - DBSource now casts TINYINT and SMALLINT to INT type
+
+- :release-note:`HYDRA-54` - Validator UI configuration is preserved in cloned pipeline.
+
+- :release-note:`HYDRA-80` - Fixed an issue where configuration of the FileSource was
+  failing while setting the properties for the FileInputFormat.
+
+- :release-note:`HYDRA-133` - HDFSSink can now be used alongside other sinks in a Hydrator
+  pipeline.
+
+- :release-note:`HYDRA-149` - Removes the dependency of using labels from plugins in
+  pipelines being imported in UI. Any pipeline configuration publishable from CLI or REST
+  api should be publishable from UI too.
+
+- :release-note:`HYDRA-398` - Adds the ability to view properties of plugins in pipelines
+  created in older versions of Hydrator.
+
+- :release-note:`HYDRA-438` - Fixed Hydrator CSVParser so that a nullable field is only set
+  to null if the parsed value is an empty string, and the field is not a string or nullable
+  string type.
+
+- :release-note:`HYDRA-451` - CSVParser now supports accepting a nullable string as a field
+  to parse. If the field is null, all other fields are propagated and those that would
+  otherwise be parsed by the CSV parser are set to null.
+
+- :release-note:`HYDRA-459` - Fixed a bug due to which the UPPER/lower transform was not
+  applied to all columns correctly for DBSink.
+
+- :release-note:`HYDRA-686` - Many existing Hydrator batch and spark plugins now have macros
+  enabled properties (specified in the documentation).
+
+- :release-note:`HYDRA-705` - Fixed an issue with record serialization for non-ascii values
+  in the shuffle phase of Hydrator pipelines.
+
+- :release-note:`HYDRA-790` - Release 3.4.0 introduced infinite-scroll for the input and
+  output schemas; the version used (1.2.2) of the infinite scroll component had
+  performance issues. The version of the infinite scroll component used has been 
+  downgraded to restore the performance in Hydrator views.
+
+- :release-note:`TRAC-21` - Renamed AuditLog service to the TrackerService.
+
+- :release-note:`TRAC-42` - Fixed integrating navigator app in Tracker UI. The POST body
+  request that was sent while deploying navigator app was using an older deprecated property
+  (UI was using 'metadataKafkaConfig' instead of 'auditKafkaConfig'). This should enable
+  using navigator app in Tracker UI.
+
+
 `Release 3.4.1 <http://docs.cask.co/cdap/3.4.1/index.html>`__
 =============================================================
 
