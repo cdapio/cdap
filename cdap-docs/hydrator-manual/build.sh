@@ -226,8 +226,8 @@ function download_includes() {
   download_md_file core-plugins File-batchsource.md
   download_md_file core-plugins FTP-batchsource.md
   download_md_file core-plugins GroupByAggregate-batchaggregator.md
-  download_md_file core-plugins HDFSFileDeleteAction-action.md
-  download_md_file core-plugins HDFSFileMoveAction-action.md
+  download_md_file core-plugins HDFSDelete-action.md
+  download_md_file core-plugins HDFSMove-action.md
   download_md_file core-plugins JavaScript-transform.md
   download_md_file core-plugins JMS-realtimesource.md
   download_md_file core-plugins Joiner-batchjoiner.md
@@ -245,7 +245,7 @@ function download_includes() {
   download_md_file core-plugins SnapshotAvro-batchsource.md
   download_md_file core-plugins SnapshotParquet-batchsink.md
   download_md_file core-plugins SnapshotParquet-batchsource.md
-  download_md_file core-plugins SSHAction-action.md
+  download_md_file core-plugins SSH-action.md
   download_md_file core-plugins Stream-batchsource.md
   download_md_file core-plugins Stream-realtimesink.md
   download_md_file core-plugins StructuredRecordToGenericRecord-transform.md
@@ -263,7 +263,7 @@ function download_includes() {
   download_md_file core-plugins XMLReader-batchsource.md
   download_md_file database-plugins Database-batchsink.md _includes/database-batchsink-append.md.txt
   download_md_file database-plugins Database-batchsource.md _includes/database-batchsource-append.md.txt
-  download_md_file database-plugins DatabaseAction-action.md
+  download_md_file database-plugins Database-action.md
   download_md_file database-plugins DatabaseQuery-postaction.md
   download_md_file elasticsearch-plugins Elasticsearch-batchsink.md
   download_md_file elasticsearch-plugins Elasticsearch-batchsource.md
