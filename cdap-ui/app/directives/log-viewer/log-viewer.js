@@ -401,6 +401,12 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
           res[index].log.stackTrace = res[index].log.stackTrace.trim();
         });
 
+        if(this.data.length > 0){
+          if(this.data[this.data.length-1].log.displayTime > res[0].log.displayTime){
+            return;
+          }
+        }
+
         this.data = this.data.concat(res);
         this.renderData();
         if(this.displayData.length < this.viewLimit){
@@ -458,6 +464,12 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
           res[index].log.displayTime = moment(formattedDate).format('L H:mm:ss');
           res[index].log.stackTrace = res[index].log.stackTrace.trim();
         });
+
+        if(this.data.length > 0){
+          if(this.data[this.data.length-1].log.displayTime > res[0].log.displayTime){
+            return;
+          }
+        }
 
         this.data = this.data.concat(res);
         this.renderData();
@@ -583,6 +595,12 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
           res[index].log.displayTime = moment(formattedDate).format('L H:mm:ss');
           res[index].log.stackTrace = res[index].log.stackTrace.trim();
         });
+
+        if(this.data.length > 0){
+          if(this.data[this.data.length-1].log.displayTime > res[0].log.displayTime){
+            return;
+          }
+        }
 
         this.data = res;
 
