@@ -31,6 +31,7 @@ import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.common.security.UGIProvider;
 import co.cask.cdap.common.security.UnsupportedUGIProvider;
 import co.cask.cdap.common.twill.MasterServiceManager;
+import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.stream.StreamServiceManager;
 import co.cask.cdap.data.stream.StreamViewHttpHandler;
@@ -112,6 +113,7 @@ import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.quartz.SchedulerException;
@@ -126,6 +128,8 @@ import org.quartz.simpl.CascadingClassLoadHelper;
 import org.quartz.spi.ClassLoadHelper;
 import org.quartz.spi.JobStore;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.List;
 
 /**
