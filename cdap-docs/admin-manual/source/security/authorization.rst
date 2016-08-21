@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016 Cask Data, Inc.
 
-.. _configuration-authorization:
+.. _admin-authorization:
 
 =========================
 Configuring Authorization
