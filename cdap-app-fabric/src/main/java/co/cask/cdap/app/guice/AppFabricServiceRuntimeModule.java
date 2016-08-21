@@ -32,7 +32,6 @@ import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.common.security.UGIProvider;
 import co.cask.cdap.common.security.UnsupportedUGIProvider;
 import co.cask.cdap.common.twill.MasterServiceManager;
-import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.stream.StreamServiceManager;
 import co.cask.cdap.data.stream.StreamViewHttpHandler;
@@ -66,9 +65,10 @@ import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
-import co.cask.cdap.internal.app.namespace.DefaultNamespaceQueryAdmin;
+import co.cask.cdap.internal.app.namespace.DefaultNamespaceResourceDeleter;
 import co.cask.cdap.internal.app.namespace.DistributedStorageProviderNamespaceAdmin;
 import co.cask.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
+import co.cask.cdap.internal.app.namespace.NamespaceResourceDeleter;
 import co.cask.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.runtime.batch.InMemoryTransactionServiceManager;
@@ -107,13 +107,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.Module;
+import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
-import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.quartz.SchedulerException;
@@ -128,8 +128,6 @@ import org.quartz.simpl.CascadingClassLoadHelper;
 import org.quartz.spi.ClassLoadHelper;
 import org.quartz.spi.JobStore;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.util.List;
 
 /**
@@ -314,9 +312,21 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(RuntimeStore.class).to(DefaultStore.class);
       bind(ArtifactStore.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
-      bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
-      bind(NamespaceQueryAdmin.class).to(DefaultNamespaceQueryAdmin.class).in(Scopes.SINGLETON);
+
       bind(PreviewStore.class).to(DefaultPreviewStore.class);
+
+      install(new PrivateModule() {
+        @Override
+        protected void configure() {
+          bind(NamespaceResourceDeleter.class).to(DefaultNamespaceResourceDeleter.class).in(Scopes.SINGLETON);
+          bind(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
+          bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class);
+          bind(NamespaceQueryAdmin.class).to(DefaultNamespaceAdmin.class);
+
+          expose(NamespaceAdmin.class);
+          expose(NamespaceQueryAdmin.class);
+        }
+      });
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
         binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));

@@ -53,6 +53,9 @@ public class SimpleNamespaceQueryAdmin implements NamespaceQueryAdmin {
 
   @Override
   public boolean exists(Id.Namespace namespaceId) throws Exception {
-    throw new UnsupportedOperationException("Check of namespace existence is not supported.");
+    // We always return true here since this query admin is only for tests classes where we want to work with
+    // namespaces without actually creating the namespace. This is why the get of this method always return a meta so
+    // we always return true here.
+    return true;
   }
 }
