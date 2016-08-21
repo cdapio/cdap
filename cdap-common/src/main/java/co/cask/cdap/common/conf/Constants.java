@@ -137,6 +137,8 @@ public final class Constants {
     public static final String PROGRAM_EXTRA_CLASSPATH = "app.program.extra.classpath";
     public static final String SPARK_YARN_CLIENT_REWRITE = "app.program.spark.yarn.client.rewrite.enabled";
     public static final String RUNTIME_EXT_DIR = "app.program.runtime.extensions.dir";
+    public static final String PROGRAM_MAX_START_SECONDS = "app.program.max.start.seconds";
+    public static final String PROGRAM_MAX_STOP_SECONDS = "app.program.max.stop.seconds";
 
     /**
      * Guice named bindings.
