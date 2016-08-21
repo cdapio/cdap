@@ -16,7 +16,6 @@
 
 package co.cask.cdap.etl.batch;
 
-import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
@@ -52,11 +51,9 @@ public abstract class TransformExecutorFactory<T> {
   protected final Metrics metrics;
   protected Schema outputSchema;
   protected boolean isMapPhase;
-  protected final Debugger debugger;
 
   public TransformExecutorFactory(JobContext hadoopContext, PipelinePluginInstantiator pluginInstantiator,
-                                  Metrics metrics, @Nullable String sourceStageName, MacroEvaluator macroEvaluator,
-                                  Debugger debugger) {
+                                  Metrics metrics, @Nullable String sourceStageName, MacroEvaluator macroEvaluator) {
     this.pluginInstantiator = pluginInstantiator;
     this.metrics = metrics;
     this.perStageInputSchemas = new HashMap<>();
@@ -64,16 +61,15 @@ public abstract class TransformExecutorFactory<T> {
     this.sourceStageName = sourceStageName;
     this.macroEvaluator = macroEvaluator;
     this.isMapPhase = hadoopContext instanceof Mapper.Context;
-    this.debugger = debugger;
   }
 
   protected abstract BatchRuntimeContext createRuntimeContext(String stageName);
 
   protected TrackedTransform getTransformation(String pluginType, String stageName) throws Exception {
     return new TrackedTransform(KVTransformations.getKVTransformation(stageName, pluginType,
-                                                                      isMapPhase,
-                                                                      getInitializedTransformation(stageName)),
-                                new DefaultStageMetrics(metrics, stageName), stageName, debugger);
+                                                                     isMapPhase,
+                                                                     getInitializedTransformation(stageName)),
+                                new DefaultStageMetrics(metrics, stageName));
   }
 
   /**
@@ -121,24 +117,18 @@ public abstract class TransformExecutorFactory<T> {
   }
 
   protected static <IN, OUT> TrackedTransform<IN, OUT> getTrackedEmitKeyStep(Transformation<IN, OUT> transform,
-                                                                             StageMetrics stageMetrics,
-                                                                             String stageName,
-                                                                             Debugger debugger) {
-    return new TrackedTransform<>(transform, stageMetrics, TrackedTransform.RECORDS_IN, null, stageName, debugger);
+                                                                             StageMetrics stageMetrics) {
+    return new TrackedTransform<>(transform, stageMetrics, TrackedTransform.RECORDS_IN, null);
   }
 
   protected static <IN, OUT> TrackedTransform<IN, OUT> getTrackedAggregateStep(Transformation<IN, OUT> transform,
-                                                                               StageMetrics stageMetrics,
-                                                                               String stageName,
-                                                                               Debugger debugger) {
+                                                                               StageMetrics stageMetrics) {
     // 'aggregator.groups' is the number of groups output by the aggregator
-    return new TrackedTransform<>(transform, stageMetrics, "aggregator.groups", TrackedTransform.RECORDS_OUT, stageName,
-                                  debugger);
+    return new TrackedTransform<>(transform, stageMetrics, "aggregator.groups", TrackedTransform.RECORDS_OUT);
   }
 
   protected static <IN, OUT> TrackedTransform<IN, OUT> getTrackedMergeStep(Transformation<IN, OUT> transform,
-                                                                           StageMetrics stageMetrics, String stageName,
-                                                                           Debugger debugger) {
-    return new TrackedTransform<>(transform, stageMetrics, null, TrackedTransform.RECORDS_OUT, stageName, debugger);
+                                                                           StageMetrics stageMetrics) {
+    return new TrackedTransform<>(transform, stageMetrics, null, TrackedTransform.RECORDS_OUT);
   }
 }

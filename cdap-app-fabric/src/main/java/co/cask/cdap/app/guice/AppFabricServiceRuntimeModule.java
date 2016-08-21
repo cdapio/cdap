@@ -21,7 +21,6 @@ import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.mapreduce.DistributedMRJobInfoFetcher;
 import co.cask.cdap.app.mapreduce.LocalMRJobInfoFetcher;
 import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
-import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -83,7 +82,6 @@ import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeSchedule
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.StandaloneAppFabricServer;
-import co.cask.cdap.internal.app.store.DefaultPreviewStore;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
 import co.cask.cdap.logging.run.InMemoryAppFabricServiceManager;
@@ -316,7 +314,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
       bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
       bind(NamespaceQueryAdmin.class).to(DefaultNamespaceQueryAdmin.class).in(Scopes.SINGLETON);
-      bind(PreviewStore.class).to(DefaultPreviewStore.class);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
         binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
@@ -344,6 +341,14 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);
       }
+    }
+
+    @Provides
+    @Named(Constants.AppFabric.SERVER_ADDRESS)
+    @SuppressWarnings("unused")
+    public InetAddress providesHostname(CConfiguration cConf) {
+      String address = cConf.get(Constants.AppFabric.SERVER_ADDRESS);
+      return Networks.resolve(address, new InetSocketAddress("localhost", 0).getAddress());
     }
 
     /**
