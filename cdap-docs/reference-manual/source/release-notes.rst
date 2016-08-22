@@ -43,8 +43,8 @@ Changes
 - :cask-issue:`CDAP-6596` - CDAP Security Extensions are packaged with CDAP Master
   packages and CDAP Parcel.
 
-- :cask-issue:`HYDRATOR-527` - The Script Transform (previously deprecated) has been removed,
-  and is replaced with the JavaScript Transform.
+- :cask-issue:`HYDRATOR-527` - The Script Transform (previously deprecated) has been
+  removed, and is replaced with the JavaScript Transform.
 
 - :cask-issue:`HYDRATOR-528` - Secure Store APIs in Hydrator Actions are now exposed.
 
@@ -52,10 +52,11 @@ Changes
 
 - :cask-issue:`HYDRATOR-653` - Additional Custom Action Hydrator Plugins have been added.
 
-- :cask-issue:`HYDRATOR-682` - The directory containing the Spark Streaming Hydrator plugins
-  has been renamed from ``batch.spark`` to ``spark``.
+- :cask-issue:`HYDRATOR-682` - The directory containing the Spark Streaming Hydrator
+  plugins has been renamed from ``batch.spark`` to ``spark``.
 
-- :cask-issue:`TRACKER-155` - An upgrade process has been added to the UI for Cask Tracker.
+- :cask-issue:`TRACKER-155` - An upgrade process has been added to the UI for Cask
+  Tracker.
 
 - :cask-issue:`CDAP-886`, :cask-issue:`CDAP-882` - Access to CDAP Streams via the RESTful
   API, CDAP-CLI, or programmatic API can be authorized through the Security Authorization
@@ -89,24 +90,25 @@ Changes
 - :cask-issue:`CDAP-6159`, :cask-issue:`CDAP-6157` - Added support for accessing streams
   (read only) across namespaces in CDAP Spark and MapReduce programs.
 
-- :cask-issue:`HYDRATOR-174`, :cask-issue:`HYDRATOR-157` - Refactored the Spark engine in data
-  pipelines to run all non-action pipeline stages in a single Spark program.
+- :cask-issue:`HYDRATOR-174`, :cask-issue:`HYDRATOR-157` - Refactored the Spark engine in
+  data pipelines to run all non-action pipeline stages in a single Spark program.
 
-- :cask-issue:`HYDRATOR-175`, :cask-issue:`HYDRATOR-157` - Added a streaming pipeline type (the
-  Data Streams artifact) to Cask Hydrator for realtime pipelines run using Spark Streaming.
+- :cask-issue:`HYDRATOR-175`, :cask-issue:`HYDRATOR-157` - Added a streaming pipeline type
+  (the Data Streams artifact) to Cask Hydrator for realtime pipelines run using Spark
+  Streaming.
 
-- :cask-issue:`HYDRATOR-177`, :cask-issue:`HYDRATOR-157` - Added a Kafka source for streaming
-  pipelines.
+- :cask-issue:`HYDRATOR-177`, :cask-issue:`HYDRATOR-157` - Added a Kafka source for
+  streaming pipelines.
 
 - :cask-issue:`HYDRATOR-178`, :cask-issue:`HYDRATOR-157` - Added a window plugin to Cask
   Hydrator that enables the creation of sliding windows in a streaming pipeline.
 
-- :cask-issue:`HYDRATOR-181`, :cask-issue:`HYDRATOR-158` - Added an experimental feature in the
-  CDAP SDK which allows users to preview the Hydrator pipelines.
+- :cask-issue:`HYDRATOR-181`, :cask-issue:`HYDRATOR-158` - Added an experimental feature
+  in the CDAP SDK which allows users to preview the Hydrator pipelines.
 
-- :cask-issue:`HYDRATOR-182` - Hydrator MapReduce or Spark jobs now support multiple inputs.
-  This will enable more efficient physical workflow generation due to the reduction in the
-  number of MapReduce or Spark programs required for a logical pipeline.
+- :cask-issue:`HYDRATOR-182` - Hydrator MapReduce or Spark jobs now support multiple
+  inputs. This will enable more efficient physical workflow generation due to the reduction
+  in the number of MapReduce or Spark programs required for a logical pipeline.
 
 - :cask-issue:`HYDRATOR-165` - Support multiple sources as input to a stage.
 
@@ -117,16 +119,16 @@ Changes
 - :cask-issue:`HYDRATOR-712` - Added to Cask Hydrator a Batch Pipeline Configuration
   Schedule.
 
-- :cask-issue:`TRACKER-108`, :cask-issue:`TRACKER-98` - Adds to Cask Tracker a tracker meter
-  widget in the UI, including search results page and details page. It displays a metric
-  that determines the 'truthfulness' of a dataset/stream being used in CDAP or Cask
+- :cask-issue:`TRACKER-108`, :cask-issue:`TRACKER-98` - Adds to Cask Tracker a tracker
+  meter widget in the UI, including search results page and details page. It displays a
+  metric that determines the 'truthfulness' of a dataset/stream being used in CDAP or Cask
   Hydrator.
 
-- :cask-issue:`TRACKER-109`, :cask-issue:`TRACKER-100` - Adds a separate section for tags in
-  Cask Tracker. This lists all available tags in CDAP.
+- :cask-issue:`TRACKER-109`, :cask-issue:`TRACKER-100` - Adds a separate section for tags
+  in Cask Tracker. This lists all available tags in CDAP.
 
-- :cask-issue:`TRACKER-149`, :cask-issue:`TRACKER-105` - Adds a histogram for audit log in Cask
-  Tracker for easier visualization of usage of a dataset.
+- :cask-issue:`TRACKER-149`, :cask-issue:`TRACKER-105` - Adds a histogram for audit log in
+  Cask Tracker for easier visualization of usage of a dataset.
 
 New Features
 ------------
@@ -139,7 +141,8 @@ New Features
 
 - :cask-issue:`CDAP-3890` - Improved performance of the Dataset Service.
 
-- :cask-issue:`CDAP-4106` - Created pre-defined alert definitions in the CDAP Ambari Service.
+- :cask-issue:`CDAP-4106` - Created pre-defined alert definitions in the CDAP Ambari
+  Service.
 
 - :cask-issue:`CDAP-4107` - Support HA CDAP installations in the CDAP Ambari Service.
 
@@ -153,18 +156,18 @@ New Features
 
 - :cask-issue:`CDAP-4913` - Added a way to cache authorization policies so every
   authorization enforcement request does not have to make a remote call. Caching is
-  configurable |---| it can be enabled by setting security.authorization.cache.enabled to true.
-  TTL for cache entries (``security.authorization.cache.ttl.secs``) as well as refresh interval
-  (``security.authorization.cache.refresh.interval.secs``) is also configurable.
+  configurable |---| it can be enabled by setting security.authorization.cache.enabled to
+  true. TTL for cache entries (``security.authorization.cache.ttl.secs``) as well as refresh
+  interval (``security.authorization.cache.refresh.interval.secs``) is also configurable.
 
-- :cask-issue:`CDAP-5740` - Provided access to ``Partitioner`` and ``Comparator`` classes to the
-  ``MapReduceTaskContext`` by implementing ``ProgramLifeCycle``.
+- :cask-issue:`CDAP-5740` - Provided access to ``Partitioner`` and ``Comparator`` classes
+  to the ``MapReduceTaskContext`` by implementing ``ProgramLifeCycle``.
 
 - :cask-issue:`CDAP-5770` - Allow setting of YARN container resources requirements for all
   program types via preferences and runtime arguments.
 
-- :cask-issue:`CDAP-6052` - Fixed a bug that prevented the setting of ``local.data.dir`` in
-  ``cdap-site.xml`` to an absolute path.
+- :cask-issue:`CDAP-6052` - Fixed a bug that prevented the setting of ``local.data.dir``
+  in ``cdap-site.xml`` to an absolute path.
 
 - :cask-issue:`CDAP-6062` - Added protection for a partition of a file set from being
   deleted while a query is reading the partition.
@@ -177,48 +180,49 @@ New Features
 - :cask-issue:`CDAP-6168` - Enable authorization, lineage, and audit log at the data
   operation level for all Datasets.
 
-- :cask-issue:`CDAP-6174` - Adds a new log viewer across CDAP, Cask Hydrator, and Cask Tracker, wherever
-  appropriate. Provides easier navigation and debugging functionality for logs of
-  different entities.
+- :cask-issue:`CDAP-6174` - Adds a new log viewer across CDAP, Cask Hydrator, and Cask
+  Tracker, wherever appropriate. Provides easier navigation and debugging functionality for
+  logs of different entities.
 
-- :cask-issue:`CDAP-6235` - Add an indicator in the UI of the CDAP mode (distributed or standalone,
-  secure or insecure).
+- :cask-issue:`CDAP-6235` - Add an indicator in the UI of the CDAP mode (distributed or
+  standalone, secure or insecure).
 
-- :cask-issue:`CDAP-6393` - Added authorization to the Secure Key HTTP RESTful APIs. To create a
-  secure key, a user needs WRITE privilege on the namespace in which the key is being
-  created. Users can only view secure keys that they have access to. To delete a key, ADMIN
-  privilege is required.
+- :cask-issue:`CDAP-6393` - Added authorization to the Secure Key HTTP RESTful APIs. To
+  create a secure key, a user needs WRITE privilege on the namespace in which the key is
+  being created. Users can only view secure keys that they have access to. To delete a key,
+  ADMIN privilege is required.
 
 - :cask-issue:`CDAP-6456` - Exposed the secure store APIs to Programs.
 
-- :cask-issue:`CDAP-6516` - Added authorization for listing and viewing CDAP entities.  
+- :cask-issue:`CDAP-6516` - Added authorization for listing and viewing CDAP entities.
 
 - :cask-issue:`CDAP-7002` - Fixed an issue where the UI would ignore the configured port
   when connecting to the CDAP Router.
 
-- :cask-issue:`HYDRATOR-156` - Added an alpha feature (CDAP SDK only): Hydrator Data Pipeline preview.
+- :cask-issue:`HYDRATOR-156` - Added an alpha feature (CDAP SDK only): Hydrator Data
+  Pipeline preview.
 
-- :cask-issue:`HYDRATOR-162` - Added support for executing custom actions in the Cask Hydrator
-  pipelines.
+- :cask-issue:`HYDRATOR-162` - Added support for executing custom actions in the Cask
+  Hydrator pipelines.
 
-- :cask-issue:`HYDRATOR-168` - Re-organized the bottom panel in Cask Hydrator to be in-context.
-  Pipeline-level information is moved to a top panel and plugin-level information is moved to
-  a modal dialog.
+- :cask-issue:`HYDRATOR-168` - Re-organized the bottom panel in Cask Hydrator to be
+  in-context. Pipeline-level information is moved to a top panel and plugin-level
+  information is moved to a modal dialog.
 
-- :cask-issue:`HYDRATOR-379` - Re-organized the left panel in Cask Hydrator studio view to have a
-  maximum of four categories of plugin types: Source, Transform, Sink, and Actions. All other types are
-  consolidated into one of these types.
+- :cask-issue:`HYDRATOR-379` - Re-organized the left panel in Cask Hydrator studio view to
+  have a maximum of four categories of plugin types: Source, Transform, Sink, and Actions.
+  All other types are consolidated into one of these types.
 
-- :cask-issue:`HYDRATOR-501` - Implemented the Value Mapper plugin for Cask Hydrator plugins.
-  This is a type of transform that maps string values of a field in the input record to
-  another value.
+- :cask-issue:`HYDRATOR-501` - Implemented the Value Mapper plugin for Cask Hydrator
+  plugins. This is a type of transform that maps string values of a field in the input
+  record to another value.
 
 - :cask-issue:`HYDRATOR-502` - Added the XML Parser Transform plugin to Cask Hydrator
-  plugins. This plugin uses XPath to extract fields from a complex XML Event. It is generally
-  used in conjunction with the XML Reader Source Plugin.
+  plugins. This plugin uses XPath to extract fields from a complex XML Event. It is
+  generally used in conjunction with the XML Reader Source Plugin.
 
-- :cask-issue:`HYDRATOR-503` - Added the XML Reader Source Plugin to Cask Hydrator plugins.
-  This plugin allows users to read XML files stored on HDFS.
+- :cask-issue:`HYDRATOR-503` - Added the XML Reader Source Plugin to Cask Hydrator
+  plugins. This plugin allows users to read XML files stored on HDFS.
 
 - :cask-issue:`HYDRATOR-506` - Implemented the Cask Hydrator plugin for Row Denormalizer
   aggregator. This plugin converts raw data into de-normalized data based on a key column.
@@ -228,80 +232,84 @@ New Features
   plugins. This source plugin allows users to read and process mainframe files defined using
   COBOL Copybook.
 
-- :cask-issue:`HYDRATOR-514` - Added the Excel Reader Source plugin to Cask Hydrator Plugins.
-  This plugin provides the ability to read data from one or more Excel file(s).  New
-  Feature
+- :cask-issue:`HYDRATOR-514` - Added the Excel Reader Source plugin to Cask Hydrator
+  Plugins. This plugin provides the ability to read data from one or more Excel file(s). 
+  New Feature
 
 - :cask-issue:`HYDRATOR-629` - Adds macros to pipeline plugin configurations. This allows
-  users to set macros for plugin properties which can be provided as runtime arguments
-  while scheduling and running the pipeline.
+  users to set macros for plugin properties which can be provided as runtime arguments while
+  scheduling and running the pipeline.
 
 - :cask-issue:`HYDRATOR-634` - Adds a new Run Configuration player for published pipeline
-  views. This allows users to set runtime arguments while scheduling or running a pipeline.  
+  views. This allows users to set runtime arguments while scheduling or running a pipeline.
 
 - :cask-issue:`HYDRATOR-685` - Added a Twitter source for Spark Streaming pipelines.
 
-- :cask-issue:`TRACKER-96` - Added the ability to edit user properties for a dataset directly
-  in Cask Tracker.
+- :cask-issue:`TRACKER-96` - Added the ability to edit user properties for a dataset
+  directly in Cask Tracker.
 
-- :cask-issue:`TRACKER-98` - Added the Cask Tracker Meter to measure how active a dataset is in
-  a cluster on a scale of zero to 100.
+- :cask-issue:`TRACKER-98` - Added the Cask Tracker Meter to measure how active a dataset
+  is in a cluster on a scale of zero to 100.
 
-- :cask-issue:`TRACKER-100` - Added the ability to add, remove, and manage a common dictionary
-  of Preferred Tags in Cask Tracker and apply them to datasets.
+- :cask-issue:`TRACKER-100` - Added the ability to add, remove, and manage a common
+  dictionary of Preferred Tags in Cask Tracker and apply them to datasets.
 
-- :cask-issue:`TRACKER-104` - Added the ability to preview data directly in the Cask Tracker
-  UI.
+- :cask-issue:`TRACKER-104` - Added the ability to preview data directly in the Cask
+  Tracker UI.
 
 - :cask-issue:`TRACKER-105` - Added the ability to view usage metrics about datasets in
-  Cask Tracker. Users can view how many applications and programs are accessing each dataset using service
-  endpoints and the Tracker UI.
+  Cask Tracker. Users can view how many applications and programs are accessing each dataset
+  using service endpoints and the Tracker UI.
 
 Improvements
 ------------
+
 - :cask-issue:`CDAP-4065` - Improved the way that MapReduce failures are reported.
 
-- :cask-issue:`CDAP-4775` - Warns if either the app-fabric or router bind addresses are configured with
-  a loopback address.
+- :cask-issue:`CDAP-4775` - Warns if either the app-fabric or router bind addresses are
+  configured with a loopback address.
 
-- :cask-issue:`CDAP-5000` - The number of containers for the CDAP Explore service is no longer
-  configurable and will be ignored upon specification. It will always be set to one (1).
+- :cask-issue:`CDAP-5000` - The number of containers for the CDAP Explore service is no
+  longer configurable and will be ignored upon specification. It will always be set to one
+  (1).
 
 - :cask-issue:`CDAP-5336` - Now publishing ``stdout`` and ``stderr`` logs for MapReduce
   containers to CDAP.
 
-- :cask-issue:`CDAP-5601` - Allowing the setting of batch size for flowlet process methods via
-  preferences and runtime arguments.
+- :cask-issue:`CDAP-5601` - Allowing the setting of batch size for flowlet process methods
+  via preferences and runtime arguments.
 
-- :cask-issue:`CDAP-5794` - Added support for long-running Spark jobs in a Kerberos-enabled
-  cluster.
+- :cask-issue:`CDAP-5794` - Added support for long-running Spark jobs in a
+  Kerberos-enabled cluster.
 
 - :cask-issue:`CDAP-5874` - Added support for starting extensions in distributed mode.
 
-- :cask-issue:`CDAP-5959` - Setting the ``JAVA_LIBRARY_PATH`` now causes CDAP Master to load Hadoop
-  native libraries at startup.
+- :cask-issue:`CDAP-5959` - Setting the ``JAVA_LIBRARY_PATH`` now causes CDAP Master to
+  load Hadoop native libraries at startup.
 
 - :cask-issue:`CDAP-6034` - CDAP's Tephra dependency has been changed to depend on the
   `Apache Incubator Tephra project <http://tephra.incubator.apache.org>`.
 
-- :cask-issue:`CDAP-6206` - Improved the error message given on application deployment failure due to a
-  missing Spark library.
+- :cask-issue:`CDAP-6206` - Improved the error message given on application deployment
+  failure due to a missing Spark library.
 
 - :cask-issue:`CDAP-6216` - Added support in the log API for field suppression in JSON
   format.
 
-- :cask-issue:`CDAP-6246` - Added the ability to specify a CDAP Master's temporary directory.
+- :cask-issue:`CDAP-6246` - Added the ability to specify a CDAP Master's temporary
+  directory.
 
 - :cask-issue:`CDAP-6276` - Introduced new experimental dataset APIs for updating a
   dataset's properties.
 
-- :cask-issue:`CDAP-6327` - Allowed specifying individual Java heap sizes for Java services
-  in ``cdap-env.sh``.
+- :cask-issue:`CDAP-6327` - Allowed specifying individual Java heap sizes for Java
+  services in ``cdap-env.sh``.
 
 - :cask-issue:`CDAP-6350` - Declared startup script contents as read-only to prevent them
   from being overridden by a user in ``cdap-env.sh``.
 
-- :cask-issue:`CDAP-6361` - Added "Quick Links" for the CDAP UI, Cask Hydrator, and Cask Tracker in the Ambari 2.3+ UI.
+- :cask-issue:`CDAP-6361` - Added "Quick Links" for the CDAP UI, Cask Hydrator, and Cask
+  Tracker in the Ambari 2.3+ UI.
 
 - :cask-issue:`CDAP-6362` - Added support for CDAP services over SSL in Ambari.
 
@@ -311,11 +319,11 @@ Improvements
 - :cask-issue:`CDAP-6573` - Added a tool that allows bringing Hive in-sync with the
   partitions of a (time-)partitioned fileset.
 
-- :cask-issue:`CDAP-6880` - Users can now configure timeouts for internal HTTP connections and
-  reads in ``cdap-site.xml``. These are used for all internal HTTP calls.
+- :cask-issue:`CDAP-6880` - Users can now configure timeouts for internal HTTP connections
+  and reads in ``cdap-site.xml``. These are used for all internal HTTP calls.
 
-- :cask-issue:`CDAP-6913` - Changed to use ``YarnClient`` instead of the YARN HTTP API to fetch node
-  reports.
+- :cask-issue:`CDAP-6913` - Changed to use ``YarnClient`` instead of the YARN HTTP API to
+  fetch node reports.
 
 - :cask-issue:`CDAP-7021` - Improved program launch performance to avoid large CPU spikes
   when multiple programs are launched at the same time.
@@ -324,30 +332,34 @@ Improvements
   that were provided macro syntax will return true. At runtime, all properties will have
   ``containsMacro(.)`` return false.
 
-- :cask-issue:`HYDRATOR-219` - Added a new editor for complex schema in the Cask Hydrator UI.
+- :cask-issue:`HYDRATOR-219` - Added a new editor for complex schema in the Cask Hydrator
+  UI.
 
-- :cask-issue:`HYDRATOR-244` - Added support for macros in plugins. This allows
-  Cask Hydrator plugin fields to accept macros.
+- :cask-issue:`HYDRATOR-244` - Added support for macros in plugins. This allows Cask
+  Hydrator plugin fields to accept macros.
 
-- :cask-issue:`HYDRATOR-289` - Added support to join data from multiple sources in
-  Cask Hydrator.
+- :cask-issue:`HYDRATOR-289` - Added support to join data from multiple sources in Cask
+  Hydrator.
 
-- :cask-issue:`HYDRATOR-392` - Enhanced the Cask Hydrator upgrade tool to upgrade 3.4.x pipelines
-  to 3.5.x pipelines.
+- :cask-issue:`HYDRATOR-392` - Enhanced the Cask Hydrator upgrade tool to upgrade 3.4.x
+  pipelines to 3.5.x pipelines.
 
-- :cask-issue:`HYDRATOR-560` - The plugins NaiveBayesTrainer and NaiveBayesClassifier now have an
-  optional configurable ``features`` property. If specified as ``none``, ``100`` is used as the number of features.
+- :cask-issue:`HYDRATOR-560` - The plugins NaiveBayesTrainer and NaiveBayesClassifier now
+  have an optional configurable ``features`` property. If specified as ``none``, ``100`` is
+  used as the number of features.
 
 - :cask-issue:`HYDRATOR-578` - Snapshot sinks now allow users to specify a property
   ``cleanPartitionsOlderThan`` that cleans up any snapshots older than ``x`` days.
 
-- :cask-issue:`HYDRATOR-606` - Changed the DBSource plugin to override user-specified output schema.  
+- :cask-issue:`HYDRATOR-606` - Changed the DBSource plugin to override user-specified
+  output schema.
 
-- :cask-issue:`HYDRATOR-607` - Fixed an issue that prevented TPFS sources and sinks created
-  by Hydrator pipelines from being used as either input or output for MapReduce or Spark.
+- :cask-issue:`HYDRATOR-607` - Fixed an issue that prevented TPFS sources and sinks
+  created by Hydrator pipelines from being used as either input or output for MapReduce or
+  Spark.
 
-- :cask-issue:`HYDRATOR-713` - Added Encryptor and Decryptor plugins to Cask Hydrator that can
-  encrypt or decrypt record fields.
+- :cask-issue:`HYDRATOR-713` - Added Encryptor and Decryptor plugins to Cask Hydrator that
+  can encrypt or decrypt record fields.
 
 Bug Fixes
 ---------
@@ -358,8 +370,8 @@ Bug Fixes
 - :cask-issue:`CDAP-2501` - The CDAP Router and UI no longer need to be colocated using
   Cloudera Manager.
 
-- :cask-issue:`CDAP-3131` - Running the endpoint of the Program Lifecycle RESTful API now returns ``404``
-  instead of an empty list if a specified application is not found.
+- :cask-issue:`CDAP-3131` - Running the endpoint of the Program Lifecycle RESTful API now
+  returns ``404`` instead of an empty list if a specified application is not found.
 
 - :cask-issue:`CDAP-3732` - Fixed an issue where deploying an application was trying to
   enable CDAP Explore on system tables.
@@ -370,38 +382,41 @@ Bug Fixes
 - :cask-issue:`CDAP-4007` - Fixed an issue when running multiple unit tests in the same
   JVM.
 
-- :cask-issue:`CDAP-4434` - CDAP startup scripts return success (exit 0) if calling a service that
-  is already running.
+- :cask-issue:`CDAP-4434` - CDAP startup scripts return success (exit 0) if calling a
+  service that is already running.
 
-- :cask-issue:`CDAP-4860` - Introduced a ``/available`` endpoint for Services to check their
-  availability.
+- :cask-issue:`CDAP-4860` - Introduced a ``/available`` endpoint for Services to check
+  their availability.
 
 - :cask-issue:`CDAP-5135` - Fixed an issue where the status of a program that was killed
   through YARN showed in CDAP as having been completed successfully.
 
-- :cask-issue:`CDAP-5279` The ``beforeSubmit`` and ``onFinish`` methods of the MapReduce and Spark APIs have been deprecated. Changes to the API include:
+- :cask-issue:`CDAP-5279` The ``beforeSubmit`` and ``onFinish`` methods of the MapReduce
+  and Spark APIs have been deprecated. Changes to the API include:
 
     - 1. ``AbstractMapReduce`` and ``AbstractSpark`` now implement ``ProgramLifeCycle``
 
-    - 2. ``AbstractMapReduce`` and ``AbstractSpark`` now have a ``final initialize(context)`` method
+    - 2. ``AbstractMapReduce`` and ``AbstractSpark`` now have a ``final
+    initialize(context)`` method
 
     - 3. ``AbstractMapReduce`` and ``AbstractSpark`` now have a ``protected initialize()``
-         method default implementation of which will call ``beforeSubmit()``
+    method default implementation of which will call ``beforeSubmit()``
 
     - 4. User programs will override the no-arg initialize method
 
     - 5. Driver will call both versions of the initialize method
 
-- :cask-issue:`CDAP-5291` - Fixed a problem in the fit-to-screen functionality of flow diagrams.
+- :cask-issue:`CDAP-5291` - Fixed a problem in the fit-to-screen functionality of flow
+  diagrams.
 
-- :cask-issue:`CDAP-5536` - Fixed a problem with users putting back a partition to PartitionConsumer
-  without processing it.
+- :cask-issue:`CDAP-5536` - Fixed a problem with users putting back a partition to
+  PartitionConsumer without processing it.
 
 - :cask-issue:`CDAP-5643` - Fixed certain test cases to not depend on ``US`` as the system
   locale.
 
-- :cask-issue:`CDAP-5676` - Upgraded the Hive version used by the CDAP SDK to Hive-1.2.1 in
-  order to pick up a fix for parquet tables.
+- :cask-issue:`CDAP-5676` - Upgraded the Hive version used by the CDAP SDK to Hive-1.2.1
+  in order to pick up a fix for parquet tables.
 
 - :cask-issue:`CDAP-5875` - Require Spark on clusters configured for Hive on Spark and
   CDAP Explore service.
@@ -409,20 +424,21 @@ Bug Fixes
 - :cask-issue:`CDAP-5882` - Removed conditional restart on distributed CDAP package
   upgrades.
 
-- :cask-issue:`CDAP-5969` - CDAP Upgrade tasks are now available in the CDAP Ambari Service.
+- :cask-issue:`CDAP-5969` - CDAP Upgrade tasks are now available in the CDAP Ambari
+  Service.
 
-- :cask-issue:`CDAP-6026` - Fixed an issue where an exception thrown in the initialize method of
-  the Workflow was causing the Workflow container not to be terminated.
+- :cask-issue:`CDAP-6026` - Fixed an issue where an exception thrown in the initialize
+  method of the Workflow was causing the Workflow container not to be terminated.
 
-- :cask-issue:`CDAP-6035` - Fixed a problem with correctly setting the context classloader for the Workflow
-  ``initialize()`` and ``destroy(``) methods, to provide a consistent classloading behavior across
-  all program types.
+- :cask-issue:`CDAP-6035` - Fixed a problem with correctly setting the context classloader
+  for the Workflow ``initialize()`` and ``destroy(``) methods, to provide a consistent
+  classloading behavior across all program types.
 
 - :cask-issue:`CDAP-6045` - Fixed an issue where application deployment was failing on
   Windows because of a colon (":") character in the filename.
 
-- :cask-issue:`CDAP-6109` - Fixed a NullPointerException issue in Spark when saving RDD to a
-  PartitionedFileSet dataset.
+- :cask-issue:`CDAP-6109` - Fixed a NullPointerException issue in Spark when saving RDD to
+  a PartitionedFileSet dataset.
 
 - :cask-issue:`CDAP-6115` - Fixed a bug in the Flow system where usage of the primitive
   ``byte``, ``short``, or ``char`` types caused exceptions.
@@ -435,15 +451,15 @@ Bug Fixes
 - :cask-issue:`CDAP-6147` - Improved the error message in the authorization and lineage
   clients when a ``404`` is returned from the server side.
 
-- :cask-issue:`CDAP-6150` - The ``isSuccessful()`` method of the WorkflowContext is replaced by the
-  ``getState()`` method, which returns the state of the workflow.
+- :cask-issue:`CDAP-6150` - The ``isSuccessful()`` method of the WorkflowContext is
+  replaced by the ``getState()`` method, which returns the state of the workflow.
 
-- :cask-issue:`CDAP-6170` - Fixed an issue that caused an error if an application or program
-  attempted to override input/output format properties that were already defined in the
-  dataset properties.
+- :cask-issue:`CDAP-6170` - Fixed an issue that caused an error if an application or
+  program attempted to override input/output format properties that were already defined in
+  the dataset properties.
 
-- :cask-issue:`CDAP-6280` - Fixed a problem with allowing FileSets and PartitionedFileSets to be tagged as
-  explorable in the CDAP UI.
+- :cask-issue:`CDAP-6280` - Fixed a problem with allowing FileSets and PartitionedFileSets
+  to be tagged as explorable in the CDAP UI.
 
 - :cask-issue:`CDAP-6311` - Fixed a bug that the program run record was not correctly
   reflected in CDAP if the corresponding YARN application failed to start.
@@ -457,31 +473,33 @@ Bug Fixes
 - :cask-issue:`CDAP-6386` - Fixed an issue where updating the properties of a dataset
   deleted all of its partitions in Hive.
 
-- :cask-issue:`CDAP-6452` - Add a check for the environment variable ``CDAP_UI_COMPRESSION_ENABLED`` 
-to disable UI compression.
+- :cask-issue:`CDAP-6452` - Add a check for the environment variable
+  ``CDAP_UI_COMPRESSION_ENABLED`` to disable UI compression.
 
 - :cask-issue:`CDAP-6455` - Fixed the classpath of a MapReduce program launched by the
   explore service to include the ``cdap-common.jar`` at the beginning.
 
-- :cask-issue:`CDAP-6486` - Fixed an issue that caused a Zookeeper watch to leak memory every
-  time a program was started.
+- :cask-issue:`CDAP-6486` - Fixed an issue that caused a Zookeeper watch to leak memory
+  every time a program was started.
 
-- :cask-issue:`CDAP-6510` - Fixed an issue where the ExploreService was attempting (with no
-  effect except for a slow down) to run the upgrade procedure for all explorable datasets.
+- :cask-issue:`CDAP-6510` - Fixed an issue where the ExploreService was attempting (with
+  no effect except for a slow down) to run the upgrade procedure for all explorable
+  datasets.
 
-- :cask-issue:`CDAP-6515` - Fixed classloading issues related to using Guava's ``Optional`` class in
-  Spark, allowing programs to perform left-outer and full-outer joins on RDDs.
+- :cask-issue:`CDAP-6515` - Fixed classloading issues related to using Guava's
+  ``Optional`` class in Spark, allowing programs to perform left-outer and full-outer joins
+  on RDDs.
 
 - :cask-issue:`CDAP-6524` - Plugins now support the "char" primitive as a property type.
 
-- :cask-issue:`CDAP-6643` - Fixed an issue that caused massive log messages when there was an
-  underlying HDFS issues.
+- :cask-issue:`CDAP-6643` - Fixed an issue that caused massive log messages when there was
+  an underlying HDFS issues.
 
 - :cask-issue:`CDAP-6783` - Fixed the classpath ordering in Spark to load the classes from
   ``cdap-common`` first.
 
-- :cask-issue:`CDAP-6829` - Fixed issues that prevented the Log Saver from performing cleanup
-  when metadata is present for a non-existing file.
+- :cask-issue:`CDAP-6829` - Fixed issues that prevented the Log Saver from performing
+  cleanup when metadata is present for a non-existing file.
 
 - :cask-issue:`CDAP-6852` - Fixed issues that makes the Log Saver more resilient to errors
   while checkpointing.
@@ -493,83 +511,84 @@ to disable UI compression.
   this step:
 
     - 1. The user that CDAP runs as now receives "admin" privileges on the CDAP instance,
-         as well as "all" privileges on the system namespace.
+    as well as "all" privileges on the system namespace.
 
     - 2. The list of users specified in the parameter
-         ``security.authorization.admin.users`` in cdap-site.xml receives "admin"
-         privileges on the CDAP instance so that they can create namespaces.
+    ``security.authorization.admin.users`` in cdap-site.xml receives "admin" privileges on
+    the CDAP instance so that they can create namespaces.
 
 - :cask-issue:`CDAP-6929` - Logs from Spark driver and executors are now collected.
 
-- :cask-issue:`CDAP-6930` - **Incompatible Change:** Updated the :ref:`cdap-clients to throw
-  UnauthorizedExceptions when operations return ``403 - Forbidden`` from CDAP. Users of
-  ``cdap-clients`` may have to update their code to handle these exceptions.
+- :cask-issue:`CDAP-6930` - **Incompatible Change:** Updated the "cdap-clients" to throw
+  ``UnauthorizedException`` when an operation returns ``403 - Forbidden`` from CDAP. Users
+  of "cdap-clients" may need to update their code to handle these exceptions.
 
 - :cask-issue:`CDAP-6935` - Fix a bug where the live-info endpoint was not working for
   Workflows, MapReduce, Worker, and Spark.
 
-- :cask-issue:`CDAP-6939` - Fixes support for chrome < 44 version. UI is using Ecmascript
-  2015` - that older browsers doesn't implement. Added proper transpilation to support older
-  browsers in VMs.
+- :cask-issue:`CDAP-6939` - Fixed support in the CDAP UI for Google Chrome prior to
+  version 44.
 
-- :cask-issue:`CDAP-7026` - Upon namespace creation, all privileges are granted to both -
+- :cask-issue:`CDAP-7026` - Upon namespace creation, all privileges are granted to both
   the user who created the namespace as well as the user that programs will run as in the
-  namespace.
+  new namespace.
 
-- :cask-issue:`CDAP-7066` - Restart of system services kills containers if the containers
-  are un-responsive thereby not leaving stray containers.
+- :cask-issue:`CDAP-7066` - Restart of system services now kills containers if the
+  containers are unresponsive so as to not leave stray containers.
 
-- :cask-issue:`CDAP-7082` - Removed bundling the parquet jar from com.twitter package with
-  CDAP master.
+- :cask-issue:`CDAP-7082` - Removed bundling the parquet JAR from the ``com.twitter``
+  package with CDAP Master.
 
-- :cask-issue:`CDAP-7128` - Fixed a bug on changing number of Worker instances in
-  distributed mode.
+- :cask-issue:`CDAP-7128` - Fixed a bug on changing the number of Worker instances in CDAP
+  Distributed mode.
 
-- :cask-issue:`HYDRATOR-47` - DBSource now casts TINYINT and SMALLINT to INT type
+- :cask-issue:`HYDRATOR-47` - The DBSource plugin now casts ``TINYINT`` and ``SMALLINT``
+  to ``INT`` type.
 
-- :cask-issue:`HYDRATOR-54` - Validator UI configuration is preserved in cloned pipeline.
-
-- :cask-issue:`HYDRATOR-80` - Fixed an issue where configuration of the FileSource was
-  failing while setting the properties for the FileInputFormat.
-
-- :cask-issue:`HYDRATOR-133` - HDFSSink can now be used alongside other sinks in a Hydrator
+- :cask-issue:`HYDRATOR-54` - The Validator UI configuration is now preserved in a cloned
   pipeline.
 
+- :cask-issue:`HYDRATOR-80` - Fixed an issue where the configuration of the FileSource was
+  failing while setting the properties for the FileInputFormat.
+
+- :cask-issue:`HYDRATOR-133` - HDFSSink can now be used alongside other sinks in a
+  Hydrator pipeline.
+
 - :cask-issue:`HYDRATOR-149` - Removes the dependency of using labels from plugins in
-  pipelines being imported in UI. Any pipeline configuration publishable from CLI or REST
-  api should be publishable from UI too.
+  pipelines being imported in UI. Any pipeline configuration publishable from the CDAP-CLI
+  or the Artifact RESTful HTTP API should now be publishable from UI.
 
 - :cask-issue:`HYDRATOR-398` - Adds the ability to view properties of plugins in pipelines
-  created in older versions of Hydrator.
+  created in older versions of Cask Hydrator.
 
-- :cask-issue:`HYDRATOR-438` - Fixed Hydrator CSVParser so that a nullable field is only set
-  to null if the parsed value is an empty string, and the field is not a string or nullable
-  string type.
+- :cask-issue:`HYDRATOR-438` - Fixed the Hydrator CSVParser plugin so that a nullable
+  field is only set to null if the parsed value is an empty string and the field is not
+  either a string or nullable string type.
 
-- :cask-issue:`HYDRATOR-451` - CSVParser now supports accepting a nullable string as a field
-  to parse. If the field is null, all other fields are propagated and those that would
-  otherwise be parsed by the CSV parser are set to null.
+- :cask-issue:`HYDRATOR-451` - The CSVParser plugin now supports accepting a nullable
+  string as a field to parse. If the field is null, all other fields are propagated and
+  those that would otherwise be parsed by the CSVParser are set to null.
 
-- :cask-issue:`HYDRATOR-459` - Fixed a bug due to which the UPPER/lower transform was not
+- :cask-issue:`HYDRATOR-459` - Fixed a bug causing the UPPER to lower transform not being
   applied to all columns correctly for DBSink.
 
-- :cask-issue:`HYDRATOR-686` - Many existing Hydrator batch and spark plugins now have macros
-  enabled properties (specified in the documentation).
+- :cask-issue:`HYDRATOR-686` - Many existing Hydrator batch and spark plugins now have
+  macro-enabled properties, as specified in their reference documentation.
 
-- :cask-issue:`HYDRATOR-705` - Fixed an issue with record serialization for non-ascii values
-  in the shuffle phase of Hydrator pipelines.
+- :cask-issue:`HYDRATOR-705` - Fixed an issue with record serialization for non-ASCII
+  values in the shuffle phase of Hydrator pipelines.
 
-- :cask-issue:`HYDRATOR-790` - Release 3.4.0 introduced infinite-scroll for the input and
-  output schemas; the version used (1.2.2) of the infinite scroll component had
-  performance issues. The version of the infinite scroll component used has been 
-  downgraded to restore the performance in Hydrator views.
+- :cask-issue:`HYDRATOR-790` - Release CDAP 3.4.0 introduced infinite-scroll for the input
+  and output schemas; the version used (1.2.2) of the infinite scroll component had
+  performance issues. The version of the infinite scroll component used has been downgraded
+  to restore the performance in Hydrator views.
 
-- :cask-issue:`TRACKER-21` - Renamed AuditLog service to the TrackerService.
+- :cask-issue:`TRACKER-21` - Renamed the AuditLog service to the TrackerService.
 
-- :cask-issue:`TRACKER-42` - Fixed integrating navigator app in Tracker UI. The POST body
-  request that was sent while deploying navigator app was using an older deprecated property
-  (UI was using 'metadataKafkaConfig' instead of 'auditKafkaConfig'). This should enable
-  using navigator app in Tracker UI.
+- :cask-issue:`TRACKER-42` - Fixed integrating the navigator app in the Cask Tracker UI.
+  The POST body request that was sent while deploying the navigator app was using an older,
+  deprecated property (UI was using ``metadataKafkaConfig`` instead of
+  ``auditKafkaConfig``). This should enable using the navigator app in the Cask Tracker UI.
 
 
 `Release 3.4.1 <http://docs.cask.co/cdap/3.4.1/index.html>`__
