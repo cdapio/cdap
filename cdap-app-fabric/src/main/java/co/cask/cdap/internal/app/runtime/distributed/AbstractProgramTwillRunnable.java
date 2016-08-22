@@ -225,12 +225,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       if (controller != null) {
         controller.stop().get();
       }
-      if (logAppenderInitializer != null) {
-        logAppenderInitializer.close();
-      }
-    } catch (InterruptedException e) {
-      LOG.debug("Interrupted while stopping runnable: {}.", name, e);
-      Thread.currentThread().interrupt();
     } catch (Exception e) {
       LOG.error("Failed to stop runnable: {}.", name, e);
       throw Throwables.propagate(e);
@@ -331,13 +325,19 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   @Override
   public void destroy() {
     LOG.info("Releasing resources: {}", name);
-    if (program != null) {
-      Closeables.closeQuietly(program);
+    try {
+      if (program != null) {
+        Closeables.closeQuietly(program);
+      }
+      Futures.getUnchecked(
+        Services.chainStop(authEnforcementService, resourceReporter, streamCoordinatorClient,
+                           metricsCollectionService, kafkaClientService, zkClientService));
+      LOG.info("Runnable stopped: {}", name);
+    } finally {
+      if (logAppenderInitializer != null) {
+        logAppenderInitializer.close();
+      }
     }
-    Futures.getUnchecked(
-      Services.chainStop(authEnforcementService, resourceReporter, streamCoordinatorClient,
-                         metricsCollectionService, kafkaClientService, zkClientService));
-    LOG.info("Runnable stopped: {}", name);
   }
 
   private CommandLine parseArgs(String[] args) {
