@@ -122,7 +122,7 @@ public class ExploreServiceUtilsTest {
       conf.writeXml(os);
     }
 
-    String mapredApplicationClassPath = "$PWD/*," +
+    String mapredApplicationClassPath = "$PWD/classes,$PWD/*," +
       conf.get(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH,
                MRJobConfig.DEFAULT_MAPREDUCE_APPLICATION_CLASSPATH);
 
