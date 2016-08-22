@@ -72,7 +72,7 @@ div.related {
     background-color: #303840;
     line-height: 32px;
     color: #fff;
-    text-shadow: 0px 1px 0 #444;
+    text-shadow: 0 1px 0 #444;
     font-size: 0.9em;
     width: auto;
     background-image: url(./doc_logo.png);
@@ -89,6 +89,10 @@ div.related {
 div.related a {
     color: #FFFFFF;
     font-weight: bold;
+}
+
+div.section {
+	clear: both;
 }
 
 div.sphinxsidebar {
@@ -127,6 +131,12 @@ div.sphinxsidebar h3 a {
     color: #444;
 }
 
+div.sphinxsidebar h3.cdap-extensions {
+    background-color: #eee;
+    margin-left: 0;
+    padding-bottom: 0;
+}
+
 div.sphinxsidebar p {
     color: #888;
     padding: 5px 20px;
@@ -136,7 +146,7 @@ div.sphinxsidebar p.topless {
 }
 
 div.sphinxsidebar ul {
-    margin-top:    10px;
+    margin-top:    5px;
     margin-bottom: 10px;
     margin-right:  10px;
     margin-left:   20px;
@@ -170,21 +180,7 @@ div.sphinxsidebar input[type=text]{
     margin-left: 20px;
 }
 
-a.current {
-    font-weight: bold;
-}
-
 /* -- body styles ----------------------------------------------------------- */
-
-a {
-    color: #ff6600;
-    text-decoration: none;
-}
-
-a:hover {
-    color: #005B81;
-    text-decoration: underline;
-}
 
 div.body h1,
 div.body h2,
@@ -195,9 +191,9 @@ div.body h6 {
     background-color: #EEE;
     font-weight: normal;
     color: #111;
-    margin: 30px 0px 10px -15px;
-    padding: 5px 0px  5px  15px;
-    text-shadow: 0px 1px 0px white;
+    margin: 30px 0 10px -15px;
+    padding: 5px 0  5px  15px;
+    text-shadow: 0 1px 0 white;
 }
 
 div.body h1 { border-top: 20px solid white; margin-top: 0; font-size: 180%; font-weight:bold;}
@@ -209,22 +205,39 @@ div.body h6 { font-size: 100%; font-weight:normal;}
 
 div.body h1 { background-color: #E0E0E0; }
 div.body h2 { background-color: #E0E0E0; }
-div.body h3 { background-color: #E0E0E0; margin: 30px 0px 10px 0px; }
-div.body h4 { background-color: #EDEDED; margin: 30px 0px 10px 0px; }
-div.body h5 { background-color: #F2F2F2; margin: 30px 0px 10px 0px; }
+div.body h3 { background-color: #E0E0E0; margin: 30px 0 10px 0; }
+div.body h4 { background-color: #EDEDED; margin: 30px 0 10px 0; }
+div.body h5 { background-color: #F2F2F2; margin: 30px 0 10px 0; }
 div.body h6 { background-color: #F2F2F2; }
 
-a.headerlink {
-    color: #c60f0f;
-    font-size: 0.8em;
-    padding: 0 4px 0 4px;
+a {
+    color: #ff6600;
     text-decoration: none;
-    display: none;
 }
 
-a.headerlink:hover {
-    background-color: #c60f0f;
-    color: white;
+a.current {
+    font-weight: bold;
+}
+
+a:hover {
+    color: #005B81;
+    text-decoration: underline;
+}
+
+a.headerlink {
+    color: #ff6600;
+    font-size: 0.8em;
+    padding-top: .25em;
+    width: 1.5ex;
+    margin-left: -3ex;
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    float: left;
+}
+
+h1:hover > a.headerlink {
+    margin-left: -2.5ex;
 }
 
 a.toc-backref {
@@ -245,8 +258,8 @@ div.admonition p.admonition-title + p {
 
 div.highlight{
     background-color: white;
-    margin-left: 0px;
-    margin-right: 0px;
+    margin-left: 0;
+    margin-right: 0;
 }
 
 div.note {
@@ -256,7 +269,7 @@ div.note {
 
 div.related ul {
     margin-left: -5px;
-    padding-left: 0px;
+    padding-left: 0;
 }
 
 div.seealso {
@@ -270,6 +283,15 @@ li.versions {
     margin-left: -135px;
     text-align: right;
     top: 6px;
+}
+
+/* -- Fix menu display on Firefox ------------------------- */
+
+@-moz-document url-prefix() { 
+    li.versions {
+        margin-left: -165px;
+        top: -1px;
+    }
 }
 
 div.topic {
@@ -301,13 +323,13 @@ p.admonition-title:after {
 }
 
 p.rubric {
-    background-color: #E0E0E0;
-    font-size: 120%;
-    font-weight: normal;
+    background-color: #EDEDED; 
     color: #111;
-    margin: 30px 0px 10px 0px;
-    padding: 5px 0 5px 15px;
-    text-shadow: 0px 1px 0 white
+    font-size: 110%; 
+    font-weight: normal;
+    margin: 30px 0 10px 0;
+    padding: 5px 0  5px  15px;
+    text-shadow: 0 1px 0 white;
 }
 
 .sidebar20.sidebar {
@@ -360,7 +382,7 @@ div.viewcode-block:target {
 
 img.bordered-image { 
     border:2px outset #708091;
-    display: inline-block; 
+    /* display: inline-block; */
 }
 
 img.bordered-image-top-margin { 
@@ -391,9 +413,9 @@ ul.simple {
 
 td .docutils.literal {
   background: #ffffff;
-  border: 0px;
-  border-radius: 0px;
-  padding: 0px;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
 }
 
 /* -- Table styles used in Introduction page -------------------------------------- */
@@ -450,7 +472,7 @@ div.table-block.container table.triple-table.docutils tr:first-of-type th.stub {
 div.table-block-example.container {
   border-style: solid;
   border-width: 1px;
-  margin-left: 0px;
+  margin-left: 0;
   margin-top: 20px;
   margin-bottom: 30px;
   border-color: #aaa;
@@ -506,12 +528,12 @@ table.faq-table.docutils tr.row-odd td {
 
 table.faq-table.docutils tr.row-even th.stub {
     padding-top: 5px;
-    border-bottom: 0px;
+    border-bottom: 0;
 }
 
 table.faq-table.docutils tr.row-even td {
     padding-top: 5px;
-    border-bottom: 0px;
+    border-bottom: 0;
 }
 
 table.faq-table.docutils tr.row-odd div.highlight pre {
@@ -522,7 +544,7 @@ table.faq-table.docutils tr.row-odd div.highlight pre {
 /* -- Styles to hide navigation ----------------------------------------------- */
 
 div.documentwrapper-hidden {
-    margin-top: 0px;
+    margin-top: 0;
 }
 
 div.bodywrapper-hidden {
@@ -532,7 +554,7 @@ div.bodywrapper-hidden {
 /* -- Styles for tabbed parsed literals -------------------------------------- */
 
 div.code.code-tab div.highlight pre {
-    margin-top: 0px;
+    margin-top: 0;
     margin-right: 14px;
     margin-left: 14px;
     margin-bottom: 16px;
@@ -547,4 +569,27 @@ div.code.code-tab {
 
 div.tab-contents {
     padding-bottom: 16px;
+}
+
+
+/* -- Styles for Administration manual installation step images ------------- */
+
+div.admin-manual-step-images.container {
+    margin-left: -20px;
+    margin-bottom: -20px;
+}
+
+/* -- Styles for custom "inline-sidebar" ------------- */
+
+div.inline-sidebar.container {
+    background-color: #F9FAFB;
+    border: 2px solid #d8d8d8;
+    padding: 0 10px 0 10px;
+}
+
+/* -- Styles for "black links" ------------- */
+
+a span.link-black {
+	color: black;
+	font-weight:bold;
 }
