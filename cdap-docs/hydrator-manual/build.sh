@@ -233,7 +233,7 @@ function download_includes() {
   download_md_file core-plugins File-batchsource.md
   download_md_file core-plugins FTP-batchsource.md
   download_md_file core-plugins GroupByAggregate-batchaggregator.md
-  download_md_file core-plugins HDFSFileMoveAction-action.md
+  download_md_file core-plugins HDFSMove-action.md
   download_md_file core-plugins JavaScript-transform.md
   download_md_file core-plugins JMS-realtimesource.md
   download_md_file core-plugins Joiner-batchjoiner.md
@@ -251,7 +251,7 @@ function download_includes() {
   download_md_file core-plugins SnapshotAvro-batchsource.md
   download_md_file core-plugins SnapshotParquet-batchsink.md
   download_md_file core-plugins SnapshotParquet-batchsource.md
-  download_md_file core-plugins SSHAction-action.md
+  download_md_file core-plugins SSH-action.md
   download_md_file core-plugins Stream-batchsource.md
   download_md_file core-plugins Stream-realtimesink.md
   download_md_file core-plugins StructuredRecordToGenericRecord-transform.md
