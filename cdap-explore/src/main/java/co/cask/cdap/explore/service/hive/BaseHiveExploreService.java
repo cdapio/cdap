@@ -767,7 +767,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         if (Strings.isNullOrEmpty(namespaceMeta.getConfig().getHiveDatabase())) {
           // if no custom hive database was provided get the hive database according to cdap format and create it
           // if one does not exists since cdap is responsible for managing the lifecycle of such databases
-          String database = getHiveDatabase(namespaceMeta.getName());
+          String database = createHiveDBName(namespaceMeta.getName());
           // "IF NOT EXISTS" so that this operation is idempotent.
           String statement = String.format("CREATE DATABASE IF NOT EXISTS %s", database);
           operationHandle = executeAsync(sessionHandle, statement);
@@ -1248,22 +1248,35 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   private String getHiveDatabase(@Nullable String namespace) {
     // null namespace implies that the operation happens across all databases
-    if (namespace == null) {
-      return null;
+    if (isNullOrDefault(namespace)) {
+      return namespace;
     }
     try {
-      if (namespace.equals(NamespaceId.DEFAULT.getNamespace())) {
-        return namespace;
-      }
       String customHiveDb = namespaceQueryAdmin.get(Id.Namespace.from(namespace)).getConfig().getHiveDatabase();
       if (!Strings.isNullOrEmpty(customHiveDb)) {
         return customHiveDb;
       }
-      String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
-      return String.format("%s_%s", tablePrefix, namespace);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+    return getCDAPFormatDBName(namespace);
+  }
+
+  private String createHiveDBName(@Nullable String namespace) {
+    // null namespace implies that the operation happens across all databases
+    if (isNullOrDefault(namespace)) {
+      return namespace;
+    }
+    return getCDAPFormatDBName(namespace);
+  }
+
+  private String getCDAPFormatDBName(@Nullable String namespace) {
+    String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
+    return String.format("%s_%s", tablePrefix, namespace);
+  }
+
+  private boolean isNullOrDefault(@Nullable String namespace) {
+    return namespace == null || namespace.equals(NamespaceId.DEFAULT.getNamespace());
   }
 
   /**

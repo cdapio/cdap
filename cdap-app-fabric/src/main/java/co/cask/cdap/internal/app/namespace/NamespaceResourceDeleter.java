@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,16 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.app.preview;
 
-import co.cask.cdap.api.preview.PreviewLogger;
+package co.cask.cdap.internal.app.namespace;
+
+import co.cask.cdap.proto.NamespaceMeta;
 
 /**
- * Implementation of the {@link PreviewLogger} which logs nothing.
+ * Responsible for deleting resources associated with namespace.
  */
-public class NoopPreviewLogger implements PreviewLogger {
-  @Override
-  public void log(String propertyName, Object propertyValue) {
-    // no-op
-  }
+public interface NamespaceResourceDeleter {
+
+  void deleteResources(NamespaceMeta namespaceMeta) throws Exception;
 }

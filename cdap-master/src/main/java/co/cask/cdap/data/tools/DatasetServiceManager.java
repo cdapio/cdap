@@ -46,7 +46,7 @@ import co.cask.cdap.security.CurrentUGIProvider;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreModules;
-import co.cask.cdap.store.guice.NamespaceStoreModule;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.AbstractModule;
@@ -123,7 +123,8 @@ public class DatasetServiceManager extends AbstractIdleService {
     }
   }
 
-  private Injector createInjector(CConfiguration cConf, Configuration hConf) {
+  @VisibleForTesting
+  Injector createInjector(CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
@@ -137,7 +138,6 @@ public class DatasetServiceManager extends AbstractIdleService {
       new DataSetsModules().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new ExploreClientModule(),
-      new NamespaceStoreModule().getDistributedModules(),
       new RemoteSystemOperationsServiceModule(),
       new SecureStoreModules().getDistributedModules(),
       new AuthorizationModule(),
