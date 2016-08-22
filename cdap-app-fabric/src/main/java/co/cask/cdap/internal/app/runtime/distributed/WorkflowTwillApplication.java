@@ -19,6 +19,8 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.proto.ProgramType;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.TwillApplication;
@@ -33,13 +35,13 @@ public class WorkflowTwillApplication extends AbstractProgramTwillApplication {
   private final WorkflowSpecification spec;
   private final Resources resources;
 
-  public WorkflowTwillApplication(Program program, WorkflowSpecification spec,
+  public WorkflowTwillApplication(Program program, Arguments runtimeArgs, WorkflowSpecification spec,
                                   Map<String, LocalizeResource> localizeResources,
                                   EventHandler eventHandler,
                                   Resources resources) {
     super(program, localizeResources, eventHandler);
     this.spec = spec;
-    this.resources = resources;
+    this.resources = SystemArguments.getResources(runtimeArgs, resources);
   }
 
   @Override

@@ -118,6 +118,10 @@ public enum ProgramType {
     return parameters.getPrettyName();
   }
 
+  public String getScope() {
+    return name().toLowerCase();
+  }
+
   public SchedulableProgramType getSchedulableType() {
     if (parameters.getSchedulableType() == null) {
       throw new IllegalArgumentException(this + " is not a SchedulableProgramType");

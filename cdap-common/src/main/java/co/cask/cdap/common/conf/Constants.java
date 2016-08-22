@@ -84,7 +84,6 @@ public final class Constants {
     /** Scheduler queue name to submit the master service app. */
     public static final String SCHEDULER_QUEUE = "master.services.scheduler.queue";
     public static final String METADATA_SERVICE = "metadata.service";
-    public static final String PREVIEW_HTTP = "preview";
   }
 
   /**
@@ -137,6 +136,8 @@ public final class Constants {
     public static final String PROGRAM_EXTRA_CLASSPATH = "app.program.extra.classpath";
     public static final String SPARK_YARN_CLIENT_REWRITE = "app.program.spark.yarn.client.rewrite.enabled";
     public static final String RUNTIME_EXT_DIR = "app.program.runtime.extensions.dir";
+    public static final String PROGRAM_MAX_START_SECONDS = "app.program.max.start.seconds";
+    public static final String PROGRAM_MAX_STOP_SECONDS = "app.program.max.stop.seconds";
 
     /**
      * Guice named bindings.
@@ -184,17 +185,6 @@ public final class Constants {
     public static final String WORKFLOW_LOCAL_DATASET_PROPERTY = "workflow.local.dataset";
   }
 
-  /**
-   * Preview Configurations
-   */
-  public class Preview {
-    public static final String ENABLED = "enable.alpha.preview";
-
-    /**
-     * Guice named bindings.
-     */
-    public static final String HANDLERS_BINDING = "preview.http.handler";
-  }
   /**
    * Scheduler options.
    */

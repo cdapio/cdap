@@ -18,7 +18,9 @@ package co.cask.cdap.api.spark;
 
 import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.ProgramConfigurer;
+import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 
@@ -35,6 +37,12 @@ public interface SparkConfigurer extends ProgramConfigurer, DatasetConfigurer, P
    * @param className the fully qualified name of class containing the main method
    */
   void setMainClassName(String className);
+
+  /**
+   * Sets the resources requirement for the Spark client process. It is the process where the
+   * {@link ProgramLifecycle#initialize(RuntimeContext)} and {@link ProgramLifecycle#destroy()} methods get executed.
+   */
+  void setClientResources(Resources resources);
 
   /**
    * Sets the resources requirement for the Spark driver process.

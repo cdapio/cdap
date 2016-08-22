@@ -283,9 +283,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         programController = new WebappTwillProgramController(programId.toId(), controller, runId);
         break;
       case SERVICE:
-        DistributedServiceRunnableInstanceUpdater instanceUpdater =
-          new DistributedServiceRunnableInstanceUpdater(controller);
-        programController = new ServiceTwillProgramController(programId.toId(), controller, instanceUpdater, runId);
+        programController = new ServiceTwillProgramController(programId.toId(), controller, runId);
         break;
       case WORKER:
         programController = new WorkerTwillProgramController(programId.toId(), controller, runId);

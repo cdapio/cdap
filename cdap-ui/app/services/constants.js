@@ -18,6 +18,7 @@
 var pluginLabels = {
   'source': 'Source',
   'transform': 'Transform',
+  'analytics': 'Analytics',
   'sink': 'Sink',
   'action': 'Action'
 };
@@ -70,12 +71,12 @@ angular.module(PKG.name + '.services')
       'transform': pluginLabels['transform'],
       'batchsource': pluginLabels['source'],
       'batchsink': pluginLabels['sink'],
-      'batchaggregator': pluginLabels['transform'],
+      'batchaggregator': pluginLabels['analytics'],
       'realtimesink': pluginLabels['sink'],
       'realtimesource': pluginLabels['source'],
-      'sparksink': pluginLabels['sink'],
-      'sparkcompute': pluginLabels['transform'],
-      'batchjoiner': pluginLabels['transform'],
+      'sparksink': pluginLabels['analytics'],
+      'sparkcompute': pluginLabels['analytics'],
+      'batchjoiner': pluginLabels['analytics'],
       'action': 'Action',
       'streamingsource': pluginLabels['source'],
       'windower': pluginLabels['transform']
@@ -148,6 +149,9 @@ angular.module(PKG.name + '.services')
               'INVALID-SCHEDULE': 'Batch pipeline should have a valid schedule specification.',
               'INVALID-INSTANCE': 'Realtime pipeline should have a valid instance specification.',
               'INVALID-NODES-CONNECTIONS': 'Unknown node(s) in \'connections\' property in pipeline specification.'
+            },
+            'PREVIEW': {
+              'NO-SOURCE-SINK': 'Please add a source and sink to the pipeline'
             },
             'MISSING-SYSTEM-ARTIFACTS': 'Missing system artifacts. Please load system artifacts to use hydrator studio.'
           },

@@ -15,7 +15,8 @@
  */
 
 class HydratorPlusPlusNodeConfigCtrl {
-  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, HydratorPlusPlusHydratorService) {
+  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, HydratorPlusPlusHydratorService, myPipelineApi, HydratorPlusPlusPreviewStore, rIsStudioMode) {
+    'ngInject';
     this.$scope = $scope;
     this.$timeout = $timeout;
     this.$state = $state;
@@ -31,6 +32,8 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.ConfigStore = HydratorPlusPlusConfigStore;
     this.$scope.isDisabled = rDisabled;
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
+    this.myPipelineApi = myPipelineApi;
+    this.previewStore = HydratorPlusPlusPreviewStore;
 
     this.setDefaults(rPlugin);
     this.tabs = [
@@ -47,8 +50,20 @@ class HydratorPlusPlusNodeConfigCtrl {
         templateUrl: '/assets/features/hydratorplusplus/templates/partial/node-config-modal/reference-tab.html'
       }
     ];
-    this.activeTab = 1;
+
     this.showContents();
+
+    this.isStudioMode = rIsStudioMode;
+    this.isPreviewMode = this.previewStore.getState().preview.isPreviewModeEnabled;
+
+    if (rIsStudioMode && this.isPreviewMode) {
+      this.previewLoading = false;
+      this.previewData = null;
+      this.fetchPreview();
+    }
+
+    this.activeTab = this.isPreviewMode ? 2 : 1;
+
 
     // Timeouts
     this.setStateTimeout = null;
@@ -316,8 +331,112 @@ class HydratorPlusPlusNodeConfigCtrl {
       error.push('There are two or more fields with the same name.');
     }
   }
+
+  // PREVIEW
+  fetchPreview() {
+    this.previewLoading = true;
+    let previewId = this.previewStore.getState().preview.previewId;
+
+    if (!previewId) {
+      this.previewLoading = false;
+      return;
+    }
+    let params = {
+      namespace: this.$state.params.namespace,
+      previewId: previewId,
+      stage: this.state.node.plugin.label,
+      scope: this.$scope
+    };
+    this.myPipelineApi.getStagePreview(params)
+      .$promise
+      .then((res) => {
+        this.previewData = {
+          input: {},
+          output: {},
+          numInputStages: 0
+        };
+
+        if (!this.state.isSource) {
+          this.previewData.input = this.formatMultipleRecords(res['input.records']);
+          this.previewData.numInputStages = Object.keys(this.previewData.input).length;
+        }
+        if (!this.state.isSink) {
+          this.previewData.output = this.formatRecords(res['output.records']);
+        }
+        this.previewLoading = false;
+      }, () => {
+        this.previewLoading = false;
+      });
+  }
+
+  formatMultipleRecords(records) {
+    let mapInputs = {};
+
+    angular.forEach(records, (record) => {
+      let json = {};
+      try {
+        json = JSON.parse(record);
+      } catch (e) {
+        console.log('ERROR', e);
+        return;
+      }
+
+      if (!json.value.schema) { return; }
+
+      let schema = json.value.schema.fields.map( (field) => {
+        return field.name;
+      });
+
+      let data = json.value.fields;
+
+      if (!mapInputs[json.key]) {
+        mapInputs[json.key] = {
+          schema: schema,
+          records: []
+        };
+      }
+
+      mapInputs[json.key].records.push(data);
+    });
+
+    return mapInputs;
+  }
+
+  formatRecords(records) {
+    if (!records) {
+      return {
+        schema: [],
+        records: []
+      };
+    }
+
+    let jsonRecords = records.map( (record) => {
+      let json = {};
+      try {
+        json = JSON.parse(record);
+      } catch (e) {
+        console.log('ERROR', e);
+        return json;
+      }
+      return json;
+    });
+
+    let schema = jsonRecords[0].value.schema.fields.map( (field) => {
+      return field.name;
+    });
+
+    let data = jsonRecords.map( (record) => {
+      return record.value.fields;
+    });
+
+    return {
+      schema: schema,
+      records: data
+    };
+  }
+
+
 }
-HydratorPlusPlusNodeConfigCtrl.$inject = ['$scope', '$timeout', '$state', 'HydratorPlusPlusPluginConfigFactory', 'EventPipe', 'GLOBALS', 'HydratorPlusPlusConfigActions', 'myHelpers', 'NonStorePipelineErrorFactory', '$uibModal', 'HydratorPlusPlusConfigStore', 'rPlugin', 'rDisabled', 'HydratorPlusPlusHydratorService'];
 
 angular.module(PKG.name + '.feature.hydratorplusplus')
   .controller('HydratorPlusPlusNodeConfigCtrl', HydratorPlusPlusNodeConfigCtrl);

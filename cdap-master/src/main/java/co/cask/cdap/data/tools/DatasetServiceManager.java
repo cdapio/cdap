@@ -16,8 +16,12 @@
 
 package co.cask.cdap.data.tools;
 
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
-import co.cask.cdap.app.store.Store;
+import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
+import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -25,13 +29,15 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
-import co.cask.cdap.common.security.UGIProvider;
+import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
@@ -39,14 +45,17 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsService;
 import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsServiceModule;
-import co.cask.cdap.internal.app.store.DefaultStore;
-import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
+import co.cask.cdap.metrics.store.DefaultMetricStore;
+import co.cask.cdap.metrics.store.MetricDatasetFactory;
+import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
+import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.security.CurrentUGIProvider;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.AbstractModule;
@@ -123,7 +132,8 @@ public class DatasetServiceManager extends AbstractIdleService {
     }
   }
 
-  private Injector createInjector(CConfiguration cConf, Configuration hConf) {
+  @VisibleForTesting
+  Injector createInjector(CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
@@ -131,24 +141,34 @@ public class DatasetServiceManager extends AbstractIdleService {
       new IOModule(),
       new KafkaClientModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
-      new NamespaceClientRuntimeModule().getDistributedModules(),
       new DataSetServiceModules().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
-      new MetricsClientRuntimeModule().getDistributedModules(),
       new ExploreClientModule(),
-      new NamespaceStoreModule().getDistributedModules(),
       new RemoteSystemOperationsServiceModule(),
       new SecureStoreModules().getDistributedModules(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
       new AuthenticationContextModules().getMasterModule(),
+      new AppFabricServiceRuntimeModule().getDistributedModules(),
+      new ProgramRunnerRuntimeModule().getDistributedModules(),
+      new TwillModule(),
+      new ViewAdminModules().getDistributedModules(),
+      new StreamAdminModules().getDistributedModules(),
+      new ServiceStoreModules().getDistributedModules(),
+      new NamespaceStoreModule().getDistributedModules(),
+      // don't need real notifications for upgrade, so use the in-memory implementations
+      new NotificationServiceRuntimeModule().getInMemoryModules(),
+      new NotificationFeedClientModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(Store.class).to(DefaultStore.class);
-          // CDAP-6577 Perform impersonation when doing upgrade from CDAP 3.5.0
-          bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
+          // the DataFabricDistributedModule needs MetricsCollectionService binding and since Upgrade tool does not do
+          // anything with Metrics we just bind it to NoOpMetricsCollectionService
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
+          bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
+          bind(MetricStore.class).to(DefaultMetricStore.class);
+
         }
       }
     );

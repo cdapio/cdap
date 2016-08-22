@@ -40,18 +40,22 @@ public final class SparkSpecification implements ProgramSpecification, PropertyP
   private final String mainClassName;
   private final Set<String> datasets;
   private final Map<String, String> properties;
+  private final Resources clientResources;
   private final Resources driverResources;
   private final Resources executorResources;
 
   public SparkSpecification(String className, String name, String description,
                             String mainClassName, Set<String> datasets, Map<String, String> properties,
-                            @Nullable Resources driverResources, @Nullable Resources executorResources) {
+                            @Nullable Resources clientResources,
+                            @Nullable Resources driverResources,
+                            @Nullable Resources executorResources) {
     this.className = className;
     this.name = name;
     this.description = description;
     this.mainClassName = mainClassName;
     this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
     this.datasets = Collections.unmodifiableSet(new HashSet<>(datasets));
+    this.clientResources = clientResources;
     this.driverResources = driverResources;
     this.executorResources = executorResources;
   }
@@ -93,6 +97,14 @@ public final class SparkSpecification implements ProgramSpecification, PropertyP
   @Override
   public String getProperty(String key) {
     return properties.get(key);
+  }
+
+  /**
+   * @return Resources requirement for the Spark client process or {@code null} if not specified.
+   */
+  @Nullable
+  public Resources getClientResources() {
+    return clientResources;
   }
 
   /**

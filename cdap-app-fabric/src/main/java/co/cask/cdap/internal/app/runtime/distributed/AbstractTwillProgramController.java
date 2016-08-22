@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -117,5 +117,9 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
   protected final void doStop() throws Exception {
     stopRequested = true;
     Futures.getUnchecked(twillController.terminate());
+  }
+
+  protected final TwillController getTwillController() {
+    return twillController;
   }
 }

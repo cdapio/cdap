@@ -45,7 +45,7 @@ import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data.runtime.DataFabricDistributedModule;
+import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
@@ -336,7 +336,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
       new NotificationFeedClientModule(),
       new TwillModule(),
       new ExploreClientModule(),
-      new DataFabricDistributedModule(),
+      new DataFabricModules().getDistributedModules(),
       new ServiceStoreModules().getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),

@@ -21,7 +21,6 @@ import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.Tick;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
-import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -416,7 +415,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       String key = batch.key();
       if (!key.isEmpty()) {
         // Try to lookup the value from runtime arguments
-        Map<String, String> args = RuntimeArguments.extractScope(Scope.FLOWLET, flowletContext.getName(),
+        Map<String, String> args = RuntimeArguments.extractScope(FlowUtils.FLOWLET_SCOPE, flowletContext.getName(),
                                                                  flowletContext.getRuntimeArguments());
         String value = args.get(key);
         String sourceName = "runtime arguments";

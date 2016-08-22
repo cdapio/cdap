@@ -44,6 +44,7 @@ public final class DefaultSparkConfigurer extends DefaultPluginConfigurer implem
   private String description;
   private String mainClassName;
   private Map<String, String> properties;
+  private Resources clientResources;
   private Resources driverResources;
   private Resources executorResources;
 
@@ -78,6 +79,11 @@ public final class DefaultSparkConfigurer extends DefaultPluginConfigurer implem
   }
 
   @Override
+  public void setClientResources(Resources resources) {
+    this.clientResources = resources;
+  }
+
+  @Override
   public void setDriverResources(Resources resources) {
     this.driverResources = resources;
   }
@@ -96,6 +102,7 @@ public final class DefaultSparkConfigurer extends DefaultPluginConfigurer implem
     Reflections.visit(spark, spark.getClass(), new PropertyFieldExtractor(properties),
                       new DataSetFieldExtractor(datasets));
     return new SparkSpecification(spark.getClass().getName(), name, description,
-                                  mainClassName, datasets, properties, driverResources, executorResources);
+                                  mainClassName, datasets, properties,
+                                  clientResources, driverResources, executorResources);
   }
 }

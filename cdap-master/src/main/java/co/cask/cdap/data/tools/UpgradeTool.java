@@ -34,7 +34,7 @@ import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.config.DefaultConfigStore;
-import co.cask.cdap.data.runtime.DataFabricDistributedModule;
+import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
@@ -211,10 +211,10 @@ public class UpgradeTool {
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
       new SecureStoreModules().getDistributedModules(),
+      new DataFabricModules().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
-          install(new DataFabricDistributedModule());
           // the DataFabricDistributedModule needs MetricsCollectionService binding and since Upgrade tool does not do
           // anything with Metrics we just bind it to NoOpMetricsCollectionService
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);

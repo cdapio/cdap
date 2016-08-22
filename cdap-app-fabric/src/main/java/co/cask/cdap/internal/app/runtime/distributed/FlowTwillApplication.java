@@ -15,12 +15,17 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
+import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.proto.ProgramType;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.TwillApplication;
@@ -34,11 +39,13 @@ import java.util.Map;
 public final class FlowTwillApplication extends AbstractProgramTwillApplication {
 
   private final FlowSpecification spec;
+  private final Arguments runtimeArgs;
 
-  public FlowTwillApplication(Program program, FlowSpecification spec,
+  public FlowTwillApplication(Program program, Arguments runtimeArgs, FlowSpecification spec,
                               Map<String, LocalizeResource> localizeResources, EventHandler eventHandler) {
     super(program, localizeResources, eventHandler);
     this.spec = spec;
+    this.runtimeArgs = runtimeArgs;
   }
 
   @Override
@@ -48,14 +55,19 @@ public final class FlowTwillApplication extends AbstractProgramTwillApplication 
 
   @Override
   protected void addRunnables(Map<String, RunnableResource> runnables) {
+    Map<String, String> args = runtimeArgs.asMap();
+
     for (Map.Entry<String, FlowletDefinition> entry  : spec.getFlowlets().entrySet()) {
       FlowletDefinition flowletDefinition = entry.getValue();
       FlowletSpecification flowletSpec = flowletDefinition.getFlowletSpec();
 
       String flowletName = entry.getKey();
+      Map<String, String> flowletArgs = RuntimeArguments.extractScope(FlowUtils.FLOWLET_SCOPE, flowletName, args);
+      Resources resources = SystemArguments.getResources(flowletArgs, flowletSpec.getResources());
+
       runnables.put(entry.getKey(), new RunnableResource(
         new FlowletTwillRunnable(flowletName),
-        createResourceSpec(flowletSpec.getResources(), flowletDefinition.getInstances())
+        createResourceSpec(resources, flowletDefinition.getInstances())
       ));
     }
   }

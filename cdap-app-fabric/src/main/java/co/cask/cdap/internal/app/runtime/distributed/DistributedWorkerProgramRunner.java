@@ -86,7 +86,8 @@ public class DistributedWorkerProgramRunner extends AbstractDistributedProgramRu
 
     LOG.info("Launching distributed worker {}", program.getName());
 
-    TwillController controller = launcher.launch(new WorkerTwillApplication(program, newWorkerSpec,
+    TwillController controller = launcher.launch(new WorkerTwillApplication(program, options.getUserArguments(),
+                                                                            newWorkerSpec,
                                                                             localizeResources, eventHandler));
     RunId runId = ProgramRunners.getRunId(options);
     return new WorkerTwillProgramController(program.getId(), controller, runId).startListen();
