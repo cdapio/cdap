@@ -36,6 +36,7 @@ RULE="${SINGLE_RETURN_STRING}---${DOUBLE_RETURN_STRING}"
 
 # PRE_POST_RUN="pre-post-run"
 PRE_POST_RUN="post-run-plugin"
+NON_TRANSFORM_TYPES="action source sink ${PRE_POST_RUN}"
 PLUGIN_TYPE_STRING="Hydrator Plugin Type:"
 VERSION_STRING="Hydrator Version:"
 
@@ -55,8 +56,8 @@ function download_md_file() {
   local source_dir="${1}"
   local source_file_name="${2}"
   local append_file="${3}"
-  local plugin_category="${4}"
-  local plugin_type="${5}" # NOTE: singular types: "sink", not "sinks"
+  local plugin_type="${4}" # NOTE: singular types: "sink", not "sinks"
+  local target_file_name="${5}"
   
   local source_url="${HYDRATOR_SOURCE}/${source_dir}/docs/${source_file_name}"
 
@@ -65,66 +66,48 @@ function download_md_file() {
   type="${type%.md}" # strip suffix
   
   local type_capital="$(echo ${type:0:1} | tr [:lower:] [:upper:])${type:1}"
-  local target_file_name=$(echo "${source_file_name%-*}.md" | tr [:upper:] [:lower:]) # cassandra
-
+  if [[ "x${target_file_name}" == "x" ]]; then
+    local target_file_name=$(echo "${source_file_name}" | tr [:upper:] [:lower:]) # cassandra-batchsink.md
+  fi
+  
   # Determine from name of the plugin file the:
-  # category (batch, realtime, shared-plugin, postaction) and 
-  # type (source, sink, transform, aggregator)
-  # Defining these in the parameters overrides this
-  if [[ "x${plugin_category}${plugin_type}" == "x" ]]; then
-    if [[ "x${type:0:5}" == "xbatch" ]]; then
-      plugin_category="batch"
-      plugin_type="${type:5}"
-    elif [[ "x${type:0:8}" == "xrealtime" ]]; then
-      plugin_category="realtime"
-      plugin_type="${type:8}"
-      
-    # FIXME: this type "postaction" is going away
-    elif [[ "x${type}" == "xpostaction" ]]; then
-#       plugin_category="${PRE_POST_RUN}"
-      plugin_category=''
+  # type (source, sink, transform, shared-plugin, postaction)
+  # Defining this in the parameters overrides this
+  if [[ "x${plugin_type}" == "x" ]]; then
+    # FIXME: this type "postaction" maybe going away
+    if [[ "x${type}" == "xpostaction" ]]; then
       plugin_type="post-run-plugin"
     # END FIXME
-    
     # FIXME: these types "prerun" and  "postrun" are currently not used
 #     elif [[ "x${type}" == "xprerun" ]]; then
-#       plugin_category="${PRE_POST_RUN}"
 #       plugin_type="pre-run"
 #     elif [[ "x${type}" == "xpostrun" ]]; then
-#       plugin_category=''
 #       plugin_type="post-run"
     # END FIXME
     elif [[ "x${type}" == "xaction" ]]; then
-      plugin_category=''
-      plugin_type="action"
+      plugin_type="${type}"
+    elif [[ "x${type}" == "xtransform" ]]; then
+      plugin_type="${type}"
+    elif [[ "x${type: -6}" == "xsource" ]]; then
+      plugin_type="${type: -6}"
+    elif [[ "x${type: -4}" == "xsink" ]]; then
+      plugin_type="${type: -  4}"
     else
       # assume of type transform; to be copied to both batch and realtime
-      plugin_category=''
       plugin_type="transform"
     fi
   fi
-    
-  if [[ "x${plugin_category}" != "x" ]]; then
-    if [[ ( "${plugin_type}" == "sink" ) || ( "${plugin_type}" == "source" ) ]]; then
-      local target_dir="${plugin_category}/${plugin_type}s"
-    else
-      local target_dir="${plugin_category}/transforms"
-    fi
-    local target_dir_extra=''
-  elif [[ "${plugin_type}" == "transform" ]]; then
-    # Directories are plural, though types are singular
-    local target_dir="batch/${plugin_type}s"
-    local target_dir_extra="realtime/${plugin_type}s"
-  elif [[ ( "${plugin_type}" == "action" ) || ( "${plugin_type}" == "${PRE_POST_RUN}" ) ]]; then
-    local target_dir="${plugin_type}s"
-    local target_dir_extra='' 
-  fi
   
-  local target="${BASE_TARGET}/${target_dir}/${target_file_name}"
-  local target_extra=''
-  if [[ "x${target_dir_extra}" != "x" ]]; then
-    target_extra="${BASE_TARGET}/${target_dir_extra}/${target_file_name}"
+  local target_dir="${plugin_type}s"
+
+  echo ${NON_TRANSFORM_TYPES} | grep -q ${plugin_type}
+  if [ "$?" == "0" ]; then
+    local target_dir="${plugin_type}s"
+  else
+    local target_dir="transforms"
   fi
+
+  local target="${BASE_TARGET}/${target_dir}/${target_file_name}"
 
   # Create display names for log output
   local fifty_spaces="                                                  "
@@ -144,19 +127,32 @@ function download_md_file() {
         local m="Markdown file missing initial title: ${source_file_name}: ${source_name} ${type_capital}"
         echo_red_bold "${m}"
         set_message "${m}"
-        echo "# ${source_name} ${type_capital}${DOUBLE_RETURN_STRING}$(cat ${target})" > ${target}
+#         echo "# ${source_name} ${type_capital}${DOUBLE_RETURN_STRING}$(cat ${target})" > ${target}
+        echo "# ${source_name}${DOUBLE_RETURN_STRING}$(cat ${target})" > ${target}
+      else
+        # Remove title suffixes
+        tail -n +2 "${target}" > "${target}.tmp" && mv "${target}.tmp" "${target}"
+        # Strip trailing whitespace
+        first="${first%"${first##*[![:space:]]}"}"
+        # Strip trailing items of interest
+        first=${first% Batch Sink}
+        first=${first% Batch Source}
+        first=${first% Post-run Action}
+        first=${first% Post Action}
+        first=${first% Real-time Sink}
+        first=${first% Real-time Source}
+        first=${first% Action}
+        first=${first% Source}
+        first=${first% Transform}
+        echo "${first}${DOUBLE_RETURN_STRING}$(cat ${target})" > ${target}
       fi
       if [[ "x${append_file}" != "x" ]]; then
         echo "  Appending ${append_file} to ${target_file_name}"
         cat ${BASE_TARGET}/${append_file} >> ${target}
       fi
       echo "${DOUBLE_RETURN_STRING}${RULE}- ${PLUGIN_TYPE_STRING} ${type}${DOUBLE_RETURN_STRING}- ${VERSION_STRING} ${HYDRATOR_VERSION}" >> ${target}
-      if [[ "x${target_dir_extra}" != "x" ]]; then
-        cp ${target} ${target_extra}
-        echo "  Copied    ${display_source_file_name} from ${display_source_dir} to ${target_dir_extra}/${target_file_name}"
-      fi
     else
-      local m="File does not exist: ${target}"
+      local m="File does not exist for ${target}"
       echo_red_bold "From ${source_url}"
       echo_red_bold "${m}"
       set_message "${m}"
@@ -212,15 +208,13 @@ function download_includes() {
   get_hydrator_version ${BASE_TARGET} ${HYDRATOR_SOURCE}
   
   # Uses: $BASE_TARGET  $HYDRATOR_SOURCE
-  # Parameter      1                 2                         3
-  # Definition     source_dir        source_file_name          append_file (optional)
+  # Parameter      1                 2                         3 (optional)  4 (optional)  5 (optional)
+  # Definition     source_dir        source_file_name          append_file   target_file   target_dir
   
   download_md_file cassandra-plugins Cassandra-batchsink.md
   download_md_file cassandra-plugins Cassandra-batchsource.md 
   download_md_file cassandra-plugins Cassandra-realtimesink.md 
-
   download_md_file copybookreader-plugins CopybookReader-batchsource.md 
-
   download_md_file core-plugins AmazonSQS-realtimesource.md
   download_md_file core-plugins AzureBlobStore-batchsource.md
   download_md_file core-plugins Cube-batchsink.md
@@ -233,6 +227,7 @@ function download_includes() {
   download_md_file core-plugins File-batchsource.md
   download_md_file core-plugins FTP-batchsource.md
   download_md_file core-plugins GroupByAggregate-batchaggregator.md
+  download_md_file core-plugins HDFSDelete-action.md
   download_md_file core-plugins HDFSMove-action.md
   download_md_file core-plugins JavaScript-transform.md
   download_md_file core-plugins JMS-realtimesource.md
@@ -260,50 +255,45 @@ function download_includes() {
   download_md_file core-plugins Table-realtimesink.md
   download_md_file core-plugins TPFSAvro-batchsink.md
   download_md_file core-plugins TPFSAvro-batchsource.md
+  download_md_file core-plugins TPFSOrc-batchsink.md
   download_md_file core-plugins TPFSParquet-batchsink.md
   download_md_file core-plugins TPFSParquet-batchsource.md
   download_md_file core-plugins Twitter-realtimesource.md
   download_md_file core-plugins Validator-transform.md
+  download_md_file core-plugins Window-windower.md
   download_md_file core-plugins XMLReader-batchsource.md
-
   download_md_file database-plugins Database-batchsink.md _includes/database-batchsink-append.md.txt
   download_md_file database-plugins Database-batchsource.md _includes/database-batchsource-append.md.txt
+  download_md_file database-plugins Database-action.md
   download_md_file database-plugins DatabaseQuery-postaction.md
-
   download_md_file elasticsearch-plugins Elasticsearch-batchsink.md
   download_md_file elasticsearch-plugins Elasticsearch-batchsource.md
   download_md_file elasticsearch-plugins Elasticsearch-realtimesink.md
-  
   download_md_file hbase-plugins HBase-batchsink.md
   download_md_file hbase-plugins HBase-batchsource.md
-  
   download_md_file hdfs-plugins HDFS-batchsink.md
-  
   download_md_file hive-plugins Hive-batchsink.md
   download_md_file hive-plugins Hive-batchsource.md
-  
   download_md_file http-plugins HTTPCallback-postaction.md
   download_md_file http-plugins HTTPPoller-realtimesource.md
-
   download_md_file kafka-plugins Kafka-realtimesource.md
   download_md_file kafka-plugins KafkaProducer-realtimesink.md
-  
   download_md_file mongodb-plugins MongoDB-batchsink.md
   download_md_file mongodb-plugins MongoDB-batchsource.md
   download_md_file mongodb-plugins MongoDB-realtimesink.md
-  
   download_md_file spark-plugins Kafka-streamingsource.md
-  # Currently only for batch
-  download_md_file spark-plugins NaiveBayesClassifier-sparkcompute.md '' "batch" "transform"
-  download_md_file spark-plugins NaiveBayesTrainer-sparksink.md       '' "batch" "transform"
-  
+  download_md_file spark-plugins Twitter-streamingsource.md
+  download_md_file spark-plugins NaiveBayesClassifier-sparkcompute.md '' "transform" "DPB-naivebayesclassifier-sparkcompute.md" # Currently only for batch
+  download_md_file spark-plugins NaiveBayesTrainer-sparksink.md       '' "sink" # Currently only for batch
   download_md_file transform-plugins CloneRecord-transform.md
   download_md_file transform-plugins Compressor-transform.md
   download_md_file transform-plugins CSVFormatter-transform.md
   download_md_file transform-plugins CSVParser-transform.md
   download_md_file transform-plugins Decoder-transform.md
   download_md_file transform-plugins Decompressor-transform.md
+  download_md_file transform-plugins Decryptor-transform.md
   download_md_file transform-plugins Encoder-transform.md
+  download_md_file transform-plugins Encryptor-transform.md
   download_md_file transform-plugins Hasher-transform.md
   download_md_file transform-plugins JSONFormatter-transform.md
   download_md_file transform-plugins JSONParser-transform.md
@@ -313,7 +303,7 @@ function download_includes() {
   download_md_file transform-plugins XMLParser-transform.md
   download_md_file transform-plugins XMLToJSON-transform.md
 
-  extract_table ${BASE_TARGET} "batch/transforms/validator.md" _includes/validator-extract.txt
+  extract_table ${BASE_TARGET} "transforms/validator-transform.md" _includes/validator-extract.txt
 }
 
 run_command ${1}

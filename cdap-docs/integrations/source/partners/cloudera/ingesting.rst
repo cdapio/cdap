@@ -15,10 +15,10 @@ Integrating CDAP with Impala
 
 When using CDAP with Impala:
 
-.. |cdap-apps| replace:: **CDAP Applications:**
-.. _cdap-apps: ../../../cdap-apps/hydrator/index.html
+.. |hydrator| replace:: **Data Pipelines:**
+.. _hydrator: ../../../hydrator-manual/index.html
 
-- |cdap-apps|_ Using **ETL** and **custom ETL plugins**
+- |hydrator|_ Using **Hydrator** and **plugins** to create either real-time or batch data pipelines
 
 
 .. |stream| replace:: **Stream Exploration:**

@@ -2,11 +2,11 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016 Cask Data, Inc.
 
-.. _cask-hydrator-plugins-shared:
+.. _cask-hydrator-plugins-transformations:
 
-==============
-Shared Plugins
-==============
+======================
+Transformation Plugins
+======================
 
 Hydrator Version |cask-hydrator-version|
 
@@ -21,4 +21,16 @@ These plugins work with:
     :maxdepth: 1
     :glob:
 
-    **
+    [!D][!P][!B]*
+    
+These plugins work only with:
+
+  - *Data Pipeline - Batch* (``cdap-data-pipeline`` artifact)
+
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+    DPB*
+
+.. - `NaiveBayesClassifier <naivebayesclassifier-sparkcompute.html>`__
