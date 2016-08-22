@@ -105,11 +105,21 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
     // Adds the extra class that Spark runtime needed
     ProgramRuntimeProvider provider = runtimeProviderLoader.get(ProgramType.SPARK);
     if (provider != null) {
-      extraDependencies.add(provider.getClass());
+      try {
+        String sparkAssemblyJarName = SparkUtils.prepareSparkResources(tempDir, localizeResources);
+        // Localize the spark-assembly jar and spark conf zip
+        extraClassPaths.add(sparkAssemblyJarName);
+        extraDependencies.add(provider.getClass());
+      } catch (Exception e) {
+        if (driverMeta.hasSpark) {
+          // If the Workflow actually has spark, we can't ignore this error.
+          throw e;
+        }
+        // Otherwise, this can be ignore.
+        LOG.debug("Spark assembly jar is not present. It doesn't affected Workflow {} since it doesn't use Spark.",
+                  program.getId(), e);
+      }
 
-      // Localize the spark-assembly jar and spark conf zip
-      String sparkAssemblyJarName = SparkUtils.prepareSparkResources(tempDir, localizeResources);
-      extraClassPaths.add(sparkAssemblyJarName);
     } else if (driverMeta.hasSpark) {
       // If the workflow contains spark and yet the spark runtime provider is missing, then it's an error.
       throw new IllegalStateException("Missing Spark runtime system. Not able to run Spark program in Workflow.");
