@@ -233,7 +233,7 @@ function download_includes() {
   download_md_file core-plugins File-batchsource.md
   download_md_file core-plugins FTP-batchsource.md
   download_md_file core-plugins GroupByAggregate-batchaggregator.md
-  download_md_file core-plugins HDFSFile-action.md
+  download_md_file core-plugins HDFSMove-action.md
   download_md_file core-plugins JavaScript-transform.md
   download_md_file core-plugins JMS-realtimesource.md
   download_md_file core-plugins Joiner-batchjoiner.md
