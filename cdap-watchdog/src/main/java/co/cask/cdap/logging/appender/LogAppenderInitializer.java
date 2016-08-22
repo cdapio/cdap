@@ -84,6 +84,7 @@ public class LogAppenderInitializer implements Closeable {
     if (logAppender != null) {
       LOG.info("Stopping log appender {}", logAppender.getName());
       logAppender.stop();
+      LOG.info("Done stopping log appender {}", logAppender.getName());
     }
   }
 }

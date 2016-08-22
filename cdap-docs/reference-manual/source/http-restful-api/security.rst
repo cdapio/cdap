@@ -358,7 +358,7 @@ with the metadata of the secure key returned as a JSON object |---| name (the
      - Metadata for the secure key was successfully retrieved
    * - ``404 NOT FOUND``
      - The namespace specified in the request does not exist or a secure key by the
-     specified name does not exist in the specified namespace
+       specified name does not exist in the specified namespace
 
 
 .. _http-restful-api-security-secure-storage-list:
