@@ -23,7 +23,6 @@ import co.cask.cdap.app.guice.DistributedProgramRunnableModule;
 import co.cask.cdap.app.program.DefaultProgram;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
-import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
@@ -191,8 +190,7 @@ public final class SparkRuntimeContextProvider {
         injector.getInstance(SecureStore.class),
         injector.getInstance(SecureStoreManager.class),
         injector.getInstance(AuthorizationEnforcer.class),
-        injector.getInstance(AuthenticationContext.class), injector.getInstance(PreviewStore.class),
-        contextConfig.getPreviewId()
+        injector.getInstance(AuthenticationContext.class)
       );
       LoggingContextAccessor.setLoggingContext(sparkRuntimeContext.getLoggingContext());
       return sparkRuntimeContext;

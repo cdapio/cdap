@@ -16,7 +16,6 @@
 
 package co.cask.cdap.app.runtime.spark;
 
-import co.cask.cdap.api.Debugger;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
@@ -32,7 +31,6 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.spark.submit.DistributedSparkSubmitter;
 import co.cask.cdap.app.runtime.spark.submit.LocalSparkSubmitter;
 import co.cask.cdap.app.runtime.spark.submit.SparkSubmitter;
-import co.cask.cdap.app.store.PreviewStore;
 import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -52,7 +50,6 @@ import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.PreviewId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Preconditions;
@@ -61,7 +58,6 @@ import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -90,7 +86,6 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkProgramRunner.class);
 
-  private static final Gson GSON = new Gson();
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final LocationFactory locationFactory;
@@ -104,7 +99,6 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   private final SecureStoreManager secureStoreManager;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
-  private final PreviewStore previewStore;
 
   @Inject
   SparkProgramRunner(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
@@ -112,8 +106,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                      MetricsCollectionService metricsCollectionService,
                      DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin,
                      RuntimeStore runtimeStore, SecureStore secureStore, SecureStoreManager secureStoreManager,
-                     AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
-                     PreviewStore previewStore) {
+                     AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext) {
     super(cConf);
     this.cConf = cConf;
     this.hConf = hConf;
@@ -128,7 +121,6 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     this.secureStoreManager = secureStoreManager;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
-    this.previewStore = previewStore;
   }
 
   @Override
@@ -171,16 +163,12 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
         closeables.addFirst(pluginInstantiator);
       }
 
-      String previewIdJson = arguments.getOption(ProgramOptionConstants.PREVIEW_ID);
-      PreviewId previewId = previewIdJson == null ? null : GSON.fromJson(previewIdJson, PreviewId.class);
-
       SparkRuntimeContext runtimeContext = new SparkRuntimeContext(new Configuration(hConf), program, options,
                                                                    txClient, programDatasetFramework,
                                                                    discoveryServiceClient,
                                                                    metricsCollectionService, streamAdmin, workflowInfo,
                                                                    pluginInstantiator, secureStore, secureStoreManager,
-                                                                   authorizationEnforcer, authenticationContext,
-                                                                   previewStore, previewId);
+                                                                   authorizationEnforcer, authenticationContext);
       closeables.addFirst(runtimeContext);
 
       Spark spark;

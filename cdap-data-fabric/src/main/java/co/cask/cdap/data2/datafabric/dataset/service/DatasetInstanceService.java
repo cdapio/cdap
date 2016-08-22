@@ -522,7 +522,7 @@ public class DatasetInstanceService {
    */
   private void ensureNamespaceExists(Id.Namespace namespace) throws Exception {
     if (!Id.Namespace.SYSTEM.equals(namespace)) {
-      if (namespaceQueryAdmin.get(namespace) == null) {
+      if (!namespaceQueryAdmin.exists(namespace)) {
         throw new NamespaceNotFoundException(namespace);
       }
     }

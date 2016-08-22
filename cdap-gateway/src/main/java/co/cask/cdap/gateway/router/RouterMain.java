@@ -22,10 +22,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.kerberos.SecurityUtil;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.security.guice.SecurityModules;
 import com.google.common.base.Throwables;
@@ -114,8 +112,6 @@ public class RouterMain extends DaemonMain {
     return Guice.createInjector(
       new ConfigModule(cConf),
       new ZKClientModule(),
-      new LocationRuntimeModule().getDistributedModules(),
-      new NamespaceClientRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new RouterModules().getDistributedModules(),
       new SecurityModules().getDistributedModules(),

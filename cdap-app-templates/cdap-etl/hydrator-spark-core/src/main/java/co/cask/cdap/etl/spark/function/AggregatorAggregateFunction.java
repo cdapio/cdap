@@ -16,8 +16,6 @@
 
 package co.cask.cdap.etl.spark.function;
 
-import co.cask.cdap.api.Debugger;
-import co.cask.cdap.api.preview.PreviewLogger;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.Transformation;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
@@ -47,22 +45,7 @@ public class AggregatorAggregateFunction implements FlatMapFunction<Tuple2<Objec
       aggregateTransform = new TrackedTransform<>(new AggregateTransform<>(aggregator),
                                                   pluginFunctionContext.createStageMetrics(),
                                                   "aggregator.groups",
-                                                  TrackedTransform.RECORDS_OUT, null, new Debugger() {
-        @Override
-        public boolean isPreviewEnabled() {
-          return false;
-        }
-
-        @Override
-        public PreviewLogger getPreviewLogger(String loggerName) {
-          return new PreviewLogger() {
-            @Override
-            public void log(String propertyName, Object propertyValue) {
-              // no-op
-            }
-          };
-        }
-      });
+                                                  TrackedTransform.RECORDS_OUT);
       emitter = new DefaultEmitter<>();
     }
     emitter.reset();

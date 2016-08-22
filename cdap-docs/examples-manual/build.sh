@@ -57,8 +57,17 @@ function guide_rewrite_sed() {
         curl --silent ${url}/${image} --output ${includes_dir}/${guide}/${image_file}
       done
     fi
-    # Rewrite image and code 
-    sed -e "s|image:: docs/images/|image:: ${redirect}/${guide}/|g" -e "s|.. code:: |.. code-block:: |g" ${includes_dir}/${guide}/${readme_source} > ${includes_dir}/${guide}/${readme}
+    # For cdap-etl-adapter-guide, re-write links, image, and code 
+    if [ "${guide}" == "cdap-etl-guide" ]; then
+    sed -e "s|image:: docs/images/|image:: ${redirect}/${guide}/|g" \
+        -e "s|.. code:: |.. code-block:: |g" \
+        -e "s|.. _\(.*\): \(.*\)|.. _\1: https://github.com/cdap-guides/${guide}/tree/${source2}/\2|g" \
+        ${includes_dir}/${guide}/${readme_source} > ${includes_dir}/${guide}/${readme}
+    else
+      # Just rewrite image and code 
+      sed -e "s|image:: docs/images/|image:: ${redirect}/${guide}/|g" -e "s|.. code:: |.. code-block:: |g" \
+      ${includes_dir}/${guide}/${readme_source} > ${includes_dir}/${guide}/${readme}    
+    fi
   else
     local m="URL does not exist: {$url}"
     echo_red_bold "${m}"

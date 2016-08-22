@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -72,12 +72,11 @@ public final class InMemoryConfigurator implements Configurator {
   private final ClassLoader artifactClassLoader;
   private final String appClassName;
   private final Id.Artifact artifactId;
-  private final boolean isPreviewRun;
 
   public InMemoryConfigurator(CConfiguration cConf, Id.Namespace appNamespace, Id.Artifact artifactId,
                               String appClassName, ArtifactRepository artifactRepository,
                               ClassLoader artifactClassLoader,
-                              @Nullable String applicationName, @Nullable String configString, boolean isPreviewRun) {
+                              @Nullable String applicationName, @Nullable String configString) {
     this.cConf = cConf;
     this.appNamespace = appNamespace;
     this.artifactId = artifactId;
@@ -88,7 +87,6 @@ public final class InMemoryConfigurator implements Configurator {
     this.artifactClassLoader = artifactClassLoader;
     this.baseUnpackDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                   cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-    this.isPreviewRun = isPreviewRun;
   }
 
   /**
@@ -152,7 +150,7 @@ public final class InMemoryConfigurator implements Configurator {
       }
 
       try {
-        app.configure(configurer, new DefaultApplicationContext<>(appConfig, isPreviewRun));
+        app.configure(configurer, new DefaultApplicationContext<>(appConfig));
       } catch (Throwable t) {
         Throwable rootCause = Throwables.getRootCause(t);
         if (rootCause instanceof ClassNotFoundException) {

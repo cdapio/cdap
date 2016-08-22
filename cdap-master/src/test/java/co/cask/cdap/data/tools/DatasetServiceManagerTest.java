@@ -14,22 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.api.preview;
+package co.cask.cdap.data.tools;
 
-import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.common.conf.CConfiguration;
+import org.apache.hadoop.conf.Configuration;
+import org.junit.Test;
 
 /**
- * Interface used by the CDAP applications to log the preview data.
- *
- * NOTE: Preview feature is experimental and will change in future.
+ * Test Guice injector
  */
-@Beta
-public interface PreviewLogger {
-
-  /**
-   * Logs the preview data. Multiple values can be logged for preview against the same property.
-   * @param propertyName the the name of the property
-   * @param propertyValue the value associated with the property
-   */
-  void log(String propertyName, Object propertyValue);
+public class DatasetServiceManagerTest {
+  @Test
+  public void testInjector() throws Exception {
+    CConfiguration cConf = CConfiguration.create();
+    Configuration hConf = new Configuration();
+    DatasetServiceManager datasetServiceManager = new DatasetServiceManager(cConf, hConf);
+    datasetServiceManager.createInjector(cConf, hConf);
+    // should not throw exception
+  }
 }

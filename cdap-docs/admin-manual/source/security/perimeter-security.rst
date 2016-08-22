@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
-.. _configuration-perimeter-security:
+.. _admin-perimeter-security:
 
 ==================
 Perimeter Security
