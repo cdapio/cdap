@@ -100,15 +100,19 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
     DriverMeta driverMeta = findDriverResources(program.getApplicationSpecification().getSpark(),
                                                 program.getApplicationSpecification().getMapReduce(), workflowSpec);
 
-    if (driverMeta.hasSpark) {
-      // Adds the extra class that Spark runtime needed
-      ProgramRuntimeProvider provider = runtimeProviderLoader.get(ProgramType.SPARK);
-      Preconditions.checkState(provider != null, "Missing Spark runtime system. Not able to run Spark program.");
+    // Due to caching in CDAP-7021, we need to always include Spark if it is available, regardless of the
+    // Workflow contains Spark inside or not.
+    // Adds the extra class that Spark runtime needed
+    ProgramRuntimeProvider provider = runtimeProviderLoader.get(ProgramType.SPARK);
+    if (provider != null) {
       extraDependencies.add(provider.getClass());
 
       // Localize the spark-assembly jar and spark conf zip
       String sparkAssemblyJarName = SparkUtils.prepareSparkResources(tempDir, localizeResources);
       extraClassPaths.add(sparkAssemblyJarName);
+    } else if (driverMeta.hasSpark) {
+      // If the workflow contains spark and yet the spark runtime provider is missing, then it's an error.
+      throw new IllegalStateException("Missing Spark runtime system. Not able to run Spark program in Workflow.");
     }
     
     // Add classpaths for MR framework
