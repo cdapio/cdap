@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2016 Cask Data, Inc.
 
 .. _namespaces:
 
@@ -102,7 +102,15 @@ Namespace Examples
 - The CDAP :ref:`Command Line Interface <cli>` is namespace-aware. You set the
   namespace you are currently using; the command prompt displays it as a visual reminder.
 
+.. _namespaces-custom-mapping:
 
-<Update this entire document with namespace mapping features>
+Custom Mapping of Storage Providers
+===================================
+When creating a namespace, the underlying storage can also be configured per namespace.
+For example, a custom HBase namespace, Hive database, or HDFS directory can be specified to
+be used for data in a particular namespace.
+See :ref:`Namespace Configurations <http-restful-api-namespace-configs>`.
 
-<Currently this seems to be the place to document impersonation too>
+When configuring these, CDAP will not manage the lifecycle of these entities; they must exist
+before the CDAP namespace is created, and they will not be removed upon the deletion of the
+CDAP namespace.

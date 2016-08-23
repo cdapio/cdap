@@ -149,10 +149,8 @@ for when you `Create a Namespace`_.
    * - ``description``
      - Display description of the namespace
    * - ``config``
-     - Configuration properties, with a JSON map of name-value pairs. Currently, the only
-       supported configuration property is ``scheduler.queue.name``: 
-       :ref:`Scheduler queue <resource-guarantees>` for CDAP programs and *Explore Queries* in the namespace.
-    
+     - Configuration properties, with a JSON map of key-value pairs.
+
 .. rubric:: HTTP Responses
 .. list-table::
    :widths: 20 80
@@ -217,3 +215,34 @@ namespace is retained, as it is always available in CDAP.
 
 To delete only the datasets of a namespace, there is a 
 :ref:`specific dataset endpoint <http-restful-api-dataset-deleting-all>` for that.
+
+.. _http-restful-api-namespace-configs:
+
+Namespace Configurations
+========================
+
+When creating or editing a namespace, namespace configurations can be supplied as a part of the
+request body. These would be in the form of a JSON string of configuration key-value pairs. Note
+that the values for these keys can not be modified once the namespace is created, with the exception
+of ``scheduler.queue.name``.
+
+.. rubric:: Namespace Configurations
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Configuration Name
+     - Description
+   * - ``scheduler.queue.name``
+     - Scheduler queue for CDAP programs and CDAP explore queries run in the namespace. See
+       :ref:`Scheduler queue <resource-guarantees>`
+   * - ``root.directory``
+     - The pre-existing file-system directory to be used for the namespace
+   * - ``hbase.namespace``
+     - The pre-existing HBase namespace to be used for the namespace
+   * - ``hive.database``
+     - The pre-existing Hive database to be used for the namespace
+   * - ``principal``
+     - The principal for the namespace
+   * - ``keytabURI``
+     - The URI of the keytab file for the namespace
