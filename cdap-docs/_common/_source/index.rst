@@ -103,7 +103,7 @@ CDAP extensions provide additional capabilities, such as *Cask Hydrator* and *Ca
 .. _admin-man-i-black: admin-manual/installation/index.html
 
 .. |admin-man-s-black| replace:: `Security:`
-.. _admin-man-s-black: admin-manual/security.html
+.. _admin-man-s-black: admin-manual/security/index.html
 
 .. |admin-man-o-black| replace:: `Operations:`
 .. _admin-man-o-black: admin-manual/operations/index.html
