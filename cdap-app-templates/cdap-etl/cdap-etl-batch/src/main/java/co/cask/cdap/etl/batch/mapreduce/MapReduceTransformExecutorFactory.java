@@ -21,6 +21,7 @@ import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.Aggregator;
 import co.cask.cdap.etl.api.Emitter;
+import co.cask.cdap.etl.api.InvalidEntry;
 import co.cask.cdap.etl.api.JoinElement;
 import co.cask.cdap.etl.api.Joiner;
 import co.cask.cdap.etl.api.StageMetrics;
@@ -36,7 +37,6 @@ import co.cask.cdap.etl.batch.conversion.WritableConversion;
 import co.cask.cdap.etl.batch.conversion.WritableConversions;
 import co.cask.cdap.etl.batch.join.Join;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
-import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.TrackedTransform;
@@ -249,7 +249,6 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
   private static class MapperAggregatorTransformation<GROUP_KEY, GROUP_VAL, OUT_KEY extends Writable,
     OUT_VAL extends Writable> implements Transformation<GROUP_VAL, KeyValue<OUT_KEY, OUT_VAL>> {
     private final Aggregator<GROUP_KEY, GROUP_VAL, ?> aggregator;
-    private final DefaultEmitter<GROUP_KEY> groupKeyEmitter;
     private final WritableConversion<GROUP_KEY, OUT_KEY> keyConversion;
     private final WritableConversion<GROUP_VAL, OUT_VAL> valConversion;
 
@@ -257,7 +256,6 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
                                    String groupKeyClassName,
                                    String groupValClassName) {
       this.aggregator = aggregator;
-      this.groupKeyEmitter = new DefaultEmitter<>();
       WritableConversion<GROUP_KEY, OUT_KEY> keyConversion = WritableConversions.getConversion(groupKeyClassName);
       WritableConversion<GROUP_VAL, OUT_VAL> valConversion = WritableConversions.getConversion(groupValClassName);
       // if the conversion is null, it means the user is using a Writable already
@@ -266,12 +264,17 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
     }
 
     @Override
-    public void transform(GROUP_VAL input, Emitter<KeyValue<OUT_KEY, OUT_VAL>> emitter) throws Exception {
-      groupKeyEmitter.reset();
-      aggregator.groupBy(input, groupKeyEmitter);
-      for (GROUP_KEY groupKey : groupKeyEmitter.getEntries()) {
-        emitter.emit(new KeyValue<>(keyConversion.toWritable(groupKey), valConversion.toWritable(input)));
-      }
+    public void transform(final GROUP_VAL input, final Emitter<KeyValue<OUT_KEY, OUT_VAL>> emitter) throws Exception {
+      aggregator.groupBy(input, new Emitter<GROUP_KEY>() {
+        @Override
+        public void emit(GROUP_KEY groupKey) {
+          emitter.emit(new KeyValue<>(keyConversion.toWritable(groupKey), valConversion.toWritable(input)));
+        }
+        @Override
+        public void emitError(InvalidEntry<GROUP_KEY> invalidEntry) {
+          // TODO: why ignore errors? (can't happen or what?)
+        }
+      });
     }
   }
 

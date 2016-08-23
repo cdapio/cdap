@@ -25,7 +25,6 @@ import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.common.Constants;
-import co.cask.cdap.etl.common.DefaultEmitter;
 
 /**
  * Key-Value transformation which wraps transformation for each batch plugin to emit stageName along with each record
@@ -80,25 +79,25 @@ public final class KVTransformations {
   public static class KVSourceTransformation<IN, OUT> implements Transformation<IN, KeyValue<String, OUT>> {
     private final String stageName;
     private final Transformation<IN, OUT> transformation;
-    private final DefaultEmitter<OUT> singleEmitter;
 
     public KVSourceTransformation(String stageName, Transformation<IN, OUT> transformation) {
       this.stageName = stageName;
       this.transformation = transformation;
-      this.singleEmitter = new DefaultEmitter<>();
     }
 
     @Override
-    public void transform(IN input, Emitter<KeyValue<String, OUT>> emitter) throws Exception {
-      singleEmitter.reset();
-      transformation.transform(input, singleEmitter);
-      for (OUT out : singleEmitter.getEntries()) {
-        emitter.emit(new KeyValue<>(stageName, out));
-      }
-      for (InvalidEntry<OUT> error : singleEmitter.getErrors()) {
-        emitter.emitError(new InvalidEntry<>(error.getErrorCode(), error.getErrorMsg(),
-                                             new KeyValue<>(stageName, error.getInvalidRecord())));
-      }
+    public void transform(IN input, final Emitter<KeyValue<String, OUT>> emitter) throws Exception {
+      transformation.transform(input, new Emitter<OUT>() {
+        @Override
+        public void emit(OUT value) {
+          emitter.emit(new KeyValue<>(stageName, value));
+        }
+        @Override
+        public void emitError(InvalidEntry<OUT> error) {
+          emitter.emitError(new InvalidEntry<>(error.getErrorCode(), error.getErrorMsg(),
+                                               new KeyValue<>(stageName, error.getInvalidRecord())));
+        }
+      });
     }
   }
 
@@ -110,23 +109,14 @@ public final class KVTransformations {
    */
   public static class KVSinkTransformation<IN, OUT> implements Transformation<KeyValue<String, IN>, OUT> {
     private final Transformation<IN, OUT> transformation;
-    private final DefaultEmitter<OUT> singleEmitter;
 
     public KVSinkTransformation(Transformation<IN, OUT> transformation) {
       this.transformation = transformation;
-      this.singleEmitter = new DefaultEmitter<>();
     }
 
     @Override
     public void transform(KeyValue<String, IN> input, Emitter<OUT> emitter) throws Exception {
-      singleEmitter.reset();
-      transformation.transform(input.getValue(), singleEmitter);
-      for (OUT out : singleEmitter.getEntries()) {
-        emitter.emit(out);
-      }
-      for (InvalidEntry<OUT> error : singleEmitter.getErrors()) {
-        emitter.emitError(new InvalidEntry<>(error.getErrorCode(), error.getErrorMsg(), error.getInvalidRecord()));
-      }
+      transformation.transform(input.getValue(), emitter);
     }
   }
 
@@ -140,25 +130,25 @@ public final class KVTransformations {
     OUT>> {
     private final String stageName;
     private final Transformation<IN, OUT> transformation;
-    private final DefaultEmitter<OUT> singleEmitter;
 
     public KVWrappedTransformation(String stageName, Transformation<IN, OUT> transformation) {
       this.stageName = stageName;
       this.transformation = transformation;
-      this.singleEmitter = new DefaultEmitter<>();
     }
 
     @Override
-    public void transform(KeyValue<String, IN> input, Emitter<KeyValue<String, OUT>> emitter) throws Exception {
-      singleEmitter.reset();
-      transformation.transform(input.getValue(), singleEmitter);
-      for (OUT out : singleEmitter.getEntries()) {
-        emitter.emit(new KeyValue<>(stageName, out));
-      }
-      for (InvalidEntry<OUT> error : singleEmitter.getErrors()) {
-        emitter.emitError(new InvalidEntry<>(error.getErrorCode(), error.getErrorMsg(),
-                                             new KeyValue<>(stageName, error.getInvalidRecord())));
-      }
+    public void transform(KeyValue<String, IN> input, final Emitter<KeyValue<String, OUT>> emitter) throws Exception {
+      transformation.transform(input.getValue(), new Emitter<OUT>() {
+        @Override
+        public void emit(OUT value) {
+          emitter.emit(new KeyValue<>(stageName, value));
+        }
+        @Override
+        public void emitError(InvalidEntry<OUT> error) {
+          emitter.emitError(new InvalidEntry<>(error.getErrorCode(), error.getErrorMsg(),
+                                               new KeyValue<>(stageName, error.getInvalidRecord())));
+        }
+      });
     }
   }
 }
