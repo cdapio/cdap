@@ -59,4 +59,9 @@ public class ResolvingDiscoverable implements Discoverable {
     }
     return bindAddress;
   }
+
+  @Override
+  public String toString() {
+    return "ResolvingDiscoverable(" + String.valueOf(discoverable) + ")";
+  }
 }
