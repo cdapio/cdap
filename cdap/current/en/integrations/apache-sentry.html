@@ -1,0 +1,368 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2016 Cask Data, Inc." name="copyright" />
+
+    
+    
+    <meta name="git_release" content="3.5.0">
+    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
+    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <title>Apache Sentry &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
+    
+    <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/annotator.min.css" type="text/css" />
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.5.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/copy-to-clipboard.js"></script>
+    <script type="text/javascript" src="_static/tabbed-parsed-literal.js"></script>
+    <!-- Annotator -->
+<!-- 
+    <script type="text/javascript" src="_static/cdap-annotator-full.js"></script>
+    <!~~ annotator.min.css_t included in css files ~~>
+    <script type="text/javascript" src="_static/cdap-annotator.js"></script>
+ -->
+    <!-- Annotator end -->
+    <!-- Google Tag Manager start -->
+    <script>dataLayer = [];</script>
+    <noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-PBZ3JL"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-PBZ3JL');</script>
+    <!-- Google Tag Manager end -->
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.5.0 Documentation" href="index.html" />
+    <link rel="next" title="CDAP JDBC Driver" href="jdbc.html" />
+    <link rel="prev" title="Navigator Integration Application" href="partners/cloudera/navigator-integration.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="jdbc.html" title="CDAP JDBC Driver"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="partners/cloudera/navigator-integration.html" title="Navigator Integration Application"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.5.0');</script>
+       
+        <li><a href="table-of-contents.html">Integrations</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div id="documentwrapper" class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="apache-sentry">
+<span id="id1"></span><h1><a class="headerlink" href="#apache-sentry" title="Perma-link to this heading">🔗</a>Apache Sentry</h1>
+<div class="section" id="cdap-authorization-extension-using-apache-sentry">
+<h2><a class="headerlink" href="#cdap-authorization-extension-using-apache-sentry" title="Perma-link to this heading">🔗</a>CDAP Authorization Extension using Apache Sentry</h2>
+</div>
+<div class="section" id="overview">
+<h2><a class="headerlink" href="#overview" title="Perma-link to this heading">🔗</a>Overview</h2>
+<p>This project integrates CDAP with Apache Sentry to delegate authorization (both ACL Management and Enforcement) to
+Apache Sentry. It implements the CDAP
+<a class="reference external" href="https://github.com/caskdata/cdap/blob/develop/cdap-security/src/main/java/co/cask/cdap/security/authorization/Authorizer.java">Authorizer</a>
+interface to achieve this integration. This project is implemented as a CDAP Authorizer extension.</p>
+</div>
+<div class="section" id="code-organization">
+<h2><a class="headerlink" href="#code-organization" title="Perma-link to this heading">🔗</a>Code Organization</h2>
+<p>This code is organized into three submodules:</p>
+<div class="section" id="cdap-sentry-model">
+<h3><a class="headerlink" href="#cdap-sentry-model" title="Perma-link to this heading">🔗</a>CDAP Sentry Model</h3>
+<p>Defines the CDAP Data Model in Sentry. Used in both the Sentry Service and the Sentry Client (which runs inside the
+CDAP Master).</p>
+</div>
+<div class="section" id="cdap-sentry-policy-engine">
+<h3><a class="headerlink" href="#cdap-sentry-policy-engine" title="Perma-link to this heading">🔗</a>CDAP Sentry Policy Engine</h3>
+<p>Defines authorization policies for CDAP entities in Sentry. It depends on the CDAP Sentry Model. It runs inside the
+Sentry Service and is not required in the Sentry Client.</p>
+</div>
+<div class="section" id="cdap-sentry-binding">
+<h3><a class="headerlink" href="#cdap-sentry-binding" title="Perma-link to this heading">🔗</a>CDAP Sentry Binding</h3>
+<p>Defines binding between the CDAP entities and the CDAP Data Model in the Sentry Service. Runs inside the Sentry Client
+which runs inside the CDAP Master.</p>
+</div>
+</div>
+<div class="section" id="building">
+<h2><a class="headerlink" href="#building" title="Perma-link to this heading">🔗</a>Building</h2>
+<div class="section" id="prerequisites">
+<h3><a class="headerlink" href="#prerequisites" title="Perma-link to this heading">🔗</a>Prerequisites</h3>
+<p>Since Apache Sentry releases are source-only, this project assumes that Apache Sentry 1.7.0 has been pre-built and
+installed in the local maven repo. To do this, in the Apache Sentry source root directory please run:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">git</span> <span class="n">fetch</span> <span class="n">origin</span>
+<span class="n">git</span> <span class="n">checkout</span> <span class="n">branch</span><span class="o">-</span><span class="mf">1.7</span><span class="o">.</span><span class="mi">0</span>
+<span class="n">mvn</span> <span class="n">clean</span> <span class="n">install</span> <span class="o">-</span><span class="n">DskipTests</span>
+</pre></div>
+</div>
+<p>To build the CDAP Sentry Extension and run tests, execute the following command from the <code class="docutils literal"><span class="pre">cdap-sentry</span></code>
+root directory:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">mvn</span> <span class="n">clean</span> <span class="kn">package</span>
+</pre></div>
+</div>
+<p>To skip tests, execute:</p>
+<div class="highlight-java"><div class="highlight"><pre>mvn clean package -DskipTests
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="deploying">
+<h2><a class="headerlink" href="#deploying" title="Perma-link to this heading">🔗</a>Deploying</h2>
+<div class="section" id="sentry-server-side-deployment">
+<h3><a class="headerlink" href="#sentry-server-side-deployment" title="Perma-link to this heading">🔗</a>Sentry Server Side Deployment</h3>
+<p>The server side code only requires CDAP Sentry Policy and the CDAP Sentry Model classes. So, the
+<code class="docutils literal"><span class="pre">cdap-sentry-extension/cdap-sentry-policy/target/cdap-sentry-policy-*.jar</span></code> and
+<code class="docutils literal"><span class="pre">cdap-sentry-extension/cdap-sentry-model/target/cdap-sentry-model-*.jar</span></code>
+should be deployed on the host running the Sentry Service. There are two options for deploying these jars:</p>
+<ol class="arabic simple">
+<li>Copy them to the <code class="docutils literal"><span class="pre">[SENTRY_HOME_DIR]/lib</span></code> directory; or</li>
+<li>Set <code class="docutils literal"><span class="pre">HADOOP_CLASSPATH</span></code> to the location containing these jar files. On a
+<a class="reference external" href="https://www.cloudera.com/products/cloudera-manager.html">Cloudera Manager</a> managed cluster, the
+<code class="docutils literal"><span class="pre">HADOOP_CLASSPATH</span></code> can be set under the <strong>Sentry Service Environment Advanced Configuration Snippet (Safety Valve)</strong>
+configuration setting for the Sentry Service.</li>
+</ol>
+<p>Additionally, the following configurations should be specified in the <code class="docutils literal"><span class="pre">sentry-site.xml</span></code> used by the Sentry Service:</p>
+<ol class="arabic simple">
+<li>The <code class="docutils literal"><span class="pre">cdap</span></code> user should be added to <code class="docutils literal"><span class="pre">sentry.service.allow.connect</span></code>.</li>
+<li>The <code class="docutils literal"><span class="pre">cdap</span></code> user should be added to <code class="docutils literal"><span class="pre">sentry.service.admin.group</span></code>.</li>
+<li>An additional setting <code class="docutils literal"><span class="pre">sentry.cdap.action.factory</span></code> should be set to
+<code class="docutils literal"><span class="pre">co.cask.cdap.security.authorization.sentry.model.ActionFactory</span></code>. This setting can be added as a
+<strong>Sentry Service Advanced Configuration Snippet (Safety Valve) for sentry-site.xml</strong></li>
+</ol>
+<p>After updating these jars and settings, please restart the Sentry Service.</p>
+</div>
+<div class="section" id="cdap-master-side-deployment">
+<h3><a class="headerlink" href="#cdap-master-side-deployment" title="Perma-link to this heading">🔗</a>CDAP Master side deployment</h3>
+<p>The CDAP Master, which is also a client for the Sentry service requires the CDAP Sentry Binding classes as well as its
+dependencies. To deploy the cdap-sentry authorization extension:</p>
+<ul class="simple">
+<li>Install the <code class="docutils literal"><span class="pre">cdap-sentry-extension/cdap-sentry-binding/target/cdap-sentry-binding-*.jar</span></code> at a known location on your CDAP Master host.</li>
+<li>Set the following properties in in the <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> that the Master uses:</li>
+</ul>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="70%" />
+<col width="10%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+<th class="head">Default Value</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.authorization.extension.jar.path</span></code></td>
+<td>Absolute path, including the filename, of the <code class="docutils literal"><span class="pre">cdap-sentry-binding-*.jar</span></code> JAR file on the local file system
+of the CDAP Master.</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.authorization.extension.config.sentry.site.url</span></code></td>
+<td>Absolute path of the client-side <code class="docutils literal"><span class="pre">sentry-site.xml</span></code> on the local file system of the CDAP Master. Note, if
+Apache Sentry is managed via Cloudera Manager, you can add a Sentry Gateway role to the CDAP Master host, and the
+file will be available at <code class="docutils literal"><span class="pre">/etc/sentry/conf/sentry-site.xml</span></code> on the CDAP Master host. Alternatively, you can
+also download this file from the Actions -&gt; Download Client Configuration drop down link in the &quot;Configuration&quot;
+tab of the Sentry Service, and copy it to a location of your choice on the CDAP Master Host.</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">security.authorization.extension.config.sentry.admin.group</span></code></td>
+<td>A unix group configured as an admin group in the Sentry Service (identified by <code class="docutils literal"><span class="pre">sentry.service.admin.group</span></code>
+in the <code class="docutils literal"><span class="pre">sentry-site.xml</span></code> used by the Sentry Service). This group is used while granting <code class="docutils literal"><span class="pre">ALL</span></code> privileges
+to a user when he/she successfully creates an entity, as well as revoking privileges when an entity is deleted.
+It is also required to list privileges and roles in Sentry for enforcing authorization on CDAP entities.
+It is recommended that the <code class="docutils literal"><span class="pre">cdap</span></code> user (which runs the CDAP Master) be added to the
+<code class="docutils literal"><span class="pre">sentry.service.admin.group</span></code> configuration, but any other user is also acceptable.</td>
+<td><code class="docutils literal"><span class="pre">cdap</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.authorization.extension.config.instance.name</span></code></td>
+<td>String to use to identify the CDAP Instance.</td>
+<td><code class="docutils literal"><span class="pre">cdap</span></code></td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li>Restart CDAP Master.</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.5.0</a></h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+    <h3 class="cdap-extensions">CDAP Extensions</h3>
+    
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../hydrator-manual/index.html" rel="nofollow">Cask Hydrator</a></li>
+      <li><div class=""></div><a href="table-of-contents/../../tracker-manual/index.html" rel="nofollow">Cask Tracker</a></li>
+    </ul>
+  </div>
+    
+  <h3 class="pagenavtitle"><a href="table-of-contents.html">Integrations: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="partners/cloudera/index.html"> Cloudera</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href=""> Apache Sentry</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#cdap-authorization-extension-using-apache-sentry">CDAP Authorization Extension using Apache Sentry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#code-organization">Code Organization</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#cdap-sentry-model">CDAP Sentry Model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cdap-sentry-policy-engine">CDAP Sentry Policy Engine</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cdap-sentry-binding">CDAP Sentry Binding</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#building">Building</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#deploying">Deploying</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#sentry-server-side-deployment">Sentry Server Side Deployment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cdap-master-side-deployment">CDAP Master side deployment</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="jdbc.html"> CDAP JDBC Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="odbc.html"> CDAP ODBC Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pentaho.html"> Pentaho Data Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="squirrel.html"> SquirrelSQL</a></li>
+</ul>
+ 
+    </nav>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.5.0/cdap-docs-3.5.0-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Navigator Integration Application" href="partners/cloudera/navigator-integration.html" />Navigator Integration Application</a>&nbsp;&nbsp;
+    </th>
+    
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+      &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="CDAP JDBC Driver" href="jdbc.html" />CDAP JDBC Driver</a>
+    </th>
+
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>
