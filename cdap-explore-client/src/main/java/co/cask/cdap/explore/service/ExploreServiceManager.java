@@ -46,11 +46,6 @@ public class ExploreServiceManager extends AbstractDistributedMasterServiceManag
 
   @Override
   public int getMaxInstances() {
-    String configuredInstances = cConf.get(Constants.Explore.CONTAINER_INSTANCES);
-    if (configuredInstances != null) {
-      LOG.warn("Explore service instance count is set to {}, but this configuration is no longer supported " +
-                 "as it is always set to 1.", configuredInstances);
-    }
     return 1; // max explore service container instances is 1 (non-configurable)
   }
 

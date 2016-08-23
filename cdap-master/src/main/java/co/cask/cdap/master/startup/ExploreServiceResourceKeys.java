@@ -23,9 +23,8 @@ import co.cask.cdap.common.conf.CConfiguration;
  */
 public class ExploreServiceResourceKeys extends ServiceResourceKeys {
 
-  public ExploreServiceResourceKeys(CConfiguration cConf, String serviceName, String memoryKey, String vcoresKey,
-                             String instancesKey, String maxInstancesKey) {
-    super(cConf, serviceName, memoryKey, vcoresKey, instancesKey, maxInstancesKey);
+  public ExploreServiceResourceKeys(CConfiguration cConf, String serviceName, String memoryKey, String vcoresKey) {
+    super(cConf, serviceName, memoryKey, vcoresKey, null, null);
   }
 
   @Override

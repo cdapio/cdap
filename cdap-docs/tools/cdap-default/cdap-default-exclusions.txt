@@ -6,8 +6,6 @@ router.webapp.enabled
 
 # Deprecated properties
 
-explore.executor.container.instances
-explore.executor.max.instances
 kafka.bind.address
 kafka.bind.port
 kafka.default.replication.factor
