@@ -164,7 +164,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
       }
 
       SparkRuntimeContext runtimeContext = new SparkRuntimeContext(new Configuration(hConf), program, options,
-                                                                   txClient, programDatasetFramework,
+                                                                   host, txClient, programDatasetFramework,
                                                                    discoveryServiceClient,
                                                                    metricsCollectionService, streamAdmin, workflowInfo,
                                                                    pluginInstantiator, secureStore, secureStoreManager,
@@ -185,7 +185,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                                         options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
 
       Service sparkRuntimeService = new SparkRuntimeService(cConf, spark, getPluginArchive(options),
-                                                            runtimeContext, submitter, host);
+                                                            runtimeContext, submitter);
 
       sparkRuntimeService.addListener(
         createRuntimeServiceListener(program.getId(), runId, arguments, options.getUserArguments(),

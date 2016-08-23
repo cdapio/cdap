@@ -22,11 +22,14 @@ import co.cask.cdap.common.lang.ClassPathResources;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.io.OutputSupplier;
+import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.spark.SparkConf;
 import org.apache.spark.streaming.DStreamGraph;
@@ -43,6 +46,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.SynchronousQueue;
@@ -56,7 +61,10 @@ import java.util.zip.ZipOutputStream;
  */
 public final class SparkRuntimeUtils {
 
+  private static final String LOCALIZED_RESOURCES = "spark.cdap.localized.resources";
+
   private static final Logger LOG = LoggerFactory.getLogger(SparkRuntimeUtils.class);
+  private static final Gson GSON = new Gson();
 
   // ClassLoader filter
   @VisibleForTesting
@@ -244,6 +252,31 @@ public final class SparkRuntimeUtils {
     executor.allowCoreThreadTimeOut(true);
     parArray.tasksupport_$eq(new ThreadPoolTaskSupport(executor));
     return parArray;
+  }
+
+  /**
+   * Saves the names of localized resources to the given config.
+   */
+  public static void setLocalizedResources(Set<String> localizedResourcesNames,
+                                           Map<String, String> configs) {
+    configs.put(LOCALIZED_RESOURCES, GSON.toJson(localizedResourcesNames));
+  }
+
+  /**
+   * Retrieves the names of localized resources in the given config and constructs a map from the resource name
+   * to local files with the resource names as the file names in the given directory.
+   */
+  public static Map<String, File> getLocalizedResources(File dir, SparkConf sparkConf) {
+    String resources = sparkConf.get(LOCALIZED_RESOURCES, null);
+    if (resources == null) {
+      return Collections.emptyMap();
+    }
+    Map<String, File> result = new HashMap<>();
+    Set<String> resourceNames = GSON.fromJson(resources, new TypeToken<Set<String>>() { }.getType());
+    for (String name : resourceNames) {
+      result.put(name, new File(dir, name));
+    }
+    return result;
   }
 
   private SparkRuntimeUtils() {
