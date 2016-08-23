@@ -51,8 +51,10 @@ There are two different methods for creating pipelines:
 
 Using **Hydrator Studio,** the basic operations are:
 
-  1. **Create** a new pipeline, either by starting from a :ref:`blank canvas <cask-hydrator-getting-started-hydrator-studio>`, 
-     starting from a `template <Pipeline Templates>`_, or by `cloning <Cloning>`_ an already-published pipeline.
+  1. **Create** a new pipeline, either by starting from a :ref:`blank canvas 
+     <cask-hydrator-getting-started-hydrator-studio>`, starting from a
+     :ref:`template <cask-hydrator-creating-pipelines-pipeline-templates>`, or by 
+     :ref:`cloning <cask-hydrator-creating-pipelines-cloning>` an already-published pipeline.
 
   #. **Edit** the pipeline in Hydrator Studio, setting appropriate configurations and
      settings.
@@ -505,6 +507,8 @@ Existing pipelines can be used to create new pipelines by:
 - **Cloning** an already-published pipeline and saving the resulting draft with a new name
 - **Exporting** a configuration file, editing it, and then **importing** the revised file
 
+.. _cask-hydrator-creating-pipelines-pipeline-templates:
+
 Pipeline Templates
 ------------------
 A collection of predefined and preconfigured pipelines are available from within Hydrator
@@ -555,6 +559,8 @@ These are the available templates:
 - **ETL Batch** (deprecated as of CDAP 3.5.0; use *Data Pipeline* instead)
 
   - **Stream to HBase:** Periodically ingest from a stream into an HBase table
+
+.. _cask-hydrator-creating-pipelines-cloning:
 
 Cloning
 -------

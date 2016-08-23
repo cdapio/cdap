@@ -67,7 +67,7 @@ to enable the building, deploying, and managing of data pipelines.
 .. _developing-pipelines: developing-pipelines.html
 
 .. |developing-plugins| replace:: **Developing Plugins:**
-.. _developing-plugins: developing-plugins.html
+.. _developing-plugins: developing-plugins/index.html
 
 .. |how-hydrator-works| replace:: **How Hydrator Works:**
 .. _how-hydrator-works: how-hydrator-works.html
