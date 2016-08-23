@@ -507,10 +507,16 @@ public class ExploreServiceUtils {
     String mrAppClassPath = conf.get(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH,
                                      MRJobConfig.DEFAULT_MAPREDUCE_APPLICATION_CLASSPATH);
 
-    // Add the pwd/* at the beginning of classpath. Without this change, old jars from mr framework classpath
-    // get into classpath.
-    mrAppClassPath = "$PWD/*," + mrAppClassPath;
+    // TODO Remove the logic of adding cdap-common.jar after CDAP-4923 is fixed.
+    // We first add cdap-common.jar to the classpath so that FileContextLocationFactory from cdap-common gets
+    // picked instead of FileContextLocationFactory from Apache Twill. We then add the pwd/* to the classpath.
+    // so user's jar will take precedence. Without pwd/* in the beginning of classpath, job.jar will be at
+    // the beginning of the classpath. Since job.jar has old guava version classes, we want to add pwd/* before.
+    String cdapCommonJarName = getCdapCommonJarName();
+    String cdapCommonJarClassPath = cdapCommonJarName == null ? "" : "$PWD/" + cdapCommonJarName + ",";
+    mrAppClassPath = cdapCommonJarClassPath + "$PWD/*," + mrAppClassPath;
 
+    LOG.debug("Setting mapreduce.application.classpath to {}", mrAppClassPath);
     conf.set(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH, mrAppClassPath);
 
     File newMapredConfFile = new File(tempDir, "mapred-site.xml");
