@@ -162,10 +162,10 @@ configurable error dataset.
 
 These transform plugins support error record handling:
 
-- JavaScript:       `batch <plugins/batch/transforms/javascript.html>`__      or `real-time <plugins/realtime/transforms/javascript.html>`__
-- Python Evaluator: `batch <plugins/batch/transforms/pythonevaluator.html>`__ or `real-time <plugins/realtime/transforms/pythonevaluator.html>`__
-- Validator:        `batch <plugins/batch/transforms/validator.html>`__       or `real-time <plugins/realtime/transforms/validator.html>`__
-- XML Parser:       `batch <plugins/batch/transforms/xmlparser.html>`__       or `real-time <plugins/realtime/transforms/xmlparser.html>`__
+- `JavaScript <plugins/transforms/javascript.html>`__
+- `Python Evaluator <plugins/transforms/pythonevaluator.html>`__
+- `Validator <plugins/transforms/validator.html>`__
+- `XML Parser <plugins/transforms/xmlparser.html>`__
 
 See the :ref:`Core Validator <cask-hydrator-plugins-shared-core-validator>` for examples
 and additional information.

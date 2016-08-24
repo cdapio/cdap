@@ -35,17 +35,17 @@ API Changes
 - :cask-issue:`CDAP-5279` - The ``beforeSubmit`` and ``onFinish`` methods of the MapReduce
   and Spark APIs have been deprecated. Changes to the API include:
 
-- 1. ``AbstractMapReduce`` and ``AbstractSpark`` now implement ``ProgramLifeCycle``
+  1. ``AbstractMapReduce`` and ``AbstractSpark`` now implement ``ProgramLifeCycle``
 
-- 2. ``AbstractMapReduce`` and ``AbstractSpark`` now have a ``final
+  2. ``AbstractMapReduce`` and ``AbstractSpark`` now have a ``final
      initialize(context)`` method
 
-- 3. ``AbstractMapReduce`` and ``AbstractSpark`` now have a ``protected initialize()``
+  3. ``AbstractMapReduce`` and ``AbstractSpark`` now have a ``protected initialize()``
      method default implementation of which will call ``beforeSubmit()``
 
-- 4. User programs will override the no-arg initialize method
+  4. User programs will override the no-arg initialize method
 
-- 5. Driver will call both versions of the initialize method
+  5. Driver will call both versions of the initialize method
 
 - :cask-issue:`CDAP-6150` - The ``isSuccessful()`` method of the WorkflowContext is
   replaced by the ``getState()`` method, which returns the state of the workflow.
@@ -156,8 +156,7 @@ New Features
   COBOL Copybook.
 
 - :cask-issue:`HYDRATOR-514` - Added the Excel Reader Source plugin to Cask Hydrator
-  Plugins. This plugin provides the ability to read data from one or more Excel file(s). 
-  New Feature
+  Plugins. This plugin provides the ability to read data from one or more Excel file(s).
 
 - :cask-issue:`HYDRATOR-629` - Adds macros to pipeline plugin configurations. This allows
   users to set macros for plugin properties which can be provided as runtime arguments while
@@ -357,11 +356,13 @@ Improvements
 
 - :cask-issue:`CDAP-6901` - Added a bootstrap step for authorization in CDAP. As part of
   this step:
-- 1. The user that CDAP runs as now receives "admin" privileges on the CDAP instance, as
-  well as "all" privileges on the system namespace.
-- 2. The list of users specified in the parameter ``security.authorization.admin.users``
-  in cdap-site.xml receives "admin" privileges on the CDAP instance so that they can create
-  namespaces.
+
+  1. The user that CDAP runs as now receives "admin" privileges on the CDAP instance, as
+     well as "all" privileges on the system namespace.
+
+  2. The list of users specified in the parameter ``security.authorization.admin.users``
+     in cdap-site.xml receives "admin" privileges on the CDAP instance so that they can
+     create namespaces.
 
 - :cask-issue:`CDAP-6913` - Changed to use ``YarnClient`` instead of the YARN HTTP API to
   fetch node reports.
