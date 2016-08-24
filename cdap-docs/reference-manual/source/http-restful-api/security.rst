@@ -314,6 +314,7 @@ with the data of the secure key returned as text, passed in the response body.
      - The namespace specified in the request does not exist or the secure key with that
        name does not exist in that namespace
 
+.. _http-restful-api-security-secure-storage-retrieve-metadata:
 
 Retrieve the Metadata for a Secure Key
 --------------------------------------

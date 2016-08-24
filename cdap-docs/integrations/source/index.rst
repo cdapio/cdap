@@ -64,6 +64,13 @@ Integrations
 
 - |apache-sentry|_ Configuring and integrating CDAP with **Apache Sentry**
 
+.. rubric:: Apache Hadoop Key Management Server (KMS)
+
+.. |hadoop-kms| replace:: **Integrations:**
+.. _hadoop-kms: hadoop-kms.html
+
+- |hadoop-kms|_ Configuring and integrating CDAP with **Apache Hadoop Key Management Service (KMS)**
+
 
 .. rubric:: Accessing CDAP Datasets through JDBC and ODBC
 
