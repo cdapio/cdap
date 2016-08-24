@@ -217,10 +217,27 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
 
       @Override
       public InetSocketAddress getSocketAddress() throws RuntimeException {
+        LOG.debug(String.format("getSocketAddress method with announceAddress=%s", announceAddress));
         if (announceAddress != null) {
-          return new InetSocketAddress(announceAddress, connector.getLocalPort());
+            InetSocketAddress addr = new InetSocketAddress(announceAddress, connector.getLocalPort());
+            if (addr != null) {
+              LOG.debug(String.format("announceAddress != null, InetSocketAddress=%s", addr));
+            }
+            else {
+              LOG.debug("announceAddress != null, InetSocketAddress is null");
+            }
+            return addr;
+//          return new InetSocketAddress(announceAddress, connector.getLocalPort());
         }
-        return new InetSocketAddress(connector.getHost(), connector.getLocalPort());
+        InetSocketAddress addr = new InetSocketAddress(connector.getHost(), connector.getLocalPort());
+        if (addr != null) {
+          LOG.debug(String.format("announceAddress == null, InetSocketAddress=%s", addr));
+        }
+        else {
+          LOG.debug("announceAddress == null, InetSocketAddress is null");
+        }
+        return addr;
+//        return new InetSocketAddress(connector.getHost(), connector.getLocalPort());
       }
     }));
   }
