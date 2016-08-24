@@ -221,10 +221,10 @@ To delete only the datasets of a namespace, there is a
 Namespace Configurations
 ========================
 
-When creating or editing a namespace, namespace configurations can be supplied as a part of the
-request body. These would be in the form of a JSON string of configuration key-value pairs. Note
-that the values for these keys can not be modified once the namespace is created, with the exception
-of ``scheduler.queue.name``.
+When creating or editing a namespace, namespace configurations can be supplied as part of the
+request body. These are in the form of a JSON string of configuration key-value pairs. Note
+that the values for these keys cannot be modified once the namespace has been created, with 
+the exception of the property ``scheduler.queue.name``.
 
 .. rubric:: Namespace Configurations
 .. list-table::
@@ -233,16 +233,16 @@ of ``scheduler.queue.name``.
 
    * - Configuration Name
      - Description
-   * - ``scheduler.queue.name``
-     - Scheduler queue for CDAP programs and CDAP explore queries run in the namespace. See
-       :ref:`Scheduler queue <resource-guarantees>`
-   * - ``root.directory``
-     - The pre-existing file-system directory to be used for the namespace
    * - ``hbase.namespace``
-     - The pre-existing HBase namespace to be used for the namespace
+     - The pre-existing HBase namespace to be used for the namespace (CDAP Distributed mode only)
    * - ``hive.database``
      - The pre-existing Hive database to be used for the namespace
-   * - ``principal``
-     - The Kerberos principal for the namespace
    * - ``keytabURI``
      - The URI of the Kerberos keytab file for the namespace
+   * - ``principal``
+     - The Kerberos principal for the namespace
+   * - ``root.directory``
+     - The pre-existing file-system directory to be used for the namespace
+   * - ``scheduler.queue.name``
+     - Scheduler queue for CDAP programs and CDAP explore queries run in the namespace. See
+       :ref:`Scheduler queue <resource-guarantees>` for details.
