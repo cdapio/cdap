@@ -262,6 +262,7 @@ function build_javadocs_api() {
   if [ "${DEBUG}" == "${TRUE}" ]; then
     debug_flag="-X"
   fi
+   mvn -version
   local start=`date`
   MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true && ${javadoc_run} -DskipTests -DisOffline=false ${debug_flag}
   echo
@@ -281,6 +282,7 @@ function build_docs_cli() {
     local target_txt=${SCRIPT_PATH}/../cdap-docs-gen/${TARGET}/cdap-docs-cli.txt
     set_version
     set_mvn_environment
+    mvn -version
     mvn package -pl cdap-docs-gen -am -DskipTests
     warnings=$?
     if [ "${warnings}" == "0" ]; then
