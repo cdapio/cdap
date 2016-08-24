@@ -66,8 +66,8 @@ the entity ID, since an entity cannot exist independently of a namespace.
 Using Namespaces
 ================
 The best practices with using namespaces would be to create desired namespaces and use
-them for all operations. Otherwise, CDAP will use the ``default`` namespace for any operations
-undertaken.
+them for all operations. Otherwise, CDAP will use the ``default`` namespace for any
+operations undertaken.
 
 Once a namespace has been created, you can edit its description and configuration
 preferences, either by using a :ref:`RESTful API <http-restful-api-namespace>` or the 
@@ -106,9 +106,9 @@ Namespace Examples
 
 Custom Mapping of Storage Providers
 ===================================
-When creating a namespace, the underlying storage can also be configured per namespace.
-For example, a custom HBase namespace, Hive database, or HDFS directory can be specified to
-be used for data in a particular namespace.
+When creating a namespace, the underlying storage provider can also be configured per
+namespace. For example, a custom HBase namespace, Hive database, or HDFS directory can be
+specified to be used for data in a particular namespace.
 See :ref:`Namespace Configurations <http-restful-api-namespace-configs>`.
 
 When configuring these, CDAP will not manage the lifecycle of these entities; they must exist
