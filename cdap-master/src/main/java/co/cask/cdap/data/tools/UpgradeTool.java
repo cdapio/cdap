@@ -73,7 +73,6 @@ import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.NamespaceStore;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
-import co.cask.tephra.distributed.TransactionService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
