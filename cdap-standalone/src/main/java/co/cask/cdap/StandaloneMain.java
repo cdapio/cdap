@@ -78,6 +78,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.inject.Guice;
@@ -97,6 +98,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Standalone Main.
@@ -248,7 +250,13 @@ public class StandaloneMain {
     }
 
     if (zkClient != null) {
-      zkClient.startAndWait();
+      ListenableFuture<Service.State> startFunction = zkClient.start();
+      try {
+        startFunction.get(cConf.getLong(Constants.Zookeeper.CFG_CLIENT_TIMEOUT_MILLIS), TimeUnit.MILLISECONDS);
+      } catch (Exception e) {
+        LOG.error("Exception while trying to start Zookeper client", e);
+        throw e;
+      }
     }
 
     if (kafkaClient != null) {
