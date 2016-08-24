@@ -22,8 +22,8 @@ To configure a namespace to have impersonation, specify the ``principal`` and
 
 If these are not specified, the principal and keytab of the CDAP Master user will be used.
 
-The configured principal must have been granted permissions for the operations that will
-occur in that namespace. For instance, if
+The configured Kerberos principal must have been granted permissions for the operations
+that will occur in that namespace. For instance, if
 a :ref:`custom HBase namespace <namespaces-custom-mapping>` is configured, the configured
 principal must have privileges to create tables within that HBase namespace. If no
 custom HBase namespace is specified, the configured principal must have privilege to

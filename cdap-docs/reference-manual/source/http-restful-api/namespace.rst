@@ -243,6 +243,6 @@ of ``scheduler.queue.name``.
    * - ``hive.database``
      - The pre-existing Hive database to be used for the namespace
    * - ``principal``
-     - The principal for the namespace
+     - The Kerberos principal for the namespace
    * - ``keytabURI``
-     - The URI of the keytab file for the namespace
+     - The URI of the Kerberos keytab file for the namespace
