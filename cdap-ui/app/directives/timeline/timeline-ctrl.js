@@ -17,9 +17,12 @@
 function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myLogsApi, MyMetricsQueryHelper, MyCDAPDataSource, ProgramsHelpers, moment, $timeout, caskWindowManager) {
 
   var dataSrc = new MyCDAPDataSource($scope);
-  this.pinScrollPosition = 0;
   $scope.moment = moment;
   let screenSize;
+  $scope.globalStartTime = null;
+
+  //Default values for scrollPosition
+  this.pinScrollPosition = 0;
   $scope.pinScrollingPosition = 0;
 
   this.updateStartTimeInStore = function(val) {
@@ -31,9 +34,11 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
     });
   };
 
+  //Re-render timeline when screen resizes
   $scope.$on(caskWindowManager.event.resize, () => {
     $timeout($scope.initialize);
   });
+
   this.updateTotalLogsInStore = function(val) {
     LogViewerStore.dispatch({
       type: LOGVIEWERSTORE_ACTIONS.TOTAL_LOGS,
@@ -71,6 +76,7 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
 
   var pollPromise = null;
   var programType = ProgramsHelpers.getSingularName(this.programType);
+
   var apiSettings = {
     metric : {
       context: `namespace.${this.namespaceId}.app.${this.appId}.${programType}.${this.programId}.run.${this.runId}`,
@@ -82,9 +88,9 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
   };
 
   this.setDefaultTimeWindow = () => {
-    apiSettings.metric.startTime = '';
+    apiSettings.metric.startTime = $scope.globalStartTime;
     apiSettings.metric.endTime = '';
-    this.updateStartTimeInStore(apiSettings.metric.startTime);
+    this.updateStartTimeInStore($scope.globalStartTime);
   };
 
   const pollForMetadata = () => {
@@ -113,6 +119,13 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
   };
 
   LogViewerStore.subscribe(() => {
+
+    //'*1000' converts from seconds to miliseconds
+    if($scope.globalStartTime === null || $scope.globalStartTime !== LogViewerStore.getState().globalStartTime * 1000){
+      $scope.globalStartTime = LogViewerStore.getState().globalStartTime * 1000;
+      return;
+    }
+
     if(screenSize !== LogViewerStore.getState().fullScreen){
       screenSize = LogViewerStore.getState().fullScreen;
       $timeout($scope.initialize);
@@ -134,6 +147,7 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
         $scope.renderSearchCircles($scope.searchResultTimes);
       }
     }
+
   });
 
   screenSize = LogViewerStore.getState().fullScreen;

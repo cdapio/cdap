@@ -86,7 +86,7 @@ function link (scope, element) {
       return;
     }
 
-    startTime = timelineData.qid.startTime*1000;
+    startTime = scope.globalStartTime;
     endTime = timelineData.qid.endTime*1000;
 
     timescaleSvg = d3.select('.timeline-log-chart')
@@ -94,7 +94,6 @@ function link (scope, element) {
       .attr('width', width)
       .attr('height', height);
 
-    //Set the Range and Domain
     xScale = d3.time.scale().range([0, (maxRange)]);
     xScale.domain([startTime, endTime]);
 
@@ -183,8 +182,8 @@ function link (scope, element) {
     if(firstRun){
       firstRun = false;
       scope.sliderBarPositionRefresh = xScale.invert(0);
-      scope.Timeline.updateStartTimeInStore(xScale.invert(0));
     }
+
     let xValue = xScale(scope.sliderBarPositionRefresh);
     if(xValue < 0 || xValue > maxRange){
       xValue = 0;
@@ -278,12 +277,15 @@ function link (scope, element) {
   scope.updatePin = function () {
     let xPositionVal = xScale(scope.pinScrollingPosition);
 
+    if(xPositionVal < 0) {
+      xPositionVal = 0;
+    }
+
+    if(xPositionVal > maxRange){
+      xPositionVal = maxRange;
+    }
+
     if(typeof pinHandle !== 'undefined'){
-
-      if(totalCount === 0){
-        xPositionVal = 0;
-      }
-
       pinHandle.attr('x', xPositionVal - pinOffset + 1);
       scrollNeedle.attr('x1', xPositionVal + 8)
         .attr('x2', xPositionVal + 8);

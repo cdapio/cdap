@@ -15,7 +15,7 @@
  */
 
 var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
-  const startTime = (state = new Date(), action = {}) => {
+  const startTime = (state = null, action = {}) => {
     switch(action.type) {
       case LOGVIEWERSTORE_ACTIONS.START_TIME:
         if(!action.payload.startTime) {
@@ -23,14 +23,28 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
         }
         return action.payload.startTime;
       case LOGVIEWERSTORE_ACTIONS.RESET:
-        return new Date();
+        return null;
+      default:
+        return state;
+    }
+  };
+
+  const globalStartTime = (state = null, action = {}) => {
+    switch(action.type) {
+      case LOGVIEWERSTORE_ACTIONS.GLOBAL_START_TIME:
+        if(!action.payload.globalStartTime) {
+          return state;
+        }
+        return action.payload.globalStartTime;
+      case LOGVIEWERSTORE_ACTIONS.RESET:
+        return null;
       default:
         return state;
     }
   };
 
   //Scroll Position Reducer
-  const scrollPosition = (state = Date.now(), action = {}) => {
+  const scrollPosition = (state = null, action = {}) => {
     switch(action.type) {
       case LOGVIEWERSTORE_ACTIONS.SCROLL_POSITION:
         if(!action.payload.scrollPosition) {
@@ -38,7 +52,7 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
         }
         return action.payload.scrollPosition;
       case LOGVIEWERSTORE_ACTIONS.RESET:
-        return Date.now();
+        return null;
       default:
         return state;
     }
@@ -118,6 +132,7 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
     startTime,
     scrollPosition,
     fullScreen,
+    globalStartTime,
     searchResults,
     totalLogs,
     totalErrors,
@@ -126,8 +141,9 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
 
   let getInitialState = () => {
     return {
-      startTime: Date.now(),
-      scrollPosition: Date.now(),
+      startTime: null,
+      scrollPosition: null,
+      globalStartTime: null,
       fullScreen: false,
       searchResults: [],
       totalLogs: 0,
@@ -150,6 +166,7 @@ LogViewerStore.$inject = ['LOGVIEWERSTORE_ACTIONS', 'Redux', 'ReduxThunk'];
 angular.module(`${PKG.name}.commons`)
   .constant('LOGVIEWERSTORE_ACTIONS', {
     'START_TIME' : 'START_TIME',
+    'GLOBAL_START_TIME' : 'GLOBAL_START_TIME',
     'SCROLL_POSITION' : 'SCROLL_POSITION',
     'SEARCH_RESULTS' : 'SEARCH_RESULTS',
     'FULL_SCREEN' : 'FULL_SCREEN',
