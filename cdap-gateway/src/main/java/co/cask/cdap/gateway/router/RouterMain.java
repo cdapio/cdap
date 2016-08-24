@@ -35,12 +35,15 @@ import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Main class to run Router from command line.
  */
 public class RouterMain extends DaemonMain {
   private static final Logger LOG = LoggerFactory.getLogger(RouterMain.class);
 
+  private CConfiguration cConf;
   private ZKClientService zkClientService;
   private NettyRouter router;
 
@@ -62,7 +65,7 @@ public class RouterMain extends DaemonMain {
     LOG.info("Initializing Router...");
     try {
       // Load configuration
-      CConfiguration cConf = CConfiguration.create();
+      cConf = CConfiguration.create();
 
       if (cConf.getBoolean(Constants.Security.ENABLED)) {
         // Enable Kerberos login
@@ -90,9 +93,17 @@ public class RouterMain extends DaemonMain {
   }
 
   @Override
-  public void start() {
+  public void start() throws Exception {
     LOG.info("Starting Router...");
-    Futures.getUnchecked(Services.chainStart(zkClientService, router));
+    co.cask.cdap.common.service.Services.startAndWait(zkClientService,
+                                                      cConf.getLong(Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
+                                                      TimeUnit.MILLISECONDS,
+                                                      String.format("Connection timed out while trying to start " +
+                                                                    "ZooKeeper client. Please verify that the " +
+                                                                    "ZooKeeper quorum settings are correct in " +
+                                                                    "cdap-site.xml. Currently configured as: %s",
+                                                                    cConf.get(Constants.Zookeeper.QUORUM)));
+    router.startAndWait();
     LOG.info("Router started.");
   }
 

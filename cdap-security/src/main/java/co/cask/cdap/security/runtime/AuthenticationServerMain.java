@@ -36,6 +36,8 @@ import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Server for authenticating clients accessing CDAP.  When a client authenticates successfully, it is issued
  * an access token containing a verifiable representation of the client's identity.  Other CDAP services
@@ -63,7 +65,7 @@ public class AuthenticationServerMain extends DaemonMain {
   }
 
   @Override
-  public void start() {
+  public void start() throws Exception {
     if (authServer != null) {
       try {
         LOG.info("Starting AuthenticationServer.");
@@ -71,7 +73,16 @@ public class AuthenticationServerMain extends DaemonMain {
         // Enable Kerberos login
         SecurityUtil.enableKerberosLogin(configuration);
 
-        Services.chainStart(zkClientService, authServer);
+        co.cask.cdap.common.service.Services.startAndWait(zkClientService,
+                                                          configuration.getLong(
+                                                            Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
+                                                          TimeUnit.MILLISECONDS,
+                                                          String.format("Connection timed out while trying to start " +
+                                                                          "ZooKeeper client. Please verify that the " +
+                                                                          "ZooKeeper quorum settings are correct in " +
+                                                                          "cdap-site.xml. Currently configured as: %s",
+                                                                        configuration.get(Constants.Zookeeper.QUORUM)));
+        authServer.startAndWait();
       } catch (Exception e) {
         Throwable rootCause = Throwables.getRootCause(e);
         if (rootCause instanceof ServiceBindException) {

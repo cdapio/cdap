@@ -25,6 +25,7 @@ import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
@@ -32,6 +33,7 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.common.service.Services;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.config.DefaultConfigStore;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -91,6 +93,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Command line tool for the Upgrade tool
@@ -250,8 +253,15 @@ public class UpgradeTool {
    */
   private void startUp() throws Exception {
     // Start all the services.
-    zkClientService.startAndWait();
+    LOG.info("Starting Zookeeper Client...");
+    Services.startAndWait(zkClientService, cConf.getLong(Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
+                          TimeUnit.MILLISECONDS,
+                          String.format("Connection timed out while trying to start ZooKeeper client. Please " +
+                                          "verify that the ZooKeeper quorum settings are correct in cdap-site.xml. " +
+                                          "Currently configured as: %s", cConf.get(Constants.Zookeeper.QUORUM)));
+    LOG.info("Starting Transaction Service...");
     txService.startAndWait();
+    LOG.info("Initializing Dataset Framework...");
     initializeDSFramework(cConf, dsFramework);
   }
 

@@ -67,7 +67,7 @@ public abstract class DaemonMain {
   /**
    * Invoked by jsvc to start the program.
    */
-  public abstract void start();
+  public abstract void start() throws Exception;
 
   /**
    * Invoked by jsvc to stop the program.

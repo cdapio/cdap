@@ -200,6 +200,14 @@
     </description>
   </property>
 
+  <property>
+    <name>zookeeper.client.startup.timeout.millis</name>
+    <value>60000</value>
+    <description>
+      Maximum amount of time in milliseconds to wait for a successful
+      connection to a server in the ZooKeeper quorum.
+    </description>
+  </property>
 
   <!-- Global Configuration -->
 

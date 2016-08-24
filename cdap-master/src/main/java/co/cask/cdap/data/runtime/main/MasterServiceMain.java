@@ -38,6 +38,7 @@ import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
+import co.cask.cdap.common.service.Services;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -221,15 +222,18 @@ public class MasterServiceMain extends DaemonMain {
   }
 
   @Override
-  public void start() {
+  public void start() throws Exception {
     logAppenderInitializer.initialize();
     createDirectory("twill");
     createDirectory(cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_COPROCESSOR_DIR,
                               QueueConstants.DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR));
     createSystemHBaseNamespace();
     updateConfigurationTable();
-
-    zkClient.startAndWait();
+    Services.startAndWait(zkClient, cConf.getLong(Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
+                          TimeUnit.MILLISECONDS,
+                          String.format("Connection timed out while trying to start ZooKeeper client. Please " +
+                                          "verify that the ZooKeeper quorum settings are correct in cdap-site.xml. " +
+                                          "Currently configured as: %s", cConf.get(Constants.Zookeeper.QUORUM)));
     // Tries to create the ZK root node (which can be namespaced through the zk connection string)
     Futures.getUnchecked(ZKOperations.ignoreError(zkClient.create("/", null, CreateMode.PERSISTENT),
                                                   KeeperException.NodeExistsException.class, null));
