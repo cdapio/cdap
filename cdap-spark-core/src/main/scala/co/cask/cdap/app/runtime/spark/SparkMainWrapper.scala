@@ -89,19 +89,20 @@ object SparkMainWrapper {
 
       // Load the user Spark class
       val userSparkClass = sparkClassLoader.getProgramClassLoader.loadClass(arguments(ARG_USER_CLASS))
-      val executionContext = sparkClassLoader.createExecutionContext()
+      val executionContext = sparkClassLoader.getSparkExecutionContext(true)
+      val serializableExecutionContext = new SerializableSparkExecutionContext(executionContext)
       try {
         val cancelHeartbeat = startHeartbeat(arguments, runtimeContext, () => triggerShutdown)
         try {
           userSparkClass match {
             // SparkMain
             case cls if classOf[SparkMain].isAssignableFrom(cls) =>
-              cls.asSubclass(classOf[SparkMain]).newInstance().run(executionContext)
+              cls.asSubclass(classOf[SparkMain]).newInstance().run(serializableExecutionContext)
 
             // JavaSparkMain
             case cls if classOf[JavaSparkMain].isAssignableFrom(cls) =>
               cls.asSubclass(classOf[JavaSparkMain]).newInstance().run(
-                sparkClassLoader.createJavaExecutionContext(executionContext))
+                sparkClassLoader.createJavaExecutionContext(serializableExecutionContext))
 
             // main() method
             case cls =>

@@ -50,6 +50,7 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.Services;
@@ -58,7 +59,9 @@ import org.apache.twill.zookeeper.ZKClientService;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -180,6 +183,7 @@ public final class SparkRuntimeContextProvider {
       sparkRuntimeContext = new SparkRuntimeContext(
         contextConfig.getConfiguration(),
         program, contextConfig.getProgramOptions(),
+        getHostname(),
         injector.getInstance(TransactionSystemClient.class),
         programDatasetFramework,
         injector.getInstance(DiscoveryServiceClient.class),
@@ -208,6 +212,22 @@ public final class SparkRuntimeContextProvider {
     hConf.clear();
     hConf.addResource(new File(HCONF_FILE_NAME).toURI().toURL());
     return hConf;
+  }
+
+  private static String getHostname() {
+    // Try to determine the hostname from the NM_HOST environment variable, which is set by NM
+    String host = System.getenv(ApplicationConstants.Environment.NM_HOST.key());
+    if (host != null) {
+      return host;
+    }
+    // If it is missing, use the current hostname
+    try {
+      return InetAddress.getLocalHost().getCanonicalHostName();
+    } catch (UnknownHostException e) {
+      // Nothing much we can do. Just throw exception since
+      // we need the hostname to start the SparkTransactionService
+      throw Throwables.propagate(e);
+    }
   }
 
   private static Program createProgram(CConfiguration cConf,

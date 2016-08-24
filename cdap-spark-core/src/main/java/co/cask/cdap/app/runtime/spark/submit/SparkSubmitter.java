@@ -16,8 +16,6 @@
 
 package co.cask.cdap.app.runtime.spark.submit;
 
-import co.cask.cdap.api.spark.SparkExecutionContext;
-import co.cask.cdap.app.runtime.spark.SparkExecutionContextFactory;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeContext;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -37,7 +35,6 @@ public interface SparkSubmitter {
    * Submits a Spark job to the Spark framework.
    *
    * @param runtimeContext the {@link SparkRuntimeContext} representing the Spark program
-   * @param contextFactory a {@link SparkExecutionContextFactory} for creating {@link SparkExecutionContext}
    * @param configs configurations for the Spark framework
    * @param resources list of resources to be localized to Spark containers
    * @param jobJar location of the job JAR file required by the framework
@@ -48,6 +45,6 @@ public interface SparkSubmitter {
    *         when {@link ListenableFuture#get} is called. If {@link ListenableFuture#cancel(boolean)} is called,
    *         the running job will be terminated immediately.
    */
-  <V> ListenableFuture<V> submit(SparkRuntimeContext runtimeContext, SparkExecutionContextFactory contextFactory,
-                                 Map<String, String> configs, List<LocalizeResource> resources, File jobJar, V result);
+  <V> ListenableFuture<V> submit(SparkRuntimeContext runtimeContext, Map<String, String> configs,
+                                 List<LocalizeResource> resources, File jobJar, V result);
 }

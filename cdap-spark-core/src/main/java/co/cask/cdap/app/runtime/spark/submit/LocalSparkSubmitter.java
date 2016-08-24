@@ -17,14 +17,8 @@
 package co.cask.cdap.app.runtime.spark.submit;
 
 import co.cask.cdap.app.runtime.spark.SparkMainWrapper;
-import co.cask.cdap.app.runtime.spark.SparkRuntimeEnv;
-import co.cask.cdap.app.runtime.spark.SparkRuntimeUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,7 +27,6 @@ import java.util.regex.Pattern;
  */
 public class LocalSparkSubmitter extends AbstractSparkSubmitter {
 
-  private static final Logger LOG = LoggerFactory.getLogger(LocalSparkSubmitter.class);
   private static final Pattern LOCAL_MASTER_PATTERN = Pattern.compile("local\\[([0-9]+|\\*)\\]");
 
   @Override

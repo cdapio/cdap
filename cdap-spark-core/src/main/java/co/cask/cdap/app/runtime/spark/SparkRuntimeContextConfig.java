@@ -27,11 +27,9 @@ import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.conf.Configuration;
 
 import java.io.File;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -55,7 +53,6 @@ public class SparkRuntimeContextConfig {
   private static final String HCONF_ATTR_PROGRAM_ID = "cdap.spark.program.id";
   private static final String HCONF_ATTR_PROGRAM_OPTIONS = "cdap.spark.program.options";
   private static final String HCONF_ATTR_WORKFLOW_INFO = "cdap.spark.program.workflow.info";
-  private static final String HCONF_ATTR_LOCAL_RESOURCES = "cdap.spark.local.resources";
 
   private final Configuration hConf;
 
@@ -90,13 +87,11 @@ public class SparkRuntimeContextConfig {
   /**
    * Sets configurations based on the given context.
    */
-  public SparkRuntimeContextConfig set(SparkRuntimeContext context, Set<String> localizeResourceNames,
-                                       @Nullable File pluginArchive) {
+  public SparkRuntimeContextConfig set(SparkRuntimeContext context, @Nullable File pluginArchive) {
     setApplicationSpecification(context.getApplicationSpecification());
     setProgramId(context.getProgram().getId().toEntityId());
     setProgramOptions(context.getProgramOptions());
     setWorkflowProgramInfo(context.getWorkflowInfo());
-    setLocalizedResourceNames(localizeResourceNames);
     setPluginArchive(pluginArchive);
 
     return this;
@@ -136,13 +131,6 @@ public class SparkRuntimeContextConfig {
   }
 
   /**
-   * @return the set of localized resource names stored in the configuration.
-   */
-  public Set<String> getLocalizedResourceNames() {
-    return GSON.fromJson(hConf.get(HCONF_ATTR_LOCAL_RESOURCES), new TypeToken<Set<String>>() { }.getType());
-  }
-
-  /**
    * @return the name of the plugin archive file stored in the configuration.
    */
   @Nullable
@@ -178,13 +166,6 @@ public class SparkRuntimeContextConfig {
     if (info != null) {
       hConf.set(HCONF_ATTR_WORKFLOW_INFO, GSON.toJson(info));
     }
-  }
-
-  /**
-   * Serialize the set of localize resource names to the configuration.
-   */
-  private void setLocalizedResourceNames(Set<String> names) {
-    hConf.set(HCONF_ATTR_LOCAL_RESOURCES, GSON.toJson(names));
   }
 
   /**
