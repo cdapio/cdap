@@ -1,9 +1,10 @@
 {
   "cdap": {
     "cdap_site": {
-      "zookeeper.quorum": "{{ZK_QUORUM}}",
-      "kafka.log.dir": "/var/cdap/kafka-logs",
-      "explore.enabled": "{{EXPLORE_ENABLED}}"
+      "explore.enabled": "{{EXPLORE_ENABLED}}",
+      "kafka.server.log.dirs": "/var/cdap/kafka-logs",
+      "router_bind_port": "11015",
+      "zookeeper.quorum": "{{ZK_QUORUM}}"
     },
     "cdap_env": {
       "cdap_ui_compression_enabled": "false",
