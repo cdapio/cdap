@@ -243,6 +243,10 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
       if(isInview) {
 
+        if(typeof this.displayData[index] !== 'undefined'){
+          return;
+        }
+
         //tbody extends beyond the viewport when scrolling down the table
         let topOfTable = event.inViewTarget.parentElement.getBoundingClientRect().top;
 
