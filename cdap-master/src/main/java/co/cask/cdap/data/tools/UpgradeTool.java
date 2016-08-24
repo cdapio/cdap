@@ -25,6 +25,7 @@ import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
@@ -72,6 +73,9 @@ import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.NamespaceStore;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
+import co.cask.tephra.distributed.TransactionService;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -91,6 +95,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Command line tool for the Upgrade tool
@@ -250,8 +255,17 @@ public class UpgradeTool {
    */
   private void startUp() throws Exception {
     // Start all the services.
-    zkClientService.startAndWait();
+    LOG.info("Starting Zookeeper Client...");
+    ListenableFuture<Service.State> startFunction = zkClientService.start();
+    try {
+      startFunction.get(cConf.getLong(Constants.Zookeeper.CFG_CLIENT_TIMEOUT_MILLIS), TimeUnit.MILLISECONDS);
+    } catch (Exception e) {
+      LOG.error("Exception while trying to start Zookeper client", e);
+      throw e;
+    }
+    LOG.info("Starting Transaction Service...");
     txService.startAndWait();
+    LOG.info("Initializing Dataset Framework...");
     initializeDSFramework(cConf, dsFramework);
   }
 

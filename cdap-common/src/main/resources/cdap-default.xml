@@ -200,6 +200,13 @@
     </description>
   </property>
 
+  <property>
+    <name>zookeeper.client.timeout.millis</name>
+    <value>40000</value>
+    <description>
+      ZooKeeper client timeout in milliseconds
+    </description>
+  </property>
 
   <!-- Global Configuration -->
 

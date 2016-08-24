@@ -81,6 +81,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -221,7 +222,7 @@ public class MasterServiceMain extends DaemonMain {
   }
 
   @Override
-  public void start() {
+  public void start() throws Exception {
     logAppenderInitializer.initialize();
     createDirectory("twill");
     createDirectory(cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_COPROCESSOR_DIR,
@@ -229,7 +230,14 @@ public class MasterServiceMain extends DaemonMain {
     createSystemHBaseNamespace();
     updateConfigurationTable();
 
-    zkClient.startAndWait();
+    ListenableFuture<Service.State> startFunction = zkClient.start();
+    try {
+      startFunction.get(cConf.getLong(Constants.Zookeeper.CFG_CLIENT_TIMEOUT_MILLIS), TimeUnit.MILLISECONDS);
+    } catch (Exception e) {
+      LOG.error("Exception while trying to start Zookeper client", e);
+      throw e;
+    }
+
     // Tries to create the ZK root node (which can be namespaced through the zk connection string)
     Futures.getUnchecked(ZKOperations.ignoreError(zkClient.create("/", null, CreateMode.PERSISTENT),
                                                   KeeperException.NodeExistsException.class, null));
