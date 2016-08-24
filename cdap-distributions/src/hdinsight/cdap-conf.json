@@ -2,7 +2,7 @@
   "cdap": {
     "cdap_site": {
       "zookeeper.quorum": "{{ZK_QUORUM}}",
-      "kafka.log.dir": "/var/cdap/kafka-logs",
+      "kafka.server.log.dirs": "/var/cdap/kafka-logs",
       "explore.enabled": "{{EXPLORE_ENABLED}}"
     },
     "cdap_env": {
