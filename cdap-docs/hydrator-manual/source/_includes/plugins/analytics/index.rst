@@ -30,5 +30,3 @@ These plugins work with:
     :glob:
 
     DPB*
-
-.. - `NaiveBayesClassifier <naivebayesclassifier-sparkcompute.html>`__
