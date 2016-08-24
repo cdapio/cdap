@@ -204,7 +204,8 @@
     <name>zookeeper.client.timeout.millis</name>
     <value>40000</value>
     <description>
-      ZooKeeper client timeout in milliseconds
+      Maximum amount of time in milliseconds to wait for the first successful
+      connection to a server in the ZooKeeper quorum.
     </description>
   </property>
 
