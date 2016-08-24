@@ -78,7 +78,8 @@ source ${__gitdir}/cdap-common/bin/common.sh || die "Cannot source CDAP common s
 __zk_quorum=$(cdap_get_conf 'hbase.zookeeper.quorum' '/etc/hbase/conf/hbase-site.xml') || die "Cannot determine zookeeper quorum"
 
 # Get HDP version, allow for the future addition hdp-select "current" directory
-__hdp_version=$(ls /usr/hdp | grep "^[0-9]*\.") || die "Cannot determine HDP version"
+__hdp_version_str=$(hdp-select status hadoop-client) || die "Cannot run hdp-select to determine HDP version"
+__hdp_version=$(echo ${__hdp_version_str} | cut -d' ' -f3) || die "Cannot determine HDP version from string ${__hdp_version_str}"
 
 # Create chef json configuration
 sed \
