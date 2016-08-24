@@ -299,10 +299,11 @@ test the creation of multiple applications from the same artifact, as well as th
 
 To add an artifact containing an application class::
 
-  // Add the artifact for ETL batch app
-  addAppArtifact(new NamespacedArtifactId(NamespaceId.DEFAULT.getNamespace(), "etlbatch", "3.5.0"), 
-    ETLBatchApplication.class,
+  // Add the artifact for a Data Pipeline app
+  addAppArtifact(new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "data-pipeline", "3.5.0"),
+    DataPipelineApp.class,
     BatchSource.class.getPackage().getName(),
+    Action.class.getPackage().getName(),
     PipelineConfigurable.class.getPackage().getName(),
     "org.apache.avro.mapred", "org.apache.avro", "org.apache.avro.generic");
   
@@ -310,7 +311,7 @@ The first argument is the ``id`` of the artifact; the second is the application 
 the remainder of the arguments are packages that should be included in the
 ``Export-Packages`` manifest attribute bundled in the JAR. The framework will trace the
 dependencies of the specified application class to create a JAR with those dependencies.
-This will mimic what happens when you actually build your application JAR.
+This will mimic what happens when you actually build your application JAR using maven.
 
 An application can then be deployed using that artifact::
 
@@ -324,10 +325,10 @@ An application can then be deployed using that artifact::
 
 Plugins extending the artifact can also be added::
 
-  // Add artifact for transforms
-  addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "transforms", "1.0.0"), APP_ARTIFACT_ID,
-    ProjectionTransform.class, ScriptFilterTransform.class, ValidatorTransform.class, CoreValidator.class,
-    StructuredRecordToGenericRecordTransform.class);
+  // Add some test plugins
+  addPluginArtifact(new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "spark-plugins", "1.0.0"),
+                    APP_ARTIFACT_ID,
+                    NaiveBayesTrainer.class, NaiveBayesClassifier.class);
 
 The first argument is the ``id`` of the plugin artifact; the second is the parent artifact
 it is extending; and the remainder of the arguments are classes that should be bundled in
@@ -337,8 +338,7 @@ important to include all classes in your plugin packages, even if they are not u
 your test case. This is to ensure that the JAR can trace all required dependencies to
 correctly build the JAR.
 
-The examples are taken directly from the ``BaseETLBatchTest`` in the ``cdap-etl-batch``
-artifact included with CDAP. 
+The examples are taken from the ``DataPipelineTest`` and ``HydratorTestBase`` classes of Cask Hydrator.
 
 .. _test-framework-validating-sql:
 
