@@ -20,6 +20,10 @@ To utilize this feature, Kerberos must be enabled on the cluster and configured 
 
 To configure a namespace to have impersonation, specify the Kerberos ``principal`` and
 ``keytabURI`` in the :ref:`namespace configuration <http-restful-api-namespace-configs>`.
+The keytab must be readable by the cdap user and can be on either the local file system
+of the CDAP Master or on HDFS. If the keytab is on HDFS, prefix the path with ``hdfs://``.
+If CDAP master is HA-enabled, and the local file system is used, the keytab must be on both
+file systems.
 
 If these are not specified, the principal and keytab of the CDAP Master user will be used
 instead.
@@ -40,7 +44,7 @@ Limitations
 ===========
 The configured HDFS delegation token timeout must be longer than the configured stream
 partition duration (``stream.partition.duration``), which has a default value of
-one hour (3600000). It must also be larger than the log saver's maximum
+one hour (3600000). It must also be larger than the log saver's maximum file
 lifetime (``log.saver.max.file.lifetime.ms``), which has a value of six hours (21600000).
 
 Known Issues
