@@ -54,7 +54,6 @@ GIT_BRANCH_CDAP_PACKS="release/cdap-3.5-compatible"
 
 # Used for building Hydrator documentation
 GIT_BRANCH_CASK_HYDRATOR="release/1.4"
-GIT_BRANCH_CASK_HYDRATOR="feature/r1.4_fix_titles"
 
 # Used for Tracker documentation
 GIT_BRANCH_CASK_TRACKER="release/0.2"
