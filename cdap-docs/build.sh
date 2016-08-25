@@ -250,20 +250,28 @@ function build_javadocs() {
 
 function build_javadocs_api() {
   local javadoc_type=${1}
+  echo "Building type: ${javadoc_type}"
+  if [ "${javadoc_type}" == "${ALL}" ]; then
+    local javadoc_run="mvn javadoc:aggregate -P release"
+  else
+    local javadoc_run="mvn clean site -P templates"
+  fi
+  if [ "${DEBUG}" == "${TRUE}" ]; then
+    local debug_flag="-X"
+  else
+    local debug_flag=''
+  fi
   set_mvn_environment
   echo "JAVA_HOME: ${JAVA_HOME}"
   echo "JAVA Version:"
   java -version
-  local javadoc_run="mvn javadoc:aggregate -P release"
-  if [ "${javadoc_type}" == "${DOCS}" ]; then
-    javadoc_run="mvn clean site -P templates"
-  fi
-  local debug_flag=''
-  if [ "${DEBUG}" == "${TRUE}" ]; then
-    debug_flag="-X"
-  fi
+  echo "Maven Version:"
+  mvn -version
   local start=`date`
-  MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true && ${javadoc_run} -DskipTests -DisOffline=false ${debug_flag}
+  echo "Maven clean install"
+  MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true
+  echo "Maven javadoc_run"
+  MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" ${javadoc_run} -DskipTests -DisOffline=false ${debug_flag}
   echo
   echo "Javadocs Build Start: ${start}"
   echo "                 End: `date`"
@@ -281,6 +289,7 @@ function build_docs_cli() {
     local target_txt=${SCRIPT_PATH}/../cdap-docs-gen/${TARGET}/cdap-docs-cli.txt
     set_version
     set_mvn_environment
+    mvn -version
     mvn package -pl cdap-docs-gen -am -DskipTests
     warnings=$?
     if [ "${warnings}" == "0" ]; then
