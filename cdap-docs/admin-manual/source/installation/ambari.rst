@@ -339,10 +339,8 @@ Enabling Perimeter Security
 .. .. include:: /../target/_includes/ambari-configuration.rst
 ..     :start-after: .. _ambari-configuration-eps:
 
-:ref:`CDAP Security <admin-security>` is **not currently** supported when using Apache Ambari.
-The CDAP Apache Ambari Service is not integrated with the `CDAP Authentication Server
-<https://issues.cask.co/browse/CDAP-4110>`__. As a consequence, any settings made to
-support :ref:`CDAP Security <admin-security>` will be erased by Ambari.
+:ref:`CDAP Security <admin-security>` is configured by setting the appropriate
+settings under Ambari for your environment.
 
 .. _ambari-configuration-enabling-kerberos:
 
