@@ -250,18 +250,21 @@ function build_javadocs() {
 
 function build_javadocs_api() {
   local javadoc_type=${1}
+  echo "Building type: ${javadoc_type}"
+  if [ "${javadoc_type}" == "${ALL}" ]; then
+    local javadoc_run="mvn javadoc:aggregate -P release"
+  else
+    local javadoc_run="mvn clean site -P templates"
+  fi
+  if [ "${DEBUG}" == "${TRUE}" ]; then
+    local debug_flag="-X"
+  else
+    local debug_flag=''
+  fi
   set_mvn_environment
   echo "JAVA_HOME: ${JAVA_HOME}"
   echo "JAVA Version:"
   java -version
-  local javadoc_run="mvn javadoc:aggregate -P release"
-  if [ "${javadoc_type}" == "${DOCS}" ]; then
-    javadoc_run="mvn clean site -P templates"
-  fi
-  local debug_flag=''
-  if [ "${DEBUG}" == "${TRUE}" ]; then
-    debug_flag="-X"
-  fi
   echo "Maven Version:"
   mvn -version
   local start=`date`
