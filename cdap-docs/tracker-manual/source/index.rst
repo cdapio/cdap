@@ -16,7 +16,7 @@ Introduction
 
 Cask Tracker ("Tracker") is a self-service CDAP extension that automatically captures
 :ref:`metadata <metadata-lineage>` and lets you see how data is flowing into and out 
-of datasets and streams.
+of datasets, streams, and stream views.
 
 It allows you to perform impact and root-cause analysis, delivers an audit-trail for
 auditability and compliance, and allows you to preview data. Tracker furnishes access to
@@ -60,11 +60,10 @@ to quickly show you how active a dataset is in the system.
 - Provide IT with the traceability needed in governing datasets and in applying compliance
   rules through seamless integration with other extensions.
 
-- Tracker has consistent definitions of metadata-containing information about the data to reconcile
-  differences in terminologies.
+- Tracker has consistent definitions of metadata-containing information about the data to
+  reconcile differences in terminologies.
 
 - It helps you in the understanding of the lineage of your business-critical data.
-
 
 **Blends Metadata Analytics and Integrations**
 
@@ -84,18 +83,22 @@ three billion records <http://customers.cask.co/rs/882-OYR-915/images/tracker-ca
 
 Tracker Application
 ===================
-The Cask Tracker application consists of an application in CDAP with two programs and four datasets:
+The Cask Tracker application consists of an application in CDAP with two programs and
+four datasets:
 
 - ``_Tracker`` application: names begins with an underscore
-- ``AuditLog`` service: it exposes the Tracker audit log as an API
-- ``AuditLogFlow`` flow: subscribes to Kafka audit messages and stores them in the ``_auditLog``	dataset
+- ``TrackerService`` service: it exposes the Tracker API endpoints
+- ``AuditLogFlow`` flow: subscribes to Kafka audit messages and stores them in the
+  ``_auditLog``	dataset
 - ``_auditLog`` custom dataset used to store audit messages
 - ``_kafkaOffset`` key value table used to store Kafka offsets
 - ``_auditMetrics`` a custom cube dataset used to collect metrics about datasets
 - ``_auditTagsTable`` a custom dataset used to store preferred tags
-- ``_timeSinceTable`` a custom dataset used to store the last time a specific audit message was received
+- ``_timeSinceTable`` a custom dataset used to store the last time a specific audit
+  message was received
 
-The Tracker UI is shipped with CDAP, started automatically in standalone as part of the CDAP UI. It is available at:
+The Tracker UI is shipped with CDAP, started automatically in standalone as part of the
+CDAP UI. It is available at:
 
   http://localhost:9999/ns/default/tracker/home
   
@@ -144,8 +147,8 @@ To enable Tracker, go to the **Tracker UI** at
 (Distributed CDAP) http://host:dashboard-bind-port/ns/default/tracker/home 
 and press the ``"Enable Tracker"`` button to deploy and start Tracker.
 
-Once pressed, the application will be deployed, the datasets created (if necessary), the flow and service
-started, and search and audit logging will become available.
+Once pressed, the application will be deployed, the datasets created (if necessary), the
+flow and service started, and search and audit logging will become available.
 
 If you are enabling Tracker from outside the UI, you will, in addition to enabling auditing 
 in the ``cdap-site.xml`` as described above, need to follow these steps:
@@ -188,17 +191,19 @@ This key contains a property map with:
 
 - Required Properties:
 
-  - ``zookeeperString``: Kafka Zookeeper string that can be used to subscribe to the CDAP audit log updates
+  - ``zookeeperString``: Kafka Zookeeper string that can be used to subscribe to the CDAP
+    audit log updates
   - ``brokerString``: Kafka Broker string to which CDAP audit log data is published
 
   *Note:* Specify either the ``zookeeperString`` or the ``brokerString``.
 
 - Optional Properties:
 
-  - ``topic``: Kafka Topic to which CDAP audit updates are published; default is ``audit`` which
-    corresponds to the default topic used in CDAP for audit log updates
+  - ``topic``: Kafka Topic to which CDAP audit updates are published; default is ``audit``
+    which corresponds to the default topic used in CDAP for audit log updates
   - ``numPartitions``: Number of Kafka partitions; default is set to ``10``
-  - ``offsetDataset``: Name of the dataset where Kafka offsets are stored; default is ``_kafkaOffset``
+  - ``offsetDataset``: Name of the dataset where Kafka offsets are stored; default is
+    ``_kafkaOffset``
 
 Restarting CDAP
 ---------------
@@ -917,6 +922,284 @@ Example:
      - Description
    * - ``200 OK``
      - The tag was removed successfully.
+   * - ``404 NOT FOUND``
+     - Returned if the entity does not exist.
+   * - ``500 SERVER ERROR``
+     - Unknown server error.
+
+**Get Top Entities Graph Data**
+
+Use this endpoint for getting the list of top entities accessing a dataset or all
+datasets::
+
+  GET /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1
+  /auditmetrics/top-entities/{type}[?limit=<limit>][&entityType
+  =<entityType>][&entityName=<entityName>][&startTime=<startTime>][&endTime=<endTime>]
+
+where:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``type``
+     - One of ``datasets``, ``programs``, or ``applications``
+   * - ``limit`` *(optional)*
+     - The number of results to return. Default is 5.
+   * - ``entityType`` *(optional)*
+     - One of ``dataset``, ``stream``, or ``stream_view``
+   * - ``entityName`` *(optional)*
+     - The name of the entity to list the tags for
+   * - ``startTime`` *(optional)* and ``endTime`` *(optional)*
+     - Time range defined by start (*startTime*, default ``0``) and end (*endTime*,
+       default ``now``) times, where the times are either in milliseconds since the start of
+       the Epoch, or a relative time, using ``now`` and times added to it. You can apply
+       simple math, using ``now`` for the current time, ``s`` for seconds, ``m`` for
+       minutes, ``h`` for hours and ``d`` for days. For example: ``now-5d-12h`` is 5 days
+       and 12 hours ago.
+
+A successful query will return a 200 response with a body containing the entities and
+their values for displaying in a graph.
+
+Example:
+
+.. tabbed-parsed-literal::
+
+  $ curl -w'\n' -X GET 'http://localhost:10000/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/auditmetrics/top-entities/applications?end=now&limit=5&start=now-7d'
+
+.. highlight:: json-ellipsis
+
+Results (reformatted for display)::
+
+  [
+    {
+      "entityName": "Application_1",
+      "value": 20
+    },
+    {
+      "entityName": "Application_2",
+      "value": 12
+    },
+    {
+      "entityName": "Application_3",
+      "value": 10
+    },
+    {
+      "entityName": "Application_4",
+      "value": 9
+    },
+    {
+      "entityName": "Application_5",
+      "value": 8
+    }
+  ]
+
+
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Returns the results in the body of the response.
+   * - ``404 NOT FOUND``
+     - Returned if the entity does not exist.
+   * - ``500 SERVER ERROR``
+     - Unknown server error.
+
+**Get Time Since Data**
+
+Use this endpoint for getting the list of the times since the last audit message type
+was received::
+
+  GET /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1
+  /auditmetrics/time-since?entityType=<entityType>&entityName=<entityName>
+
+where:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``entityType``
+     - One of ``dataset``, ``stream``, or ``stream_view``
+   * - ``entityName``
+     - The name of the entity to list the tags for
+
+A successful query will return a 200 response with a body containing the audit message
+types and the last time they were received for displaying in a table.
+
+Example:
+
+.. tabbed-parsed-literal::
+
+  $ curl -w'\n' -X GET 'http://localhost:10000/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/auditmetrics/time-since?entityType=stream&entityName=events'
+
+.. highlight:: json-ellipsis
+
+Results (reformatted for display)::
+
+  {
+    truncate: 44,
+    read: 1247103,
+    metadata_change: 1247718
+  }
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Returns the results in the body of the response.
+   * - ``404 NOT FOUND``
+     - Returned if the entity does not exist.
+   * - ``500 SERVER ERROR``
+     - Unknown server error.
+
+**Get Audit Log Histogram Data**
+
+Use this endpoint for getting the histogram data for audit logs::
+
+  GET /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1
+  /auditmetrics/audit-histogram/?entityType=<entityType>&entityName=<entityName
+  >[&startTime=<startTime>][&endTime=<endTime>]
+
+where:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``entityType``
+     - One of ``dataset``, ``stream``, or ``stream_view``
+   * - ``entityName``
+     - The name of the entity to list the tags for
+   * - ``startTime`` *(optional)* and ``endTime`` *(optional)*
+     - Time range defined by start (*startTime*, default ``0``) and end (*endTime*,
+       default ``now``) times, where the times are either in milliseconds since the start of
+       the Epoch, or a relative time, using ``now`` and times added to it. You can apply
+       simple math, using ``now`` for the current time, ``s`` for seconds, ``m`` for
+       minutes, ``h`` for hours and ``d`` for days. For example: ``now-5d-12h`` is 5 days
+       and 12 hours ago.
+
+A successful query will return a 200 response with a body containing the audit log
+histogram data for displaying in a graph.
+
+Example:
+
+.. tabbed-parsed-literal::
+
+  $ curl -w'\n' -X GET 'http://localhost:10000/v3/namespaces/default/apps/_Tracker/services/TrackerService/methods/v1/auditmetrics/audit-histogram?entityType=stream&entityName=events'
+
+.. highlight:: json-ellipsis
+
+Results (reformatted for display)::
+
+  {
+    results: [
+      {
+        timestamp: 1471910400,
+        value: 6
+      },
+      {
+        timestamp: 1472083200,
+        value: 1
+      }
+    ],
+    bucketInterval: "DAY"
+  }
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Returns the results in the body of the response.
+   * - ``404 NOT FOUND``
+     - Returned if the entity does not exist.
+   * - ``500 SERVER ERROR``
+     - Unknown server error.
+
+**Get Tracker Meter Data**
+
+Use this endpoint for getting the tracker meter scores for a list of datasets or streams::
+
+  POST /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1
+  /tracker-meter
+
+where:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``payload``
+     - A JSON map of string to array where the keys are either ``streams`` or
+     ``datasets`` and the value is an array of the names of each type.
+
+A successful query will return a 200 response with a body containing the Tracker scores
+ for each entity requested.
+
+Example:
+
+.. tabbed-parsed-literal::
+
+  $ curl -w'\n' -X POST 'http://localhost:10000/v3/namespaces/default/apps/_Tracker
+  /services/TrackerService/methods/v1/auditmetrics/tracker-meter' -d '{"datasets":["ds1","ds2","ds3","ds4"],"streams":["strm1","strm2","strm3","strm4"]}'
+
+.. highlight:: json-ellipsis
+
+Results (reformatted for display)::
+
+  {
+    "datasets": [
+      {
+        "name": "ds1",
+        "value": 80
+      }
+    ],
+    "streams": [
+      {
+        "name": "strm1",
+        "value": 80
+      },
+      {
+        "name": "strm2",
+        "value": 90
+      }
+    ]
+  }
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - Returns the results in the body of the response.
    * - ``404 NOT FOUND``
      - Returned if the entity does not exist.
    * - ``500 SERVER ERROR``
