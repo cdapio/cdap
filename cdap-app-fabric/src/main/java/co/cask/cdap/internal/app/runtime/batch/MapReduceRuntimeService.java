@@ -946,12 +946,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     // The key and value type are in the 3rd and 4th type parameters
     if (!isProgrammaticConfig(conf, MRJobConfig.OUTPUT_KEY_CLASS)) {
       Class<?> cls = TypeToken.of(typeArgs[2]).getRawType();
-      LOG.debug("Set output key class to {}", cls);
+      LOG.info("Set output key class to {}", cls);
       job.setOutputKeyClass(cls);
     }
     if (!isProgrammaticConfig(conf, MRJobConfig.OUTPUT_VALUE_CLASS)) {
       Class<?> cls = TypeToken.of(typeArgs[3]).getRawType();
-      LOG.debug("Set output value class to {}", cls);
+      LOG.info("Set output value class to {}", cls);
       job.setOutputValueClass(cls);
     }
   }
@@ -989,12 +989,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     // The key and value type are in the 3rd and 4th type parameters
     if (!isProgrammaticConfig(conf, MRJobConfig.MAP_OUTPUT_KEY_CLASS)) {
       Class<?> cls = TypeToken.of(typeArgs[keyIdx]).getRawType();
-      LOG.debug("Set map output key class to {}", cls);
+      LOG.info("Set map output key class to {}", cls);
       job.setMapOutputKeyClass(cls);
     }
     if (!isProgrammaticConfig(conf, MRJobConfig.MAP_OUTPUT_VALUE_CLASS)) {
       Class<?> cls = TypeToken.of(typeArgs[valueIdx]).getRawType();
-      LOG.debug("Set map output value class to {}", cls);
+      LOG.info("Set map output value class to {}", cls);
       job.setMapOutputValueClass(cls);
     }
   }

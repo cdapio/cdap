@@ -70,8 +70,8 @@ public class DelegatingInputFormat<K, V> extends InputFormat<K, V> {
       }
       String googleCloud = jobCopy.getConfiguration().get("google.cloud.auth.service.account.json.keyfile");
       String mapredBQ = jobCopy.getConfiguration().get("mapred.bq.auth.service.account.json.keyfile");
-      LOG.debug("test the passed jobconf, googleCloud is {}, mapred is {}", googleCloud, mapredBQ);
-      LOG.debug("test the passed outputkey{}", jobCopy.getOutputKeyClass().toString());
+      LOG.info("test the passed jobconf, googleCloud is {}, mapred is {}", googleCloud, mapredBQ);
+      LOG.info("test the passed outputkey{}", jobCopy.getOutputKeyClass().toString());
       List<InputSplit> formatSplits = inputFormat.getSplits(jobCopy);
       for (InputSplit split : formatSplits) {
         splits.add(new TaggedInputSplit(inputName, split, confCopy, mapperInput.getInputFormatConfiguration(),
