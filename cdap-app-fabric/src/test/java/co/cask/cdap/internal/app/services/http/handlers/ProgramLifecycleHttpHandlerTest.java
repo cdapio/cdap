@@ -177,7 +177,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // get run records corresponding to the program runs
     List<RunRecord> historyRuns = getProgramRuns(dummyMR2, "running");
-    Assert.assertTrue(2 == historyRuns.size());
+    Assert.assertEquals(2, historyRuns.size());
 
     // stop individual runs of the map-reduce program
     String runId = historyRuns.get(0).getPid();
@@ -187,6 +187,21 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     stopProgram(dummyMR2, runId, 200);
 
     waitState(dummyMR2, STOPPED);
+
+    // start multiple runs of the map-reduce program
+    startProgram(dummyMR2);
+    startProgram(dummyMR2);
+    verifyProgramRuns(dummyMR2, "running", 1);
+    historyRuns = getProgramRuns(dummyMR2, "running");
+    Assert.assertEquals(2, historyRuns.size());
+
+    // stop all runs of the map-reduce program
+    stopProgram(dummyMR2, 200);
+    waitState(dummyMR2, STOPPED);
+
+    // get run records, all runs should be stopped
+    historyRuns = getProgramRuns(dummyMR2, "running");
+    Assert.assertTrue(historyRuns.isEmpty());
 
     // deploy an app containing a workflow
     response = deploy(SleepingWorkflowApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);

@@ -76,6 +76,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -357,8 +358,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * Stops the specified run of the specified program.
    *
    * @param programId the {@link ProgramId program} to stop
-   * @param runId the runId of the program run to stop. If null, the first run of the program as returned by
-   *              {@link ProgramRuntimeService} is stopped.
+   * @param runId the runId of the program run to stop. If null, all runs of the program as returned by
+   *              {@link ProgramRuntimeService} are stopped.
    * @throws NotFoundException if the app, program or run was not found
    * @throws BadRequestException if an attempt is made to stop a program that is either not running or
    *                             was started by a workflow
@@ -366,7 +367,10 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @throws ExecutionException if there was a problem while waiting for the stop call to complete
    */
   public void stop(ProgramId programId, @Nullable String runId) throws Exception {
-    issueStop(programId, runId).get();
+    List<ListenableFuture<ProgramController>> issueStops = issueStop(programId, runId);
+    for (ListenableFuture<ProgramController> issueStop : issueStops) {
+      issueStop.get();
+    }
   }
 
   /**
@@ -375,19 +379,21 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * Clients can wait for completion of the {@link ListenableFuture}.
    *
    * @param programId the {@link ProgramId program} to issue a stop for
-   * @param runId the runId of the program run to stop. If null, the first run of the program as returned by
-   *              {@link ProgramRuntimeService} is stopped.
-   * @return a {@link ListenableFuture} with a {@link ProgramController} that clients can wait on for stop to complete.
+   * @param runId the runId of the program run to stop. If null, all runs of the program as returned by
+   *              {@link ProgramRuntimeService} are stopped.
+   * @return a list of {@link ListenableFuture} with a {@link ProgramController} that clients can wait on for stop
+   *         to complete.
    * @throws NotFoundException if the app, program or run was not found
    * @throws BadRequestException if an attempt is made to stop a program that is either not running or
    *                             was started by a workflow
    * @throws UnauthorizedException if the user issuing the command is not authorized to stop the program. To stop a
    *                               program, a user requires {@link Action#EXECUTE} permission on the program.
    */
-  public ListenableFuture<ProgramController> issueStop(ProgramId programId, @Nullable String runId) throws Exception {
+  public List<ListenableFuture<ProgramController>> issueStop(ProgramId programId, @Nullable String runId)
+    throws Exception {
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runId);
-    if (runtimeInfo == null) {
+    List<ProgramRuntimeService.RuntimeInfo> runtimeInfos = findRuntimeInfo(programId, runId);
+    if (runtimeInfos.isEmpty()) {
       if (!store.applicationExists(programId.toId().getApplication())) {
         throw new ApplicationNotFoundException(programId.toId().getApplication());
       } else if (!store.programExists(programId.toId())) {
@@ -407,7 +413,11 @@ public class ProgramLifecycleService extends AbstractIdleService {
       }
       throw new BadRequestException(String.format("Program '%s' is not running.", programId));
     }
-    return runtimeInfo.getController().stop();
+    List<ListenableFuture<ProgramController>> futures = new ArrayList<>();
+    for (ProgramRuntimeService.RuntimeInfo runtimeInfo : runtimeInfos) {
+      futures.add(runtimeInfo.getController().stop());
+    }
+    return futures;
   }
 
   /**
@@ -441,8 +451,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     return EnumSet.of(ProgramType.WORKFLOW, ProgramType.MAPREDUCE).contains(type);
   }
 
-  @Nullable
-  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId programId,
+  private List<ProgramRuntimeService.RuntimeInfo> findRuntimeInfo(ProgramId programId,
                                                             @Nullable String runId) throws BadRequestException {
     Map<RunId, ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(programId.getType());
 
@@ -453,10 +462,12 @@ public class ProgramLifecycleService extends AbstractIdleService {
       } catch (IllegalArgumentException e) {
         throw new BadRequestException("Error parsing run-id.", e);
       }
-      return runtimeInfos.get(run);
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeInfos.get(run);
+      return runtimeInfo == null ? new ArrayList<ProgramRuntimeService.RuntimeInfo>() :
+        new ArrayList<>(Arrays.asList(runtimeInfo));
+    } else {
+      return findRuntimeInfos(programId);
     }
-
-    return findRuntimeInfo(programId);
   }
 
   @Nullable
@@ -468,6 +479,17 @@ public class ProgramLifecycleService extends AbstractIdleService {
       }
     }
     return null;
+  }
+
+  private List<ProgramRuntimeService.RuntimeInfo> findRuntimeInfos(ProgramId programId) {
+    Map<RunId, ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(programId.getType());
+    List<ProgramRuntimeService.RuntimeInfo> runtimeInfosResult = new ArrayList<>();
+    for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos.values()) {
+      if (programId.equals(info.getProgramId().toEntityId())) {
+        runtimeInfosResult.add(info);
+      }
+    }
+    return runtimeInfosResult;
   }
 
   /**

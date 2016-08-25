@@ -601,14 +601,17 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       ProgramId programId =
         Ids.namespace(namespaceId).app(program.getAppId()).program(program.getProgramType(), program.getProgramId());
       try {
-        ListenableFuture<BatchProgramResult> issuedStop = Futures.transform(lifecycleService.issueStop(programId, null),
-          new Function<ProgramController, BatchProgramResult>() {
-            @Override
-            public BatchProgramResult apply(ProgramController input) {
-              return new BatchProgramResult(program, HttpResponseStatus.OK.getCode(), null);
-            }
-          });
-        issuedStops.add(issuedStop);
+        List<ListenableFuture<ProgramController>> stops = lifecycleService.issueStop(programId, null);
+        for (ListenableFuture<ProgramController> stop : stops) {
+          ListenableFuture<BatchProgramResult> issuedStop = Futures.transform(stop,
+            new Function<ProgramController, BatchProgramResult>() {
+              @Override
+              public BatchProgramResult apply(ProgramController input) {
+                return new BatchProgramResult(program, HttpResponseStatus.OK.getCode(), null);
+              }
+            });
+          issuedStops.add(issuedStop);
+        }
       } catch (NotFoundException e) {
         issuedStops.add(Futures.immediateFuture(
           new BatchProgramResult(program, HttpResponseStatus.NOT_FOUND.getCode(), e.getMessage())));
