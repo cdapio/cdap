@@ -152,6 +152,7 @@ Assign CDAP Services to Hosts
  
    #. **Master:** Coordinator service which launches CDAP system services into YARN
    #. **Router:** Serves HTTP endpoints for CDAP applications and REST API
+   #. **Auth Server:** For managing authentication tokens on CDAP perimeter security enabled clusters
    #. **Kafka Server:** For transporting CDAP metrics and CDAP system service log data
    #. **UI:** Web interface to CDAP and :ref:`Cask Hydrator <cask-hydrator>`
       (for CDAP 3.2.x and later installations)
