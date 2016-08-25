@@ -201,7 +201,7 @@
   </property>
 
   <property>
-    <name>zookeeper.client.timeout.millis</name>
+    <name>zookeeper.client.startup.timeout.millis</name>
     <value>600000</value>
     <description>
       Maximum amount of time in milliseconds to wait for the first successful

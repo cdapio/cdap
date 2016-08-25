@@ -94,7 +94,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Scanner;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Command line tool for the Upgrade tool
@@ -258,8 +260,15 @@ public class UpgradeTool {
     ListenableFuture<Service.State> startFunction = zkClientService.start();
     try {
       startFunction.get(cConf.getLong(Constants.Zookeeper.CFG_CLIENT_TIMEOUT_MILLIS), TimeUnit.MILLISECONDS);
-    } catch (Exception e) {
-      LOG.error("Exception while trying to start Zookeper client", e);
+    } catch (TimeoutException e) {
+      LOG.error("Connection timed out while trying to start ZooKeeper client. Please verify that the ZooKeeper " +
+                  " quorum settings are correct.", e);
+      throw e;
+    } catch (InterruptedException e) {
+      LOG.error("Interrupted while waiting to start ZooKeeper client.", e);
+      throw e;
+    } catch (ExecutionException e) {
+      LOG.error("Exception while trying to start ZooKeeper client.", e);
       throw e;
     }
     LOG.info("Starting Transaction Service...");

@@ -140,6 +140,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
@@ -233,8 +234,15 @@ public class MasterServiceMain extends DaemonMain {
     ListenableFuture<Service.State> startFunction = zkClient.start();
     try {
       startFunction.get(cConf.getLong(Constants.Zookeeper.CFG_CLIENT_TIMEOUT_MILLIS), TimeUnit.MILLISECONDS);
-    } catch (Exception e) {
-      LOG.error("Exception while trying to start Zookeper client", e);
+    } catch (TimeoutException e) {
+      LOG.error("Connection timed out while trying to start ZooKeeper client. Please verify that the ZooKeeper " +
+                " quorum settings are correct.", e);
+      throw e;
+    } catch (InterruptedException e) {
+      LOG.error("Interrupted while waiting to start ZooKeeper client.", e);
+      throw e;
+    } catch (ExecutionException e) {
+      LOG.error("Exception while trying to start ZooKeeper client.", e);
       throw e;
     }
 

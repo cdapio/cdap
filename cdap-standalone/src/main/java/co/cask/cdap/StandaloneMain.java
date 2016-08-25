@@ -98,7 +98,9 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Standalone Main.
@@ -253,8 +255,15 @@ public class StandaloneMain {
       ListenableFuture<Service.State> startFunction = zkClient.start();
       try {
         startFunction.get(cConf.getLong(Constants.Zookeeper.CFG_CLIENT_TIMEOUT_MILLIS), TimeUnit.MILLISECONDS);
-      } catch (Exception e) {
-        LOG.error("Exception while trying to start Zookeper client", e);
+      } catch (TimeoutException e) {
+        LOG.error("Connection timed out while trying to start ZooKeeper client. Please verify that the ZooKeeper " +
+                    " quorum settings are correct.", e);
+        throw e;
+      } catch (InterruptedException e) {
+        LOG.error("Interrupted while waiting to start ZooKeeper client.", e);
+        throw e;
+      } catch (ExecutionException e) {
+        LOG.error("Exception while trying to start ZooKeeper client.", e);
         throw e;
       }
     }
