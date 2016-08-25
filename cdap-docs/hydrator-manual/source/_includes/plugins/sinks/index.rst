@@ -26,16 +26,6 @@ These plugins work with:
     
     *batch*
 
-These plugins work with:
-
-  - *Data Pipeline - Batch* (``cdap-data-pipeline`` artifact)
-
-.. toctree::
-    :maxdepth: 1
-    :glob:
-    
-    *sparksink*
-
 
 .. _cask-hydrator-plugins-real-time-sinks:
 
