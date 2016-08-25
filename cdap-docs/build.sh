@@ -262,7 +262,8 @@ function build_javadocs_api() {
   if [ "${DEBUG}" == "${TRUE}" ]; then
     debug_flag="-X"
   fi
-   mvn -version
+  echo "Maven Version:"
+  mvn -version
   local start=`date`
   MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true && ${javadoc_run} -DskipTests -DisOffline=false ${debug_flag}
   echo
