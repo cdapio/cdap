@@ -6,9 +6,9 @@
 
 .. _building-blocks:
 
-============================================
+===============
 Building Blocks
-============================================
+===============
 
 .. toctree::
    :maxdepth: 1
@@ -79,8 +79,8 @@ write data through the data abstraction layer in CDAP.
   that provides ACID (*atomicity, consistency, isolation,* and *durability*) guarantees,
   critical in applications where data accuracy is required.
 
-- The :doc:`Secure Keys <secure-keys>` allows users to store sensitive information such 
-  as passwords in secure, encrypted storage.
+- :doc:`Secure Keys <secure-keys>` allows users to store and retrieve sensitive information such
+  as passwords from secure and encrypted storage.
 
 For a **high-level view of the concepts** of the Cask Data Application Platform, see the
 platform :doc:`overview. </overview/index>`
