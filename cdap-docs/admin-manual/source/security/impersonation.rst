@@ -9,21 +9,21 @@ Impersonation
 =============
 
 Impersonation allows users to run programs and access datasets, streams, and other
-resources as pre-configured users. Currently CDAP supports configuring impersonation
-at a namespace level, which means that every namespace will have a single user that
-programs in that namespace will run as, and that resources will be accessed as.
+resources as pre-configured users. Currently, CDAP supports configuring impersonation
+at a namespace level, which means that every namespace has a single user that all
+programs in that namespace run as, and that resources are accessed as.
 
 Requirements
 ============
-To utilize this feature, Kerberos must be enabled on the cluster and configured in
-:ref:`cdap-site.xml <appendix-cdap-site.xml>`, using the parameter ``kerberos.auth.enabled``.
+To utilize this feature, `Kerberos <http://kerberos.org>`__ must be enabled on the cluster and
+configured in :ref:`cdap-site.xml <appendix-cdap-site.xml>`, using the parameter ``kerberos.auth.enabled``.
 
 To configure a namespace to have impersonation, specify the Kerberos ``principal`` and
 ``keytabURI`` in the :ref:`namespace configuration <http-restful-api-namespace-configs>`.
-The keytab must be readable by the cdap user and can be on either the local file system
+The keytab file (the "keytab") must be readable by the CDAP user and can be on either the local file system
 of the CDAP Master or on HDFS. If the keytab is on HDFS, prefix the path with ``hdfs://``.
-If CDAP master is HA-enabled, and the local file system is used, the keytab must be on both
-file systems.
+If CDAP Master is :ref:`HA-enabled <admin-manual-install-deployment-architectures-ha>`, 
+and the local file system is used, the keytab must be on all file systems used with CDAP Master.
 
 If these are not specified, the principal and keytab of the CDAP Master user will be used
 instead.
