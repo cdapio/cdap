@@ -32,11 +32,6 @@ public abstract class Action implements PipelineConfigurable {
    */
   public abstract void run(ActionContext context) throws Exception;
 
-  /**
-   * Implement this method to validate configurations
-   * @param pipelineConfigurer the configurer
-   * @throws IllegalArgumentException if any configs are invalid
-   */
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
     //no-op
