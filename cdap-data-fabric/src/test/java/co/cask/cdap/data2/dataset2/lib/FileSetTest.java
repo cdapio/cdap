@@ -63,6 +63,8 @@ public class FileSetTest {
     Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "lookAlikeFileSet");
   private static final Id.DatasetInstance testFileSetInstance5 =
     Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "externalFileSet");
+  private static final Id.DatasetInstance testFileSetInstance6 =
+    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "nonExternalFileSet1");
 
   @Before
   public void before() throws Exception {
@@ -88,6 +90,7 @@ public class FileSetTest {
     deleteInstance(testFileSetInstance3);
     deleteInstance(testFileSetInstance4);
     deleteInstance(testFileSetInstance5);
+    deleteInstance(testFileSetInstance6);
   }
 
   static void deleteInstance(Id.DatasetInstance id) throws Exception {
@@ -224,6 +227,21 @@ public class FileSetTest {
                                    FileSetProperties.builder()
                                      .setBasePath(absolutePath)
                                      .setDataExternal(true)
+                                     .build());
+  }
+
+
+  @Test(expected = IOException.class)
+  public void testNonExternalExistentPath() throws Exception {
+    // Create an instance at a location
+    String absolutePath = tmpFolder.newFolder() + "/some/existing/location";
+    File file = new File(absolutePath);
+    Assert.assertTrue(file.mkdirs());
+    // Try to add another instance of non external fileset at the same location
+    dsFrameworkUtil.createInstance("fileSet", testFileSetInstance6,
+                                   FileSetProperties.builder()
+                                     .setBasePath(absolutePath)
+                                     .setDataExternal(false)
                                      .build());
   }
 
