@@ -160,13 +160,14 @@ public class MetricsClient {
    * @param tags tags for the request
    * @param metrics names of the metrics
    * @param groupBys groupBys for the request
+   * @param timeRangeParams parameters specifying the time range
    * @return values of the metrics
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   // TODO: take in query object shared by MetricsHandler
   public MetricQueryResult query(Map<String, String> tags, List<String> metrics, List<String> groupBys,
-                                 @Nullable Map<String, String> timeRangeParams)
+                                 Map<String, String> timeRangeParams)
     throws IOException, UnauthenticatedException, UnauthorizedException {
 
     List<String> queryParts = Lists.newArrayList();

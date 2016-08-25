@@ -163,7 +163,7 @@ public class ETLConfig extends Config {
       Objects.equals(transforms, that.transforms) &&
       Objects.equals(connections, that.connections) &&
       Objects.equals(resources, that.resources) &&
-      isStageLoggingEnabled() == that.isStageLoggingEnabled();
+      Objects.equals(isStageLoggingEnabled(), that.isStageLoggingEnabled());
   }
 
   @Override

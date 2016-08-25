@@ -62,7 +62,7 @@ public class KeyRange {
     if (this == obj) {
       return true;
     }
-    if (KeyRange.class != obj.getClass()) {
+    if (obj == null || KeyRange.class != obj.getClass()) {
       return false;
     }
     KeyRange other = (KeyRange) obj;

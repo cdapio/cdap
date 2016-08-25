@@ -226,7 +226,7 @@ public class InMemoryTableService {
    * Given a key prefix, return the smallest key that is greater than all keys starting with that prefix.
    */
   static byte[] rowAfterPrefix(byte[] prefix) {
-    Preconditions.checkNotNull("prefix must not be null", prefix);
+    Preconditions.checkNotNull(prefix, "prefix must not be null");
     for (int i = prefix.length - 1; i >= 0; i--) {
       if (prefix[i] != (byte) 0xff) {
         // i is at the position of the last byte that is not xFF and thus can be incremented
