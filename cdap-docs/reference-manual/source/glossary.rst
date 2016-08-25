@@ -47,7 +47,17 @@ Glossary
    Workflow
       A workflow is used to execute a series of MapReduce programs, with an optional schedule
       to run itself periodically.
-      
+
+   Secure Key
+      An identifier or an alias for an entry in :term:`Secure Storage`. An entry in secure
+      storage can be referenced and retrieved using a Secure Key using :ref:`programmatic <secure-keys-programmatic>`
+      or :ref:`RESTful <http-restful-api-secure-storage>` APIs.
+
+   Secure Storage
+      Encrypted storage for sensitive data using :term:`Secure Keys <Secure Key>`. CDAP supports :ref:`File-backed
+      <admin-secure-storage-file>` (for :term:`Standalone CDAP`) as well as :ref:`Apache Hadoop KMS-backed 
+      <admin-secure-storage-kms>` (for :term:`Distributed CDAP`) Secure Storage.
+
    Spark
       Spark is a fast and general processing engine, compatible with Hadoop data, used for
       in-memory cluster computing. It lets you load large sets of data into memory and
