@@ -20,14 +20,8 @@ Installation using Apache Ambari
 - Ambari is for setting up HDP (Hortonworks Data Platform) on bare clusters; it can't be 
   used for clusters with HDP already installed, where the original installation was
   **not** with Ambari.
-- These features are **currently not included** in the CDAP Apache Ambari Service (though they may in the future):
-  
-  - The CDAP Apache Ambari Service is not integrated with the `CDAP Authentication Server <https://issues.cask.co/browse/CDAP-4110>`__;
-  - CDAP component `high-availability <https://issues.cask.co/browse/CDAP-4107>`__  is not supported;
-
 - A number of features are currently planned to be added, including:
 
-  - `pre-defined alerts <https://issues.cask.co/browse/CDAP-4106>`__  for CDAP services ;
   - select `CDAP metrics <https://issues.cask.co/browse/CDAP-4108>`__; and
   - a full `smoke test of CDAP functionality <https://issues.cask.co/browse/CDAP-4105>`__ after installation.
 
@@ -78,6 +72,8 @@ with the CDAP Repository from the list below that you would like to use:
 +----------------+-----------------+-------------------------+
 | CDAP Series    | CDAP Repository | Hadoop Distributions    |
 +================+=================+=========================+
+| CDAP 3.5.x     | ``cdap/3.5``    | HDP 2.0 through HDP 2.4 |
++----------------+-----------------+-------------------------+
 | CDAP 3.4.x     | ``cdap/3.4``    | HDP 2.0 through HDP 2.4 |
 +----------------+-----------------+-------------------------+
 | CDAP 3.3.x     | ``cdap/3.3``    | HDP 2.0 through HDP 2.3 |
@@ -354,8 +350,3 @@ Enabling Kerberos
 Kerberos support in CDAP is automatically enabled when enabling Kerberos security on your
 cluster via Ambari. Consult the appropriate Ambari documentation for instructions on enabling
 Kerberos support for your cluster.
-
-CDAP HA Setup
--------------
-CDAP component `high-availability <https://issues.cask.co/browse/CDAP-4107>`__  is not
-supported.
