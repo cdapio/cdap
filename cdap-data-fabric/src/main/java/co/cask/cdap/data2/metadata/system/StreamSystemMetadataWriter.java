@@ -63,7 +63,8 @@ public class StreamSystemMetadataWriter extends AbstractSystemMetadataWriter {
   @Override
   protected String[] getSystemTagsToAdd() {
     return new String[] {
-      config.getStreamId().getId()
+      config.getStreamId().getId(),
+      EXPLORE_TAG
     };
   }
 
