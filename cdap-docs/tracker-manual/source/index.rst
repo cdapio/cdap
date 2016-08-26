@@ -146,10 +146,10 @@ As these are the default settings for these properties, they do not need to be i
 Enabling Tracker
 ----------------
 Tracker is enabled automatically in Standalone CDAP and the UI is available at
- http://localhost:9999/ns/default/tracker/home. In the Distributed version of CDAP,
+http://localhost:9999/ns/default/tracker/home. In the Distributed version of CDAP,
 you must manually enable Tracker by visiting
- http://host:dashboard-bind-port/ns/default/tracker/home
-and pressing the ``"Enable Tracker"`` button.
+http://host:dashboard-bind-port/ns/default/tracker/home and pressing the
+``"Enable Tracker"`` button.
 
 Once pressed, the application will be deployed, the datasets created (if necessary), the
 flow and service started, and search and audit logging will become available.
@@ -578,12 +578,12 @@ where:
    :widths: 20 80
    :header-rows: 1
 
-     * - Parameter
-       - Description
-     * - ``type`` *(optional)*
-       - The type of tag to return, either ``user`` or ``preferred``
-     * - ``prefix`` *(optional)*
-       - Each tag returned will start with this prefix
+   * - Parameter
+     - Description
+   * - ``type`` *(optional)*
+     - The type of tag to return, either ``user`` or ``preferred``
+   * - ``prefix`` *(optional)*
+     - Each tag returned will start with this prefix
 
 A successful query will return a 200 response with the total number of each type of tag
 matching the options as well as a list of the tags and the number of entities they are
@@ -792,9 +792,9 @@ where:
      * - Parameter
        - Description
      * - ``entityType``
-     - One of ``dataset``, ``stream``, or ``stream_view``
+       - One of ``dataset``, ``stream``, or ``stream_view``
      * - ``entityName``
-     - The name of the entity to list the tags for
+       - The name of the entity to list the tags for
 
 A successful query will return a 200 response with a body containing the list of tags.
 
