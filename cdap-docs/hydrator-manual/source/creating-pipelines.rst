@@ -412,13 +412,16 @@ Administration Manual, Preferences <preferences>`. These can be set with the HTT
 :ref:`Lifecycle <http-restful-api-lifecycle-start>` and :ref:`Preferences
 <http-restful-api-preferences>` RESTful APIs.
 
+To set values for macro keys through a Hydrator pipeline's preferences, see the
+:ref:`Preferences HTTP RESTful API <http-restful-api-preferences>`.
+
 Fields that are macro-enabled are identified in the Hydrator Studio UI and documented in
 the :ref:`Hydrator Plugin Reference <cask-hydrator-plugins>`.
 
 
 Macro Functions
 ---------------
-In addition to macro substitution, you can use pre-defined macro functions. Currently,
+In addition to macro substitution, you can use predefined macro functions. Currently,
 these functions are predefined and available:
 
 - ``logicalStartTime``
