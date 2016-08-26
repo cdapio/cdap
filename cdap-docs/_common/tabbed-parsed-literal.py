@@ -243,7 +243,7 @@ def convert(c, state={}):
     Converts a Linux command to a Windows-equivalent following a few simple rules:
 
     - Converts a starting '$' to '>'
-    - Forward-slashes in 'http[s]' and 'localhost:11015' URIs are preserved
+    - Forward-slashes in 'http[s]' and 'localhost' URIs are preserved
     - Other forward-slashes become backslashes
     - A lone backslash (the Linux line continuation character) becomes a '^'
     - '.sh' commands become '.bat' commands
