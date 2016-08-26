@@ -17,6 +17,7 @@
 package co.cask.cdap.logging.gateway.handlers;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.http.HttpResponder;
@@ -40,12 +41,12 @@ public class LogDataOffsetCallback extends AbstractJSONCallback {
   @Override
   public Object encodeSend(LogEvent logEvent) {
     ILoggingEvent event = logEvent.getLoggingEvent();
-    StackTraceElement[] stackTraceElements = event.getCallerData();
     String className = "";
     String simpleClassName = "";
     int lineNumber = 0;
-    if (stackTraceElements.length > 0) {
-      StackTraceElement first = stackTraceElements[0];
+    IThrowableProxy throwableProxy = event.getThrowableProxy();
+    if (throwableProxy != null && throwableProxy.getStackTraceElementProxyArray().length > 0) {
+      StackTraceElement first = throwableProxy.getStackTraceElementProxyArray()[0].getStackTraceElement();
       className = first.getClassName();
       if (className.lastIndexOf('.') >= 0) {
         simpleClassName = className.substring(className.lastIndexOf('.') + 1);
