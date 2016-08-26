@@ -65,6 +65,8 @@ default['cdap']['sdk']['checksum'] =
     '953b9b7244e8075c78881695d9efb3dbd43f30e98adeafb0e28b857c98e142fd'
   when '3.3.6'
     '2ae37dc2cebc4c0f99b80a0437e1af52053180e82ad66b6951bf02d16e952345'
+  when '3.3.7'
+    '46ab798d11db9cf44dfc2abd66d5c6e0575331a84ae78a500663da9538c854e6'
   when '3.4.0'
     '1876673b010ff6e795418272ed3ecf171fae340b6f489fea8f6b2d3fe0d42e3f'
   when '3.4.1'
