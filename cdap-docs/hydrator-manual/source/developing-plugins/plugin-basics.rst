@@ -13,15 +13,22 @@ Plugin Types
 In Cask Hydrator, these plugin types are presently used:
 
 - Action (*action*, restricted to batch pipelines)
-- Batch Source (*batchsource*)
+- Batch Source (*batchsource*, restricted to batch pipelines)
 - Batch Sink (*batchsink*)
-- Real-time Source (*realtimesource*)
-- Real-time Sink (*realtimesink*)
+- Streaming Source (*streamingsource*, restricted to real-time pipelines)
 - Transformation (*transform*)
 - Batch Aggregator (*batchaggregator*)
+- Batch Joiner (*batchjoiner*)
 - Spark Compute (*sparkcompute*)
-- Spark Sink (*sparksink*) 
+- Spark Sink (*sparksink*, restricted to batch pipelines) 
+- Windower (*windower*, restricted to real-time pipelines)
 - Post-run Action (*postaction*, restricted to batch pipelines)
+- Real-time Source (*realtimesource*, deprecated)
+- Real-time Sink (*realtimesink*, deprecated)
+
+In the Cask Hydrator UI, all Batch Aggregator, Batch Joiner, Spark Compute, and Spark Sink
+plugins are grouped under the Analytics section. All Transformation and Windower plugins
+are grouped under the Transforms section. 
 
 .. _cask-hydrator-developing-plugin-basics-maven-archetypes:
 
@@ -30,8 +37,8 @@ Maven Archetypes
 To get started on creating a custom plugin, you can use one of these Maven archetypes to create your project: 
 
 - ``cdap-data-pipeline-plugins-archetype`` (contains batch, Spark plugin, and other types)
-- ``cdap-etl-realtime-source-archetype`` (contains a realtime source)
-- ``cdap-etl-realtime-sink-archetype`` (contains a realtime sink)
+- ``cdap-etl-realtime-source-archetype`` (contains a realtime source, deprecated)
+- ``cdap-etl-realtime-sink-archetype`` (contains a realtime sink, deprecated)
 - ``cdap-etl-transform-archetype`` (contains a transform)
 
 This command will create a project from an archetype:
