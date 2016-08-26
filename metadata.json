@@ -14,7 +14,6 @@
     "ubuntu": ">= 0.0.0"
   },
   "dependencies": {
-    "ambari": ">= 0.0.0",
     "apt": ">= 0.0.0",
     "ark": ">= 0.0.0",
     "hadoop": ">= 0.0.0",
@@ -26,7 +25,7 @@
     "krb5_utils": ">= 0.0.0"
   },
   "recommendations": {
-
+    "ambari": ">= 0.0.0"
   },
   "suggestions": {
 
@@ -49,7 +48,7 @@
   "recipes": {
 
   },
-  "version": "2.22.0",
+  "version": "2.23.0",
   "source_url": "https://github.com/caskdata/cdap_cookbook",
   "issues_url": "https://issues.cask.co/browse/COOK/component/10603"
 }
