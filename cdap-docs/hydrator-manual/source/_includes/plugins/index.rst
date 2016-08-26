@@ -16,6 +16,7 @@ Plugin Reference
     Action Plugins <actions/index>
     Source Plugins <sources/index>
     Transform Plugins <transforms/index>
+    Analytic Plugins <analytics/index>
     Sink Plugins <sinks/index>
     Shared Plugins <shared-plugins/index>
     Post-run Plugins <post-run-plugins/index>
@@ -27,6 +28,7 @@ SDK and Distributed CDAP:
 - :doc:`Action Plugins <actions/index>`
 - :doc:`Source Plugins <sources/index>`
 - :doc:`Transform Plugins <transforms/index>`
+- :doc:`Analytic Plugins <analytics/index>`
 - :doc:`Sink Plugins <sinks/index>`
 - :doc:`Shared Plugins <shared-plugins/index>`
 
@@ -49,7 +51,7 @@ SDK and Distributed CDAP:
   Other plugin types may be restricted as to which plugin (and artifact) that they work
   with, depending on the particular functionality they provide. For instance, certain
   *model* (the *NaiveBayesTrainer*) and *compute* (the *NaiveBayesClassifier*) plugins
-  (found in *transforms*) only work with batch pipelines.
+  (found in *analytics*) only work with batch pipelines.
 
 - Certain plugins |---| such as the *JavaScript*, *Python Evaluator*, and *Validator*
   transforms |---| are designed to be customized by end-users with their own code, either
@@ -66,8 +68,9 @@ SDK and Distributed CDAP:
 
 .. rubric:: Exploring Plugin Details
 
-Details on the available plugins and the required properties for sources, transformations
-(transforms), sinks, and other plugin types can be obtained and explored using:
+Details on the available plugins and the required properties for sources, analytics,
+transformations (transforms), sinks, and other plugin types can be obtained and explored
+using:
 
 - :ref:`Hydrator Studio <cask-hydrator-studio>`
 - :ref:`CDAP CLI <cli>`
@@ -75,6 +78,7 @@ Details on the available plugins and the required properties for sources, transf
 - Individual plugin documentation for
   :doc:`actions <actions/index>`,
   :doc:`sources <sources/index>`,
+  :doc:`analytics <analytics/index>`,
   :doc:`transforms <transforms/index>`,
   :doc:`sinks <sinks/index>`,
   :doc:`shared <shared-plugins/index>` and

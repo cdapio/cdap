@@ -32,6 +32,16 @@ These plugins work with:
 
 These plugins work with:
 
+  - *Data Pipeline - Realtime* (``cdap-data-streams`` artifact)
+
+.. toctree::
+    :maxdepth: 1
+    :glob:
+    
+    *streamingsource*
+
+These plugins work with:
+
   - *Realtime Pipeline* (``cdap-etl-realtime`` artifact, deprecated as of CDAP 3.5.0)
 
 .. toctree::
@@ -40,12 +50,3 @@ These plugins work with:
 
     *realtime*
 
-These plugins work with:
-
-  - *Data Pipeline - Realtime* (``cdap-data-streams`` artifact)
-
-.. toctree::
-    :maxdepth: 1
-    :glob:
-    
-    *streamingsource*
