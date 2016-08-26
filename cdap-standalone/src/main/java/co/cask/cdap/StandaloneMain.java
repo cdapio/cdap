@@ -182,11 +182,11 @@ public class StandaloneMain {
     serviceStore = injector.getInstance(ServiceStore.class);
     streamService = injector.getInstance(StreamService.class);
 
-    if (cConf.getBoolean(DISABLE_UI, false)) {
-      userInterfaceService = null;
+    // if (cConf.getBoolean(DISABLE_UI, false)) {
+    //   userInterfaceService = null;
     // } else {
     //   userInterfaceService = injector.getInstance(UserInterfaceService.class);
-    }
+    // }
 
     sslEnabled = cConf.getBoolean(Constants.Security.SSL_ENABLED);
     securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);
@@ -277,9 +277,9 @@ public class StandaloneMain {
     metricsQueryService.startAndWait();
     router.startAndWait();
 
-    if (userInterfaceService != null) {
-      userInterfaceService.startAndWait();
-    }
+    // if (userInterfaceService != null) {
+    //   userInterfaceService.startAndWait();
+    // }
 
     if (securityEnabled) {
       externalAuthenticationServer.startAndWait();
@@ -312,9 +312,9 @@ public class StandaloneMain {
     boolean halt = false;
     try {
       // order matters: first shut down UI 'cause it will stop working after router is down
-      if (userInterfaceService != null) {
-        userInterfaceService.stopAndWait();
-      }
+      // if (userInterfaceService != null) {
+      //   userInterfaceService.stopAndWait();
+      // }
 
       if (trackerAppCreationService != null) {
         trackerAppCreationService.stopAndWait();
