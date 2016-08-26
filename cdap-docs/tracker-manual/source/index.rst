@@ -291,8 +291,8 @@ real-time pipelines.
 Entity Details
 --------------
 Clicking on a name in the search results list will take you to details for a particular
-entity. Details are provided on the separate tabs: *Metadata*, *Lineage*, *Audit Log*,
-*Preview*, and *Usage*.
+entity. Details are provided on the tabs *Metadata*, *Lineage*, *Audit Log*, *Preview*
+(included if the dataset is explorable), and *Usage*.
 
 **Metadata**
 
@@ -420,7 +420,7 @@ Details on completing this form are described in CDAP's documentation on
 Tracker HTTP RESTful API
 ========================
 
-All Tracker features are also available via RESTful endpoints. It supports searching of
+All Tracker features are also available via HTTP RESTful endpoints. It supports searching of
 the *_auditLog* dataset, managing preferred tags, and querying metrics, through a set
 of HTTP RESTful APIs. (See the :ref:`Reference Manual: HTTP RESTful API
 <http-restful-api-introduction>` for details on the conventions used for this API.)
