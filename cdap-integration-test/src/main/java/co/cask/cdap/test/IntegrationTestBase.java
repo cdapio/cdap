@@ -265,10 +265,10 @@ public abstract class IntegrationTestBase {
   /**
    * Reads the CDAP instance URI from the system property "instanceUri".
    * "instanceUri" should be specified in the format [host]:[port].
-   * Defaults to "localhost:10000".
+   * Defaults to "localhost:11015".
    */
   protected String getInstanceURI() {
-    return System.getProperty("instanceUri", "localhost:10000");
+    return System.getProperty("instanceUri", "localhost:11015");
   }
 
   /**

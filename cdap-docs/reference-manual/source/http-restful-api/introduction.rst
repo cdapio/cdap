@@ -38,7 +38,7 @@ where:
    * - ``host``
      - Host name of the CDAP server
    * - ``port``
-     - Port set as the ``router.bind.port`` in ``cdap-site.xml`` (default: **10000**)
+     - Port set as the ``router.bind.port`` in ``cdap-site.xml`` (default: **11015**)
 
 
 **Note:** If SSL is enabled for CDAP, then the base URL uses ``https`` instead and ``port`` becomes the port that is set
@@ -58,7 +58,7 @@ If you are using the CDAP SDK, running on your local machine, you might make a `
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X PUT "http://localhost:10000/v3/namespaces/default/streams/who"
+  $ curl -w"\n" -X PUT "http://localhost:11015/v3/namespaces/default/streams/who"
 
 Variable Replacement
 --------------------

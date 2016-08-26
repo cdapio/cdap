@@ -45,6 +45,6 @@ understanding of Docker behavior and commands.
 
 - Run a Docker container from the new image::
 
-    docker run -d -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone
+    docker run -d -p 11011:11011 -p 11015:11015 caskdata/cdap-standalone
 
 You now have a new Docker container running with CDAP Standalone.

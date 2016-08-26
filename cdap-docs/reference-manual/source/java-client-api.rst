@@ -57,9 +57,9 @@ instance that you wish to interact with.
 
 In a non-secure (default) CDAP instance, instantiate as follows::
 
-  // Interact with the CDAP instance located at example.com, port 10000
+  // Interact with the CDAP instance located at example.com, port 11015
   ClientConfig clientConfig = ClientConfig.builder()
-    .setConnectionConfig(new ConnectionConfig("example.com", 10000, false))
+    .setConnectionConfig(new ConnectionConfig("example.com", 11015, false))
     .build();
 
 In a secure CDAP instance, first pull in the ``cdap-authentication-client`` Maven dependency::
@@ -74,14 +74,14 @@ Then, instantiate as follows::
 
   // Obtain AccessToken
   AuthenticationClient authenticationClient = new BasicAuthenticationClient();
-  authenticationClient.setConnectionInfo("example.com", 10000, sslEnabled);
+  authenticationClient.setConnectionInfo("example.com", 11015, sslEnabled);
   // Configure the AuthenticationClient as documented in
   // https://github.com/caskdata/cdap-clients/blob/develop/cdap-authentication-clients/java
   AccessToken accessToken = authenticationClient.getAccessToken();
 
-  // Interact with the secure CDAP instance located at example.com, port 10000, with the provided accessToken
+  // Interact with the secure CDAP instance located at example.com, port 11015, with the provided accessToken
   ClientConfig clientConfig = ClientConfig.builder()
-    .setConnectionConfig(new ConnectionConfig("example.com", 10000, sslEnabled))
+    .setConnectionConfig(new ConnectionConfig("example.com", 11015, sslEnabled))
     .setAccessToken(accessToken)
     .build();
 

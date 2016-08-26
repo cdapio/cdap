@@ -58,8 +58,8 @@ ENV PATH /opt/cdap/sdk/bin:${PATH}
 # Copy entrypoint
 COPY docker-entrypoint.sh /
 
-# Expose Ports (9999 & 10000 for CDAP)
-EXPOSE 9999 10000
+# Expose Ports (11011 & 11015 for CDAP)
+EXPOSE 11011 11015
 
 # start CDAP in the background and tail in the foreground
 ENTRYPOINT ["/docker-entrypoint.sh"]

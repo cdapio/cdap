@@ -196,9 +196,9 @@ ports which can be opened to provide external access:
    :header: "Description", "Governing Configuration", "Default Value in Packages/MapR", "Default Value in Ambari/Cloudera Manager"
    :widths: 25, 25, 25, 25
 
-   "CDAP Router listen port (HTTP RESTful)", "``router.bind.port``", "10000", "11015"
+   "CDAP Router listen port (HTTP RESTful)", "``router.bind.port``", "11015", "11015"
    "CDAP Router listen port (HTTP RESTful) (SSL)", "``router.ssl.bind.port``", "10443", "10443"
-   "CDAP UI listen port", "``dashboard.bind.port``", "9999", "9999"
+   "CDAP UI listen port", "``dashboard.bind.port``", "11011", "11011"
    "CDAP UI listen port (SSL)", "``dashboard.ssl.bind.port``", "9443", "9443"
    "CDAP Auth Server listen port", "``security.auth.server.bind.port``", "10009", "10009"
    "CDAP Auth Server listen port (SSL)", "``security.auth.server.ssl.bind.port``", "10010", "10010"
@@ -218,7 +218,7 @@ cluster. They need unrestricted client access to the cluster with the ability to
 connections to cluster nodes, on any port that a container may choose to open.
 
 Taking this same picture, if the firewall were moved to the left of the CDAP Router/Auth
-Server, then two ports (10000 and 10009) would need to be opened to allow access by
+Server, then two ports (11015 and 10009) would need to be opened to allow access by
 clients to the hosts running the CDAP Router/Auth Server. There could be another firewall
 between the CDAP Router/Auth Server and the cluster, as long as it provids client access
 from the CDAP Auth Server to the ZooKeeper nodes. The same is true for the CDAP Router

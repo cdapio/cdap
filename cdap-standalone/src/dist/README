@@ -45,7 +45,7 @@ or on Windows:
 Using CDAP
 ==========
 
-Open a browser window to http://localhost:9999 to view the CDAP-UI.
+Open a browser window to http://localhost:11011 to view the CDAP-UI.
 
 To get started with CDAP, see our online introduction:
  

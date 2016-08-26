@@ -19,7 +19,7 @@ convenience.
 #. Each example folder has a ``.jar`` file in its ``target`` directory.
    For verification, we will use the :ref:`WordCount example <examples-word-count>`.
 #. Open a web browser to the CDAP UI.
-   It is located on port ``9999`` of the box where you installed the CDAP UI service.
+   It is located on port ``11011`` of the box where you installed the CDAP UI service.
 #. On the UI, click the button *Add App*.
 #. Find the pre-built |literal-Wordcount-release-jar| using the dialog box to navigate to
    ``CDAP_HOME/examples/WordCount/target/``. 

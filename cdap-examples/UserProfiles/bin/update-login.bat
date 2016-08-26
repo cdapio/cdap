@@ -101,7 +101,7 @@ for /L %%G IN (1 1 %$MAX_EVENTS%) DO (
     set $AUTH=
     if DEFINED $ACCESS_TOKEN set $AUTH=-H "Authorization: Bearer !$ACCESS_TOKEN!"
     set $CURLX=-X PUT -d!$CURRENT_TIME!
-    set $URL="http://!$GATEWAY!:10000/%$ENDPOINT%/!$USERID!/lastLogin"
+    set $URL="http://!$GATEWAY!:11015/%$ENDPOINT%/!$USERID!/lastLogin"
     set $COMMAND=curl -qfsw "%%{http_code}" !$AUTH! !$CURLX! !$URL!
     set $EXPECTED=200
     for /F "tokens=* USEBACKQ" %%F IN (`!$COMMAND!`) DO (
