@@ -151,10 +151,14 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
         LOG.debug("Authentication failed due to invalid token, reason={};", tokenState);
       }
       JsonArray externalAuthenticationURIs = new JsonArray();
-
-      //Waiting for service to get discovered
-      stopWatchWait(externalAuthenticationURIs);
-
+      String announceAddress = configuration.get(Constants.Security.AUTH_SERVER_ANNOUNCE_ADDRESS);
+      // If the announceAddress is set in configuration, return it directly
+      if (announceAddress != null) {
+        externalAuthenticationURIs.add(new JsonPrimitive(announceAddress));
+      } else {
+        //Waiting for service to get discovered
+        stopWatchWait(externalAuthenticationURIs);
+      }
       jsonObject.add("auth_uri", externalAuthenticationURIs);
 
       ChannelBuffer content = ChannelBuffers.wrappedBuffer(jsonObject.toString().getBytes(Charsets.UTF_8));
