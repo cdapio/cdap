@@ -20,21 +20,25 @@ of datasets, streams, and stream views.
 
 It allows you to perform impact and root-cause analysis, delivers an audit-trail for
 auditability and compliance, and allows you to preview data. Tracker furnishes access to
-structured information that describes, explains, locates, and makes it easier to
+structured information that describes, explains, and locates data, making it easier to
 retrieve, use, and manage datasets.
 
 Tracker also allows users to update metadata for datasets and streams. Users can add,
-remove, and update tags or user properties directly in the UI. We also allow users to set
+remove, and update tags and user properties directly in the UI. It allows users to set
 a preferred dictionary of terms so that teams can use the same lexicon when updating metadata.
 
 Tracker's UI shows a graphical visualization of the :ref:`lineage
 <metadata-lineage-lineage>` of an entity. A lineage shows |---| for a specified time range
 |---| all data access of the entity, and details of where that access originated from.
 
-Tracker captures activity metrics for datasets as well. Users can see the datasets that are
-being used the most and view usage metrics for each dataset. This allows teams to easily find
-the right dataset to use for analysis. The Tracker Meter also rates each dataset on a scale
-to quickly show you how active a dataset is in the system.
+Tracker also captures activity metrics for datasets. You can see the datasets that are
+being used the most and view usage metrics for each dataset. This allows teams to easily
+determine the appropriate dataset to use for an analysis. The Tracker Meter rates each
+dataset on a scale that shows how active a dataset is in the system. Users can see the
+datasets that are being used the most and view usage metrics for each dataset. This
+allows teams to easily find the right dataset to use for analysis. The Tracker Meter
+also rates each dataset on a scale to quickly show you how active a dataset is in the
+system.
 
 **Harvest, Index, Track, and Analyze Datasets**
 
@@ -49,9 +53,9 @@ to quickly show you how active a dataset is in the system.
 - Provides viewing and updating complete metadata on datasets, enabling traceability to resolve
   data issues and to improve data quality.
 
-- Collects usage metrics about datasets so that you know which datasets are being used the most.
+- Collects usage metrics about datasets so that you know which datasets are being used most often.
 
-- Provides the ability to designate tags as preferred so that teams can easily find and tag datasets.
+- Provides the ability to designate certain tags as "preferred" so that teams can easily find and tag datasets.
 
 - Allows users to preview data directly in the UI.
 
@@ -83,21 +87,20 @@ three billion records <http://customers.cask.co/rs/882-OYR-915/images/tracker-ca
 
 Tracker Application
 ===================
-The Cask Tracker application consists of an application in CDAP with two programs and
-four datasets:
+Cask Tracker consists of an application in CDAP with two programs and four datasets:
 
 - ``_Tracker`` application: names begins with an underscore
-- ``TrackerService`` service: it exposes the Tracker API endpoints
-- ``AuditLogFlow`` flow: subscribes to Kafka audit messages and stores them in the
-  ``_auditLog``	dataset
-- ``_auditLog`` custom dataset used to store audit messages
-- ``_kafkaOffset`` key value table used to store Kafka offsets
-- ``_auditMetrics`` a custom cube dataset used to collect metrics about datasets
-- ``_auditTagsTable`` a custom dataset used to store preferred tags
-- ``_timeSinceTable`` a custom dataset used to store the last time a specific audit
+- ``TrackerService``: Service exposing the Tracker API endpoints
+- ``AuditLogFlow``: Flow that subscribes to Kafka audit messages and stores them in the
+  ``_auditLog`` dataset
+- ``_auditLog``: Custom dataset for storing audit messages
+- ``_kafkaOffset``: Key-value table for storing Kafka offsets
+- ``_auditMetrics``: Custom cube dataset for collecting dataset metrics
+- ``_auditTagsTable``: Custom dataset for storing preferred tags
+- ``_timeSinceTable``: Custom dataset for storing the last time a specific audit
   message was received
 
-The Tracker UI is shipped with CDAP, started automatically in standalone as part of the
+The Tracker UI is shipped with CDAP, started automatically in standalone CDAP as part of the
 CDAP UI. It is available at:
 
   http://localhost:9999/ns/default/tracker/home
@@ -142,10 +145,11 @@ As these are the default settings for these properties, they do not need to be i
 
 Enabling Tracker
 ----------------
-To enable Tracker, go to the **Tracker UI** at 
-(in the SDK) http://localhost:9999/ns/default/tracker/home or 
-(Distributed CDAP) http://host:dashboard-bind-port/ns/default/tracker/home 
-and press the ``"Enable Tracker"`` button to deploy and start Tracker.
+Tracker is enabled automatically in Standalone CDAP and the UI is available at
+ http://localhost:9999/ns/default/tracker/home. In the Distributed version of CDAP,
+you must manually enable Tracker by visiting
+ http://host:dashboard-bind-port/ns/default/tracker/home
+and pressing the ``"Enable Tracker"`` button.
 
 Once pressed, the application will be deployed, the datasets created (if necessary), the
 flow and service started, and search and audit logging will become available.
@@ -222,7 +226,7 @@ Disabling and Removing Tracker
 ------------------------------
 If for some reason you need to disable or remove Tracker, you would need to:
 
-- stop all _Tracker programs
+- stop all ``_Tracker`` programs
 - delete the Tracker application
 - delete the Tracker datasets
 
@@ -260,8 +264,8 @@ The results would appear similar to this:
   :align: center
   :class: bordered-image
 
-In this example, Tracker has found a single dataset that satisfied the condition. The search
-used is shown in the upper-left, and the results show the dataset found with
+In this example, Tracker has found two datasets that satisfied the condition. The search
+used is shown in the upper-left, and the results show the datasets found with
 information and links for each.
 
 **On the left side** is the **Filter** pane, which provides information on what was found (the
@@ -273,7 +277,7 @@ Note that the *entities* and *metadata* filters have an ``and`` relationship; at
 selection must be made in each of *entities* and *metadata* for there to be any results
 that appear.
 
-**On the right side** is a sortable list of results. It is sortable by *Create Date*, the entity
+**On the right side** is a sortable list of results. It is sortable by one of *Create Date*, the entity
 ID (name), or the Tracker Score.
 
 Each entry in the list provides a summery of information about the entity, and its name is
@@ -346,9 +350,9 @@ specified, in addition to common time ranges (two weeks to one year).
 
 **Preview**
 
-The *Preview* tab shows a preview for the dataset. It is available for all datasets that are
-explorable. You can scroll for up to 500 records. For additional analysis, you can leverage the
-*Jump* menu to go into CDAP and explore the dataset using a custom query.
+The *Preview* tab (if available) shows a preview for the dataset. It is available for all datasets that are
+explorable. You can scroll for up to 500 records. For additional analysis, use the *Jump*
+menu to go into CDAP and explore the dataset using a custom query.
 
 .. figure:: /_images/tracker-preview.png
   :figwidth: 100%
@@ -374,8 +378,8 @@ the Program name will take you to that entity in the main CDAP UI.
 
 The *Tags* tab at the top of the page allows you to enter a common set of preferred terms to use when
 adding tags to datasets. Preferred tags show up first when adding tags, and will guide your team to
-use the same terminology. Any Preferred Tag that has not been attached to any datasets can be deleted
-by clicking the red trashcan icon. If a Preferred tag ahs been added to an entity, you cannot delete it,
+use the same terminology. Any preferred tag that has not been attached to any entities can be deleted
+by clicking the red trashcan icon. If a preferred tag has been added to an entity, you cannot delete it,
 but you can demote it back to just being a user tag.
 
 .. figure:: /_images/tracker-tags.png
@@ -384,10 +388,10 @@ but you can demote it back to just being a user tag.
   :align: center
   :class: bordered-image
 
-Adding preferred tags is easy. Just click the **Add Preferred Tags** button and use the UI to add a
-list of terms you would like to be preferred. If the tag already exists in CDAP, it will be promoted
-to a preferred tag automatically. If it is a new tag in CDAP, it will still show up in the Preferred
-Tags list.
+To add preferred tags, click the **Add Preferred Tags** button and use the UI to add or import a
+list of tags that you would like to be "preferred". If the tag already exists in CDAP,
+it will be promoted from being a user tag to being a preferred tag. If it is a new tag
+in CDAP, it will be added in the *Preferred Tags* list.
 
 .. figure:: /_images/tracker-tags-upload.png
   :figwidth: 100%
@@ -417,7 +421,7 @@ Tracker HTTP RESTful API
 ========================
 
 All Tracker features are also available via RESTful endpoints. It supports searching of
-the *_auditLog* dataset, managing preferred tags, and querying metrics, all through a set
+the *_auditLog* dataset, managing preferred tags, and querying metrics, through a set
 of HTTP RESTful APIs. (See the :ref:`Reference Manual: HTTP RESTful API
 <http-restful-api-introduction>` for details on the conventions used for this API.)
 
@@ -573,13 +577,13 @@ Use this endpoint to list all tags in the system::
 where:
 
 .. list-table::
-:widths: 20 80
+   :widths: 20 80
    :header-rows: 1
 
      * - Parameter
        - Description
      * - ``type`` *(optional)*
-       - The type, either ``user`` or ``preferred`` of tag to return
+       - The type of tag to return, either ``user`` or ``preferred``
      * - ``prefix`` *(optional)*
        - Each tag returned will start with this prefix
 
@@ -785,7 +789,7 @@ Use this endpoint for getting the tags for a specific dataset, stream, or stream
 where:
 
 .. list-table::
-:widths: 20 80
+   :widths: 20 80
    :header-rows: 1
 
      * - Parameter
@@ -1155,7 +1159,7 @@ where:
      - Description
    * - ``payload``
      - A JSON map of string to array where the keys are either ``streams`` or
-     ``datasets`` and the value is an array of the names of each type.
+       ``datasets`` and the value is an array of the names of each type.
 
 A successful query will return a 200 response with a body containing the Tracker scores
  for each entity requested.
