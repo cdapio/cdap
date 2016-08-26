@@ -429,8 +429,7 @@ of HTTP RESTful APIs. (See the :ref:`Reference Manual: HTTP RESTful API
 
 To search for audit log entries for a particular dataset, stream, or stream view, submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/auditlog/<type>/<name>
-    [?startTime=<time>][&endTime=<time>][&offset=<offset>][&limit=<limit>]
+  GET /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/auditlog/<type>/<name>[?startTime=<time>][&endTime=<time>][&offset=<offset>][&limit=<limit>]
 
 where:
 
@@ -571,8 +570,7 @@ needed.
 
 Use this endpoint to list all tags in the system::
 
-  GET /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/tags
-  [?type=<type>][&prefix=<prefix>]
+  GET /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/tags[?type=<type>][&prefix=<prefix>]
 
 where:
 
@@ -633,8 +631,7 @@ Results (reformatted for display)::
 
 Use this endpoint to validate a list of tags before adding them::
 
-  POST /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1
-  /tags/validate
+  POST /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/tags/validate
 
 where the payload is a json array of tags to validate:
 
@@ -888,8 +885,7 @@ Example:
 
 Use this endpoint for adding tags for a specific dataset, stream, or stream view::
 
-  DELETE /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1
-  /tags/delete/{entityType}/{entityName}?tagname=<tag>
+  DELETE /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/tags/delete/{entityType}/{entityName}?tagname=<tag>
 
 where:
 
@@ -936,9 +932,7 @@ Example:
 Use this endpoint for getting the list of top entities accessing a dataset or all
 datasets::
 
-  GET /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1
-  /auditmetrics/top-entities/{type}[?limit=<limit>][&entityType
-  =<entityType>][&entityName=<entityName>][&startTime=<startTime>][&endTime=<endTime>]
+  GET /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/auditmetrics/top-entities/{type}[?limit=<limit>][&entityType=<entityType>][&entityName=<entityName>][&startTime=<startTime>][&endTime=<endTime>]
 
 where:
 
@@ -1022,8 +1016,7 @@ Results (reformatted for display)::
 Use this endpoint for getting the list of the times since the last audit message type
 was received::
 
-  GET /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1
-  /auditmetrics/time-since?entityType=<entityType>&entityName=<entityName>
+  GET /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/auditmetrics/time-since?entityType=<entityType>&entityName=<entityName>
 
 where:
 
@@ -1076,9 +1069,7 @@ Results (reformatted for display)::
 
 Use this endpoint for getting the histogram data for audit logs::
 
-  GET /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1
-  /auditmetrics/audit-histogram/?entityType=<entityType>&entityName=<entityName
-  >[&startTime=<startTime>][&endTime=<endTime>]
+  GET /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/auditmetrics/audit-histogram/?entityType=<entityType>&entityName=<entityName>[&startTime=<startTime>][&endTime=<endTime>]
 
 where:
 
@@ -1146,8 +1137,7 @@ Results (reformatted for display)::
 
 Use this endpoint for getting the tracker meter scores for a list of datasets or streams::
 
-  POST /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1
-  /tracker-meter
+  POST /v3/namespaces/<namespace-id>/apps/_Tracker/services/TrackerService/methods/v1/tracker-meter
 
 where:
 
