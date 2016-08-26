@@ -19,16 +19,22 @@
 
 # Default: conf.chef
 default['cdap']['conf_dir'] = 'conf.chef'
-# Default: 3.4.3-1
-default['cdap']['version'] = '3.4.3-1'
+# Default: 3.5.0-1
+default['cdap']['version'] = '3.5.0-1'
 # cdap-site.xml
 default['cdap']['cdap_site']['root.namespace'] = 'cdap'
 # ideally we could put the macro '/${cdap.namespace}' here but this attribute is used elsewhere in the cookbook
 default['cdap']['cdap_site']['hdfs.namespace'] = "/#{node['cdap']['cdap_site']['root.namespace']}"
 default['cdap']['cdap_site']['hdfs.user'] = 'yarn'
-default['cdap']['cdap_site']['kafka.log.dir'] = '/data/cdap/kafka-logs'
 default['cdap']['cdap_site']['kafka.seed.brokers'] = "#{node['fqdn']}:9092"
-default['cdap']['cdap_site']['kafka.default.replication.factor'] = '1'
+# CDAP 3.5.0 deprecated Kafka Server settings
+if node['cdap']['version'].to_f < 3.5
+  default['cdap']['cdap_site']['kafka.log.dir'] = '/data/cdap/kafka-logs'
+  default['cdap']['cdap_site']['kafka.default.replication.factor'] = '1'
+else
+  default['cdap']['cdap_site']['kafka.server.log.dirs'] = '/data/cdap/kafka-logs'
+  default['cdap']['cdap_site']['kafka.server.default.replication.factor'] = '1'
+end
 default['cdap']['cdap_site']['log.retention.duration.days'] = '7'
 default['cdap']['cdap_site']['zookeeper.quorum'] = "#{node['fqdn']}:2181/#{node['cdap']['cdap_site']['root.namespace']}"
 default['cdap']['cdap_site']['router.bind.address'] = node['fqdn']

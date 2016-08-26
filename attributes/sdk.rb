@@ -73,6 +73,8 @@ default['cdap']['sdk']['checksum'] =
     '6103e5d7f3fa2f91057511703f12fa513235e6f5ff52d4e10ead4bbc8727954c'
   when '3.4.3'
     'b834eda1137f8423aec2e45dd917f14b86009cfa061c6487f3d20ae29017db8d'
+  when '3.5.0'
+    '883c91073c5658a73e5603eea62bd95516521cef9ae4ed8382f724777714b24b'
   end
 default['cdap']['sdk']['install_path'] = '/opt/cdap'
 default['cdap']['sdk']['user'] = 'cdap'

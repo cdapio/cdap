@@ -24,21 +24,29 @@ package 'cdap-kafka' do
   version node['cdap']['version']
 end
 
-kafka_log_dir =
-  if node['cdap']['cdap_site'].key?('kafka.log.dir')
+if node['cdap']['version'].to_f >= 3.5 && node['cdap']['cdap_site'].key?('kafka.log.dir')
+  Chef::Log.warn('kafka.log.dir has been deprecated. Please use kafka.server.log.dirs instead.')
+end
+
+kafka_log_dirs =
+  if node['cdap']['cdap_site'].key?('kafka.server.log.dirs')
+    node['cdap']['cdap_site']['kafka.server.log.dirs']
+  elsif node['cdap']['cdap_site'].key?('kafka.log.dir')
     node['cdap']['cdap_site']['kafka.log.dir']
   else
     '/tmp/kafka-logs'
   end
 
-node.default['cdap']['cdap_site']['kafka.log.dir'] = kafka_log_dir
+node.default['cdap']['cdap_site']['kafka.server.log.dirs'] = kafka_log_dirs
 
-directory kafka_log_dir do
-  mode 0o755
-  owner 'cdap'
-  group 'cdap'
-  action :create
-  recursive true
+kafka_log_dirs.split(',').each do |kafka_log_dir|
+  directory kafka_log_dir do
+    mode 0o755
+    owner 'cdap'
+    group 'cdap'
+    action :create
+    recursive true
+  end
 end
 
 template '/etc/init.d/cdap-kafka-server' do
