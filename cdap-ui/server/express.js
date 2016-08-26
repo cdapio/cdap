@@ -40,6 +40,9 @@ var express = require('express'),
     DIST_PATH = require('path').normalize(
       __dirname + '/../dist'
     ),
+    LOGIN_DIST_PATH= require('path').normalize(
+      __dirname + '/../login_dist'
+    ),
     CDAP_DIST_PATH=require('path').normalize(
       __dirname + '/../cdap_dist'
     ),
@@ -138,15 +141,6 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
 
   });
 
-  /*
-    For now both login and accessToken APIs do the same thing.
-    This is only for semantic differntiation. In the future ideally
-    these endpoints will vary based on success failure conditions.
-    (A 404 vs warning for login vs token)
-
-  */
-  app.post('/login', authentication);
-
   app.post('/accessToken', authentication);
 
   /*
@@ -214,6 +208,14 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       finalhandler(req, res)(false); // 404
     }
   ]);
+  app.use('/login_assets', [
+    express.static(LOGIN_DIST_PATH + '/login_assets', {
+      index: false
+    }),
+    function(req, res) {
+      finalhandler(req, res)(false); // 404
+    }
+  ]);
   app.get('/robots.txt', [
     function (req, res) {
       res.type('text/plain');
@@ -229,10 +231,8 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       },
       url: authAddress.get()
     };
-
     request(opts,
       function (nerr, nres, nbody) {
-
         if (nerr || nres.statusCode !== 200) {
           res.status(nres.statusCode).send(nbody);
         } else {
@@ -247,6 +247,25 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       res.sendFile(DIST_PATH + '/test.html');
     }
   ]);
+
+  app.get('/login', [
+    function(req, res) {
+      if(!authAddress.get() || req.cookies.CDAP_Auth_Token) {
+        res.redirect('/');
+        return;
+      }
+      res.sendFile(LOGIN_DIST_PATH + '/login_assets/login.html');
+    }
+  ]);
+
+  /*
+    For now both login and accessToken APIs do the same thing.
+    This is only for semantic differntiation. In the future ideally
+    these endpoints will vary based on success failure conditions.
+    (A 404 vs warning for login vs token)
+
+  */
+  app.post('/login', authentication);
 
   app.get('/backendstatus', [
     function (req, res) {

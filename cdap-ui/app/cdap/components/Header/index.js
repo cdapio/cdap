@@ -30,11 +30,11 @@ export default class Header extends Component {
     switch(extension) {
       case 'hydrator':
         return window.getAbsUIUrl({
-          uiApp: 'hydrator'
+          uiApp: 'cask-hydrator'
         });
       case 'tracker':
         return window.getAbsUIUrl({
-          uiApp: 'tracker'
+          uiApp: 'cask-tracker'
         });
       default:
         return window.getAbsUIUrl();

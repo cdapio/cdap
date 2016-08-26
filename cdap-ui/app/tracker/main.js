@@ -22,7 +22,8 @@ angular
   .module(PKG.name, [
 
     angular.module(PKG.name+'.features', [
-      PKG.name+'.feature.tracker'
+      PKG.name+'.feature.tracker',
+      PKG.name+'.feature.userprofile'
     ]).name,
 
     angular.module(PKG.name+'.commons', [
@@ -94,6 +95,27 @@ angular
 
     // for debugging... or to trigger easter eggs?
     window.$go = $state.go;
+  })
+  .run(function($rootScope, MY_CONFIG, myAuth, MYAUTH_EVENT) {
+    $rootScope.$on('$stateChangeStart', function () {
+      if (MY_CONFIG.securityEnabled) {
+        if (!myAuth.isAuthenticated()) {
+          $rootScope.$broadcast(MYAUTH_EVENT.logoutSuccess);
+        }
+      }
+    });
+  })
+  .run(function($rootScope, myHelpers, MYAUTH_EVENT) {
+    $rootScope.$on(MYAUTH_EVENT.logoutSuccess, function() {
+      window.location.href = myHelpers.getAbsUIUrl({
+        uiApp: 'login',
+        redirectUrl: location.href,
+        clientId: 'hydrator'
+      });
+    });
+  })
+  .run(function(myNamespace) {
+    myNamespace.getList();
   })
 
   .config(function (MyDataSourceProvider) {
@@ -227,64 +249,6 @@ angular
     });
   }])
 
-  /*
-    FIXME: This is a one time only thing. Once all old users who migrated to 3.3 have their drafts moved from global level to
-          namespace level this snippet can be removed. Ideally in 4.* we should be able to remove this.
-  */
-  .run(function(mySettings, EventPipe, $state, $alert, $q) {
-    mySettings.get('hydratorDrafts')
-      .then(
-        function success(res) {
-          var namespacedDrafts = {
-            default: {}
-          };
-          if (res && !res.isMigrated) {
-            angular.forEach(res, function(draft, name) {
-               namespacedDrafts.default[name] = draft;
-            });
-
-            namespacedDrafts.isMigrated = true;
-            return mySettings.set('hydratorDrafts', namespacedDrafts);
-          } else {
-            return $q.reject(false);
-          }
-        }
-      )
-      .then(
-        function showAlert() {
-          $alert({
-            type: 'info',
-            content: 'All current drafts can be found in Default namespace.'
-          });
-        }
-      );
-  })
-
-  .run(function (MYSOCKET_EVENT, myAlert, EventPipe) {
-
-    EventPipe.on(MYSOCKET_EVENT.message, function (data) {
-      if(data.statusCode > 399 && !data.resource.suppressErrors) {
-        myAlert({
-          title: data.statusCode.toString(),
-          content: data.response || 'Server had an issue, please try refreshing the page',
-          type: 'danger'
-        });
-      }
-
-      // The user doesn't need to know that the backend node
-      // is unable to connect to CDAP. Error messages add no
-      // more value than the pop showing that the FE is waiting
-      // for system to come back up. Most of the issues are with
-      // connect, other than that pass everything else to user.
-      if(data.warning && data.error.syscall !== 'connect') {
-        myAlert({
-          content: data.warning,
-          type: 'warning'
-        });
-      }
-    });
-  })
-
   /**
    * BodyCtrl
    * attached to the <body> tag, mostly responsible for
@@ -294,15 +258,7 @@ angular
 
     var activeThemeClass = caskTheme.getClassName();
     var dataSource = new MyCDAPDataSource($scope);
-    if (MY_CONFIG.securityEnabled) {
-      if (myAuth.isAuthenticated()) {
-        getVersion();
-      } else {
-        $rootScope.$on(MYAUTH_EVENT.loginSuccess, getVersion);
-      }
-    } else {
-      getVersion();
-    }
+    getVersion();
 
     $scope.copyrightYear = new Date().getFullYear();
 

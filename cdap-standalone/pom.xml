@@ -375,6 +375,10 @@
                       <directory>${project.parent.basedir}/cdap-ui/dist</directory>
                       <targetPath>ui/dist</targetPath>
                     </resource>
+		    <resource>
+		      <directory>${project.parent.basedir}/cdap-ui/cdap_dist</directory>
+                      <targetPath>ui/cdap_dist</targetPath>
+		    </resource>
                     <resource>
                       <directory>${project.parent.basedir}/cdap-ui/node_modules</directory>
                       <targetPath>ui/node_modules</targetPath>

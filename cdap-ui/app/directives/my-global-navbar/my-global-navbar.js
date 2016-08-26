@@ -22,6 +22,18 @@ function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT,
   vm.$cookies = $cookies;
 
   function findActiveProduct() {
+    var baseTag, baseUrl;
+    if ($state.is('userprofile')) {
+      baseTag = document.getElementsByTagName('base');
+      baseUrl = baseTag[0].getAttribute('href');
+      if (baseUrl.indexOf('hydrator') !== -1) {
+        return 'hydrator';
+      } else if (baseUrl.indexOf('tracker') !== -1) {
+        return 'tracker';
+      } else {
+        return 'cdap';
+      }
+    }
     if ($state.includes('hydrator.**')) {
       return 'hydrator';
     } else if ($state.includes('tracker.**') || $state.is('tracker-enable')) {
@@ -54,13 +66,13 @@ function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT,
   // Listening for event from namespace create or namespace delete
   EventPipe.on('namespace.update', updateNamespaceList);
 
-  vm.currentUser = myAuth.isAuthenticated();
+  vm.currentUser = myAuth.getUsername();
   $scope.$on (MYAUTH_EVENT.loginSuccess, () => {
-    vm.currentUser = myAuth.isAuthenticated();
+    vm.currentUser = myAuth.getUsername();
     updateNamespaceList();
   });
   $scope.$on (MYAUTH_EVENT.logoutSuccess, () => {
-    vm.currentUser = myAuth.isAuthenticated();
+    vm.currentUser = myAuth.getUsername();
     vm.namespaces = [];
   });
 

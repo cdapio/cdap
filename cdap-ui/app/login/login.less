@@ -13,37 +13,36 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-@import '../../styles/variables.less';
-.cask-card {
+
+@import './styles/variables.less';
+@import './styles/fonts.less';
+
+#login-form {
+  position: absolute;
+  top: 43%;
+  left: 50%;
+  width: 35%;
+  height: 40%;
+  transform: translate(-50%, -50%);
+  padding: 20px;
+
+  .cdap-logo {
+    color: #ff6600;
+    background: url('/login_assets/img/CDAP_Logotype.svg');
+    height: 50px;
+    width: 200px;
+    background-size: 100% 100%;
+    margin: 0 auto;
+  }
+  .card-head {
+    display: none;
+  }
   .card {
-    background: #fff;
-    border-radius: 4px;
-    padding-top: 15px;
-    .card-head {
-      display: flex;
-      justify-content: center;
-      h3 {
-        margin-top: 0;
-      }
-      .fa.fa-times {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        cursor: pointer;
-      }
-    }
-    .card-body {
-      padding: 15px;
-    }
-    .card-status {
-      color: white;
-      padding: 15px;
-      &.success {
-        background: @brand-success;
-      }
-      &.error {
-        background: @brand-danger;
-      }
-    }
+    padding-top: 10px;
+  }
+  .error-label {
+    margin-left: 10px;
+    color: @brand-danger;
+    padding-top: 0;
   }
 }

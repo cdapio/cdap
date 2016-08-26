@@ -1,0 +1,111 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import "~bootstrap/less/variables.less";
+
+// new variables for use in themes
+@cdap-white:            rgb(255, 255, 255); // #fff, white
+@cdap-orange:           rgb(255, 102, 0);   // #ff6600
+@cdap-header:           rgb(60, 67, 85);    // #3c4355
+@cdap-darkness:         rgb(102, 110, 130); // #666e82
+@cdap-bluegray:         rgb(111, 124, 157); // #6f7c9d
+@cdap-gray:             rgb(111, 124, 159); // #6f7c9f
+@cdap-lightgray:        rgb(102, 110, 131); // #666e83
+@cdap-darkblue:         rgb(44, 73, 138);   // #2c498a
+@cdap-header-icons:     rgb(121, 127, 141); // #797f8d
+
+@program-text:          rgb(150, 150, 150); // #969696
+// overrides from default bootstrap
+// @TODO: get sean to customize
+
+@brand-primary:         rgb(90, 132, 228);  // #5a84e4
+@brand-success:         rgb(74, 182, 60);   // #4ab63c
+@brand-info:            rgb(102, 110, 131); // #666e83
+@brand-warning:         rgb(244, 180, 0);   // #f4b400
+@brand-danger:          rgb(209, 86, 104);  // #d15668
+
+@alert-info-bg:         @brand-primary;     // #5a84e4
+@alert-danger-bg:       rgb(250, 67, 71);   // #FA4347
+@alert-success-bg:      @brand-success;     // #4ab63c
+@alert-warning-bg:      @brand-warning;     // #f4b400
+
+@body-bg:               darkgray; //rgb(235, 236, 241); // #ebecf1
+@jumbotron-bg:          white;              // #fff, white
+
+@text-color:            @gray-dark;         // #333
+@link-color:            @brand-primary;     // #5a84e4
+@link-hover-color:      darken(@link-color, 15%); // #2257d0
+
+@img-path:              "../img";
+
+@progress-bg:           rgb(221, 223, 230);  // #dddfe6
+@progress-bar-color:          white;         // #fff, white
+@progress-border-radius:      @border-radius-base;
+
+@panel-default-text:          @cdap-white;        // #fff, white
+@panel-default-border:        rgb(221, 221, 221); // #ddd
+@panel-default-heading-bg:    @cdap-lightgray;    // #666e83
+
+@nav-tabs-border-color:                       rgb(209, 211, 218);  // #d1d3da
+@nav-tabs-link-hover-border-color:            rgb(209, 211, 218);  // #d1d3da
+@nav-tabs-active-link-hover-bg:               @body-bg;            // #ebecf1
+@nav-tabs-active-link-hover-color:            @gray;               // #555
+@nav-tabs-active-link-hover-border-color:     rgb(209, 211, 218);  // #d1d3da
+@nav-tabs-justified-link-border-color:        rgb(221, 221, 221);  // #ddd
+@nav-tabs-justified-active-link-border-color: @body-bg;            // #ebecf1
+
+// Tooltips
+@tooltip-bg:            rgb(255, 255, 255);     // #fff, white
+@tooltip-color:         @gray-dark;             // #333
+@tooltip-arrow-color:   rgb(255, 255, 255);     // #fff, white
+
+// Popovers
+@popover-arrow-outer-color: rgb(255, 255, 255); // #fff, white
+
+@font-size-base:            13px;
+@headings-font-weight:      300;                // thin headers
+@btn-default-color:         rgb(106, 115, 135); // #6a7387
+
+// Operations dashboard
+@subnav-background:         rgb(235, 236, 241); // #ebecf1
+@subnav-border:             rgb(211, 211, 211); // #d3d3d3, lightgray
+
+// Admin sidebar
+@primary-menu-link-color:   @cdap-darkness;     // #666e82
+@secondary-menu-bg:         @brand-primary;     // #5a84e4
+@tertiary-menu-bg:          rgb(44, 73, 139);   // #2c498b
+@child-menu-link-color:     lighten(@link-color, 15%); // #9cb5ef
+
+// Tables
+@table-bg:                  rgb(246, 246, 246); // #f6f6f6
+@table-border-color:        @panel-default-border; // #ddd
+@modal-table-border-color:  rgb(201, 204, 214); // #c9ccd6
+@table-radius:              8px;
+
+// Mapreduce components
+@mr-status-bg:              rgb(222, 222, 230); // #DEDEE6
+
+// Hydrator when plugin added
+@selected-plugin-bg:        rgb(44, 73, 139);   // #2c498b
+
+@hydrator-source:            @brand-success;     // #4ab63c
+@hydrator-transform:         rgb(68, 150, 232);  // #4496e8
+@hydrator-sink:              rgb(12, 172, 196);  // #0cacc4
+
+@grid-float-breakpoint:     @screen-lg-min;
+
+@tracker-green: #35c853;
+@hydrator-blue: #098cf9;

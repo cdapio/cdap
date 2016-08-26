@@ -18,38 +18,78 @@ var webpack = require('webpack');
 var CopyWebpackPlugin = require('copy-webpack-plugin');
 var path = require('path');
 var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
-var plugins =
+var commonPlugins =
 [
-  new webpack.DefinePlugin({
-    'process.env':{
-      'NODE_ENV': JSON.stringify("production"),
-      '__DEVTOOLS__': false
-    },
-  }),
   new webpack.optimize.CommonsChunkPlugin("common", "common.js", Infinity),
   new LodashModuleReplacementPlugin,
-  new webpack.optimize.DedupePlugin(),
-  new CopyWebpackPlugin([
-    {
-      from: './cdap.html',
-      to: './cdap.html'
-    },
-    {
-      from: './styles/fonts',
-      to: './fonts/'
-    },
-    {
-      from: path.resolve(__dirname, 'node_modules', 'font-awesome', 'fonts'),
-      to: './fonts/'
-    },
-    {
-      from: './styles/img',
-      to: './img/'
+  new webpack.optimize.DedupePlugin()
+];
+var mode = process.env.NODE_ENV;
+if (mode === 'production' || mode === 'build') {
+  commonPlugins.push(
+    new webpack.DefinePlugin({
+      'process.env':{
+        'NODE_ENV': JSON.stringify("production"),
+        '__DEVTOOLS__': false
+      },
+    }),
+    new webpack.optimize.UglifyJsPlugin({
+      compress: {
+          warnings: false
+      }
+    })
+  );
+}
+var cdapPlugins = commonPlugins.concat(new CopyWebpackPlugin([
+  {
+    from: './cdap.html',
+    to: './cdap.html'
+  },
+  {
+    from: './styles/fonts',
+    to: './fonts/'
+  },
+  {
+    from: path.resolve(__dirname, 'node_modules', 'font-awesome', 'fonts'),
+    to: './fonts/'
+  },
+  {
+    from: './styles/img',
+    to: './img/'
+  }
+]));
+var loginPlugins = commonPlugins.concat(new CopyWebpackPlugin([
+  {
+    from: './login.html',
+    to: './login.html'
+  },
+  {
+    from: './styles/fonts',
+    to: './fonts/'
+  },
+  {
+    from: './styles/img',
+    to: './img/'
+  }
+]));
+
+var commonLoaders = [
+  {
+    test: /\.less$/,
+    loader: 'style-loader!css-loader!less-loader'
+  },
+  {
+    test: /\.js$/,
+    loader: 'babel',
+    exclude: /node_modules/,
+    query: {
+      plugins: ['lodash'],
+      presets: ['react', 'es2015']
     }
-  ])
+  }
 ];
 
-module.exports = {
+const cdapWebpackConfig = {
   context: __dirname + '/app/cdap',
   entry: {
     'cdap': ['./cdap.js'],
@@ -68,30 +108,42 @@ module.exports = {
         ]
       }
     ],
-    loaders: [
-      {
-        test: /\.html$/,
-        exclude: /node_modules/,
-        loader: 'file?name=[name].[ext]'
-      },
-      {
-        test: /\.less$/,
-        loader: 'style-loader!css-loader!less-loader'
-      },
-      {
-        test: /\.js$/,
-        loader: 'babel',
-        exclude: /node_modules/,
-        query: {
-          plugins: ['lodash'],
-          presets: ['react', 'es2015']
-        }
-      }
-    ]
+    loaders: commonLoaders
   },
   output: {
     filename: './[name].js',
     path: __dirname + '/cdap_dist/cdap_assets'
   },
-  plugins
+  plugins: cdapPlugins
 };
+const loginWebpackConfig = {
+  context: __dirname + '/app/login',
+  entry: {
+    'login': ['./login.js'],
+    'common': ['react', 'react-dom']
+  },
+  module: {
+    preLoaders: [
+      {
+        test: /\.js$/,
+        loader: 'eslint-loader',
+        exclude: [
+          /node_modules/,
+          /bower_components/,
+          /dist/,
+          /cdap_dist/
+        ]
+      }
+    ],
+    loaders: commonLoaders
+  },
+  output: {
+    filename: './[name].js',
+    path: __dirname + '/login_dist/login_assets'
+  },
+  plugins: loginPlugins
+};
+module.exports = [
+  cdapWebpackConfig,
+  loginWebpackConfig
+];

@@ -83,7 +83,12 @@ function getBabelBuildPipeline() {
   });
 
   var source = getEs6Directives();
-
+  source = source.concat(
+    [
+      './app/features/userprofile/module.js',
+      './app/features/userprofile/**/*.js'
+    ]
+  );
   return gulp.src(source)
     .pipe(plug.plumber())
     .pipe(plug.wrapper({
@@ -300,6 +305,7 @@ gulp.task('img', function() {
 gulp.task('html:partials', function() {
   return gulp.src([
     './app/{hydrator,tracker}/**/*.html',
+    './app/features/{userprofile,}/**/*.html',
     '!./app/tracker/tracker.html',
     '!./app/hydrator/hydrator.html'
     ])
@@ -341,6 +347,7 @@ gulp.task('lint', function() {
   return gulp.src([
     './app/**/*.js',
     '!./app/cdap/**/*.js',
+    '!./app/login/**/*.js',
     '!./app/lib/**/*.js',
     './server/*.js'
   ])
@@ -405,6 +412,7 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
   var jsAppSource = [
     './app/**/*.js',
     '!./app/cdap/**/*.js',
+    '!./app/login/**/*.js',
     '!./app/**/*-test.js'
   ];
   jsAppSource = jsAppSource.concat(getEs6Directives(true));

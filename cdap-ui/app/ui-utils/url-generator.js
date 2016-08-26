@@ -34,8 +34,17 @@
     as a proper utility function in es6 module system.
 */
 window.getAbsUIUrl = function(navigationObj = {}) {
-  let {uiApp = 'cdap', namespaceId, appId, entityType, entityId, runId} = navigationObj;
-  let baseUrl = `${location.protocol}//${location.host}/cask-${uiApp}`;
+  let {uiApp = 'cask-cdap', redirectUrl, clientId, namespaceId, appId, entityType, entityId, runId} = navigationObj;
+  let baseUrl = `${location.protocol}//${location.host}/${uiApp}`;
+  if (uiApp === 'login') {
+    baseUrl += `?`;
+  }
+  if (redirectUrl) {
+    baseUrl += `redirectUrl=${encodeURIComponent(redirectUrl)}`;
+  }
+  if (clientId) {
+    baseUrl += `&clientId=${clientId}`;
+  }
   if (namespaceId) {
     baseUrl += `/ns/${namespaceId}`;
   }
