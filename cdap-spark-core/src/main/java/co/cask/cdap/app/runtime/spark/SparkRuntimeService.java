@@ -21,7 +21,6 @@ import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkClientContext;
-import co.cask.cdap.api.spark.SparkExecutionContext;
 import co.cask.cdap.app.runtime.spark.distributed.SparkContainerLauncher;
 import co.cask.cdap.app.runtime.spark.submit.SparkSubmitter;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -118,22 +117,19 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private final File pluginArchive;
   private final SparkSubmitter sparkSubmitter;
   private final AtomicReference<ListenableFuture<RunId>> completion;
-  private final String hostname;
   private final BasicSparkClientContext context;
 
   private Callable<ListenableFuture<RunId>> submitSpark;
   private Runnable cleanupTask;
 
   SparkRuntimeService(CConfiguration cConf, Spark spark, @Nullable File pluginArchive,
-                      SparkRuntimeContext runtimeContext, SparkSubmitter sparkSubmitter,
-                      String hostname) {
+                      SparkRuntimeContext runtimeContext, SparkSubmitter sparkSubmitter) {
     this.cConf = cConf;
     this.spark = spark;
     this.runtimeContext = runtimeContext;
     this.pluginArchive = pluginArchive;
     this.sparkSubmitter = sparkSubmitter;
     this.completion = new AtomicReference<>();
-    this.hostname = hostname;
     this.context = new BasicSparkClientContext(runtimeContext);
   }
 
@@ -172,17 +168,10 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       String metricsConfPath;
       String logbackJarName = null;
 
-      // Always copy (or link if local) user requested resources to local node. This is needed because the
-      // driver is running in the same container as the launcher (i.e. this process).
-      final Map<String, File> localizedFiles = copyUserResources(context.getLocalizeResources(), tempDir);
-      final SparkExecutionContextFactory contextFactory = new SparkExecutionContextFactory() {
-        @Override
-        public SparkExecutionContext create(SparkRuntimeContext runtimeContext) {
-          return new DefaultSparkExecutionContext(runtimeContext, localizedFiles, hostname);
-        }
-      };
-
       if (contextConfig.isLocal()) {
+        // In local mode, always copy (or link if local) user requested resources
+        copyUserResources(context.getLocalizeResources(), tempDir);
+
         File metricsConf = SparkMetricsSink.writeConfig(File.createTempFile("metrics", ".properties", tempDir));
         metricsConfPath = metricsConf.getAbsolutePath();
       } else {
@@ -222,14 +211,14 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         localizeResources.add(new LocalizeResource(metricsConf));
 
         // Preserves runtime information in the hConf
-        Configuration hConf = contextConfig.set(runtimeContext,
-                                                localizedFiles.keySet(), pluginArchive).getConfiguration();
+        Configuration hConf = contextConfig.set(runtimeContext, pluginArchive).getConfiguration();
 
         // Localize the hConf file to executor nodes
         localizeResources.add(new LocalizeResource(saveHConf(hConf, tempDir)));
       }
 
       final Map<String, String> configs = createSubmitConfigs(tempDir, metricsConfPath, logbackJarName,
+                                                              context.getLocalizeResources(),
                                                               contextConfig.isLocal());
       submitSpark = new Callable<ListenableFuture<RunId>>() {
         @Override
@@ -239,8 +228,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
           if (!isRunning()) {
             return immediateCancelledFuture();
           }
-          return sparkSubmitter.submit(runtimeContext, contextFactory, configs,
-                                       localizeResources, jobJar, runtimeContext.getRunId());
+          return sparkSubmitter.submit(runtimeContext, configs, localizeResources, jobJar, runtimeContext.getRunId());
         }
       };
     } catch (Throwable t) {
@@ -446,7 +434,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    */
   private Map<String, String> createSubmitConfigs(File localDir,
                                                   String metricsConfPath, @Nullable String logbackJarName,
-                                                  boolean localMode) {
+                                                  Map<String, LocalizeResource> localizedResources, boolean localMode) {
     Map<String, String> configs = new HashMap<>();
 
     // Make Spark UI runs on random port. By default, Spark UI runs on port 4040 and it will do a sequential search
@@ -495,10 +483,14 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       // These are system specific and shouldn't allow user to modify them
       configs.put("spark.driver.extraClassPath", extraClassPath);
       configs.put("spark.executor.extraClassPath", extraClassPath);
+    } else {
+      // Only need to set this for local mode.
+      // In distributed mode, Spark will not use this but instead use the yarn container directory.
+      configs.put("spark.local.dir", localDir.getAbsolutePath());
     }
 
     configs.put("spark.metrics.conf", metricsConfPath);
-    configs.put("spark.local.dir", localDir.getAbsolutePath());
+    SparkRuntimeUtils.setLocalizedResources(localizedResources.keySet(), configs);
 
     return configs;
   }
@@ -604,13 +596,10 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    * @param targetDir the target directory for the resources to copy / link to.
    * @return a map from resource name to local file path.
    */
-  private Map<String, File> copyUserResources(Map<String, LocalizeResource> resources,
-                                              File targetDir) throws IOException {
-    Map<String, File> result = new HashMap<>();
+  private void copyUserResources(Map<String, LocalizeResource> resources, File targetDir) throws IOException {
     for (Map.Entry<String, LocalizeResource> entry : resources.entrySet()) {
-      result.put(entry.getKey(), LocalizationUtils.localizeResource(entry.getKey(), entry.getValue(), targetDir));
+      LocalizationUtils.localizeResource(entry.getKey(), entry.getValue(), targetDir);
     }
-    return result;
   }
 
   /**

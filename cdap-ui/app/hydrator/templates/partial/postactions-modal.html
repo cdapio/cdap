@@ -1,0 +1,43 @@
+<!--
+  Copyright © 2016 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="modal-header clearfix">
+  <h3 class="modal-title pull-left">{{ PostActionController.pluginConfig.plugin.name }}</h3>
+  <div class="btn-group pull-right">
+    <a class="btn" ng-click="$close()">
+      <span class="fa fa-remove"></span>
+      <span class="sr-only"> Close </span>
+    </a>
+  </div>
+</div>
+<div class="modal-body config-modal">
+  <fieldset disabled>
+
+    <!-- WITH CONFIG -->
+    <div ng-if="!PostActionController.noConfig">
+      <div ng-include="'/assets/features/hydrator/templates/partial/postactions-form.html'">
+      </div>
+    </div>
+
+    <!-- NO CONFIG -->
+    <div ng-if="PostActionController.noConfig">
+      <div ng-include="'/assets/features/hydrator/templates/partial/postactions-noconfig-form.html'">
+      </div>
+    </div>
+
+    </div>
+  </fieldset>
+</div>

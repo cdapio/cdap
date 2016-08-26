@@ -36,7 +36,7 @@ RULE="${SINGLE_RETURN_STRING}---${DOUBLE_RETURN_STRING}"
 
 # PRE_POST_RUN="pre-post-run"
 PRE_POST_RUN="post-run-plugin"
-NON_TRANSFORM_TYPES="action source sink ${PRE_POST_RUN}"
+NON_TRANSFORM_TYPES="analytic action source sink ${PRE_POST_RUN}"
 PLUGIN_TYPE_STRING="Hydrator Plugin Type:"
 VERSION_STRING="Hydrator Version:"
 
@@ -220,24 +220,24 @@ function download_includes() {
   download_md_file core-plugins Cube-batchsink.md
   download_md_file core-plugins Cube-realtimesink.md
   download_md_file core-plugins DataGenerator-realtimesource.md
-  download_md_file core-plugins Deduplicate-batchaggregator.md
-  download_md_file core-plugins Distinct-batchaggregator.md
+  download_md_file core-plugins Deduplicate-batchaggregator.md '' "analytic"
+  download_md_file core-plugins Distinct-batchaggregator.md '' "analytic"
   download_md_file core-plugins Email-postaction.md
   download_md_file core-plugins Excel-batchsource.md
   download_md_file core-plugins File-batchsource.md
   download_md_file core-plugins FTP-batchsource.md
-  download_md_file core-plugins GroupByAggregate-batchaggregator.md
+  download_md_file core-plugins GroupByAggregate-batchaggregator.md '' "analytic"
   download_md_file core-plugins HDFSDelete-action.md
   download_md_file core-plugins HDFSMove-action.md
   download_md_file core-plugins JavaScript-transform.md
   download_md_file core-plugins JMS-realtimesource.md
-  download_md_file core-plugins Joiner-batchjoiner.md
+  download_md_file core-plugins Joiner-batchjoiner.md '' "analytic"
   download_md_file core-plugins KVTable-batchsink.md
   download_md_file core-plugins KVTable-batchsource.md
   download_md_file core-plugins LogParser-transform.md
   download_md_file core-plugins Projection-transform.md
   download_md_file core-plugins PythonEvaluator-transform.md
-  download_md_file core-plugins RowDenormalizer-batchaggregator.md
+  download_md_file core-plugins RowDenormalizer-batchaggregator.md '' "analytic"
   download_md_file core-plugins S3-batchsource.md
   download_md_file core-plugins S3Avro-batchsink.md
   download_md_file core-plugins S3Parquet-batchsink.md
@@ -283,8 +283,8 @@ function download_includes() {
   download_md_file mongodb-plugins MongoDB-realtimesink.md
   download_md_file spark-plugins Kafka-streamingsource.md
   download_md_file spark-plugins Twitter-streamingsource.md
-  download_md_file spark-plugins NaiveBayesClassifier-sparkcompute.md '' "transform" "DPB-naivebayesclassifier-sparkcompute.md" # Currently only for batch
-  download_md_file spark-plugins NaiveBayesTrainer-sparksink.md       '' "sink" # Currently only for batch
+  download_md_file spark-plugins NaiveBayesClassifier-sparkcompute.md '' "analytic"
+  download_md_file spark-plugins NaiveBayesTrainer-sparksink.md       '' "analytic" "DPB-naivebayestrainer-sparksink.md" # Currently only for batch
   download_md_file transform-plugins CloneRecord-transform.md
   download_md_file transform-plugins Compressor-transform.md
   download_md_file transform-plugins CSVFormatter-transform.md

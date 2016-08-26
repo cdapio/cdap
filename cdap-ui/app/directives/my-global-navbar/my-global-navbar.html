@@ -28,19 +28,21 @@
               ng-if="Navbar.activeProduct === 'tracker' && !Navbar.mouseHoverBrand"></span>
       </a>
 
-      <a ui-sref="overview({namespace: $stateParams.namespace})"
+      <a href="/"
          class="menu-item product-title"
          ng-if="Navbar.activeProduct === 'cdap'">
         CDAP
       </a>
 
-      <a ui-sref="hydratorplusplus.list({ namespace: $stateParams.namespace })"
+      <a href=""
+         ng-click="Navbar.getAbsUIUrl({uiApp: 'hydrator', namespaceId: $stateParams.namespace})"
          class="menu-item product-title"
          ng-if="Navbar.activeProduct === 'hydrator'">
         Cask Hydrator
       </a>
 
-      <a ui-sref="tracker.home({ namespace: $stateParams.namespace })"
+      <a href=""
+         ng-click="Navbar.getAbsUIUrl({uiApp: 'tracker', namespaceId: $stateParams.namespace})"
          class="menu-item product-title"
          ng-if="Navbar.activeProduct === 'tracker'">
         Cask Tracker
@@ -73,14 +75,14 @@
     <!-- HYDRATOR -->
     <ul class="navbar-list" ng-if="Navbar.activeProduct === 'hydrator'">
       <li>
-        <a ui-sref="hydratorplusplus.create({ namespace: $stateParams.namespace })"
+        <a ui-sref="hydrator.create({ namespace: $stateParams.namespace })"
            ui-sref-opts="{ inherit: false }"
            ng-class="{ 'active': Navbar.highlightTab === 'hydratorStudioPlusPlus'}">
           Studio
         </a>
       </li>
       <li>
-        <a ui-sref="hydratorplusplus.list({ namespace: $stateParams.namespace })"
+        <a ui-sref="hydrator.list({ namespace: $stateParams.namespace })"
            ng-class="{ 'active': Navbar.highlightTab === 'hydratorList'}">
           Pipelines
         </a>
@@ -195,7 +197,7 @@
 <!-- SIDEBAR MENU -->
 <div class="display-container" ng-if="Navbar.showSidebar" ng-click="Navbar.toggleSidebar()">
   <div class="sidebar" ng-click="$event.stopPropagation()">
-    <a ui-sref="overview({namespace: $stateParams.namespace || Navbar.$cookies.get('CDAP_Namespace') || 'default' })"
+    <a href="/"
        class="brand sidebar-item top">
       <div class="brand-icon text-center cdap">
         <span class="icon-fist"></span>
@@ -209,7 +211,7 @@
     <h5>Extensions:</h5>
 
     <!-- HYDRATOR -->
-    <a ui-sref="hydratorplusplus.list({ namespace: $stateParams.namespace || Navbar.$cookies.get('CDAP_Namespace') || 'default' })"
+    <a href="{{Navbar.getAbsUIUrl({uiApp: 'hydrator', namespaceId: $stateParams.namespace || Navbar.$cookies.get('CDAP_Namespace') || 'default'})}}"
        class="brand sidebar-item">
       <div class="brand-icon text-center hydrator">
         <span class="icon-hydrator"></span>
@@ -221,7 +223,7 @@
     </a>
 
     <!-- TRACKER -->
-    <a ui-sref="tracker.home({ namespace: $stateParams.namespace || Navbar.$cookies.get('CDAP_Namespace') || 'default' })"
+    <a href="{{Navbar.getAbsUIUrl({uiApp: 'tracker', namespaceId: $stateParams.namespace || Navbar.$cookies.get('CDAP_Namespace') || 'default'})}}"
        class="brand sidebar-item">
       <div class="brand-icon text-center tracker">
         <span class="icon-tracker"></span>

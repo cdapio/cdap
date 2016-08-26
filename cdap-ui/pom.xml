@@ -113,14 +113,17 @@
               <configuration>
                 <excludes>
                   <exclude>**/*.editorconfig</exclude>
-                  <exclude>**/*.jshintignore</exclude>
+                  <exclude>**/*.babelrc</exclude>
                   <exclude>**/*.jshintrc</exclude>
+                  <exclude>**/*.eslintrc.json</exclude>
+                  <exclude>**/*.eslintignore</exclude>
                   <exclude>**/*.stylelintignore</exclude>
                   <exclude>**/*.stylelintrc</exclude>
                   <exclude>**/*.svg</exclude>
                   <exclude>**/bower_components/**</exclude>
                   <exclude>**/node_modules/**</exclude>
                   <exclude>**/dist/**</exclude>
+                  <exclude>**/cdap_dist/**</exclude>
                   <exclude>**/logs/**</exclude>
                   <exclude>**/npm-debug.log</exclude>
                   <exclude>**/node/**</exclude>

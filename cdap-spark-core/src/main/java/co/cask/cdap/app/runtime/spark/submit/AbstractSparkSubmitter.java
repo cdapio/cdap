@@ -19,7 +19,6 @@ package co.cask.cdap.app.runtime.spark.submit;
 
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.runtime.spark.SparkClassLoader;
-import co.cask.cdap.app.runtime.spark.SparkExecutionContextFactory;
 import co.cask.cdap.app.runtime.spark.SparkMainWrapper;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeContext;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeUtils;
@@ -75,7 +74,6 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
 
   @Override
   public final <V> ListenableFuture<V> submit(final SparkRuntimeContext runtimeContext,
-                                              final SparkExecutionContextFactory contextFactory,
                                               Map<String, String> configs, List<LocalizeResource> resources,
                                               File jobJar, final V result) {
     final SparkSpecification spec = runtimeContext.getSparkSpecification();
@@ -111,7 +109,7 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
         List<String> extraArgs = beforeSubmit();
         try {
           String[] submitArgs = Iterables.toArray(Iterables.concat(args, extraArgs), String.class);
-          submit(runtimeContext, contextFactory, submitArgs);
+          submit(runtimeContext, submitArgs);
           onCompleted(true);
           resultFuture.set(result);
         } catch (Throwable t) {
@@ -158,10 +156,8 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
    * @param runtimeContext context representing the Spark program
    * @param args arguments for the {@link SparkSubmit#main(String[])} method.
    */
-  private void submit(SparkRuntimeContext runtimeContext,
-                      SparkExecutionContextFactory contextFactory, String[] args) {
-    Cancellable cancellable = SparkRuntimeUtils.setContextClassLoader(new SparkClassLoader(runtimeContext,
-                                                                                           contextFactory));
+  private void submit(SparkRuntimeContext runtimeContext, String[] args) {
+    Cancellable cancellable = SparkRuntimeUtils.setContextClassLoader(new SparkClassLoader(runtimeContext));
     try {
       LOG.debug("Calling SparkSubmit for {} {}: {}",
                 runtimeContext.getProgram().getId(), runtimeContext.getRunId(), Arrays.toString(args));

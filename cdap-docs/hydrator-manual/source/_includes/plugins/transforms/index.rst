@@ -21,16 +21,4 @@ These plugins work with:
     :maxdepth: 1
     :glob:
 
-    [!D][!P][!B]*
-    
-These plugins work only with:
-
-  - *Data Pipeline - Batch* (``cdap-data-pipeline`` artifact)
-
-.. toctree::
-    :maxdepth: 1
-    :glob:
-
-    DPB*
-
-.. - `NaiveBayesClassifier <naivebayesclassifier-sparkcompute.html>`__
+    **

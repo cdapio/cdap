@@ -24,6 +24,8 @@ import org.apache.spark.SparkContext
 import org.apache.spark.streaming.kafka.KafkaUtils
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 
+import scala.collection.JavaConversions._
+
 /**
   * A testing Spark program for testing Spark streaming in CDAP.
   * It does a running word count over stream of text.
@@ -35,15 +37,29 @@ class KafkaSparkStreaming extends AbstractSpark with SparkMain {
   }
 
   override def run(implicit sec: SparkExecutionContext) = {
-    val sc = new SparkContext
-    val ssc = new StreamingContext(sc, Seconds(1))
+    val args: Map[String, String] = sec.getRuntimeArguments.toMap
+    val ssc = StreamingContext.getOrCreate(args("checkpoint.path"), () => createStreamingContext(args))
+
+    ssc.start()
+
+    try {
+      ssc.awaitTermination()
+    } catch {
+      case _: InterruptedException => ssc.stop(true, true)
+    }
+  }
+
+  private def createStreamingContext(args: Map[String, String])
+                                    (implicit sec: SparkExecutionContext) : StreamingContext = {
+    val ssc = new StreamingContext(new SparkContext, Seconds(1))
+    ssc.checkpoint(args("checkpoint.path"))
 
     // Expect the result dataset a timeseries table
-    val resultDataset = sec.getRuntimeArguments.get("result.dataset")
-    val topics = sec.getRuntimeArguments.get("kafka.topics").split(",").toSet
+    val resultDataset = args("result.dataset")
+    val topics = args("kafka.topics").split(",").toSet
 
     val kafkaDStream = KafkaUtils.createDirectStream[String, String, StringDecoder, StringDecoder](ssc,
-      Map(("metadata.broker.list", sec.getRuntimeArguments.get("kafka.brokers")),
+      Map(("metadata.broker.list", args("kafka.brokers")),
         ("auto.offset.reset", "smallest")
       ), topics)
 
@@ -63,12 +79,6 @@ class KafkaSparkStreaming extends AbstractSpark with SparkMain {
           .saveAsDataset(resultDataset)
       })
 
-    ssc.start()
-
-    try {
-      ssc.awaitTermination()
-    } catch {
-      case _: InterruptedException => ssc.stop(true, true)
-    }
+    ssc
   }
 }

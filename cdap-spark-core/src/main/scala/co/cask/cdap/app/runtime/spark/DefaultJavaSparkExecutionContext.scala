@@ -44,7 +44,8 @@ import scala.reflect.ClassTag
   * Implementation of [[co.cask.cdap.api.spark.JavaSparkExecutionContext]] that simply delegates all calls to
   * a [[co.cask.cdap.api.spark.SparkExecutionContext]].
   */
-class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaSparkExecutionContext {
+@SerialVersionUID(0L)
+class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaSparkExecutionContext with Serializable {
 
   import DefaultJavaSparkExecutionContext._
 

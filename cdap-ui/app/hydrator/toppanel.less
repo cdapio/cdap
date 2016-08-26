@@ -1,0 +1,627 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import '../styles/variables.less';
+@import '../../bower_components/bootstrap/less/mixins.less';
+@import '../styles/themes/cdap/mixins.less';
+@height-of-toppanel: 43px;
+
+body.theme-cdap {
+  &.state-hydrator {
+    div.side-panel.top {
+      background-color: white;
+      border-bottom: 1px solid @table-border-color;
+      position: fixed;
+      top: 50px;
+      right: 0;
+      z-index: 1029;
+      border-left: 0;
+      border-top: 0;
+
+      div.pipeline-type {
+        color: #397cf1;
+        text-decoration: none;
+        span {
+          display: inline-block;
+          font-size: 1.8em;
+
+          @media (min-width: @screen-sm-min) {
+            font-size: 20px;
+          }
+        }
+      }
+
+      div.btn {
+        .cask-btn(@border: 0, @border-radius: 0, @color: #666, @padding: 5px 15px);
+        border-top: 1px solid transparent;
+        border-right: 1px solid transparent;
+        border-bottom: 1px solid transparent;
+        border-left: 1px solid @table-border-color;
+        transition: all 0.2s ease;
+        span {
+          line-height: 29px;
+          &.icon-logview { font-size: 21px; }
+          &.icon-runtimestart,
+          &.icon-runtimestop { font-size: 24px; }
+          &.icon-runtimestarttime,
+          &.icon-runtimestoptime { font-size: 13px; }
+        }
+        &:hover,
+        &:focus,
+        &.btn-select {
+          background-color: #ebebeb;
+          border-top: 1px solid #ebebeb;
+          border-right: 1px solid #ebebeb;
+          border-left: 1px solid @table-border-color;
+          border-bottom: 1px solid #ebebeb;
+        }
+        &:active {
+          background-color: #828da0;
+          border-top: 1px solid #828da0;
+          border-right: 1px solid #828da0;
+          border-bottom: 1px solid #828da0;
+          color: white;
+          box-shadow: inset 0 0 20px 0 rgba(0, 0, 0, 0.25);
+        }
+        + .btn { margin-left: 0; }
+        [class*="fa-"] { font-size: 16px; }
+        .fa-sliders { transform: rotate(90deg); }
+
+        &.active {
+          background-color: #cdcdcd;
+          border-top-color: #cdcdcd;
+          border-bottom-color: #cdcdcd;
+          border-right-color: #cdcdcd;
+        }
+
+        &.run-time {
+          cursor: default;
+          color: @hydrator-blue;
+          font-size: 20px;
+          font-weight: 500;
+          &:hover { background-color: white; }
+          &:active,
+          &:focus {
+            box-shadow: none;
+            border-top-color: transparent;
+            border-bottom-color: transparent;
+            border-right-color: transparent;
+            background-color: white;
+          }
+        }
+
+        @media (max-width: @screen-xs-max) {
+          display: none;
+        }
+      }
+    }
+    .toppanel-tooltip {
+      &.in { opacity: 1; }
+      &.top {
+        .tooltip-arrow { border-top: 5px solid #666666; }
+      }
+      &.right {
+        width: 100%;
+        .tooltip-arrow { border-right: 5px solid #666666; }
+      }
+      &.bottom {
+        .tooltip-arrow { border-bottom: 5px solid #666666; }
+      }
+      &.icon-tooltip { width: auto; }
+      .tooltip-inner {
+        background-color: #666666;
+        border: 1px solid #666666;
+        padding-right: 10px;
+        padding-left: 10px;
+      }
+    }
+
+    .error-tooltip {
+      z-index: 1029;
+      &.top {
+        .tooltip-arrow { border-top: 5px solid @brand-danger; }
+      }
+      &.right {
+        width: 100%;
+        .tooltip-arrow { border-right: 5px solid @brand-danger; }
+      }
+      &.bottom {
+        .tooltip-arrow { border-bottom: 5px solid @brand-danger; }
+      }
+
+      .tooltip-inner {
+        background-color: @brand-danger;
+        border: 1px solid @brand-danger;
+      }
+    }
+
+    .pipeline-settings {
+      background: lightgray;
+      position: fixed;
+      top: 93px;
+      max-height: ~"calc(100vh - 143px)";
+      max-height: ~"-moz-calc(100vh - 143px)";
+      max-height: ~"-webkit-calc(100vh - 143px)";
+      overflow: auto;
+      right: 0;
+      z-index: 1039;
+      box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
+      h5 { margin: 10px 10px 0; }
+      .arguments-container {
+        padding: 5px 10px;
+        width: 100%;
+        // This is 100vh - (header (90px) + footer (43px) + Run time arguments title (36px) + Startnow/Schedule buttons (42px))
+        max-height: ~"calc(100vh - 216px)";
+        max-height: ~"-moz-calc(100vh - 216px)";
+        max-height: ~"-webkit-calc(100vh - 216px)";
+        overflow-y: auto;
+        overflow-x: hidden;
+        // FIXME: Everything below. What follows is a custom styling for hydrator
+        // key-value widget was specifically meant for hydrator plugin configuration
+        // Tweaking it for run configuration is messy. Either fix keyvalue to occupy
+        // max space available or build a new widget for hydrator run configuration.
+        my-key-value {
+          .keyvalue-container {
+            padding: 0;
+            border: 0;
+            .row {
+              margin: 5px 0;
+              input.form-control {
+                height: 28px;
+                padding-top: 5px;
+                &:first-child { width: 30%; }
+                &:nth-child(2) { width: 69%; }
+              }
+              .col-xs-10.col-lg-8 {
+                padding: 0;
+                width: ~"calc(100% - 60px)";
+                width: ~"-webkit-calc(100% - 60px)";
+                width: ~"-moz-calc(100% - 60px)";
+              }
+              .col-xs-2.col-lg-4 {
+                padding: 0;
+                width: 60px;
+              }
+            }
+            .btn.btn-danger,
+            .btn.btn-info { padding: 5px; }
+          }
+        }
+      }
+      .clearfix { padding: 0 10px 5px 10px; }
+    }
+    .pipeline-settings-backdrop {
+      position: fixed;
+      height: 100vh;
+      width: 100vw;
+      background: black;
+      top: 0;
+      left: 0;
+      opacity: 0;
+      z-index: 1030;
+    }
+  }
+  &.state-hydrator-create {
+    div.pipeline-type {
+      span {
+        line-height: 35px;
+
+        @media (min-width: @screen-sm-min) {
+          font-size: 20px;
+        }
+      }
+    }
+    .pipeline-settings {
+      // Right now we don't have the height of the top panel to be the same
+      // in both studio and published view.
+      top: 91px;
+      max-height: ~"calc(100vh - 143px)";
+      max-height: ~"-moz-calc(100vh - 143px)";
+      max-height: ~"-webkit-calc(100vh - 143px)";
+      overflow: auto;
+      > div {
+        width: 100%;
+        padding: 10px;
+      }
+    }
+    div.side-panel.top,
+    .pipeline-settings {
+      max-width: ~"-moz-calc(100% - 130px)";
+      max-width: ~"-webkit-calc(100% - 130px)";
+      max-width: ~"calc(100% - 130px)";
+      left: 130px;
+      transition: all 0.2s ease;
+      display: flex;
+    }
+    .side-panel.top {
+      div.hydrator-metadata {
+        flex-grow: 1;
+        flex-basis: 50%;
+        flex-wrap: wrap;
+        display: flex;
+        background-color: transparent;
+        min-width: 0;
+        z-index: 1021;
+        box-shadow: none;
+        transition: all 0.2s ease;
+
+        &:hover,
+        &:focus { cursor: pointer; }
+        div.pipeline-type {
+          display: inline-block;
+          padding-left: 7px;
+        }
+        div.metadata {
+          margin-left: 10px;
+          width: ~"calc(100% - 50px)";
+          width: ~"-moz-calc(100% - 50px)";
+          width: ~"-webkit-calc(100% - 50px)";
+          > div {
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+
+            &:before {
+              content: none;
+              color: gray;
+            }
+
+            &:first-child {
+              font-size: 14px;
+              margin-top: 5px;
+              line-height: 17px;
+
+              &.placeholder {
+                &:before { content: "Name your pipeline"; }
+              }
+            }
+            &:last-child {
+              font-size: 12px;
+              &.placeholder {
+                &:before { content: "Enter a description for your pipeline"; }
+              }
+            }
+          }
+          .pipeline-name {
+            &.error {
+              color: @brand-danger;
+              &:before {
+                color: @brand-danger;
+                font-weight: bold;
+              }
+            }
+          }
+        }
+        input,
+        textarea {
+          background-color: transparent;
+          display: inline-block;
+          font-size: 12px;
+          border: 1px solid @table-border-color;
+          padding: 10px 12px;
+          width: 100%;
+          max-width: 100%;
+          border-radius: 6px;
+          .placeholder-color(@color: gray);
+          &:hover,
+          &:focus { cursor: auto; }
+          &:focus { outline: 0; }
+        }
+        input { height: @height-of-toppanel; }
+        textarea {
+          font-weight: 400;
+          resize: none;
+          margin-bottom: 7px;
+          margin-top: 10px;
+          min-height: 65px;
+        }
+        button {
+          font-weight: 500;
+          text-decoration: none;
+          &.btn {
+            width: 0;
+            height: 0;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s ease;
+          }
+        }
+        &.expanded {
+          background-color: white;
+          height: 185px;
+          cursor: auto;
+          padding: 10px;
+          width: 100%;
+          position: absolute;
+          box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
+          div.pipeline-type {
+            span { line-height: 1; }
+          }
+          div.pipeline-name {
+            padding: 10px;
+
+            &:after { content: none; }
+          }
+          div.btn-group {
+            .btn {
+              display: inline-block;
+              width: auto;
+              height: 32px;
+              padding: 0 10px;
+              border-radius: 4px;
+              opacity: 1;
+              transition: all 0.2s ease;
+              visibility: visible;
+              &:first-child {
+                background-color: @body-bg;
+                &:hover,
+                &:focus { background-color: darken(@body-bg, 10%); }
+              }
+              &:last-child { margin-left: 5px; }
+            }
+          }
+        }
+      }
+      .btn-group {
+        .btn {
+          .fa-caret-down {
+            position: absolute;
+            top: 25px;
+            left: 18px;
+            line-height: 1;
+          }
+        }
+      }
+    }
+  }
+  &.state-hydrator-detail {
+    div.side-panel.top {
+      left: 0;
+      display: flex;
+      justify-content: space-between;
+      .run-specific-section {
+        display: flex;
+        flex: 1;
+        flex-basis: 60vw;
+        width: ~"calc(100vw - 288px)";
+        width: ~"-moz-calc(100vw - 288px)";
+        width: ~"-webkit-calc(100vw - 288px)";
+        border-right: 0;
+        .hydrator-detail-metadata {
+          display: flex;
+          align-items: center;
+          overflow: hidden;
+          padding: 0 10px;
+
+          /*
+            - Two buttons for schedule & start now
+            - App status container
+            - Right side pipeline specific section (6 buttons)
+            - 20px of padding for metadata section
+            48 * 2 + 275 + 288 (48 * 6) + 20 = 679;
+            FIXME: This is not scalable.
+            Flexbox has a growth and shrink factor but that is not based on the content,
+            but based on the browser size. We need to dynamically have more space for description
+            and still be able to have run specific section stick to metadata section.
+          */
+          max-width: ~"calc(100% - 412px)";
+          max-width: ~"-moz-calc(100% - 412px)";
+          max-width: ~"-webkit-calc(100% - 412px)";
+
+          @media (min-width: @screen-md-min) {
+            min-width: 200px;
+          }
+
+          div.pipeline-type {
+            line-height: 1;
+            text-decoration: none;
+            padding: 0 10px 0 0;
+          }
+          div.pipeline-name {
+            text-align: left;
+            overflow: hidden;
+            width: 100%;
+            height: 42px;
+          }
+          h1,
+          p {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+            height: 21px;
+          }
+          h1 {
+            font-size: 16px;
+            font-weight: 500;
+            margin: 0;
+            &.name-only {
+              height: 42px;
+              line-height: 2.5;
+            }
+            &:not(.name-only) { padding-top: 2px; }
+          }
+          p {
+            color: #666666;
+            font-size: 12px;
+            font-weight: 400;
+            margin: 0;
+          }
+        }
+        .next-run,
+        .last-run,
+        .all-runs {
+          flex-grow: 0.1;
+          display: flex;
+          align-items: center;
+          padding: 0 6px;
+          .last-run-container,
+          .all-runs-container,
+          .next-runs-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+          }
+          .last-run-container {
+            .metric {
+              h5 { margin: 0; }
+              &:first-child { margin-right: 10px; }
+            }
+          }
+        }
+        .app-status,
+        .last-run { background-color: #ebebeb; }
+
+        .app-status {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 3px 0 3px 3px;
+          padding-left: 5px;
+          border-right: 0;
+          &.status-green span { color: @brand-success; }
+          &.status-red span { color: @brand-danger; }
+          span { line-height: inherit; }
+          .metric-value { margin-right: 5px; }
+        }
+        .app-status-container {
+          display: flex;
+          min-width: 400px;
+          position: relative;
+          .btn.log-viewer,
+          .btn.scheduler { border-right: 1px solid #dddddd; }
+        }
+        .last-run { margin: 3px 3px 3px 0; }
+      }
+      div.btn {
+        align-items: center;
+        height: 45px;
+        .fa.fa-caret-down {
+          position: absolute;
+          top: 17px;
+          left: 18px;
+        }
+        .icon-double {
+          position: relative;
+          span {
+            &:last-child {
+              position: absolute;
+              top: -6px;
+            }
+            &.icon-runtimestarttime { left: 7px; }
+            &.icon-runtimestoptime { left: 13px; }
+          }
+        }
+      }
+      .pipeline-specific-section {
+        justify-content: flex-end;
+        border-left: 0;
+        display: flex;
+        width: 288px;
+        span.metric-value {
+          color: #636363;
+          font-size: 13px;
+          font-weight: 500;
+          margin-right: 5px;
+        }
+        span.metric-label {
+          color: rgba(0, 0, 0, 0.4);
+          font-weight: 600;
+        }
+      }
+      .pipeline-settings {
+        width: 100%;
+        > div {
+          width: 100%;
+          padding: 10px;
+        }
+        &.pipeline-run-section {
+          position: absolute;
+          left: 0;
+          top: 43px;
+          background: #ebebeb;
+          width: 700px;
+          .macro-error-container { width: 70%; }
+        }
+        &.pipeline-logs-section {
+          height: ~"calc(100vh - 147px)";
+          height: ~"-moz-calc(100vh - 147px)";
+          height: ~"-webkit-calc(100vh - 147px)";
+          box-shadow: none;
+
+          .logs-table {
+            height: ~"calc(100vh - 263px)";
+            height: ~"-moz-calc(100vh - 263px)";
+            height: ~"-webkit-calc(100vh - 263px)";
+          }
+          .fa.fa-expand { display: none; }
+        }
+      }
+    }
+  }
+  &.state-hydrator-list {
+    div.side-panel.top {
+      font-weight: 500;
+      left: 0;
+      z-index: 1028;
+      height: 60px;
+      box-shadow: 0 7px 7px fade(black, 10%), 0 10px 59px fade(black, 25%);
+      h1 {
+        border-right: 1px solid @table-border-color;
+        display: inline-block;
+        font-size: 20px;
+        line-height: 60px;
+        margin: 0;
+        padding: 0 15px;
+      }
+      > div {
+        padding: 7px 15px;
+        span {
+          display: block;
+          &:first-child { font-size: 15px; }
+          &:last-child { font-size: 18px; }
+        }
+      }
+      ul {
+        line-height: 60px;
+        margin: 0;
+        li {
+          padding: 0 15px;
+          i {
+            font-size: 22px;
+            margin-right: 10px;
+            vertical-align: sub;
+          }
+          span {
+            font-size: 15px;
+            &:first-child { padding-right: 5px; }
+          }
+        }
+      }
+      a.btn-primary {
+        position: absolute;
+        right: 40px;
+        top: 35px;
+        padding: 12px 16px;
+        border-radius: 50%;
+        span.fa {
+          font-size: 24px;
+          vertical-align: middle;
+        }
+      }
+    }
+  }
+}

@@ -16,7 +16,7 @@
 
 package co.cask.cdap.app.runtime.spark
 
-import java.io.{File, IOException}
+import java.io._
 import java.net.URI
 import java.util
 import java.util.concurrent.{CountDownLatch, TimeUnit}
@@ -29,7 +29,7 @@ import co.cask.cdap.api.dataset.Dataset
 import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
-import co.cask.cdap.api.security.store.{SecureStore, SecureStoreData, SecureStoreMetadata}
+import co.cask.cdap.api.security.store.{SecureStore, SecureStoreData}
 import co.cask.cdap.api.spark.{SparkExecutionContext, SparkSpecification}
 import co.cask.cdap.api.stream.GenericStreamEventData
 import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
@@ -65,8 +65,9 @@ import scala.reflect.ClassTag
   *                          beforeSubmit call.
   */
 class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
-                                   localizeResources: util.Map[String, File],
-                                   hostname: String) extends SparkExecutionContext with AutoCloseable {
+                                   localizeResources: util.Map[String, File])
+  extends SparkExecutionContext with AutoCloseable {
+
   // Import the companion object for static fields
   import DefaultSparkExecutionContext._
 
@@ -74,7 +75,8 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
   private val transactional = new SparkTransactional(runtimeContext.getTransactionSystemClient,
                                                      runtimeContext.getDatasetCache)
   private val workflowInfo = Option(runtimeContext.getWorkflowInfo)
-  private val sparkTxService = new SparkTransactionService(runtimeContext.getTransactionSystemClient, hostname)
+  private val sparkTxService = new SparkTransactionService(runtimeContext.getTransactionSystemClient,
+                                                           runtimeContext.getHostname)
   private val applicationEndLatch = new CountDownLatch(1)
   private val authorizationEnforcer = runtimeContext.getAuthorizationEnforcer
   private val authenticationContext = runtimeContext.getAuthenticationContext

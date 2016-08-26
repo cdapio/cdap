@@ -5,6 +5,7 @@ node/
 node_modules/
 bower_components/
 dist/
+cdap_dist/
 target/
 cdap-config.json
 cdap-security-config.json
