@@ -6,11 +6,12 @@ description      'Installs/Configures Cask Data Application Platform (CDAP)'
 long_description IO.read(File.join(File.dirname(__FILE__), 'README.md'))
 version          '2.22.0'
 
-%w(ambari apt ark hadoop java nodejs ntp yum yum-epel).each do |cb|
+%w(apt ark hadoop java nodejs ntp yum yum-epel).each do |cb|
   depends cb
 end
 
 depends 'krb5_utils'
+recommends 'ambari' # ~FC053
 
 %w(amazon centos debian redhat scientific ubuntu).each do |os|
   supports os

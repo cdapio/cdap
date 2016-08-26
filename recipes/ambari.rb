@@ -18,7 +18,7 @@
 #
 
 include_recipe 'cdap::repo'
-include_recipe 'ambari::server' if node['cdap']['ambari']['install'].to_s == 'true'
+include_recipe 'ambari::server' if node['cdap']['ambari']['install'].to_s == 'true' # ~FC007
 
 package 'cdap-ambari-service' do
   action :install
