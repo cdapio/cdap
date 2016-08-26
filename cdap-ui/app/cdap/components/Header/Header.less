@@ -1,0 +1,228 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import "../../styles/variables.less";
+
+@navbar-bg: #464a56;
+@navbar-brand-bg: #363945;
+@navbar-height: 50px;
+
+CDAP-Header {
+  .navbar {
+    height: @navbar-height;
+    background-color: @navbar-bg;
+    color: white;
+    border: 0;
+    font-weight: 500;
+
+    &.cdap { .product-navbar-mixins(@cdap-orange, @cdap-orange); }
+    &.hydrator { .product-navbar-mixins(@hydrator-blue, #43AAFF); }
+    &.tracker { .product-navbar-mixins(@tracker-green, @tracker-green); }
+
+    .brand-header {
+      width: 200px;
+      float: left;
+      a { color: white; }
+
+      .navbar-brand {
+        border-right: 4px solid;
+        background-color: @navbar-brand-bg;
+      }
+    }
+
+    .menu-item,
+    .navbar-item {
+      display: inline-block;
+      line-height: @navbar-height;
+      height: @navbar-height;
+      text-decoration: none;
+    }
+
+    .menu-item {
+      font-size: 14px;
+    }
+
+    .navbar-list {
+      margin-left: 15px;
+      float: left;
+      line-height: 50px;
+
+      li { display: inline-block; }
+      a {
+        padding-left: 0;
+        padding-right: 40px;
+        color: #cccccc;
+        text-decoration: none;
+        font-size: 14px;
+        &:hover,
+        &:focus {
+          background-color: inherit;
+        }
+      }
+    }
+
+    .environment {
+      display: inline-block;
+      line-height: @navbar-height;
+      position: absolute;
+      right: 335px;
+      color: rgba(117, 117, 117, 0.7);
+    }
+
+    .product-title {
+      margin-left: 10px;
+      user-select: none;
+    }
+
+    /* RIGHT MENU */
+    .right-menu {
+      height: 50px;
+    }
+    .navbar-item {
+      font-size: 17px;
+      cursor: pointer;
+      float: left;
+      padding: 0 20px;
+
+      .namespace-holder {
+        height: inherit;
+      }
+      &.open {
+        background-color: white;
+        color: #666666;
+        border-bottom: 2px solid #cccccc;
+      }
+
+      ul.dropdown-menu {
+        margin: 1px 0;
+        border: 0;
+        border-radius: 0 0 4px 4px;
+        max-height: 300px;
+        overflow-y: auto;
+
+        li a {
+          line-height: 30px;
+          font-weight: 500;
+        }
+      }
+    }
+
+    .namespace-dropdown {
+      width: 160px;
+      border-left: 1px solid #666666;
+      padding: 0 10px;
+      font-size: 14px;
+      user-select: none;
+
+      div[disabled] { cursor: not-allowed; }
+
+      .dropdown-toggle { height: 50px; }
+
+      .fa.fa-angle-down {
+        line-height: 50px;
+        font-size: 17px;
+      }
+
+      .namespace-display {
+        display: inline-block;
+        width: 87%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+    // TODO: Look into switching this to behave like the Settings uib dropdown
+    .popover.bottom > .arrow {
+      border-bottom-color: #999999;
+    }
+  }
+
+  .display-container {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1040;
+
+    a.sidebar-item {
+      color: white;
+      background-color: #323232;
+      display: block;
+      &:hover { background-color: #424242; }
+    }
+
+    .sidebar {
+      width: 200px;
+      height: 100%;
+      background-color: #2c2c2c;
+      color: white;
+      font-weight: 500;
+      user-select: none;
+
+      .sidebar-item {
+        font-size: 14px;
+        line-height: 50px;
+        height: 50px;
+      }
+
+      h5 {
+        margin-left: 10px;
+        font-weight: 500;
+        color: #cccccc;
+      }
+
+      .top { border-bottom: 1px solid #666666; }
+
+      .brand {
+        height: @navbar-height;
+
+        .brand-icon,
+        .product-name {
+          float: left;
+        }
+
+        .brand-icon {
+          border-right: 4px solid;
+          padding: 16px 15px;
+          line-height: 18px;
+          height: 50px;
+          font-size: 17px;
+
+          &.cdap { border-color: @cdap-orange; }
+          &.hydrator { border-color: @hydrator-blue; }
+          &.tracker { border-color: @tracker-green; }
+        }
+        .product-name {
+          margin-left: 10px;
+        }
+
+      }
+    }
+  }
+}
+
+.product-navbar-mixins(@border-product-color, @active-link-color) {
+  .brand-header .navbar-brand { border-color: @border-product-color; }
+  .navbar-list {
+    a {
+      &:hover,
+      &.active {
+        color: @active-link-color;
+      }
+    }
+  }
+}
