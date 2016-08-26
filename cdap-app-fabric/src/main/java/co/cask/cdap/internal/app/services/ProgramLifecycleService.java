@@ -232,6 +232,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @param programId the {@link ProgramId} to start/stop
    * @param overrides the arguments to override in the program's configured user arguments before starting
    * @param debug {@code true} if the program is to be started in debug mode, {@code false} otherwise
+   * @return {@link ProgramController}
    * @throws ConflictException if the specified program is already running, and if concurrent runs are not allowed
    * @throws NotFoundException if the specified program or the app it belongs to is not found in the specified namespace
    * @throws IOException if there is an error starting the program
@@ -239,7 +240,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
    *                               a user requires {@link Action#EXECUTE} on the program
    * @throws Exception if there were other exceptions checking if the current user is authorized to start the program
    */
-  public synchronized void start(ProgramId programId, Map<String, String> overrides, boolean debug) throws Exception {
+  public synchronized ProgramController start(ProgramId programId, Map<String, String> overrides, boolean debug)
+    throws Exception {
     if (isRunning(programId) && !isConcurrentRunsAllowed(programId.getType())) {
       throw new ConflictException(String.format("Program %s is already running", programId));
     }
@@ -254,6 +256,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     if (runtimeInfo == null) {
       throw new IOException(String.format("Failed to start program %s", programId));
     }
+    return runtimeInfo.getController();
   }
 
   /**
