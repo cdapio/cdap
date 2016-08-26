@@ -639,10 +639,10 @@ where the payload is a json array of tags to validate:
    :widths: 20 80
    :header-rows: 1
 
-     * - Parameter
-       - Description
-     * - ``payload``
-       - A JSON formatted array of tags to validate
+   * - Parameter
+     - Description
+   * - ``payload``
+     - A JSON formatted array of tags to validate
 
 A successful query will return a 200 response with a message letting you know which
 tags are valid and which are invalid.
@@ -695,10 +695,10 @@ where the payload is a json array of tags to promote or demote:
    :widths: 20 80
    :header-rows: 1
 
-    * - Parameter
-      - Description
-    * - ``payload``
-      - A JSON formatted array of tags to promote
+   * - Parameter
+     - Description
+   * - ``payload``
+     - A JSON formatted array of tags to promote
 
 A successful query will return a 200 response with a message telling you know which
 tags are valid and promoted/demoted and which are invalid.
@@ -789,12 +789,12 @@ where:
    :widths: 20 80
    :header-rows: 1
 
-     * - Parameter
-       - Description
-     * - ``entityType``
-       - One of ``dataset``, ``stream``, or ``stream_view``
-     * - ``entityName``
-       - The name of the entity to list the tags for
+   * - Parameter
+     - Description
+   * - ``entityType``
+     - One of ``dataset``, ``stream``, or ``stream_view``
+   * - ``entityName``
+     - The name of the entity to list the tags for
 
 A successful query will return a 200 response with a body containing the list of tags.
 
