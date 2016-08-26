@@ -112,7 +112,7 @@ public class StandaloneMain {
   private static final Logger LOG = LoggerFactory.getLogger(StandaloneMain.class);
 
   private final Injector injector;
-  private final UserInterfaceService userInterfaceService;
+  // private final UserInterfaceService userInterfaceService;
   private final NettyRouter router;
   private final MetricsQueryService metricsQueryService;
   private final AppFabricServer appFabricServer;
@@ -184,8 +184,8 @@ public class StandaloneMain {
 
     if (cConf.getBoolean(DISABLE_UI, false)) {
       userInterfaceService = null;
-    } else {
-      userInterfaceService = injector.getInstance(UserInterfaceService.class);
+    // } else {
+    //   userInterfaceService = injector.getInstance(UserInterfaceService.class);
     }
 
     sslEnabled = cConf.getBoolean(Constants.Security.SSL_ENABLED);
