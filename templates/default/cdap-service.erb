@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2014-2015 Cask Data, Inc.
+# Copyright © 2014-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -37,6 +37,12 @@ if [[ -r /etc/default/cdap-<%= @init_name.downcase.gsub(' ', '-') %> ]]; then
   . /etc/default/cdap-<%= @init_name.downcase.gsub(' ', '-') %>
 fi
 
+# source cdap-env.sh, if it exists
+CDAP_CONF=${CDAP_CONF:-/etc/cdap/conf}
+if [[ -r ${CDAP_CONF}/cdap-env.sh ]]; then
+  . "${CDAP_CONF}"/cdap-env.sh
+fi
+
 # how about jdk.sh
 if [[ -r /etc/profile.d/jdk.sh ]]; then
   . /etc/profile.d/jdk.sh
@@ -57,13 +63,17 @@ if [[ -r $CDAP_KEYTAB ]] && [[ -n $CDAP_PRINCIPAL ]]; then
 fi
 
 <% end %>
-# drop permissions to cdap user and run service script
+CDAP_USER=${CDAP_USER:-<%= @user %>}
 
+# drop permissions to CDAP_USER and run service script
 if [[ $UID -eq 0 ]]; then
-    su <%= @user %> -c "$SVC_COMMAND"
-    ret=$?
+  su ${CDAP_USER} -c "${SVC_COMMAND}"
+  ret=$?
+elif [[ ${USER} == ${CDAP_USER} ]]; then
+  ${SVC_COMMAND}
+  ret=$?
 else
-    $SVC_COMMAND
-    ret=$?
+  echo "ERROR: Must run this script as root or ${CDAP_USER}!"
+  ret=1
 fi
 exit $ret

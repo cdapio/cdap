@@ -28,35 +28,60 @@ name = 'kafka'
 default['cdap'][name]['user'] = 'cdap'
 default['cdap'][name]['init_name'] = 'Kafka Server'
 default['cdap'][name]['init_krb5'] = false
-default['cdap'][name]['init_cmd'] = "/opt/cdap/#{name}/bin/svc-#{name}-server"
+default['cdap'][name]['init_cmd'] =
+  if node['cdap']['version'].to_f < 4.0
+    "/opt/cdap/#{name}/bin/svc-#{name}-server"
+  else
+    "/opt/cdap/#{name}/bin/cdap #{name}-server"
+  end
 default['cdap'][name]['init_actions'] = [:nothing]
 
 name = 'master'
 default['cdap'][name]['user'] = 'cdap'
 default['cdap'][name]['init_name'] = name.split.map(&:capitalize).join(' ')
 default['cdap'][name]['init_krb5'] = true
-default['cdap'][name]['init_cmd'] = "/opt/cdap/#{name}/bin/svc-#{name}"
+default['cdap'][name]['init_cmd'] =
+  if node['cdap']['version'].to_f < 4.0
+    "/opt/cdap/#{name}/bin/svc-#{name}"
+  else
+    "/opt/cdap/#{name}/bin/cdap #{name}"
+  end
 default['cdap'][name]['init_actions'] = [:nothing]
 
 name = 'router'
 default['cdap'][name]['user'] = 'cdap'
 default['cdap'][name]['init_name'] = name.split.map(&:capitalize).join(' ')
 default['cdap'][name]['init_krb5'] = false
-default['cdap'][name]['init_cmd'] = "/opt/cdap/gateway/bin/svc-#{name}"
+default['cdap'][name]['init_cmd'] =
+  if node['cdap']['version'].to_f < 4.0
+    "/opt/cdap/#{name}/bin/svc-#{name}"
+  else
+    "/opt/cdap/#{name}/bin/cdap #{name}"
+  end
 default['cdap'][name]['init_actions'] = [:nothing]
 
 name = 'security'
 default['cdap'][name]['user'] = 'cdap'
 default['cdap'][name]['init_name'] = 'Auth Server'
 default['cdap'][name]['init_krb5'] = false
-default['cdap'][name]['init_cmd'] = "/opt/cdap/#{name}/bin/svc-auth-server"
+default['cdap'][name]['init_cmd'] =
+  if node['cdap']['version'].to_f < 4.0
+    "/opt/cdap/#{name}/bin/svc-auth-server"
+  else
+    "/opt/cdap/#{name}/bin/cdap auth-server"
+  end
 default['cdap'][name]['init_actions'] = [:nothing]
 
 name = 'ui'
 default['cdap'][name]['user'] = 'cdap'
 default['cdap'][name]['init_name'] = name.upcase
 default['cdap'][name]['init_krb5'] = false
-default['cdap'][name]['init_cmd'] = "/opt/cdap/#{name}/bin/svc-#{name}"
+default['cdap'][name]['init_cmd'] =
+  if node['cdap']['version'].to_f < 4.0
+    "/opt/cdap/#{name}/bin/svc-#{name}"
+  else
+    "/opt/cdap/#{name}/bin/cdap #{name}"
+  end
 default['cdap'][name]['init_actions'] = [:nothing]
 
 name = 'web_app'
