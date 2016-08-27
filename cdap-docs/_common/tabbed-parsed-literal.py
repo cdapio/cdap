@@ -243,7 +243,7 @@ def convert(c, state={}):
     Converts a Linux command to a Windows-equivalent following a few simple rules:
 
     - Converts a starting '$' to '>'
-    - Forward-slashes in 'http[s]' and 'localhost:10000' URIs are preserved
+    - Forward-slashes in 'http[s]' and 'localhost' URIs are preserved
     - Other forward-slashes become backslashes
     - A lone backslash (the Linux line continuation character) becomes a '^'
     - '.sh' commands become '.bat' commands
@@ -272,11 +272,15 @@ def convert(c, state={}):
     IN_CURL_HEADER_ARTIFACT = False
     STATE_KEYS = ['IN_CLI', 'IN_CURL', 'IN_CURL_DATA', 'IN_CURL_DATA_JSON', 'IN_CURL_HEADER', 'IN_CURL_HEADER_ARTIFACT']
     JSON_OPEN_CLOSE = {
-        "open":"'{", 
-        "open_win": "\"{", 
+        "open_array":"'[", 
+        "open_array_win": "\"[", 
+        "open_object":"'{", 
+        "open_object_win": "\"{", 
         "open-artifact": "'Artifact-", 
-        "close": "}'", 
-        "close_win": "}\"",
+        "close_array": "]'", 
+        "close_array_win": "]\"",
+        "close_object": "}'", 
+        "close_object_win": "}\"",
         }
     # Passed state
     for s in STATE_KEYS:
@@ -335,14 +339,14 @@ def convert(c, state={}):
             if DEBUG: print "IN_CURL and IN_CURL_DATA"
             if DEBUG: print "IN_CURL_DATA_JSON: %s" % IN_CURL_DATA_JSON
             state['IN_CURL'] = True
-            if v.startswith(JSON_OPEN_CLOSE["open"]):
+            if v.startswith(JSON_OPEN_CLOSE["open_array"]) or v.startswith(JSON_OPEN_CLOSE["open_object"]):
                 if DEBUG: print "Start of json"
                 IN_CURL_DATA_JSON = True
                 state['IN_CURL_DATA_JSON'] =  True
                 w.append("\"%s" % v.replace('"', '\\"')[1:])
-            elif v.endswith(JSON_OPEN_CLOSE["close"]):
+            elif v.endswith(JSON_OPEN_CLOSE["close_array"]) or v.endswith(JSON_OPEN_CLOSE["close_object"]):
                 if DEBUG: print "End of json"
-                w.append("%s\"" % v.replace('"', '\\"')[:1])
+                w.append("%s\"" % v.replace('"', '\\"')[:-1])
                 IN_CURL_DATA = False
                 state['IN_CURL_DATA'] =  False
                 IN_CURL_DATA_JSON = False
