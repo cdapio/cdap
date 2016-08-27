@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.gateway.handlers;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxyUtil;
@@ -41,12 +42,22 @@ public class LogDataOffsetCallback extends AbstractJSONCallback {
   @Override
   public Object encodeSend(LogEvent logEvent) {
     ILoggingEvent event = logEvent.getLoggingEvent();
+    StackTraceElement[] stackTraceElements = event.getCallerData();
     String className = "";
     String simpleClassName = "";
     int lineNumber = 0;
-    IThrowableProxy throwableProxy = event.getThrowableProxy();
-    if (throwableProxy != null && throwableProxy.getStackTraceElementProxyArray().length > 0) {
-      StackTraceElement first = throwableProxy.getStackTraceElementProxyArray()[0].getStackTraceElement();
+    Level level = event.getLevel();
+    StackTraceElement first = null;
+    if (level.equals(Level.ERROR)) {
+      IThrowableProxy throwableProxy = event.getThrowableProxy();
+      if (throwableProxy != null && throwableProxy.getStackTraceElementProxyArray().length > 0) {
+        first = throwableProxy.getStackTraceElementProxyArray()[0].getStackTraceElement();
+      }
+    }
+    else if (stackTraceElements.length > 0) {
+      first = stackTraceElements[0];
+    }
+    if (first != null) {
       className = first.getClassName();
       if (className.lastIndexOf('.') >= 0) {
         simpleClassName = className.substring(className.lastIndexOf('.') + 1);
