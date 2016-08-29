@@ -85,7 +85,15 @@ public abstract class EntityId implements IdCompatible {
 
   protected abstract Iterable<String> toIdParts();
 
+  /**
+   * Deprecated to rename the method. Use {@link #getEntityType()}
+   */
+  @Deprecated
   public final EntityType getEntity() {
+    return entity;
+  }
+
+  public final EntityType getEntityType() {
     return entity;
   }
 
