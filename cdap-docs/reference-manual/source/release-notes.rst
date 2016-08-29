@@ -26,6 +26,15 @@ Cask Data Application Platform Release Notes
 `Release 3.5.0 <http://docs.cask.co/cdap/3.5.0/index.html>`__
 =============================================================
 
+Known Issues
+------------
+- :cask-issue:`CDAP-7179` - In CDAP 3.5.0, new ``kafka.server.*`` properties replace older
+  properties such as ``kafka.log.dir``. Though the older properties were marked as
+  deprecated, they are in fact being ignored, and need to be replaced with the current
+  properties as described in the :ref:`Administration Manual: Appendices: cdap-site.xml
+  <appendix-cdap-default-deprecated-properties>`.
+
+
 API Changes
 -----------
 
