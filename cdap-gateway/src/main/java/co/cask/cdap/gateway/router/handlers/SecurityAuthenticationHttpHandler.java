@@ -156,7 +156,7 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
       if (announceAddress != null) {
         externalAuthenticationURIs.add(new JsonPrimitive(announceAddress));
       } else {
-        //Waiting for service to get discovered
+        // Waiting for service to get discovered
         stopWatchWait(externalAuthenticationURIs);
       }
       jsonObject.add("auth_uri", externalAuthenticationURIs);
