@@ -333,11 +333,10 @@ Advanced Topics
 
 .. _ambari-configuration-security:
 
-Enabling Perimeter Security
----------------------------
-
-.. .. include:: /../target/_includes/ambari-configuration.rst
-..     :start-after: .. _ambari-configuration-eps:
+.. Enabling Perimeter Security
+.. ---------------------------
+.. include:: /../target/_includes/ambari-configuration.rst
+    :start-after: .. _ambari-configuration-eps:
 
 :ref:`CDAP Security <admin-security>` is configured by setting the appropriate
 settings under Ambari for your environment.
@@ -349,3 +348,71 @@ Enabling Kerberos
 Kerberos support in CDAP is automatically enabled when enabling Kerberos security on your
 cluster via Ambari. Consult the appropriate Ambari documentation for instructions on enabling
 Kerberos support for your cluster.
+
+.. _ambari-configuration-highly-available:
+
+Enabling CDAP HA
+----------------
+In addition to having a :ref:`cluster architecture <admin-manual-install-deployment-architectures-ha>`
+that supports HA (high availability), these additional configuration steps need to be followed and completed:
+
+CDAP Components
+...............
+For each of the CDAP components listed below (Master, Router, Kafka, UI, Authentication Server), these
+comments apply:
+
+- Sync the configuration files (such as ``cdap-site.xml`` and ``cdap-security.xml``) on all the nodes. 
+- While the default *bind.address* settings (``0.0.0.0``, used for ``app.bind.address``,
+  ``data.tx.bind.address``, ``router.bind.address``, and so on) can be synced across hosts,
+  if you customize them to a particular IP address, they will |---| as a result |---| be
+  different on different hosts. This can be controlled by the settings for an individual *Role Instance*.
+
+CDAP Master
+...........
+The CDAP Master service primarily performs coordination tasks and can be scaled for redundancy. The
+instances coordinate amongst themselves, electing one as a leader at all times.
+
+- Using the Ambari UI, add additional hosts for the ``CDAP Master
+  Service`` to additional machines.
+
+CDAP Router
+...........
+The CDAP Router service is a stateless API endpoint for CDAP, and simply routes requests to the
+appropriate service. It can be scaled horizontally for performance. A load balancer, if
+desired, can be placed in front of the nodes running the service.
+
+- Using the Ambari UI, add additional hosts for the ``CDAP Gateway/Router
+  Service`` to additional machines.
+- Start each ``CDAP Gateway/Router Service`` role.
+
+CDAP Kafka
+..........
+- Using the Ambari UI, add additional hosts for the ``CDAP Kafka Service``
+  to additional machines.
+- Two properties govern the Kafka setting in the cluster:
+
+  - The **list of Kafka seed brokers** is generated automatically, but the
+    replication factor (``kafka.default.replication.factor``) is not set
+    automatically. Instead, it needs to be set manually.
+  - The **replication factor** is used to replicate Kafka messages across
+    multiple machines to prevent data loss in the event of a hardware
+    failure.
+
+- The recommended setting is to run **at least two** Kafka brokers with a **minimum replication
+  factor of two**; set this property to the maximum number of tolerated machine failures
+  plus one (assuming you have that number of machines). For example, if you were running
+  five Kafka brokers, and would tolerate two of those failing, you would set the
+  replication factor to three. The number of Kafka brokers listed should always be equal to
+  or greater than the replication factor.
+
+CDAP UI
+.......
+- Using the Ambari UI, add additional hosts for the ``CDAP UI Service``
+  to additional machines.
+
+CDAP Authentication Server
+..........................
+- Using the Ambari UI, add additional hosts for the ``CDAP Security Auth
+  Service`` (the CDAP Authentication Server) to additional machines.
+- Note that when an unauthenticated request is made in a secure HA setup, a list of all
+  running authentication endpoints will be returned in the body of the request.
