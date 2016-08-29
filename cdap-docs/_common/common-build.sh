@@ -230,7 +230,16 @@ function set_mvn_environment() {
   if [[ "${OSTYPE}" == "darwin"* ]]; then
     # TODO: hard-coded Java version 1.7
     export JAVA_HOME=$(/usr/libexec/java_home -v 1.7)
+  else
+#     export JAVA_HOME=/usr/lib/jvm/jdk1.7.0_75
+    if [[ "x${JAVA_HOME}" == "x" ]]; then
+      if [[ "x${JAVA_JDK_VERSION}" == "x" ]]; then
+        JAVA_JDK_VERSION="jdk1.7.0_75"
+      fi
+      export JAVA_HOME=/usr/lib/jvm/${JAVA_JDK_VERSION}
+    fi
   fi
+  echo "Using JAVA_HOME: ${JAVA_HOME}"
 }
 
 function check_build_rst() {

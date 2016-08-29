@@ -132,7 +132,7 @@ or using ``curl`` to directly make an HTTP request:
 
 .. tabbed-parsed-literal::
 
-    $ curl -w"\n" localhost:10000/v3/namespaces/default/artifacts/cdap-wise \
+    $ curl -w"\n" localhost:11015/v3/namespaces/default/artifacts/cdap-wise \
     --data-binary @cdap-wise-|cdap-apps-version|/target/cdap-wise-|cdap-apps-version|.jar
     
     Artifact added successfully
@@ -146,7 +146,7 @@ include the ``cdap-apps/Wise`` directory, such as:
 
     or
 
-    $ curl -w"\n" localhost:10000/v3/namespaces/default/artifacts/cdap-wise \
+    $ curl -w"\n" localhost:11015/v3/namespaces/default/artifacts/cdap-wise \
     --data-binary @cdap-apps/Wise/target/cdap-wise-|cdap-apps-version|.jar
 
 
@@ -163,7 +163,7 @@ or by using ``curl``:
 
 .. tabbed-parsed-literal::
 
-    $ curl -w"\n" -X PUT -H "Content-Type: application/json" localhost:10000/v3/namespaces/default/apps/Wise \
+    $ curl -w"\n" -X PUT -H "Content-Type: application/json" localhost:11015/v3/namespaces/default/apps/Wise \
     -d '{ "artifact":{ "name": "cdap-wise", "version": "|cdap-apps-version|", "scope": "user" } }'
 
     Deploy Complete
@@ -186,7 +186,7 @@ analyze them in real time. Another way to start the flow is using ``curl``:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X POST "localhost:10000/v3/namespaces/default/apps/Wise/flows/WiseFlow/start"
+  $ curl -w"\n" -X POST "localhost:11015/v3/namespaces/default/apps/Wise/flows/WiseFlow/start"
 
 At any time, you can find out whether the flow is running:
 
@@ -196,7 +196,7 @@ At any time, you can find out whether the flow is running:
   
   RUNNING
   
-  $ curl -w"\n" "localhost:10000/v3/namespaces/default/apps/Wise/flows/WiseFlow/status"
+  $ curl -w"\n" "localhost:11015/v3/namespaces/default/apps/Wise/flows/WiseFlow/status"
   
   {"status":"RUNNING"}
 
@@ -225,13 +225,13 @@ Or, you can use ``curl`` and an HTTP request:
 
   .. Linux
 
-  $ curl -w"\n" -X POST "localhost:10000/v3/namespaces/default/streams/logEventStream" \
+  $ curl -w"\n" -X POST "localhost:11015/v3/namespaces/default/streams/logEventStream" \
     -d "255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] 'GET /cdap.html HTTP/1.0' \ 
     401 2969 ' ' 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)'"
     
   .. Windows
     
-  > curl -X POST "localhost:10000/v3/namespaces/default/streams/logEventStream" ^
+  > curl -X POST "localhost:11015/v3/namespaces/default/streams/logEventStream" ^
   -d "255.255.255.200 - - [23\Sep\2014:11:45:38 -0400] 'GET \cdap.html HTTP\1.0' 2969 ' ' 'Mozilla\4.0 (compatible; MSIE 7.0; Windows NT 5.1)'"
 
 
@@ -309,7 +309,7 @@ start and end of the time range to milliseconds since the start of the Epoch:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" "localhost:10000/v3/namespaces/default/streams/logEventStream/events?start=1412386081819\&end=1412386081870\&limit=5"
+  $ curl -w"\n" "localhost:11015/v3/namespaces/default/streams/logEventStream/events?start=1412386081819\&end=1412386081870\&limit=5"
   
 The current time in seconds since the start of the Epoch can be found with:
 
@@ -346,18 +346,18 @@ on when and how many events you have sent):
 
   .. Linux
 
-  $ curl -w"\n" -X POST "localhost:10000/v3/metrics/query?"\
+  $ curl -w"\n" -X POST "localhost:11015/v3/metrics/query?"\
   "context=namespace.default.app.Wise.flow.WiseFlow.flowlet.parser"\
   "&metric=system.process.events.processed&aggregate=true"
   
   .. Windows
   
-  > curl -X POST "localhost:10000/v3/metrics/query?context=namespace.default.app.Wise.flow.WiseFlow.flowlet.parser&metric=system.process.events.processed&aggregate=true"
+  > curl -X POST "localhost:11015/v3/metrics/query?context=namespace.default.app.Wise.flow.WiseFlow.flowlet.parser&metric=system.process.events.processed&aggregate=true"
   
   {"startTime":0,"endTime":1431467057,"series":[{"metricName":"system.process.events.processed","grouping":{},"data":[{"time":0,"value":3007}]}]}
 
-A much easier way to observe the flow is in the `CDAP UI: <http://localhost:9999>`__
-it shows a `visualization of the flow, <http://localhost:9999/ns/default/apps/Wise/programs/flows/WiseFlow/runs>`__
+A much easier way to observe the flow is in the `CDAP UI: <http://localhost:11011>`__
+it shows a `visualization of the flow, <http://localhost:11011/ns/default/apps/Wise/programs/flows/WiseFlow/runs>`__
 annotated with its real-time metrics:
 
 .. image:: ../_images/quickstart/wise-flow1.png
@@ -399,9 +399,9 @@ Or, using RESTful calls:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X POST "localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/start"
+  $ curl -w"\n" -X POST "localhost:11015/v3/namespaces/default/apps/Wise/services/WiseService/start"
   
-  $ curl -w"\n" -X GET "localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/status"
+  $ curl -w"\n" -X GET "localhost:11015/v3/namespaces/default/apps/Wise/services/WiseService/status"
   
   {"status":"RUNNING"}
 
@@ -417,14 +417,14 @@ using a REST call:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" "localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.249/count"
+  $ curl -w"\n" "localhost:11015/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.249/count"
   42
 
 Or, we can find out how many times the URL ``/home.html`` was accessed from the same IP address:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X POST "localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.249/count" \
+  $ curl -w"\n" -X POST "localhost:11015/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.249/count" \
   -d "/home.html"
   6
   
@@ -488,7 +488,7 @@ or using a RESTful call:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X POST "localhost:10000/v3/namespaces/default/apps/Wise/mapreduce/BounceCountsMapReduce/start"
+  $ curl -w"\n" -X POST "localhost:11015/v3/namespaces/default/apps/Wise/mapreduce/BounceCountsMapReduce/start"
 
 Note that this MapReduce program processes the exact same data that is consumed by the
 *WiseFlow*, namely, the log event stream, and both programs can run at the same time without
@@ -498,7 +498,7 @@ We can inquire as to the status of the MapReduce:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" "localhost:10000/v3/namespaces/default/apps/Wise/mapreduce/BounceCountsMapReduce/status"
+  $ curl -w"\n" "localhost:11015/v3/namespaces/default/apps/Wise/mapreduce/BounceCountsMapReduce/status"
   
   {"status":"RUNNING"}
 

@@ -84,7 +84,7 @@ started correctly.
      :dependent: linux-windows
      :languages: console,shell-session
  
-     $ docker run -d --name cdap-standalone -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone:|release|
+     $ docker run -d --name cdap-standalone -p 11011:11011 -p 11015:11015 caskdata/cdap-standalone:|release|
      
    This will start the container, name it ``cdap-standalone``, and setup the proxying of ports.
 
@@ -92,7 +92,7 @@ started correctly.
    directory is under ``/opt/cdap/sdk``.
 
 #. Once CDAP starts, it will instruct you to connect to the CDAP UI with a web browser
-   at ``http://localhost:9999``. 
+   at ``http://localhost:11011``. 
   
 #. If you are **running Docker on either Mac OS X or Microsoft Windows**, replace ``localhost`` 
    with the Docker VM's IP address (such as ``192.168.99.100``) that you obtained earlier.
@@ -175,7 +175,7 @@ Kitematic and then download, start, and connect to a CDAP container.
         :align: center
 
 #. Close the menu by pressing the ``X`` in the circle. Press "Create" to download and start the CDAP image. 
-   When it has started up, you will see in the logs a message that the CDAP UI is listening on port 9999:
+   When it has started up, you will see in the logs a message that the CDAP UI is listening on port 11011:
  
      .. image:: ../../_images/kitematic/kitematic-4-cdap-started.png
         :width: 8in
@@ -189,7 +189,7 @@ Kitematic and then download, start, and connect to a CDAP container.
         :width: 8in
         :align: center
 
-#. This shows that the CDAP container is listening on the internal port ``9999`` within the
+#. This shows that the CDAP container is listening on the internal port ``11011`` within the
    Docker host, while the Docker host proxies that port on the virtual machine IP address
    and port (``192.168.99.100:32769``). Enter that address and port into your system web browser to
    connect to the CDAP UI:

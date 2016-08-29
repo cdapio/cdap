@@ -143,7 +143,7 @@ Using a ``curl``  command:
 
 .. tabbed-parsed-literal::
  
-  $ curl -w"\n" -X PUT localhost:10000/v3/namespaces/default/apps/SportResults/services/UploadService/methods/leagues/nfl/seasons/2012 \
+  $ curl -w"\n" -X PUT localhost:11015/v3/namespaces/default/apps/SportResults/services/UploadService/methods/leagues/nfl/seasons/2012 \
   --data-binary @examples/SportResults/resources/nfl-2012.csv
 
 
@@ -199,7 +199,7 @@ have scored the least points compared to the points they conceded:
   
 The last command would produce results (your results may vary, depending on the datasets you load) such as::
 
-  Successfully connected CDAP instance at http://localhost:10000/default
+  Successfully connected CDAP instance at http://localhost:11015/default
   +=====================================================================================================================================+
   | dataset_totals.t | dataset_totals.w | dataset_totals.t | dataset_totals.l | dataset_totals.s | dataset_totals.c | dataset_totals.le |
   | eam: STRING      | ins: INT         | ies: INT         | osses: INT       | cored: INT       | onceded: INT     | ague: STRING      |

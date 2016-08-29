@@ -1,0 +1,65 @@
+<!--
+  Copyright © 2016 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="row" ng-if="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name !== 'Validator'">
+  <div class="col-xs-12">
+    <fieldset ng-disabled="isDisabled">
+      <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.noconfig">
+        <div class="well well-lg widget-group-container">
+          <div class="form-group">
+            <label class="control-label">
+              <span>Label</span>
+              <span class="fa fa-asterisk"></span>
+              <small class="text-danger" ng-if="HydratorPlusPlusNodeConfigCtrl.state.nodeLabelError">{{::HydratorPlusPlusNodeConfigCtrl.state.nodeLabelError}}</small>
+            </label>
+            <input type="text" class="form-control" ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label">
+          </div>
+          <div ng-repeat="(name, value) in HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties track by $index">
+            <div class="form-group">
+              <label ng-init="title='info';description=HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[name].description"
+                      class="control-label">
+                <span>{{::name}}</span>
+                <span class="fa fa-info-circle"
+                      uib-tooltip="{{description}}"
+                      tooltip-placement="right"
+                      tooltip-append-to-body="true">
+                </span>
+                <span class="fa fa-asterisk" ng-if="HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[name].required"></span>
+                <small class="text-danger" ng-if="!HydratorPlusPlusNodeConfigCtrl.state.node.warning && HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[name].required && !HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[name]">{{::HydratorPlusPlusNodeConfigCtrl.requiredPropertyError}}</small>
+              </label>
+              <input type="text" class="form-control" ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties[name]" ng-disabled="HydratorPlusPlusNodeConfigCtrl.state.node.pluginTemplate && plugin.lock[name]">
+
+              <span class="badge macro-indicator pull-right"
+                    ng-if="HydratorPlusPlusNodeConfigCtrl.state.node._backendProperties[name].macroSupported"
+                    uib-tooltip="A placeholder that will be substituted at runtime. eg. ${placeholder} or ${secure(key)}"
+                    tooltip-append-to-body="true"
+                    tooltip-popup-delay="300"
+                    tooltip-placement="left">
+                Macro
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+  </div>
+</div>
+
+<div ng-if="HydratorPlusPlusNodeConfigCtrl.state.isTransform && HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name === 'Validator'">
+  <div class="col-lg-12">
+    <div ng-include="'/assets/features/hydrator/templates/partial/node-config-modal/node-config/plugin-edit-validator-transform.html'"></div>
+  </div>
+</div>

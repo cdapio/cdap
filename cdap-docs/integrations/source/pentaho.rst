@@ -18,7 +18,7 @@ CDAP datasets using the :ref:`CDAP JDBC driver <cdap-jdbc>`.
 #. In the toolbar, select ``File -> New -> Database Connection...``.
 #. In the ``General`` section, select a ``Connection Name``, like ``CDAP Standalone``. For the ``Connection Type``, select
    ``Generic database``. Select ``Native (JDBC)`` for the ``Access`` field. In this example, where we connect to
-   a standalone instance of CDAP, our ``Custom Connection URL`` will then be ``jdbc:cdap://localhost:10000``.
+   a standalone instance of CDAP, our ``Custom Connection URL`` will then be ``jdbc:cdap://localhost:11015``.
    In the field ``Custom Driver Class Name``, enter ``co.cask.cdap.explore.jdbc.ExploreDriver``.
 
    .. image:: _images/jdbc/pentaho_add_connection.png

@@ -125,7 +125,7 @@ the plugins when deploying the artifact. For example, if you are using the HTTP 
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X POST "localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java" \
+  $ curl -w"\n" -X POST "localhost:11015/v3/namespaces/default/artifacts/mysql-connector-java" \
   -H 'Artifact-Plugins: [ { "name": "mysql", "type": "jdbc", "className": "com.mysql.jdbc.Driver" } ]' \
   -H "Artifact-Version: 5.1.35" \
   -H "Artifact-Extends: system:cdap-data-pipeline[|version|, |version|]/system:cdap-data-streams[|version|, |version|]" \
@@ -298,7 +298,7 @@ For example, to deploy ``custom-transforms-1.0.0.jar`` using the RESTful API:
 
 .. tabbed-parsed-literal::
 
-    $ curl -w"\n" -X POST "localhost:10000/v3/namespaces/default/artifacts/custom-transforms" \
+    $ curl -w"\n" -X POST "localhost:11015/v3/namespaces/default/artifacts/custom-transforms" \
     -H "Artifact-Extends: system:cdap-data-pipeline[|version|, |version|]/system:cdap-data-streams[|version|, |version|]" \
     --data-binary @/path/to/custom-transforms-1.0.0.jar
 
@@ -335,7 +335,7 @@ it needs to be set explicitly, as the JAR contents are uploaded without the file
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X POST "localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java" \
+  $ curl -w"\n" -X POST "localhost:11015/v3/namespaces/default/artifacts/mysql-connector-java" \
   -H 'Artifact-Plugins: [ { "name": "mysql", "type": "jdbc", "className": "com.mysql.jdbc.Driver" } ]' \
   -H "Artifact-Version: 5.1.35" \
   -H "Artifact-Extends: system:cdap-data-pipeline[|version|, |version|]/system:cdap-data-streams[|version|, |version|]" \
@@ -376,7 +376,7 @@ For example, to retrieve detail about our ``custom-transforms`` artifact:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X GET "localhost:10000/v3/namespaces/default/artifacts/custom-transforms/versions/1.0.0?scope=[system | user]
+  $ curl -w"\n" -X GET "localhost:11015/v3/namespaces/default/artifacts/custom-transforms/versions/1.0.0?scope=[system | user]
 
 Using the CLI:
 
@@ -395,7 +395,7 @@ specific type. For example, to check if ``cdap-data-pipeline`` can access the pl
 
 .. tabbed-parsed-literal::
 
-    $ curl -w"\n" -X GET "localhost:10000/v3/namespaces/default/artifacts/cdap-data-pipeline/versions/|version|/extensions/transform?scope=system"
+    $ curl -w"\n" -X GET "localhost:11015/v3/namespaces/default/artifacts/cdap-data-pipeline/versions/|version|/extensions/transform?scope=system"
 
 Using the CLI:
 
@@ -477,13 +477,13 @@ We package our code into a JAR file named ``wordcount-1.0.0.jar`` and add it to 
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X POST "localhost:10000/v3/namespaces/default/artifacts/wordcount" --data-binary @wordcount-1.0.0.jar
+  $ curl -w"\n" -X POST "localhost:11015/v3/namespaces/default/artifacts/wordcount" --data-binary @wordcount-1.0.0.jar
 
 We then create an application from that artifact:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X PUT "localhost:10000/v3/namespaces/default/apps/basicwordcount" -H "Content-Type: application/json" \
+  $ curl -w"\n" -X PUT "localhost:11015/v3/namespaces/default/apps/basicwordcount" -H "Content-Type: application/json" \
   -d '{ "artifact": { "name": "wordcount", "version": "1.0.0", "scope": "user" } }'
     
 This program runs just fine. It counts all words in the input. However, what if we want to count phrases
@@ -498,14 +498,14 @@ stopwords, we want to be able to create it through a configuration:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X PUT "localhost:10000/v3/namespaces/default/apps/stopwordcount" -H "Content-Type: application/json" \
+  $ curl -w"\n" -X PUT "localhost:11015/v3/namespaces/default/apps/stopwordcount" -H "Content-Type: application/json" \
   -d '{ "artifact": { "name": "wordcount", "version": "1.0.0", "scope": "user" }, "config": { "tokenizer": "stopword" } }'
   
 Similarly, we want to be able to create an application that counts phrases through a configuration:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X PUT "localhost:10000/v3/namespaces/default/apps/phrasecount" -H "Content-Type: application/json" \
+  $ curl -w"\n" -X PUT "localhost:11015/v3/namespaces/default/apps/phrasecount" -H "Content-Type: application/json" \
   -d '{ "artifact": { "name": "wordcount", "version": "1.0.0", "scope": "user" }, "config": { "tokenizer": "phrase" } }'
 
 .. highlight:: java
@@ -613,7 +613,7 @@ We then package the code in a new version of the artifact ``wordcount-1.1.0.jar`
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X POST "localhost:10000/v3/namespaces/default/artifacts/wordcount" --data-binary @wordcount-1.1.0.jar
+  $ curl -w"\n" -X POST "localhost:11015/v3/namespaces/default/artifacts/wordcount" --data-binary @wordcount-1.1.0.jar
 
 .. rubric:: Implementing Tokenizer Plugins
 
@@ -705,7 +705,7 @@ When deploying this artifact, we tell CDAP that the artifact extends the ``wordc
 
 .. tabbed-parsed-literal::
 
- $ curl -w"\n" "localhost:10000/v3/namespaces/default/artifacts/tokenizers" --data-binary @tokenizers-1.0.0.jar \
+ $ curl -w"\n" "localhost:11015/v3/namespaces/default/artifacts/tokenizers" --data-binary @tokenizers-1.0.0.jar \
  -H "Artifact-Extends:wordcount[1.1.0,2.0.0)"
 
 This will make the plugins available to those versions of the ``wordcount`` artifact. We can now create
@@ -713,7 +713,7 @@ applications that use the tokenizer we want:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X PUT localhost:10000/v3/namespaces/default/apps/phrasecount -H "Content-Type: application/json" \
+  $ curl -w"\n" -X PUT localhost:11015/v3/namespaces/default/apps/phrasecount -H "Content-Type: application/json" \
   -d '{ "artifact": { "name": "wordcount", "version": "1.1.0", "scope": "user" }, "config": { "tokenizer": "phrase" } }'
 
 .. rubric:: Adding a Plugin Configuration to the Application
@@ -775,7 +775,7 @@ Now we can create an application that uses a comma instead of a space to split t
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X PUT "localhost:10000/v3/namespaces/default/apps/wordcount2" -H "Content-Type: application/json" \
+  $ curl -w"\n" -X PUT "localhost:11015/v3/namespaces/default/apps/wordcount2" -H "Content-Type: application/json" \
     -d '{ 
       "artifact": { "name": "wordcount", "version": "1.2.0", "scope": "user" },
       "config": { "tokenizer": "default", "tokenizerProperties": { "delimiter": "," }

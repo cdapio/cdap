@@ -32,6 +32,7 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
+import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.DatasetSystemMetadataWriter;
 import co.cask.cdap.metadata.MetadataHttpHandler;
 import co.cask.cdap.proto.Id;
@@ -596,7 +597,8 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     // verify stream system metadata
     Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, AllProgramsApp.STREAM_NAME);
     Set<String> streamSystemTags = getTags(streamId, MetadataScope.SYSTEM);
-    Assert.assertEquals(ImmutableSet.of(AllProgramsApp.STREAM_NAME), streamSystemTags);
+    Assert.assertEquals(ImmutableSet.of(AllProgramsApp.STREAM_NAME, AbstractSystemMetadataWriter.EXPLORE_TAG),
+                        streamSystemTags);
 
     Map<String, String> streamSystemProperties = getProperties(streamId, MetadataScope.SYSTEM);
     // Verify create time exists, and is within the past hour
@@ -666,7 +668,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertEquals(
       ImmutableSet.of(AllProgramsApp.DATASET_NAME,
                       DatasetSystemMetadataWriter.BATCH_TAG,
-                      DatasetSystemMetadataWriter.EXPLORE_TAG),
+                      AbstractSystemMetadataWriter.EXPLORE_TAG),
       dsSystemTags);
 
     Map<String, String> dsSystemProperties = getProperties(datasetInstance, MetadataScope.SYSTEM);
@@ -749,7 +751,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertEquals(
       ImmutableSet.of(AllProgramsApp.DATASET_NAME,
                       DatasetSystemMetadataWriter.BATCH_TAG,
-                      DatasetSystemMetadataWriter.EXPLORE_TAG,
+                      AbstractSystemMetadataWriter.EXPLORE_TAG,
                       DatasetSystemMetadataWriter.LOCAL_DATASET_TAG),
       dsSystemTags);
   }
@@ -757,6 +759,14 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   @Test
   public void testExploreSystemTags() throws Exception {
     appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(AllProgramsApp.class));
+
+    //verify stream is explorable
+    Id.Stream streamInstance = Id.Stream.from(Id.Namespace.DEFAULT, AllProgramsApp.STREAM_NAME);
+    Set<String> streamSystemTags = getTags(streamInstance, MetadataScope.SYSTEM);
+    Assert.assertEquals(
+      ImmutableSet.of(AllProgramsApp.STREAM_NAME,
+                      AbstractSystemMetadataWriter.EXPLORE_TAG),
+      streamSystemTags);
     
     // verify fileSet is explorable
     Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME4);
@@ -764,7 +774,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertEquals(
       ImmutableSet.of(AllProgramsApp.DATASET_NAME4,
                       DatasetSystemMetadataWriter.BATCH_TAG,
-                      DatasetSystemMetadataWriter.EXPLORE_TAG),
+                      AbstractSystemMetadataWriter.EXPLORE_TAG),
       dsSystemTags);
 
     //verify partitionedFileSet is explorable
@@ -772,20 +782,20 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Set<String> dsSystemTags2 = getTags(datasetInstance2, MetadataScope.SYSTEM);
     Assert.assertEquals(
       ImmutableSet.of(AllProgramsApp.DATASET_NAME5,
-                        DatasetSystemMetadataWriter.BATCH_TAG,
-                        DatasetSystemMetadataWriter.EXPLORE_TAG),
+                      DatasetSystemMetadataWriter.BATCH_TAG,
+                      AbstractSystemMetadataWriter.EXPLORE_TAG),
       dsSystemTags2);
 
     //verify that fileSet that isn't set to explorable does not have explore tag
     Id.DatasetInstance datasetInstance3 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME6);
     Set<String> dsSystemTags3 = getTags(datasetInstance3, MetadataScope.SYSTEM);
-    Assert.assertFalse(dsSystemTags3.contains(DatasetSystemMetadataWriter.EXPLORE_TAG));
+    Assert.assertFalse(dsSystemTags3.contains(AbstractSystemMetadataWriter.EXPLORE_TAG));
     Assert.assertTrue(dsSystemTags3.contains(DatasetSystemMetadataWriter.BATCH_TAG));
 
     //verify that partitioned fileSet that isn't set to explorable does not have explore tag
     Id.DatasetInstance datasetInstance4 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME7);
     Set<String> dsSystemTags4 = getTags(datasetInstance4, MetadataScope.SYSTEM);
-    Assert.assertFalse(dsSystemTags4.contains(DatasetSystemMetadataWriter.EXPLORE_TAG));
+    Assert.assertFalse(dsSystemTags4.contains(AbstractSystemMetadataWriter.EXPLORE_TAG));
     Assert.assertTrue(dsSystemTags4.contains(DatasetSystemMetadataWriter.BATCH_TAG));
   }
 
@@ -1398,8 +1408,14 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       .add(new MetadataSearchResultRecord(datasetInstance6))
       .add(new MetadataSearchResultRecord(datasetInstance7))
       .build();
+    ImmutableSet<MetadataSearchResultRecord> expectedExplorables =
+      ImmutableSet.<MetadataSearchResultRecord>builder()
+      .addAll(expectedExplorableDatasets)
+      .add(new MetadataSearchResultRecord(streamId))
+      .add(new MetadataSearchResultRecord(mystream))
+      .build();
     metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "explore");
-    Assert.assertEquals(expectedExplorableDatasets, metadataSearchResultRecords);
+    Assert.assertEquals(expectedExplorables, metadataSearchResultRecords);
     metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, KeyValueTable.class.getName());
     Assert.assertEquals(expectedKvTables, metadataSearchResultRecords);
     metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "type:*");

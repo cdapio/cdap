@@ -50,7 +50,7 @@ Using ``curl``:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X POST "http://<hostname>:10000/v3/namespaces/default/apps/WordCount/flows/WordCounter/debug"
+  $ curl -w"\n" -X POST "http://<hostname>:11015/v3/namespaces/default/apps/WordCount/flows/WordCounter/debug"
 
 Note that this URL differs from the URL for starting the flow only by the last path
 component (``debug`` instead of ``start``; see the :ref:`http-restful-api-lifecycle`). 

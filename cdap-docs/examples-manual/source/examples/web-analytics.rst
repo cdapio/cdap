@@ -126,10 +126,10 @@ To inject a single log event, you can use the ``curl`` command:
 .. tabbed-parsed-literal::
 
   $ curl -d "192.168.252.135 - - [14/Jan/2014:00:12:51 -0400] 'GET /products HTTP/1.1' 500 182 'http://www.example.org' 'Mozilla/5.0'" \
-  "http://localhost:10000/v3/namespaces/default/streams/log"
+  "http://localhost:11015/v3/namespaces/default/streams/log"
 
 This sends the log event (formatted in the Common Log Format or CLF) to the CDAP instance located at
-``localhost`` and listening on port ``10000``.
+``localhost`` and listening on port ``11015``.
 
 The application includes sample logs, located in ``examples/resources/accesslog.txt`` that you can inject 
 using the CDAP Commmand Line Interface:
@@ -145,7 +145,7 @@ Query the Unique Visitor Page Views
 Once the log data has been processed by the ``WebAnalyticsFlow``, we can explore the
 dataset ``UniqueVisitCount`` with a SQL query. You can easily execute SQL queries against
 datasets using the CDAP UI by going to the *Data* page showing `All Datasets 
-<http://localhost:9999/ns/default/data>`__, clicking on the **UniqueVisitCount**
+<http://localhost:11011/ns/default/data>`__, clicking on the **UniqueVisitCount**
 dataset:
 
 .. image:: _images/web-analytics-0.png

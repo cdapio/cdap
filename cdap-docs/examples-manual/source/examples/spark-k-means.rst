@@ -90,7 +90,7 @@ Running the Spark Program
 There are three ways to start the Spark program:
 
 1. Go to the *SparkKMeans* `application overview page, programs tab 
-   <http://localhost:9999/ns/default/apps/SparkKMeans/overview/programs>`__,
+   <http://localhost:11011/ns/default/apps/SparkKMeans/overview/programs>`__,
    click ``CentersService`` to get to the service detail page, then click the *Start* button; or
    
 #. Use the Command Line Interface:
@@ -104,7 +104,7 @@ There are three ways to start the Spark program:
    .. tabbed-parsed-literal::
 
     $ curl -w"\n" -X POST -d '{args="3"}' \
-    "http://localhost:10000/v3/namespaces/default/apps/SparkKMeans/spark/SparkKMeansProgram/start"
+    "http://localhost:11015/v3/namespaces/default/apps/SparkKMeans/spark/SparkKMeansProgram/start"
     
 
 Querying the Results
@@ -123,7 +123,7 @@ To query the *centers* ObjectStore using the ``CentersService``, you can:
 
   .. tabbed-parsed-literal::
 
-    $ curl -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps/SparkKMeans/services/CentersService/methods/centers/1"
+    $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/SparkKMeans/services/CentersService/methods/centers/1"
     
     306.52261306532665,306.52261306532665,793.7956448911223
 

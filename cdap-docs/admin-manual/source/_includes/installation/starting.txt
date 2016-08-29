@@ -12,9 +12,9 @@ command::
   $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
 
 When all the services have completed starting, the CDAP UI should then be
-accessible through a browser at port ``9999``. 
+accessible through a browser at port ``11011``. 
 
-The URL will be ``http://<host>:9999`` where ``<host>`` is the IP address of
+The URL will be ``http://<host>:11011`` where ``<host>`` is the IP address of
 one of the machines where you installed the packages and started the services.
 
 .. _|distribution|-starting-services-java-heapmax:

@@ -21,17 +21,85 @@ var gulp = require('gulp'),
     del = require('del'),
     mainBowerFiles = require('main-bower-files'),
     merge = require('merge-stream'),
-    autoprefixer = require('autoprefixer'),
-    stylelint = require('stylelint');
+    autoprefixer = require('autoprefixer');
 
+function getEs6Directives(isNegate) {
+  var es6directives = [
+    'dag-plus',
+    'plugin-templates',
+    'my-global-navbar',
+    'datetime-picker',
+    'datetime-range',
+    'log-viewer',
+    'complex-schema',
+    'my-pipeline-settings',
+    'my-pipeline-summary',
+    'my-pipeline-resource',
+    'my-post-run-action-wizard',
+    'my-post-run-actions',
+    'widget-container/widget-complex-schema-editor',
+    'timeline',
+    'widget-container',
+    'plugin-functions',
+    'my-link-button'
+  ];
 
-/*
-  library CSS
- */
+  return es6directives.map(function (directive) {
+    return (isNegate ? '!' : '') + './app/directives/' + directive + '/**/*.js';
+  });
+}
+function getExtensionBuildPipeline(extension) {
+  var PKG = JSON.stringify({
+    name: pkg.name,
+    v: pkg.version
+  });
+
+  var source = [
+    './app/'+ extension + '/main.js',
+    './app/services/**/*.js',
+    './app/directives/**/*.js',
+    './app/filters/**/*.js',
+    './app/lib/global-lib.js',
+    './app/' + extension + '/module.js',
+    './app/' + extension + '/**/*.js',
+  ];
+  source = source.concat(getEs6Directives(true));
+
+  return gulp.src(source)
+    .pipe(plug.plumber())
+    .pipe(plug.wrapper({
+       header: '\n(function (PKG){ /* ${filename} */\n',
+       footer: '\n})('+PKG+');\n'
+    }))
+    .pipe(plug.babel())
+    .pipe(plug.ngAnnotate())
+    .pipe(plug.concat(extension + '.js'))
+    .pipe(gulp.dest('./dist/assets/bundle'));
+}
+function getBabelBuildPipeline() {
+  var PKG = JSON.stringify({
+    name: pkg.name,
+    v: pkg.version
+  });
+
+  var source = getEs6Directives();
+
+  return gulp.src(source)
+    .pipe(plug.plumber())
+    .pipe(plug.wrapper({
+       header: '\n(function (PKG){ /* ${filename} */\n',
+       footer: '\n})('+PKG+');\n'
+    }))
+    .pipe(plug.babel())
+    .pipe(plug.ngAnnotate())
+    .pipe(plug.concat('common.es6.js'))
+    .pipe(gulp.dest('./dist/assets/bundle'));
+}
+
 gulp.task('css:lib', ['fonts'], function() {
 
-  return gulp.src([
-      './app/styles/bootstrap.less',
+  return merge(
+    gulp.src([
       './bower_components/angular/angular-csp.css',
       './bower_components/angular-loading-bar/build/loading-bar.min.css',
       './bower_components/angular-motion/dist/angular-motion.min.css',
@@ -41,29 +109,13 @@ gulp.task('css:lib', ['fonts'], function() {
       './bower_components/angular-cron-jobs/dist/angular-cron-jobs.min.css',
     ].concat(mainBowerFiles({
       filter: /cask\-angular\-[^\/]+\/.*\.(css|less)$/
-    })))
-    .pipe(plug.if('*.less', plug.less()))
+    }))),
+    gulp.src('./app/styles/bootstrap.less')
+      .pipe(plug.less())
+  )
     .pipe(plug.concat('lib.css'))
     .pipe(gulp.dest('./dist/assets/bundle'));
 });
-
-
-/*
-  fonts
- */
-gulp.task('fonts', function() {
-  return gulp.src([
-      // './bower_components/bootstrap/dist/fonts/*',
-      './app/styles/fonts/*',
-      './bower_components/font-awesome/fonts/*'
-    ])
-    .pipe(gulp.dest('./dist/assets/fonts'));
-});
-
-
-/*
-  application CSS
- */
 gulp.task('css:app', ['css:lint'], function() {
   var processor = [
     autoprefixer({ browsers: ['> 1%'], cascade:true })
@@ -72,16 +124,16 @@ gulp.task('css:app', ['css:lint'], function() {
   return gulp.src([
       './app/styles/common.less',
       './app/styles/themes/*.less',
-      './app/directives/**/*.{less,css}',
-      './app/features/**/*.{less,css}'
+      './app/directives/**/*.less',
+      './app/hydrator/**/*.less',
+      './app/tracker/**/*.less'
     ])
-    .pipe(plug.if('*.less', plug.less()))
+    .pipe(plug.less())
     .pipe(plug.concat('app.css'))
     .pipe(plug.postcss(processor))
     .pipe(gulp.dest('./dist/assets/bundle'))
     .pipe(plug.livereload());
 });
-
 gulp.task('css:lint', function () {
 
   return gulp.src([
@@ -99,12 +151,6 @@ gulp.task('css:lint', function () {
       }]
     }));
 });
-
-
-
-/*
-  library javascript
- */
 gulp.task('js:lib', function() {
   return gulp.src([
       './bower_components/angular/angular.js',
@@ -193,7 +239,6 @@ gulp.task('js:lib', function() {
     .pipe(plug.concat('lib.js'))
     .pipe(gulp.dest('./dist/assets/bundle'));
 });
-
 gulp.task('js:aceworkers', function() {
   gulp.src([
     './bower_components/ace-builds/src-min-noconflict/ace.js',
@@ -202,236 +247,103 @@ gulp.task('js:aceworkers', function() {
   ])
     .pipe(gulp.dest('./dist/assets/bundle/ace-editor-worker-scripts/'));
 });
-
-function getEs6Features(isNegate) {
-  /*
-    When we move a feature to use es6 all we need to do is add it here for the build/dev process.
-    Eventually when all the features are ported to es6 then we should use a better package manager
-    like webpack or jspm for development and replace the js:app,js:lib,js:aceworkers & js:$modal gulp tasks
-    with the package manager build step. The transition process is going to be painful but the end goal is better (hopefully :])
-  */
-  var es6features = [
-    'workflows',
-    'flows',
-    'apps',
-    'search',
-    'pins',
-    'hydratorplusplus',
-    'tracker'
-  ];
-
-  return es6features.map(function (feature) {
-    return (isNegate ? '!' : '') + './app/features/' + feature + '/**/*.js';
-  });
-}
-
-function getEs6Directives(isNegate) {
-  var es6directives = [
-    'dag-plus',
-    'plugin-templates',
-    'my-global-navbar',
-    'datetime-picker',
-    'datetime-range',
-    'log-viewer',
-    'complex-schema',
-    'my-pipeline-settings',
-    'my-pipeline-summary',
-    'my-pipeline-resource',
-    'my-post-run-action-wizard',
-    'my-post-run-actions',
-    'widget-container/widget-complex-schema-editor',
-    'timeline',
-    'widget-container',
-    'plugin-functions',
-    'my-link-button'
-  ];
-
-  return es6directives.map(function (directive) {
-    return (isNegate ? '!' : '') + './app/directives/' + directive + '/**/*.js';
-  });
-}
-
-
-/*
-  application javascript
- */
-gulp.task('watch:js:app', function() {
-  var PKG = JSON.stringify({
-    name: pkg.name,
-    v: pkg.version
-  });
-
-  var source = [
-    './app/main.js',
-    '!./app/lib/c3.js',
-    '!./app/lib/avsc-bundle.js',
-    './app/features/*/module.js',
-    './app/**/*.js',
-    '!./app/**/*-test.js',
-    './app/lib/global-lib.js'
-  ];
-  source = source.concat(getEs6Features(true));
-  source = source.concat(getEs6Directives(true));
-
-  return gulp.src(source)
-    .pipe(plug.plumber())
-    .pipe(plug.ngAnnotate())
-    .pipe(plug.wrapper({
-       header: '\n(function (PKG){ /* ${filename} */\n',
-       footer: '\n})('+PKG+');\n'
-    }))
-    .pipe(plug.concat('app.js'))
-    .pipe(gulp.dest('./dist/assets/bundle'))
-    .pipe(plug.livereload());
-});
-
-gulp.task('watch:js:app:babel', function() {
-  var PKG = JSON.stringify({
-    name: pkg.name,
-    v: pkg.version
-  });
-
-  var source = getEs6Features();
-  source = source.concat(getEs6Directives());
-
-  return gulp.src(source)
-    .pipe(plug.plumber())
-    // .pipe(plug.sourcemaps.init())
-    .pipe(plug.wrapper({
-       header: '\n(function (PKG){ /* ${filename} */\n',
-       footer: '\n})('+PKG+');\n'
-    }))
-    .pipe(plug.babel({
-      presets: ['es2015']
-    }))
-    .pipe(plug.ngAnnotate())
-    .pipe(plug.concat('app.es6.js'))
-    // .pipe(plug.sourcemaps.write("."))
-    .pipe(gulp.dest('./dist/assets/bundle'))
-    .pipe(plug.livereload());
-});
-
-gulp.task('js:app', function() {
-  var PKG = JSON.stringify({
-    name: pkg.name,
-    v: pkg.version
-  });
+gulp.task('fonts', function() {
   return gulp.src([
-    './app/main.js',
-    '!./app/lib/c3.js',
-    '!./app/lib/avsc-bundle.js',
-    './app/features/*/module.js',
-    './app/**/*.js',
-    '!./app/**/*-test.js',
-    './app/lib/global-lib.js'
+      // './bower_components/bootstrap/dist/fonts/*',
+      './app/styles/fonts/*',
+      './bower_components/font-awesome/fonts/*'
+    ])
+    .pipe(gulp.dest('./dist/assets/fonts'));
+});
+
+// Build using watch
+gulp.task('watch:js:app:hydrator', function() {
+  return getExtensionBuildPipeline('hydrator')
+    .pipe(plug.livereload());
+});
+gulp.task('watch:js:app:tracker', function() {
+  return getExtensionBuildPipeline('tracker')
+    .pipe(plug.livereload());
+});
+gulp.task('watch:js:app:babel', function() {
+  return getBabelBuildPipeline()
+    .pipe(plug.livereload());
+});
+
+// Build once.
+gulp.task('js:app:hydrator', function() {
+  return getExtensionBuildPipeline('hydrator');
+});
+gulp.task('js:app:tracker', function() {
+  return getExtensionBuildPipeline('tracker');
+});
+gulp.task('js:app:babel', function() {
+  return getBabelBuildPipeline();
+});
+
+gulp.task('js:app', ['js:app:babel', 'js:app:hydrator', 'js:app:tracker']);
+gulp.task('watch:js:app', ['watch:js:app:hydrator', 'watch:js:app:tracker']);
+gulp.task('polyfill', function () {
+  return gulp.src([
+    './app/polyfill.js',
+    './app/ui-utils/url-generator.js'
   ])
-    .pipe(plug.plumber())
-    .pipe(plug.replace('/* !! DISABLE DEBUG INFO !! */', '$compileProvider.debugInfoEnabled(false);'))
-    // .pipe(plug.sourcemaps.init())
-    .pipe(plug.wrapper({
-       header: '\n(function (PKG){ /* ${filename} */\n',
-       footer: '\n})('+PKG+');\n'
-    }))
-    .pipe(plug.babel({
-      presets: ['es2015']
-    }))
-    .pipe(plug.ngAnnotate())
-    .pipe(plug.concat('app.js'))
-    // .pipe(plug.sourcemaps.write("."))
+    .pipe(plug.concat('polyfill.js'))
     .pipe(gulp.dest('./dist/assets/bundle'));
 });
 
-
-/*
-  images
-  TODO: imgmin?
- */
 gulp.task('img', function() {
   return gulp.src('./app/styles/img/**/*')
     .pipe(gulp.dest('./dist/assets/img'));
 });
 
-
-
-
-/*
-  template cache
- */
+gulp.task('html:partials', function() {
+  return gulp.src([
+    './app/{hydrator,tracker}/**/*.html',
+    '!./app/tracker/tracker.html',
+    '!./app/hydrator/hydrator.html'
+    ])
+      .pipe(plug.htmlmin({ removeComments: true }))
+      .pipe(gulp.dest('./dist/assets/features'))
+      .pipe(plug.livereload());
+});
+gulp.task('html:main', function() {
+  return gulp.src([
+    './app/tracker/tracker.html',
+    './app/hydrator/hydrator.html',
+  ])
+    .pipe(plug.htmlmin({ removeComments: true }))
+    .pipe(gulp.dest('./dist'));
+});
+gulp.task('html', ['html:main', 'html:partials']);
 gulp.task('tpl', function() {
-  return merge(
-
-    gulp.src([
+  return gulp.src([
       './app/directives/**/*.html',
       './app/services/**/*.html'
     ])
-      .pipe(plug.htmlmin({ removeComments: true }))
-      .pipe(plug.angularTemplatecache({
-        module: pkg.name + '.commons'
-      })),
-
-    gulp.src([
-      './app/features/home/home.html'
-    ])
-      .pipe(plug.htmlmin({ removeComments: true }))
-      .pipe(plug.angularTemplatecache({
-        module: pkg.name + '.features',
-        base: __dirname + '/app',
-        root: '/assets/'
-      }))
-
-  )
+    .pipe(plug.htmlmin({ removeComments: true }))
+    .pipe(plug.angularTemplatecache({
+      module: pkg.name + '.commons'
+    }))
     .pipe(plug.concat('tpl.js'))
     .pipe(gulp.dest('./dist/assets/bundle'))
     .pipe(plug.livereload());
 });
 
+gulp.task('js', ['js:lib', 'js:aceworkers', 'js:app', 'polyfill']);
+gulp.task('watch:js', ['js:lib', 'js:aceworkers', 'watch:js:app:hydrator', 'watch:js:app:tracker', 'watch:js:app:babel', 'polyfill']);
 
-/*
-  Polyfill
-*/
-gulp.task('polyfill', function () {
-  return gulp.src('./app/polyfill.js')
-      .pipe(gulp.dest('./dist/assets/bundle'));
-});
+gulp.task('css', ['css:lib', 'css:app']);
+gulp.task('style', ['css']);
+gulp.task('build', ['js', 'css', 'img', 'tpl', 'html']);
 
-
-
-/*
-  Markup
- */
-gulp.task('html:partials', function() {
-  return gulp.src('./app/features/**/*.html')
-      .pipe(plug.htmlmin({ removeComments: true }))
-      .pipe(gulp.dest('./dist/assets/features'))
-      .pipe(plug.livereload());
-});
-
-gulp.task('html:main', function() {
-  return gulp.src('./app/*.html')
-      .pipe(plug.htmlmin({ removeComments: true }))
-      .pipe(gulp.dest('./dist'));
-});
-
-gulp.task('html:main.dev', function () {
-  return gulp.src('./app/*.html')
-      .pipe(plug.replace('<!-- DEV DEPENDENCIES -->',
-        '<script type="text/javascript" src="/assets/bundle/app.es6.js"></script>' +
-        '<script src="http://localhost:35729/livereload.js"></script>'))
-      .pipe(gulp.dest('./dist'));
-    });
-
-gulp.task('html', ['html:main', 'html:partials']);
-gulp.task('html.dev', ['html:main.dev', 'html:partials']);
-
-
-
-
-
-/*
-  JS hint
- */
 gulp.task('lint', function() {
-  return gulp.src(['./app/**/*.js', './server/*.js'])
+  return gulp.src([
+    './app/**/*.js',
+    '!./app/cdap/**/*.js',
+    '!./app/lib/**/*.js',
+    './server/*.js'
+  ])
     .pipe(plug.plumber())
     .pipe(plug.jshint())
     .pipe(plug.jshint.reporter())
@@ -440,16 +352,9 @@ gulp.task('lint', function() {
 gulp.task('jshint', ['lint']);
 gulp.task('hint', ['lint']);
 
-
-
-
-/*
-  clean dist
- */
 gulp.task('clean', function() {
   return del.sync(['./dist/*']);
 });
-
 
 /*
   minification
@@ -459,22 +364,16 @@ gulp.task('js:minify', ['js'], function() {
     .pipe(plug.uglify())
     .pipe(gulp.dest('./dist/assets/bundle'));
 });
-
 gulp.task('css:minify', ['css'], function() {
   return gulp.src('./dist/assets/bundle/*.css')
     .pipe(plug.cssnano({ safe: true }))
     .pipe(gulp.dest('./dist/assets/bundle'));
 });
-
 gulp.task('minify', ['js:minify', 'css:minify']);
-
-
-
 
 /*
   rev'd assets
  */
-
 gulp.task('rev:manifest', ['minify', 'tpl'], function() {
   return gulp.src(['./dist/assets/bundle/*'])
     .pipe(plug.rev())
@@ -490,29 +389,12 @@ gulp.task('rev:replace', ['html:main', 'rev:manifest'], function() {
       p = '/assets/bundle/';
   for (var f in rev) {
     out = out.pipe(plug.replace(p+f, p+rev[f]));
-  };
+  }
   return out.pipe(gulp.dest('./dist'));
 });
-
-
-
-/*
-  alias tasks
- */
-gulp.task('js', ['js:lib', 'js:aceworkers', 'js:app', 'polyfill']);
-gulp.task('watch:js', ['js:lib', 'js:aceworkers', 'watch:js:app', 'watch:js:app:babel', 'polyfill']);
-gulp.task('css', ['css:lib', 'css:app']);
-gulp.task('style', ['css']);
-
-
-gulp.task('watch:build', ['watch:js', 'css', 'img', 'tpl', 'html.dev']);
-gulp.task('build', ['js', 'css', 'img', 'tpl', 'html']);
-
+gulp.task('watch:build', ['watch:js', 'css', 'img', 'tpl', 'html']);
 gulp.task('distribute', ['clean', 'build', 'rev:replace']);
-
 gulp.task('default', ['lint', 'build']);
-
-
 
 /*
   watch
@@ -522,18 +404,24 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
 
   var jsAppSource = [
     './app/**/*.js',
+    '!./app/cdap/**/*.js',
     '!./app/**/*-test.js'
   ];
-  jsAppSource = jsAppSource.concat(getEs6Features(true));
   jsAppSource = jsAppSource.concat(getEs6Directives(true));
 
   gulp.watch(jsAppSource, ['jshint', 'watch:js:app']);
 
-  var jsAppBabelSource = getEs6Features(false);
+  var jsAppBabelSource = [];
   jsAppBabelSource = jsAppBabelSource.concat(getEs6Directives(false));
   gulp.watch(jsAppBabelSource, ['jshint', 'watch:js:app:babel']);
 
   gulp.watch('./app/**/*.{less,css}', ['css']);
-  gulp.watch(['./app/directives/**/*.html', './app/services/**/*.html', './app/features/home/home.html'], ['tpl']);
-  gulp.watch('./app/features/**/*.html', ['html:partials']);
+  gulp.watch([
+    './app/directives/**/*.html',
+    './app/services/**/*.html'
+  ], ['tpl']);
+  gulp.watch([
+    './app/hydrator/**/*.html',
+    './app/tracker/**/*.html',
+  ], ['html:partials', 'html:main']);
 });

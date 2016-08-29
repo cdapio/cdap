@@ -136,7 +136,7 @@ Now you can make a request to the service using ``curl``:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps/HelloWorld/services/Greeting/methods/greet"
+  $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/HelloWorld/services/Greeting/methods/greet"
 
 If the last name you entered was *Tom*, the service will respond with ``Hello Tom!``
 
@@ -161,7 +161,7 @@ To see the value of the ``names.bytes`` metric, you can make an HTTP request to 
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X POST "http://localhost:10000/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver&metric=user.names.bytes&aggregate=true"
+  $ curl -w"\n" -X POST "http://localhost:11015/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver&metric=user.names.bytes&aggregate=true"
   
   {"startTime":0,"endTime":1458877439,"series":[{"metricName":"user.names.bytes","grouping":{},"data":[{"time":0,"value":79}]}],"resolution":"2147483647s"}
 
@@ -170,7 +170,7 @@ you can use:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X POST "http://localhost:10000/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver&metric=user.names.longnames&aggregate=true"
+  $ curl -w"\n" -X POST "http://localhost:11015/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver&metric=user.names.longnames&aggregate=true"
   
   {"startTime":0,"endTime":1458877544,"series":[{"metricName":"user.names.longnames","grouping":{},"data":[{"time":0,"value":3}]}],"resolution":"2147483647s"}
   
@@ -179,7 +179,7 @@ you can use:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X POST "http://localhost:10000/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=service:Greeting&metric=user.greetings.count.jane_doe&aggregate=true"
+  $ curl -w"\n" -X POST "http://localhost:11015/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=service:Greeting&metric=user.greetings.count.jane_doe&aggregate=true"
   
   {"startTime":0,"endTime":1458877575,"series":[{"metricName":"user.greetings.count.jane_doe","grouping":{},"data":[{"time":0,"value":2}]}],"resolution":"2147483647s"}
 

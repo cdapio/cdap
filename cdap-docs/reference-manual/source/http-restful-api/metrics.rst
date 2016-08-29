@@ -605,7 +605,7 @@ returned result to identify the series.
 
 For example, to retrieve multiple metrics using a ``curl`` call (command and results reformatted to fit)::
 
-  $ curl -w'\n' -X POST 'http://localhost:10000/v3/metrics/query' -H 'Content-Type: application/json' \
+  $ curl -w'\n' -X POST 'http://localhost:11015/v3/metrics/query' -H 'Content-Type: application/json' \
       -d '{"eventsIn":{"tags": {"flow":"CountRandom"}, "metrics": ["system.process.events.in"], 
                        "timeRange": {"start":"now-5s", "count":"5"} }, 
            "eventsOut":{"tags": {"flow":"CountRandom"}, "metrics": ["system.process.events.out"],

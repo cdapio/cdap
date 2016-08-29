@@ -39,6 +39,7 @@ module.constant('MYAUTH_ROLE', {
 
 
 module.run(function ($location, $state, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH_ROLE) {
+// module.run(function() {
 
   $rootScope.$on('$stateChangeStart', function (event, next, nextParams) {
 
@@ -47,6 +48,7 @@ module.run(function ($location, $state, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH
 
     var user = myAuth.isAuthenticated();
     if (user) { // user is logged in
+      $rootScope.$broadcast(MYAUTH_EVENT.loginSuccess);
       if (authorizedRoles === MYAUTH_ROLE.all) { return; } // any logged-in user is welcome
       if (user.hasRole(authorizedRoles)) { return; } // user is legit
     }
@@ -54,6 +56,7 @@ module.run(function ($location, $state, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH
     // in all other cases, prevent going to this state
     event.preventDefault();
 
+    // FIXME: This needs to be static login page. login state should not exist.
     $state.go('login', {
       next: next.name,
       nextParams: encodeURIComponent(JSON.stringify(nextParams))

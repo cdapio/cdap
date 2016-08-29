@@ -111,11 +111,11 @@ Without SSL:
 ================================================= ==================== ======================================================
 Property                                          Default Value        Description
 ================================================= ==================== ======================================================
-``router.bind.port``                              ``10000``            Port number that the CDAP Router should bind to for 
+``router.bind.port``                              ``11015``            Port number that the CDAP Router should bind to for 
                                                                        HTTP Connections
 ``security.auth.server.bind.port``                ``10009``            Port number that the CDAP Authentication Server should
                                                                        bind to for HTTP Connections
-``dashboard.bind.port``                           ``9999``             Port number that the CDAP UI should
+``dashboard.bind.port``                           ``11011``            Port number that the CDAP UI should
                                                                        bind to for HTTP Connections
 ================================================= ==================== ======================================================
 
@@ -418,7 +418,7 @@ will use ``https`` instead of ``http``.
  
   .. tabbed-parsed-literal::
 	
-    $ curl -v -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps"
+    $ curl -v -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps"
 
   This should return a ``401 Unauthorized`` response with a list of authentication URIs in
   the response body. For example::
@@ -454,7 +454,7 @@ will use ``https`` instead of ``http``.
 	
   .. tabbed-parsed-literal::
 	
-    $ curl -v -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps" \
+    $ curl -v -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps" \
     -H "Authorization: Bearer AghjZGFwAI7e8p65Uo7OpfG5UrD87psGQE0u0sFDoqxtacdRR5GxEb6bkTypP7mXdqvqqnLmfxOS" 
       
   This should return a ``200 OK`` response.

@@ -25,7 +25,7 @@ import org.junit.Test;
  * Tests for explore connection params.
  */
 public class ExploreConnectionParamsTest {
-  private static final String BASE = String.format("%s%s:%d", Constants.Explore.Jdbc.URL_PREFIX, "foobar", 10000);
+  private static final String BASE = String.format("%s%s:%d", Constants.Explore.Jdbc.URL_PREFIX, "foobar", 11015);
 
   @Test
   public void testParseFetchSize() {
@@ -41,19 +41,19 @@ public class ExploreConnectionParamsTest {
 
     connectionParams = ExploreConnectionParams.parseConnectionUrl(BASE);
     Assert.assertEquals("foobar", connectionParams.getHost());
-    Assert.assertEquals(10000, connectionParams.getPort());
+    Assert.assertEquals(11015, connectionParams.getPort());
     Assert.assertEquals(ImmutableMultimap.of(), connectionParams.getExtraInfos());
 
     connectionParams = ExploreConnectionParams.parseConnectionUrl(BASE + "?auth.token=foo");
     Assert.assertEquals("foobar", connectionParams.getHost());
-    Assert.assertEquals(10000, connectionParams.getPort());
+    Assert.assertEquals(11015, connectionParams.getPort());
     Assert.assertEquals(
       ImmutableMultimap.of(ExploreConnectionParams.Info.EXPLORE_AUTH_TOKEN, "foo"),
       connectionParams.getExtraInfos());
 
     connectionParams = ExploreConnectionParams.parseConnectionUrl(BASE + "?auth.token=foo&foo2=bar2");
     Assert.assertEquals("foobar", connectionParams.getHost());
-    Assert.assertEquals(10000, connectionParams.getPort());
+    Assert.assertEquals(11015, connectionParams.getPort());
     Assert.assertEquals(
       ImmutableMultimap.of(ExploreConnectionParams.Info.EXPLORE_AUTH_TOKEN, "foo"),
       connectionParams.getExtraInfos());
@@ -61,7 +61,7 @@ public class ExploreConnectionParamsTest {
     connectionParams = ExploreConnectionParams.parseConnectionUrl(
       BASE + "?foo2=bar2&auth.token=foo&ssl.enabled=true&verify.ssl.cert=false");
     Assert.assertEquals("foobar", connectionParams.getHost());
-    Assert.assertEquals(10000, connectionParams.getPort());
+    Assert.assertEquals(11015, connectionParams.getPort());
     Assert.assertEquals(
       ImmutableMultimap.of(ExploreConnectionParams.Info.EXPLORE_AUTH_TOKEN, "foo",
                            ExploreConnectionParams.Info.SSL_ENABLED, "true",
@@ -70,12 +70,12 @@ public class ExploreConnectionParamsTest {
 
     connectionParams = ExploreConnectionParams.parseConnectionUrl(BASE + "?foo2=bar2&auth.token");
     Assert.assertEquals("foobar", connectionParams.getHost());
-    Assert.assertEquals(10000, connectionParams.getPort());
+    Assert.assertEquals(11015, connectionParams.getPort());
     Assert.assertEquals(ImmutableMultimap.of(), connectionParams.getExtraInfos());
 
     connectionParams = ExploreConnectionParams.parseConnectionUrl(BASE + "?foo2=bar2&auth.token=foo,bar");
     Assert.assertEquals("foobar", connectionParams.getHost());
-    Assert.assertEquals(10000, connectionParams.getPort());
+    Assert.assertEquals(11015, connectionParams.getPort());
     Assert.assertEquals(
       ImmutableMultimap.of(ExploreConnectionParams.Info.EXPLORE_AUTH_TOKEN, "foo",
                            ExploreConnectionParams.Info.EXPLORE_AUTH_TOKEN, "bar"),

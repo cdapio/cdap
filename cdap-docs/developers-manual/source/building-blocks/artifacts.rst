@@ -195,18 +195,18 @@ Our development team writes code such as::
 Our build system creates a JAR named ``myapp-1.0.0.jar`` that contains the ``MyApp`` class.
 The JAR is deployed via the RESTful API::
 
-  curl localhost:10000/v3/namespaces/default/artifacts/myapp --data-binary @myapp-1.0.0.jar
+  curl localhost:11015/v3/namespaces/default/artifacts/myapp --data-binary @myapp-1.0.0.jar
 
 CDAP determines the version is 1.0.0 by examining the manifest file contained in the JAR.
 Information about the artifact and the application class in the artifact are now visible
 through JAR API calls::
 
-  curl localhost:10000/v3/namespaces/default/artifacts?scope=user
+  curl localhost:11015/v3/namespaces/default/artifacts?scope=user
   [ 
     { "name": "myapp", "scope":"USER",  "version": "1.0.0" }
   ]
 
-  curl localhost:10000/v3/namespaces/default/artifacts/myapp/versions/1.0.0
+  curl localhost:11015/v3/namespaces/default/artifacts/myapp/versions/1.0.0
   {
     "classes": {
       "apps": [
@@ -235,7 +235,7 @@ an application class, and it contains a config that takes in a value for ``strea
 From this information, we decide to create an application named ``purchaseDump`` that reads
 from the ``purchases`` stream and writes to the ``events`` table::
 
-  curl -X PUT localhost:10000/v3/namespaces/default/apps/purchaseDump -H 'Content-Type: application/json' -d '
+  curl -X PUT localhost:11015/v3/namespaces/default/apps/purchaseDump -H 'Content-Type: application/json' -d '
   { 
     "artifact": {
       "name": "myapp",
@@ -253,11 +253,11 @@ We can then manage the lifecycle of the flow using the
 After it has been running for a while, a bug is found in the code. The development team provides
 a fix, and ``myapp-1.0.1.jar`` is released. The artifact is deployed::
 
-  curl localhost:10000/v3/namespaces/default/artifacts/myapp --data-binary @myapp-1.0.1.jar
+  curl localhost:11015/v3/namespaces/default/artifacts/myapp --data-binary @myapp-1.0.1.jar
 
 A call can be made to find all applications that use the old artifact::
 
-  curl localhost:10000/v3/namespaces/default/apps?artifactName=myapp&artifactVersion=1.0.0
+  curl localhost:11015/v3/namespaces/default/apps?artifactName=myapp&artifactVersion=1.0.0
   [
     {
       "name": "purchaseDump",
@@ -272,7 +272,7 @@ A call can be made to find all applications that use the old artifact::
 
 The flow for the ``purchaseDump`` application is stopped, then the application is updated::
 
-  curl localhost:10000/v3/namespaces/default/apps/purchaseDump/update -d '
+  curl localhost:11015/v3/namespaces/default/apps/purchaseDump/update -d '
   {
     "artifact": {
       "name": "myapp",
@@ -288,7 +288,7 @@ The flow for the ``purchaseDump`` application is stopped, then the application i
 The flow is started again, which picks up the new code. We quickly realize version 1.0.1 has a serious
 bug and decide to roll back to the previous version. The flow is stopped and another update call is made::
 
-  curl localhost:10000/v3/namespaces/default/apps/purchaseDump/update -d '
+  curl localhost:11015/v3/namespaces/default/apps/purchaseDump/update -d '
   {
     "artifact": {
       "name": "myapp",

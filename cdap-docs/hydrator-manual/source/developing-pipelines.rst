@@ -311,7 +311,7 @@ the CDAP CLI.
 
   .. tabbed-parsed-literal::
 
-    $ curl -w"\n" -X PUT localhost:10000/v3/namespaces/default/apps/streamETLApp \
+    $ curl -w"\n" -X PUT localhost:11015/v3/namespaces/default/apps/streamETLApp \
         -H "Content-Type: application/json" -d @config.json
         
     Deploy Complete

@@ -17,19 +17,31 @@
 /*global require, module, process */
 
 module.exports = {
-  extractConfig: extractConfig
+  extractConfig: extractConfig,
+  extractUISettings: extractUISettings
 };
 
 var promise = require('q'),
-    fs = require('fs'),
     spawn = require('child_process').spawn,
     StringDecoder = require('string_decoder').StringDecoder,
     decoder = new StringDecoder('utf8'),
     log4js = require('log4js'),
     cache = {},
+    path,
     buffer = '';
 
 var log = log4js.getLogger('default');
+
+function extractUISettings() {
+  try {
+    if (require.resolve('./ui-settings.json')) {
+      return require('./ui-settings.json') || {};
+    }
+  } catch(e) {
+    log.info('Unable to find UI settings json file.');
+    return {};
+  }
+}
 
 /*
  *  Extracts the config
@@ -39,7 +51,6 @@ var log = log4js.getLogger('default');
 function extractConfig(param) {
   var deferred = promise.defer(),
       tool;
-
   param = param || 'cdap';
 
   if (cache[param]) {

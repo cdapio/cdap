@@ -1,0 +1,25 @@
+{
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "rules": {
+    "semi": 2,
+    "no-console": 0
+  },
+  "env": {
+    "browser": true,
+    "commonjs": true,
+    "node": true
+  },
+  "globals": {
+    "angular": false,
+    "PKG": true,
+    "getAbsCDAPUrl": true
+  },
+  "plugins": ["react"],
+  "extends": ["eslint:recommended", "plugin:react/recommended"]
+}

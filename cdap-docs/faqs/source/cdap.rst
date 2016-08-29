@@ -116,7 +116,7 @@ If you have followed :ref:`the installation instructions <installation-index>`, 
 
 - If CDAP Master has started, query the backend by using a command (substituting for ``<host>`` as appropriate)::
 
-    $ curl -w'\n' <host>:10000/v3/system/services/status
+    $ curl -w'\n' <host>:11015/v3/system/services/status
     
   The response should be something similar to::
   
@@ -126,7 +126,7 @@ If you have followed :ref:`the installation instructions <installation-index>`, 
 ..
 
 - Check that the CDAP UI is accessible (by default, the URL will be
-  ``http://<host>:9999`` where ``<host>`` is the IP address of one of the machines where you
+  ``http://<host>:11011`` where ``<host>`` is the IP address of one of the machines where you
   installed the packages and started the services).
 
 
@@ -147,7 +147,7 @@ This is indicative that the UI cannot connect to the CDAP system service contain
   The ``yarn-site.xml`` configuration file determines the container log directory.
   
 - Ensure that the CDAP UI can connect to the CDAP Router. Check that the configured ``router.server.address`` and 
-  ``router.server.port`` (default 10000) in :ref:`cdap-site.xml file <packages-configuration-options>` corresponds with where the CDAP Router is listening.
+  ``router.server.port`` (default 11015) in :ref:`cdap-site.xml file <packages-configuration-options>` corresponds with where the CDAP Router is listening.
 
 
 I don't see the CDAP Master service on YARN.
@@ -156,7 +156,7 @@ I don't see the CDAP Master service on YARN.
   Can you log into the cluster at ``http://<host>:8088`` and access the YARN Resource Manager webapp?
 - Ensure :ref:`YARN has enough memory and vcore capacity <faq-installation-startup-memory-core-requirements>`.
 - Is the router address properly configured (``router.server.address`` and ``router.server.port`` 
-  (default 10000) in :ref:`cdap-site.xml file <packages-configuration-options>`) and the boxes using it?
+  (default 11015) in :ref:`cdap-site.xml file <packages-configuration-options>`) and the boxes using it?
 - Check that the classpath used includes the YARN configuration in it.
 
 
@@ -214,18 +214,6 @@ not be able to communicate with each other, and you'll see error messages such a
 You can set a system's network setting for a proxy by using::
 
   $ export no_proxy="localhost,127.0.0.1"
-
-
-The HiveServer2 already listens on port 10000; what should I do?
-----------------------------------------------------------------
-By default, CDAP uses port 10000. If port 10000 is being used by another service, simply
-change the ``router.bind.port`` in the ``cdap-site.xml`` to another available port. Since
-in the Hadoop ecosystem, HiveServer2 defaults to 10000, we are considering changing the
-router default port.
-
-If you use CDM or Apache Ambari to install CDAP, it will detect this and run the CDAP
-Router on port 11015. Another solution is to simply run the CDAP Router on a different
-host than HiveServer2.
 
 
 CDAP services on distributed CDAP aren't starting up due to an exception. What should I do?

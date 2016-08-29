@@ -18,7 +18,7 @@
  * various utility functions
  */
 angular.module(PKG.name+'.services')
-  .factory('myHelpers', function(myCdapUrl){
+  .factory('myHelpers', function(myCdapUrl, $window){
 
    /**
     * set a property deep in an object
@@ -178,6 +178,7 @@ angular.module(PKG.name+'.services')
     deepGet: deepGet,
     objectQuery: objectQuery,
     getConfig: getConfig,
-    getConfigNs: getConfigNs
+    getConfigNs: getConfigNs,
+    getAbsUIUrl: $window.getAbsUIUrl
   };
 });
