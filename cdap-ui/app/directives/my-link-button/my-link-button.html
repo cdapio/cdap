@@ -26,7 +26,7 @@
           <span>{{dataset.datasetId}}</span>
       </a>
       <a ng-if="dataset.entityType === 'datasets'"
-          ui-sref="tracker.detail.entity.metadata({entityType: 'datasets', entityId: dataset.datasetId})">
+          ui-sref="tracker.detail.entityType.metadata({entityType: 'datasets', entityId: dataset.datasetId})">
           <span class="fa icon-tracker"></span>
           <span>{{dataset.datasetId}}</span>
       </a>
@@ -36,7 +36,7 @@
           <span>{{dataset.streamId}}</span>
       </a>
       <a ng-if="dataset.entityType === 'streams'"
-          ui-sref="tracker.detail.entity.metadata({entityType: 'streams', entityId: dataset.streamId})">
+          ui-sref="tracker.detail.entityType.metadata({entityType: 'streams', entityId: dataset.streamId})">
           <span class="fa icon-tracker"></span>
           <span>{{dataset.streamId}}</span>
       </a>

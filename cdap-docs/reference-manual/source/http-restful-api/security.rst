@@ -33,14 +33,14 @@ Use the CDAP Authorization HTTP RESTful API to grant, revoke, and list privilege
 entities. Details about authorization in CDAP can be found at :ref:`Admin' Manual:
 Authorization <admin-authorization>`.
 
-In this API, a JSON-formatted body is used that contains the principal, the CDAP entity, and the privileges to
+In this API, a JSON-formatted body is used that contains the principal, the CDAP entityType, and the privileges to
 be granted::
 
   {
-    "entity": {
+    "entityType": {
       "namespace": "default",
       "dataset": "dataset",
-      "entity": "DATASET"
+      "entityType": "DATASET"
     },
     "principal": {
       "name": "alice",
@@ -49,8 +49,8 @@ be granted::
     "actions": ["READ", "WRITE", "ADMIN"]
   }
 
-In the above JSON body, the ``entity`` object is the JSON-serialized form of the CDAP
-entity classes |---| for example, for datasets, it is the JSON representation of the
+In the above JSON body, the ``entityType`` object is the JSON-serialized form of the CDAP
+entityType classes |---| for example, for datasets, it is the JSON representation of the
 :cdap-java-source-github:`DatasetId <cdap-proto/src/main/java/co/cask/cdap/proto/id/DatasetId.java>`
 class; for programs, it is the JSON representation of the
 :cdap-java-source-github:`ProgramId <cdap-proto/src/main/java/co/cask/cdap/proto/id/ProgramId.java>`
@@ -65,7 +65,7 @@ supporting integration with** :ref:`Apache Sentry <integrations:apache-sentry>`.
 **It may be removed in a future release.**
 
 The ``actions`` list contains the actions you want to grant the ``principal`` on the
-``entity``. The supported actions are ``READ``, ``WRITE``, ``ADMIN``, and ``EXECUTE``.
+``entityType``. The supported actions are ``READ``, ``WRITE``, ``ADMIN``, and ``EXECUTE``.
 
 .. _http-restful-api-security-auth-grant:
 
@@ -76,14 +76,14 @@ the URL::
 
   POST /v3/security/authorization/privileges/grant
 
-with JSON-formatted body that contains the principal, the CDAP entity, and the actions to
+with JSON-formatted body that contains the principal, the CDAP entityType, and the actions to
 be granted, such as::
 
   {
-    "entity": {
+    "entityType": {
       "namespace": "default",
       "dataset": "dataset",
-      "entity": "DATASET"
+      "entityType": "DATASET"
     },
     "principal": {
       "name": "alice",
@@ -112,13 +112,13 @@ You can revoke privileges for a principal on a CDAP Entity by making an HTTP POS
 
   POST /v3/security/authorization/privileges/revoke
 
-with JSON-formatted body that contains the principal, the CDAP entity and the actions to be revoked::
+with JSON-formatted body that contains the principal, the CDAP entityType and the actions to be revoked::
 
   {
-    "entity": {
+    "entityType": {
       "namespace": "default",
       "dataset": "dataset",
-      "entity": "DATASET"
+      "entityType": "DATASET"
     },
     "principal": {
       "name": "alice",
@@ -127,12 +127,12 @@ with JSON-formatted body that contains the principal, the CDAP entity and the ac
     "actions": ["READ", "WRITE", "ADMIN"]
   }
 
-The ``entity`` object is mandatory in a revoke request.
+The ``entityType`` object is mandatory in a revoke request.
 
 - If both ``principal`` and ``actions`` are not provided, then the API revokes all
-  privileges on the specified entity for all principals. 
-- If ``entity`` and ``principal`` are provided, but ``actions`` is not, the API revokes
-  all actions (``READ``, ``WRITE``, ``ADMIN``, and ``EXECUTE``) on the specified entity for
+  privileges on the specified entityType for all principals.
+- If ``entityType`` and ``principal`` are provided, but ``actions`` is not, the API revokes
+  all actions (``READ``, ``WRITE``, ``ADMIN``, and ``EXECUTE``) on the specified entityType for
   the specified principal.
 
 .. rubric:: HTTP Responses
@@ -178,32 +178,32 @@ You can list all privileges for a principal on all CDAP entities by making an HT
    * - ``200 OK``
      - Privileges were successfully listed for the specified principal
 
-This will return a JSON array that lists each privilege for the principal with its ``entity`` and ``action``.
+This will return a JSON array that lists each privilege for the principal with its ``entityType`` and ``action``.
 Example output (pretty-printed)::
 
   [
     {
-      "entity": {
+      "entityType": {
         "namespace": "default",
         "dataset": "dataset",
-        "entity": "DATASET"
+        "entityType": "DATASET"
       },
       "action": "WRITE"
     },
     {
-      "entity": {
+      "entityType": {
         "namespace": "default",
-        "entity": "NAMESPACE"
+        "entityType": "NAMESPACE"
       },
       "action": "READ"
     },
     {
-      "entity": {
+      "entityType": {
         "namespace": "default",
         "application": "app",
         "type": "Flow",
         "program": "testflow",
-        "entity": "PROGRAM"
+        "entityType": "PROGRAM"
       },
       "action": "EXECUTE"
     }

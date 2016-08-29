@@ -76,17 +76,25 @@ public abstract class EntityId implements IdCompatible {
     return datasetIdPattern.matcher(datasetId).matches();
   }
 
-  private final EntityType entity;
+  private final EntityType entityType;
   private Vector<EntityId> hierarchy;
 
-  protected EntityId(EntityType entity) {
-    this.entity = entity;
+  protected EntityId(EntityType entityType) {
+    this.entityType = entityType;
   }
 
   protected abstract Iterable<String> toIdParts();
 
+  /**
+   * Deprecated to rename the method. Use {@link #getEntityType()}
+   */
+  @Deprecated
   public final EntityType getEntity() {
-    return entity;
+    return entityType;
+  }
+
+  public final EntityType getEntityType() {
+    return entityType;
   }
 
   public static <T extends Id> T fromStringOld(String string, Class<T> oldIdClass) {
@@ -125,7 +133,7 @@ public abstract class EntityId implements IdCompatible {
   @Override
   public final String toString() {
     StringBuilder result = new StringBuilder();
-    result.append(entity.name().toLowerCase());
+    result.append(entityType.name().toLowerCase());
 
     String separator = IDSTRING_TYPE_SEPARATOR;
     for (String part : toIdParts()) {
@@ -144,12 +152,12 @@ public abstract class EntityId implements IdCompatible {
       return false;
     }
     EntityId entityId = (EntityId) o;
-    return Objects.equals(entity, entityId.entity);
+    return Objects.equals(entityType, entityId.entityType);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(entity);
+    return Objects.hash(entityType);
   }
 
   protected static String next(Iterator<String> iterator, String fieldName) {

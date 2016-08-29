@@ -144,9 +144,9 @@ Glossary
    Namespace
       A namespace is a logical grouping of application, data and its metadata in CDAP.
       Conceptually, namespaces can be thought of as a partitioning of a CDAP instance. Any
-      application or data (referred to here as an “entity”) can exist independently in
-      multiple namespaces at the same time. The data and metadata of an entity is stored
-      independent of another instance of the same entity in a different namespace. The
+      application or data (referred to here as an “entityType”) can exist independently in
+      multiple namespaces at the same time. The data and metadata of an entityType is stored
+      independent of another instance of the same entityType in a different namespace. The
       primary motivation for namespaces in CDAP is to achieve application and data
       isolation.
 
@@ -176,12 +176,12 @@ Glossary
       dataset, and the files in a dataset must meet certain requirements.
 
    Producer
-      A producer is an entity that emits events, such as a :term:`stream` or a
+      A producer is an entityType that emits events, such as a :term:`stream` or a
       :term:`flowlet`. Flowlets can at the same time be both :term:`consumers <consumer>`
       and producers.
 
    Consumer
-      A consumer is an entity that is a recipient of events, typically a :term:`flowlet`.
+      A consumer is an entityType that is a recipient of events, typically a :term:`flowlet`.
       A consumer flowlet is the recipient of a queue. The difference between the total of
       a :term:`producer's <producer>` events and the consumed events is the pending events.
 

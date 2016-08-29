@@ -12,9 +12,9 @@ Overview
 ========
 A *Namespace* is a logical grouping of application, data and its metadata in CDAP. Conceptually,
 namespaces can be thought of as a partitioning of a CDAP instance. Any application or data
-(referred to here as an “entity”) can exist independently in multiple namespaces at the
-same time. The data and metadata of an entity is stored independent of another instance of
-the same entity in a different namespace. 
+(referred to here as an “entityType”) can exist independently in multiple namespaces at the
+same time. The data and metadata of an entityType is stored independent of another instance of
+the same entityType in a different namespace.
 
 The primary motivation for namespaces in CDAP is to achieve application and data
 isolation. This is an intial step towards introducing `multi-tenancy
@@ -59,8 +59,8 @@ feature in a future release.
 
 Identifying Entities in a Namespace
 ===================================
-The ID of an entity in a namespace is composed of a combination of the namespace ID plus
-the entity ID, since an entity cannot exist independently of a namespace.
+The ID of an entityType in a namespace is composed of a combination of the namespace ID plus
+the entityType ID, since an entityType cannot exist independently of a namespace.
 
 
 Using Namespaces

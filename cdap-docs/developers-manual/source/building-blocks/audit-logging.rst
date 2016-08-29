@@ -12,10 +12,10 @@ Overview
 ========
 Audit logging provides a chronological ledger containing evidence of operations or changes
 on CDAP entities. This information can be used to capture a trail of the activities that
-determined the state of an entity at a given point in time. These activities include the
-creation, modification, and deletion of an entity. It also includes modification of the
-entity's :ref:`metadata <metadata-lineage-metadata>`. For data entities (datasets and
-streams), it includes access information used to generate the entity's :ref:`lineage
+determined the state of an entityType at a given point in time. These activities include the
+creation, modification, and deletion of an entityType. It also includes modification of the
+entityType's :ref:`metadata <metadata-lineage-metadata>`. For data entities (datasets and
+streams), it includes access information used to generate the entityType's :ref:`lineage
 <metadata-lineage-lineage>`. Audit logging is an especially important feature because it
 enables users to integrate CDAP with external data governance systems such as
 :ref:`Cloudera Navigator <audit-logging-navigator-integration>`. 
@@ -95,7 +95,7 @@ Here are some example JSON messages, pretty-printed:
 	  "entityId": {
 		  "namespace": "ns1",
 		  "dataset": "ds1",
-		  "entity": "DATASET"
+		  "entityType": "DATASET"
 	  },
 	  "user": "user1",
 	  "type": "CREATE",
@@ -112,7 +112,7 @@ Here are some example JSON messages, pretty-printed:
 	  "entityId": {
 		  "namespace": "ns1",
 		  "stream": "stream1",
-		  "entity": "STREAM"
+		  "entityType": "STREAM"
 	  },
 	  "user": "user1",
 	  "type": "ACCESS",
@@ -124,7 +124,7 @@ Here are some example JSON messages, pretty-printed:
 			  "type": "Flow",
 			  "program": "flow1",
 			  "run": "run1",
-			  "entity": "PROGRAM_RUN"
+			  "entityType": "PROGRAM_RUN"
 		  }
 	  }
   }
@@ -139,7 +139,7 @@ Here are some example JSON messages, pretty-printed:
 	  "entityId": {
   		"namespace": "ns1",
 	  	"application": "app1",
-		  "entity": "APPLICATION"
+		  "entityType": "APPLICATION"
 	  },
 	  "user": "user1",
 	  "type": "METADATA_CHANGE",

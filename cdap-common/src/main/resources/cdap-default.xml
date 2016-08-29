@@ -161,7 +161,7 @@
     <description>
       Java garbage collection options for all Apache Twill containers;
       "&lt;LOG_DIR&gt;" is the location of the log directory in the
-      container; note that the special characters are replaced with entity
+      container; note that the special characters are replaced with entityType
       equivalents so they can be included in the XML
     </description>
   </property>

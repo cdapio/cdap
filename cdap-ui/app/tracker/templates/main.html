@@ -40,12 +40,12 @@
           <p>Last 7 days</p>
         </div>
         <div class="metric-container">
-          <my-top-entity-graph
+          <my-top-entityType-graph
             type="applications"
             start="'now-7d'"
             end="'now'"
             limit="5">
-          </my-top-entity-graph>
+          </my-top-entityType-graph>
         </div>
       </div>
       <div class="col-md-4">
@@ -54,12 +54,12 @@
           <p>Last 7 days</p>
         </div>
         <div class="metric-container">
-          <my-top-entity-graph
+          <my-top-entityType-graph
             type="programs"
             start="'now-7d'"
             end="'now'"
             limit="5">
-          </my-top-entity-graph>
+          </my-top-entityType-graph>
         </div>
       </div>
       <div class="col-md-4">
@@ -86,7 +86,7 @@
                 <td class="text-left">
 
                   <a ng-if="metric.entityType === 'dataset'"
-                    ui-sref="tracker.detail.entity.metadata({entityType: 'datasets', entityId: metric.entityName})">
+                    ui-sref="tracker.detail.entityType.metadata({entityType: 'datasets', entityId: metric.entityName})">
                     <span uib-tooltip="{{ ::metric.entityName }}"
                       tooltip-ellipsis="{{ ::metric.entityName }}"
                       tooltip-enable="metric.entityName.length > 15"
@@ -98,7 +98,7 @@
                     </span>
                   </a>
                   <a ng-if="metric.entityType === 'stream'"
-                    ui-sref="tracker.detail.entity.metadata({entityType: 'streams', entityId: metric.entityName})">
+                    ui-sref="tracker.detail.entityType.metadata({entityType: 'streams', entityId: metric.entityName})">
                     <span uib-tooltip="{{ ::metric.entityName }}"
                       tooltip-ellipsis="{{ ::metric.entityName }}"
                       tooltip-enable="metric.entityName.length > 15"

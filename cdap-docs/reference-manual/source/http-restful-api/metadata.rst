@@ -29,7 +29,7 @@ The HTTP RESTful API is divided into these sections:
 
 Metadata keys, values, and tags must conform to the CDAP :ref:`alphanumeric extra extended
 character set <supported-characters>`, and are limited to 50 characters in length. The entire
-metadata object associated with a single entity is limited to 10K bytes in size.
+metadata object associated with a single entityType is limited to 10K bytes in size.
 
 There is one reserved word for property keys and values: *tags*, either as ``tags`` or
 ``TAGS``. Tags themselves have no reserved words.
@@ -48,7 +48,7 @@ Annotating Properties
 ---------------------
 To annotate user metadata properties for an application, dataset, or stream, submit an HTTP POST request::
 
-  POST /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/properties
+  POST /v3/namespaces/<namespace-id>/<entityType-type>/<entityType-id>/metadata/properties
   
 or, for a particular program of a specific application::
 
@@ -71,7 +71,7 @@ request body::
     // ...
   }
   
-If the entity requested is found, new keys will be added and existing keys will be
+If the entityType requested is found, new keys will be added and existing keys will be
 updated. Existing keys not in the properties map will not be deleted.
 
 .. list-table::
@@ -82,10 +82,10 @@ updated. Existing keys not in the properties map will not be deleted.
      - Description
    * - ``namespace-id``
      - Namespace ID
-   * - ``entity-type``
+   * - ``entityType-type``
      - One of ``apps``, ``datasets``, or ``streams``
-   * - ``entity-id``
-     - Name of the entity
+   * - ``entityType-id``
+     - Name of the entityType
    * - ``app-id``
      - Name of the application
    * - ``program-type``
@@ -112,9 +112,9 @@ updated. Existing keys not in the properties map will not be deleted.
    * - ``200 OK``
      - The properties were set
    * - ``404 NOT FOUND``
-     - The entity or program for which properties are being set was not found
+     - The entityType or program for which properties are being set was not found
 
-**Note**: When using this API, properties can be added to the metadata of the specified entity
+**Note**: When using this API, properties can be added to the metadata of the specified entityType
 only in the *user* scope.
      
 
@@ -122,7 +122,7 @@ Retrieving Properties
 ---------------------
 To retrieve user metadata properties for an application, dataset, or stream, submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/properties[?scope=<scope>]
+  GET /v3/namespaces/<namespace-id>/<entityType-type>/<entityType-id>/metadata/properties[?scope=<scope>]
   
 or, for a particular program of a specific application::
 
@@ -153,10 +153,10 @@ in the response body (pretty-printed)::
      - Description
    * - ``namespace-id``
      - Namespace ID
-   * - ``entity-type``
+   * - ``entityType-type``
      - One of ``apps``, ``datasets``, or ``streams``
-   * - ``entity-id``
-     - Name of the entity
+   * - ``entityType-id``
+     - Name of the entityType
    * - ``app-id``
      - Name of the application
    * - ``program-type``
@@ -186,7 +186,7 @@ in the response body (pretty-printed)::
    * - ``200 OK``
      - The properties requested were returned as a JSON string in the body of the response
    * - ``404 NOT FOUND``
-     - The entity or program for which properties are being retrieved was not found
+     - The entityType or program for which properties are being retrieved was not found
 
 
 Deleting Properties
@@ -194,7 +194,7 @@ Deleting Properties
 To delete **all** user metadata properties for an application, dataset, or stream, submit an
 HTTP DELETE request::
 
-  DELETE /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/properties
+  DELETE /v3/namespaces/<namespace-id>/<entityType-type>/<entityType-id>/metadata/properties
   
 or, for all user metadata properties of a particular program of a specific application::
 
@@ -211,7 +211,7 @@ or, for a particular view of a stream::
 To delete **a specific property** for an application, dataset, or stream, submit
 an HTTP DELETE request with the property key::
 
-  DELETE /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/properties/<key>
+  DELETE /v3/namespaces/<namespace-id>/<entityType-type>/<entityType-id>/metadata/properties/<key>
   
 or, for a particular property of a program of a specific application::
 
@@ -233,10 +233,10 @@ or, for a particular view of a stream::
      - Description
    * - ``namespace-id``
      - Namespace ID
-   * - ``entity-type``
+   * - ``entityType-type``
      - One of ``apps``, ``datasets``, or ``streams``
-   * - ``entity-id``
-     - Name of the entity
+   * - ``entityType-id``
+     - Name of the entityType
    * - ``app-id``
      - Name of the application
    * - ``program-type``
@@ -266,7 +266,7 @@ or, for a particular view of a stream::
      - The method was successfully called, and the properties were deleted, or in the case of a
        specific key, were either deleted or the key was not present
    * - ``404 NOT FOUND``
-     - The entity or program for which properties are being deleted was not found
+     - The entityType or program for which properties are being deleted was not found
 
 **Note**: When using this API, only properties in the *user* scope can be deleted.
 
@@ -279,7 +279,7 @@ Adding Tags
 -----------
 To add user metadata tags for an application, dataset, or stream, submit an HTTP POST request::
 
-  POST /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/tags
+  POST /v3/namespaces/<namespace-id>/<entityType-type>/<entityType-id>/metadata/tags
   
 or, for a particular program of a specific application::
 
@@ -305,10 +305,10 @@ with the metadata tags, as a list of strings, passed in the JSON request body::
      - Description
    * - ``namespace-id``
      - Namespace ID
-   * - ``entity-type``
+   * - ``entityType-type``
      - One of ``apps``, ``datasets``, or ``streams``
-   * - ``entity-id``
-     - Name of the entity
+   * - ``entityType-id``
+     - Name of the entityType
    * - ``app-id``
      - Name of the application
    * - ``program-type``
@@ -335,16 +335,16 @@ with the metadata tags, as a list of strings, passed in the JSON request body::
    * - ``200 OK``
      - The tags were set
    * - ``404 NOT FOUND``
-     - The entity or program for which tags are being set was not found
+     - The entityType or program for which tags are being set was not found
 
-**Note**: When using this API, tags can be added to the metadata of the specified entity only in the user scope.
+**Note**: When using this API, tags can be added to the metadata of the specified entityType only in the user scope.
 
 
 Retrieving Tags
 ---------------
 To retrieve user metadata tags for an application, dataset, or stream, submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/tags[?scope=<scope>
+  GET /v3/namespaces/<namespace-id>/<entityType-type>/<entityType-id>/metadata/tags[?scope=<scope>
   
 or, for a particular program of a specific application::
 
@@ -370,10 +370,10 @@ with the metadata tags returned as a JSON string in the return body::
      - Description
    * - ``namespace-id``
      - Namespace ID
-   * - ``entity-type``
+   * - ``entityType-type``
      - One of ``apps``, ``datasets``, or ``streams``
-   * - ``entity-id``
-     - Name of the entity
+   * - ``entityType-id``
+     - Name of the entityType
    * - ``app-id``
      - Name of the application
    * - ``program-type``
@@ -403,7 +403,7 @@ with the metadata tags returned as a JSON string in the return body::
    * - ``200 OK``
      - The properties requested were returned as a JSON string in the body of the response
    * - ``404 NOT FOUND``
-     - The entity or program for which properties are being retrieved was not found
+     - The entityType or program for which properties are being retrieved was not found
      
      
 Removing Tags
@@ -411,7 +411,7 @@ Removing Tags
 To delete all user metadata tags for an application, dataset, or stream, submit an
 HTTP DELETE request::
 
-  DELETE /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/tags
+  DELETE /v3/namespaces/<namespace-id>/<entityType-type>/<entityType-id>/metadata/tags
   
 or, for all user metadata tags of a particular program of a specific application::
 
@@ -428,7 +428,7 @@ or, for a particular view of a stream::
 To delete a specific user metadata tag for an application, dataset, or stream, submit
 an HTTP DELETE request with the tag::
 
-  DELETE /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/metadata/tags/<tag>
+  DELETE /v3/namespaces/<namespace-id>/<entityType-type>/<entityType-id>/metadata/tags/<tag>
   
 or, for a particular user metadata tag of a program of a specific application::
 
@@ -450,10 +450,10 @@ or, for a particular view of a stream::
      - Description
    * - ``namespace-id``
      - Namespace ID
-   * - ``entity-type``
+   * - ``entityType-type``
      - One of ``apps``, ``datasets``, or ``streams``
-   * - ``entity-id``
-     - Name of the entity
+   * - ``entityType-id``
+     - Name of the entityType
    * - ``app-id``
      - Name of the application
    * - ``program-type``
@@ -483,7 +483,7 @@ or, for a particular view of a stream::
      - The method was successfully called, and the tags were deleted, or in the case of a
        specific tag, was either deleted or the tag was not present
    * - ``404 NOT FOUND``
-     - The entity or program for which tags are being deleted was not found
+     - The entityType or program for which tags are being deleted was not found
 
 **Note**: When using this API, only tags in the user scope can be deleted.
 
@@ -495,9 +495,9 @@ Searching for Metadata
 CDAP supports searching metadata of entities. To find which applications, datasets, streams, etc. have a particular
 metadata property or metadata tag, submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace-id>/metadata/search?query=<term>[&target=<entity-type>&target=<entity-type2>...]
+  GET /v3/namespaces/<namespace-id>/metadata/search?query=<term>[&target=<entityType-type>&target=<entityType-type2>...]
 
-Entities that match the specified query and entity type are returned in the body of the response in JSON format::
+Entities that match the specified query and entityType type are returned in the body of the response in JSON format::
 
   [
      {
@@ -556,8 +556,8 @@ Entities that match the specified query and entity type are returned in the body
      - Description
    * - ``namespace-id``
      - Namespace ID
-   * - ``entity-type``
-     - Restricts the search to either all or specified entity types: ``all``, ``artifact``, ``app``, ``dataset``,
+   * - ``entityType-type``
+     - Restricts the search to either all or specified entityType types: ``all``, ``artifact``, ``app``, ``dataset``,
        ``program``, ``stream``, or ``view``
    * - ``term``
      - :ref:`Query term <http-restful-api-metadata-query-terms>`, as described below. Query terms are case-insensitive
@@ -571,7 +571,7 @@ Entities that match the specified query and entity type are returned in the body
    * - Status Codes
      - Description
    * - ``200 OK``
-     - Entity ID and metadata of entities that match the query and entity type(s) are returned in the body of the response
+     - Entity ID and metadata of entities that match the query and entityType type(s) are returned in the body of the response
 
 .. _http-restful-api-metadata-query-terms:
 
@@ -642,7 +642,7 @@ Viewing Lineages
 ================
 To view the lineage of a dataset or stream, submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace-id>/<entity-type>/<entity-id>/lineage?start=<start-ts>&end=<end-ts>[&levels=<levels>][&collapse=<collapse>&collapse=<collapse>...]
+  GET /v3/namespaces/<namespace-id>/<entityType-type>/<entityType-id>/lineage?start=<start-ts>&end=<end-ts>[&levels=<levels>][&collapse=<collapse>&collapse=<collapse>...]
 
 where:
 
@@ -654,9 +654,9 @@ where:
      - Description
    * - ``namespace-id``
      - Namespace ID
-   * - ``entity-type``
+   * - ``entityType-type``
      - One of ``datasets`` or ``streams``
-   * - ``entity-id``
+   * - ``entityType-id``
      - Name of the ``dataset`` or ``stream``
    * - ``start-ts``
      - Starting time-stamp of lineage (inclusive), in seconds. Supports ``now``, ``now-1h``, etc. syntax.
@@ -789,7 +789,7 @@ to differentiate between multiple lineage relations that only differ by the coll
 
 For example, consider a program that wrote to a dataset in multiple runs over a specified time interval. 
 If you do not want to differentiate between lineage relations involving different runs of this program 
-(so you only want to know that a program accessed a data entity in a given time interval), you could provide 
+(so you only want to know that a program accessed a data entityType in a given time interval), you could provide
 the query parameter ``collapse=run`` to the lineage API. This would collapse the lineage relations in the 
 output to group the multiple runs of the program together. 
 
@@ -1124,4 +1124,4 @@ with the metadata returned as a JSON string in the return body::
    * - ``200 OK``
      - The properties requested were returned as a JSON string in the body of the response
    * - ``404 NOT FOUND``
-     - The entity, program, or run for which properties are being requested was not found
+     - The entityType, program, or run for which properties are being requested was not found

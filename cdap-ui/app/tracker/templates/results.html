@@ -47,22 +47,22 @@
       </h4>
 
       <div class="checkbox"
-           ng-class="{'hover': entity.isHover }"
-           ng-repeat="entity in ResultsController.entityFiltersList"
-           ng-if="entity.count > 0">
-        <label ng-class="{ 'active': entity.isActive }"
-               ng-mouseenter="entity.isHover = true"
-               ng-mouseleave="entity.isHover = false"
+           ng-class="{'hover': entityType.isHover }"
+           ng-repeat="entityType in ResultsController.entityFiltersList"
+           ng-if="entityType.count > 0">
+        <label ng-class="{ 'active': entityType.isActive }"
+               ng-mouseenter="entityType.isHover = true"
+               ng-mouseleave="entityType.isHover = false"
                ng-click="ResultsController.filterResults()">
-          <input type="checkbox" ng-model="entity.isActive">
-          <span>{{ entity.name }}</span>
+          <input type="checkbox" ng-model="entityType.isActive">
+          <span>{{ entityType.name }}</span>
           <span class="pull-right">
             <span class="only-button"
-                  ng-show="entity.isHover"
-                  ng-click="ResultsController.onlyFilter($event, entity, 'ENTITIES')">
+                  ng-show="entityType.isHover"
+                  ng-click="ResultsController.onlyFilter($event, entityType, 'ENTITIES')">
               only
             </span>
-            <span>{{ entity.count }}</span>
+            <span>{{ entityType.count }}</span>
           </span>
         </label>
       </div>
@@ -136,42 +136,42 @@
 
     <div class="results-list" ng-if="ResultsController.searchResults.length > 0">
       <div class="row"
-           ng-repeat="entity in ResultsController.searchResults | orderBy: ResultsController.sortBy.sort | myPaginate: ResultsController.currentPage">
+           ng-repeat="entityType in ResultsController.searchResults | orderBy: ResultsController.sortBy.sort | myPaginate: ResultsController.currentPage">
         <div class="col-xs-12">
           <h4>
-            <a ui-sref="tracker.detail.entity.metadata({ entityType: entity.entityTypeState, entityId: entity.name, searchTerm: $state.params.searchQuery })">{{ entity.name }}</a>
+            <a ui-sref="tracker.detail.entityType.metadata({ entityType: entityType.entityTypeState, entityId: entityType.name, searchTerm: $state.params.searchQuery })">{{ entityType.name }}</a>
           </h4>
         </div>
         <div class="col-xs-6">
           <h5>
-            <span class="{{entity.icon}}"></span>
-            <span>{{ entity.type }}</span>
+            <span class="{{entityType.icon}}"></span>
+            <span>{{ entityType.type }}</span>
 
             <span class="pull-right">
               <span class="text-dark">Created: </span>
-              <span ng-if="entity.createDate">
-                {{ entity.createDate | amDateFormat:'MMM DD, YYYY' }}
+              <span ng-if="entityType.createDate">
+                {{ entityType.createDate | amDateFormat:'MMM DD, YYYY' }}
               </span>
-              <span ng-if="!entity.createDate">
+              <span ng-if="!entityType.createDate">
                 &mdash;
               </span>
             </span>
           </h5>
 
-          <p>{{ entity.description }}</p>
+          <p>{{ entityType.description }}</p>
         </div>
 
         <div class="col-xs-4">
-          <my-truth-meter score="ResultsController.truthMeterMap[entity.entityTypeState][entity.name]"
+          <my-truth-meter score="ResultsController.truthMeterMap[entityType.entityTypeState][entityType.name]"
                           width="190"></my-truth-meter>
         </div>
 
         <div class="col-xs-2 text-right">
           <my-jump-button
-            entity-type="entity.entityTypeState"
-            entity-id="entity.name"
-            dataset-type="entity.datasetType"
-            dataset-explorable="entity.datasetExplorable">
+            entityType-type="entityType.entityTypeState"
+            entityType-id="entityType.name"
+            dataset-type="entityType.datasetType"
+            dataset-explorable="entityType.datasetExplorable">
           </my-jump-button>
         </div>
       </div>
