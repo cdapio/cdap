@@ -209,19 +209,19 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
       String url = String.format("%s://%s/%s", protocol, announceAddress,
                                  GrantAccessToken.Paths.GET_TOKEN);
       externalAuthenticationURIs.add(new JsonPrimitive(url));
-    } else {
-      do {
-        for (Discoverable d : discoverables) {
-          String url = String.format("%s://%s:%d/%s", protocol, d.getSocketAddress().getHostName(), port,
-                                     GrantAccessToken.Paths.GET_TOKEN);
-          externalAuthenticationURIs.add(new JsonPrimitive(url));
-          done = true;
-        }
-        if (!done) {
-          TimeUnit.MILLISECONDS.sleep(200);
-        }
-      } while (!done && stopwatch.elapsedTime(TimeUnit.SECONDS) < 2L);
+      return;
     }
+    do {
+      for (Discoverable d : discoverables) {
+        String url = String.format("%s://%s:%d/%s", protocol, d.getSocketAddress().getHostName(), port,
+                                   GrantAccessToken.Paths.GET_TOKEN);
+        externalAuthenticationURIs.add(new JsonPrimitive(url));
+        done = true;
+      }
+      if (!done) {
+        TimeUnit.MILLISECONDS.sleep(200);
+      }
+    } while (!done && stopwatch.elapsedTime(TimeUnit.SECONDS) < 2L);
   }
 
 
