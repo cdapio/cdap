@@ -48,14 +48,16 @@ public class LogDataOffsetCallback extends AbstractJSONCallback {
     int lineNumber = 0;
     Level level = event.getLevel();
     StackTraceElement first = null;
-    if (level.equals(Level.ERROR)) {
-      IThrowableProxy throwableProxy = event.getThrowableProxy();
-      if (throwableProxy != null && throwableProxy.getStackTraceElementProxyArray().length > 0) {
-        first = throwableProxy.getStackTraceElementProxyArray()[0].getStackTraceElement();
-      }
-    }
-    else if (stackTraceElements.length > 0) {
+    if (stackTraceElements.length > 0) {
       first = stackTraceElements[0];
+      // If the line number from caller data is -1 and the event level is ERROR,
+      // use the line number from throwable proxy
+      if (first.getLineNumber() == -1 && level.equals(Level.ERROR)) {
+        IThrowableProxy throwableProxy = event.getThrowableProxy();
+        if (throwableProxy != null && throwableProxy.getStackTraceElementProxyArray().length > 0) {
+          first = throwableProxy.getStackTraceElementProxyArray()[0].getStackTraceElement();
+        }
+      }
     }
     if (first != null) {
       className = first.getClassName();
