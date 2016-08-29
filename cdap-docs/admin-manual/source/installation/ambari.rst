@@ -22,7 +22,7 @@ Installation using Apache Ambari
   **not** with Ambari.
 - A number of features are currently planned to be added, including:
 
-  - select `CDAP metrics <https://issues.cask.co/browse/CDAP-4108>`__; and
+  - select `CDAP metrics <https://issues.cask.co/browse/CDAP-4108>`__ and
   - a full `smoke test of CDAP functionality <https://issues.cask.co/browse/CDAP-4105>`__ after installation.
 
 
@@ -148,11 +148,11 @@ Assign CDAP Services to Hosts
 
 3. Next, assign CDAP services to hosts.
 
-   CDAP consists of 4 daemons:
+   CDAP consists of five daemons:
  
    #. **Master:** Coordinator service which launches CDAP system services into YARN
    #. **Router:** Serves HTTP endpoints for CDAP applications and REST API
-   #. **Auth Server:** For managing authentication tokens on CDAP perimeter security enabled clusters
+   #. **Auth Server:** For managing authentication tokens on CDAP clusters with perimeter security enabled
    #. **Kafka Server:** For transporting CDAP metrics and CDAP system service log data
    #. **UI:** Web interface to CDAP and :ref:`Cask Hydrator <cask-hydrator>`
       (for CDAP 3.2.x and later installations)
