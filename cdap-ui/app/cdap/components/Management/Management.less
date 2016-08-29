@@ -1,0 +1,414 @@
+body {
+  background-color: #FFFFFF;
+}
+
+.Management-View {
+  width: 96%;
+  height: 100%;
+  border: solid #E3E3E3 2px;
+  margin: auto;
+  margin-top: 20px;
+  margin-bottom: 70px;
+  background-color: #FFFFFF;
+  padding-left: 20px;
+  padding-right: 20px;
+
+  .admin-row {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: row;
+    flex-direction: row;
+    padding-top: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .Info-Card {
+    width: 150px;
+    height: 100px;
+    background-color: #E3E3E3;
+    display: inline-block;
+    margin: 5px 5px 5px 0;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+
+    .Info-Card-Main-Text {
+      font-size: 35px;
+      color: #656565;
+      margin: auto;
+      text-align: center;
+    }
+
+    .Info-Card-Secondary-Text {
+      font-size: 12px;
+      color: #656565;
+      margin: auto;
+      text-align: center;
+      padding-top: 8px;
+    }
+  }
+
+  .Service-Status-Component {
+    margin-left: 5px;
+
+    .Service-Status-Panel-Label {
+      background-color: #E3E3E3;
+      color: #656565;
+      margin-top: 5px;
+      height: 100px;
+      width: 40px;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .Service-Status-Panel-Label-Text {
+      text-align: center;
+      transform: rotate(270deg);
+      font-size: 12px;
+    }
+  }
+
+  .Service-Status-Panel {
+    display: inline-block;
+    width: 100%;
+    height: 100px;
+    margin-top: 5px;
+    background-color: #262834;
+    overflow: hidden;
+  }
+
+  .Service-Status {
+    padding-top: 15px;
+    margin-left: 30px;
+    display: inline-block;
+
+    .Status-Circle {
+      display: inline-block;
+      border-radius: 50%;
+      margin-top: 4px;
+      width: 15px;
+      height: 15px;
+      background-color: #47B834;
+      position: relative;
+      top: 2px;
+    }
+
+    .Status-Label {
+      display: inline-block;
+      margin-left: 10px;
+      font-size: 14px;
+      color: #E9EAEB;
+    }
+  }
+
+  .Admin-Detail-Panel {
+    border: solid 5px #E3E3E3;
+    height: 250px;
+    width: 100%;
+
+    .Admin-Detail-Panel-Body {
+      height: 225px;
+      overflow: hidden;
+    }
+
+    .Admin-Detail-Panel-Header {
+      height: 25px;
+      background-color: #E3E3E3;
+    }
+
+    .Admin-Detail-Panel-Header-Name {
+      display: inline-block;
+      margin-left: 15px;
+      margin-top: 4px;
+      float: left;
+      font-weight: bold;
+    }
+
+    .Admin-Detail-Panel-Header-Status {
+      display: inline-block;
+      float: right;
+      margin-right: 20px;
+      font-size: 12px;
+      margin-top: 4px;
+      color: #A3A3A3;
+    }
+
+    .Admin-Detail-Panel-Button-Right {
+      height:40px;
+      width:20px;
+      border-radius: 0 40px 40px 0;
+      background: #E2E2E2;
+      float: right;
+      position: relative;
+      top: 100px;
+      margin-right: -20px;
+    }
+
+    .Admin-Detail-Panel-Button-Right .fa {
+      position: relative;
+      top: 11px;
+      left: 4px;
+    }
+
+    .Admin-Detail-Panel-Button-Left {
+      height:40px;
+      width:20px;
+      border-radius: 40px 0 0 40px;
+      background: #E2E2E2;
+      position: relative;
+      float: left;
+      top: 100px;
+      margin-left: -20px;
+    }
+    .Admin-Detail-Panel-Button-Left .fa {
+      position: relative;
+      top: 11px;
+      left: 4px;
+    }
+  }
+
+  .Detail-Module {
+    height: 85%;
+    position: relative;
+    top: 10px;
+    display: inline-block;
+    border-right: dotted 2px #E3E3E3;
+
+    .Detail-Module-Header {
+      margin-top: 20px;
+      margin-bottom: 20px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      width: 100%;
+      display: block;
+    }
+
+    .Detail-Module-Body {
+      width: 100%;
+      height: 200px;
+    }
+  }
+
+  .row {
+    margin-left: 15px;
+    margin-right: 15px;
+  }
+
+  .Detail-Module-Stat-Container {
+    text-align: center;
+    display: inline-block;
+    margin-left: 20px;
+    margin-right: 20px;
+
+    .Detail-Module-Stat {
+      width: 40px;
+      font-size: 25px;
+      display: block;
+    }
+
+    .Detail-Module-Stat-Label {
+      display: block;
+      color: #9ca4ab;
+      font-size: 12px;
+    }
+  }
+
+  .navigation-container {
+    width: 400px;
+    margin: 0 auto;
+    margin-top: 30px;
+    font-weight: bold;
+    font-size: 20px;
+
+    hr {
+      height: .25rem;
+      width: 70px;
+      margin: 0;
+      margin-top: -4px;
+      margin-left: 15px;
+      background: #FF6501;
+      border: none;
+      transition: .3s ease-in-out;
+    }
+
+    ul li {
+      display: inline;
+      text-align: center;
+    }
+
+    a {
+      display: inline-block;
+      width: 100px;
+      padding: .75rem 0;
+      margin: 0;
+      text-decoration: none;
+      color: #999999;
+    }
+
+    a:hover {
+      color: #333333;
+      text-decoration: none;
+    }
+
+    .active {
+      color: #333;
+    }
+
+    .two:hover ~ hr,
+    .two.active ~ hr {
+      margin-left: 32%;
+    }
+
+    .three:hover ~ hr,
+    .three.active ~ hr {
+      margin-left: 60%;
+    }
+  }
+
+  .Configure-Module,
+  .Overview-Module {
+    margin-top: 25px;
+    display: inline-block;
+    width: 48%;
+  }
+
+  .Overview-Module {
+    margin-left: 35px;
+    position: relative;
+    right: -15px;
+  }
+
+  .Overview-Module-Card,
+  .Configure-Button {
+    margin: 15px 15px 25px 15px;
+    display: inline-block;
+  }
+
+  .Overview-Module-Card {
+    width: 150px;
+    height: 65px;
+    box-shadow: 0 4px 100px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+
+    .Overview-Module-Card-Header {
+      background-color: #FF6600;
+      width: 100%;
+      height: 35px;
+      padding: 5px;
+      display: inline-flex;
+      align-items: center;
+      border-top-right-radius: 3px;
+      border-top-left-radius: 3px;
+    }
+
+    .Overview-Module-Card-Name {
+      float: left;
+      color: white;
+      font-size: 12px;
+      margin-left: 3px;
+    }
+
+    .Overview-Module-Card-Version {
+      margin-left: auto;
+      margin-right: 4px;
+      color: #8F3B00;
+      font-size: 12px;
+    }
+
+    .Overview-Module-Card-Body {
+      background-color: white;
+      height: 38px;
+      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      color: #AAAAAA;
+      border-bottom-right-radius: 3px;
+      border-bottom-left-radius: 3px;
+
+      .icon-container {
+        width: 50%;
+        height: 100%;
+        font-size: 1.5em;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .icon-container-right {
+          border-left: solid 1px #E3E3E3;
+      }
+    }
+  }
+
+  .Configure-Module > span,
+  .Overview-Module > span {
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  .Configure-Module-Container, .Overview-Module-Container {
+    border: solid 1px #F1F1F1;
+    background-color: #F1F1F1;
+    width: 100%;
+    height: 350px;
+    margin-right: 20px;
+    margin-top: 5px;
+    overflow: auto;
+    padding-top: 15px;
+  }
+
+  .Overview-Card-Row, .Configure-Row {
+    padding-left: 10px;
+    padding-right: 10px;
+    display: -webkit-flex;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .Configure-Row {
+    padding-right: 40px;
+    padding-left: 18px;
+  }
+
+  .Configure-Button {
+    margin: 8px 0 15px 15px;
+    width: 155px;
+    height: 50px;
+    background-color: #FFFFFF;
+    border-radius: 2px;
+    box-shadow: 0 1px 10px 0 rgba(0, 0, 0, 0.1), 0 3px 10px 0 rgba(0, 0, 0, 0.1);
+
+    i {
+      font-size: 2em;
+      display: inline-block;
+      position: relative;
+      top: 10px;
+      left: 10px;
+      float: left;
+      color: #F96C14;
+    }
+
+    .Configure-Button-Text {
+      position: relative;
+      color: #494949;
+      top: 20px;
+      left: 25px;
+      margin-top: -13px;
+      margin-left: -6px;
+      padding: 0;
+      height: 90%;
+      width: 100px;
+      line-height: 14px;
+      font-weight: bold;
+      display: inline-block;
+      word-break: hidden;
+      white-space: pre-wrap;      /* CSS3 */
+      white-space: -moz-pre-wrap; /* Firefox */
+      white-space: -pre-wrap;     /* Opera <7 */
+      white-space: -o-pre-wrap;   /* Opera 7 */
+      word-wrap: break-word;      /* IE */
+    }
+  }
+}
