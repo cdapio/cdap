@@ -66,7 +66,7 @@ that does not exist or an application that has not yet been deployed.
    * - ``400 BAD REQUEST``
      - The JSON body has an invalid format
    * - ``404 NOT FOUND``
-     - The entity for which preferences are being set was not found
+     - The entityType for which preferences are being set was not found
 
 
 Get Preferences
@@ -123,7 +123,7 @@ To retrieve the resolved preferences (collapsing preferences from higher levels 
    * - ``200 OK``
      - The event successfully called the method, and the preferences were retrieved
    * - ``404 NOT FOUND``
-     - The entity for which preferences are being set was not found
+     - The entityType for which preferences are being set was not found
 
 Delete Preferences
 ==================
@@ -163,4 +163,4 @@ To delete preferences, issue an HTTP DELETE. Preferences can be deleted only at 
    * - ``200 OK``
      - The event successfully called the method, and the preferences were deleted
    * - ``404 NOT FOUND``
-     - The entity for which preferences are being deleted was not found
+     - The entityType for which preferences are being deleted was not found

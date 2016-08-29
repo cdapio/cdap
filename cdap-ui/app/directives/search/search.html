@@ -32,7 +32,7 @@
 
     <div class="search-results" ng-if="SearchCtrl.searchResults.length > 0">
       <div ng-repeat="result in SearchCtrl.searchResults | orderBy:'type'">
-        <a class="entity-name clearfix"
+        <a class="entityType-name clearfix"
            ui-sref="{{ result.stateLink }}">
           <div class="col-xs-7 truncate-ellipsis">
             <div class="result-info">
@@ -46,7 +46,7 @@
           </div>
 
           <div class="col-xs-5 truncate-ellipsis">
-            <span class="entity-app-details" ng-if="result.programType">
+            <span class="entityType-app-details" ng-if="result.programType">
               <span class="icon-app"></span>
               <span>{{ result.stateParams.appId }}</span>
             </span>

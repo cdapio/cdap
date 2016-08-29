@@ -39,7 +39,7 @@ retrieve, and delete these metadata annotations.
 
 Metadata keys, values, and tags must conform to the CDAP :ref:`supported characters 
 <supported-characters>`, and are limited to 50 characters in length. The entire metadata
-object associated with a single entity is limited to 10K bytes in size.
+object associated with a single entityType is limited to 10K bytes in size.
 
 Discovery
 =========
@@ -209,13 +209,13 @@ Refer to :ref:`Cloudera Navigator Integration <navigator-integration>` for more 
 Lineage
 =======
 **Lineage** can be retrieved for dataset and stream entities. A lineage shows
-|---| for a specified time range |---| all data access of the entity, and details of where
+|---| for a specified time range |---| all data access of the entityType, and details of where
 that access originated from.
 
 For example: with a stream, writing to a stream may take place from a worker, which
 obtained the data from a combination of a dataset and a stream. The data in those entities
 comes from possibly other entities. The number of levels of the lineage that are
-calculated is set when a request is made to view the lineage of a particular entity.
+calculated is set when a request is made to view the lineage of a particular entityType.
 
 In the case of streams, the lineage includes whether the access was reading or writing to
 the stream. In the case of datasets, in this CDAP version, lineage can only indicate that

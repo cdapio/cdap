@@ -40,16 +40,16 @@ my-lineage-diagram {
     padding: 10px 15px;
     cursor: pointer;
 
-    .entity-name {
+    .entityType-name {
       line-height: 20px;
     }
-    .entity-type {
+    .entityType-type {
       span[class*="icon-"] {
         font-size: 13px;
       }
     }
 
-    .entity-link {
+    .entityType-link {
       text-decoration: none;
       user-select: none;
     }
@@ -130,7 +130,7 @@ my-lineage-diagram {
             margin-top: 10px;
           }
 
-          .entity-detail {
+          .entityType-detail {
             padding-left: 10px;
             span { font-size: 14px; }
             a { color: white; }
@@ -177,14 +177,14 @@ my-lineage-diagram {
   }
 }
 
-.nodeTypeStyling(@node-background-color: white, @font-color: black, @entity-type-font-color: black) {
+.nodeTypeStyling(@node-background-color: white, @font-color: black, @entityType-type-font-color: black) {
   background-color: @node-background-color;
   color: @font-color;
-  h4.entity-name {
+  h4.entityType-name {
     color: @font-color;
   }
-  .entity-type {
-    color: @entity-type-font-color;
+  .entityType-type {
+    color: @entityType-type-font-color;
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow-x: hidden;

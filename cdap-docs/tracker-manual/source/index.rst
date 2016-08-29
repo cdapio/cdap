@@ -26,8 +26,8 @@ Tracker also allows for the storage of metadata where it can be accessed and ind
 allows it to be is easily searched and provides consistent, high-quality metadata.
 
 Tracker's UI shows a graphical visualization of the :ref:`lineage
-<metadata-lineage-lineage>` of an entity. A lineage shows |---| for a specified time range
-|---| all data access of the entity, and details of where that access originated from.
+<metadata-lineage-lineage>` of an entityType. A lineage shows |---| for a specified time range
+|---| all data access of the entityType, and details of where that access originated from.
 
 
 **Harvest, Index, and Track Datasets**
@@ -81,7 +81,7 @@ The Cask Tracker application consists of an application in CDAP with two program
 - ``_Tracker`` application: names begins with an underscore
 - ``AuditLog`` service: it exposes the Tracker audit log as an API
 - ``AuditLogFlow`` flow: subscribes to Kafka audit messages and stores them in the ``_auditLog``	dataset
-- ``_auditLog`` custom dataset: type ``co.cask.tracker.entity.AuditLogTable``
+- ``_auditLog`` custom dataset: type ``co.cask.tracker.entityType.AuditLogTable``
 - ``_kafkaOffset`` dataset: type key-value table
 
 The Tracker UI is shipped with CDAP, started automatically as part of the CDAP UI, and is available at:
@@ -259,13 +259,13 @@ Note that the *entities* and *metadata* filters have an ``and`` relationship; at
 selection must be made in each of *entities* and *metadata* for there to be any results
 that appear.
 
-**On the right side** is a sortable list of results. It is sortable by *Create Date* or the entity
+**On the right side** is a sortable list of results. It is sortable by *Create Date* or the entityType
 ID (name), either *A-Z* (alphabetical ascending), or *Z-A* (alphabetical descending).
 
-Each entry in the list provides a summery of information about the entity, and its name is
+Each entry in the list provides a summery of information about the entityType, and its name is
 a hyperlink to further details: metadata, lineage, and audit log.
 
-The **Jump** button provides three actions: go to the selected entity in CDAP, or add it
+The **Jump** button provides three actions: go to the selected entityType in CDAP, or add it
 to a new Cask Hydrator pipeline as a source or as a sink. Datasets can be added as sources or
 sinks to batch pipelines, while streams can be sources in batch pipelines or sinks in
 real-time pipelines.
@@ -273,14 +273,14 @@ real-time pipelines.
 Entity Details
 --------------
 Clicking on a name in the search results list will take you to details for a particular
-entity. Details are provided on three separate tabs: *Metadata*, *Lineage*, and *Audit
+entityType. Details are provided on three separate tabs: *Metadata*, *Lineage*, and *Audit
 Log*.
 
 **Metadata**
 
 The *Metadata* tab provides lists of the *System Tags*, *User Tags*, *Schema*, *User
-Properties*, and *System Properties* that were found for the entity. The values shown will
-vary depending on the type of entity and each individual entity. For instance, a stream
+Properties*, and *System Properties* that were found for the entityType. The values shown will
+vary depending on the type of entityType and each individual entityType. For instance, a stream
 may have a schema attached, and if so, it will be displayed.
 
 .. figure:: /_images/tracker-metadata.png
@@ -291,11 +291,11 @@ may have a schema attached, and if so, it will be displayed.
 
 **Lineage**
 
-The *Lineage* tab shows the relationship between an entity and the programs that are
-interacting with it. As different lineage diagrams can be created for the same entity,
+The *Lineage* tab shows the relationship between an entityType and the programs that are
+interacting with it. As different lineage diagrams can be created for the same entityType,
 depending on the particular set of programs selected to construct the diagram, a green
 button in the shape of an arrow is used to cycle through the different lineage digrams
-that a particular entity participates in.
+that a particular entityType participates in.
 
 A date menu in the left side of the digram lets you control the time range that the
 diagram displays. By default, the last seven days are used, though a custom range can be
@@ -310,7 +310,7 @@ specified, in addition to common time ranges (two weeks to one year).
 **Audit Log**
 
 The *Audit Log* tab shows each record in the *_auditLog* dataset that has been created for
-that particular entity, displayed in reverse chronological order. Because of how datasets
+that particular entityType, displayed in reverse chronological order. Because of how datasets
 work in CDAP, reading and writing from a flow or service to a dataset shows an access of
 "UNKNOWN" rather than indicating if it was read or write access. This will be addressed in
 a future release.
@@ -351,7 +351,7 @@ the :ref:`Reference Manual: HTTP RESTful API <http-restful-api-introduction>` fo
 on the conventions used for this API.) To search for audit log entries for a particular
 dataset, stream, or stream view, submit an HTTP GET request::
 
-  GET /v3/namespaces/<namespace-id>/apps/_Tracker/services/AuditLog/methods/auditlog/<entity-type>/<name>
+  GET /v3/namespaces/<namespace-id>/apps/_Tracker/services/AuditLog/methods/auditlog/<entityType-type>/<name>
     [?startTime=<time>][&endTime=<time>][&offset=<offset>][&limit=<limit>]
 
 where:
@@ -364,10 +364,10 @@ where:
      - Description
    * - ``namespace-id``
      - Namespace ID
-   * - ``entity-type``
+   * - ``entityType-type``
      - One of ``dataset``, ``stream``, or ``stream_view``
    * - ``name``
-     - Name of the ``entity-type``
+     - Name of the ``entityType-type``
    * - ``time`` *(optional)*
      - Time range defined by start (*startTime*, default ``0``) and end (*endTime*,
        default ``now``) times, where the times are either in milliseconds since the start of
@@ -417,7 +417,7 @@ Results (reformatted for display)::
         "entityId": {
           "namespace": "default",
           "stream": "who",
-          "entity": "STREAM"
+          "entityType": "STREAM"
         },
         "user": "unknown",
         "type": "METADATA_CHANGE",
@@ -456,7 +456,7 @@ Results (reformatted for display)::
         "entityId": {
           "namespace": "default",
           "stream": "who",
-          "entity": "STREAM"
+          "entityType": "STREAM"
         },
         "user": "unknown",
         "type": "CREATE",
