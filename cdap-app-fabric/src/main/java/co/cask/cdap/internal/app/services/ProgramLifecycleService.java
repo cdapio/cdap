@@ -78,6 +78,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -456,8 +457,6 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
   private List<ProgramRuntimeService.RuntimeInfo> findRuntimeInfo(ProgramId programId,
                                                             @Nullable String runId) throws BadRequestException {
-    Map<RunId, ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(programId.getType());
-
     if (runId != null) {
       RunId run;
       try {
@@ -465,34 +464,17 @@ public class ProgramLifecycleService extends AbstractIdleService {
       } catch (IllegalArgumentException e) {
         throw new BadRequestException("Error parsing run-id.", e);
       }
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeInfos.get(run);
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.lookup(programId.toId(), run);
       return runtimeInfo == null ? new ArrayList<ProgramRuntimeService.RuntimeInfo>() :
-        new ArrayList<>(Arrays.asList(runtimeInfo));
-    } else {
-      return findRuntimeInfos(programId);
+        Collections.singletonList(runtimeInfo);
     }
+    return new ArrayList<>(runtimeService.list(programId.toId()).values());
   }
 
   @Nullable
   private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId programId) {
-    Map<RunId, ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(programId.getType());
-    for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos.values()) {
-      if (programId.equals(info.getProgramId().toEntityId())) {
-        return info;
-      }
-    }
-    return null;
-  }
-
-  private List<ProgramRuntimeService.RuntimeInfo> findRuntimeInfos(ProgramId programId) {
-    Map<RunId, ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(programId.getType());
-    List<ProgramRuntimeService.RuntimeInfo> runtimeInfosResult = new ArrayList<>();
-    for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos.values()) {
-      if (programId.equals(info.getProgramId().toEntityId())) {
-        runtimeInfosResult.add(info);
-      }
-    }
-    return runtimeInfosResult;
+    Map<RunId, ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(programId.toId());
+    return runtimeInfos.isEmpty() ? null : runtimeInfos.values().iterator().next();
   }
 
   /**
