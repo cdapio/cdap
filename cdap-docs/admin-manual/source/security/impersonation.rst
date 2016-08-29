@@ -23,7 +23,8 @@ To configure a namespace to have impersonation, specify the Kerberos ``principal
 The keytab file (the "keytab") must be readable by the CDAP user and can be on either the local file system
 of the CDAP Master or on HDFS. If the keytab is on HDFS, prefix the path with ``hdfs://``.
 If CDAP Master is :ref:`HA-enabled <admin-manual-install-deployment-architectures-ha>`, 
-and the local file system is used, the keytab must be on all file systems used with CDAP Master.
+and the local file system is used, the keytab must be on all local file systems used with 
+the CDAP Master instances.
 
 If these are not specified, the principal and keytab of the CDAP Master user will be used
 instead.
