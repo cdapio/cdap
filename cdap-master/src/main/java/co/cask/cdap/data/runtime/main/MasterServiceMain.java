@@ -40,6 +40,7 @@ import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.common.zookeeper.ZooKeeperUtils;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -140,7 +141,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
@@ -230,22 +230,7 @@ public class MasterServiceMain extends DaemonMain {
                               QueueConstants.DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR));
     createSystemHBaseNamespace();
     updateConfigurationTable();
-
-    ListenableFuture<Service.State> startFunction = zkClient.start();
-    try {
-      startFunction.get(cConf.getLong(Constants.Zookeeper.CFG_CLIENT_TIMEOUT_MILLIS), TimeUnit.MILLISECONDS);
-    } catch (TimeoutException e) {
-      LOG.error("Connection timed out while trying to start ZooKeeper client. Please verify that the ZooKeeper " +
-                "quorum settings are correct.", e);
-      throw e;
-    } catch (InterruptedException e) {
-      LOG.error("Interrupted while waiting to start ZooKeeper client.", e);
-      throw e;
-    } catch (ExecutionException e) {
-      LOG.error("Exception while trying to start ZooKeeper client.", e);
-      throw e;
-    }
-
+    ZooKeeperUtils.connectWithTimeout(zkClient, cConf);
     // Tries to create the ZK root node (which can be namespaced through the zk connection string)
     Futures.getUnchecked(ZKOperations.ignoreError(zkClient.create("/", null, CreateMode.PERSISTENT),
                                                   KeeperException.NodeExistsException.class, null));
