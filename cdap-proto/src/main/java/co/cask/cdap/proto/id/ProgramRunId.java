@@ -60,6 +60,10 @@ public class ProgramRunId extends EntityId implements NamespacedId, ParentedId<P
     return program;
   }
 
+  public String getEntityName() {
+    return getProgram();
+  }
+
   public String getRun() {
     return run;
   }

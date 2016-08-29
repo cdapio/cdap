@@ -97,6 +97,10 @@ public class SecureKeyId extends EntityId implements NamespacedId, ParentedId<Na
     return name;
   }
 
+  public String getEntityName() {
+    return getName();
+  }
+
   private static boolean isValidSecureKey(String name) {
     return secureKeyNamePattern.matcher(name).matches();
   }

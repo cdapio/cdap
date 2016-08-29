@@ -46,6 +46,10 @@ public class ApplicationId extends EntityId implements NamespacedId, ParentedId<
     return application;
   }
 
+  public String getEntityName() {
+    return getApplication();
+  }
+
   @Override
   public NamespaceId getParent() {
     return new NamespaceId(namespace);

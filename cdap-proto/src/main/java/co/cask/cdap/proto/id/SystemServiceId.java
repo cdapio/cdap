@@ -39,6 +39,10 @@ public class SystemServiceId extends EntityId {
     return service;
   }
 
+  public String getEntityName() {
+    return getService();
+  }
+
   @Override
   public boolean equals(Object o) {
     if (!super.equals(o)) {

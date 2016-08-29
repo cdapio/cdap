@@ -39,6 +39,10 @@ public class InstanceId extends EntityId {
     return instance;
   }
 
+  public String getEntityName() {
+    return getInstance();
+  }
+
   @Override
   protected Iterable<String> toIdParts() {
     return Collections.singletonList(instance);

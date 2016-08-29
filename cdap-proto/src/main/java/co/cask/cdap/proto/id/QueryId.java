@@ -39,6 +39,10 @@ public class QueryId extends EntityId {
     return handle;
   }
 
+  public String getEntityName() {
+    return getHandle();
+  }
+
   @Override
   public boolean equals(Object o) {
     if (!super.equals(o)) {

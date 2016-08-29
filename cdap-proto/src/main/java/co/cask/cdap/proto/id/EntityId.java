@@ -89,6 +89,8 @@ public abstract class EntityId implements IdCompatible {
     return entity;
   }
 
+  public abstract String getEntityName();
+
   public static <T extends Id> T fromStringOld(String string, Class<T> oldIdClass) {
     EntityType type = EntityType.valueOfOldIdClass(oldIdClass);
     EntityId id = fromString(string, type.getIdClass());

@@ -51,6 +51,10 @@ public class ScheduleId extends EntityId implements NamespacedId, ParentedId<App
     return schedule;
   }
 
+  public String getEntityName() {
+    return getSchedule();
+  }
+
   @Override
   public boolean equals(Object o) {
     if (!super.equals(o)) {

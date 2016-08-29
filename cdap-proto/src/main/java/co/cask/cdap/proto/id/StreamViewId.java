@@ -51,6 +51,10 @@ public class StreamViewId extends EntityId implements NamespacedId, ParentedId<S
     return view;
   }
 
+  public String getEntityName() {
+    return getView();
+  }
+
   @Override
   public StreamId getParent() {
     return new StreamId(namespace, stream);
