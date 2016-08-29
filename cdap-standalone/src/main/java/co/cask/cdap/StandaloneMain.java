@@ -257,7 +257,7 @@ public class StandaloneMain {
         startFunction.get(cConf.getLong(Constants.Zookeeper.CFG_CLIENT_TIMEOUT_MILLIS), TimeUnit.MILLISECONDS);
       } catch (TimeoutException e) {
         LOG.error("Connection timed out while trying to start ZooKeeper client. Please verify that the ZooKeeper " +
-                    " quorum settings are correct.", e);
+                    "quorum settings are correct.", e);
         throw e;
       } catch (InterruptedException e) {
         LOG.error("Interrupted while waiting to start ZooKeeper client.", e);
