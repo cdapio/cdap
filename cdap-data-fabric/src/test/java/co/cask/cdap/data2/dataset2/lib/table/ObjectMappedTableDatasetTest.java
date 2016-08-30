@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
+import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.Lists;
@@ -120,6 +121,14 @@ public class ObjectMappedTableDatasetTest {
       results = records.scan(null, "123");
       Assert.assertFalse(results.hasNext());
       results.close();
+
+      Scan scan = new Scan(null, null);
+      results = records.scan(scan);
+      actualList = Lists.newArrayList();
+      while (results.hasNext()) {
+        actualList.add(results.next());
+      }
+      Assert.assertEquals(recordList.size(), actualList.size());
     } finally {
       dsFrameworkUtil.deleteInstance(RECORDS_ID);
     }

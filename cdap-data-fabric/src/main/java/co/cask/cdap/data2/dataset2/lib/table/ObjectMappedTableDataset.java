@@ -33,6 +33,7 @@ import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.internal.io.ReflectionPutWriter;
@@ -149,6 +150,12 @@ public class ObjectMappedTableDataset<T> extends AbstractDataset implements Obje
   @Override
   public CloseableIterator<KeyValue<byte[], T>> scan(byte[] startRow, byte[] stopRow) {
     return new ObjectIterator(table.scan(startRow, stopRow));
+  }
+
+  @ReadOnly
+  @Override
+  public CloseableIterator<KeyValue<byte[], T>> scan(Scan scan) {
+    return new ObjectIterator(table.scan(scan));
   }
 
   @WriteOnly
