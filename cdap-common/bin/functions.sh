@@ -272,9 +272,9 @@ cdap_kinit() {
   fi
   if [[ $(which kinit 2>/dev/null) ]]; then
     # Replace _HOST in principal w/ FQDN, like Hadoop does
-    kinit -kt "${__keytab}" "${__principal/_HOST/`hostname -f`}"
+    kinit -kt "${__keytab}" "${__principal/_HOST/${HOSTNAME}}"
     if [[ ! ${?} ]]; then
-      die "Failed executing 'kinit -kt \"${__keytab}\" \"${__principal/_HOST/`hostname -f`}\"'"
+      die "Failed executing 'kinit -kt \"${__keytab}\" \"${__principal/_HOST/${HOSTNAME}}\"'"
     fi
   else
     die "Cannot locate kinit! Please, ensure the appropriate Kerberos utilities are installed"
@@ -516,7 +516,7 @@ cdap_service() {
       echo ${CLASSPATH}
       __ret=0
       ;;
-    usage) echo "Usage: $0 ${__service} {start|stop|restart|status|condrestart|classpath}"; __ret=0 ;;
+    usage|-h|--help) echo "Usage: $0 ${__service} {start|stop|restart|status|condrestart|classpath}"; __ret=0 ;;
     *) die "Usage: $0 ${__service} {start|stop|restart|status|condrestart|classpath}" ;;
   esac
   return ${__ret}
@@ -1079,7 +1079,7 @@ export PID_DIR=${CDAP_PID_DIR:-/var/cdap/run}
 # The directory serving as the java.io.tmpdir directory for master
 export TEMP_DIR=${CDAP_TEMP_DIR:-/tmp}
 
-# Add default JVM options here.
+# Default SDK options
 CDAP_OPTS="${OPTS} -Djava.security.krb5.realm= -Djava.security.krb5.kdc= -Djava.awt.headless=true"
 
 export NICENESS=${NICENESS:-0}

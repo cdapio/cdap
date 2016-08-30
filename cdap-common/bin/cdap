@@ -76,6 +76,9 @@ case ${1} in
     echo "    sdk               - Sends the arguments to the SDK service"
     echo "    standalone"
     echo
+    echo " Get more help for each command by executing:"
+    echo " ${0} <command> --help"
+    echo
     ;;
   *) cdap_cli ${@}; __ret=${?} ;;
 esac
