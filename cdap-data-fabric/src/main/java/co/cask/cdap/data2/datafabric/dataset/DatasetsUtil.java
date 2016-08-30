@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,8 @@
 
 package co.cask.cdap.data2.datafabric.dataset;
 
+import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetManagementException;
@@ -32,6 +34,7 @@ import co.cask.cdap.data2.dataset2.lib.file.FileSetDataset;
 import co.cask.cdap.data2.metadata.lineage.LineageDataset;
 import co.cask.cdap.data2.registry.UsageDataset;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
@@ -65,7 +68,26 @@ public final class DatasetsUtil {
     throws DatasetManagementException, IOException {
 
     createIfNotExists(datasetFramework, datasetInstanceId, typeName, props);
-    return (T) datasetFramework.getDataset(datasetInstanceId, arguments, null);
+    return datasetFramework.getDataset(datasetInstanceId, arguments, null);
+  }
+
+  /**
+   * Gets a {@link Dataset} instance through the given {@link DatasetContext}. If the dataset doesn't exist,
+   * it will be created using the given {@link DatasetFramework}.
+   */
+  public static <T extends Dataset> T getOrCreateDataset(DatasetContext datasetContext,
+                                                         DatasetFramework datasetFramework,
+                                                         DatasetId datasetId,
+                                                         String datasetTypename,
+                                                         DatasetProperties datasetProperties)
+    throws DatasetManagementException, IOException {
+
+    try {
+      return datasetContext.getDataset(datasetId.getNamespace(), datasetId.getDataset());
+    } catch (DatasetInstantiationException e) {
+      createIfNotExists(datasetFramework, datasetId.toId(), datasetTypename, datasetProperties);
+      return datasetContext.getDataset(datasetId.getNamespace(), datasetId.getDataset());
+    }
   }
 
   /**
