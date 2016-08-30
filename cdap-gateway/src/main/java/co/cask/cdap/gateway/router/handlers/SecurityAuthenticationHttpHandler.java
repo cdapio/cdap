@@ -204,7 +204,6 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
     String announceAddress = configuration.get(Constants.Security.AUTH_SERVER_ANNOUNCE_ADDRESS);
     // If the announceAddress is set in configuration, only add it to the list
     if (announceAddress != null) {
-      externalAuthenticationURIs.add(new JsonPrimitive(announceAddress));
       // announceAddress should follow the format host:port
       String url = String.format("%s://%s/%s", protocol, announceAddress,
                                  GrantAccessToken.Paths.GET_TOKEN);
