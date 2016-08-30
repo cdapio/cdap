@@ -121,14 +121,24 @@ Workflow Custom Action
 ----------------------
 In addition to MapReduce and Spark programs, workflow can also execute custom actions.
 Custom actions are implemented in Java and can perform tasks such as sending an email. To
-define a custom action, you will need to extend the ``AbstractWorkflowAction`` and
-implement the ``run()`` method::
+define a custom action, you will need to extend the ``AbstractCustomAction`` and
+implement its ``run()`` method::
 
-  public static class MyAction extends AbstractWorkflowAction {
+  public static class MyAction extends AbstractCustomAction {
 
     @Override
     public void run() {
-      // your code goes here
+      // Your code goes here
+      ...
+      // Datasets can be accessed in this method using a transaction such as:
+      getContext().execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          Table myDs = context.getDataset("MyDataset");
+          // Perform dataset operations such as reading and writing
+          myDs.write(...);
+        }
+      });
     }
   }
 
