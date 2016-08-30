@@ -126,14 +126,13 @@ Status Codes
      - The request had a combination of parameters that is not recognized
    * - ``401``
      - ``Unauthorized``
-     - The request did not contain an authentication token; requests can fail due to a
-       lack of authorization, as described in the section below on
-       :ref:`http-restful-api-working-with-cdap-security`.
+     - The request did not contain an authentication token; see the section below on
+       :ref:`http-restful-api-working-with-cdap-security`
    * - ``403``
      - ``Forbidden``
      - The request was authenticated but the client does not have permission; requests can
        fail due to a lack of privilege, as described in the section below on
-       :ref:`http-restful-api-working-with-cdap-security`.
+       :ref:`http-restful-api-working-with-cdap-security`
    * - ``404``
      - ``Not Found``
      - The request did not address any of the known URIs
@@ -150,7 +149,7 @@ Status Codes
      - ``Not Implemented``
      - A request contained a query that is not supported by this API
 
-**Notes:** These returned status codes are not necessarily included in the descriptions of
+**Note:** These returned status codes are not necessarily included in the descriptions of
 the APIs, but a request may return any of these.
 
 Converting from V2 APIs
