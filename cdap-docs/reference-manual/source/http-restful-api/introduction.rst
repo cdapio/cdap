@@ -126,10 +126,14 @@ Status Codes
      - The request had a combination of parameters that is not recognized
    * - ``401``
      - ``Unauthorized``
-     - The request did not contain an authentication token
+     - The request did not contain an authentication token; requests can fail due to a
+       lack of authorization, as described in the section below on
+       :ref:`http-restful-api-working-with-cdap-security`.
    * - ``403``
      - ``Forbidden``
-     - The request was authenticated but the client does not have permission
+     - The request was authenticated but the client does not have permission; requests can
+       fail due to a lack of privilege, as described in the section below on
+       :ref:`http-restful-api-working-with-cdap-security`.
    * - ``404``
      - ``Not Found``
      - The request did not address any of the known URIs
@@ -146,12 +150,8 @@ Status Codes
      - ``Not Implemented``
      - A request contained a query that is not supported by this API
 
-**Notes** 
-
-- These returned status codes are not necessarily included in the descriptions of the APIs,
-  but a request may return any of these.
-- Requests can fail due to a lack of authorization or privilege, as described in the
-  section below on :ref:`http-restful-api-working-with-cdap-security`.
+**Notes:** These returned status codes are not necessarily included in the descriptions of
+the APIs, but a request may return any of these.
 
 Converting from V2 APIs
 =======================
@@ -172,18 +172,18 @@ addition of namespaces.
 
 Working with CDAP Security
 ==========================
-When working with a CDAP cluster with **security enabled** (``security.enabled=true`` in
-``cdap-site.xml``), all calls to the HTTP RESTful APIs must be authenticated. Clients must
-first obtain an access token from the authentication server (see the :ref:`Client
-Authentication <client-authentication>` section of the :ref:`developers:developer-index`).
-In order to authenticate, all client requests must supply this access token in the
-``Authorization`` header of the request::
+- When working with a CDAP cluster with **security enabled** (``security.enabled=true`` in
+  ``cdap-site.xml``), all calls to the HTTP RESTful APIs must be authenticated. Clients must
+  first obtain an access token from the authentication server (see the :ref:`Client
+  Authentication <client-authentication>` section of the :ref:`developers:developer-index`).
+  In order to authenticate, all client requests must supply this access token in the
+  ``Authorization`` header of the request::
 
-   Authorization: Bearer <token>
+    Authorization: Bearer <token>
 
-For CDAP-issued access tokens, the authentication scheme must always be ``Bearer``.
+  For CDAP-issued access tokens, the authentication scheme must always be ``Bearer``.
 
-When working with a CDAP cluster with **authorization enabled**
-(``security.authorization.enabled=true`` in ``cdap-site.xml``), all calls to the HTTP
-RESTful APIs must be authorized. Clients must be privileged, following the polices
-described in :ref:`security-authorization-policies`.
+- When working with a CDAP cluster with **authorization enabled**
+  (``security.authorization.enabled=true`` in ``cdap-site.xml``), all calls to the HTTP
+  RESTful APIs must be authorized. Clients must be privileged, following the polices
+  described in :ref:`security-authorization-policies`.
