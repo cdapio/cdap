@@ -32,6 +32,6 @@ Starting the Services
 
   .. tabbed-parsed-literal::
 
-    $ curl -w"\n" -X POST "http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service1|/start"
-    $ curl -w"\n" -X POST "http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service2|/start"
-    $ curl -w"\n" -X POST "http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service3|/start"
+    $ curl -w"\n" -X POST "http://localhost:11015/v3/namespaces/default/apps/|example|/services/|example-service1|/start"
+    $ curl -w"\n" -X POST "http://localhost:11015/v3/namespaces/default/apps/|example|/services/|example-service2|/start"
+    $ curl -w"\n" -X POST "http://localhost:11015/v3/namespaces/default/apps/|example|/services/|example-service3|/start"

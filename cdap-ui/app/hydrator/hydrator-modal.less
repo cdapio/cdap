@@ -1,0 +1,376 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import '../styles/variables.less';
+@import '../../bower_components/bootstrap/less/mixins.less';
+@import '../styles/themes/cdap/mixins.less';
+
+.modal.hydrator-modal {
+  &.confirm-modal {
+    .modal-dialog {
+      margin-top: 40vh;
+      max-width: 400px;
+
+      .modal-body {
+        font-weight: 500;
+        font-size: 16px;
+        padding-top: 25px;
+
+        strong { font-size: 22px; }
+
+        .fa.fa-times {
+          color: #999999;
+          cursor: pointer;
+        }
+      }
+
+      .modal-footer {
+        .btn { width: 100px; }
+      }
+    }
+  }
+
+  .modal-dialog {
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      > h4,
+      .modal-title {
+        padding-left: 15px;
+        max-width: 80%;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+        font-weight: 500;
+        margin-right: auto;
+
+        @media (max-width: @screen-sm-max) {
+          max-width: 70%;
+        }
+
+        // Adjust max-width of modal title when my-jump-link is present
+        &.with-jump {
+          max-width: ~"calc(100% - 215px)";
+          max-width: ~"-moz-calc(100% - 215px)";
+          max-width: ~"-webkit-calc(100% - 215px)";
+        }
+
+        p {
+          min-width: 100%;
+          text-overflow: ellipsis;
+          overflow-wrap: break-word;
+          overflow: hidden;
+          white-space: nowrap;
+        }
+      }
+
+      > div {
+        @media (max-width: @screen-sm-max) {
+          max-width: none;
+        }
+      }
+
+      my-link-button {
+        padding: 0;
+        margin-top: 12px;
+        margin-right: 10px;
+      }
+      div.btn-group { margin-left: auto; }
+      a.btn {
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+        background-clip: padding-box;
+        color: @cdap-header;
+        font-size: 18px;
+        outline: none;
+        padding: 0;
+        white-space: normal;
+        border-left: 1px solid #c9ccd6;
+        width: 60px;
+        height: 60px;
+        line-height: 60px;
+        &:last-child { margin-right: -1px; }
+        &:hover {
+          background-color: @cdap-header;
+          border: 0;
+          color: white;
+          background-clip: padding-box;
+        }
+      }
+    }
+
+    .modal-body { padding: 10px 20px 0; }
+    textarea.query-input {
+      margin-bottom: 10px;
+      + button { margin-bottom: 10px; }
+    }
+    .modal-footer {
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+  }
+
+  &.get-schema-modal {
+    .modal-dialog {
+      textarea.form-control {
+        width: 90%;
+        margin-bottom: 10px;
+      }
+    }
+  }
+
+  &.node-config-modal,
+  &.post-run-actions-modal {
+    .modal-dialog {
+      width: 80%;
+      overflow-y: hidden;
+      margin-left: 200px;
+      margin-top: 90px;
+      margin-bottom: 0;
+
+      @media(max-width: @screen-lg-min) {
+        margin-left: 100px;
+      }
+
+      &.expand {
+        margin-left: 0;
+        width: 100%;
+        height: ~"calc(100vh - 90px)";
+        height: ~"-moz-calc(100vh - 90px)";
+        height: ~"-webkit-calc(100vh - 90px)";
+        margin-bottom: 0;
+      }
+
+      .modal-content {
+        height: inherit;
+
+        .modal-body {
+          padding: 10px 10px 0;
+          overflow: hidden;
+          max-height: 100%;
+
+          .console-type {
+            border: 1px solid @table-border-color;
+
+            .node-config {
+              .plugin-function-bottom {
+                plugin-functions > * { top: 25px; }
+              }
+
+              ul.nav.nav-tabs {
+                li {
+                  color: #666666;
+                  font-weight: 500;
+                  padding: 10px 15px;
+                  cursor: pointer;
+
+                  &.active { border-bottom: 2px solid @hydrator-blue; }
+                }
+              }
+              .bottompanel-body {
+                padding: 0 10px 10px 10px;
+                overflow-y: auto;
+                height: ~"calc(100vh - 220px)";
+                height: ~"-moz-calc(100vh - 220px)";
+                height: ~"-webkit-calc(100vh - 220px)";
+                .reference-tab { padding: 0 10px; }
+
+                .btn-hydrator {
+                  background-color: @hydrator-blue;
+                  color: white;
+                }
+
+                @media (min-width: @screen-lg-min) {
+                  padding: 0;
+                  .no-plugin-properties-message { margin: 10px; }
+                  > p,
+                  .validator-plugin > div { padding: 20px 10px; }
+                  div.config-table {
+                    display: table;
+                    width: 100%;
+                    height: ~"calc(100vh - 220px)";
+                    height: ~"-moz-calc(100vh - 220px)";
+                    height: ~"-webkit-calc(100vh - 220px)";
+
+                    > div {
+                      display: table-cell;
+                      padding: 20px 10px;
+                      vertical-align: top;
+                    }
+                  }
+                  div.source-table {
+                    > div {
+                      &:first-child {
+                        border-right: 1px solid @table-border-color;
+                        width: 66.66666667%;
+                      }
+                      &:last-child { width: 33.33333333%; }
+                    }
+                  }
+                  div.transform-table {
+                    > div {
+                      &:first-child,
+                      &:last-child { width: 25%; }
+                      &:nth-child(2) {
+                        width: 50%;
+                        border-right: 1px solid @table-border-color;
+                        border-left: 1px solid @table-border-color;
+                      }
+                    }
+                  }
+                  div.sink-table {
+                    > div {
+                      &:first-child {
+                        border-right: 1px solid @table-border-color;
+                        width: 33.33333333%;
+                      }
+                      &:last-child { width: 66.66666667%; }
+                    }
+                  }
+                }
+              }
+
+              .row.preview-tab {
+                margin-left: 0;
+                margin-right: 0;
+                height: 100%;
+              }
+
+              .preview-records {
+                padding: 0;
+                height: 100%;
+                overflow: auto;
+
+                &:first-child {
+                  border-right: 2px solid @table-border-color;
+                }
+
+                h4 {
+                  padding-left: 5px;
+                  margin-top: 20px;
+                  font-size: 18px;
+                }
+                .schema-toggle {
+                  padding-left: 15px;
+                  cursor: pointer;
+                }
+
+                h5.stage-title {
+                  margin-left: 5px;
+                  margin-top: 20px;
+                  font-size: 15px;
+                  font-weight: 500;
+                }
+
+                table.table {
+                  margin-top: 10px;
+                  border: 0;
+
+                  th {
+                    &:hover,
+                    &:focus { cursor: default; }
+
+                    font-size: 13px;
+                    padding-left: 5px;
+                    padding-bottom: 5px;
+                    max-width: initial;
+                    overflow: initial;
+                    text-overflow: initial;
+                    white-space: initial;
+                  }
+
+                  tr > td {
+                    max-width: initial;
+                    overflow: initial;
+                    text-overflow: initial;
+                    white-space: initial;
+
+                    &:first-child { border-left: 0; }
+                    &:last-child { border-right: 0; }
+                  }
+                }
+              }
+            }
+          }
+          .control-label { font-weight: bold; }
+          table.table {
+            .control-label { font-weight: bold; }
+          }
+          div.header > h4,
+          div.nullable-header > h4 {
+            color: #666666;
+            font-size: 14px;
+            font-weight: 500;
+          }
+        }
+      }
+    }
+    &.post-run-actions-modal {
+      .modal-dialog {
+        width: 50%;
+        margin-left: 33%;
+        .modal-content {
+          .modal-body { max-height: 75vh; }
+        }
+      }
+    }
+  }
+
+  &.layered-modal {
+    .modal-dialog {
+      margin: 90px auto 0;
+      width: 50%;
+    }
+  }
+}
+
+body.theme-cdap {
+  &.state-hydrator-detail {
+    .modal.hydrator-modal {
+      &.node-config-modal {
+        .modal-dialog {
+          margin-top: 120px;
+          &.expand {
+            margin-bottom: 0;
+            height: ~"calc(100vh - 120px)";
+            height: ~"-moz-calc(100vh - 120px)";
+            height: ~"-webkit-calc(100vh - 120px)";
+          }
+          .modal-content {
+            .modal-body {
+              .console-type {
+                .node-config {
+                  .bottompanel-body {
+                    height: ~"calc(100vh - 250px)";
+                    height: ~"-moz-calc(100vh - 250px)";
+                    height: ~"-webkit-calc(100vh - 250px)";
+                  }
+                  div.config-table {
+                    height: ~"calc(100vh - 250px)";
+                    height: ~"-moz-calc(100vh - 250px)";
+                    height: ~"-webkit-calc(100vh - 250px)";
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

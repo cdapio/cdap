@@ -35,7 +35,7 @@ With your data represented in CDAP as streams and datasets, you are able to proc
 that data in real time or in batch using a program (*Flow,* *MapReduce*, *Spark*,
 *Workflow*) and you can serve data to external clients using a *Service*.
 
-This diagram how the CDAP components relate in an Apache Hadoop installation: 
+This diagram shows how the CDAP components relate in an Apache Hadoop installation: 
 
 .. image:: ../_images/architecture_diag.png
    :width: 7in

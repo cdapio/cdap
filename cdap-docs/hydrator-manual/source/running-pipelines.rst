@@ -113,7 +113,7 @@ using a `curl` command, such as (reformatted for display):
 
   .. tabbed-parsed-literal::
 
-    $ curl -w"\n" -X POST "http://localhost:10000/v3/metrics/search?target=metric&tag=namespace:default&tag=app:demoPipeline"
+    $ curl -w"\n" -X POST "http://localhost:11015/v3/metrics/search?target=metric&tag=namespace:default&tag=app:demoPipeline"
 
     ["system.app.log.debug","system.app.log.info","system.app.log.warn","system.dataset.
     store.bytes","system.dataset.store.ops","system.dataset.store.reads","system.dataset.
@@ -129,7 +129,7 @@ The value of the metric can be retrieved with:
 
   .. tabbed-parsed-literal::
 
-    $ curl -w"\n" -X POST "localhost:10000/v3/metrics/query?tag=namespace:default&tag=app:etlRealtime6&metric=user.JavaScript.record.count&aggregate=true"
+    $ curl -w"\n" -X POST "localhost:11015/v3/metrics/query?tag=namespace:default&tag=app:etlRealtime6&metric=user.JavaScript.record.count&aggregate=true"
 
     {"startTime":0,"endTime":1468884338,"series":[{"metricName":"user.JavaScript.record.
     count","grouping":{},"data":[{"time":0,"value":170}]}],"resolution":"2147483647s"}

@@ -106,7 +106,7 @@ Running the Example
 Injecting Sentences
 -------------------
 In the application's `detail page
-<http://localhost:9999/ns/default/apps/WordCount/overview/programs>`__, click on the
+<http://localhost:11011/ns/default/apps/WordCount/overview/programs>`__, click on the
 *WordCounter* flow. This takes you to the flow details page. 
 
 Now double-click on the *wordStream* stream on the left side of the flow visualization,
@@ -137,7 +137,7 @@ To query the ``RetrieveCounts`` service, either:
 
   .. tabbed-parsed-literal::
 
-    $ curl -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/methods/count/CDAP"
+    $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/WordCount/services/RetrieveCounts/methods/count/CDAP"
 
 .. highlight:: json
 

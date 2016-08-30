@@ -36,6 +36,8 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractSystemMetadataWriter implements SystemMetadataWriter {
 
+  public static final String EXPLORE_TAG = "explore";
+
   protected static final String SCHEMA_FIELD_PROPERTY_PREFIX = "schema";
   protected static final String PLUGIN_KEY_PREFIX = "plugin";
   protected static final String PLUGIN_VERSION_KEY_PREFIX = "plugin-version";

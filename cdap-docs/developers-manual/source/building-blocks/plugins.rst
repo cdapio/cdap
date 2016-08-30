@@ -125,10 +125,10 @@ the plugins when deploying the artifact. For example, if you are using the HTTP 
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X POST "localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java" \
+  $ curl -w"\n" -X POST "localhost:11015/v3/namespaces/default/artifacts/mysql-connector-java" \
   -H 'Artifact-Plugins: [ { "name": "mysql", "type": "jdbc", "className": "com.mysql.jdbc.Driver" } ]' \
   -H "Artifact-Version: 5.1.35" \
-  -H "Artifact-Extends: system:cdap-data-pipeline[|version|, |version|]/system:cdap-etl-realtime[|version|, |version|]" \
+  -H "Artifact-Extends: system:cdap-data-pipeline[|version|, |version|]/system:cdap-data-streams[|version|, |version|]" \
   --data-binary @mysql-connector-java-5.1.35.jar
 
 Or, using the CDAP CLI:
@@ -147,7 +147,7 @@ where ``config.json`` contains:
 
   .. parsed-literal:: 
     {
-      "parents": [ "system:cdap-data-pipeline\[|version|,\ |version|]", "system:cdap-etl-realtime[|version|,\ |version|]" ],
+      "parents": [ "system:cdap-data-pipeline\[|version|,\ |version|]", "system:cdap-data-streams[|version|,\ |version|]" ],
       "plugins": [
         {
           "name": "mysql",
@@ -227,7 +227,7 @@ can use the plugins. The file name must match the name of the JAR, except it mus
 extension instead of the ``.jar`` extension. For example, if your JAR file is named
 ``custom-transforms-1.0.0.jar``, there must be a corresponding ``custom-transforms-1.0.0.json`` file.
 If your ``custom-transforms-1.0.0.jar`` contains transforms that can be used by both the ``cdap-data-pipeline``
-and ``cdap-etl-realtime`` artifacts, ``custom-transforms-1.0.0.json`` would contain:
+and ``cdap-data-streams`` artifacts, ``custom-transforms-1.0.0.json`` would contain:
 
 .. highlight:: json
 
@@ -235,11 +235,11 @@ and ``cdap-etl-realtime`` artifacts, ``custom-transforms-1.0.0.json`` would cont
 
   .. parsed-literal:: 
     {
-      "parents": [ "cdap-data-pipeline[|version|,\ |version|]", "cdap-etl-realtime[|version|,\ |version|]" ]
+      "parents": [ "cdap-data-pipeline[|version|,\ |version|]", "cdap-data-streams[|version|,\ |version|]" ]
     }
 
 This file specifies that the plugins in ``custom-transforms-1.0.0.jar`` can be used by version |version| of
-the ``cdap-data-pipeline`` and ``cdap-etl-realtime`` artifacts. You can also specify a wider range of versions
+the ``cdap-data-pipeline`` and ``cdap-data-streams`` artifacts. You can also specify a wider range of versions
 that can use the plugins, with square brackets ``[ ]`` indicating an inclusive version and parentheses ``( )`` indicating
 an exclusive version. For example:
 
@@ -247,11 +247,11 @@ an exclusive version. For example:
 
   .. parsed-literal:: 
     {
-      "parents": [ "cdap-data-pipeline[3.2.0,4.0.0)", "cdap-etl-realtime[3.2.0,4.0.0)" ]
+      "parents": [ "cdap-data-pipeline[3.5.0,4.0.0)", "cdap-data-streams[3.5.0,4.0.0)" ]
     }
 
-specifies that these plugins can be used by versions 3.2.0 (inclusive) to 4.0.0 (exclusive) of the
-``cdap-data-pipeline`` and ``cdap-etl-realtime`` artifacts.
+specifies that these plugins can be used by versions 3.5.0 (inclusive) to 4.0.0 (exclusive) of the
+``cdap-data-pipeline`` and ``cdap-data-streams`` artifacts.
 
 If the artifact contains third-party plugins, you can explicitly list them in the config file.
 For example, you may want to deploy a JDBC driver contained in a third-party JAR. In these cases,
@@ -262,7 +262,7 @@ list them in the configuration:
 
   .. parsed-literal:: 
     {
-      "parents": [ "cdap-data-pipeline[3.2.0,4.0.0)", "cdap-etl-realtime[3.2.0,4.0.0)" ],
+      "parents": [ "cdap-data-pipeline[3.5.0,4.0.0)", "cdap-data-streams[3.5.0,4.0.0)" ],
       "plugins": [
         {
           "name": "mysql",
@@ -298,8 +298,8 @@ For example, to deploy ``custom-transforms-1.0.0.jar`` using the RESTful API:
 
 .. tabbed-parsed-literal::
 
-    $ curl -w"\n" -X POST "localhost:10000/v3/namespaces/default/artifacts/custom-transforms" \
-    -H "Artifact-Extends: system:cdap-data-pipeline[|version|, |version|]/system:cdap-etl-realtime[|version|, |version|]" \
+    $ curl -w"\n" -X POST "localhost:11015/v3/namespaces/default/artifacts/custom-transforms" \
+    -H "Artifact-Extends: system:cdap-data-pipeline[|version|, |version|]/system:cdap-data-streams[|version|, |version|]" \
     --data-binary @/path/to/custom-transforms-1.0.0.jar
 
 Using the CLI:
@@ -317,7 +317,7 @@ where ``config.json`` contains:
 
   .. parsed-literal:: 
     {
-      "parents": [ "system:cdap-data-pipeline[|version|,\ |version|]", "system:cdap-etl-realtime[|version|,\ |version|]" ]
+      "parents": [ "system:cdap-data-pipeline[|version|,\ |version|]", "system:cdap-data-streams[|version|,\ |version|]" ]
     }
 
 Note that when deploying a user artifact that extends a system artifact,
@@ -335,10 +335,10 @@ it needs to be set explicitly, as the JAR contents are uploaded without the file
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X POST "localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java" \
+  $ curl -w"\n" -X POST "localhost:11015/v3/namespaces/default/artifacts/mysql-connector-java" \
   -H 'Artifact-Plugins: [ { "name": "mysql", "type": "jdbc", "className": "com.mysql.jdbc.Driver" } ]' \
   -H "Artifact-Version: 5.1.35" \
-  -H "Artifact-Extends: system:cdap-data-pipeline[|version|, |version|]/system:cdap-etl-realtime[|version|, |version|]" \
+  -H "Artifact-Extends: system:cdap-data-pipeline[|version|, |version|]/system:cdap-data-streams[|version|, |version|]" \
   --data-binary @mysql-connector-java-5.1.35.jar
 
 Using the CLI (note that the artifact version, if not explicitly set, is derived from the JAR filename):
@@ -356,7 +356,7 @@ where ``config.json`` contains:
 
   .. parsed-literal:: 
     {
-      "parents": [ "system:cdap-data-pipeline\[|version|,\ |version|]", "system:cdap-etl-realtime[|version|,\ |version|]" ],
+      "parents": [ "system:cdap-data-pipeline\[|version|,\ |version|]", "system:cdap-data-streams[|version|,\ |version|]" ],
       "plugins": [
         {
           "name": "mysql",
@@ -376,7 +376,7 @@ For example, to retrieve detail about our ``custom-transforms`` artifact:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X GET "localhost:10000/v3/namespaces/default/artifacts/custom-transforms/versions/1.0.0?scope=[system | user]
+  $ curl -w"\n" -X GET "localhost:11015/v3/namespaces/default/artifacts/custom-transforms/versions/1.0.0?scope=[system | user]
 
 Using the CLI:
 
@@ -395,7 +395,7 @@ specific type. For example, to check if ``cdap-data-pipeline`` can access the pl
 
 .. tabbed-parsed-literal::
 
-    $ curl -w"\n" -X GET "localhost:10000/v3/namespaces/default/artifacts/cdap-data-pipeline/versions/|version|/extensions/transform?scope=system"
+    $ curl -w"\n" -X GET "localhost:11015/v3/namespaces/default/artifacts/cdap-data-pipeline/versions/|version|/extensions/transform?scope=system"
 
 Using the CLI:
 
@@ -477,13 +477,13 @@ We package our code into a JAR file named ``wordcount-1.0.0.jar`` and add it to 
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X POST "localhost:10000/v3/namespaces/default/artifacts/wordcount" --data-binary @wordcount-1.0.0.jar
+  $ curl -w"\n" -X POST "localhost:11015/v3/namespaces/default/artifacts/wordcount" --data-binary @wordcount-1.0.0.jar
 
 We then create an application from that artifact:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X PUT "localhost:10000/v3/namespaces/default/apps/basicwordcount" -H "Content-Type: application/json" \
+  $ curl -w"\n" -X PUT "localhost:11015/v3/namespaces/default/apps/basicwordcount" -H "Content-Type: application/json" \
   -d '{ "artifact": { "name": "wordcount", "version": "1.0.0", "scope": "user" } }'
     
 This program runs just fine. It counts all words in the input. However, what if we want to count phrases
@@ -498,14 +498,14 @@ stopwords, we want to be able to create it through a configuration:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X PUT "localhost:10000/v3/namespaces/default/apps/stopwordcount" -H "Content-Type: application/json" \
+  $ curl -w"\n" -X PUT "localhost:11015/v3/namespaces/default/apps/stopwordcount" -H "Content-Type: application/json" \
   -d '{ "artifact": { "name": "wordcount", "version": "1.0.0", "scope": "user" }, "config": { "tokenizer": "stopword" } }'
   
 Similarly, we want to be able to create an application that counts phrases through a configuration:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X PUT "localhost:10000/v3/namespaces/default/apps/phrasecount" -H "Content-Type: application/json" \
+  $ curl -w"\n" -X PUT "localhost:11015/v3/namespaces/default/apps/phrasecount" -H "Content-Type: application/json" \
   -d '{ "artifact": { "name": "wordcount", "version": "1.0.0", "scope": "user" }, "config": { "tokenizer": "phrase" } }'
 
 .. highlight:: java
@@ -613,7 +613,7 @@ We then package the code in a new version of the artifact ``wordcount-1.1.0.jar`
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X POST "localhost:10000/v3/namespaces/default/artifacts/wordcount" --data-binary @wordcount-1.1.0.jar
+  $ curl -w"\n" -X POST "localhost:11015/v3/namespaces/default/artifacts/wordcount" --data-binary @wordcount-1.1.0.jar
 
 .. rubric:: Implementing Tokenizer Plugins
 
@@ -705,7 +705,7 @@ When deploying this artifact, we tell CDAP that the artifact extends the ``wordc
 
 .. tabbed-parsed-literal::
 
- $ curl -w"\n" "localhost:10000/v3/namespaces/default/artifacts/tokenizers" --data-binary @tokenizers-1.0.0.jar \
+ $ curl -w"\n" "localhost:11015/v3/namespaces/default/artifacts/tokenizers" --data-binary @tokenizers-1.0.0.jar \
  -H "Artifact-Extends:wordcount[1.1.0,2.0.0)"
 
 This will make the plugins available to those versions of the ``wordcount`` artifact. We can now create
@@ -713,7 +713,7 @@ applications that use the tokenizer we want:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X PUT localhost:10000/v3/namespaces/default/apps/phrasecount -H "Content-Type: application/json" \
+  $ curl -w"\n" -X PUT localhost:11015/v3/namespaces/default/apps/phrasecount -H "Content-Type: application/json" \
   -d '{ "artifact": { "name": "wordcount", "version": "1.1.0", "scope": "user" }, "config": { "tokenizer": "phrase" } }'
 
 .. rubric:: Adding a Plugin Configuration to the Application
@@ -775,7 +775,7 @@ Now we can create an application that uses a comma instead of a space to split t
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X PUT "localhost:10000/v3/namespaces/default/apps/wordcount2" -H "Content-Type: application/json" \
+  $ curl -w"\n" -X PUT "localhost:11015/v3/namespaces/default/apps/wordcount2" -H "Content-Type: application/json" \
     -d '{ 
       "artifact": { "name": "wordcount", "version": "1.2.0", "scope": "user" },
       "config": { "tokenizer": "default", "tokenizerProperties": { "delimiter": "," }

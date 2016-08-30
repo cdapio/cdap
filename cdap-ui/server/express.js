@@ -21,14 +21,14 @@ module.exports = {
     return require('q').all([
         // router check also fetches the auth server address if security is enabled
         require('./config/router-check.js').ping(),
-        require('./config/parser.js').extractConfig('cdap')
+        require('./config/parser.js').extractConfig('cdap'),
+        require('./config/parser.js').extractUISettings()
       ])
       .spread(makeApp);
   }
 };
 
-var pkg = require('../package.json'),
-    express = require('express'),
+var express = require('express'),
     cookieParser = require('cookie-parser'),
     compression = require('compression'),
     finalhandler = require('finalhandler'),
@@ -40,11 +40,14 @@ var pkg = require('../package.json'),
     DIST_PATH = require('path').normalize(
       __dirname + '/../dist'
     ),
+    CDAP_DIST_PATH=require('path').normalize(
+      __dirname + '/../cdap_dist'
+    ),
     fs = require('fs');
 
 var log = log4js.getLogger('default');
 
-function makeApp (authAddress, cdapConfig) {
+function makeApp (authAddress, cdapConfig, uiSettings) {
 
   var app = express();
 
@@ -74,7 +77,9 @@ function makeApp (authAddress, cdapConfig) {
       cdap: {
         routerServerUrl: cdapConfig['router.server.address'],
         routerServerPort: cdapConfig['router.server.port'],
-        routerSSLServerPort: cdapConfig['router.ssl.bind.port']
+        routerSSLServerPort: cdapConfig['router.ssl.bind.port'],
+        showStandaloneWelcomeMessage: uiSettings['standalone.welcome.message'] || false,
+        standaloneWebsiteSDKDownload: uiSettings['standalone.website.sdk.download'] || false
       },
       hydrator: {
         previewEnabled: cdapConfig['enable.alpha.preview'] === 'true'
@@ -88,10 +93,15 @@ function makeApp (authAddress, cdapConfig) {
       'Content-Type': 'text/javascript',
       'Cache-Control': 'no-store, must-revalidate'
     });
-    res.send('angular.module("'+pkg.name+'.config", [])' +
-              '.constant("MY_CONFIG",'+data+');');
+    res.send('window.CDAP_CONFIG = '+data+';');
   });
 
+  app.post('/resetWelcomeMessage', function(req, res) {
+    var writer = require('./config/writer.js');
+    writer.resetStandaloneWelcomeMessage()
+      .then(() => res.sendStatus(200))
+      .catch((err) => res.status(500).send(err));
+  });
   app.get('/ui-config.js', function (req, res) {
     var path = __dirname + '/config/cdap-ui-config.json';
 
@@ -102,8 +112,7 @@ function makeApp (authAddress, cdapConfig) {
       'Content-Type': 'text/javascript',
       'Cache-Control': 'no-store, must-revalidate'
     });
-    res.send('angular.module("'+pkg.name+'.config")' +
-              '.constant("UI_CONFIG",'+fileConfig+');');
+    res.send('window.CDAP_UI_CONFIG = ' + fileConfig+ ';');
   });
 
   app.post('/downloadQuery', function(req, res) {
@@ -197,7 +206,14 @@ function makeApp (authAddress, cdapConfig) {
       finalhandler(req, res)(false); // 404
     }
   ]);
-
+  app.use('/cdap_assets', [
+    express.static(CDAP_DIST_PATH + '/cdap_assets', {
+      index: false
+    }),
+    function(req, res) {
+      finalhandler(req, res)(false); // 404
+    }
+  ]);
   app.get('/robots.txt', [
     function (req, res) {
       res.type('text/plain');
@@ -360,7 +376,7 @@ function makeApp (authAddress, cdapConfig) {
   ]);
 
   // any other path, serve index.html
-  app.all('*', [
+  app.all(['/cask-hydrator', '/cask-hydrator*'], [
     function (req, res) {
       // BCookie is the browser cookie, that is generated and will live for a year.
       // This cookie is always generated to provide unique id for the browser that
@@ -372,10 +388,29 @@ function makeApp (authAddress, cdapConfig) {
       } else {
         res.cookie('bcookie', req.cookies.bcookie, { expires: date});
       }
-     res.sendFile(DIST_PATH + '/index.html');
+     res.sendFile(DIST_PATH + '/hydrator.html');
     }
   ]);
-
+  app.all(['/cask-tracker', '/cask-tracker*'], [
+    function (req, res) {
+      // BCookie is the browser cookie, that is generated and will live for a year.
+      // This cookie is always generated to provide unique id for the browser that
+      // is being used to interact with the CDAP backend.
+      var date = new Date();
+      date.setDate(date.getDate() + 365); // Expires after a year.
+      if(! req.cookies.bcookie) {
+        res.cookie('bcookie', uuid.v4(), { expires: date});
+      } else {
+        res.cookie('bcookie', req.cookies.bcookie, { expires: date});
+      }
+     res.sendFile(DIST_PATH + '/tracker.html');
+    }
+  ]);
+  app.all(['/', '/cask-cdap', '/cask-cdap*'], [
+    function(req, res) {
+      res.sendFile(CDAP_DIST_PATH + '/cdap_assets/cdap.html');
+    }
+  ]);
 
   return app;
 

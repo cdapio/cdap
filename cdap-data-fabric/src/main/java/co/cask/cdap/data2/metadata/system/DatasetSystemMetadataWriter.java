@@ -47,7 +47,6 @@ import javax.annotation.Nullable;
 public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetSystemMetadataWriter.class);
 
-  public static final String EXPLORE_TAG = "explore";
   public static final String BATCH_TAG = "batch";
   public static final String TYPE = "type";
   public static final String LOCAL_DATASET_TAG = "local-dataset";

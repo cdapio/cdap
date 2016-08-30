@@ -85,7 +85,7 @@ public class ClientConfig {
    * Resolves a path against the target CDAP server
    *
    * @param path Path to the HTTP endpoint. For example, "apps" would result
-   *             in a URL like "http://example.com:10000/v2/apps".
+   *             in a URL like "http://example.com:11015/v2/apps".
    * @return URL of the resolved path
    */
   public URL resolveURL(String path) throws DisconnectedException, MalformedURLException {
@@ -100,7 +100,7 @@ public class ClientConfig {
    * Resolves a path against the target CDAP server
    *
    * @param path Path to the HTTP endpoint. For example, "apps" would result
-   *             in a URL like "http://example.com:10000/v2/apps".
+   *             in a URL like "http://example.com:11015/v2/apps".
    * @return URL of the resolved path
    */
   public URL resolveURLV3(String path) throws MalformedURLException {
@@ -118,7 +118,7 @@ public class ClientConfig {
    * Resolves a path against the target CDAP server with the provided namespace, using V3 APIs
    *
    * @param path Path to the HTTP endpoint. For example, "apps" would result
-   *             in a URL like "http://example.com:10000/v3/&lt;namespace&gt;/apps".
+   *             in a URL like "http://example.com:11015/v3/&lt;namespace&gt;/apps".
    * @return URL of the resolved path
    * @throws MalformedURLException
    */

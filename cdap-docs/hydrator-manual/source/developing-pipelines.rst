@@ -228,7 +228,7 @@ when the run completes, a post-run action send an email indicating that the run 
               "type": "postaction",
               "artifact": {
                 "name": "core-plugins",
-                "version": "1.4.0-SNAPSHOT",
+                "version": "|cask-hydrator-version|",
                 "scope": "SYSTEM"
               },
               "properties": {
@@ -311,7 +311,7 @@ the CDAP CLI.
 
   .. tabbed-parsed-literal::
 
-    $ curl -w"\n" -X PUT localhost:10000/v3/namespaces/default/apps/streamETLApp \
+    $ curl -w"\n" -X PUT localhost:11015/v3/namespaces/default/apps/streamETLApp \
         -H "Content-Type: application/json" -d @config.json
         
     Deploy Complete
@@ -330,8 +330,14 @@ where, in both cases, ``config.json`` is the file that contains the pipeline con
 
 Creating a Real-Time Pipeline
 =============================
+With a Hydrator real-time pipeline, a ``batchInterval`` property is required
+specifying the frequency at which the sources will create new micro batches of data.
+The ``batchInterval`` must be a number followed by a time unit, with 's' for seconds,
+'m' for minutes, and 'h' for hours. For example, a value of '10s' will be interpreted
+as ten seconds. This means that every ten seconds, a new micro batch of data will be generated. 
+
 To create a real-time pipeline that reads from a source such as Twitter and writes to a
-stream after performing a projection transformation, you can use a configuration such as:
+CDAP Table after performing a projection transformation, you can use a configuration such as:
 
 .. container:: highlight
 
@@ -340,21 +346,20 @@ stream after performing a projection transformation, you can use a configuration
     {
       "name": "twitterToStream",
       "artifact": {
-        "name": "cdap-etl-realtime",
+        "name": "cdap-data-streams",
         "version": "|release|",
         "scope": "system"
       },
       "config": {
-        "instances": 1,
-        "postActions": [],
+        "batchInterval": "10s",
         "stages": [
           {
             "name": "twitterSource",
             "plugin": {
               "name": "Twitter",
-              "type": "realtimesource",
+              "type": "streamingsource",
               "artifact": {
-                "name": "core-plugins",
+                "name": "spark-plugins",
                 "version": "|cask-hydrator-version|",
                 "scope": "system"
               },
@@ -384,18 +389,19 @@ stream after performing a projection transformation, you can use a configuration
             }
           },
           {
-            "name": "streamSink",
+            "name": "tableSink",
             "plugin": {
-              "name": "Stream",
-              "type": "realtimesink",
+              "name": "Table",
+              "type": "batchsink",
               "artifact": {
                 "name": "core-plugins",
                 "version": "|cask-hydrator-version|",
                 "scope": "system"
               },              
               "properties": {
-                "name": "twitterStream",
-                "body.field": "tweet"
+                "name": "myTable",
+                "schema": "{\\"type\\":\\"record\\",\\"name\\":\\"etlSchemaBody\\",\\"fields\\":[{\\"name\\":\\"id\\",\\"type\\":\\"long\\"},{\\"name\\":\\"tweet\\",\\"type\\":\\"string\\"},{\\"name\\":\\"retCount\\",\\"type\\":\\"int\\"}]}",
+                "schema.row.field": "id"
               }
             }
           }
@@ -407,27 +413,16 @@ stream after performing a projection transformation, you can use a configuration
           },
           {
             "from": "dropProjector",
-            "to": "streamSink"
+            "to": "tableSink"
           }
         ]
       }
     }
 
-A Hydrator real-time pipeline expects an instance property that will create *N* instances
-of the worker that runs concurrently. In Standalone CDAP mode, this is implemented as
-multiple threads; in Distributed CDAP mode, it will create different YARN containers. The
-number of worker instances of a real-time pipeline should not (in general) be changed
-during runtime. If the number of instances needs to be changed, the worker must first be
-stopped, and then the pipeline configuration can be updated to the new number of instances.
-
-The ``instances`` property value needs to be greater than zero. Note that the ``instance``
-property replaces the ``schedule`` property of a Hydrator batch pipeline.
-
 In the example code above, we will use a *ProjectionTransform* (a type of transform) to
-drop and rename selected columns in the incoming data. A *StreamSink* in the final step
-needs a data field property (``body.field``) that it will use as the content for the data
-to be written.
-
+drop and rename selected columns in the incoming data. A *TableSink* in the final step
+requires a schema property that it will use to set the columns and row field for
+writing the data to a CDAP Table.
 
 Non-linear Executions in Pipelines
 ==================================
@@ -603,7 +598,7 @@ of received records will vary.
               "type": "batchstream",
               "artifact": {
                 "name": "core-plugins",
-                "version": "1.4.0-SNAPSHOT",
+                "version": "|cask-hydrator-version|",
                 "scope": "SYSTEM"
               },
               "properties": {
@@ -630,7 +625,7 @@ of received records will vary.
               "type": "transform",
               "artifact": {
                 "name": "core-plugins",
-                "version": "1.4.0-SNAPSHOT",
+                "version": "|cask-hydrator-version|",
                 "scope": "SYSTEM"
               },
               "properties": {
@@ -663,7 +658,7 @@ of received records will vary.
               "type": "transform",
               "artifact": {
                 "name": "core-plugins",
-                "version": "1.4.0-SNAPSHOT",
+                "version": "|cask-hydrator-version|",
                 "scope": "SYSTEM"
               },
               "properties": {
@@ -692,7 +687,7 @@ of received records will vary.
               "type": "batchsink",
               "artifact": {
                 "name": "core-plugins",
-                "version": "1.4.0-SNAPSHOT",
+                "version": "|cask-hydrator-version|",
                 "scope": "SYSTEM"
               },
               "properties": {
@@ -757,7 +752,7 @@ Sample configuration for using a *Database Source* and a *Database Sink*:
               "type": "batchsource",
               "artifact": {
                 "name": "core-plugins",
-                "version": "1.4.0-SNAPSHOT",
+                "version": "|cask-hydrator-version|",
                 "scope": "SYSTEM"
               },
               "properties": {
@@ -779,7 +774,7 @@ Sample configuration for using a *Database Source* and a *Database Sink*:
               "type": "batchsink",
               "artifact": {
                 "name": "core-plugins",
-                "version": "1.4.0-SNAPSHOT",
+                "version": "|cask-hydrator-version|",
                 "scope": "SYSTEM"
               },
               "properties": {
@@ -816,49 +811,52 @@ creating the source:
     {
       "name": "KafkaPipeline",
       "artifact": {
-        "name": "cdap-etl-realtime",
+        "name": "cdap-data-streams",
         "version": "|version|",
         "scope": "system"
       },
       "config": {
+        "batchInterval": "1s",
         "connections": [
           {
             "from": "kafkaSource",
-            "to": "streamSink"
+            "to": "tableSink"
           }
-        ]
-        "instances": 1,
+        ],
         "stages": [
           {
             "name": "kafkaSource",
             "plugin": {
               "name": "Kafka",
-              "type": "realtimesource",
+              "type": "streamingsource",
               "artifact": {
-                "name": "core-plugins",
-                "version": "1.4.0-SNAPSHOT",
+                "name": "spark-plugins",
+                "version": "|cask-hydrator-version|",
                 "scope": "SYSTEM"
               },
               "properties": {
-                "kafka.partitions": "1",
-                "kafka.topic": "test",
-                "kafka.brokers": "localhost:9092"
+                "referenceName": "purchasesTopic",
+                "brokers": "localhost:9092",
+                "topics": "purchases",
+                "format": "csv",
+                "schema": "{\\"type\\":\\"record\\",\\"name\\":\\"etlSchemaBody\\",\\"fields\\":[{\\"name\\":\\"id\\",\\"type\\":\\"long\\"},{\\"name\\":\\"customer\\",\\"type\\":\\"string\\"},{\\"name\\":\\"item\\",\\"type\\":\\"string\\"}]}"
               }
             }
           },
           {
-            "name": "streamSink",
+            "name": "tableSink",
             "plugin": {
-              "name": "Stream",
-              "type": "realtimesink",
+              "name": "Table",
+              "type": "batchsink",
               "artifact": {
                 "name": "core-plugins",
-                "version": "1.4.0-SNAPSHOT",
-                "scope": "SYSTEM"
-              },
+                "version": "|cask-hydrator-version|",
+                "scope": "system"
+              },              
               "properties": {
-                "name": "myStream",
-                "body.field": "message"
+                "name": "myTable",
+                "schema": "{\\"type\\":\\"record\\",\\"name\\":\\"etlSchemaBody\\",\\"fields\\":[{\\"name\\":\\"id\\",\\"type\\":\\"long\\"},{\\"name\\":\\"customer\\",\\"type\\":\\"string\\"},{\\"name\\":\\"item\\",\\"type\\":\\"string\\"}]}"
+                "schema.row.field": "id"
               }
             }
           }

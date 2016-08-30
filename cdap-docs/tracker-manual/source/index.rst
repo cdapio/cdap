@@ -3,8 +3,6 @@
     :description: Cask Tracker
     :copyright: Copyright © 2016 Cask Data, Inc.
 
-:hide-toc: true
-
 .. _cask-tracker-index:
 
 ============
@@ -18,45 +16,56 @@ Cask Tracker ("Tracker") is a self-service CDAP extension that automatically cap
 :ref:`metadata <metadata-lineage>` and lets you see how data is flowing into and out 
 of datasets, streams, and stream views.
 
-It allows you to perform impact and root-cause analysis, and delivers an audit-trail for
-auditability and compliance. Tracker furnishes access to structured information that
-describes, explains, locates, and makes it easier to retrieve, use, and manage datasets.
+It allows you to perform impact and root-cause analysis, delivers an audit-trail for
+auditability and compliance, and allows you to preview data. Tracker furnishes access to
+structured information that describes, explains, and locates data, making it easier to
+retrieve, use, and manage datasets.
 
-Tracker also allows for the storage of metadata where it can be accessed and indexed. This
-allows it to be is easily searched and provides consistent, high-quality metadata.
+Tracker also allows users to update metadata for datasets and streams. Users can add,
+remove, and update tags and user properties directly in the UI. It allows users to set
+a preferred dictionary of terms so that teams can use the same lexicon when updating metadata.
 
 Tracker's UI shows a graphical visualization of the :ref:`lineage
 <metadata-lineage-lineage>` of an entity. A lineage shows |---| for a specified time range
 |---| all data access of the entity, and details of where that access originated from.
 
+Tracker also captures activity metrics for datasets. You can see the datasets that are
+being used the most and view usage metrics for each dataset. This allows teams to easily
+determine the appropriate dataset to use for an analysis. The Tracker Meter rates each
+dataset on a scale that shows how active a dataset is in the system. Users can see the
+datasets that are being used the most and view usage metrics for each dataset. This
+allows teams to easily find the right dataset to use for analysis. The Tracker Meter
+also rates each dataset on a scale to quickly show you how active a dataset is in the
+system.
 
-**Harvest, Index, and Track Datasets**
+**Harvest, Index, Track, and Analyze Datasets**
 
 - Immediate, timely, and seamless capture of technical, business, and operational metadata,
   enabling faster and better traceability of all datasets.
-
-- Tracker quickly, reliably, and accurately indexes technical, business, and operational metadata
-  to help locate datasets.
 
 - Through its use of lineage, it lets you understand the impact of changing a dataset on
   other datasets, processes or queries.
 
 - Tracks the flow of data across enterprise systems and data lakes.
 
-- Provides trusted and complete metadata on datasets, enabling traceability to resolve
+- Provides viewing and updating complete metadata on datasets, enabling traceability to resolve
   data issues and to improve data quality.
 
+- Collects usage metrics about datasets so that you know which datasets are being used most often.
+
+- Provides the ability to designate certain tags as "preferred" so that teams can easily find and tag datasets.
+
+- Allows users to preview data directly in the UI.
 
 **Supports Standardization, Governance, and Compliance Needs**
 
 - Provide IT with the traceability needed in governing datasets and in applying compliance
   rules through seamless integration with other extensions.
 
-- Tracker has consistent definitions of metadata-containing information about the data to reconcile
-  differences in terminologies.
+- Tracker has consistent definitions of metadata-containing information about the data to
+  reconcile differences in terminologies.
 
 - It helps you in the understanding of the lineage of your business-critical data.
-
 
 **Blends Metadata Analytics and Integrations**
 
@@ -76,17 +85,23 @@ three billion records <http://customers.cask.co/rs/882-OYR-915/images/tracker-ca
 
 Tracker Application
 ===================
-The Cask Tracker application consists of an application in CDAP with two programs and two datasets:
+Cask Tracker consists of an application in CDAP with two programs and four datasets:
 
 - ``_Tracker`` application: names begins with an underscore
-- ``AuditLog`` service: it exposes the Tracker audit log as an API
-- ``AuditLogFlow`` flow: subscribes to Kafka audit messages and stores them in the ``_auditLog``	dataset
-- ``_auditLog`` custom dataset: type ``co.cask.tracker.entity.AuditLogTable``
-- ``_kafkaOffset`` dataset: type key-value table
+- ``TrackerService``: Service exposing the Tracker API endpoints
+- ``AuditLogFlow``: Flow that subscribes to Kafka audit messages and stores them in the
+  ``_auditLog`` dataset
+- ``_auditLog``: Custom dataset for storing audit messages
+- ``_kafkaOffset``: Key-value table for storing Kafka offsets
+- ``_auditMetrics``: Custom cube dataset for collecting dataset metrics
+- ``_auditTagsTable``: Custom dataset for storing preferred tags
+- ``_timeSinceTable``: Custom dataset for storing the last time a specific audit
+  message was received
 
-The Tracker UI is shipped with CDAP, started automatically as part of the CDAP UI, and is available at:
+The Tracker UI is shipped with CDAP, started automatically in standalone CDAP as part of the
+CDAP UI. It is available at:
 
-  http://localhost:9999/ns/default/tracker/home
+  http://localhost:11011/ns/default/tracker/home
   
 or (Distributed CDAP):
 
@@ -128,13 +143,14 @@ As these are the default settings for these properties, they do not need to be i
 
 Enabling Tracker
 ----------------
-To enable Tracker, go to the **Tracker UI** at 
-(in the SDK) http://localhost:9999/ns/default/tracker/home or 
-(Distributed CDAP) http://host:dashboard-bind-port/ns/default/tracker/home 
-and press the ``"Enable Tracker"`` button to deploy and start Tracker.
+Tracker is enabled automatically in Standalone CDAP and the UI is available at
+http://localhost:9999/ns/default/tracker/home. In the Distributed version of CDAP,
+you must manually enable Tracker by visiting
+http://host:dashboard-bind-port/ns/default/tracker/home and pressing the
+``"Enable Tracker"`` button.
 
-Once pressed, the application will be deployed, the datasets created (if necessary), the flow and service
-started, and search and audit logging will become available.
+Once pressed, the application will be deployed, the datasets created (if necessary), the
+flow and service started, and search and audit logging will become available.
 
 If you are enabling Tracker from outside the UI, you will, in addition to enabling auditing 
 in the ``cdap-site.xml`` as described above, need to follow these steps:
@@ -177,17 +193,19 @@ This key contains a property map with:
 
 - Required Properties:
 
-  - ``zookeeperString``: Kafka Zookeeper string that can be used to subscribe to the CDAP audit log updates
+  - ``zookeeperString``: Kafka Zookeeper string that can be used to subscribe to the CDAP
+    audit log updates
   - ``brokerString``: Kafka Broker string to which CDAP audit log data is published
 
   *Note:* Specify either the ``zookeeperString`` or the ``brokerString``.
 
 - Optional Properties:
 
-  - ``topic``: Kafka Topic to which CDAP audit updates are published; default is ``audit`` which
-    corresponds to the default topic used in CDAP for audit log updates
+  - ``topic``: Kafka Topic to which CDAP audit updates are published; default is ``audit``
+    which corresponds to the default topic used in CDAP for audit log updates
   - ``numPartitions``: Number of Kafka partitions; default is set to ``10``
-  - ``offsetDataset``: Name of the dataset where Kafka offsets are stored; default is ``_kafkaOffset``
+  - ``offsetDataset``: Name of the dataset where Kafka offsets are stored; default is
+    ``_kafkaOffset``
 
 Restarting CDAP
 ---------------
@@ -206,11 +224,9 @@ Disabling and Removing Tracker
 ------------------------------
 If for some reason you need to disable or remove Tracker, you would need to:
 
-- stop the Tracker flow
-- stop the Tracker service
+- stop all ``_Tracker`` programs
 - delete the Tracker application
 - delete the Tracker datasets
-
 
 Tracker and its UI
 ==================
@@ -246,8 +262,8 @@ The results would appear similar to this:
   :align: center
   :class: bordered-image
 
-In this example, Tracker has found two datasets that satisfy the condition. The search
-used is shown in the upper-left, and the results show both the datasets found with
+In this example, Tracker has found two datasets that satisfied the condition. The search
+used is shown in the upper-left, and the results show the datasets found with
 information and links for each.
 
 **On the left side** is the **Filter** pane, which provides information on what was found (the
@@ -259,8 +275,8 @@ Note that the *entities* and *metadata* filters have an ``and`` relationship; at
 selection must be made in each of *entities* and *metadata* for there to be any results
 that appear.
 
-**On the right side** is a sortable list of results. It is sortable by *Create Date* or the entity
-ID (name), either *A-Z* (alphabetical ascending), or *Z-A* (alphabetical descending).
+**On the right side** is a sortable list of results. It is sortable by one of *Create Date*, the entity
+ID (name), or the Tracker Score.
 
 Each entry in the list provides a summery of information about the entity, and its name is
 a hyperlink to further details: metadata, lineage, and audit log.
@@ -273,8 +289,8 @@ real-time pipelines.
 Entity Details
 --------------
 Clicking on a name in the search results list will take you to details for a particular
-entity. Details are provided on three separate tabs: *Metadata*, *Lineage*, and *Audit
-Log*.
+entity. Details are provided on the tabs *Metadata*, *Lineage*, *Audit Log*, *Preview*
+(included if the dataset is explorable), and *Usage*.
 
 **Metadata**
 
@@ -289,6 +305,11 @@ may have a schema attached, and if so, it will be displayed.
   :align: center
   :class: bordered-image
 
+You can add user tags to any entity by clicking the plus button in the UI. You can also
+remove tags by hovering over the tag and clicking the x. You can also add and remove User
+Properties for the dataset or stream. This is useful for storing additional details about
+the dataset for others to see.
+
 **Lineage**
 
 The *Lineage* tab shows the relationship between an entity and the programs that are
@@ -297,7 +318,7 @@ depending on the particular set of programs selected to construct the diagram, a
 button in the shape of an arrow is used to cycle through the different lineage digrams
 that a particular entity participates in.
 
-A date menu in the left side of the digram lets you control the time range that the
+A date menu in the left side of the diagram lets you control the time range that the
 diagram displays. By default, the last seven days are used, though a custom range can be
 specified, in addition to common time ranges (two weeks to one year).
 
@@ -315,11 +336,62 @@ work in CDAP, reading and writing from a flow or service to a dataset shows an a
 "UNKNOWN" rather than indicating if it was read or write access. This will be addressed in
 a future release.
 
-A date menu in the left side of the digram lets you control the time range that the
+A date menu in the left side of the diagram lets you control the time range that the
 diagram displays. By default, the last seven days are used, though a custom range can be
 specified, in addition to common time ranges (two weeks to one year).
 
 .. figure:: /_images/tracker-audit-log.png
+  :figwidth: 100%
+  :width: 800px
+  :align: center
+  :class: bordered-image
+
+**Preview**
+
+The *Preview* tab (if available) shows a preview for the dataset. It is available for all datasets that are
+explorable. You can scroll for up to 500 records. For additional analysis, use the *Jump*
+menu to go into CDAP and explore the dataset using a custom query.
+
+.. figure:: /_images/tracker-preview.png
+  :figwidth: 100%
+  :width: 800px
+  :align: center
+  :class: bordered-image
+
+**Usage**
+
+The *Usage* tab shows a set of graphs displaying usage metrics for the dataset. At the top is a
+histogram of all audit messages for a particular dataset. Along the bottom of the screen is a set of
+charts displaying the Applications and Programs that are accessing the dataset, and a table showing
+the last time a specific message was received about the dataset. Clicking the Application name or
+the Program name will take you to that entity in the main CDAP UI.
+
+.. figure:: /_images/tracker-usage.png
+  :figwidth: 100%
+  :width: 800px
+  :align: center
+  :class: bordered-image
+
+**Preferred Tags**
+
+The *Tags* tab at the top of the page allows you to enter a common set of preferred terms to use when
+adding tags to datasets. Preferred tags show up first when adding tags, and will guide your team to
+use the same terminology. Any preferred tag that has not been attached to any entities can be deleted
+by clicking the red trashcan icon. If a preferred tag has been added to an entity, you cannot delete it,
+but you can demote it back to just being a user tag.
+
+.. figure:: /_images/tracker-tags.png
+  :figwidth: 100%
+  :width: 800px
+  :align: center
+  :class: bordered-image
+
+To add preferred tags, click the **Add Preferred Tags** button and use the UI to add or import a
+list of tags that you would like to be "preferred". If the tag already exists in CDAP,
+it will be promoted from being a user tag to being a preferred tag. If it is a new tag
+in CDAP, it will be added in the *Preferred Tags* list.
+
+.. figure:: /_images/tracker-tags-upload.png
   :figwidth: 100%
   :width: 800px
   :align: center
@@ -341,145 +413,3 @@ connecting to a Navigator instance:
 Details on completing this form are described in CDAP's documentation on
 :ref:`Navigator Integration Application <navigator-integration>`.
 
-.. highlight:: console  
-
-Tracker HTTP RESTful API
-========================
-
-Tracker supports searching of the *_auditLog* dataset through an HTTP RESTful API. (See
-the :ref:`Reference Manual: HTTP RESTful API <http-restful-api-introduction>` for details
-on the conventions used for this API.) To search for audit log entries for a particular
-dataset, stream, or stream view, submit an HTTP GET request::
-
-  GET /v3/namespaces/<namespace-id>/apps/_Tracker/services/AuditLog/methods/auditlog/<entity-type>/<name>
-    [?startTime=<time>][&endTime=<time>][&offset=<offset>][&limit=<limit>]
-
-where:
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``namespace-id``
-     - Namespace ID
-   * - ``entity-type``
-     - One of ``dataset``, ``stream``, or ``stream_view``
-   * - ``name``
-     - Name of the ``entity-type``
-   * - ``time`` *(optional)*
-     - Time range defined by start (*startTime*, default ``0``) and end (*endTime*,
-       default ``now``) times, where the times are either in milliseconds since the start of
-       the Epoch, or a relative time, using ``now`` and times added to it. You can apply
-       simple math, using ``now`` for the current time, ``s`` for seconds, ``m`` for
-       minutes, ``h`` for hours and ``d`` for days. For example: ``now-5d-12h`` is 5 days
-       and 12 hours ago.
-   * - ``offset`` *(optional)*
-     - The offset to start the results at for paging; default is ``0``.
-   * - ``limit`` *(optional)*
-     - The maximum number of results to return in the results; default is ``10``.
-     
-A successful query will return with the results as a field along with a count of the total
-results available, plus the offset used for the set of results returned. This is to allow
-for pagination through the results. Results are sorted so that the most recent audit event
-in the time range is returned first.
-
-.. highlight:: json  
-
-If there are no results, an empty set of results will be returned (pretty-printed here for
-display)::
-
-  {
-    "totalResults": 0,
-    "results": [],
-    "offset": 0
-  }
-
-
-Example:
-
-.. tabbed-parsed-literal::
-
-  $ curl -w'\n' -X GET 'http://localhost:10000/v3/namespaces/default/apps/_Tracker/services/AuditLog/methods/auditlog/stream/who?limit=1&startTime=now-5d-12h&endTime=now-12h'
-
-
-.. highlight:: json-ellipsis
-
-Results (reformatted for display)::
-
-  {
-    "totalResults": 5,
-    "results": [
-      {
-        "version": 1,
-        "time": 1461266805472,
-        "entityId": {
-          "namespace": "default",
-          "stream": "who",
-          "entity": "STREAM"
-        },
-        "user": "unknown",
-        "type": "METADATA_CHANGE",
-        "payload": {
-          "previous": {
-            "SYSTEM": {
-              "properties": {
-                "creation-time": "1461266804916",
-                "ttl": "9223372036854775807"
-              },
-              "tags": [
-                "who"
-              ]
-            }
-          },
-          "additions": {
-            "SYSTEM": {
-              "properties": {
-                "schema": "{\"type\":\"record\",\"name\":\"stringBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"}]}"
-              },
-              "tags": []
-            }
-          },
-          "deletions": {
-            "SYSTEM": {
-              "properties": {},
-              "tags": []
-            }
-          }
-        }
-      },
-      ...
-      {
-        "version": 1,
-        "time": 1461266805404,
-        "entityId": {
-          "namespace": "default",
-          "stream": "who",
-          "entity": "STREAM"
-        },
-        "user": "unknown",
-        "type": "CREATE",
-        "payload": {}
-      }
-    ],
-    "offset": 0
-  }
-
-
-.. rubric:: HTTP Responses
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Status Codes
-     - Description
-   * - ``200 OK``
-     - Returns the audit log entries requested in the body of the response.
-   * - ``400 BAD REQUEST``
-     - Returned if the input values are invalid, such as an incorrect date format, negative
-       offsets or limits, or an invalid range. The response will include an appropriate error
-       message.
-   * - ``500 SERVER ERROR``
-     - Unknown server error.

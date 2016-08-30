@@ -1,0 +1,78 @@
+<!--
+  Copyright © 2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<!DOCTYPE html>
+<html lang="en" ng-app="cdap-ui">
+<head>
+    <title ng-bind="$state.current.name">CDAP</title>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="Cask Data Application Platform">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <base href="/cask-tracker/" ></base>
+
+    <link rel="stylesheet" type="text/css" href="/assets/bundle/lib.css" />
+    <link rel="stylesheet" type="text/css" href="/assets/bundle/app.css" />
+</head>
+<body ng-class="bodyClass" ng-controller="BodyCtrl" ng-keyup="onSearch($event)">
+  <my-global-navbar></my-global-navbar>
+  <main class="container">
+    <div ui-view></div>
+  </main>
+
+  <div class="alerts" id="alerts"></div>
+  <footer>
+    <div class="container">
+      <div class="row text-muted" ng-cloak>
+        <div class="col-sm-6 text-uppercase">
+          <p>
+            <span class="cask-logo"></span>
+            <span>Copyright &copy; {{ copyrightYear }} Cask Data, Inc.</span>
+          </p>
+        </div>
+        <div class="col-sm-6">
+          <ul class="list-inline">
+            <li>
+              {{ ::version }}
+            </li>
+            <li>
+              <a href="http://cask.co/terms" target="_blank">Terms</a>
+            </li>
+            <li>
+              <a href="http://cask.co/privacy" target="_blank">Privacy</a>
+            </li>
+            <li>
+              <a href="http://cask.co/contact" target="_blank">Contact</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script type="text/javascript" src="/assets/bundle/polyfill.js"></script>
+  <script type="text/javascript" src="/assets/bundle/lib.js"></script>
+  <script type="text/javascript" src="/config.js"></script>
+  <script type="text/javascript" src="/ui-config.js"></script>
+  <script type="text/javascript" src="/assets/bundle/tracker.js"></script>
+  <script type="text/javascript" src="/assets/bundle/common.es6.js"></script>
+  <script type="text/javascript" src="/assets/bundle/tpl.js"></script>
+
+  <script src="http://localhost:35729/livereload.js"></script>
+
+</body>
+</html>

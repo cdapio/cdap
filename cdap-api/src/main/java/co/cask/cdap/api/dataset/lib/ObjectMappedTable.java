@@ -23,6 +23,7 @@ import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.table.Scan;
 
 import java.util.List;
 import javax.annotation.Nullable;
@@ -95,6 +96,14 @@ public interface ObjectMappedTable<T> extends Dataset, BatchReadable<byte[], T>,
    * @return {@link CloseableIterator} over {@link KeyValue KeyValue&lt;byte[], T&gt;}
    */
   CloseableIterator<KeyValue<byte[], T>> scan(@Nullable byte[] startRow, @Nullable byte[] stopRow);
+
+  /**
+   * Scans table.
+   *
+   * @param scan Scan object to scan the table with.
+   * @return {@link CloseableIterator} over {@link KeyValue KeyValue&lt;byte[], T&gt;}
+   */
+  CloseableIterator<KeyValue<byte[], T>> scan(Scan scan);
 
   /**
    * Delete the object for the specified key.

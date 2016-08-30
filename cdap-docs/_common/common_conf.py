@@ -213,20 +213,20 @@ locale_dirs = ['_locale/', '../../_common/_locale']
 # Used by the sphinx.ext.extlinks extension, these are available using this example syntax:
 # :cdap-ui-apps-programs:`application overview page, programs tab <ClicksAndViews>`
 # returns
-# http://localhost:9999/ns/default/apps/ClicksAndViews/overview/programs
+# http://localhost:11011/ns/default/apps/ClicksAndViews/overview/programs
 # use %% to preserve substitution
 cdap_java_source_github_pattern = "https://github.com/caskdata/cdap/blob/%s/%%s" % git_build_vars["GIT_BRANCH_PARENT"]
 
 extlinks = {
-    'cdap-ui': ('http://localhost:9999/ns/default/%s', None),
-    'cdap-ui-apps': ('http://localhost:9999/ns/default/apps/%s', None),
-    'cdap-ui-apps-programs': ('http://localhost:9999/ns/default/apps/%s/overview/programs', None),
-    'cdap-ui-datasets': ('http://localhost:9999/ns/default/datasets/%s', None),
-    'cdap-ui-datasets-explore': ('http://localhost:9999/ns/default/datasets/%s/overview/explore', None),
-    'cdap-ui-datasets-explore': ('http://localhost:9999/ns/default/datasets/%s/overview/explore', None),
-    'cask-hydrator': ('http://localhost:9999/ns/default/hydrator/%s', None),
-    'cask-hydrator-studio': ('http://localhost:9999/ns/default/hydrator/studio/%s', None),
-    'cask-hydrator-studio-artifact': ('http://localhost:9999/ns/default/hydrator/studio?artifactType=%s', None),
+    'cdap-ui': ('http://localhost:11011/ns/default/%s', None),
+    'cdap-ui-apps': ('http://localhost:11011/ns/default/apps/%s', None),
+    'cdap-ui-apps-programs': ('http://localhost:11011/ns/default/apps/%s/overview/programs', None),
+    'cdap-ui-datasets': ('http://localhost:11011/ns/default/datasets/%s', None),
+    'cdap-ui-datasets-explore': ('http://localhost:11011/ns/default/datasets/%s/overview/explore', None),
+    'cdap-ui-datasets-explore': ('http://localhost:11011/ns/default/datasets/%s/overview/explore', None),
+    'cask-hydrator': ('http://localhost:11011/ns/default/hydrator/%s', None),
+    'cask-hydrator-studio': ('http://localhost:11011/ns/default/hydrator/studio/%s', None),
+    'cask-hydrator-studio-artifact': ('http://localhost:11011/ns/default/hydrator/studio?artifactType=%s', None),
     'cdap-java-source-github': (cdap_java_source_github_pattern , None),
     'cask-issue': ('https://issues.cask.co/browse/%s', ''),
 }

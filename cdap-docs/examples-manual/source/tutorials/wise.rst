@@ -133,7 +133,7 @@ To deploy and start the application, make sure CDAP is running and then execute:
 
 You should get responses similar to::
 
-  Successfully connected CDAP instance at http://localhost:10000
+  Successfully connected CDAP instance at http://localhost:11015
   Successfully started flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}'
   ...
   Successfully started service 'WiseService' of application 'Wise' with stored runtime arguments '{}'
@@ -543,7 +543,7 @@ Using the ``curl`` command and the CLI, example use of the service would be:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.185/count"
+  $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.185/count"
   21
   
   $ cdap-cli.sh call service Wise.WiseService GET ip/255.255.255.185/count  
@@ -587,7 +587,7 @@ from IP ``255.255.255.207``:
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X GET "http://localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.207/count"
+  $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.207/count"
   22
 
 The ``PageViewCountHandler`` has another endpoint for retrieving the pageview count of a particular page from
@@ -595,7 +595,7 @@ a specific IP address. For example, to query the pageview count of page ``/index
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X POST -d "/index.html" "http://localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.154/count"
+  $ curl -w"\n" -X POST -d "/index.html" "http://localhost:11015/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.154/count"
   2
   
   
@@ -605,7 +605,7 @@ With WISE, you can explore the datasets using SQL queries. The SQL interface on 
 called *Explore*, can be accessed through the CDAP UI:
 
 1. After deploying WISE in your Standalone CDAP instance, go to the *WISE* 
-   `overview page <http://localhost:9999/ns/default/apps/Wise/overview/status>`__:
+   `overview page <http://localhost:11011/ns/default/apps/Wise/overview/status>`__:
 
    .. image:: ../_images/wise_overview.png 
      :width: 8in

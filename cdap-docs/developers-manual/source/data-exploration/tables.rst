@@ -74,7 +74,7 @@ For example, the same schema set through the example code above can also be set 
 
 .. tabbed-parsed-literal::
 
-  $ curl -w"\n" -X PUT "http://example.com:10000/v3/namespaces/<namespace-id>/data/datasets/profiles/properties" \
+  $ curl -w"\n" -X PUT "http://example.com:11015/v3/namespaces/<namespace-id>/data/datasets/profiles/properties" \
     -d '{ "typeName": "table", \
           "properties": { \
             "schema": "{ \

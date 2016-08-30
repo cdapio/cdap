@@ -426,7 +426,7 @@ public final class Constants {
     /**
      * Defaults.
      */
-    public static final String DEFAULT_ROUTER_PORT = "10000";
+    public static final String DEFAULT_ROUTER_PORT = "11015";
 
     public static final String GATEWAY_DISCOVERY_NAME = Service.GATEWAY;
     public static final String WEBAPP_DISCOVERY_NAME = "webapp/$HOST";

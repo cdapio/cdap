@@ -36,7 +36,7 @@ public final class TimeseriesId {
 
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof TimeseriesId) || o == null) {
+    if (!(o instanceof TimeseriesId)) {
       return false;
     }
     TimeseriesId other = (TimeseriesId) o;

@@ -181,11 +181,6 @@ public class DefaultStreamManager implements StreamManager {
   }
 
   @Override
-  protected void finalize() throws Throwable {
-    super.finalize();
-  }
-
-  @Override
   public List<StreamEvent> getEvents(String startTime, String endTime, int limit) throws IOException {
     return getEvents(streamId, startTime, endTime, limit);
   }

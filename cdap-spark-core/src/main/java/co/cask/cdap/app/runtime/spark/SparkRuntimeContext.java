@@ -56,6 +56,7 @@ import javax.annotation.Nullable;
 public final class SparkRuntimeContext extends AbstractContext implements Metrics, Closeable {
 
   private final Configuration hConf;
+  private final String hostname;
   private final TransactionSystemClient txClient;
   private final StreamAdmin streamAdmin;
   private final WorkflowProgramInfo workflowProgramInfo;
@@ -64,7 +65,7 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
   private final AuthenticationContext authenticationContext;
 
   SparkRuntimeContext(Configuration hConf, Program program, ProgramOptions programOptions,
-                      TransactionSystemClient txClient,
+                      String hostname, TransactionSystemClient txClient,
                       DatasetFramework datasetFramework,
                       DiscoveryServiceClient discoveryServiceClient,
                       MetricsCollectionService metricsCollectionService,
@@ -80,6 +81,7 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
           secureStore, secureStoreManager, pluginInstantiator);
 
     this.hConf = hConf;
+    this.hostname = hostname;
     this.txClient = txClient;
     this.streamAdmin = streamAdmin;
     this.workflowProgramInfo = workflowProgramInfo;
@@ -118,6 +120,13 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
    */
   public SparkSpecification getSparkSpecification() {
     return getSparkSpecification(getProgram());
+  }
+
+  /**
+   * Returns the hostname of the current container.
+   */
+  public String getHostname() {
+    return hostname;
   }
 
   private static SparkSpecification getSparkSpecification(Program program) {

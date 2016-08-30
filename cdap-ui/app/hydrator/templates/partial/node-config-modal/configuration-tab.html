@@ -1,0 +1,54 @@
+<!--
+  Copyright © 2016 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+<div ng-if="HydratorPlusPlusNodeConfigCtrl.state.configfetched">
+  <div ng-class="{'modal-sink': HydratorPlusPlusNodeConfigCtrl.state.node.type === 'sink'}">
+    <div ng-show="!showinfo">
+      <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.configfetched">
+
+        <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.noproperty !== 0">
+          <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.noconfig" ng-include="'/assets/features/hydrator/templates/partial/node-config-modal/node-config/plugin-edit-noconfig-form.html'"></div>
+
+          <div ng-if="(HydratorPlusPlusNodeConfigCtrl.state.configfetched && !HydratorPlusPlusNodeConfigCtrl.state.noconfig)">
+            <div ng-include="'/assets/features/hydrator/templates/partial/node-config-modal/node-config/plugin-edit-config-form.html'"></div>
+          </div>
+        </div>
+
+        <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.noproperty === 0" class="no-plugin-properties-message">
+          <div class="well well-lg text-center">
+            <h4>No Properties found for Plugin '{{::HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name}}'</h4>
+          </div>
+        </div>
+      </div>
+
+      <div ng-if="!HydratorPlusPlusNodeConfigCtrl.state.configfetched">
+        <h3>
+          <span class="fa fa-spinner fa-spin"></span>
+          <span>Loading...</span>
+        </h3>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+<div ng-if="!HydratorPlusPlusNodeConfigCtrl.state.configfetched" class="loading-message">
+  <h3>
+    <small class="fa fa-spin fa-spinner"></small>
+    Loading...
+  </h3>
+</div>

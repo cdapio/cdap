@@ -69,7 +69,7 @@ For example, to create a stream view *logStreamView* on an existing stream
  
 .. tabbed-parsed-literal::
 	 
-  $ curl -w"\n" -X PUT "http://example.com:10000/v3/namespaces/default/streams/logStream/views/logStreamView" \
+  $ curl -w"\n" -X PUT "http://example.com:11015/v3/namespaces/default/streams/logStream/views/logStreamView" \
     -H 'Content-Type: application/json' -d \
     "{
       'format': {
@@ -137,7 +137,7 @@ For example, to see all the stream views on an existing stream *logStream*, you 
 
 .. tabbed-parsed-literal::
 	 
-  $ curl -w"\n" -X GET "http://example.com:10000/v3/namespaces/default/streams/logStream/views"
+  $ curl -w"\n" -X GET "http://example.com:11015/v3/namespaces/default/streams/logStream/views"
     
   ["logStreamView1", "logStreamView2", ...]
 
@@ -184,7 +184,7 @@ For example, to see the details of the stream view *logStreamView* on the stream
  
 .. tabbed-parsed-literal::
 	 
-  $ curl -w"\n" -X GET "http://example.com:10000/v3/namespaces/default/streams/logStream/view/logStreamView"
+  $ curl -w"\n" -X GET "http://example.com:11015/v3/namespaces/default/streams/logStream/view/logStreamView"
     
   {"id":"logStreamView",
    "format":
@@ -242,7 +242,7 @@ For example, to delete the stream view *logStreamView* on the stream
  
 .. tabbed-parsed-literal::
 	 
-  $ curl -w"\n" -X DELETE "http://example.com:10000/v3/namespaces/default/streams/logStream/view/logStreamView"
+  $ curl -w"\n" -X DELETE "http://example.com:11015/v3/namespaces/default/streams/logStream/view/logStreamView"
      
 .. rubric:: HTTP Responses
 

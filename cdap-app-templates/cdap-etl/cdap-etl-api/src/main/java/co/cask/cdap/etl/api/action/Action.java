@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.api.action;
 
 import co.cask.cdap.etl.api.PipelineConfigurable;
+import co.cask.cdap.etl.api.PipelineConfigurer;
 
 /**
  * Represents custom logic to be executed in the pipeline.
@@ -30,4 +31,9 @@ public abstract class Action implements PipelineConfigurable {
    * @throws Exception when there is failure in method execution
    */
   public abstract void run(ActionContext context) throws Exception;
+
+  @Override
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+    //no-op
+  }
 }
