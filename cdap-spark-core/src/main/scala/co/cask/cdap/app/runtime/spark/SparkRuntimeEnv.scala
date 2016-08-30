@@ -22,7 +22,7 @@ import javax.annotation.Nullable
 
 import com.google.common.reflect.TypeToken
 import org.apache.spark.scheduler._
-import org.apache.spark.streaming.{StreamingContext, StreamingContextState}
+import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.{SparkConf, SparkContext}
 import org.slf4j.LoggerFactory
 

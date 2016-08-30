@@ -18,7 +18,6 @@ package $package;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
-import co.cask.cdap.api.mapreduce.MapReduceContext;
 import org.apache.hadoop.mapreduce.Job;
 
 /**

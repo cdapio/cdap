@@ -19,7 +19,6 @@ package co.cask.cdap.api.security.store;
 import co.cask.cdap.api.annotation.Beta;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 /**

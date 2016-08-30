@@ -7,9 +7,9 @@
 # Used to generate a table in the CLI documentation from a table in a Markdown file.
 #
 
-from optparse import OptionParser
 import os
 import sys
+from optparse import OptionParser
 
 VERSION = "0.0.1"
 

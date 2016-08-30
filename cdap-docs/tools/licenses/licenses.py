@@ -22,11 +22,11 @@
 #
 
 
-from optparse import OptionParser
 import csv
 import os
 import subprocess
 import sys
+from optparse import OptionParser
 
 VERSION = '0.1.0'
 
@@ -318,7 +318,6 @@ def process_cdap_ui(options):
     new_versions_dict = {}
     
     import json
-    from pprint import pprint
     print
 
     for type in CDAP_UI_SOURCES.keys():

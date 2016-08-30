@@ -18,8 +18,6 @@ package co.cask.cdap.data2.registry;
 
 import co.cask.cdap.proto.Id;
 
-import java.util.Set;
-
 /**
  * Store program -> dataset/stream usage information. Differs from UsageRegistry in that UsageRegistry does not have
  * a remote implementation, usable from program runtime.

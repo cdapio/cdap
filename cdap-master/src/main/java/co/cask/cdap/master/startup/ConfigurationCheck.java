@@ -22,7 +22,6 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import kafka.common.Topic;
 import org.apache.kafka.common.errors.InvalidTopicException;

@@ -34,7 +34,6 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import java.util.List;
 import java.util.Map;
 
 /**

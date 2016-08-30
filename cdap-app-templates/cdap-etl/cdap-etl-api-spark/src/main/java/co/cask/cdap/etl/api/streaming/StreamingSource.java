@@ -17,11 +17,9 @@
 package co.cask.cdap.etl.api.streaming;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import org.apache.spark.streaming.api.java.JavaDStream;
-import org.apache.spark.streaming.api.java.JavaStreamingContext;
 
 import java.io.Serializable;
 

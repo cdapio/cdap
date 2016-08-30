@@ -17,7 +17,7 @@ package co.cask.cdap.examples.sparkstreaming
 
 import co.cask.cdap.api.Resources
 import co.cask.cdap.api.common.Bytes
-import co.cask.cdap.api.spark.{AbstractSpark, SparkClientContext, SparkExecutionContext, SparkMain}
+import co.cask.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
 import com.google.common.base.Strings
 import kafka.serializer.{DefaultDecoder, StringDecoder}
 import org.apache.spark.mllib.classification.NaiveBayes

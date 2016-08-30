@@ -23,10 +23,9 @@
 import codecs
 import os
 import sys
-
 from sphinx.search import js_index
-from sphinx.util.osutil import movefile
 from sphinx.util.console import bold
+from sphinx.util.osutil import movefile
 
 sys.path.append(os.path.abspath('../../_common'))
 from common_conf import setup as _setup

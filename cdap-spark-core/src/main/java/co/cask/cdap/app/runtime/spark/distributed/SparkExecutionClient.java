@@ -25,7 +25,6 @@ import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import org.apache.hadoop.security.Credentials;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;

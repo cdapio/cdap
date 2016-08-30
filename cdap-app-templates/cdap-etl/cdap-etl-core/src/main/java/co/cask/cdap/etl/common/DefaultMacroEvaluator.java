@@ -23,7 +23,6 @@ import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.common.macro.LogicalStartTimeMacro;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;

@@ -17,7 +17,6 @@
 package co.cask.cdap.etl.api.action;
 
 import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.etl.api.StageContext;
