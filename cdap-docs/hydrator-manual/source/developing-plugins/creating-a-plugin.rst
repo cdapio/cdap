@@ -13,7 +13,9 @@ Creating a Plugin
 
 Action Plugin
 =============
-In order to implement an Action plugin (to be used with the *Data Pipeline* artifact), you
+An ``Action`` plugin runs arbitrary logic at the start or end of a batch data pipeline.
+
+In order to implement an Action plugin, you
 extend the ``Action`` class. Only one method is required to be implemented::
 
   run()
@@ -24,10 +26,34 @@ extend the ``Action`` class. Only one method is required to be implemented::
 - ``configurePipeline()``: Used to create any streams or datasets or perform any validation
   on the application configuration required by this plugin.
 
+Post-run Action Plugin
+======================
+A ``PostAction`` plugin runs arbitrary logic after the end of a pipeline run. 
+It can be set to execute based on whether the run completed successfully,
+if it failed, or in either case.
+
+The difference between a ``PostAction`` and an ``Action`` that is placed at the
+end of a pipeline is that a ``PostAction`` will always be executed, even if the pipeline run fails.
+An ``Action`` will only be executed if every stage preceding it successfully runs.
+
+In order to implement an Post-run Action plugin, you extend the ``PostAction`` class.
+Only one method is required to be implemented::
+
+  run()
+
+.. rubric:: Methods
+
+- ``run()``: Used to implement the functionality of the plugin.
+- ``configurePipeline()``: Used to perform any validation on the application configuration
+  required by this plugin.
+
 
 Batch Source Plugin
 ===================
-In order to implement a Batch Source (to be used with the *Data Pipeline* artifact), you extend the
+A ``BatchSource`` plugin is used as a source of a batch data pipeline. It is used to prepare
+and configure the input of a pipeline run.
+
+In order to implement a Batch Source, you extend the
 ``BatchSource`` class. You need to define the types of the KEY and VALUE that the Batch
 Source will receive and the type of object that the Batch Source will emit to the
 subsequent stage (which could be either a Transformation or a Batch Sink). After defining
@@ -172,7 +198,10 @@ Example::
 
 Batch Sink Plugin
 =================
-In order to implement a Batch Sink (to be used with the *Data Pipeline* artifact), you extend the
+A ``BatchSink`` plugin is used to write data in either batch or real-time data pipelines.
+It is used to prepare and configure the output of a batch of data from a pipeline run.
+
+In order to implement a Batch Sink, you extend the
 ``BatchSink`` class. Similar to a Batch Source, you need to define the types of the KEY and
 VALUE that the Batch Sink will write in the Batch job and the type of object that it will
 accept from the previous stage (which could be either a Transformation or a Batch Source).
@@ -300,8 +329,562 @@ Example::
 
 .. highlight:: java
 
-Real-Time Source Plugin
+Transformation Plugin
+=====================
+A ``Transform`` plugin is used to convert one input record into zero or more output records.
+It can be used in both batch and real-time data pipelines.
+
+The only method that needs to be implemented is::
+
+  transform()
+
+.. rubric:: Methods
+
+- ``initialize()``: Used to perform any initialization step that might be required during
+  the runtime of the ``Transform``. It is guaranteed that this method will be invoked
+  before the ``transform`` method.
+- ``transform()``: This method contains the logic that will be applied on each
+  incoming data object. An emitter can be used to pass the results to the subsequent stage
+  (which could be either another Transformation or a Sink).
+- ``destroy()``: Used to perform any cleanup before the plugin shuts down.
+
+Below is an example of a ``DuplicateTransform`` that emits copies of the incoming record
+based on the value in the record. In addition, a user metric indicating the number of
+copies in each transform is emitted. The user metrics can be queried by using the CDAP
+:ref:`Metrics HTTP RESTful API <http-restful-api-metrics>`::
+
+  @Plugin(type = Transform.PLUGIN_TYPE)
+  @Name("Duplicator")
+  @Description("Transformation example that makes copies.")
+  public class DuplicateTransform extends Transform<StructuredRecord, StructuredRecord> {
+
+  private final Config config;
+
+    public static final class Config extends PluginConfig {
+
+      @Name("count")
+      @Description("Field that indicates number of copies to make.")
+      private String fieldName;
+    }
+
+    @Override
+    public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) {
+      int copies = input.get(config.fieldName);
+      for (int i = 0; i < copies; i++) {
+        emitter.emit(input);
+      }
+      getContext().getMetrics().count("copies", copies);
+    }
+
+    @Override
+    public void destroy() {
+
+    }
+  }
+
+.. _cask-hydrator-creating-a-plugin-script-transformations:
+
+.. highlight:: java
+
+Script Transformations
+----------------------
+In the script transformations (*JavaScriptTransform*, *PythonEvaluator*,
+*ScriptFilterTransform*, and the *ValidatorTransform*), a ``ScriptContext`` object is
+passed to the ``transform()`` method::
+
+  function transform(input, context);
+
+The different Transforms that are passed this context object have similar signatures:
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Transform
+     - Signature
+   * - ``JavaScriptTransform``
+     - ``{{function transform(input, emitter, context)}}``
+   * - ``PythonEvaluator``
+     - ``{{function transform(input, emitter, context)}}``
+   * - ``ScriptFilterTransform``
+     - ``{{function shouldFilter(input, context)}}``
+   * - ``ValidatorTransform``
+     - ``{{function isValid(input, context)}}``
+
+The ``ScriptContext`` has these methods::
+
+  public Logger getLogger();
+  public StageMetrics getMetrics();
+  public ScriptLookup getLookup(String table);
+  
+The context passed by the *ValidatorTransform* has an additional method that returns a validator::
+
+  public Object getValidator(String validatorName);
+
+These methods allow access within the script to CDAP loggers, metrics, lookup tables, and the validator object.
+
+**Logger**
+
+``Logger`` is an `org.slf4j.Logger <http://www.slf4j.org/api/org/slf4j/Logger.html>`__.
+
+For example, a JavaScript transform step can access and write to the *debug* log with::
+
+  context.getLogger().debug('Received record with id ' + input.id);
+
+**StageMetrics**
+
+``StageMetrics`` has these methods:
+
+- ``count(String metricName, int delta)``: Increases the value of the specific metric by
+  delta. Metrics name will be prefixed by the stage ID, hence it will be aggregated for
+  the current stage.
+- ``gauge(String metricName, long value)``: Sets the specific metric to the provided
+  value. Metrics name will be prefixed by the stage ID, hence it will be aggregated for
+  the current stage.
+- ``pipelineCount(String metricName, int delta)``: Increases the value of the specific
+  metric by delta. Metrics emitted will be aggregated for the entire pipeline.
+- ``pipelineGauge(String metricName, long value)``: Sets the specific metric to the
+  provided value. Metrics emitted will be aggregated for the entire pipeline.
+
+**ScriptLookup**
+
+Currently, ``ScriptContext.getLookup(String table)`` only supports :ref:`key-value tables <datasets-index>`.
+
+For example, if a lookup table *purchases* is configured, then you will be able to perform
+operations with that lookup table in your script: ``context.getLookup('purchases').lookup('key')``
+
+**Validator Object**
+
+.. highlight:: javascript
+
+For example, in a validator transform, you can retrieve the validator object and call its
+functions as part of your JavaScript::
+
+  var coreValidator = context.getValidator("coreValidator");
+  if (!coreValidator.isDate(input.date)) {
+  . . .
+
+Batch Aggregator Plugin
 =======================
+A ``BatchAggregator`` plugin is used to compute aggregates over a batch of data.
+It is used in both batch and real-time data pipelines.
+An aggregation takes place in two steps: *groupBy* and then *aggregate*.
+
+- In the *groupBy* step, the aggregator creates zero or more group keys for each input
+  record. Before the *aggregate* step occurs, Hydrator will take all records that have the
+  same group key, and collect them into a group. If a record does not have any of the
+  group keys, it is filtered out. If a record has multiple group keys, it will belong to
+  multiple groups.
+
+- The *aggregate* step is then called. In this step, the plugin receives group keys and
+  all records that had that group key. It is then left to the plugin to decide what to do
+  with each of the groups.
+
+In order to implement a Batch Aggregator, you extend the
+``BatchAggregator`` class. Unlike a ``Transform``, which operates on a single record at a time, a
+``BatchAggregator`` operates on a collection of records. 
+
+.. highlight:: java
+
+.. rubric:: Methods
+
+- ``configurePipeline()``: Used to create any streams or datasets or perform any validation
+  on the application configuration that are required by this plugin.
+- ``initialize()``: Initialize the Batch Aggregator. Guaranteed to be executed before any call
+  to the plugin’s ``groupBy`` or ``aggregate`` methods. This is called by each executor of the job.
+  For example, if the MapReduce engine is being used, each mapper will call this method.
+- ``destroy()``: Destroy any resources created by ``initialize``. Guaranteed to be
+  executed after all calls to the plugin’s ``groupBy`` or ``aggregate`` methods have been
+  made. This is called by each executor of the job. For example, if the MapReduce engine
+  is being used, each mapper will call this method.
+- ``groupBy()``: This method will be called for every object that is received from the
+  previous stage. This method returns zero or more group keys for each object it recieves.
+  Objects with the same group key will be grouped together for the ``aggregate`` method.
+- ``aggregate()``: The method is called after every object has been assigned their group keys.
+  This method is called once for each group key emitted by the ``groupBy`` method.
+  The method recieves a group key as well as an iterator over all objects that had that group key.
+  Objects emitted in this method are the output for this stage. 
+
+Example::
+
+  /**
+   * Aggregator that counts how many times each word appears in records input to the aggregator.
+   */
+  @Plugin(type = BatchAggregator.PLUGIN_TYPE)
+  @Name(WordCountAggregator.NAME)
+  @Description("Counts how many times each word appears in all records input to the aggregator.")
+  public class WordCountAggregator extends BatchAggregator<String, StructuredRecord, StructuredRecord> {
+    public static final String NAME = "WordCount";
+    public static final Schema OUTPUT_SCHEMA = Schema.recordOf(
+      "wordCount",
+      Schema.Field.of("word", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("count", Schema.of(Schema.Type.LONG))
+    );
+    private static final Pattern WHITESPACE = Pattern.compile("\\s");
+    private final Conf config;
+
+    /**
+     * Config properties for the plugin.
+     */
+    public static class Conf extends PluginConfig {
+      @Description("The field from the input records containing the words to count.")
+      private String field;
+    }
+
+    public WordCountAggregator(Conf config) {
+      this.config = config;
+    }
+
+    @Override
+    public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+      // Any static configuration validation should happen here.
+      // We will check that the field is in the input schema and is of type string.
+      Schema inputSchema = pipelineConfigurer.getStageConfigurer().getInputSchema();
+      // A null input schema means it is unknown until runtime, or it is not constant.
+      if (inputSchema != null) {
+        // If the input schema is constant and known at configure time, check that the input field exists and is a string.
+        Schema.Field inputField = inputSchema.getField(config.field);
+        if (inputField == null) {
+          throw new IllegalArgumentException(
+            String.format("Field '%s' does not exist in input schema %s.", config.field, inputSchema));
+        }
+        Schema fieldSchema = inputField.getSchema();
+        Schema.Type fieldType = fieldSchema.isNullable() ? fieldSchema.getNonNullable().getType() : fieldSchema.getType();
+        if (fieldType != Schema.Type.STRING) {
+          throw new IllegalArgumentException(
+            String.format("Field '%s' is of illegal type %s. Must be of type %s.",
+                          config.field, fieldType, Schema.Type.STRING));
+        }
+      }
+      // Set the output schema so downstream stages will know their input schema.
+      pipelineConfigurer.getStageConfigurer().setOutputSchema(OUTPUT_SCHEMA);
+    }
+
+    @Override
+    public void groupBy(StructuredRecord input, Emitter<String> groupKeyEmitter) throws Exception {
+      String val = input.get(config.field);
+      if (val == null) {
+        return;
+      }
+
+      for (String word : WHITESPACE.split(val)) {
+        groupKeyEmitter.emit(word);
+      }
+    }
+
+    @Override
+    public void aggregate(String groupKey, Iterator<StructuredRecord> groupValues,
+                          Emitter<StructuredRecord> emitter) throws Exception {
+      long count = 0;
+      while (groupValues.hasNext()) {
+        groupValues.next();
+        count++;
+      }
+      emitter.emit(StructuredRecord.builder(OUTPUT_SCHEMA).set("word", groupKey).set("count", count).build());
+    }
+  }
+
+Spark Compute Plugin
+====================
+A ``SparkCompute`` plugin is used to transform a collection of input records into a collection
+of output records. It can be used in both batch and real-time data pipelines.
+It is similar to a ``Transform``, except instead of transforming its input
+record by record, it transforms an entire collection. In a ``SparkCompute``
+plugin, you are given access to anything you would be able to do in a Spark program. 
+
+In order to implement a Spark Compute Plugin, you extend the ``SparkCompute`` class. 
+
+.. highlight:: java
+
+.. rubric:: Methods
+
+- ``configurePipeline()``: Used to create any streams or datasets or perform any validation
+  on the application configuration that are required by this plugin.
+- ``transform()``: This method is given a Spark RDD (Resilient Distributed Dataset) containing 
+  every object that is received from the previous stage. This method then performs Spark operations
+  on the input to transform it into an output RDD that will be sent to the next stage.
+
+Example::
+
+  /**
+   * SparkCompute plugin that counts how many times each word appears in records input to the compute stage.
+   */
+  @Plugin(type = SparkCompute.PLUGIN_TYPE)
+  @Name(WordCountCompute.NAME)
+  @Description("Counts how many times each word appears in all records input to the aggregator.")
+  public class WordCountCompute extends SparkCompute<StructuredRecord, StructuredRecord> {
+    public static final String NAME = "WordCount";
+    public static final Schema OUTPUT_SCHEMA = Schema.recordOf(
+      "wordCount",
+      Schema.Field.of("word", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("count", Schema.of(Schema.Type.LONG))
+    );
+    private final Conf config;
+
+    /**
+     * Config properties for the plugin.
+     */
+    public static class Conf extends PluginConfig {
+      @Description("The field from the input records containing the words to count.")
+      private String field;
+    }
+
+    public WordCountCompute(Conf config) {
+      this.config = config;
+    }
+
+    @Override
+    public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+      // Any static configuration validation should happen here.
+      // We will check that the field is in the input schema and is of type string.
+      Schema inputSchema = pipelineConfigurer.getStageConfigurer().getInputSchema();
+      if (inputSchema != null) {
+        WordCount wordCount = new WordCount(config.field);
+        wordCount.validateSchema(inputSchema);
+      }
+      // Set the output schema so downstream stages will know their input schema.
+      pipelineConfigurer.getStageConfigurer().setOutputSchema(OUTPUT_SCHEMA);
+    }
+
+    @Override
+    public JavaRDD<StructuredRecord> transform(SparkExecutionPluginContext sparkExecutionPluginContext,
+                                               JavaRDD<StructuredRecord> javaRDD) throws Exception {
+      WordCount wordCount = new WordCount(config.field);
+      return wordCount.countWords(javaRDD)
+        .flatMap(new FlatMapFunction<Tuple2<String, Long>, StructuredRecord>() {
+          @Override
+          public Iterable<StructuredRecord> call(Tuple2<String, Long> stringLongTuple2) throws Exception {
+            List<StructuredRecord> output = new ArrayList<>();
+            output.add(StructuredRecord.builder(OUTPUT_SCHEMA)
+                         .set("word", stringLongTuple2._1())
+                         .set("count", stringLongTuple2._2())
+                         .build());
+            return output;
+          }
+        });
+    }
+  }
+
+Spark Sink Plugin
+=================
+A ``SparkSink`` plugin is used to perform computations on a collection of input records
+and optionally write output data. It can only be used in batch data pipelines.
+A ``SparkSink`` is similar to a ``SparkCompute`` plugin except that it has no output.
+In a ``SparkSink``, you are given access to anything you would be able to do in a Spark
+program. For example, one common use case is to train a machine-learning model in this
+plugin.
+
+In order to implement a Spark Sink Plugin, you extend the ``SparkSink`` class. 
+
+.. highlight:: java
+
+.. rubric:: Methods
+
+- ``configurePipeline()``: Used to create any streams or datasets or perform any validation
+  on the application configuration that are required by this plugin.
+- ``run()``: This method is given a Spark RDD (Resilient Distributed Dataset) containing every 
+  object that is received from the previous stage. This method then performs Spark operations
+  on the input, and usually saves the result to a dataset.
+
+Example::
+
+  /**
+   * SparkSink plugin that counts how many times each word appears in records input to it
+   * and stores the result in a KeyValueTable.
+   */
+  @Plugin(type = SparkSink.PLUGIN_TYPE)
+  @Name(WordCountSink.NAME)
+  @Description("Counts how many times each word appears in all records input to the aggregator.")
+  public class WordCountSink extends SparkSink<StructuredRecord> {
+    public static final String NAME = "WordCount";
+    private final Conf config;
+
+    /**
+     * Config properties for the plugin.
+     */
+    public static class Conf extends PluginConfig {
+      @Description("The field from the input records containing the words to count.")
+      private String field;
+
+      @Description("The name of the KeyValueTable to write to.")
+      private String tableName;
+    }
+
+    public WordCountSink(Conf config) {
+      this.config = config;
+    }
+
+    @Override
+    public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+      // Any static configuration validation should happen here.
+      // We will check that the field is in the input schema and is of type string.
+      Schema inputSchema = pipelineConfigurer.getStageConfigurer().getInputSchema();
+      if (inputSchema != null) {
+        WordCount wordCount = new WordCount(config.field);
+        wordCount.validateSchema(inputSchema);
+      }
+      pipelineConfigurer.createDataset(config.tableName, KeyValueTable.class, DatasetProperties.EMPTY);
+    }
+
+    @Override
+    public void run(SparkExecutionPluginContext sparkExecutionPluginContext,
+                    JavaRDD<StructuredRecord> javaRDD) throws Exception {
+      WordCount wordCount = new WordCount(config.field);
+      JavaPairRDD outputRDD = wordCount.countWords(javaRDD)
+        .mapToPair(new PairFunction<Tuple2<String, Long>, byte[], byte[]>() {
+          @Override
+          public Tuple2<byte[], byte[]> call(Tuple2<String, Long> stringLongTuple2) throws Exception {
+            return new Tuple2<>(Bytes.toBytes(stringLongTuple2._1()), Bytes.toBytes(stringLongTuple2._2()));
+          }
+        });
+      sparkExecutionPluginContext.saveAsDataset(outputRDD, config.tableName);
+    }
+  }
+
+.. highlight:: java
+
+Streaming Source Plugin
+=======================
+A Streaming Source plugin is used as a source in real-time data pipelines.
+It is used to fetch a Spark DStream, which is an object that represents a
+collection of Spark RDDs and that produces a new RDD every batch interval of the pipeline. 
+
+In order to implement a Streaming Source Plugin, you extend the ``StreamingSource`` class.
+
+.. rubric:: Methods
+
+- ``configurePipeline()``: Used to create any streams or datasets or perform any validation
+  on the application configuration that are required by this plugin.
+- ``getStream()``: Returns the ``JavaDStream`` that will be used as a source in the pipeline.
+
+Example::
+
+  @Plugin(type = StreamingSource.PLUGIN_TYPE)
+  @Name("Twitter")
+  @Description("Twitter streaming source.")
+  public class TwitterStreamingSource extends StreamingSource<StructuredRecord> {
+    private final TwitterStreamingConfig config;
+
+    /**
+     * Config class for TwitterStreamingSource.
+     */
+    public static class TwitterStreamingConfig extends PluginConfig implements Serializable {
+      private static final long serialVersionUID = 4218063781909515444L;
+
+      private String consumerKey;
+
+      private String consumerSecret;
+
+      private String accessToken;
+
+      private String accessTokenSecret;
+    }
+
+    public TwitterStreamingSource(TwitterStreamingConfig config) {
+      this.config = config;
+    }
+
+    @Override
+    public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+      pipelineConfigurer.getStageConfigurer().setOutputSchema(TwitterConstants.SCHEMA);
+    }
+
+    @Override
+    public JavaDStream<StructuredRecord> getStream(StreamingContext context) throws Exception {
+      JavaStreamingContext javaStreamingContext = context.getSparkStreamingContext();
+
+      // Create authorization from user-provided properties
+      ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
+      configurationBuilder.setDebugEnabled(false)
+        .setOAuthConsumerKey(config.consumerKey)
+        .setOAuthConsumerSecret(config.consumerSecret)
+        .setOAuthAccessToken(config.accessToken)
+        .setOAuthAccessTokenSecret(config.accessTokenSecret);
+      Authorization authorization = new OAuthAuthorization(configurationBuilder.build());
+
+      return TwitterUtils.createStream(javaStreamingContext, authorization).map(
+        new Function<Status, StructuredRecord>() {
+          public StructuredRecord call(Status status) {
+            return convertTweet(status);
+          }
+        }
+      );
+    }
+
+    private StructuredRecord convertTweet(Status tweet) {
+      // logic to convert a Twitter Status into a CDAP StructuredRecord
+    }
+
+  }
+
+.. highlight:: java
+
+Windower Plugin
+===============
+A Windower plugin is used in real-time data pipelines to create sliding windows over the data.
+It does this by combining multiple micro batches into larger batches.
+
+A window is defined by its *size* and its *slide interval*. Both are defined in seconds and
+must be multiples of the ``batchInterval`` of the pipeline. The *size* defines how much data
+is contained in the window. The *slide interval* defines have often a window is created.
+
+For example, consider a pipeline with a ``batchInterval`` of 10 seconds. The pipeline uses a 
+``windower`` that has a size of 60 and a slide interval of 30. The input into the ``windower``
+will be micro batches containing 10 seconds of data. Every 30 seconds, the windower will
+output a batch of data containing the past 60 seconds of data, meaning the previous six 
+micro batches that it received as input.
+
+This also means that each window output will overlap (repeat) some of the data from the
+previous window. This is useful in calculating aggregates, such as how many "404" responses
+did a website send out in the past ten seconds, past minute, past five minutes.
+
+In order to implement a Windower Plugin, you extend the ``Windower`` class.
+
+.. rubric:: Methods
+
+- ``configurePipeline()``: Used to create any streams or datasets or perform any validation
+  on the application configuration that are required by this plugin.
+- ``getWidth()``: Return the width in seconds of windows created by this plugin.
+  Must be a multiple of the ``batchInterval`` of the pipeline.
+- ``getSlideInterval()``: Get the slide interval in seconds of windows created by this plugin.
+  Must be a multiple of the ``batchInterval`` of the pipeline.
+
+Example::
+
+  @Plugin(type = Windower.PLUGIN_TYPE)
+  @Name("Window")
+  @Description("Creates a sliding window over the data")
+  public class Window extends Windower {
+    private final Conf conf;
+
+    /**
+     * Config for window plugin.
+     */
+    public static class Conf extends PluginConfig {
+      long width;
+
+      long slideInterval;
+    }
+
+    public Window(Conf conf) {
+      this.conf = conf;
+    }
+
+    @Override
+    public long getWidth() {
+      return conf.width;
+    }
+
+    @Override
+    public long getSlideInterval() {
+      return conf.slideInterval;
+    }
+  }
+
+.. highlight:: java
+
+Real-Time Source Plugin (Deprecated)
+====================================
 The only method that needs to be implemented is::
 
   poll()
@@ -432,8 +1015,8 @@ case of failures.
 
 .. highlight:: java
 
-Real-Time Sink Plugin
-=====================
+Real-Time Sink Plugin (Deprecated)
+==================================
 The only method that needs to be implemented is::
 
   write()
@@ -467,427 +1050,4 @@ Example::
       return written;
     }
   }
-
-.. highlight:: java
-
-Transformation Plugin
-=====================
-The only method that needs to be implemented is::
-
-  transform()
-
-.. rubric:: Methods
-
-- ``initialize()``: Used to perform any initialization step that might be required during
-  the runtime of the ``Transform``. It is guaranteed that this method will be invoked
-  before the ``transform`` method.
-- ``transform()``: This method contains the logic that will be applied on each
-  incoming data object. An emitter can be used to pass the results to the subsequent stage
-  (which could be either another Transformation or a Sink).
-- ``destroy()``: Used to perform any cleanup before the plugin shuts down.
-
-Below is an example of a ``DuplicateTransform`` that emits copies of the incoming record
-based on the value in the record. In addition, a user metric indicating the number of
-copies in each transform is emitted. The user metrics can be queried by using the CDAP
-:ref:`Metrics HTTP RESTful API <http-restful-api-metrics>`::
-
-  @Plugin(type = "transform")
-  @Name("Duplicator")
-  @Description("Transformation example that makes copies.")
-
-  public class DuplicateTransform extends Transform<StructuredRecord, StructuredRecord> {
-
-  private final Config config;
-
-    public static final class Config extends PluginConfig {
-
-      @Name("count")
-      @Description("Field that indicates number of copies to make.")
-      private String fieldName;
-    }
-
-    @Override
-    public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) {
-      int copies = input.get(config.fieldName);
-      for (int i = 0; i < copies; i++) {
-        emitter.emit(input);
-      }
-      getContext().getMetrics().count("copies", copies);
-    }
-
-    @Override
-    public void destroy() {
-
-    }
-  }
-
-.. _cask-hydrator-creating-a-plugin-script-transformations:
-
-.. highlight:: java
-
-Script Transformations
-----------------------
-In the script transformations (*JavaScriptTransform*, *PythonEvaluator*,
-*ScriptFilterTransform*, and the *ValidatorTransform*), a ``ScriptContext`` object is
-passed to the ``transform()`` method::
-
-  function transform(input, context);
-
-The different Transforms that are passed this context object have similar signatures:
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Transform
-     - Signature
-   * - ``JavaScriptTransform``
-     - ``{{function transform(input, emitter, context)}}``
-   * - ``PythonEvaluator``
-     - ``{{function transform(input, emitter, context)}}``
-   * - ``ScriptFilterTransform``
-     - ``{{function shouldFilter(input, context)}}``
-   * - ``ValidatorTransform``
-     - ``{{function isValid(input, context)}}``
-
-The ``ScriptContext`` has these methods::
-
-  public Logger getLogger();
-  public StageMetrics getMetrics();
-  public ScriptLookup getLookup(String table);
-  
-The context passed by the *ValidatorTransform* has an additional method that returns a validator::
-
-  public Object getValidator(String validatorName);
-
-These methods allow access within the script to CDAP loggers, metrics, lookup tables, and the validator object.
-
-**Logger**
-
-``Logger`` is an `org.slf4j.Logger <http://www.slf4j.org/api/org/slf4j/Logger.html>`__.
-
-For example, a JavaScript transform step can access and write to the *debug* log with::
-
-  context.getLogger().debug('Received record with id ' + input.id);
-
-**StageMetrics**
-
-``StageMetrics`` has these methods:
-
-- ``count(String metricName, int delta)``: Increases the value of the specific metric by
-  delta. Metrics name will be prefixed by the stage ID, hence it will be aggregated for
-  the current stage.
-- ``gauge(String metricName, long value)``: Sets the specific metric to the provided
-  value. Metrics name will be prefixed by the stage ID, hence it will be aggregated for
-  the current stage.
-- ``pipelineCount(String metricName, int delta)``: Increases the value of the specific
-  metric by delta. Metrics emitted will be aggregated for the entire pipeline.
-- ``pipelineGauge(String metricName, long value)``: Sets the specific metric to the
-  provided value. Metrics emitted will be aggregated for the entire pipeline.
-
-**ScriptLookup**
-
-Currently, ``ScriptContext.getLookup(String table)`` only supports :ref:`key-value tables <datasets-index>`.
-
-For example, if a lookup table *purchases* is configured, then you will be able to perform
-operations with that lookup table in your script: ``context.getLookup('purchases').lookup('key')``
-
-**Validator Object**
-
-.. highlight:: javascript
-
-For example, in a validator transform, you can retrieve the validator object and call its
-functions as part of your JavaScript::
-
-  var coreValidator = context.getValidator("coreValidator");
-  if (!coreValidator.isDate(input.date)) {
-  . . .
-
-Batch Aggregator Plugin
-=======================
-In order to implement a Batch Aggregator (to be used with the Data Pipeline artifact), you extend the
-``BatchAggregator`` class. Unlike a ``Transform``, which operates on a single record at a time, a
-``BatchAggregator`` operates on a collection of records. 
-
-An aggregation takes place in two steps: *groupBy* and then *aggregate*.
-
-- In the *groupBy* step, the aggregator creates zero or more group keys for each input
-  record. Before the *aggregate* step occurs, Hydrator will take all records that have the
-  same group key, and collect them into a group. If a record does not have any of the
-  group keys, it is filtered out. If a record has multiple group keys, it will belong to
-  multiple groups.
-
-- The *aggregate* step is then called. In this step, the plugin receives group keys and
-  all records that had that group key. It is then left to the plugin to decide what to do
-  with each of the groups.
-
-.. highlight:: java
-
-.. rubric:: Methods
-
-- ``configurePipeline()``: Used to create any streams or datasets or perform any validation
-  on the application configuration that are required by this plugin.
-- ``initialize()``: Initialize the Batch Aggregator. Guaranteed to be executed before any call
-  to the plugin’s ``groupBy`` or ``aggregate`` methods. This is called by each executor of the job.
-  For example, if the MapReduce engine is being used, each mapper will call this method.
-- ``destroy()``: Destroy any resources created by ``initialize``. Guaranteed to be
-  executed after all calls to the plugin’s ``groupBy`` or ``aggregate`` methods have been
-  made. This is called by each executor of the job. For example, if the MapReduce engine
-  is being used, each mapper will call this method.
-- ``groupBy()``: This method will be called for every object that is received from the
-  previous stage. This method returns zero or more group keys for each object it recieves.
-  Objects with the same group key will be grouped together for the ``aggregate`` method.
-- ``aggregate()``: The method is called after every object has been assigned their group keys.
-  This method is called once for each group key emitted by the ``groupBy`` method.
-  The method recieves a group key as well as an iterator over all objects that had that group key.
-  Objects emitted in this method are the output for this stage. 
-
-Example::
-
-  /**
-   * Aggregator that counts how many times each word appears in records input to the aggregator.
-   */
-  @Plugin(type = BatchAggregator.PLUGIN_TYPE)
-  @Name(WordCountAggregator.NAME)
-  @Description("Counts how many times each word appears in all records input to the aggregator.")
-  public class WordCountAggregator extends BatchAggregator<String, StructuredRecord, StructuredRecord> {
-    public static final String NAME = "WordCount";
-    public static final Schema OUTPUT_SCHEMA = Schema.recordOf(
-      "wordCount",
-      Schema.Field.of("word", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("count", Schema.of(Schema.Type.LONG))
-    );
-    private static final Pattern WHITESPACE = Pattern.compile("\\s");
-    private final Conf config;
-
-    /**
-     * Config properties for the plugin.
-     */
-    public static class Conf extends PluginConfig {
-      @Description("The field from the input records containing the words to count.")
-      private String field;
-    }
-
-    public WordCountAggregator(Conf config) {
-      this.config = config;
-    }
-
-    @Override
-    public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-      // Any static configuration validation should happen here.
-      // We will check that the field is in the input schema and is of type string.
-      Schema inputSchema = pipelineConfigurer.getStageConfigurer().getInputSchema();
-      // A null input schema means it is unknown until runtime, or it is not constant.
-      if (inputSchema != null) {
-        // If the input schema is constant and known at configure time, check that the input field exists and is a string.
-        Schema.Field inputField = inputSchema.getField(config.field);
-        if (inputField == null) {
-          throw new IllegalArgumentException(
-            String.format("Field '%s' does not exist in input schema %s.", config.field, inputSchema));
-        }
-        Schema fieldSchema = inputField.getSchema();
-        Schema.Type fieldType = fieldSchema.isNullable() ? fieldSchema.getNonNullable().getType() : fieldSchema.getType();
-        if (fieldType != Schema.Type.STRING) {
-          throw new IllegalArgumentException(
-            String.format("Field '%s' is of illegal type %s. Must be of type %s.",
-                          config.field, fieldType, Schema.Type.STRING));
-        }
-      }
-      // Set the output schema so downstream stages will know their input schema.
-      pipelineConfigurer.getStageConfigurer().setOutputSchema(OUTPUT_SCHEMA);
-    }
-
-    @Override
-    public void groupBy(StructuredRecord input, Emitter<String> groupKeyEmitter) throws Exception {
-      String val = input.get(config.field);
-      if (val == null) {
-        return;
-      }
-
-      for (String word : WHITESPACE.split(val)) {
-        groupKeyEmitter.emit(word);
-      }
-    }
-
-    @Override
-    public void aggregate(String groupKey, Iterator<StructuredRecord> groupValues,
-                          Emitter<StructuredRecord> emitter) throws Exception {
-      long count = 0;
-      while (groupValues.hasNext()) {
-        groupValues.next();
-        count++;
-      }
-      emitter.emit(StructuredRecord.builder(OUTPUT_SCHEMA).set("word", groupKey).set("count", count).build());
-    }
-  }
-
-Spark Compute Plugin
-====================
-In order to implement a Spark Compute Plugin (to be used with the Data Pipeline artifact),
-you extend the ``SparkCompute`` class. A ``SparkCompute`` plugin is similar to a
-``Transform``, except instead of transforming its input record by record, it transforms an
-entire collection of records into another collection of records. In a ``SparkCompute``
-plugin, you are given access to anything you would be able to do in a Spark program. 
-
-.. highlight:: java
-
-.. rubric:: Methods
-
-- ``configurePipeline()``: Used to create any streams or datasets or perform any validation
-  on the application configuration that are required by this plugin.
-- ``transform()``: This method is given a Spark RDD (Resilient Distributed Dataset) containing 
-  every object that is received from the previous stage. This method then performs Spark operations
-  on the input to transform it into an output RDD that will be sent to the next stage.
-
-Example::
-
-  /**
-   * SparkCompute plugin that counts how many times each word appears in records input to the compute stage.
-   */
-  @Plugin(type = SparkCompute.PLUGIN_TYPE)
-  @Name(WordCountCompute.NAME)
-  @Description("Counts how many times each word appears in all records input to the aggregator.")
-  public class WordCountCompute extends SparkCompute<StructuredRecord, StructuredRecord> {
-    public static final String NAME = "WordCount";
-    public static final Schema OUTPUT_SCHEMA = Schema.recordOf(
-      "wordCount",
-      Schema.Field.of("word", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("count", Schema.of(Schema.Type.LONG))
-    );
-    private final Conf config;
-
-    /**
-     * Config properties for the plugin.
-     */
-    public static class Conf extends PluginConfig {
-      @Description("The field from the input records containing the words to count.")
-      private String field;
-    }
-
-    public WordCountCompute(Conf config) {
-      this.config = config;
-    }
-
-    @Override
-    public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-      // Any static configuration validation should happen here.
-      // We will check that the field is in the input schema and is of type string.
-      Schema inputSchema = pipelineConfigurer.getStageConfigurer().getInputSchema();
-      if (inputSchema != null) {
-        WordCount wordCount = new WordCount(config.field);
-        wordCount.validateSchema(inputSchema);
-      }
-      // Set the output schema so downstream stages will know their input schema.
-      pipelineConfigurer.getStageConfigurer().setOutputSchema(OUTPUT_SCHEMA);
-    }
-
-    @Override
-    public JavaRDD<StructuredRecord> transform(SparkExecutionPluginContext sparkExecutionPluginContext,
-                                               JavaRDD<StructuredRecord> javaRDD) throws Exception {
-      WordCount wordCount = new WordCount(config.field);
-      return wordCount.countWords(javaRDD)
-        .flatMap(new FlatMapFunction<Tuple2<String, Long>, StructuredRecord>() {
-          @Override
-          public Iterable<StructuredRecord> call(Tuple2<String, Long> stringLongTuple2) throws Exception {
-            List<StructuredRecord> output = new ArrayList<>();
-            output.add(StructuredRecord.builder(OUTPUT_SCHEMA)
-                         .set("word", stringLongTuple2._1())
-                         .set("count", stringLongTuple2._2())
-                         .build());
-            return output;
-          }
-        });
-    }
-  }
-
-Spark Sink Plugin
-=================
-In order to implement a Spark Sink Plugin (to be used with the Data Pipeline artifact), you
-extend the ``SparkSink`` class. A ``SparkSink`` is similar to a ``SparkCompute`` plugin
-except that it has no output. This means other plugins cannot be connected to it. In this
-way, it is similar to a ``BatchSink``.
-
-In a ``SparkSink``, you are given access to anything you would be able to do in a Spark
-program. For example, one common use case is to train a machine-learning model in this
-plugin.
-
-.. highlight:: java
-
-.. rubric:: Methods
-
-- ``configurePipeline()``: Used to create any streams or datasets or perform any validation
-  on the application configuration that are required by this plugin.
-- ``run()``: This method is given a Spark RDD (Resilient Distributed Dataset) containing every 
-  object that is received from the previous stage. This method then performs Spark operations
-  on the input, and usually saves the result to a dataset.
-
-Example::
-
-  /**
-   * SparkSink plugin that counts how many times each word appears in records input to it
-   * and stores the result in a KeyValueTable.
-   */
-  @Plugin(type = SparkSink.PLUGIN_TYPE)
-  @Name(WordCountSink.NAME)
-  @Description("Counts how many times each word appears in all records input to the aggregator.")
-  public class WordCountSink extends SparkSink<StructuredRecord> {
-    public static final String NAME = "WordCount";
-    private final Conf config;
-
-    /**
-     * Config properties for the plugin.
-     */
-    public static class Conf extends PluginConfig {
-      @Description("The field from the input records containing the words to count.")
-      private String field;
-
-      @Description("The name of the KeyValueTable to write to.")
-      private String tableName;
-    }
-
-    public WordCountSink(Conf config) {
-      this.config = config;
-    }
-
-    @Override
-    public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-      // Any static configuration validation should happen here.
-      // We will check that the field is in the input schema and is of type string.
-      Schema inputSchema = pipelineConfigurer.getStageConfigurer().getInputSchema();
-      if (inputSchema != null) {
-        WordCount wordCount = new WordCount(config.field);
-        wordCount.validateSchema(inputSchema);
-      }
-      pipelineConfigurer.createDataset(config.tableName, KeyValueTable.class, DatasetProperties.EMPTY);
-    }
-
-    @Override
-    public void run(SparkExecutionPluginContext sparkExecutionPluginContext,
-                    JavaRDD<StructuredRecord> javaRDD) throws Exception {
-      WordCount wordCount = new WordCount(config.field);
-      JavaPairRDD outputRDD = wordCount.countWords(javaRDD)
-        .mapToPair(new PairFunction<Tuple2<String, Long>, byte[], byte[]>() {
-          @Override
-          public Tuple2<byte[], byte[]> call(Tuple2<String, Long> stringLongTuple2) throws Exception {
-            return new Tuple2<>(Bytes.toBytes(stringLongTuple2._1()), Bytes.toBytes(stringLongTuple2._2()));
-          }
-        });
-      sparkExecutionPluginContext.saveAsDataset(outputRDD, config.tableName);
-    }
-  }
-
-
-Post-run Action Plugin
-======================
-In order to implement an Post-run Action plugin (to be used with the Data Pipeline
-artifact), you extend the ``PostAction`` class. Only one method is required to be
-implemented::
-
-  run()
-
-.. rubric:: Methods
-
-- ``run()``: Used to implement the functionality of the plugin.
-- ``configurePipeline()``: Used to perform any validation on the application configuration
-  required by this plugin.
 
