@@ -18,7 +18,6 @@ package co.cask.cdap.app.guice;
 
 import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStoreManager;
@@ -26,6 +25,7 @@ import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.DefaultAdmin;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.authorization.AuthorizationContextFactory;
@@ -45,7 +45,6 @@ import com.google.inject.Singleton;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import org.apache.tephra.TransactionContext;
-import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -119,7 +118,7 @@ public class AuthorizationModule extends PrivateModule {
 
     @Override
     public DynamicDatasetCache get() {
-      SystemDatasetInstantiator dsInstantiator = new SystemDatasetInstantiator(dsFramework, null, null);
+      SystemDatasetInstantiator dsInstantiator = new SystemDatasetInstantiator(dsFramework);
       return new MultiThreadDatasetCache(
         dsInstantiator, txClient, NamespaceId.SYSTEM, ImmutableMap.<String, String>of(),
         metricsCollectionService.getContext(ImmutableMap.<String, String>of()),
@@ -159,23 +158,7 @@ public class AuthorizationModule extends PrivateModule {
 
     @Override
     public Transactional get() {
-      return new Transactional() {
-        @Override
-        public void execute(TxRunnable runnable) throws TransactionFailureException {
-          TransactionContext transactionContext = datasetCache.newTransactionContext();
-          transactionContext.start();
-          try {
-            runnable.run(datasetCache);
-            transactionContext.finish();
-          } catch (TransactionFailureException e) {
-            LOG.error("Exception while executing runnable inside a transaction. Aborting transaction.", e);
-            transactionContext.abort(e);
-          } catch (Throwable t) {
-            LOG.error("Exception while executing runnable inside a transaction. Aborting transaction.", t);
-            transactionContext.abort(new TransactionFailureException("Exception raised from TxRunnable.run()", t));
-          }
-        }
-      };
+      return Transactions.createTransactional(datasetCache);
     }
   }
 }

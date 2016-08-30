@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.worker;
 
+import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.stream.StreamBatchWriter;
 import co.cask.cdap.api.data.stream.StreamWriter;
@@ -31,19 +32,17 @@ import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.logging.context.WorkerLoggingContext;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,13 +54,13 @@ import javax.annotation.Nullable;
  * Default implementation of {@link WorkerContext}
  */
 final class BasicWorkerContext extends AbstractContext implements WorkerContext {
-  private static final Logger LOG = LoggerFactory.getLogger(BasicWorkerContext.class);
 
   private final WorkerSpecification specification;
   private final int instanceId;
   private final LoggingContext loggingContext;
-  private volatile int instanceCount;
   private final StreamWriter streamWriter;
+  private final Transactional transactional;
+  private volatile int instanceCount;
 
   BasicWorkerContext(WorkerSpecification spec, Program program, ProgramOptions programOptions,
                      int instanceId, int instanceCount,
@@ -83,6 +82,7 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
     this.instanceCount = instanceCount;
     this.loggingContext = createLoggingContext(program.getId(), getRunId());
     this.streamWriter = streamWriterFactory.create(new Id.Run(program.getId(), getRunId().getId()), getOwners());
+    this.transactional = Transactions.createTransactional(getDatasetCache());
   }
 
   private LoggingContext createLoggingContext(Id.Program programId, RunId runId) {
@@ -101,15 +101,10 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
 
   @Override
   public void execute(TxRunnable runnable) {
-    final TransactionContext context = datasetCache.newTransactionContext();
     try {
-      context.start();
-      runnable.run(datasetCache);
-      context.finish();
+      transactional.execute(runnable);
     } catch (TransactionFailureException e) {
-      abortTransaction(e, "Failed to commit. Aborting transaction.", context);
-    } catch (Exception e) {
-      abortTransaction(e, "Exception occurred running user code. Aborting transaction.", context);
+      throw Throwables.propagate(e);
     }
   }
 
@@ -125,17 +120,6 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
 
   public void setInstanceCount(int instanceCount) {
     this.instanceCount = instanceCount;
-  }
-
-  private void abortTransaction(Exception e, String message, TransactionContext context) {
-    try {
-      LOG.error(message, e);
-      context.abort();
-      throw Throwables.propagate(e);
-    } catch (TransactionFailureException e1) {
-      LOG.error("Failed to abort transaction.", e1);
-      throw Throwables.propagate(e1);
-    }
   }
 
   @Override
