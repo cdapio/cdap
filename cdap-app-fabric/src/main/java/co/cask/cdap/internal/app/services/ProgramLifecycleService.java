@@ -65,6 +65,7 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -76,7 +77,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -371,9 +371,21 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @throws ExecutionException if there was a problem while waiting for the stop call to complete
    */
   public void stop(ProgramId programId, @Nullable String runId) throws Exception {
-    List<ListenableFuture<ProgramController>> issueStops = issueStop(programId, runId);
-    for (ListenableFuture<ProgramController> issueStop : issueStops) {
-      issueStop.get();
+    List<ListenableFuture<ProgramController>> futures = issueStop(programId, runId);
+    ListenableFuture<List<ProgramController>> future = Futures.successfulAsList(futures);
+    future.get();
+
+    List<Throwable> causes = new ArrayList<>();
+    for (ListenableFuture<ProgramController> f : futures) {
+      try {
+        f.get();
+      } catch (ExecutionException | InterruptedException e) {
+        causes.add(e.getCause());
+      }
+    }
+    if (!causes.isEmpty()) {
+      throw new Exception(String.format("%d out of %d runs of the program %s failed to stop",
+                                        causes.size(), futures.size(), programId));
     }
   }
 
@@ -465,16 +477,15 @@ public class ProgramLifecycleService extends AbstractIdleService {
         throw new BadRequestException("Error parsing run-id.", e);
       }
       ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.lookup(programId.toId(), run);
-      return runtimeInfo == null ? new ArrayList<ProgramRuntimeService.RuntimeInfo>() :
-        Collections.singletonList(runtimeInfo);
+      return runtimeInfo == null ? Collections.<RuntimeInfo>emptyList() : Collections.singletonList(runtimeInfo);
     }
     return new ArrayList<>(runtimeService.list(programId.toId()).values());
   }
 
   @Nullable
-  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId programId) {
-    Map<RunId, ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(programId.toId());
-    return runtimeInfos.isEmpty() ? null : runtimeInfos.values().iterator().next();
+  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId programId) throws BadRequestException {
+    List<ProgramRuntimeService.RuntimeInfo> runtimeInfos = findRuntimeInfo(programId, null);
+    return runtimeInfos.isEmpty() ? null : runtimeInfos.iterator().next();
   }
 
   /**
@@ -571,7 +582,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
     return filter.apply(programId);
   }
 
-  private void setWorkerInstances(ProgramId programId, int instances) throws ExecutionException, InterruptedException {
+  private void setWorkerInstances(ProgramId programId, int instances)
+    throws ExecutionException, InterruptedException, BadRequestException {
     int oldInstances = store.getWorkerInstances(programId.toId());
     if (oldInstances != instances) {
       store.setWorkerInstances(programId.toId(), instances);
@@ -586,7 +598,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
   }
 
   private void setFlowletInstances(ProgramId programId, String flowletId,
-                                   int instances) throws ExecutionException, InterruptedException {
+                                   int instances) throws ExecutionException, InterruptedException, BadRequestException {
     int oldInstances = store.getFlowletInstances(programId.toId(), flowletId);
     if (oldInstances != instances) {
       FlowSpecification flowSpec = store.setFlowletInstances(programId.toId(), flowletId, instances);
@@ -601,7 +613,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
     }
   }
 
-  private void setServiceInstances(ProgramId programId, int instances) throws ExecutionException, InterruptedException {
+  private void setServiceInstances(ProgramId programId, int instances)
+    throws ExecutionException, InterruptedException, BadRequestException {
     int oldInstances = store.getServiceInstances(programId.toId());
     if (oldInstances != instances) {
       store.setServiceInstances(programId.toId(), instances);
