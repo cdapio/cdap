@@ -46,7 +46,11 @@ angular.module(PKG.name + '.services')
         }
 
         xhr.setRequestHeader('X-Archive-Name', fileObj.file.name);
-        xhr.setRequestHeader('Authorization', 'Bearer ' + myAuth.currentUser.token);
+
+        if (myAuth.currentUser.token) {
+          xhr.setRequestHeader('Authorization', 'Bearer ' + myAuth.currentUser.token);
+        }
+
         xhr.send(fileObj.file);
         cfpLoadingBar.start();
         xhr.onreadystatechange = function () {

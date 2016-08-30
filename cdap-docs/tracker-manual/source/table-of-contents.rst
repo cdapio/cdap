@@ -10,3 +10,4 @@ Cask Tracker: Table of Contents
    :maxdepth: 3
 
     Cask Tracker <index>
+    HTTP RESTful API <http-restful-api>

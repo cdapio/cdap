@@ -70,7 +70,6 @@ If the standard authentication mechanisms are not sufficient, you can provide a
 
 .. rubric:: Authorization Extensions
 
-:doc:`Authorization Extensions <authorization-extensions>`
-
-Authorization backends for CDAP are implemented as extensions. Extensions run in their own, isolated classloader
-so that there are no conflicts with the system classloader of the CDAP Master.
+:doc:`Authorization Extensions: <authorization-extensions>` Authorization backends for CDAP
+are implemented as extensions. Extensions run in their own, isolated classloader so that
+there are no conflicts with the system classloader of CDAP Master.
