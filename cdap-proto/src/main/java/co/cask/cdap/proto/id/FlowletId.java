@@ -55,6 +55,11 @@ public class FlowletId extends EntityId implements NamespacedId, ParentedId<Prog
   }
 
   @Override
+  public String getEntityName() {
+    return getFlowlet();
+  }
+
+  @Override
   public ProgramId getParent() {
     return new ProgramId(namespace, application, ProgramType.FLOW, flow);
   }

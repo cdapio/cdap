@@ -53,6 +53,11 @@ public class NotificationFeedId extends EntityId implements NamespacedId, Parent
   }
 
   @Override
+  public String getEntityName() {
+    return getFeed();
+  }
+
+  @Override
   public NamespaceId getParent() {
     return new NamespaceId(namespace);
   }

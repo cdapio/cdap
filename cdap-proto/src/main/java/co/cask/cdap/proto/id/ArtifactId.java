@@ -47,6 +47,11 @@ public class ArtifactId extends EntityId implements NamespacedId, ParentedId<Nam
     return artifact;
   }
 
+  @Override
+  public String getEntityName() {
+    return getArtifact();
+  }
+
   public String getVersion() {
     return version;
   }

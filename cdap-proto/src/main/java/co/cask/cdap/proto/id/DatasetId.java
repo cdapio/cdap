@@ -57,6 +57,11 @@ public class DatasetId extends EntityId implements NamespacedId, ParentedId<Name
   }
 
   @Override
+  public String getEntityName() {
+    return getDataset();
+  }
+
+  @Override
   public NamespaceId getParent() {
     return namespaceId != null ? namespaceId : new NamespaceId(namespace);
   }

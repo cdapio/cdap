@@ -44,6 +44,11 @@ public class NamespaceId extends EntityId implements NamespacedId {
     return namespace;
   }
 
+  @Override
+  public String getEntityName() {
+    return getNamespace();
+  }
+
   public ArtifactId artifact(String artifact, String version) {
     return new ArtifactId(namespace, artifact, version);
   }

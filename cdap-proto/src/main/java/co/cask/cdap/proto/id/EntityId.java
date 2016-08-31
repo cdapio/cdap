@@ -93,6 +93,8 @@ public abstract class EntityId implements IdCompatible {
     return entity;
   }
 
+  public abstract String getEntityName();
+
   public final EntityType getEntityType() {
     return entity;
   }
