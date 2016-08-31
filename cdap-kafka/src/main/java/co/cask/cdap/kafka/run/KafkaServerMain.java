@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.KafkaConstants;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.common.utils.Networks;
+import co.cask.cdap.common.zookeeper.ZooKeeperUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.net.InetAddresses;
@@ -62,7 +63,7 @@ public class KafkaServerMain extends DaemonMain {
     if (zkNamespace != null) {
       ZKClientService client = ZKClientService.Builder.of(zkConnectStr).build();
       try {
-        client.startAndWait();
+        ZooKeeperUtils.connectWithTimeout(client, cConf);
 
         String path = "/" + zkNamespace;
         LOG.info(String.format("Creating zookeeper namespace %s", path));
