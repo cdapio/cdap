@@ -106,9 +106,7 @@ function download_includes() {
 
   echo_red_bold "Downloading image files from GitHub..."
   download_file $includes $project_img wise_architecture_diagram.png f01e52df149f10702d933d73935d9f29
-  download_file $includes $project_img wise_explore_page.png         5136132e4e3232a216c12e2fe9d1b0c4
-  download_file $includes $project_img wise_flow.png                 4a79853f2b5a0ac45929d0966f7cd7f5
-  download_file $includes $project_img wise_store_page.png           15bcd8dac10ab5d1c643fff7bdecc52d
+  download_file $includes $project_img wise_flow.png                 894828f13019dfbda5de43f514a8a49f
 
   echo_red_bold "Downloading files and any images and re-writing all the image links..."
   guide_rewrite_sed $1 cdap-bi-guide 
