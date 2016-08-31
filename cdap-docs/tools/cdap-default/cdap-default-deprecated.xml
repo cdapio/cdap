@@ -20,24 +20,6 @@
   <!-- Deprecated Properties Configuration -->
 
   <property>
-    <name>explore.executor.container.instances</name>
-    <value>1</value>
-    <description>
-      Number of explore executor instances (deprecated: instance count is
-      always set to 1)
-    </description>
-  </property>
-
-  <property>
-    <name>explore.executor.max.instances</name>
-    <value>1</value>
-    <description>
-      Maximum number of explore executor instances (deprecated: instance
-      count is always set to 1)
-    </description>
-  </property>
-
-  <property>
     <name>kafka.bind.address</name>
     <value>${kafka.server.host.name}</value>
     <description>

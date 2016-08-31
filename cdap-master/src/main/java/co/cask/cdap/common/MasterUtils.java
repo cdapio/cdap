@@ -81,9 +81,7 @@ public final class MasterUtils {
       builder.add(new ExploreServiceResourceKeys(cConf,
                                                  Constants.Service.EXPLORE_HTTP_USER_SERVICE,
                                                  Constants.Explore.CONTAINER_MEMORY_MB,
-                                                 Constants.Explore.CONTAINER_VIRTUAL_CORES,
-                                                 Constants.Explore.CONTAINER_INSTANCES,
-                                                 Constants.Explore.MAX_INSTANCES));
+                                                 Constants.Explore.CONTAINER_VIRTUAL_CORES));
     }
     return builder.build();
   }
