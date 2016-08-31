@@ -24,7 +24,7 @@ require('font-awesome-webpack!./styles/font-awesome.config.js');
 import Management from './components/Management';
 import Dashboard from './components/Dashboard';
 import Home from './components/Home';
-import Header from './components/Header';
+import CdapHeader from './components/CdapHeader';
 import Footer from './components/Footer';
 import SplashScreen from './components/SplashScreen';
 
@@ -40,7 +40,7 @@ class CDAP extends Component {
   render() {
     return (
       <div>
-        <Header />
+        <CdapHeader />
         <SplashScreen />
         <div className="container-fluid">
           {this.props.children}

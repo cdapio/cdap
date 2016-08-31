@@ -14,31 +14,22 @@
  * the License.
  */
 
-import React, {Component} from 'react';
-import {Link} from 'react-router';
+import React, {Component, PropTypes} from 'react';
+
 require('./Header.less');
+import HeaderBrand from '../HeaderBrand';
+import HeaderNavbarList from '../HeaderNavbarList';
+import HeaderActions from '../HeaderActions';
+import HeaderSidebar from '../HeaderSidebar';
 
 export default class Header extends Component {
   constructor(props) {
     super(props);
     this.props = props;
     this.state = {
-      showSidebar: false
+      showSidebar: false,
+      navbarItemList: this.props.navbarItemList
     };
-  }
-  getAbsUrl(extension) {
-    switch(extension) {
-      case 'hydrator':
-        return window.getAbsUIUrl({
-          uiApp: 'cask-hydrator'
-        });
-      case 'tracker':
-        return window.getAbsUIUrl({
-          uiApp: 'cask-tracker'
-        });
-      default:
-        return window.getAbsUIUrl();
-    }
   }
   sidebarClickNoOp(e) {
     e.stopPropagation();
@@ -50,82 +41,34 @@ export default class Header extends Component {
   }
   render() {
     return (
-      <CDAP-Header>
-        <header className="navbar navbar-fixed-top">
+      <div className="cask-header">
+        <div className="navbar navbar-fixed-top">
           <nav className="navbar cdap">
-            <div className="brand-header">
-              <a className="navbar-brand"
-                 onClick={this.toggleSidebar.bind(this)}>
-                <span className="fa icon-fist"></span>
-              </a>
-              <a href="/" className="menu-item product-title">
-                CDAP
-              </a>
-            </div>
-            <ul className="navbar-list">
-              <li>
-                <Link to="home" activeClassName="active">
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link to="dashboard" activeClassName="active">
-                  Dashboard
-                </Link>
-              </li>
-              <li>
-                <Link to="management" activeClassName="active">
-                  Managment
-                </Link>
-              </li>
-            </ul>
+            <HeaderBrand
+              title="CDAP"
+              icon="icon-fist"
+              onClickHandler={this.toggleSidebar.bind(this)}
+            />
+            <HeaderNavbarList
+              list={this.state.navbarItemList}
+            />
+            <HeaderActions />
           </nav>
-        </header>
+        </div>
         <div className={this.state.showSidebar ? 'display-container': 'hide'}
              onClick={this.toggleSidebar.bind(this)}>
-          <div className="sidebar" onClick={this.sidebarClickNoOp.bind(this)}>
-            <a href="/"
-               className="brand sidebar-item top">
-              <div className="brand-icon text-center cdap">
-                <span className="icon-fist"></span>
-              </div>
-
-              <div className="product-name">
-                <span>CDAP</span>
-              </div>
-            </a>
-
-            <h5>Extensions:</h5>
-            {
-            /*
-              FIXME: This should be dynamic; based on host, port & other contextual information.
-              Need to build a utility function ASAP
-            */
-            }
-            <a href={this.getAbsUrl('hydrator')}
-               className="brand sidebar-item">
-              <div className="brand-icon text-center hydrator">
-                <span className="icon-hydrator"></span>
-              </div>
-
-              <div className="product-name">
-                <span>Cask Hydrator</span>
-              </div>
-            </a>
-
-            <a href={this.getAbsUrl('tracker')}
-               className="brand sidebar-item">
-              <div className="brand-icon text-center tracker">
-                <span className="icon-tracker"></span>
-              </div>
-
-              <div className="product-name">
-                <span>Cask Tracker</span>
-              </div>
-            </a>
-          </div>
+          <HeaderSidebar
+            onClickHandler={this.sidebarClickNoOp.bind(this)}
+          />
         </div>
-      </CDAP-Header>
+      </div>
     );
   }
 }
+
+Header.propTypes = {
+  navbarItemList: PropTypes.arrayOf(PropTypes.shape({
+    linkTo: PropTypes.string,
+    title: PropTypes.string
+  }))
+};
