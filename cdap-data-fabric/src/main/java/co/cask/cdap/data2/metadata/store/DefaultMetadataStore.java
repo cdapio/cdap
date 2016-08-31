@@ -28,11 +28,9 @@ import co.cask.cdap.data2.metadata.dataset.Metadata;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
 import co.cask.cdap.data2.metadata.indexer.Indexer;
-import co.cask.cdap.data2.metadata.publisher.MetadataChangePublisher;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.audit.AuditType;
-import co.cask.cdap.proto.metadata.MetadataChangeRecord;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
@@ -84,15 +82,12 @@ public class DefaultMetadataStore implements MetadataStore {
 
   private final TransactionExecutorFactory txExecutorFactory;
   private final DatasetFramework dsFramework;
-  private final MetadataChangePublisher changePublisher;
   private AuditPublisher auditPublisher;
 
   @Inject
-  DefaultMetadataStore(TransactionExecutorFactory txExecutorFactory, DatasetFramework dsFramework,
-                       MetadataChangePublisher changePublisher) {
+  DefaultMetadataStore(TransactionExecutorFactory txExecutorFactory, DatasetFramework dsFramework) {
     this.txExecutorFactory = txExecutorFactory;
     this.dsFramework = dsFramework;
-    this.changePublisher = changePublisher;
   }
 
 
@@ -143,8 +138,8 @@ public class DefaultMetadataStore implements MetadataStore {
       // In both update or new cases, mark a single addition.
       propAdditions.put(entry.getKey(), entry.getValue());
     }
-    publish(previousRecord, new MetadataRecord(entityId, scope, propAdditions.build(), EMPTY_TAGS),
-            new MetadataRecord(entityId, scope, propDeletions.build(), EMPTY_TAGS));
+    publishAudit(previousRecord, new MetadataRecord(entityId, scope, propAdditions.build(), EMPTY_TAGS),
+                 new MetadataRecord(entityId, scope, propDeletions.build(), EMPTY_TAGS));
   }
 
   /**
@@ -162,8 +157,8 @@ public class DefaultMetadataStore implements MetadataStore {
         input.addTags(entityId, tagsToAdd);
       }
     }, scope);
-    publish(previousRef.get(), new MetadataRecord(entityId, scope, EMPTY_PROPERTIES, Sets.newHashSet(tagsToAdd)),
-            new MetadataRecord(entityId, scope));
+    publishAudit(previousRef.get(), new MetadataRecord(entityId, scope, EMPTY_PROPERTIES, Sets.newHashSet(tagsToAdd)),
+                 new MetadataRecord(entityId, scope));
   }
 
   @Override
@@ -266,7 +261,7 @@ public class DefaultMetadataStore implements MetadataStore {
       }
     }, scope);
     MetadataRecord previous = previousRef.get();
-    publish(previous, new MetadataRecord(entityId, scope), new MetadataRecord(previous));
+    publishAudit(previous, new MetadataRecord(entityId, scope), new MetadataRecord(previous));
   }
 
   /**
@@ -282,8 +277,8 @@ public class DefaultMetadataStore implements MetadataStore {
         input.removeProperties(entityId);
       }
     }, scope);
-    publish(previousRef.get(), new MetadataRecord(entityId, scope),
-            new MetadataRecord(entityId, scope, previousRef.get().getProperties(), EMPTY_TAGS));
+    publishAudit(previousRef.get(), new MetadataRecord(entityId, scope),
+                 new MetadataRecord(entityId, scope, previousRef.get().getProperties(), EMPTY_TAGS));
   }
 
   /**
@@ -307,8 +302,8 @@ public class DefaultMetadataStore implements MetadataStore {
         input.removeProperties(entityId, keys);
       }
     }, scope);
-    publish(previousRef.get(), new MetadataRecord(entityId, scope),
-            new MetadataRecord(entityId, scope, deletesBuilder.build(), EMPTY_TAGS));
+    publishAudit(previousRef.get(), new MetadataRecord(entityId, scope),
+                 new MetadataRecord(entityId, scope, deletesBuilder.build(), EMPTY_TAGS));
   }
 
   /**
@@ -325,15 +320,15 @@ public class DefaultMetadataStore implements MetadataStore {
       }
     }, scope);
     MetadataRecord previous = previousRef.get();
-    publish(previous, new MetadataRecord(entityId, scope),
-            new MetadataRecord(entityId, scope, EMPTY_PROPERTIES, previous.getTags()));
+    publishAudit(previous, new MetadataRecord(entityId, scope),
+                 new MetadataRecord(entityId, scope, EMPTY_PROPERTIES, previous.getTags()));
   }
 
   /**
    * Removes the specified tags from the {@link Id.NamespacedId}
    */
   @Override
-  public void removeTags(final MetadataScope scope, final Id.NamespacedId entityId, final String ... tagsToRemove) {
+  public void removeTags(final MetadataScope scope, final Id.NamespacedId entityId, final String... tagsToRemove) {
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
@@ -342,8 +337,8 @@ public class DefaultMetadataStore implements MetadataStore {
         input.removeTags(entityId, tagsToRemove);
       }
     }, scope);
-    publish(previousRef.get(), new MetadataRecord(entityId, scope),
-            new MetadataRecord(entityId, scope, EMPTY_PROPERTIES, Sets.newHashSet(tagsToRemove)));
+    publishAudit(previousRef.get(), new MetadataRecord(entityId, scope),
+                 new MetadataRecord(entityId, scope, EMPTY_PROPERTIES, Sets.newHashSet(tagsToRemove)));
   }
 
   @Override
@@ -489,14 +484,6 @@ public class DefaultMetadataStore implements MetadataStore {
     while (deleteBatch(MetadataScope.USER) != 0) {
       LOG.debug("Deleted a batch of business metadata indexes.");
     }
-  }
-
-  private void publish(MetadataRecord previous, MetadataRecord additions, MetadataRecord deletions) {
-    MetadataChangeRecord.MetadataDiffRecord diff = new MetadataChangeRecord.MetadataDiffRecord(additions, deletions);
-    MetadataChangeRecord changeRecord = new MetadataChangeRecord(previous, diff, System.currentTimeMillis());
-    changePublisher.publish(changeRecord);
-
-    publishAudit(previous, additions, deletions);
   }
 
   private void publishAudit(MetadataRecord previous, MetadataRecord additions, MetadataRecord deletions) {

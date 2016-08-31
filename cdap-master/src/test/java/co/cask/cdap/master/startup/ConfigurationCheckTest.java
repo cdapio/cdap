@@ -47,7 +47,7 @@ public class ConfigurationCheckTest {
   }
 
   @Test (expected = RuntimeException.class)
-  public void invalidMetadataKafkaTopicTest() {
-    runConfigurationCheck(Constants.Metadata.UPDATES_KAFKA_TOPIC, "invalid*topic");
+  public void invalidAuditKafkaTopicTest() {
+    runConfigurationCheck(Constants.Audit.KAFKA_TOPIC, "invalid*topic");
   }
 }

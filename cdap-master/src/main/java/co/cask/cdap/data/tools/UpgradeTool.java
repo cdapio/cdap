@@ -47,8 +47,6 @@ import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.metadata.lineage.LineageStore;
-import co.cask.cdap.data2.metadata.publisher.MetadataChangePublisher;
-import co.cask.cdap.data2.metadata.publisher.NoOpMetadataChangePublisher;
 import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
@@ -190,7 +188,6 @@ public class UpgradeTool {
                       .build(DatasetDefinitionRegistryFactory.class));
             // CDAP-5954 Upgrade tool does not need to record lineage and metadata changes for now.
             bind(LineageWriter.class).to(NoOpLineageWriter.class);
-            bind(MetadataChangePublisher.class).to(NoOpMetadataChangePublisher.class);
           }
         }
       ),

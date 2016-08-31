@@ -26,8 +26,6 @@ import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.LineageStore;
-import co.cask.cdap.data2.metadata.publisher.MetadataChangePublisher;
-import co.cask.cdap.data2.metadata.publisher.NoOpMetadataChangePublisher;
 import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.Id;
@@ -100,7 +98,6 @@ public class BasicLineageWriterTest {
           bind(DatasetFramework.class)
             .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
             .to(InMemoryDatasetFramework.class);
-          bind(MetadataChangePublisher.class).to(NoOpMetadataChangePublisher.class);
           bind(MetadataStore.class).to(DefaultMetadataStore.class);
         }
       }
