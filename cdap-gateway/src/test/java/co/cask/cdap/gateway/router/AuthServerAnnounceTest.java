@@ -23,6 +23,7 @@ import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
+import co.cask.cdap.internal.guava.reflect.TypeToken;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.GrantAccessToken;
@@ -30,61 +31,65 @@ import com.google.common.collect.Maps;
 import com.google.common.io.CharStreams;
 import com.google.common.net.InetAddresses;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.Gson;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.commons.net.DefaultSocketFactory;
-import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStreamReader;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import javax.net.SocketFactory;
 
 public class AuthServerAnnounceTest {
   private static final String HOSTNAME = "127.0.0.1";
   private static final int CONNECTION_IDLE_TIMEOUT_SECS = 2;
   private static final DiscoveryService DISCOVERY_SERVICE = new InMemoryDiscoveryService();
   private static final String ANNOUNCE_ADDRESS = "vip.cask.co:10000";
+  private static final Gson GSON = new Gson();
+  private static final Type TYPE = new TypeToken<Map<String, List<String>>>() {}.getType();
 
   @Test
   public void testEmptyAnnounceAddressConfig() throws Exception {
-    DefaultHttpClient client = new DefaultHttpClient();
     HttpRouterService routerService = createRouterService(null);
     routerService.startUp();
+    DefaultHttpClient client = new DefaultHttpClient();
     String url = resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v3/apps", routerService);
     HttpGet get = new HttpGet(url);
     HttpResponse response = client.execute(get);
+    Map<String, List<String>> responseMap =
+      GSON.fromJson(new InputStreamReader(response.getEntity().getContent()), TYPE);
+    Assert.assertEquals(Collections.EMPTY_LIST, responseMap.get("auth_uri"));
     routerService.shutDown();
-    String content = CharStreams.toString(new InputStreamReader(response.getEntity().getContent()));
-    Assert.assertEquals(content, routerService.correctAuthServerResponse(null));
   }
 
   @Test
   public void testAnnounceAddressConfig() throws Exception {
-    DefaultHttpClient client = new DefaultHttpClient();
     HttpRouterService routerService = createRouterService(ANNOUNCE_ADDRESS);
     routerService.startUp();
+    DefaultHttpClient client = new DefaultHttpClient();
     String url = resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v3/apps", routerService);
     HttpGet get = new HttpGet(url);
     HttpResponse response = client.execute(get);
+    Map<String, List<String>> responseMap =
+      GSON.fromJson(new InputStreamReader(response.getEntity().getContent()), TYPE);
+    Assert.assertEquals(
+      Collections.singletonList(String.format("http://%s/%s", ANNOUNCE_ADDRESS,
+                                              GrantAccessToken.Paths.GET_TOKEN)),
+      responseMap.get("auth_uri"));
     routerService.shutDown();
-    String content = CharStreams.toString(new InputStreamReader(response.getEntity().getContent()));
-    Assert.assertEquals(content, routerService.correctAuthServerResponse(ANNOUNCE_ADDRESS));
   }
-
 
   private HttpRouterService createRouterService(String announceAddress) {
     HttpRouterService routerService = new AuthServerAnnounceTest.HttpRouterService(HOSTNAME, DISCOVERY_SERVICE);
@@ -113,23 +118,6 @@ public class AuthServerAnnounceTest {
     private HttpRouterService(String hostname, DiscoveryService discoveryService) {
       this.hostname = hostname;
       this.discoveryService = discoveryService;
-    }
-
-    private String correctAuthServerResponse(String announceAddress) {
-      if (announceAddress == null) {
-        return "{\"auth_uri\":[]}";
-      }
-      String protocol;
-      if (cConf.getBoolean(Constants.Security.SSL_ENABLED)) {
-        protocol = "https";
-      } else {
-        protocol = "http";
-      }
-
-      String url = String.format("%s://%s/%s", protocol, announceAddress,
-                          GrantAccessToken.Paths.GET_TOKEN);
-      return String.format("{\"auth_uri\":[\"%s\"]}", url);
-
     }
 
     private void setAuthServerAnnounceAddress(String announceAddress) {
