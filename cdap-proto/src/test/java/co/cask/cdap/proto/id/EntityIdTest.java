@@ -257,7 +257,7 @@ public class EntityIdTest {
   @Ignore
   public void printToString() {
     for (EntityId id : ids) {
-      System.out.println(id.getEntity() + ": " + id.toString());
+      System.out.println(id.getEntityType() + ": " + id.toString());
     }
   }
 
@@ -265,7 +265,7 @@ public class EntityIdTest {
   @Ignore
   public void printToJson() {
     for (EntityId id : ids) {
-      System.out.println(id.getEntity() + ": " + GSON.toJson(id));
+      System.out.println(id.getEntityType() + ": " + GSON.toJson(id));
     }
   }
 
