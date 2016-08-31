@@ -1841,14 +1841,23 @@
         -->
         <original.service.name>${project.artifactId}</original.service.name>
         <stage.dir>${project.build.directory}/stage-packaging</stage.dir>
-        <stage.opt.dir>${stage.dir}/opt/cdap/${package.name}</stage.opt.dir>
+        <stage.opt.dir>${stage.dir}/opt/cdap</stage.opt.dir>
         <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
         <stage.plugins.dir>${stage.opt.dir}/plugins</stage.plugins.dir>
-        <package.deb.depends>--depends cdap</package.deb.depends>
-        <package.rpm.depends>--depends cdap</package.rpm.depends>
-        <package.deb.arch>all</package.deb.arch>
-        <package.rpm.arch>all</package.rpm.arch>
+        <stage.artifacts.dir>${stage.opt.dir}/artifacts</stage.artifacts.dir>
+        <stage.security.ext.dir>${stage.opt.dir}/ext/security</stage.security.ext.dir>
+        <additional.artifacts.jar.pattern>**/target/*.jar</additional.artifacts.jar.pattern>
+        <additional.artifacts.config.pattern>**/target/*.json</additional.artifacts.config.pattern>
+        <additional.artifacts.exclude.pattern>**/target/*-tests.jar</additional.artifacts.exclude.pattern>
+        <security.ext.jar.pattern>**/target/*.jar</security.ext.jar.pattern>
+        <security.ext.config.pattern>**/target/*.json</security.ext.config.pattern>
+        <security.ext.exclude.pattern>**/target/*-tests.jar</security.ext.exclude.pattern>
+        <package.deb.depends>--depends libxml2-utils</package.deb.depends>
+        <package.rpm.depends>--depends libxml2</package.rpm.depends>
+        <package.deb.arch>amd64</package.deb.arch>
+        <package.rpm.arch>x86_64</package.rpm.arch>
         <package.dirs>opt etc</package.dirs>
+        <package.config.dir>etc</package.config.dir>
       </properties>
       <build>
         <pluginManagement>
@@ -1932,13 +1941,6 @@
                         <directory>${project.parent.basedir}/cdap-common/bin</directory>
                         <targetPath>bin</targetPath>
                         <filtering>true</filtering>
-                      </resource>
-                      <resource>
-                        <directory>bin</directory>
-                        <targetPath>bin</targetPath>
-                        <excludes>
-                          <exclude>node</exclude>
-                        </excludes>
                       </resource>
                       <resource>
                         <directory>conf</directory>
@@ -2079,298 +2081,6 @@
             </executions>
           </plugin>
         </plugins>
-      </build>
-    </profile>
-
-    <!-- Profile for prepare RPM package. The "dist" profile must be activated as well. -->
-    <profile>
-      <id>rpm-prepare</id>
-      <build>
-        <pluginManagement>
-          <plugins>
-            <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-resources-plugin</artifactId>
-              <version>2.6</version>
-              <executions>
-                <execution>
-                  <id>copy-rpm-scripts</id>
-                  <phase>process-resources</phase>
-                  <goals>
-                    <goal>copy-resources</goal>
-                  </goals>
-                  <configuration>
-                    <outputDirectory>${project.build.directory}/dist/rpm</outputDirectory>
-                    <!-- Copy it twice, one with filter, one without -->
-                    <resources>
-                      <resource>
-                        <directory>${project.parent.basedir}/cdap-distributions/src/rpm/init.d</directory>
-                        <targetPath>unfilter</targetPath>
-                      </resource>
-                      <resource>
-                        <directory>${project.parent.basedir}/cdap-distributions/src/rpm/init.d</directory>
-                        <filtering>true</filtering>
-                      </resource>
-                    </resources>
-                  </configuration>
-                </execution>
-              </executions>
-            </plugin>
-            <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-antrun-plugin</artifactId>
-              <version>1.7</version>
-              <executions>
-                <execution>
-                  <id>rename-rpm-service</id>
-                  <phase>process-resources</phase>
-                  <goals>
-                    <goal>run</goal>
-                  </goals>
-                  <configuration>
-                    <target>
-                      <copy file="${project.build.directory}/dist/rpm/cdap-service" tofile="${stage.dir}/etc/rc.d/init.d/cdap-${service.name}" />
-                    </target>
-                  </configuration>
-                </execution>
-                <!--This is for workaround a bug in resource-plugin that it doesn't preserve file permission-->
-                <!--http://jira.codehaus.org/browse/MRESOURCES-132-->
-                <execution>
-                  <id>rpm-init-permission</id>
-                  <phase>prepare-package</phase>
-                  <configuration>
-                    <target>
-                      <chmod file="${stage.dir}/etc/rc.d/init.d/**" perm="755"/>
-                    </target>
-                  </configuration>
-                  <goals>
-                    <goal>run</goal>
-                  </goals>
-                </execution>
-                <execution>
-                  <id>rpm-bin-permission</id>
-                  <phase>prepare-package</phase>
-                  <configuration>
-                    <target>
-                      <chmod file="${stage.opt.dir}/bin/**" perm="755"/>
-                    </target>
-                  </configuration>
-                  <goals>
-                    <goal>run</goal>
-                  </goals>
-                </execution>
-              </executions>
-            </plugin>
-          </plugins>
-        </pluginManagement>
-      </build>
-    </profile>
-
-    <!-- Profile for prepare Debian package. The "dist" profile must be activated as well. -->
-    <profile>
-      <id>deb-prepare</id>
-      <build>
-        <pluginManagement>
-          <plugins>
-            <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-resources-plugin</artifactId>
-              <version>2.6</version>
-              <executions>
-                <execution>
-                  <id>copy-deb-staging</id>
-                  <phase>prepare-package</phase>
-                  <goals>
-                    <goal>copy-resources</goal>
-                  </goals>
-                  <configuration>
-                    <outputDirectory>${stage.dir}-deb</outputDirectory>
-                    <resources>
-                      <resource>
-                        <directory>${stage.dir}</directory>
-                        <includes>
-                          <include>opt/**</include>
-                          <include>etc/profile.d/**</include>
-                        </includes>
-                      </resource>
-                    </resources>
-                  </configuration>
-                </execution>
-                <execution>
-                  <id>copy-deb-scripts</id>
-                  <phase>process-resources</phase>
-                  <goals>
-                    <goal>copy-resources</goal>
-                  </goals>
-                  <configuration>
-                    <outputDirectory>${project.build.directory}/dist/deb</outputDirectory>
-                    <resources>
-                      <!-- Copy it twice, one with filter, one without -->
-                      <resource>
-                        <directory>${project.parent.basedir}/cdap-distributions/src/debian/init.d</directory>
-                        <targetPath>unfilter</targetPath>
-                      </resource>
-                      <resource>
-                        <directory>${project.parent.basedir}/cdap-distributions/src/debian/init.d</directory>
-                        <filtering>true</filtering>
-                      </resource>
-                    </resources>
-                  </configuration>
-                </execution>
-              </executions>
-            </plugin>
-            <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-antrun-plugin</artifactId>
-              <version>1.7</version>
-              <executions>
-                <execution>
-                  <id>rename-deb-service</id>
-                  <phase>process-resources</phase>
-                  <goals>
-                    <goal>run</goal>
-                  </goals>
-                  <configuration>
-                    <target>
-                      <copy file="${project.build.directory}/dist/deb/cdap-service" tofile="${stage.dir}-deb/etc/init.d/cdap-${service.name}" />
-                    </target>
-                  </configuration>
-                </execution>
-                <!--This is for workaround a bug in resource-plugin that it doesn't preserve file permission-->
-                <!--http://jira.codehaus.org/browse/MRESOURCES-132-->
-                <execution>
-                  <id>deb-init-permission</id>
-                  <phase>prepare-package</phase>
-                  <configuration>
-                    <target>
-                      <chmod file="${stage.dir}-deb/etc/init.d/**" perm="755"/>
-                    </target>
-                  </configuration>
-                  <goals>
-                    <goal>run</goal>
-                  </goals>
-                </execution>
-                <execution>
-                  <id>deb-bin-permission</id>
-                  <phase>prepare-package</phase>
-                  <configuration>
-                    <target>
-                      <chmod file="${stage.dir}-deb/opt/cdap/${package.name}/bin/**" perm="755"/>
-                    </target>
-                  </configuration>
-                  <goals>
-                    <goal>run</goal>
-                  </goals>
-                </execution>
-              </executions>
-            </plugin>
-          </plugins>
-        </pluginManagement>
-      </build>
-    </profile>
-
-    <!-- Profile for creating RPM package. Both "dist" and "rpm-prepare" must be activated. -->
-    <profile>
-      <id>rpm</id>
-      <build>
-        <pluginManagement>
-          <plugins>
-            <plugin>
-              <groupId>org.codehaus.mojo</groupId>
-              <artifactId>exec-maven-plugin</artifactId>
-              <version>1.3.1</version>
-              <executions>
-                <execution>
-                  <id>rpm-package</id>
-                  <phase>package</phase>
-                  <goals>
-                    <goal>exec</goal>
-                  </goals>
-                  <configuration>
-                    <workingDirectory>${project.build.directory}</workingDirectory>
-                    <executable>fpm</executable>
-                    <commandlineArgs>
-                      --name "cdap-${package.name}"
-                      --vendor "Cask Data, Inc."
-                      --maintainer "support@cask.co"
-                      --license "Copyright © ${package.build.year} Cask Data, Inc. Licensed under the Apache License, Version 2.0."
-                      --description "Cask DAP (CDAP) Component: ${package.name}"
-                      --category misc
-                      -s dir
-                      -t rpm
-                      -C "${stage.dir}"
-                      --directories "/opt/cdap/${package.name}"
-                      --version "${package.version}"
-                      --architecture "${package.rpm.arch}"
-                      --rpm-os linux
-                      --url "http://cask.co"
-                      --template-value "project=${package.name}"
-                      --after-install "${project.parent.basedir}/cdap-distributions/src/rpm/scripts/postinst"
-                      --before-remove "${project.parent.basedir}/cdap-distributions/src/rpm/scripts/prerm"
-                      --after-remove "${project.parent.basedir}/cdap-distributions/src/rpm/scripts/postrm"
-                      --iteration "${release.iteration}"
-                      --depends libxml2
-                      ${package.rpm.depends}
-                      ${package.dirs}
-                    </commandlineArgs>
-                  </configuration>
-                </execution>
-              </executions>
-            </plugin>
-          </plugins>
-        </pluginManagement>
-      </build>
-    </profile>
-
-    <!-- Profile for creating Debian package. Both "dist" and "deb-prepare" must be activated. -->
-    <profile>
-      <id>deb</id>
-      <build>
-        <pluginManagement>
-          <plugins>
-            <plugin>
-              <groupId>org.codehaus.mojo</groupId>
-              <artifactId>exec-maven-plugin</artifactId>
-              <version>1.3.1</version>
-              <executions>
-                <execution>
-                  <id>deb-package</id>
-                  <phase>package</phase>
-                  <goals>
-                    <goal>exec</goal>
-                  </goals>
-                  <configuration>
-                    <workingDirectory>${project.build.directory}</workingDirectory>
-                    <executable>fpm</executable>
-                    <commandlineArgs>
-                      --name "cdap-${package.name}"
-                      --vendor "Cask Data, Inc."
-                      --maintainer "support@cask.co"
-                      --license "Copyright © ${package.build.year} Cask Data, Inc. Licensed under the Apache License, Version 2.0."
-                      --description "Cask DAP (CDAP) Component: ${package.name}"
-                      --category misc
-                      -s dir
-                      -t deb
-                      -C "${stage.dir}-deb"
-                      --directories "/opt/cdap/${package.name}"
-                      --version "${package.version}"
-                      --architecture "${package.deb.arch}"
-                      --url "http://cask.co"
-                      --template-value "project=${package.name}"
-                      --after-install "${project.parent.basedir}/cdap-distributions/src/debian/scripts/postinst"
-                      --before-remove "${project.parent.basedir}/cdap-distributions/src/debian/scripts/prerm"
-                      --after-remove "${project.parent.basedir}/cdap-distributions/src/debian/scripts/postrm"
-                      --iteration "${release.iteration}"
-                      --depends libxml2-utils
-                      ${package.deb.depends}
-                      ${package.dirs}
-                    </commandlineArgs>
-                  </configuration>
-                </execution>
-              </executions>
-            </plugin>
-          </plugins>
-        </pluginManagement>
       </build>
     </profile>
 

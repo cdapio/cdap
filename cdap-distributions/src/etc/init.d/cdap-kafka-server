@@ -17,11 +17,11 @@
 
 #
 # chkconfig: 2345 96 15
-# description: Starts and stops the @service.name@ service
+# description: Starts and stops the cdap-kafka-server service
 # 
 ### BEGIN INIT INFO
-# Provides:          cdap-@service.name@
-# Short-Description: Cask CDAP @service.name@
+# Provides:          cdap-kafka-server
+# Short-Description: CDAP Kafka Server
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Required-Start:    $syslog $remote_fs
@@ -30,11 +30,11 @@
 # Should-Stop:
 ### END INIT INFO
 
-SVC_COMMAND="/opt/cdap/@package.name@/bin/cdap @service.name@ $*"
+SVC_COMMAND="/opt/cdap/bin/cdap kafka-server $*"
 
 # source configuration, if it exists
-if [[ -r /etc/default/cdap-@service.name@ ]]; then
-  . /etc/default/cdap-@service.name@
+if [[ -r /etc/default/cdap-kafka-server ]]; then
+  . /etc/default/cdap-kafka-server
 fi
 
 # source cdap-env.sh, if it exists

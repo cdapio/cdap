@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2014 Cask Data, Inc.
+  Copyright © 2014-2016 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -31,29 +31,348 @@
   <name>CDAP Distributions</name>
   <packaging>jar</packaging>
 
+  <dependencies>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-cli</artifactId>
+      <version>${project.version}</version>
+      <!--
+        Excludes unnecessary transitive dependencies from cdap-cli.
+        cli is added as dependency is because we want to copy the fat jar.
+      -->
+      <exclusions>
+        <exclusion>
+          <groupId>jline</groupId>
+          <artifactId>jline</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.googlecode.concurrent-trees</groupId>
+          <artifactId>concurrent-trees</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-gateway</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-kafka</artifactId>
+      <version>${project.version}</version>
+      <!-- <scope>provided</scope> TODO: Do I need this? -->
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-master</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-security</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-ui</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
+
   <profiles>
+    <profile>
+      <id>dist</id>
+      <properties>
+        <package.deb.replaces>--replaces cdap-gateway --replaces cdap-kafka --replaces cdap-master --replaces cdap-security --replaces cdap-ui</package.deb.replaces>
+        <package.rpm.replaces>${package.deb.replaces}</package.rpm.replaces>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <version>2.4</version>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>2.8</version>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-resources-plugin</artifactId>
+            <version>2.6</version>
+            <executions>
+              <execution>
+                <id>copy-ui</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.opt.dir}</outputDirectory>
+                  <useDefaultDelimiters>false</useDefaultDelimiters>
+                  <delimiters>
+                    <delimiter>@@</delimiter>
+                  </delimiters>
+                  <resources>
+                    <!-- Copy cdap-ui -->
+		    <resource>
+		      <directory>${project.parent.basedir}/cdap-ui/node</directory>
+                      <targetPath>ui/bin</targetPath>
+                      <includes>
+                        <include>node</include>
+                      </includes>
+		    </resource>
+		    <resource>
+		      <directory>${project.parent.basedir}/cdap-ui/cdap_dist</directory>
+                      <targetPath>ui/cdap_dist</targetPath>
+		    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-ui/dist</directory>
+                      <targetPath>ui/dist</targetPath>
+                    </resource>
+		    <resource>
+		      <directory>${project.parent.basedir}/cdap-ui/login_dist</directory>
+                      <targetPath>ui/login_dist</targetPath>
+		    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-ui/node_modules</directory>
+                      <targetPath>ui/node_modules</targetPath>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-ui/server</directory>
+                      <targetPath>ui/server</targetPath>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-ui/templates</directory>
+                      <targetPath>ui/templates</targetPath>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-ui/</directory>
+                      <targetPath>ui/</targetPath>
+                      <includes>
+                        <include>server.js</include>
+                        <include>package.json</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <execution>
+                <id>copy-master</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.opt.dir}</outputDirectory>
+                  <useDefaultDelimiters>false</useDefaultDelimiters>
+                  <delimiters>
+                    <delimiter>@@</delimiter>
+                  </delimiters>
+                  <resources>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-master/target/stage-packaging/opt/cdap/artifacts</directory>
+                      <targetPath>artifacts</targetPath>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-master/target/stage-packaging/opt/cdap/ext</directory>
+                      <targetPath>ext</targetPath>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-master/target/stage-packaging/opt/cdap/libexec</directory>
+                      <targetPath>libexec</targetPath>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <execution>
+                <id>copy-hbase-compat</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.opt.dir}</outputDirectory>
+                  <useDefaultDelimiters>false</useDefaultDelimiters>
+                  <delimiters>
+                    <delimiter>@@</delimiter>
+                  </delimiters>
+                  <resources>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-hbase-compat-0.96/target/stage-packaging/opt/cdap/lib</directory>
+                      <targetPath>lib/hbase-compat-0.96</targetPath>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-hbase-compat-0.98/target/stage-packaging/opt/cdap/lib</directory>
+                      <targetPath>lib/hbase-compat-0.98</targetPath>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-hbase-compat-1.0/target/stage-packaging/opt/cdap/lib</directory>
+                      <targetPath>lib/hbase-compat-1.0</targetPath>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-hbase-compat-1.0-cdh/target/stage-packaging/opt/cdap/lib</directory>
+                      <targetPath>lib/hbase-compat-1.0-cdh</targetPath>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-hbase-compat-1.0-cdh5.5.0/target/stage-packaging/opt/cdap/lib</directory>
+                      <targetPath>lib/hbase-compat-1.0-cdh5.5.0</targetPath>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-hbase-compat-1.1/target/stage-packaging/opt/cdap/lib</directory>
+                      <targetPath>lib/hbase-compat-1.1</targetPath>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-hbase-compat-1.2-cdh5.7.0/target/stage-packaging/opt/cdap/lib</directory>
+                      <targetPath>lib/hbase-compat-1.2-cdh5.7.0</targetPath>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>1.7</version>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
 
     <profile>
       <id>rpm-prepare</id>
       <build>
-        <resources>
-          <resource>
-            <directory>${project.basedir}/src/etc</directory>
-            <targetPath>${stage.dir}/etc</targetPath>
-          </resource>
-        </resources>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-resources-plugin</artifactId>
+              <version>2.6</version>
+              <executions>
+                <execution>
+                  <id>copy-etc-staging</id>
+                  <phase>prepare-package</phase>
+                  <goals>
+                    <goal>copy-resources</goal>
+                  </goals>
+                  <configuration>
+                    <outputDirectory>${stage.dir}/etc</outputDirectory>
+                    <resources>
+                      <resource>
+                        <directory>${project.basedir}/src/etc</directory>
+                      </resource>
+                    </resources>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-antrun-plugin</artifactId>
+              <version>1.7</version>
+              <executions>
+                <!--This is for workaround a bug in resource-plugin that it doesn't preserve file permission-->
+                <!--http://jira.codehaus.org/browse/MRESOURCES-132-->
+                <execution>
+                  <id>rpm-init-permission</id>
+                  <phase>prepare-package</phase>
+                  <configuration>
+                    <target>
+                      <chmod file="${stage.dir}/etc/init.d/**" perm="755"/>
+                    </target>
+                  </configuration>
+                  <goals>
+                    <goal>run</goal>
+                  </goals>
+                </execution>
+                <execution>
+                  <id>rpm-bin-permission</id>
+                  <phase>prepare-package</phase>
+                  <configuration>
+                    <target>
+                      <chmod file="${stage.opt.dir}/bin/**" perm="755"/>
+                    </target>
+                  </configuration>
+                  <goals>
+                    <goal>run</goal>
+                  </goals>
+                </execution>
+              </executions>
+            </plugin>
+          </plugins>
+        </pluginManagement>
       </build>
     </profile>
 
     <profile>
       <id>deb-prepare</id>
       <build>
-        <resources>
-          <resource>
-            <directory>${project.basedir}/src/etc</directory>
-            <targetPath>${stage.dir}-deb/etc</targetPath>
-          </resource>
-        </resources>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-resources-plugin</artifactId>
+              <version>2.6</version>
+              <executions>
+                <execution>
+                  <id>copy-deb-staging</id>
+                  <phase>prepare-package</phase>
+                  <goals>
+                    <goal>copy-resources</goal>
+                  </goals>
+                  <configuration>
+                    <outputDirectory>${stage.dir}-deb</outputDirectory>
+                    <resources>
+                      <resource>
+                        <directory>${stage.dir}</directory>
+                        <includes>
+                          <include>opt/**</include>
+                          <include>etc/**</include>
+                        </includes>
+                      </resource>
+                    </resources>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-antrun-plugin</artifactId>
+              <version>1.7</version>
+              <executions>
+                <!--This is for workaround a bug in resource-plugin that it doesn't preserve file permission-->
+                <!--http://jira.codehaus.org/browse/MRESOURCES-132-->
+                <execution>
+                  <id>deb-init-permission</id>
+                  <phase>prepare-package</phase>
+                  <configuration>
+                    <target>
+                      <chmod file="${stage.dir}-deb/etc/init.d/**" perm="755"/>
+                    </target>
+                  </configuration>
+                  <goals>
+                    <goal>run</goal>
+                  </goals>
+                </execution>
+                <execution>
+                  <id>deb-bin-permission</id>
+                  <phase>prepare-package</phase>
+                  <configuration>
+                    <target>
+                      <chmod file="${stage.dir}-deb/opt/cdap/bin/**" perm="755"/>
+                    </target>
+                  </configuration>
+                  <goals>
+                    <goal>run</goal>
+                  </goals>
+                </execution>
+              </executions>
+            </plugin>
+          </plugins>
+        </pluginManagement>
       </build>
     </profile>
 
@@ -81,55 +400,31 @@
                     --vendor "Cask Data, Inc."
                     --maintainer "support@cask.co"
                     --license "Copyright © ${package.build.year} Cask Data, Inc. Licensed under the Apache License, Version 2.0."
-                    --description "Common setup and default configuration for CDAP"
+                    --description "Cask Data Application Platform (CDAP)"
                     --category misc
                     -s dir
                     -t rpm
                     -C "${stage.dir}"
+                    --directories "/opt/cdap"
                     --version "${package.version}"
                     --architecture "${package.rpm.arch}"
                     --rpm-os linux
-                    --url "http://www.cask.co"
+                    --url "http://cask.co"
                     --template-value "project=cdap"
                     --after-install "${project.basedir}/src/rpm/scripts/common-postinst"
+                    --after-remove "${project.basedir}/src/rpm/scripts/postrm"
                     --before-install "${project.basedir}/src/rpm/scripts/common-preinst"
                     --before-remove "${project.basedir}/src/rpm/scripts/common-prerm"
                     --iteration "${release.iteration}"
-                    etc
+                    --config-files ${package.config.dir}
+                    ${package.rpm.depends}
+                    ${package.rpm.replaces}
+                    ${package.dirs}
                   </commandlineArgs>
                 </configuration>
               </execution>
             </executions>
           </plugin>
-
-          <!-- Extra deployment for rpm package. -->
-          <!-- This has to be in child level, otherwise all modules would try to deploy. -->
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-deploy-plugin</artifactId>
-            <version>2.8</version>
-            <executions>
-              <execution>
-                <id>deploy-rpm</id>
-                <phase>deploy</phase>
-                <goals>
-                  <goal>deploy-file</goal>
-                </goals>
-                <configuration>
-                  <version>${project.version}</version>
-                  <groupId>${dist.deploy.groupId}</groupId>
-                  <artifactId>cdap</artifactId>
-                  <packaging>noarch.rpm</packaging>
-                  <generatePom>false</generatePom>
-                  <file>${project.build.directory}/cdap-${package.version}-1.noarch.rpm</file>
-                  <classifier>1</classifier>
-                  <repositoryId>continuuity</repositoryId>
-                  <url>${deploy.url}</url>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-
         </plugins>
       </build>
     </profile>
@@ -163,43 +458,21 @@
                     -s dir
                     -t deb
                     -C "${stage.dir}-deb"
+                    --directories "/opt/cdap"
                     --version "${package.version}"
                     --architecture "${package.deb.arch}"
-                    --url "http://www.cask.co"
+                    --url "http://cask.co"
                     --template-value "project=cdap"
                     --after-install "${project.basedir}/src/debian/scripts/common-postinst"
                     --before-install "${project.basedir}/src/debian/scripts/common-preinst"
                     --before-remove "${project.basedir}/src/debian/scripts/common-prerm"
+                    --after-remove "${project.basedir}/src/debian/scripts/postrm"
                     --iteration "${release.iteration}"
-                    etc
+                    --config-files ${package.config.dir}
+                    ${package.deb.depends}
+                    ${package.deb.replaces}
+                    ${package.dirs}
                   </commandlineArgs>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-
-          <!-- Extra deployment for deb package -->
-          <!-- This has to be in child level, otherwise all modules would try to deploy. -->
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-deploy-plugin</artifactId>
-            <version>2.8</version>
-            <executions>
-              <execution>
-                <id>deploy-deb</id>
-                <phase>deploy</phase>
-                <goals>
-                  <goal>deploy-file</goal>
-                </goals>
-                <configuration>
-                  <version>${project.version}</version>
-                  <groupId>${dist.deploy.groupId}</groupId>
-                  <artifactId>cdap</artifactId>
-                  <packaging>deb</packaging>
-                  <generatePom>false</generatePom>
-                  <file>${project.build.directory}/cdap_${package.version}-1_all.deb</file>
-                  <repositoryId>continuuity</repositoryId>
-                  <url>${deploy.url}</url>
                 </configuration>
               </execution>
             </executions>

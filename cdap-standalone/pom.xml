@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2014-2015 Cask Data, Inc.
+  Copyright © 2014-2016 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -716,31 +716,10 @@
               </execution>
             </executions>
           </plugin>
-
-          <!-- Extra deployment for cdap sdk -->
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-deploy-plugin</artifactId>
             <version>2.8</version>
-            <executions>
-              <execution>
-                <id>deploy-sdk</id>
-                <phase>deploy</phase>
-                <goals>
-                  <goal>deploy-file</goal>
-                </goals>
-                <configuration>
-                  <version>${project.version}</version>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>cdap-sdk</artifactId>
-                  <packaging>zip</packaging>
-                  <generatePom>false</generatePom>
-                  <file>${project.build.directory}/cdap-sdk-${project.version}.zip</file>
-                  <repositoryId>continuuity</repositoryId>
-                  <url>${deploy.url}</url>
-                </configuration>
-              </execution>
-            </executions>
           </plugin>
         </plugins>
       </build>

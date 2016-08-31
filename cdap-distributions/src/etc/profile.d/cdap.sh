@@ -12,4 +12,5 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-export PATH=${PATH}:/opt/cdap/cli/bin
+export PATH=${PATH}:/opt/cdap/bin
+export CDAP_HOME=/opt/cdap
