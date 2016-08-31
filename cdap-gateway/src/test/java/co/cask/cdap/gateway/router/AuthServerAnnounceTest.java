@@ -58,37 +58,44 @@ public class AuthServerAnnounceTest {
   private static final DiscoveryService DISCOVERY_SERVICE = new InMemoryDiscoveryService();
   private static final String ANNOUNCE_ADDRESS = "vip.cask.co:10000";
   private static final Gson GSON = new Gson();
-  private static final Type TYPE = new TypeToken<Map<String, List<String>>>() {}.getType();
+  private static final Type TYPE = new TypeToken<Map<String, List<String>>>() {
+  }.getType();
 
   @Test
   public void testEmptyAnnounceAddressConfig() throws Exception {
     HttpRouterService routerService = createRouterService(null);
     routerService.startUp();
-    DefaultHttpClient client = new DefaultHttpClient();
-    String url = resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v3/apps", routerService);
-    HttpGet get = new HttpGet(url);
-    HttpResponse response = client.execute(get);
-    Map<String, List<String>> responseMap =
-      GSON.fromJson(new InputStreamReader(response.getEntity().getContent()), TYPE);
-    Assert.assertEquals(Collections.EMPTY_LIST, responseMap.get("auth_uri"));
-    routerService.shutDown();
+    try {
+      DefaultHttpClient client = new DefaultHttpClient();
+      String url = resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v3/apps", routerService);
+      HttpGet get = new HttpGet(url);
+      HttpResponse response = client.execute(get);
+      Map<String, List<String>> responseMap =
+        GSON.fromJson(new InputStreamReader(response.getEntity().getContent()), TYPE);
+      Assert.assertEquals(Collections.EMPTY_LIST, responseMap.get("auth_uri"));
+    } finally {
+      routerService.shutDown();
+    }
   }
 
   @Test
   public void testAnnounceAddressConfig() throws Exception {
     HttpRouterService routerService = createRouterService(ANNOUNCE_ADDRESS);
     routerService.startUp();
-    DefaultHttpClient client = new DefaultHttpClient();
-    String url = resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v3/apps", routerService);
-    HttpGet get = new HttpGet(url);
-    HttpResponse response = client.execute(get);
-    Map<String, List<String>> responseMap =
-      GSON.fromJson(new InputStreamReader(response.getEntity().getContent()), TYPE);
-    Assert.assertEquals(
-      Collections.singletonList(String.format("http://%s/%s", ANNOUNCE_ADDRESS,
-                                              GrantAccessToken.Paths.GET_TOKEN)),
-      responseMap.get("auth_uri"));
-    routerService.shutDown();
+    try {
+      DefaultHttpClient client = new DefaultHttpClient();
+      String url = resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v3/apps", routerService);
+      HttpGet get = new HttpGet(url);
+      HttpResponse response = client.execute(get);
+      Map<String, List<String>> responseMap =
+        GSON.fromJson(new InputStreamReader(response.getEntity().getContent()), TYPE);
+      Assert.assertEquals(
+        Collections.singletonList(String.format("http://%s/%s", ANNOUNCE_ADDRESS,
+                                                GrantAccessToken.Paths.GET_TOKEN)),
+        responseMap.get("auth_uri"));
+    } finally {
+      routerService.shutDown();
+    }
   }
 
   private HttpRouterService createRouterService(String announceAddress) {
