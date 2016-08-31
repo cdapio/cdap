@@ -381,9 +381,8 @@ The CDAP Router service is a stateless API endpoint for CDAP, and simply routes 
 appropriate service. It can be scaled horizontally for performance. A load balancer, if
 desired, can be placed in front of the nodes running the service.
 
-- Using the Ambari UI, add additional hosts for the ``CDAP Gateway/Router
-  Service`` to additional machines.
-- Start each ``CDAP Gateway/Router Service`` role.
+- Using the Ambari UI, add additional hosts for the ``CDAP Router Service`` to additional machines.
+- Start each ``CDAP Router Service`` role.
 
 CDAP Kafka
 ..........
