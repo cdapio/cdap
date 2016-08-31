@@ -58,9 +58,9 @@ function download_includes() {
 # https://raw.githubusercontent.com/caskdata/cdap-clients/develop/cdap-authentication-clients/java/README.rst
   local clients_url="${github_url}/cdap-clients/${clients_branch}"
 
-  download_readme_file_and_test ${includes_dir} ${clients_url} 25b715da9e3f65e93204a9663d19c90b cdap-authentication-clients/java
+  download_readme_file_and_test ${includes_dir} ${clients_url} 9bdc7d9ab874bfb6ec044964d3df804e cdap-authentication-clients/java
 #   download_readme_file_and_test ${includes_dir} ${clients_url} f075935545e48a132d014c6a8d32122a cdap-authentication-clients/javascript
-  download_readme_file_and_test ${includes_dir} ${clients_url} 1f8330e0370b3895c38452f9af72506a cdap-authentication-clients/python
+  download_readme_file_and_test ${includes_dir} ${clients_url} 6f937cbf71ed2312a4893cba27e6145f cdap-authentication-clients/python
 #   download_readme_file_and_test ${includes_dir} ${clients_url} c16bf5ce7c1f0a2a4a680974a848cdd0 cdap-authentication-clients/ruby
   
 # cdap-ingest
