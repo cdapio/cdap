@@ -189,11 +189,6 @@ Customize CDAP
    Under *Advanced cdap-env*, you can configure environment settings such as heap sizes
    and the directories used to store logs and pids for the CDAP services which run on the edge nodes.
 
-   **Including Spark:** If you are including Spark, the *Advanced cdap-env* needs to
-   contain the location of the Spark libraries, typically as
-   ``SPARK_HOME=/usr/hdp/<version>/spark``, where "<version>" matches the HDP version
-   of the cluster, including its build iteration, such as "2.3.4.0-3485".
-
    .. figure:: ../_images/ambari/ss05-config-cdap-env.png
       :figwidth: 100%
       :width: 800px
@@ -213,13 +208,7 @@ Customize CDAP
  
       **Ambari Dashboard:** Customizing Services 2
 
-#. To use the CDAP Explore service (to use SQL to query CDAP data), you must have Hive
-   installed on the cluster, have the Hive client libraries installed on the same host as
-   the CDAP services, and have the *Advanced cdap-site* ``explore.enabled`` option set to
-   *true* (the default). If you do not have Hive installed or available, this option must be
-   set to *false*.
-
-   **Router Bind Port, Router Server Port:** These two ports should match; *Router Server
+#. **Router Bind Port, Router Server Port:** These two ports should match; *Router Server
    Port* is used by the CDAP UI to connect to the CDAP Router service.
 
    .. figure:: ../_images/ambari/ss07-config-enable-explore.png
