@@ -51,6 +51,7 @@ public class ScheduleId extends EntityId implements NamespacedId, ParentedId<App
     return schedule;
   }
 
+  @Override
   public String getEntityName() {
     return getSchedule();
   }

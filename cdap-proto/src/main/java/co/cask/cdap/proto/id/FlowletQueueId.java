@@ -59,6 +59,7 @@ public class FlowletQueueId extends EntityId implements NamespacedId, ParentedId
     return queue;
   }
 
+  @Override
   public String getEntityName() {
     return getQueue();
   }

@@ -44,6 +44,7 @@ public class NamespaceId extends EntityId implements NamespacedId {
     return namespace;
   }
 
+  @Override
   public String getEntityName() {
     return getNamespace();
   }

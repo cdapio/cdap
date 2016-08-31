@@ -46,6 +46,7 @@ public class ApplicationId extends EntityId implements NamespacedId, ParentedId<
     return application;
   }
 
+  @Override
   public String getEntityName() {
     return getApplication();
   }

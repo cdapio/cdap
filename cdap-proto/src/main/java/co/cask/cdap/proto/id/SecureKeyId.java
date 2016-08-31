@@ -97,6 +97,7 @@ public class SecureKeyId extends EntityId implements NamespacedId, ParentedId<Na
     return name;
   }
 
+  @Override
   public String getEntityName() {
     return getName();
   }

@@ -39,6 +39,7 @@ public class SystemServiceId extends EntityId {
     return service;
   }
 
+  @Override
   public String getEntityName() {
     return getService();
   }

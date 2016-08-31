@@ -39,6 +39,7 @@ public class QueryId extends EntityId {
     return handle;
   }
 
+  @Override
   public String getEntityName() {
     return getHandle();
   }

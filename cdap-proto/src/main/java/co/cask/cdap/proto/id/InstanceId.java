@@ -39,6 +39,7 @@ public class InstanceId extends EntityId {
     return instance;
   }
 
+  @Override
   public String getEntityName() {
     return getInstance();
   }

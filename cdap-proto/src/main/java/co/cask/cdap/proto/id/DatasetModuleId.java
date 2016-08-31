@@ -45,6 +45,7 @@ public class DatasetModuleId extends EntityId implements NamespacedId, ParentedI
     return module;
   }
 
+  @Override
   public String getEntityName() {
     return getModule();
   }

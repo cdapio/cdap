@@ -59,6 +59,7 @@ public class ProgramId extends EntityId implements NamespacedId, ParentedId<Appl
     return program;
   }
 
+  @Override
   public String getEntityName() {
     return getProgram();
   }

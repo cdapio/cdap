@@ -45,6 +45,7 @@ public class DatasetTypeId extends EntityId implements NamespacedId, ParentedId<
     return type;
   }
 
+  @Override
   public String getEntityName() {
     return getType();
   }
