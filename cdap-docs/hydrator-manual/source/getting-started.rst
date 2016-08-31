@@ -216,9 +216,9 @@ parses them into separate fields, and writes them as individual records to a tab
 
      **Cask Hydrator Studio:** Button labels, upper-right toolbar
       
-   Clicking the *Validate* button should produce a message in the console similar to::
+   Clicking the *Validate* button should produce a banner message similar to::
    
-    xx/xx/xx xx:xx:xx am: Validation success! Pipeline demoPipeline is valid.
+      Validation success! Pipeline demoPipeline is valid.
 
 #. If there are any errors, correct them before continuing. 
 
@@ -243,8 +243,8 @@ parses them into separate fields, and writes them as individual records to a tab
    as before, showing which values have been configured for each stage of the pipeline.
 
 #. Before we can run the pipeline, we need to put data into the stream for the application to
-   act on. Navigate to the stream by clicking on the *Datasets* button, and then the *demoStream*
-   button:
+   act on. Navigate to the stream by clicking on the *View in CDAP* button, then the
+   *Datasets* button, and then the *demoStream* button:
    
     .. figure:: /_images/hydrator-gs-1-7-stream.png
       :figwidth: 100%
@@ -264,7 +264,8 @@ parses them into separate fields, and writes them as individual records to a tab
 
    Return to *Hydrator* by clicking your browser back-button.
   
-#. You can now run the pipeline. Click the *Run* button, located in the upper-right:
+#. You can now run the pipeline. Click the *Run* button, located in the upper-left. (No
+   runtime arguments are required; you can click *Start Now* in the dialog that appears.):
 
    .. figure:: /_images/hydrator-gs-1-8-buttons.png
      :figwidth: 100%
@@ -272,7 +273,7 @@ parses them into separate fields, and writes them as individual records to a tab
      :align: center
      :class: bordered-image
   
-     **Cask Hydrator:** Button labels, upper-right toolbar
+     **Cask Hydrator:** Button labels, upper toolbar
 
    The pipeline should start running, as indicated by the green *Running* icon indicating
    the status. The number of records processed will, in time, change from zero to 10,000.
