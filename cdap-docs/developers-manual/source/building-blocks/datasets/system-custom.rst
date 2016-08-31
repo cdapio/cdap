@@ -121,6 +121,8 @@ You can pass other properties, such as for
 :ref:`conflict detection <transaction-system-conflict-detection>` and for
 :ref:`pre-splitting into multiple regions <table-datasets-pre-splitting>`.
 
+.. _custom-datasets-accessing-datasets:
+
 Accessing a Dataset
 -------------------
 Application components can access a custom dataset in the same way as all other datasets:
@@ -132,3 +134,20 @@ A complete application demonstrating the use of a custom dataset is included in 
 :ref:`Purchase Example <examples-purchase>`.
 
 You can also create, drop, and truncate datasets using the :ref:`http-restful-api-dataset`.
+
+.. _custom-datasets-access-annotations:
+
+Annotating Dataset Methods
+--------------------------
+Dataset methods can be annotated with the type of access that they perform on data.
+Annotations help the CDAP runtime to enforce :ref:`authorization <admin-authorization>`,
+as well as track :ref:`lineage <metadata-lineage-lineage>`. Dataset methods (including
+constructors) can be annotated with one of:
+
+- ``@ReadOnly``: Denotes that a method or constructor performs only **read** operations
+- ``@WriteOnly``: Denotes that a method or constructor performs only **write** operations
+- ``@ReadWrite``: Denotes that a method or constructor performs both **read** and **write** operations
+
+Methods in :ref:`System Datasets <system-datasets>` already contain appropriate
+annotations. For :ref:`Custom Datasets <custom-datasets>`, it is the responsibility of the
+developer to appropriately annotate methods.

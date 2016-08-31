@@ -212,12 +212,17 @@ Lineage
 |---| for a specified time range |---| all data access of the entity, and details of where
 that access originated from.
 
-For example: with a stream, writing to a stream may take place from a worker, which
-obtained the data from a combination of a dataset and a stream. The data in those entities
-comes from possibly other entities. The number of levels of the lineage that are
-calculated is set when a request is made to view the lineage of a particular entity.
+For example: with a stream, writing to a stream can take place from a worker, which may
+have obtained the data from a combination of a dataset and a (different) stream. The data
+in those entities can come from (possibly) other entities. The number of levels of the
+lineage that are calculated is set when a request is made to view the lineage of a
+particular entity.
 
 In the case of streams, the lineage includes whether the access was reading or writing to
-the stream. In the case of datasets, in this CDAP version, lineage can only indicate that
-dataset access took place, and does not provide indication if that access was for reading
-or writing. Later versions of CDAP will address this limitation.
+the stream. 
+
+In the case of datasets, lineage can indicate if a dataset access was for reading,
+writing, or both, if the methods in the dataset have appropriate :ref:`annotations
+<custom-datasets-access-annotations>`. If annotations are absent, lineage can only
+indicate that a dataset access took place, and does not provide indication if that access
+was for reading or writing.
