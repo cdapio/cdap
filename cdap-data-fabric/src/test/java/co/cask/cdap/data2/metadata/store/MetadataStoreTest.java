@@ -18,38 +18,36 @@ package co.cask.cdap.data2.metadata.store;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.audit.InMemoryAuditPublisher;
-import co.cask.cdap.data2.audit.payload.builder.MetadataPayloadBuilder;
-import co.cask.cdap.kafka.KafkaTester;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.audit.AuditMessage;
 import co.cask.cdap.proto.audit.AuditType;
-import co.cask.cdap.proto.codec.NamespacedIdCodec;
+import co.cask.cdap.proto.audit.payload.metadata.MetadataPayload;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.Metadata;
-import co.cask.cdap.proto.metadata.MetadataChangeRecord;
-import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.util.Modules;
 import org.apache.tephra.TransactionManager;
@@ -58,11 +56,9 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -73,17 +69,121 @@ import java.util.Set;
  * Tests for {@link MetadataStore}
  */
 public class MetadataStoreTest {
-  private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Id.NamespacedId.class, new NamespacedIdCodec())
-    .create();
+  private static final Map<String, String> EMPTY_PROPERTIES = Collections.emptyMap();
+  private static final Set<String> EMPTY_TAGS = Collections.emptySet();
+  private static final Map<MetadataScope, Metadata> EMPTY_USER_METADATA =
+    ImmutableMap.of(MetadataScope.USER, new Metadata(EMPTY_PROPERTIES, EMPTY_TAGS));
 
-  @ClassRule
-  public static final KafkaTester KAFKA_TESTER = new KafkaTester(
-    ImmutableMap.of(Constants.Metadata.UPDATES_PUBLISH_ENABLED, "true"),
-    ImmutableList.of(
-      new AuthorizationTestModule(),
-      new AuthorizationEnforcementModule().getInMemoryModules(),
-      new AuthenticationContextModules().getMasterModule(),
+  private final ApplicationId app = NamespaceId.DEFAULT.app("app");
+  private final ProgramId flow = app.flow("flow");
+  private final DatasetId dataset = NamespaceId.DEFAULT.dataset("ds");
+  private final StreamId stream = NamespaceId.DEFAULT.stream("stream");
+  private final Set<String> datasetTags = ImmutableSet.of("dTag");
+  private final Map<String, String> appProperties = ImmutableMap.of("aKey", "aValue");
+  private final Set<String> appTags = ImmutableSet.of("aTag");
+  private final Map<String, String> streamProperties = ImmutableMap.of("stKey", "stValue");
+  private final Map<String, String> updatedStreamProperties = ImmutableMap.of("stKey", "stV");
+  private final Set<String> flowTags = ImmutableSet.of("fTag");
+
+  private final AuditMessage auditMessage1 = new AuditMessage(
+    0, dataset, "", AuditType.METADATA_CHANGE,
+    new MetadataPayload(
+      EMPTY_USER_METADATA, ImmutableMap.of(MetadataScope.USER, new Metadata(EMPTY_PROPERTIES, datasetTags)),
+      EMPTY_USER_METADATA
+    )
+  );
+  private final AuditMessage auditMessage2 = new AuditMessage(
+    0, app, "", AuditType.METADATA_CHANGE,
+    new MetadataPayload(
+      EMPTY_USER_METADATA, ImmutableMap.of(MetadataScope.USER, new Metadata(appProperties, EMPTY_TAGS)),
+      EMPTY_USER_METADATA
+    )
+  );
+  private final AuditMessage auditMessage3 = new AuditMessage(
+    0, app, "", AuditType.METADATA_CHANGE,
+    new MetadataPayload(
+      ImmutableMap.of(MetadataScope.USER, new Metadata(appProperties, EMPTY_TAGS)),
+      ImmutableMap.of(MetadataScope.USER, new Metadata(EMPTY_PROPERTIES, appTags)),
+      EMPTY_USER_METADATA
+    )
+  );
+  private final AuditMessage auditMessage4 = new AuditMessage(
+    0, stream, "", AuditType.METADATA_CHANGE,
+    new MetadataPayload(
+      EMPTY_USER_METADATA,
+      ImmutableMap.of(MetadataScope.USER, new Metadata(streamProperties, EMPTY_TAGS)),
+      EMPTY_USER_METADATA
+    )
+  );
+  private final AuditMessage auditMessage5 = new AuditMessage(
+    0, stream, "", AuditType.METADATA_CHANGE,
+    new MetadataPayload(
+      ImmutableMap.of(MetadataScope.USER, new Metadata(streamProperties, EMPTY_TAGS)),
+      EMPTY_USER_METADATA, EMPTY_USER_METADATA
+    )
+  );
+  private final AuditMessage auditMessage6 = new AuditMessage(
+    0, stream, "", AuditType.METADATA_CHANGE,
+    new MetadataPayload(
+      ImmutableMap.of(MetadataScope.USER, new Metadata(streamProperties, EMPTY_TAGS)),
+      ImmutableMap.of(MetadataScope.USER, new Metadata(updatedStreamProperties, EMPTY_TAGS)),
+      ImmutableMap.of(MetadataScope.USER, new Metadata(streamProperties, EMPTY_TAGS))
+    )
+  );
+  private final AuditMessage auditMessage7 = new AuditMessage(
+    0, flow, "", AuditType.METADATA_CHANGE,
+    new MetadataPayload(
+      EMPTY_USER_METADATA,
+      ImmutableMap.of(MetadataScope.USER, new Metadata(EMPTY_PROPERTIES, flowTags)),
+      EMPTY_USER_METADATA
+    )
+  );
+  private final AuditMessage auditMessage8 = new AuditMessage(
+    0, flow, "", AuditType.METADATA_CHANGE,
+    new MetadataPayload(
+      ImmutableMap.of(MetadataScope.USER, new Metadata(EMPTY_PROPERTIES, flowTags)),
+      EMPTY_USER_METADATA,
+      ImmutableMap.of(MetadataScope.USER, new Metadata(EMPTY_PROPERTIES, flowTags))
+    )
+  );
+  private final AuditMessage auditMessage9 = new AuditMessage(
+    0, dataset, "", AuditType.METADATA_CHANGE,
+    new MetadataPayload(
+      ImmutableMap.of(MetadataScope.USER, new Metadata(EMPTY_PROPERTIES, datasetTags)),
+      EMPTY_USER_METADATA,
+      ImmutableMap.of(MetadataScope.USER, new Metadata(EMPTY_PROPERTIES, datasetTags))
+    )
+  );
+  private final AuditMessage auditMessage10 = new AuditMessage(
+    0, stream, "", AuditType.METADATA_CHANGE,
+    new MetadataPayload(
+      ImmutableMap.of(MetadataScope.USER, new Metadata(updatedStreamProperties, EMPTY_TAGS)),
+      EMPTY_USER_METADATA,
+      ImmutableMap.of(MetadataScope.USER, new Metadata(updatedStreamProperties, EMPTY_TAGS))
+    )
+  );
+  private final AuditMessage auditMessage11 = new AuditMessage(
+    0, app, "", AuditType.METADATA_CHANGE,
+    new MetadataPayload(
+      ImmutableMap.of(MetadataScope.USER, new Metadata(appProperties, appTags)),
+      EMPTY_USER_METADATA,
+      ImmutableMap.of(MetadataScope.USER, new Metadata(appProperties, appTags))
+    )
+  );
+  private final List<AuditMessage> expectedAuditMessages = ImmutableList.of(
+    auditMessage1, auditMessage2, auditMessage3, auditMessage4, auditMessage5, auditMessage6, auditMessage7,
+    auditMessage8, auditMessage9, auditMessage10, auditMessage11
+  );
+
+  private static CConfiguration cConf;
+  private static TransactionManager txManager;
+  private static MetadataStore store;
+  private static InMemoryAuditPublisher auditPublisher;
+
+  @BeforeClass
+  public static void setup() throws IOException {
+    Injector injector = Guice.createInjector(
+      new ConfigModule(),
       Modules.override(
         new DataSetsModules().getInMemoryModules()).with(new AbstractModule() {
         @Override
@@ -96,125 +196,12 @@ public class MetadataStoreTest {
       new TransactionInMemoryModule(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new NamespaceClientRuntimeModule().getInMemoryModules(),
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
+      new AuthenticationContextModules().getMasterModule(),
       new AuditModule().getInMemoryModules()
-    ),
-    1,
-    Constants.Metadata.UPDATES_KAFKA_BROKER_LIST
-  );
-
-  private static final Type METADATA_CHANGE_RECORD_TYPE = new TypeToken<MetadataChangeRecord>() { }.getType();
-
-  private final Id.Application app = Id.Application.from(Id.Namespace.DEFAULT, "app");
-  private final Id.Program flow = Id.Program.from(app, ProgramType.FLOW, "flow");
-  private final Id.DatasetInstance dataset = Id.DatasetInstance.from(Id.Namespace.DEFAULT, "ds");
-  private final Id.Stream stream = Id.Stream.from(Id.Namespace.DEFAULT, "stream");
-  private final Set<String> datasetTags = ImmutableSet.of("dTag");
-  private final Map<String, String> appProperties = ImmutableMap.of("aKey", "aValue");
-  private final Set<String> appTags = ImmutableSet.of("aTag");
-  private final Map<String, String> streamProperties = ImmutableMap.of("stKey", "stValue");
-  private final Map<String, String> updatedStreamProperties = ImmutableMap.of("stKey", "stV");
-  private final Set<String> flowTags = ImmutableSet.of("fTag");
-
-  private final MetadataChangeRecord change1 = new MetadataChangeRecord(
-    new MetadataRecord(dataset, MetadataScope.USER),
-    new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(dataset, MetadataScope.USER, ImmutableMap.<String, String>of(), datasetTags),
-      new MetadataRecord(dataset, MetadataScope.USER)
-    ),
-    System.currentTimeMillis()
-  );
-  private final MetadataChangeRecord change2 = new MetadataChangeRecord(
-    new MetadataRecord(app, MetadataScope.USER),
-    new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(app, MetadataScope.USER, appProperties, ImmutableSet.<String>of()),
-      new MetadataRecord(app, MetadataScope.USER)
-    ),
-    System.currentTimeMillis()
-  );
-  private final MetadataChangeRecord change3 = new MetadataChangeRecord(
-    new MetadataRecord(app, MetadataScope.USER, appProperties, ImmutableSet.<String>of()),
-    new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(app, MetadataScope.USER, ImmutableMap.<String, String>of(), appTags),
-      new MetadataRecord(app, MetadataScope.USER)
-    ),
-    System.currentTimeMillis()
-  );
-  private final MetadataChangeRecord change4 = new MetadataChangeRecord(
-    new MetadataRecord(stream, MetadataScope.USER),
-    new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(stream, MetadataScope.USER, streamProperties, ImmutableSet.<String>of()),
-      new MetadataRecord(stream, MetadataScope.USER)
-    ),
-    System.currentTimeMillis()
-  );
-  private final MetadataChangeRecord change5 = new MetadataChangeRecord(
-    new MetadataRecord(stream, MetadataScope.USER, streamProperties, ImmutableSet.<String>of()),
-    new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(stream, MetadataScope.USER),
-      new MetadataRecord(stream, MetadataScope.USER)
-    ),
-    System.currentTimeMillis()
-  );
-  private final MetadataChangeRecord change6 = new MetadataChangeRecord(
-    new MetadataRecord(stream, MetadataScope.USER, streamProperties, ImmutableSet.<String>of()),
-    new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(stream, MetadataScope.USER, updatedStreamProperties, ImmutableSet.<String>of()),
-      new MetadataRecord(stream, MetadataScope.USER, streamProperties, ImmutableSet.<String>of())
-    ),
-    System.currentTimeMillis()
-  );
-  private final MetadataChangeRecord change7 = new MetadataChangeRecord(
-    new MetadataRecord(flow, MetadataScope.USER),
-    new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(flow, MetadataScope.USER, ImmutableMap.<String, String>of(), flowTags),
-      new MetadataRecord(flow, MetadataScope.USER)
-    ),
-    System.currentTimeMillis()
-  );
-  private final MetadataChangeRecord change8 = new MetadataChangeRecord(
-    new MetadataRecord(flow, MetadataScope.USER, ImmutableMap.<String, String>of(), flowTags),
-    new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(flow, MetadataScope.USER),
-      new MetadataRecord(flow, MetadataScope.USER, ImmutableMap.<String, String>of(), flowTags)
-    ),
-    System.currentTimeMillis()
-  );
-  private final MetadataChangeRecord change9 = new MetadataChangeRecord(
-    new MetadataRecord(dataset, MetadataScope.USER, ImmutableMap.<String, String>of(), datasetTags),
-    new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(dataset, MetadataScope.USER),
-      new MetadataRecord(dataset, MetadataScope.USER, ImmutableMap.<String, String>of(), datasetTags)
-    ),
-    System.currentTimeMillis()
-  );
-  private final MetadataChangeRecord change10 = new MetadataChangeRecord(
-    new MetadataRecord(stream, MetadataScope.USER, updatedStreamProperties, ImmutableSet.<String>of()),
-    new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(stream, MetadataScope.USER),
-      new MetadataRecord(stream, MetadataScope.USER, updatedStreamProperties, ImmutableSet.<String>of())
-    ),
-    System.currentTimeMillis()
-  );
-  private final MetadataChangeRecord change11 = new MetadataChangeRecord(
-    new MetadataRecord(app, MetadataScope.USER, appProperties, appTags),
-    new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(app, MetadataScope.USER, ImmutableMap.<String, String>of(), ImmutableSet.<String>of()),
-      new MetadataRecord(app, MetadataScope.USER, appProperties, appTags)
-    ),
-    System.currentTimeMillis()
-  );
-  private final List<MetadataChangeRecord> expectedChanges = ImmutableList.of(
-  change1, change2, change3, change4, change5, change6, change7, change8, change9, change10, change11);
-
-  private int kafkaOffset = 0;
-
-  private static TransactionManager txManager;
-  private static MetadataStore store;
-  private static InMemoryAuditPublisher auditPublisher;
-
-  @BeforeClass
-  public static void setup() throws IOException {
-    Injector injector = KAFKA_TESTER.getInjector();
+    );
+    cConf = injector.getInstance(CConfiguration.class);
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
     store = injector.getInstance(MetadataStore.class);
@@ -229,34 +216,8 @@ public class MetadataStoreTest {
   @Test
   public void testPublishing() throws InterruptedException {
     generateMetadataUpdates();
-    String topic = KAFKA_TESTER.getCConf().get(Constants.Metadata.UPDATES_KAFKA_TOPIC);
-    List<MetadataChangeRecord> publishedChanges =
-      KAFKA_TESTER.getPublishedMessages(topic, expectedChanges.size(), METADATA_CHANGE_RECORD_TYPE, GSON);
-    for (int i = 0; i < expectedChanges.size(); i++) {
-      MetadataChangeRecord expected = expectedChanges.get(i);
-      MetadataChangeRecord actual = publishedChanges.get(i);
-      Assert.assertEquals(expected.getPrevious(), actual.getPrevious());
-      Assert.assertEquals(expected.getChanges(), actual.getChanges());
-    }
-    // note kafka offset
-    kafkaOffset += publishedChanges.size();
-
-    // Verify audit publishing for the metadata changes
-    Function<MetadataChangeRecord, AuditMessage> metadataChangeRecordToAuditMessage =
-      new Function<MetadataChangeRecord, AuditMessage>() {
-        @Override
-        public AuditMessage apply(MetadataChangeRecord input) {
-          MetadataPayloadBuilder builder = new MetadataPayloadBuilder();
-          builder.addPrevious(input.getPrevious());
-          builder.addAdditions(input.getChanges().getAdditions());
-          builder.addDeletions(input.getChanges().getDeletions());
-          return new AuditMessage(0, input.getPrevious().getEntityId().toEntityId(), "",
-                                  AuditType.METADATA_CHANGE, builder.build());
-        }
-      };
 
     // Audit messages for metadata changes
-    List<AuditMessage> expectedAuditMessages = Lists.transform(expectedChanges, metadataChangeRecordToAuditMessage);
     List<AuditMessage> actualAuditMessages = new ArrayList<>();
     for (AuditMessage auditMessage : auditPublisher.popMessages()) {
       // Ignore system audit messages
@@ -272,23 +233,20 @@ public class MetadataStoreTest {
 
   @Test
   public void testPublishingDisabled() throws InterruptedException {
-    CConfiguration cConf = KAFKA_TESTER.getCConf();
-    boolean publishEnabled = cConf.getBoolean(Constants.Metadata.UPDATES_PUBLISH_ENABLED);
-    cConf.setBoolean(Constants.Metadata.UPDATES_PUBLISH_ENABLED, false);
+    boolean auditEnabled = cConf.getBoolean(Constants.Audit.ENABLED);
+    cConf.setBoolean(Constants.Audit.ENABLED, false);
     generateMetadataUpdates();
-    String topic = cConf.get(Constants.Metadata.UPDATES_KAFKA_TOPIC);
+    String topic = cConf.get(Constants.Audit.KAFKA_TOPIC);
 
     try {
-      List<MetadataChangeRecord> publishedChanges =
-        KAFKA_TESTER.getPublishedMessages(topic, expectedChanges.size(), METADATA_CHANGE_RECORD_TYPE,
-                                          GSON, kafkaOffset);
+      List<AuditMessage> publishedAuditMessages = auditPublisher.popMessages();
       Assert.fail(String.format("Expected no changes to be published, but found %d changes: %s.",
-                                publishedChanges.size(), publishedChanges));
+                                publishedAuditMessages.size(), publishedAuditMessages));
     } catch (AssertionError e) {
       // expected
     }
     // reset config
-    cConf.setBoolean(Constants.Metadata.UPDATES_PUBLISH_ENABLED, publishEnabled);
+    cConf.setBoolean(Constants.Audit.ENABLED, auditEnabled);
   }
 
   @Test
@@ -354,16 +312,16 @@ public class MetadataStoreTest {
   }
 
   private void generateMetadataUpdates() {
-    store.addTags(MetadataScope.USER, dataset, datasetTags.iterator().next());
-    store.setProperties(MetadataScope.USER, app, appProperties);
-    store.addTags(MetadataScope.USER, app, appTags.iterator().next());
-    store.setProperties(MetadataScope.USER, stream, streamProperties);
-    store.setProperties(MetadataScope.USER, stream, streamProperties);
-    store.setProperties(MetadataScope.USER, stream, updatedStreamProperties);
-    store.addTags(MetadataScope.USER, flow, flowTags.iterator().next());
-    store.removeTags(MetadataScope.USER, flow);
-    store.removeTags(MetadataScope.USER, dataset, datasetTags.iterator().next());
-    store.removeProperties(MetadataScope.USER, stream);
-    store.removeMetadata(MetadataScope.USER, app);
+    store.addTags(MetadataScope.USER, dataset.toId(), datasetTags.iterator().next());
+    store.setProperties(MetadataScope.USER, app.toId(), appProperties);
+    store.addTags(MetadataScope.USER, app.toId(), appTags.iterator().next());
+    store.setProperties(MetadataScope.USER, stream.toId(), streamProperties);
+    store.setProperties(MetadataScope.USER, stream.toId(), streamProperties);
+    store.setProperties(MetadataScope.USER, stream.toId(), updatedStreamProperties);
+    store.addTags(MetadataScope.USER, flow.toId(), flowTags.iterator().next());
+    store.removeTags(MetadataScope.USER, flow.toId());
+    store.removeTags(MetadataScope.USER, dataset.toId(), datasetTags.iterator().next());
+    store.removeProperties(MetadataScope.USER, stream.toId());
+    store.removeMetadata(MetadataScope.USER, app.toId());
   }
 }

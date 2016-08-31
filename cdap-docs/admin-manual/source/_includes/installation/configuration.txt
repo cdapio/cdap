@@ -171,8 +171,8 @@ for CDAP to run successfully.
     
    #. If you'd like to publish metadata updates to an external Apache Kafka instance, 
       CDAP has the capability of publishing notifications upon metadata updates. Details on
-      the configuration settings and an example output are shown in the :ref:`Metadata and
-      Lineage section <metadata-update-notifications>` of the Developers' Manual.
+      the configuration settings and an example output are shown in the :ref:`Audit logging
+      section <audit-logging>` of the Developers' Manual.
 
 .. _|distribution|-configuration-ulimit:
 

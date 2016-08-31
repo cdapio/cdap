@@ -17,8 +17,6 @@
 package co.cask.cdap.data.runtime;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
@@ -28,9 +26,6 @@ import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.LineageStore;
 import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.LineageStoreWriter;
-import co.cask.cdap.data2.metadata.publisher.KafkaMetadataChangePublisher;
-import co.cask.cdap.data2.metadata.publisher.MetadataChangePublisher;
-import co.cask.cdap.data2.metadata.publisher.NoOpMetadataChangePublisher;
 import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
@@ -40,11 +35,8 @@ import co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework;
 import co.cask.cdap.data2.registry.DefaultUsageRegistry;
 import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
 import co.cask.cdap.data2.registry.UsageRegistry;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
-import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
@@ -88,9 +80,6 @@ public class DataSetsModules extends RuntimeModule {
 
         bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
         expose(DatasetFramework.class);
-
-        bind(MetadataChangePublisher.class).toProvider(MetadataChangePublisherProvider.class);
-        expose(MetadataChangePublisher.class);
       }
     };
   }
@@ -127,9 +116,6 @@ public class DataSetsModules extends RuntimeModule {
 
         bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
         expose(DatasetFramework.class);
-
-        bind(MetadataChangePublisher.class).toProvider(MetadataChangePublisherProvider.class);
-        expose(MetadataChangePublisher.class);
       }
     };
   }
@@ -166,30 +152,7 @@ public class DataSetsModules extends RuntimeModule {
 
         bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
         expose(DatasetFramework.class);
-
-        bind(MetadataChangePublisher.class).toProvider(MetadataChangePublisherProvider.class);
-        expose(MetadataChangePublisher.class);
       }
     };
   }
-
-  private static final class MetadataChangePublisherProvider implements Provider<MetadataChangePublisher> {
-    private final Injector injector;
-    private final CConfiguration cConf;
-
-    @Inject
-    MetadataChangePublisherProvider(Injector injector, CConfiguration cConf) {
-      this.injector = injector;
-      this.cConf = cConf;
-    }
-
-    @Override
-    public MetadataChangePublisher get() {
-      if (cConf.getBoolean(Constants.Metadata.UPDATES_PUBLISH_ENABLED)) {
-        return injector.getInstance(KafkaMetadataChangePublisher.class);
-      }
-      return injector.getInstance(NoOpMetadataChangePublisher.class);
-    }
-  }
-
 }

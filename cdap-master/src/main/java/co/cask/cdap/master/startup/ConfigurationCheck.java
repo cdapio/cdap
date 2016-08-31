@@ -134,8 +134,8 @@ class ConfigurationCheck extends AbstractMasterCheck {
     if (!isValidKafkaTopic(Constants.Logging.KAFKA_TOPIC)) {
       problemKeys.add(Constants.Logging.KAFKA_TOPIC);
     }
-    if (!isValidKafkaTopic(Constants.Metadata.UPDATES_KAFKA_TOPIC)) {
-      problemKeys.add(Constants.Metadata.UPDATES_KAFKA_TOPIC);
+    if (!isValidKafkaTopic(Constants.Audit.KAFKA_TOPIC)) {
+      problemKeys.add(Constants.Audit.KAFKA_TOPIC);
     }
   }
 
