@@ -27,6 +27,11 @@
     </description>
   </property>
 
+  <property>
+    <name>standalone.disable.ui</name>
+    <value>true</value>
+    <description>Temporarily disable UI in Standalone</description>
+  </property>
 
   <!-- Applications Configuration -->
   

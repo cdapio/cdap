@@ -1541,6 +1541,7 @@
                   <exclude>**/*.json.template</exclude>
                   <exclude>**/MANIFEST.MF</exclude>
                   <exclude>**/.rubocop*.yml</exclude>
+                  <exclude>cdap-ui/**</exclude>
                 </excludes>
               </configuration>
             </execution>
@@ -2487,7 +2488,7 @@
         <module>cdap-archetypes</module>
         <module>cdap-test</module>
         <module>cdap-integration-test</module>
-        <module>cdap-ui</module>
+        <!-- <module>cdap-ui</module> -->
       </modules>
     </profile>
     <profile>
