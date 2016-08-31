@@ -59,7 +59,7 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
   @Inject
   public InMemoryProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, CConfiguration cConf,
                                        ArtifactRepository artifactRepository,
-                                       @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
+                                       @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
                                        Impersonator impersonator) {
     super(cConf, programRunnerFactory, artifactRepository, impersonator);
     this.hostname = hostname.getCanonicalHostName();
