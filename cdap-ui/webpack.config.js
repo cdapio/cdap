@@ -93,7 +93,17 @@ const cdapWebpackConfig = {
   context: __dirname + '/app/cdap',
   entry: {
     'cdap': ['./cdap.js'],
-    'common': ['whatwg-fetch', 'react', 'react-dom', 'redux', 'lodash', 'classnames', 'node-uuid']
+    'common': [
+      'whatwg-fetch',
+      'react',
+      'react-dom',
+      'redux',
+      'lodash',
+      'classnames',
+      'node-uuid',
+      'sockjs-client',
+      'rx'
+    ]
   },
   module: {
     preLoaders: [

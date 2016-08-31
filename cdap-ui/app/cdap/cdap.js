@@ -27,6 +27,7 @@ import Home from './components/Home';
 import CdapHeader from './components/CdapHeader';
 import Footer from './components/Footer';
 import SplashScreen from './components/SplashScreen';
+import ConnectionExample from './components/ConnectionExample';
 
 require('./styles/lib-styles.less');
 require('./styles/common.less');
@@ -61,6 +62,7 @@ ReactDOM.render(
       <Route name="home" path="home" component={Home}/>
       <Route name="dashboard" path="dashboard" component={Dashboard}/>
       <Route path="management" component={Management}/>
+      <Route name="socket" path="socket-example" component={ConnectionExample} />
     </Route>
   </Router>,
   document.getElementById('app-container')
