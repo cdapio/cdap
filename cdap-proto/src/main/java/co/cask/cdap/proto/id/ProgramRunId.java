@@ -52,7 +52,15 @@ public class ProgramRunId extends EntityId implements NamespacedId, ParentedId<P
     return application;
   }
 
+  /**
+   *  Deprecated as of 3.5; Use {@link #getProgramType()}
+   */
+  @Deprecated
   public ProgramType getType() {
+    return type;
+  }
+
+  public ProgramType getProgramType() {
     return type;
   }
 
