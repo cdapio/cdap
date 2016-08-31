@@ -27,9 +27,12 @@ An entry in secure storage consists of:
   Data is stored against the provided key and can be retrieved using the same key.
   Key must be of the :ref:`Alphanumeric Character Set <supported-characters>`, contain *only
   lowercase* characters, and should start with a letter.
+
 - **Data**: The data which is to be stored in a secure and encrypted manner. This could be a passphrase,
   cryptographic key, access token, or any other data that needs to be stored securely.
+
 - **Description**: A description for the secure store entry.
+
 - **Properties**: A string map of properties for the secure storage entry. A ``creationTime`` property is available
   for all secure store entries by default. Additional properties can be supplied by users at the time of creation.
 
@@ -45,18 +48,21 @@ implementation for storing secure keys. This implementation is not available in
 :term:`Distributed CDAP <distributed cdap>` as it stores the secure data in the local file system, and thus is
 not available on all nodes of a distributed cluster.
 
-To use this mode, set:
+To use this mode, set these properties:
 
-- ``security.store.provider`` to ``file`` in ``cdap-site.xml``; and
-- ``security.store.file.password`` to a password (to protect the secure storage file) in ``cdap-security.xml``.
+- In ``cdap-site.xml``, set ``security.store.provider`` to ``file``
+- In ``cdap-security.xml``, set ``security.store.file.password`` to a password (to protect the secure storage file)
 
 .. _admin-secure-storage-kms:
 
-Hadoop Key Management Server (KMS)-backed Secure Storage
---------------------------------------------------------
-`Hadoop KMS-backed <https://hadoop.apache.org/docs/stable/hadoop-kms/index.html>`__ secure storage is available for use
-with :term:`Distributed CDAP <distributed cdap>`. To use this mode, set ``security.store.provider`` to ``kms``
-in ``cdap-site.xml``.
+Hadoop Key Management Server-backed Secure Storage
+--------------------------------------------------
+`Hadoop KMS (Key Management Server)-backed <https://hadoop.apache.org/docs/stable/hadoop-kms/index.html>`__
+secure storage is available for use with :term:`Distributed CDAP <distributed cdap>`.
+
+To use this mode, set this property:
+
+- In ``cdap-site.xml``, set ``security.store.provider`` to ``kms``
 
 For additional information on integration with Hadoop KMS, please refer to
 :ref:`Integrations: Apache Hadoop KMS <apache-hadoop-kms>`.

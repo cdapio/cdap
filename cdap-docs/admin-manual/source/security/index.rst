@@ -20,10 +20,10 @@ Security
     Secure Storage <secure-storage>
 
 Cask Data Application Platform (CDAP) supports securing clusters using various mechanisms such as
-:ref:`perimeter security <admin-perimeter-security>`,
-:ref:`authorization <admin-authorization>`,
-:ref:`impersonation <admin-impersonation>`, and
-:ref:`secure storage <admin-secure-storage>`.
+:ref:`Perimeter Security <admin-perimeter-security>`,
+:ref:`Authorization <admin-authorization>`,
+:ref:`Impersonation <admin-impersonation>`, and
+:ref:`Secure Storage <admin-secure-storage>`.
 This section covers how to setup these security mechanisms on a secure CDAP instance.
 
 Additional security information, including client APIs, the authentication process,

@@ -133,7 +133,7 @@ public class AuditPublishTest {
           continue;
         }
       }
-      if (entityId.getEntity() == EntityType.ARTIFACT && entityId instanceof ArtifactId) {
+      if (entityId.getEntityType() == EntityType.ARTIFACT && entityId instanceof ArtifactId) {
         ArtifactId artifactId = (ArtifactId) entityId;
         // Version is dynamic for deploys in test cases
         entityId = Ids.namespace(artifactId.getNamespace()).artifact(artifactId.getArtifact(), "1");

@@ -34,9 +34,6 @@ which are used to create the different kinds of data pipeline applications.
 **Note:** *Two system artifacts,* ``cdap-etl-batch`` *and* ``cdap-etl-realtime``, *have
 been deprecated and replaced by the above artifacts, as of CDAP 3.5.0.*
 
-An additional system artifact (``core-plugins``) provides common resources for the other
-system artifacts, and can be used by developers of custom plugins.
-
 Pipelines can be created using Cask Hydrator's included visual editor (*Cask Hydrator
 Studio*), using command-line tools such the CDAP CLI and ``curl``, or programmatically
 with scripts or Java programs.
@@ -97,7 +94,7 @@ Batch Pipelines
 
 Introduction
 ------------
-Batch pipelines can be scheduled to run periodically, using a cron expression and can read
+Batch pipelines can be scheduled to run periodically using a cron expression, and can read
 data from batch sources using either a MapReduce or Spark job. The batch application then
 performs any (optional) transformations before writing to one or more batch sinks.
 
@@ -109,11 +106,13 @@ Types of Plugins
 ----------------
 Batch pipelines, based on the ``cdap-data-pipeline`` application template, can include these plugins:
 
-- :ref:`Actions <cask-hydrator-action-plugins>`
+- :ref:`Actions <cask-hydrator-plugins-actions>`
 
 - :ref:`Batch Source Plugins <cask-hydrator-plugins-batch-sources>`
 
 - :ref:`Transformation Plugins <cask-hydrator-plugins-transformations>`
+
+- :ref:`Analytics Plugins <cask-hydrator-plugins-analytics>`
 
 - :ref:`Batch Sink Plugins <cask-hydrator-plugins-batch-sinks>`
 
@@ -137,13 +136,14 @@ To use Hydrator Studio to create a batch pipeline:
   template for your pipeline.
 
 - Click the icons in the left-sidebar to select the plugins you would like included in
-  your pipeline. In addition to the :ref:`action plugins <cask-hydrator-action-plugins>`
-  and the :ref:`transform plugins <cask-hydrator-plugins-transformations>`, you can use
+  your pipeline. In addition to the :ref:`action plugins <cask-hydrator-plugins-actions>`,
+  the :ref:`transform plugins <cask-hydrator-plugins-transformations>`, and certain of
+  the :ref:`analytics plugins <cask-hydrator-plugins-analytics>`, you can use
   any of the :ref:`batch source plugins <cask-hydrator-plugins-batch-sources>` or the
   :ref:`batch sink plugins <cask-hydrator-plugins-batch-sinks>`.
 
-- Typically, you will need at a minimum a source, a sink, and any optional transformations
-  that are needed being the source and sink stages.
+- Typically, you will need at a minimum a source, a sink, and any optional transformations or analytics
+  that are required between the source and sink stages.
   
 - Action steps can be added before a source and after a sink. These will be run only at
   the start (before a source) and only at the end if the pipeline successfully completes.
@@ -245,7 +245,7 @@ action to run irregardless of completion, use a :ref:`post-run action
 
 Currently, action plugins are only available when using the ``cdap-data-pipeline``
 application template. Available action plugins are documented in the :ref:`Plugin
-Reference <cask-hydrator-action-plugins>`, with this action available:
+Reference <cask-hydrator-plugins-actions>`, with this action available:
 
 - *SSH Action*, which establishes an SSH connection with a remote machine to execute a
   command on that machine.
@@ -280,21 +280,26 @@ Real-time Pipelines
 
 Introduction
 ------------
-Real-time pipelines are designed to poll sources periodically to fetch data, perform any
-(optional) transformations, and then write to one or more real-time sinks. As they are
-intended to be run continuously, post-run actions are not applicable or available.
+Real-time pipelines are designed to generate micro batches of data at a regular interval, perform any
+(optional) transformations and analytics, and then write to one or more sinks. As they are
+intended to be run continuously, actions and post-run actions are not applicable or available.
+Real-time pipelines do not operate on a record by record basis, but on a micro batch by micro batch basis.
 
 Types of Plugins
 ----------------
-Real-time pipelines, based on the ``cdap-etl-realtime`` application template, can include these plugins:
+Real-time pipelines, based on the ``cdap-data-streams`` application template, can include these plugins:
 
-- :ref:`Actions <cask-hydrator-action-plugins>`
-
-- :ref:`Real-time Sink Source Plugins <cask-hydrator-plugins-real-time-sources>`
+- :ref:`Streaming Source Plugins <cask-hydrator-plugins-real-time-sources>`
 
 - :ref:`Transformation Plugins <cask-hydrator-plugins-transformations>`
 
-- :ref:`Real-time Sink Plugins <cask-hydrator-plugins-real-time-sinks>`
+- :ref:`Analytics Plugins <cask-hydrator-plugins-analytics>`
+
+- :ref:`Batch Sink Plugins <cask-hydrator-plugins-batch-sinks>`
+
+Despite the name, batch sink plugins are not limited to just batch pipelines.
+The real-time pipeline artifact generates micro batches that can then be written to a batch sink.
+
 
 How Does It Work?
 -----------------
@@ -302,11 +307,7 @@ A real-time pipeline is created by taking a "virtual" pipeline (in the form of a
 configuration file) and then creating a "physical" pipeline as a CDAP application with
 appropriate CDAP programs to implement the configuration.
 
-The programs used will depend on the plugins used to build the pipeline. The available
-plugins are determined by those plugins that will work with the *ETL Realtime* (the
-``cdap-etl-realtime`` artifact), as listed above.
-
-The application created will consist of a worker to be run continuously, polling as required.
+The application created will consist of a Spark Streaming program.
 
 Building a Pipeline
 -------------------
@@ -314,23 +315,23 @@ To create a real-time pipeline, you can use either Hydrator Studio or command li
 
 To use Hydrator Studio to create a real-time pipeline:
 
-- Specify *ETL Realtime* (the ``cdap-etl-realtime`` artifact) as the application
+- Specify *Data Pipeline - Realtime* (the ``cdap-data-streams`` artifact) as the application
   template for your pipeline.
 
 - Click the icons in the left-sidebar to select the plugins you would like included in
-  your pipeline. In addition to the :ref:`action plugins <cask-hydrator-action-plugins>`
-  and the :ref:`transform plugins <cask-hydrator-plugins-transformations>`, you can use
-  any of the :ref:`real-time source plugins <cask-hydrator-plugins-real-time-sources>` or the
-  :ref:`real-time sink plugins <cask-hydrator-plugins-real-time-sinks>`.
+  your pipeline. In addition to the :ref:`transform plugins <cask-hydrator-plugins-transformations>`
+  and certain of the :ref:`analytics plugins <cask-hydrator-plugins-analytics>`,
+  you can use any of the :ref:`streaming source plugins <cask-hydrator-plugins-real-time-sources>` or the
+  :ref:`batch sink plugins <cask-hydrator-plugins-batch-sinks>`.
 
-- Typically, you will need at a minimum a source, a sink, and any optional transformations
-  that are needed being the source and sink stages.
+- You will need at a minimum a source, a sink, and any optional transformations or analytics
+  that are needed between the source and sink stages.
   
-- Action steps can be added before a source and after a sink. These will be run only at
-  the start (before a source) and only at the end if the pipeline successfully completes.
-
-- The *Settings* button allows you to specify the number of instances used for workers of
-  the pipeline. The default is one.
+- The *Settings* button allows you to specify the batch interval for your pipeline. The batch interval controls
+  how often your sources will generate a micro batch of data. This must be a number followed
+  by a time unit, with 's' for seconds, 'm' for minutes, and 'h' for hours.
+  For example, '10s' translates to ten seconds. This means the sources will generate a micro batch of data every
+  ten seconds.
 
 - Complete all required information for each stage, and any optional information that your
   particular use requires.
@@ -412,13 +413,16 @@ Administration Manual, Preferences <preferences>`. These can be set with the HTT
 :ref:`Lifecycle <http-restful-api-lifecycle-start>` and :ref:`Preferences
 <http-restful-api-preferences>` RESTful APIs.
 
+To set values for macro keys through a Hydrator pipeline's preferences, see the
+:ref:`Preferences HTTP RESTful API <http-restful-api-preferences>`.
+
 Fields that are macro-enabled are identified in the Hydrator Studio UI and documented in
 the :ref:`Hydrator Plugin Reference <cask-hydrator-plugins>`.
 
 
 Macro Functions
 ---------------
-In addition to macro substitution, you can use pre-defined macro functions. Currently,
+In addition to macro substitution, you can use predefined macro functions. Currently,
 these functions are predefined and available:
 
 - ``logicalStartTime``
