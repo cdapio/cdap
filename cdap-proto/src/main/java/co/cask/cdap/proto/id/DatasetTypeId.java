@@ -41,7 +41,15 @@ public class DatasetTypeId extends EntityId implements NamespacedId, ParentedId<
     return namespace;
   }
 
+  /**
+   *  Deprecated as of 3.5; Use {@link #getDatasetType()}
+   */
+  @Deprecated
   public String getType() {
+    return type;
+  }
+
+  public String getDatasetType() {
     return type;
   }
 
