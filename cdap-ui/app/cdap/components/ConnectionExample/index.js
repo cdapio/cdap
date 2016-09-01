@@ -16,43 +16,130 @@
 
 import React, {Component} from 'react';
 import Datasource from '../../services/datasource';
+import Rx from 'rx';
 
 export default class ConnectionExample extends Component {
   constructor(props) {
     super(props);
 
-    this.datasrc = new Datasource();
+    this.dataSrc = new Datasource();
 
     this.state = {
-      namespaces: []
+      data: [],
+      error: '',
+      isPolling: true
     };
+    let streamsReqObj = {
+      _cdapPath: '/namespaces/default/streams',
+      interval: 2000
+    };
+    let datasetReqObj = {
+      _cdapPath: '/namespaces/default/data/datasets'
+    };
+
+    let streams = this.dataSrc.poll(streamsReqObj)
+      .map((response) => {
+        return response.map((stream) => {
+          return {
+            name: stream.name,
+            type: 'Stream'
+          };
+        });
+      });
+    let datasets = this.dataSrc.poll(datasetReqObj)
+      .map((response) => {
+        return response.map((dataset) => {
+          return {
+            name: dataset.name,
+            type: 'Dataset'
+          };
+        });
+      });
+
+    let combinedData = Rx.Observable.combineLatest(streams, datasets);
+    this.combination = combinedData.subscribe(
+      (response) => {
+        let combined = response[0].concat(response[1]);
+        this.setState({data: combined});
+      },
+      (error) => {
+        // This error will get executed if either streams or datasets polling
+        // gives an error
+
+        this.setState({error: error});
+      });
+  }
+
+  addStream() {
+    let streamName = this.refs.streamName.value;
+
     let reqObj = {
-      _cdapPath: '/namespaces'
+      _cdapPath: '/namespaces/default/streams/' + streamName,
+      method: 'PUT'
     };
-
-    let namespaceStream = this.datasrc.poll(reqObj);
-
-    this.stream = namespaceStream.subscribe((data) => {
-      this.setState({namespaces: data});
-    });
+    this.dataSrc.request(reqObj)
+      .subscribe(
+        () => {
+          this.refs.streamName.value = '';
+        },
+        (err) => {
+          this.setState({error: err});
+        }
+      );
   }
 
   stopPoll() {
-    this.stream.dispose();
+    // To stop the poll, just dispose the subscription
+    this.combination.dispose();
+    this.setState({isPolling: false});
   }
 
   render() {
+    let error;
+    if (this.state.error) {
+      error = (
+        <div className="text-danger">
+          {this.state.error}
+        </div>
+      );
+    }
+
     return (
       <div>
-        <h1> Connection </h1>
+        <h1> Connection Example</h1>
+        <h3> Datasets & Streams <small>in Default Namespace</small></h3>
 
-        <h3> Namespaces</h3>
-
+        {error}
+        <div className="row">
+          <div className="col-xs-3">
+            <input type="text"
+              className="form-control"
+              placeholder="Stream Name"
+              ref="streamName"
+            />
+          </div>
+          <div className="col-xs-3">
+            <button className="btn"
+              onClick={this.addStream.bind(this)}
+            >
+              Add Stream
+            </button>
+          </div>
+        </div>
+        <br />
         <ul>
-          {this.state.namespaces.map((ns, index) => <li key={index}>{ns.name}</li>)}
+          {this.state.data.map((res, index) => <li key={index}>{res.name} ({res.type})</li>)}
         </ul>
 
-        <button onClick={this.stopPoll.bind(this)}>stop</button>
+        <button
+          className="btn btn-danger"
+          onClick={this.stopPoll.bind(this)}
+          disabled={!this.state.isPolling}
+        >
+          Stop Poll
+        </button>
+        <h4>Polling Status: <i> {this.state.isPolling ? 'Polling' : 'Stopped'} </i></h4>
+
       </div>
     );
   }

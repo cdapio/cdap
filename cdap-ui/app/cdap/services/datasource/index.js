@@ -31,18 +31,14 @@ export default class Datasource {
 
         if (data.statusCode > 299 || data.warning) {
           this.bindings[hash].rx.onError(data.error || data.response);
-          if (this.bindings[hash].type === 'REQUEST') {
-            this.bindings[hash].rx.onCompleted();
-            this.bindings[hash].rx.dispose();
-            delete this.bindings[hash];
-          }
         } else {
           this.bindings[hash].rx.onNext(data.response);
-          if (this.bindings[hash].type === 'REQUEST') {
-            this.bindings[hash].rx.onCompleted();
-            this.bindings[hash].rx.dispose();
-            delete this.bindings[hash];
-          }
+        }
+
+        if (this.bindings[hash].type === 'REQUEST') {
+          this.bindings[hash].rx.onCompleted();
+          this.bindings[hash].rx.dispose();
+          delete this.bindings[hash];
         }
       }
     );
@@ -171,9 +167,9 @@ export default class Datasource {
     this.socketSubscription.dispose();
 
     // stopping existing polls
-    for (let value in this.bindings) {
-      if (value.type === 'POLL') {
-        this.stopPoll(value.resource);
+    for (let key in this.bindings) {
+      if (this.bindings[key].type === 'POLL') {
+        this.stopPoll(this.bindings[key].resource);
       }
     }
     this.bindings = {};
@@ -208,9 +204,9 @@ export default class Datasource {
 
     function forEachSorted(obj, iterator, context) {
       var keys = Object.keys(params).sort();
-      for (var i = 0; i < keys.length; i++) {
-        iterator.call(context, obj[keys[i]], keys[i]);
-      }
+      keys.forEach((key) => {
+        iterator.call(context, obj[key], key);
+      });
       return keys;
     }
 
@@ -225,19 +221,19 @@ export default class Datasource {
     }
 
     forEachSorted(params, function(value, key) {
-      if (value === null || angular.isUndefined(value)) {
+      if (value === null || typeof value === 'undefined') {
         return;
       }
-      if (!angular.isArray(value)) {
+      if (!Array.isArray(value)) {
         value = [value];
       }
 
-      angular.forEach(value, function(v) {
-        if (angular.isObject(v)) {
-          if (angular.isDate(v)) {
+      value.forEach((v) => {
+        if (typeof v === 'object' && v !== null) {
+          if (value.toString() === '[object Date]') {
             v = v.toISOString();
           } else {
-            v = angular.toJson(v);
+            v = JSON.stringify(v);
           }
         }
         parts.push(encodeUriQuery(key) + '=' + encodeUriQuery(v));
