@@ -19,6 +19,7 @@ import 'whatwg-fetch';
 import cookie from 'react-cookie';
 
 import Card from './components/Card';
+import CardActionFeedback from './components/CardActionFeedback';
 
 import * as util from './utils';
 import Footer from './components/Footer';
@@ -88,9 +89,19 @@ class Login extends Component {
     });
   }
   render() {
+    let footer;
+    if (this.state.message) {
+      footer = (
+        <CardActionFeedback
+          type="DANGER"
+          message={this.state.message}
+        />
+      );
+    }
+
     return (
       <div>
-        <Card error={this.state.message}>
+        <Card footer={footer}>
           <div className="cdap-logo"></div>
           <form
             role="form"
