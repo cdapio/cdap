@@ -20,7 +20,8 @@ angular
   .module(PKG.name, [
 
     angular.module(PKG.name+'.features', [
-      PKG.name+'.feature.hydrator'
+      PKG.name+'.feature.hydrator',
+      PKG.name + '.feature.userprofile'
     ]).name,
 
     angular.module(PKG.name+'.commons', [
@@ -105,7 +106,28 @@ angular
   .run(function ($rootScope) {
     $rootScope.defaultPollInterval = 10000;
   })
+  .run(function($rootScope, MY_CONFIG, myAuth, MYAUTH_EVENT) {
+    $rootScope.$on('$stateChangeStart', function () {
+      if (MY_CONFIG.securityEnabled) {
+        if (!myAuth.isAuthenticated()) {
+          $rootScope.$broadcast(MYAUTH_EVENT.logoutSuccess);
+        }
+      }
+    });
+  })
+  .run(function($rootScope, myHelpers, MYAUTH_EVENT) {
+    $rootScope.$on(MYAUTH_EVENT.logoutSuccess, function() {
+      window.location.href = myHelpers.getAbsUIUrl({
+        uiApp: 'login',
+        redirectUrl: location.href,
+        clientId: 'hydrator'
+      });
+    });
+  })
 
+  .run(function(myNamespace) {
+    myNamespace.getList();
+  })
   .config(function($provide) {
 
     $provide.decorator('$http', function($delegate, MyCDAPDataSource) {
@@ -225,39 +247,6 @@ angular
     });
   }])
 
-  /*
-    FIXME: This is a one time only thing. Once all old users who migrated to 3.3 have their drafts moved from global level to
-          namespace level this snippet can be removed. Ideally in 4.* we should be able to remove this.
-  */
-  .run(function(mySettings, EventPipe, $state, $alert, $q) {
-    mySettings.get('hydratorDrafts')
-      .then(
-        function success(res) {
-          var namespacedDrafts = {
-            default: {}
-          };
-          if (res && !res.isMigrated) {
-            angular.forEach(res, function(draft, name) {
-               namespacedDrafts.default[name] = draft;
-            });
-
-            namespacedDrafts.isMigrated = true;
-            return mySettings.set('hydratorDrafts', namespacedDrafts);
-          } else {
-            return $q.reject(false);
-          }
-        }
-      )
-      .then(
-        function showAlert() {
-          $alert({
-            type: 'info',
-            content: 'All current drafts can be found in Default namespace.'
-          });
-        }
-      );
-  })
-
   .run(function (MYSOCKET_EVENT, myAlert, EventPipe) {
 
     EventPipe.on(MYSOCKET_EVENT.message, function (data) {
@@ -292,16 +281,7 @@ angular
 
     var activeThemeClass = caskTheme.getClassName();
     var dataSource = new MyCDAPDataSource($scope);
-    if (MY_CONFIG.securityEnabled) {
-      if (myAuth.isAuthenticated()) {
-        getVersion();
-      } else {
-        $rootScope.$on(MYAUTH_EVENT.loginSuccess, getVersion);
-      }
-    } else {
-      getVersion();
-    }
-
+    getVersion();
     $scope.copyrightYear = new Date().getFullYear();
 
     function getVersion() {
@@ -363,8 +343,5 @@ angular
       $window.location.reload();
     });
 
-    // $rootScope.$on('$stateChangeError', function () {
-    //   $state.go('login');
-    // });
     console.timeEnd(PKG.name);
   });

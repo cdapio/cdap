@@ -16,6 +16,7 @@
 
 angular.module(PKG.name + '.feature.tracker')
   .controller('TrackerHomeController', function ($state, $stateParams, rNsList, mySessionStorage, myLoadingService) {
+
     if (!rNsList.length) {
       $state.go('unauthorized');
       return;

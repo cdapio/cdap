@@ -15,19 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorHomeController', function ($state, $stateParams, rNsList, mySessionStorage, myLoadingService, MY_CONFIG, $rootScope, myAuth, MYAUTH_EVENT) {
-
-    if (MY_CONFIG.securityEnabled) {
-      if (myAuth.isAuthenticated()) {
-        $rootScope.$broadcast(MYAUTH_EVENT.loginSuccess);
-      } else {
-        // This should go to generic login page instead of the one specific to angular.
-        $state.go('login');
-        return;
-      }
-    } else {
-      $rootScope.$broadcast(MYAUTH_EVENT.loginSuccess);
-    }
+  .controller('HydratorHomeController', function ($state, $stateParams, rNsList, mySessionStorage, myLoadingService) {
 
     if (!rNsList.length) {
       $state.go('unauthorized');

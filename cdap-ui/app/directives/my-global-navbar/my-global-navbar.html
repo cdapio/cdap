@@ -35,14 +35,14 @@
       </a>
 
       <a href=""
-         ng-click="Navbar.getAbsUIUrl({uiApp: 'hydrator', namespaceId: $stateParams.namespace})"
+         ng-click="Navbar.getAbsUIUrl({uiApp: 'cask-hydrator', namespaceId: $stateParams.namespace})"
          class="menu-item product-title"
          ng-if="Navbar.activeProduct === 'hydrator'">
         Cask Hydrator
       </a>
 
       <a href=""
-         ng-click="Navbar.getAbsUIUrl({uiApp: 'tracker', namespaceId: $stateParams.namespace})"
+         ng-click="Navbar.getAbsUIUrl({uiApp: 'cask-tracker', namespaceId: $stateParams.namespace})"
          class="menu-item product-title"
          ng-if="Navbar.activeProduct === 'tracker'">
         Cask Tracker
@@ -133,6 +133,13 @@
         </div>
 
         <ul uib-dropdown-menu>
+          <li ng-if="Navbar.securityEnabled && Navbar.currentUser">
+            <a>
+              <span> Signed in as </span>
+              <span class="username" ng-bind="Navbar.currentUser"></span>
+            </a>
+          </li>
+          <li class="divider" ng-if="Navbar.securityEnabled && Navbar.currentUser"></li>
           <li>
             <a href="http://cask.co" target="_blank">
               <span class="fa fa-fw fa-book"></span>
@@ -143,12 +150,6 @@
             <a href="http://cask.co/community">
               <span class="fa fa-fw fa-support"></span>
               <span>Support</span>
-            </a>
-          </li>
-          <li ng-if="Navbar.securityEnabled && !Navbar.currentUser">
-            <a ui-sref="login({next:Navbar.$state.current.url})">
-              <span class="fa fa-fw fa-sign-in"></span>
-              <span>Log In</span>
             </a>
           </li>
 
@@ -211,7 +212,7 @@
     <h5>Extensions:</h5>
 
     <!-- HYDRATOR -->
-    <a href="{{Navbar.getAbsUIUrl({uiApp: 'hydrator', namespaceId: $stateParams.namespace || Navbar.$cookies.get('CDAP_Namespace') || 'default'})}}"
+    <a href="{{Navbar.getAbsUIUrl({uiApp: 'cask-hydrator', namespaceId: $stateParams.namespace || Navbar.$cookies.get('CDAP_Namespace') || 'default'})}}"
        class="brand sidebar-item">
       <div class="brand-icon text-center hydrator">
         <span class="icon-hydrator"></span>
@@ -223,7 +224,7 @@
     </a>
 
     <!-- TRACKER -->
-    <a href="{{Navbar.getAbsUIUrl({uiApp: 'tracker', namespaceId: $stateParams.namespace || Navbar.$cookies.get('CDAP_Namespace') || 'default'})}}"
+    <a href="{{Navbar.getAbsUIUrl({uiApp: 'cask-tracker', namespaceId: $stateParams.namespace || Navbar.$cookies.get('CDAP_Namespace') || 'default'})}}"
        class="brand sidebar-item">
       <div class="brand-icon text-center tracker">
         <span class="icon-tracker"></span>

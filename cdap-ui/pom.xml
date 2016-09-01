@@ -160,7 +160,7 @@
                   <goal>install-node-and-npm</goal>
                 </goals>
                 <configuration>
-                  <nodeVersion>v0.12.0</nodeVersion>
+                  <nodeVersion>v4.5.0</nodeVersion>
                   <npmVersion>3.8.8</npmVersion>
                 </configuration>
               </execution>
@@ -171,34 +171,7 @@
                 </goals>
                 <!-- Optional configuration which provides for running any npm command -->
                 <configuration>
-                  <arguments>install -s --progress=false</arguments>
-                </configuration>
-              </execution>
-              <execution>
-                <id>bower-cache-clean</id>
-                <goals>
-                  <goal>bower</goal>
-                </goals>
-                <configuration>
-                  <arguments>cache clean --allow-root</arguments>
-                </configuration>
-              </execution>
-              <execution>
-                <id>bower-install</id>
-                <goals>
-                  <goal>bower</goal>
-                </goals>
-                <configuration>
-                  <arguments>install --allow-root</arguments>
-                </configuration>
-              </execution>
-              <execution>
-                <id>gulp distribute</id>
-                <goals>
-                  <goal>gulp</goal>
-                </goals>
-                <configuration>
-                  <arguments>distribute</arguments>
+                  <arguments>run ui-prod-build</arguments>
                 </configuration>
               </execution>
             </executions>
@@ -257,6 +230,9 @@
                     </copy>
                     <copy todir = "${stage.opt.dir}/dist">
                       <fileset dir = "dist" />
+                    </copy>
+                    <copy todir = "${stage.opt.dir}/cdap_dist">
+                      <fileset dir = "cdap_dist" />
                     </copy>
                     <copy todir = "${stage.opt.dir}/bin">
                       <fileset dir = "node">

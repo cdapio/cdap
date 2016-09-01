@@ -16,7 +16,7 @@
 
 import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
-import { Router, Route, browserHistory, IndexRedirect } from 'react-router';
+import {Router, Route, browserHistory, IndexRedirect} from 'react-router';
 
 require('../ui-utils/url-generator');
 require('font-awesome-webpack!./styles/font-awesome.config.js');

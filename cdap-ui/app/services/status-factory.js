@@ -17,26 +17,20 @@
 angular.module(PKG.name + '.services')
   .service('StatusFactory', function($http, EventPipe, myAuth, $rootScope, MYAUTH_EVENT, MY_CONFIG, $timeout) {
 
-    var isLoggedIn = true;
+    var isPollingEnabled = true;
     this.startPolling = function () {
-      if (isLoggedIn){
+      if (isPollingEnabled){
         beginPolling.bind(this)();
       }
     };
     this.stopPolling = function() {
-      isLoggedIn = false;
+      isPollingEnabled = false;
     };
-    $rootScope.$on(MYAUTH_EVENT.logoutSuccess, this.stopPolling.bind(this));
-
-    $rootScope.$on(MYAUTH_EVENT.loginSuccess, function() {
-      isLoggedIn = true;
-      this.startPolling();
-    }.bind(this));
 
     function beginPolling() {
 
       _.debounce(function() {
-        if (isLoggedIn) {
+        if (isPollingEnabled) {
           $http.get(
             '/backendstatus',
             {ignoreLoadingBar: true}
@@ -76,5 +70,5 @@ angular.module(PKG.name + '.services')
       return false;
     }
 
-    // this.startPolling();
+    this.startPolling();
   });
