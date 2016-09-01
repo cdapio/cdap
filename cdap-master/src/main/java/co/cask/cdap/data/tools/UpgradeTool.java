@@ -254,7 +254,7 @@ public class UpgradeTool {
   private void startUp() throws Exception {
     // Start all the services.
     LOG.info("Starting Zookeeper Client...");
-    Services.startAndWait(zkClientService, cConf.getLong(Constants.Zookeeper.CFG_CLIENT_TIMEOUT_MILLIS),
+    Services.startAndWait(zkClientService, cConf.getLong(Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
                           TimeUnit.MILLISECONDS,
                           String.format("Connection timed out while trying to start ZooKeeper client. Please " +
                                           "verify that the ZooKeeper quorum settings are correct. Currently " +

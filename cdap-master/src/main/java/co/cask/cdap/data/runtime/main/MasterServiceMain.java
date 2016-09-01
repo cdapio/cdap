@@ -229,7 +229,7 @@ public class MasterServiceMain extends DaemonMain {
                               QueueConstants.DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR));
     createSystemHBaseNamespace();
     updateConfigurationTable();
-    Services.startAndWait(zkClient, cConf.getLong(Constants.Zookeeper.CFG_CLIENT_TIMEOUT_MILLIS),
+    Services.startAndWait(zkClient, cConf.getLong(Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
                           TimeUnit.MILLISECONDS,
                           String.format("Connection timed out while trying to start ZooKeeper client. Please " +
                                           "verify that the ZooKeeper quorum settings are correct. Currently " +
