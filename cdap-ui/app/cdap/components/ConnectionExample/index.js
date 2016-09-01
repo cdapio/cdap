@@ -71,14 +71,16 @@ export default class ConnectionExample extends Component {
   }
 
   addStream() {
+    let streamName = this.streamNameInput.value;
+
     let reqObj = {
-      _cdapPath: '/namespaces/default/streams/' + this.streamName,
+      _cdapPath: '/namespaces/default/streams/' + streamName,
       method: 'PUT'
     };
     this.dataSrc.request(reqObj)
       .subscribe(
         () => {
-          this.streamName = '';
+          this.streamNameInput.value = '';
         },
         (err) => {
           this.setState({error: err});
@@ -113,8 +115,7 @@ export default class ConnectionExample extends Component {
             <input type="text"
               className="form-control"
               placeholder="Stream Name"
-              value={this.streamName}
-              onChange={(e) => this.streamName = e.target.value}
+              ref={(ref) => this.streamNameInput = ref}
             />
           </div>
           <div className="col-xs-3">
