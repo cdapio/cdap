@@ -19,11 +19,20 @@ import Rx from 'rx';
 
 class Socket {
   constructor() {
-    this.socket = new SockJS('/_sock');
     this.buffer = [];
+    this.observable = new Rx.Subject();
+    this.timeout = null;
+
+    this.init();
+  }
+
+  init(attempt) {
+    attempt = attempt || 1;
+    clearTimeout(this.timeout);
+
+    this.socket = new SockJS('/_sock');
 
     this.socket.onopen = () => {
-
       // Buffering request while Socket is still starting up
       this.buffer.forEach((req) => {
         this._doSend(req);
@@ -31,19 +40,26 @@ class Socket {
       this.buffer = [];
     };
 
-    this.observable = Rx.Observable.create( (obs) => {
-      this.socket.onmessage = (event) => {
-        try {
-          let data = JSON.parse(event.data);
-          obs.onNext(data);
-        } catch (e) {
-          console.log('error', e);
-        }
-      };
-    });
+    this.socket.onmessage = (event) => {
+      try {
+        let data = JSON.parse(event.data);
+        this.observable.onNext(data);
+      } catch (e) {
+        console.log('error', e);
+      }
+    };
 
     // Need to implement the reconnect function
-    // this.socket.onclose
+    this.socket.onclose = () => {
+      // reconnect with exponential backoff
+      let delay = Math.max(500, Math.round(
+        (Math.random() + 1) * 500 * Math.pow(2, attempt)
+      ));
+
+      this.timeout = setTimeout(() => {
+        this.init(attempt++);
+      }, delay);
+    };
   }
 
   getObservable() {
