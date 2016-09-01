@@ -24,8 +24,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.entity.EntityExistenceVerifier;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.NamespacedId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
@@ -77,84 +77,84 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   }
 
   @Override
-  public void addProperties(Id.NamespacedId entityId, Map<String, String> properties)
+  public void addProperties(NamespacedId namespacedId, Map<String, String> properties)
     throws NotFoundException, InvalidMetadataException {
-    entityExistenceVerifier.ensureExists(entityId.toEntityId());
-    validateProperties(entityId, properties);
-    metadataStore.setProperties(MetadataScope.USER, entityId, properties);
+    entityExistenceVerifier.ensureExists(namespacedId);
+    validateProperties(namespacedId, properties);
+    metadataStore.setProperties(MetadataScope.USER, namespacedId, properties);
   }
 
   @Override
-  public void addTags(Id.NamespacedId entityId, String... tags) throws NotFoundException, InvalidMetadataException {
-    entityExistenceVerifier.ensureExists(entityId.toEntityId());
-    validateTags(entityId, tags);
-    metadataStore.addTags(MetadataScope.USER, entityId, tags);
+  public void addTags(NamespacedId namespacedId, String... tags) throws NotFoundException, InvalidMetadataException {
+    entityExistenceVerifier.ensureExists(namespacedId);
+    validateTags(namespacedId, tags);
+    metadataStore.addTags(MetadataScope.USER, namespacedId, tags);
   }
 
   @Override
-  public Set<MetadataRecord> getMetadata(Id.NamespacedId entityId) throws NotFoundException {
-    entityExistenceVerifier.ensureExists(entityId.toEntityId());
-    return metadataStore.getMetadata(entityId);
+  public Set<MetadataRecord> getMetadata(NamespacedId namespacedId) throws NotFoundException {
+    entityExistenceVerifier.ensureExists(namespacedId);
+    return metadataStore.getMetadata(namespacedId);
   }
 
   @Override
-  public Set<MetadataRecord> getMetadata(MetadataScope scope, Id.NamespacedId entityId) throws NotFoundException {
-    entityExistenceVerifier.ensureExists(entityId.toEntityId());
-    return ImmutableSet.of(metadataStore.getMetadata(scope, entityId));
+  public Set<MetadataRecord> getMetadata(MetadataScope scope, NamespacedId namespacedId) throws NotFoundException {
+    entityExistenceVerifier.ensureExists(namespacedId);
+    return ImmutableSet.of(metadataStore.getMetadata(scope, namespacedId));
   }
 
   @Override
-  public Map<String, String> getProperties(Id.NamespacedId entityId) throws NotFoundException {
-    entityExistenceVerifier.ensureExists(entityId.toEntityId());
-    return metadataStore.getProperties(entityId);
+  public Map<String, String> getProperties(NamespacedId namespacedId) throws NotFoundException {
+    entityExistenceVerifier.ensureExists(namespacedId);
+    return metadataStore.getProperties(namespacedId);
   }
 
   @Override
-  public Map<String, String> getProperties(MetadataScope scope, Id.NamespacedId entityId) throws NotFoundException {
-    entityExistenceVerifier.ensureExists(entityId.toEntityId());
-    return metadataStore.getProperties(scope, entityId);
+  public Map<String, String> getProperties(MetadataScope scope, NamespacedId namespacedId) throws NotFoundException {
+    entityExistenceVerifier.ensureExists(namespacedId);
+    return metadataStore.getProperties(scope, namespacedId);
   }
 
   @Override
-  public Set<String> getTags(Id.NamespacedId entityId) throws NotFoundException {
-    entityExistenceVerifier.ensureExists(entityId.toEntityId());
-    return metadataStore.getTags(entityId);
+  public Set<String> getTags(NamespacedId namespacedId) throws NotFoundException {
+    entityExistenceVerifier.ensureExists(namespacedId);
+    return metadataStore.getTags(namespacedId);
   }
 
   @Override
-  public Set<String> getTags(MetadataScope scope, Id.NamespacedId entityId) throws NotFoundException {
-    entityExistenceVerifier.ensureExists(entityId.toEntityId());
-    return metadataStore.getTags(scope, entityId);
+  public Set<String> getTags(MetadataScope scope, NamespacedId namespacedId) throws NotFoundException {
+    entityExistenceVerifier.ensureExists(namespacedId);
+    return metadataStore.getTags(scope, namespacedId);
   }
 
   @Override
-  public void removeMetadata(Id.NamespacedId entityId) throws NotFoundException {
-    entityExistenceVerifier.ensureExists(entityId.toEntityId());
-    metadataStore.removeMetadata(MetadataScope.USER, entityId);
+  public void removeMetadata(NamespacedId namespacedId) throws NotFoundException {
+    entityExistenceVerifier.ensureExists(namespacedId);
+    metadataStore.removeMetadata(MetadataScope.USER, namespacedId);
   }
 
   @Override
-  public void removeProperties(Id.NamespacedId entityId) throws NotFoundException {
-    entityExistenceVerifier.ensureExists(entityId.toEntityId());
-    metadataStore.removeProperties(MetadataScope.USER, entityId);
+  public void removeProperties(NamespacedId namespacedId) throws NotFoundException {
+    entityExistenceVerifier.ensureExists(namespacedId);
+    metadataStore.removeProperties(MetadataScope.USER, namespacedId);
   }
 
   @Override
-  public void removeProperties(Id.NamespacedId entityId, String... keys) throws NotFoundException {
-    entityExistenceVerifier.ensureExists(entityId.toEntityId());
-    metadataStore.removeProperties(MetadataScope.USER, entityId, keys);
+  public void removeProperties(NamespacedId namespacedId, String... keys) throws NotFoundException {
+    entityExistenceVerifier.ensureExists(namespacedId);
+    metadataStore.removeProperties(MetadataScope.USER, namespacedId, keys);
   }
 
   @Override
-  public void removeTags(Id.NamespacedId entityId) throws NotFoundException {
-    entityExistenceVerifier.ensureExists(entityId.toEntityId());
-    metadataStore.removeTags(MetadataScope.USER, entityId);
+  public void removeTags(NamespacedId namespacedId) throws NotFoundException {
+    entityExistenceVerifier.ensureExists(namespacedId);
+    metadataStore.removeTags(MetadataScope.USER, namespacedId);
   }
 
   @Override
-  public void removeTags(Id.NamespacedId entityId, String... tags) throws NotFoundException {
-    entityExistenceVerifier.ensureExists(entityId.toEntityId());
-    metadataStore.removeTags(MetadataScope.USER, entityId, tags);
+  public void removeTags(NamespacedId namespacedId, String... tags) throws NotFoundException {
+    entityExistenceVerifier.ensureExists(namespacedId);
+    metadataStore.removeTags(MetadataScope.USER, namespacedId, tags);
   }
 
   @Override
@@ -184,7 +184,7 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
       Iterables.filter(results, new com.google.common.base.Predicate<MetadataSearchResultRecord>() {
         @Override
         public boolean apply(MetadataSearchResultRecord metadataSearchResultRecord) {
-          return filter.apply(metadataSearchResultRecord.getEntityId().toEntityId());
+          return filter.apply(metadataSearchResultRecord.getEntityId());
         }
       })
     );
@@ -192,33 +192,33 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
 
   // Helper methods to validate the metadata entries.
 
-  private void validateProperties(Id.NamespacedId entityId,
+  private void validateProperties(NamespacedId namespacedId,
                                   Map<String, String> properties) throws InvalidMetadataException {
     for (Map.Entry<String, String> entry : properties.entrySet()) {
       // validate key
-      validateKeyAndTagsFormat(entityId, entry.getKey());
-      validateTagReservedKey(entityId, entry.getKey());
-      validateLength(entityId, entry.getKey());
+      validateKeyAndTagsFormat(namespacedId, entry.getKey());
+      validateTagReservedKey(namespacedId, entry.getKey());
+      validateLength(namespacedId, entry.getKey());
 
       // validate value
-      validateValueFormat(entityId, entry.getValue());
-      validateLength(entityId, entry.getValue());
+      validateValueFormat(namespacedId, entry.getValue());
+      validateLength(namespacedId, entry.getValue());
     }
   }
 
-  private void validateTags(Id.NamespacedId entityId, String... tags) throws InvalidMetadataException {
+  private void validateTags(NamespacedId namespacedId, String... tags) throws InvalidMetadataException {
     for (String tag : tags) {
-      validateKeyAndTagsFormat(entityId, tag);
-      validateLength(entityId, tag);
+      validateKeyAndTagsFormat(namespacedId, tag);
+      validateLength(namespacedId, tag);
     }
   }
 
   /**
    * Validate that the key is not reserved {@link MetadataDataset#TAGS_KEY}.
    */
-  private void validateTagReservedKey(Id.NamespacedId entityId, String key) throws InvalidMetadataException {
+  private void validateTagReservedKey(NamespacedId namespacedId, String key) throws InvalidMetadataException {
     if (MetadataDataset.TAGS_KEY.equals(key.toLowerCase())) {
-      throw new InvalidMetadataException(entityId,
+      throw new InvalidMetadataException(namespacedId,
                                   "Could not set metadata with reserved key " + MetadataDataset.TAGS_KEY);
     }
   }
@@ -226,28 +226,28 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   /**
    * Validate the key matches the {@link #KEY_AND_TAG_MATCHER} character test.
    */
-  private void validateKeyAndTagsFormat(Id.NamespacedId entityId, String keyword) throws InvalidMetadataException {
+  private void validateKeyAndTagsFormat(NamespacedId namespacedId, String keyword) throws InvalidMetadataException {
     if (!KEY_AND_TAG_MATCHER.matchesAllOf(keyword)) {
-      throw new InvalidMetadataException(entityId, "Illegal format for the value : " + keyword);
+      throw new InvalidMetadataException(namespacedId, "Illegal format for the value : " + keyword);
     }
   }
 
   /**
    * Validate the value of a property matches the {@link #VALUE_MATCHER} character test.
    */
-  private void validateValueFormat(Id.NamespacedId entityId, String keyword) throws InvalidMetadataException {
+  private void validateValueFormat(NamespacedId namespacedId, String keyword) throws InvalidMetadataException {
     if (!VALUE_MATCHER.matchesAllOf(keyword)) {
-      throw new InvalidMetadataException(entityId, "Illegal format for the value : " + keyword);
+      throw new InvalidMetadataException(namespacedId, "Illegal format for the value : " + keyword);
     }
   }
 
   /**
    * Validate that the key length does not exceed the configured limit.
    */
-  private void validateLength(Id.NamespacedId entityId, String keyword) throws InvalidMetadataException {
+  private void validateLength(NamespacedId namespacedId, String keyword) throws InvalidMetadataException {
     // check for max char per value
     if (keyword.length() > cConf.getInt(Constants.Metadata.MAX_CHARS_ALLOWED)) {
-      throw new InvalidMetadataException(entityId, "Metadata " + keyword + " should not exceed maximum of " +
+      throw new InvalidMetadataException(namespacedId, "Metadata " + keyword + " should not exceed maximum of " +
         cConf.get(Constants.Metadata.MAX_CHARS_ALLOWED) + " characters.");
     }
   }

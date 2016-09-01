@@ -18,8 +18,8 @@ package co.cask.cdap.data2.metadata.dataset;
 
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespacedId;
 
-import java.util.Arrays;
 import javax.annotation.Nullable;
 
 /**
@@ -86,7 +86,7 @@ final class MdsKey {
    * Creates a key for metadata value row in the format:
    * [{@link #VALUE_ROW_PREFIX}][targetType][targetId][key] for value index rows
    */
-  static MDSKey getMDSValueKey(Id.NamespacedId targetId, @Nullable String key) {
+  static MDSKey getMDSValueKey(NamespacedId targetId, @Nullable String key) {
     MDSKey.Builder builder = getMDSKeyPrefix(targetId, VALUE_ROW_PREFIX);
     if (key != null) {
       builder.add(key);
@@ -98,7 +98,7 @@ final class MdsKey {
    * Creates a key for metadata index row in the format:
    * [{@link #INDEX_ROW_PREFIX}][targetType][targetId][key][index] for value index rows
    */
-  static MDSKey getMDSIndexKey(Id.NamespacedId targetId, String key, @Nullable String index) {
+  static MDSKey getMDSIndexKey(NamespacedId targetId, String key, @Nullable String index) {
     MDSKey.Builder builder = getMDSKeyPrefix(targetId, INDEX_ROW_PREFIX);
     builder.add(key);
     if (index != null) {
@@ -107,7 +107,7 @@ final class MdsKey {
     return builder.build();
   }
 
-  static Id.NamespacedId getNamespacedIdFromKey(String type, byte[] rowKey) {
+  static NamespacedId getNamespacedIdFromKey(String type, byte[] rowKey) {
     MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
 
     // The rowkey is
@@ -142,7 +142,7 @@ final class MdsKey {
     return key.getKey();
   }
 
-  private static MDSKey.Builder getMDSKeyPrefix(Id.NamespacedId targetId, byte[] rowPrefix) {
+  private static MDSKey.Builder getMDSKeyPrefix(NamespacedId targetId, byte[] rowPrefix) {
     String targetType = KeyHelper.getTargetType(targetId);
     MDSKey.Builder builder = new MDSKey.Builder();
     builder.add(rowPrefix);

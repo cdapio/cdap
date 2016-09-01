@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.data2.metadata.dataset;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespacedId;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -24,17 +24,17 @@ import javax.annotation.Nullable;
  * Represents a single Metadata entry for a CDAP Entity.
  */
 public class MetadataEntry {
-  private final Id.NamespacedId targetId;
+  private final NamespacedId targetId;
   private final String key;
   private final String value;
   private final String schema;
 
-  public MetadataEntry(Id.NamespacedId targetId, String key, String value) {
+  public MetadataEntry(NamespacedId targetId, String key, String value) {
     this(targetId, key, value, null);
   }
 
   //TODO: Remove this constructor when it is finalized that schema need not be stored separately
-  public MetadataEntry(Id.NamespacedId targetId, String key, String value,
+  public MetadataEntry(NamespacedId targetId, String key, String value,
                        @Nullable String schema) {
     this.targetId = targetId;
     this.key = key;
@@ -42,7 +42,7 @@ public class MetadataEntry {
     this.schema = schema;
   }
 
-  public Id.NamespacedId  getTargetId() {
+  public NamespacedId  getTargetId() {
     return targetId;
   }
 

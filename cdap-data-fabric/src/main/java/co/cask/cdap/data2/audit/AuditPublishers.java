@@ -20,6 +20,7 @@ import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.audit.payload.access.AccessPayload;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.EntityIdCompatible;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -102,14 +103,14 @@ public final class AuditPublishers {
    * @param auditType audit type
    * @param auditPayload audit payload
    */
-  public static void publishAudit(@Nullable AuditPublisher publisher, EntityIdCompatible entityId,
+  public static void publishAudit(@Nullable AuditPublisher publisher, EntityId entityId,
                                   AuditType auditType, AuditPayload auditPayload) {
     if (publisher == null) {
       logWarning();
       return;
     }
 
-    publisher.publish(entityId.toEntityId(), auditType, auditPayload);
+    publisher.publish(entityId, auditType, auditPayload);
   }
 
   /**

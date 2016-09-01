@@ -32,6 +32,7 @@ import co.cask.cdap.data2.metadata.publisher.MetadataChangePublisher;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.audit.AuditType;
+import co.cask.cdap.proto.id.NamespacedId;
 import co.cask.cdap.proto.metadata.MetadataChangeRecord;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
@@ -73,10 +74,10 @@ public class DefaultMetadataStore implements MetadataStore {
   private static final Set<String> EMPTY_TAGS = ImmutableSet.of();
   private static final int BATCH_SIZE = 1000;
 
-  private static final Comparator<Map.Entry<Id.NamespacedId, Integer>> SEARCH_RESULT_DESC_SCORE_COMPARATOR =
-    new Comparator<Map.Entry<Id.NamespacedId, Integer>>() {
+  private static final Comparator<Map.Entry<NamespacedId, Integer>> SEARCH_RESULT_DESC_SCORE_COMPARATOR =
+    new Comparator<Map.Entry<NamespacedId, Integer>>() {
       @Override
-      public int compare(Map.Entry<Id.NamespacedId, Integer> o1, Map.Entry<Id.NamespacedId, Integer> o2) {
+      public int compare(Map.Entry<NamespacedId, Integer> o1, Map.Entry<NamespacedId, Integer> o2) {
         // sort in descending order
         return o2.getValue() - o1.getValue();
       }
@@ -103,25 +104,25 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
   @Override
-  public void setProperties(MetadataScope scope, Id.NamespacedId entityId, Map<String, String> properties) {
-    setProperties(scope, entityId, properties, null);
+  public void setProperties(MetadataScope scope, NamespacedId namespacedId, Map<String, String> properties) {
+    setProperties(scope, namespacedId, properties, null);
   }
 
   /**
-   * Adds/updates metadata for the specified {@link Id.NamespacedId}.
+   * Adds/updates metadata for the specified {@link NamespacedId}.
    */
   @Override
-  public void setProperties(final MetadataScope scope, final Id.NamespacedId entityId,
+  public void setProperties(final MetadataScope scope, final NamespacedId namespacedId,
                             final Map<String, String> properties, @Nullable final Indexer indexer) {
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
       public void apply(MetadataDataset input) throws Exception {
-        Map<String, String> existingProperties = input.getProperties(entityId);
-        Set<String> existingTags = input.getTags(entityId);
-        previousRef.set(new MetadataRecord(entityId, scope, existingProperties, existingTags));
+        Map<String, String> existingProperties = input.getProperties(namespacedId);
+        Set<String> existingTags = input.getTags(namespacedId);
+        previousRef.set(new MetadataRecord(namespacedId, scope, existingProperties, existingTags));
         for (Map.Entry<String, String> entry : properties.entrySet()) {
-          input.setProperty(entityId, entry.getKey(), entry.getValue(), indexer);
+          input.setProperty(namespacedId, entry.getKey(), entry.getValue(), indexer);
         }
       }
     }, scope);
@@ -143,60 +144,60 @@ public class DefaultMetadataStore implements MetadataStore {
       // In both update or new cases, mark a single addition.
       propAdditions.put(entry.getKey(), entry.getValue());
     }
-    publish(previousRecord, new MetadataRecord(entityId, scope, propAdditions.build(), EMPTY_TAGS),
-            new MetadataRecord(entityId, scope, propDeletions.build(), EMPTY_TAGS));
+    publish(previousRecord, new MetadataRecord(namespacedId, scope, propAdditions.build(), EMPTY_TAGS),
+            new MetadataRecord(namespacedId, scope, propDeletions.build(), EMPTY_TAGS));
   }
 
   /**
-   * Adds tags for the specified {@link Id.NamespacedId}.
+   * Adds tags for the specified {@link NamespacedId}.
    */
   @Override
-  public void addTags(final MetadataScope scope, final Id.NamespacedId entityId, final String... tagsToAdd) {
+  public void addTags(final MetadataScope scope, final NamespacedId namespacedId, final String... tagsToAdd) {
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
       public void apply(MetadataDataset input) throws Exception {
-        Map<String, String> existingProperties = input.getProperties(entityId);
-        Set<String> existingTags = input.getTags(entityId);
-        previousRef.set(new MetadataRecord(entityId, scope, existingProperties, existingTags));
-        input.addTags(entityId, tagsToAdd);
+        Map<String, String> existingProperties = input.getProperties(namespacedId);
+        Set<String> existingTags = input.getTags(namespacedId);
+        previousRef.set(new MetadataRecord(namespacedId, scope, existingProperties, existingTags));
+        input.addTags(namespacedId, tagsToAdd);
       }
     }, scope);
-    publish(previousRef.get(), new MetadataRecord(entityId, scope, EMPTY_PROPERTIES, Sets.newHashSet(tagsToAdd)),
-            new MetadataRecord(entityId, scope));
+    publish(previousRef.get(), new MetadataRecord(namespacedId, scope, EMPTY_PROPERTIES, Sets.newHashSet(tagsToAdd)),
+            new MetadataRecord(namespacedId, scope));
   }
 
   @Override
-  public Set<MetadataRecord> getMetadata(Id.NamespacedId entityId) {
-    return ImmutableSet.of(getMetadata(MetadataScope.USER, entityId), getMetadata(MetadataScope.SYSTEM, entityId));
+  public Set<MetadataRecord> getMetadata(NamespacedId namespacedId) {
+    return ImmutableSet.of(getMetadata(MetadataScope.USER, namespacedId), getMetadata(MetadataScope.SYSTEM, namespacedId));
   }
 
   @Override
-  public MetadataRecord getMetadata(final MetadataScope scope, final Id.NamespacedId entityId) {
+  public MetadataRecord getMetadata(final MetadataScope scope, final NamespacedId namespacedId) {
     return execute(new TransactionExecutor.Function<MetadataDataset, MetadataRecord>() {
       @Override
       public MetadataRecord apply(MetadataDataset input) throws Exception {
-        Map<String, String> properties = input.getProperties(entityId);
-        Set<String> tags = input.getTags(entityId);
-        return new MetadataRecord(entityId, scope, properties, tags);
+        Map<String, String> properties = input.getProperties(namespacedId);
+        Set<String> tags = input.getTags(namespacedId);
+        return new MetadataRecord(namespacedId, scope, properties, tags);
       }
     }, scope);
   }
 
   /**
    * @return a set of {@link MetadataRecord}s representing all the metadata (including properties and tags)
-   * for the specified set of {@link Id.NamespacedId}s.
+   * for the specified set of {@link NamespacedId}s.
    */
   @Override
-  public Set<MetadataRecord> getMetadata(final MetadataScope scope, final Set<Id.NamespacedId> entityIds) {
+  public Set<MetadataRecord> getMetadata(final MetadataScope scope, final Set<NamespacedId> namespacedIds) {
     return execute(new TransactionExecutor.Function<MetadataDataset, Set<MetadataRecord>>() {
       @Override
       public Set<MetadataRecord> apply(MetadataDataset input) throws Exception {
-        Set<MetadataRecord> metadataRecords = new HashSet<>(entityIds.size());
-        for (Id.NamespacedId entityId : entityIds) {
-          Map<String, String> properties = input.getProperties(entityId);
-          Set<String> tags = input.getTags(entityId);
-          metadataRecords.add(new MetadataRecord(entityId, scope, properties, tags));
+        Set<MetadataRecord> metadataRecords = new HashSet<>(namespacedIds.size());
+        for (NamespacedId namespacedId : namespacedIds) {
+          Map<String, String> properties = input.getProperties(namespacedId);
+          Set<String> tags = input.getTags(namespacedId);
+          metadataRecords.add(new MetadataRecord(namespacedId, scope, properties, tags));
         }
         return metadataRecords;
       }
@@ -204,146 +205,146 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
   @Override
-  public Map<String, String> getProperties(Id.NamespacedId entityId) {
+  public Map<String, String> getProperties(NamespacedId namespacedId) {
     return ImmutableMap.<String, String>builder()
-      .putAll(getProperties(MetadataScope.USER, entityId))
-      .putAll(getProperties(MetadataScope.SYSTEM, entityId))
+      .putAll(getProperties(MetadataScope.USER, namespacedId))
+      .putAll(getProperties(MetadataScope.SYSTEM, namespacedId))
       .build();
   }
 
   /**
-   * @return the metadata for the specified {@link Id.NamespacedId}
+   * @return the metadata for the specified {@link NamespacedId}
    */
   @Override
-  public Map<String, String> getProperties(MetadataScope scope, final Id.NamespacedId entityId) {
+  public Map<String, String> getProperties(MetadataScope scope, final NamespacedId namespacedId) {
     return execute(new TransactionExecutor.Function<MetadataDataset, Map<String, String>>() {
       @Override
       public Map<String, String> apply(MetadataDataset input) throws Exception {
-        return input.getProperties(entityId);
+        return input.getProperties(namespacedId);
       }
     }, scope);
   }
 
   @Override
-  public Set<String> getTags(Id.NamespacedId entityId) {
+  public Set<String> getTags(NamespacedId namespacedId) {
     return ImmutableSet.<String>builder()
-      .addAll(getTags(MetadataScope.USER, entityId))
-      .addAll(getTags(MetadataScope.SYSTEM, entityId))
+      .addAll(getTags(MetadataScope.USER, namespacedId))
+      .addAll(getTags(MetadataScope.SYSTEM, namespacedId))
       .build();
   }
 
   /**
-   * @return the tags for the specified {@link Id.NamespacedId}
+   * @return the tags for the specified {@link NamespacedId}
    */
   @Override
-  public Set<String> getTags(MetadataScope scope, final Id.NamespacedId entityId) {
+  public Set<String> getTags(MetadataScope scope, final NamespacedId namespacedId) {
     return execute(new TransactionExecutor.Function<MetadataDataset, Set<String>>() {
       @Override
       public Set<String> apply(MetadataDataset input) throws Exception {
-        return input.getTags(entityId);
+        return input.getTags(namespacedId);
       }
     }, scope);
   }
 
   @Override
-  public void removeMetadata(Id.NamespacedId entityId) {
-    removeMetadata(MetadataScope.USER, entityId);
-    removeMetadata(MetadataScope.SYSTEM, entityId);
+  public void removeMetadata(NamespacedId namespacedId) {
+    removeMetadata(MetadataScope.USER, namespacedId);
+    removeMetadata(MetadataScope.SYSTEM, namespacedId);
   }
 
   /**
-   * Removes all metadata (including properties and tags) for the specified {@link Id.NamespacedId}.
+   * Removes all metadata (including properties and tags) for the specified {@link NamespacedId}.
    */
   @Override
-  public void removeMetadata(final MetadataScope scope, final Id.NamespacedId entityId) {
+  public void removeMetadata(final MetadataScope scope, final NamespacedId namespacedId) {
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
       public void apply(MetadataDataset input) throws Exception {
-        previousRef.set(new MetadataRecord(entityId, scope, input.getProperties(entityId), input.getTags(entityId)));
-        input.removeProperties(entityId);
-        input.removeTags(entityId);
+        previousRef.set(new MetadataRecord(namespacedId, scope, input.getProperties(namespacedId), input.getTags(namespacedId)));
+        input.removeProperties(namespacedId);
+        input.removeTags(namespacedId);
       }
     }, scope);
     MetadataRecord previous = previousRef.get();
-    publish(previous, new MetadataRecord(entityId, scope), new MetadataRecord(previous));
+    publish(previous, new MetadataRecord(namespacedId, scope), new MetadataRecord(previous));
   }
 
   /**
-   * Removes all properties for the specified {@link Id.NamespacedId}.
+   * Removes all properties for the specified {@link NamespacedId}.
    */
   @Override
-  public void removeProperties(final MetadataScope scope, final Id.NamespacedId entityId) {
+  public void removeProperties(final MetadataScope scope, final NamespacedId namespacedId) {
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
       public void apply(MetadataDataset input) throws Exception {
-        previousRef.set(new MetadataRecord(entityId, scope, input.getProperties(entityId), input.getTags(entityId)));
-        input.removeProperties(entityId);
+        previousRef.set(new MetadataRecord(namespacedId, scope, input.getProperties(namespacedId), input.getTags(namespacedId)));
+        input.removeProperties(namespacedId);
       }
     }, scope);
-    publish(previousRef.get(), new MetadataRecord(entityId, scope),
-            new MetadataRecord(entityId, scope, previousRef.get().getProperties(), EMPTY_TAGS));
+    publish(previousRef.get(), new MetadataRecord(namespacedId, scope),
+            new MetadataRecord(namespacedId, scope, previousRef.get().getProperties(), EMPTY_TAGS));
   }
 
   /**
-   * Removes the specified properties of the {@link Id.NamespacedId}.
+   * Removes the specified properties of the {@link NamespacedId}.
    */
   @Override
-  public void removeProperties(final MetadataScope scope, final Id.NamespacedId entityId, final String... keys) {
+  public void removeProperties(final MetadataScope scope, final NamespacedId namespacedId, final String... keys) {
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
     final ImmutableMap.Builder<String, String> deletesBuilder = ImmutableMap.builder();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
       public void apply(MetadataDataset input) throws Exception {
-        previousRef.set(new MetadataRecord(entityId, scope, input.getProperties(entityId), input.getTags(entityId)));
+        previousRef.set(new MetadataRecord(namespacedId, scope, input.getProperties(namespacedId), input.getTags(namespacedId)));
         for (String key : keys) {
-          MetadataEntry record = input.getProperty(entityId, key);
+          MetadataEntry record = input.getProperty(namespacedId, key);
           if (record == null) {
             continue;
           }
           deletesBuilder.put(record.getKey(), record.getValue());
         }
-        input.removeProperties(entityId, keys);
+        input.removeProperties(namespacedId, keys);
       }
     }, scope);
-    publish(previousRef.get(), new MetadataRecord(entityId, scope),
-            new MetadataRecord(entityId, scope, deletesBuilder.build(), EMPTY_TAGS));
+    publish(previousRef.get(), new MetadataRecord(namespacedId, scope),
+            new MetadataRecord(namespacedId, scope, deletesBuilder.build(), EMPTY_TAGS));
   }
 
   /**
-   * Removes all the tags from the {@link Id.NamespacedId}
+   * Removes all the tags from the {@link NamespacedId}
    */
   @Override
-  public void removeTags(final MetadataScope scope, final Id.NamespacedId entityId) {
+  public void removeTags(final MetadataScope scope, final NamespacedId namespacedId) {
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
       public void apply(MetadataDataset input) throws Exception {
-        previousRef.set(new MetadataRecord(entityId, scope, input.getProperties(entityId), input.getTags(entityId)));
-        input.removeTags(entityId);
+        previousRef.set(new MetadataRecord(namespacedId, scope, input.getProperties(namespacedId), input.getTags(namespacedId)));
+        input.removeTags(namespacedId);
       }
     }, scope);
     MetadataRecord previous = previousRef.get();
-    publish(previous, new MetadataRecord(entityId, scope),
-            new MetadataRecord(entityId, scope, EMPTY_PROPERTIES, previous.getTags()));
+    publish(previous, new MetadataRecord(namespacedId, scope),
+            new MetadataRecord(namespacedId, scope, EMPTY_PROPERTIES, previous.getTags()));
   }
 
   /**
-   * Removes the specified tags from the {@link Id.NamespacedId}
+   * Removes the specified tags from the {@link NamespacedId}
    */
   @Override
-  public void removeTags(final MetadataScope scope, final Id.NamespacedId entityId, final String ... tagsToRemove) {
+  public void removeTags(final MetadataScope scope, final NamespacedId namespacedId, final String ... tagsToRemove) {
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
       public void apply(MetadataDataset input) throws Exception {
-        previousRef.set(new MetadataRecord(entityId, scope, input.getProperties(entityId), input.getTags(entityId)));
-        input.removeTags(entityId, tagsToRemove);
+        previousRef.set(new MetadataRecord(namespacedId, scope, input.getProperties(namespacedId), input.getTags(namespacedId)));
+        input.removeTags(namespacedId, tagsToRemove);
       }
     }, scope);
-    publish(previousRef.get(), new MetadataRecord(entityId, scope),
-            new MetadataRecord(entityId, scope, EMPTY_PROPERTIES, Sets.newHashSet(tagsToRemove)));
+    publish(previousRef.get(), new MetadataRecord(namespacedId, scope),
+            new MetadataRecord(namespacedId, scope, EMPTY_PROPERTIES, Sets.newHashSet(tagsToRemove)));
   }
 
   @Override
@@ -382,7 +383,7 @@ public class DefaultMetadataStore implements MetadataStore {
     }, scope);
 
     // Score results
-    final Map<Id.NamespacedId, Integer> weightedResults = new HashMap<>();
+    final Map<NamespacedId, Integer> weightedResults = new HashMap<>();
     for (MetadataEntry metadataEntry : results) {
       Integer score = weightedResults.get(metadataEntry.getTargetId());
       score = score == null ? 0 : score;
@@ -390,38 +391,38 @@ public class DefaultMetadataStore implements MetadataStore {
     }
 
     // Sort the results by score
-    List<Map.Entry<Id.NamespacedId, Integer>> resultList = new ArrayList<>(weightedResults.entrySet());
+    List<Map.Entry<NamespacedId, Integer>> resultList = new ArrayList<>(weightedResults.entrySet());
     Collections.sort(resultList, SEARCH_RESULT_DESC_SCORE_COMPARATOR);
 
     // Fetch metadata for entities in the result list
     // Note: since the fetch is happening in a different transaction, the metadata for entities may have been
     // removed. It is okay not to have metadata for some results in case this happens.
-    Map<Id.NamespacedId, Metadata> systemMetadata = fetchMetadata(weightedResults.keySet(), MetadataScope.SYSTEM);
-    Map<Id.NamespacedId, Metadata> userMetadata = fetchMetadata(weightedResults.keySet(), MetadataScope.USER);
+    Map<NamespacedId, Metadata> systemMetadata = fetchMetadata(weightedResults.keySet(), MetadataScope.SYSTEM);
+    Map<NamespacedId, Metadata> userMetadata = fetchMetadata(weightedResults.keySet(), MetadataScope.USER);
 
     return addMetadataToResults(resultList, systemMetadata, userMetadata);
   }
 
-  private Map<Id.NamespacedId, Metadata> fetchMetadata(final Set<Id.NamespacedId> entityIds, MetadataScope scope) {
+  private Map<NamespacedId, Metadata> fetchMetadata(final Set<NamespacedId> namespacedIds, MetadataScope scope) {
     Set<Metadata> metadataSet =
       execute(new TransactionExecutor.Function<MetadataDataset, Set<Metadata>>() {
         @Override
         public Set<Metadata> apply(MetadataDataset input) throws Exception {
-          return input.getMetadata(entityIds);
+          return input.getMetadata(namespacedIds);
         }
       }, scope);
-    Map<Id.NamespacedId, Metadata> metadataMap = new HashMap<>();
+    Map<NamespacedId, Metadata> metadataMap = new HashMap<>();
     for (Metadata m : metadataSet) {
       metadataMap.put(m.getEntityId(), m);
     }
     return metadataMap;
   }
 
-  Set<MetadataSearchResultRecord> addMetadataToResults(List<Map.Entry<Id.NamespacedId, Integer>> results,
-                                                       Map<Id.NamespacedId, Metadata> systemMetadata,
-                                                       Map<Id.NamespacedId, Metadata> userMetadata) {
+  Set<MetadataSearchResultRecord> addMetadataToResults(List<Map.Entry<NamespacedId, Integer>> results,
+                                                       Map<NamespacedId, Metadata> systemMetadata,
+                                                       Map<NamespacedId, Metadata> userMetadata) {
     Set<MetadataSearchResultRecord> result = new LinkedHashSet<>();
-    for (Map.Entry<Id.NamespacedId, Integer> entry : results) {
+    for (Map.Entry<NamespacedId, Integer> entry : results) {
       ImmutableMap.Builder<MetadataScope, co.cask.cdap.proto.metadata.Metadata> builder = ImmutableMap.builder();
       // Add system metadata
       Metadata metadata = systemMetadata.get(entry.getKey());
@@ -444,21 +445,21 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
   @Override
-  public Set<MetadataRecord> getSnapshotBeforeTime(final Set<Id.NamespacedId> entityIds, final long timeMillis) {
+  public Set<MetadataRecord> getSnapshotBeforeTime(final Set<NamespacedId> namespacedIds, final long timeMillis) {
     return ImmutableSet.<MetadataRecord>builder()
-      .addAll(getSnapshotBeforeTime(MetadataScope.USER, entityIds, timeMillis))
-      .addAll(getSnapshotBeforeTime(MetadataScope.SYSTEM, entityIds, timeMillis))
+      .addAll(getSnapshotBeforeTime(MetadataScope.USER, namespacedIds, timeMillis))
+      .addAll(getSnapshotBeforeTime(MetadataScope.SYSTEM, namespacedIds, timeMillis))
       .build();
   }
 
   @Override
-  public Set<MetadataRecord> getSnapshotBeforeTime(MetadataScope scope, final Set<Id.NamespacedId> entityIds,
+  public Set<MetadataRecord> getSnapshotBeforeTime(MetadataScope scope, final Set<NamespacedId> namespacedIds,
                                                    final long timeMillis) {
     Set<Metadata> metadataHistoryEntries =
       execute(new TransactionExecutor.Function<MetadataDataset, Set<Metadata>>() {
         @Override
         public Set<Metadata> apply(MetadataDataset input) throws Exception {
-          return input.getSnapshotBeforeTime(entityIds, timeMillis);
+          return input.getSnapshotBeforeTime(namespacedIds, timeMillis);
         }
       }, scope);
 

@@ -16,7 +16,7 @@
 
 package co.cask.cdap.data2.metadata.dataset;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespacedId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
@@ -25,28 +25,28 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Represents the complete metadata of a {@link Id.NamespacedId} including its properties and tags.
+ * Represents the complete metadata of a {@link NamespacedId} including its properties and tags.
  */
 public class Metadata {
-  private final Id.NamespacedId entityId;
+  private final NamespacedId namespacedId;
   private final Map<String, String> properties;
   private final Set<String> tags;
 
   /**
    * Returns an empty {@link Metadata}
    */
-  public Metadata(Id.NamespacedId entityId) {
-    this(entityId, ImmutableMap.<String, String>of(), ImmutableSet.<String>of());
+  public Metadata(NamespacedId namespacedId) {
+    this(namespacedId, ImmutableMap.<String, String>of(), ImmutableSet.<String>of());
   }
 
-  public Metadata(Id.NamespacedId entityId, Map<String, String> properties, Set<String> tags) {
-    this.entityId = entityId;
+  public Metadata(NamespacedId namespacedId, Map<String, String> properties, Set<String> tags) {
+    this.namespacedId = namespacedId;
     this.properties = properties;
     this.tags = tags;
   }
 
-  public Id.NamespacedId getEntityId() {
-    return entityId;
+  public NamespacedId getEntityId() {
+    return namespacedId;
   }
 
   public Map<String, String> getProperties() {
@@ -68,20 +68,20 @@ public class Metadata {
 
     Metadata that = (Metadata) o;
 
-    return Objects.equals(entityId, that.entityId) &&
+    return Objects.equals(namespacedId, that.namespacedId) &&
       Objects.equals(properties, that.properties) &&
       Objects.equals(tags, that.tags);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(entityId, properties, tags);
+    return Objects.hash(namespacedId, properties, tags);
   }
 
   @Override
   public String toString() {
     return "Metadata{" +
-      "entityId=" + entityId +
+      "namespacedId=" + namespacedId +
       ", properties=" + properties +
       ", tags=" + tags +
       '}';

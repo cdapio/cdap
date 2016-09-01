@@ -16,7 +16,7 @@
 package co.cask.cdap.proto.metadata;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespacedId;
 
 import java.util.Collections;
 import java.util.Map;
@@ -27,21 +27,21 @@ import java.util.Objects;
  */
 @Beta
 public class MetadataSearchResultRecord {
-  private final Id.NamespacedId entityId;
+  private final NamespacedId namespacedId;
   private final Map<MetadataScope, Metadata> metadata;
 
-  public MetadataSearchResultRecord(Id.NamespacedId entityId) {
-    this.entityId = entityId;
+  public MetadataSearchResultRecord(NamespacedId namespacedId) {
+    this.namespacedId = namespacedId;
     this.metadata = Collections.emptyMap();
   }
 
-  public MetadataSearchResultRecord(Id.NamespacedId entityId, Map<MetadataScope, Metadata> metadata) {
-    this.entityId = entityId;
+  public MetadataSearchResultRecord(NamespacedId namespacedId, Map<MetadataScope, Metadata> metadata) {
+    this.namespacedId = namespacedId;
     this.metadata = metadata;
   }
 
-  public Id.NamespacedId getEntityId() {
-    return entityId;
+  public NamespacedId getEntityId() {
+    return namespacedId;
   }
 
   public Map<MetadataScope, Metadata> getMetadata() {
@@ -57,19 +57,19 @@ public class MetadataSearchResultRecord {
       return false;
     }
     MetadataSearchResultRecord that = (MetadataSearchResultRecord) o;
-    return Objects.equals(entityId, that.entityId) &&
+    return Objects.equals(namespacedId, that.namespacedId) &&
       Objects.equals(metadata, that.metadata);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(entityId, metadata);
+    return Objects.hash(namespacedId, metadata);
   }
 
   @Override
   public String toString() {
     return "MetadataSearchResultRecord{" +
-      "entityId=" + entityId +
+      "namespacedId=" + namespacedId +
       ", metadata=" + metadata +
       '}';
   }

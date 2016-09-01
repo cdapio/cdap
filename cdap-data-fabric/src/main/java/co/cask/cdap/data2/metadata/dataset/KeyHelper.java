@@ -18,7 +18,15 @@ package co.cask.cdap.data2.metadata.dataset;
 
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespacedId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.id.StreamViewId;
+
+import java.util.Arrays;
 
 /**
  * Helper methods for keys of {@link MetadataDataset}.
@@ -26,49 +34,49 @@ import co.cask.cdap.proto.ProgramType;
 // Note: these methods were refactored from MetadataDataset class. Once CDAP-3657 is fixed, these methods will need
 // to be cleaned up CDAP-4291
 final class KeyHelper {
-  static void addTargetIdToKey(MDSKey.Builder builder, Id.NamespacedId namespacedId) {
+  static void addTargetIdToKey(MDSKey.Builder builder, NamespacedId namespacedId) {
     String type = getTargetType(namespacedId);
-    if (type.equals(Id.Program.class.getSimpleName())) {
-      Id.Program program = (Id.Program) namespacedId;
-      String namespaceId = program.getNamespaceId();
-      String appId = program.getApplicationId();
+    if (type.equals(ProgramId.class.getSimpleName())) {
+      ProgramId program = (ProgramId) namespacedId;
+      String namespaceId = program.getNamespace();
+      String appId = program.getApplication();
       String programType = program.getType().name();
-      String programId = program.getId();
+      String programId = program.getProgram();
       builder.add(namespaceId);
       builder.add(appId);
       builder.add(programType);
       builder.add(programId);
-    } else if (type.equals(Id.Application.class.getSimpleName())) {
-      Id.Application application = (Id.Application) namespacedId;
-      String namespaceId = application.getNamespaceId();
-      String instanceId = application.getId();
+    } else if (type.equals(ApplicationId.class.getSimpleName())) {
+      ApplicationId application = (ApplicationId) namespacedId;
+      String namespaceId = application.getNamespace();
+      String instanceId = application.getApplication();
       builder.add(namespaceId);
       builder.add(instanceId);
-    } else if (type.equals(Id.DatasetInstance.class.getSimpleName())) {
-      Id.DatasetInstance datasetInstance = (Id.DatasetInstance) namespacedId;
-      String namespaceId = datasetInstance.getNamespaceId();
-      String instanceId = datasetInstance.getId();
+    } else if (type.equals(DatasetId.class.getSimpleName())) {
+      DatasetId datasetInstance = (DatasetId) namespacedId;
+      String namespaceId = datasetInstance.getNamespace();
+      String instanceId = datasetInstance.getDataset();
       builder.add(namespaceId);
       builder.add(instanceId);
-    } else if (type.equals(Id.Stream.class.getSimpleName())) {
-      Id.Stream stream = (Id.Stream) namespacedId;
-      String namespaceId = stream.getNamespaceId();
-      String instanceId = stream.getId();
+    } else if (type.equals(StreamId.class.getSimpleName())) {
+      StreamId stream = (StreamId) namespacedId;
+      String namespaceId = stream.getNamespace();
+      String instanceId = stream.getStream();
       builder.add(namespaceId);
       builder.add(instanceId);
-    } else if (type.equals(Id.Stream.View.class.getSimpleName())) {
-      Id.Stream.View view = (Id.Stream.View) namespacedId;
-      String namespaceId = view.getNamespaceId();
-      String streamId = view.getStreamId();
-      String viewId = view.getId();
+    } else if (type.equals(StreamViewId.class.getSimpleName())) {
+      StreamViewId view = (StreamViewId) namespacedId;
+      String namespaceId = view.getNamespace();
+      String streamId = view.getStream();
+      String viewId = view.getView();
       builder.add(namespaceId);
       builder.add(streamId);
       builder.add(viewId);
-    } else if (type.equals(Id.Artifact.class.getSimpleName())) {
-      Id.Artifact artifactId = (Id.Artifact) namespacedId;
-      String namespaceId = artifactId.getNamespace().getId();
-      String name = artifactId.getName();
-      String version = artifactId.getVersion().getVersion();
+    } else if (type.equals(ArtifactId.class.getSimpleName())) {
+      ArtifactId artifactId = (ArtifactId) namespacedId;
+      String namespaceId = artifactId.getNamespace();
+      String name = artifactId.getArtifact();
+      String version = artifactId.getVersion();
       builder.add(namespaceId);
       builder.add(name);
       builder.add(version);
@@ -77,42 +85,42 @@ final class KeyHelper {
     }
   }
 
-  static Id.NamespacedId getTargetIdIdFromKey(MDSKey.Splitter keySplitter, String type) {
+  static NamespacedId getTargetIdIdFromKey(MDSKey.Splitter keySplitter, String type) {
     if (type.equals(Id.Program.class.getSimpleName())) {
       String namespaceId = keySplitter.getString();
       String appId = keySplitter.getString();
       String programType = keySplitter.getString();
       String programId = keySplitter.getString();
-      return Id.Program.from(namespaceId, appId, ProgramType.valueOf(programType), programId);
+      return ProgramId.fromIdParts(Arrays.asList(namespaceId, appId, programType, programId));
     } else if (type.equals(Id.Application.class.getSimpleName())) {
       String namespaceId = keySplitter.getString();
       String appId = keySplitter.getString();
-      return Id.Application.from(namespaceId, appId);
+      return ApplicationId.fromIdParts(Arrays.asList(namespaceId, appId));
     } else if (type.equals(Id.Artifact.class.getSimpleName())) {
       String namespaceId = keySplitter.getString();
       String name = keySplitter.getString();
       String version = keySplitter.getString();
-      return Id.Artifact.from(Id.Namespace.from(namespaceId), name, version);
+      return ArtifactId.fromIdParts(Arrays.asList(namespaceId, name, version));
     } else if (type.equals(Id.DatasetInstance.class.getSimpleName())) {
       String namespaceId = keySplitter.getString();
       String instanceId  = keySplitter.getString();
-      return Id.DatasetInstance.from(namespaceId, instanceId);
+      return DatasetId.fromIdParts(Arrays.asList(namespaceId, instanceId));
     } else if (type.equals(Id.Stream.class.getSimpleName())) {
       String namespaceId = keySplitter.getString();
       String instanceId  = keySplitter.getString();
-      return Id.Stream.from(namespaceId, instanceId);
+      return StreamId.fromIdParts(Arrays.asList(namespaceId, instanceId));
     } else if (type.equals(Id.Stream.View.class.getSimpleName())) {
       String namespaceId = keySplitter.getString();
       String streamId  = keySplitter.getString();
       String viewId = keySplitter.getString();
-      return Id.Stream.View.from(Id.Stream.from(namespaceId, streamId), viewId);
+      return StreamViewId.fromIdParts(Arrays.asList(namespaceId, streamId, viewId));
     }
     throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
   }
 
-  static String getTargetType(Id.NamespacedId namespacedId) {
-    if (namespacedId instanceof Id.Program) {
-      return Id.Program.class.getSimpleName();
+  static String getTargetType(NamespacedId namespacedId) {
+    if (namespacedId instanceof ProgramId) {
+      return ProgramId.class.getSimpleName();
     }
     return namespacedId.getClass().getSimpleName();
   }
