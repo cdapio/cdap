@@ -24,6 +24,7 @@ import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
@@ -32,6 +33,7 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.common.service.Services;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -77,6 +79,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class DatasetServiceManager extends AbstractIdleService {
 
+  private final CConfiguration cConf;
   private final DatasetService datasetService;
   private final ZKClientService zkClientService;
   private final DatasetFramework datasetFramework;
@@ -86,6 +89,7 @@ public class DatasetServiceManager extends AbstractIdleService {
   @Inject
   DatasetServiceManager(CConfiguration cConf, Configuration hConf) {
     Injector injector = createInjector(cConf, hConf);
+    this.cConf = cConf;
     this.datasetService = injector.getInstance(DatasetService.class);
     this.zkClientService = injector.getInstance(ZKClientService.class);
     this.datasetFramework = injector.getInstance(DatasetFramework.class);
@@ -100,7 +104,11 @@ public class DatasetServiceManager extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     if (!zkClientService.isRunning()) {
-      zkClientService.startAndWait();
+      Services.startAndWait(zkClientService, cConf.getLong(Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
+                            TimeUnit.MILLISECONDS,
+                            String.format("Connection timed out while trying to start ZooKeeper client. Please " +
+                                            "verify that the ZooKeeper quorum settings are correct. Currently " +
+                                            "configured as: %s", cConf.get(Constants.Zookeeper.QUORUM)));
     }
     datasetOpExecutorService.startAndWait();
     remoteSystemOperationsService.startAndWait();
