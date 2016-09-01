@@ -178,6 +178,12 @@ be used, provided its classes are serializable.
 
     sec.saveAsDataset(purchaseRDD, "purchases");
 
+**Note**: Spark programs can read or write to datasets in different namespaces using
+:ref:`Cross Namespace Dataset Access <cross-namespace-dataset-access>` by passing a
+``String`` containing the :term:`namespace` as an additional parameter before the :term:`dataset`
+name parameter. (By default, if the namespace parameter is not supplied, the namespace in
+which the program runs is used.).
+
 
 Spark and Streams
 =================
@@ -231,6 +237,11 @@ In Java, you can read custom objects from a stream by providing a ``decoderType`
 `StreamEventDecoder <../../reference-manual/javadocs/co/cask/cdap/api/stream/StreamEventDecoder.html>`__::
 
     sec.fromStream(streamName, startTime, endTime, decoderType, keyType, valueType);
+
+**Note**: Spark programs can read from streams in different namespaces by passing a
+``String`` containing the :term:`namespace` as an additional parameter before the
+:term:`stream` name parameter. (By default, if the namespace parameter is not supplied,
+the namespace in which the program runs is used.)
 
 
 Spark and Services
