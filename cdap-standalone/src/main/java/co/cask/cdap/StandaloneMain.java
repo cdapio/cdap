@@ -36,7 +36,7 @@ import co.cask.cdap.common.io.URLConnections;
 import co.cask.cdap.common.startup.ConfigurationLogger;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.OSDetector;
-import co.cask.cdap.common.zookeeper.ZooKeeperUtils;
+import co.cask.cdap.common.service.Services;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -79,7 +79,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.inject.Guice;
@@ -99,6 +98,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Standalone Main.
@@ -250,7 +250,11 @@ public class StandaloneMain {
     }
 
     if (zkClient != null) {
-      ZooKeeperUtils.connectWithTimeout(zkClient, cConf);
+      Services.startAndWait(zkClient, cConf.getLong(Constants.Zookeeper.CFG_CLIENT_TIMEOUT_MILLIS),
+                            TimeUnit.MILLISECONDS,
+                            String.format("Connection timed out while trying to start ZooKeeper client. Please " +
+                                            "verify that the ZooKeeper quorum settings are correct. Currently " +
+                                            "configured as: %s", cConf.get(Constants.Zookeeper.QUORUM)));
     }
 
     if (kafkaClient != null) {

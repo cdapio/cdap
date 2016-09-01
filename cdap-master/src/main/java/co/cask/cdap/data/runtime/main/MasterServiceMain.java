@@ -40,7 +40,7 @@ import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.common.zookeeper.ZooKeeperUtils;
+import co.cask.cdap.common.service.Services;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -82,7 +82,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
@@ -230,7 +229,11 @@ public class MasterServiceMain extends DaemonMain {
                               QueueConstants.DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR));
     createSystemHBaseNamespace();
     updateConfigurationTable();
-    ZooKeeperUtils.connectWithTimeout(zkClient, cConf);
+    Services.startAndWait(zkClient, cConf.getLong(Constants.Zookeeper.CFG_CLIENT_TIMEOUT_MILLIS),
+                          TimeUnit.MILLISECONDS,
+                          String.format("Connection timed out while trying to start ZooKeeper client. Please " +
+                                          "verify that the ZooKeeper quorum settings are correct. Currently " +
+                                          "configured as: %s", cConf.get(Constants.Zookeeper.QUORUM)));
     // Tries to create the ZK root node (which can be namespaced through the zk connection string)
     Futures.getUnchecked(ZKOperations.ignoreError(zkClient.create("/", null, CreateMode.PERSISTENT),
                                                   KeeperException.NodeExistsException.class, null));
