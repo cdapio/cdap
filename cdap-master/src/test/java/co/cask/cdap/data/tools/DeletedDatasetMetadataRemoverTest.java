@@ -88,9 +88,9 @@ public class DeletedDatasetMetadataRemoverTest {
     DS_FRAMEWORK_TEST_UTIL.createInstance("table", ds2.toId(), DatasetProperties.EMPTY);
     DS_FRAMEWORK_TEST_UTIL.createInstance("table", ds3.toId(), DatasetProperties.EMPTY);
     Assert.assertEquals(3, DS_FRAMEWORK_TEST_UTIL.list(NamespaceId.DEFAULT.toId()).size());
-    metadataStore.addTags(MetadataScope.USER, ds1.toId(), "ds1Tag1", "ds1Tag2");
-    metadataStore.setProperties(MetadataScope.USER, ds2.toId(), Collections.singletonMap("ds2Key", "ds2Value"));
-    metadataStore.addTags(MetadataScope.USER, ds3.toId(), "ds3Tag1", "ds3Tag2");
+    metadataStore.addTags(MetadataScope.USER, ds1, "ds1Tag1", "ds1Tag2");
+    metadataStore.setProperties(MetadataScope.USER, ds2, Collections.singletonMap("ds2Key", "ds2Value"));
+    metadataStore.addTags(MetadataScope.USER, ds3, "ds3Tag1", "ds3Tag2");
 
     verifyMetadataRemoval(ds1);
     verifyMetadataRemoval(ds2);
@@ -105,12 +105,12 @@ public class DeletedDatasetMetadataRemoverTest {
   }
 
   private void assertNonEmptyMetadata(DatasetId dsId) {
-    MetadataRecord metadata = metadataStore.getMetadata(MetadataScope.USER, dsId.toId());
+    MetadataRecord metadata = metadataStore.getMetadata(MetadataScope.USER, dsId);
     Assert.assertTrue(!metadata.getProperties().isEmpty() || !metadata.getTags().isEmpty());
   }
 
   private void assertEmptyMetadata(DatasetId dsId) {
-    MetadataRecord metadata = metadataStore.getMetadata(MetadataScope.USER, dsId.toId());
+    MetadataRecord metadata = metadataStore.getMetadata(MetadataScope.USER, dsId);
     Assert.assertTrue(metadata.getProperties().isEmpty() && metadata.getTags().isEmpty());
   }
 }

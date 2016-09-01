@@ -27,8 +27,7 @@ import java.util.Objects;
 /**
  * Uniquely identifies a program run.
  */
-public class ProgramRunId extends EntityId implements NamespacedId, ParentedId<ProgramId> {
-  private final String namespace;
+public class ProgramRunId extends NamespacedEntityId implements ParentedId<ProgramId> {
   private final String application;
   private final ProgramType type;
   private final String program;
@@ -36,16 +35,11 @@ public class ProgramRunId extends EntityId implements NamespacedId, ParentedId<P
   private transient Integer hashCode;
 
   public ProgramRunId(String namespace, String application, ProgramType type, String program, String run) {
-    super(EntityType.PROGRAM_RUN);
-    this.namespace = namespace;
+    super(namespace, EntityType.PROGRAM_RUN);
     this.application = application;
     this.type = type;
     this.program = program;
     this.run = run;
-  }
-
-  public String getNamespace() {
-    return namespace;
   }
 
   public String getApplication() {

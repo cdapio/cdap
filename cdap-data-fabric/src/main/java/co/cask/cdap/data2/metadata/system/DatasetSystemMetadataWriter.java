@@ -75,7 +75,7 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
                                      long createTime,
                                      @Nullable Dataset dataset, @Nullable String dsType,
                                      @Nullable String description) {
-    super(metadataStore, dsInstance);
+    super(metadataStore, dsInstance.toEntityId());
     this.dsInstance = dsInstance;
     this.dsType = dsType;
     this.dsProperties = dsProperties;

@@ -17,6 +17,10 @@
 package co.cask.cdap.data2.metadata.lineage;
 
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
@@ -58,12 +62,12 @@ public final class LineageCollapser {
     LOG.trace("Collapsed relations: {}", multimap.asMap());
 
     for (Map.Entry<CollapseKey, Collection<Relation>> collapsedEntry : multimap.asMap().entrySet()) {
-      Id.NamespacedId data = collapsedEntry.getKey().data;
-      Id.Program program = collapsedEntry.getKey().program;
+      NamespacedEntityId data = (NamespacedEntityId) collapsedEntry.getKey().data.toEntityId();
+      ProgramId program = collapsedEntry.getKey().program.toEntityId();
 
       Set<AccessType> accessTypes = new HashSet<>();
       Set<RunId> runs = new HashSet<>();
-      Set<Id.NamespacedId> components = new HashSet<>();
+      Set<NamespacedEntityId> components = new HashSet<>();
 
       for (Relation relation : collapsedEntry.getValue()) {
         accessTypes.add(relation.getAccess());
@@ -76,7 +80,8 @@ public final class LineageCollapser {
   }
 
   private static CollapseKey getCollapseKey(Relation relation, Set<CollapseType> collapseTypes) {
-    CollapseKeyBuilder builder = new CollapseKeyBuilder(relation.getData(), relation.getProgram());
+    CollapseKeyBuilder builder = new CollapseKeyBuilder((Id.NamespacedId) relation.getData().toId(),
+                                                        relation.getProgram().toId());
     if (!collapseTypes.contains(CollapseType.ACCESS)) {
       builder.setAccess(relation.getAccess());
     }
@@ -84,7 +89,7 @@ public final class LineageCollapser {
       builder.setRun(relation.getRun());
     }
     if (!collapseTypes.contains(CollapseType.COMPONENT)) {
-      builder.setComponents(relation.getComponents());
+      builder.setComponents(relation.getIdComponents());
     }
     return builder.build();
   }
@@ -118,15 +123,15 @@ public final class LineageCollapser {
     }
   }
 
-  private static CollapsedRelation toCollapsedRelation(Id.NamespacedId data, Id.Program program,
+  private static CollapsedRelation toCollapsedRelation(NamespacedEntityId data, ProgramId program,
                                                        Set<AccessType> accesses, Set<RunId> runs,
-                                                       Set<Id.NamespacedId> components) {
-    Preconditions.checkState(data instanceof Id.DatasetInstance || data instanceof Id.Stream,
+                                                       Set<NamespacedEntityId> components) {
+    Preconditions.checkState(data instanceof DatasetId || data instanceof StreamId,
                              "%s should be an instance of dataset or stream", data);
-    if (data instanceof Id.DatasetInstance) {
-      return new CollapsedRelation((Id.DatasetInstance) data, program, accesses, runs, components);
+    if (data instanceof DatasetId) {
+      return new CollapsedRelation((DatasetId) data, program, accesses, runs, components);
     }
-    return new CollapsedRelation((Id.Stream) data, program, accesses, runs, components);
+    return new CollapsedRelation((StreamId) data, program, accesses, runs, components);
   }
 
   private static final class CollapseKey {

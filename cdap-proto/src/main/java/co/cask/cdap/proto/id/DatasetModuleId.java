@@ -26,19 +26,13 @@ import java.util.Objects;
 /**
  * Uniquely identifies a dataset module.
  */
-public class DatasetModuleId extends EntityId implements NamespacedId, ParentedId<NamespaceId> {
-  private final String namespace;
+public class DatasetModuleId extends NamespacedEntityId implements ParentedId<NamespaceId> {
   private final String module;
   private transient Integer hashCode;
 
   public DatasetModuleId(String namespace, String module) {
-    super(EntityType.DATASET_MODULE);
-    this.namespace = namespace;
+    super(namespace, EntityType.DATASET_MODULE);
     this.module = module;
-  }
-
-  public String getNamespace() {
-    return namespace;
   }
 
   public String getModule() {

@@ -130,7 +130,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
       }
 
       // Remove metadata for the deleted program
-      metadataStore.removeMetadata(programId);
+      metadataStore.removeMetadata(programId.toEntityId());
     }
     if (!deletedFlows.isEmpty()) {
       deleteMetrics(appSpec.getApplicationId(), deletedFlows);

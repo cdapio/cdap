@@ -34,7 +34,7 @@ import javax.annotation.Nullable;
  *     <li>
  *       Implement interfaces
  *       <ol>
- *         <li>{@link NamespacedId} if the new ID belongs to a namespace</li>
+ *         <li>{@link NamespacedEntityId} if the new ID belongs to a namespace</li>
  *         <li>{@link ParentedId} if the new ID has a parent ID</li>
  *       </ol>
  *     </li>

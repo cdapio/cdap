@@ -33,7 +33,7 @@ import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.NamespacedId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -127,8 +127,8 @@ public class AuditPublishTest {
     Multimap<AuditType, EntityId> actualAuditEntities = HashMultimap.create();
     for (AuditMessage message : publishedMessages) {
       EntityId entityId = message.getEntityId();
-      if (entityId instanceof NamespacedId) {
-        if (((NamespacedId) entityId).getNamespace().equals(NamespaceId.SYSTEM.getNamespace())) {
+      if (entityId instanceof NamespacedEntityId) {
+        if (((NamespacedEntityId) entityId).getNamespace().equals(NamespaceId.SYSTEM.getNamespace())) {
           // Ignore system audit messages
           continue;
         }

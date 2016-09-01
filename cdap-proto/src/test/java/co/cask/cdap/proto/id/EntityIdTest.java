@@ -21,10 +21,12 @@ import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.codec.IdTypeAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,6 +41,8 @@ public class EntityIdTest {
     .registerTypeAdapter(Id.class, new IdTypeAdapter())
     .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
     .create();
+
+  private static final Type MAP_TYPE = new TypeToken<Map<String, Object>>() { }.getType();
 
   private static final List<EntityId> ids = new ArrayList<>();
   static {
@@ -228,7 +232,7 @@ public class EntityIdTest {
     }
 
     for (Map.Entry<? extends EntityId, String> toJsonEntry : idsToJson.entrySet()) {
-      Assert.assertEquals(toJsonEntry.getValue(), GSON.toJson(toJsonEntry.getKey()));
+      Assert.assertEquals(jsonToMap(toJsonEntry.getValue()), jsonToMap(GSON.toJson(toJsonEntry.getKey())));
     }
   }
 
@@ -269,4 +273,7 @@ public class EntityIdTest {
     }
   }
 
+  private Map<String, Object> jsonToMap(String json) {
+    return GSON.fromJson(json, MAP_TYPE);
+  }
 }

@@ -27,21 +27,15 @@ import java.util.Objects;
  * Uniquely identifies a notification feed.
  */
 // TODO: toString() must be namespace.category.feed for backwards compatibility with Id.NotificationFeed
-public class NotificationFeedId extends EntityId implements NamespacedId, ParentedId<NamespaceId> {
-  private final String namespace;
+public class NotificationFeedId extends NamespacedEntityId implements ParentedId<NamespaceId> {
   private final String category;
   private final String feed;
   private transient Integer hashCode;
 
   public NotificationFeedId(String namespace, String category, String feed) {
-    super(EntityType.NOTIFICATION_FEED);
-    this.namespace = namespace;
+    super(namespace, EntityType.NOTIFICATION_FEED);
     this.category = category;
     this.feed = feed;
-  }
-
-  public String getNamespace() {
-    return namespace;
   }
 
   public String getCategory() {

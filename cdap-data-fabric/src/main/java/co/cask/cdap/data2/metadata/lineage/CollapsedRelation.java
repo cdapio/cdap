@@ -17,10 +17,17 @@
 package co.cask.cdap.data2.metadata.lineage;
 
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableSet;
 import org.apache.twill.api.RunId;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -28,14 +35,14 @@ import java.util.Set;
  * A {@link Relation} collapsed based on {@link CollapseType}.
  */
 public class CollapsedRelation {
-  private final Id.NamespacedId data;
-  private final Id.Program program;
+  private final NamespacedEntityId data;
+  private final ProgramId program;
   private final Set<AccessType> access;
   private final Set<RunId> runs;
-  private final Set<Id.NamespacedId> components;
+  private final Set<NamespacedEntityId> components;
 
-  public CollapsedRelation(Id.DatasetInstance dataset, Id.Program program, Set<AccessType> access, Set<RunId> runs,
-                           Set<Id.NamespacedId> components) {
+  public CollapsedRelation(DatasetId dataset, ProgramId program, Set<AccessType> access, Set<RunId> runs,
+                           Set<NamespacedEntityId> components) {
     this.data = dataset;
     this.program = program;
     this.access = ImmutableSet.copyOf(access);
@@ -43,8 +50,8 @@ public class CollapsedRelation {
     this.components = ImmutableSet.copyOf(components);
   }
 
-  public CollapsedRelation(Id.Stream stream, Id.Program program, Set<AccessType> access, Set<RunId> runs,
-                           Set<Id.NamespacedId> components) {
+  public CollapsedRelation(StreamId stream, ProgramId program, Set<AccessType> access, Set<RunId> runs,
+                           Set<NamespacedEntityId> components) {
     this.data = stream;
     this.program = program;
     this.access = ImmutableSet.copyOf(access);
@@ -52,11 +59,11 @@ public class CollapsedRelation {
     this.components = ImmutableSet.copyOf(components);
   }
 
-  public Id.NamespacedId getData() {
+  public NamespacedEntityId getData() {
     return data;
   }
 
-  public Id.Program getProgram() {
+  public ProgramId getProgram() {
     return program;
   }
 
@@ -68,8 +75,21 @@ public class CollapsedRelation {
     return runs;
   }
 
-  public Set<Id.NamespacedId> getComponents() {
+  public Set<NamespacedEntityId> getComponents() {
     return components;
+  }
+
+  /**
+   * Temporary fix while phasing out usages of the {@link Id} class.
+   */
+  public Set<Id.NamespacedId> getIdComponents() {
+    Set<NamespacedEntityId> components = getComponents();
+    return new HashSet<>(Collections2.transform(components, new Function<NamespacedEntityId, Id.NamespacedId>() {
+      @Override
+      public Id.NamespacedId apply(NamespacedEntityId namespacedEntityId) {
+        return (Id.NamespacedId) namespacedEntityId.toId();
+      }
+    }));
   }
 
   @Override

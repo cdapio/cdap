@@ -28,6 +28,7 @@ import co.cask.cdap.proto.id.EntityIdCompatible;
 import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.FlowletQueueId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.NotificationFeedId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -116,7 +117,7 @@ public abstract class Id implements EntityIdCompatible {
   /**
    * Indicates that the ID belongs to a namespace.
    *
-   * @deprecated As of 3.3.0, use {@link co.cask.cdap.proto.id.NamespacedId}.
+   * @deprecated As of 3.3.0, use {@link NamespacedEntityId}.
    */
   @Deprecated
   public abstract static class NamespacedId extends Id {

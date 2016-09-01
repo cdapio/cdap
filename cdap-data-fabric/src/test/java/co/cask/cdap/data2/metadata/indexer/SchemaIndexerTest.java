@@ -18,7 +18,7 @@ package co.cask.cdap.data2.metadata.indexer;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;
@@ -36,7 +36,7 @@ public class SchemaIndexerTest {
     Schema simpleSchema = Schema.of(Schema.Type.INT);
     Set<String> expected = Collections.emptySet();
     SchemaIndexer indexer = new SchemaIndexer();
-    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from("ns1", "ds1");
+    DatasetId datasetInstance = new DatasetId("ns1", "ds1");
     Set<String> actual = indexer.getIndexes(new MetadataEntry(datasetInstance, "schema", simpleSchema.toString()));
     Assert.assertEquals(expected, actual);
   }
@@ -53,7 +53,7 @@ public class SchemaIndexerTest {
                                                                             Schema.of(Schema.Type.DOUBLE))));
     Set<String> expected = ImmutableSet.of("record1", "record1:RECORD", "x", "x:STRING", "y", "y:ARRAY", "z", "z:MAP");
     SchemaIndexer indexer = new SchemaIndexer();
-    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from("ns1", "ds1");
+    DatasetId datasetInstance = new DatasetId("ns1", "ds1");
     Set<String> actual = indexer.getIndexes(new MetadataEntry(datasetInstance, "schema", simpleSchema.toString()));
     Assert.assertEquals(expected, actual);
   }
@@ -93,7 +93,7 @@ public class SchemaIndexerTest {
                                            "y", "y:ARRAY", "z", "z:MAP", "record22", "record22:RECORD", "a", "a:MAP",
                                            "i", "i:INT", "j", "j:UNION", "record1", "record1:RECORD");
     SchemaIndexer indexer = new SchemaIndexer();
-    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from("ns1", "ds1");
+    DatasetId datasetInstance = new DatasetId("ns1", "ds1");
     Set<String> actual = indexer.getIndexes(new MetadataEntry(datasetInstance, "schema",
                                                               superComplexSchema.toString()));
     Assert.assertEquals(expected, actual);

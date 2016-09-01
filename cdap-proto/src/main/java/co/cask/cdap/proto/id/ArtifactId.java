@@ -26,15 +26,13 @@ import java.util.Objects;
 /**
  * Uniquely identifies an artifact.
  */
-public class ArtifactId extends EntityId implements NamespacedId, ParentedId<NamespaceId> {
-  private final String namespace;
+public class ArtifactId extends NamespacedEntityId implements ParentedId<NamespaceId> {
   private final String artifact;
   private final String version;
   private transient Integer hashCode;
 
   public ArtifactId(String namespace, String artifact, String version) {
-    super(EntityType.ARTIFACT);
-    this.namespace = namespace;
+    super(namespace, EntityType.ARTIFACT);
     this.artifact = artifact;
     this.version = version;
   }

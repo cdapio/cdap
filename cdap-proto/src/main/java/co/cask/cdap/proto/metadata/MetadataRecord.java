@@ -16,7 +16,7 @@
 
 package co.cask.cdap.proto.metadata;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 
 import java.util.Collections;
 import java.util.Map;
@@ -24,12 +24,12 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Represents the complete metadata of a {@link Id.NamespacedId} including its properties, tags in a given
+ * Represents the complete metadata of a {@link NamespacedEntityId} including its properties, tags in a given
  * {@link MetadataScope}
  */
 @Deprecated
 public class MetadataRecord {
-  private final Id.NamespacedId entityId;
+  private final NamespacedEntityId entityId;
   private final MetadataScope scope;
   private final Map<String, String> properties;
   private final Set<String> tags;
@@ -37,7 +37,7 @@ public class MetadataRecord {
   /**
    * Returns an empty {@link MetadataRecord} in the specified {@link MetadataScope}.
    */
-  public MetadataRecord(Id.NamespacedId entityId, MetadataScope scope) {
+  public MetadataRecord(NamespacedEntityId entityId, MetadataScope scope) {
     this(entityId, scope, Collections.<String, String>emptyMap(), Collections.<String>emptySet());
   }
 
@@ -48,7 +48,7 @@ public class MetadataRecord {
     this(other.getEntityId(), other.getScope(), other.getProperties(), other.getTags());
   }
 
-  public MetadataRecord(Id.NamespacedId entityId, MetadataScope scope, Map<String, String> properties,
+  public MetadataRecord(NamespacedEntityId entityId, MetadataScope scope, Map<String, String> properties,
                         Set<String> tags) {
     this.entityId = entityId;
     this.scope = scope;
@@ -56,7 +56,7 @@ public class MetadataRecord {
     this.tags = tags;
   }
 
-  public Id.NamespacedId getEntityId() {
+  public NamespacedEntityId getEntityId() {
     return entityId;
   }
 

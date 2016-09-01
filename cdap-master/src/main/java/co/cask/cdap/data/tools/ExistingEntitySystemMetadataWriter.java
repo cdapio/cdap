@@ -44,7 +44,12 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;
@@ -85,7 +90,7 @@ public class ExistingEntitySystemMetadataWriter {
 
   public void write(DatasetFramework dsFramework) throws Exception {
     for (NamespaceMeta namespaceMeta : nsStore.list()) {
-      Id.Namespace namespace = Id.Namespace.from(namespaceMeta.getName());
+      NamespaceId namespace = new NamespaceId(namespaceMeta.getName());
       writeSystemMetadataForArtifacts(namespace);
       writeSystemMetadataForApps(namespace);
       writeSystemMetadataForDatasets(namespace, dsFramework);
@@ -93,27 +98,28 @@ public class ExistingEntitySystemMetadataWriter {
     }
   }
 
-  private void writeSystemMetadataForArtifacts(Id.Namespace namespace) throws IOException {
-    for (ArtifactDetail artifactDetail : artifactStore.getArtifacts(namespace.toEntityId())) {
-      ArtifactInfo artifactInfo = new ArtifactInfo(artifactDetail.getDescriptor().getArtifactId(),
+  private void writeSystemMetadataForArtifacts(NamespaceId namespace) throws IOException {
+    for (ArtifactDetail artifactDetail : artifactStore.getArtifacts(namespace)) {
+      co.cask.cdap.api.artifact.ArtifactId artifact = artifactDetail.getDescriptor().getArtifactId();
+      ArtifactInfo artifactInfo = new ArtifactInfo(artifact,
                                                    artifactDetail.getMeta().getClasses(),
                                                    artifactDetail.getMeta().getProperties());
-      Id.Artifact artifactId = Id.Artifact.from(namespace, artifactDetail.getDescriptor().getArtifactId());
+      ArtifactId artifactId = namespace.artifact(artifact.getName(), artifact.getVersion().getVersion());
       SystemMetadataWriter writer = new ArtifactSystemMetadataWriter(metadataStore, artifactId, artifactInfo);
       writer.write();
     }
   }
 
-  private void writeSystemMetadataForApps(Id.Namespace namespace) {
-    for (ApplicationSpecification appSpec : store.getAllApplications(namespace)) {
-      Id.Application app = Id.Application.from(namespace, appSpec.getName());
+  private void writeSystemMetadataForApps(NamespaceId namespace) {
+    for (ApplicationSpecification appSpec : store.getAllApplications(namespace.toId())) {
+      ApplicationId app = namespace.app(appSpec.getName());
       SystemMetadataWriter writer = new AppSystemMetadataWriter(metadataStore, app, appSpec);
       writer.write();
       writeSystemMetadataForPrograms(app, appSpec);
     }
   }
 
-  private void writeSystemMetadataForPrograms(Id.Application app, ApplicationSpecification appSpec) {
+  private void writeSystemMetadataForPrograms(ApplicationId app, ApplicationSpecification appSpec) {
     writeSystemMetadataForPrograms(app, ProgramType.FLOW, appSpec.getFlows().values());
     writeSystemMetadataForPrograms(app, ProgramType.MAPREDUCE, appSpec.getMapReduce().values());
     writeSystemMetadataForPrograms(app, ProgramType.SERVICE, appSpec.getServices().values());
@@ -122,34 +128,34 @@ public class ExistingEntitySystemMetadataWriter {
     writeSystemMetadataForPrograms(app, ProgramType.WORKFLOW, appSpec.getWorkflows().values());
   }
 
-  private void writeSystemMetadataForPrograms(Id.Application app, ProgramType programType,
+  private void writeSystemMetadataForPrograms(ApplicationId app, ProgramType programType,
                                               Collection<? extends ProgramSpecification> programSpecs) {
     for (ProgramSpecification programSpec : programSpecs) {
-      ProgramId programId = app.toEntityId().program(programType, programSpec.getName());
+      ProgramId programId = app.program(programType, programSpec.getName());
       SystemMetadataWriter writer = new ProgramSystemMetadataWriter(metadataStore, programId, programSpec);
       writer.write();
     }
   }
 
-  private void writeSystemMetadataForDatasets(Id.Namespace namespace, DatasetFramework dsFramework)
+  private void writeSystemMetadataForDatasets(NamespaceId namespace, DatasetFramework dsFramework)
     throws DatasetManagementException, IOException {
     SystemDatasetInstantiatorFactory systemDatasetInstantiatorFactory =
       new SystemDatasetInstantiatorFactory(locationFactory, dsFramework, cConf);
     try (SystemDatasetInstantiator systemDatasetInstantiator = systemDatasetInstantiatorFactory.create()) {
-      for (DatasetSpecificationSummary summary : dsFramework.getInstances(namespace)) {
-        Id.DatasetInstance dsInstance = Id.DatasetInstance.from(namespace, summary.getName());
+      for (DatasetSpecificationSummary summary : dsFramework.getInstances(namespace.toId())) {
+        DatasetId dsInstance = namespace.dataset(summary.getName());
         DatasetProperties dsProperties = DatasetProperties.of(summary.getProperties());
         String dsType = summary.getType();
         Dataset dataset = null;
         try {
           try {
-            dataset = systemDatasetInstantiator.getDataset(dsInstance);
+            dataset = systemDatasetInstantiator.getDataset(dsInstance.toId());
           } catch (Exception e) {
             LOG.warn("Exception while instantiating dataset {}", dsInstance, e);
           }
 
           SystemMetadataWriter writer =
-            new DatasetSystemMetadataWriter(metadataStore, dsInstance, dsProperties, dataset, dsType,
+            new DatasetSystemMetadataWriter(metadataStore, dsInstance.toId(), dsProperties, dataset, dsType,
                                             summary.getDescription());
           writer.write();
         } finally {
@@ -161,14 +167,14 @@ public class ExistingEntitySystemMetadataWriter {
     }
   }
 
-  private void writeSystemMetadataForStreams(Id.Namespace namespace) throws Exception {
-    for (StreamSpecification streamSpec : store.getAllStreams(namespace)) {
-      Id.Stream streamId = Id.Stream.from(namespace, streamSpec.getName());
+  private void writeSystemMetadataForStreams(NamespaceId namespace) throws Exception {
+    for (StreamSpecification streamSpec : store.getAllStreams(namespace.toId())) {
+      StreamId streamId = namespace.stream(streamSpec.getName());
       SystemMetadataWriter writer =
-        new StreamSystemMetadataWriter(metadataStore, streamId, streamAdmin.getConfig(streamId),
+        new StreamSystemMetadataWriter(metadataStore, streamId.toId(), streamAdmin.getConfig(streamId.toId()),
                                        streamSpec.getDescription());
       writer.write();
-      for (Id.Stream.View view : streamAdmin.listViews(streamId)) {
+      for (Id.Stream.View view : streamAdmin.listViews(streamId.toId())) {
         writer = new ViewSystemMetadataWriter(metadataStore, view, viewAdmin.get(view));
         writer.write();
       }

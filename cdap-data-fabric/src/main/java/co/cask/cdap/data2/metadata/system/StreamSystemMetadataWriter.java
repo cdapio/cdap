@@ -41,7 +41,7 @@ public class StreamSystemMetadataWriter extends AbstractSystemMetadataWriter {
 
   public StreamSystemMetadataWriter(MetadataStore metadataStore, Id.Stream streamId, StreamConfig config,
                                     long creationTime, @Nullable String description) {
-    super(metadataStore, streamId);
+    super(metadataStore, streamId.toEntityId());
     this.config = config;
     this.creationTime = creationTime;
     this.description = description;

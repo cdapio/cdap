@@ -38,7 +38,7 @@ import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.audit.payload.access.AccessPayload;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.NamespacedId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
@@ -386,8 +386,8 @@ public abstract class StreamAdminTest {
                        new Predicate<AuditMessage>() {
                          @Override
                          public boolean apply(AuditMessage input) {
-                           return !(input.getEntityId() instanceof NamespacedId &&
-                             ((NamespacedId) input.getEntityId()).getNamespace().equals(systemNs));
+                           return !(input.getEntityId() instanceof NamespacedEntityId &&
+                             ((NamespacedEntityId) input.getEntityId()).getNamespace().equals(systemNs));
                          }
                        });
 

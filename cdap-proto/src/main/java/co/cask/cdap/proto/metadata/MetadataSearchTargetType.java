@@ -49,4 +49,8 @@ public enum MetadataSearchTargetType {
     }
     throw new IllegalArgumentException(String.format("No enum constant for serialized form: %s", value));
   }
+
+  public String getSerializedForm() {
+    return serializedForm;
+  }
 }

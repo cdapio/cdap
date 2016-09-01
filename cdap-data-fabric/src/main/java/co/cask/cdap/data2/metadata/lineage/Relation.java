@@ -17,10 +17,17 @@
 package co.cask.cdap.data2.metadata.lineage;
 
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableSet;
 import org.apache.twill.api.RunId;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -28,18 +35,18 @@ import java.util.Set;
  * Represents a Dataset access by a Program.
  */
 public class Relation {
-  private final Id.NamespacedId data;
-  private final Id.Program program;
+  private final NamespacedEntityId data;
+  private final ProgramId program;
   private final AccessType access;
   private final RunId run;
-  private final Set<Id.NamespacedId> components;
+  private final Set<NamespacedEntityId> components;
 
-  public Relation(Id.DatasetInstance data, Id.Program program, AccessType access, RunId run) {
-    this(data, program, access, run, Collections.<Id.NamespacedId>emptySet());
+  public Relation(DatasetId data, ProgramId program, AccessType access, RunId run) {
+    this(data, program, access, run, Collections.<NamespacedEntityId>emptySet());
   }
 
-  public Relation(Id.DatasetInstance data, Id.Program program, AccessType access, RunId run,
-                  Set<? extends Id.NamespacedId> components) {
+  public Relation(DatasetId data, ProgramId program, AccessType access, RunId run,
+                  Set<? extends NamespacedEntityId> components) {
     this.data = data;
     this.program = program;
     this.access = access;
@@ -47,12 +54,12 @@ public class Relation {
     this.components = ImmutableSet.copyOf(components);
   }
 
-  public Relation(Id.Stream stream, Id.Program program, AccessType access, RunId run) {
-    this(stream, program, access, run, Collections.<Id.NamespacedId>emptySet());
+  public Relation(StreamId stream, ProgramId program, AccessType access, RunId run) {
+    this(stream, program, access, run, Collections.<NamespacedEntityId>emptySet());
   }
 
-  public Relation(Id.Stream stream, Id.Program program, AccessType access, RunId run,
-                  Set<? extends Id.NamespacedId> components) {
+  public Relation(StreamId stream, ProgramId program, AccessType access, RunId run,
+                  Set<? extends NamespacedEntityId> components) {
     this.data = stream;
     this.program = program;
     this.access = access;
@@ -60,11 +67,11 @@ public class Relation {
     this.components = ImmutableSet.copyOf(components);
   }
 
-  public Id.NamespacedId getData() {
+  public NamespacedEntityId getData() {
     return data;
   }
 
-  public Id.Program getProgram() {
+  public ProgramId getProgram() {
     return program;
   }
 
@@ -76,8 +83,21 @@ public class Relation {
     return run;
   }
 
-  public Set<Id.NamespacedId> getComponents() {
+  public Set<NamespacedEntityId> getComponents() {
     return components;
+  }
+
+  /**
+   * Temporary fix while phasing out {@link Id} class.
+   */
+  public Set<Id.NamespacedId> getIdComponents() {
+    Set<NamespacedEntityId> components = getComponents();
+    return new HashSet<>(Collections2.transform(components, new Function<NamespacedEntityId, Id.NamespacedId>() {
+      @Override
+      public Id.NamespacedId apply(NamespacedEntityId namespaceEntityId) {
+        return (Id.NamespacedId) namespaceEntityId.toId();
+      }
+    }));
   }
 
   @Override

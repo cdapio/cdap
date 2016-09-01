@@ -26,19 +26,13 @@ import java.util.Objects;
 /**
  * Uniquely identifies a dataset type.
  */
-public class DatasetTypeId extends EntityId implements NamespacedId, ParentedId<NamespaceId> {
-  private final String namespace;
+public class DatasetTypeId extends NamespacedEntityId implements ParentedId<NamespaceId> {
   private final String type;
   private transient Integer hashCode;
 
   public DatasetTypeId(String namespace, String type) {
-    super(EntityType.DATASET_TYPE);
-    this.namespace = namespace;
+    super(namespace, EntityType.DATASET_TYPE);
     this.type = type;
-  }
-
-  public String getNamespace() {
-    return namespace;
   }
 
   public String getType() {

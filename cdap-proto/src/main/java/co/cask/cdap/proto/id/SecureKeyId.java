@@ -28,28 +28,21 @@ import java.util.regex.Pattern;
 /**
  * Uniquely identifies a Secure store key.
  */
-public class SecureKeyId extends EntityId implements NamespacedId, ParentedId<NamespaceId> {
+public class SecureKeyId extends NamespacedEntityId implements ParentedId<NamespaceId> {
   // KMS only supports lower case keys.
   private static final Pattern secureKeyNamePattern = Pattern.compile("[a-z0-9_-]+");
 
-  private final String namespace;
   private final String name;
   private transient Integer hashCode;
 
   public SecureKeyId(String namespace, String name) {
-    super(EntityType.SECUREKEY);
+    super(namespace, EntityType.SECUREKEY);
     if (!isValidSecureKey(name)) {
       throw new IllegalArgumentException(String.format("Improperly formatted secure key name '%s'." +
                                                          " The name can contain lower case alphabets," +
                                                          " numbers, _, and -", name));
     }
-    this.namespace = namespace;
     this.name = name;
-  }
-
-  @Override
-  public String getNamespace() {
-    return namespace;
   }
 
   @Override

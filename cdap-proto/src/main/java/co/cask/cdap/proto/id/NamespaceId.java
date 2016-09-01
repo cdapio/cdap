@@ -26,22 +26,16 @@ import java.util.Objects;
 /**
  * Uniquely identifies a namespace.
  */
-public class NamespaceId extends EntityId implements NamespacedId {
+public class NamespaceId extends NamespacedEntityId {
 
   public static final NamespaceId DEFAULT = new NamespaceId("default");
   public static final NamespaceId SYSTEM = new NamespaceId("system");
   public static final NamespaceId CDAP = new NamespaceId("cdap");
 
-  private final String namespace;
   private transient Integer hashCode;
 
   public NamespaceId(String namespace) {
-    super(EntityType.NAMESPACE);
-    this.namespace = namespace;
-  }
-
-  public String getNamespace() {
-    return namespace;
+    super(namespace, EntityType.NAMESPACE);
   }
 
   @Override

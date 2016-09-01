@@ -40,7 +40,7 @@ public class ViewSystemMetadataWriter extends AbstractSystemMetadataWriter {
   private final ViewSpecification viewSpec;
 
   public ViewSystemMetadataWriter(MetadataStore metadataStore, Id.Stream.View viewId, ViewSpecification viewSpec) {
-    super(metadataStore, viewId);
+    super(metadataStore, viewId.toEntityId());
     this.viewId = viewId;
     this.viewSpec = viewSpec;
   }

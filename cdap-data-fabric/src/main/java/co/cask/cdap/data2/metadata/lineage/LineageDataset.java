@@ -25,6 +25,7 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
@@ -146,8 +147,8 @@ public class LineageDataset extends AbstractDataset {
   /**
    * @return a set of entities (program and data it accesses) associated with a program run.
    */
-  public Set<Id.NamespacedId> getEntitiesForRun(Id.Run run) {
-    ImmutableSet.Builder<Id.NamespacedId> recordBuilder = ImmutableSet.builder();
+  public Set<NamespacedEntityId> getEntitiesForRun(Id.Run run) {
+    ImmutableSet.Builder<NamespacedEntityId> recordBuilder = ImmutableSet.builder();
     byte[] startKey = getRunScanStartKey(run);
     try (Scanner scanner = accessRegistryTable.scan(startKey, Bytes.stopKeyForPrefix(startKey))) {
       Row row;
@@ -157,8 +158,8 @@ public class LineageDataset extends AbstractDataset {
         }
         RowKey rowKey = parseRow(row);
         if (run.getId().equals(rowKey.getRunId().getId())) {
-          recordBuilder.add(rowKey.getProgram());
-          recordBuilder.add(rowKey.getData());
+          recordBuilder.add(rowKey.getProgram().toEntityId());
+          recordBuilder.add((NamespacedEntityId) rowKey.getData().toEntityId());
         }
       }
     }
@@ -506,18 +507,22 @@ public class LineageDataset extends AbstractDataset {
     LOG.trace("Got component {}", component);
 
     if (stream == null) {
-      return new Relation(datasetInstance,
-                          program,
+      return new Relation(datasetInstance.toEntityId(),
+                          program.toEntityId(),
                           accessType,
                           runId,
-                          component == null ? ImmutableSet.<Id.NamespacedId>of() : ImmutableSet.of(component));
+                          component == null ?
+                            ImmutableSet.<NamespacedEntityId>of() :
+                            ImmutableSet.of((NamespacedEntityId) component.toEntityId()));
     }
 
-    return new Relation(stream,
-                        program,
+    return new Relation(stream.toEntityId(),
+                        program.toEntityId(),
                         accessType,
                         runId,
-                        component == null ? ImmutableSet.<Id.NamespacedId>of() : ImmutableSet.of(component));
+                        component == null ?
+                          ImmutableSet.<NamespacedEntityId>of() :
+                          ImmutableSet.of((NamespacedEntityId) component.toEntityId()));
   }
 
   private static final class RowKey {

@@ -43,11 +43,14 @@ import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.metadata.Metadata;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
@@ -69,6 +72,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -82,36 +86,35 @@ import javax.annotation.Nullable;
  */
 public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
-  private final Id.Application application =
-    Id.Application.from(Id.Namespace.DEFAULT, AppWithDataset.class.getSimpleName());
-  private final Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, application.getId(), "1.0.0");
-  private final Id.Program pingService = Id.Program.from(application, ProgramType.SERVICE, "PingService");
-  private final Id.DatasetInstance myds = Id.DatasetInstance.from(Id.Namespace.DEFAULT, "myds");
-  private final Id.Stream mystream = Id.Stream.from(Id.Namespace.DEFAULT, "mystream");
-  private final Id.Stream.View myview = Id.Stream.View.from(mystream, "myview");
-  private final Id.Application nonExistingApp = Id.Application.from("blah", AppWithDataset.class.getSimpleName());
-  private final Id.Service nonExistingService = Id.Service.from(nonExistingApp, "PingService");
-  private final Id.DatasetInstance nonExistingDataset = Id.DatasetInstance.from("blah", "myds");
-  private final Id.Stream nonExistingStream = Id.Stream.from("blah", "mystream");
-  private final Id.Stream.View nonExistingView = Id.Stream.View.from(nonExistingStream, "myView");
-  private final Id.Artifact nonExistingArtifact = Id.Artifact.from(Id.Namespace.from("blah"), "art", "1.0.0");
+  private final ApplicationId application = NamespaceId.DEFAULT.app(AppWithDataset.class.getSimpleName());
+  private final ArtifactId artifactId = NamespaceId.DEFAULT.artifact(application.getApplication(), "1.0.0");
+  private final ProgramId pingService = application.service("PingService");
+  private final DatasetId myds = NamespaceId.DEFAULT.dataset("myds");
+  private final StreamId mystream = NamespaceId.DEFAULT.stream("mystream");
+  private final StreamViewId myview = mystream.view("myview");
+  private final ApplicationId nonExistingApp = new ApplicationId("blah", AppWithDataset.class.getSimpleName());
+  private final ProgramId nonExistingService = nonExistingApp.service("PingService");
+  private final DatasetId nonExistingDataset = new DatasetId("blah", "myds");
+  private final StreamId nonExistingStream = new StreamId("blah", "mystream");
+  private final StreamViewId nonExistingView = nonExistingStream.view("myView");
+  private final ArtifactId nonExistingArtifact = new ArtifactId("blah", "art", "1.0.0");
 
   @Before
   public void before() throws Exception {
     addAppArtifact(artifactId, AppWithDataset.class);
     AppRequest<Config> appRequest = new AppRequest<>(
-      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
+      new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()));
 
-    appClient.deploy(application, appRequest);
+    appClient.deploy(application.toId(), appRequest);
     FormatSpecification format = new FormatSpecification("csv", null, null);
     ViewSpecification viewSpec = new ViewSpecification(format, null);
-    streamViewClient.createOrUpdate(myview, viewSpec);
+    streamViewClient.createOrUpdate(myview.toId(), viewSpec);
   }
 
   @After
   public void after() throws Exception {
-    appClient.delete(application);
-    artifactClient.delete(artifactId);
+    appClient.delete(application.toId());
+    artifactClient.delete(artifactId.toId());
     namespaceClient.delete(NamespaceId.DEFAULT.toId());
   }
 
@@ -160,26 +163,25 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Set<MetadataSearchResultRecord> expected = ImmutableSet.of(
       new MetadataSearchResultRecord(application)
     );
-    Set<MetadataSearchResultRecord> searchProperties = searchMetadata(Id.Namespace.DEFAULT,
+    Set<MetadataSearchResultRecord> searchProperties = searchMetadata(NamespaceId.DEFAULT,
                                                                       "aKey:aValue",
                                                                       MetadataSearchTargetType.APP);
     Assert.assertEquals(expected, searchProperties);
-    searchProperties = searchMetadata(Id.Namespace.DEFAULT, "multiword:wow1", MetadataSearchTargetType.APP);
+    searchProperties = searchMetadata(NamespaceId.DEFAULT, "multiword:wow1", MetadataSearchTargetType.APP);
     Assert.assertEquals(expected, searchProperties);
-    searchProperties = searchMetadata(Id.Namespace.DEFAULT, "multiword:woW5", MetadataSearchTargetType.APP);
+    searchProperties = searchMetadata(NamespaceId.DEFAULT, "multiword:woW5", MetadataSearchTargetType.APP);
     Assert.assertEquals(expected, searchProperties);
-    searchProperties = searchMetadata(Id.Namespace.DEFAULT, "WOW3", MetadataSearchTargetType.APP);
+    searchProperties = searchMetadata(NamespaceId.DEFAULT, "WOW3", MetadataSearchTargetType.APP);
     Assert.assertEquals(expected, searchProperties);
 
     // test search for stream
-    searchProperties = searchMetadata(Id.Namespace.DEFAULT, "stKey:stValue", MetadataSearchTargetType.STREAM);
+    searchProperties = searchMetadata(NamespaceId.DEFAULT, "stKey:stValue", MetadataSearchTargetType.STREAM);
     expected = ImmutableSet.of(
-      new MetadataSearchResultRecord(mystream)
-    );
+      new MetadataSearchResultRecord(mystream));
     Assert.assertEquals(expected, searchProperties);
 
     // test search for view with lowercase key value when metadata was stored in mixed case
-    searchProperties = searchMetadata(Id.Namespace.DEFAULT,
+    searchProperties = searchMetadata(NamespaceId.DEFAULT,
                                       "viewkey:viewvalue", MetadataSearchTargetType.VIEW);
     expected = ImmutableSet.of(
       new MetadataSearchResultRecord(myview)
@@ -187,7 +189,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertEquals(expected, searchProperties);
 
     // test search for view with lowercase value when metadata was stored in mixed case
-    searchProperties = searchMetadata(Id.Namespace.DEFAULT,
+    searchProperties = searchMetadata(NamespaceId.DEFAULT,
                                       "viewvalue", MetadataSearchTargetType.VIEW);
     expected = ImmutableSet.of(
       new MetadataSearchResultRecord(myview)
@@ -195,7 +197,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertEquals(expected, searchProperties);
 
     // test search for artifact
-    searchProperties = searchMetadata(Id.Namespace.DEFAULT,
+    searchProperties = searchMetadata(NamespaceId.DEFAULT,
                                       "rKey:rValue", MetadataSearchTargetType.ARTIFACT);
     expected = ImmutableSet.of(
       new MetadataSearchResultRecord(artifactId)
@@ -207,42 +209,42 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       new MetadataSearchResultRecord(mystream)
     );
 
-    searchProperties = searchMetadata(Id.Namespace.DEFAULT, "multiword:w*", MetadataSearchTargetType.ALL);
+    searchProperties = searchMetadata(NamespaceId.DEFAULT, "multiword:w*", MetadataSearchTargetType.ALL);
     Assert.assertEquals(2, searchProperties.size());
     Assert.assertEquals(expected, searchProperties);
 
-    searchProperties = searchMetadata(Id.Namespace.DEFAULT, "multiword:*", MetadataSearchTargetType.ALL);
+    searchProperties = searchMetadata(NamespaceId.DEFAULT, "multiword:*", MetadataSearchTargetType.ALL);
     Assert.assertEquals(2, searchProperties.size());
     Assert.assertEquals(expected, searchProperties);
 
-    searchProperties = searchMetadata(Id.Namespace.DEFAULT, "wo*", MetadataSearchTargetType.ALL);
+    searchProperties = searchMetadata(NamespaceId.DEFAULT, "wo*", MetadataSearchTargetType.ALL);
     Assert.assertEquals(2, searchProperties.size());
     Assert.assertEquals(expected, searchProperties);
 
     // test prefix search for service
-    searchProperties = searchMetadata(Id.Namespace.DEFAULT, "sKey:s*", MetadataSearchTargetType.ALL);
+    searchProperties = searchMetadata(NamespaceId.DEFAULT, "sKey:s*", MetadataSearchTargetType.ALL);
     expected = ImmutableSet.of(
       new MetadataSearchResultRecord(pingService)
     );
     Assert.assertEquals(expected, searchProperties);
 
     // search without any target param
-    searchProperties = searchMetadata(Id.Namespace.DEFAULT, "sKey:s*");
+    searchProperties = searchMetadata(NamespaceId.DEFAULT, "sKey:s*");
     Assert.assertEquals(expected, searchProperties);
 
     // Should get empty
-    searchProperties = searchMetadata(Id.Namespace.DEFAULT, "sKey:s");
+    searchProperties = searchMetadata(NamespaceId.DEFAULT, "sKey:s");
     Assert.assertTrue(searchProperties.size() == 0);
 
-    searchProperties = searchMetadata(Id.Namespace.DEFAULT, "s");
+    searchProperties = searchMetadata(NamespaceId.DEFAULT, "s");
     Assert.assertTrue(searchProperties.size() == 0);
 
     // search non-existent property should return empty set
-    searchProperties = searchMetadata(Id.Namespace.DEFAULT, "NullKey:s*");
+    searchProperties = searchMetadata(NamespaceId.DEFAULT, "NullKey:s*");
     Assert.assertEquals(ImmutableSet.<MetadataSearchResultRecord>of(), searchProperties);
 
     // search invalid ns should return empty set
-    searchProperties = searchMetadata(Id.Namespace.from("invalidnamespace"), "sKey:s*");
+    searchProperties = searchMetadata(new NamespaceId("invalidnamespace"), "sKey:s*");
     Assert.assertEquals(ImmutableSet.of(), searchProperties);
 
     // test removal
@@ -323,13 +325,13 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertTrue(artifactTags.containsAll(tags));
     // test search for stream
     Set<MetadataSearchResultRecord> searchTags =
-      searchMetadata(Id.Namespace.DEFAULT, "stT", MetadataSearchTargetType.STREAM);
+      searchMetadata(NamespaceId.DEFAULT, "stT", MetadataSearchTargetType.STREAM);
     Set<MetadataSearchResultRecord> expected = ImmutableSet.of(
       new MetadataSearchResultRecord(mystream)
     );
     Assert.assertEquals(expected, searchTags);
 
-    searchTags = searchMetadata(Id.Namespace.DEFAULT, "Wow", MetadataSearchTargetType.STREAM);
+    searchTags = searchMetadata(NamespaceId.DEFAULT, "Wow", MetadataSearchTargetType.STREAM);
     expected = ImmutableSet.of(
       new MetadataSearchResultRecord(mystream)
     );
@@ -337,13 +339,13 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertEquals(expected, searchTags);
     // test search for view with lowercase tag when metadata was stored in mixed case
     searchTags =
-      searchMetadata(Id.Namespace.DEFAULT, "viewtag", MetadataSearchTargetType.VIEW);
+      searchMetadata(NamespaceId.DEFAULT, "viewtag", MetadataSearchTargetType.VIEW);
     expected = ImmutableSet.of(
       new MetadataSearchResultRecord(myview)
     );
     Assert.assertEquals(expected, searchTags);
     // test prefix search, should match stream and application
-    searchTags = searchMetadata(Id.Namespace.DEFAULT, "Wow*", MetadataSearchTargetType.ALL);
+    searchTags = searchMetadata(NamespaceId.DEFAULT, "Wow*", MetadataSearchTargetType.ALL);
     expected = ImmutableSet.of(
       new MetadataSearchResultRecord(application),
       new MetadataSearchResultRecord(mystream)
@@ -351,11 +353,11 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertEquals(expected, searchTags);
 
     // search without any target param
-    searchTags = searchMetadata(Id.Namespace.DEFAULT, "Wow*");
+    searchTags = searchMetadata(NamespaceId.DEFAULT, "Wow*");
     Assert.assertEquals(expected, searchTags);
 
     // search non-existent tags should return empty set
-    searchTags = searchMetadata(Id.Namespace.DEFAULT, "NullKey");
+    searchTags = searchMetadata(NamespaceId.DEFAULT, "NullKey");
     Assert.assertEquals(ImmutableSet.<MetadataSearchResultRecord>of(), searchTags);
 
     // test removal
@@ -486,8 +488,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   public void testDeleteApplication() throws Exception {
     namespaceClient.create(new NamespaceMeta.Builder().setName(TEST_NAMESPACE1.toId()).build());
     appClient.deploy(TEST_NAMESPACE1.toId(), createAppJarFile(WordCountApp.class));
-    Id.Program programId = new ProgramId(TEST_NAMESPACE1.getNamespace(), "WordCountApp",
-                                         ProgramType.FLOW, "WordCountFlow").toId();
+    ProgramId programId = TEST_NAMESPACE1.app("WordCountApp").flow("WordCountFlow");
 
     // Set some properties metadata
     Map<String, String> flowProperties = ImmutableMap.of("sKey", "sValue", "sK", "sV");
@@ -498,11 +499,11 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertEquals(2, properties.size());
 
     // Delete the App after stopping the flow
-    appClient.delete(programId.getApplication());
+    appClient.delete(TEST_NAMESPACE1.app(programId.getApplication()).toId());
 
     // Delete again should throw not found exception
     try {
-      appClient.delete(programId.getApplication());
+      appClient.delete(TEST_NAMESPACE1.app(programId.getApplication()).toId());
       Assert.fail("Expected NotFoundException");
     } catch (NotFoundException e) {
       // expected
@@ -514,11 +515,12 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
   @Test
   public void testInvalidEntities() throws IOException {
-    Id.Program nonExistingProgram = Id.Program.from(application, ProgramType.SERVICE, "NonExistingService");
-    Id.DatasetInstance nonExistingDataset = Id.DatasetInstance.from(Id.Namespace.DEFAULT, "NonExistingDataset");
-    Id.Stream nonExistingStream = Id.Stream.from(Id.Namespace.DEFAULT, "NonExistingStream");
-    Id.Stream.View nonExistingView = Id.Stream.View.from(mystream, "NonExistingView");
-    Id.Application nonExistingApp = Id.Application.from(Id.Namespace.DEFAULT, "NonExistingApp");
+    ProgramId nonExistingProgram = application.service("NonExistingService");
+    DatasetId nonExistingDataset = new DatasetId(NamespaceId.DEFAULT.getNamespace(),
+                                                                       "NonExistingDataset");
+    StreamId nonExistingStream = NamespaceId.DEFAULT.stream("NonExistingStream");
+    StreamViewId nonExistingView = nonExistingStream.view("NonExistingView");
+    ApplicationId nonExistingApp = NamespaceId.DEFAULT.app("NonExistingApp");
 
     Map<String, String> properties = ImmutableMap.of("aKey", "aValue", "aK", "aV");
     addProperties(nonExistingApp, properties, NotFoundException.class);
@@ -570,7 +572,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   @Test
   public void testDeletedProgramHandlerStage() throws Exception {
     appClient.deploy(TEST_NAMESPACE1.toId(), createAppJarFile(WordCountApp.class));
-    Id.Program program = Id.Program.from(TEST_NAMESPACE1.toId(), "WordCountApp", ProgramType.FLOW, "WordCountFlow");
+    ProgramId program = TEST_NAMESPACE1.app("WordCountApp").flow("WordCountFlow");
 
     // Set some properties metadata
     Map<String, String> flowProperties = ImmutableMap.of("sKey", "sValue", "sK", "sV");
@@ -595,7 +597,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   public void testSystemMetadataRetrieval() throws Exception {
     appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(AllProgramsApp.class));
     // verify stream system metadata
-    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, AllProgramsApp.STREAM_NAME);
+    StreamId streamId = NamespaceId.DEFAULT.stream(AllProgramsApp.STREAM_NAME);
     Set<String> streamSystemTags = getTags(streamId, MetadataScope.SYSTEM);
     Assert.assertEquals(ImmutableSet.of(AllProgramsApp.STREAM_NAME, AbstractSystemMetadataWriter.EXPLORE_TAG),
                         streamSystemTags);
@@ -626,7 +628,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
     // Update stream properties and verify metadata got updated (except creation time and description)
     long newTtl = 100000L;
-    streamClient.setStreamProperties(streamId, new StreamProperties(newTtl, null, null));
+    streamClient.setStreamProperties(streamId.toId(), new StreamProperties(newTtl, null, null));
     streamSystemProperties = getProperties(streamId, MetadataScope.SYSTEM);
     Assert.assertEquals(
       ImmutableMap.of(schema,
@@ -642,14 +644,14 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
     Set<MetadataRecord> streamSystemMetadata = getMetadata(streamId, MetadataScope.SYSTEM);
     Assert.assertEquals(
-      ImmutableSet.of(new MetadataRecord(streamId, MetadataScope.SYSTEM, streamSystemProperties, streamSystemTags)),
-      streamSystemMetadata);
+      ImmutableSet.of(new MetadataRecord(streamId, MetadataScope.SYSTEM, streamSystemProperties,
+                                         streamSystemTags)), streamSystemMetadata);
 
     // create view and verify view system metadata
-    Id.Stream.View view = Id.Stream.View.from(streamId, "view");
+    StreamViewId view = new StreamViewId(streamId.getNamespace(), streamId.getStream(), "view");
     Schema viewSchema = Schema.recordOf("record",
                                         Schema.Field.of("viewBody", Schema.nullableOf(Schema.of(Schema.Type.BYTES))));
-    streamViewClient.createOrUpdate(view, new ViewSpecification(new FormatSpecification("format", viewSchema)));
+    streamViewClient.createOrUpdate(view.toId(), new ViewSpecification(new FormatSpecification("format", viewSchema)));
     Set<String> viewSystemTags = getTags(view, MetadataScope.SYSTEM);
     Assert.assertEquals(ImmutableSet.of("view", AllProgramsApp.STREAM_NAME), viewSystemTags);
     Map<String, String> viewSystemProperties = getProperties(view, MetadataScope.SYSTEM);
@@ -657,13 +659,15 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     ImmutableSet<String> viewUserTags = ImmutableSet.of("viewTag");
     addTags(view, viewUserTags);
     Assert.assertEquals(
-      ImmutableSet.of(new MetadataRecord(view, MetadataScope.USER, ImmutableMap.<String, String>of(), viewUserTags),
-                      new MetadataRecord(view, MetadataScope.SYSTEM, viewSystemProperties, viewSystemTags)),
+      ImmutableSet.of(new MetadataRecord(view, MetadataScope.USER, ImmutableMap.<String, String>of(),
+                                         viewUserTags),
+                      new MetadataRecord(view, MetadataScope.SYSTEM, viewSystemProperties,
+                                         viewSystemTags)),
       getMetadata(view)
     );
 
     // verify dataset system metadata
-    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME);
+    DatasetId datasetInstance = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME);
     Set<String> dsSystemTags = getTags(datasetInstance, MetadataScope.SYSTEM);
     Assert.assertEquals(
       ImmutableSet.of(AllProgramsApp.DATASET_NAME,
@@ -689,7 +693,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     );
 
     //Update properties, and make sure that system metadata gets updated (except create time)
-    datasetClient.update(datasetInstance, ImmutableMap.of(Table.PROPERTY_TTL, "100000"));
+    datasetClient.update(datasetInstance.toId(), ImmutableMap.of(Table.PROPERTY_TTL, "100000"));
     dsSystemProperties = getProperties(datasetInstance, MetadataScope.SYSTEM);
     Assert.assertEquals(
       ImmutableMap.of(
@@ -702,7 +706,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     );
 
     // verify artifact metadata
-    Id.Artifact artifactId = getArtifactId();
+    ArtifactId artifactId = getArtifactId();
     Assert.assertEquals(
       ImmutableSet.of(
         new MetadataRecord(artifactId, MetadataScope.SYSTEM, ImmutableMap.<String, String>of(),
@@ -711,7 +715,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       getMetadata(artifactId, MetadataScope.SYSTEM)
     );
     // verify app system metadata
-    Id.Application app = Id.Application.from(Id.Namespace.DEFAULT, AllProgramsApp.NAME);
+    ApplicationId app = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
     Assert.assertEquals(
       ImmutableMap.builder()
         .put(ProgramType.FLOW.getPrettyName() + MetadataDataset.KEYVALUE_SEPARATOR + AllProgramsApp.NoOpFlow.NAME,
@@ -735,15 +739,15 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertEquals(ImmutableSet.of(AllProgramsApp.class.getSimpleName(), AllProgramsApp.NAME),
                         getTags(app, MetadataScope.SYSTEM));
     // verify program system metadata
-    assertProgramSystemMetadata(Id.Program.from(app, ProgramType.FLOW, AllProgramsApp.NoOpFlow.NAME), "Realtime");
-    assertProgramSystemMetadata(Id.Program.from(app, ProgramType.WORKER, AllProgramsApp.NoOpWorker.NAME), "Realtime");
-    assertProgramSystemMetadata(Id.Program.from(app, ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME), "Realtime");
-    assertProgramSystemMetadata(Id.Program.from(app, ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR.NAME), "Batch");
-    assertProgramSystemMetadata(Id.Program.from(app, ProgramType.SPARK, AllProgramsApp.NoOpSpark.NAME), "Batch");
-    assertProgramSystemMetadata(Id.Program.from(app, ProgramType.WORKFLOW, AllProgramsApp.NoOpWorkflow.NAME), "Batch");
+    assertProgramSystemMetadata(app.flow(AllProgramsApp.NoOpFlow.NAME), "Realtime");
+    assertProgramSystemMetadata(app.worker(AllProgramsApp.NoOpWorker.NAME), "Realtime");
+    assertProgramSystemMetadata(app.service(AllProgramsApp.NoOpService.NAME), "Realtime");
+    assertProgramSystemMetadata(app.mr(AllProgramsApp.NoOpMR.NAME), "Batch");
+    assertProgramSystemMetadata(app.spark(AllProgramsApp.NoOpSpark.NAME), "Batch");
+    assertProgramSystemMetadata(app.workflow(AllProgramsApp.NoOpWorkflow.NAME), "Batch");
 
     // update dataset properties to add the workflow.local.dataset property to it.
-    datasetClient.update(datasetInstance, ImmutableMap.of(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY,
+    datasetClient.update(datasetInstance.toId(), ImmutableMap.of(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY,
                                                           "true"));
 
     dsSystemTags = getTags(datasetInstance, MetadataScope.SYSTEM);
@@ -761,15 +765,15 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(AllProgramsApp.class));
 
     //verify stream is explorable
-    Id.Stream streamInstance = Id.Stream.from(Id.Namespace.DEFAULT, AllProgramsApp.STREAM_NAME);
+    StreamId streamInstance = NamespaceId.DEFAULT.stream(AllProgramsApp.STREAM_NAME);
     Set<String> streamSystemTags = getTags(streamInstance, MetadataScope.SYSTEM);
     Assert.assertEquals(
       ImmutableSet.of(AllProgramsApp.STREAM_NAME,
                       AbstractSystemMetadataWriter.EXPLORE_TAG),
       streamSystemTags);
-    
+
     // verify fileSet is explorable
-    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME4);
+    DatasetId datasetInstance = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME4);
     Set<String> dsSystemTags = getTags(datasetInstance, MetadataScope.SYSTEM);
     Assert.assertEquals(
       ImmutableSet.of(AllProgramsApp.DATASET_NAME4,
@@ -778,7 +782,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       dsSystemTags);
 
     //verify partitionedFileSet is explorable
-    Id.DatasetInstance datasetInstance2 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME5);
+    DatasetId datasetInstance2 = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME5);
     Set<String> dsSystemTags2 = getTags(datasetInstance2, MetadataScope.SYSTEM);
     Assert.assertEquals(
       ImmutableSet.of(AllProgramsApp.DATASET_NAME5,
@@ -787,13 +791,13 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       dsSystemTags2);
 
     //verify that fileSet that isn't set to explorable does not have explore tag
-    Id.DatasetInstance datasetInstance3 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME6);
+    DatasetId datasetInstance3 = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME6);
     Set<String> dsSystemTags3 = getTags(datasetInstance3, MetadataScope.SYSTEM);
     Assert.assertFalse(dsSystemTags3.contains(AbstractSystemMetadataWriter.EXPLORE_TAG));
     Assert.assertTrue(dsSystemTags3.contains(DatasetSystemMetadataWriter.BATCH_TAG));
 
     //verify that partitioned fileSet that isn't set to explorable does not have explore tag
-    Id.DatasetInstance datasetInstance4 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME7);
+    DatasetId datasetInstance4 = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME7);
     Set<String> dsSystemTags4 = getTags(datasetInstance4, MetadataScope.SYSTEM);
     Assert.assertFalse(dsSystemTags4.contains(AbstractSystemMetadataWriter.EXPLORE_TAG));
     Assert.assertTrue(dsSystemTags4.contains(DatasetSystemMetadataWriter.BATCH_TAG));
@@ -802,8 +806,8 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   @Test
   public void testSearchUsingSystemMetadata() throws Exception {
     appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(AllProgramsApp.class));
-    Id.Application app = Id.Application.from(Id.Namespace.DEFAULT, AllProgramsApp.NAME);
-    Id.Artifact artifact = getArtifactId();
+    ApplicationId app = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
+    ArtifactId artifact = getArtifactId();
     try {
       // search artifacts
       assertArtifactSearch();
@@ -815,8 +819,8 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       assertDataEntitySearch();
     } finally {
       // cleanup
-      appClient.delete(app);
-      artifactClient.delete(artifact);
+      appClient.delete(app.toId());
+      artifactClient.delete(artifact.toId());
     }
   }
 
@@ -824,11 +828,12 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   public void testSystemScopeArtifacts() throws Exception {
     // add a system artifact. currently can't do this through the rest api (by design)
     // so bypass it and use the repository directly
-    Id.Artifact systemId = Id.Artifact.from(Id.Namespace.SYSTEM, "wordcount", "1.0.0");
+    ArtifactId systemId = ArtifactId.fromIdParts(
+      Arrays.asList(NamespaceId.SYSTEM.getNamespace(), "wordcount", "1.0.0"));
     File systemArtifact = createArtifactJarFile(WordCountApp.class, "wordcount", "1.0.0", new Manifest());
 
     StandaloneTester tester = STANDALONE.get();
-    tester.addSystemArtifact(systemId.getName(), systemId.getVersion(), systemArtifact, null);
+    tester.addSystemArtifact(systemId.getArtifact(), systemId.toId().getVersion(), systemArtifact, null);
 
     // verify that user metadata can be added for system-scope artifacts
     Map<String, String> userProperties = ImmutableMap.of("systemArtifactKey", "systemArtifactValue");
@@ -850,25 +855,26 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     // with no target type
     Assert.assertEquals(
       ImmutableSet.of(new MetadataSearchResultRecord(systemId)),
-      searchMetadata(Id.Namespace.DEFAULT, "system*")
+      searchMetadata(NamespaceId.DEFAULT, "system*")
     );
     // with target type as artifact
     Assert.assertEquals(
       ImmutableSet.of(new MetadataSearchResultRecord(systemId)),
-      searchMetadata(Id.Namespace.DEFAULT, "system*", MetadataSearchTargetType.ARTIFACT)
+      searchMetadata(NamespaceId.DEFAULT, "system*", MetadataSearchTargetType.ARTIFACT)
     );
 
     // verify that user metadata can be deleted for system-scope artifacts
     removeMetadata(systemId);
     Assert.assertEquals(
       ImmutableSet.of(
-        new MetadataRecord(systemId, MetadataScope.USER, ImmutableMap.<String, String>of(), ImmutableSet.<String>of()),
+        new MetadataRecord(systemId, MetadataScope.USER, ImmutableMap.<String, String>of(),
+                           ImmutableSet.<String>of()),
         new MetadataRecord(systemId, MetadataScope.SYSTEM,
                            ImmutableMap.<String, String>of(), ImmutableSet.of("wordcount"))
       ),
       getMetadata(systemId)
     );
-    artifactClient.delete(systemId);
+    artifactClient.delete(systemId.toId());
   }
 
   @Test
@@ -920,30 +926,30 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     // Add metadata to app
     Set<String> tags = ImmutableSet.of("utag1", "utag2");
     ApplicationId appId = Ids.namespace(namespace.getNamespace()).app(AllProgramsApp.NAME);
-    addTags(appId.toId(), tags);
+    addTags(appId, tags);
 
     // Add metadata to stream
     tags = ImmutableSet.of("utag11");
     StreamId streamId = Ids.namespace(namespace.getNamespace()).stream(AllProgramsApp.STREAM_NAME);
-    addTags(streamId.toId(), tags);
+    addTags(streamId, tags);
 
     // Add metadata to dataset
     tags = ImmutableSet.of("utag21");
     DatasetId datasetId = Ids.namespace(namespace.getNamespace()).dataset(AllProgramsApp.DATASET_NAME);
-    addTags(datasetId.toId(), tags);
+    addTags(datasetId, tags);
 
     // Search for single target type
-    Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(appId.toId())),
-                        searchMetadata(namespace.toId(), "utag*", MetadataSearchTargetType.APP));
-    Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(datasetId.toId())),
-                        searchMetadata(namespace.toId(), "utag*", MetadataSearchTargetType.DATASET));
+    Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(appId)),
+                        searchMetadata(namespace, "utag*", MetadataSearchTargetType.APP));
+    Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(datasetId)),
+                        searchMetadata(namespace, "utag*", MetadataSearchTargetType.DATASET));
 
     // Search for multiple target types
     Assert.assertEquals(ImmutableSet.of(
-                          new MetadataSearchResultRecord(datasetId.toId()),
-                          new MetadataSearchResultRecord(streamId.toId())
+                          new MetadataSearchResultRecord(datasetId),
+                          new MetadataSearchResultRecord(streamId)
                         ),
-                        searchMetadata(namespace.toId(), "utag*",
+                        searchMetadata(namespace, "utag*",
                                        ImmutableSet.of(
                                          MetadataSearchTargetType.DATASET,
                                          MetadataSearchTargetType.STREAM
@@ -951,10 +957,10 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
                         ));
 
     Assert.assertEquals(ImmutableSet.of(
-                          new MetadataSearchResultRecord(datasetId.toId()),
-                          new MetadataSearchResultRecord(appId.toId())
+                          new MetadataSearchResultRecord(datasetId),
+                          new MetadataSearchResultRecord(appId)
                         ),
-                        searchMetadata(namespace.toId(), "utag*",
+                        searchMetadata(namespace, "utag*",
                                        ImmutableSet.of(
                                          MetadataSearchTargetType.APP,
                                          MetadataSearchTargetType.DATASET
@@ -963,17 +969,17 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
     // Search for all target types
     Assert.assertEquals(ImmutableSet.of(
-                          new MetadataSearchResultRecord(datasetId.toId()),
-                          new MetadataSearchResultRecord(appId.toId()),
-                          new MetadataSearchResultRecord(streamId.toId())
+                          new MetadataSearchResultRecord(datasetId),
+                          new MetadataSearchResultRecord(appId),
+                          new MetadataSearchResultRecord(streamId)
                         ),
-                        searchMetadata(namespace.toId(), "utag*", MetadataSearchTargetType.ALL));
+                        searchMetadata(namespace, "utag*", MetadataSearchTargetType.ALL));
     Assert.assertEquals(ImmutableSet.of(
-                          new MetadataSearchResultRecord(datasetId.toId()),
-                          new MetadataSearchResultRecord(appId.toId()),
-                          new MetadataSearchResultRecord(streamId.toId())
+                          new MetadataSearchResultRecord(datasetId),
+                          new MetadataSearchResultRecord(appId),
+                          new MetadataSearchResultRecord(streamId)
                         ),
-                        searchMetadata(namespace.toId(), "utag*",
+                        searchMetadata(namespace, "utag*",
                                        ImmutableSet.of(
                                          MetadataSearchTargetType.DATASET,
                                          MetadataSearchTargetType.ALL
@@ -985,12 +991,12 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   public void testSearchMetadata() throws Exception {
     appClient.deploy(Id.Namespace.DEFAULT, createAppJarFile(AllProgramsApp.class));
 
-    Map<Id.NamespacedId, Metadata> expectedUserMetadata = new HashMap<>();
+    Map<NamespacedEntityId, Metadata> expectedUserMetadata = new HashMap<>();
 
     // Add metadata to app
     Map<String, String> props = ImmutableMap.of("key1", "value1");
     Set<String> tags = ImmutableSet.of("tag1", "tag2");
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, AllProgramsApp.NAME);
+    ApplicationId appId = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
     addProperties(appId, props);
     addTags(appId, tags);
     expectedUserMetadata.put(appId, new Metadata(props, tags));
@@ -998,13 +1004,13 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     // Add metadata to stream
     props = ImmutableMap.of("key10", "value10", "key11", "value11");
     tags = ImmutableSet.of("tag11");
-    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, AllProgramsApp.STREAM_NAME);
+    StreamId streamId = NamespaceId.DEFAULT.stream(AllProgramsApp.STREAM_NAME);
     addProperties(streamId, props);
     addTags(streamId, tags);
     expectedUserMetadata.put(streamId, new Metadata(props, tags));
 
     Set<MetadataSearchResultRecord> results =
-      super.searchMetadata(Id.Namespace.DEFAULT, "value*", ImmutableSet.<MetadataSearchTargetType>of());
+      super.searchMetadata(NamespaceId.DEFAULT, "value*", ImmutableSet.<MetadataSearchTargetType>of());
 
     // Verify results
     Assert.assertEquals(expectedUserMetadata.keySet(), getEntities(results));
@@ -1021,21 +1027,21 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
   @Test
   public void testSearchMetadataDelete() throws Exception {
-    Id.Namespace namespace = Id.Namespace.from("ns1");
-    namespaceClient.create(new NamespaceMeta.Builder().setName(namespace).build());
+    NamespaceId namespace = new NamespaceId("ns1");
+    namespaceClient.create(new NamespaceMeta.Builder().setName(namespace.toId()).build());
 
     // Deploy app
-    appClient.deploy(namespace, createAppJarFile(WordCountApp.class, WordCountApp.class.getSimpleName(), "1.0"));
+    appClient.deploy(namespace.toId(), createAppJarFile(WordCountApp.class, WordCountApp.class.getSimpleName(), "1.0"));
 
     Set<String> tags = ImmutableSet.of("tag1", "tag2");
-    Id.Artifact artifact = Id.Artifact.from(namespace, "WordCountApp", "1.0");
-    Id.Application app = Id.Application.from(namespace, "WordCountApp");
-    Id.Flow flow = Id.Flow.from(app, "WordCountFlow");
-    Id.Service service = Id.Service.from(app, "WordFrequencyService");
-    Id.Stream stream = Id.Stream.from(namespace, "text");
-    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespace, "mydataset");
-    Id.Stream.View view = Id.Stream.View.from(namespace, stream.getId(), "view");
-    streamViewClient.createOrUpdate(view, new ViewSpecification(new FormatSpecification("csv", null, null)));
+    ArtifactId artifact = namespace.artifact("WordCountApp", "1.0");
+    ApplicationId app = namespace.app("WordCountApp");
+    ProgramId flow = app.flow("WordCountFlow");
+    ProgramId service = app.service("WordFrequencyService");
+    StreamId stream = namespace.stream("text");
+    DatasetId datasetInstance = namespace.dataset("mydataset");
+    StreamViewId view = stream.view("view");
+    streamViewClient.createOrUpdate(view.toId(), new ViewSpecification(new FormatSpecification("csv", null, null)));
 
     // Add metadata
     addTags(app, tags);
@@ -1045,7 +1051,8 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     addTags(view, tags);
 
     // Assert metadata
-    Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(stream), new MetadataSearchResultRecord(view)),
+    Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(stream),
+                                        new MetadataSearchResultRecord(view)),
                         searchMetadata(namespace, "text"));
     Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(datasetInstance)),
                         searchMetadata(namespace, "mydataset"));
@@ -1066,11 +1073,11 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
                         searchMetadata(namespace, "tag1"));
 
     // Delete entities
-    appClient.delete(app);
-    streamViewClient.delete(view);
-    streamClient.delete(stream);
-    datasetClient.delete(datasetInstance);
-    artifactClient.delete(artifact);
+    appClient.delete(app.toId());
+    streamViewClient.delete(view.toId());
+    streamClient.delete(stream.toId());
+    datasetClient.delete(datasetInstance.toId());
+    artifactClient.delete(artifact.toId());
 
     // Assert no metadata
     Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "text"));
@@ -1081,21 +1088,21 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
   @Test
   public void testSearchMetadataDeleteNamespace() throws Exception {
-    Id.Namespace namespace = Id.Namespace.from("ns2");
-    namespaceClient.create(new NamespaceMeta.Builder().setName(namespace).build());
+    NamespaceId namespace = new NamespaceId("ns2");
+    namespaceClient.create(new NamespaceMeta.Builder().setName(namespace.toId()).build());
 
     // Deploy app
-    appClient.deploy(namespace, createAppJarFile(WordCountApp.class, WordCountApp.class.getSimpleName(), "1.0"));
+    appClient.deploy(namespace.toId(), createAppJarFile(WordCountApp.class, WordCountApp.class.getSimpleName(), "1.0"));
 
     Set<String> tags = ImmutableSet.of("tag1", "tag2");
-    Id.Artifact artifact = Id.Artifact.from(namespace, "WordCountApp", "1.0");
-    Id.Application app = Id.Application.from(namespace, "WordCountApp");
-    Id.Flow flow = Id.Flow.from(app, "WordCountFlow");
-    Id.Service service = Id.Service.from(app, "WordFrequencyService");
-    Id.Stream stream = Id.Stream.from(namespace, "text");
-    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespace, "mydataset");
-    Id.Stream.View view = Id.Stream.View.from(namespace, stream.getId(), "view");
-    streamViewClient.createOrUpdate(view, new ViewSpecification(new FormatSpecification("csv", null, null)));
+    ArtifactId artifact = namespace.artifact("WordCountApp", "1.0");
+    ApplicationId app = namespace.app("WordCountApp");
+    ProgramId flow = app.flow("WordCountFlow");
+    ProgramId service = app.service("WordFrequencyService");
+    StreamId stream = namespace.stream("text");
+    DatasetId datasetInstance = namespace.dataset("mydataset");
+    StreamViewId view = stream.view("view");
+    streamViewClient.createOrUpdate(view.toId(), new ViewSpecification(new FormatSpecification("csv", null, null)));
 
 
     // Add metadata
@@ -1105,7 +1112,8 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     addTags(datasetInstance, tags);
     addTags(view, tags);
 
-    Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(stream), new MetadataSearchResultRecord(view)),
+    Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(stream),
+                                        new MetadataSearchResultRecord(view)),
                         searchMetadata(namespace, "text"));
     Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(datasetInstance)),
                         searchMetadata(namespace, "mydataset"));
@@ -1126,7 +1134,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
                         searchMetadata(namespace, "tag1"));
 
     // Delete namespace
-    namespaceClient.delete(namespace);
+    namespaceClient.delete(namespace.toId());
 
     // Assert no metadata
     Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "text"));
@@ -1135,22 +1143,22 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "tag1"));
   }
 
-  private Set<Id.NamespacedId> getEntities(Set<MetadataSearchResultRecord> results) {
+  private Set<NamespacedEntityId> getEntities(Set<MetadataSearchResultRecord> results) {
     return Sets.newHashSet(
-      Iterables.transform(results, new Function<MetadataSearchResultRecord, Id.NamespacedId>() {
+      Iterables.transform(results, new Function<MetadataSearchResultRecord, NamespacedEntityId>() {
         @Override
-        public Id.NamespacedId apply(MetadataSearchResultRecord input) {
+        public NamespacedEntityId apply(MetadataSearchResultRecord input) {
           return input.getEntityId();
         }
       })
     );
   }
 
-  private void assertProgramSystemMetadata(Id.Program programId, String mode) throws Exception {
+  private void assertProgramSystemMetadata(ProgramId programId, String mode) throws Exception {
     Assert.assertTrue(getProperties(programId, MetadataScope.SYSTEM).isEmpty());
-    Set<String> expected = ImmutableSet.of(programId.getId(), programId.getType().getPrettyName(), mode);
+    Set<String> expected = ImmutableSet.of(programId.getProgram(), programId.getType().getPrettyName(), mode);
     if (ProgramType.WORKFLOW == programId.getType()) {
-      expected = ImmutableSet.of(programId.getId(), programId.getType().getPrettyName(), mode,
+      expected = ImmutableSet.of(programId.getProgram(), programId.getType().getPrettyName(), mode,
                                  AllProgramsApp.NoOpAction.class.getSimpleName(), AllProgramsApp.NoOpMR.NAME);
     }
     Assert.assertEquals(expected, getTags(programId, MetadataScope.SYSTEM));
@@ -1161,182 +1169,198 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE,
                                      AllProgramsApp.AppPlugin.class.getPackage().getName());
-    Id.Artifact pluginArtifact = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins", "1.0.0");
+    ArtifactId pluginArtifact = NamespaceId.DEFAULT.artifact("plugins", "1.0.0");
     addPluginArtifact(pluginArtifact, AllProgramsApp.AppPlugin.class, manifest, null);
     // search using artifact name
-    Set<MetadataSearchResultRecord> expected = ImmutableSet.of(new MetadataSearchResultRecord(pluginArtifact));
-    Set<MetadataSearchResultRecord> results = searchMetadata(Id.Namespace.DEFAULT, "plugins");
+    Set<MetadataSearchResultRecord> expected = ImmutableSet.of(
+      new MetadataSearchResultRecord(pluginArtifact));
+    Set<MetadataSearchResultRecord> results = searchMetadata(NamespaceId.DEFAULT, "plugins");
     Assert.assertEquals(expected, results);
     // search the artifact given a plugin
-    results = searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.PLUGIN_TYPE);
+    results = searchMetadata(NamespaceId.DEFAULT, AllProgramsApp.PLUGIN_TYPE);
     Assert.assertEquals(expected, results);
-    results = searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.PLUGIN_NAME + ":" + AllProgramsApp.PLUGIN_TYPE);
+    results = searchMetadata(NamespaceId.DEFAULT, AllProgramsApp.PLUGIN_NAME + ":" + AllProgramsApp.PLUGIN_TYPE);
     Assert.assertEquals(expected, results);
-    results = searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.PLUGIN_NAME, MetadataSearchTargetType.ARTIFACT);
+    results = searchMetadata(NamespaceId.DEFAULT, AllProgramsApp.PLUGIN_NAME, MetadataSearchTargetType.ARTIFACT);
     Assert.assertEquals(expected, results);
     // add a user tag to the application with the same name as the plugin
     addTags(application, ImmutableSet.of(AllProgramsApp.PLUGIN_NAME));
     // search for all entities with plugin name. Should return both artifact and application
-    results = searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.PLUGIN_NAME);
+    results = searchMetadata(NamespaceId.DEFAULT, AllProgramsApp.PLUGIN_NAME);
     Assert.assertEquals(
-      ImmutableSet.of(new MetadataSearchResultRecord(application), new MetadataSearchResultRecord(pluginArtifact)),
+      ImmutableSet.of(new MetadataSearchResultRecord(application),
+                      new MetadataSearchResultRecord(pluginArtifact)),
       results);
     // search for all entities for a plugin with the plugin name. Should return only the artifact, since for the
     // application, its just a tag, not a plugin
-    results = searchMetadata(Id.Namespace.DEFAULT, "plugin:" + AllProgramsApp.PLUGIN_NAME + ":*");
+    results = searchMetadata(NamespaceId.DEFAULT, "plugin:" + AllProgramsApp.PLUGIN_NAME + ":*");
     Assert.assertEquals(expected, results);
   }
 
-  private void assertAppSearch(Id.Application app, Id.Artifact artifact) throws Exception {
+  private void assertAppSearch(ApplicationId app, ArtifactId artifact) throws Exception {
     // using app name
-    ImmutableSet<MetadataSearchResultRecord> expected = ImmutableSet.of(new MetadataSearchResultRecord(app));
-    Assert.assertEquals(expected, searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.NAME));
+    ImmutableSet<MetadataSearchResultRecord> expected = ImmutableSet.of(
+      new MetadataSearchResultRecord(app));
+    Assert.assertEquals(expected, searchMetadata(NamespaceId.DEFAULT, AllProgramsApp.NAME));
     // using artifact name: both app and artifact should match
     Assert.assertEquals(
-      ImmutableSet.of(new MetadataSearchResultRecord(app), new MetadataSearchResultRecord(artifact)),
-      searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.class.getSimpleName()));
+      ImmutableSet.of(new MetadataSearchResultRecord(app),
+                      new MetadataSearchResultRecord(artifact)),
+      searchMetadata(NamespaceId.DEFAULT, AllProgramsApp.class.getSimpleName()));
     // using program names
-    Assert.assertEquals(expected, searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.NoOpFlow.NAME,
+    Assert.assertEquals(expected, searchMetadata(NamespaceId.DEFAULT, AllProgramsApp.NoOpFlow.NAME,
                                                  MetadataSearchTargetType.APP));
-    Assert.assertEquals(expected, searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.NoOpMR.NAME,
+    Assert.assertEquals(expected, searchMetadata(NamespaceId.DEFAULT, AllProgramsApp.NoOpMR.NAME,
                                                  MetadataSearchTargetType.APP));
-    Assert.assertEquals(expected, searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.NoOpService.NAME,
+    Assert.assertEquals(expected, searchMetadata(NamespaceId.DEFAULT, AllProgramsApp.NoOpService.NAME,
                                                  MetadataSearchTargetType.APP));
-    Assert.assertEquals(expected, searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.NoOpSpark.NAME,
+    Assert.assertEquals(expected, searchMetadata(NamespaceId.DEFAULT, AllProgramsApp.NoOpSpark.NAME,
                                                  MetadataSearchTargetType.APP));
-    Assert.assertEquals(expected, searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.NoOpWorker.NAME,
+    Assert.assertEquals(expected, searchMetadata(NamespaceId.DEFAULT, AllProgramsApp.NoOpWorker.NAME,
                                                  MetadataSearchTargetType.APP));
-    Assert.assertEquals(expected, searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.NoOpWorkflow.NAME,
+    Assert.assertEquals(expected, searchMetadata(NamespaceId.DEFAULT, AllProgramsApp.NoOpWorkflow.NAME,
                                                  MetadataSearchTargetType.APP));
     // using program types
     Assert.assertEquals(
-      expected, searchMetadata(Id.Namespace.DEFAULT,
+      expected, searchMetadata(NamespaceId.DEFAULT,
                                ProgramType.FLOW.getPrettyName() + MetadataDataset.KEYVALUE_SEPARATOR + "*",
                                MetadataSearchTargetType.APP));
     Assert.assertEquals(
-      expected, searchMetadata(Id.Namespace.DEFAULT,
+      expected, searchMetadata(NamespaceId.DEFAULT,
                                ProgramType.MAPREDUCE.getPrettyName() + MetadataDataset.KEYVALUE_SEPARATOR + "*",
                                MetadataSearchTargetType.APP));
     Assert.assertEquals(
       ImmutableSet.builder().addAll(expected).add(new MetadataSearchResultRecord(application)).build(),
-      searchMetadata(Id.Namespace.DEFAULT,
+      searchMetadata(NamespaceId.DEFAULT,
                      ProgramType.SERVICE.getPrettyName() + MetadataDataset.KEYVALUE_SEPARATOR + "*",
                      MetadataSearchTargetType.APP));
     Assert.assertEquals(
-      expected, searchMetadata(Id.Namespace.DEFAULT,
+      expected, searchMetadata(NamespaceId.DEFAULT,
                                ProgramType.SPARK.getPrettyName() + MetadataDataset.KEYVALUE_SEPARATOR + "*",
                                MetadataSearchTargetType.APP));
     Assert.assertEquals(
-      expected, searchMetadata(Id.Namespace.DEFAULT,
+      expected, searchMetadata(NamespaceId.DEFAULT,
                                ProgramType.WORKER.getPrettyName() + MetadataDataset.KEYVALUE_SEPARATOR + "*",
                                MetadataSearchTargetType.APP));
     Assert.assertEquals(
-      expected, searchMetadata(Id.Namespace.DEFAULT,
+      expected, searchMetadata(NamespaceId.DEFAULT,
                                ProgramType.WORKFLOW.getPrettyName() + MetadataDataset.KEYVALUE_SEPARATOR + "*",
                                MetadataSearchTargetType.APP));
 
     // using schedule
-    Assert.assertEquals(expected, searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.SCHEDULE_NAME));
-    Assert.assertEquals(expected, searchMetadata(Id.Namespace.DEFAULT, "EveryMinute"));
+    Assert.assertEquals(expected, searchMetadata(NamespaceId.DEFAULT, AllProgramsApp.SCHEDULE_NAME));
+    Assert.assertEquals(expected, searchMetadata(NamespaceId.DEFAULT, "EveryMinute"));
   }
 
-  private void assertProgramSearch(Id.Application app) throws Exception {
+  private void assertProgramSearch(ApplicationId app) throws Exception {
     Assert.assertEquals(
       ImmutableSet.of(
-        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR.NAME)),
-        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR2.NAME)),
-        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.WORKFLOW, AllProgramsApp.NoOpWorkflow.NAME)),
-        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.SPARK, AllProgramsApp.NoOpSpark.NAME)),
-        new MetadataSearchResultRecord(Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME)),
-        new MetadataSearchResultRecord(Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME2)),
-        new MetadataSearchResultRecord(Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME3)),
-        new MetadataSearchResultRecord(Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME4)),
-        new MetadataSearchResultRecord(Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME5)),
-        new MetadataSearchResultRecord(Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME6)),
-        new MetadataSearchResultRecord(Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME7)),
-        new MetadataSearchResultRecord(
-          Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DS_WITH_SCHEMA_NAME)),
+        new MetadataSearchResultRecord(app.mr(AllProgramsApp.NoOpMR.NAME)),
+        new MetadataSearchResultRecord(app.mr(AllProgramsApp.NoOpMR2.NAME)),
+        new MetadataSearchResultRecord(app.workflow(AllProgramsApp.NoOpWorkflow.NAME)),
+        new MetadataSearchResultRecord(app.spark(AllProgramsApp.NoOpSpark.NAME)),
+        new MetadataSearchResultRecord(NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME)),
+        new MetadataSearchResultRecord(NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME2)),
+        new MetadataSearchResultRecord(NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME3)),
+        new MetadataSearchResultRecord(NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME4)),
+        new MetadataSearchResultRecord(NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME5)),
+        new MetadataSearchResultRecord(NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME6)),
+        new MetadataSearchResultRecord(NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME7)),
+        new MetadataSearchResultRecord(NamespaceId.DEFAULT.dataset(AllProgramsApp.DS_WITH_SCHEMA_NAME)),
         new MetadataSearchResultRecord(myds)
       ),
-      searchMetadata(Id.Namespace.DEFAULT, "Batch"));
+      searchMetadata(NamespaceId.DEFAULT, "Batch"));
     Assert.assertEquals(
       ImmutableSet.of(
-        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.FLOW, AllProgramsApp.NoOpFlow.NAME)),
-        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME)),
-        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.WORKER, AllProgramsApp.NoOpWorker.NAME)),
+        new MetadataSearchResultRecord(app.flow(AllProgramsApp.NoOpFlow.NAME)),
+        new MetadataSearchResultRecord(app.service(AllProgramsApp.NoOpService.NAME)),
+        new MetadataSearchResultRecord(app.worker(AllProgramsApp.NoOpWorker.NAME)),
         new MetadataSearchResultRecord(
-          Id.Program.from(Id.Application.from(Id.Namespace.DEFAULT, AppWithDataset.class.getSimpleName()),
-                          ProgramType.SERVICE, "PingService"))
+          NamespaceId.DEFAULT.app(AppWithDataset.class.getSimpleName()).service("PingService"))
       ),
-      searchMetadata(Id.Namespace.DEFAULT, "Realtime"));
+      searchMetadata(NamespaceId.DEFAULT, "Realtime"));
 
     // Using program names
     Assert.assertEquals(
       ImmutableSet.of(
-        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.FLOW, AllProgramsApp.NoOpFlow.NAME))),
-      searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.NoOpFlow.NAME, MetadataSearchTargetType.PROGRAM));
+        new MetadataSearchResultRecord(
+          app.flow(AllProgramsApp.NoOpFlow.NAME))),
+      searchMetadata(NamespaceId.DEFAULT, AllProgramsApp.NoOpFlow.NAME, MetadataSearchTargetType.PROGRAM));
     Assert.assertEquals(
       ImmutableSet.of(
-        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR.NAME)),
-        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.WORKFLOW, AllProgramsApp.NoOpWorkflow.NAME))),
-      searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.NoOpMR.NAME, MetadataSearchTargetType.PROGRAM));
+        new MetadataSearchResultRecord(
+          app.mr(AllProgramsApp.NoOpMR.NAME)),
+        new MetadataSearchResultRecord(
+          app.workflow(AllProgramsApp.NoOpWorkflow.NAME))),
+      searchMetadata(NamespaceId.DEFAULT, AllProgramsApp.NoOpMR.NAME, MetadataSearchTargetType.PROGRAM));
     Assert.assertEquals(
       ImmutableSet.of(
-        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME))),
-      searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.NoOpService.NAME, MetadataSearchTargetType.PROGRAM));
+        new MetadataSearchResultRecord(
+          app.service(AllProgramsApp.NoOpService.NAME))),
+      searchMetadata(NamespaceId.DEFAULT, AllProgramsApp.NoOpService.NAME, MetadataSearchTargetType.PROGRAM));
     Assert.assertEquals(
       ImmutableSet.of(
-        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.SPARK, AllProgramsApp.NoOpSpark.NAME))),
-      searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.NoOpSpark.NAME, MetadataSearchTargetType.PROGRAM));
+        new MetadataSearchResultRecord(
+          app.spark(AllProgramsApp.NoOpSpark.NAME))),
+      searchMetadata(NamespaceId.DEFAULT, AllProgramsApp.NoOpSpark.NAME, MetadataSearchTargetType.PROGRAM));
     Assert.assertEquals(
       ImmutableSet.of(
-        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.WORKER, AllProgramsApp.NoOpWorker.NAME))),
-      searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.NoOpWorker.NAME, MetadataSearchTargetType.PROGRAM));
+        new MetadataSearchResultRecord(
+          app.worker(AllProgramsApp.NoOpWorker.NAME))),
+      searchMetadata(NamespaceId.DEFAULT, AllProgramsApp.NoOpWorker.NAME, MetadataSearchTargetType.PROGRAM));
     Assert.assertEquals(
       ImmutableSet.of(
-        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.WORKFLOW, AllProgramsApp.NoOpWorkflow.NAME))),
-      searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.NoOpWorkflow.NAME, MetadataSearchTargetType.PROGRAM));
+        new MetadataSearchResultRecord(
+          app.workflow(AllProgramsApp.NoOpWorkflow.NAME))),
+      searchMetadata(NamespaceId.DEFAULT, AllProgramsApp.NoOpWorkflow.NAME, MetadataSearchTargetType.PROGRAM));
 
     // using program types
     Assert.assertEquals(
       ImmutableSet.of(
-        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.FLOW, AllProgramsApp.NoOpFlow.NAME))),
-      searchMetadata(Id.Namespace.DEFAULT, ProgramType.FLOW.getPrettyName(), MetadataSearchTargetType.PROGRAM));
+        new MetadataSearchResultRecord(
+          app.flow(AllProgramsApp.NoOpFlow.NAME))),
+      searchMetadata(NamespaceId.DEFAULT, ProgramType.FLOW.getPrettyName(), MetadataSearchTargetType.PROGRAM));
     Assert.assertEquals(
       ImmutableSet.of(
-        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR.NAME)),
-        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR2.NAME))),
-      searchMetadata(Id.Namespace.DEFAULT, ProgramType.MAPREDUCE.getPrettyName(), MetadataSearchTargetType.PROGRAM));
+        new MetadataSearchResultRecord(
+          app.mr(AllProgramsApp.NoOpMR.NAME)),
+        new MetadataSearchResultRecord(
+          app.mr(AllProgramsApp.NoOpMR2.NAME))),
+      searchMetadata(NamespaceId.DEFAULT, ProgramType.MAPREDUCE.getPrettyName(), MetadataSearchTargetType.PROGRAM));
     Assert.assertEquals(
       ImmutableSet.of(
-        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME)),
+        new MetadataSearchResultRecord(
+          app.service(AllProgramsApp.NoOpService.NAME)),
         new MetadataSearchResultRecord(pingService)),
-      searchMetadata(Id.Namespace.DEFAULT, ProgramType.SERVICE.getPrettyName(), MetadataSearchTargetType.PROGRAM));
+      searchMetadata(NamespaceId.DEFAULT, ProgramType.SERVICE.getPrettyName(), MetadataSearchTargetType.PROGRAM));
     Assert.assertEquals(
       ImmutableSet.of(
-        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.SPARK, AllProgramsApp.NoOpSpark.NAME))),
-      searchMetadata(Id.Namespace.DEFAULT, ProgramType.SPARK.getPrettyName(), MetadataSearchTargetType.PROGRAM));
+        new MetadataSearchResultRecord(
+          app.spark(AllProgramsApp.NoOpSpark.NAME))),
+      searchMetadata(NamespaceId.DEFAULT, ProgramType.SPARK.getPrettyName(), MetadataSearchTargetType.PROGRAM));
     Assert.assertEquals(
       ImmutableSet.of(
-        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.WORKER, AllProgramsApp.NoOpWorker.NAME))),
-      searchMetadata(Id.Namespace.DEFAULT, ProgramType.WORKER.getPrettyName(), MetadataSearchTargetType.PROGRAM));
+        new MetadataSearchResultRecord(
+          app.worker(AllProgramsApp.NoOpWorker.NAME))),
+      searchMetadata(NamespaceId.DEFAULT, ProgramType.WORKER.getPrettyName(), MetadataSearchTargetType.PROGRAM));
     Assert.assertEquals(
       ImmutableSet.of(
-        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.WORKFLOW, AllProgramsApp.NoOpWorkflow.NAME))),
-      searchMetadata(Id.Namespace.DEFAULT, ProgramType.WORKFLOW.getPrettyName(), MetadataSearchTargetType.PROGRAM));
+        new MetadataSearchResultRecord(
+          app.workflow(AllProgramsApp.NoOpWorkflow.NAME))),
+      searchMetadata(NamespaceId.DEFAULT, ProgramType.WORKFLOW.getPrettyName(), MetadataSearchTargetType.PROGRAM));
   }
 
   private void assertDataEntitySearch() throws Exception {
-    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME);
-    Id.DatasetInstance datasetInstance2 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME2);
-    Id.DatasetInstance datasetInstance3 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME3);
-    Id.DatasetInstance datasetInstance4 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME4);
-    Id.DatasetInstance datasetInstance5 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME5);
-    Id.DatasetInstance datasetInstance6 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME6);
-    Id.DatasetInstance datasetInstance7 = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME7);
-    Id.DatasetInstance dsWithSchema = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DS_WITH_SCHEMA_NAME);
-    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, AllProgramsApp.STREAM_NAME);
-    Id.Stream.View view = Id.Stream.View.from(streamId, "view");
+    DatasetId datasetInstance = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME);
+    DatasetId datasetInstance2 = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME2);
+    DatasetId datasetInstance3 = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME3);
+    DatasetId datasetInstance4 = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME4);
+    DatasetId datasetInstance5 = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME5);
+    DatasetId datasetInstance6 = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME6);
+    DatasetId datasetInstance7 = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME7);
+    DatasetId dsWithSchema = NamespaceId.DEFAULT.dataset(AllProgramsApp.DS_WITH_SCHEMA_NAME);
+    StreamId streamId = NamespaceId.DEFAULT.stream(AllProgramsApp.STREAM_NAME);
+    StreamViewId view = streamId.view("view");
 
     Set<MetadataSearchResultRecord> expected = ImmutableSet.of(
       new MetadataSearchResultRecord(streamId),
@@ -1348,23 +1372,23 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       .add(new MetadataSearchResultRecord(myview)).build();
 
     // schema search with fieldname
-    Set<MetadataSearchResultRecord> metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "body");
+    Set<MetadataSearchResultRecord> metadataSearchResultRecords = searchMetadata(NamespaceId.DEFAULT, "body");
     Assert.assertEquals(expectedWithView, metadataSearchResultRecords);
 
     // schema search with fieldname and fieldtype
-    metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "body:" + Schema.Type.STRING.toString());
+    metadataSearchResultRecords = searchMetadata(NamespaceId.DEFAULT, "body:" + Schema.Type.STRING.toString());
     Assert.assertEquals(expected, metadataSearchResultRecords);
 
     // schema search for partial fieldname
-    metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "bo*");
+    metadataSearchResultRecords = searchMetadata(NamespaceId.DEFAULT, "bo*");
     Assert.assertEquals(expectedWithView, metadataSearchResultRecords);
 
     // schema search with fieldname and all/partial fieldtype
-    metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "body:STR*");
+    metadataSearchResultRecords = searchMetadata(NamespaceId.DEFAULT, "body:STR*");
     Assert.assertEquals(expected, metadataSearchResultRecords);
 
     // schema search for a field with the given fieldname:fieldtype
-    metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "body:STRING+field1:STRING");
+    metadataSearchResultRecords = searchMetadata(NamespaceId.DEFAULT, "body:STRING+field1:STRING");
     Assert.assertEquals(ImmutableSet.<MetadataSearchResultRecord>builder()
                           .addAll(expected)
                           .add(new MetadataSearchResultRecord(dsWithSchema))
@@ -1374,14 +1398,14 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     // create a view
     Schema viewSchema = Schema.recordOf("record",
                                         Schema.Field.of("viewBody", Schema.nullableOf(Schema.of(Schema.Type.BYTES))));
-    streamViewClient.createOrUpdate(view, new ViewSpecification(new FormatSpecification("format", viewSchema)));
+    streamViewClient.createOrUpdate(view.toId(), new ViewSpecification(new FormatSpecification("format", viewSchema)));
 
     // search all entities that have a defined schema
     // add a user property with "schema" as key
     Map<String, String> datasetProperties = ImmutableMap.of("schema", "schemaValue");
     addProperties(datasetInstance, datasetProperties);
 
-    metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "schema:*");
+    metadataSearchResultRecords = searchMetadata(NamespaceId.DEFAULT, "schema:*");
     Assert.assertEquals(ImmutableSet.<MetadataSearchResultRecord>builder()
                           .addAll(expectedWithView)
                           .add(new MetadataSearchResultRecord(datasetInstance))
@@ -1392,8 +1416,10 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
     // search dataset
     ImmutableSet<MetadataSearchResultRecord> expectedKvTables = ImmutableSet.of(
-      new MetadataSearchResultRecord(datasetInstance), new MetadataSearchResultRecord(datasetInstance2),
-      new MetadataSearchResultRecord(datasetInstance3), new MetadataSearchResultRecord(myds)
+      new MetadataSearchResultRecord(datasetInstance),
+      new MetadataSearchResultRecord(datasetInstance2),
+      new MetadataSearchResultRecord(datasetInstance3),
+      new MetadataSearchResultRecord(myds)
     );
 
     ImmutableSet<MetadataSearchResultRecord> expectedExplorableDatasets =
@@ -1414,36 +1440,42 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       .add(new MetadataSearchResultRecord(streamId))
       .add(new MetadataSearchResultRecord(mystream))
       .build();
-    metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "explore");
+    metadataSearchResultRecords = searchMetadata(NamespaceId.DEFAULT, "explore");
     Assert.assertEquals(expectedExplorables, metadataSearchResultRecords);
-    metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, KeyValueTable.class.getName());
+    metadataSearchResultRecords = searchMetadata(NamespaceId.DEFAULT, KeyValueTable.class.getName());
     Assert.assertEquals(expectedKvTables, metadataSearchResultRecords);
-    metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "type:*");
+    metadataSearchResultRecords = searchMetadata(NamespaceId.DEFAULT, "type:*");
     Assert.assertEquals(expectedAllDatasets, metadataSearchResultRecords);
 
     // search using ttl
-    metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "ttl:*");
+    metadataSearchResultRecords = searchMetadata(NamespaceId.DEFAULT, "ttl:*");
     Assert.assertEquals(expected, metadataSearchResultRecords);
 
     // search using names
-    metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.STREAM_NAME);
+    metadataSearchResultRecords = searchMetadata(NamespaceId.DEFAULT, AllProgramsApp.STREAM_NAME);
     Assert.assertEquals(
-      ImmutableSet.of(new MetadataSearchResultRecord(streamId), new MetadataSearchResultRecord(view)),
+      ImmutableSet.of(new MetadataSearchResultRecord(streamId),
+                      new MetadataSearchResultRecord(view)),
       metadataSearchResultRecords);
 
-    metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.STREAM_NAME,
+    metadataSearchResultRecords = searchMetadata(NamespaceId.DEFAULT, AllProgramsApp.STREAM_NAME,
                                                  MetadataSearchTargetType.STREAM);
-    Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(streamId)), metadataSearchResultRecords);
-    metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.STREAM_NAME,
+    Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(streamId)),
+                        metadataSearchResultRecords);
+    metadataSearchResultRecords = searchMetadata(NamespaceId.DEFAULT, AllProgramsApp.STREAM_NAME,
                                                  MetadataSearchTargetType.VIEW);
-    Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(view)), metadataSearchResultRecords);
-    metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "view",
+    Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(view)),
+                        metadataSearchResultRecords);
+    metadataSearchResultRecords = searchMetadata(NamespaceId.DEFAULT, "view",
                                                  MetadataSearchTargetType.VIEW);
-    Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(view)), metadataSearchResultRecords);
-    metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME);
-    Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(datasetInstance)), metadataSearchResultRecords);
-    metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.DS_WITH_SCHEMA_NAME);
-    Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(dsWithSchema)), metadataSearchResultRecords);
+    Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(view)),
+                        metadataSearchResultRecords);
+    metadataSearchResultRecords = searchMetadata(NamespaceId.DEFAULT, AllProgramsApp.DATASET_NAME);
+    Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(datasetInstance)),
+                        metadataSearchResultRecords);
+    metadataSearchResultRecords = searchMetadata(NamespaceId.DEFAULT, AllProgramsApp.DS_WITH_SCHEMA_NAME);
+    Assert.assertEquals(ImmutableSet.of(new MetadataSearchResultRecord(dsWithSchema)),
+                        metadataSearchResultRecords);
   }
 
   private void removeAllMetadata() throws Exception {
@@ -1477,7 +1509,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   /**
    * Returns the artifact id of the deployed application. Need this because we don't know the exact version.
    */
-  private Id.Artifact getArtifactId() throws Exception {
+  private ArtifactId getArtifactId() throws Exception {
     Iterable<ArtifactSummary> filtered =
       Iterables.filter(artifactClient.list(NamespaceId.DEFAULT.toId()), new Predicate<ArtifactSummary>() {
         @Override
@@ -1486,22 +1518,22 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
         }
       });
     ArtifactSummary artifact = Iterables.getOnlyElement(filtered);
-    return Id.Artifact.from(Id.Namespace.DEFAULT, artifact.getName(), artifact.getVersion());
+    return NamespaceId.DEFAULT.artifact(artifact.getName(), artifact.getVersion());
   }
 
-  private Set<MetadataSearchResultRecord> searchMetadata(Id.Namespace namespaceId, String query,
+  private Set<MetadataSearchResultRecord> searchMetadata(NamespaceId namespaceId, String query,
                                                          MetadataSearchTargetType target) throws Exception {
     return searchMetadata(namespaceId, query, ImmutableSet.of(target));
   }
 
-  private Set<MetadataSearchResultRecord> searchMetadata(Id.Namespace namespaceId, String query) throws Exception {
+  private Set<MetadataSearchResultRecord> searchMetadata(NamespaceId namespaceId, String query) throws Exception {
     return searchMetadata(namespaceId, query, ImmutableSet.<MetadataSearchTargetType>of());
   }
 
   /**
    * strips metadata from search results
    */
-  protected Set<MetadataSearchResultRecord> searchMetadata(Id.Namespace namespaceId, String query,
+  protected Set<MetadataSearchResultRecord> searchMetadata(NamespaceId namespaceId, String query,
                                                            Set<MetadataSearchTargetType> targets) throws Exception {
     Set<MetadataSearchResultRecord> results = super.searchMetadata(namespaceId, query, targets);
     Set<MetadataSearchResultRecord> transformed = new HashSet<>();

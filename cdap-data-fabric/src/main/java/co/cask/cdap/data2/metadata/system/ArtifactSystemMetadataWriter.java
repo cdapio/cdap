@@ -21,6 +21,7 @@ import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactClasses;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
+import co.cask.cdap.proto.id.ArtifactId;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
@@ -32,7 +33,7 @@ public class ArtifactSystemMetadataWriter extends AbstractSystemMetadataWriter {
 
   private final ArtifactInfo artifactInfo;
 
-  public ArtifactSystemMetadataWriter(MetadataStore metadataStore, Id.Artifact artifactId,
+  public ArtifactSystemMetadataWriter(MetadataStore metadataStore, ArtifactId artifactId,
                                       ArtifactInfo artifactInfo) {
     super(metadataStore, artifactId);
     this.artifactInfo = artifactInfo;
