@@ -11,8 +11,8 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>Apache Sentry &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
@@ -55,7 +55,7 @@
     <!-- Google Tag Manager end -->
     <link rel="shortcut icon" href="_static/favicon.ico"/>
     <link rel="top" title="Cask Data Application Platform 3.5.0 Documentation" href="index.html" />
-    <link rel="next" title="CDAP JDBC Driver" href="jdbc.html" />
+    <link rel="next" title="Apache Hadoop Key Management Server (KMS)" href="hadoop-kms.html" />
     <link rel="prev" title="Navigator Integration Application" href="partners/cloudera/navigator-integration.html" /> 
   </head>
   <body role="document">
@@ -66,7 +66,7 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">Index</a></li>
         <li class="right" >
-          <a href="jdbc.html" title="CDAP JDBC Driver"
+          <a href="hadoop-kms.html" title="Apache Hadoop Key Management Server (KMS)"
              accesskey="N">Next</a> |</li>
         <li class="right" >
           <a href="partners/cloudera/navigator-integration.html" title="Navigator Integration Application"
@@ -87,47 +87,71 @@
             
   <div class="section" id="apache-sentry">
 <span id="id1"></span><h1><a class="headerlink" href="#apache-sentry" title="Perma-link to this heading">🔗</a>Apache Sentry</h1>
+<div class="section" id="configuring-apache-sentry-for-integration-with-cdap">
+<span id="apache-sentry-configuration"></span><h2><a class="headerlink" href="#configuring-apache-sentry-for-integration-with-cdap" title="Perma-link to this heading">🔗</a>Configuring Apache Sentry for Integration with CDAP</h2>
+<p>To use CDAP on a cluster using Apache Sentry for authorization, set this property:</p>
+<ul class="simple">
+<li>Add the user <code class="docutils literal"><span class="pre">cdap</span></code> to the Sentry property <code class="docutils literal"><span class="pre">sentry.service.allow.connect</span></code></li>
+</ul>
+<p>We also recommend setting these properties:</p>
+<ul class="simple">
+<li>Add the user <code class="docutils literal"><span class="pre">cdap</span></code> to the Sentry property <code class="docutils literal"><span class="pre">sentry.service.admin.group</span></code>; this allows
+the CDAP user to create roles, add roles to users, remove roles, list all roles, etc.</li>
+<li>Add the user <code class="docutils literal"><span class="pre">cdap</span></code> to the Hive property <code class="docutils literal"><span class="pre">sentry.metastore.service.users</span></code>; this
+should be set if you want to allow CDAP to bypass Sentry authorization for Hive Metastore
+queries, such as the default case where all applications run as <code class="docutils literal"><span class="pre">cdap</span></code> and not as
+individual users.</li>
+</ul>
+<p><strong>Note:</strong> You must restart Apache Sentry and HiveServer2 after setting these properties.</p>
+</div>
+<div class="section" id="cdap-sentry-authorization-extension">
+<span id="id2"></span><h2><a class="headerlink" href="#cdap-sentry-authorization-extension" title="Perma-link to this heading">🔗</a>CDAP Sentry Authorization Extension</h2>
+<p>In addition to setting up CDAP to work on a cluster already using Apache Sentry for
+authorization of non-CDAP components, users can also use the CDAP Sentry Authorization
+Extension to enforce authorization on CDAP entities using Apache Sentry.</p>
+</div>
 <div class="section" id="cdap-authorization-extension-using-apache-sentry">
 <h2><a class="headerlink" href="#cdap-authorization-extension-using-apache-sentry" title="Perma-link to this heading">🔗</a>CDAP Authorization Extension using Apache Sentry</h2>
 </div>
 <div class="section" id="overview">
 <h2><a class="headerlink" href="#overview" title="Perma-link to this heading">🔗</a>Overview</h2>
-<p>This project integrates CDAP with Apache Sentry to delegate authorization (both ACL Management and Enforcement) to
-Apache Sentry. It implements the CDAP
-<a class="reference external" href="https://github.com/caskdata/cdap/blob/develop/cdap-security/src/main/java/co/cask/cdap/security/authorization/Authorizer.java">Authorizer</a>
-interface to achieve this integration. This project is implemented as a CDAP Authorizer extension.</p>
+<p>This project integrates CDAP with Apache Sentry to delegate authorization (both ACL
+Management and Enforcement) to Apache Sentry. It implements the CDAP <a class="reference external" href="https://github.com/caskdata/cdap/blob/develop/cdap-security/src/main/java/co/cask/cdap/security/authorization/Authorizer.java">Authorizer</a>
+interface to achieve this integration. This project is implemented as a CDAP Authorizer
+extension.</p>
 </div>
 <div class="section" id="code-organization">
 <h2><a class="headerlink" href="#code-organization" title="Perma-link to this heading">🔗</a>Code Organization</h2>
 <p>This code is organized into three submodules:</p>
 <div class="section" id="cdap-sentry-model">
 <h3><a class="headerlink" href="#cdap-sentry-model" title="Perma-link to this heading">🔗</a>CDAP Sentry Model</h3>
-<p>Defines the CDAP Data Model in Sentry. Used in both the Sentry Service and the Sentry Client (which runs inside the
-CDAP Master).</p>
+<p>Defines the CDAP Data Model in Sentry. Used in both the Sentry Service and the Sentry
+Client (which runs inside the CDAP Master).</p>
 </div>
 <div class="section" id="cdap-sentry-policy-engine">
 <h3><a class="headerlink" href="#cdap-sentry-policy-engine" title="Perma-link to this heading">🔗</a>CDAP Sentry Policy Engine</h3>
-<p>Defines authorization policies for CDAP entities in Sentry. It depends on the CDAP Sentry Model. It runs inside the
-Sentry Service and is not required in the Sentry Client.</p>
+<p>Defines authorization policies for CDAP entities in Sentry. It depends on the CDAP Sentry
+Model. It runs inside the Sentry Service and is not required in the Sentry Client.</p>
 </div>
 <div class="section" id="cdap-sentry-binding">
 <h3><a class="headerlink" href="#cdap-sentry-binding" title="Perma-link to this heading">🔗</a>CDAP Sentry Binding</h3>
-<p>Defines binding between the CDAP entities and the CDAP Data Model in the Sentry Service. Runs inside the Sentry Client
-which runs inside the CDAP Master.</p>
+<p>Defines binding between the CDAP entities and the CDAP Data Model in the Sentry Service.
+Runs inside the Sentry Client which runs inside the CDAP Master.</p>
 </div>
 </div>
 <div class="section" id="building">
 <h2><a class="headerlink" href="#building" title="Perma-link to this heading">🔗</a>Building</h2>
 <div class="section" id="prerequisites">
 <h3><a class="headerlink" href="#prerequisites" title="Perma-link to this heading">🔗</a>Prerequisites</h3>
-<p>Since Apache Sentry releases are source-only, this project assumes that Apache Sentry 1.7.0 has been pre-built and
-installed in the local maven repo. To do this, in the Apache Sentry source root directory please run:</p>
+<p>Since Apache Sentry releases are source-only, this project assumes that Apache Sentry
+1.7.0 has been pre-built and installed in the local Maven repo. To do this, in the Apache
+Sentry source root directory, run:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="n">git</span> <span class="n">fetch</span> <span class="n">origin</span>
 <span class="n">git</span> <span class="n">checkout</span> <span class="n">branch</span><span class="o">-</span><span class="mf">1.7</span><span class="o">.</span><span class="mi">0</span>
 <span class="n">mvn</span> <span class="n">clean</span> <span class="n">install</span> <span class="o">-</span><span class="n">DskipTests</span>
 </pre></div>
 </div>
-<p>To build the CDAP Sentry Extension and run tests, execute the following command from the <code class="docutils literal"><span class="pre">cdap-sentry</span></code>
+<p>To build the CDAP Sentry Extension and run tests, execute this command from the <code class="docutils literal"><span class="pre">cdap-sentry</span></code>
 root directory:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="n">mvn</span> <span class="n">clean</span> <span class="kn">package</span>
 </pre></div>
@@ -141,36 +165,46 @@ root directory:</p>
 <div class="section" id="deploying">
 <h2><a class="headerlink" href="#deploying" title="Perma-link to this heading">🔗</a>Deploying</h2>
 <div class="section" id="sentry-server-side-deployment">
-<h3><a class="headerlink" href="#sentry-server-side-deployment" title="Perma-link to this heading">🔗</a>Sentry Server Side Deployment</h3>
-<p>The server side code only requires CDAP Sentry Policy and the CDAP Sentry Model classes. So, the
-<code class="docutils literal"><span class="pre">cdap-sentry-extension/cdap-sentry-policy/target/cdap-sentry-policy-*.jar</span></code> and
-<code class="docutils literal"><span class="pre">cdap-sentry-extension/cdap-sentry-model/target/cdap-sentry-model-*.jar</span></code>
-should be deployed on the host running the Sentry Service. There are two options for deploying these jars:</p>
-<ol class="arabic simple">
-<li>Copy them to the <code class="docutils literal"><span class="pre">[SENTRY_HOME_DIR]/lib</span></code> directory; or</li>
-<li>Set <code class="docutils literal"><span class="pre">HADOOP_CLASSPATH</span></code> to the location containing these jar files. On a
-<a class="reference external" href="https://www.cloudera.com/products/cloudera-manager.html">Cloudera Manager</a> managed cluster, the
-<code class="docutils literal"><span class="pre">HADOOP_CLASSPATH</span></code> can be set under the <strong>Sentry Service Environment Advanced Configuration Snippet (Safety Valve)</strong>
-configuration setting for the Sentry Service.</li>
-</ol>
-<p>Additionally, the following configurations should be specified in the <code class="docutils literal"><span class="pre">sentry-site.xml</span></code> used by the Sentry Service:</p>
-<ol class="arabic simple">
-<li>The <code class="docutils literal"><span class="pre">cdap</span></code> user should be added to <code class="docutils literal"><span class="pre">sentry.service.allow.connect</span></code>.</li>
-<li>The <code class="docutils literal"><span class="pre">cdap</span></code> user should be added to <code class="docutils literal"><span class="pre">sentry.service.admin.group</span></code>.</li>
-<li>An additional setting <code class="docutils literal"><span class="pre">sentry.cdap.action.factory</span></code> should be set to
-<code class="docutils literal"><span class="pre">co.cask.cdap.security.authorization.sentry.model.ActionFactory</span></code>. This setting can be added as a
-<strong>Sentry Service Advanced Configuration Snippet (Safety Valve) for sentry-site.xml</strong></li>
-</ol>
-<p>After updating these jars and settings, please restart the Sentry Service.</p>
+<h3><a class="headerlink" href="#sentry-server-side-deployment" title="Perma-link to this heading">🔗</a>Sentry Server-side Deployment</h3>
+<p>The server-side code only requires the CDAP Sentry Policy and the CDAP Sentry Model
+classes. As a result, these JARs should be deployed on the host running the Sentry Service:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">cdap-sentry-extension/cdap-sentry-policy/target/cdap-sentry-policy-*.jar</span></code></li>
+<li><code class="docutils literal"><span class="pre">cdap-sentry-extension/cdap-sentry-model/target/cdap-sentry-model-*.jar</span></code></li>
+</ul>
+<p>There are two options for deploying these jars:</p>
+<ul>
+<li><p class="first">Copy them to the <code class="docutils literal"><span class="pre">[SENTRY_HOME_DIR]/lib</span></code> directory; or</p>
+</li>
+<li><p class="first">Set <code class="docutils literal"><span class="pre">HADOOP_CLASSPATH</span></code> to the location containing these jar files.</p>
+<p>On a <a class="reference external" href="https://www.cloudera.com/products/cloudera-manager.html">Cloudera Manager</a>
+managed cluster, the <code class="docutils literal"><span class="pre">HADOOP_CLASSPATH</span></code> can be set under the <em>Sentry Service
+Environment Advanced Configuration Snippet (Safety Valve)</em> configuration setting for the
+Sentry Service.</p>
+</li>
+</ul>
+<p>Additionally, these configurations should be specified in the <code class="docutils literal"><span class="pre">sentry-site.xml</span></code> used by
+the Sentry Service:</p>
+<ul class="simple">
+<li>The <code class="docutils literal"><span class="pre">cdap</span></code> user should be added to <code class="docutils literal"><span class="pre">sentry.service.allow.connect</span></code></li>
+<li>The <code class="docutils literal"><span class="pre">cdap</span></code> user should be added to <code class="docutils literal"><span class="pre">sentry.service.admin.group</span></code></li>
+<li>An additional setting, <code class="docutils literal"><span class="pre">sentry.cdap.action.factory</span></code>, should be set to
+<code class="docutils literal"><span class="pre">co.cask.cdap.security.authorization.sentry.model.ActionFactory</span></code>; this setting can be
+added as a <em>Sentry Service Advanced Configuration Snippet (Safety Valve) for
+sentry-site.xml</em></li>
+</ul>
+<p>After updating these JARs and settings, restart the Sentry Service.</p>
 </div>
 <div class="section" id="cdap-master-side-deployment">
-<h3><a class="headerlink" href="#cdap-master-side-deployment" title="Perma-link to this heading">🔗</a>CDAP Master side deployment</h3>
-<p>The CDAP Master, which is also a client for the Sentry service requires the CDAP Sentry Binding classes as well as its
-dependencies. To deploy the cdap-sentry authorization extension:</p>
-<ul class="simple">
-<li>Install the <code class="docutils literal"><span class="pre">cdap-sentry-extension/cdap-sentry-binding/target/cdap-sentry-binding-*.jar</span></code> at a known location on your CDAP Master host.</li>
-<li>Set the following properties in in the <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> that the Master uses:</li>
-</ul>
+<h3><a class="headerlink" href="#cdap-master-side-deployment" title="Perma-link to this heading">🔗</a>CDAP Master-side Deployment</h3>
+<p>The CDAP Master, which is also a client for the Sentry service, requires the CDAP Sentry
+Binding classes as well as its dependencies. To deploy the <code class="docutils literal"><span class="pre">cdap-sentry</span></code> authorization
+extension:</p>
+<ul>
+<li><p class="first">Install the <code class="docutils literal"><span class="pre">cdap-sentry-extension/cdap-sentry-binding/target/cdap-sentry-binding-*.jar</span></code>
+at a known location on your CDAP Master host</p>
+</li>
+<li><p class="first">Set these properties in the <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> that the CDAP Master uses:</p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="20%" />
@@ -185,42 +219,40 @@ dependencies. To deploy the cdap-sentry authorization extension:</p>
 </thead>
 <tbody valign="top">
 <tr class="row-even"><td><code class="docutils literal"><span class="pre">security.authorization.extension.jar.path</span></code></td>
-<td>Absolute path, including the filename, of the <code class="docutils literal"><span class="pre">cdap-sentry-binding-*.jar</span></code> JAR file on the local file system
-of the CDAP Master.</td>
-<td><ul class="first last simple">
-<li></li>
-</ul>
-</td>
+<td>The absolute path, including the filename, of the <code class="docutils literal"><span class="pre">cdap-sentry-binding-*.jar</span></code>
+file on the local file system of the CDAP Master</td>
+<td><em>none</em></td>
 </tr>
 <tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.authorization.extension.config.sentry.site.url</span></code></td>
-<td>Absolute path of the client-side <code class="docutils literal"><span class="pre">sentry-site.xml</span></code> on the local file system of the CDAP Master. Note, if
-Apache Sentry is managed via Cloudera Manager, you can add a Sentry Gateway role to the CDAP Master host, and the
-file will be available at <code class="docutils literal"><span class="pre">/etc/sentry/conf/sentry-site.xml</span></code> on the CDAP Master host. Alternatively, you can
-also download this file from the Actions -&gt; Download Client Configuration drop down link in the &quot;Configuration&quot;
-tab of the Sentry Service, and copy it to a location of your choice on the CDAP Master Host.</td>
-<td><ul class="first last simple">
-<li></li>
-</ul>
-</td>
+<td>The absolute path of the client-side <code class="docutils literal"><span class="pre">sentry-site.xml</span></code> on the local file system
+of the CDAP Master. Note that if Apache Sentry is managed via Cloudera Manager, you can
+add a Sentry Gateway role to the CDAP Master host, and the file will be available
+at <code class="docutils literal"><span class="pre">/etc/sentry/conf/sentry-site.xml</span></code> on the CDAP Master host. Alternatively, you
+can download this file from the <em>Actions -&gt; Download Client Configuration</em> drop
+down link in the &quot;Configuration&quot; tab of the Sentry Service, and copy it to a
+location of your choice on the CDAP Master host.</td>
+<td><em>none</em></td>
 </tr>
 <tr class="row-even"><td><code class="docutils literal"><span class="pre">security.authorization.extension.config.sentry.admin.group</span></code></td>
-<td>A unix group configured as an admin group in the Sentry Service (identified by <code class="docutils literal"><span class="pre">sentry.service.admin.group</span></code>
-in the <code class="docutils literal"><span class="pre">sentry-site.xml</span></code> used by the Sentry Service). This group is used while granting <code class="docutils literal"><span class="pre">ALL</span></code> privileges
-to a user when he/she successfully creates an entity, as well as revoking privileges when an entity is deleted.
-It is also required to list privileges and roles in Sentry for enforcing authorization on CDAP entities.
-It is recommended that the <code class="docutils literal"><span class="pre">cdap</span></code> user (which runs the CDAP Master) be added to the
-<code class="docutils literal"><span class="pre">sentry.service.admin.group</span></code> configuration, but any other user is also acceptable.</td>
+<td>A UNIX group configured as an admin group in the Sentry Service (identified by
+<code class="docutils literal"><span class="pre">sentry.service.admin.group</span></code> in the <code class="docutils literal"><span class="pre">sentry-site.xml</span></code> used by the Sentry
+Service). This group is used when granting all privileges to a user when they
+have successfully created an entity, as well as for revoking privileges when an
+entity is deleted. It is required to list privileges and roles in Sentry for
+enforcing authorization on CDAP entities. It is recommended that the <code class="docutils literal"><span class="pre">cdap</span></code> user
+(which runs the CDAP Master) be added to the <code class="docutils literal"><span class="pre">sentry.service.admin.group</span></code>
+configuration, but any other user is also acceptable.</td>
 <td><code class="docutils literal"><span class="pre">cdap</span></code></td>
 </tr>
 <tr class="row-odd"><td><code class="docutils literal"><span class="pre">security.authorization.extension.config.instance.name</span></code></td>
-<td>String to use to identify the CDAP Instance.</td>
+<td>String used to identify the CDAP Instance</td>
 <td><code class="docutils literal"><span class="pre">cdap</span></code></td>
 </tr>
 </tbody>
 </table>
-<ul class="simple">
-<li>Restart CDAP Master.</li>
+</li>
 </ul>
+<p>After installing the JAR and setting these properties, restart CDAP Master.</p>
 </div>
 </div>
 </div>
@@ -276,6 +308,8 @@ It is recommended that the <code class="docutils literal"><span class="pre">cdap
 <li class="toctree-l1"><a class="reference internal" href="index.html"> Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="partners/cloudera/index.html"> Cloudera</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href=""> Apache Sentry</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#configuring-apache-sentry-for-integration-with-cdap">Configuring Apache Sentry for Integration with CDAP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cdap-sentry-authorization-extension">CDAP Sentry Authorization Extension</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#cdap-authorization-extension-using-apache-sentry">CDAP Authorization Extension using Apache Sentry</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#code-organization">Code Organization</a><ul>
@@ -289,12 +323,13 @@ It is recommended that the <code class="docutils literal"><span class="pre">cdap
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#deploying">Deploying</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#sentry-server-side-deployment">Sentry Server Side Deployment</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#cdap-master-side-deployment">CDAP Master side deployment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sentry-server-side-deployment">Sentry Server-side Deployment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cdap-master-side-deployment">CDAP Master-side Deployment</a></li>
 </ul>
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="hadoop-kms.html"> Apache Hadoop KMS</a></li>
 <li class="toctree-l1"><a class="reference internal" href="jdbc.html"> CDAP JDBC Driver</a></li>
 <li class="toctree-l1"><a class="reference internal" href="odbc.html"> CDAP ODBC Driver</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pentaho.html"> Pentaho Data Integration</a></li>
@@ -357,7 +392,7 @@ It is recommended that the <code class="docutils literal"><span class="pre">cdap
       &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </th>
     <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
-    <a title="CDAP JDBC Driver" href="jdbc.html" />CDAP JDBC Driver</a>
+    <a title="Apache Hadoop Key Management Server (KMS)" href="hadoop-kms.html" />Apache Hadoop Key Management Server (KMS)</a>
     </th>
 
   </tr>

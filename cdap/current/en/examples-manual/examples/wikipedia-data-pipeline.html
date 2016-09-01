@@ -12,8 +12,8 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>Wikipedia Pipeline &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -332,11 +332,11 @@ $(function tabbedparsedliteral162() {
 
 </div>
 </li>
-<li><p class="first">Once the application has been deployed, you can start its components, as described in
-<a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-starting-application" title="(in Cask Data Application Platform v3.5.0)"><span class="xref std std-ref">Starting an Application</span></a>, and detailed at the
-start of <a class="reference external" href="#running-the-example">running the example</a>.</p>
+<li><p class="first">Once the application (<em>WikipediaPipeline</em>) has been deployed, you can start its components, as described in general in
+<a class="reference external" href="../source/../../developers-manual/getting-started/building-apps.html#cdap-building-running-starting-application" title="(in Cask Data Application Platform v3.5.0)"><span class="xref std std-ref">Starting an Application</span></a>, and
+detailed for this example in <a class="reference external" href="#deploying-the-example">deploying the example</a>.</p>
 </li>
-<li><p class="first">Once all components are started, <a class="reference external" href="#running-the-example">run the example</a>.</p>
+<li><p class="first">Once all components are deployed, <a class="reference external" href="#running-the-example">run the example</a>.</p>
 </li>
 <li><p class="first">When finished, you can <a class="reference external" href="#stopping-and-removing-the-application">stop and remove the application</a>.</p>
 </li>
@@ -344,8 +344,11 @@ start of <a class="reference external" href="#running-the-example">running the e
 </div>
 <div class="section" id="deploying-the-example">
 <h2><a class="headerlink" href="#deploying-the-example" title="Perma-link to this heading">🔗</a>Deploying the Example</h2>
-<p>Since deploying the WikipediaPipelineApp involves loading an artifact and creating two applications from it, the
-preferred method of deploying it is to use the CDAP CLI.</p>
+<p>After deploying the <em>WikipediaPipeline</em> application, the Apache Spark program
+<em>SparkWikipediaClustering</em> needs to be loaded as the <em>WikipediaPipelineApp</em> and two
+versions of it be created.</p>
+<p>Since deploying the <em>WikipediaPipelineApp</em> involves loading an artifact and creating two
+applications from it, the preferred method of deploying it is to use the CDAP CLI.</p>
 <ul class="simple">
 <li>Load the Artifact:</li>
 </ul>
@@ -763,11 +766,15 @@ If unspecified, no words are considered as stopwords.</li>
 </ul>
 <p>If you run with the default arguments, you will find that the pipeline starts but then
 stops after the first node, as the number of pages is less than the <em>min.pages.threshold</em>:</p>
-<a class="reference internal image-reference" href="../_images/wikipedia-data-pipeline-1.png"><img alt="../_images/wikipedia-data-pipeline-1.png" src="../_images/wikipedia-data-pipeline-1.png" style="width: 8in;" /></a>
-<p>Reduce the number of minimum number of pages to zero, and change the mode to <em>online</em>, by
-setting either the runtime arguments (which changes the <em>next</em> run) or the preferences
-(which changes <em>all</em> subsequent runs):</p>
-<a class="reference internal image-reference" href="../_images/wikipedia-data-pipeline-2.png"><img alt="../_images/wikipedia-data-pipeline-2.png" src="../_images/wikipedia-data-pipeline-2.png" style="width: 8in;" /></a>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/wikipedia-data-pipeline-1.png"><img alt="../_images/wikipedia-data-pipeline-1.png" class="bordered-image" src="../_images/wikipedia-data-pipeline-1.png" style="width: 800px;" /></a>
+</div>
+<p>Reduce the number of minimum number of pages (<code class="docutils literal"><span class="pre">min.pages.threshold</span></code>) to zero, and change
+the <code class="docutils literal"><span class="pre">mode</span></code> to <code class="docutils literal"><span class="pre">online</span></code>, by setting either the runtime arguments (which changes the
+<em>next</em> run) or the preferences (which changes <em>all</em> subsequent runs):</p>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/wikipedia-data-pipeline-2.png"><img alt="../_images/wikipedia-data-pipeline-2.png" class="bordered-image" src="../_images/wikipedia-data-pipeline-2.png" style="width: 800px;" /></a>
+</div>
 <p>You can also do this from a terminal:</p>
 <ul>
 <li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
@@ -867,7 +874,7 @@ $(function tabbedparsedliteral171() {
 <div class="code code-tab">
 <div class="highlight-shell-session">
 <!-- tabbed-parsed-literal start -->
-<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST -d &quot;{\&quot;min.pages.threshold\&quot;:\&quot;0\&quot;, \&quot; ^</span>
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST -d &quot;{\&quot;min.pages.threshold\&quot;:\&quot;0\&quot;, \&quot;mode\&quot;:\&quot;online\&quot;}&quot; ^</span>
 <span class="go">&quot;http://localhost:10000/v3/namespaces/default/apps/WikipediaPipeline/workflows/WikipediaPipelineWorkflow/start&quot;</span></span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
@@ -882,7 +889,9 @@ $(function tabbedparsedliteral171() {
 </li>
 </ul>
 <p>Once the pipeline has run through to the end (below), you can start the service and query the results.</p>
-<a class="reference internal image-reference" href="../_images/wikipedia-data-pipeline-3.png"><img alt="../_images/wikipedia-data-pipeline-3.png" src="../_images/wikipedia-data-pipeline-3.png" style="width: 8in;" /></a>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/wikipedia-data-pipeline-3.png"><img alt="../_images/wikipedia-data-pipeline-3.png" class="bordered-image" src="../_images/wikipedia-data-pipeline-3.png" style="width: 800px;" /></a>
+</div>
 </div>
 <div class="section" id="starting-the-service">
 <h3><a class="headerlink" href="#starting-the-service" title="Perma-link to this heading">🔗</a>Starting the Service</h3>

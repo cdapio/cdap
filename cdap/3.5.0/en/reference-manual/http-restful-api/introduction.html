@@ -12,8 +12,8 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>Introduction &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -244,11 +244,14 @@ however,  can be used by anyone.</p>
 </tr>
 <tr class="row-even"><td><code class="docutils literal"><span class="pre">401</span></code></td>
 <td><code class="docutils literal"><span class="pre">Unauthorized</span></code></td>
-<td>The request did not contain an authentication token</td>
+<td>The request did not contain an authentication token; see the section below on
+<a class="reference internal" href="#http-restful-api-working-with-cdap-security"><span>Working with CDAP Security</span></a></td>
 </tr>
 <tr class="row-odd"><td><code class="docutils literal"><span class="pre">403</span></code></td>
 <td><code class="docutils literal"><span class="pre">Forbidden</span></code></td>
-<td>The request was authenticated but the client does not have permission</td>
+<td>The request was authenticated but the client does not have permission; requests can
+fail due to a lack of privilege, as described in the section below on
+<a class="reference internal" href="#http-restful-api-working-with-cdap-security"><span>Working with CDAP Security</span></a></td>
 </tr>
 <tr class="row-even"><td><code class="docutils literal"><span class="pre">404</span></code></td>
 <td><code class="docutils literal"><span class="pre">Not</span> <span class="pre">Found</span></code></td>
@@ -272,8 +275,8 @@ however,  can be used by anyone.</p>
 </tr>
 </tbody>
 </table>
-<p><strong>Note:</strong> These returned status codes are not necessarily included in the descriptions of the APIs,
-but a request may return any of these.</p>
+<p><strong>Note:</strong> These returned status codes are not necessarily included in the descriptions of
+the APIs, but a request may return any of these.</p>
 </div>
 <div class="section" id="converting-from-v2-apis">
 <h2><a class="headerlink" href="#converting-from-v2-apis" title="Perma-link to this heading">🔗</a>Converting from V2 APIs</h2>
@@ -291,8 +294,9 @@ in CDAP. Example:</p>
 addition of namespaces.</p>
 </div>
 <div class="section" id="working-with-cdap-security">
-<h2><a class="headerlink" href="#working-with-cdap-security" title="Perma-link to this heading">🔗</a>Working with CDAP Security</h2>
-<p>When working with a CDAP cluster with security enabled (<code class="docutils literal"><span class="pre">security.enabled=true</span></code> in
+<span id="http-restful-api-working-with-cdap-security"></span><h2><a class="headerlink" href="#working-with-cdap-security" title="Perma-link to this heading">🔗</a>Working with CDAP Security</h2>
+<ul>
+<li><p class="first">When working with a CDAP cluster with <strong>security enabled</strong> (<code class="docutils literal"><span class="pre">security.enabled=true</span></code> in
 <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>), all calls to the HTTP RESTful APIs must be authenticated. Clients must
 first obtain an access token from the authentication server (see the <a class="reference external" href="../source/../../developers-manual/security/client-authentication.html#client-authentication" title="(in Cask Data Application Platform v3.5.0)"><span class="xref std std-ref">Client
 Authentication</span></a> section of the <a class="reference external" href="../source/../../developers-manual/index.html#developer-index" title="(in Cask Data Application Platform v3.5.0)"><span>CDAP Developers’ Manual</span></a>).
@@ -302,6 +306,13 @@ In order to authenticate, all client requests must supply this access token in t
 </pre></div>
 </div>
 <p>For CDAP-issued access tokens, the authentication scheme must always be <code class="docutils literal"><span class="pre">Bearer</span></code>.</p>
+</li>
+<li><p class="first">When working with a CDAP cluster with <strong>authorization enabled</strong>
+(<code class="docutils literal"><span class="pre">security.authorization.enabled=true</span></code> in <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>), all calls to the HTTP
+RESTful APIs must be authorized. Clients must be privileged, following the polices
+described in <a class="reference external" href="../source/../../admin-manual/security/authorization.html#security-authorization-policies" title="(in Cask Data Application Platform v3.5.0)"><span>Authorization Policies</span></a>.</p>
+</li>
+</ul>
 </div>
 </div>
 

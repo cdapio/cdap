@@ -11,8 +11,8 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>Plugins &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -223,7 +223,7 @@ $(function tabbedparsedliteral3() {
 <div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java&quot;</span> <span class="se">\</span>
 <span class="go">-H &#39;Artifact-Plugins: [ { &quot;name&quot;: &quot;mysql&quot;, &quot;type&quot;: &quot;jdbc&quot;, &quot;className&quot;: &quot;com.mysql.jdbc.Driver&quot; } ]&#39; \</span>
 <span class="go">-H &quot;Artifact-Version: 5.1.35&quot; \</span>
-<span class="go">-H &quot;Artifact-Extends: system:cdap-data-pipeline[3.5.0, 3.5.0]/system:cdap-etl-realtime[3.5.0, 3.5.0]&quot; \</span>
+<span class="go">-H &quot;Artifact-Extends: system:cdap-data-pipeline[3.5.0, 3.5.0]/system:cdap-data-streams[3.5.0, 3.5.0]&quot; \</span>
 <span class="go">--data-binary @mysql-connector-java-5.1.35.jar</span></span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
@@ -238,7 +238,7 @@ $(function tabbedparsedliteral3() {
 <div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java&quot; ^</span>
 <span class="go">-H &quot;Artifact-Plugins: [ { \&quot;name\&quot;: \&quot;mysql\&quot;, \&quot;type\&quot;: \&quot;jdbc\&quot;, \&quot;className\&quot;: \&quot;com.mysql.jdbc.Driver\&quot; } ]&quot; ^</span>
 <span class="go">-H &quot;Artifact-Version: 5.1.35&quot; ^</span>
-<span class="go">-H &quot;Artifact-Extends: system:cdap-data-pipeline[3.5.0, 3.5.0]/system:cdap-etl-realtime[3.5.0, 3.5.0]&quot; ^</span>
+<span class="go">-H &quot;Artifact-Extends: system:cdap-data-pipeline[3.5.0, 3.5.0]/system:cdap-data-streams[3.5.0, 3.5.0]&quot; ^</span>
 <span class="go">--data-binary @mysql-connector-java-5.1.35.jar</span></span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
@@ -302,7 +302,7 @@ $(function() {
 <div class="highlight container">
 <pre class="literal-block">
 {
-  &quot;parents&quot;: [ &quot;system:cdap-data-pipeline[3.5.0,3.5.0]&quot;, &quot;system:cdap-etl-realtime[3.5.0,3.5.0]&quot; ],
+  &quot;parents&quot;: [ &quot;system:cdap-data-pipeline[3.5.0,3.5.0]&quot;, &quot;system:cdap-data-streams[3.5.0,3.5.0]&quot; ],
   &quot;plugins&quot;: [
     {
       &quot;name&quot;: &quot;mysql&quot;,
@@ -368,34 +368,34 @@ can use the plugins. The file name must match the name of the JAR, except it mus
 extension instead of the <code class="docutils literal"><span class="pre">.jar</span></code> extension. For example, if your JAR file is named
 <code class="docutils literal"><span class="pre">custom-transforms-1.0.0.jar</span></code>, there must be a corresponding <code class="docutils literal"><span class="pre">custom-transforms-1.0.0.json</span></code> file.
 If your <code class="docutils literal"><span class="pre">custom-transforms-1.0.0.jar</span></code> contains transforms that can be used by both the <code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code>
-and <code class="docutils literal"><span class="pre">cdap-etl-realtime</span></code> artifacts, <code class="docutils literal"><span class="pre">custom-transforms-1.0.0.json</span></code> would contain:</p>
+and <code class="docutils literal"><span class="pre">cdap-data-streams</span></code> artifacts, <code class="docutils literal"><span class="pre">custom-transforms-1.0.0.json</span></code> would contain:</p>
 <div class="highlight container">
 <pre class="literal-block">
 {
-  &quot;parents&quot;: [ &quot;cdap-data-pipeline[3.5.0,3.5.0]&quot;, &quot;cdap-etl-realtime[3.5.0,3.5.0]&quot; ]
+  &quot;parents&quot;: [ &quot;cdap-data-pipeline[3.5.0,3.5.0]&quot;, &quot;cdap-data-streams[3.5.0,3.5.0]&quot; ]
 }
 </pre>
 </div>
 <p>This file specifies that the plugins in <code class="docutils literal"><span class="pre">custom-transforms-1.0.0.jar</span></code> can be used by version 3.5.0 of
-the <code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> and <code class="docutils literal"><span class="pre">cdap-etl-realtime</span></code> artifacts. You can also specify a wider range of versions
+the <code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> and <code class="docutils literal"><span class="pre">cdap-data-streams</span></code> artifacts. You can also specify a wider range of versions
 that can use the plugins, with square brackets <code class="docutils literal"><span class="pre">[</span> <span class="pre">]</span></code> indicating an inclusive version and parentheses <code class="docutils literal"><span class="pre">(</span> <span class="pre">)</span></code> indicating
 an exclusive version. For example:</p>
 <div class="highlight container">
 <div class="highlight-json"><div class="highlight"><pre><span class="p">{</span>
-  <span class="nt">&quot;parents&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;cdap-data-pipeline[3.2.0,4.0.0)&quot;</span><span class="p">,</span> <span class="s2">&quot;cdap-etl-realtime[3.2.0,4.0.0)&quot;</span> <span class="p">]</span>
+  <span class="nt">&quot;parents&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;cdap-data-pipeline[3.5.0,4.0.0)&quot;</span><span class="p">,</span> <span class="s2">&quot;cdap-data-streams[3.5.0,4.0.0)&quot;</span> <span class="p">]</span>
 <span class="p">}</span>
 </pre></div>
 </div>
 </div>
-<p>specifies that these plugins can be used by versions 3.2.0 (inclusive) to 4.0.0 (exclusive) of the
-<code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> and <code class="docutils literal"><span class="pre">cdap-etl-realtime</span></code> artifacts.</p>
+<p>specifies that these plugins can be used by versions 3.5.0 (inclusive) to 4.0.0 (exclusive) of the
+<code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> and <code class="docutils literal"><span class="pre">cdap-data-streams</span></code> artifacts.</p>
 <p>If the artifact contains third-party plugins, you can explicitly list them in the config file.
 For example, you may want to deploy a JDBC driver contained in a third-party JAR. In these cases,
 you have no control over the code to annotate the classes that should be plugins, so you need to
 list them in the configuration:</p>
 <div class="highlight container">
 <div class="highlight-json"><div class="highlight"><pre><span class="p">{</span>
-  <span class="nt">&quot;parents&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;cdap-data-pipeline[3.2.0,4.0.0)&quot;</span><span class="p">,</span> <span class="s2">&quot;cdap-etl-realtime[3.2.0,4.0.0)&quot;</span> <span class="p">],</span>
+  <span class="nt">&quot;parents&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="s2">&quot;cdap-data-pipeline[3.5.0,4.0.0)&quot;</span><span class="p">,</span> <span class="s2">&quot;cdap-data-streams[3.5.0,4.0.0)&quot;</span> <span class="p">],</span>
   <span class="nt">&quot;plugins&quot;</span><span class="p">:</span> <span class="p">[</span>
     <span class="p">{</span>
       <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;mysql&quot;</span><span class="p">,</span>
@@ -451,7 +451,7 @@ $(function tabbedparsedliteral5() {
 <div class="highlight-console">
 <!-- tabbed-parsed-literal start -->
 <div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;localhost:10000/v3/namespaces/default/artifacts/custom-transforms&quot;</span> <span class="se">\</span>
-<span class="go">-H &quot;Artifact-Extends: system:cdap-data-pipeline[3.5.0, 3.5.0]/system:cdap-etl-realtime[3.5.0, 3.5.0]&quot; \</span>
+<span class="go">-H &quot;Artifact-Extends: system:cdap-data-pipeline[3.5.0, 3.5.0]/system:cdap-data-streams[3.5.0, 3.5.0]&quot; \</span>
 <span class="go">--data-binary @/path/to/custom-transforms-1.0.0.jar</span></span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
@@ -464,7 +464,7 @@ $(function tabbedparsedliteral5() {
 <div class="highlight-shell-session">
 <!-- tabbed-parsed-literal start -->
 <div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;localhost:10000/v3/namespaces/default/artifacts/custom-transforms&quot; ^</span>
-<span class="go">-H &quot;Artifact-Extends: system:cdap-data-pipeline[3.5.0, 3.5.0]/system:cdap-etl-realtime[3.5.0, 3.5.0]&quot; ^</span>
+<span class="go">-H &quot;Artifact-Extends: system:cdap-data-pipeline[3.5.0, 3.5.0]/system:cdap-data-streams[3.5.0, 3.5.0]&quot; ^</span>
 <span class="go">--data-binary @/path/to/custom-transforms-1.0.0.jar</span></span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
@@ -528,7 +528,7 @@ $(function() {
 <div class="highlight container">
 <pre class="literal-block">
 {
-  &quot;parents&quot;: [ &quot;system:cdap-data-pipeline[3.5.0,3.5.0]&quot;, &quot;system:cdap-etl-realtime[3.5.0,3.5.0]&quot; ]
+  &quot;parents&quot;: [ &quot;system:cdap-data-pipeline[3.5.0,3.5.0]&quot;, &quot;system:cdap-data-streams[3.5.0,3.5.0]&quot; ]
 }
 </pre>
 </div>
@@ -572,7 +572,7 @@ $(function tabbedparsedliteral7() {
 <div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X POST <span class="s2">&quot;localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java&quot;</span> <span class="se">\</span>
 <span class="go">-H &#39;Artifact-Plugins: [ { &quot;name&quot;: &quot;mysql&quot;, &quot;type&quot;: &quot;jdbc&quot;, &quot;className&quot;: &quot;com.mysql.jdbc.Driver&quot; } ]&#39; \</span>
 <span class="go">-H &quot;Artifact-Version: 5.1.35&quot; \</span>
-<span class="go">-H &quot;Artifact-Extends: system:cdap-data-pipeline[3.5.0, 3.5.0]/system:cdap-etl-realtime[3.5.0, 3.5.0]&quot; \</span>
+<span class="go">-H &quot;Artifact-Extends: system:cdap-data-pipeline[3.5.0, 3.5.0]/system:cdap-data-streams[3.5.0, 3.5.0]&quot; \</span>
 <span class="go">--data-binary @mysql-connector-java-5.1.35.jar</span></span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
@@ -587,7 +587,7 @@ $(function tabbedparsedliteral7() {
 <div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST &quot;localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java&quot; ^</span>
 <span class="go">-H &quot;Artifact-Plugins: [ { \&quot;name\&quot;: \&quot;mysql\&quot;, \&quot;type\&quot;: \&quot;jdbc\&quot;, \&quot;className\&quot;: \&quot;com.mysql.jdbc.Driver\&quot; } ]&quot; ^</span>
 <span class="go">-H &quot;Artifact-Version: 5.1.35&quot; ^</span>
-<span class="go">-H &quot;Artifact-Extends: system:cdap-data-pipeline[3.5.0, 3.5.0]/system:cdap-etl-realtime[3.5.0, 3.5.0]&quot; ^</span>
+<span class="go">-H &quot;Artifact-Extends: system:cdap-data-pipeline[3.5.0, 3.5.0]/system:cdap-data-streams[3.5.0, 3.5.0]&quot; ^</span>
 <span class="go">--data-binary @mysql-connector-java-5.1.35.jar</span></span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
@@ -651,7 +651,7 @@ $(function() {
 <div class="highlight container">
 <pre class="literal-block">
 {
-  &quot;parents&quot;: [ &quot;system:cdap-data-pipeline[3.5.0,3.5.0]&quot;, &quot;system:cdap-etl-realtime[3.5.0,3.5.0]&quot; ],
+  &quot;parents&quot;: [ &quot;system:cdap-data-pipeline[3.5.0,3.5.0]&quot;, &quot;system:cdap-data-streams[3.5.0,3.5.0]&quot; ],
   &quot;plugins&quot;: [
     {
       &quot;name&quot;: &quot;mysql&quot;,

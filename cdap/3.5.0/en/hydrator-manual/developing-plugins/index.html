@@ -11,8 +11,8 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>Developing Plugins &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -99,13 +99,9 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="creating-a-plugin.html">Creating a Plugin</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="creating-a-plugin.html#action-plugin">Action Plugin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="creating-a-plugin.html#post-run-action-plugin">Post-run Action Plugin</a></li>
 <li class="toctree-l2"><a class="reference internal" href="creating-a-plugin.html#batch-source-plugin">Batch Source Plugin</a></li>
 <li class="toctree-l2"><a class="reference internal" href="creating-a-plugin.html#batch-sink-plugin">Batch Sink Plugin</a></li>
-<li class="toctree-l2"><a class="reference internal" href="creating-a-plugin.html#real-time-source-plugin">Real-Time Source Plugin</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="creating-a-plugin.html#source-state">Source State</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="creating-a-plugin.html#real-time-sink-plugin">Real-Time Sink Plugin</a></li>
 <li class="toctree-l2"><a class="reference internal" href="creating-a-plugin.html#transformation-plugin">Transformation Plugin</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="creating-a-plugin.html#script-transformations">Script Transformations</a></li>
 </ul>
@@ -113,7 +109,13 @@
 <li class="toctree-l2"><a class="reference internal" href="creating-a-plugin.html#batch-aggregator-plugin">Batch Aggregator Plugin</a></li>
 <li class="toctree-l2"><a class="reference internal" href="creating-a-plugin.html#spark-compute-plugin">Spark Compute Plugin</a></li>
 <li class="toctree-l2"><a class="reference internal" href="creating-a-plugin.html#spark-sink-plugin">Spark Sink Plugin</a></li>
-<li class="toctree-l2"><a class="reference internal" href="creating-a-plugin.html#post-run-action-plugin">Post-run Action Plugin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="creating-a-plugin.html#streaming-source-plugin">Streaming Source Plugin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="creating-a-plugin.html#windower-plugin">Windower Plugin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="creating-a-plugin.html#real-time-source-plugin-deprecated">Real-Time Source Plugin (Deprecated)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="creating-a-plugin.html#source-state">Source State</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="creating-a-plugin.html#real-time-sink-plugin-deprecated">Real-Time Sink Plugin (Deprecated)</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="testing-plugins.html">Testing Plugins</a><ul>
@@ -139,9 +141,10 @@
 <p>This section is intended for developers writing custom plugins. Users of plugins and
 pipelines should refer to the documentation on <a class="reference internal" href="../concepts-design.html#cask-hydrator-introduction-what-is-a-plugin"><span>using plugins</span></a>.</p>
 <p>CDAP provides for the creation of custom plugins to extend the existing
-<code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> and <code class="docutils literal"><span class="pre">cdap-etl-realtime</span></code> system artifacts.</p>
-<p><strong>Note:</strong> <em>The</em> <code class="docutils literal"><span class="pre">cdap-etl-batch</span></code> <em>artifact has been deprecated and replaced with the</em>
-<code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code>, <em>as of CDAP 3.5.0.</em></p>
+<code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> and <code class="docutils literal"><span class="pre">cdap-data-streams</span></code> system artifacts.</p>
+<p><strong>Note:</strong> <em>As of CDAP 3.5.0, the</em> <code class="docutils literal"><span class="pre">cdap-etl-batch</span></code> <em>artifact has been deprecated and replaced with the</em>
+<code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code>, <em>artifact, and the</em> <code class="docutils literal"><span class="pre">cdap-etl-realtime</span></code> <em>artifact has been deprecated and replaced with the</em>
+<code class="docutils literal"><span class="pre">cdap-data-streams</span></code>, <em>artifact.</em></p>
 <p>Deploying plugins is covered under <a class="reference internal" href="../plugin-management.html#cask-hydrator-plugin-management-deployment"><span>Plugin Management: Plugin Deployment</span></a>, for deploying as either a system or user
 artifact.</p>
 <ul class="simple">

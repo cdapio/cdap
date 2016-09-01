@@ -11,8 +11,8 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>Installation using Cloudera Manager &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -586,22 +586,10 @@ need to run this command multiple times, once for each entry.)</p>
 </div>
 <div class="section" id="enabling-sentry">
 <span id="cloudera-configuration-integration-sentry"></span><h3><a class="headerlink" href="#enabling-sentry" title="Perma-link to this heading">🔗</a>Enabling Sentry</h3>
-<p>To use CDAP with Cloudera clusters using Sentry authorization, this property needs to be set:</p>
-<ul class="simple">
-<li>Add the user <code class="docutils literal"><span class="pre">cdap</span></code> to the Sentry property <code class="docutils literal"><span class="pre">sentry.service.allow.connect</span></code></li>
-</ul>
-<p>We recommend setting these properties:</p>
-<ul class="simple">
-<li>Add the user <code class="docutils literal"><span class="pre">cdap</span></code> to the Sentry property <code class="docutils literal"><span class="pre">sentry.service.admin.group</span></code>; this allows
-the CDAP user to create roles, add roles to users, remove roles, list all roles, etc</li>
-<li>Add the user <code class="docutils literal"><span class="pre">cdap</span></code> to the Hive property <code class="docutils literal"><span class="pre">sentry.metastore.service.users</span></code>; this
-should be set if you want to allow CDAP to bypass Sentry authorization for Hive Metastore
-queries, such as in the default case where all applications run as <code class="docutils literal"><span class="pre">cdap</span></code> and not
-individual users</li>
-</ul>
-<p>These can be set from within Cloudera Manager by searching for these properties in the
-configuration for each component; in this case, Sentry and Hive.</p>
-<p><strong>Note:</strong> You must restart the cluster and HiveServer2 after setting these values.</p>
+<p>To use CDAP with Cloudera clusters using Sentry authorization, refer to the steps at
+<a class="reference external" href="../source/../../integrations/apache-sentry.html#apache-sentry-configuration" title="(in Cask Data Application Platform v3.5.0)"><span class="xref std std-ref">Apache Sentry Configuration</span></a></p>
+<p>The properties described there can be set from within Cloudera Manager by searching for them in the
+configuration for each component; particularly, Sentry and Hive.</p>
 </div>
 <div class="section" id="enabling-cdap-ha">
 <span id="cloudera-configuration-highly-available"></span><h3><a class="headerlink" href="#enabling-cdap-ha" title="Perma-link to this heading">🔗</a>Enabling CDAP HA</h3>

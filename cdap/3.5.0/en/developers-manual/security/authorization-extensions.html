@@ -11,8 +11,8 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>Authorization Extensions &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -89,7 +89,60 @@
             
   <div class="section" id="authorization-extensions">
 <span id="id1"></span><h1><a class="headerlink" href="#authorization-extensions" title="Perma-link to this heading">🔗</a>Authorization Extensions</h1>
-<p>Authorization backends in CDAP are implemented as extensions.</p>
+<p>Authorization backends in CDAP are implemented as extensions, and are loaded and executed in their
+own Java classloader.</p>
+<p>The reason for implementing them as extensions is that a variety of existing authorization
+systems can then be plugged into CDAP, and can execute using their own classloader without
+having to worry about conflicts with CDAP's system classloader. Each authorization
+extension is designed to be a fully self-contained JAR file, packaged with the required
+versions of all its dependencies.</p>
+<p>This is similar to how CDAP applications are packaged. In fact, users can use the CDAP
+application archetype to write their own authorization extension for CDAP. Having the
+required dependencies loaded from a separate class loader constructed using the provided
+JAR file ensures that there will be no conflicts, even if CDAP itself uses a different
+version of the library than the one that the extension requires.</p>
+<div class="section" id="writing-your-own-authorization-extension">
+<h2><a class="headerlink" href="#writing-your-own-authorization-extension" title="Perma-link to this heading">🔗</a>Writing Your Own Authorization Extension</h2>
+<p>CDAP provides an authorization SPI (Service Provider Interface) for users to implement their own authorization
+extensions. To implement an authorization extension:</p>
+<ul>
+<li><p class="first">Create a Maven project using the CDAP Application Archetype, as described in <a class="reference internal" href="../getting-started/dev-env.html#dev-env"><span>Creating an Application</span></a>.</p>
+</li>
+<li><p class="first">Implement your authorization extension by extending the <code class="docutils literal"><span class="pre">AbstractAuthorizer</span></code> class.</p>
+</li>
+<li><p class="first">This class must be specified as the <code class="docutils literal"><span class="pre">Main-Class</span></code> attribute in the extension JAR's
+manifest file. This will be done automatically if you specify the <code class="docutils literal"><span class="pre">app.main.class</span></code>
+property to be the fully qualified class name in the <code class="docutils literal"><span class="pre">pom.xml</span></code> of the Maven project
+generated using the archetype.</p>
+</li>
+<li><p class="first">The class that extends <code class="docutils literal"><span class="pre">AbstractAuthorizer</span></code> must have a default constructor, as that
+default constructor is the one that will be invoked by CDAP.</p>
+</li>
+<li><p class="first">All dependencies of the class must be packaged within the JAR file containing the
+authorizer class. This is also done automatically by the CDAP Application Archetype.</p>
+</li>
+<li><p class="first">The <code class="docutils literal"><span class="pre">AbstractAuthorizer</span></code> class provides lifecycle methods for authorization
+extensions. Any initialization code should be implemented by overriding the <code class="docutils literal"><span class="pre">initialize</span></code>
+method. Cleanup code should be implemented by overriding the <code class="docutils literal"><span class="pre">destroy</span></code> method.</p>
+</li>
+<li><p class="first">The <code class="docutils literal"><span class="pre">initialize</span></code> method provides an <code class="docutils literal"><span class="pre">AuthorizationContext</span></code> object. This object can
+be used to obtain access to—and perform admin operations on—CDAP Datasets and Secure
+Keys.</p>
+</li>
+<li><p class="first">If the authorization extension requires configuration parameters, they are provided in
+the <code class="docutils literal"><span class="pre">AuthorizationContext</span></code> object as a Java <code class="docutils literal"><span class="pre">Properties</span></code> object via the
+<code class="docutils literal"><span class="pre">getProperties</span></code> method. The <code class="docutils literal"><span class="pre">Properties</span></code> object is populated with configuration
+parameters from <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> with the prefix <code class="docutils literal"><span class="pre">security.authorization.extension.config</span></code>.</p>
+<p><strong>Note:</strong> In the <code class="docutils literal"><span class="pre">Properties</span></code> object, these configuration parameters are available
+with the <code class="docutils literal"><span class="pre">security.authorization.extension.config</span></code> prefix removed. For example:
+<code class="docutils literal"><span class="pre">security.authorization.extension.config.example.property</span></code> in the <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>
+will be available as <code class="docutils literal"><span class="pre">example.property</span></code> in the <code class="docutils literal"><span class="pre">Properties</span></code> object.</p>
+</li>
+</ul>
+<p>For an example of implementing an authorization extension, please refer to the
+<a class="reference external" href="https://github.com/caskdata/cdap-security-extn/blob/release/0.2/cdap-sentry/cdap-sentry-extension/cdap-sentry-binding/src/main/java/co/cask/cdap/security/authorization/sentry/binding/SentryAuthorizer.java">Apache Sentry Authorization Extension</a>
+as well as its documentation at <a class="reference external" href="../source/../../integrations/apache-sentry.html#apache-sentry" title="(in Cask Data Application Platform v3.5.0)"><span class="xref std std-ref">Integrations: Apache Sentry</span></a>.</p>
+</div>
 </div>
 
 
@@ -149,7 +202,10 @@
 <li class="toctree-l2"><a class="reference internal" href="cdap-authentication-clients-java.html">CDAP Authentication Client for Java</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cdap-authentication-clients-python.html">CDAP Authentication Client for Python</a></li>
 <li class="toctree-l2"><a class="reference internal" href="custom-authentication.html">Custom Authentication</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="">Authorization Extensions</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Authorization Extensions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#writing-your-own-authorization-extension">Writing Your Own Authorization Extension</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../testing/index.html"> Testing and Debugging</a></li>

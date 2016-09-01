@@ -11,8 +11,8 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>Quick Start &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -221,8 +221,8 @@ $(function tabbedparsedliteral38() {
 <div class="highlight-console">
 <!-- tabbed-parsed-literal start -->
 <div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text"><span class="nb">cd</span> &lt;CDAP-SDK-HOME&gt;</span>
-<span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -O -X GET <span class="s2">&quot;http://repository.cask.co/downloads/co/cask/cdap/apps/0.7.0/cdap-wise-0.7.0.zip&quot;</span></span>
-<span class="gp">$ </span><span class="copyable-text">unzip cdap-wise-0.7.0.zip</span>
+<span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -O -X GET <span class="s2">&quot;http://repository.cask.co/downloads/co/cask/cdap/apps/0.8.0/cdap-wise-0.8.0.zip&quot;</span></span>
+<span class="gp">$ </span><span class="copyable-text">unzip cdap-wise-0.8.0.zip</span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
 </div>
@@ -234,8 +234,8 @@ $(function tabbedparsedliteral38() {
 <div class="highlight-shell-session">
 <!-- tabbed-parsed-literal start -->
 <div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cd &lt;CDAP-SDK-HOME&gt;</span></span>
-<span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -O -X GET &quot;http://repository.cask.co/downloads/co/cask/cdap/apps/0.7.0/cdap-wise-0.7.0.zip&quot;</span></span>
-<span class="gp">&gt; </span><span class="copyable-text"><span class="go">jar xf cdap-wise-0.7.0.zip</span></span>
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -O -X GET &quot;http://repository.cask.co/downloads/co/cask/cdap/apps/0.8.0/cdap-wise-0.8.0.zip&quot;</span></span>
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">jar xf cdap-wise-0.8.0.zip</span></span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
 </div>
@@ -307,7 +307,7 @@ $(function tabbedparsedliteral39() {
 <code class="docutils literal"><span class="pre">target/</span></code> directory with the file name:</p>
 <div class="highlight container">
 <pre class="literal-block">
-cdap-wise-0.7.0.jar
+cdap-wise-0.8.0.jar
 </pre>
 </div>
 <p><strong>Learn More:</strong> A detailed description of the application and its implementation is
@@ -344,7 +344,7 @@ $(function tabbedparsedliteral40() {
 <div class="code code-tab">
 <div class="highlight-console">
 <!-- tabbed-parsed-literal start -->
-<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load artifact cdap-wise-0.7.0/target/cdap-wise-0.7.0.jar</span>
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load artifact cdap-wise-0.8.0/target/cdap-wise-0.8.0.jar</span>
 
 <span class="go">Successfully added artifact with name &#39;cdap-wise&#39;</span>
 </pre></div>
@@ -357,7 +357,7 @@ $(function tabbedparsedliteral40() {
 <div class="code code-tab">
 <div class="highlight-shell-session">
 <!-- tabbed-parsed-literal start -->
-<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load artifact cdap-wise-0.7.0\target\cdap-wise-0.7.0.jar</span></span>
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load artifact cdap-wise-0.8.0\target\cdap-wise-0.8.0.jar</span></span>
 
 <span class="go">Successfully added artifact with name &#39;cdap-wise&#39;</span>
 </pre></div>
@@ -399,7 +399,7 @@ $(function tabbedparsedliteral41() {
 <div class="highlight-console">
 <!-- tabbed-parsed-literal start -->
 <div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> localhost:10000/v3/namespaces/default/artifacts/cdap-wise <span class="se">\</span>
-<span class="go">--data-binary @cdap-wise-0.7.0/target/cdap-wise-0.7.0.jar</span></span>
+<span class="go">--data-binary @cdap-wise-0.8.0/target/cdap-wise-0.8.0.jar</span></span>
 
 <span class="go">Artifact added successfully</span>
 </pre></div>
@@ -413,7 +413,7 @@ $(function tabbedparsedliteral41() {
 <div class="highlight-shell-session">
 <!-- tabbed-parsed-literal start -->
 <div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl localhost:10000/v3/namespaces/default/artifacts/cdap-wise ^</span>
-<span class="go">--data-binary @cdap-wise-0.7.0\target\cdap-wise-0.7.0.jar</span></span>
+<span class="go">--data-binary @cdap-wise-0.8.0\target\cdap-wise-0.8.0.jar</span></span>
 
 <span class="go">Artifact added successfully</span>
 </pre></div>
@@ -455,12 +455,12 @@ $(function tabbedparsedliteral42() {
 <div class="code code-tab">
 <div class="highlight-console">
 <!-- tabbed-parsed-literal start -->
-<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load artifact cdap-apps/Wise/target/cdap-wise-0.7.0.jar</span>
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load artifact cdap-apps/Wise/target/cdap-wise-0.8.0.jar</span>
 
 <span class="go">or</span>
 
 <span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> localhost:10000/v3/namespaces/default/artifacts/cdap-wise <span class="se">\</span>
-<span class="go">--data-binary @cdap-apps/Wise/target/cdap-wise-0.7.0.jar</span></span>
+<span class="go">--data-binary @cdap-apps/Wise/target/cdap-wise-0.8.0.jar</span></span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
 </div>
@@ -471,12 +471,12 @@ $(function tabbedparsedliteral42() {
 <div class="code code-tab">
 <div class="highlight-shell-session">
 <!-- tabbed-parsed-literal start -->
-<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load artifact cdap-apps\Wise\target\cdap-wise-0.7.0.jar</span></span>
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load artifact cdap-apps\Wise\target\cdap-wise-0.8.0.jar</span></span>
 
 <span class="go">or</span>
 
 <span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl localhost:10000/v3/namespaces/default/artifacts/cdap-wise ^</span>
-<span class="go">--data-binary @cdap-apps/Wise/target/cdap-wise-0.7.0.jar</span></span>
+<span class="go">--data-binary @cdap-apps/Wise/target/cdap-wise-0.8.0.jar</span></span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
 </div>
@@ -516,7 +516,7 @@ $(function tabbedparsedliteral43() {
 <div class="code code-tab">
 <div class="highlight-console">
 <!-- tabbed-parsed-literal start -->
-<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh create app Wise cdap-wise 0.7.0 user</span>
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh create app Wise cdap-wise 0.8.0 user</span>
 
 <span class="go">Successfully created application</span>
 </pre></div>
@@ -529,7 +529,7 @@ $(function tabbedparsedliteral43() {
 <div class="code code-tab">
 <div class="highlight-shell-session">
 <!-- tabbed-parsed-literal start -->
-<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat create app Wise cdap-wise 0.7.0 user</span></span>
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat create app Wise cdap-wise 0.8.0 user</span></span>
 
 <span class="go">Successfully created application</span>
 </pre></div>
@@ -571,7 +571,7 @@ $(function tabbedparsedliteral44() {
 <div class="highlight-console">
 <!-- tabbed-parsed-literal start -->
 <div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">curl -w<span class="s2">&quot;\n&quot;</span> -X PUT -H <span class="s2">&quot;Content-Type: application/json&quot;</span> localhost:10000/v3/namespaces/default/apps/Wise <span class="se">\</span>
-<span class="go">-d &#39;{ &quot;artifact&quot;:{ &quot;name&quot;: &quot;cdap-wise&quot;, &quot;version&quot;: &quot;0.7.0&quot;, &quot;scope&quot;: &quot;user&quot; } }&#39;</span></span>
+<span class="go">-d &#39;{ &quot;artifact&quot;:{ &quot;name&quot;: &quot;cdap-wise&quot;, &quot;version&quot;: &quot;0.8.0&quot;, &quot;scope&quot;: &quot;user&quot; } }&#39;</span></span>
 
 <span class="go">Deploy Complete</span>
 </pre></div>
@@ -585,7 +585,7 @@ $(function tabbedparsedliteral44() {
 <div class="highlight-shell-session">
 <!-- tabbed-parsed-literal start -->
 <div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X PUT -H &quot;Content-Type: application/json&quot; localhost:10000/v3/namespaces/default/apps/Wise ^</span>
-<span class="go">-d &quot;{ \&quot;artifact\&quot;:{ \&quot;name\&quot;: \&quot;cdap-wise\&quot;, \&quot;version\&quot;: \&quot;0.7.0\&quot;, \&quot;scope\&quot;: \&quot;user\&quot; } }&quot;</span></span>
+<span class="go">-d &quot;{ \&quot;artifact\&quot;:{ \&quot;name\&quot;: \&quot;cdap-wise\&quot;, \&quot;version\&quot;: \&quot;0.8.0\&quot;, \&quot;scope\&quot;: \&quot;user\&quot; } }&quot;</span></span>
 
 <span class="go">Deploy Complete</span>
 </pre></div>
@@ -911,7 +911,7 @@ $(function tabbedparsedliteral50() {
 <div class="code code-tab">
 <div class="highlight-console">
 <!-- tabbed-parsed-literal start -->
-<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load stream logEventStream cdap-wise-0.7.0/resources/apache.accesslog text/plain</span>
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load stream logEventStream cdap-wise-0.8.0/resources/apache.accesslog text/plain</span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
 </div>
@@ -922,7 +922,7 @@ $(function tabbedparsedliteral50() {
 <div class="code code-tab">
 <div class="highlight-shell-session">
 <!-- tabbed-parsed-literal start -->
-<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load stream logEventStream cdap-wise-0.7.0/resources/apache.accesslog text/plain</span></span>
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load stream logEventStream cdap-wise-0.8.0/resources/apache.accesslog text/plain</span></span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->
 </div>
@@ -1295,7 +1295,7 @@ $(function tabbedparsedliteral56() {
 it shows a <a class="reference external" href="http://localhost:9999/ns/default/apps/Wise/programs/flows/WiseFlow/runs">visualization of the flow,</a>
 annotated with its real-time metrics:</p>
 <a class="reference internal image-reference" href="../_images/wise-flow1.png"><img alt="../_images/wise-flow1.png" src="../_images/wise-flow1.png" style="width: 600px;" /></a>
-<p>In this screenshot, we see that the stream has about thirty thousand events and all of them
+<p>In this screenshot, we see that the stream has thousands of events and all of them
 have been processed by both flowlets. You can watch these metrics update in real time by
 repeating the injection of events into the stream:</p>
 <script type="text/javascript">
@@ -1325,7 +1325,7 @@ $(function tabbedparsedliteral57() {
 <div class="code code-tab">
 <div class="highlight-console">
 <!-- tabbed-parsed-literal start -->
-<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load stream logEventStream cdap-wise-0.7.0/resources/apache.accesslog text/plain</span>
+<div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text">cdap-cli.sh load stream logEventStream cdap-wise-0.8.0/resources/apache.accesslog text/plain</span>
 
 <span class="go">or</span>
 
@@ -1340,7 +1340,7 @@ $(function tabbedparsedliteral57() {
 <div class="code code-tab">
 <div class="highlight-shell-session">
 <!-- tabbed-parsed-literal start -->
-<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load stream logEventStream cdap-wise-0.7.0/resources/apache.accesslog text/plain</span></span>
+<div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat load stream logEventStream cdap-wise-0.8.0/resources/apache.accesslog text/plain</span></span>
 
 <span class="go">or</span>
 
@@ -1355,8 +1355,8 @@ $(function tabbedparsedliteral57() {
 </div>
 
 </div>
-<p>If you click on the right-most flowlet (<em>pageViewCount</em>) you see the current number of
-events being processed by each flowlet, in this case up to about 60 events per second:</p>
+<p>If you double-click on the right-most flowlet (<em>pageViewCount</em>) you see the current number of
+events being processed by each flowlet:</p>
 <a class="reference internal image-reference" href="../_images/wise-flow2.png"><img alt="../_images/wise-flow2.png" src="../_images/wise-flow2.png" style="width: 600px;" /></a>
 </div>
 <div class="section" id="retrieving-the-results-of-processing">

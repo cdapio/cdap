@@ -11,8 +11,8 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>Sink Plugins &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
@@ -57,7 +57,7 @@
     <link rel="top" title="Cask Data Application Platform 3.5.0 Documentation" href="../../index.html" />
     <link rel="up" title="Plugin Reference" href="../index.html" />
     <link rel="next" title="Cassandra" href="cassandra-batchsink.html" />
-    <link rel="prev" title="Naive Bayes Classifier" href="../transforms/DPB-naivebayesclassifier-sparkcompute.html" /> 
+    <link rel="prev" title="Naive Bayes Trainer" href="../analytics/DPB-naivebayestrainer-sparksink.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -70,7 +70,7 @@
           <a href="cassandra-batchsink.html" title="Cassandra"
              accesskey="N">Next</a> |</li>
         <li class="right" >
-          <a href="../transforms/DPB-naivebayesclassifier-sparkcompute.html" title="Naive Bayes Classifier"
+          <a href="../analytics/DPB-naivebayestrainer-sparksink.html" title="Naive Bayes Trainer"
              accesskey="P">Previous</a> |</li>
         
         <script type="text/javascript" src="../../_static/version-menu.js"></script>
@@ -89,7 +89,7 @@
             
   <div class="section" id="sink-plugins">
 <span id="cask-hydrator-plugins-sinks"></span><h1><a class="headerlink" href="#sink-plugins" title="Perma-link to this heading">🔗</a>Sink Plugins</h1>
-<p>Hydrator Version 1.4.0-SNAPSHOT</p>
+<p>Hydrator Version 1.4.1-SNAPSHOT</p>
 <p id="cask-hydrator-plugins-batch-sinks"><strong>Batch Plugins</strong></p>
 <p>These plugins work with:</p>
 <blockquote>
@@ -118,17 +118,6 @@
 <li class="toctree-l1"><a class="reference internal" href="tpfsavro-batchsink.html">TimePartitionedFileSet Avro</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tpfsorc-batchsink.html">TimePartitionedFileSet ORC</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tpfsparquet-batchsink.html">TimePartitionedFileSet Parquet</a></li>
-</ul>
-</div>
-<p>These plugins work with:</p>
-<blockquote>
-<div><ul class="simple">
-<li><em>Data Pipeline - Batch</em> (<code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> artifact)</li>
-</ul>
-</div></blockquote>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="naivebayestrainer-sparksink.html">Naive Bayes Trainer</a></li>
 </ul>
 </div>
 <p id="cask-hydrator-plugins-real-time-sinks"><strong>Real-time Plugins</strong></p>
@@ -210,6 +199,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../actions/index.html"> Action Plugins</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../sources/index.html"> Source Plugins</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../transforms/index.html"> Transform Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../analytics/index.html"> Analytic Plugins</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href=""> Sink Plugins</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="cassandra-batchsink.html">Cassandra</a></li>
 <li class="toctree-l3"><a class="reference internal" href="cube-batchsink.html">Cube</a></li>
@@ -228,7 +218,6 @@
 <li class="toctree-l3"><a class="reference internal" href="tpfsavro-batchsink.html">TimePartitionedFileSet Avro</a></li>
 <li class="toctree-l3"><a class="reference internal" href="tpfsorc-batchsink.html">TimePartitionedFileSet ORC</a></li>
 <li class="toctree-l3"><a class="reference internal" href="tpfsparquet-batchsink.html">TimePartitionedFileSet Parquet</a></li>
-<li class="toctree-l3"><a class="reference internal" href="naivebayestrainer-sparksink.html">Naive Bayes Trainer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="cassandra-realtimesink.html">Cassandra</a></li>
 <li class="toctree-l3"><a class="reference internal" href="cube-realtimesink.html">Cube</a></li>
 <li class="toctree-l3"><a class="reference internal" href="elasticsearch-realtimesink.html">Elasticsearch</a></li>
@@ -297,7 +286,7 @@
 
   <tr>
     <th class="tg-031e">Previous Topic: 
-    <a title="Naive Bayes Classifier" href="../transforms/DPB-naivebayesclassifier-sparkcompute.html" />Naive Bayes Classifier</a>&nbsp;&nbsp;
+    <a title="Naive Bayes Trainer" href="../analytics/DPB-naivebayestrainer-sparksink.html" />Naive Bayes Trainer</a>&nbsp;&nbsp;
     </th>
     
     <th class="tg-s6z2">

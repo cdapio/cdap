@@ -11,8 +11,8 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>Creating Pipelines &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
@@ -106,8 +106,6 @@ Studio, specified in-memory.</p>
 <p>which are used to create the different kinds of data pipeline applications.</p>
 <p><strong>Note:</strong> <em>Two system artifacts,</em> <code class="docutils literal"><span class="pre">cdap-etl-batch</span></code> <em>and</em> <code class="docutils literal"><span class="pre">cdap-etl-realtime</span></code>, <em>have
 been deprecated and replaced by the above artifacts, as of CDAP 3.5.0.</em></p>
-<p>An additional system artifact (<code class="docutils literal"><span class="pre">core-plugins</span></code>) provides common resources for the other
-system artifacts, and can be used by developers of custom plugins.</p>
 <p>Pipelines can be created using Cask Hydrator's included visual editor (<em>Cask Hydrator
 Studio</em>), using command-line tools such the CDAP CLI and <code class="docutils literal"><span class="pre">curl</span></code>, or programmatically
 with scripts or Java programs.</p>
@@ -121,8 +119,9 @@ with scripts or Java programs.</p>
 <p>Using <strong>Hydrator Studio,</strong> the basic operations are:</p>
 <blockquote>
 <div><ol class="arabic simple">
-<li><strong>Create</strong> a new pipeline, either by starting from a <a class="reference internal" href="getting-started.html#cask-hydrator-getting-started-hydrator-studio"><span>blank canvas</span></a>,
-starting from a <a class="reference external" href="PipelineTemplates">template</a>, or by <a class="reference external" href="Cloning">cloning</a> an already-published pipeline.</li>
+<li><strong>Create</strong> a new pipeline, either by starting from a <a class="reference internal" href="getting-started.html#cask-hydrator-getting-started-hydrator-studio"><span>blank canvas</span></a>, starting from a
+<a class="reference internal" href="#cask-hydrator-creating-pipelines-pipeline-templates"><span>template</span></a>, or by
+<a class="reference internal" href="#cask-hydrator-creating-pipelines-cloning"><span>cloning</span></a> an already-published pipeline.</li>
 <li><strong>Edit</strong> the pipeline in Hydrator Studio, setting appropriate configurations and
 settings.</li>
 <li><strong>Save</strong> the pipeline as you are working on it, as a draft pipeline, using a unique name.</li>
@@ -158,7 +157,7 @@ can be cloned and edited using Hydrator Studio.</p>
 <h2><a class="headerlink" href="#batch-pipelines" title="Perma-link to this heading">🔗</a>Batch Pipelines</h2>
 <div class="section" id="introduction">
 <h3><a class="headerlink" href="#introduction" title="Perma-link to this heading">🔗</a>Introduction</h3>
-<p>Batch pipelines can be scheduled to run periodically, using a cron expression and can read
+<p>Batch pipelines can be scheduled to run periodically using a cron expression, and can read
 data from batch sources using either a MapReduce or Spark job. The batch application then
 performs any (optional) transformations before writing to one or more batch sinks.</p>
 <p>Action plugins can be added to perform special actions before the pipeline starts, and
@@ -169,9 +168,10 @@ irregardless if the pipeline successfully completed.</p>
 <h3><a class="headerlink" href="#types-of-plugins" title="Perma-link to this heading">🔗</a>Types of Plugins</h3>
 <p>Batch pipelines, based on the <code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> application template, can include these plugins:</p>
 <ul class="simple">
-<li><a class="reference internal" href="plugins/actions/index.html#cask-hydrator-action-plugins"><span>Actions</span></a></li>
+<li><a class="reference internal" href="plugins/actions/index.html#cask-hydrator-plugins-actions"><span>Actions</span></a></li>
 <li><a class="reference internal" href="plugins/sources/index.html#cask-hydrator-plugins-batch-sources"><span>Batch Source Plugins</span></a></li>
 <li><a class="reference internal" href="plugins/transforms/index.html#cask-hydrator-plugins-transformations"><span>Transformation Plugins</span></a></li>
+<li><a class="reference internal" href="plugins/analytics/index.html#cask-hydrator-plugins-analytics"><span>Analytics Plugins</span></a></li>
 <li><a class="reference internal" href="plugins/sinks/index.html#cask-hydrator-plugins-batch-sinks"><span>Batch Sink Plugins</span></a></li>
 </ul>
 </div>
@@ -192,12 +192,13 @@ work with the <em>Data Pipeline</em> (the <code class="docutils literal"><span c
 <li>Specify <em>Data Pipeline</em> (the <code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code> artifact) as the application
 template for your pipeline.</li>
 <li>Click the icons in the left-sidebar to select the plugins you would like included in
-your pipeline. In addition to the <a class="reference internal" href="plugins/actions/index.html#cask-hydrator-action-plugins"><span>action plugins</span></a>
-and the <a class="reference internal" href="plugins/transforms/index.html#cask-hydrator-plugins-transformations"><span>transform plugins</span></a>, you can use
+your pipeline. In addition to the <a class="reference internal" href="plugins/actions/index.html#cask-hydrator-plugins-actions"><span>action plugins</span></a>,
+the <a class="reference internal" href="plugins/transforms/index.html#cask-hydrator-plugins-transformations"><span>transform plugins</span></a>, and certain of
+the <a class="reference internal" href="plugins/analytics/index.html#cask-hydrator-plugins-analytics"><span>analytics plugins</span></a>, you can use
 any of the <a class="reference internal" href="plugins/sources/index.html#cask-hydrator-plugins-batch-sources"><span>batch source plugins</span></a> or the
 <a class="reference internal" href="plugins/sinks/index.html#cask-hydrator-plugins-batch-sinks"><span>batch sink plugins</span></a>.</li>
-<li>Typically, you will need at a minimum a source, a sink, and any optional transformations
-that are needed being the source and sink stages.</li>
+<li>Typically, you will need at a minimum a source, a sink, and any optional transformations or analytics
+that are required between the source and sink stages.</li>
 <li>Action steps can be added before a source and after a sink. These will be run only at
 the start (before a source) and only at the end if the pipeline successfully completes.</li>
 <li>The <em>Settings</em> button allows you to specify the <em>Schedule</em>, &quot;Post-run Actions* and <em>Engine</em> used
@@ -289,7 +290,7 @@ stages, and all other stages will complete before any of the actions at the end 
 <p>Actions at the end will only run if the pipeline successfully completes. If you need an
 action to run irregardless of completion, use a <a class="reference internal" href="#cask-hydrator-creating-pipelines-post-run-actions"><span>post-run action</span></a> instead.</p>
 <p>Currently, action plugins are only available when using the <code class="docutils literal"><span class="pre">cdap-data-pipeline</span></code>
-application template. Available action plugins are documented in the <a class="reference internal" href="plugins/actions/index.html#cask-hydrator-action-plugins"><span>Plugin
+application template. Available action plugins are documented in the <a class="reference internal" href="plugins/actions/index.html#cask-hydrator-plugins-actions"><span>Plugin
 Reference</span></a>, with this action available:</p>
 <ul class="simple">
 <li><em>SSH Action</em>, which establishes an SSH connection with a remote machine to execute a
@@ -322,48 +323,49 @@ application template. Available post-run plugins are documented in the <a class=
 <h2><a class="headerlink" href="#real-time-pipelines" title="Perma-link to this heading">🔗</a>Real-time Pipelines</h2>
 <div class="section" id="id1">
 <h3><a class="headerlink" href="#id1" title="Perma-link to this heading">🔗</a>Introduction</h3>
-<p>Real-time pipelines are designed to poll sources periodically to fetch data, perform any
-(optional) transformations, and then write to one or more real-time sinks. As they are
-intended to be run continuously, post-run actions are not applicable or available.</p>
+<p>Real-time pipelines are designed to generate micro batches of data at a regular interval, perform any
+(optional) transformations and analytics, and then write to one or more sinks. As they are
+intended to be run continuously, actions and post-run actions are not applicable or available.
+Real-time pipelines do not operate on a record by record basis, but on a micro batch by micro batch basis.</p>
 </div>
 <div class="section" id="id2">
 <h3><a class="headerlink" href="#id2" title="Perma-link to this heading">🔗</a>Types of Plugins</h3>
-<p>Real-time pipelines, based on the <code class="docutils literal"><span class="pre">cdap-etl-realtime</span></code> application template, can include these plugins:</p>
+<p>Real-time pipelines, based on the <code class="docutils literal"><span class="pre">cdap-data-streams</span></code> application template, can include these plugins:</p>
 <ul class="simple">
-<li><a class="reference internal" href="plugins/actions/index.html#cask-hydrator-action-plugins"><span>Actions</span></a></li>
-<li><a class="reference internal" href="plugins/sources/index.html#cask-hydrator-plugins-real-time-sources"><span>Real-time Sink Source Plugins</span></a></li>
+<li><a class="reference internal" href="plugins/sources/index.html#cask-hydrator-plugins-real-time-sources"><span>Streaming Source Plugins</span></a></li>
 <li><a class="reference internal" href="plugins/transforms/index.html#cask-hydrator-plugins-transformations"><span>Transformation Plugins</span></a></li>
-<li><a class="reference internal" href="plugins/sinks/index.html#cask-hydrator-plugins-real-time-sinks"><span>Real-time Sink Plugins</span></a></li>
+<li><a class="reference internal" href="plugins/analytics/index.html#cask-hydrator-plugins-analytics"><span>Analytics Plugins</span></a></li>
+<li><a class="reference internal" href="plugins/sinks/index.html#cask-hydrator-plugins-batch-sinks"><span>Batch Sink Plugins</span></a></li>
 </ul>
+<p>Despite the name, batch sink plugins are not limited to just batch pipelines.
+The real-time pipeline artifact generates micro batches that can then be written to a batch sink.</p>
 </div>
 <div class="section" id="id3">
 <h3><a class="headerlink" href="#id3" title="Perma-link to this heading">🔗</a>How Does It Work?</h3>
 <p>A real-time pipeline is created by taking a &quot;virtual&quot; pipeline (in the form of a
 configuration file) and then creating a &quot;physical&quot; pipeline as a CDAP application with
 appropriate CDAP programs to implement the configuration.</p>
-<p>The programs used will depend on the plugins used to build the pipeline. The available
-plugins are determined by those plugins that will work with the <em>ETL Realtime</em> (the
-<code class="docutils literal"><span class="pre">cdap-etl-realtime</span></code> artifact), as listed above.</p>
-<p>The application created will consist of a worker to be run continuously, polling as required.</p>
+<p>The application created will consist of a Spark Streaming program.</p>
 </div>
 <div class="section" id="id4">
 <h3><a class="headerlink" href="#id4" title="Perma-link to this heading">🔗</a>Building a Pipeline</h3>
 <p>To create a real-time pipeline, you can use either Hydrator Studio or command line tools.</p>
 <p>To use Hydrator Studio to create a real-time pipeline:</p>
 <ul class="simple">
-<li>Specify <em>ETL Realtime</em> (the <code class="docutils literal"><span class="pre">cdap-etl-realtime</span></code> artifact) as the application
+<li>Specify <em>Data Pipeline - Realtime</em> (the <code class="docutils literal"><span class="pre">cdap-data-streams</span></code> artifact) as the application
 template for your pipeline.</li>
 <li>Click the icons in the left-sidebar to select the plugins you would like included in
-your pipeline. In addition to the <a class="reference internal" href="plugins/actions/index.html#cask-hydrator-action-plugins"><span>action plugins</span></a>
-and the <a class="reference internal" href="plugins/transforms/index.html#cask-hydrator-plugins-transformations"><span>transform plugins</span></a>, you can use
-any of the <a class="reference internal" href="plugins/sources/index.html#cask-hydrator-plugins-real-time-sources"><span>real-time source plugins</span></a> or the
-<a class="reference internal" href="plugins/sinks/index.html#cask-hydrator-plugins-real-time-sinks"><span>real-time sink plugins</span></a>.</li>
-<li>Typically, you will need at a minimum a source, a sink, and any optional transformations
-that are needed being the source and sink stages.</li>
-<li>Action steps can be added before a source and after a sink. These will be run only at
-the start (before a source) and only at the end if the pipeline successfully completes.</li>
-<li>The <em>Settings</em> button allows you to specify the number of instances used for workers of
-the pipeline. The default is one.</li>
+your pipeline. In addition to the <a class="reference internal" href="plugins/transforms/index.html#cask-hydrator-plugins-transformations"><span>transform plugins</span></a>
+and certain of the <a class="reference internal" href="plugins/analytics/index.html#cask-hydrator-plugins-analytics"><span>analytics plugins</span></a>,
+you can use any of the <a class="reference internal" href="plugins/sources/index.html#cask-hydrator-plugins-real-time-sources"><span>streaming source plugins</span></a> or the
+<a class="reference internal" href="plugins/sinks/index.html#cask-hydrator-plugins-batch-sinks"><span>batch sink plugins</span></a>.</li>
+<li>You will need at a minimum a source, a sink, and any optional transformations or analytics
+that are needed between the source and sink stages.</li>
+<li>The <em>Settings</em> button allows you to specify the batch interval for your pipeline. The batch interval controls
+how often your sources will generate a micro batch of data. This must be a number followed
+by a time unit, with 's' for seconds, 'm' for minutes, and 'h' for hours.
+For example, '10s' translates to ten seconds. This means the sources will generate a micro batch of data every
+ten seconds.</li>
 <li>Complete all required information for each stage, and any optional information that your
 particular use requires.</li>
 <li>Save the pipeline under a unique name</li>
@@ -522,11 +524,11 @@ can be cloned and edited using Hydrator Studio.</p>
 <li><strong>Exporting</strong> a configuration file, editing it, and then <strong>importing</strong> the revised file</li>
 </ul>
 <div class="section" id="pipeline-templates">
-<h3><a class="headerlink" href="#pipeline-templates" title="Perma-link to this heading">🔗</a>Pipeline Templates</h3>
+<span id="cask-hydrator-creating-pipelines-pipeline-templates"></span><h3><a class="headerlink" href="#pipeline-templates" title="Perma-link to this heading">🔗</a>Pipeline Templates</h3>
 <p>A collection of predefined and preconfigured pipelines are available from within Hydrator
 Studio through the controls at the top of the left side-bar. These templates can be used
 as the starting point for either your own pipelines or your own pipeline templates.</p>
-<div class="figure align-center" id="id6" style="width: 100%">
+<div class="figure align-center" id="id5" style="width: 100%">
 <a class="bordered-image reference internal image-reference" href="_images/hydrator-studio-annotated.png"><img alt="_images/hydrator-studio-annotated.png" class="bordered-image" src="_images/hydrator-studio-annotated.png" style="width: 6in;" /></a>
 <p class="caption"><span class="caption-text"><strong>Cask Hydrator Studio:</strong> Annotations showing components</span></p>
 </div>
@@ -558,8 +560,8 @@ to your requirements.</p>
 </li>
 </ul>
 </div>
-<div class="section" id="id5">
-<h3><a class="headerlink" href="#id5" title="Perma-link to this heading">🔗</a>Cloning</h3>
+<div class="section" id="cloning">
+<span id="cask-hydrator-creating-pipelines-cloning"></span><h3><a class="headerlink" href="#cloning" title="Perma-link to this heading">🔗</a>Cloning</h3>
 <p>Any existing pipeline that has been published, can be <em>cloned.</em> This creates an in-memory
 copy of the pipeline with the same name and opens it within Hydrator Studio.</p>
 <p>At this point, you can rename the pipeline to a unique name and then either save it as a
@@ -577,12 +579,12 @@ practice is to increment the names, from <em>Demo-1</em> to <em>Demo-2</em> with
 <ol class="arabic">
 <li><p class="first">From <strong>within Hydrator Studio</strong>, you can export a pipeline configuration JSON file using
 the <em>Export...</em> button:</p>
-<div class="figure align-center" id="id7" style="width: 100%">
+<div class="figure align-center" id="id6" style="width: 100%">
 <a class="bordered-image reference internal image-reference" href="_images/hydrator-gs-1-5-buttons.png"><img alt="_images/hydrator-gs-1-5-buttons.png" class="bordered-image" src="_images/hydrator-gs-1-5-buttons.png" style="width: 6in;" /></a>
 <p class="caption"><span class="caption-text"><strong>Cask Hydrator Studio:</strong> Button labels, upper-right toolbar</span></p>
 </div>
 <p>Clicking the &quot;Export...&quot; button will bring up the export dialog:</p>
-<div class="figure align-center" id="id8" style="width: 100%">
+<div class="figure align-center" id="id7" style="width: 100%">
 <a class="bordered-image reference internal image-reference" href="_images/hydrator-studio-export.png"><img alt="_images/hydrator-studio-export.png" class="bordered-image" src="_images/hydrator-studio-export.png" style="width: 6in;" /></a>
 <p class="caption"><span class="caption-text"><strong>Cask Hydrator Studio:</strong> Export dialog, with display of configuration file</span></p>
 </div>
@@ -596,7 +598,7 @@ similar. The UI information is added in the <code class="docutils literal"><span
 file.</p>
 </li>
 <li><p class="first">From <strong>within a Hydrator pipeline configuration</strong> page, there is an <em>Export</em> button:</p>
-<div class="figure align-center" id="id9" style="width: 100%">
+<div class="figure align-center" id="id8" style="width: 100%">
 <a class="bordered-image reference internal image-reference" href="_images/hydrator-pipeline-detail-configuration.png"><img alt="_images/hydrator-pipeline-detail-configuration.png" class="bordered-image" src="_images/hydrator-pipeline-detail-configuration.png" style="width: 6in;" /></a>
 <p class="caption"><span class="caption-text"><strong>Cask Hydrator:</strong> Configuration page, pipeline detail, showing <em>Export</em> button on right</span></p>
 </div>
@@ -612,7 +614,7 @@ the <code class="docutils literal"><span class="pre">&quot;__ui__&quot;</span></
 <h3><a class="headerlink" href="#importing" title="Perma-link to this heading">🔗</a>Importing</h3>
 <p>From within Hydrator Studio, you can import a pipeline configuration JSON file to create a
 new pipeline using the <em>Import Pipeline</em> button:</p>
-<div class="figure align-center" id="id10" style="width: 100%">
+<div class="figure align-center" id="id9" style="width: 100%">
 <a class="bordered-image reference internal image-reference" href="_images/hydrator-gs-1-5-buttons.png"><img alt="_images/hydrator-gs-1-5-buttons.png" class="bordered-image" src="_images/hydrator-gs-1-5-buttons.png" style="width: 6in;" /></a>
 <p class="caption"><span class="caption-text"><strong>Cask Hydrator Studio:</strong> Button labels, upper-right toolbar</span></p>
 </div>
@@ -706,7 +708,7 @@ required. It may be created from an existing pipeline by exporting its configura
 <li class="toctree-l2"><a class="reference internal" href="#publishing">Publishing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#templates-and-re-using-pipelines">Templates and Re-using Pipelines</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#pipeline-templates">Pipeline Templates</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id5">Cloning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cloning">Cloning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#exporting">Exporting</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#importing">Importing</a></li>
 </ul>

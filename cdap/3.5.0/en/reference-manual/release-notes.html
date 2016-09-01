@@ -12,8 +12,8 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>Cask Data Application Platform Release Notes &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
@@ -83,177 +83,174 @@
 <span id="release-notes"></span><span id="index-0"></span><h1><a class="headerlink" href="#cask-data-application-platform-release-notes" title="Perma-link to this heading">🔗</a>Cask Data Application Platform Release Notes</h1>
 <div class="contents faq local topic" id="contents">
 <ul class="simple">
-<li><a class="reference internal" href="#release-3-5-0" id="id66">Release 3.5.0</a><ul>
-<li><a class="reference internal" href="#api-changes" id="id67">API Changes</a></li>
-<li><a class="reference internal" href="#new-features" id="id68">New Features</a></li>
-<li><a class="reference internal" href="#changes" id="id69">Changes</a></li>
-<li><a class="reference internal" href="#improvements" id="id70">Improvements</a></li>
-<li><a class="reference internal" href="#bug-fixes" id="id71">Bug Fixes</a></li>
+<li><a class="reference internal" href="#release-3-5-0" id="id67">Release 3.5.0</a><ul>
+<li><a class="reference internal" href="#known-issues" id="id68">Known Issues</a></li>
+<li><a class="reference internal" href="#api-changes" id="id69">API Changes</a></li>
+<li><a class="reference internal" href="#new-features" id="id70">New Features</a></li>
+<li><a class="reference internal" href="#changes" id="id71">Changes</a></li>
+<li><a class="reference internal" href="#improvements" id="id72">Improvements</a></li>
+<li><a class="reference internal" href="#bug-fixes" id="id73">Bug Fixes</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#release-3-4-1" id="id72">Release 3.4.1</a><ul>
-<li><a class="reference internal" href="#id1" id="id73">Bug Fixes</a></li>
-<li><a class="reference internal" href="#known-issues" id="id74">Known Issues</a></li>
+<li><a class="reference internal" href="#release-3-4-1" id="id74">Release 3.4.1</a><ul>
+<li><a class="reference internal" href="#id1" id="id75">Bug Fixes</a></li>
+<li><a class="reference internal" href="#id2" id="id76">Known Issues</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#release-3-4-0" id="id75">Release 3.4.0</a><ul>
-<li><a class="reference internal" href="#id2" id="id76">API Changes</a></li>
-<li><a class="reference internal" href="#id3" id="id77">New Features</a></li>
-<li><a class="reference internal" href="#id4" id="id78">Improvements</a></li>
-<li><a class="reference internal" href="#id5" id="id79">Bug Fixes</a></li>
-<li><a class="reference internal" href="#deprecated-and-removed-features" id="id80">Deprecated and Removed Features</a></li>
-<li><a class="reference internal" href="#known-issues-340" id="id81">Known Issues</a></li>
+<li><a class="reference internal" href="#release-3-4-0" id="id77">Release 3.4.0</a><ul>
+<li><a class="reference internal" href="#id3" id="id78">API Changes</a></li>
+<li><a class="reference internal" href="#id4" id="id79">New Features</a></li>
+<li><a class="reference internal" href="#id5" id="id80">Improvements</a></li>
+<li><a class="reference internal" href="#id6" id="id81">Bug Fixes</a></li>
+<li><a class="reference internal" href="#deprecated-and-removed-features" id="id82">Deprecated and Removed Features</a></li>
+<li><a class="reference internal" href="#known-issues-340" id="id83">Known Issues</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#release-3-3-3" id="id82">Release 3.3.3</a><ul>
-<li><a class="reference internal" href="#bug-fix" id="id83">Bug Fix</a></li>
+<li><a class="reference internal" href="#release-3-3-3" id="id84">Release 3.3.3</a><ul>
+<li><a class="reference internal" href="#bug-fix" id="id85">Bug Fix</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#release-3-3-2" id="id84">Release 3.3.2</a><ul>
-<li><a class="reference internal" href="#id7" id="id85">Improvements</a></li>
-<li><a class="reference internal" href="#id8" id="id86">Bug Fixes</a></li>
+<li><a class="reference internal" href="#release-3-3-2" id="id86">Release 3.3.2</a><ul>
+<li><a class="reference internal" href="#id8" id="id87">Improvements</a></li>
+<li><a class="reference internal" href="#id9" id="id88">Bug Fixes</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#release-3-3-1" id="id87">Release 3.3.1</a><ul>
-<li><a class="reference internal" href="#id9" id="id88">Improvements</a></li>
-<li><a class="reference internal" href="#id10" id="id89">Bug Fixes</a></li>
-<li><a class="reference internal" href="#id11" id="id90">Deprecated and Removed Features</a></li>
-<li><a class="reference internal" href="#id12" id="id91">Known Issues</a></li>
+<li><a class="reference internal" href="#release-3-3-1" id="id89">Release 3.3.1</a><ul>
+<li><a class="reference internal" href="#id10" id="id90">Improvements</a></li>
+<li><a class="reference internal" href="#id11" id="id91">Bug Fixes</a></li>
+<li><a class="reference internal" href="#id12" id="id92">Deprecated and Removed Features</a></li>
+<li><a class="reference internal" href="#id13" id="id93">Known Issues</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#release-3-3-0" id="id92">Release 3.3.0</a><ul>
-<li><a class="reference internal" href="#id13" id="id93">New Features</a></li>
-<li><a class="reference internal" href="#id14" id="id94">Improvements</a></li>
-<li><a class="reference internal" href="#id15" id="id95">Bug Fixes</a></li>
-<li><a class="reference internal" href="#id16" id="id96">Deprecated and Removed Features</a></li>
-<li><a class="reference internal" href="#id17" id="id97">Known Issues</a></li>
+<li><a class="reference internal" href="#release-3-3-0" id="id94">Release 3.3.0</a><ul>
+<li><a class="reference internal" href="#id14" id="id95">New Features</a></li>
+<li><a class="reference internal" href="#id15" id="id96">Improvements</a></li>
+<li><a class="reference internal" href="#id16" id="id97">Bug Fixes</a></li>
+<li><a class="reference internal" href="#id17" id="id98">Deprecated and Removed Features</a></li>
+<li><a class="reference internal" href="#id18" id="id99">Known Issues</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#release-3-2-1" id="id98">Release 3.2.1</a><ul>
-<li><a class="reference internal" href="#id18" id="id99">New Features</a></li>
-<li><a class="reference internal" href="#id19" id="id100">Improvements</a></li>
-<li><a class="reference internal" href="#id20" id="id101">Bug Fixes</a></li>
-<li><a class="reference internal" href="#id21" id="id102">Known Issues</a></li>
+<li><a class="reference internal" href="#release-3-2-1" id="id100">Release 3.2.1</a><ul>
+<li><a class="reference internal" href="#id19" id="id101">New Features</a></li>
+<li><a class="reference internal" href="#id20" id="id102">Improvements</a></li>
+<li><a class="reference internal" href="#id21" id="id103">Bug Fixes</a></li>
+<li><a class="reference internal" href="#id22" id="id104">Known Issues</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#release-3-2-0" id="id103">Release 3.2.0</a><ul>
-<li><a class="reference internal" href="#id22" id="id104">New Features</a></li>
-<li><a class="reference internal" href="#id23" id="id105">Improvements</a></li>
-<li><a class="reference internal" href="#id24" id="id106">Bug Fixes</a></li>
-<li><a class="reference internal" href="#id25" id="id107">API Changes</a></li>
-<li><a class="reference internal" href="#id26" id="id108">Deprecated and Removed Features</a></li>
-<li><a class="reference internal" href="#id27" id="id109">Known Issues</a></li>
+<li><a class="reference internal" href="#release-3-2-0" id="id105">Release 3.2.0</a><ul>
+<li><a class="reference internal" href="#id23" id="id106">New Features</a></li>
+<li><a class="reference internal" href="#id24" id="id107">Improvements</a></li>
+<li><a class="reference internal" href="#id25" id="id108">Bug Fixes</a></li>
+<li><a class="reference internal" href="#id26" id="id109">API Changes</a></li>
+<li><a class="reference internal" href="#id27" id="id110">Deprecated and Removed Features</a></li>
+<li><a class="reference internal" href="#id28" id="id111">Known Issues</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#release-3-1-0" id="id110">Release 3.1.0</a><ul>
-<li><a class="reference internal" href="#id28" id="id111">New Features</a></li>
-<li><a class="reference internal" href="#id29" id="id112">Improvements</a></li>
-<li><a class="reference internal" href="#id30" id="id113">Bug Fixes</a></li>
-<li><a class="reference internal" href="#id31" id="id114">Deprecated and Removed Features</a></li>
-<li><a class="reference internal" href="#known-issues-310" id="id115">Known Issues</a></li>
+<li><a class="reference internal" href="#release-3-1-0" id="id112">Release 3.1.0</a><ul>
+<li><a class="reference internal" href="#id29" id="id113">New Features</a></li>
+<li><a class="reference internal" href="#id30" id="id114">Improvements</a></li>
+<li><a class="reference internal" href="#id31" id="id115">Bug Fixes</a></li>
+<li><a class="reference internal" href="#id32" id="id116">Deprecated and Removed Features</a></li>
+<li><a class="reference internal" href="#known-issues-310" id="id117">Known Issues</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#release-3-0-3" id="id116">Release 3.0.3</a><ul>
-<li><a class="reference internal" href="#id33" id="id117">Bug Fix</a></li>
-<li><a class="reference internal" href="#id34" id="id118">Known Issues</a></li>
+<li><a class="reference internal" href="#release-3-0-3" id="id118">Release 3.0.3</a><ul>
+<li><a class="reference internal" href="#id34" id="id119">Bug Fix</a></li>
+<li><a class="reference internal" href="#id35" id="id120">Known Issues</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#release-3-0-2" id="id119">Release 3.0.2</a><ul>
-<li><a class="reference internal" href="#id35" id="id120">Bug Fixes</a></li>
-<li><a class="reference internal" href="#id36" id="id121">Known Issues</a></li>
+<li><a class="reference internal" href="#release-3-0-2" id="id121">Release 3.0.2</a><ul>
+<li><a class="reference internal" href="#id36" id="id122">Bug Fixes</a></li>
+<li><a class="reference internal" href="#id37" id="id123">Known Issues</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#release-3-0-1" id="id122">Release 3.0.1</a><ul>
-<li><a class="reference internal" href="#id38" id="id123">New Features</a></li>
-<li><a class="reference internal" href="#id39" id="id124">Improvements</a></li>
-<li><a class="reference internal" href="#id40" id="id125">Bug Fixes</a></li>
-<li><a class="reference internal" href="#known-issues-301" id="id126">Known Issues</a></li>
+<li><a class="reference internal" href="#release-3-0-1" id="id124">Release 3.0.1</a><ul>
+<li><a class="reference internal" href="#id39" id="id125">New Features</a></li>
+<li><a class="reference internal" href="#id40" id="id126">Improvements</a></li>
+<li><a class="reference internal" href="#id41" id="id127">Bug Fixes</a></li>
+<li><a class="reference internal" href="#known-issues-301" id="id128">Known Issues</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#release-3-0-0" id="id127">Release 3.0.0</a><ul>
-<li><a class="reference internal" href="#id42" id="id128">New Features</a></li>
-<li><a class="reference internal" href="#new-user-interface" id="id129">New User Interface</a></li>
-<li><a class="reference internal" href="#improvement" id="id130">Improvement</a></li>
-<li><a class="reference internal" href="#id43" id="id131">Bug Fixes</a></li>
-<li><a class="reference internal" href="#id44" id="id132">API Changes</a></li>
-<li><a class="reference internal" href="#id45" id="id133">Deprecated and Removed Features</a></li>
-<li><a class="reference internal" href="#known-issues-300" id="id134">Known Issues</a></li>
+<li><a class="reference internal" href="#release-3-0-0" id="id129">Release 3.0.0</a><ul>
+<li><a class="reference internal" href="#id43" id="id130">New Features</a></li>
+<li><a class="reference internal" href="#new-user-interface" id="id131">New User Interface</a></li>
+<li><a class="reference internal" href="#improvement" id="id132">Improvement</a></li>
+<li><a class="reference internal" href="#id44" id="id133">Bug Fixes</a></li>
+<li><a class="reference internal" href="#id45" id="id134">API Changes</a></li>
+<li><a class="reference internal" href="#id46" id="id135">Deprecated and Removed Features</a></li>
+<li><a class="reference internal" href="#known-issues-300" id="id136">Known Issues</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#release-2-8-0" id="id135">Release 2.8.0</a><ul>
-<li><a class="reference internal" href="#general" id="id136">General</a></li>
-<li><a class="reference internal" href="#id47" id="id137">New Features</a></li>
-<li><a class="reference internal" href="#id48" id="id138">Improvement</a></li>
-<li><a class="reference internal" href="#id49" id="id139">API Changes</a></li>
-<li><a class="reference internal" href="#known-issues-280" id="id140">Known Issues</a></li>
+<li><a class="reference internal" href="#release-2-8-0" id="id137">Release 2.8.0</a><ul>
+<li><a class="reference internal" href="#general" id="id138">General</a></li>
+<li><a class="reference internal" href="#id48" id="id139">New Features</a></li>
+<li><a class="reference internal" href="#id49" id="id140">Improvement</a></li>
+<li><a class="reference internal" href="#id50" id="id141">API Changes</a></li>
+<li><a class="reference internal" href="#known-issues-280" id="id142">Known Issues</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#release-2-7-1" id="id141">Release 2.7.1</a><ul>
-<li><a class="reference internal" href="#id51" id="id142">API Changes</a></li>
-<li><a class="reference internal" href="#id52" id="id143">New Features</a></li>
-<li><a class="reference internal" href="#known-issues-271" id="id144">Known Issues</a></li>
+<li><a class="reference internal" href="#release-2-7-1" id="id143">Release 2.7.1</a><ul>
+<li><a class="reference internal" href="#id52" id="id144">API Changes</a></li>
+<li><a class="reference internal" href="#id53" id="id145">New Features</a></li>
+<li><a class="reference internal" href="#known-issues-271" id="id146">Known Issues</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#release-2-6-1" id="id145">Release 2.6.1</a><ul>
-<li><a class="reference internal" href="#cdap-bug-fixes" id="id146">CDAP Bug Fixes</a></li>
-<li><a class="reference internal" href="#known-issues-261" id="id147">Known Issues</a></li>
+<li><a class="reference internal" href="#release-2-6-1" id="id147">Release 2.6.1</a><ul>
+<li><a class="reference internal" href="#cdap-bug-fixes" id="id148">CDAP Bug Fixes</a></li>
+<li><a class="reference internal" href="#known-issues-261" id="id149">Known Issues</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#release-2-6-0" id="id148">Release 2.6.0</a><ul>
-<li><a class="reference internal" href="#id55" id="id149">API Changes</a></li>
-<li><a class="reference internal" href="#id56" id="id150">New Features</a></li>
-<li><a class="reference internal" href="#id57" id="id151">CDAP Bug Fixes</a></li>
-<li><a class="reference internal" href="#known-issues-260" id="id152">Known Issues</a></li>
+<li><a class="reference internal" href="#release-2-6-0" id="id150">Release 2.6.0</a><ul>
+<li><a class="reference internal" href="#id56" id="id151">API Changes</a></li>
+<li><a class="reference internal" href="#id57" id="id152">New Features</a></li>
+<li><a class="reference internal" href="#id58" id="id153">CDAP Bug Fixes</a></li>
+<li><a class="reference internal" href="#known-issues-260" id="id154">Known Issues</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#release-2-5-2" id="id153">Release 2.5.2</a><ul>
-<li><a class="reference internal" href="#id59" id="id154">CDAP Bug Fixes</a></li>
-<li><a class="reference internal" href="#other-changes" id="id155">Other Changes</a></li>
-<li><a class="reference internal" href="#id60" id="id156">Known Issues</a></li>
+<li><a class="reference internal" href="#release-2-5-2" id="id155">Release 2.5.2</a><ul>
+<li><a class="reference internal" href="#id60" id="id156">CDAP Bug Fixes</a></li>
+<li><a class="reference internal" href="#other-changes" id="id157">Other Changes</a></li>
+<li><a class="reference internal" href="#id61" id="id158">Known Issues</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#release-2-5-1" id="id157">Release 2.5.1</a><ul>
-<li><a class="reference internal" href="#id61" id="id158">CDAP Bug Fixes</a></li>
-<li><a class="reference internal" href="#id62" id="id159">Other Changes</a></li>
-<li><a class="reference internal" href="#id63" id="id160">Known Issues</a></li>
+<li><a class="reference internal" href="#release-2-5-1" id="id159">Release 2.5.1</a><ul>
+<li><a class="reference internal" href="#id62" id="id160">CDAP Bug Fixes</a></li>
+<li><a class="reference internal" href="#id63" id="id161">Other Changes</a></li>
+<li><a class="reference internal" href="#id64" id="id162">Known Issues</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#release-2-5-0" id="id161">Release 2.5.0</a><ul>
-<li><a class="reference internal" href="#id64" id="id162">New Features</a></li>
-<li><a class="reference internal" href="#major-cdap-bug-fixes" id="id163">Major CDAP Bug Fixes</a></li>
-<li><a class="reference internal" href="#known-issues-250" id="id164">Known Issues</a></li>
+<li><a class="reference internal" href="#release-2-5-0" id="id163">Release 2.5.0</a><ul>
+<li><a class="reference internal" href="#id65" id="id164">New Features</a></li>
+<li><a class="reference internal" href="#major-cdap-bug-fixes" id="id165">Major CDAP Bug Fixes</a></li>
+<li><a class="reference internal" href="#known-issues-250" id="id166">Known Issues</a></li>
 </ul>
 </li>
 </ul>
 </div>
 <div class="section" id="release-3-5-0">
 <h2><a class="headerlink" href="#release-3-5-0" title="Perma-link to this heading">🔗</a><a class="reference external" href="http://docs.cask.co/cdap/3.5.0/index.html">Release 3.5.0</a></h2>
+<div class="section" id="known-issues">
+<h3><a class="headerlink" href="#known-issues" title="Perma-link to this heading">🔗</a>Known Issues</h3>
+<ul class="simple">
+<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-7179">CDAP-7179</a> - In CDAP 3.5.0, new <code class="docutils literal"><span class="pre">kafka.server.*</span></code> properties replace older
+properties such as <code class="docutils literal"><span class="pre">kafka.log.dir</span></code>. Though the older properties were marked as
+deprecated, they are in fact being ignored, and need to be replaced with the current
+properties as described in the <a class="reference external" href="source/../../admin-manual/appendices/cdap-site.html#appendix-cdap-default-deprecated-properties" title="(in Cask Data Application Platform v3.5.0)"><span class="xref std std-ref">Administration Manual: Appendices: cdap-site.xml</span></a>.</li>
+</ul>
+</div>
 <div class="section" id="api-changes">
 <h3><a class="headerlink" href="#api-changes" title="Perma-link to this heading">🔗</a>API Changes</h3>
 <ul class="simple">
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-4860">CDAP-4860</a> - Introduced an &quot;available&quot; (<code class="docutils literal"><span class="pre">/available</span></code>) endpoint for
 Services to check their availability.</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-5279">CDAP-5279</a> - The <code class="docutils literal"><span class="pre">beforeSubmit</span></code> and <code class="docutils literal"><span class="pre">onFinish</span></code> methods of the MapReduce
-and Spark APIs have been deprecated. Changes to the API include:</li>
-<li><ol class="first arabic">
+and Spark APIs have been deprecated. Changes to the API include:<ol class="arabic">
 <li><code class="docutils literal"><span class="pre">AbstractMapReduce</span></code> and <code class="docutils literal"><span class="pre">AbstractSpark</span></code> now implement <code class="docutils literal"><span class="pre">ProgramLifeCycle</span></code></li>
-</ol>
-</li>
-<li><ol class="first arabic" start="2">
 <li><code class="docutils literal"><span class="pre">AbstractMapReduce</span></code> and <code class="docutils literal"><span class="pre">AbstractSpark</span></code> now have a <code class="docutils literal"><span class="pre">final</span>
 <span class="pre">initialize(context)</span></code> method</li>
-</ol>
-</li>
-<li><ol class="first arabic" start="3">
 <li><code class="docutils literal"><span class="pre">AbstractMapReduce</span></code> and <code class="docutils literal"><span class="pre">AbstractSpark</span></code> now have a <code class="docutils literal"><span class="pre">protected</span> <span class="pre">initialize()</span></code>
 method default implementation of which will call <code class="docutils literal"><span class="pre">beforeSubmit()</span></code></li>
-</ol>
-</li>
-<li><ol class="first arabic" start="4">
 <li>User programs will override the no-arg initialize method</li>
-</ol>
-</li>
-<li><ol class="first arabic" start="5">
 <li>Driver will call both versions of the initialize method</li>
 </ol>
 </li>
@@ -336,8 +333,7 @@ De-normalized data can be easier and faster to query.</li>
 plugins. This source plugin allows users to read and process mainframe files defined using
 COBOL Copybook.</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/HYDRATOR-514">HYDRATOR-514</a> - Added the Excel Reader Source plugin to Cask Hydrator
-Plugins. This plugin provides the ability to read data from one or more Excel file(s).
-New Feature</li>
+Plugins. This plugin provides the ability to read data from one or more Excel file(s).</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/HYDRATOR-629">HYDRATOR-629</a> - Adds macros to pipeline plugin configurations. This allows
 users to set macros for plugin properties which can be provided as runtime arguments while
 scheduling and running the pipeline.</li>
@@ -478,12 +474,14 @@ partitions of a (time-)partitioned fileset.</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-6880">CDAP-6880</a> - Users can now configure timeouts for internal HTTP connections
 and reads in <code class="docutils literal"><span class="pre">cdap-site.xml</span></code>. These are used for all internal HTTP calls.</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-6901">CDAP-6901</a> - Added a bootstrap step for authorization in CDAP. As part of
-this step:</li>
-<li>1. The user that CDAP runs as now receives &quot;admin&quot; privileges on the CDAP instance, as
+this step:<ol class="arabic">
+<li>The user that CDAP runs as now receives &quot;admin&quot; privileges on the CDAP instance, as
 well as &quot;all&quot; privileges on the system namespace.</li>
-<li>2. The list of users specified in the parameter <code class="docutils literal"><span class="pre">security.authorization.admin.users</span></code>
-in cdap-site.xml receives &quot;admin&quot; privileges on the CDAP instance so that they can create
-namespaces.</li>
+<li>The list of users specified in the parameter <code class="docutils literal"><span class="pre">security.authorization.admin.users</span></code>
+in cdap-site.xml receives &quot;admin&quot; privileges on the CDAP instance so that they can
+create namespaces.</li>
+</ol>
+</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-6913">CDAP-6913</a> - Changed to use <code class="docutils literal"><span class="pre">YarnClient</span></code> instead of the YARN HTTP API to
 fetch node reports.</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-7021">CDAP-7021</a> - Improved program launch performance to avoid large CPU spikes
@@ -681,8 +679,8 @@ in the BatchReadableRDD so that it won't skip records when used by
 DataFrame.</li>
 </ul>
 </div>
-<div class="section" id="known-issues">
-<h3><a class="headerlink" href="#known-issues" title="Perma-link to this heading">🔗</a>Known Issues</h3>
+<div class="section" id="id2">
+<h3><a class="headerlink" href="#id2" title="Perma-link to this heading">🔗</a>Known Issues</h3>
 <ul class="simple">
 <li>After upgrading CDAP from a pre-3.0 version, any unprocessed metrics data in Kafka will
 be lost and <em>WARN</em> log messages will be logged that tell about the inability to process
@@ -743,14 +741,14 @@ metadata made by the upgrade tool will not be published.</li>
 </div>
 <div class="section" id="release-3-4-0">
 <h2><a class="headerlink" href="#release-3-4-0" title="Perma-link to this heading">🔗</a><a class="reference external" href="http://docs.cask.co/cdap/3.4.0/index.html">Release 3.4.0</a></h2>
-<div class="section" id="id2">
-<h3><a class="headerlink" href="#id2" title="Perma-link to this heading">🔗</a>API Changes</h3>
+<div class="section" id="id3">
+<h3><a class="headerlink" href="#id3" title="Perma-link to this heading">🔗</a>API Changes</h3>
 <ul class="simple">
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-5082">CDAP-5082</a> - Added a new Spark Java and Scala API.</li>
 </ul>
 </div>
-<div class="section" id="id3">
-<h3><a class="headerlink" href="#id3" title="Perma-link to this heading">🔗</a>New Features</h3>
+<div class="section" id="id4">
+<h3><a class="headerlink" href="#id4" title="Perma-link to this heading">🔗</a>New Features</h3>
 <ul class="simple">
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-20">CDAP-20</a> - Removed dependency on the Guava
 library from the <code class="docutils literal"><span class="pre">cdap-api</span></code> module. Applications are now free to use a Guava library
@@ -801,8 +799,8 @@ an execution engine for CDAP Explore.</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-5846">CDAP-5846</a> - Bundled <a class="reference external" href="https://nodejs.org/">Node.js</a> with the CDAP UI RPM and DEB packages and with the CDAP Parcels.</li>
 </ul>
 </div>
-<div class="section" id="id4">
-<h3><a class="headerlink" href="#id4" title="Perma-link to this heading">🔗</a>Improvements</h3>
+<div class="section" id="id5">
+<h3><a class="headerlink" href="#id5" title="Perma-link to this heading">🔗</a>Improvements</h3>
 <ul class="simple">
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-4071">CDAP-4071</a> - MapReduce programs can now be
 configured to write metadata for each partition created using a <code class="docutils literal"><span class="pre">DynamicPartitioner</span></code>.</li>
@@ -867,8 +865,8 @@ This needs to be set before using any of these plugins.</li>
 CDAP to 0.7.1.</li>
 </ul>
 </div>
-<div class="section" id="id5">
-<h3><a class="headerlink" href="#id5" title="Perma-link to this heading">🔗</a>Bug Fixes</h3>
+<div class="section" id="id6">
+<h3><a class="headerlink" href="#id6" title="Perma-link to this heading">🔗</a>Bug Fixes</h3>
 <ul class="simple">
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3498">CDAP-3498</a> - Upgraded CDAP to use
 Apache Twill <code class="docutils literal"><span class="pre">0.7.0-incubating</span></code> with numerous new features, improvements, and bug
@@ -974,7 +972,7 @@ field set to <code class="docutils literal"><span class="pre">METADATA_CHANGE</s
 </ul>
 </div>
 <div class="section" id="known-issues-340">
-<span id="id6"></span><h3><a class="headerlink" href="#known-issues-340" title="Perma-link to this heading">🔗</a>Known Issues</h3>
+<span id="id7"></span><h3><a class="headerlink" href="#known-issues-340" title="Perma-link to this heading">🔗</a>Known Issues</h3>
 <ul class="simple">
 <li>After upgrading CDAP from a pre-3.0 version, any unprocessed metrics data in Kafka will
 be lost and <em>WARN</em> log messages will be logged that tell about the inability to process
@@ -1040,16 +1038,16 @@ MapReduce programs from running on clusters with encryption.</li>
 </div>
 <div class="section" id="release-3-3-2">
 <h2><a class="headerlink" href="#release-3-3-2" title="Perma-link to this heading">🔗</a><a class="reference external" href="http://docs.cask.co/cdap/3.3.2/index.html">Release 3.3.2</a></h2>
-<div class="section" id="id7">
-<h3><a class="headerlink" href="#id7" title="Perma-link to this heading">🔗</a>Improvements</h3>
+<div class="section" id="id8">
+<h3><a class="headerlink" href="#id8" title="Perma-link to this heading">🔗</a>Improvements</h3>
 <ul class="simple">
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-5047">CDAP-5047</a> - Added a <a class="reference external" href="http://docs.cask.co/cdap/3.3.2/en/cdap-apps/hydrator/hydrator-plugins/batchsources/azureblobstore.html">Batch Source Plugin</a>
 to read from Microsoft Azure Blob Storage.</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-5134">CDAP-5134</a> - Added support for CDH 5.6 to CDAP.</li>
 </ul>
 </div>
-<div class="section" id="id8">
-<h3><a class="headerlink" href="#id8" title="Perma-link to this heading">🔗</a>Bug Fixes</h3>
+<div class="section" id="id9">
+<h3><a class="headerlink" href="#id9" title="Perma-link to this heading">🔗</a>Bug Fixes</h3>
 <ul class="simple">
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-4967">CDAP-4967</a> - Fixed a schema-parsing bug
 that prevented the use of schemas where a record is used both as a top-level field and
@@ -1073,8 +1071,8 @@ not being submitted to the appropriate YARN scheduler queue set for the namespac
 </div>
 <div class="section" id="release-3-3-1">
 <h2><a class="headerlink" href="#release-3-3-1" title="Perma-link to this heading">🔗</a><a class="reference external" href="http://docs.cask.co/cdap/3.3.1/index.html">Release 3.3.1</a></h2>
-<div class="section" id="id9">
-<h3><a class="headerlink" href="#id9" title="Perma-link to this heading">🔗</a>Improvements</h3>
+<div class="section" id="id10">
+<h3><a class="headerlink" href="#id10" title="Perma-link to this heading">🔗</a>Improvements</h3>
 <ul class="simple">
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-4602">CDAP-4602</a> - Updated CDAP to use
 Tephra 0.6.5.</li>
@@ -1086,8 +1084,8 @@ archetypes to include build steps to build the deployment JSON for the artifact.
 the Master Stream service when it can't connect to the CDAP AppFabric server.</li>
 </ul>
 </div>
-<div class="section" id="id10">
-<h3><a class="headerlink" href="#id10" title="Perma-link to this heading">🔗</a>Bug Fixes</h3>
+<div class="section" id="id11">
+<h3><a class="headerlink" href="#id11" title="Perma-link to this heading">🔗</a>Bug Fixes</h3>
 <ul class="simple">
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-4117">CDAP-4117</a> - Fixed an issue of not using
 the correct user to access HDFS when submitting a YARN application through Apache Twill,
@@ -1178,16 +1176,16 @@ CDAP CLI from 15 seconds to unlimited.</li>
 in the proper format in secure Hadoop HA clusters.</li>
 </ul>
 </div>
-<div class="section" id="id11">
-<h3><a class="headerlink" href="#id11" title="Perma-link to this heading">🔗</a>Deprecated and Removed Features</h3>
+<div class="section" id="id12">
+<h3><a class="headerlink" href="#id12" title="Perma-link to this heading">🔗</a>Deprecated and Removed Features</h3>
 <ul class="simple">
 <li>See the <a class="reference internal" href="javadocs/index.html#javadocs"><span>CDAP 3.3.1 Javadocs</span></a> for a list of deprecated and removed APIs.</li>
 <li>The properties <code class="docutils literal"><span class="pre">router.ssl.webapp.bind.port</span></code>, <code class="docutils literal"><span class="pre">router.webapp.bind.port</span></code>,
 <code class="docutils literal"><span class="pre">router.webapp.enabled</span></code> have been deprecated and will be removed in a future version.</li>
 </ul>
 </div>
-<div class="section" id="id12">
-<h3><a class="headerlink" href="#id12" title="Perma-link to this heading">🔗</a>Known Issues</h3>
+<div class="section" id="id13">
+<h3><a class="headerlink" href="#id13" title="Perma-link to this heading">🔗</a>Known Issues</h3>
 <ul class="simple">
 <li>After upgrading CDAP from a pre-3.0 version, any unprocessed metrics data in Kafka will
 be lost and <em>WARN</em> log messages will be logged that tell about the inability to process
@@ -1242,8 +1240,8 @@ If a table schema contains a field name that is a reserved word in the Hive DDL,
 </div>
 <div class="section" id="release-3-3-0">
 <h2><a class="headerlink" href="#release-3-3-0" title="Perma-link to this heading">🔗</a><a class="reference external" href="http://docs.cask.co/cdap/3.3.0/index.html">Release 3.3.0</a></h2>
-<div class="section" id="id13">
-<h3><a class="headerlink" href="#id13" title="Perma-link to this heading">🔗</a>New Features</h3>
+<div class="section" id="id14">
+<h3><a class="headerlink" href="#id14" title="Perma-link to this heading">🔗</a>New Features</h3>
 <ul class="simple">
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-961">CDAP-961</a> -
 Added on demand (dynamic) dataset instantiation through program runtime context.</li>
@@ -1299,8 +1297,8 @@ Schema fields are stored as Metadata and are searchable.</li>
 Added capability in CDAP UI to display system tags.</li>
 </ul>
 </div>
-<div class="section" id="id14">
-<h3><a class="headerlink" href="#id14" title="Perma-link to this heading">🔗</a>Improvements</h3>
+<div class="section" id="id15">
+<h3><a class="headerlink" href="#id15" title="Perma-link to this heading">🔗</a>Improvements</h3>
 <ul class="simple">
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3079">CDAP-3079</a> -
 Table datasets, and any other dataset that implements <code class="docutils literal"><span class="pre">RecordWritable&lt;StructuredRecord&gt;</span></code>,
@@ -1348,8 +1346,8 @@ Added an error message when a required field is not provided when configuring Hy
 pipeline.</li>
 </ul>
 </div>
-<div class="section" id="id15">
-<h3><a class="headerlink" href="#id15" title="Perma-link to this heading">🔗</a>Bug Fixes</h3>
+<div class="section" id="id16">
+<h3><a class="headerlink" href="#id16" title="Perma-link to this heading">🔗</a>Bug Fixes</h3>
 <ul class="simple">
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-1174">CDAP-1174</a> -
 Prefix start script functions with <code class="docutils literal"><span class="pre">'cdap'</span></code> to prevent namespace collisions.</li>
@@ -1430,8 +1428,8 @@ Fixed an issue where the logs and history list on a Hydrator pipeline view was n
 updating on new runs.</li>
 </ul>
 </div>
-<div class="section" id="id16">
-<h3><a class="headerlink" href="#id16" title="Perma-link to this heading">🔗</a>Deprecated and Removed Features</h3>
+<div class="section" id="id17">
+<h3><a class="headerlink" href="#id17" title="Perma-link to this heading">🔗</a>Deprecated and Removed Features</h3>
 <ul class="simple">
 <li>See the <a class="reference internal" href="javadocs/index.html#javadocs"><span>CDAP 3.3.0 Javadocs</span></a> for a list of deprecated and removed APIs.</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-2481">CDAP-2481</a> -
@@ -1447,8 +1445,8 @@ deprecated Schedule constructor.</li>
 Removed deprecated fluent style API for Flow configuration. The only supported API is now the configurer style.</li>
 </ul>
 </div>
-<div class="section" id="id17">
-<h3><a class="headerlink" href="#id17" title="Perma-link to this heading">🔗</a>Known Issues</h3>
+<div class="section" id="id18">
+<h3><a class="headerlink" href="#id18" title="Perma-link to this heading">🔗</a>Known Issues</h3>
 <ul class="simple">
 <li>After upgrading CDAP from a pre-3.0 version, any unprocessed metrics data in Kafka will
 be lost and <em>WARN</em> log messages will be logged that tell about the inability to process
@@ -1503,15 +1501,15 @@ If a table schema contains a field name that is a reserved word in the Hive DDL,
 </div>
 <div class="section" id="release-3-2-1">
 <h2><a class="headerlink" href="#release-3-2-1" title="Perma-link to this heading">🔗</a><a class="reference external" href="http://docs.cask.co/cdap/3.2.1/index.html">Release 3.2.1</a></h2>
-<div class="section" id="id18">
-<h3><a class="headerlink" href="#id18" title="Perma-link to this heading">🔗</a>New Features</h3>
+<div class="section" id="id19">
+<h3><a class="headerlink" href="#id19" title="Perma-link to this heading">🔗</a>New Features</h3>
 <ul class="simple">
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3951">CDAP-3951</a> -
 Added the ability for S3 batch sources and sinks to set additional file system properties.</li>
 </ul>
 </div>
-<div class="section" id="id19">
-<h3><a class="headerlink" href="#id19" title="Perma-link to this heading">🔗</a>Improvements</h3>
+<div class="section" id="id20">
+<h3><a class="headerlink" href="#id20" title="Perma-link to this heading">🔗</a>Improvements</h3>
 <ul class="simple">
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3870">CDAP-3870</a> -
 Added logging and metrics support for <em>Script</em>, <em>ScriptFilter</em>, and <em>Validator</em> transforms.</li>
@@ -1519,8 +1517,8 @@ Added logging and metrics support for <em>Script</em>, <em>ScriptFilter</em>, an
 Improved artifact and application deployment failure handling.</li>
 </ul>
 </div>
-<div class="section" id="id20">
-<h3><a class="headerlink" href="#id20" title="Perma-link to this heading">🔗</a>Bug Fixes</h3>
+<div class="section" id="id21">
+<h3><a class="headerlink" href="#id21" title="Perma-link to this heading">🔗</a>Bug Fixes</h3>
 <ul class="simple">
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3342">CDAP-3342</a> -
 Fixed a problem with the CDAP SDK unable to start on certain Windows machines by updating
@@ -1545,8 +1543,8 @@ Java heap size of the Standalone SDK on Linux systems to 2048m.</li>
 Fixed a missing dependency on <code class="docutils literal"><span class="pre">cdap-hbase-compat-1.1</span></code> package in the CDAP Master package.</li>
 </ul>
 </div>
-<div class="section" id="id21">
-<h3><a class="headerlink" href="#id21" title="Perma-link to this heading">🔗</a>Known Issues</h3>
+<div class="section" id="id22">
+<h3><a class="headerlink" href="#id22" title="Perma-link to this heading">🔗</a>Known Issues</h3>
 <ul class="simple">
 <li>After upgrading CDAP from a pre-3.0 version, any unprocessed metrics data in Kafka will
 be lost and <em>WARN</em> log messages will be logged that tell about the inability to process
@@ -1601,8 +1599,8 @@ If a table schema contains a field name that is a reserved word in the Hive DDL,
 </div>
 <div class="section" id="release-3-2-0">
 <h2><a class="headerlink" href="#release-3-2-0" title="Perma-link to this heading">🔗</a><a class="reference external" href="http://docs.cask.co/cdap/3.2.0/index.html">Release 3.2.0</a></h2>
-<div class="section" id="id22">
-<h3><a class="headerlink" href="#id22" title="Perma-link to this heading">🔗</a>New Features</h3>
+<div class="section" id="id23">
+<h3><a class="headerlink" href="#id23" title="Perma-link to this heading">🔗</a>New Features</h3>
 <ul class="simple">
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-2556">CDAP-2556</a> -
 Added support for HBase1.1.</li>
@@ -1655,8 +1653,8 @@ stream event columns to schema columns.</li>
 Added support for CDAP to work with HDP 2.3.</li>
 </ul>
 </div>
-<div class="section" id="id23">
-<h3><a class="headerlink" href="#id23" title="Perma-link to this heading">🔗</a>Improvements</h3>
+<div class="section" id="id24">
+<h3><a class="headerlink" href="#id24" title="Perma-link to this heading">🔗</a>Improvements</h3>
 <ul class="simple">
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-1914">CDAP-1914</a> -
 Added documentation of the RESTful endpoint to retrieve the properties of a stream.</li>
@@ -1715,8 +1713,8 @@ Updated CDAP to use Tephra 0.6.2.</li>
 Updated the transaction debugger client to print checkpoint information.</li>
 </ul>
 </div>
-<div class="section" id="id24">
-<h3><a class="headerlink" href="#id24" title="Perma-link to this heading">🔗</a>Bug Fixes</h3>
+<div class="section" id="id25">
+<h3><a class="headerlink" href="#id25" title="Perma-link to this heading">🔗</a>Bug Fixes</h3>
 <ul class="simple">
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-1697">CDAP-1697</a> -
 Fixed an issue where failed dataset operations via Explore queries did not invalidate
@@ -1843,8 +1841,8 @@ for internal server errors.</li>
 Fixed a possible deadlock when CDAP master is restarted with an existing app running on a cluster.</li>
 </ul>
 </div>
-<div class="section" id="id25">
-<h3><a class="headerlink" href="#id25" title="Perma-link to this heading">🔗</a>API Changes</h3>
+<div class="section" id="id26">
+<h3><a class="headerlink" href="#id26" title="Perma-link to this heading">🔗</a>API Changes</h3>
 <ul class="simple">
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-2763">CDAP-2763</a> -
 Added RESTful APIs for managing artifacts.</li>
@@ -1882,8 +1880,8 @@ CDAP program.</li>
 Added a RESTful API for computing lineage of a CDAP dataset or stream.</li>
 </ul>
 </div>
-<div class="section" id="id26">
-<h3><a class="headerlink" href="#id26" title="Perma-link to this heading">🔗</a>Deprecated and Removed Features</h3>
+<div class="section" id="id27">
+<h3><a class="headerlink" href="#id27" title="Perma-link to this heading">🔗</a>Deprecated and Removed Features</h3>
 <ul class="simple">
 <li>See the <a class="reference internal" href="javadocs/index.html#javadocs"><span>CDAP 3.2.0 Javadocs</span></a> for a list of deprecated and removed APIs.</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-2667">CDAP-2667</a> -
@@ -1896,8 +1894,8 @@ Removed deprecated methods in cdap-client.</li>
 Replaced the ETL ApplicationTemplates with the new ETL Applications.</li>
 </ul>
 </div>
-<div class="section" id="id27">
-<h3><a class="headerlink" href="#id27" title="Perma-link to this heading">🔗</a>Known Issues</h3>
+<div class="section" id="id28">
+<h3><a class="headerlink" href="#id28" title="Perma-link to this heading">🔗</a>Known Issues</h3>
 <ul class="simple">
 <li>After upgrading CDAP from a pre-3.0 version, any unprocessed metrics data in Kafka will
 be lost and <em>WARN</em> log messages will be logged that tell about the inability to process
@@ -1960,8 +1958,8 @@ The Cassandra source does not handles spaces properly in column fields which req
 </div>
 <div class="section" id="release-3-1-0">
 <h2><a class="headerlink" href="#release-3-1-0" title="Perma-link to this heading">🔗</a><a class="reference external" href="http://docs.cask.co/cdap/3.1.0/index.html">Release 3.1.0</a></h2>
-<div class="section" id="id28">
-<h3><a class="headerlink" href="#id28" title="Perma-link to this heading">🔗</a>New Features</h3>
+<div class="section" id="id29">
+<h3><a class="headerlink" href="#id29" title="Perma-link to this heading">🔗</a>New Features</h3>
 <p><strong>MapR 4.1 Support, HDP 2.2 Support, CDH 5.4 Support</strong></p>
 <ul class="simple">
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-1614">CDAP-1614</a> -
@@ -2135,8 +2133,8 @@ Added Cloudfront format option to LogParserTransform.</li>
 Documented TestConfiguration class usage in unit-test framework.</li>
 </ul>
 </div>
-<div class="section" id="id29">
-<h3><a class="headerlink" href="#id29" title="Perma-link to this heading">🔗</a>Improvements</h3>
+<div class="section" id="id30">
+<h3><a class="headerlink" href="#id30" title="Perma-link to this heading">🔗</a>Improvements</h3>
 <ul class="simple">
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-593">CDAP-593</a> -
 Spark no longer determines the mode through MRConfig.FRAMEWORK_NAME.</li>
@@ -2250,8 +2248,8 @@ Changed CLI command descriptions to use consistent element case.</li>
 Refactored ETLBatch sources and sinks.</li>
 </ul>
 </div>
-<div class="section" id="id30">
-<h3><a class="headerlink" href="#id30" title="Perma-link to this heading">🔗</a>Bug Fixes</h3>
+<div class="section" id="id31">
+<h3><a class="headerlink" href="#id31" title="Perma-link to this heading">🔗</a>Bug Fixes</h3>
 <ul class="simple">
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-23">CDAP-23</a> -
 Fixed a problem with the DatasetFramework not loading a given dataset with the same classloader across calls.</li>
@@ -2616,14 +2614,14 @@ Fixed a problem with the ETL source/transform/sinks descriptions and documentati
 Fixed a problem with the AbstractFlowlet constructors being deprecated when they should not be.</li>
 </ul>
 </div>
-<div class="section" id="id31">
-<h3><a class="headerlink" href="#id31" title="Perma-link to this heading">🔗</a>Deprecated and Removed Features</h3>
+<div class="section" id="id32">
+<h3><a class="headerlink" href="#id32" title="Perma-link to this heading">🔗</a>Deprecated and Removed Features</h3>
 <ul class="simple">
 <li>See the <a class="reference internal" href="javadocs/index.html#javadocs"><span>CDAP 3.1.0 Javadocs</span></a> for a list of deprecated and removed APIs.</li>
 </ul>
 </div>
 <div class="section" id="known-issues-310">
-<span id="id32"></span><h3><a class="headerlink" href="#known-issues-310" title="Perma-link to this heading">🔗</a>Known Issues</h3>
+<span id="id33"></span><h3><a class="headerlink" href="#known-issues-310" title="Perma-link to this heading">🔗</a>Known Issues</h3>
 <ul class="simple">
 <li>See the above section (<em>API Changes</em>) for alterations that can affect existing installations.</li>
 <li>CDAP has been tested on and supports CDH 4.2.x through CDH 5.4.4, HDP 2.0 through 2.6, and
@@ -2689,15 +2687,15 @@ this point.</li>
 </div>
 <div class="section" id="release-3-0-3">
 <h2><a class="headerlink" href="#release-3-0-3" title="Perma-link to this heading">🔗</a><a class="reference external" href="http://docs.cask.co/cdap/3.0.3/index.html">Release 3.0.3</a></h2>
-<div class="section" id="id33">
-<h3><a class="headerlink" href="#id33" title="Perma-link to this heading">🔗</a>Bug Fix</h3>
+<div class="section" id="id34">
+<h3><a class="headerlink" href="#id34" title="Perma-link to this heading">🔗</a>Bug Fix</h3>
 <ul class="simple">
 <li>Fixed a Bower dependency error in the CDAP UI
 (<a class="reference external" href="https://issues.cask.co/browse/CDAP-3010">CDAP-3010</a>).</li>
 </ul>
 </div>
-<div class="section" id="id34">
-<h3><a class="headerlink" href="#id34" title="Perma-link to this heading">🔗</a>Known Issues</h3>
+<div class="section" id="id35">
+<h3><a class="headerlink" href="#id35" title="Perma-link to this heading">🔗</a>Known Issues</h3>
 <ul class="simple">
 <li>See the <em>Known Issues</em> of <a class="reference external" href="#known-issues-301">version 3.0.1</a>.</li>
 </ul>
@@ -2705,16 +2703,16 @@ this point.</li>
 </div>
 <div class="section" id="release-3-0-2">
 <h2><a class="headerlink" href="#release-3-0-2" title="Perma-link to this heading">🔗</a><a class="reference external" href="http://docs.cask.co/cdap/3.0.2/index.html">Release 3.0.2</a></h2>
-<div class="section" id="id35">
-<h3><a class="headerlink" href="#id35" title="Perma-link to this heading">🔗</a>Bug Fixes</h3>
+<div class="section" id="id36">
+<h3><a class="headerlink" href="#id36" title="Perma-link to this heading">🔗</a>Bug Fixes</h3>
 <ul class="simple">
 <li>Fixed problems with the dataset upgrade tool
 (<a class="reference external" href="https://issues.cask.co/browse/CDAP-2962">CDAP-2962</a>,
 <a class="reference external" href="https://issues.cask.co/browse/CDAP-2897">CDAP-2897</a>).</li>
 </ul>
 </div>
-<div class="section" id="id36">
-<h3><a class="headerlink" href="#id36" title="Perma-link to this heading">🔗</a>Known Issues</h3>
+<div class="section" id="id37">
+<h3><a class="headerlink" href="#id37" title="Perma-link to this heading">🔗</a>Known Issues</h3>
 <ul class="simple">
 <li>See the <em>Known Issues</em> of <a class="reference external" href="#known-issues-301">version 3.0.1</a>.</li>
 </ul>
@@ -2722,8 +2720,8 @@ this point.</li>
 </div>
 <div class="section" id="release-3-0-1">
 <h2><a class="headerlink" href="#release-3-0-1" title="Perma-link to this heading">🔗</a><a class="reference external" href="http://docs.cask.co/cdap/3.0.1/index.html">Release 3.0.1</a></h2>
-<div class="section" id="id38">
-<h3><a class="headerlink" href="#id38" title="Perma-link to this heading">🔗</a>New Features</h3>
+<div class="section" id="id39">
+<h3><a class="headerlink" href="#id39" title="Perma-link to this heading">🔗</a>New Features</h3>
 <ul class="simple">
 <li>In the CDAP UI, mandatory parameters for Application Template creation are marked with
 asterisks, and if a user tries to create a template without one of those parameters, the
@@ -2731,8 +2729,8 @@ missing parameter is highlighted
 (<a class="reference external" href="https://issues.cask.co/browse/CDAP-2499">CDAP-2499</a>).</li>
 </ul>
 </div>
-<div class="section" id="id39">
-<h3><a class="headerlink" href="#id39" title="Perma-link to this heading">🔗</a>Improvements</h3>
+<div class="section" id="id40">
+<h3><a class="headerlink" href="#id40" title="Perma-link to this heading">🔗</a>Improvements</h3>
 <p><strong>Tools</strong></p>
 <ul class="simple">
 <li>Added a tool (<a class="reference external" href="https://github.com/caskdata/cdap/blob/release/3.0/cdap-master/src/main/java/co/cask/cdap/data/tools/HBaseQueueDebugger.java">HBaseQueueDebugger</a>)
@@ -2769,8 +2767,8 @@ CDAP examples
 (<a class="reference external" href="https://issues.cask.co/browse/CDAP-2613">CDAP-2613</a>).</li>
 </ul>
 </div>
-<div class="section" id="id40">
-<h3><a class="headerlink" href="#id40" title="Perma-link to this heading">🔗</a>Bug Fixes</h3>
+<div class="section" id="id41">
+<h3><a class="headerlink" href="#id41" title="Perma-link to this heading">🔗</a>Bug Fixes</h3>
 <p><strong>General</strong></p>
 <ul class="simple">
 <li>Fixed a problem with the HBase store and flows with multiple queues, where one queue name
@@ -2916,7 +2914,7 @@ previously included in the SDK
 </ul>
 </div>
 <div class="section" id="known-issues-301">
-<span id="id41"></span><h3><a class="headerlink" href="#known-issues-301" title="Perma-link to this heading">🔗</a>Known Issues</h3>
+<span id="id42"></span><h3><a class="headerlink" href="#known-issues-301" title="Perma-link to this heading">🔗</a>Known Issues</h3>
 <ul>
 <li><p class="first">The application in the <a class="reference external" href="https://github.com/cdap-guides/cdap-kafka-ingest-guide/tree/release/cdap-3.0-compatible">cdap-kafka-ingest-guide</a>
 does not run on Ubuntu 14.x and CDAP 3.0.x
@@ -2994,8 +2992,8 @@ other applications that are using the dataset can work with the new changes.</p>
 </div>
 <div class="section" id="release-3-0-0">
 <h2><a class="headerlink" href="#release-3-0-0" title="Perma-link to this heading">🔗</a><a class="reference external" href="http://docs.cask.co/cdap/3.0.0/index.html">Release 3.0.0</a></h2>
-<div class="section" id="id42">
-<h3><a class="headerlink" href="#id42" title="Perma-link to this heading">🔗</a>New Features</h3>
+<div class="section" id="id43">
+<h3><a class="headerlink" href="#id43" title="Perma-link to this heading">🔗</a>New Features</h3>
 <ul class="simple">
 <li>Support for application templates has been added (<a class="reference external" href="https://issues.cask.co/browse/CDAP-1753">CDAP-1753</a>).</li>
 <li>Built-in ETL application templates and plugins have been added (<a class="reference external" href="https://issues.cask.co/browse/CDAP-1767">CDAP-1767</a>).</li>
@@ -3081,8 +3079,8 @@ area-spline, area-spline-stacked, area-stacked, step, table).</li>
 <a class="reference external" href="https://issues.cask.co/browse/CDAP-2125">CDAP-2125</a>).</li>
 </ul>
 </div>
-<div class="section" id="id43">
-<h3><a class="headerlink" href="#id43" title="Perma-link to this heading">🔗</a>Bug Fixes</h3>
+<div class="section" id="id44">
+<h3><a class="headerlink" href="#id44" title="Perma-link to this heading">🔗</a>Bug Fixes</h3>
 <ul class="simple">
 <li>The CDAP Authentication server now reports the port correctly when the port is set to 0
 (<a class="reference external" href="https://issues.cask.co/browse/CDAP-614">CDAP-614</a>).</li>
@@ -3096,8 +3094,8 @@ area-spline, area-spline-stacked, area-stacked, step, table).</li>
 (<a class="reference external" href="https://issues.cask.co/browse/CDAP-64">CDAP-64</a>).</li>
 </ul>
 </div>
-<div class="section" id="id44">
-<h3><a class="headerlink" href="#id44" title="Perma-link to this heading">🔗</a>API Changes</h3>
+<div class="section" id="id45">
+<h3><a class="headerlink" href="#id45" title="Perma-link to this heading">🔗</a>API Changes</h3>
 <ul class="simple">
 <li>The endpoint (<code class="docutils literal"><span class="pre">POST</span> <span class="pre">'&lt;base-url&gt;/metrics/search?target=childContext[&amp;context=&lt;context&gt;]'</span></code>)
 that searched for the available contexts of metrics has been deprecated, pending removal
@@ -3137,8 +3135,8 @@ It only affects classes who implement the <code class="docutils literal"><span c
 </li>
 </ul>
 </div>
-<div class="section" id="id45">
-<h3><a class="headerlink" href="#id45" title="Perma-link to this heading">🔗</a>Deprecated and Removed Features</h3>
+<div class="section" id="id46">
+<h3><a class="headerlink" href="#id46" title="Perma-link to this heading">🔗</a>Deprecated and Removed Features</h3>
 <ul class="simple">
 <li>The <a class="reference external" href="http://docs.cask.co/cdap/2.8.0/en/developers-manual/ingesting-tools/cdap-file-drop-zone.html">File DropZone</a>
 and <a class="reference external" href="http://docs.cask.co/cdap/2.8.0/en/developers-manual/ingesting-tools/cdap-file-tailer.html">File Tailer</a>
@@ -3154,7 +3152,7 @@ contained a service worker must be redeployed.</li>
 </ul>
 </div>
 <div class="section" id="known-issues-300">
-<span id="id46"></span><h3><a class="headerlink" href="#known-issues-300" title="Perma-link to this heading">🔗</a>Known Issues</h3>
+<span id="id47"></span><h3><a class="headerlink" href="#known-issues-300" title="Perma-link to this heading">🔗</a>Known Issues</h3>
 <ul>
 <li><p class="first">CDAP has been tested on and supports CDH 4.2.x through CDH 5.3.x, HDP 2.0 through 2.1, and
 Apache Bigtop 0.8.0. It has not been tested on more recent versions of CDH.
@@ -3229,8 +3227,8 @@ for CDAP Master services, CDAP programs, and Explore Queries
 <li>System HTTP services now bind to all interfaces (0.0.0.0), rather than 127.0.0.1.</li>
 </ul>
 </div>
-<div class="section" id="id47">
-<h3><a class="headerlink" href="#id47" title="Perma-link to this heading">🔗</a>New Features</h3>
+<div class="section" id="id48">
+<h3><a class="headerlink" href="#id48" title="Perma-link to this heading">🔗</a>New Features</h3>
 <ul class="simple">
 <li><strong>Command Line Interface (CLI)</strong><ul>
 <li>CLI can now directly connect to a CDAP instance of your choice at startup by using
@@ -3299,14 +3297,14 @@ please reach out to us at <a class="reference external" href="https://groups.goo
 </li>
 </ul>
 </div>
-<div class="section" id="id48">
-<h3><a class="headerlink" href="#id48" title="Perma-link to this heading">🔗</a>Improvement</h3>
+<div class="section" id="id49">
+<h3><a class="headerlink" href="#id49" title="Perma-link to this heading">🔗</a>Improvement</h3>
 <ul class="simple">
 <li>Improved flow performance and scalability with a new distributed queue implementation.</li>
 </ul>
 </div>
-<div class="section" id="id49">
-<h3><a class="headerlink" href="#id49" title="Perma-link to this heading">🔗</a>API Changes</h3>
+<div class="section" id="id50">
+<h3><a class="headerlink" href="#id50" title="Perma-link to this heading">🔗</a>API Changes</h3>
 <ul class="simple">
 <li>The endpoint (<code class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/data/explore/datasets/&lt;dataset-name&gt;/schema</span></code>) that
 retrieved the schema of a dataset's underlying Hive table has been removed
@@ -3316,7 +3314,7 @@ CDAP and HBase (<a class="reference internal" href="http-restful-api/configurati
 </ul>
 </div>
 <div class="section" id="known-issues-280">
-<span id="id50"></span><h3><a class="headerlink" href="#known-issues-280" title="Perma-link to this heading">🔗</a>Known Issues</h3>
+<span id="id51"></span><h3><a class="headerlink" href="#known-issues-280" title="Perma-link to this heading">🔗</a>Known Issues</h3>
 <ul>
 <li><p class="first">When running secure Hadoop clusters, metrics and debug logs from MapReduce programs are
 not available (<a class="reference external" href="https://issues.cask.co/browse/CDAP-64">CDAP-64</a> and <a class="reference external" href="https://issues.cask.co/browse/CDAP-797">CDAP-797</a>).</p>
@@ -3378,16 +3376,16 @@ problem (<a class="reference external" href="https://issues.apache.org/jira/brow
 </div>
 <div class="section" id="release-2-7-1">
 <h2><a class="headerlink" href="#release-2-7-1" title="Perma-link to this heading">🔗</a><a class="reference external" href="http://docs.cask.co/cdap/2.7.1/index.html">Release 2.7.1</a></h2>
-<div class="section" id="id51">
-<h3><a class="headerlink" href="#id51" title="Perma-link to this heading">🔗</a>API Changes</h3>
+<div class="section" id="id52">
+<h3><a class="headerlink" href="#id52" title="Perma-link to this heading">🔗</a>API Changes</h3>
 <ul class="simple">
 <li>The property <code class="docutils literal"><span class="pre">security.auth.server.address</span></code> has been deprecated and replaced with
 <code class="docutils literal"><span class="pre">security.auth.server.bind.address</span></code> (<a class="reference external" href="https://issues.cask.co/browse/CDAP-639">CDAP-639</a>,
 <a class="reference external" href="https://issues.cask.co/browse/CDAP-1078">CDAP-1078</a>).</li>
 </ul>
 </div>
-<div class="section" id="id52">
-<h3><a class="headerlink" href="#id52" title="Perma-link to this heading">🔗</a>New Features</h3>
+<div class="section" id="id53">
+<h3><a class="headerlink" href="#id53" title="Perma-link to this heading">🔗</a>New Features</h3>
 <ul class="simple">
 <li><strong>Spark</strong><ul>
 <li>Spark now uses a configurer-style API for specifying (<a class="reference external" href="https://issues.cask.co/browse/CDAP-382">CDAP-382</a>).</li>
@@ -3422,7 +3420,7 @@ arguments (<a class="reference external" href="https://issues.cask.co/browse/CDA
 </ul>
 </div>
 <div class="section" id="known-issues-271">
-<span id="id53"></span><h3><a class="headerlink" href="#known-issues-271" title="Perma-link to this heading">🔗</a>Known Issues</h3>
+<span id="id54"></span><h3><a class="headerlink" href="#known-issues-271" title="Perma-link to this heading">🔗</a>Known Issues</h3>
 <ul>
 <li><p class="first">When upgrading an existing CDAP installation to 2.7.1, all metrics are reset.</p>
 </li>
@@ -3483,7 +3481,7 @@ other applications that are using the dataset can work with the new changes.</p>
 </ul>
 </div>
 <div class="section" id="known-issues-261">
-<span id="id54"></span><h3><a class="headerlink" href="#known-issues-261" title="Perma-link to this heading">🔗</a>Known Issues</h3>
+<span id="id55"></span><h3><a class="headerlink" href="#known-issues-261" title="Perma-link to this heading">🔗</a>Known Issues</h3>
 <ul>
 <li><p class="first">When running secure Hadoop clusters, metrics and debug logs from MapReduce programs are
 not available (<a class="reference external" href="https://issues.cask.co/browse/CDAP-64">CDAP-64</a> and <a class="reference external" href="https://issues.cask.co/browse/CDAP-797">CDAP-797</a>).</p>
@@ -3530,16 +3528,16 @@ other applications that are using the dataset can work with the new changes.</p>
 </div>
 <div class="section" id="release-2-6-0">
 <h2><a class="headerlink" href="#release-2-6-0" title="Perma-link to this heading">🔗</a><a class="reference external" href="http://docs.cask.co/cdap/2.6.0/index.html">Release 2.6.0</a></h2>
-<div class="section" id="id55">
-<h3><a class="headerlink" href="#id55" title="Perma-link to this heading">🔗</a>API Changes</h3>
+<div class="section" id="id56">
+<h3><a class="headerlink" href="#id56" title="Perma-link to this heading">🔗</a>API Changes</h3>
 <ul class="simple">
 <li>API for specifying services and MapReduce programs has been changed to use a &quot;configurer&quot;
 style; this will require modification of user classes implementing either MapReduce
 or service as the interfaces have changed (<a class="reference external" href="https://issues.cask.co/browse/CDAP-335">CDAP-335</a>).</li>
 </ul>
 </div>
-<div class="section" id="id56">
-<h3><a class="headerlink" href="#id56" title="Perma-link to this heading">🔗</a>New Features</h3>
+<div class="section" id="id57">
+<h3><a class="headerlink" href="#id57" title="Perma-link to this heading">🔗</a>New Features</h3>
 <ul class="simple">
 <li><strong>General</strong><ul>
 <li>Health checks are now available for CDAP system services
@@ -3607,8 +3605,8 @@ or service as the interfaces have changed (<a class="reference external" href="h
 </li>
 </ul>
 </div>
-<div class="section" id="id57">
-<h3><a class="headerlink" href="#id57" title="Perma-link to this heading">🔗</a>CDAP Bug Fixes</h3>
+<div class="section" id="id58">
+<h3><a class="headerlink" href="#id58" title="Perma-link to this heading">🔗</a>CDAP Bug Fixes</h3>
 <ul class="simple">
 <li>Fixed a problem with readless increments not being used when they were enabled in a dataset
 (<a class="reference external" href="https://issues.cask.co/browse/CDAP-383">CDAP-383</a>).</li>
@@ -3623,7 +3621,7 @@ a region flush or compaction occurred (<a class="reference external" href="https
 </ul>
 </div>
 <div class="section" id="known-issues-260">
-<span id="id58"></span><h3><a class="headerlink" href="#known-issues-260" title="Perma-link to this heading">🔗</a>Known Issues</h3>
+<span id="id59"></span><h3><a class="headerlink" href="#known-issues-260" title="Perma-link to this heading">🔗</a>Known Issues</h3>
 <ul>
 <li><p class="first">When running secure Hadoop clusters, metrics and debug logs from MapReduce programs are
 not available (<a class="reference external" href="https://issues.cask.co/browse/CDAP-64">CDAP-64</a> and <a class="reference external" href="https://issues.cask.co/browse/CDAP-797">CDAP-797</a>).</p>
@@ -3655,8 +3653,8 @@ problem (<a class="reference external" href="https://issues.apache.org/jira/brow
 </div>
 <div class="section" id="release-2-5-2">
 <h2><a class="headerlink" href="#release-2-5-2" title="Perma-link to this heading">🔗</a><a class="reference external" href="http://docs.cask.co/cdap/2.5.2/index.html">Release 2.5.2</a></h2>
-<div class="section" id="id59">
-<h3><a class="headerlink" href="#id59" title="Perma-link to this heading">🔗</a>CDAP Bug Fixes</h3>
+<div class="section" id="id60">
+<h3><a class="headerlink" href="#id60" title="Perma-link to this heading">🔗</a>CDAP Bug Fixes</h3>
 <ul class="simple">
 <li>Fixed a problem with a Coopr-provisioned secure cluster failing to start due to a classpath
 issue (<a class="reference external" href="https://issues.cask.co/browse/CDAP-478">CDAP-478</a>).</li>
@@ -3692,8 +3690,8 @@ Manual, Reference Manual—and a set of examples, how-to guides and tutorials;</
 </li>
 </ul>
 </div>
-<div class="section" id="id60">
-<h3><a class="headerlink" href="#id60" title="Perma-link to this heading">🔗</a>Known Issues</h3>
+<div class="section" id="id61">
+<h3><a class="headerlink" href="#id61" title="Perma-link to this heading">🔗</a>Known Issues</h3>
 <ul>
 <li><p class="first">Currently, applications that include Spark or Scala classes in user classes not extended
 from either <code class="docutils literal"><span class="pre">JavaSparkProgram</span></code> or <code class="docutils literal"><span class="pre">ScalaSparkProgram</span></code> (depending upon the language)
@@ -3729,8 +3727,8 @@ problem (<a class="reference external" href="https://issues.apache.org/jira/brow
 </div>
 <div class="section" id="release-2-5-1">
 <h2><a class="headerlink" href="#release-2-5-1" title="Perma-link to this heading">🔗</a><a class="reference external" href="http://docs.cask.co/cdap/2.5.1/index.html">Release 2.5.1</a></h2>
-<div class="section" id="id61">
-<h3><a class="headerlink" href="#id61" title="Perma-link to this heading">🔗</a>CDAP Bug Fixes</h3>
+<div class="section" id="id62">
+<h3><a class="headerlink" href="#id62" title="Perma-link to this heading">🔗</a>CDAP Bug Fixes</h3>
 <ul class="simple">
 <li>Improved the documentation of the CDAP authentication and stream clients, both Java and Python APIs.</li>
 <li>Fixed problems with the CDAP Command Line Interface (CLI):<ul>
@@ -3746,8 +3744,8 @@ problem (<a class="reference external" href="https://issues.apache.org/jira/brow
 without first checking if authentication was enabled.</li>
 </ul>
 </div>
-<div class="section" id="id62">
-<h3><a class="headerlink" href="#id62" title="Perma-link to this heading">🔗</a>Other Changes</h3>
+<div class="section" id="id63">
+<h3><a class="headerlink" href="#id63" title="Perma-link to this heading">🔗</a>Other Changes</h3>
 <ul class="simple">
 <li>The scripts <code class="docutils literal"><span class="pre">send-query.sh</span></code>, <code class="docutils literal"><span class="pre">access-token.sh</span></code> and <code class="docutils literal"><span class="pre">access-token.bat</span></code> has been replaced by the
 <a class="reference internal" href="cli-api.html#cli"><span>CDAP Command Line Interface,</span></a> <code class="docutils literal"><span class="pre">cdap-cli.sh</span></code>.</li>
@@ -3756,8 +3754,8 @@ without first checking if authentication was enabled.</li>
 <li>The CDAP Python Authentication Client's <code class="docutils literal"><span class="pre">configure()</span></code> method now takes a dictionary rather than a filepath.</li>
 </ul>
 </div>
-<div class="section" id="id63">
-<h3><a class="headerlink" href="#id63" title="Perma-link to this heading">🔗</a>Known Issues</h3>
+<div class="section" id="id64">
+<h3><a class="headerlink" href="#id64" title="Perma-link to this heading">🔗</a>Known Issues</h3>
 <ul>
 <li><p class="first">Metrics for MapReduce programs aren't populated on secure Hadoop clusters</p>
 </li>
@@ -3785,8 +3783,8 @@ problem (<a class="reference external" href="https://issues.apache.org/jira/brow
 </div>
 <div class="section" id="release-2-5-0">
 <h2><a class="headerlink" href="#release-2-5-0" title="Perma-link to this heading">🔗</a><a class="reference external" href="http://docs.cask.co/cdap/2.5.0/index.html">Release 2.5.0</a></h2>
-<div class="section" id="id64">
-<h3><a class="headerlink" href="#id64" title="Perma-link to this heading">🔗</a>New Features</h3>
+<div class="section" id="id65">
+<h3><a class="headerlink" href="#id65" title="Perma-link to this heading">🔗</a>New Features</h3>
 <div class="section" id="ad-hoc-querying">
 <h4><a class="headerlink" href="#ad-hoc-querying" title="Perma-link to this heading">🔗</a>Ad-hoc querying</h4>
 <ul class="simple">
@@ -3863,7 +3861,7 @@ problem (<a class="reference external" href="https://issues.apache.org/jira/brow
 </ul>
 </div>
 <div class="section" id="known-issues-250">
-<span id="id65"></span><h3><a class="headerlink" href="#known-issues-250" title="Perma-link to this heading">🔗</a>Known Issues</h3>
+<span id="id66"></span><h3><a class="headerlink" href="#known-issues-250" title="Perma-link to this heading">🔗</a>Known Issues</h3>
 <ul>
 <li><p class="first">Metrics for MapReduce programs aren't populated on secure Hadoop clusters</p>
 </li>
