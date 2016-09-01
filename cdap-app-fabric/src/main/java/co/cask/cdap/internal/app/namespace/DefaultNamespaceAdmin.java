@@ -175,11 +175,11 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
           return null;
         }
       });
-    } catch (IOException | ExploreException | SQLException e) {
+    } catch (Throwable t) {
       // failed to create namespace in underlying storage so delete the namespace meta stored in the store earlier
       deleteNamespaceMeta(metadata.getNamespaceId());
       privilegesManager.revoke(namespace);
-      throw new NamespaceCannotBeCreatedException(namespace.toId(), e);
+      throw new NamespaceCannotBeCreatedException(namespace.toId(), t);
     }
   }
 
