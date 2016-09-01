@@ -363,7 +363,7 @@ annotated with its real-time metrics:
 .. image:: ../_images/quickstart/wise-flow1.png
    :width: 600px
 
-In this screenshot, we see that the stream has thousand of events and all of them
+In this screenshot, we see that the stream has thousands of events and all of them
 have been processed by both flowlets. You can watch these metrics update in real time by
 repeating the injection of events into the stream:
 
