@@ -71,16 +71,14 @@ export default class ConnectionExample extends Component {
   }
 
   addStream() {
-    let streamName = this.refs.streamName.value;
-
     let reqObj = {
-      _cdapPath: '/namespaces/default/streams/' + streamName,
+      _cdapPath: '/namespaces/default/streams/' + this.streamName,
       method: 'PUT'
     };
     this.dataSrc.request(reqObj)
       .subscribe(
         () => {
-          this.refs.streamName.value = '';
+          this.streamName = '';
         },
         (err) => {
           this.setState({error: err});
@@ -115,7 +113,8 @@ export default class ConnectionExample extends Component {
             <input type="text"
               className="form-control"
               placeholder="Stream Name"
-              ref="streamName"
+              value={this.streamName}
+              onChange={(e) => this.streamName = e.target.value}
             />
           </div>
           <div className="col-xs-3">
@@ -138,7 +137,10 @@ export default class ConnectionExample extends Component {
         >
           Stop Poll
         </button>
-        <h4>Polling Status: <i> {this.state.isPolling ? 'Polling' : 'Stopped'} </i></h4>
+        <h4>
+          Polling Status:
+          <i> {this.state.isPolling ? 'Polling' : 'Stopped'} </i>
+        </h4>
 
       </div>
     );
