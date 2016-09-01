@@ -104,8 +104,9 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
 
   /**
    * Intercepts the HttpMessage for getting the access token in authorization header
-   * @param ctx channel handler context delegated from MessageReceived callback
-   * @param msg intercepted HTTP message
+   *
+   * @param ctx            channel handler context delegated from MessageReceived callback
+   * @param msg            intercepted HTTP message
    * @param inboundChannel
    * @return {@code true} if the HTTP message has valid Access token
    * @throws Exception
@@ -139,20 +140,20 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
       JsonObject jsonObject = new JsonObject();
       if (tokenState == TokenState.MISSING) {
         httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE,
-                                 String.format("Bearer realm=\"%s\"", realm));
+                               String.format("Bearer realm=\"%s\"", realm));
         LOG.debug("Authentication failed due to missing token");
 
       } else {
         httpResponse.addHeader(HttpHeaders.Names.WWW_AUTHENTICATE,
-                                 String.format("Bearer realm=\"%s\" error=\"invalid_token\"" +
-                                                 " error_description=\"%s\"", realm, tokenState.getMsg()));
+                               String.format("Bearer realm=\"%s\" error=\"invalid_token\"" +
+                                               " error_description=\"%s\"", realm, tokenState.getMsg()));
         jsonObject.addProperty("error", "invalid_token");
         jsonObject.addProperty("error_description", tokenState.getMsg());
         LOG.debug("Authentication failed due to invalid token, reason={};", tokenState);
       }
       JsonArray externalAuthenticationURIs = new JsonArray();
 
-      //Waiting for service to get discovered
+      // Waiting for service to get discovered
       stopWatchWait(externalAuthenticationURIs);
 
       jsonObject.add("auth_uri", externalAuthenticationURIs);
@@ -182,7 +183,6 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
   }
 
   /**
-   *
    * @param externalAuthenticationURIs the list that should be populated with discovered with
    *                                   external auth servers URIs
    * @throws Exception
@@ -201,10 +201,19 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
       port = configuration.getInt(Constants.Security.AUTH_SERVER_BIND_PORT);
     }
 
+    String announceAddress = configuration.get(Constants.Security.AUTH_SERVER_ANNOUNCE_ADDRESS);
+    // If the announceAddress is set in configuration, only add it to the list
+    if (announceAddress != null) {
+      // announceAddress should follow the format host:port
+      String url = String.format("%s://%s/%s", protocol, announceAddress,
+                                 GrantAccessToken.Paths.GET_TOKEN);
+      externalAuthenticationURIs.add(new JsonPrimitive(url));
+      return;
+    }
     do {
-      for (Discoverable d : discoverables)  {
+      for (Discoverable d : discoverables) {
         String url = String.format("%s://%s:%d/%s", protocol, d.getSocketAddress().getHostName(), port,
-                                                                        GrantAccessToken.Paths.GET_TOKEN);
+                                   GrantAccessToken.Paths.GET_TOKEN);
         externalAuthenticationURIs.add(new JsonPrimitive(url));
         done = true;
       }
