@@ -26,7 +26,7 @@ import java.util.Objects;
 /**
  * Uniquely identifies a dataset module.
  */
-public class DatasetModuleId extends EntityId implements NamespacedId, ParentedId<NamespaceId> {
+public class DatasetModuleId extends NamespacedId implements ParentedId<NamespaceId> {
   private final String namespace;
   private final String module;
   private transient Integer hashCode;

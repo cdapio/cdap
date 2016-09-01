@@ -26,7 +26,7 @@ import java.util.Objects;
 /**
  * Uniquely identifies a stream view.
  */
-public class StreamViewId extends EntityId implements NamespacedId, ParentedId<StreamId> {
+public class StreamViewId extends NamespacedId implements ParentedId<StreamId> {
   private final String namespace;
   private final String stream;
   private final String view;

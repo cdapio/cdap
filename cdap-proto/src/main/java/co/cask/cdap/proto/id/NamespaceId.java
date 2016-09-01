@@ -26,7 +26,7 @@ import java.util.Objects;
 /**
  * Uniquely identifies a namespace.
  */
-public class NamespaceId extends EntityId implements NamespacedId {
+public class NamespaceId extends NamespacedId {
 
   public static final NamespaceId DEFAULT = new NamespaceId("default");
   public static final NamespaceId SYSTEM = new NamespaceId("system");

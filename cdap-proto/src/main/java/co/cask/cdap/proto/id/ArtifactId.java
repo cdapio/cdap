@@ -26,7 +26,7 @@ import java.util.Objects;
 /**
  * Uniquely identifies an artifact.
  */
-public class ArtifactId extends EntityId implements NamespacedId, ParentedId<NamespaceId> {
+public class ArtifactId extends NamespacedId implements ParentedId<NamespaceId> {
   private final String namespace;
   private final String artifact;
   private final String version;

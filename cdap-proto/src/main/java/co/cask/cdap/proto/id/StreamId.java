@@ -26,7 +26,7 @@ import java.util.Objects;
 /**
  * Uniquely identifies a stream.
  */
-public class StreamId extends EntityId implements NamespacedId, ParentedId<NamespaceId> {
+public class StreamId extends NamespacedId implements ParentedId<NamespaceId> {
   private final String namespace;
   private final String stream;
   private transient Integer hashCode;

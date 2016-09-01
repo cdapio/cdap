@@ -27,7 +27,7 @@ import java.util.Objects;
 /**
  * Uniquely identifies a program run.
  */
-public class ProgramRunId extends EntityId implements NamespacedId, ParentedId<ProgramId> {
+public class ProgramRunId extends NamespacedId implements ParentedId<ProgramId> {
   private final String namespace;
   private final String application;
   private final ProgramType type;

@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 /**
  * Uniquely identifies a Secure store key.
  */
-public class SecureKeyId extends EntityId implements NamespacedId, ParentedId<NamespaceId> {
+public class SecureKeyId extends NamespacedId implements ParentedId<NamespaceId> {
   // KMS only supports lower case keys.
   private static final Pattern secureKeyNamePattern = Pattern.compile("[a-z0-9_-]+");
 

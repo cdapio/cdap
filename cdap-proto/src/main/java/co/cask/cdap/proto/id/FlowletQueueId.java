@@ -26,7 +26,7 @@ import java.util.Objects;
 /**
  * Uniquely identifies a flowlet queue.
  */
-public class FlowletQueueId extends EntityId implements NamespacedId, ParentedId<FlowletId> {
+public class FlowletQueueId extends NamespacedId implements ParentedId<FlowletId> {
   private final String namespace;
   private final String application;
   private final String flow;

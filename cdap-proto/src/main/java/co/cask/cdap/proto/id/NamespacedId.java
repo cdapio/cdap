@@ -15,9 +15,16 @@
  */
 package co.cask.cdap.proto.id;
 
+import co.cask.cdap.proto.element.EntityType;
+
 /**
  * An {@link EntityId} which belongs to a namespace.
  */
-public interface NamespacedId {
-  String getNamespace();
+public abstract class NamespacedId extends EntityId {
+
+  protected NamespacedId(EntityType entity) {
+    super(entity);
+  }
+
+  abstract String getNamespace();
 }

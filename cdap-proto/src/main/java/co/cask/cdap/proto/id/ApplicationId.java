@@ -27,7 +27,7 @@ import java.util.Objects;
 /**
  * Uniquely identifies an application.
  */
-public class ApplicationId extends EntityId implements NamespacedId, ParentedId<NamespaceId> {
+public class ApplicationId extends NamespacedId implements ParentedId<NamespaceId> {
   private final String namespace;
   private final String application;
   private transient Integer hashCode;

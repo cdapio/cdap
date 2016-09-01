@@ -26,7 +26,7 @@ import java.util.Objects;
 /**
  * Uniquely identifies a schedule.
  */
-public class ScheduleId extends EntityId implements NamespacedId, ParentedId<ApplicationId> {
+public class ScheduleId extends NamespacedId implements ParentedId<ApplicationId> {
   private final String namespace;
   private final String application;
   private final String schedule;

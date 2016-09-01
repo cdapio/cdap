@@ -28,7 +28,7 @@ import java.util.Objects;
 /**
  * Uniquely identifies a program.
  */
-public class ProgramId extends EntityId implements NamespacedId, ParentedId<ApplicationId> {
+public class ProgramId extends NamespacedId implements ParentedId<ApplicationId> {
   private final String namespace;
   private final String application;
   private final ProgramType type;
