@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright © 2015 Cask Data, Inc.
+# Copyright © 2015-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -67,15 +67,16 @@ function convert_branch_name () {
 #   3 scenarios (assuming remote base web directory=/var/www/html/cdap and VERSION=2.8.1)
 #     OPT_DIR is set via environment variables
 #         => remote directory=/var/www/html/cdap/${VERSION}-${OPT_DIR}
-#     OPT_DIR is not set AND branch=release/* or branch=develop/*
+#     OPT_DIR is not set AND branch=release/* or branch=develop/* or branch=docs/*
 #         => remote directory=/var/www/html/cdap/2.8.1
 #     OPT_DIR is not set AND branch=anything else (e.g. feature/*, hotfix/*, etc..)
 #         => remote directory=/var/www/html/cdap/${VERSION}-${BRANCH_NAME}
+# Modified to allow releasing of docs from a docs "feature" branch
 set_remote_dir () {
   DOC_DIR=${OPT_DIR:-${BRANCH_NAME}}
   convert_branch_name
   BRANCH=''
-  if [[ "${DOC_DIR}" == release* || "${DOC_DIR}" == develop* ]]; then
+  if [[ "${DOC_DIR}" == release* || "${DOC_DIR}" == develop* || "${DOC_DIR}" == docs* ]]; then
     REMOTE_DIR=''
   else
     REMOTE_DIR=${VERSION}-${DOC_DIR}
