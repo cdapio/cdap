@@ -124,6 +124,7 @@
                   <exclude>**/node_modules/**</exclude>
                   <exclude>**/dist/**</exclude>
                   <exclude>**/cdap_dist/**</exclude>
+                  <exclude>**/login_dist/**</exclude>
                   <exclude>**/logs/**</exclude>
                   <exclude>**/npm-debug.log</exclude>
                   <exclude>**/node/**</exclude>
@@ -164,16 +165,6 @@
                   <npmVersion>3.8.8</npmVersion>
                 </configuration>
               </execution>
-              <execution>
-                <id>npm-install</id>
-                <goals>
-                  <goal>npm</goal>
-                </goals>
-                <!-- Optional configuration which provides for running any npm command -->
-                <configuration>
-                  <arguments>run ui-prod-build</arguments>
-                </configuration>
-              </execution>
             </executions>
           </plugin>
           <plugin>
@@ -181,6 +172,65 @@
             <artifactId>exec-maven-plugin</artifactId>
             <version>1.3.1</version>
             <executions>
+              <execution>
+                <id>npm-install</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>${project.basedir}/node/node</executable>
+                  <arguments>
+                    <executable>${project.basedir}/node/npm/bin/npm-cli.js</executable>
+                    <argument>install</argument>
+                    <argument>-s --progress=false</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+              <execution>
+                <id>bower-install</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>${project.basedir}/node/node</executable>
+                  <arguments>
+                    <executable>${project.basedir}/node_modules/bower/bin/bower</executable>
+                    <argument>install</argument>
+                    <argument>--allow-root</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+              <execution>
+                <id>build-ui</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>${project.basedir}/node/node</executable>
+                  <arguments>
+                    <executable>${project.basedir}/node/npm/bin/npm-cli.js</executable>
+                    <argument>run</argument>
+                    <argument>cdap-prod-build</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+              <execution>
+                <id>build-hydrator-tracker</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>${project.basedir}/node/node</executable>
+                  <arguments>
+                    <executable>${project.basedir}/node_modules/gulp/bin/gulp.js</executable>
+                    <argument>distribute</argument>
+                  </arguments>
+                </configuration>
+              </execution>
               <execution>
                 <id>clean-bower-components</id>
                 <phase>process-resources</phase>
