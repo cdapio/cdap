@@ -11,8 +11,8 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>System and Custom Datasets &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
@@ -185,7 +185,7 @@ a TTL (time-to-live, specified in seconds) property, you can use:</p>
 <a class="reference internal" href="table.html#table-datasets-pre-splitting"><span>pre-splitting into multiple regions</span></a>.</p>
 </div>
 <div class="section" id="accessing-a-dataset">
-<h3><a class="headerlink" href="#accessing-a-dataset" title="Perma-link to this heading">🔗</a>Accessing a Dataset</h3>
+<span id="custom-datasets-accessing-datasets"></span><h3><a class="headerlink" href="#accessing-a-dataset" title="Perma-link to this heading">🔗</a>Accessing a Dataset</h3>
 <p>Application components can access a custom dataset in the same way as all other datasets:
 via either the <code class="docutils literal"><span class="pre">&#64;UseDataSet</span></code> annotation, or the <code class="docutils literal"><span class="pre">getDataset()</span></code> method of the program context.
 This is described in more detail in the section on
@@ -193,6 +193,21 @@ This is described in more detail in the section on
 <p>A complete application demonstrating the use of a custom dataset is included in our
 <a class="reference external" href="../../source/../../examples-manual/examples/purchase.html#examples-purchase" title="(in Cask Data Application Platform v3.5.0)"><span class="xref std std-ref">Purchase Example</span></a>.</p>
 <p>You can also create, drop, and truncate datasets using the <a class="reference external" href="../../source/../../reference-manual/http-restful-api/dataset.html#http-restful-api-dataset" title="(in Cask Data Application Platform v3.5.0)"><span>Dataset HTTP RESTful API</span></a>.</p>
+</div>
+<div class="section" id="annotating-dataset-methods">
+<span id="custom-datasets-access-annotations"></span><h3><a class="headerlink" href="#annotating-dataset-methods" title="Perma-link to this heading">🔗</a>Annotating Dataset Methods</h3>
+<p>Dataset methods can be annotated with the type of access that they perform on data.
+Annotations help the CDAP runtime to enforce <a class="reference external" href="../../source/../../admin-manual/security/authorization.html#admin-authorization" title="(in Cask Data Application Platform v3.5.0)"><span class="xref std std-ref">authorization</span></a>,
+as well as track <a class="reference internal" href="../metadata-lineage.html#metadata-lineage-lineage"><span>lineage</span></a>. Dataset methods (including
+constructors) can be annotated with one of:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">&#64;ReadOnly</span></code>: Denotes that a method or constructor performs only <strong>read</strong> operations</li>
+<li><code class="docutils literal"><span class="pre">&#64;WriteOnly</span></code>: Denotes that a method or constructor performs only <strong>write</strong> operations</li>
+<li><code class="docutils literal"><span class="pre">&#64;ReadWrite</span></code>: Denotes that a method or constructor performs both <strong>read</strong> and <strong>write</strong> operations</li>
+</ul>
+<p>Methods in <a class="reference internal" href="#system-datasets"><span>System Datasets</span></a> already contain appropriate
+annotations. For <a class="reference internal" href="#custom-datasets"><span>Custom Datasets</span></a>, it is the responsibility of the
+developer to appropriately annotate methods.</p>
 </div>
 </div>
 </div>

@@ -11,8 +11,8 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>Security &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -119,17 +119,41 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="authorization.html">Authorization</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="authorization.html#enabling-authorization">Enabling Authorization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="authorization.html#cdap-instances">CDAP Instances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="authorization.html#authorization-policies">Authorization Policies</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="authorization.html#namespaces">Namespaces</a></li>
+<li class="toctree-l3"><a class="reference internal" href="authorization.html#artifacts">Artifacts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="authorization.html#applications">Applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="authorization.html#programs">Programs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="authorization.html#datasets">Datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="authorization.html#dataset-modules">Dataset Modules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="authorization.html#dataset-types">Dataset Types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="authorization.html#secure-keys">Secure Keys</a></li>
+<li class="toctree-l3"><a class="reference internal" href="authorization.html#streams">Streams</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="impersonation.html">Impersonation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="secure-storage.html">Secure Storage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="authorization.html#bootstrapping-authorization">Bootstrapping Authorization</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="impersonation.html">Impersonation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="impersonation.html#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="impersonation.html#limitations">Limitations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="impersonation.html#known-issues">Known Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="secure-storage.html">Secure Storage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="secure-storage.html#secure-storage-format">Secure Storage Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="secure-storage.html#file-backed-secure-storage">File-backed Secure Storage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="secure-storage.html#hadoop-key-management-server-backed-secure-storage">Hadoop Key Management Server-backed Secure Storage</a></li>
+</ul>
+</li>
 </ul>
 </div>
 <p>Cask Data Application Platform (CDAP) supports securing clusters using various mechanisms such as
-<a class="reference internal" href="perimeter-security.html#admin-perimeter-security"><span>perimeter security</span></a>,
-<a class="reference internal" href="authorization.html#admin-authorization"><span>authorization</span></a>,
-<a class="reference internal" href="impersonation.html#admin-impersonation"><span>impersonation</span></a>, and
-<a class="reference internal" href="secure-storage.html#admin-secure-storage"><span>secure storage</span></a>.
+<a class="reference internal" href="perimeter-security.html#admin-perimeter-security"><span>Perimeter Security</span></a>,
+<a class="reference internal" href="authorization.html#admin-authorization"><span>Authorization</span></a>,
+<a class="reference internal" href="impersonation.html#admin-impersonation"><span>Impersonation</span></a>, and
+<a class="reference internal" href="secure-storage.html#admin-secure-storage"><span>Secure Storage</span></a>.
 This section covers how to setup these security mechanisms on a secure CDAP instance.</p>
 <p>Additional security information, including client APIs, the authentication process,
 developing authorization extensions, and authorization policies is covered in the
@@ -153,13 +177,13 @@ SSL certificate keys. It should be owned and readable only by the CDAP user.</li
 <li><a class="reference internal" href="perimeter-security.html#admin-perimeter-security"><span>Perimeter Security</span></a></li>
 </ul>
 <ul class="simple">
-<li><a class="reference internal" href="authorization.html#admin-authorization"><span>Configuring Authorization</span></a></li>
+<li><a class="reference internal" href="authorization.html#admin-authorization"><span>Authorization</span></a></li>
 </ul>
 <ul class="simple">
-<li><a class="reference internal" href="impersonation.html#admin-impersonation"><span>Configuring Impersonation</span></a></li>
+<li><a class="reference internal" href="impersonation.html#admin-impersonation"><span>Impersonation</span></a></li>
 </ul>
 <ul class="simple">
-<li><a class="reference internal" href="secure-storage.html#admin-secure-storage"><span>Configuring Secure Storage</span></a></li>
+<li><a class="reference internal" href="secure-storage.html#admin-secure-storage"><span>Secure Storage</span></a></li>
 </ul>
 </div>
 

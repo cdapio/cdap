@@ -12,8 +12,8 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>CDAP Tutorial: WISE (Web InSights Engine) Application &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -105,7 +105,7 @@ such a system on CDAP that is easy, concise, and powerful. WISE extracts value f
 server access logs, counts visits made by different IP addresses seen in the logs in
 real time, and computes the bounce ratio of each web page encountered using batch
 processing.</p>
-<p>The WISE v0.7.0 application uses these Cask Data Application Platform (CDAP) constructs to
+<p>The WISE v0.8.0 application uses these Cask Data Application Platform (CDAP) constructs to
 analyze web server logs:</p>
 <ul class="simple">
 <li><strong>Stream:</strong> Ingests log data in real time</li>
@@ -196,7 +196,7 @@ a definition of <code class="docutils literal"><span class="pre">JAVA_HOME</span
 </div>
 <div class="section" id="running-wise">
 <h2><a class="headerlink" href="#running-wise" title="Perma-link to this heading">🔗</a>Running WISE</h2>
-<p>Building and running WISE v0.7.0 is straightforward. We’ll assume that you have
+<p>Building and running WISE v0.8.0 is straightforward. We’ll assume that you have
 already downloaded, installed, and have started an instance of CDAP, as described in the
 <a class="reference external" href="../source/../../developers-manual/getting-started/standalone/index.html#standalone-index" title="(in Cask Data Application Platform v3.5.0)"><span class="xref std std-ref">CDAP Software Development Kit (SDK)</span></a>.</p>
 <p>Change to the directory where you have installed the CDAP SDK Standalone, and download the
@@ -437,7 +437,7 @@ $(function tabbedparsedliteral193() {
 <div class="highlight-console">
 <!-- tabbed-parsed-literal start -->
 <div class="highlight"><pre class="copyable"><span class="gp">$ </span><span class="copyable-text"><span class="nb">cd</span> <span class="nv">$CDAP</span>-SDK-HOME</span>
-<span class="gp">$ </span><span class="copyable-text">cdap-cli.sh deploy app examples/cdap-apps-release-cdap-3.5-compatible/Wise/target/cdap-wise-0.7.0.jar</span>
+<span class="gp">$ </span><span class="copyable-text">cdap-cli.sh deploy app examples/cdap-apps-release-cdap-3.5-compatible/Wise/target/cdap-wise-0.8.0.jar</span>
 <span class="gp">$ </span><span class="copyable-text">cdap-cli.sh start flow Wise.WiseFlow</span>
 <span class="gp">$ </span><span class="copyable-text">cdap-cli.sh start service Wise.WiseService</span>
 </pre></div>
@@ -451,7 +451,7 @@ $(function tabbedparsedliteral193() {
 <div class="highlight-shell-session">
 <!-- tabbed-parsed-literal start -->
 <div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cd $CDAP-SDK-HOME</span></span>
-<span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat deploy app examples/cdap-apps-release-cdap-3.5-compatible/Wise/target/cdap-wise-0.7.0.jar</span></span>
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat deploy app examples/cdap-apps-release-cdap-3.5-compatible/Wise/target/cdap-wise-0.8.0.jar</span></span>
 <span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat start flow Wise.WiseFlow</span></span>
 <span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat start service Wise.WiseService</span></span>
 </pre></div>
@@ -1277,13 +1277,19 @@ called <em>Explore</em>, can be accessed through the CDAP UI:</p>
 <ol class="arabic">
 <li><p class="first">After deploying WISE in your Standalone CDAP instance, go to the <em>WISE</em>
 <a class="reference external" href="http://localhost:9999/ns/default/apps/Wise/overview/status">overview page</a>:</p>
-<a class="reference internal image-reference" href="../_images/wise_overview.png"><img alt="../_images/wise_overview.png" class="align-center" src="../_images/wise_overview.png" style="width: 8in;" /></a>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/wise_overview.png"><img alt="../_images/wise_overview.png" class="bordered-image" src="../_images/wise_overview.png" style="width: 800px;" /></a>
+</div>
 </li>
 <li><p class="first">Click on the <em>Datasets</em> tab to display the list of datasets used by WISE:</p>
-<a class="reference internal image-reference" href="../_images/wise_datasets.png"><img alt="../_images/wise_datasets.png" class="align-center" src="../_images/wise_datasets.png" style="width: 8in;" /></a>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/wise_datasets.png"><img alt="../_images/wise_datasets.png" class="bordered-image" src="../_images/wise_datasets.png" style="width: 800px;" /></a>
+</div>
 </li>
 <li><p class="first">Click on <em>bouncecountstore</em>, and then the <em>Explore</em> tab:</p>
-<a class="reference internal image-reference" href="../_images/wise_bouncecountstore.png"><img alt="../_images/wise_bouncecountstore.png" class="align-center" src="../_images/wise_bouncecountstore.png" style="width: 8in;" /></a>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/wise_bouncecountstore.png"><img alt="../_images/wise_bouncecountstore.png" class="bordered-image" src="../_images/wise_bouncecountstore.png" style="width: 800px;" /></a>
+</div>
 </li>
 </ol>
 <p>This is the <strong>Explore</strong> tab, where you can run ad-hoc SQL queries and see information about

@@ -11,8 +11,8 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>Streams &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -103,11 +103,11 @@ by <a class="reference internal" href="mapreduce-programs.html#mapreduce"><span>
 </pre></div>
 </div>
 <p>This specifies a new stream named <em>myStream</em>.</p>
-<p>Streams are uniquely identified by the ID string (a &quot;name&quot;) and are explicitly created
-before being used. Names used for streams need to be unique across the CDAP instance, as
-streams are shared between applications. Names that start with an underscore (<code class="docutils literal"><span class="pre">_</span></code>) will
-not be visible in the home page of the <a class="reference external" href="../source/../../admin-manual/operations/cdap-ui.html#cdap-ui" title="(in Cask Data Application Platform v3.5.0)"><span class="xref std std-ref">CDAP UI</span></a>, though they will be
-visible elsewhere in the CDAP UI.</p>
+<p>Streams are uniquely identified by a combination of the <a class="reference internal" href="namespaces.html#namespaces"><span>namespace</span></a> and
+the stream name and are explicitly created before being used. Names used for streams need
+to be unique within a <a class="reference internal" href="namespaces.html#namespaces"><span>namespace</span></a>, as streams are shared between applications.
+Names that start with an underscore (<code class="docutils literal"><span class="pre">_</span></code>) will not be visible in the home page of the
+<a class="reference external" href="../source/../../admin-manual/operations/cdap-ui.html#cdap-ui" title="(in Cask Data Application Platform v3.5.0)"><span class="xref std std-ref">CDAP UI</span></a>, though they will be visible elsewhere in the CDAP UI.</p>
 </div>
 <div class="section" id="writing-to-a-stream">
 <h2><a class="headerlink" href="#writing-to-a-stream" title="Perma-link to this heading">🔗</a>Writing To a Stream</h2>

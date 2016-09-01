@@ -11,8 +11,8 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>Developing Pipelines &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
@@ -337,7 +337,7 @@ when the run completes, a post-run action send an email indicating that the run 
           &quot;type&quot;: &quot;postaction&quot;,
           &quot;artifact&quot;: {
             &quot;name&quot;: &quot;core-plugins&quot;,
-            &quot;version&quot;: &quot;1.4.0-SNAPSHOT&quot;,
+            &quot;version&quot;: &quot;1.4.1-SNAPSHOT&quot;,
             &quot;scope&quot;: &quot;SYSTEM&quot;
           },
           &quot;properties&quot;: {
@@ -359,7 +359,7 @@ when the run completes, a post-run action send an email indicating that the run 
           &quot;type&quot;: &quot;batchsource&quot;,
           &quot;artifact&quot;: {
             &quot;name&quot;: &quot;core-plugins&quot;,
-            &quot;version&quot;: &quot;1.4.0-SNAPSHOT&quot;,
+            &quot;version&quot;: &quot;1.4.1-SNAPSHOT&quot;,
             &quot;scope&quot;: &quot;system&quot;
           },
           &quot;properties&quot;: {
@@ -377,7 +377,7 @@ when the run completes, a post-run action send an email indicating that the run 
           &quot;type&quot;: &quot;batchsink&quot;,
           &quot;artifact&quot;: {
             &quot;name&quot;: &quot;core-plugins&quot;,
-            &quot;version&quot;: &quot;1.4.0-SNAPSHOT&quot;,
+            &quot;version&quot;: &quot;1.4.1-SNAPSHOT&quot;,
             &quot;scope&quot;: &quot;system&quot;
           },
           &quot;properties&quot;: {
@@ -530,29 +530,33 @@ $(function tabbedparsedliteral2() {
 </div>
 <div class="section" id="creating-a-real-time-pipeline">
 <span id="hydrator-developing-pipelines-creating-real-time"></span><h2><a class="headerlink" href="#creating-a-real-time-pipeline" title="Perma-link to this heading">🔗</a>Creating a Real-Time Pipeline</h2>
+<p>With a Hydrator real-time pipeline, a <code class="docutils literal"><span class="pre">batchInterval</span></code> property is required
+specifying the frequency at which the sources will create new micro batches of data.
+The <code class="docutils literal"><span class="pre">batchInterval</span></code> must be a number followed by a time unit, with 's' for seconds,
+'m' for minutes, and 'h' for hours. For example, a value of '10s' will be interpreted
+as ten seconds. This means that every ten seconds, a new micro batch of data will be generated.</p>
 <p>To create a real-time pipeline that reads from a source such as Twitter and writes to a
-stream after performing a projection transformation, you can use a configuration such as:</p>
+CDAP Table after performing a projection transformation, you can use a configuration such as:</p>
 <div class="highlight container">
 <pre class="literal-block">
 {
   &quot;name&quot;: &quot;twitterToStream&quot;,
   &quot;artifact&quot;: {
-    &quot;name&quot;: &quot;cdap-etl-realtime&quot;,
+    &quot;name&quot;: &quot;cdap-data-streams&quot;,
     &quot;version&quot;: &quot;3.5.0&quot;,
     &quot;scope&quot;: &quot;system&quot;
   },
   &quot;config&quot;: {
-    &quot;instances&quot;: 1,
-    &quot;postActions&quot;: [],
+    &quot;batchInterval&quot;: &quot;10s&quot;,
     &quot;stages&quot;: [
       {
         &quot;name&quot;: &quot;twitterSource&quot;,
         &quot;plugin&quot;: {
           &quot;name&quot;: &quot;Twitter&quot;,
-          &quot;type&quot;: &quot;realtimesource&quot;,
+          &quot;type&quot;: &quot;streamingsource&quot;,
           &quot;artifact&quot;: {
-            &quot;name&quot;: &quot;core-plugins&quot;,
-            &quot;version&quot;: &quot;1.4.0-SNAPSHOT&quot;,
+            &quot;name&quot;: &quot;spark-plugins&quot;,
+            &quot;version&quot;: &quot;1.4.1-SNAPSHOT&quot;,
             &quot;scope&quot;: &quot;system&quot;
           },
           &quot;properties&quot;: {
@@ -571,7 +575,7 @@ stream after performing a projection transformation, you can use a configuration
           &quot;type&quot;: &quot;transform&quot;,
           &quot;artifact&quot;: {
             &quot;name&quot;: &quot;core-plugins&quot;,
-            &quot;version&quot;: &quot;1.4.0-SNAPSHOT&quot;,
+            &quot;version&quot;: &quot;1.4.1-SNAPSHOT&quot;,
             &quot;scope&quot;: &quot;system&quot;
           },
           &quot;properties&quot;: {
@@ -581,18 +585,19 @@ stream after performing a projection transformation, you can use a configuration
         }
       },
       {
-        &quot;name&quot;: &quot;streamSink&quot;,
+        &quot;name&quot;: &quot;tableSink&quot;,
         &quot;plugin&quot;: {
-          &quot;name&quot;: &quot;Stream&quot;,
-          &quot;type&quot;: &quot;realtimesink&quot;,
+          &quot;name&quot;: &quot;Table&quot;,
+          &quot;type&quot;: &quot;batchsink&quot;,
           &quot;artifact&quot;: {
             &quot;name&quot;: &quot;core-plugins&quot;,
-            &quot;version&quot;: &quot;1.4.0-SNAPSHOT&quot;,
+            &quot;version&quot;: &quot;1.4.1-SNAPSHOT&quot;,
             &quot;scope&quot;: &quot;system&quot;
           },
           &quot;properties&quot;: {
-            &quot;name&quot;: &quot;twitterStream&quot;,
-            &quot;body.field&quot;: &quot;tweet&quot;
+            &quot;name&quot;: &quot;myTable&quot;,
+            &quot;schema&quot;: &quot;{\&quot;type\&quot;:\&quot;record\&quot;,\&quot;name\&quot;:\&quot;etlSchemaBody\&quot;,\&quot;fields\&quot;:[{\&quot;name\&quot;:\&quot;id\&quot;,\&quot;type\&quot;:\&quot;long\&quot;},{\&quot;name\&quot;:\&quot;tweet\&quot;,\&quot;type\&quot;:\&quot;string\&quot;},{\&quot;name\&quot;:\&quot;retCount\&quot;,\&quot;type\&quot;:\&quot;int\&quot;}]}&quot;,
+            &quot;schema.row.field&quot;: &quot;id&quot;
           }
         }
       }
@@ -604,25 +609,17 @@ stream after performing a projection transformation, you can use a configuration
       },
       {
         &quot;from&quot;: &quot;dropProjector&quot;,
-        &quot;to&quot;: &quot;streamSink&quot;
+        &quot;to&quot;: &quot;tableSink&quot;
       }
     ]
   }
 }
 </pre>
 </div>
-<p>A Hydrator real-time pipeline expects an instance property that will create <em>N</em> instances
-of the worker that runs concurrently. In Standalone CDAP mode, this is implemented as
-multiple threads; in Distributed CDAP mode, it will create different YARN containers. The
-number of worker instances of a real-time pipeline should not (in general) be changed
-during runtime. If the number of instances needs to be changed, the worker must first be
-stopped, and then the pipeline configuration can be updated to the new number of instances.</p>
-<p>The <code class="docutils literal"><span class="pre">instances</span></code> property value needs to be greater than zero. Note that the <code class="docutils literal"><span class="pre">instance</span></code>
-property replaces the <code class="docutils literal"><span class="pre">schedule</span></code> property of a Hydrator batch pipeline.</p>
 <p>In the example code above, we will use a <em>ProjectionTransform</em> (a type of transform) to
-drop and rename selected columns in the incoming data. A <em>StreamSink</em> in the final step
-needs a data field property (<code class="docutils literal"><span class="pre">body.field</span></code>) that it will use as the content for the data
-to be written.</p>
+drop and rename selected columns in the incoming data. A <em>TableSink</em> in the final step
+requires a schema property that it will use to set the columns and row field for
+writing the data to a CDAP Table.</p>
 </div>
 <div class="section" id="non-linear-executions-in-pipelines">
 <h2><a class="headerlink" href="#non-linear-executions-in-pipelines" title="Perma-link to this heading">🔗</a>Non-linear Executions in Pipelines</h2>
@@ -635,7 +632,7 @@ events to the table <code class="docutils literal"><span class="pre">replicaTabl
 <code class="docutils literal"><span class="pre">userIds</span></code> to the <code class="docutils literal"><span class="pre">usersTable</span></code> when a user's purchase price is greater than 1000. This
 filtering logic is applied by using an included script in the step
 <code class="docutils literal"><span class="pre">spendingUsersScript</span></code>:</p>
-<a class="reference internal image-reference" href="_images/forkInPipeline.png"><img alt="_images/forkInPipeline.png" class="align-center" src="_images/forkInPipeline.png" style="width: 6in;" /></a>
+<a class="reference internal image-reference" href="_images/fork-in-pipeline.png"><img alt="_images/fork-in-pipeline.png" class="align-center" src="_images/fork-in-pipeline.png" style="width: 6in;" /></a>
 <div class="highlight container">
 <pre class="literal-block">
 {
@@ -657,7 +654,7 @@ filtering logic is applied by using an included script in the step
           &quot;type&quot;: &quot;batchsource&quot;,
           &quot;artifact&quot;: {
             &quot;name&quot;: &quot;core-plugins&quot;,
-            &quot;version&quot;: &quot;1.4.0-SNAPSHOT&quot;,
+            &quot;version&quot;: &quot;1.4.1-SNAPSHOT&quot;,
             &quot;scope&quot;: &quot;SYSTEM&quot;
           },
           &quot;properties&quot;: {
@@ -675,7 +672,7 @@ filtering logic is applied by using an included script in the step
           &quot;type&quot;: &quot;batchsink&quot;,
           &quot;artifact&quot;: {
             &quot;name&quot;: &quot;core-plugins&quot;,
-            &quot;version&quot;: &quot;1.4.0-SNAPSHOT&quot;,
+            &quot;version&quot;: &quot;1.4.1-SNAPSHOT&quot;,
             &quot;scope&quot;: &quot;SYSTEM&quot;
           },
           &quot;properties&quot;: {
@@ -692,7 +689,7 @@ filtering logic is applied by using an included script in the step
           &quot;type&quot;: &quot;batchsink&quot;,
           &quot;artifact&quot;: {
             &quot;name&quot;: &quot;core-plugins&quot;,
-            &quot;version&quot;: &quot;1.4.0-SNAPSHOT&quot;,
+            &quot;version&quot;: &quot;1.4.1-SNAPSHOT&quot;,
             &quot;scope&quot;: &quot;SYSTEM&quot;
           },
           &quot;properties&quot;: {
@@ -709,7 +706,7 @@ filtering logic is applied by using an included script in the step
           &quot;type&quot;: &quot;transform&quot;,
           &quot;artifact&quot;: {
             &quot;name&quot;: &quot;core-plugins&quot;,
-            &quot;version&quot;: &quot;1.4.0-SNAPSHOT&quot;,
+            &quot;version&quot;: &quot;1.4.1-SNAPSHOT&quot;,
             &quot;scope&quot;: &quot;SYSTEM&quot;
           },
           &quot;properties&quot;: {
@@ -759,7 +756,7 @@ output records in the same format, <code class="docutils literal"><span class="p
 <p>The rewards records are merged at the sink <code class="docutils literal"><span class="pre">rewardsSink</span></code>; note that the incoming schema
 from the transforms <code class="docutils literal"><span class="pre">userRewards</span></code> and <code class="docutils literal"><span class="pre">itemRewards</span></code> are the same, and that the order
 of received records will vary.</p>
-<a class="reference internal image-reference" href="_images/mergeInPipeline.png"><img alt="_images/mergeInPipeline.png" class="align-center" src="_images/mergeInPipeline.png" style="width: 8in;" /></a>
+<a class="reference internal image-reference" href="_images/merge-in-pipeline.png"><img alt="_images/merge-in-pipeline.png" class="align-center" src="_images/merge-in-pipeline.png" style="width: 8in;" /></a>
 <div class="highlight container">
 <pre class="literal-block">
 {
@@ -781,7 +778,7 @@ of received records will vary.</p>
           &quot;type&quot;: &quot;batchstream&quot;,
           &quot;artifact&quot;: {
             &quot;name&quot;: &quot;core-plugins&quot;,
-            &quot;version&quot;: &quot;1.4.0-SNAPSHOT&quot;,
+            &quot;version&quot;: &quot;1.4.1-SNAPSHOT&quot;,
             &quot;scope&quot;: &quot;SYSTEM&quot;
           },
           &quot;properties&quot;: {
@@ -808,7 +805,7 @@ of received records will vary.</p>
           &quot;type&quot;: &quot;transform&quot;,
           &quot;artifact&quot;: {
             &quot;name&quot;: &quot;core-plugins&quot;,
-            &quot;version&quot;: &quot;1.4.0-SNAPSHOT&quot;,
+            &quot;version&quot;: &quot;1.4.1-SNAPSHOT&quot;,
             &quot;scope&quot;: &quot;SYSTEM&quot;
           },
           &quot;properties&quot;: {
@@ -841,7 +838,7 @@ of received records will vary.</p>
           &quot;type&quot;: &quot;transform&quot;,
           &quot;artifact&quot;: {
             &quot;name&quot;: &quot;core-plugins&quot;,
-            &quot;version&quot;: &quot;1.4.0-SNAPSHOT&quot;,
+            &quot;version&quot;: &quot;1.4.1-SNAPSHOT&quot;,
             &quot;scope&quot;: &quot;SYSTEM&quot;
           },
           &quot;properties&quot;: {
@@ -870,7 +867,7 @@ of received records will vary.</p>
           &quot;type&quot;: &quot;batchsink&quot;,
           &quot;artifact&quot;: {
             &quot;name&quot;: &quot;core-plugins&quot;,
-            &quot;version&quot;: &quot;1.4.0-SNAPSHOT&quot;,
+            &quot;version&quot;: &quot;1.4.1-SNAPSHOT&quot;,
             &quot;scope&quot;: &quot;SYSTEM&quot;
           },
           &quot;properties&quot;: {
@@ -933,7 +930,7 @@ of received records will vary.</p>
           &quot;type&quot;: &quot;batchsource&quot;,
           &quot;artifact&quot;: {
             &quot;name&quot;: &quot;core-plugins&quot;,
-            &quot;version&quot;: &quot;1.4.0-SNAPSHOT&quot;,
+            &quot;version&quot;: &quot;1.4.1-SNAPSHOT&quot;,
             &quot;scope&quot;: &quot;SYSTEM&quot;
           },
           &quot;properties&quot;: {
@@ -955,7 +952,7 @@ of received records will vary.</p>
           &quot;type&quot;: &quot;batchsink&quot;,
           &quot;artifact&quot;: {
             &quot;name&quot;: &quot;core-plugins&quot;,
-            &quot;version&quot;: &quot;1.4.0-SNAPSHOT&quot;,
+            &quot;version&quot;: &quot;1.4.1-SNAPSHOT&quot;,
             &quot;scope&quot;: &quot;SYSTEM&quot;
           },
           &quot;properties&quot;: {
@@ -990,49 +987,52 @@ creating the source:</p>
 {
   &quot;name&quot;: &quot;KafkaPipeline&quot;,
   &quot;artifact&quot;: {
-    &quot;name&quot;: &quot;cdap-etl-realtime&quot;,
+    &quot;name&quot;: &quot;cdap-data-streams&quot;,
     &quot;version&quot;: &quot;3.5.0&quot;,
     &quot;scope&quot;: &quot;system&quot;
   },
   &quot;config&quot;: {
+    &quot;batchInterval&quot;: &quot;1s&quot;,
     &quot;connections&quot;: [
       {
         &quot;from&quot;: &quot;kafkaSource&quot;,
-        &quot;to&quot;: &quot;streamSink&quot;
+        &quot;to&quot;: &quot;tableSink&quot;
       }
-    ]
-    &quot;instances&quot;: 1,
+    ],
     &quot;stages&quot;: [
       {
         &quot;name&quot;: &quot;kafkaSource&quot;,
         &quot;plugin&quot;: {
           &quot;name&quot;: &quot;Kafka&quot;,
-          &quot;type&quot;: &quot;realtimesource&quot;,
+          &quot;type&quot;: &quot;streamingsource&quot;,
           &quot;artifact&quot;: {
-            &quot;name&quot;: &quot;core-plugins&quot;,
-            &quot;version&quot;: &quot;1.4.0-SNAPSHOT&quot;,
+            &quot;name&quot;: &quot;spark-plugins&quot;,
+            &quot;version&quot;: &quot;1.4.1-SNAPSHOT&quot;,
             &quot;scope&quot;: &quot;SYSTEM&quot;
           },
           &quot;properties&quot;: {
-            &quot;kafka.partitions&quot;: &quot;1&quot;,
-            &quot;kafka.topic&quot;: &quot;test&quot;,
-            &quot;kafka.brokers&quot;: &quot;localhost:9092&quot;
+            &quot;referenceName&quot;: &quot;purchasesTopic&quot;,
+            &quot;brokers&quot;: &quot;localhost:9092&quot;,
+            &quot;topics&quot;: &quot;purchases&quot;,
+            &quot;format&quot;: &quot;csv&quot;,
+            &quot;schema&quot;: &quot;{\&quot;type\&quot;:\&quot;record\&quot;,\&quot;name\&quot;:\&quot;etlSchemaBody\&quot;,\&quot;fields\&quot;:[{\&quot;name\&quot;:\&quot;id\&quot;,\&quot;type\&quot;:\&quot;long\&quot;},{\&quot;name\&quot;:\&quot;customer\&quot;,\&quot;type\&quot;:\&quot;string\&quot;},{\&quot;name\&quot;:\&quot;item\&quot;,\&quot;type\&quot;:\&quot;string\&quot;}]}&quot;
           }
         }
       },
       {
-        &quot;name&quot;: &quot;streamSink&quot;,
+        &quot;name&quot;: &quot;tableSink&quot;,
         &quot;plugin&quot;: {
-          &quot;name&quot;: &quot;Stream&quot;,
-          &quot;type&quot;: &quot;realtimesink&quot;,
+          &quot;name&quot;: &quot;Table&quot;,
+          &quot;type&quot;: &quot;batchsink&quot;,
           &quot;artifact&quot;: {
             &quot;name&quot;: &quot;core-plugins&quot;,
-            &quot;version&quot;: &quot;1.4.0-SNAPSHOT&quot;,
-            &quot;scope&quot;: &quot;SYSTEM&quot;
+            &quot;version&quot;: &quot;1.4.1-SNAPSHOT&quot;,
+            &quot;scope&quot;: &quot;system&quot;
           },
           &quot;properties&quot;: {
-            &quot;name&quot;: &quot;myStream&quot;,
-            &quot;body.field&quot;: &quot;message&quot;
+            &quot;name&quot;: &quot;myTable&quot;,
+            &quot;schema&quot;: &quot;{\&quot;type\&quot;:\&quot;record\&quot;,\&quot;name\&quot;:\&quot;etlSchemaBody\&quot;,\&quot;fields\&quot;:[{\&quot;name\&quot;:\&quot;id\&quot;,\&quot;type\&quot;:\&quot;long\&quot;},{\&quot;name\&quot;:\&quot;customer\&quot;,\&quot;type\&quot;:\&quot;string\&quot;},{\&quot;name\&quot;:\&quot;item\&quot;,\&quot;type\&quot;:\&quot;string\&quot;}]}&quot;
+            &quot;schema.row.field&quot;: &quot;id&quot;
           }
         }
       }

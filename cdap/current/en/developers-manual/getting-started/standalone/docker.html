@@ -12,8 +12,8 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>Docker Image &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
@@ -412,34 +412,45 @@ either Mac OS X or Microsoft Windows.</p>
 Windows, in <code class="docutils literal"><span class="pre">Start</span> <span class="pre">Menu</span> <span class="pre">&gt;</span> <span class="pre">Docker</span> <span class="pre">&gt;</span> <span class="pre">Kitematic</span></code>.</p>
 </li>
 <li><p class="first">Once Kitematic has started, search for the <strong>CDAP image</strong> using the search box at the
-top of the window. Then click on the repository menu, circled in red here:</p>
+top of the window and <code class="docutils literal"><span class="pre">caskdata:cdap-standalone</span></code>. Then click on the repository menu,
+circled in red here:</p>
 <blockquote>
-<div><a class="reference internal image-reference" href="../../_images/kitematic-1-searching.png"><img alt="../../_images/kitematic-1-searching.png" class="align-center" src="../../_images/kitematic-1-searching.png" style="width: 8in;" /></a>
+<div><div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../../_images/kitematic-1-searching.png"><img alt="../../_images/kitematic-1-searching.png" class="bordered-image" src="../../_images/kitematic-1-searching.png" style="width: 800px;" /></a>
+</div>
 </div></blockquote>
 </li>
 <li><p class="first">Click on the tags button:</p>
 <blockquote>
-<div><a class="reference internal image-reference" href="../../_images/kitematic-2-tags.png"><img alt="../../_images/kitematic-2-tags.png" class="align-center" src="../../_images/kitematic-2-tags.png" style="width: 4in;" /></a>
+<div><div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../../_images/kitematic-2-tags.png"><img alt="../../_images/kitematic-2-tags.png" class="bordered-image" src="../../_images/kitematic-2-tags.png" style="width: 400px;" /></a>
+</div>
 </div></blockquote>
 </li>
 <li><p class="first">Select the desired version.
 Note that the tag <strong>latest</strong> is the last version that was put up at Docker Hub, which is not the
 necessarily the desired version, which is <code class="docutils literal"><span class="pre">3.5.0</span></code>:</p>
 <blockquote>
-<div><a class="reference internal image-reference" href="../../_images/kitematic-3-select-tag.png"><img alt="../../_images/kitematic-3-select-tag.png" class="align-center" src="../../_images/kitematic-3-select-tag.png" style="width: 4in;" /></a>
+<div><div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../../_images/kitematic-3-select-tag.png"><img alt="../../_images/kitematic-3-select-tag.png" class="bordered-image" src="../../_images/kitematic-3-select-tag.png" style="width: 400px;" /></a>
+</div>
 </div></blockquote>
 </li>
 <li><p class="first">Close the menu by pressing the <code class="docutils literal"><span class="pre">X</span></code> in the circle. Press &quot;Create&quot; to download and start the CDAP image.
 When it has started up, you will see in the logs a message that the CDAP UI is listening on port 9999:</p>
 <blockquote>
-<div><a class="reference internal image-reference" href="../../_images/kitematic-4-cdap-started.png"><img alt="../../_images/kitematic-4-cdap-started.png" class="align-center" src="../../_images/kitematic-4-cdap-started.png" style="width: 8in;" /></a>
+<div><div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../../_images/kitematic-4-cdap-started.png"><img alt="../../_images/kitematic-4-cdap-started.png" class="bordered-image" src="../../_images/kitematic-4-cdap-started.png" style="width: 800px;" /></a>
+</div>
 </div></blockquote>
 </li>
 <li><p class="first">To connect a web browser for the CDAP UI, you'll need to find the external IP addresses
 and ports that the Docker host is exposing. The easiest way to do that is click on the
 <em>Settings</em> tab, and then the <em>Ports</em> tab:</p>
 <blockquote>
-<div><a class="reference internal image-reference" href="../../_images/kitematic-5-links.png"><img alt="../../_images/kitematic-5-links.png" class="align-center" src="../../_images/kitematic-5-links.png" style="width: 8in;" /></a>
+<div><div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../../_images/kitematic-5-links.png"><img alt="../../_images/kitematic-5-links.png" class="bordered-image" src="../../_images/kitematic-5-links.png" style="width: 800px;" /></a>
+</div>
 </div></blockquote>
 </li>
 <li><p class="first">This shows that the CDAP container is listening on the internal port <code class="docutils literal"><span class="pre">9999</span></code> within the
@@ -447,7 +458,9 @@ Docker host, while the Docker host proxies that port on the virtual machine IP a
 and port (<code class="docutils literal"><span class="pre">192.168.99.100:32769</span></code>). Enter that address and port into your system web browser to
 connect to the CDAP UI:</p>
 <blockquote>
-<div><a class="reference internal image-reference" href="../../_images/kitematic-6-cdap-ui.png"><img alt="../../_images/kitematic-6-cdap-ui.png" class="align-center" src="../../_images/kitematic-6-cdap-ui.png" style="width: 8in;" /></a>
+<div><div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../../_images/kitematic-6-cdap-ui.png"><img alt="../../_images/kitematic-6-cdap-ui.png" class="bordered-image" src="../../_images/kitematic-6-cdap-ui.png" style="width: 800px;" /></a>
+</div>
 </div></blockquote>
 </li>
 </ol>

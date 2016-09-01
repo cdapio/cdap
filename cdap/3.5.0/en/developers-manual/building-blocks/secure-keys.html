@@ -11,8 +11,8 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>Secure Keys &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -88,8 +88,37 @@
           <div class="body" role="main">
             
   <div class="section" id="secure-keys">
-<h1><a class="headerlink" href="#secure-keys" title="Perma-link to this heading">🔗</a>Secure Keys</h1>
-<p>Documentation on secure keys.</p>
+<span id="secure-keys-programmatic"></span><h1><a class="headerlink" href="#secure-keys" title="Perma-link to this heading">🔗</a>Secure Keys</h1>
+<p>A <a class="reference external" href="../source/../../reference-manual/glossary.html#term-secure-key" title="(in Cask Data Application Platform v3.5.0)"><span class="xref std std-term">Secure Key</span></a> is an identifier for an entry in <a class="reference external" href="../source/../../admin-manual/security/secure-storage.html#admin-secure-storage" title="(in Cask Data Application Platform v3.5.0)"><span class="xref std std-ref">Secure Storage</span></a>. It is used to
+store information such as passphrases, cryptographic keys, passwords, and other sensitive information. Users can access
+and manage secure keys using the <a class="reference external" href="../source/../../reference-manual/http-restful-api/security.html#http-restful-api-secure-storage" title="(in Cask Data Application Platform v3.5.0)"><span class="xref std std-ref">Secure Keys HTTP RESTful API</span></a>. Secure keys
+can also be accessed and managed from programs.</p>
+<div class="section" id="accessing-secure-keys-in-programs">
+<h2><a class="headerlink" href="#accessing-secure-keys-in-programs" title="Perma-link to this heading">🔗</a>Accessing Secure Keys in Programs</h2>
+<p>Secure keys can be accessed in programs using the context object returned by the <code class="docutils literal"><span class="pre">getContext()</span></code> method. This object
+has these methods to access secure keys:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">listSecureData(String</span> <span class="pre">namespace)</span></code>: Lists all secure keys in the specified namespace</li>
+<li><code class="docutils literal"><span class="pre">getSecureData(String</span> <span class="pre">namespace,</span> <span class="pre">String</span> <span class="pre">name)</span></code>: Retrieves the secure key identified by the key name <code class="docutils literal"><span class="pre">name</span></code>
+in the specified namespace</li>
+</ul>
+</div>
+<div class="section" id="managing-secure-keys-in-programs">
+<h2><a class="headerlink" href="#managing-secure-keys-in-programs" title="Perma-link to this heading">🔗</a>Managing Secure Keys in Programs</h2>
+<p>Secure keys can be added or deleted in programs using the <code class="docutils literal"><span class="pre">Admin</span></code> object available in programs as:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">Admin</span> <span class="n">admin</span> <span class="o">=</span> <span class="n">getContext</span><span class="o">().</span><span class="na">getAdmin</span><span class="o">();</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal"><span class="pre">Admin</span></code> object returned by the above call exposes these methods to manage secure keys:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">putSecureData(String</span> <span class="pre">namespace,</span> <span class="pre">String</span> <span class="pre">name,</span> <span class="pre">String</span> <span class="pre">data,</span> <span class="pre">String</span> <span class="pre">description,</span> <span class="pre">Map&lt;String,</span> <span class="pre">String&gt;</span> <span class="pre">properties)</span></code>:
+Adds a new secure key identified by the key name <code class="docutils literal"><span class="pre">name</span></code> in the specified namespace</li>
+<li><code class="docutils literal"><span class="pre">deleteSecureData(String</span> <span class="pre">namespace,</span> <span class="pre">String</span> <span class="pre">name)</span></code>: Deletes the secure key (and its associated data) identified
+by the key name <code class="docutils literal"><span class="pre">name</span></code> in the specified namespace</li>
+</ul>
+<p>For details on the setting the other parameters of the <code class="docutils literal"><span class="pre">putSecureData()</span></code> method, see the
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/security.html#http-restful-api-secure-storage" title="(in Cask Data Application Platform v3.5.0)"><span class="xref std std-ref">Secure Keys HTTP RESTful API</span></a>.</p>
+</div>
 </div>
 
 
@@ -153,7 +182,11 @@
 <li class="toctree-l2"><a class="reference internal" href="mapreduce-programs.html"> MapReduce Programs</a></li>
 <li class="toctree-l2"><a class="reference internal" href="plugins.html"> Plugins</a></li>
 <li class="toctree-l2"><a class="reference internal" href="schedules.html"> Schedules</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href=""> Secure Keys</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Secure Keys</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#accessing-secure-keys-in-programs">Accessing Secure Keys in Programs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#managing-secure-keys-in-programs">Managing Secure Keys in Programs</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="services.html"> Services</a></li>
 <li class="toctree-l2"><a class="reference internal" href="spark-programs.html"> Spark Programs</a></li>
 <li class="toctree-l2"><a class="reference internal" href="workers.html"> Workers</a></li>

@@ -12,8 +12,8 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>Security HTTP RESTful API &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -99,7 +99,8 @@ entities as well as manage secure storage.</p>
 </ul>
 <p>All methods or endpoints described in this API have a base URL (typically
 <code class="docutils literal"><span class="pre">http://&lt;host&gt;:10000</span></code> or <code class="docutils literal"><span class="pre">https://&lt;host&gt;:10443</span></code>) that precedes the resource
-identifier, as described in the <a class="reference internal" href="introduction.html#http-restful-api-conventions-base-url"><span>RESTful API Conventions</span></a>.</p>
+identifier, as described in the <a class="reference internal" href="introduction.html#http-restful-api-conventions-base-url"><span>RESTful API Conventions</span></a>.
+These methods return a status code, as listed in the <a class="reference internal" href="introduction.html#http-restful-api-status-codes"><span>RESTful API  Status Codes</span></a>.</p>
 <div class="section" id="authorization">
 <span id="http-restful-api-authorization"></span><h2><a class="headerlink" href="#authorization" title="Perma-link to this heading">🔗</a>Authorization</h2>
 <p>Use the CDAP Authorization HTTP RESTful API to grant, revoke, and list privileges on CDAP
@@ -425,7 +426,7 @@ name does not exist in that namespace</td>
 </table>
 </div>
 <div class="section" id="retrieve-the-metadata-for-a-secure-key">
-<h3><a class="headerlink" href="#retrieve-the-metadata-for-a-secure-key" title="Perma-link to this heading">🔗</a>Retrieve the Metadata for a Secure Key</h3>
+<span id="http-restful-api-security-secure-storage-retrieve-metadata"></span><h3><a class="headerlink" href="#retrieve-the-metadata-for-a-secure-key" title="Perma-link to this heading">🔗</a>Retrieve the Metadata for a Secure Key</h3>
 <p>You can retrieve just the metadata for a secure key from secure storage by making an HTTP GET request to the URL:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">GET /v3/namespaces/&lt;namespace-id&gt;/securekeys/&lt;secure-key-id&gt;/metadata</span>
 </pre></div>

@@ -11,9 +11,9 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
-    <title>Configuring Impersonation &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
+    <title>Impersonation &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -56,8 +56,8 @@
     <link rel="shortcut icon" href="../_static/favicon.ico"/>
     <link rel="top" title="Cask Data Application Platform 3.5.0 Documentation" href="../index.html" />
     <link rel="up" title="Security" href="index.html" />
-    <link rel="next" title="Configuring Secure Storage" href="secure-storage.html" />
-    <link rel="prev" title="Configuring Authorization" href="authorization.html" /> 
+    <link rel="next" title="Secure Storage" href="secure-storage.html" />
+    <link rel="prev" title="Authorization" href="authorization.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -67,10 +67,10 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">Index</a></li>
         <li class="right" >
-          <a href="secure-storage.html" title="Configuring Secure Storage"
+          <a href="secure-storage.html" title="Secure Storage"
              accesskey="N">Next</a> |</li>
         <li class="right" >
-          <a href="authorization.html" title="Configuring Authorization"
+          <a href="authorization.html" title="Authorization"
              accesskey="P">Previous</a> |</li>
         
         <script type="text/javascript" src="../_static/version-menu.js"></script>
@@ -87,11 +87,48 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="configuring-impersonation">
-<span id="admin-impersonation"></span><h1><a class="headerlink" href="#configuring-impersonation" title="Perma-link to this heading">🔗</a>Configuring Impersonation</h1>
-<p>Impersonation allows users to run programs and access datasets, streams, and other resources as pre-configured users.
-Currently CDAP supports configuring impersonation at a namespace level, which means that every namespace will have
-a single user that programs in that namespace will run as, and that resources will be accessed as.</p>
+  <div class="section" id="impersonation">
+<span id="admin-impersonation"></span><h1><a class="headerlink" href="#impersonation" title="Perma-link to this heading">🔗</a>Impersonation</h1>
+<p>Impersonation allows users to run programs and access datasets, streams, and other
+resources as pre-configured users. Currently, CDAP supports configuring impersonation
+at a namespace level, which means that every namespace has a single user that all
+programs in that namespace run as, and that resources are accessed as.</p>
+<div class="section" id="requirements">
+<h2><a class="headerlink" href="#requirements" title="Perma-link to this heading">🔗</a>Requirements</h2>
+<p>To utilize this feature, <a class="reference external" href="http://kerberos.org">Kerberos</a> must be enabled on the cluster and
+configured in <a class="reference internal" href="../appendices/cdap-site.html#appendix-cdap-site-xml"><span>cdap-site.xml</span></a>, using the parameter <code class="docutils literal"><span class="pre">kerberos.auth.enabled</span></code>.</p>
+<p>To configure a namespace to have impersonation, specify the Kerberos <code class="docutils literal"><span class="pre">principal</span></code> and
+<code class="docutils literal"><span class="pre">keytabURI</span></code> in the <a class="reference external" href="../source/../../reference-manual/http-restful-api/namespace.html#http-restful-api-namespace-configs" title="(in Cask Data Application Platform v3.5.0)"><span class="xref std std-ref">namespace configuration</span></a>.
+The keytab file (the &quot;keytab&quot;) must be readable by the CDAP user and can be on either the local file system
+of the CDAP Master or on HDFS. If the keytab is on HDFS, prefix the path with <code class="docutils literal"><span class="pre">hdfs://</span></code>.
+If CDAP Master is <a class="reference internal" href="../deployment-architectures.html#admin-manual-install-deployment-architectures-ha"><span>HA-enabled</span></a>,
+and the local file system is used, the keytab must be on all local file systems used with
+the CDAP Master instances.</p>
+<p>If these are not specified, the principal and keytab of the CDAP Master user will be used
+instead.</p>
+<p>The configured Kerberos principal must have been granted permissions for the operations
+that will occur in that namespace. For instance, if
+a <a class="reference external" href="../source/../../developers-manual/building-blocks/namespaces.html#namespaces-custom-mapping" title="(in Cask Data Application Platform v3.5.0)"><span class="xref std std-ref">custom HBase namespace</span></a> is configured, the configured
+principal must have privileges to create tables within that HBase namespace. If no
+custom HBase namespace is specified, the configured principal must have privileges to
+create namespaces.</p>
+<p>Because of this, it is simplest to specify a custom mapping for <code class="docutils literal"><span class="pre">root.directory</span></code> and
+<code class="docutils literal"><span class="pre">hbase.namespace</span></code> when using impersonation so that the privileges granted to the
+configured principal can be kept to a minimum.</p>
+</div>
+<div class="section" id="limitations">
+<h2><a class="headerlink" href="#limitations" title="Perma-link to this heading">🔗</a>Limitations</h2>
+<p>The configured HDFS delegation token timeout must be longer than the configured stream
+partition duration (<code class="docutils literal"><span class="pre">stream.partition.duration</span></code>), which has a default value of
+one hour (3600000). It must also be larger than the log saver's maximum file
+lifetime (<code class="docutils literal"><span class="pre">log.saver.max.file.lifetime.ms</span></code>), which has a value of six hours (21600000).</p>
+</div>
+<div class="section" id="known-issues">
+<h2><a class="headerlink" href="#known-issues" title="Perma-link to this heading">🔗</a>Known Issues</h2>
+<ul class="simple">
+<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-6587">CDAP-6587</a> - Explore is not supported when impersonation is enabled.</li>
+</ul>
+</div>
 </div>
 
 
@@ -153,7 +190,12 @@ a single user that programs in that namespace will run as, and that resources wi
 <li class="toctree-l1 current"><a class="reference internal" href="index.html"> Security</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="perimeter-security.html">Perimeter Security</a></li>
 <li class="toctree-l2"><a class="reference internal" href="authorization.html">Authorization</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="">Impersonation</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Impersonation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirements">Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#limitations">Limitations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#known-issues">Known Issues</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="secure-storage.html">Secure Storage</a></li>
 </ul>
 </li>
@@ -209,7 +251,7 @@ a single user that programs in that namespace will run as, and that resources wi
 
   <tr>
     <th class="tg-031e">Previous Topic: 
-    <a title="Configuring Authorization" href="authorization.html" />Configuring Authorization</a>&nbsp;&nbsp;
+    <a title="Authorization" href="authorization.html" />Authorization</a>&nbsp;&nbsp;
     </th>
     
     <th class="tg-s6z2">
@@ -217,7 +259,7 @@ a single user that programs in that namespace will run as, and that resources wi
       &bull; Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </th>
     <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
-    <a title="Configuring Secure Storage" href="secure-storage.html" />Configuring Secure Storage</a>
+    <a title="Secure Storage" href="secure-storage.html" />Secure Storage</a>
     </th>
 
   </tr>

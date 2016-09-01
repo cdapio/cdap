@@ -12,8 +12,8 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>Log Analysis Example &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -883,7 +883,7 @@ $(function tabbedparsedliteral60() {
 <!-- tabbed-parsed-literal start -->
 <div class="highlight"><pre class="copyable"><span class="gp">&gt; </span><span class="copyable-text"><span class="go">cdap-cli.bat call service LogAnalysis.RequestCounterService POST &quot;reqfile&quot; body &#39;{&quot;time&quot;:&quot;7/29/15 7:47 PM&quot;}&#39;</span></span>
 
-<span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST -d &quot;{\&quot;time\&quot;:\&quot;7/29/15 7:47 P&quot; ^</span>
+<span class="gp">&gt; </span><span class="copyable-text"><span class="go">curl -X POST -d &quot;{\&quot;time\&quot;:\&quot;7/29/15 7:47 PM\&quot;}&quot; ^</span>
 <span class="go">&quot;http://localhost:10000/v3/namespaces/default/apps/LogAnalysis/services/RequestCounterService/methods/reqfile&quot;</span></span>
 </pre></div>
 <!-- tabbed-parsed-literal end -->

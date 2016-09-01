@@ -11,8 +11,8 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>Workflows &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -187,13 +187,23 @@ through the <code class="docutils literal"><span class="pre">WorkflowContext</sp
 <span id="workflow-custom-actions"></span><h3><a class="headerlink" href="#workflow-custom-action" title="Perma-link to this heading">🔗</a>Workflow Custom Action</h3>
 <p>In addition to MapReduce and Spark programs, workflow can also execute custom actions.
 Custom actions are implemented in Java and can perform tasks such as sending an email. To
-define a custom action, you will need to extend the <code class="docutils literal"><span class="pre">AbstractWorkflowAction</span></code> and
-implement the <code class="docutils literal"><span class="pre">run()</span></code> method:</p>
-<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">MyAction</span> <span class="kd">extends</span> <span class="n">AbstractWorkflowAction</span> <span class="o">{</span>
+define a custom action, you will need to extend the <code class="docutils literal"><span class="pre">AbstractCustomAction</span></code> and
+implement its <code class="docutils literal"><span class="pre">run()</span></code> method:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">MyAction</span> <span class="kd">extends</span> <span class="n">AbstractCustomAction</span> <span class="o">{</span>
 
   <span class="nd">@Override</span>
   <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
-    <span class="c1">// your code goes here</span>
+    <span class="c1">// Your code goes here</span>
+    <span class="o">...</span>
+    <span class="c1">// Datasets can be accessed in this method using a transaction such as:</span>
+    <span class="n">getContext</span><span class="o">().</span><span class="na">execute</span><span class="o">(</span><span class="k">new</span> <span class="n">TxRunnable</span><span class="o">()</span> <span class="o">{</span>
+      <span class="nd">@Override</span>
+      <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">(</span><span class="n">DatasetContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+        <span class="n">Table</span> <span class="n">myDs</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getDataset</span><span class="o">(</span><span class="s">&quot;MyDataset&quot;</span><span class="o">);</span>
+        <span class="c1">// Perform dataset operations such as reading and writing</span>
+        <span class="n">myDs</span><span class="o">.</span><span class="na">write</span><span class="o">(...);</span>
+      <span class="o">}</span>
+    <span class="o">});</span>
   <span class="o">}</span>
 <span class="o">}</span>
 </pre></div>

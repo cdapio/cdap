@@ -6,13 +6,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta content="Cask Data, Inc." name="author" />
-<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+<meta content="Copyright © 2015-2016 Cask Data, Inc." name="copyright" />
 
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>Namespaces &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -134,9 +134,9 @@ the entity ID, since an entity cannot exist independently of a namespace.</p>
 </div>
 <div class="section" id="using-namespaces">
 <h2><a class="headerlink" href="#using-namespaces" title="Perma-link to this heading">🔗</a>Using Namespaces</h2>
-<p>The best practices with using namespaces would be to create desired namespaces and use
-them for all operations. Otherwise, CDAP will use the <code class="docutils literal"><span class="pre">default</span></code> namespace for any operations
-undertaken.</p>
+<p>The best practice with using namespaces would be to create desired namespaces and use
+them for all operations. Otherwise, CDAP will use the <code class="docutils literal"><span class="pre">default</span></code> namespace for any
+operations undertaken.</p>
 <p>Once a namespace has been created, you can edit its description and configuration
 preferences, either by using a <a class="reference external" href="../source/../../reference-manual/http-restful-api/namespace.html#http-restful-api-namespace" title="(in Cask Data Application Platform v3.5.0)"><span class="xref std std-ref">RESTful API</span></a> or the
 <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.5.0)"><span class="xref std std-ref">Command Line Interface</span></a>.</p>
@@ -157,6 +157,18 @@ retained, as the <code class="docutils literal"><span class="pre">default</span>
 namespaces. It can only be done if all programs of the namespace have been stopped, and if
 the <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> parameter <code class="docutils literal"><span class="pre">enable.unrecoverable.reset</span></code> has been enabled.</p>
 </div>
+<div class="section" id="custom-mapping-of-storage-providers">
+<span id="namespaces-custom-mapping"></span><h2><a class="headerlink" href="#custom-mapping-of-storage-providers" title="Perma-link to this heading">🔗</a>Custom Mapping of Storage Providers</h2>
+<p>When creating a namespace, the underlying storage provider can also be configured for the
+namespace. For example, a custom HBase namespace, Hive database, or HDFS directory can be
+specified to be used for the data in a particular namespace.
+See <a class="reference external" href="../source/../../reference-manual/http-restful-api/namespace.html#http-restful-api-namespace-configs" title="(in Cask Data Application Platform v3.5.0)"><span class="xref std std-ref">Namespace Configurations</span></a> for how to specify
+the properties of a namespace.</p>
+<p>When configuring an underlying storage provider, CDAP will not manage the lifecycle of these
+entities; they must exist before the CDAP namespace is created, and they will not be removed
+upon the deletion of the CDAP namespace. The contents (the data) of the storage provider are
+deleted when a CDAP namespace is deleted through CDAP.</p>
+</div>
 <div class="section" id="namespace-examples">
 <h2><a class="headerlink" href="#namespace-examples" title="Perma-link to this heading">🔗</a>Namespace Examples</h2>
 <ul class="simple">
@@ -165,8 +177,6 @@ namespaces when using the CDAP HTTP RESTful API.</li>
 <li>The CDAP <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.5.0)"><span class="xref std std-ref">Command Line Interface</span></a> is namespace-aware. You set the
 namespace you are currently using; the command prompt displays it as a visual reminder.</li>
 </ul>
-<p>&lt;Update this entire document with namespace mapping features&gt;</p>
-<p>&lt;Currently this seems to be the place to document impersonation too&gt;</p>
 </div>
 </div>
 
@@ -245,6 +255,7 @@ namespace you are currently using; the command prompt displays it as a visual re
 <li class="toctree-l3"><a class="reference internal" href="#independent-and-non-hierarchical">Independent and Non-hierarchical</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#identifying-entities-in-a-namespace">Identifying Entities in a Namespace</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#using-namespaces">Using Namespaces</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#custom-mapping-of-storage-providers">Custom Mapping of Storage Providers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#namespace-examples">Namespace Examples</a></li>
 </ul>
 </li>

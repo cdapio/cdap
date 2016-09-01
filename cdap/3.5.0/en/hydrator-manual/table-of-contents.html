@@ -11,8 +11,8 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>Cask Hydrator: Table of Contents &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
@@ -147,7 +147,7 @@
 <li class="toctree-l2"><a class="reference internal" href="creating-pipelines.html#publishing">Publishing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="creating-pipelines.html#templates-and-re-using-pipelines">Templates and Re-using Pipelines</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="creating-pipelines.html#pipeline-templates">Pipeline Templates</a></li>
-<li class="toctree-l3"><a class="reference internal" href="creating-pipelines.html#id5">Cloning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="creating-pipelines.html#cloning">Cloning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="creating-pipelines.html#exporting">Exporting</a></li>
 <li class="toctree-l3"><a class="reference internal" href="creating-pipelines.html#importing">Importing</a></li>
 </ul>
@@ -208,14 +208,14 @@
 <li class="toctree-l3"><a class="reference internal" href="plugins/sources/tpfsavro-batchsource.html">TimePartitionedFileSet Avro</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/sources/tpfsparquet-batchsource.html">TimePartitionedFileSet Parquet</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/sources/xmlreader-batchsource.html">XML Reader</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plugins/sources/kafka-streamingsource.html">Kafka Streaming</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plugins/sources/twitter-streamingsource.html">Twitter Streaming</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/sources/amazonsqs-realtimesource.html">Amazon SQS</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/sources/datagenerator-realtimesource.html">Data Generator</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/sources/httppoller-realtimesource.html">HTTP Poller</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/sources/jms-realtimesource.html">JMS</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/sources/kafka-realtimesource.html">Kafka</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/sources/twitter-realtimesource.html">Twitter</a></li>
-<li class="toctree-l3"><a class="reference internal" href="plugins/sources/kafka-streamingsource.html">Kafka Streaming</a></li>
-<li class="toctree-l3"><a class="reference internal" href="plugins/sources/twitter-streamingsource.html">Twitter Streaming</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="plugins/transforms/index.html"> Transform Plugins</a><ul>
@@ -226,21 +226,16 @@
 <li class="toctree-l3"><a class="reference internal" href="plugins/transforms/decoder-transform.html">Decoder</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/transforms/decompressor-transform.html">Decompressor</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/transforms/decryptor-transform.html">Decryptor</a></li>
-<li class="toctree-l3"><a class="reference internal" href="plugins/transforms/deduplicate-batchaggregator.html">Deduplicate</a></li>
-<li class="toctree-l3"><a class="reference internal" href="plugins/transforms/distinct-batchaggregator.html">Distinct Aggregator</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/transforms/encoder-transform.html">Encoder</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/transforms/encryptor-transform.html">Encryptor</a></li>
-<li class="toctree-l3"><a class="reference internal" href="plugins/transforms/groupbyaggregate-batchaggregator.html">GroupBy Aggregate</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/transforms/hasher-transform.html">Hasher</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/transforms/javascript-transform.html">JavaScript</a></li>
-<li class="toctree-l3"><a class="reference internal" href="plugins/transforms/joiner-batchjoiner.html">Joiner</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/transforms/jsonformatter-transform.html">JSON Formatter</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/transforms/jsonparser-transform.html">JSON Parser</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/transforms/logparser-transform.html">Log Parser</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/transforms/normalize-transform.html">Normalize</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/transforms/projection-transform.html">Projection</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/transforms/pythonevaluator-transform.html">Python Evaluator</a></li>
-<li class="toctree-l3"><a class="reference internal" href="plugins/transforms/rowdenormalizer-batchaggregator.html">Row Denormalizer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/transforms/scriptfilter-transform.html">Script Filter</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/transforms/streamformatter-transform.html">Stream Formatter</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/transforms/structuredrecordtogenericrecord-transform.html">StructuredRecord To GenericRecord</a></li>
@@ -249,7 +244,16 @@
 <li class="toctree-l3"><a class="reference internal" href="plugins/transforms/window-windower.html">Window Plugin</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/transforms/xmlparser-transform.html">XML Parser</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/transforms/xmltojson-transform.html">XML String to JSON String Converter</a></li>
-<li class="toctree-l3"><a class="reference internal" href="plugins/transforms/DPB-naivebayesclassifier-sparkcompute.html">Naive Bayes Classifier</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="plugins/analytics/index.html"> Analytic Plugins</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="plugins/analytics/deduplicate-batchaggregator.html">Deduplicate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plugins/analytics/distinct-batchaggregator.html">Distinct Aggregator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plugins/analytics/groupbyaggregate-batchaggregator.html">GroupBy Aggregate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plugins/analytics/joiner-batchjoiner.html">Joiner</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plugins/analytics/naivebayesclassifier-sparkcompute.html">Naive Bayes Classifier</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plugins/analytics/rowdenormalizer-batchaggregator.html">Row Denormalizer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plugins/analytics/DPB-naivebayestrainer-sparksink.html">Naive Bayes Trainer</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="plugins/sinks/index.html"> Sink Plugins</a><ul>
@@ -270,7 +274,6 @@
 <li class="toctree-l3"><a class="reference internal" href="plugins/sinks/tpfsavro-batchsink.html">TimePartitionedFileSet Avro</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/sinks/tpfsorc-batchsink.html">TimePartitionedFileSet ORC</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/sinks/tpfsparquet-batchsink.html">TimePartitionedFileSet Parquet</a></li>
-<li class="toctree-l3"><a class="reference internal" href="plugins/sinks/naivebayestrainer-sparksink.html">Naive Bayes Trainer</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/sinks/cassandra-realtimesink.html">Cassandra</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/sinks/cube-realtimesink.html">Cube</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plugins/sinks/elasticsearch-realtimesink.html">Elasticsearch</a></li>
@@ -323,15 +326,17 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="developing-plugins/creating-a-plugin.html">Creating a Plugin</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="developing-plugins/creating-a-plugin.html#action-plugin">Action Plugin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developing-plugins/creating-a-plugin.html#post-run-action-plugin">Post-run Action Plugin</a></li>
 <li class="toctree-l3"><a class="reference internal" href="developing-plugins/creating-a-plugin.html#batch-source-plugin">Batch Source Plugin</a></li>
 <li class="toctree-l3"><a class="reference internal" href="developing-plugins/creating-a-plugin.html#batch-sink-plugin">Batch Sink Plugin</a></li>
-<li class="toctree-l3"><a class="reference internal" href="developing-plugins/creating-a-plugin.html#real-time-source-plugin">Real-Time Source Plugin</a></li>
-<li class="toctree-l3"><a class="reference internal" href="developing-plugins/creating-a-plugin.html#real-time-sink-plugin">Real-Time Sink Plugin</a></li>
 <li class="toctree-l3"><a class="reference internal" href="developing-plugins/creating-a-plugin.html#transformation-plugin">Transformation Plugin</a></li>
 <li class="toctree-l3"><a class="reference internal" href="developing-plugins/creating-a-plugin.html#batch-aggregator-plugin">Batch Aggregator Plugin</a></li>
 <li class="toctree-l3"><a class="reference internal" href="developing-plugins/creating-a-plugin.html#spark-compute-plugin">Spark Compute Plugin</a></li>
 <li class="toctree-l3"><a class="reference internal" href="developing-plugins/creating-a-plugin.html#spark-sink-plugin">Spark Sink Plugin</a></li>
-<li class="toctree-l3"><a class="reference internal" href="developing-plugins/creating-a-plugin.html#post-run-action-plugin">Post-run Action Plugin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developing-plugins/creating-a-plugin.html#streaming-source-plugin">Streaming Source Plugin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developing-plugins/creating-a-plugin.html#windower-plugin">Windower Plugin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developing-plugins/creating-a-plugin.html#real-time-source-plugin-deprecated">Real-Time Source Plugin (Deprecated)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="developing-plugins/creating-a-plugin.html#real-time-sink-plugin-deprecated">Real-Time Sink Plugin (Deprecated)</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="developing-plugins/testing-plugins.html">Testing Plugins</a><ul>

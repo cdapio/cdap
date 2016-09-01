@@ -12,8 +12,8 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>Web Analytics Application &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -516,11 +516,15 @@ $(function tabbedparsedliteral157() {
 <h3><a class="headerlink" href="#query-the-unique-visitor-page-views" title="Perma-link to this heading">🔗</a>Query the Unique Visitor Page Views</h3>
 <p>Once the log data has been processed by the <code class="docutils literal"><span class="pre">WebAnalyticsFlow</span></code>, we can explore the
 dataset <code class="docutils literal"><span class="pre">UniqueVisitCount</span></code> with a SQL query. You can easily execute SQL queries against
-datasets using the CDAP UI by going to the <em>Data</em> page showing <a class="reference external" href="http://localhost:9999/ns/default/data">All Datasets</a>, clicking on the <strong>UniqueVisitCount</strong>
-dataset:</p>
-<a class="reference internal image-reference" href="../_images/web-analytics-0.png"><img alt="../_images/web-analytics-0.png" src="../_images/web-analytics-0.png" style="width: 8in;" /></a>
+datasets using the CDAP UI by going to the <em>Data</em> page showing <a class="reference external" href="http://localhost:9999/ns/default/data">All Datasets</a>, entering <em>UniqueVisitCount</em> in the search box,
+and clicking on the <strong>UniqueVisitCount</strong> dataset:</p>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/web-analytics-0.png"><img alt="../_images/web-analytics-0.png" class="bordered-image" src="../_images/web-analytics-0.png" style="width: 800px;" /></a>
+</div>
 <p>Then, once at the dataset detail page, select the <em>Explore</em> tab:</p>
-<a class="reference internal image-reference" href="../_images/web-analytics-1.png"><img alt="../_images/web-analytics-1.png" src="../_images/web-analytics-1.png" style="width: 8in;" /></a>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/web-analytics-1.png"><img alt="../_images/web-analytics-1.png" class="bordered-image" src="../_images/web-analytics-1.png" style="width: 800px;" /></a>
+</div>
 <p>You can then run SQL queries against the dataset. Let's try to find the top five IP
 addresses that visited the site by running a SQL query:</p>
 <script type="text/javascript">
@@ -575,12 +579,18 @@ $(function tabbedparsedliteral158() {
 <p>You can copy and paste the above SQL into the text box as shown below (replacing the
 default query that is there) and click the <strong>Execute SQL</strong> button to run it. It may take a
 moment for the query to finish.</p>
-<a class="reference internal image-reference" href="../_images/web-analytics-2.png"><img alt="../_images/web-analytics-2.png" src="../_images/web-analytics-2.png" style="width: 8in;" /></a>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/web-analytics-2.png"><img alt="../_images/web-analytics-2.png" class="bordered-image" src="../_images/web-analytics-2.png" style="width: 800px;" /></a>
+</div>
 <p>Once it's finished, click on the preview button the right side of the <strong>Results</strong>
 table:</p>
-<a class="reference internal image-reference" href="../_images/web-analytics-3.png"><img alt="../_images/web-analytics-3.png" src="../_images/web-analytics-3.png" style="width: 8in;" /></a>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/web-analytics-3.png"><img alt="../_images/web-analytics-3.png" class="bordered-image" src="../_images/web-analytics-3.png" style="width: 800px;" /></a>
+</div>
 <p>This will display the first five rows of the query results:</p>
-<a class="reference internal image-reference" href="../_images/web-analytics-4.png"><img alt="../_images/web-analytics-4.png" src="../_images/web-analytics-4.png" style="width: 8in;" /></a>
+<div class="figure align-center" style="width: 100%">
+<a class="bordered-image reference internal image-reference" href="../_images/web-analytics-4.png"><img alt="../_images/web-analytics-4.png" class="bordered-image" src="../_images/web-analytics-4.png" style="width: 800px;" /></a>
+</div>
 </div>
 </div>
 <div class="section" id="stopping-and-removing-the-application">

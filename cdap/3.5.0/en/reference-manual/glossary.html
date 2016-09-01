@@ -9,8 +9,8 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>Glossary &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
@@ -188,6 +188,12 @@ expected by the <a class="reference internal" href="#term-application"><span cla
 <dd>A producer is an entity that emits events, such as a <a class="reference internal" href="#term-stream"><span class="xref std std-term">stream</span></a> or a
 <a class="reference internal" href="#term-flowlet"><span class="xref std std-term">flowlet</span></a>. Flowlets can at the same time be both <a class="reference internal" href="#term-consumer"><span class="xref std std-term">consumers</span></a>
 and producers.</dd>
+<dt id="term-secure-key">Secure Key</dt>
+<dd>An identifier or an alias for an entry in <a class="reference internal" href="#term-secure-storage"><span class="xref std std-term">Secure Storage</span></a>. An entry in secure
+storage can be referenced and retrieved using a Secure Key using <a class="reference external" href="source/../../developers-manual/building-blocks/secure-keys.html#secure-keys-programmatic" title="(in Cask Data Application Platform v3.5.0)"><span class="xref std std-ref">programmatic</span></a>
+or <a class="reference internal" href="http-restful-api/security.html#http-restful-api-secure-storage"><span>RESTful</span></a> APIs.</dd>
+<dt id="term-secure-storage">Secure Storage</dt>
+<dd>Encrypted storage for sensitive data using <a class="reference internal" href="#term-secure-key"><span class="xref std std-term">Secure Keys</span></a>. CDAP supports <a class="reference external" href="source/../../admin-manual/security/secure-storage.html#admin-secure-storage-file" title="(in Cask Data Application Platform v3.5.0)"><span class="xref std std-ref">File-backed</span></a> (for <a class="reference internal" href="#term-standalone-cdap"><span class="xref std std-term">Standalone CDAP</span></a>) as well as <a class="reference external" href="source/../../admin-manual/security/secure-storage.html#admin-secure-storage-kms" title="(in Cask Data Application Platform v3.5.0)"><span class="xref std std-ref">Apache Hadoop KMS-backed</span></a> (for <a class="reference internal" href="#term-distributed-cdap"><span class="xref std std-term">Distributed CDAP</span></a>) Secure Storage.</dd>
 <dt id="term-service">Service</dt>
 <dd>Services can be run in a Cask Data Application Platform (CDAP) application to serve
 data to external clients. Similar to flows, services run in containers and the

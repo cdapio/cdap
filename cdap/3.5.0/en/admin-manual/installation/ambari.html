@@ -11,8 +11,8 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>Installation using Apache Ambari &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -100,14 +100,8 @@ ZooKeeper, and—optionally—Hive and Spark) installed.</li>
 <li>Ambari is for setting up HDP (Hortonworks Data Platform) on bare clusters; it can't be
 used for clusters with HDP already installed, where the original installation was
 <strong>not</strong> with Ambari.</li>
-<li>These features are <strong>currently not included</strong> in the CDAP Apache Ambari Service (though they may in the future):<ul>
-<li>The CDAP Apache Ambari Service is not integrated with the <a class="reference external" href="https://issues.cask.co/browse/CDAP-4110">CDAP Authentication Server</a>;</li>
-<li>CDAP component <a class="reference external" href="https://issues.cask.co/browse/CDAP-4107">high-availability</a>  is not supported;</li>
-</ul>
-</li>
 <li>A number of features are currently planned to be added, including:<ul>
-<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-4106">pre-defined alerts</a>  for CDAP services ;</li>
-<li>select <a class="reference external" href="https://issues.cask.co/browse/CDAP-4108">CDAP metrics</a>; and</li>
+<li>select <a class="reference external" href="https://issues.cask.co/browse/CDAP-4108">CDAP metrics</a> and</li>
 <li>a full <a class="reference external" href="https://issues.cask.co/browse/CDAP-4105">smoke test of CDAP functionality</a> after installation.</li>
 </ul>
 </li>
@@ -178,23 +172,27 @@ with the CDAP Repository from the list below that you would like to use:</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-odd"><td>CDAP 3.4.x</td>
+<tr class="row-odd"><td>CDAP 3.5.x</td>
+<td><code class="docutils literal"><span class="pre">cdap/3.5</span></code></td>
+<td>HDP 2.0 through HDP 2.4</td>
+</tr>
+<tr class="row-even"><td>CDAP 3.4.x</td>
 <td><code class="docutils literal"><span class="pre">cdap/3.4</span></code></td>
 <td>HDP 2.0 through HDP 2.4</td>
 </tr>
-<tr class="row-even"><td>CDAP 3.3.x</td>
+<tr class="row-odd"><td>CDAP 3.3.x</td>
 <td><code class="docutils literal"><span class="pre">cdap/3.3</span></code></td>
 <td>HDP 2.0 through HDP 2.3</td>
 </tr>
-<tr class="row-odd"><td>CDAP 3.2.x</td>
+<tr class="row-even"><td>CDAP 3.2.x</td>
 <td><code class="docutils literal"><span class="pre">cdap/3.2</span></code></td>
 <td>HDP 2.0 through HDP 2.3</td>
 </tr>
-<tr class="row-even"><td>CDAP 3.1.x</td>
+<tr class="row-odd"><td>CDAP 3.1.x</td>
 <td><code class="docutils literal"><span class="pre">cdap/3.1</span></code></td>
 <td>HDP 2.0 through HDP 2.2</td>
 </tr>
-<tr class="row-odd"><td>CDAP 3.0.x</td>
+<tr class="row-even"><td>CDAP 3.0.x</td>
 <td><code class="docutils literal"><span class="pre">cdap/3.0</span></code></td>
 <td>HDP 2.0 and HDP 2.1</td>
 </tr>
@@ -297,10 +295,11 @@ currently installed on the cluster, Ambari will prompt you to install them.</p>
 <h3><a class="headerlink" href="#assign-cdap-services-to-hosts" title="Perma-link to this heading">🔗</a>Assign CDAP Services to Hosts</h3>
 <ol class="arabic" start="3">
 <li><p class="first">Next, assign CDAP services to hosts.</p>
-<p>CDAP consists of 4 daemons:</p>
+<p>CDAP consists of five daemons:</p>
 <ol class="arabic simple">
 <li><strong>Master:</strong> Coordinator service which launches CDAP system services into YARN</li>
 <li><strong>Router:</strong> Serves HTTP endpoints for CDAP applications and REST API</li>
+<li><strong>Auth Server:</strong> For managing authentication tokens on CDAP clusters with perimeter security enabled</li>
 <li><strong>Kafka Server:</strong> For transporting CDAP metrics and CDAP system service log data</li>
 <li><strong>UI:</strong> Web interface to CDAP and <a class="reference external" href="../source/../../hydrator-manual/index.html#cask-hydrator" title="(in Cask Data Application Platform v3.5.0)"><span class="xref std std-ref">Cask Hydrator</span></a>
 (for CDAP 3.2.x and later installations)</li>
@@ -330,10 +329,6 @@ the cluster or, for smaller clusters, on the same node as the CDAP services.</p>
 <li><p class="first">On the <strong>Customize Services</strong> screen, click the <em>Advanced</em> tab to bring up the CDAP configuration.
 Under <em>Advanced cdap-env</em>, you can configure environment settings such as heap sizes
 and the directories used to store logs and pids for the CDAP services which run on the edge nodes.</p>
-<p><strong>Including Spark:</strong> If you are including Spark, the <em>Advanced cdap-env</em> needs to
-contain the location of the Spark libraries, typically as
-<code class="docutils literal"><span class="pre">SPARK_HOME=/usr/hdp/&lt;version&gt;/spark</span></code>, where &quot;&lt;version&gt;&quot; matches the HDP version
-of the cluster, including its build iteration, such as &quot;2.3.4.0-3485&quot;.</p>
 <div class="figure align-center" id="id5" style="width: 100%">
 <a class="bordered-image reference internal image-reference" href="../_images/ss05-config-cdap-env.png"><img alt="../_images/ss05-config-cdap-env.png" class="bordered-image" src="../_images/ss05-config-cdap-env.png" style="width: 800px;" /></a>
 <p class="caption"><span class="caption-text"><strong>Ambari Dashboard:</strong> Customizing Services 1</span></p>
@@ -346,12 +341,7 @@ of CDAP and CDAP applications.</p>
 <p class="caption"><span class="caption-text"><strong>Ambari Dashboard:</strong> Customizing Services 2</span></p>
 </div>
 </li>
-<li><p class="first">To use the CDAP Explore service (to use SQL to query CDAP data), you must have Hive
-installed on the cluster, have the Hive client libraries installed on the same host as
-the CDAP services, and have the <em>Advanced cdap-site</em> <code class="docutils literal"><span class="pre">explore.enabled</span></code> option set to
-<em>true</em> (the default). If you do not have Hive installed or available, this option must be
-set to <em>false</em>.</p>
-<p><strong>Router Bind Port, Router Server Port:</strong> These two ports should match; <em>Router Server
+<li><p class="first"><strong>Router Bind Port, Router Server Port:</strong> These two ports should match; <em>Router Server
 Port</em> is used by the CDAP UI to connect to the CDAP Router service.</p>
 <div class="figure align-center" id="id7" style="width: 100%">
 <a class="bordered-image reference internal image-reference" href="../_images/ss07-config-enable-explore.png"><img alt="../_images/ss07-config-enable-explore.png" class="bordered-image" src="../_images/ss07-config-enable-explore.png" style="width: 800px;" /></a>
@@ -452,11 +442,25 @@ UI in the upper right will show the status of the CDAP services.</p>
 </div>
 <div class="section" id="advanced-topics">
 <span id="ambari-installation-advanced-topics"></span><h2><a class="headerlink" href="#advanced-topics" title="Perma-link to this heading">🔗</a>Advanced Topics</h2>
-<div class="section" id="enabling-perimeter-security">
-<span id="ambari-configuration-security"></span><h3><a class="headerlink" href="#enabling-perimeter-security" title="Perma-link to this heading">🔗</a>Enabling Perimeter Security</h3>
-<p><a class="reference internal" href="../security/index.html#admin-security"><span>CDAP Security</span></a> is <strong>not currently</strong> supported when using Apache Ambari.
-The CDAP Apache Ambari Service is not integrated with the <a class="reference external" href="https://issues.cask.co/browse/CDAP-4110">CDAP Authentication Server</a>. As a consequence, any settings made to
-support <a class="reference internal" href="../security/index.html#admin-security"><span>CDAP Security</span></a> will be erased by Ambari.</p>
+<span class="target" id="ambari-configuration-security"></span><div class="section" id="enabling-security">
+<h3><a class="headerlink" href="#enabling-security" title="Perma-link to this heading">🔗</a>Enabling Security</h3>
+<p>Cask Data Application Platform (CDAP) supports securing clusters using perimeter security, authorization,
+impersonation and secure storage.</p>
+<p>Network (or cluster) perimeter security limits outside access, providing a first level of
+security. However, perimeter security itself does not provide the safeguards of authentication,
+authorization and service request management that a secure Hadoop cluster provides.</p>
+<p>Authorization provides a way of enforcing access control on CDAP entities.</p>
+<p>Impersonation ensures that programs inside CDAP are run as configured users at the namespace level. When enabled, it
+guarantees that all actions on datasets, streams and other resources happen as the configured user.</p>
+<p>We recommend that in order for CDAP to be secure, CDAP security should always be used in conjunction with
+<a class="reference external" href="http://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/SecureMode.html">secure Hadoop clusters</a>.
+In cases where secure Hadoop is not or cannot be used, it is inherently insecure and any applications
+running on the cluster are effectively &quot;trusted”. Although there is still value in having perimeter security,
+authorization enforcement and secure storage in that situation, whenever possible a secure Hadoop
+cluster should be employed with CDAP security.</p>
+<p>For instructions on enabling CDAP Security, see <a class="reference internal" href="../security/index.html#admin-security"><span>CDAP Security</span></a>.</p>
+<p><a class="reference internal" href="../security/index.html#admin-security"><span>CDAP Security</span></a> is configured by setting the appropriate
+settings under Ambari for your environment.</p>
 </div>
 <div class="section" id="enabling-kerberos">
 <span id="ambari-configuration-enabling-kerberos"></span><h3><a class="headerlink" href="#enabling-kerberos" title="Perma-link to this heading">🔗</a>Enabling Kerberos</h3>
@@ -464,10 +468,79 @@ support <a class="reference internal" href="../security/index.html#admin-securit
 cluster via Ambari. Consult the appropriate Ambari documentation for instructions on enabling
 Kerberos support for your cluster.</p>
 </div>
-<div class="section" id="cdap-ha-setup">
-<h3><a class="headerlink" href="#cdap-ha-setup" title="Perma-link to this heading">🔗</a>CDAP HA Setup</h3>
-<p>CDAP component <a class="reference external" href="https://issues.cask.co/browse/CDAP-4107">high-availability</a>  is not
-supported.</p>
+<div class="section" id="enabling-cdap-ha">
+<span id="ambari-configuration-highly-available"></span><h3><a class="headerlink" href="#enabling-cdap-ha" title="Perma-link to this heading">🔗</a>Enabling CDAP HA</h3>
+<p>In addition to having a <a class="reference internal" href="../deployment-architectures.html#admin-manual-install-deployment-architectures-ha"><span>cluster architecture</span></a>
+that supports HA (high availability), these additional configuration steps need to be followed and completed:</p>
+<div class="section" id="cdap-components">
+<h4><a class="headerlink" href="#cdap-components" title="Perma-link to this heading">🔗</a>CDAP Components</h4>
+<p>For each of the CDAP components listed below (Master, Router, Kafka, UI, Authentication Server), these
+comments apply:</p>
+<ul class="simple">
+<li>Sync the configuration files (such as <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> and <code class="docutils literal"><span class="pre">cdap-security.xml</span></code>) on all the nodes.</li>
+<li>While the default <em>bind.address</em> settings (<code class="docutils literal"><span class="pre">0.0.0.0</span></code>, used for <code class="docutils literal"><span class="pre">app.bind.address</span></code>,
+<code class="docutils literal"><span class="pre">data.tx.bind.address</span></code>, <code class="docutils literal"><span class="pre">router.bind.address</span></code>, and so on) can be synced across hosts,
+if you customize them to a particular IP address, they will—as a result—be
+different on different hosts. This can be controlled by the settings for an individual <em>Role Instance</em>.</li>
+</ul>
+</div>
+<div class="section" id="cdap-master">
+<h4><a class="headerlink" href="#cdap-master" title="Perma-link to this heading">🔗</a>CDAP Master</h4>
+<p>The CDAP Master service primarily performs coordination tasks and can be scaled for redundancy. The
+instances coordinate amongst themselves, electing one as a leader at all times.</p>
+<ul class="simple">
+<li>Using the Ambari UI, add additional hosts for the <code class="docutils literal"><span class="pre">CDAP</span> <span class="pre">Master</span>
+<span class="pre">Service</span></code> to additional machines.</li>
+</ul>
+</div>
+<div class="section" id="cdap-router">
+<h4><a class="headerlink" href="#cdap-router" title="Perma-link to this heading">🔗</a>CDAP Router</h4>
+<p>The CDAP Router service is a stateless API endpoint for CDAP, and simply routes requests to the
+appropriate service. It can be scaled horizontally for performance. A load balancer, if
+desired, can be placed in front of the nodes running the service.</p>
+<ul class="simple">
+<li>Using the Ambari UI, add additional hosts for the <code class="docutils literal"><span class="pre">CDAP</span> <span class="pre">Router</span> <span class="pre">Service</span></code> to additional machines.</li>
+<li>Start each <code class="docutils literal"><span class="pre">CDAP</span> <span class="pre">Router</span> <span class="pre">Service</span></code> role.</li>
+</ul>
+</div>
+<div class="section" id="cdap-kafka">
+<h4><a class="headerlink" href="#cdap-kafka" title="Perma-link to this heading">🔗</a>CDAP Kafka</h4>
+<ul class="simple">
+<li>Using the Ambari UI, add additional hosts for the <code class="docutils literal"><span class="pre">CDAP</span> <span class="pre">Kafka</span> <span class="pre">Service</span></code>
+to additional machines.</li>
+<li>Two properties govern the Kafka setting in the cluster:<ul>
+<li>The <strong>list of Kafka seed brokers</strong> is generated automatically, but the
+replication factor (<code class="docutils literal"><span class="pre">kafka.default.replication.factor</span></code>) is not set
+automatically. Instead, it needs to be set manually.</li>
+<li>The <strong>replication factor</strong> is used to replicate Kafka messages across
+multiple machines to prevent data loss in the event of a hardware
+failure.</li>
+</ul>
+</li>
+<li>The recommended setting is to run <strong>at least two</strong> Kafka brokers with a <strong>minimum replication
+factor of two</strong>; set this property to the maximum number of tolerated machine failures
+plus one (assuming you have that number of machines). For example, if you were running
+five Kafka brokers, and would tolerate two of those failing, you would set the
+replication factor to three. The number of Kafka brokers listed should always be equal to
+or greater than the replication factor.</li>
+</ul>
+</div>
+<div class="section" id="cdap-ui">
+<h4><a class="headerlink" href="#cdap-ui" title="Perma-link to this heading">🔗</a>CDAP UI</h4>
+<ul class="simple">
+<li>Using the Ambari UI, add additional hosts for the <code class="docutils literal"><span class="pre">CDAP</span> <span class="pre">UI</span> <span class="pre">Service</span></code>
+to additional machines.</li>
+</ul>
+</div>
+<div class="section" id="cdap-authentication-server">
+<h4><a class="headerlink" href="#cdap-authentication-server" title="Perma-link to this heading">🔗</a>CDAP Authentication Server</h4>
+<ul class="simple">
+<li>Using the Ambari UI, add additional hosts for the <code class="docutils literal"><span class="pre">CDAP</span> <span class="pre">Security</span> <span class="pre">Auth</span>
+<span class="pre">Service</span></code> (the CDAP Authentication Server) to additional machines.</li>
+<li>Note that when an unauthenticated request is made in a secure HA setup, a list of all
+running authentication endpoints will be returned in the body of the request.</li>
+</ul>
+</div>
 </div>
 </div>
 </div>

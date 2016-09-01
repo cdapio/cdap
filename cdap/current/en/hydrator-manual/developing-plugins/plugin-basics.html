@@ -11,8 +11,8 @@
     
     
     <meta name="git_release" content="3.5.0">
-    <meta name="git_hash" content="d5c3cf716d569c6b497480fac47335b9e391119c">
-    <meta name="git_timestamp" content="2016-08-21 21:25:16 -0700">
+    <meta name="git_hash" content="5bf169a74ab4b6cbb2cc70b38a402c07b765210f">
+    <meta name="git_timestamp" content="2016-09-01 12:12:36 -0700">
     <title>Plugin Basics &mdash; Cask Data Application Platform 3.5.0 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -94,24 +94,30 @@
 <p>In Cask Hydrator, these plugin types are presently used:</p>
 <ul class="simple">
 <li>Action (<em>action</em>, restricted to batch pipelines)</li>
-<li>Batch Source (<em>batchsource</em>)</li>
+<li>Batch Source (<em>batchsource</em>, restricted to batch pipelines)</li>
 <li>Batch Sink (<em>batchsink</em>)</li>
-<li>Real-time Source (<em>realtimesource</em>)</li>
-<li>Real-time Sink (<em>realtimesink</em>)</li>
+<li>Streaming Source (<em>streamingsource</em>, restricted to real-time pipelines)</li>
 <li>Transformation (<em>transform</em>)</li>
 <li>Batch Aggregator (<em>batchaggregator</em>)</li>
+<li>Batch Joiner (<em>batchjoiner</em>)</li>
 <li>Spark Compute (<em>sparkcompute</em>)</li>
-<li>Spark Sink (<em>sparksink</em>)</li>
+<li>Spark Sink (<em>sparksink</em>, restricted to batch pipelines)</li>
+<li>Windower (<em>windower</em>, restricted to real-time pipelines)</li>
 <li>Post-run Action (<em>postaction</em>, restricted to batch pipelines)</li>
+<li>Real-time Source (<em>realtimesource</em>, deprecated)</li>
+<li>Real-time Sink (<em>realtimesink</em>, deprecated)</li>
 </ul>
+<p>In the Cask Hydrator UI, all Batch Aggregator, Batch Joiner, Spark Compute, and Spark Sink
+plugins are grouped under the Analytics section. All Transformation and Windower plugins
+are grouped under the Transforms section.</p>
 </div>
 <div class="section" id="maven-archetypes">
 <span id="cask-hydrator-developing-plugin-basics-maven-archetypes"></span><h2><a class="headerlink" href="#maven-archetypes" title="Perma-link to this heading">🔗</a>Maven Archetypes</h2>
 <p>To get started on creating a custom plugin, you can use one of these Maven archetypes to create your project:</p>
 <ul class="simple">
 <li><code class="docutils literal"><span class="pre">cdap-data-pipeline-plugins-archetype</span></code> (contains batch, Spark plugin, and other types)</li>
-<li><code class="docutils literal"><span class="pre">cdap-etl-realtime-source-archetype</span></code> (contains a realtime source)</li>
-<li><code class="docutils literal"><span class="pre">cdap-etl-realtime-sink-archetype</span></code> (contains a realtime sink)</li>
+<li><code class="docutils literal"><span class="pre">cdap-etl-realtime-source-archetype</span></code> (contains a realtime source, deprecated)</li>
+<li><code class="docutils literal"><span class="pre">cdap-etl-realtime-sink-archetype</span></code> (contains a realtime sink, deprecated)</li>
 <li><code class="docutils literal"><span class="pre">cdap-etl-transform-archetype</span></code> (contains a transform)</li>
 </ul>
 <p>This command will create a project from an archetype:</p>
