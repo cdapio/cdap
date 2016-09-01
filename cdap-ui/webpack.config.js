@@ -102,7 +102,8 @@ const cdapWebpackConfig = {
       'classnames',
       'node-uuid',
       'sockjs-client',
-      'rx'
+      'rx',
+      'reactstrap'
     ]
   },
   module: {

@@ -16,17 +16,8 @@
 
 @import '../../styles/variables.less';
 
-.cask-market-place {}
-
-/*
-  This will be eventually moved under .cask-market-place class
-   Right now this changes globally and thats not how it should be.
-   Have created a PR for reactstrap and got it merged(https://github.com/reactstrap/reactstrap/pull/111)
-   Once the release is bumped to 2.6.1 or 2.7.0 will update reactstrap
-   and will move the code appropriately to have style namespaced.
-*/
-.modal {
-  .modal-dialog {
+.cask-market-place {
+  &.modal-dialog {
     height: 75vh;
     width: 85vw;
     margin-top: 50px;

@@ -23,14 +23,17 @@ export default class CaskMarketPlace extends Component{
   }
   render() {
     return (
-      <div className="cask-market-place">
-        <Modal isOpen={this.props.isOpen} toggle={this.props.onCloseHandler} size="lg">
-          <ModalHeader className="cask-market-place-header"> CASK Market Place </ModalHeader>
-          <ModalBody>
-            Some big Modal body
-          </ModalBody>
-        </Modal>
-      </div>
+      <Modal
+        isOpen={this.props.isOpen}
+        toggle={this.props.onCloseHandler}
+        className="cask-market-place"
+        size="lg"
+      >
+        <ModalHeader className="cask-market-place-header"> CASK Market Place </ModalHeader>
+        <ModalBody>
+          Some big Modal body
+        </ModalBody>
+      </Modal>
     );
   }
 }
