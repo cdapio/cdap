@@ -1,0 +1,42 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import '../../styles/variables.less';
+
+.cask-market-place {}
+
+/*
+  This will be eventually moved under .cask-market-place class
+   Right now this changes globally and thats not how it should be.
+   Have created a PR for reactstrap and got it merged(https://github.com/reactstrap/reactstrap/pull/111)
+   Once the release is bumped to 2.6.1 or 2.7.0 will update reactstrap
+   and will move the code appropriately to have style namespaced.
+*/
+.modal {
+  .modal-dialog {
+    height: 75vh;
+    width: 85vw;
+    margin-top: 50px;
+
+    .modal-header {
+      background: @cdap-orange;
+      color: white;
+      h4 {
+        font-weight: normal;
+      }
+    }
+  }
+}

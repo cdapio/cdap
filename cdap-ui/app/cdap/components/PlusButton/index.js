@@ -13,17 +13,34 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 import React, {Component} from 'react';
-import Card from './Card';
-export class CaskAppStore extends Component {
+import CaskMarketPlace from '../CaskMarketPlace';
+
+export default class PlusButton extends Component {
   constructor(props) {
     super(props);
+    this.state = {
+      showMarketPlace: false
+    };
+  }
+  onClickHandler() {
+    this.setState({
+      showMarketPlace: !this.state.showMarketPlace
+    });
   }
   render() {
     return (
-      <Card
-        title="Cask App Store"
-      />
+      <div>
+        <span
+          className="fa fa-plus-circle text-success"
+          onClick={this.onClickHandler.bind(this)}
+        ></span>
+        <CaskMarketPlace
+          isOpen={this.state.showMarketPlace}
+          onCloseHandler={this.onClickHandler.bind(this)}
+        />
+      </div>
     );
   }
 }

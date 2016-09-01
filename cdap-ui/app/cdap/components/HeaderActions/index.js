@@ -15,6 +15,8 @@
  */
 import React from 'react';
 
+import PlusButton from '../PlusButton';
+
 export default function HeaderActions() {
   return (
     <ul className="navbar-list pull-right">
@@ -25,7 +27,7 @@ export default function HeaderActions() {
         <span className="fa fa-bolt"></span>
       </div>
       <div className="navbar-item">
-        <span className="fa fa-plus-circle text-success"></span>
+        <PlusButton />
       </div>
       <div className="navbar-item">
         <span className="fa fa-cog"></span>
