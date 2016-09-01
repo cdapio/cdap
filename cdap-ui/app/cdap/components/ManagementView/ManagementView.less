@@ -1,0 +1,108 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+@import '../../styles/variables.less';
+
+.management-view {
+  width: 96%;
+  height: 100%;
+  border: solid #E3E3E3 2px;
+  margin: auto;
+  margin-top: 20px;
+  margin-bottom: 70px;
+  background-color: #FFFFFF;
+  padding: 20px;
+
+  .top-panel {
+    border: solid #E3E3E3 2px;
+  }
+
+  .admin-row {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: row;
+    flex-direction: row;
+    padding-top: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .navigation-container {
+    width: 400px;
+    margin: 0 auto;
+    margin-top: 30px;
+    margin-bottom: -10px;
+    font-weight: bold;
+    font-size: 20px;
+
+    hr {
+      height: .25rem;
+      width: 70px;
+      margin: 0;
+      margin-top: -4px;
+      background: #FF6501;
+      border: none;
+      transition: .3s ease-in-out;
+    }
+
+    ul li {
+      display: inline;
+      text-align: center;
+    }
+
+    li.active {
+    }
+
+    .test {
+      background-color: green;
+    }
+
+    a {
+      display: inline-block;
+      width: 100px;
+      padding: .75rem 0;
+      margin: 0;
+      text-decoration: none;
+      color: #999999;
+    }
+
+    a:hover {
+      color: #333333;
+      text-decoration: none;
+    }
+
+    .active {
+      color: black;
+    }
+
+    .one:hover ~ hr,
+    .one:active ~ hr,
+    hr.one {
+      margin-left: 15px;
+    }
+
+    .two:hover ~ hr,
+    .two.active ~ hr,
+    hr.two {
+      margin-left: 32%;
+    }
+
+    .three:hover ~ hr,
+    .three.active ~ hr,
+    hr.three {
+      margin-left: 60%;
+    }
+  }
+}

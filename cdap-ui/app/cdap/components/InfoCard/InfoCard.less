@@ -1,0 +1,60 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+@import '../../styles/variables.less';
+
+.info-card {
+  width: 170px;
+  height: 100px;
+  background-color: #E3E3E3;
+  display: inline-block;
+  margin: 5px 10px 5px 0;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+
+  .uptime-unit {
+    position: absolute;
+    margin-left: 60px;
+    margin-top: 7px;
+    font-weight: bold;
+    color: #9A9A9A;
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  .info-card-main-text {
+    font-size: 35px;
+    color: #656565;
+    margin: auto;
+    text-align: center;
+    position: relative;
+    top: 6px;
+    font-weight: 500;
+  }
+
+  .info-card-secondary-text {
+    font-size: 13px;
+    font-weight: 900;
+    color: #656565;
+    margin: auto;
+    text-align: center;
+    padding-top: 8px;
+    position: relative;
+    bottom: 1px;
+  }
+}

@@ -1,0 +1,98 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+@import '../../styles/variables.less';
+
+.admin-detail-panel {
+  border: solid 5px #E3E3E3;
+  height: 250px;
+  width: 100%;
+
+  .admin-detail-panel-body {
+    height: 225px;
+    overflow: hidden;
+    display: flex;
+    justify-content: space-between;
+
+    .vertical-line {
+      width: 2px;
+      height: 90%;
+      border-right: dotted 2px #E3E3E3;
+      position: relative;
+      top: 5px;
+    }
+
+    .end-line {
+      width: 2px;
+      height: 100%;
+      border: none;
+    }
+  }
+
+  .admin-detail-panel-header {
+    height: 25px;
+    background-color: #E3E3E3;
+  }
+
+  .admin-detail-panel-header-name {
+    display: inline-block;
+    margin-left: 15px;
+    margin-top: 4px;
+    float: left;
+    font-weight: bold;
+  }
+
+  .admin-detail-panel-header-status {
+    display: inline-block;
+    float: right;
+    margin-right: 20px;
+    font-size: 12px;
+    margin-top: 4px;
+    color: #A3A3A3;
+  }
+
+  .admin-detail-panel-button-right {
+    height:40px;
+    width:20px;
+    border-radius: 0 40px 40px 0;
+    background: #E2E2E2;
+    float: right;
+    position: relative;
+    top: 100px;
+    margin-right: -20px;
+  }
+
+  .admin-detail-panel-button-right .fa {
+    position: relative;
+    top: 11px;
+    left: 4px;
+  }
+
+  .admin-detail-panel-button-left {
+    height:40px;
+    width:20px;
+    border-radius: 40px 0 0 40px;
+    background: #E2E2E2;
+    position: relative;
+    float: left;
+    top: 100px;
+    margin-left: -20px;
+  }
+  .admin-detail-panel-button-left .fa {
+    position: relative;
+    top: 11px;
+    left: 4px;
+  }
+}
