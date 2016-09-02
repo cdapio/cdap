@@ -217,7 +217,7 @@ public abstract class AppFabricTestBase {
 
   protected static CConfiguration createBasicCConf() throws IOException {
     CConfiguration cConf = CConfiguration.create();
-    cConf.set(Constants.AppFabric.SERVER_ADDRESS, hostname);
+    cConf.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, hostname);
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
     cConf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
     cConf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));

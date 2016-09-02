@@ -384,9 +384,8 @@ public class TestBase {
     // These configurations cannot be overridden by user
     // configure all services except for router to bind to localhost
     String localhost = InetAddress.getLoopbackAddress().getHostAddress();
-    cConf.set(Constants.AppFabric.SERVER_ADDRESS, localhost);
+    cConf.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, localhost);
     cConf.set(Constants.Transaction.Container.ADDRESS, localhost);
-    cConf.set(Constants.Dataset.Manager.ADDRESS, localhost);
     cConf.set(Constants.Dataset.Executor.ADDRESS, localhost);
     cConf.set(Constants.Stream.ADDRESS, localhost);
     cConf.set(Constants.Metrics.ADDRESS, localhost);
