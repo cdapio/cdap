@@ -17,11 +17,12 @@
 import React from 'react';
 require('./ConfigureModule.less');
 import ConfigureButton from '../ConfigureButton/index.js';
+var shortid = require('shortid');
 
 export default function ConfigureModule(){
   var buttons = [];
   for(var i = 0 ; i < 20; i++){
-    buttons.push(<ConfigureButton label="View Configurations"/>);
+    buttons.push(<ConfigureButton key={shortid.generate()} label="View Configurations" />);
   }
 
   return (

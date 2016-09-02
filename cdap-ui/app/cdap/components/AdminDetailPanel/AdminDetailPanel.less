@@ -14,9 +14,11 @@
  * the License.
  */
 @import '../../styles/variables.less';
+@grey-theme-color: #e3e3e3;
+@header-color: #e2e2e2;
 
 .admin-detail-panel {
-  border: solid 5px #E3E3E3;
+  border: solid 5px @grey-theme-color;
   height: 250px;
   width: 100%;
 
@@ -29,7 +31,7 @@
     .vertical-line {
       width: 2px;
       height: 90%;
-      border-right: dotted 2px #E3E3E3;
+      border-right: dotted 2px @grey-theme-color;
       position: relative;
       top: 5px;
     }
@@ -43,7 +45,7 @@
 
   .admin-detail-panel-header {
     height: 25px;
-    background-color: #E3E3E3;
+    background-color: @header-color;
   }
 
   .admin-detail-panel-header-name {
@@ -67,7 +69,7 @@
     height:40px;
     width:20px;
     border-radius: 0 40px 40px 0;
-    background: #E2E2E2;
+    background: @grey-theme-color;
     float: right;
     position: relative;
     top: 100px;
@@ -84,7 +86,7 @@
     height:40px;
     width:20px;
     border-radius: 40px 0 0 40px;
-    background: #E2E2E2;
+    background: @grey-theme-color;
     position: relative;
     float: left;
     top: 100px;

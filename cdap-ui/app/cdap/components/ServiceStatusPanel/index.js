@@ -17,11 +17,17 @@
 import React, {PropTypes} from 'react';
 require('./ServiceStatusPanel.less');
 import ServiceStatus from '../ServiceStatus/index.js';
+var shortid = require('shortid');
 
-export default function ServiceStatusPanel({services, isLoading}) {
+const propTypes = {
+  services: PropTypes.array,
+  isLoading: PropTypes.bool
+};
+
+function ServiceStatusPanel({services, isLoading}) {
 
   var serviceList = services.map(function(service){
-    return <ServiceStatus isLoading={isLoading} status={service.status} name={service.name}/>;
+    return <ServiceStatus key={shortid.generate()} isLoading={isLoading} status={service.status} name={service.name} />;
   });
 
   return (
@@ -31,7 +37,6 @@ export default function ServiceStatusPanel({services, isLoading}) {
   );
 }
 
-ServiceStatusPanel.propTypes = {
-  services: PropTypes.array,
-  isLoading: PropTypes.bool
-};
+ServiceStatusPanel.propTypes = propTypes;
+
+export default ServiceStatusPanel;

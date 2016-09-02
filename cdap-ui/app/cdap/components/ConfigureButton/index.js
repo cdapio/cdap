@@ -17,10 +17,15 @@
 import React, {PropTypes} from 'react';
 require('./ConfigureButton.less');
 
- export default function ConfigureButton({label}){
+
+const propTypes  = {
+  label: PropTypes.string
+};
+
+function ConfigureButton({label}){
   return (
     <div className="configure-button">
-      <i className="fa fa-arrows-alt"></i>
+      <i className="fa fa-arrows-alt" />
       <div className="configure-button-text">
         {label}
       </div>
@@ -28,6 +33,6 @@ require('./ConfigureButton.less');
   );
 }
 
-ConfigureButton.propTypes = {
-  label: PropTypes.string
-};
+ConfigureButton.propTypes = propTypes;
+
+export default ConfigureButton;

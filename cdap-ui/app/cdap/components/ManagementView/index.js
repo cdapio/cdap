@@ -24,7 +24,11 @@ import AdminDetailPanel from '../AdminDetailPanel/index.js';
 import ConfigureModule from '../ConfigureModule/index.js';
 import OverviewModule from '../OverviewModule/index.js';
 
-export default class ManagementView extends Component {
+const propTypes = {
+  data: PropTypes.object
+};
+
+class ManagementView extends Component {
 
   constructor(props) {
     super(props);
@@ -35,6 +39,9 @@ export default class ManagementView extends Component {
       loading: true
     };
     this.interval = undefined;
+    this.setToCDAP = this.setToCDAP.bind(this);
+    this.setToYARN = this.setToYARN.bind(this);
+    this.setToHBASE = this.setToHBASE.bind(this);
   }
 
   setToCDAP() {
@@ -94,30 +101,36 @@ export default class ManagementView extends Component {
        <div className="management-view">
         <div className="top-panel">
           <div className="admin-row">
-            <InfoCard isLoading={this.state.loading} version={this.props.data.version}/>
-            <InfoCard isLoading={this.state.loading} uptime={this.props.data.uptime}/>
+            <InfoCard isLoading={this.state.loading} version={this.props.data.version} />
+            <InfoCard isLoading={this.state.loading} uptime={this.props.data.uptime} />
             <ServiceStatusComponent/>
-            <ServiceStatusPanel isLoading={this.state.loading} services={this.props.data.services}/>
+            <ServiceStatusPanel isLoading={this.state.loading} services={this.props.data.services} />
           </div>
           <div className="admin-row">
-            <AdminDetailPanel isLoading={this.state.loading} applicationName={this.state.application} timeFromUpdate={this.state.lastUpdated}/>
+            <AdminDetailPanel isLoading={this.state.loading} applicationName={this.state.application} timeFromUpdate={this.state.lastUpdated} />
           </div>
           <div className="navigation-container">
             <ul>
-              <li onClick={this.setToCDAP.bind(this)} className="one"><a className={oneActive}>CDAP</a></li>
-              <li onClick={this.setToYARN.bind(this)} className="two"><a className={twoActive}>YARN</a></li>
-              <li onClick={this.setToHBASE.bind(this)} className="three"><a className={threeActive}>HBASE</a></li>
-              <hr className={this.state.navUnderlineClass}/>
+              <li onClick={this.setToCDAP} className="one">
+                <a className={oneActive}>CDAP</a>
+              </li>
+              <li onClick={this.setToYARN} className="two">
+                <a className={twoActive}>YARN</a>
+              </li>
+              <li onClick={this.setToHBASE} className="three">
+                <a className={threeActive}>HBASE</a>
+              </li>
+              <hr className={this.state.navUnderlineClass} />
             </ul>
           </div>
         </div>
-        <ConfigureModule/>
-        <OverviewModule isLoading={this.state.loading}/>
+        <ConfigureModule />
+        <OverviewModule isLoading={this.state.loading} />
       </div>
     );
   }
 }
 
-ManagementView.propTypes = {
-  data: PropTypes.object
-};
+ManagementView.propTypes = propTypes;
+
+export default ManagementView;

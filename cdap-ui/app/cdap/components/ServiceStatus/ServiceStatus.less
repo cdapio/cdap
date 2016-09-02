@@ -14,6 +14,9 @@
  * the License.
  */
 @import '../../styles/variables.less';
+@circle-dimension: 15px;
+@circle-margin: 4px;
+@circle-top-offset: 2px;
 
 .service-status {
   padding-top: 15px;
@@ -23,45 +26,45 @@
   .status-circle-green {
     display: inline-block;
     border-radius: 50%;
-    margin-top: 4px;
-    width: 15px;
-    height: 15px;
+    margin-top: @circle-margin;
+    width: @circle-dimension;
+    height: @circle-dimension;
     background-color: #47B834;
     position: relative;
-    top: 2px;
+    top: @circle-top-offset;
   }
 
   .status-circle-yellow {
     display: inline-block;
     border-radius: 50%;
-    margin-top: 4px;
-    width: 15px;
-    height: 15px;
+    margin-top: @circle-margin;
+    width: @circle-dimension;
+    height: @circle-dimension;
     background-color: #ffff00;
     position: relative;
-    top: 2px;
+    top: @circle-top-offset;
   }
 
   .status-circle-red {
     display: inline-block;
     border-radius: 50%;
-    margin-top: 4px;
-    width: 15px;
-    height: 15px;
+    margin-top: @circle-margin;
+    width: @circle-dimension;
+    height: @circle-dimension;
     background-color: #ff0000;
     position: relative;
-    top: 2px;
+    top: @circle-top-offset;
   }
 
   .status-circle-grey {
     display: inline-block;
     border-radius: 50%;
-    margin-top: 4px;
-    width: 15px;
-    height: 15px;
+    margin-top: @circle-margin;
+    width: @circle-dimension;
+    height: @circle-dimension;
     background-color: #cccccc;
     position: relative;
-    top: 2px;
+    top: @circle-top-offset;
   }
 
   .status-label {

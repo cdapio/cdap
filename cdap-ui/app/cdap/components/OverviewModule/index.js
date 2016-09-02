@@ -18,12 +18,17 @@ import React, {PropTypes} from 'react';
 require('./OverviewModule.less');
 import OverviewModuleCard from '../OverviewModuleCard/index.js';
 var classNames = require('classnames');
+var shortid = require('shortid');
 
-export default function OverviewModule({isLoading}) {
+const propTypes = {
+  isLoading: PropTypes.bool
+};
+
+function OverviewModule({isLoading}) {
 
   var cards = [];
   for(var i = 0; i < 8; i++){
-    cards.push(<OverviewModuleCard isLoading={isLoading} name="HBASE" version={5.6}/>);
+    cards.push(<OverviewModuleCard key={shortid.generate()} isLoading={isLoading} name="HBASE" version={5.6} />);
   }
 
   return (
@@ -39,6 +44,6 @@ export default function OverviewModule({isLoading}) {
   );
 }
 
-OverviewModule.propTypes = {
-  isLoading: PropTypes.bool
-};
+OverviewModule.propTypes = propTypes;
+
+export default OverviewModule;

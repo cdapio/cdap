@@ -19,12 +19,18 @@ require('./DetailModule.less');
 import DetailModuleStatContainer from '../DetailModuleStatContainer/index.js';
 var classNames = require('classnames');
 
-export default function DetailModule({numStats, label, isLoading}){
+const propTypes = {
+  numStats: PropTypes.number,
+  label: PropTypes.string,
+  isLoading: PropTypes.bool
+};
+
+function DetailModule({numStats, label, isLoading}){
 
   var stats = [];
 
   for(var i = 0; i < numStats; i++){
-    stats.push(<DetailModuleStatContainer isLoading={isLoading} number={25} label="Total"/>);
+    stats.push(<DetailModuleStatContainer isLoading={isLoading} number={25} label="Total" />);
   }
 
   var containers = [];
@@ -39,7 +45,7 @@ export default function DetailModule({numStats, label, isLoading}){
       temp = stats[j];
     }
 
-    containers.push(<div className="stat-container">{temp}</div>);
+    containers.push(<div className="stat-container" key={j}>{temp}</div>);
   }
 
   return (
@@ -53,13 +59,10 @@ export default function DetailModule({numStats, label, isLoading}){
       <div className="detail-module-body">
         {containers}
       </div>
-
     </div>
   );
 }
 
-DetailModule.propTypes = {
-  numStats: PropTypes.number,
-  label: PropTypes.string,
-  isLoading: PropTypes.bool
-};
+DetailModule.propTypes = propTypes;
+
+export default DetailModule;

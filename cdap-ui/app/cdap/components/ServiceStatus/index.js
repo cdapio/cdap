@@ -18,25 +18,31 @@ import React, {PropTypes} from 'react';
 require('./ServiceStatus.less');
 var classNames = require('classnames');
 
-export default function ServiceStatus({status, name, isLoading}) {
+const propTypes = {
+  name: PropTypes.string,
+  status: PropTypes.string,
+  isLoading: PropTypes.bool
+};
+
+function ServiceStatus({status, name, isLoading}) {
   var circle = '';
 
   if(!isLoading){
     switch(status){
         case 'Green' :
-          circle = <div className={classNames({"status-circle-green" : !isLoading, "status-circle-grey" : isLoading})}></div>;
+          circle = <div className={classNames({"status-circle-green" : !isLoading, "status-circle-grey" : isLoading})} />;
           break;
         case 'Yellow' :
-          circle = <div className={classNames({"status-circle-yellow" : !isLoading, "status-circle-grey" : isLoading})}></div>;
+          circle = <div className={classNames({"status-circle-yellow" : !isLoading, "status-circle-grey" : isLoading})} />;
           break;
         case 'Red' :
-          circle = <div className={classNames({"status-circle-red" : !isLoading, "status-circle-grey" : isLoading})}></div>;
+          circle = <div className={classNames({"status-circle-red" : !isLoading, "status-circle-grey" : isLoading})} />;
           break;
         default:
-          circle = <div className="status-circle-grey"></div>;
+          circle = <div className="status-circle-grey" />;
     }
   } else {
-    circle = <div className="status-circle-grey"></div>;
+    circle = <div className="status-circle-grey" />;
   }
 
   return (
@@ -49,8 +55,6 @@ export default function ServiceStatus({status, name, isLoading}) {
   );
 }
 
-ServiceStatus.propTypes = {
-  name: PropTypes.string,
-  status: PropTypes.string,
-  isLoading: PropTypes.bool
-};
+ServiceStatus.propTypes = propTypes;
+
+export default ServiceStatus;

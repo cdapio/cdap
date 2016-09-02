@@ -19,7 +19,13 @@ import React, {PropTypes} from 'react';
 require('./DetailModuleStatContainer.less');
 var classNames = require('classnames');
 
-export default function DetailModuleStatContainer({number, label, isLoading}) {
+const propTypes = {
+  number: PropTypes.number,
+  label: PropTypes.string,
+  isLoading: PropTypes.bool
+};
+
+function DetailModuleStatContainer({number, label, isLoading}) {
   return (
     <div className="detail-module-stat-container">
       <div className={classNames("detail-module-stat", {"hidden" : isLoading})}>
@@ -32,8 +38,6 @@ export default function DetailModuleStatContainer({number, label, isLoading}) {
   );
 }
 
-DetailModuleStatContainer.propTypes = {
-  number: PropTypes.number,
-  label: PropTypes.string,
-  isLoading: PropTypes.bool
-};
+DetailModuleStatContainer.propTypes = propTypes;
+
+export default DetailModuleStatContainer;

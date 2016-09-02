@@ -18,7 +18,7 @@ import React from 'react';
 import ManagementView from '../ManagementView';
 
 var dummyData = {
-  version: "3.4",
+  version: '3.4',
   uptime: {
     duration: 0.2,
     unit: 'hr'
@@ -62,7 +62,7 @@ var dummyData = {
 export default function Management() {
   return (
     <div className="management">
-      <ManagementView data={dummyData}/>
+      <ManagementView data={dummyData} />
     </div>
   );
 }

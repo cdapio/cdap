@@ -18,14 +18,20 @@ import DetailModule from '../DetailModule/index.js';
 import React, {PropTypes} from 'react';
 require('./AdminDetailPanel.less');
 
-export default function AdminDetailPanel({applicationName, timeFromUpdate, isLoading}){
+const propTypes = {
+  applicationName: PropTypes.string,
+  timeFromUpdate: PropTypes.number,
+  isLoading: PropTypes.bool
+};
+
+function AdminDetailPanel({applicationName, timeFromUpdate, isLoading}){
     return (
       <div className="admin-detail-panel">
         <div className="admin-detail-panel-button-left">
-          <i className="fa fa-chevron-left" aria-hidden="true"></i>
+          <i className="fa fa-chevron-left" aria-hidden="true" />
         </div>
         <div className="admin-detail-panel-button-right">
-          <i className="fa fa-chevron-right" aria-hidden="true"></i>
+          <i className="fa fa-chevron-right" aria-hidden="true" />
         </div>
         <div className="admin-detail-panel-header">
           <div className="admin-detail-panel-header-name">
@@ -36,22 +42,20 @@ export default function AdminDetailPanel({applicationName, timeFromUpdate, isLoa
           </div>
         </div>
         <div className="admin-detail-panel-body">
-          <div className="end-line"></div>
-          <DetailModule isLoading={isLoading} label="Nodes" numStats={6}/>
-          <div className="vertical-line"></div>
-          <DetailModule isLoading={isLoading} label="Virtual Cores" numStats={4}/>
-          <div className="vertical-line"></div>
-          <DetailModule isLoading={isLoading} label="Memory" numStats={4}/>
-          <div className="vertical-line"></div>
-          <DetailModule isLoading={isLoading} label="Application" end={true} numStats={6}/>
-          <div className="end-line"></div>
+          <div className="end-line" />
+          <DetailModule isLoading={isLoading} label="Nodes" numStats={6} />
+          <div className="vertical-line" />
+          <DetailModule isLoading={isLoading} label="Virtual Cores" numStats={4} />
+          <div className="vertical-line" />
+          <DetailModule isLoading={isLoading} label="Memory" numStats={4} />
+          <div className="vertical-line" />
+          <DetailModule isLoading={isLoading} label="Application" end={true} numStats={6} />
+          <div className="end-line" />
         </div>
       </div>
     );
 }
 
-AdminDetailPanel.propTypes = {
-  applicationName: PropTypes.string,
-  timeFromUpdate: PropTypes.string,
-  isLoading: PropTypes.bool
-};
+AdminDetailPanel.propTypes = propTypes;
+
+export default AdminDetailPanel;

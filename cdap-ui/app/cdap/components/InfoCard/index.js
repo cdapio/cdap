@@ -14,52 +14,49 @@
  * the License.
  */
 
-import React, {Component, PropTypes} from 'react';
+import React, {PropTypes} from 'react';
 require('./InfoCard.less');
 var classNames = require('classnames');
 
-class InfoCard extends Component {
+const propTypes = {
+ version: PropTypes.string,
+ uptime: PropTypes.object,
+ isLoading: PropTypes.bool
+};
 
-  render () {
+function InfoCard({isLoading, uptime, version}) {
 
-    var unitLoading = classNames("uptime-unit", {'hidden' : this.props.isLoading});
-    var textLoading = classNames("info-card-text", {'hidden' : this.props.isLoading});
-    var primaryText = '';
-    var secondaryText = '';
+  var unitLoading = classNames("uptime-unit", {'hidden' : isLoading});
+  var textLoading = classNames("info-card-text", {'hidden' : isLoading});
+  var primaryText = '';
+  var secondaryText = '';
+  var unit;
 
-    if(this.props.version){
-      primaryText = this.props.version;
-      secondaryText = 'Version';
-    } else if(this.props.uptime){
-      this.unit = <div className={unitLoading}> {this.props.uptime.unit} </div>;
-      primaryText = this.props.uptime.duration;
-      secondaryText = 'Uptime';
-    }
-
-    return (
-      <div className="info-card">
-        {this.unit}
-        <i className={classNames("fa", "fa-spinner", "fa-spin", "fa-3x", {"hidden" : !this.props.isLoading})}></i>
-        <div className={textLoading}>
-          <div className="info-card-main-text">
-            {primaryText}
-          </div>
-          <div className="info-card-secondary-text">
-            {secondaryText}
-          </div>
-        </div>
-      </div>
-    );
+  if(version){
+    primaryText = version;
+    secondaryText = 'Version';
+  } else if(uptime){
+    unit = <div className={unitLoading}> {uptime.unit} </div>;
+    primaryText = uptime.duration;
+    secondaryText = 'Uptime';
   }
+
+  return (
+  <div className="info-card">
+    {unit}
+    <i className={classNames("fa", "fa-spinner", "fa-spin", "fa-3x", {"hidden" : !isLoading})} />
+    <div className={textLoading}>
+      <div className="info-card-main-text">
+        {primaryText}
+      </div>
+      <div className="info-card-secondary-text">
+        {secondaryText}
+      </div>
+    </div>
+  </div>
+  );
 }
 
- InfoCard.propTypes = {
-  version: PropTypes.string,
-  uptime: {
-    duration: PropTypes.number,
-    unit: PropTypes.string
-  },
-  isLoading: PropTypes.bool
-};
+InfoCard.propTypes = propTypes;
 
 export default InfoCard;
