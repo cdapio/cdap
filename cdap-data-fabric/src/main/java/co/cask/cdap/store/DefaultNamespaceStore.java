@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -63,7 +63,7 @@ public class DefaultNamespaceStore implements NamespaceStore {
     DatasetFramework framework) {
     this.dsFramework = framework;
     this.dsCache = new MultiThreadDatasetCache(
-      new SystemDatasetInstantiator(dsFramework, null, null), txClient, NamespaceId.SYSTEM, null, null, null);
+      new SystemDatasetInstantiator(dsFramework), txClient, NamespaceId.SYSTEM, null, null, null);
     this.apps =
       new Supplier<NamespaceMDS>() {
         @Override
