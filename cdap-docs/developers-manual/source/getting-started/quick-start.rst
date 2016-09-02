@@ -363,7 +363,7 @@ annotated with its real-time metrics:
 .. image:: ../_images/quickstart/wise-flow1.png
    :width: 600px
 
-In this screenshot, we see that the stream has about thirty thousand events and all of them
+In this screenshot, we see that the stream has thousands of events and all of them
 have been processed by both flowlets. You can watch these metrics update in real time by
 repeating the injection of events into the stream:
 
@@ -375,8 +375,8 @@ repeating the injection of events into the stream:
 
     $ cdap-cli.sh load stream logEventStream cdap-apps/Wise/resources/apache.accesslog text/plain
   
-If you click on the right-most flowlet (*pageViewCount*) you see the current number of
-events being processed by each flowlet, in this case up to about 60 events per second:
+If you double-click on the right-most flowlet (*pageViewCount*) you see the current number of
+events being processed by each flowlet:
 
 .. image:: ../_images/quickstart/wise-flow2.png
    :width: 600px
