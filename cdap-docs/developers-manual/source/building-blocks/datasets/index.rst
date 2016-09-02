@@ -144,13 +144,13 @@ There are two ways to use a dataset in a program:
         counters.increment(key.getBytes(), 1L);
       }
 
-  See the :ref:`Word Count <examples-word-count>` for an example of how this can be used to configure
+  See :ref:`Word Count <examples-word-count>` for an example of how this can be used to configure
   the dataset names used by an application.
 
   Contrary to static datasets, dynamic datasets allow the release of the resources held by their Java classes
   after you are finished using them. You can do that by calling the ``discardDataset()`` method of the program context:
   it marks the dataset to be closed and removed from all transactions. However, this will not happen until after the
-  current transaction is completes, because the discarded dataset may have performed data operations and therefore
+  current transaction is complete, because the discarded dataset may have performed data operations and therefore
   still needs to participate in the commit (or rollback) of the transaction.
   
   Discarding a dataset is useful:
@@ -158,7 +158,7 @@ There are two ways to use a dataset in a program:
   - To ensure that the dataset is closed and its resources are released, as soon as a program does not need the dataset
     any longer.
   - To refresh a dataset after its properties have been updated. Without discarding the dataset, the program would keep
-    the dataset in its cache, and it would never pick up a change in the dataset's properties. Discarding the dataset
+    the dataset in its cache and never pick up a change in the dataset's properties. Discarding the dataset
     ensures that it is removed from the cache after the current transaction. Therefore, the next time this dataset is
     obtained using ``getDataset()`` in a subsequent transaction, it is guaranteed to return a fresh instance of the
     dataset, hence picking up any properties that have changed since the program started.
@@ -190,7 +190,7 @@ in an instance variable and makes it available through ``getContext()``:
     :dedent: 2
 
 The handler defines several endpoints for dataset management, one of which can be used to create a new file set,
-either by cloning an existing file set's dataset properties, or using the properties submitted in the request body:
+either by cloning an existing file set's dataset properties, or by using the properties submitted in the request body:
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
     :language: java
@@ -280,7 +280,7 @@ While these Tables have rows and columns similar to relational database tables, 
   and written independently of other columns, and columns are ordered
   in byte-lexicographic order. They are also known as *Ordered Columnar Tables*.
 
-A |fileset|_ represents a collections of files in the file system that share some common attributes
+A |fileset|_ represents a collection of files in the file system that share some common attributes
 such as the format and schema, while abstracting from the actual underlying file system interfaces.
 
 .. |fileset| replace:: **FileSet**
