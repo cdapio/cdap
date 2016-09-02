@@ -32,6 +32,9 @@ import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.AbstractModule;
@@ -42,6 +45,7 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -60,15 +64,16 @@ public class BasicLineageWriterTest {
     LineageWriter lineageWriter = new BasicLineageWriter(lineageStore);
 
     // Define entities
-    Id.Program program = Id.Program.from("default", "app", ProgramType.FLOW, "flow");
-    Id.Stream stream = Id.Stream.from("default", "stream");
-    Id.Run run1 = new Id.Run(program, RunIds.generate(10000).getId());
-    Id.Run run2 = new Id.Run(program, RunIds.generate(20000).getId());
+    ProgramId program = ProgramId.fromIdParts(Arrays.asList(NamespaceId.DEFAULT.getNamespace(), "app",
+                                              ProgramType.FLOW.getPrettyName(), "flow"));
+    StreamId stream = StreamId.fromIdParts(Arrays.asList(NamespaceId.DEFAULT.getNamespace(), "stream"));
+    Id.Run run1 = new Id.Run(program.toId(), RunIds.generate(10000).getId());
+    Id.Run run2 = new Id.Run(program.toId(), RunIds.generate(20000).getId());
 
     // Tag stream
     metadataStore.addTags(MetadataScope.USER, stream, "stag1", "stag2");
     // Write access for run1
-    lineageWriter.addAccess(run1, stream, AccessType.READ);
+    lineageWriter.addAccess(run1, stream.toId(), AccessType.READ);
     Assert.assertEquals(ImmutableSet.of(program, stream), lineageStore.getEntitiesForRun(run1));
 
     // Record time to verify duplicate writes.
@@ -79,12 +84,12 @@ public class BasicLineageWriterTest {
     // Add another tag to stream
     metadataStore.addTags(MetadataScope.USER, stream, "stag3");
     // Write access for run1 again
-    lineageWriter.addAccess(run1, stream, AccessType.READ);
+    lineageWriter.addAccess(run1, stream.toId(), AccessType.READ);
     // The write should be no-op, and access time for run1 should not be updated
     Assert.assertTrue(lineageStore.getAccessTimesForRun(run1).get(0) < beforeSecondTag);
 
     // However, you can write access for another run
-    lineageWriter.addAccess(run2, stream, AccessType.READ);
+    lineageWriter.addAccess(run2, stream.toId(), AccessType.READ);
     // Assert new access time is written
     Assert.assertTrue(lineageStore.getAccessTimesForRun(run2).get(0) >= beforeSecondTag);
   }

@@ -530,7 +530,7 @@ public class DatasetInstanceService {
 
   private void publishAudit(Id.DatasetInstance datasetInstance, AuditType auditType) {
     // TODO: Add properties to Audit Payload (CDAP-5220)
-    AuditPublishers.publishAudit(auditPublisher, datasetInstance, auditType, AuditPayload.EMPTY_PAYLOAD);
+    AuditPublishers.publishAudit(auditPublisher, datasetInstance.toEntityId(), auditType, AuditPayload.EMPTY_PAYLOAD);
   }
 
   /**

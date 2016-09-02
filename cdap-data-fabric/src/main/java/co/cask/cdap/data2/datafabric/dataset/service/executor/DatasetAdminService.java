@@ -219,7 +219,7 @@ public class DatasetAdminService {
     }
 
     // Remove metadata for the dataset
-    metadataStore.removeMetadata(datasetInstanceId);
+    metadataStore.removeMetadata(datasetInstanceId.toEntityId());
   }
 
   public void truncate(Id.DatasetInstance datasetInstanceId) throws Exception {

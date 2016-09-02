@@ -220,7 +220,8 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
 
     Set<MetadataRecord> metadataRecords = metadataClient.getMetadata(wordcountId1, MetadataScope.USER);
     Assert.assertEquals(1, metadataRecords.size());
-    Assert.assertEquals(new MetadataRecord(wordcountId1, MetadataScope.USER), metadataRecords.iterator().next());
+    Assert.assertEquals(new MetadataRecord(wordcountId1.toEntityId(), MetadataScope.USER),
+                        metadataRecords.iterator().next());
     // delete artifact
     deleteArtifact(wordcountId1, true, null, 200);
     try {

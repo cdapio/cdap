@@ -563,6 +563,6 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       auditType != AuditType.ACCESS) {
       return;
     }
-    AuditPublishers.publishAudit(auditPublisher, datasetInstance, auditType, AuditPayload.EMPTY_PAYLOAD);
+    AuditPublishers.publishAudit(auditPublisher, datasetInstance.toEntityId(), auditType, AuditPayload.EMPTY_PAYLOAD);
   }
 }

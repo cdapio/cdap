@@ -27,6 +27,7 @@ import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.Relation;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespacedId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import com.google.common.annotations.VisibleForTesting;
@@ -139,7 +140,16 @@ public class LineageAdmin {
   public Set<MetadataRecord> getMetadataForRun(Id.Run run) throws NotFoundException {
     entityExistenceVerifier.ensureExists(run.toEntityId());
 
-    Set<Id.NamespacedId> runEntities = new HashSet<>(lineageStoreReader.getEntitiesForRun(run));
+    // TODO: Remove this once lineageStoreReader stops using deprecated Id class
+    Set<NamespacedId> runEntities = new HashSet<>(
+      Collections2.transform(lineageStoreReader.getEntitiesForRun(run),
+        new Function<Id.NamespacedId, NamespacedId>() {
+         @Override
+         public NamespacedId apply(Id.NamespacedId namespacedId) {
+           return (NamespacedId) namespacedId.toEntityId();
+         }
+    }));
+
     // No entities associated with the run, but run exists.
     if (runEntities.isEmpty()) {
       return ImmutableSet.of();
@@ -149,7 +159,7 @@ public class LineageAdmin {
 
     // The entities returned by lineageStore does not contain application
     Id.Application application = run.getProgram().getApplication();
-    runEntities.add(application);
+    runEntities.add(application.toEntityId());
     return metadataStore.getSnapshotBeforeTime(MetadataScope.USER, runEntities,
                                                RunIds.getTime(runId, TimeUnit.MILLISECONDS));
   }

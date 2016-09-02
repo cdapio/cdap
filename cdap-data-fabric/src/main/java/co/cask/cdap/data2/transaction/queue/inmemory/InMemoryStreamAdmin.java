@@ -85,7 +85,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
     queueService.resetStreamsWithPrefix(QueueName.prefixForNamedspacedStream(namespace.getId()));
     for (StreamSpecification spec : streamMetaStore.listStreams(namespace)) {
       // Remove metadata for the stream
-      metadataStore.removeMetadata(Id.Stream.from(namespace, spec.getName()));
+      metadataStore.removeMetadata(Id.Stream.from(namespace, spec.getName()).toEntityId());
       streamMetaStore.removeStream(Id.Stream.from(namespace, spec.getName()));
     }
   }
@@ -152,7 +152,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   public void drop(Id.Stream streamId) throws Exception {
     Preconditions.checkArgument(exists(streamId), "Stream '%s' does not exist.", streamId);
     // Remove metadata for the stream
-    metadataStore.removeMetadata(streamId);
+    metadataStore.removeMetadata(streamId.toEntityId());
     drop(QueueName.fromStream(streamId));
     streamMetaStore.removeStream(streamId);
     publishAudit(streamId, AuditType.DELETE);
@@ -202,6 +202,6 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   }
 
   private void publishAudit(Id.Stream stream, AuditType auditType) {
-    AuditPublishers.publishAudit(auditPublisher, stream, auditType, AuditPayload.EMPTY_PAYLOAD);
+    AuditPublishers.publishAudit(auditPublisher, stream.toEntityId(), auditType, AuditPayload.EMPTY_PAYLOAD);
   }
 }

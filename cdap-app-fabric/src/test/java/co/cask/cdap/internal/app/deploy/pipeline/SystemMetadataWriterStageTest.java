@@ -77,7 +77,7 @@ public class SystemMetadataWriterStageTest {
     systemMetadataWriterStage.process(appWithPrograms);
 
     // verify that the workflow is not tagged with the fork node name
-    Set<String> workflowSystemTags = metadataStore.getTags(MetadataScope.SYSTEM, appId.workflow(workflowName).toId());
+    Set<String> workflowSystemTags = metadataStore.getTags(MetadataScope.SYSTEM, appId.workflow(workflowName));
     Sets.SetView<String> intersection = Sets.intersection(workflowSystemTags, getWorkflowForkNodes(workflowSpec));
     Assert.assertTrue("Workflows should not be tagged with fork node names, but found the following fork nodes " +
                         "in the workflow's system tags: " + intersection, intersection.isEmpty());

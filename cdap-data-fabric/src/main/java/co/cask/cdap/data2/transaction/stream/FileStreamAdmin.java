@@ -667,7 +667,7 @@ public class FileStreamAdmin implements StreamAdmin {
           });
 
           streamMetaStore.removeStream(streamId);
-          metadataStore.removeMetadata(streamId);
+          metadataStore.removeMetadata(streamId.toEntityId());
           // revoke all privileges on the stream
           privilegesManager.revoke(streamId.toEntityId());
           publishAudit(streamId, AuditType.DELETE);
@@ -795,7 +795,7 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   private void publishAudit(Id.Stream stream, AuditType auditType) {
-    AuditPublishers.publishAudit(auditPublisher, stream, auditType, AuditPayload.EMPTY_PAYLOAD);
+    AuditPublishers.publishAudit(auditPublisher, stream.toEntityId(), auditType, AuditPayload.EMPTY_PAYLOAD);
   }
 
   private <T extends EntityId> void ensureAccess(T entityId, Action action) throws Exception {

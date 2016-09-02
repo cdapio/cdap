@@ -26,5 +26,5 @@ public abstract class NamespacedId extends EntityId {
     super(entity);
   }
 
-  abstract String getNamespace();
+  public abstract String getNamespace();
 }

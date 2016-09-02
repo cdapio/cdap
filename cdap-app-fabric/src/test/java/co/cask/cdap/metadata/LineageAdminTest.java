@@ -96,28 +96,28 @@ public class LineageAdminTest extends AppFabricTestBase {
     LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityExistenceVerifier());
 
     // Define metadata
-    MetadataRecord run1AppMeta = new MetadataRecord(program1.getApplication(), MetadataScope.USER,
+    MetadataRecord run1AppMeta = new MetadataRecord(program1.toEntityId(), MetadataScope.USER,
                                                     toMap("pk1", "pk1"), toSet("pt1"));
-    MetadataRecord run1ProgramMeta = new MetadataRecord(program1, MetadataScope.USER,
+    MetadataRecord run1ProgramMeta = new MetadataRecord(program1.toEntityId(), MetadataScope.USER,
                                                         toMap("pk1", "pk1"), toSet("pt1"));
-    MetadataRecord run1Data1Meta = new MetadataRecord(dataset1, MetadataScope.USER,
+    MetadataRecord run1Data1Meta = new MetadataRecord(dataset1.toEntityId(), MetadataScope.USER,
                                                       toMap("dk1", "dk1"), toSet("dt1"));
-    MetadataRecord run1Data2Meta = new MetadataRecord(dataset2, MetadataScope.USER,
+    MetadataRecord run1Data2Meta = new MetadataRecord(dataset2.toEntityId(), MetadataScope.USER,
                                                       toMap("dk2", "dk2"), toSet("dt2"));
 
     // Add metadata
-    metadataStore.setProperties(MetadataScope.USER, program1.getApplication(), run1AppMeta.getProperties());
+    metadataStore.setProperties(MetadataScope.USER, program1.toEntityId(), run1AppMeta.getProperties());
     //noinspection ToArrayCallWithZeroLengthArrayArgument
-    metadataStore.addTags(MetadataScope.USER, program1.getApplication(), run1AppMeta.getTags().toArray(new String[0]));
-    metadataStore.setProperties(MetadataScope.USER, program1, run1ProgramMeta.getProperties());
+    metadataStore.addTags(MetadataScope.USER, program1.toEntityId(), run1AppMeta.getTags().toArray(new String[0]));
+    metadataStore.setProperties(MetadataScope.USER, program1.toEntityId(), run1ProgramMeta.getProperties());
     //noinspection ToArrayCallWithZeroLengthArrayArgument
-    metadataStore.addTags(MetadataScope.USER, program1, run1ProgramMeta.getTags().toArray(new String[0]));
-    metadataStore.setProperties(MetadataScope.USER, dataset1, run1Data1Meta.getProperties());
+    metadataStore.addTags(MetadataScope.USER, program1.toEntityId(), run1ProgramMeta.getTags().toArray(new String[0]));
+    metadataStore.setProperties(MetadataScope.USER, dataset1.toEntityId(), run1Data1Meta.getProperties());
     //noinspection ToArrayCallWithZeroLengthArrayArgument
-    metadataStore.addTags(MetadataScope.USER, dataset1, run1Data1Meta.getTags().toArray(new String[0]));
-    metadataStore.setProperties(MetadataScope.USER, dataset2, run1Data2Meta.getProperties());
+    metadataStore.addTags(MetadataScope.USER, dataset1.toEntityId(), run1Data1Meta.getTags().toArray(new String[0]));
+    metadataStore.setProperties(MetadataScope.USER, dataset2.toEntityId(), run1Data2Meta.getProperties());
     //noinspection ToArrayCallWithZeroLengthArrayArgument
-    metadataStore.addTags(MetadataScope.USER, dataset2, run1Data2Meta.getTags().toArray(new String[0]));
+    metadataStore.addTags(MetadataScope.USER, dataset2.toEntityId(), run1Data2Meta.getTags().toArray(new String[0]));
     TimeUnit.MILLISECONDS.sleep(1);
 
     // Add accesses for D3 -> P2 -> D2 -> P1 -> D1 <-> P3

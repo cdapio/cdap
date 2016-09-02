@@ -85,43 +85,43 @@ public class NamespacedIdCodecTest {
     tags.add("tag1");
     tags.add("t1");
     // verify with Id.Application
-    MetadataRecord appRecord = new MetadataRecord(app, MetadataScope.USER, properties, tags);
+    MetadataRecord appRecord = new MetadataRecord(app.toEntityId(), MetadataScope.USER, properties, tags);
     String appRecordJson = GSON.toJson(appRecord);
     Assert.assertEquals(appRecord, GSON.fromJson(appRecordJson, MetadataRecord.class));
     // verify with Id.Program
-    MetadataRecord programRecord = new MetadataRecord(program, MetadataScope.USER, properties, tags);
+    MetadataRecord programRecord = new MetadataRecord(program.toEntityId(), MetadataScope.USER, properties, tags);
     String programRecordJson = GSON.toJson(programRecord);
     Assert.assertEquals(programRecord, GSON.fromJson(programRecordJson, MetadataRecord.class));
     // verify with Id.Flow
-    MetadataRecord flowRecord = new MetadataRecord(flow, MetadataScope.USER, properties, tags);
+    MetadataRecord flowRecord = new MetadataRecord(flow.toEntityId(), MetadataScope.USER, properties, tags);
     String flowRecordJson = GSON.toJson(flowRecord);
     Assert.assertEquals(flowRecord, GSON.fromJson(flowRecordJson, MetadataRecord.class));
     // verify with Id.Flow.Flowlet
-    MetadataRecord flowletRecord = new MetadataRecord(flowlet, MetadataScope.USER, properties, tags);
+    MetadataRecord flowletRecord = new MetadataRecord(flowlet.toEntityId(), MetadataScope.USER, properties, tags);
     String flowletRecordJson = GSON.toJson(flowletRecord);
     Assert.assertEquals(flowletRecord, GSON.fromJson(flowletRecordJson, MetadataRecord.class));
     // verify with Id.Service
-    MetadataRecord serviceRecord = new MetadataRecord(service, MetadataScope.USER, properties, tags);
+    MetadataRecord serviceRecord = new MetadataRecord(service.toEntityId(), MetadataScope.USER, properties, tags);
     String serviceRecordJson = GSON.toJson(serviceRecord);
     Assert.assertEquals(serviceRecord, GSON.fromJson(serviceRecordJson, MetadataRecord.class));
     // verify with Id.Schedule
-    MetadataRecord scheduleRecord = new MetadataRecord(schedule, MetadataScope.USER, properties, tags);
+    MetadataRecord scheduleRecord = new MetadataRecord(schedule.toEntityId(), MetadataScope.USER, properties, tags);
     String scheduleRecordJson = GSON.toJson(scheduleRecord);
     Assert.assertEquals(scheduleRecord, GSON.fromJson(scheduleRecordJson, MetadataRecord.class));
     // verify with Id.Worker
-    MetadataRecord workerRecord = new MetadataRecord(worker, MetadataScope.USER, properties, tags);
+    MetadataRecord workerRecord = new MetadataRecord(worker.toEntityId(), MetadataScope.USER, properties, tags);
     String workerRecordJson = GSON.toJson(workerRecord);
     Assert.assertEquals(workerRecord, GSON.fromJson(workerRecordJson, MetadataRecord.class));
     // verify with Id.Workflow
-    MetadataRecord workflowRecord = new MetadataRecord(workflow, MetadataScope.USER, properties, tags);
+    MetadataRecord workflowRecord = new MetadataRecord(workflow.toEntityId(), MetadataScope.USER, properties, tags);
     String workflowRecordJson = GSON.toJson(workflowRecord);
     Assert.assertEquals(workflowRecord, GSON.fromJson(workflowRecordJson, MetadataRecord.class));
     // verify with Id.DatasetInstance
-    MetadataRecord datasetRecord = new MetadataRecord(dataset, MetadataScope.USER, properties, tags);
+    MetadataRecord datasetRecord = new MetadataRecord(dataset.toEntityId(), MetadataScope.USER, properties, tags);
     String datasetRecordJson = GSON.toJson(datasetRecord);
     Assert.assertEquals(datasetRecord, GSON.fromJson(datasetRecordJson, MetadataRecord.class));
     // verify with Id.Stream
-    MetadataRecord streamRecord = new MetadataRecord(stream, MetadataScope.USER, properties, tags);
+    MetadataRecord streamRecord = new MetadataRecord(stream.toEntityId(), MetadataScope.USER, properties, tags);
     String streamRecordJson = GSON.toJson(streamRecord);
     Assert.assertEquals(streamRecord, GSON.fromJson(streamRecordJson, MetadataRecord.class));
   }

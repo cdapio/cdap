@@ -26,7 +26,7 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
@@ -46,6 +46,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * Test AbstractSystemMetadataWriter.
@@ -88,9 +89,9 @@ public class AbstractSystemMetadataWriterTest {
 
   @Test
   public void testMetadataOverwrite() throws Exception {
-    Id.DatasetInstance dsInstance = Id.DatasetInstance.from("ns1", "ds1");
+    DatasetId dsInstance = DatasetId.fromIdParts(Arrays.asList("ns1", "ds1"));
     DatasetSystemMetadataWriter datasetSystemMetadataWriter =
-      new DatasetSystemMetadataWriter(store, dsInstance,
+      new DatasetSystemMetadataWriter(store, dsInstance.toId(),
                                       DatasetProperties.builder()
                                         .add(Table.PROPERTY_TTL, "100")
                                         .build(),
@@ -102,12 +103,13 @@ public class AbstractSystemMetadataWriterTest {
                          ImmutableMap.of(AbstractSystemMetadataWriter.DESCRIPTION, "description1",
                                          AbstractSystemMetadataWriter.CREATION_TIME, String.valueOf(123456L),
                                          AbstractSystemMetadataWriter.TTL_KEY, "100"),
-                         ImmutableSet.of(dsInstance.getId()));
+                         ImmutableSet.of(dsInstance.getDataset()));
     Assert.assertEquals(expected, store.getMetadata(MetadataScope.SYSTEM, dsInstance));
 
     // Now remove TTL, and add dsType
     datasetSystemMetadataWriter =
-      new DatasetSystemMetadataWriter(store, dsInstance, DatasetProperties.EMPTY, null, "dsType", "description2");
+      new DatasetSystemMetadataWriter(store, dsInstance.toId(),
+                                      DatasetProperties.EMPTY, null, "dsType", "description2");
     datasetSystemMetadataWriter.write();
 
     expected =
@@ -115,7 +117,7 @@ public class AbstractSystemMetadataWriterTest {
                          ImmutableMap.of(AbstractSystemMetadataWriter.DESCRIPTION, "description2",
                                          AbstractSystemMetadataWriter.CREATION_TIME, String.valueOf(123456L),
                                          DatasetSystemMetadataWriter.TYPE, "dsType"),
-                         ImmutableSet.of(dsInstance.getId()));
+                         ImmutableSet.of(dsInstance.getDataset()));
     Assert.assertEquals(expected, store.getMetadata(MetadataScope.SYSTEM, dsInstance));
 
     store.removeMetadata(dsInstance);

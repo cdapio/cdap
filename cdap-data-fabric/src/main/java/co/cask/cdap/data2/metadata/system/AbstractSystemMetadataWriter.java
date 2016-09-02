@@ -21,6 +21,7 @@ import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.indexer.SchemaIndexer;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespacedId;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
@@ -85,28 +86,28 @@ public abstract class AbstractSystemMetadataWriter implements SystemMetadataWrit
   @Override
   public void write() {
     // Delete existing system metadata before writing new metadata
-    Set<String> existingProperties = metadataStore.getProperties(MetadataScope.SYSTEM, entityId).keySet();
+    Set<String> existingProperties = metadataStore.getProperties(MetadataScope.SYSTEM,
+                                                                 (NamespacedId) entityId.toEntityId()).keySet();
     Sets.SetView<String> removeProperties = Sets.difference(existingProperties, PRESERVE_PROPERTIES);
     if (!removeProperties.isEmpty()) {
       String[] propertiesArray = removeProperties.toArray(new String[removeProperties.size()]);
-      metadataStore.removeProperties(MetadataScope.SYSTEM, entityId, propertiesArray);
+      metadataStore.removeProperties(MetadataScope.SYSTEM, (NamespacedId) entityId.toEntityId(), propertiesArray);
     }
-    metadataStore.removeTags(MetadataScope.SYSTEM, entityId);
+    metadataStore.removeTags(MetadataScope.SYSTEM, (NamespacedId) entityId.toEntityId());
 
     // Now add the new metadata
     Map<String, String> properties = getSystemPropertiesToAdd();
     if (properties.size() > 0) {
-      metadataStore.setProperties(MetadataScope.SYSTEM, entityId, properties);
+      metadataStore.setProperties(MetadataScope.SYSTEM, (NamespacedId) entityId.toEntityId(), properties);
     }
     String[] tags = getSystemTagsToAdd();
     if (tags.length > 0) {
-      metadataStore.addTags(MetadataScope.SYSTEM, entityId, tags);
+      metadataStore.addTags(MetadataScope.SYSTEM, (NamespacedId) entityId.toEntityId(), tags);
     }
     // if there is schema property then set that while providing schema indexer
     if (!Strings.isNullOrEmpty(getSchemaToAdd())) {
-      metadataStore.setProperties(MetadataScope.SYSTEM, entityId, ImmutableMap.of(SCHEMA_FIELD_PROPERTY_PREFIX,
-                                                                                  getSchemaToAdd()),
-                                  new SchemaIndexer());
+      metadataStore.setProperties(MetadataScope.SYSTEM, (NamespacedId) entityId.toEntityId(),
+                                  ImmutableMap.of(SCHEMA_FIELD_PROPERTY_PREFIX, getSchemaToAdd()), new SchemaIndexer());
     }
   }
 

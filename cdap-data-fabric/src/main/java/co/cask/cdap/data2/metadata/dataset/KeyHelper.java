@@ -17,7 +17,6 @@
 package co.cask.cdap.data2.metadata.dataset;
 
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
@@ -86,30 +85,30 @@ final class KeyHelper {
   }
 
   static NamespacedId getTargetIdIdFromKey(MDSKey.Splitter keySplitter, String type) {
-    if (type.equals(Id.Program.class.getSimpleName())) {
+    if (type.equals(ProgramId.class.getSimpleName())) {
       String namespaceId = keySplitter.getString();
       String appId = keySplitter.getString();
       String programType = keySplitter.getString();
       String programId = keySplitter.getString();
       return ProgramId.fromIdParts(Arrays.asList(namespaceId, appId, programType, programId));
-    } else if (type.equals(Id.Application.class.getSimpleName())) {
+    } else if (type.equals(ApplicationId.class.getSimpleName())) {
       String namespaceId = keySplitter.getString();
       String appId = keySplitter.getString();
       return ApplicationId.fromIdParts(Arrays.asList(namespaceId, appId));
-    } else if (type.equals(Id.Artifact.class.getSimpleName())) {
+    } else if (type.equals(ArtifactId.class.getSimpleName())) {
       String namespaceId = keySplitter.getString();
       String name = keySplitter.getString();
       String version = keySplitter.getString();
       return ArtifactId.fromIdParts(Arrays.asList(namespaceId, name, version));
-    } else if (type.equals(Id.DatasetInstance.class.getSimpleName())) {
+    } else if (type.equals(DatasetId.class.getSimpleName())) {
       String namespaceId = keySplitter.getString();
       String instanceId  = keySplitter.getString();
       return DatasetId.fromIdParts(Arrays.asList(namespaceId, instanceId));
-    } else if (type.equals(Id.Stream.class.getSimpleName())) {
+    } else if (type.equals(StreamId.class.getSimpleName())) {
       String namespaceId = keySplitter.getString();
       String instanceId  = keySplitter.getString();
       return StreamId.fromIdParts(Arrays.asList(namespaceId, instanceId));
-    } else if (type.equals(Id.Stream.View.class.getSimpleName())) {
+    } else if (type.equals(StreamViewId.class.getSimpleName())) {
       String namespaceId = keySplitter.getString();
       String streamId  = keySplitter.getString();
       String viewId = keySplitter.getString();

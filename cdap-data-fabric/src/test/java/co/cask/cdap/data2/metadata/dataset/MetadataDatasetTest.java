@@ -15,15 +15,19 @@
  */
 package co.cask.cdap.data2.metadata.dataset;
 
-import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.metadata.indexer.Indexer;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NamespacedId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -36,6 +40,7 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -56,14 +61,16 @@ public class MetadataDatasetTest {
 
   private MetadataDataset dataset;
 
-  private final Id.Application app1 = Id.Application.from("ns1", "app1");
-  private final Id.Application appNs2 = Id.Application.from("ns2", "app1");
+  private final ApplicationId app1 = ApplicationId.fromIdParts(Arrays.asList("ns1", "app1"));
+  private final ApplicationId appNs2 = ApplicationId.fromIdParts(Arrays.asList("ns2", "app1"));
   // Have to use Id.Program for comparison here because the MetadataDataset APIs return Id.Program.
-  private final Id.Program flow1 = Id.Program.from("ns1", "app1", ProgramType.FLOW, "flow1");
-  private final Id.DatasetInstance dataset1 = Id.DatasetInstance.from("ns1", "ds1");
-  private final Id.Stream stream1 = Id.Stream.from("ns1", "s1");
-  private final Id.Stream.View view1 = Id.Stream.View.from(stream1, "v1");
-  private final Id.Artifact artifact1 = Id.Artifact.from(Id.Namespace.from("ns1"), "a1", "1.0.0");
+  private final ProgramId flow1 = ProgramId.fromIdParts(Arrays.asList("ns1", "app1", ProgramType.FLOW.getPrettyName(),
+                                                                      "flow1"));
+  private final DatasetId dataset1 = DatasetId.fromIdParts(Arrays.asList("ns1", "ds1"));
+  private final StreamId stream1 = StreamId.fromIdParts(Arrays.asList("ns1", "s1"));
+  private final StreamViewId view1 = StreamViewId.fromIdParts(Arrays.asList(stream1.getStream(), "v1"));
+  private final co.cask.cdap.proto.id.ArtifactId artifact1 =
+    co.cask.cdap.proto.id.ArtifactId.fromIdParts(Arrays.asList("ns1", "a1", "1.0.0"));
 
   @Before
   public void before() throws Exception {
@@ -380,7 +387,7 @@ public class MetadataDatasetTest {
     // Test wrong ns
     List<MetadataEntry> results2  =
       dataset.search("ns12", "key1" + MetadataDataset.KEYVALUE_SEPARATOR + "value1",
-                               ImmutableSet.of(MetadataSearchTargetType.PROGRAM));
+                     ImmutableSet.of(MetadataSearchTargetType.PROGRAM));
     Assert.assertTrue(results2.isEmpty());
 
     // Test multi word query
@@ -401,9 +408,10 @@ public class MetadataDatasetTest {
   @Test
   public void testSearchIncludesSystemEntities() {
     // Use the same artifact in two different namespaces - system and ns2
-    Id.Artifact sysArtifact = Id.Artifact.from(
-      Id.Namespace.SYSTEM, new ArtifactId("artifact", new ArtifactVersion("1.0"), ArtifactScope.SYSTEM));
-    Id.Artifact ns2Artifact = Id.Artifact.from(Id.Namespace.from("ns2"), "artifact", "1.0");
+    co.cask.cdap.proto.id.ArtifactId sysArtifact = co.cask.cdap.proto.id.ArtifactId.fromIdParts(Arrays.asList(
+      NamespaceId.SYSTEM.getNamespace(), "artifact", "1.0"));
+    co.cask.cdap.proto.id.ArtifactId ns2Artifact = co.cask.cdap.proto.id.ArtifactId.fromIdParts(Arrays.asList(
+      "ns2", "artifact", "1.0"));
     String multiWordKey = "multiword";
     String multiWordValue = "aV1 av2 ,  -  ,  av3 - av4_av5 av6";
     dataset.setProperty(flow1, multiWordKey, multiWordValue);
@@ -451,11 +459,11 @@ public class MetadataDatasetTest {
     dataset.addTags(flow1, "tag1", "tag2");
 
     Assert.assertEquals(ImmutableList.of(new MetadataEntry(flow1, "key1", "value1")),
-                        dataset.search(flow1.getNamespaceId(), "value1", ImmutableSet.<MetadataSearchTargetType>of()));
+                        dataset.search(flow1.getNamespace(), "value1", ImmutableSet.<MetadataSearchTargetType>of()));
     Assert.assertEquals(ImmutableList.of(new MetadataEntry(flow1, "key2", "value2")),
-                        dataset.search(flow1.getNamespaceId(), "value2", ImmutableSet.<MetadataSearchTargetType>of()));
+                        dataset.search(flow1.getNamespace(), "value2", ImmutableSet.<MetadataSearchTargetType>of()));
     Assert.assertEquals(ImmutableList.of(new MetadataEntry(flow1, MetadataDataset.TAGS_KEY, "tag1,tag2")),
-                        dataset.search(flow1.getNamespaceId(), "tag2", ImmutableSet.<MetadataSearchTargetType>of()));
+                        dataset.search(flow1.getNamespace(), "tag2", ImmutableSet.<MetadataSearchTargetType>of()));
     // Update key1
     dataset.setProperty(flow1, "key1", "value3");
     dataset.removeProperties(flow1, "key2");
@@ -463,43 +471,43 @@ public class MetadataDatasetTest {
 
     // Searching for value1 should be empty
     Assert.assertEquals(ImmutableList.of(),
-                        dataset.search(flow1.getNamespaceId(), "value1", ImmutableSet.<MetadataSearchTargetType>of()));
+                        dataset.search(flow1.getNamespace(), "value1", ImmutableSet.<MetadataSearchTargetType>of()));
     // Instead key1 has value value3 now
     Assert.assertEquals(ImmutableList.of(new MetadataEntry(flow1, "key1", "value3")),
-                        dataset.search(flow1.getNamespaceId(), "value3", ImmutableSet.<MetadataSearchTargetType>of()));
+                        dataset.search(flow1.getNamespace(), "value3", ImmutableSet.<MetadataSearchTargetType>of()));
     // key2 was deleted
     Assert.assertEquals(ImmutableList.of(),
-                        dataset.search(flow1.getNamespaceId(), "value2", ImmutableSet.<MetadataSearchTargetType>of()));
+                        dataset.search(flow1.getNamespace(), "value2", ImmutableSet.<MetadataSearchTargetType>of()));
     // tag2 was deleted
     Assert.assertEquals(ImmutableList.of(),
-                        dataset.search(flow1.getNamespaceId(), "tag2", ImmutableSet.<MetadataSearchTargetType>of()));
+                        dataset.search(flow1.getNamespace(), "tag2", ImmutableSet.<MetadataSearchTargetType>of()));
     Assert.assertEquals(ImmutableList.of(new MetadataEntry(flow1, MetadataDataset.TAGS_KEY, "tag1")),
-                        dataset.search(flow1.getNamespaceId(), "tag1", ImmutableSet.<MetadataSearchTargetType>of()));
+                        dataset.search(flow1.getNamespace(), "tag1", ImmutableSet.<MetadataSearchTargetType>of()));
   }
 
   @Test
   public void testMultiGet() throws Exception {
-    Map<Id.NamespacedId, Metadata> allMetadata = new HashMap<>();
+    Map<NamespacedId, Metadata> allMetadata = new HashMap<>();
     allMetadata.put(flow1, new Metadata(flow1,
                                         ImmutableMap.of("key1", "value1", "key2", "value2"),
                                         ImmutableSet.of("tag1", "tag2", "tag3")));
     allMetadata.put(dataset1, new Metadata(dataset1,
-                                 ImmutableMap.of("key10", "value10", "key11", "value11"),
-                                 ImmutableSet.<String>of()));
+                                           ImmutableMap.of("key10", "value10", "key11", "value11"),
+                                           ImmutableSet.<String>of()));
     allMetadata.put(app1, new Metadata(app1,
-                                 ImmutableMap.of("key20", "value20", "key21", "value21"),
-                                 ImmutableSet.<String>of()));
+                                       ImmutableMap.of("key20", "value20", "key21", "value21"),
+                                       ImmutableSet.<String>of()));
     allMetadata.put(stream1, new Metadata(stream1,
-                                 ImmutableMap.of("key30", "value30", "key31", "value31", "key32", "value32"),
-                                 ImmutableSet.<String>of()));
+                                          ImmutableMap.of("key30", "value30", "key31", "value31", "key32", "value32"),
+                                          ImmutableSet.<String>of()));
     allMetadata.put(artifact1, new Metadata(artifact1,
-                                 ImmutableMap.of("key40", "value41"),
-                                 ImmutableSet.<String>of()));
+                                            ImmutableMap.of("key40", "value41"),
+                                            ImmutableSet.<String>of()));
     allMetadata.put(view1, new Metadata(view1,
-                                 ImmutableMap.of("key50", "value50", "key51", "value51"),
-                                 ImmutableSet.of("tag51")));
+                                        ImmutableMap.of("key50", "value50", "key51", "value51"),
+                                        ImmutableSet.of("tag51")));
 
-    for (Map.Entry<Id.NamespacedId, Metadata> entry : allMetadata.entrySet()) {
+    for (Map.Entry<NamespacedId, Metadata> entry : allMetadata.entrySet()) {
       Metadata metadata = entry.getValue();
       for (Map.Entry<String, String> props : metadata.getProperties().entrySet()) {
         dataset.setProperty(metadata.getEntityId(), props.getKey(), props.getValue());
@@ -530,7 +538,7 @@ public class MetadataDatasetTest {
     Assert.assertEquals(expected, dataset.getMetadata(ImmutableSet.of(artifact1)));
 
     expected = ImmutableSet.of();
-    Assert.assertEquals(expected, dataset.getMetadata(ImmutableSet.<Id.NamespacedId>of()));
+    Assert.assertEquals(expected, dataset.getMetadata(ImmutableSet.<NamespacedId>of()));
   }
 
   @Test
@@ -575,7 +583,7 @@ public class MetadataDatasetTest {
       getDataset(Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "testIndexRebuilding"));
     dataset.setProperty(flow1, "flowKey", "flowValue", new ReversingIndexer());
     dataset.setProperty(dataset1, "datasetKey", "datasetValue", new ReversingIndexer());
-    String namespaceId = flow1.getNamespaceId();
+    String namespaceId = flow1.getNamespace();
     Set<MetadataSearchTargetType> targetTypes = Collections.singleton(MetadataSearchTargetType.ALL);
     List<MetadataEntry> searchResults = dataset.search(namespaceId, "flowValue", targetTypes);
     Assert.assertTrue(searchResults.isEmpty());
@@ -622,7 +630,7 @@ public class MetadataDatasetTest {
       getDataset(Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "testIndexRebuilding"));
     dataset.setProperty(flow1, "flowKey", "flowValue");
     dataset.setProperty(dataset1, "datasetKey", "datasetValue");
-    String namespaceId = flow1.getNamespaceId();
+    String namespaceId = flow1.getNamespace();
     Set<MetadataSearchTargetType> targetTypes = Collections.singleton(MetadataSearchTargetType.ALL);
     MetadataEntry expectedFlowEntry = new MetadataEntry(flow1, "flowKey", "flowValue");
     MetadataEntry expectedDatasetEntry = new MetadataEntry(dataset1, "datasetKey", "datasetValue");
@@ -642,7 +650,7 @@ public class MetadataDatasetTest {
     Assert.assertEquals(0, dataset.deleteAllIndexes(1));
   }
 
-  private void doTestHistory(MetadataDataset dataset, Id.NamespacedId targetId, String prefix)
+  private void doTestHistory(MetadataDataset dataset, NamespacedId targetId, String prefix)
     throws Exception {
     // Metadata change history keyed by time in millis the change was made
     Map<Long, Metadata> expected = new HashMap<>();
@@ -677,7 +685,7 @@ public class MetadataDatasetTest {
     dataset.addTags(targetId, prefix + "t3");
     // Save the complete metadata record at this point
     completeRecord = new Metadata(targetId, toProps(prefix, "k1", "v1", "k2", "v2"),
-                                              toTags(prefix, "t1", "t2", "t3"));
+                                  toTags(prefix, "t1", "t2", "t3"));
     time = System.currentTimeMillis();
     expected.put(time, completeRecord);
     // Assert the history record with the change
@@ -693,7 +701,7 @@ public class MetadataDatasetTest {
     dataset.addTags(targetId, prefix + "t4");
     // Save the complete metadata record at this point
     completeRecord = new Metadata(targetId, toProps(prefix, "k1", "v1", "k2", "v2", "k3", "v3"),
-                                        toTags(prefix, "t1", "t2", "t3", "t4"));
+                                  toTags(prefix, "t1", "t2", "t3", "t4"));
     time = System.currentTimeMillis();
     expected.put(time, completeRecord);
     // Assert the history record with the change
@@ -709,7 +717,7 @@ public class MetadataDatasetTest {
     dataset.addTags(targetId, prefix + "t3");
     // Save the complete metadata record at this point
     completeRecord = new Metadata(targetId, toProps(prefix, "k1", "v1", "k2", "v2", "k3", "v3"),
-                                        toTags(prefix, "t1", "t2", "t3", "t4"));
+                                  toTags(prefix, "t1", "t2", "t3", "t4"));
     time = System.currentTimeMillis();
     expected.put(time, completeRecord);
     // Assert the history record with the change
@@ -726,7 +734,7 @@ public class MetadataDatasetTest {
     dataset.removeTags(targetId, prefix + "t2");
     // Save the complete metadata record at this point
     completeRecord = new Metadata(targetId, toProps(prefix, "k1", "v1", "k3", "v3"),
-                                        toTags(prefix, "t1", "t3"));
+                                  toTags(prefix, "t1", "t3"));
     time = System.currentTimeMillis();
     expected.put(time, completeRecord);
     // Assert the history record with the change
@@ -757,7 +765,7 @@ public class MetadataDatasetTest {
     dataset.addTags(targetId, prefix + "t2");
     // Save the complete metadata record at this point
     completeRecord = new Metadata(targetId, toProps(prefix, "k2", "v2"),
-                                        toTags(prefix, "t2"));
+                                  toTags(prefix, "t2"));
     time = System.currentTimeMillis();
     expected.put(time, completeRecord);
     // Assert the history record with the change

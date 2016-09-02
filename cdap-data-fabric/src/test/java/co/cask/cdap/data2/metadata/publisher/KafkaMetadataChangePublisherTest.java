@@ -26,6 +26,7 @@ import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.kafka.KafkaTester;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.codec.NamespacedIdCodec;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.metadata.MetadataChangeRecord;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
@@ -48,6 +49,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -103,7 +105,7 @@ public class KafkaMetadataChangePublisherTest {
   private List<MetadataChangeRecord> generateMetadataChanges() {
     long currentTime = System.currentTimeMillis();
     ImmutableList.Builder<MetadataChangeRecord> changesBuilder = ImmutableList.builder();
-    Id.DatasetInstance dataset = Id.DatasetInstance.from("ns1", "ds1");
+    DatasetId dataset = DatasetId.fromIdParts(Arrays.asList("ns1", "ds1"));
     // Initial state: empty
     MetadataRecord previous = new MetadataRecord(dataset, MetadataScope.USER, ImmutableMap.<String, String>of(),
                                                  ImmutableSet.<String>of());
