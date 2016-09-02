@@ -52,7 +52,7 @@ import javax.annotation.Nullable;
 /**
  * Helper class for getting and setting specific config settings for a job context.
  */
-final class MapReduceContextConfig {
+public final class MapReduceContextConfig {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceContextConfig.class);
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
@@ -73,7 +73,7 @@ final class MapReduceContextConfig {
 
   private final Configuration hConf;
 
-  MapReduceContextConfig(Configuration hConf) {
+  public MapReduceContextConfig(Configuration hConf) {
     this.hConf = hConf;
   }
 

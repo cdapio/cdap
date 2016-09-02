@@ -15,6 +15,10 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.common.RuntimeArguments;
+import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.flow.FlowletProgramRunner;
 import com.google.common.base.Throwables;
 import org.apache.twill.api.Command;
@@ -46,5 +50,10 @@ final class FlowletTwillRunnable extends AbstractProgramTwillRunnable<FlowletPro
       }
       LOG.debug("Command failure ignored", e);
     }
+  }
+
+  @Override
+  protected Arguments resolveScope(Arguments arguments) {
+    return new BasicArguments(RuntimeArguments.extractScope(FlowUtils.FLOWLET_SCOPE, name, arguments.asMap()));
   }
 }

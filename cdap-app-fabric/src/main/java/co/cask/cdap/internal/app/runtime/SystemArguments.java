@@ -18,9 +18,11 @@ package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -33,6 +35,37 @@ public final class SystemArguments {
 
   private static final String MEMORY_KEY = "system.resources.memory";
   private static final String CORES_KEY = "system.resources.cores";
+  private static final String LOG_LEVEL = "system.log.level";
+
+  /**
+   * Set the log level for the {@link LogAppenderInitializer}.
+   *
+   * Same as calling {@link #setLogLevel(Map, LogAppenderInitializer)} with first argument from
+   * {@link Arguments#asMap()}
+   */
+  public static void setLogLevel(Arguments args, LogAppenderInitializer initializer) {
+    setLogLevel(args.asMap(), initializer);
+  }
+
+  /**
+   * Set the log level for the {@link LogAppenderInitializer}.
+   * @param args the arguments to use for looking up resources configurations
+   * @param initializer the LogAppenderInitializer which will be used to set up the log level
+   */
+  public static void setLogLevel(Map<String, String> args, LogAppenderInitializer initializer) {
+    Map<String, String> logPairs = new HashMap<>();
+    for (Map.Entry<String, String> entry : args.entrySet()) {
+      String key = entry.getKey();
+      if (!key.equals(LOG_LEVEL) && key.startsWith(LOG_LEVEL)) {
+        logPairs.put(entry.getKey().substring(LOG_LEVEL.length() + 1), entry.getValue());
+      }
+    }
+    String logLevel = args.get(LOG_LEVEL);
+    if (logLevel != null) {
+      logPairs.put(Logger.ROOT_LOGGER_NAME, logLevel);
+    }
+    initializer.setLogLevels(logPairs);
+  }
 
   /**
    * Returns the {@link Resources} based on configurations in the given arguments.

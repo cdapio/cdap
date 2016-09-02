@@ -23,6 +23,7 @@ import co.cask.cdap.app.guice.DistributedProgramRunnableModule;
 import co.cask.cdap.app.program.DefaultProgram;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
@@ -34,6 +35,7 @@ import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.ProgramClassLoader;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
@@ -126,7 +128,8 @@ public final class SparkRuntimeContextProvider {
 
       Injector injector = createInjector(cConf, hConf);
 
-      final Service logAppenderService = new LogAppenderService(injector.getInstance(LogAppenderInitializer.class));
+      final Service logAppenderService = new LogAppenderService(injector.getInstance(LogAppenderInitializer.class),
+                                                                contextConfig.getProgramOptions());
       final ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
       final KafkaClientService kafkaClientService = injector.getInstance(KafkaClientService.class);
       final MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
@@ -244,16 +247,19 @@ public final class SparkRuntimeContextProvider {
    */
   private static final class LogAppenderService extends AbstractService {
 
+    private final ProgramOptions programOptions;
     private final LogAppenderInitializer initializer;
 
-    private LogAppenderService(LogAppenderInitializer initializer) {
+    private LogAppenderService(LogAppenderInitializer initializer, ProgramOptions programOptions) {
       this.initializer = initializer;
+      this.programOptions = programOptions;
     }
 
     @Override
     protected void doStart() {
       try {
         initializer.initialize();
+        SystemArguments.setLogLevel(programOptions.getUserArguments(), initializer);
         notifyStarted();
       } catch (Throwable t) {
         notifyFailed(t);
