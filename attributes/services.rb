@@ -54,9 +54,9 @@ default['cdap'][name]['init_name'] = name.split.map(&:capitalize).join(' ')
 default['cdap'][name]['init_krb5'] = false
 default['cdap'][name]['init_cmd'] =
   if node['cdap']['version'].to_f < 4.0
-    "/opt/cdap/#{name}/bin/svc-#{name}"
+    "/opt/cdap/gateway/bin/svc-#{name}"
   else
-    "/opt/cdap/#{name}/bin/cdap #{name}"
+    "/opt/cdap/gateway/bin/cdap #{name}"
   end
 default['cdap'][name]['init_actions'] = [:nothing]
 
