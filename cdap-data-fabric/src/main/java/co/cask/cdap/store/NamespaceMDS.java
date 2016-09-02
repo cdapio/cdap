@@ -28,28 +28,28 @@ import javax.annotation.Nullable;
 /**
  * Dataset for namespace metadata
  */
-public class NamespaceMDS extends MetadataStoreDataset {
+final class NamespaceMDS extends MetadataStoreDataset {
 
   private static final String TYPE_NAMESPACE = "namespace";
 
-  public NamespaceMDS(Table table) {
+  NamespaceMDS(Table table) {
     super(table);
   }
 
-  public void create(NamespaceMeta metadata) {
+  void create(NamespaceMeta metadata) {
     write(getNamespaceKey(metadata.getName()), metadata);
   }
 
   @Nullable
-  public NamespaceMeta get(Id.Namespace id) {
+  NamespaceMeta get(Id.Namespace id) {
     return getFirst(getNamespaceKey(id.getId()), NamespaceMeta.class);
   }
 
-  public void delete(Id.Namespace id) {
+  void delete(Id.Namespace id) {
     deleteAll(getNamespaceKey(id.getId()));
   }
 
-  public List<NamespaceMeta> list() {
+  List<NamespaceMeta> list() {
     return list(getNamespaceKey(null), NamespaceMeta.class);
   }
 
