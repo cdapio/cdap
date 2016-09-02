@@ -28,6 +28,7 @@ import CdapHeader from './components/CdapHeader';
 import Footer from './components/Footer';
 import SplashScreen from './components/SplashScreen';
 import ConnectionExample from './components/ConnectionExample';
+import Experimental from './components/Experimental';
 
 require('./styles/lib-styles.less');
 require('./styles/common.less');
@@ -63,6 +64,7 @@ ReactDOM.render(
       <Route name="dashboard" path="dashboard" component={Dashboard}/>
       <Route path="management" component={Management}/>
       <Route name="socket" path="socket-example" component={ConnectionExample} />
+      <Route path="experimental" component={Experimental} />
     </Route>
   </Router>,
   document.getElementById('app-container')

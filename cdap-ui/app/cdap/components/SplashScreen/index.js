@@ -38,6 +38,7 @@ export default class SplashScreen extends Component {
       }
     })
       .then((response) => {
+        // TODO: do something??
         if (response.status > 300) {
           this.setState({error: response.statusText});
         }
@@ -55,10 +56,8 @@ export default class SplashScreen extends Component {
         <div className="splash-screen-backdrop"></div>
         <div className="splash-screen">
           <Card
-            title="Welcome to Cask Data Application Platform"
-            error={this.state.error}
-            success={this.state.message}
             closeable
+            title="Welcome to Cask Data Application Platform"
             onClose={this.onClose.bind(this)}
           >
             <div className="text-center">

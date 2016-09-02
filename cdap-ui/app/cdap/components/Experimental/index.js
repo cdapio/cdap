@@ -14,32 +14,13 @@
  * the License.
  */
 
-@import './styles/variables.less';
-@import './styles/fonts.less';
-
-#login-form {
-  position: absolute;
-  top: 43%;
-  left: 50%;
-  width: 35%;
-  height: 40%;
-  transform: translate(-50%, -50%);
-  padding: 20px;
-
-  .cdap-logo {
-    color: #ff6600;
-    background: url('/login_assets/img/CDAP_Logotype.svg');
-    height: 50px;
-    width: 200px;
-    background-size: 100% 100%;
-    margin: 0 auto;
-  }
-  .cask-card {
-    padding-top: 10px;
-  }
-  .error-label {
-    margin-left: 10px;
-    color: @brand-danger;
-    padding-top: 0;
+import React, {Component} from 'react';
+export default class Experimental extends Component {
+  render() {
+    return (
+      <div>
+        <h1> Experimental </h1>
+      </div>
+    );
   }
 }
