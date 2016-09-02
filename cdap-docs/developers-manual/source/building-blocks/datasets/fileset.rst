@@ -49,8 +49,9 @@ To create and use a FileSet in an application, you create it as part of the appl
       createDataset("lines", FileSet.class, FileSetProperties.builder()
         .setBasePath("example/data/lines")
         .setInputFormat(TextInputFormat.class)
-        .setOutputFormat(TextOutputFormat.class).build());
+        .setOutputFormat(TextOutputFormat.class)
         .setOutputProperty(TextOutputFormat.SEPERATOR, ":")
+        .build());
       ...
     }
 
