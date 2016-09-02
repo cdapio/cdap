@@ -14,7 +14,7 @@ A system-supplied validator that offers a set of functions that can be called fr
 
 It is included in a transform by adding its name (``core``) to the ``validators`` field of
 the transform configuration and its functions are referenced by using its JavaScript name
-(``coreValidator``). See an example in the `Validator transforms plugin <../transforms/validator-transforms.html>`__.
+(``coreValidator``). See an example in the `Validator transforms plugin <../transforms/validator-transform.html>`__.
 
 .. rubric:: Use Case
 
