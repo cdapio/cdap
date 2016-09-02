@@ -121,8 +121,8 @@ function link (scope, element) {
       .ticks(8)
       .tickFormat(customTimeFormat);
 
-    getLogStats();
     generateEventCircles();
+    getLogStats();
     renderBrushAndSlider();
   };
 

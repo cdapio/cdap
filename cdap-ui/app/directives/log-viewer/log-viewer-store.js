@@ -29,6 +29,7 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
     }
   };
 
+  //This start time remains static for the application ; used for the start of the timeline
   const globalStartTime = (state = null, action = {}) => {
     switch(action.type) {
       case LOGVIEWERSTORE_ACTIONS.GLOBAL_START_TIME:

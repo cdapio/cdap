@@ -210,6 +210,10 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
   let unsub = LogViewerStore.subscribe(() => {
 
+    this.totalCount = LogViewerStore.getState().totalLogs;
+    this.warningCount = LogViewerStore.getState().totalWarnings;
+    this.errorCount = LogViewerStore.getState().totalErrors;
+
     this.fullScreen = LogViewerStore.getState().fullScreen;
     if(this.logStartTime === LogViewerStore.getState().startTime){
       return;
@@ -224,10 +228,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     if(this.startTimeSec === Math.floor(this.logStartTime/1000)){
       return;
     }
-
-    this.totalCount = LogViewerStore.getState().totalLogs;
-    this.warningCount = LogViewerStore.getState().totalWarnings;
-    this.errorCount = LogViewerStore.getState().totalErrors;
 
     //Make a new request based on the changed start time
     this.startTimeSec = (this.logStartTime instanceof Date) ? (Math.floor(this.logStartTime.getTime()/1000)) : (this.logStartTime/1000);
