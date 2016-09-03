@@ -42,7 +42,7 @@ stream, write to a table, run a script), and is dependent on the particular plug
 All stages are connected together in a directed acyclic graph (or *DAG*), which is
 shown in *Hydrator Studio* and in CDAP as a connected series of icons:
 
-.. image:: /_images/forkInPipeline.png
+.. image:: /_images/fork-in-pipeline.png
    :width: 6in
    :align: center
 

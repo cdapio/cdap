@@ -20,15 +20,9 @@ Installation using Apache Ambari
 - Ambari is for setting up HDP (Hortonworks Data Platform) on bare clusters; it can't be 
   used for clusters with HDP already installed, where the original installation was
   **not** with Ambari.
-- These features are **currently not included** in the CDAP Apache Ambari Service (though they may in the future):
-  
-  - The CDAP Apache Ambari Service is not integrated with the `CDAP Authentication Server <https://issues.cask.co/browse/CDAP-4110>`__;
-  - CDAP component `high-availability <https://issues.cask.co/browse/CDAP-4107>`__  is not supported;
-
 - A number of features are currently planned to be added, including:
 
-  - `pre-defined alerts <https://issues.cask.co/browse/CDAP-4106>`__  for CDAP services ;
-  - select `CDAP metrics <https://issues.cask.co/browse/CDAP-4108>`__; and
+  - select `CDAP metrics <https://issues.cask.co/browse/CDAP-4108>`__ and
   - a full `smoke test of CDAP functionality <https://issues.cask.co/browse/CDAP-4105>`__ after installation.
 
 
@@ -78,6 +72,8 @@ with the CDAP Repository from the list below that you would like to use:
 +----------------+-----------------+-------------------------+
 | CDAP Series    | CDAP Repository | Hadoop Distributions    |
 +================+=================+=========================+
+| CDAP 3.5.x     | ``cdap/3.5``    | HDP 2.0 through HDP 2.4 |
++----------------+-----------------+-------------------------+
 | CDAP 3.4.x     | ``cdap/3.4``    | HDP 2.0 through HDP 2.4 |
 +----------------+-----------------+-------------------------+
 | CDAP 3.3.x     | ``cdap/3.3``    | HDP 2.0 through HDP 2.3 |
@@ -152,10 +148,11 @@ Assign CDAP Services to Hosts
 
 3. Next, assign CDAP services to hosts.
 
-   CDAP consists of 4 daemons:
+   CDAP consists of five daemons:
  
    #. **Master:** Coordinator service which launches CDAP system services into YARN
    #. **Router:** Serves HTTP endpoints for CDAP applications and REST API
+   #. **Auth Server:** For managing authentication tokens on CDAP clusters with perimeter security enabled
    #. **Kafka Server:** For transporting CDAP metrics and CDAP system service log data
    #. **UI:** Web interface to CDAP and :ref:`Cask Hydrator <cask-hydrator>`
       (for CDAP 3.2.x and later installations)
@@ -192,11 +189,6 @@ Customize CDAP
    Under *Advanced cdap-env*, you can configure environment settings such as heap sizes
    and the directories used to store logs and pids for the CDAP services which run on the edge nodes.
 
-   **Including Spark:** If you are including Spark, the *Advanced cdap-env* needs to
-   contain the location of the Spark libraries, typically as
-   ``SPARK_HOME=/usr/hdp/<version>/spark``, where "<version>" matches the HDP version
-   of the cluster, including its build iteration, such as "2.3.4.0-3485".
-
    .. figure:: ../_images/ambari/ss05-config-cdap-env.png
       :figwidth: 100%
       :width: 800px
@@ -216,13 +208,7 @@ Customize CDAP
  
       **Ambari Dashboard:** Customizing Services 2
 
-#. To use the CDAP Explore service (to use SQL to query CDAP data), you must have Hive
-   installed on the cluster, have the Hive client libraries installed on the same host as
-   the CDAP services, and have the *Advanced cdap-site* ``explore.enabled`` option set to
-   *true* (the default). If you do not have Hive installed or available, this option must be
-   set to *false*.
-
-   **Router Bind Port, Router Server Port:** These two ports should match; *Router Server
+#. **Router Bind Port, Router Server Port:** These two ports should match; *Router Server
    Port* is used by the CDAP UI to connect to the CDAP Router service.
 
    .. figure:: ../_images/ambari/ss07-config-enable-explore.png
@@ -336,16 +322,13 @@ Advanced Topics
 
 .. _ambari-configuration-security:
 
-Enabling Perimeter Security
----------------------------
+.. Enabling Perimeter Security
+.. ---------------------------
+.. include:: /../target/_includes/ambari-configuration.rst
+    :start-after: .. _ambari-configuration-eps:
 
-.. .. include:: /../target/_includes/ambari-configuration.rst
-..     :start-after: .. _ambari-configuration-eps:
-
-:ref:`CDAP Security <admin-security>` is **not currently** supported when using Apache Ambari.
-The CDAP Apache Ambari Service is not integrated with the `CDAP Authentication Server
-<https://issues.cask.co/browse/CDAP-4110>`__. As a consequence, any settings made to
-support :ref:`CDAP Security <admin-security>` will be erased by Ambari.
+:ref:`CDAP Security <admin-security>` is configured by setting the appropriate
+settings under Ambari for your environment.
 
 .. _ambari-configuration-enabling-kerberos:
 
@@ -355,7 +338,69 @@ Kerberos support in CDAP is automatically enabled when enabling Kerberos securit
 cluster via Ambari. Consult the appropriate Ambari documentation for instructions on enabling
 Kerberos support for your cluster.
 
-CDAP HA Setup
--------------
-CDAP component `high-availability <https://issues.cask.co/browse/CDAP-4107>`__  is not
-supported.
+.. _ambari-configuration-highly-available:
+
+Enabling CDAP HA
+----------------
+In addition to having a :ref:`cluster architecture <admin-manual-install-deployment-architectures-ha>`
+that supports HA (high availability), these additional configuration steps need to be followed and completed:
+
+CDAP Components
+...............
+For each of the CDAP components listed below (Master, Router, Kafka, UI, Authentication Server), these
+comments apply:
+
+- Sync the configuration files (such as ``cdap-site.xml`` and ``cdap-security.xml``) on all the nodes. 
+- While the default *bind.address* settings (``0.0.0.0``, used for ``app.bind.address``,
+  ``data.tx.bind.address``, ``router.bind.address``, and so on) can be synced across hosts,
+  if you customize them to a particular IP address, they will |---| as a result |---| be
+  different on different hosts. This can be controlled by the settings for an individual *Role Instance*.
+
+CDAP Master
+...........
+The CDAP Master service primarily performs coordination tasks and can be scaled for redundancy. The
+instances coordinate amongst themselves, electing one as a leader at all times.
+
+- Using the Ambari UI, add additional hosts for the ``CDAP Master
+  Service`` to additional machines.
+
+CDAP Router
+...........
+The CDAP Router service is a stateless API endpoint for CDAP, and simply routes requests to the
+appropriate service. It can be scaled horizontally for performance. A load balancer, if
+desired, can be placed in front of the nodes running the service.
+
+- Using the Ambari UI, add additional hosts for the ``CDAP Router Service`` to additional machines.
+- Start each ``CDAP Router Service`` role.
+
+CDAP Kafka
+..........
+- Using the Ambari UI, add additional hosts for the ``CDAP Kafka Service``
+  to additional machines.
+- Two properties govern the Kafka setting in the cluster:
+
+  - The **list of Kafka seed brokers** is generated automatically, but the
+    replication factor (``kafka.default.replication.factor``) is not set
+    automatically. Instead, it needs to be set manually.
+  - The **replication factor** is used to replicate Kafka messages across
+    multiple machines to prevent data loss in the event of a hardware
+    failure.
+
+- The recommended setting is to run **at least two** Kafka brokers with a **minimum replication
+  factor of two**; set this property to the maximum number of tolerated machine failures
+  plus one (assuming you have that number of machines). For example, if you were running
+  five Kafka brokers, and would tolerate two of those failing, you would set the
+  replication factor to three. The number of Kafka brokers listed should always be equal to
+  or greater than the replication factor.
+
+CDAP UI
+.......
+- Using the Ambari UI, add additional hosts for the ``CDAP UI Service``
+  to additional machines.
+
+CDAP Authentication Server
+..........................
+- Using the Ambari UI, add additional hosts for the ``CDAP Security Auth
+  Service`` (the CDAP Authentication Server) to additional machines.
+- Note that when an unauthenticated request is made in a secure HA setup, a list of all
+  running authentication endpoints will be returned in the body of the request.
