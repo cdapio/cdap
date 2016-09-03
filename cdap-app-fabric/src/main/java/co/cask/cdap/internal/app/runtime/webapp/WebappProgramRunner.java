@@ -69,7 +69,7 @@ public class WebappProgramRunner implements ProgramRunner {
 
   @Inject
   public WebappProgramRunner(ServiceAnnouncer serviceAnnouncer, DiscoveryService discoveryService,
-                             @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
+                             @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
                              WebappHttpHandlerFactory webappHttpHandlerFactory,
                              CConfiguration cConf) {
     this.serviceAnnouncer = serviceAnnouncer;
