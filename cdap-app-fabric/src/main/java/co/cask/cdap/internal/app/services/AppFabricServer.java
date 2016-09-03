@@ -89,7 +89,7 @@ public class AppFabricServer extends AbstractIdleService {
   @Inject
   public AppFabricServer(CConfiguration configuration, DiscoveryService discoveryService,
                          SchedulerService schedulerService, NotificationService notificationService,
-                         @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
+                         @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                          @Named(Constants.AppFabric.HANDLERS_BINDING) Set<HttpHandler> handlers,
                          @Nullable MetricsCollectionService metricsCollectionService,
                          ProgramRuntimeService programRuntimeService,
@@ -173,13 +173,8 @@ public class AppFabricServer extends AbstractIdleService {
 
       @Override
       public void running() {
-        String announceAddress = configuration.get(Constants.Service.MASTER_SERVICES_ANNOUNCE_ADDRESS,
-                                                   httpService.getBindAddress().getHostName());
-        int announcePort = configuration.getInt(Constants.AppFabric.SERVER_ANNOUNCE_PORT,
-                                                httpService.getBindAddress().getPort());
-
-        final InetSocketAddress socketAddress = new InetSocketAddress(announceAddress, announcePort);
-        LOG.info("AppFabric HTTP Service announced at {}", socketAddress);
+        final InetSocketAddress socketAddress = httpService.getBindAddress();
+        LOG.info("AppFabric HTTP Service started at {}", socketAddress);
 
         // TODO accept a list of services, and start them here
         // When it is running, register it with service discovery

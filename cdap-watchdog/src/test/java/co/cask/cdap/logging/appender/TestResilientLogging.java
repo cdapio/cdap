@@ -93,7 +93,7 @@ public class TestResilientLogging {
     datasetDir.mkdirs();
 
     cConf.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
-    cConf.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, "localhost");
+    cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
 
     cConf.set(Constants.Dataset.Executor.ADDRESS, "localhost");
     cConf.setInt(Constants.Dataset.Executor.PORT, Networks.getRandomPort());

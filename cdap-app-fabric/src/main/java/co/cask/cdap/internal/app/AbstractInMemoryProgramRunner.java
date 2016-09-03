@@ -59,7 +59,7 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
 
   @Inject
   protected AbstractInMemoryProgramRunner(CConfiguration cConf) {
-    this.host = cConf.get(Constants.Service.MASTER_SERVICES_BIND_ADDRESS);
+    this.host = cConf.get(Constants.AppFabric.SERVER_ADDRESS);
   }
 
   /**

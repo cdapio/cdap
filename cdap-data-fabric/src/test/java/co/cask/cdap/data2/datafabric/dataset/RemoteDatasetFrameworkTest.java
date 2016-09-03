@@ -103,7 +103,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
   @Before
   public void before() throws Exception {
-    cConf.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, "localhost");
+    cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
 
     Configuration txConf = HBaseConfiguration.create();

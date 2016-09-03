@@ -141,8 +141,7 @@ public class DistributedProgramRunnableModule {
                              @Override
                              protected void configure() {
 
-                               bind(InetAddress.class).annotatedWith(
-                                 Names.named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS))
+                               bind(InetAddress.class).annotatedWith(Names.named(Constants.AppFabric.SERVER_ADDRESS))
                                  .toInstance(context.getHost());
 
                                bind(ServiceAnnouncer.class).toInstance(new ServiceAnnouncer() {

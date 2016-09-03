@@ -60,7 +60,6 @@ public class DatasetService extends AbstractExecutionThreadService {
   private final DatasetOpExecutor opExecutorClient;
   private final Set<DatasetMetricsReporter> metricReporters;
   private final DatasetTypeService typeService;
-  private final CConfiguration cConf;
 
   private Cancellable cancelDiscovery;
   private Cancellable opExecutorServiceWatch;
@@ -76,7 +75,6 @@ public class DatasetService extends AbstractExecutionThreadService {
                         Set<DatasetMetricsReporter> metricReporters,
                         DatasetTypeService datasetTypeService,
                         DatasetInstanceService datasetInstanceService) throws Exception {
-    this.cConf = cConf;
     this.typeService = datasetTypeService;
     DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(datasetTypeService);
     DatasetInstanceHandler datasetInstanceHandler = new DatasetInstanceHandler(datasetInstanceService);
@@ -87,7 +85,7 @@ public class DatasetService extends AbstractExecutionThreadService {
     builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                      Constants.Service.DATASET_MANAGER)));
 
-    builder.setHost(cConf.get(Constants.Service.MASTER_SERVICES_BIND_ADDRESS));
+    builder.setHost(cConf.get(Constants.Dataset.Manager.ADDRESS));
 
     builder.setPort(cConf.getInt(Constants.Dataset.Manager.PORT));
 
@@ -143,12 +141,6 @@ public class DatasetService extends AbstractExecutionThreadService {
   protected void run() throws Exception {
     waitForOpExecutorToStart();
 
-    String announceAddress = cConf.get(Constants.Service.MASTER_SERVICES_ANNOUNCE_ADDRESS,
-                                       httpService.getBindAddress().getHostName());
-    int announcePort = cConf.getInt(Constants.Dataset.Manager.ANNOUNCE_PORT,
-                                    httpService.getBindAddress().getPort());
-
-    final InetSocketAddress socketAddress = new InetSocketAddress(announceAddress, announcePort);
     LOG.info("Announcing DatasetService for discovery...");
     // Register the service
     cancelDiscovery = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
@@ -159,11 +151,11 @@ public class DatasetService extends AbstractExecutionThreadService {
 
       @Override
       public InetSocketAddress getSocketAddress() {
-        return socketAddress;
+        return httpService.getBindAddress();
       }
     }));
 
-    LOG.info("DatasetService started successfully on {}", socketAddress);
+    LOG.info("DatasetService started successfully on {}", httpService.getBindAddress());
     while (isRunning()) {
       try {
         TimeUnit.SECONDS.sleep(1);

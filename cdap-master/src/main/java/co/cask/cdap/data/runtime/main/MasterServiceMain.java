@@ -180,6 +180,7 @@ public class MasterServiceMain extends DaemonMain {
 
   public MasterServiceMain() {
     CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.Dataset.Manager.ADDRESS, getLocalHost().getCanonicalHostName());
 
     // Note: login has to happen before any objects that need Kerberos credentials are instantiated.
     login(cConf);

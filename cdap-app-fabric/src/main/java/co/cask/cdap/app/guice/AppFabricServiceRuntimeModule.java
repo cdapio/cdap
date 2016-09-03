@@ -357,10 +357,10 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
     }
 
     @Provides
-    @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS)
+    @Named(Constants.AppFabric.SERVER_ADDRESS)
     @SuppressWarnings("unused")
     public InetAddress providesHostname(CConfiguration cConf) {
-      String address = cConf.get(Constants.Service.MASTER_SERVICES_BIND_ADDRESS);
+      String address = cConf.get(Constants.AppFabric.SERVER_ADDRESS);
       return Networks.resolve(address, new InetSocketAddress("localhost", 0).getAddress());
     }
 

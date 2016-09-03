@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.common.utils.DirUtils;
 import com.google.common.base.Preconditions;
 import com.google.gson.stream.JsonWriter;
+import kafka.Kafka;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Comment;
@@ -242,10 +243,6 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
           new DeprecatedKeyInfo(KafkaConstants.ConfigKeys.HOSTNAME_CONFIG));
       put(KafkaConstants.ConfigKeys.NUM_PARTITIONS_CONFIG_DEPRECATED,
           new DeprecatedKeyInfo(KafkaConstants.ConfigKeys.NUM_PARTITIONS_CONFIG));
-      put(Constants.AppFabric.SERVER_ADDRESS_DEPRECATED,
-          new DeprecatedKeyInfo(Constants.Service.MASTER_SERVICES_BIND_ADDRESS));
-      put(Constants.Dataset.Manager.ADDRESS_DEPRECATED,
-          new DeprecatedKeyInfo(Constants.Service.MASTER_SERVICES_BIND_ADDRESS));
     }
   };
 
@@ -265,8 +262,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
           new String[] {KafkaConstants.ConfigKeys.HOSTNAME_CONFIG_DEPRECATED});
       put(KafkaConstants.ConfigKeys.NUM_PARTITIONS_CONFIG,
           new String[] {KafkaConstants.ConfigKeys.NUM_PARTITIONS_CONFIG_DEPRECATED});
-      put(Constants.Service.MASTER_SERVICES_BIND_ADDRESS,
-          new String[]{Constants.AppFabric.SERVER_ADDRESS_DEPRECATED, Constants.Dataset.Manager.ADDRESS_DEPRECATED});
+
     }
   };
 

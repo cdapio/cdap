@@ -53,7 +53,7 @@ public class StandaloneAppFabricServer extends AppFabricServer {
                                    DiscoveryService discoveryService,
                                    SchedulerService schedulerService,
                                    NotificationService notificationService,
-                                   @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
+                                   @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                                    @Named(Constants.AppFabric.HANDLERS_BINDING) Set<HttpHandler> handlers,
                                    @Nullable MetricsCollectionService metricsCollectionService,
                                    ProgramRuntimeService programRuntimeService,
