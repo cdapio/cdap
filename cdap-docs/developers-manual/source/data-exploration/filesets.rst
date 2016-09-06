@@ -1,16 +1,17 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2016 Cask Data, Inc.
 
 .. _fileset-exploration:
 
 ===================
-Fileset Exploration
+FileSet Exploration
 ===================
 
-The ``FileSet``, ``PartitionedFileSet``, and ``TimePartitionedFileSet`` datasets can be explored through ad-hoc SQL-like queries.
-To enable exploration, you must set several properties when creating the dataset, and the files in 
-your dataset must meet certain requirements. These properties and requirements are described below. 
+The ``FileSet``, ``PartitionedFileSet``, and ``TimePartitionedFileSet`` datasets can be
+explored through ad-hoc SQL-like queries. To enable exploration, you must set several
+properties when creating the dataset, and the files in your dataset must meet certain
+requirements. These properties and requirements are described below. 
 
 Explore Properties
 ------------------

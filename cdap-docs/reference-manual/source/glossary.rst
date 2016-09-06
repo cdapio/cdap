@@ -217,3 +217,7 @@ Glossary
       sinks, configuring an :term:`ETL` pipeline within minutes. It provides an
       operational view of the resulting ETL pipeline that allows for monitoring of
       metrics, logs, and other run-time information.
+
+   Storage Provider
+      For :term:`datasets <dataset>` and :term:`streams <stream>`, a storage provider is the underlying
+      system that CDAP uses for persistence. Examples include HDFS, HBase, and Hive.

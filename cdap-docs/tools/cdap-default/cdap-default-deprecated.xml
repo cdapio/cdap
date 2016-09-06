@@ -20,6 +20,22 @@
   <!-- Deprecated Properties Configuration -->
 
   <property>
+    <name>app.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      App Fabric service bind address (deprecated: use master.services.bind.address instead)
+    </description>
+  </property>
+
+  <property>
+    <name>dataset.service.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+       Dataset service bind address (deprecated: use master.services.bind.address instead)
+    </description>
+  </property>
+ 
+  <property>
     <name>explore.executor.container.instances</name>
     <value>1</value>
     <description>
@@ -152,6 +168,15 @@
     <description>
       Determines if the webapp listening service should be started
       (deprecated)
+    </description>
+  </property>
+
+  <property>
+    <name>security.auth.server.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      CDAP Authentication service bind address
+      (deprecated; use security.auth.server.bind.address instead)
     </description>
   </property>
 
