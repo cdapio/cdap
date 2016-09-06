@@ -11,7 +11,7 @@ Apache Sentry
 .. _apache-sentry-configuration:
 
 Configuring Apache Sentry for Integration with CDAP
-===================================================
++++++++++++++++++++++++++++++++++++++++++++++++++++
 To use CDAP on a cluster using Apache Sentry for authorization, set this property:
 
 - Add the user ``cdap`` to the Sentry property ``sentry.service.allow.connect``
@@ -31,11 +31,11 @@ We also recommend setting these properties:
 .. _cdap-sentry-authorization-extension:
 
 CDAP Sentry Authorization Extension
-===================================
++++++++++++++++++++++++++++++++++++
 In addition to setting up CDAP to work on a cluster already using Apache Sentry for
 authorization of non-CDAP components, users can also use the CDAP Sentry Authorization
 Extension to enforce authorization on CDAP entities using Apache Sentry.
 
 .. include:: /../target/_includes/cdap-sentry-extension-readme.txt
-    :start-after: ================================================
+    :start-line: 4
     :end-before: Share and Discuss!
