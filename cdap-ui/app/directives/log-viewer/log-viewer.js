@@ -25,6 +25,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   this.viewLimit = 100;
   this.$uibModal = $uibModal;
   this.errorRetrievingLogs = false;
+  this.loading = true;
 
   var rawLogs = {
     log: '',
@@ -32,6 +33,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   };
 
   this.setProgramMetadata = (status) => {
+
     this.programStatus = status;
 
     if(!this.entityName) {
@@ -57,6 +59,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         break;
     }
   };
+
   let page = angular.element(window);
 
   this.setDefault = () => {
@@ -186,7 +189,30 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   let numEvents = 0;
   this.toggleExpandAll = false;
 
+  //Initial Call To Get Logs
+  if (this.runId) {
+    myLogsApi.getLogsMetadata({
+      namespace : this.namespaceId,
+      appId : this.appId,
+      programType : this.programType,
+      programId : this.programId,
+      runId : this.runId
+    }).$promise.then(
+      (statusRes) => {
+        this.setProgramMetadata(statusRes.status);
+        this.updateGlobalStartInStore(statusRes.start);
+        this.updateStartTimeInStore(statusRes.start);
+      },
+      (statusErr) => {
+        console.log('ERROR: ', statusErr);
+      });
+  }
+
   let unsub = LogViewerStore.subscribe(() => {
+
+    this.totalCount = LogViewerStore.getState().totalLogs;
+    this.warningCount = LogViewerStore.getState().totalWarnings;
+    this.errorCount = LogViewerStore.getState().totalErrors;
 
     this.fullScreen = LogViewerStore.getState().fullScreen;
     if(this.logStartTime === LogViewerStore.getState().startTime){
@@ -195,17 +221,18 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
     this.logStartTime = LogViewerStore.getState().startTime;
 
+    if(this.logStartTime === null){
+      return;
+    }
 
     if(this.startTimeSec === Math.floor(this.logStartTime/1000)){
       return;
     }
 
-    this.totalCount = LogViewerStore.getState().totalLogs;
-    this.warningCount = LogViewerStore.getState().totalWarnings;
-    this.errorCount = LogViewerStore.getState().totalErrors;
-
+    //Make a new request based on the changed start time
     this.startTimeSec = (this.logStartTime instanceof Date) ? (Math.floor(this.logStartTime.getTime()/1000)) : (this.logStartTime/1000);
-    this.fromOffset = -1 + '.' + this.startTimeSec*1000;
+    this.fromOffset = -10000 + '.' + this.startTimeSec*1000;
+    this.loading = true;
     startTimeRequest();
   });
 
@@ -215,6 +242,10 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   this.inViewScrollUpdate = (index, isInview, event) => {
 
       if(isInview) {
+
+        if(typeof this.displayData[index] !== 'undefined'){
+          return;
+        }
 
         //tbody extends beyond the viewport when scrolling down the table
         let topOfTable = event.inViewTarget.parentElement.getBoundingClientRect().top;
@@ -244,25 +275,9 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         }
 
         proximityVal = difference;
-    }
+      }
   };
 
-  if (this.runId) {
-    //Get Initial Status
-    myLogsApi.getLogsMetadata({
-      namespace : this.namespaceId,
-      appId : this.appId,
-      programType : this.programType,
-      programId : this.programId,
-      runId : this.runId
-    }).$promise.then(
-      (statusRes) => {
-        this.setProgramMetadata(statusRes.status);
-      },
-      (statusErr) => {
-        console.log('ERROR: ', statusErr);
-      });
-  }
 
   this.filterSearch = () => {
     //Rerender data
@@ -341,6 +356,24 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     });
   };
 
+  this.updateGlobalStartInStore = (val) => {
+    LogViewerStore.dispatch({
+      type: LOGVIEWERSTORE_ACTIONS.GLOBAL_START_TIME,
+      payload: {
+        globalStartTime: val
+      }
+    });
+  };
+
+  this.updateStartTimeInStore = function(val) {
+    LogViewerStore.dispatch({
+      type: LOGVIEWERSTORE_ACTIONS.START_TIME,
+      payload: {
+        startTime: val
+      }
+    });
+  };
+
   this.updateScreenChangeInStore = (state) => {
 
     LogViewerStore.dispatch({
@@ -371,6 +404,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
        return;
     }
 
+    this.loading = true;
+
     if(pollPromise){
       dataSrc.stopPoll(pollPromise.__pollId__);
       pollPromise = null;
@@ -388,6 +423,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         this.errorRetrievingLogs = false;
 
         if(res.length === 0){
+          this.loading = false;
           getStatus();
           return;
         }
@@ -403,6 +439,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
         this.data = this.data.concat(res);
         this.renderData();
+        this.loading = false;
         if(this.displayData.length < this.viewLimit){
           getStatus();
         }
@@ -536,10 +573,9 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   };
 
   const startTimeRequest = () => {
-
     this.data = [];
     this.renderData();
-    this.loading = true;
+
     if(pollPromise){
       dataSrc.stopPoll(pollPromise.__pollId__);
       pollPromise = null;
@@ -549,6 +585,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
        this.loading = false;
        return;
     }
+
+    this.loading = true;
 
     //Scroll table to the top
     angular.element(document.getElementsByClassName('logs-table'))[0].scrollTop = 0;
@@ -570,9 +608,20 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     }).$promise.then(
       (res) => {
 
+        if(res.length === 0){
+          //Update with start-time
+          this.data = [];
+          this.renderData();
+          this.loading = false;
+          getStatus();
+          if(this.statusType !== 0){
+            this.displayData = [];
+          }
+          return;
+        }
+
         this.errorRetrievingLogs = false;
         this.fromOffset = res[res.length-1].offset;
-        this.loading = false;
         this.data = [];
         this.displayData = [];
         this.renderData();
@@ -585,19 +634,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         });
 
         this.data = res;
-
-        if(res.length === 0){
-          //Update with start-time
-          this.renderData();
-          getStatus();
-          if(this.statusType !== 0){
-            this.loading = false;
-            this.displayData = [];
-          }
-          return;
-        }
-
         this.renderData();
+        this.loading = false;
         //Update the scroll needle to be positioned at the first element in the rendered data
         if(this.displayData.length > 0){
           this.updateScrollPositionInStore(this.displayData[0].log.timestamp);
@@ -715,6 +753,10 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   };
 
   this.scrollFn = function(){
+      if(this.data.length > 0){
+        this.viewLimit += 100;
+        this.fromOffset = this.data[this.data.length-1].offset;
+      }
       requestWithOffset();
   };
 
