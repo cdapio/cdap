@@ -37,7 +37,7 @@ export default class TabContents extends Component {
     childRefs.forEach(childRef => {
       this.childRefs[childRef].classList.add('hide');
     });
-    if (!this.state.activeTab) {
+    if (typeof this.state.activeTab === 'undefined') {
       childRefs[0].classList.remove('hide');
     } else {
       this.childRefs[this.state.activeTab].classList.remove('hide');
@@ -48,7 +48,13 @@ export default class TabContents extends Component {
     if (!childRefs.length) {
       return;
     }
-    let clickedChild = childRefs.filter(childRef => childRef === this.state.activeTab);
+    // FIXME: Here we are not doing type checking for active tab.
+    // Today we don't enforce what 'type' activeTab should be. Ideally a tab could
+    // be named using numbers or strings (name of the tab).
+    // User uses number for tab names. Object.keys(this.childRefs) will give an array of
+    // strings (numbers in strings). Thank you javascript.
+    
+    let clickedChild = childRefs.filter(childRef => childRef == this.state.activeTab);
     childRefs.forEach(ref => this.childRefs[ref].classList.add('hide'));
     this.childRefs[clickedChild[0]].classList.remove('hide');
   }

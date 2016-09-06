@@ -24,5 +24,6 @@ export default function TabContent({children}) {
   );
 }
 TabContent.propTypes = {
-  children: PropTypes.node
+  children: PropTypes.node,
+  name: PropTypes.any
 };

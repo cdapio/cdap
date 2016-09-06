@@ -17,22 +17,25 @@
 @import '../../styles/variables.less';
 
 .cask-tabs {
+  height: 100%;
   list-style: none;
   display: flex;
   justify-content: space-between;
   flex-direction: column;
+  
   &.vertical {
     flex-direction: row;
-    > .cask-tab-headers, .cask-tab-contents {
+    > div {
       &:first-child {
-        width: 30%;
+        width: 15%;
         flex-direction: column;
+        padding: 5px 0;
       }
-      width: 70%;
+      width: 85%;
       display: flex;
     }
   }
-  > .cask-tab-headers, .cask-tab-contents {
+  > div {
     width: 100%;
     display: flex;
   }

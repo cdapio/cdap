@@ -26,8 +26,52 @@ export default class CaskMarketPlace extends Component{
   constructor(props) {
     super(props);
     this.state = {
-      tabId: '1'
+      tabId: 0,
+      tabs:[
+        {
+          title: 'All',
+          content: 'All Tab content'
+        },
+        {
+          title: 'Examples',
+          content: 'Examples Tab Content'
+        },
+        {
+          title: 'Use Cases',
+          content: 'Use cases Tab Content'
+        },
+        {
+          title: 'Pipeline',
+          content: 'Pipeline Tab Content'
+        },
+        {
+          title: 'Applications',
+          content: 'Applications Tab Content'
+        },
+        {
+          title: 'Datasets',
+          content: 'Datasets Tab Content'
+        },
+        {
+          title: 'Plugins',
+          content: 'Plugins Tab Content'
+        },
+        {
+          title: 'Dashboards',
+          content: 'Dashboards Tab Content'
+        },
+        {
+          title: 'Artifacts',
+          content: 'Artifacts Tab Content'
+        }
+      ]
     };
+  }
+  componentWillReceiveProps() {
+    // On closing CaskMarketPlace modal reset the tab to be 0 instead of the one that is last opened.
+    this.setState({
+      tabId: 0
+    });
   }
   setTab(tabId) {
     this.setState({tabId});
@@ -48,7 +92,7 @@ export default class CaskMarketPlace extends Component{
             CASK Market Place
           </span>
           <div className="pull-right">
-            <button className="btn btn-resource-center">
+            <button className="btn btn-sm btn-resource-center">
               Resource Center
             </button>
           </div>
@@ -56,26 +100,31 @@ export default class CaskMarketPlace extends Component{
         <ModalBody>
           <Tabs mode="vertical">
             <TabHeaders>
-              <TabHead
-                onClick={() => this.setTab('1')}
-                activeTab={this.isActiveTab('1')}
-              >
-                Tab 1
-              </TabHead>
-              <TabHead
-                onClick={() => this.setTab('2')}
-                activeTab={this.isActiveTab('2')}
-              >
-                Tab 2
-              </TabHead>
+              {this.state.tabs.map((tab, index) => {
+                return(
+                  <TabHead
+                    key={index}
+                    onClick={() => this.setTab(index)}
+                    activeTab={this.isActiveTab(index)}
+                  >
+                    <strong>{tab.title}</strong>
+                  </TabHead>
+                );
+              })}
             </TabHeaders>
             <TabContents activeTab={this.state.tabId}>
-              <TabContent name="1">
-                Tab 1 Contents
-              </TabContent>
-              <TabContent name="2">
-                Tab 2 Contents
-              </TabContent>
+              {
+                this.state.tabs.map((tab, index) => {
+                  return (
+                    <TabContent
+                      name={index}
+                      key={index}
+                    >
+                      {tab.content}
+                    </TabContent>
+                  );
+                })
+              }
             </TabContents>
           </Tabs>
         </ModalBody>

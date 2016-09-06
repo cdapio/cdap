@@ -20,18 +20,31 @@
   &.modal-dialog {
     height: 75vh;
     width: 85vw;
-    margin-top: 50px;
+    margin-top: 70px;
 
-    .modal-header {
-      background: @cdap-orange;
-      color: white;
-      h4 {
-        font-weight: normal;
+    .modal-content {
+      border-radius: 0;
+      height: 100%;
+
+      .modal-body {
+        padding: 0;
+        height: ~"calc(100% - 51px)"; // 100% - 51px for modal header
       }
-      .btn-resource-center {
-        background-color: #8A3800;
-        border-color: none;
-        color: lightgray;
+      .modal-header {
+        padding: 10px;
+        background: @cdap-orange;
+        color: white;
+        h4 {
+          font-weight: normal;
+          span {
+            line-height: 30px;
+          }
+        }
+        .btn-resource-center {
+          background-color: #8A3800;
+          border-color: none;
+          color: lightgray;
+        }
       }
     }
   }
