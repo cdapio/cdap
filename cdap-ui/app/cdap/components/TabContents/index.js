@@ -15,6 +15,7 @@
  */
 
 import React, {PropTypes, Component} from 'react';
+require('./TabContents.less');
 
 export default class TabContents extends Component {
   constructor(props) {
@@ -53,7 +54,7 @@ export default class TabContents extends Component {
     // be named using numbers or strings (name of the tab).
     // User uses number for tab names. Object.keys(this.childRefs) will give an array of
     // strings (numbers in strings). Thank you javascript.
-    
+
     let clickedChild = childRefs.filter(childRef => childRef == this.state.activeTab);
     childRefs.forEach(ref => this.childRefs[ref].classList.add('hide'));
     this.childRefs[clickedChild[0]].classList.remove('hide');
@@ -64,6 +65,7 @@ export default class TabContents extends Component {
         {
           React.Children.map(this.props.children, (child) => {
             return <div
+              className="cask-tab-content-wrapper"
               ref={(ref) => this.childRefs[child.props.name] = ref}
             >
               {child}

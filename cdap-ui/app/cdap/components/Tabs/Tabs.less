@@ -20,18 +20,19 @@
   height: 100%;
   list-style: none;
   display: flex;
-  justify-content: space-between;
   flex-direction: column;
-  
+  justify-content: flex-start;
+
   &.vertical {
+    justify-content: space-between;
     flex-direction: row;
     > div {
       &:first-child {
-        width: 15%;
+        width: 110px;
         flex-direction: column;
         padding: 5px 0;
       }
-      width: 85%;
+      width: ~"calc(100% - 110px)";
       display: flex;
     }
   }

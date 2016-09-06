@@ -14,39 +14,30 @@
  * the License.
  */
 
-import React, {PropTypes, Component} from 'react';
-var classnames = require('classnames');
-require('./TabHead.less');
-export default class TabHead extends Component {
+import React, {Component} from 'react';
+import SearchTextBox from '../SearchTextBox';
+
+export default class AllTabContents extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      activeTab: this.props.activeTab,
-      mode: this.props.mode
+      searchStr: ''
     };
   }
-  componentWillReceiveProps(newProps) {
-    this.setState({
-      activeTab: newProps.activeTab
-    });
+  onSearch(changeEvent) {
+    // For now just save. Eventually we will make a backend call to get the search result.
+    this.setState({searchStr: changeEvent.target.value});
   }
   render() {
     return (
-      <div
-        className={classnames("cask-tab-head", {
-          'active-tab': this.state.activeTab,
-          'vertical': this.state.mode === 'vertical'
-        })}
-        onClick={this.props.onClick}
-      >
-        {this.props.children}
+      <div>
+        <SearchTextBox
+          placeholder="Search"
+          value={this.state.searchStr}
+          onChange={this.onSearch.bind(this)}
+        />
+        <h1> All Tab Content </h1>
       </div>
     );
   }
 }
-TabHead.propTypes = {
-  children: PropTypes.node,
-  onClick: PropTypes.func,
-  activeTab: PropTypes.bool,
-  mode: PropTypes.string
-};
