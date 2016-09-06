@@ -84,6 +84,8 @@ public final class Constants {
     /** Scheduler queue name to submit the master service app. */
     public static final String SCHEDULER_QUEUE = "master.services.scheduler.queue";
     public static final String METADATA_SERVICE = "metadata.service";
+    public static final String MASTER_SERVICES_BIND_ADDRESS = "master.services.bind.address";
+    public static final String MASTER_SERVICES_ANNOUNCE_ADDRESS = "master.services.announce.address";
   }
 
   /**
@@ -118,8 +120,10 @@ public final class Constants {
     /**
      * App Fabric Server.
      */
-    public static final String SERVER_ADDRESS = "app.bind.address";
+    @Deprecated
+    public static final String SERVER_ADDRESS_DEPRECATED = "app.bind.address";
     public static final String SERVER_PORT = "app.bind.port";
+    public static final String SERVER_ANNOUNCE_PORT = "app.announce.port";
     public static final String OUTPUT_DIR = "app.output.dir";
     public static final String TEMP_DIR = "app.temp.dir";
     public static final String REST_PORT = "app.rest.port";
@@ -264,8 +268,10 @@ public final class Constants {
      */
     public static final class Manager {
       /** for the address (hostname) of the dataset server. */
-      public static final String ADDRESS = "dataset.service.bind.address";
+      @Deprecated
+      public static final String ADDRESS_DEPRECATED = "dataset.service.bind.address";
       public static final String PORT = "dataset.service.bind.port";
+      public static final String ANNOUNCE_PORT = "dataset.service.announce.port";
 
       public static final String BACKLOG_CONNECTIONS = "dataset.service.connection.backlog";
       public static final String EXEC_THREADS = "dataset.service.exec.threads";

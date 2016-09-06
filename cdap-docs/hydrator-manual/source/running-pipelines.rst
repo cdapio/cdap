@@ -162,10 +162,10 @@ configurable error dataset.
 
 These transform plugins support error record handling:
 
-- `JavaScript <plugins/transforms/javascript.html>`__
-- `Python Evaluator <plugins/transforms/pythonevaluator.html>`__
-- `Validator <plugins/transforms/validator.html>`__
-- `XML Parser <plugins/transforms/xmlparser.html>`__
+- `JavaScript <plugins/transforms/javascript-transform.html>`__
+- `Python Evaluator <plugins/transforms/pythonevaluator-transform.html>`__
+- `Validator <plugins/transforms/validator-transform.html>`__
+- `XML Parser <plugins/transforms/xmlparser-transform.html>`__
 
 See the :ref:`Core Validator <cask-hydrator-plugins-shared-core-validator>` for examples
 and additional information.

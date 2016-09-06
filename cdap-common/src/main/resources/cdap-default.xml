@@ -236,10 +236,10 @@
   </property>
 
   <property>
-    <name>app.bind.address</name>
+    <name>master.services.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-      App Fabric service bind address
+      Bind address for app fabric service and dataset service
     </description>
   </property>
 
@@ -622,14 +622,6 @@
     <value>/opt/cdap/ext/lib</value>
     <description>
       Directory where all dataset extensions are stored
-    </description>
-  </property>
-
-  <property>
-    <name>dataset.service.bind.address</name>
-    <value>0.0.0.0</value>
-    <description>
-      Dataset service bind address
     </description>
   </property>
 

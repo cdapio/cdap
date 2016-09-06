@@ -277,7 +277,7 @@ public abstract class DatasetServiceTestBase {
       throw new RuntimeException(String.format("Could not create DatasetFramework output dir %s", dataDir));
     }
     cConf.set(Constants.Dataset.Manager.OUTPUT_DIR, dataDir.getAbsolutePath());
-    cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
+    cConf.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, "localhost");
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     return cConf;
   }
