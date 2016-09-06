@@ -33,7 +33,7 @@ public class AppFabricServiceManager implements MasterServiceManager {
   private final InetAddress hostname;
 
   @Inject
-  public AppFabricServiceManager(@Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname) {
+  public AppFabricServiceManager(@Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname) {
     this.hostname = hostname;
   }
 
