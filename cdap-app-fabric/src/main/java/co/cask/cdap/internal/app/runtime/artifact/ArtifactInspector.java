@@ -112,7 +112,8 @@ final class ArtifactInspector {
    *                                  actually an Application.
    */
   ArtifactClasses inspectArtifact(Id.Artifact artifactId, File artifactFile,
-                                  ClassLoader parentClassLoader) throws IOException, InvalidArtifactException {
+                                  @Nullable ClassLoader parentClassLoader) throws IOException,
+                                                                                  InvalidArtifactException {
     Path tmpDir = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                             cConf.get(Constants.AppFabric.TEMP_DIR)).toAbsolutePath();
     Files.createDirectories(tmpDir);
@@ -123,16 +124,18 @@ final class ArtifactInspector {
       File unpackedDir = BundleJarUtil.unJar(artifactLocation,
                                              Files.createTempDirectory(stageDir, "unpacked-").toFile());
 
-      ArtifactClasses.Builder builder = inspectApplications(artifactId, ArtifactClasses.builder(),
-                                                            artifactLocation, unpackedDir);
+      try (CloseableClassLoader artifactClassLoader = artifactClassLoaderFactory.createClassLoader(unpackedDir)) {
+        ArtifactClasses.Builder builder = inspectApplications(artifactId, ArtifactClasses.builder(),
+                                                              artifactLocation, artifactClassLoader);
 
-      try (PluginInstantiator pluginInstantiator =
-             new PluginInstantiator(cConf, parentClassLoader,
-                                    Files.createTempDirectory(stageDir, "plugins-").toFile())) {
-        pluginInstantiator.addArtifact(artifactLocation, artifactId.toArtifactId());
-        inspectPlugins(builder, artifactFile, artifactId.toArtifactId(), pluginInstantiator);
+        try (PluginInstantiator pluginInstantiator =
+               new PluginInstantiator(cConf, parentClassLoader == null ? artifactClassLoader : parentClassLoader,
+                                      Files.createTempDirectory(stageDir, "plugins-").toFile())) {
+          pluginInstantiator.addArtifact(artifactLocation, artifactId.toArtifactId());
+          inspectPlugins(builder, artifactFile, artifactId.toArtifactId(), pluginInstantiator);
+        }
+        return builder.build();
       }
-      return builder.build();
     } finally {
       try {
         DirUtils.deleteDirectoryContents(stageDir.toFile());
@@ -145,7 +148,8 @@ final class ArtifactInspector {
   private ArtifactClasses.Builder inspectApplications(Id.Artifact artifactId,
                                                       ArtifactClasses.Builder builder,
                                                       Location artifactLocation,
-                                                      File unpackedDir) throws IOException, InvalidArtifactException {
+                                                      ClassLoader artifactClassLoader) throws IOException,
+                                                                                              InvalidArtifactException {
 
     // right now we force users to include the application main class as an attribute in their manifest,
     // which forces them to have a single application class.
@@ -171,7 +175,7 @@ final class ArtifactInspector {
       return builder;
     }
 
-    try (CloseableClassLoader artifactClassLoader = artifactClassLoaderFactory.createClassLoader(unpackedDir)) {
+    try {
       Object appMain = artifactClassLoader.loadClass(mainClassName).newInstance();
       if (!(appMain instanceof Application)) {
         // we don't want to error here, just don't record an application class.

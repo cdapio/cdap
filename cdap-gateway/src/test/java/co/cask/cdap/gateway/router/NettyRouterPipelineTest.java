@@ -18,8 +18,8 @@ package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.gateway.apps.AppWritingtoStream;
-import co.cask.cdap.internal.test.AppJarHelper;
 import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
 import com.ning.http.client.AsyncCompletionHandler;

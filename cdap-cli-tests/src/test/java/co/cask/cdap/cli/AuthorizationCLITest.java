@@ -19,7 +19,7 @@ package co.cask.cdap.cli;
 import co.cask.cdap.StandaloneTester;
 import co.cask.cdap.client.AuthorizationClient;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.test.AppJarHelper;
+import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;

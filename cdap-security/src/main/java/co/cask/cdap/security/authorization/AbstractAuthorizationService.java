@@ -105,8 +105,8 @@ public class AbstractAuthorizationService extends AbstractScheduledService {
   @Override
   protected void runOneIteration() {
     if (!isAuthCacheEnabled()) {
-      LOG.debug("Authorization cache is disabled security: {}; authorization: {}; cache: {}",
-               securityEnabled, authorizationEnabled, cacheEnabled);
+      LOG.trace("Authorization cache is disabled security: {}; authorization: {}; cache: {}",
+                securityEnabled, authorizationEnabled, cacheEnabled);
       return;
     }
     LOG.trace("Running authorization {} service iteration...", serviceName);
@@ -141,6 +141,9 @@ public class AbstractAuthorizationService extends AbstractScheduledService {
 
   @VisibleForTesting
   Map<Principal, Map<EntityId, Set<Action>>> getCache() {
+    // Cleanup the cache before returning it. This help erase possible race condition between invalidating entries
+    // and unit-test validation
+    authPolicyCache.cleanUp();
     return authPolicyCache.asMap();
   }
 
@@ -210,9 +213,9 @@ public class AbstractAuthorizationService extends AbstractScheduledService {
   private void validateCacheConfig() {
     if (!isAuthCacheEnabled()) {
       if (cacheEnabled) {
-        LOG.warn("Authorization policy caching is enabled ({} is set to true), however, this setting will have no " +
+        LOG.trace("Authorization policy caching is enabled ({} is set to true), however, this setting will have no " +
                    "effect because authorization is disabled ({} is set to false). ",
-                 Constants.Security.Authorization.CACHE_ENABLED, Constants.Security.Authorization.ENABLED);
+                  Constants.Security.Authorization.CACHE_ENABLED, Constants.Security.Authorization.ENABLED);
       }
       return;
     }

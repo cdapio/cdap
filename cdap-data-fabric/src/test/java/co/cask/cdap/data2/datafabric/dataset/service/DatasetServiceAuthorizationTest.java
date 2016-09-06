@@ -23,7 +23,7 @@ import co.cask.cdap.api.dataset.InstanceNotFoundException;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.test.AppJarHelper;
+import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.DatasetId;

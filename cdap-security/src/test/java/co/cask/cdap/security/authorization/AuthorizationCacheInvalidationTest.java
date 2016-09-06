@@ -17,7 +17,7 @@
 package co.cask.cdap.security.authorization;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.test.AppJarHelper;
+import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
