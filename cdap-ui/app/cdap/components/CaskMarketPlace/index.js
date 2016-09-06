@@ -17,9 +17,23 @@ import React, {PropTypes, Component} from 'react';
 import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 require('./CaskMarketPlace.less');
 
+import Tabs from '../Tabs';
+import TabContents from '../TabContents';
+import TabContent from '../TabContent';
+import TabHeaders from '../TabHeaders';
+import TabHead from '../TabHead';
 export default class CaskMarketPlace extends Component{
   constructor(props) {
     super(props);
+    this.state = {
+      tabId: '1'
+    };
+  }
+  setTab(tabId) {
+    this.setState({tabId});
+  }
+  isActiveTab(tabId) {
+    return this.state.tabId === tabId;
   }
   render() {
     return (
@@ -29,9 +43,41 @@ export default class CaskMarketPlace extends Component{
         className="cask-market-place"
         size="lg"
       >
-        <ModalHeader className="cask-market-place-header"> CASK Market Place </ModalHeader>
+        <ModalHeader className="cask-market-place-header">
+          <span className="pull-left">
+            CASK Market Place
+          </span>
+          <div className="pull-right">
+            <button className="btn btn-resource-center">
+              Resource Center
+            </button>
+          </div>
+        </ModalHeader>
         <ModalBody>
-          Some big Modal body
+          <Tabs mode="vertical">
+            <TabHeaders>
+              <TabHead
+                onClick={() => this.setTab('1')}
+                activeTab={this.isActiveTab('1')}
+              >
+                Tab 1
+              </TabHead>
+              <TabHead
+                onClick={() => this.setTab('2')}
+                activeTab={this.isActiveTab('2')}
+              >
+                Tab 2
+              </TabHead>
+            </TabHeaders>
+            <TabContents activeTab={this.state.tabId}>
+              <TabContent name="1">
+                Tab 1 Contents
+              </TabContent>
+              <TabContent name="2">
+                Tab 2 Contents
+              </TabContent>
+            </TabContents>
+          </Tabs>
         </ModalBody>
       </Modal>
     );
