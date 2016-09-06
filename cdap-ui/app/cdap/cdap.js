@@ -16,7 +16,9 @@
 
 import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
-import {Router, Route, browserHistory, IndexRedirect} from 'react-router';
+import {Router, Route, useRouterHistory, IndexRedirect} from 'react-router';
+import {createHistory} from 'history';
+const history = useRouterHistory(createHistory)({ basename: '/cask-cdap/' });
 
 require('../ui-utils/url-generator');
 require('font-awesome-webpack!./styles/font-awesome.config.js');
@@ -57,7 +59,7 @@ CDAP.propTypes = {
 };
 
 ReactDOM.render(
-  <Router history={browserHistory}>
+  <Router history={history}>
     <Route path="/" component={CDAP}>
       <IndexRedirect to="/home" />
       <Route name="home" path="home" component={Home}/>

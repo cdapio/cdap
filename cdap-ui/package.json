@@ -82,6 +82,7 @@
     "express": "4.13.4",
     "finalhandler": "0.4.1",
     "font-awesome": "4.6.3",
+    "history": "2.1.2",
     "lodash": "https://registry.npmjs.org/lodash/-/lodash-4.0.1.tgz",
     "log4js": "0.6.30",
     "node-uuid": "https://registry.npmjs.org/node-uuid/-/node-uuid-1.4.7.tgz",
