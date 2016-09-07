@@ -80,18 +80,19 @@ class ManagementView extends Component {
     }
   }
 
-  //Simulates the page loading
-  myFunction() {
+  // FIXME: This for giving it a strcture. Eventually will be removed.
+  // Simulates the page loading
+  simulateLoading() {
     setTimeout( () => {
       this.setState({
         loading: false
       });
     }, 1500);
   }
-
+  componentDidMount() {
+    this.simulateLoading();
+  }
   render () {
-
-    this.myFunction();
 
     var oneActive = classNames({ 'active' : this.state.navUnderlineClass === 'one' });
     var twoActive = classNames({ 'active' : this.state.navUnderlineClass === 'two' });

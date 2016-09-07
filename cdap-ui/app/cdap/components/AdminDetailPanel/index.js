@@ -25,35 +25,35 @@ const propTypes = {
 };
 
 function AdminDetailPanel({applicationName, timeFromUpdate, isLoading}){
-    return (
-      <div className="admin-detail-panel">
-        <div className="admin-detail-panel-button-left">
-          <i className="fa fa-chevron-left" aria-hidden="true" />
+  return (
+    <div className="admin-detail-panel">
+      <div className="admin-detail-panel-button-left">
+        <i className="fa fa-chevron-left" aria-hidden="true" />
+      </div>
+      <div className="admin-detail-panel-button-right">
+        <i className="fa fa-chevron-right" aria-hidden="true" />
+      </div>
+      <div className="admin-detail-panel-header">
+        <div className="admin-detail-panel-header-name">
+          {applicationName}
         </div>
-        <div className="admin-detail-panel-button-right">
-          <i className="fa fa-chevron-right" aria-hidden="true" />
-        </div>
-        <div className="admin-detail-panel-header">
-          <div className="admin-detail-panel-header-name">
-            {applicationName}
-          </div>
-          <div className="admin-detail-panel-header-status">
-            Last updated {timeFromUpdate} seconds ago
-          </div>
-        </div>
-        <div className="admin-detail-panel-body">
-          <div className="end-line" />
-          <DetailModule isLoading={isLoading} label="Nodes" numStats={6} />
-          <div className="vertical-line" />
-          <DetailModule isLoading={isLoading} label="Virtual Cores" numStats={4} />
-          <div className="vertical-line" />
-          <DetailModule isLoading={isLoading} label="Memory" numStats={4} />
-          <div className="vertical-line" />
-          <DetailModule isLoading={isLoading} label="Application" end={true} numStats={6} />
-          <div className="end-line" />
+        <div className="admin-detail-panel-header-status">
+          Last updated {timeFromUpdate} seconds ago
         </div>
       </div>
-    );
+      <div className="admin-detail-panel-body">
+        <div className="end-line" />
+        <DetailModule isLoading={isLoading} label="Nodes" numStats={6} />
+        <div className="vertical-line" />
+        <DetailModule isLoading={isLoading} label="Virtual Cores" numStats={4} />
+        <div className="vertical-line" />
+        <DetailModule isLoading={isLoading} label="Memory" numStats={4} />
+        <div className="vertical-line" />
+        <DetailModule isLoading={isLoading} label="Application" end={true} numStats={6} />
+        <div className="end-line" />
+      </div>
+    </div>
+  );
 }
 
 AdminDetailPanel.propTypes = propTypes;
