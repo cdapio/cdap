@@ -156,7 +156,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       }
 
       // Program matched
-      RunRecordMeta record = store.getRun(programId, runId.getId());
+      RunRecordMeta record = store.getRun(programId.toEntityId(), runId.getId());
       if (record == null) {
         return null;
       }
@@ -249,7 +249,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   @Nullable
   private RuntimeInfo createRuntimeInfo(Id.Program programId, TwillController controller, RunId runId) {
     try {
-      ProgramDescriptor programDescriptor = store.loadProgram(programId);
+      ProgramDescriptor programDescriptor = store.loadProgram(programId.toEntityId());
       ProgramController programController = createController(programDescriptor, controller, runId);
       return programController == null ? null : new SimpleRuntimeInfo(programController, programId.toEntityId(),
                                                                       controller.getRunId());

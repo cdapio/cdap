@@ -126,10 +126,10 @@ public class DefaultStoreTest {
   @Test
   public void testLoadingProgram() throws Exception {
     ApplicationSpecification appSpec = Specifications.from(new ToyApp());
-    store.addApplication(NamespaceId.DEFAULT.app(appSpec.getName()).toId(), appSpec);
+    ApplicationId appId = NamespaceId.DEFAULT.app(appSpec.getName());
+    store.addApplication(appId.toId(), appSpec);
 
-    ProgramDescriptor descriptor = store.loadProgram(Id.Program.from(DefaultId.NAMESPACE.getId(), "ToyApp",
-                                                                     ProgramType.FLOW, "ToyFlow"));
+    ProgramDescriptor descriptor = store.loadProgram(appId.flow("ToyFlow"));
     Assert.assertNotNull(descriptor);
     FlowSpecification flowSpec = descriptor.getSpecification();
     Assert.assertEquals("ToyFlow", flowSpec.getName());
@@ -137,18 +137,18 @@ public class DefaultStoreTest {
 
   @Test(expected = RuntimeException.class)
   public void testStopBeforeStart() throws RuntimeException {
-    Id.Program programId = Id.Program.from("account1", "invalidApp", ProgramType.FLOW, "InvalidFlowOperation");
+    ProgramId programId = new ProgramId("account1", "invalidApp", ProgramType.FLOW, "InvalidFlowOperation");
     long now = System.currentTimeMillis();
     store.setStop(programId, "runx", now, ProgramController.State.ERROR.getRunStatus());
   }
 
   @Test
   public void testDeleteSuspendedWorkflow() {
-    Id.Namespace namespaceId = new Id.Namespace("namespace1");
+    NamespaceId namespaceId = new NamespaceId("namespace1");
 
     // Test delete application
-    Id.Application appId1 = new Id.Application(namespaceId, "app1");
-    Id.Program programId1 = Id.Program.from(appId1, ProgramType.WORKFLOW, "pgm1");
+    ApplicationId appId1 = namespaceId.app("app1");
+    ProgramId programId1 = appId1.workflow("pgm1");
     RunId run1 = RunIds.generate();
     store.setStart(programId1, run1.getId(), runIdToSecs(run1));
     store.setSuspend(programId1, run1.getId());
@@ -156,13 +156,12 @@ public class DefaultStoreTest {
     Assert.assertTrue(store.getRuns(programId1, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).isEmpty());
 
     // Test delete namespace
-    Id.Application appId2 = new Id.Application(namespaceId, "app2");
-    Id.Program programId2 = Id.Program.from(appId2, ProgramType.WORKFLOW, "pgm2");
+    ProgramId programId2 = namespaceId.app("app2").workflow("pgm2");
     RunId run2 = RunIds.generate();
     store.setStart(programId2, run2.getId(), runIdToSecs(run2));
     store.setSuspend(programId2, run2.getId());
     store.removeAll(namespaceId);
-    nsStore.delete(namespaceId);
+    nsStore.delete(namespaceId.toId());
     Assert.assertTrue(store.getRuns(programId2, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).isEmpty());
   }
 
@@ -183,7 +182,7 @@ public class DefaultStoreTest {
     ProgramRunId workflowRun = appId.workflow(workflowName).run(workflowRunId);
 
     // start Workflow
-    store.setStart(workflowRun.getParent().toId(), workflowRun.getRun(), currentTime);
+    store.setStart(workflowRun.getParent(), workflowRun.getRun(), currentTime);
 
     // start MapReduce as a part of Workflow
     Map<String, String> systemArgs = ImmutableMap.of(ProgramOptionConstants.WORKFLOW_NODE_ID, mapReduceName,
@@ -191,11 +190,11 @@ public class DefaultStoreTest {
                                                      ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId);
 
     RunId mapReduceRunId = RunIds.generate(currentTime + 10);
-    store.setStart(mapReduceProgram.toId(), mapReduceRunId.getId(), currentTime + 10, null,
+    store.setStart(mapReduceProgram, mapReduceRunId.getId(), currentTime + 10, null,
                    ImmutableMap.<String, String>of(), systemArgs);
 
     // stop the MapReduce program
-    store.setStop(mapReduceProgram.toId(), mapReduceRunId.getId(), currentTime + 50, ProgramRunStatus.COMPLETED);
+    store.setStop(mapReduceProgram, mapReduceRunId.getId(), currentTime + 50, ProgramRunStatus.COMPLETED);
 
     // start Spark program as a part of Workflow
     systemArgs = ImmutableMap.of(ProgramOptionConstants.WORKFLOW_NODE_ID, sparkName,
@@ -203,17 +202,17 @@ public class DefaultStoreTest {
                                  ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId);
 
     RunId sparkRunId = RunIds.generate(currentTime + 60);
-    store.setStart(sparkProgram.toId(), sparkRunId.getId(), currentTime + 60, null,
+    store.setStart(sparkProgram, sparkRunId.getId(), currentTime + 60, null,
                    ImmutableMap.<String, String>of(), systemArgs);
 
     // stop the Spark program with failure
     NullPointerException npe = new NullPointerException("dataset not found");
     IllegalArgumentException iae = new IllegalArgumentException("illegal argument", npe);
-    store.setStop(sparkProgram.toId(), sparkRunId.getId(), currentTime + 100, ProgramRunStatus.FAILED,
+    store.setStop(sparkProgram, sparkRunId.getId(), currentTime + 100, ProgramRunStatus.FAILED,
                   new BasicThrowable(iae));
 
     // stop Workflow
-    store.setStop(workflowRun.getParent().toId(), workflowRun.getRun(), currentTime + 110, ProgramRunStatus.FAILED);
+    store.setStop(workflowRun.getParent(), workflowRun.getRun(), currentTime + 110, ProgramRunStatus.FAILED);
 
     List<WorkflowNodeStateDetail> nodeStateDetails = store.getWorkflowNodeStates(workflowRun);
     Map<String, WorkflowNodeStateDetail> workflowNodeStates = new HashMap<>();
@@ -247,7 +246,7 @@ public class DefaultStoreTest {
   public void testConcurrentStopStart() throws Exception {
     // Two programs that start/stop at same time
     // Should have two run history.
-    Id.Program programId = Id.Program.from("account1", "concurrentApp", ProgramType.FLOW, "concurrentFlow");
+    ProgramId programId = new ProgramId("account1", "concurrentApp", ProgramType.FLOW, "concurrentFlow");
     long now = System.currentTimeMillis();
     long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
 
@@ -269,7 +268,7 @@ public class DefaultStoreTest {
     Map<String, String> noRuntimeArgsProps = ImmutableMap.of("runtimeArgs",
                                                              GSON.toJson(ImmutableMap.<String, String>of()));
     // record finished flow
-    Id.Program programId = Id.Program.from("account1", "application1", ProgramType.FLOW, "flow1");
+    ProgramId programId = new ProgramId("account1", "application1", ProgramType.FLOW, "flow1");
     long now = System.currentTimeMillis();
     long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
 
@@ -297,13 +296,13 @@ public class DefaultStoreTest {
     Assert.assertNull(runRecord.getStopTs());
 
     // record run of different program
-    Id.Program programId2 = Id.Program.from("account1", "application1", ProgramType.FLOW, "flow2");
+    ProgramId programId2 = new ProgramId("account1", "application1", ProgramType.FLOW, "flow2");
     RunId run4 = RunIds.generate(now - 5000);
     store.setStart(programId2, run4.getId(), runIdToSecs(run4));
     store.setStop(programId2, run4.getId(), nowSecs - 4, ProgramController.State.COMPLETED.getRunStatus());
 
     // record for different account
-    store.setStart(Id.Program.from("account2", "application1", ProgramType.FLOW, "flow1"),
+    store.setStart(new ProgramId("account2", "application1", ProgramType.FLOW, "flow1"),
                    run3.getId(), RunIds.getTime(run3, TimeUnit.MILLISECONDS));
 
     // we should probably be better with "get" method in DefaultStore interface to do that, but we don't have one
@@ -409,22 +408,22 @@ public class DefaultStoreTest {
   @Test
   public void testAddApplication() throws Exception {
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
-    Id.Application id = new Id.Application(new Id.Namespace("account1"), "application1");
-    store.addApplication(id, spec);
+    ApplicationId appId = new ApplicationId("account1", "application1");
+    store.addApplication(appId.toId(), spec);
 
-    ApplicationSpecification stored = store.getApplication(id);
+    ApplicationSpecification stored = store.getApplication(appId.toId());
     assertWordCountAppSpecAndInMetadataStore(stored);
   }
 
   @Test
   public void testUpdateChangedApplication() throws Exception {
-    Id.Application id = new Id.Application(new Id.Namespace("account1"), "application1");
+    ApplicationId id = new ApplicationId("account1", "application1");
 
-    store.addApplication(id, Specifications.from(new FooApp()));
+    store.addApplication(id.toId(), Specifications.from(new FooApp()));
     // update
-    store.addApplication(id, Specifications.from(new ChangedFooApp()));
+    store.addApplication(id.toId(), Specifications.from(new ChangedFooApp()));
 
-    ApplicationSpecification stored = store.getApplication(id);
+    ApplicationSpecification stored = store.getApplication(id.toId());
     assertChangedFooAppSpecAndInMetadataStore(stored);
   }
 
@@ -584,19 +583,19 @@ public class DefaultStoreTest {
   public void testSetFlowletInstances() throws Exception {
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
     int initialInstances = spec.getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances();
-    Id.Application appId = new Id.Application(new Id.Namespace(DefaultId.NAMESPACE.getId()), spec.getName());
-    store.addApplication(appId, spec);
+    ApplicationId appId = NamespaceId.DEFAULT.app(spec.getName());
+    store.addApplication(appId.toId(), spec);
 
-    Id.Program programId = new Id.Program(appId, ProgramType.FLOW, "WordCountFlow");
-    store.setFlowletInstances(programId, "StreamSource",
+    ProgramId programId = appId.flow("WordCountFlow");
+    store.setFlowletInstances(programId.toId(), "StreamSource",
                               initialInstances + 5);
     // checking that app spec in store was adjusted
-    ApplicationSpecification adjustedSpec = store.getApplication(appId);
+    ApplicationSpecification adjustedSpec = store.getApplication(appId.toId());
     Assert.assertNotNull(adjustedSpec);
     Assert.assertEquals(initialInstances + 5,
                         adjustedSpec.getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances());
 
-    // checking that program spec in program jar was adjsuted
+    // checking that program spec in program jar was adjusted
     ProgramDescriptor descriptor = store.loadProgram(programId);
     Assert.assertNotNull(descriptor);
     Assert.assertEquals(initialInstances + 5,
@@ -607,10 +606,10 @@ public class DefaultStoreTest {
   @Test
   public void testWorkerInstances() throws Exception {
     ApplicationSpecification spec = Specifications.from(new AppWithWorker());
-    store.addApplication(NamespaceId.DEFAULT.app(spec.getName()).toId(), spec);
+    ApplicationId appId = NamespaceId.DEFAULT.app(spec.getName());
+    store.addApplication(appId.toId(), spec);
 
-    Id.Application appId = Id.Application.from(DefaultId.NAMESPACE.getId(), spec.getName());
-    Id.Program programId = Id.Program.from(appId, ProgramType.WORKER, AppWithWorker.WORKER);
+    ProgramId programId = appId.worker(AppWithWorker.WORKER);
 
     int instancesFromSpec = spec.getWorkers().get(AppWithWorker.WORKER).getInstances();
     Assert.assertEquals(1, instancesFromSpec);
@@ -625,68 +624,67 @@ public class DefaultStoreTest {
   @Test
   public void testRemoveAllApplications() throws Exception {
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
-    Id.Namespace namespaceId = new Id.Namespace("account1");
-    Id.Application appId = new Id.Application(namespaceId, spec.getName());
-    store.addApplication(appId, spec);
+    NamespaceId namespaceId = new NamespaceId("account1");
+    ApplicationId appId = namespaceId.app(spec.getName());
+    store.addApplication(appId.toId(), spec);
 
-    Assert.assertNotNull(store.getApplication(appId));
+    Assert.assertNotNull(store.getApplication(appId.toId()));
 
     // removing flow
     store.removeAllApplications(namespaceId);
 
-    Assert.assertNull(store.getApplication(appId));
+    Assert.assertNull(store.getApplication(appId.toId()));
   }
 
   @Test
   public void testRemoveAll() throws Exception {
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
-    Id.Namespace namespaceId = new Id.Namespace("account1");
-    Id.Application appId = new Id.Application(namespaceId, "application1");
-    store.addApplication(appId, spec);
+    NamespaceId namespaceId = new NamespaceId("account1");
+    ApplicationId appId = namespaceId.app("application1");
+    store.addApplication(appId.toId(), spec);
 
-    Assert.assertNotNull(store.getApplication(appId));
+    Assert.assertNotNull(store.getApplication(appId.toId()));
 
     // removing flow
     store.removeAll(namespaceId);
 
-    Assert.assertNull(store.getApplication(appId));
+    Assert.assertNull(store.getApplication(appId.toId()));
   }
 
   @Test
   public void testRemoveApplication() throws Exception {
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
-    Id.Namespace namespaceId = new Id.Namespace("account1");
-    Id.Application appId = new Id.Application(namespaceId, spec.getName());
-    store.addApplication(appId, spec);
+    NamespaceId namespaceId = new NamespaceId("account1");
+    ApplicationId appId = namespaceId.app(spec.getName());
+    store.addApplication(appId.toId(), spec);
 
-    Assert.assertNotNull(store.getApplication(appId));
+    Assert.assertNotNull(store.getApplication(appId.toId()));
 
     // removing application
     store.removeApplication(appId);
 
-    Assert.assertNull(store.getApplication(appId));
+    Assert.assertNull(store.getApplication(appId.toId()));
   }
 
   @Test
   public void testRuntimeArgsDeletion() throws Exception {
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
-    Id.Namespace namespaceId = new Id.Namespace("testDeleteRuntimeArgs");
-    Id.Application appId = new Id.Application(namespaceId, spec.getName());
-    store.addApplication(appId, spec);
+    ApplicationId appId = new ApplicationId("testDeleteRuntimeArgs", spec.getName());
+    store.addApplication(appId.toId(), spec);
 
-    Assert.assertNotNull(store.getApplication(appId));
+    Assert.assertNotNull(store.getApplication(appId.toId()));
 
-    Id.Program flowProgramId = new Id.Program(appId, ProgramType.FLOW, "NoOpFlow");
-    Id.Program mapreduceProgramId = new Id.Program(appId, ProgramType.MAPREDUCE, "NoOpMR");
-    Id.Program workflowProgramId = new Id.Program(appId, ProgramType.WORKFLOW, "NoOpWorkflow");
+    ProgramId flowProgramId = appId.flow("NoOpFlow");
+    ProgramId mapreduceProgramId = appId.mr("NoOpMR");
+    ProgramId workflowProgramId = appId.workflow("NoOpWorkflow");
 
     String flowRunId = RunIds.generate().getId();
     String mapreduceRunId = RunIds.generate().getId();
     String workflowRunId = RunIds.generate().getId();
 
-    Id.Run flowProgramRunId = new Id.Run(flowProgramId, flowRunId);
-    Id.Run mapreduceProgramRunId = new Id.Run(mapreduceProgramId, mapreduceRunId);
-    Id.Run workflowProgramRunId = new Id.Run(workflowProgramId, workflowRunId);
+    ProgramRunId flowProgramRunId = flowProgramId.run(flowRunId);
+    ProgramRunId mapreduceProgramRunId = mapreduceProgramId.run(mapreduceRunId);
+    ProgramRunId workflowProgramRunId = workflowProgramId.run(workflowRunId);
 
     store.setStart(flowProgramId, flowRunId, System.currentTimeMillis(), null,
                    ImmutableMap.of("model", "click"), null);
@@ -695,15 +693,15 @@ public class DefaultStoreTest {
     store.setStart(workflowProgramId, workflowRunId, System.currentTimeMillis(), null,
                    ImmutableMap.of("whitelist", "cask"), null);
 
-    Map<String, String> args = store.getRuntimeArguments(flowProgramRunId);
+    Map<String, String> args = store.getRuntimeArguments(flowProgramRunId.toId());
     Assert.assertEquals(1, args.size());
     Assert.assertEquals("click", args.get("model"));
 
-    args = store.getRuntimeArguments(mapreduceProgramRunId);
+    args = store.getRuntimeArguments(mapreduceProgramRunId.toId());
     Assert.assertEquals(1, args.size());
     Assert.assertEquals("/data", args.get("path"));
 
-    args = store.getRuntimeArguments(workflowProgramRunId);
+    args = store.getRuntimeArguments(workflowProgramRunId.toId());
     Assert.assertEquals(1, args.size());
     Assert.assertEquals("cask", args.get("whitelist"));
 
@@ -711,13 +709,13 @@ public class DefaultStoreTest {
     store.removeApplication(appId);
 
     //Check if args are deleted.
-    args = store.getRuntimeArguments(flowProgramRunId);
+    args = store.getRuntimeArguments(flowProgramRunId.toId());
     Assert.assertEquals(0, args.size());
 
-    args = store.getRuntimeArguments(mapreduceProgramRunId);
+    args = store.getRuntimeArguments(mapreduceProgramRunId.toId());
     Assert.assertEquals(0, args.size());
 
-    args = store.getRuntimeArguments(workflowProgramRunId);
+    args = store.getRuntimeArguments(workflowProgramRunId.toId());
     Assert.assertEquals(0, args.size());
   }
 
@@ -728,22 +726,22 @@ public class DefaultStoreTest {
     // Remove application using accountId, AppId and verify
     // Remove all from accountId and verify
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
-    Id.Namespace namespaceId = new Id.Namespace("testDeleteAll");
-    Id.Application appId1 = new Id.Application(namespaceId, spec.getName());
-    store.addApplication(appId1, spec);
+    NamespaceId namespaceId = new NamespaceId("testDeleteAll");
+    ApplicationId appId1 = namespaceId.app(spec.getName());
+    store.addApplication(appId1.toId(), spec);
 
     spec = Specifications.from(new WordCountApp());
-    Id.Application appId2 = new Id.Application(namespaceId, spec.getName());
-    store.addApplication(appId2, spec);
+    ApplicationId appId2 = namespaceId.app(spec.getName());
+    store.addApplication(appId2.toId(), spec);
 
-    Id.Program flowProgramId1 = new Id.Program(appId1, ProgramType.FLOW, "NoOpFlow");
-    Id.Program mapreduceProgramId1 = new Id.Program(appId1, ProgramType.MAPREDUCE, "NoOpMR");
-    Id.Program workflowProgramId1 = new Id.Program(appId1, ProgramType.WORKFLOW, "NoOpWorkflow");
+    ProgramId flowProgramId1 = appId1.flow("NoOpFlow");
+    ProgramId mapreduceProgramId1 = appId1.mr("NoOpMR");
+    ProgramId workflowProgramId1 = appId1.workflow("NoOpWorkflow");
 
-    Id.Program flowProgramId2 = new Id.Program(appId2, ProgramType.FLOW, "WordCountFlow");
+    ProgramId flowProgramId2 = appId2.flow("WordCountFlow");
 
-    Assert.assertNotNull(store.getApplication(appId1));
-    Assert.assertNotNull(store.getApplication(appId2));
+    Assert.assertNotNull(store.getApplication(appId1.toId()));
+    Assert.assertNotNull(store.getApplication(appId2.toId()));
 
     long now = System.currentTimeMillis();
 
@@ -769,7 +767,8 @@ public class DefaultStoreTest {
     // removing application
     store.removeApplication(appId1);
 
-    Assert.assertNull(store.getApplication(appId1));
+    Assert.assertNull(store.getApplication(appId1.toId()));
+    Assert.assertNotNull(store.getApplication(appId2.toId()));
 
     verifyRunHistory(flowProgramId1, 0);
     verifyRunHistory(mapreduceProgramId1, 0);
@@ -784,7 +783,7 @@ public class DefaultStoreTest {
     verifyRunHistory(flowProgramId2, 0);
   }
 
-  private void verifyRunHistory(Id.Program programId, int count) {
+  private void verifyRunHistory(ProgramId programId, int count) {
     List<RunRecordMeta> history = store.getRuns(programId, ProgramRunStatus.ALL,
                                                 0, Long.MAX_VALUE, Integer.MAX_VALUE);
     Assert.assertEquals(count, history.size());
@@ -796,7 +795,7 @@ public class DefaultStoreTest {
     Id.Application appId = Id.Application.from("testRunsLimit", spec.getName());
     store.addApplication(appId, spec);
 
-    Id.Program flowProgramId = Id.Program.from(appId, ProgramType.FLOW, "NoOpFlow");
+    ProgramId flowProgramId = new ProgramId("testRunsLimit", spec.getName(), ProgramType.FLOW, "NoOpFlow");
 
     Assert.assertNotNull(store.getApplication(appId));
 
@@ -913,30 +912,30 @@ public class DefaultStoreTest {
     Map<String, ScheduleSpecification> schedules = getSchedules(appId);
     Assert.assertEquals(0, schedules.size());
 
-    store.addSchedule(program, scheduleSpec1);
+    store.addSchedule(program.toEntityId(), scheduleSpec1);
     schedules = getSchedules(appId);
     Assert.assertEquals(1, schedules.size());
     Assert.assertEquals(scheduleSpec1, schedules.get("Schedule1"));
 
-    store.addSchedule(program, scheduleSpec2);
+    store.addSchedule(program.toEntityId(), scheduleSpec2);
     schedules = getSchedules(appId);
     Assert.assertEquals(2, schedules.size());
     Assert.assertEquals(scheduleSpec2, schedules.get("Schedule2"));
 
     try {
-      store.addSchedule(program, scheduleWithSameNameSpec);
+      store.addSchedule(program.toEntityId(), scheduleWithSameNameSpec);
       Assert.fail("Should have thrown Exception because multiple schedules with the same name are being added.");
     } catch (IllegalArgumentException ex) {
       Assert.assertEquals("Schedule with the name 'Schedule2' already exists.", ex.getMessage());
     }
 
-    store.deleteSchedule(program, "Schedule2");
+    store.deleteSchedule(program.toEntityId(), "Schedule2");
     schedules = getSchedules(appId);
     Assert.assertEquals(1, schedules.size());
     Assert.assertEquals(null, schedules.get("Schedule2"));
 
     try {
-      store.deleteSchedule(program, "Schedule2");
+      store.deleteSchedule(program.toEntityId(), "Schedule2");
       Assert.fail();
     } catch (NoSuchElementException e) {
       // Expected
@@ -1060,19 +1059,22 @@ public class DefaultStoreTest {
   }
 
   private void writeStartRecord(Id.Run run) {
-    store.setStart(run.getProgram(), run.getId(), RunIds.getTime(RunIds.fromString(run.getId()), TimeUnit.SECONDS));
-    Assert.assertNotNull(store.getRun(run.getProgram(), run.getId()));
+    ProgramId programId = run.getProgram().toEntityId();
+    store.setStart(programId, run.getId(), RunIds.getTime(RunIds.fromString(run.getId()), TimeUnit.SECONDS));
+    Assert.assertNotNull(store.getRun(programId, run.getId()));
   }
 
   private void writeStopRecord(Id.Run run, long stopTimeInMillis) {
-    store.setStop(run.getProgram(), run.getId(), TimeUnit.MILLISECONDS.toSeconds(stopTimeInMillis),
+    ProgramId programId = run.getProgram().toEntityId();
+    store.setStop(programId, run.getId(), TimeUnit.MILLISECONDS.toSeconds(stopTimeInMillis),
                   ProgramRunStatus.COMPLETED);
-    Assert.assertNotNull(store.getRun(run.getProgram(), run.getId()));
+    Assert.assertNotNull(store.getRun(programId, run.getId()));
   }
 
   private void writeSuspendedRecord(Id.Run run) {
-    store.setSuspend(run.getProgram(), run.getId());
-    Assert.assertNotNull(store.getRun(run.getProgram(), run.getId()));
+    ProgramId programId = run.getProgram().toEntityId();
+    store.setSuspend(programId, run.getId());
+    Assert.assertNotNull(store.getRun(programId, run.getId()));
   }
 
   private Set<Long> runsToTime(Id.Run... runIds) {
