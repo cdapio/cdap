@@ -55,7 +55,7 @@ import javax.annotation.Nullable;
  * can be added to the transaction context. This is useful for transaction-aware's that
  * do not implement a Dataset (such as queue consumers etc.).
  */
-public abstract class DynamicDatasetCache implements DatasetContext, Supplier<TransactionContext> {
+public abstract class DynamicDatasetCache implements DatasetContext, Supplier<TransactionContext>, AutoCloseable {
 
   protected final SystemDatasetInstantiator instantiator;
   protected final TransactionSystemClient txClient;
@@ -275,6 +275,7 @@ public abstract class DynamicDatasetCache implements DatasetContext, Supplier<Tr
    * If an extra transaction-awares were added to this cache (and not removed), then they will also
    * be closed.
    */
+  @Override
   public void close() {
     Closeables.closeQuietly(instantiator);
   }

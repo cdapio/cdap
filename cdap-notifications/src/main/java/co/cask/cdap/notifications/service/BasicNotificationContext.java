@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,7 +42,7 @@ public final class BasicNotificationContext implements NotificationContext {
     // TODO this dataset context needs a metrics context [CDAP-3114]
     // TODO this context is only used in system code. When we expose it to user code, we need to set the class loader,
     //      the owners, the runtime arguments and the metrics context.
-    this.datasetContext = new MultiThreadDatasetCache(new SystemDatasetInstantiator(dsFramework, null, null),
+    this.datasetContext = new MultiThreadDatasetCache(new SystemDatasetInstantiator(dsFramework),
                                                       txSystemClient, new NamespaceId(namespaceId.getId()),
                                                       null, null, null);
   }

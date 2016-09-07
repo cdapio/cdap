@@ -71,7 +71,6 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.store.DefaultNamespaceStore;
 import com.google.common.base.Function;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
@@ -927,9 +926,8 @@ public class DefaultStoreTest {
     try {
       store.addSchedule(program, scheduleWithSameNameSpec);
       Assert.fail("Should have thrown Exception because multiple schedules with the same name are being added.");
-    } catch (Exception ex) {
-      Assert.assertEquals(ex.getCause().getCause().getMessage(),
-                          "Schedule with the name 'Schedule2' already exists.");
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals("Schedule with the name 'Schedule2' already exists.", ex.getMessage());
     }
 
     store.deleteSchedule(program, "Schedule2");
@@ -940,8 +938,8 @@ public class DefaultStoreTest {
     try {
       store.deleteSchedule(program, "Schedule2");
       Assert.fail();
-    } catch (Exception e) {
-      Assert.assertEquals(NoSuchElementException.class, Throwables.getRootCause(e).getClass());
+    } catch (NoSuchElementException e) {
+      // Expected
     }
     schedules = getSchedules(appId);
     Assert.assertEquals(1, schedules.size());
