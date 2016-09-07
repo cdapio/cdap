@@ -16,26 +16,36 @@
 
 package co.cask.cdap.data.view;
 
-import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ViewDetail;
 import co.cask.cdap.proto.ViewSpecification;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Function;
-import com.google.common.base.Objects;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
-import org.apache.tephra.TransactionExecutor;
-import org.apache.tephra.TransactionExecutorFactory;
+import org.apache.tephra.RetryStrategies;
+import org.apache.tephra.TransactionFailureException;
+import org.apache.tephra.TransactionSystemClient;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -43,39 +53,51 @@ import java.util.List;
  */
 public final class MDSViewStore implements ViewStore {
 
-  private static final Id.DatasetInstance STORE_DATASET_ID =
-    Id.DatasetInstance.from(Id.Namespace.SYSTEM, Constants.AppMetaStore.TABLE);
+  private static final DatasetId STORE_DATASET_ID = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
   private static final String TYPE_STREAM_VIEW = "stream.view";
+  private static final Function<StreamViewEntry, Id.Stream.View> VIEW_ENTRY_TO_ID =
+    new Function<StreamViewEntry, Id.Stream.View>() {
+      @Override
+      public Id.Stream.View apply(StreamViewEntry entry) {
+        return entry.getId();
+      }
+    };
 
-  private final TransactionExecutorFactory executorFactory;
   private final DatasetFramework datasetFramework;
+  private final Transactional transactional;
 
   @Inject
-  public MDSViewStore(final DatasetFramework datasetFramework,
-                      TransactionExecutorFactory executorFactory) {
+  public MDSViewStore(DatasetFramework datasetFramework, TransactionSystemClient txClient) {
     this.datasetFramework = datasetFramework;
-    this.executorFactory = executorFactory;
+    this.transactional = Transactions.createTransactionalWithRetry(
+      Transactions.createTransactional(new MultiThreadDatasetCache(
+        new SystemDatasetInstantiator(datasetFramework), txClient,
+        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
+      RetryStrategies.retryOnConflict(20, 100)
+    );
   }
 
-  private <T> T execute(TransactionExecutor.Function<ViewMetadataStoreDataset, T> func) {
+  private <T> T execute(TxCallable<T> callable) {
     try {
-      Table table = DatasetsUtil.getOrCreateDataset(
-        datasetFramework, STORE_DATASET_ID,
-        "table", DatasetProperties.EMPTY,
-        DatasetDefinition.NO_ARGUMENTS, null);
-      ViewMetadataStoreDataset viewDataset = new ViewMetadataStoreDataset(table);
-      TransactionExecutor txExecutor = Transactions.createTransactionExecutor(executorFactory, viewDataset);
-      return txExecutor.execute(func, viewDataset);
-    } catch (Exception e) {
-      throw new RuntimeException(String.format("Error accessing %s table", Constants.Stream.View.STORE_TABLE), e);
+      return Transactions.execute(transactional, callable);
+    } catch (TransactionFailureException e) {
+      throw Transactions.propagate(e);
     }
+  }
+
+  private ViewMetadataStoreDataset getViewDataset(DatasetContext datasetContext) throws IOException,
+                                                                                        DatasetManagementException {
+    Table table = DatasetsUtil.getOrCreateDataset(datasetContext, datasetFramework, STORE_DATASET_ID,
+                                                  Table.class.getName(), DatasetProperties.EMPTY);
+    return new ViewMetadataStoreDataset(table);
   }
 
   @Override
   public boolean createOrUpdate(final Id.Stream.View viewId, final ViewSpecification spec) {
-    return execute(new TransactionExecutor.Function<ViewMetadataStoreDataset, Boolean>() {
+    return execute(new TxCallable<Boolean>() {
       @Override
-      public Boolean apply(ViewMetadataStoreDataset mds) throws Exception {
+      public Boolean call(DatasetContext context) throws Exception {
+        ViewMetadataStoreDataset mds = getViewDataset(context);
         boolean created = !mds.exists(getKey(viewId));
         mds.write(getKey(viewId), new StreamViewEntry(viewId, spec));
         return created;
@@ -85,70 +107,60 @@ public final class MDSViewStore implements ViewStore {
 
   @Override
   public boolean exists(final Id.Stream.View viewId) {
-    return execute(new TransactionExecutor.Function<ViewMetadataStoreDataset, Boolean>() {
+    return execute(new TxCallable<Boolean>() {
       @Override
-      public Boolean apply(ViewMetadataStoreDataset mds) throws Exception {
-        return mds.exists(getKey(viewId));
+      public Boolean call(DatasetContext context) throws Exception {
+        return getViewDataset(context).exists(getKey(viewId));
       }
     });
   }
 
   @Override
   public void delete(final Id.Stream.View viewId) throws NotFoundException {
-    boolean notFound = execute(new TransactionExecutor.Function<ViewMetadataStoreDataset, Boolean>() {
-      @Override
-      public Boolean apply(ViewMetadataStoreDataset mds) throws Exception {
-        if (!mds.exists(getKey(viewId))) {
-          return true;
+    try {
+      transactional.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          ViewMetadataStoreDataset mds = getViewDataset(context);
+          MDSKey key = getKey(viewId);
+          if (!mds.exists(key)) {
+            throw new NotFoundException(viewId);
+          }
+          mds.deleteAll(key);
         }
-        mds.deleteAll(getKey(viewId));
-        return false;
-      }
-    });
-
-    if (notFound) {
-      throw new NotFoundException(viewId);
+      });
+    } catch (TransactionFailureException e) {
+      throw Transactions.propagate(e, NotFoundException.class);
     }
   }
 
   @Override
   public List<Id.Stream.View> list(final Id.Stream streamId) {
-    List<StreamViewEntry> entries = execute(
-      new TransactionExecutor.Function<ViewMetadataStoreDataset, List<StreamViewEntry>>() {
-        @Override
-        public List<StreamViewEntry> apply(ViewMetadataStoreDataset mds) throws Exception {
-          return Objects.firstNonNull(
-            mds.<StreamViewEntry>list(getKey(streamId), StreamViewEntry.class),
-            ImmutableList.<StreamViewEntry>of());
-        }
-      });
-
-    ImmutableList.Builder<Id.Stream.View> builder = ImmutableList.builder();
-    builder.addAll(Collections2.transform(entries, new Function<StreamViewEntry, Id.Stream.View>() {
+    return execute(new TxCallable<List<Id.Stream.View>>() {
       @Override
-      public Id.Stream.View apply(StreamViewEntry input) {
-        return input.getId();
+      public List<Id.Stream.View> call(DatasetContext context) throws Exception {
+        List<StreamViewEntry> views = getViewDataset(context).list(getKey(streamId), StreamViewEntry.class);
+        return ImmutableList.copyOf(Lists.transform(views, VIEW_ENTRY_TO_ID));
       }
-    }));
-    return builder.build();
+    });
   }
 
   @Override
   public ViewDetail get(final Id.Stream.View viewId) throws NotFoundException {
-    StreamViewEntry entry = execute(
-      new TransactionExecutor.Function<ViewMetadataStoreDataset, StreamViewEntry>() {
-      @Override
-      public StreamViewEntry apply(ViewMetadataStoreDataset mds) throws Exception {
-        if (!mds.exists(getKey(viewId))) {
-          return null;
+    try {
+      return Transactions.execute(transactional, new TxCallable<ViewDetail>() {
+        @Override
+        public ViewDetail call(DatasetContext context) throws Exception {
+          StreamViewEntry viewEntry = getViewDataset(context).get(getKey(viewId), StreamViewEntry.class);
+          if (viewEntry == null) {
+            throw new NotFoundException(viewId);
+          }
+          return new ViewDetail(viewId.getId(), viewEntry.getSpec());
         }
-        return mds.get(getKey(viewId), StreamViewEntry.class);
-      }
-    });
-    if (entry == null) {
-      throw new NotFoundException(viewId);
+      });
+    } catch (TransactionFailureException e) {
+      throw Transactions.propagate(e, NotFoundException.class);
     }
-    return new ViewDetail(viewId.getId(), entry.getSpec());
   }
 
   private MDSKey getKey(Id.Stream id) {
