@@ -14,7 +14,11 @@
  * the License.
  */
 
-import DetailModule from '../DetailModule/index.js';
+import MetadataPaneApplication from '../MetadataPaneApplication/index.js';
+import MetadataPaneMemory from '../MetadataPaneMemory/index.js';
+import MetadataPaneNode from '../MetadataPaneNode/index.js';
+import MetadataPaneVirtualCores from '../MetadataPaneVirtualCores/index.js';
+
 import React, {PropTypes} from 'react';
 require('./AdminDetailPanel.less');
 
@@ -43,13 +47,13 @@ function AdminDetailPanel({applicationName, timeFromUpdate, isLoading}){
       </div>
       <div className="admin-detail-panel-body">
         <div className="end-line" />
-        <DetailModule isLoading={isLoading} label="Nodes" numStats={6} />
+        <MetadataPaneNode isLoading={isLoading} label="Nodes" numStats={6} />
         <div className="vertical-line" />
-        <DetailModule isLoading={isLoading} label="Virtual Cores" numStats={4} />
+        <MetadataPaneVirtualCores isLoading={isLoading} label="Virtual Cores" numStats={4} />
         <div className="vertical-line" />
-        <DetailModule isLoading={isLoading} label="Memory" numStats={4} />
+        <MetadataPaneMemory isLoading={isLoading} label="Memory" numStats={4} />
         <div className="vertical-line" />
-        <DetailModule isLoading={isLoading} label="Application" end={true} numStats={6} />
+        <MetadataPaneApplication isLoading={isLoading} label="Application" end={true} numStats={6} />
         <div className="end-line" />
       </div>
     </div>

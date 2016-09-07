@@ -14,23 +14,50 @@
  * the License.
  */
 @import '../../styles/variables.less';
-@grey-theme-color: #e3e3e3;
-.service-status-component {
 
-  .service-status-panel-label {
-    background-color: @grey-theme-color;
-    color: #656565;
-    margin-top: 5px;
-    height: 110px;
-    width: 40px;
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
+.metadata-pane-node {
+  height: 85%;
+  position: relative;
+  top: 10px;
+  display: inline-block;
+
+  .spinner {
+    margin: auto;
+    display: inline-block;
   }
 
-  .service-status-panel-label-text {
+  .hidden {
+    visibility: hidden;
+  }
+
+  .spinner-container {
+    display: flex;
+    justify-content: center;
+  }
+
+  .stat-container {
+    display: inline-block;
+    max-width: 100px;
+    margin-left: 8px;
+    margin-right: 8px;
+  }
+
+  .pane-header {
+    margin-top: 10px;
+    margin-bottom: 20px;
     text-align: center;
-    transform: rotate(270deg);
-    font-size: 12px;
+    font-size: 18px;
+    font-weight: bold;
+  }
+
+  .pane-body {
+    height: 200px;
+    display: flex;
+    justify-content: space-between;
+
+    .row {
+      margin-left: 15px;
+      margin-right: 15px;
+    }
   }
 }

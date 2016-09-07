@@ -101,7 +101,7 @@ class ManagementView extends Component {
     return (
        <div className="management-view">
         <div className="top-panel">
-          <div className="admin-row">
+          <div className="admin-row top-row">
             <InfoCard isLoading={this.state.loading} version={this.props.data.version} />
             <InfoCard isLoading={this.state.loading} uptime={this.props.data.uptime} />
             <ServiceStatusComponent/>

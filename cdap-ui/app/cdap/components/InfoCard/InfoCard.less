@@ -18,8 +18,9 @@
 @info-card-text-color: #656565;
 
 .info-card {
-  width: 170px;
-  height: 100px;
+  min-width: 130px;
+  flex-shrink: 0;
+  height: 110px;
   background-color: @grey-theme-color;
   display: inline-block;
   margin: 5px 10px 5px 0;
@@ -40,9 +41,13 @@
   }
 
   .info-card-main-text {
-    font-size: 35px;
+    white-space: nowrap;
+    font-size: 38px;
     color: @info-card-text-color;
+    width: 100%;
     margin: auto;
+    padding-left : 5px;
+    padding-right: 5px;
     text-align: center;
     position: relative;
     top: 6px;
@@ -50,7 +55,7 @@
   }
 
   .info-card-secondary-text {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 900;
     color: @info-card-text-color;
     margin: auto;

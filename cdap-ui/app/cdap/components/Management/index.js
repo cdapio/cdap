@@ -18,7 +18,7 @@ import React from 'react';
 import ManagementView from '../ManagementView';
 
 var dummyData = {
-  version: '3.4',
+  version: '4.0-SNAPSHOT',
   uptime: {
     duration: 0.2,
     unit: 'hr'
