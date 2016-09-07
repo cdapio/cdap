@@ -15,7 +15,7 @@
  */
 
 import React, {PropTypes} from 'react';
-require('./OverviewModuleCard.less');
+require('./OverviewPaneCard.less');
 var classNames = require('classnames');
 
 const propTypes = {
@@ -24,18 +24,18 @@ const propTypes = {
   isLoading: PropTypes.bool
 };
 
-function OverviewModuleCard({name, version, isLoading}) {
+function OverviewPaneCard({name, version, isLoading}) {
   return (
-    <div className={classNames("overview-module-card", {"hidden" : isLoading})}>
-      <div className="overview-module-card-header">
-        <span className="overview-module-card-name">
+    <div className={classNames("overview-pane-card", {"hidden" : isLoading})}>
+      <div className="overview-pane-card-header">
+        <span className="overview-pane-card-name">
           {name}
         </span>
-        <span className="overview-module-card-version">
+        <span className="overview-pane-card-version">
           {version}
         </span>
       </div>
-      <div className="overview-module-card-body">
+      <div className="overview-pane-card-body">
         <div className="icon-container">
           <i className="fa fa-list-alt" aria-hidden="true">
           </i>
@@ -48,6 +48,6 @@ function OverviewModuleCard({name, version, isLoading}) {
   );
 }
 
-OverviewModuleCard.propTypes = propTypes;
+OverviewPaneCard.propTypes = propTypes;
 
-export default OverviewModuleCard;
+export default OverviewPaneCard;

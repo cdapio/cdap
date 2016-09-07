@@ -19,33 +19,23 @@ require('./InfoCard.less');
 var classNames = require('classnames');
 
 const propTypes = {
- version: PropTypes.string,
- uptime: PropTypes.object,
+ primaryText: PropTypes.string,
+ secondaryText: PropTypes.string,
+ superscriptText: PropTypes.string,
  isLoading: PropTypes.bool
 };
 
-function InfoCard({isLoading, uptime, version}) {
+function InfoCard({isLoading, primaryText, secondaryText, superscriptText}) {
 
-  var unitLoading = classNames("uptime-unit", {'hidden' : isLoading});
-  var textLoading = classNames("info-card-text", {'hidden' : isLoading});
-  var primaryText = '';
-  var secondaryText = '';
-  var unit;
-
-  if(version){
-    primaryText = version;
-    secondaryText = 'Version';
-  } else if(uptime){
-    unit = <div className={unitLoading}> {uptime.unit} </div>;
-    primaryText = uptime.duration;
-    secondaryText = 'Uptime';
-  }
+  var textClasses = classNames("info-card-text", {'hidden' : isLoading});
+  var superScriptClasses = classNames("superscript-text", {'hidden' : isLoading});
+  var superscript = <div className={superScriptClasses}> {superscriptText} </div>;
 
   return (
   <div className="info-card">
-    {unit}
+    {superscript}
     <i className={classNames("fa", "fa-spinner", "fa-spin", "fa-3x", {"hidden" : !isLoading})} />
-    <div className={textLoading}>
+    <div className={textClasses}>
       <div className="info-card-main-text">
         {primaryText}
       </div>

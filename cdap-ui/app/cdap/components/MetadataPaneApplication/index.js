@@ -16,7 +16,7 @@
 
 import React, {PropTypes} from 'react';
 require('./MetadataPaneApplication.less');
-import DetailModuleStatContainer from '../DetailModuleStatContainer/index.js';
+import StatContainer from '../StatContainer/index.js';
 var classNames = require('classnames');
 
 const propTypes = {
@@ -30,7 +30,7 @@ function MetadataPaneApplication({numStats, label, isLoading}){
   var stats = [];
 
   for(var i = 0; i < numStats; i++){
-    stats.push(<DetailModuleStatContainer isLoading={isLoading} number={25} label="Total" />);
+    stats.push(<StatContainer isLoading={isLoading} number={25} label="Total" />);
   }
 
   var containers = [];

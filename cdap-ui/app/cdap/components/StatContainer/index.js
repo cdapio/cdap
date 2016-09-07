@@ -14,36 +14,30 @@
  * the License.
  */
 
+
 import React, {PropTypes} from 'react';
-require('./OverviewModule.less');
-import OverviewModuleCard from '../OverviewModuleCard/index.js';
+require('./StatContainer.less');
 var classNames = require('classnames');
-var shortid = require('shortid');
 
 const propTypes = {
+  number: PropTypes.number,
+  label: PropTypes.string,
   isLoading: PropTypes.bool
 };
 
-function OverviewModule({isLoading}) {
-
-  var cards = [];
-  for(var i = 0; i < 8; i++){
-    cards.push(<OverviewModuleCard key={shortid.generate()} isLoading={isLoading} name="HBASE" version={5.6} />);
-  }
-
+function StatContainer({number, label, isLoading}) {
   return (
-    <div className="overview-module">
-      <span>Component Overview</span>
-      <div className="overview-module-container">
-        <div className={classNames("spinner-container", { "hidden" : !isLoading})}>
-          <div className={classNames("fa", "fa-spinner", "fa-spin", "spinner", "fa-3x", { "hidden" : !isLoading})}></div>
-        </div>
-       {cards}
+    <div className="stat-container">
+      <div className={classNames("stat", {"hidden" : isLoading})}>
+        {number}
+      </div>
+      <div className={classNames("stat-label", {"hidden" : isLoading})}>
+        {label}
       </div>
     </div>
   );
 }
 
-OverviewModule.propTypes = propTypes;
+StatContainer.propTypes = propTypes;
 
-export default OverviewModule;
+export default StatContainer;

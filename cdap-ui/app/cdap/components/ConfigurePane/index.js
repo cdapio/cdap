@@ -13,27 +13,24 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-@import '../../styles/variables.less';
 
-.detail-module-stat-container {
-  text-align: center;
-  display: block;
-  margin-left: 20px;
-  margin-right: 20px;
+import React from 'react';
+require('./ConfigurePane.less');
+import ConfigureButton from '../ConfigureButton/index.js';
+var shortid = require('shortid');
 
-  .hidden {
-    visibility : hidden;
+export default function ConfigurePane(){
+  var buttons = [];
+  for(var i = 0 ; i < 20; i++){
+    buttons.push(<ConfigureButton key={shortid.generate()} label="View Configurations" />);
   }
 
-  .detail-module-stat {
-    min-width: 40px;
-    font-size: 25px;
-    display: block;
-  }
-
-  .detail-module-stat-label {
-    display: block;
-    color: #9ca4ab;
-    font-size: 12px;
-  }
+  return (
+    <div className="configure-pane">
+      <span>Configure</span>
+      <div className="configure-pane-container">
+        {buttons}
+      </div>
+    </div>
+  );
 }

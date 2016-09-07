@@ -14,30 +14,36 @@
  * the License.
  */
 
-
 import React, {PropTypes} from 'react';
-require('./DetailModuleStatContainer.less');
+require('./OverviewPane.less');
+import OverviewPaneCard from '../OverviewPaneCard/index.js';
 var classNames = require('classnames');
+var shortid = require('shortid');
 
 const propTypes = {
-  number: PropTypes.number,
-  label: PropTypes.string,
   isLoading: PropTypes.bool
 };
 
-function DetailModuleStatContainer({number, label, isLoading}) {
+function OverviewPane({isLoading}) {
+
+  var cards = [];
+  for(var i = 0; i < 8; i++){
+    cards.push(<OverviewPaneCard key={shortid.generate()} isLoading={isLoading} name="HBASE" version={5.6} />);
+  }
+
   return (
-    <div className="detail-module-stat-container">
-      <div className={classNames("detail-module-stat", {"hidden" : isLoading})}>
-        {number}
-      </div>
-      <div className={classNames("detail-module-stat-label", {"hidden" : isLoading})}>
-        {label}
+    <div className="overview-pane">
+      <span>Component Overview</span>
+      <div className="overview-pane-container">
+        <div className={classNames("spinner-container", { "hidden" : !isLoading})}>
+          <div className={classNames("fa", "fa-spinner", "fa-spin", "spinner", "fa-3x", { "hidden" : !isLoading})}></div>
+        </div>
+       {cards}
       </div>
     </div>
   );
 }
 
-DetailModuleStatContainer.propTypes = propTypes;
+OverviewPane.propTypes = propTypes;
 
-export default DetailModuleStatContainer;
+export default OverviewPane;

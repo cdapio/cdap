@@ -21,8 +21,8 @@ import InfoCard from '../InfoCard/index.js';
 import ServiceStatusComponent from '../ServiceStatusComponent/index.js';
 import ServiceStatusPanel from '../ServiceStatusPanel/index.js';
 import AdminDetailPanel from '../AdminDetailPanel/index.js';
-import ConfigureModule from '../ConfigureModule/index.js';
-import OverviewModule from '../OverviewModule/index.js';
+import ConfigurePane from '../ConfigurePane/index.js';
+import OverviewPane from '../OverviewPane/index.js';
 
 const propTypes = {
   data: PropTypes.object
@@ -102,8 +102,8 @@ class ManagementView extends Component {
        <div className="management-view">
         <div className="top-panel">
           <div className="admin-row top-row">
-            <InfoCard isLoading={this.state.loading} version={this.props.data.version} />
-            <InfoCard isLoading={this.state.loading} uptime={this.props.data.uptime} />
+            <InfoCard isLoading={this.state.loading} primaryText="3.5.0-SNAPSHOT" secondaryText="Version" />
+            <InfoCard isLoading={this.state.loading} primaryText="0.2" secondaryText="Uptime" superscriptText="hr" />
             <ServiceStatusComponent/>
             <ServiceStatusPanel isLoading={this.state.loading} services={this.props.data.services} />
           </div>
@@ -125,8 +125,8 @@ class ManagementView extends Component {
             </ul>
           </div>
         </div>
-        <ConfigureModule />
-        <OverviewModule isLoading={this.state.loading} />
+        <ConfigurePane />
+        <OverviewPane isLoading={this.state.loading} />
       </div>
     );
   }

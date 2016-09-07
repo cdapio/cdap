@@ -16,17 +16,35 @@
 @import '../../styles/variables.less';
 @module-color-lightgrey: #f1f1f1;
 
-.configure-module {
+.overview-pane {
   margin-top: 25px;
   display: inline-block;
   width: 48%;
+  margin-left: 35px;
+  position: relative;
+  right: -15px;
 
   span {
     font-size: 20px;
     font-weight: 600;
   }
 
-  .configure-module-container {
+  .spinner-container {
+    width: 50px;
+    height: 50px;
+    margin: 0 auto;
+    font-size: 50px;
+    position: relative;
+    top: 45%;
+    transform: translateY(-50%);
+  }
+
+  .spinner {
+    margin: auto;
+    font-size: 50px;
+  }
+
+  .overview-pane-container {
     border: solid 1px @module-color-lightgrey;
     background-color: @module-color-lightgrey;
     width: 100%;
@@ -35,5 +53,9 @@
     margin-top: 5px;
     overflow: auto;
     padding-top: 15px;
+  }
+
+  .hidden {
+    visibility: none;
   }
 }
