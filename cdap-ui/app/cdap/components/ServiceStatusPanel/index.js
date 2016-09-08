@@ -27,7 +27,12 @@ const propTypes = {
 function ServiceStatusPanel({services, isLoading}) {
 
   var serviceList = services.map(function(service){
-    return <ServiceStatus key={shortid.generate()} isLoading={isLoading} status={service.status} name={service.name} />;
+    return <ServiceStatus
+              key={shortid.generate()}
+              isLoading={isLoading}
+              status={service.status}
+              name={service.name}
+            />;
   });
 
   return (

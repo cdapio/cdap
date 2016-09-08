@@ -28,7 +28,14 @@ function OverviewPane({isLoading}) {
 
   var cards = [];
   for(var i = 0; i < 8; i++){
-    cards.push(<OverviewPaneCard key={shortid.generate()} isLoading={isLoading} name="HBASE" version={5.6} />);
+    cards.push(
+      <OverviewPaneCard
+        key={shortid.generate()}
+        isLoading={isLoading}
+        name="HBASE"
+        version={5.6}
+      />
+    );
   }
 
   return (

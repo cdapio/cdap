@@ -25,16 +25,18 @@ require('./AdminDetailPanel.less');
 const propTypes = {
   applicationName: PropTypes.string,
   timeFromUpdate: PropTypes.number,
-  isLoading: PropTypes.bool
+  isLoading: PropTypes.bool,
+  clickLeftButton: PropTypes.func,
+  clickRightButton: PropTypes.func
 };
 
-function AdminDetailPanel({applicationName, timeFromUpdate, isLoading}){
+function AdminDetailPanel({applicationName, timeFromUpdate, clickLeftButton, clickRightButton}){
   return (
     <div className="admin-detail-panel">
-      <div className="admin-detail-panel-button-left">
+      <div onClick={clickLeftButton} className="admin-detail-panel-button-left">
         <i className="fa fa-chevron-left" aria-hidden="true" />
       </div>
-      <div className="admin-detail-panel-button-right">
+      <div onClick={clickRightButton} className="admin-detail-panel-button-right">
         <i className="fa fa-chevron-right" aria-hidden="true" />
       </div>
       <div className="admin-detail-panel-header">
@@ -47,13 +49,13 @@ function AdminDetailPanel({applicationName, timeFromUpdate, isLoading}){
       </div>
       <div className="admin-detail-panel-body">
         <div className="end-line" />
-        <MetadataPaneNode isLoading={isLoading} label="Nodes" numStats={6} />
+        <MetadataPaneNode />
         <div className="vertical-line" />
-        <MetadataPaneVirtualCores isLoading={isLoading} label="Virtual Cores" numStats={4} />
+        <MetadataPaneVirtualCores />
         <div className="vertical-line" />
-        <MetadataPaneMemory isLoading={isLoading} label="Memory" numStats={4} />
+        <MetadataPaneMemory />
         <div className="vertical-line" />
-        <MetadataPaneApplication isLoading={isLoading} label="Application" end={true} numStats={6} />
+        <MetadataPaneApplication />
         <div className="end-line" />
       </div>
     </div>

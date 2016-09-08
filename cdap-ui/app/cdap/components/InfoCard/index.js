@@ -27,15 +27,11 @@ const propTypes = {
 
 function InfoCard({isLoading, primaryText, secondaryText, superscriptText}) {
 
-  var textClasses = classNames("info-card-text", {'hidden' : isLoading});
-  var superScriptClasses = classNames("superscript-text", {'hidden' : isLoading});
-  var superscript = <div className={superScriptClasses}> {superscriptText} </div>;
-
   return (
   <div className="info-card">
-    {superscript}
+    <div className={classNames("superscript-text", {'hidden' : isLoading})}> {superscriptText} </div>
     <i className={classNames("fa", "fa-spinner", "fa-spin", "fa-3x", {"hidden" : !isLoading})} />
-    <div className={textClasses}>
+    <div className={classNames("info-card-text", {'hidden' : isLoading})}>
       <div className="info-card-main-text">
         {primaryText}
       </div>

@@ -15,13 +15,13 @@
  */
 
 import React from 'react';
-require('./ServiceStatusComponent.less');
+require('./ServiceLabel.less');
 
-export default function ServiceStatusComponent() {
+export default function ServiceLabel() {
   return (
-    <div className="service-status-component">
-      <div className="service-status-panel-label">
-        <div className="service-status-panel-label-text">
+    <div className="service-label">
+      <div className="service-label-text-container">
+        <div className="service-label-text">
           Services
         </div>
       </div>

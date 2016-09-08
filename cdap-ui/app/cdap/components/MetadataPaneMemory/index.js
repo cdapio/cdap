@@ -14,23 +14,33 @@
  * the License.
  */
 
-import React, {PropTypes} from 'react';
+import React from 'react';
 require('./MetadataPaneMemory.less');
 import StatContainer from '../StatContainer/index.js';
 var classNames = require('classnames');
 
-const propTypes = {
-  numStats: PropTypes.number,
-  label: PropTypes.string,
-  isLoading: PropTypes.bool
-};
+var loading = true;
 
-function MetadataPaneMemory({numStats, label, isLoading}){
+function simulateLoading() {
+  setTimeout( () => {
+    loading = false;
+  }, 1500);
+}
+
+function MetadataPaneMemory(){
+
+  simulateLoading();
 
   var stats = [];
 
-  for(var i = 0; i < numStats; i++){
-    stats.push(<StatContainer isLoading={isLoading} number={25} label="Total" />);
+  for(var i = 0; i < 4; i++){
+    stats.push(
+      <StatContainer
+        isLoading={loading}
+        number={25}
+        label="Total"
+      />
+    );
   }
 
   var containers = [];
@@ -51,10 +61,10 @@ function MetadataPaneMemory({numStats, label, isLoading}){
   return (
     <div className="metadata-pane-memory">
       <div className="pane-header">
-        {label}
+        Memory
       </div>
-      <div className={classNames("spinner-container", {"hidden" : !isLoading})}>
-        <div className={classNames("fa", "fa-spinner", "fa-spin", "spinner", "fa-3x", {"hidden" : !isLoading})}></div>
+      <div className={classNames("spinner-container", {"hidden" : !loading})}>
+        <div className={classNames("fa", "fa-spinner", "fa-spin", "spinner", "fa-3x", {"hidden" : !loading})}></div>
       </div>
       <div className="pane-body">
         {containers}
@@ -62,7 +72,5 @@ function MetadataPaneMemory({numStats, label, isLoading}){
     </div>
   );
 }
-
-MetadataPaneMemory.propTypes = propTypes;
 
 export default MetadataPaneMemory;

@@ -15,7 +15,7 @@
  */
 @import '../../styles/variables.less';
 @grey-theme-color:  #E3E3E3;
-.management-view {
+.management {
   width: 96%;
   height: 100%;
   border: solid @grey-theme-color 2px;
@@ -29,6 +29,11 @@
     border: solid @grey-theme-color 2px;
   }
 
+  .nav-buffer {
+    width: 40px;
+    height: 100%;
+  }
+
   .admin-row {
     display: -webkit-flex;
     display: flex;
@@ -39,63 +44,35 @@
     padding-right: 20px;
   }
 
-  .navigation-container {
-    width: 400px;
-    margin: 0 auto;
-    margin-top: 30px;
-    margin-bottom: -10px;
-    font-weight: bold;
-    font-size: 22px;
+  .centering-container {
+    display: flex;
+    justify-content: center;
+  }
 
-    hr {
-      height: .25rem;
-      width: 70px;
-      margin: 0;
-      margin-top: -4px;
-      background: #FF6501;
-      border: none;
-      transition: .3s ease-in-out;
-    }
+  .container {
 
-    ul li {
-      display: inline;
-      text-align: center;
-    }
+    margin-top: 20px;
 
-    a {
-      display: inline-block;
-      width: 100px;
-      padding: .75rem 0;
-      margin: 0;
-      text-decoration: none;
-      color: #999999;
-    }
+    ul {
+      li {
+        width: 80px;
+        font-size: 22px;
+        font-weight: bold;
+        color: #999999;
+        margin-left: 30px;
+        margin-right: 30px;
+        text-align: center;
+      }
 
-    a:hover {
-      color: #333333;
-      text-decoration: none;
-    }
+      li.active {
+        border-bottom: solid 4px orange;
+        background-color: transparent;
+        color: #000000;
+      }
 
-    .active {
-      color: #000000;
-    }
-
-    .one:hover ~ hr,
-    .one:active ~ hr,
-    hr.one {
-      margin-left: 15px;
-    }
-
-    .two:hover ~ hr,
-    .two.active ~ hr,
-    hr.two {
-      margin-left: 32%;
-    }
-
-    .three:hover ~ hr,
-    .three.active ~ hr,
-    hr.three {
-      margin-left: 60%;
+      li:hover {
+        color: #000000;
+      }
     }
   }
 }
