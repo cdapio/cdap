@@ -23,6 +23,7 @@ import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -40,7 +41,7 @@ public class ApplicationVerificationTest {
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
     ApplicationVerification app = new ApplicationVerification();
-    VerifyResult result = app.verify(Id.Application.from("test", newSpec.getName()), newSpec);
+    VerifyResult result = app.verify(new ApplicationId("test", newSpec.getName()), newSpec);
     Assert.assertTrue(result.getMessage(), result.getStatus() == VerifyResult.Status.SUCCESS);
   }
 

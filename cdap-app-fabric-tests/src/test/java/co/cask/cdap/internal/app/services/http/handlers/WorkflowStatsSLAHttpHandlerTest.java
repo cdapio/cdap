@@ -37,6 +37,7 @@ import co.cask.cdap.proto.WorkflowStatsComparison;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.WorkflowId;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.mapreduce.TaskCounter;
@@ -189,7 +190,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
     String mapreduceName = "ClassicWordCount";
     String sparkName = "SparkWorkflowTest";
 
-    ProgramId workflowProgram = WORKFLOW_APP.workflow(workflowName);
+    WorkflowId workflowProgram = WORKFLOW_APP.workflow(workflowName);
     ProgramId mapreduceProgram = WORKFLOW_APP.mr(mapreduceName);
     ProgramId sparkProgram = WORKFLOW_APP.spark(sparkName);
 
@@ -243,7 +244,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
     String mapreduceName = "ClassicWordCount";
     String sparkName = "SparkWorkflowTest";
 
-    ProgramId workflowProgram = WORKFLOW_APP.workflow(workflowName);
+    WorkflowId workflowProgram = WORKFLOW_APP.workflow(workflowName);
     ProgramId mapreduceProgram = WORKFLOW_APP.mr(mapreduceName);
     ProgramId sparkProgram = WORKFLOW_APP.spark(sparkName);
 
@@ -277,7 +278,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
    * the statistics endpoint needs to handle number of spark runs differently and also have tests for a
    * specific run's spark job.
    */
-  private List<RunId> setupRuns(ProgramId workflowProgram, ProgramId mapreduceProgram,
+  private List<RunId> setupRuns(WorkflowId workflowProgram, ProgramId mapreduceProgram,
                                 ProgramId sparkProgram, Store store, int count) throws Exception {
     List<RunId> runIdList = new ArrayList<>();
     long startTime = System.currentTimeMillis();

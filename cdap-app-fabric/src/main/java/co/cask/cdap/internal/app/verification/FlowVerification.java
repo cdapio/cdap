@@ -26,6 +26,7 @@ import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.error.Err;
 import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.EntityId;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -60,7 +61,7 @@ public class FlowVerification extends ProgramVerification<FlowSpecification> {
    * @return An instance of {@link VerifyResult} depending of status of verification.
    */
   @Override
-  public VerifyResult verify(Id.Application appId, final FlowSpecification input) {
+  public VerifyResult verify(ApplicationId appId, final FlowSpecification input) {
     VerifyResult verifyResult = super.verify(appId, input);
     if (!verifyResult.isSuccess()) {
       return verifyResult;
@@ -120,7 +121,7 @@ public class FlowVerification extends ProgramVerification<FlowSpecification> {
         node = new QueueSpecificationGenerator.Node(connection.getSourceType(), connection.getSourceName());
 
       } else {
-        String sourceNamespace = connection.getSourceNamespace() == null ? appId.getNamespaceId() :
+        String sourceNamespace = connection.getSourceNamespace() == null ? appId.getNamespace() :
           connection.getSourceNamespace();
         node = new QueueSpecificationGenerator.Node(connection.getSourceType(),
                                                     sourceNamespace,

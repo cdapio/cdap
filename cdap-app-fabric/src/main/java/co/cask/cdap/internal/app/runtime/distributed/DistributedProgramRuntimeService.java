@@ -297,7 +297,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   private Multimap<String, QueueName> getFlowletQueues(ApplicationId appId, FlowSpecification flowSpec) {
     // Generate all queues specifications
     Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queueSpecs
-      = new SimpleQueueSpecificationGenerator(appId.toId()).create(flowSpec);
+      = new SimpleQueueSpecificationGenerator(appId).create(flowSpec);
 
     // For storing result from flowletId to queue.
     ImmutableSetMultimap.Builder<String, QueueName> resultBuilder = ImmutableSetMultimap.builder();

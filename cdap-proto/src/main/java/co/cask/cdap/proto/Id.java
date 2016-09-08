@@ -36,6 +36,7 @@ import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.id.SystemServiceId;
+import co.cask.cdap.proto.id.WorkflowId;
 
 import java.nio.charset.Charset;
 import java.util.regex.Pattern;
@@ -441,6 +442,11 @@ public abstract class Id implements EntityIdCompatible {
 
     public static Workflow from(Namespace namespace, String application, String id) {
       return new Workflow(Id.Application.from(namespace, application), id);
+    }
+
+    @Override
+    public WorkflowId toEntityId() {
+      return new WorkflowId(super.getNamespaceId(), super.getApplicationId(), super.getId());
     }
   }
 

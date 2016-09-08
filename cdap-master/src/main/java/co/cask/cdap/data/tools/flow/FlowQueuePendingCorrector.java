@@ -68,6 +68,10 @@ import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
@@ -147,18 +151,18 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
     System.out.println("Running queue.pending correction");
     List<NamespaceMeta> namespaceMetas = namespaceQueryAdmin.list();
     for (NamespaceMeta namespaceMeta : namespaceMetas) {
-      run(Id.Namespace.from(namespaceMeta.getName()));
+      run(new NamespaceId(namespaceMeta.getName()));
     }
   }
 
   /**
    * Corrects queue.pending metric for all flowlets in a namespace.
    */
-  public void run(Id.Namespace namespaceId) throws Exception {
+  public void run(NamespaceId namespaceId) throws Exception {
     System.out.println("Running queue.pending correction on namespace " + namespaceId);
     Collection<ApplicationSpecification> apps = store.getAllApplications(namespaceId);
     for (ApplicationSpecification app : apps) {
-      Id.Application appId = Id.Application.from(namespaceId, app.getName());
+      ApplicationId appId = namespaceId.app(app.getName());
       run(appId, app);
     }
   }
@@ -166,7 +170,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
   /**
    * Corrects queue.pending metric for all flowlets in an application.
    */
-  public void run(Id.Application appId) throws Exception {
+  public void run(ApplicationId appId) throws Exception {
     ApplicationSpecification app = store.getApplication(appId);
     run(appId, app);
   }
@@ -174,33 +178,41 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
   /**
    * Corrects queue.pending metric for all flowlets in an application.
    */
-  public void run(Id.Application appId, ApplicationSpecification appSpec) throws Exception {
+  public void run(ApplicationId appId, ApplicationSpecification appSpec) throws Exception {
     System.out.println("Running queue.pending correction on app " + appId);
-    Preconditions.checkArgument(appSpec.getName().equals(appId.getId()),
+    Preconditions.checkArgument(appSpec.getName().equals(appId.getApplication()),
                                 String.format("Expected appSpec name '%s' to be equal to appId name '%s'",
-                                              appSpec.getName(), appId.getId()));
+                                              appSpec.getName(), appId.getApplication()));
     for (FlowSpecification flow : appSpec.getFlows().values()) {
-      run(Id.Flow.from(appId, flow.getName()));
+      run(appId.flow(flow.getName()));
     }
   }
 
   /**
    * Corrects queue.pending metric for a flow.
    */
-  public void run(final Id.Flow flowId) throws Exception {
-    ApplicationSpecification app = store.getApplication(flowId.getApplication());
+  public void run(final ProgramId flowId) throws Exception {
+    /* Temporary check. Can be removed when FlowId class is ready */
+    Preconditions.checkArgument(ProgramType.FLOW == flowId.getType(),
+                                "Unexpected program type %s, FlowPendingQueueCorrector only runs on flows",
+                                flowId.getType());
+    ApplicationSpecification app = store.getApplication(flowId.getParent());
     Preconditions.checkArgument(app != null);
-    Preconditions.checkArgument(app.getFlows().containsKey(flowId.getId()));
-    FlowSpecification flow = app.getFlows().get(flowId.getId());
+    Preconditions.checkArgument(app.getFlows().containsKey(flowId.getProgram()));
+    FlowSpecification flow = app.getFlows().get(flowId.getProgram());
 
     run(flowId, flow);
   }
 
-  public void run(final Id.Flow flowId, FlowSpecification flow) throws Exception {
+  public void run(final ProgramId flowId, FlowSpecification flow) throws Exception {
+    /* Temporary check. Can be removed when FlowId class is ready */
+    Preconditions.checkArgument(ProgramType.FLOW == flowId.getType(),
+                                "Unexpected program type %s, FlowPendingQueueCorrector only runs on flows",
+                                flowId.getType());
     System.out.println("Running queue.pending correction on flow " + flowId);
 
     SimpleQueueSpecificationGenerator queueSpecGenerator =
-      new SimpleQueueSpecificationGenerator(flowId.getApplication());
+      new SimpleQueueSpecificationGenerator(flowId.getParent());
 
     Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> table = queueSpecGenerator.create(flow);
     for (Table.Cell<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> cell : table.cellSet()) {
@@ -217,29 +229,32 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
   /**
    * Corrects queue.pending metric for a flowlet.
    */
-  public void run(Id.Flow flowId, String producerFlowlet, String consumerFlowlet,
+  public void run(ProgramId flowId, String producerFlowlet, String consumerFlowlet,
                   String flowletQueue) throws Exception {
-
-    ApplicationSpecification app = store.getApplication(flowId.getApplication());
+    /* Temporary check. Can be removed when FlowId class is ready */
+    Preconditions.checkArgument(ProgramType.FLOW == flowId.getType(),
+                                "Unexpected program type %s, FlowPendingQueueCorrector only runs on flows",
+                                flowId.getType());
+    ApplicationSpecification app = store.getApplication(flowId.getParent());
     Preconditions.checkArgument(app != null, flowId.getApplication() + " not found");
-    Preconditions.checkArgument(app.getFlows().containsKey(flowId.getId()), flowId + " not found");
-    FlowSpecification flow = app.getFlows().get(flowId.getId());
+    Preconditions.checkArgument(app.getFlows().containsKey(flowId.getProgram()), flowId + " not found");
+    FlowSpecification flow = app.getFlows().get(flowId.getProgram());
     run(flowId, producerFlowlet, consumerFlowlet, flowletQueue, flow);
   }
 
   /**
    * Corrects queue.pending metric for a flowlet.
    */
-  public void run(Id.Flow flowId, String producerFlowlet, String consumerFlowlet,
+  public void run(ProgramId flowId, String producerFlowlet, String consumerFlowlet,
                   String flowletQueue, FlowSpecification flow) throws Exception {
 
     System.out.println("Running queue.pending correction on flow '" + flowId + "' producerFlowlet '" + producerFlowlet
                          + "' consumerFlowlet '" + consumerFlowlet + "' flowletQueue '" + flowletQueue + "'");
-    Map<RunId, ProgramRuntimeService.RuntimeInfo> runtimeInfos = programRuntimeService.list(flowId);
+    Map<RunId, ProgramRuntimeService.RuntimeInfo> runtimeInfos = programRuntimeService.list(flowId.toId());
     Preconditions.checkState(runtimeInfos.isEmpty(), "Cannot run tool when flow " + flowId + " is still running");
 
     SimpleQueueSpecificationGenerator queueSpecGenerator =
-      new SimpleQueueSpecificationGenerator(flowId.getApplication());
+      new SimpleQueueSpecificationGenerator(flowId.getParent());
     Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> table = queueSpecGenerator.create(flow);
 
     Preconditions.checkArgument(
@@ -256,7 +271,8 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
     }
     Preconditions.checkArgument(validQueue, "Queue " + flowletQueue + " does not exist for the given flowlets");
 
-    QueueName queueName = QueueName.fromFlowlet(flowId, producerFlowlet, flowletQueue);
+    QueueName queueName = QueueName.fromFlowlet(Id.Flow.from(flowId.getNamespace(), flowId.getApplication(),
+                                                             flowId.getProgram()), producerFlowlet, flowletQueue);
     long consumerGroupId = FlowUtils.generateConsumerGroupId(flowId, consumerFlowlet);
 
     long correctQueuePendingValue;
@@ -270,9 +286,9 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
     }
 
     Map<String, String> tags = ImmutableMap.<String, String>builder()
-      .put(Constants.Metrics.Tag.NAMESPACE, flowId.getNamespaceId())
-      .put(Constants.Metrics.Tag.APP, flowId.getApplicationId())
-      .put(Constants.Metrics.Tag.FLOW, flowId.getId())
+      .put(Constants.Metrics.Tag.NAMESPACE, flowId.getNamespace())
+      .put(Constants.Metrics.Tag.APP, flowId.getApplication())
+      .put(Constants.Metrics.Tag.FLOW, flowId.getProgram())
       .put(Constants.Metrics.Tag.CONSUMER, consumerFlowlet)
       .put(Constants.Metrics.Tag.PRODUCER, producerFlowlet)
       .put(Constants.Metrics.Tag.FLOWLET_QUEUE, flowletQueue)
@@ -382,12 +398,12 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
       if (!cmd.hasOption("namespace")) {
         corrector.run();
       } else if (!cmd.hasOption("app")) {
-        corrector.run(Id.Namespace.from(cmd.getOptionValue("namespace")));
+        corrector.run(new NamespaceId(cmd.getOptionValue("namespace")));
       } else if (!cmd.hasOption("flow")) {
         Preconditions.checkArgument(cmd.hasOption("namespace"));
-        corrector.run(Id.Application.from(cmd.getOptionValue("namespace"), cmd.getOptionValue("app")));
+        corrector.run(new ApplicationId(cmd.getOptionValue("namespace"), cmd.getOptionValue("app")));
       } else if (!cmd.hasOption("producer-flowlet") && !cmd.hasOption("consumer-flowlet")) {
-        corrector.run(Id.Flow.from(cmd.getOptionValue("namespace"), cmd.getOptionValue("app"),
+        corrector.run(new ProgramId(cmd.getOptionValue("namespace"), cmd.getOptionValue("app"), ProgramType.FLOW,
                                    cmd.getOptionValue("flow")));
       } else {
         Preconditions.checkArgument(cmd.hasOption("producer-flowlet"), "Missing producer-flowlet option");
@@ -395,7 +411,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
         String producerFlowlet = cmd.getOptionValue("producer-flowlet");
         String consumerFlowlet = cmd.getOptionValue("consumer-flowlet");
         String queue = cmd.getOptionValue("queue", "queue");
-        corrector.run(Id.Flow.from(namespace, app, flow), producerFlowlet, consumerFlowlet, queue);
+        corrector.run(new ProgramId(namespace, app, ProgramType.FLOW, flow), producerFlowlet, consumerFlowlet, queue);
       }
     } finally {
       corrector.stopAndWait();

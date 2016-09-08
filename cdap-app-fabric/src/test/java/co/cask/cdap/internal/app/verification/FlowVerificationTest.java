@@ -30,6 +30,7 @@ import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -48,7 +49,7 @@ public class FlowVerificationTest {
 
     FlowVerification flowSpec = new FlowVerification();
     for (Map.Entry<String, FlowSpecification> entry : newSpec.getFlows().entrySet()) {
-      VerifyResult result = flowSpec.verify(Id.Application.from("test", newSpec.getName()), entry.getValue());
+      VerifyResult result = flowSpec.verify(new ApplicationId("test", newSpec.getName()), entry.getValue());
       // This is the flow that has Tokenizer flowlet that defines one more output called "mylist"
       // that is not connected to any input to flowlet CountByField.
       if (entry.getValue().getName().equals("WordCountFlow")) {
@@ -67,7 +68,7 @@ public class FlowVerificationTest {
 
     FlowVerification flowSpec = new FlowVerification();
     for (Map.Entry<String, FlowSpecification> entry : newSpec.getFlows().entrySet()) {
-      VerifyResult result = flowSpec.verify(Id.Application.from("test", newSpec.getName()), entry.getValue());
+      VerifyResult result = flowSpec.verify(new ApplicationId("test", newSpec.getName()), entry.getValue());
       Assert.assertTrue(result.getStatus() == VerifyResult.Status.SUCCESS);
     }
   }
@@ -135,7 +136,7 @@ public class FlowVerificationTest {
 
     FlowVerification flowVerifier = new FlowVerification();
     for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
-      VerifyResult result = flowVerifier.verify(Id.Application.from("test", newSpec.getName()), flowSpec);
+      VerifyResult result = flowVerifier.verify(new ApplicationId("test", newSpec.getName()), flowSpec);
       Assert.assertTrue(result.getStatus() == VerifyResult.Status.FAILED);
     }
   }

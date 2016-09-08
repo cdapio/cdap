@@ -44,6 +44,7 @@ import co.cask.cdap.internal.lang.MethodVisitor;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.FlowletMethod;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -146,7 +147,7 @@ public final class FlowUtils {
                                                            StreamAdmin streamAdmin, QueueAdmin queueAdmin,
                                                            TransactionExecutorFactory txExecutorFactory) {
     // Generate all queues specifications
-    Id.Application appId = Id.Application.from(program.getNamespaceId(), program.getApplicationId());
+    ApplicationId appId = new ApplicationId(program.getNamespaceId(), program.getApplicationId());
     Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queueSpecs
       = new SimpleQueueSpecificationGenerator(appId).create(flowSpec);
 
