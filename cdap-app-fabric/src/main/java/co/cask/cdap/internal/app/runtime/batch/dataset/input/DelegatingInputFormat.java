@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.batch.dataset.input;
 import co.cask.cdap.common.conf.ConfigurationUtil;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.Job;
@@ -60,7 +61,8 @@ public class DelegatingInputFormat<K, V> extends InputFormat<K, V> {
       Class<?> inputFormatClass = confCopy.getClassByNameOrNull(mapperInput.getInputFormatClassName());
       Preconditions.checkNotNull(inputFormatClass, "Class could not be found: ", mapperInput.getInputFormatClassName());
       InputFormat inputFormat = (InputFormat) ReflectionUtils.newInstance(inputFormatClass, confCopy);
-
+      //some input format need a jobId to getSplits
+      jobCopy.setJobID(new JobID(inputName, inputName.hashCode()));
       // Get splits for each input path and tag with InputFormat
       // and Mapper types by wrapping in a TaggedInputSplit.
       List<InputSplit> formatSplits = inputFormat.getSplits(jobCopy);
