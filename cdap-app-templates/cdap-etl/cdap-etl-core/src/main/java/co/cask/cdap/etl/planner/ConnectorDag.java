@@ -23,8 +23,10 @@ import com.google.common.collect.Sets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -233,16 +235,56 @@ public class ConnectorDag extends Dag {
     Set<String> possibleNewSources = Sets.union(sources, connectors);
     Set<String> possibleNewSinks = Sets.union(sinks, connectors);
     for (String reduceNode : reduceNodes) {
-      Dag subdag = subsetAround(reduceNode, possibleNewSources, possibleNewSinks);
+      Dag subdag = subsetAround(reduceNode, possibleNewSources, possibleNewSources);
       remainingNodes.removeAll(subdag.getNodes());
       dags.add(subdag);
     }
 
     Set<String> remainingSources = Sets.intersection(remainingNodes, possibleNewSources);
+    Set<String> processedNodes = new HashSet<>();
     if (!remainingSources.isEmpty()) {
-      dags.add(subsetFrom(remainingSources, possibleNewSinks));
+      // source -> [ nodes accessible by the source ]
+      Map<String, Set<String>> nodesAccessibleBySources = new HashMap<>();
+
+      for (String remainingSource : remainingSources) {
+        Dag remainingNodesDag = subsetFrom(ImmutableSet.of(remainingSource), possibleNewSinks);
+        nodesAccessibleBySources.put(remainingSource, accessibleFrom(remainingSource, remainingNodesDag.getSinks()));
+      }
+
+      for (String remainingSource : remainingSources) {
+        if (!processedNodes.contains(remainingSource)) {
+          Set<String> remainingAccessibleNodes = nodesAccessibleBySources.get(remainingSource);
+          // Island of all the remaining nodes
+          Set<String> islandNodes = new HashSet<>();
+          islandNodes.addAll(remainingAccessibleNodes);
+          for (String otherSource : remainingSources) {
+            if (!remainingSource.equalsIgnoreCase(otherSource)) {
+              Set<String> otherAccessibleNodes = nodesAccessibleBySources.get(otherSource);
+              // If there is an overlap, add those nodes to the island.
+              if (!Sets.intersection(remainingAccessibleNodes, otherAccessibleNodes).isEmpty()) {
+                islandNodes.addAll(otherAccessibleNodes);
+              }
+            }
+          }
+          dags.add(createDag(islandNodes));
+          // keep track of processed nodes
+          processedNodes.addAll(islandNodes);
+        }
+      }
     }
     return dags;
+  }
+
+  private Dag createDag(Set<String> islandNodes) {
+    Set<Connection> connections = new HashSet<>();
+    for (String node : islandNodes) {
+      for (String outputNode : outgoingConnections.get(node)) {
+        if (islandNodes.contains(outputNode)) {
+          connections.add(new Connection(node, outputNode));
+        }
+      }
+    }
+    return new Dag(connections);
   }
 
   // add a connector in front of the specified node if one doesn't already exist there
