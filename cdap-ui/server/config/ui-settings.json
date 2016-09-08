@@ -1,4 +1,4 @@
 {
-  "standalone.welcome.message": "true",
+  "standalone.welcome.message": "false",
   "standalone.website.sdk.download": "true"
 }
