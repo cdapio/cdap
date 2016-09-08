@@ -84,10 +84,7 @@ export default class ConfigurableTab extends Component{
 }
 const TabConfig = PropTypes.shape({
   name: PropTypes.string,
-  content: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.node
-  ])
+  content: PropTypes.node
 });
 ConfigurableTab.propTypes = {
   tabConfig: PropTypes.shape({

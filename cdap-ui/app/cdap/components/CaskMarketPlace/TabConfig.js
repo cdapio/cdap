@@ -30,42 +30,42 @@ const TabConfig = {
     {
       id: 2,
       name: 'Examples',
-      content: 'Examples Tab Content'
+      content: <AllTabContents />
     },
     {
       id: 3,
       name: 'Use Cases',
-      content: 'Use cases Tab Content'
+      content: <AllTabContents />
     },
     {
       id: 4,
       name: 'Pipeline',
-      content: 'Pipeline Tab Content'
+      content: <AllTabContents />
     },
     {
       id: 5,
       name: 'Applications',
-      content: 'Applications Tab Content'
+      content: <AllTabContents />
     },
     {
       id: 6,
       name: 'Datasets',
-      content: 'Datasets Tab Content'
+      content: <AllTabContents />
     },
     {
       id: 7,
       name: 'Plugins',
-      content: 'Plugins Tab Content'
+      content: <AllTabContents />
     },
     {
       id: 8,
       name: 'Dashboards',
-      content: 'Dashboards Tab Content'
+      content: <AllTabContents />
     },
     {
       id: 9,
       name: 'Artifacts',
-      content: 'Artifacts Tab Content'
+      content: <AllTabContents />
     }
   ]
 };
