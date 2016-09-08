@@ -1,6 +1,7 @@
 {
   "cdap": {
     "cdap_site": {
+      "dashboard.bind.port": "11011",
       "explore.enabled": "{{EXPLORE_ENABLED}}",
       "kafka.server.log.dirs": "/var/cdap/kafka-logs",
       "router.bind.port": "11015",
