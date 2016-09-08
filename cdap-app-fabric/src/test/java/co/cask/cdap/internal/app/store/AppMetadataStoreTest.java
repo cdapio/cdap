@@ -46,19 +46,18 @@ import java.util.concurrent.TimeUnit;
 public class AppMetadataStoreTest {
   private static DatasetFramework datasetFramework;
   private static CConfiguration cConf;
-  private static Id.Namespace defaultNamespace = Id.Namespace.from("default");
 
   @BeforeClass
   public static void beforeClass() throws Exception {
     Injector injector = AppFabricTestHelper.getInjector();
-    AppFabricTestHelper.ensureNamespaceExists(defaultNamespace);
+    AppFabricTestHelper.ensureNamespaceExists(Id.Namespace.DEFAULT);
     datasetFramework = injector.getInstance(DatasetFramework.class);
     cConf = injector.getInstance(CConfiguration.class);
   }
 
   @Test
   public void testScanRunningInRangeWithBatch() throws Exception {
-    Id.DatasetInstance storeTable = Id.DatasetInstance.from(defaultNamespace, "testScanRunningInRange");
+    Id.DatasetInstance storeTable = Id.DatasetInstance.from(Id.Namespace.DEFAULT, "testScanRunningInRange");
     datasetFramework.addInstance(Table.class.getName(), storeTable, DatasetProperties.EMPTY);
 
     Table table = datasetFramework.getDataset(storeTable, ImmutableMap.<String, String>of(), null);
@@ -68,15 +67,17 @@ public class AppMetadataStoreTest {
     // Add some run records
     TreeSet<Long> expected = new TreeSet<>();
     for (int i = 0; i < 100; ++i) {
-      Id.Application application = Id.Application.from(defaultNamespace, "app" + i);
+      Id.Application application = Id.Application.from(Id.Namespace.DEFAULT, "app" + i);
       Id.Program program = Id.Program.from(application, ProgramType.values()[i % ProgramType.values().length],
                                            "program" + i);
       RunId runId = RunIds.generate((i + 1) * 10000);
       expected.add(RunIds.getTime(runId, TimeUnit.MILLISECONDS));
       // Start the program and stop it
-      metadataStoreDataset.recordProgramStart(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
+      metadataStoreDataset.recordProgramStart(program.toEntityId(), runId.getId(),
+                                              RunIds.getTime(runId, TimeUnit.SECONDS),
                                               null, null, null);
-      metadataStoreDataset.recordProgramStop(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
+      metadataStoreDataset.recordProgramStop(program.toEntityId(), runId.getId(),
+                                             RunIds.getTime(runId, TimeUnit.SECONDS),
                                              ProgramRunStatus.values()[i % ProgramRunStatus.values().length], null);
     }
 

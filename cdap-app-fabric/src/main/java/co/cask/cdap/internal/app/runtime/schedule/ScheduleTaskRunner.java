@@ -86,11 +86,11 @@ public final class ScheduleTaskRunner {
     }
 
     ScheduleSpecification spec = appSpec.getSchedules().get(scheduleName);
-    if (!requirementsChecker.checkSatisfied(programId, spec.getSchedule())) {
+    if (!requirementsChecker.checkSatisfied(programId.toEntityId(), spec.getSchedule())) {
       return Futures.<Void>immediateFuture(null);
     }
 
-    // Schedule properties are overriden by resolved preferences
+    // Schedule properties are overridden by resolved preferences
     userArgs.putAll(spec.getProperties());
     userArgs.putAll(propertiesResolver.getUserProperties(programId));
     userArgs.putAll(userOverrides);

@@ -30,6 +30,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.Sets;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;
@@ -98,16 +99,16 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
     Thread.sleep(2000);
 
     // Verify that the status of that run is KILLED
-    RunRecordMeta runRecordMeta = store.getRun(wordcountFlow1, rr.getPid());
+    RunRecordMeta runRecordMeta = store.getRun(wordcountFlow1.toEntityId(), rr.getPid());
     Assert.assertEquals(ProgramRunStatus.KILLED, runRecordMeta.getStatus());
 
     // Use the store manipulate state to be RUNNING
     long now = System.currentTimeMillis();
     long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
-    store.setStart(wordcountFlow1, rr.getPid(), nowSecs);
+    store.setStart(wordcountFlow1.toEntityId(), rr.getPid(), nowSecs);
 
     // Now check again via Store to assume data store is wrong.
-    runRecordMeta = store.getRun(wordcountFlow1, rr.getPid());
+    runRecordMeta = store.getRun(wordcountFlow1.toEntityId(), rr.getPid());
     Assert.assertEquals(ProgramRunStatus.RUNNING, runRecordMeta.getStatus());
 
     // Verify there is NO FAILED run record for the application

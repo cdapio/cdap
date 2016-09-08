@@ -516,7 +516,8 @@ public class LineageAdminTest extends AppFabricTestBase {
 
   private void addRuns(Store store, Id.Run... runs) {
     for (Id.Run run : runs) {
-      store.setStart(run.getProgram(), run.getId(), RunIds.getTime(RunIds.fromString(run.getId()), TimeUnit.SECONDS));
+      store.setStart(run.getProgram().toEntityId(),
+                     run.getId(), RunIds.getTime(RunIds.fromString(run.getId()), TimeUnit.SECONDS));
     }
   }
 

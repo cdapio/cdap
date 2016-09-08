@@ -324,17 +324,17 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
 
   private WorkflowToken getWorkflowToken(String namespaceId, String appName, String workflow,
                                          String runId) throws NotFoundException {
-    Id.Application appId = Id.Application.from(namespaceId, appName);
-    ApplicationSpecification appSpec = store.getApplication(appId);
+    ApplicationId appId = new ApplicationId(namespaceId, appName);
+    ApplicationSpecification appSpec = store.getApplication(appId.toId());
     if (appSpec == null) {
       throw new NotFoundException(appId);
     }
-    Id.Workflow workflowId = Id.Workflow.from(appId, workflow);
+    ProgramId workflowId = appId.workflow(workflow);
     if (!appSpec.getWorkflows().containsKey(workflow)) {
       throw new NotFoundException(workflowId);
     }
     if (store.getRun(workflowId, runId) == null) {
-      throw new NotFoundException(new Id.Run(workflowId, runId));
+      throw new NotFoundException(workflowId.run(runId));
     }
     return store.getWorkflowToken(workflowId, runId);
   }
@@ -361,7 +361,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     }
 
     ProgramRunId workflowRunId = workflowProgramId.run(runId);
-    if (store.getRun(workflowProgramId.toId(), runId) == null) {
+    if (store.getRun(workflowProgramId, runId) == null) {
       throw new NotFoundException(workflowRunId);
     }
 
@@ -451,7 +451,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       throw new ProgramNotFoundException(programId.toId());
     }
 
-    if (store.getRun(programId.toId(), runId) == null) {
+    if (store.getRun(programId, runId) == null) {
       throw new NotFoundException(new ProgramRunId(programId.getNamespace(), programId.getApplication(),
                                                    programId.getType(), programId.getProgram(), runId));
     }

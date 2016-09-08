@@ -22,6 +22,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +48,7 @@ class RunConstraintsChecker {
    * @param schedule the schedule to check
    * @return whether all run requirements are satisfied
    */
-  public boolean checkSatisfied(Id.Program programId, Schedule schedule) {
+  public boolean checkSatisfied(ProgramId programId, Schedule schedule) {
     Integer maxRuns = schedule.getRunConstraints().getMaxConcurrentRuns();
     if (maxRuns != null) {
       String scheduleName = schedule.getName();

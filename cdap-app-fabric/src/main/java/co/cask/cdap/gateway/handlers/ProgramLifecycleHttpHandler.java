@@ -185,9 +185,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("app-id") String appId,
                                @PathParam("mapreduce-id") String mapreduceId,
                                @PathParam("run-id") String runId) throws IOException, NotFoundException {
-    Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.MAPREDUCE, mapreduceId);
-    Id.Run run = new Id.Run(programId, runId);
-    ApplicationSpecification appSpec = store.getApplication(programId.getApplication());
+    ProgramId programId = new ProgramId(namespaceId, appId, ProgramType.MAPREDUCE, mapreduceId);
+    ProgramRunId run = programId.run(runId);
+    ApplicationSpecification appSpec = store.getApplication(programId.getParent().toId());
     if (appSpec == null) {
       throw new NotFoundException(programId.getApplication());
     }
@@ -199,7 +199,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new NotFoundException(run);
     }
 
-    MRJobInfo mrJobInfo = mrJobInfoFetcher.getMRJobInfo(run);
+    MRJobInfo mrJobInfo = mrJobInfoFetcher.getMRJobInfo(run.toId());
 
     mrJobInfo.setState(runRecordMeta.getStatus().name());
     // Multiple startTs / endTs by 1000, to be consistent with Task-level start/stop times returned by JobClient
@@ -415,7 +415,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     if (specification == null) {
       throw new NotFoundException(program);
     }
-    getRuns(responder, program.toId(), status, start, end, resultLimit);
+    getRuns(responder, program, status, start, end, resultLimit);
   }
 
   /**
@@ -434,14 +434,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new NotFoundException(String.format("Program run record is not supported for program type '%s'.",
                                                 programType));
     }
-    Id.Program progId = Id.Program.from(namespaceId, appId, type, programId);
+    ProgramId progId = new ProgramId(namespaceId, appId, type, programId);
     RunRecordMeta runRecordMeta = store.getRun(progId, runid);
     if (runRecordMeta != null) {
       RunRecord runRecord = CONVERT_TO_RUN_RECORD.apply(runRecordMeta);
       responder.sendJson(HttpResponseStatus.OK, runRecord);
       return;
     }
-    throw new NotFoundException(new ProgramRunId(namespaceId, appId, type, programId, runid));
+    throw new NotFoundException(progId.run(runid));
   }
 
   /**
@@ -838,7 +838,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("app-id") String appId,
                                  @PathParam("worker-id") String workerId) {
     try {
-      int count = store.getWorkerInstances(Id.Program.from(namespaceId, appId, ProgramType.WORKER, workerId));
+      int count = store.getWorkerInstances(new NamespaceId(namespaceId).app(appId).worker(workerId));
       responder.sendJson(HttpResponseStatus.OK, new Instances(count));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -1137,7 +1137,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     return new BatchRunnableInstances(runnable, HttpResponseStatus.OK.getCode(), provisioned, requested);
   }
 
-  private void getRuns(HttpResponder responder, Id.Program programId, String status,
+  private void getRuns(HttpResponder responder, ProgramId programId, String status,
                        long start, long end, int limit) throws BadRequestException {
     try {
       ProgramRunStatus runStatus = (status == null) ? ProgramRunStatus.ALL :
