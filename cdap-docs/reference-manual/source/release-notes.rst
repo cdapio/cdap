@@ -23,12 +23,63 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 3.5.1 <http://docs.cask.co/cdap/3.5.1/index.html>`__
+=============================================================
+
+Improvements
+------------
+
+- :cask-issue:`CDAP-7192` - 
+
+- :cask-issue:`CDAP-7240` - 
+
+Bug Fixes
+---------
+
+- :cask-issue:`CDAP-3544` - Corrected an error in the documentation to correctly show 
+  Mapper/Reducer classes implementing ``ProgramLifeCycle<MapReduceTaskContext>``.
+  
+- :cask-issue:`CDAP-6215` - PartitionConsumer appropriately drops partitions that have
+  been deleted from a corresponding PartitionedFileSet.
+  
+- :cask-issue:`CDAP-6404` -
+
+- :cask-issue:`CDAP-7138` -
+
+- :cask-issue:`CDAP-7175` -
+
+- :cask-issue:`CDAP-7178` -
+
+- :cask-issue:`CDAP-7179` -
+
+- :cask-issue:`CDAP-7187` - Fixed a problem with the property
+  ``dataset.service.bind.address`` having no effect.
+
+- :cask-issue:`CDAP-7199` - Corrected errors in the documentation to correctly show how to
+  set the schema on an existing table.
+
+- :cask-issue:`CDAP-7222` - Fixed a problem with being unable to delete a namespace if a
+  configured keytab file doesn't exist.
+
+- :cask-issue:`CDAP-7224` - 
+
+- :cask-issue:`CDAP-7235` - 
+
+- :cask-issue:`HYDRATOR-922` - Fixed a bug that caused the Database Source, Joiner,
+  GroupByAggregate, and De-dup plugins to fail on certain versions of Spark.
+
+- :cask-issue:`HYDRATOR-932` - Fixed an error in the documentation of the HDFS Source and
+  Sink with respect to the alias under high-availability.
+
+- :cask-issue:`TRACKER-217` - Fixed
+
+
 `Release 3.5.0 <http://docs.cask.co/cdap/3.5.0/index.html>`__
 =============================================================
 
 Known Issues
 ------------
-- :cask-issue:`CDAP-7179` - In CDAP 3.5.0, new ``kafka.server.*`` properties replace older
+- :cask-issue:`CDAP-2501` - In CDAP 3.5.0, new ``kafka.server.*`` properties replace older
   properties such as ``kafka.log.dir``. Though the older properties were marked as
   deprecated, they are in fact being ignored, and need to be replaced with the current
   properties as described in the :ref:`Administration Manual: Appendices: cdap-site.xml
