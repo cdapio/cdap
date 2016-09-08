@@ -45,6 +45,7 @@ a.out
 
 # Testing #
 ###########
+.foodcritic
 .watchr
 .rspec
 .rubocop.yml
