@@ -38,18 +38,17 @@ export default class AllTabContents extends Component {
           value={this.state.searchStr}
           onChange={this.onSearch.bind(this)}
         />
-        <div className="header-section">
-        {
-          Array
-            .apply(null, {length: 3})
-            .map(() => <MarketPlaceEntity name="Entity Name" subtitle="Version: 1.0" size="large" />)
-        }
-        </div>
         <div className="body-section">
           {
             Array
               .apply(null, {length: 50})
-              .map(() => <MarketPlaceEntity name="Entity Name" subtitle="Version: 1.0" size="small" />)
+              .map((e, index) => (
+                <MarketPlaceEntity
+                  name="Entity Name"
+                  subtitle="Version: 1.0"
+                  key={index}
+                  size="medium" />
+              ))
           }
         </div>
       </div>

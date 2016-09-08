@@ -17,8 +17,8 @@ import React, {PropTypes, Component} from 'react';
 import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 require('./CaskMarketPlace.less');
 
-import {WizardConfig as CaskMarketPlaceWizardConfig} from './WizardConfig';
-import Wizard from '../Wizard';
+import TabConfig from './TabConfig';
+import ConfigurableTab from '../ConfigurableTab';
 
 export default class CaskMarketPlace extends Component{
   constructor(props) {
@@ -44,7 +44,7 @@ export default class CaskMarketPlace extends Component{
           </div>
         </ModalHeader>
         <ModalBody>
-          <Wizard wizardConfig={CaskMarketPlaceWizardConfig} />
+          <ConfigurableTab tabConfig={TabConfig} />
         </ModalBody>
       </Modal>
     );
