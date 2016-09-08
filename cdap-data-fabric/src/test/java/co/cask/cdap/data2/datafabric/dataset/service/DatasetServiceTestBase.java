@@ -18,6 +18,7 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -236,7 +237,7 @@ public abstract class DatasetServiceTestBase {
 
     instanceService = new DatasetInstanceService(typeService, instanceManager, opExecutor, exploreFacade,
                                                  namespaceQueryAdmin, authEnforcer, privilegesManager,
-                                                 authenticationContext);
+                                                 authenticationContext, injector.getInstance(MetricStore.class));
 
     service = new DatasetService(cConf, discoveryService, discoveryServiceClient, metricsCollectionService,
                                  opExecutor, new HashSet<DatasetMetricsReporter>(), typeService, instanceService);

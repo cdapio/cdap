@@ -39,6 +39,7 @@ import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Supplier;
@@ -78,7 +79,6 @@ public class WorkerProgramRunnerTest {
 
   private static final TempFolder TEMP_FOLDER = new TempFolder();
 
-  private static Injector injector;
   private static TransactionExecutorFactory txExecutorFactory;
 
   private static TransactionManager txService;
@@ -110,7 +110,7 @@ public class WorkerProgramRunnerTest {
     conf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
     conf.setInt(TxConstants.Manager.CFG_TX_TIMEOUT, 1);
     conf.setInt(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL, 2);
-    injector = AppFabricTestHelper.getInjector(conf);
+    Injector injector = AppFabricTestHelper.getInjector(conf);
     txService = injector.getInstance(TransactionManager.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     dsFramework = injector.getInstance(DatasetFramework.class);
@@ -135,9 +135,7 @@ public class WorkerProgramRunnerTest {
         stopProgram(controller);
     }
     // cleanup user data (only user datasets)
-    for (DatasetSpecificationSummary spec : dsFramework.getInstances(DefaultId.NAMESPACE)) {
-      dsFramework.deleteInstance(DefaultId.NAMESPACE.dataset(spec.getName()));
-    }
+    dsFramework.deleteAllInstances(DefaultId.NAMESPACE);
   }
 
   @Test
@@ -178,8 +176,7 @@ public class WorkerProgramRunnerTest {
         }
       });
 
-    // validate that the table emitted metrics
-    Tasks.waitFor(3L, new Callable<Long>() {
+    Callable<Long> datasetOpCountMetric = new Callable<Long>() {
       @Override
       public Long call() throws Exception {
         Collection<MetricTimeSeries> metrics =
@@ -202,7 +199,18 @@ public class WorkerProgramRunnerTest {
         Assert.assertEquals(1, ts.getTimeValues().size());
         return ts.getTimeValues().get(0).getValue();
       }
-    }, 5L, TimeUnit.SECONDS, 50L, TimeUnit.MILLISECONDS);
+    };
+    // validate that the table emitted metrics
+    Tasks.waitFor(3L, datasetOpCountMetric, 5L, TimeUnit.SECONDS, 50L, TimeUnit.MILLISECONDS);
+
+    DatasetId datasetInstance = NamespaceId.DEFAULT.dataset(AppWithWorker.DATASET);
+    // truncating the dataset shouldn't affect the dataset op metrics
+    dsFramework.truncateInstance(datasetInstance);
+    Assert.assertEquals(3L, (long) datasetOpCountMetric.call());
+
+    // delete should reset the metric to 0
+    dsFramework.deleteInstance(datasetInstance);
+    Assert.assertEquals(0L, (long) datasetOpCountMetric.call());
   }
 
   private ProgramController startProgram(ApplicationWithPrograms app, Class<?> programClass)

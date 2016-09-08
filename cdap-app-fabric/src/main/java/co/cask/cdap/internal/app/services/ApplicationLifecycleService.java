@@ -592,8 +592,6 @@ ApplicationLifecycleService extends AbstractIdleService {
     return applicationWithPrograms;
   }
 
-  // deletes without performs checks that no programs are running
-
   /**
    * Delete the specified application without performing checks that its programs are stopped.
    *

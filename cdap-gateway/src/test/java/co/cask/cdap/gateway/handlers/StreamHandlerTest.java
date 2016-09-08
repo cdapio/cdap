@@ -74,15 +74,15 @@ public class StreamHandlerTest extends GatewayTestBase {
     new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter())).create();
 
 
-  protected URL createURL(String path) throws URISyntaxException, MalformedURLException {
+  private URL createURL(String path) throws URISyntaxException, MalformedURLException {
     return createURL(NamespaceId.DEFAULT.getEntityName(), path);
   }
 
-  protected URL createStreamInfoURL(String streamName) throws URISyntaxException, MalformedURLException {
+  private URL createStreamInfoURL(String streamName) throws URISyntaxException, MalformedURLException {
     return createURL(String.format("streams/%s", streamName));
   }
 
-  protected URL createPropertiesURL(String streamName) throws URISyntaxException, MalformedURLException {
+  private URL createPropertiesURL(String streamName) throws URISyntaxException, MalformedURLException {
     return createURL(String.format("streams/%s/properties", streamName));
   }
 
@@ -90,7 +90,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     return getEndPoint(String.format("/v3/namespaces/%s/%s", namespace, path)).toURL();
   }
 
-  protected HttpURLConnection openURL(URL url, HttpMethod method) throws IOException {
+  private HttpURLConnection openURL(URL url, HttpMethod method) throws IOException {
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
     urlConn.setRequestMethod(method.getName());
     urlConn.setRequestProperty(Constants.Gateway.API_KEY, API_KEY);
@@ -414,14 +414,43 @@ public class StreamHandlerTest extends GatewayTestBase {
     }
 
     // Check metrics to verify that the metric for events processed is specific to each stream
-    checkEventsProcessed(streamId1, 10L, 10);
-    checkEventsProcessed(streamId2, 2L, 10);
+    checkEventsProcessed(streamId1, 10L, 5);
+    checkEventsProcessed(streamId2, 2L, 5);
+  }
+
+  @Test
+  public void testMetricsDeletion() throws Exception {
+    StreamId streamId = NamespaceId.DEFAULT.stream("testMetricsDeletion");
+    createStream(streamId);
+
+    for (int i = 0; i < 10; ++i) {
+      sendEvent(streamId, Integer.toString(i));
+    }
+
+    // Check metrics to verify that the metric for events processed is specific to each stream
+    checkEventsProcessed(streamId, 10L, 5);
+
+    dropStream(streamId);
+    createStream(streamId);
+
+    // Check metrics to verify that the metric for events processed is specific to each stream
+    Assert.assertEquals(0, getNumProcessed(streamId));
   }
 
 
   private HttpResponse createStream(StreamId streamId, int... allowedErrorCodes) throws Exception {
     URL url = createURL(streamId.getNamespace(), "streams/" + streamId.getEntityName());
     HttpRequest request = HttpRequest.put(url).build();
+    return doExecute(request, allowedErrorCodes);
+  }
+
+  private HttpResponse dropStream(StreamId streamId) throws Exception {
+    URL url = createURL(streamId.getNamespace(), "streams/" + streamId.getStream());
+    HttpRequest request = HttpRequest.delete(url).build();
+    return doExecute(request);
+  }
+
+  private HttpResponse doExecute(HttpRequest request, int... allowedErrorCodes) throws IOException {
     HttpResponse response = HttpRequests.execute(request);
     int responseCode = response.getResponseCode();
     if (!ArrayUtils.contains(allowedErrorCodes, responseCode)) {

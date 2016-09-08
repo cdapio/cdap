@@ -20,12 +20,15 @@ import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.common.HttpErrorStatusProvider;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.metrics.MetricDeleteQuery;
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.common.DatasetAlreadyExistsException;
 import co.cask.cdap.common.DatasetNotFoundException;
 import co.cask.cdap.common.DatasetTypeNotFoundException;
 import co.cask.cdap.common.HandlerException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
@@ -56,6 +59,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -86,6 +90,7 @@ public class DatasetInstanceService {
   private final AuthorizationEnforcer authorizationEnforcer;
   private final PrivilegesManager privilegesManager;
   private final AuthenticationContext authenticationContext;
+  private final MetricStore metricStore;
 
   private AuditPublisher auditPublisher;
 
@@ -95,7 +100,7 @@ public class DatasetInstanceService {
                                 DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade,
                                 NamespaceQueryAdmin namespaceQueryAdmin,
                                 AuthorizationEnforcer authorizationEnforcer, PrivilegesManager privilegesManager,
-                                AuthenticationContext authenticationContext) {
+                                AuthenticationContext authenticationContext, MetricStore metricStore) {
     this.opExecutorClient = opExecutorClient;
     this.typeService = typeService;
     this.instanceManager = instanceManager;
@@ -112,6 +117,7 @@ public class DatasetInstanceService {
     this.authorizationEnforcer = authorizationEnforcer;
     this.privilegesManager = privilegesManager;
     this.authenticationContext = authenticationContext;
+    this.metricStore = metricStore;
   }
 
   @VisibleForTesting
@@ -451,7 +457,7 @@ public class DatasetInstanceService {
     LOG.info("Deleting dataset {}.{}", instance.getNamespace(), instance.getEntityName());
 
     disableExplore(instance);
-
+    deleteMetrics(instance);
     if (!instanceManager.delete(instance)) {
       throw new DatasetNotFoundException(instance.toId());
     }
@@ -469,6 +475,15 @@ public class DatasetInstanceService {
     // can clean up. This may result in orphaned privileges, which will be cleaned up by the create API if the same
     // dataset is successfully re-created.
     privilegesManager.revoke(instance);
+  }
+
+  private void deleteMetrics(DatasetId datasetId) throws Exception {
+    long endTs = System.currentTimeMillis() / 1000;
+    Map<String, String> tags = Maps.newHashMap();
+    tags.put(Constants.Metrics.Tag.NAMESPACE, datasetId.getNamespace());
+    tags.put(Constants.Metrics.Tag.DATASET, datasetId.getDataset());
+    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, tags);
+    metricStore.delete(deleteQuery);
   }
 
   private void disableExplore(DatasetId datasetInstance) {
