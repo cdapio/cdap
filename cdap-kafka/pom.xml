@@ -63,7 +63,7 @@
                 <id>jar-standalone</id>
                 <phase>prepare-package</phase>
                 <configuration combine.self="override">
-                  <outputDirectory>${build.directory}/libexec</outputDirectory>
+                  <outputDirectory>${project.build.directory}/libexec</outputDirectory>
                   <finalName>${project.groupId}.${project.build.finalName}</finalName>
                 </configuration>
                 <goals>
@@ -84,7 +84,7 @@
                   <goal>copy-dependencies</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <outputDirectory>${build.directory}/libexec</outputDirectory>
+                  <outputDirectory>${project.build.directory}/libexec</outputDirectory>
                   <overWriteReleases>false</overWriteReleases>
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>

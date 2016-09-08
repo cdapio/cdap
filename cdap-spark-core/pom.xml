@@ -187,7 +187,7 @@
                 <id>jar</id>
                 <phase>prepare-package</phase>
                 <configuration combine.self="override">
-                  <outputDirectory>${build.directory}/libexec</outputDirectory>
+                  <outputDirectory>${project.build.directory}/libexec</outputDirectory>
                   <finalName>${project.groupId}.${project.build.finalName}</finalName>
                 </configuration>
                 <goals>
@@ -209,7 +209,7 @@
                   <goal>copy-dependencies</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <outputDirectory>${build.directory}/libexec</outputDirectory>
+                  <outputDirectory>${project.build.directory}/libexec</outputDirectory>
                   <overWriteReleases>false</overWriteReleases>
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>
@@ -250,7 +250,7 @@
                       </excludes>
                     </filter>
                   </filters>
-                  <outputFile>${build.directory}/libexec/${project.groupId}.spark-assembly-${spark.version}.jar</outputFile>
+                  <outputFile>${project.build.directory}/libexec/${project.groupId}.spark-assembly-${spark.version}.jar</outputFile>
                   <!-- Needed to merge akka config files -->
                   <transformers>
                     <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
