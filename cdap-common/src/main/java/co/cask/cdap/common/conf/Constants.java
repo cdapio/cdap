@@ -187,6 +187,11 @@ public final class Constants {
      * Name of the property used to identify whether the dataset is local or not.
      */
     public static final String WORKFLOW_LOCAL_DATASET_PROPERTY = "workflow.local.dataset";
+
+    /**
+     * Configuration setting to provide extra jars for programs.
+     */
+    public static final String PROGRAM_CONTAINER_DIST_JARS = "program.container.dist.jars";
   }
 
   /**
