@@ -33,8 +33,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.common.logging.common.LogWriter;
-import co.cask.cdap.common.logging.logback.CAppender;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
@@ -125,13 +123,6 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.secureStoreManager = secureStoreManager;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
-  }
-
-  @Inject (optional = true)
-  void setLogWriter(@Nullable LogWriter logWriter) {
-    if (logWriter != null) {
-      CAppender.logWriter = logWriter;
-    }
   }
 
   @Override

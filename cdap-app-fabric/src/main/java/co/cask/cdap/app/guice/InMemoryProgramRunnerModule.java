@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,11 +23,8 @@ import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.stream.DefaultStreamWriter;
 import co.cask.cdap.app.stream.StreamWriterFactory;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
-import co.cask.cdap.common.logging.common.LocalLogWriter;
-import co.cask.cdap.common.logging.common.LogWriter;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.flow.FlowProgramRunner;
@@ -45,7 +42,6 @@ import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
 import co.cask.cdap.proto.ProgramType;
 import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
-import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
@@ -84,10 +80,6 @@ public final class InMemoryProgramRunnerModule extends PrivateModule {
    */
   @Override
   protected void configure() {
-
-    // Bind and expose LogWriter (a bit hacky, but needed by MapReduce for now)
-    bind(LogWriter.class).to(LocalLogWriter.class);
-    expose(LogWriter.class);
 
     // Bind ServiceAnnouncer for service.
     bind(ServiceAnnouncer.class).to(DiscoveryServiceAnnouncer.class);
@@ -131,12 +123,6 @@ public final class InMemoryProgramRunnerModule extends PrivateModule {
     // Create StreamWriter factory.
     install(new FactoryModuleBuilder().implement(StreamWriter.class, streamWriterClass)
               .build(StreamWriterFactory.class));
-  }
-
-  @Singleton
-  @Provides
-  private LocalLogWriter providesLogWriter(CConfiguration configuration) {
-    return new LocalLogWriter(configuration);
   }
 
   @Singleton
