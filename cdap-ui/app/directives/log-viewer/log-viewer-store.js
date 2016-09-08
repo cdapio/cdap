@@ -15,7 +15,7 @@
  */
 
 var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
-  const startTime = (state = new Date(), action = {}) => {
+  const startTime = (state = null, action = {}) => {
     switch(action.type) {
       case LOGVIEWERSTORE_ACTIONS.START_TIME:
         if(!action.payload.startTime) {
@@ -23,14 +23,14 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
         }
         return action.payload.startTime;
       case LOGVIEWERSTORE_ACTIONS.RESET:
-        return new Date();
+        return null;
       default:
         return state;
     }
   };
 
   //Scroll Position Reducer
-  const scrollPosition = (state = Date.now(), action = {}) => {
+  const scrollPosition = (state = null, action = {}) => {
     switch(action.type) {
       case LOGVIEWERSTORE_ACTIONS.SCROLL_POSITION:
         if(!action.payload.scrollPosition) {
@@ -38,7 +38,7 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
         }
         return action.payload.scrollPosition;
       case LOGVIEWERSTORE_ACTIONS.RESET:
-        return Date.now();
+        return null;
       default:
         return state;
     }
