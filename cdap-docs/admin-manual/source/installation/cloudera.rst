@@ -212,6 +212,14 @@ cm_ig_parcels.html>`__, but in summary these are the steps:
    <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_ig_parcels.html#concept_vwq_421_yk_unique_1__section_ug1_c3y_bm_unique_1>`__
    the parcel.
 
+.. figure:: ../_images/cloudera/cloudera-parcels.png
+   :figwidth: 100%
+   :width: 800px
+   :align: center
+   :class: bordered-image
+
+   **Cloudera Manager:** CDAP Parcels *Distributed, Activated* on a cluster.
+   
 **Notes:**
 
 - If the Cask parcel repository is inaccessible to your cluster, please see :ref:`these
@@ -235,7 +243,7 @@ which version of Cloudera Manager and CDAP you are using.
 
 Add CDAP Service
 ----------------
-Start from the Cloudera Manager Admin Console's *Home* page, selecting *Add a Service* from the menu for your cluster:
+Start from the Cloudera Manager Admin Console's *Home* page, selecting *Add Service* from the menu for your cluster:
 
 .. figure:: ../_images/cloudera/cloudera-csd-01.png
    :figwidth: 100%
@@ -250,7 +258,7 @@ Start from the Cloudera Manager Admin Console's *Home* page, selecting *Add a Se
 Add Service Wizard: Selecting CDAP
 ----------------------------------
 
-Use the *Add Service* Wizard and select *Cask DAP*.
+Use the *Add Service* Wizard and select *CDAP*.
 
 .. figure:: ../_images/cloudera/cloudera-csd-02.png
    :figwidth: 100%
@@ -258,7 +266,7 @@ Use the *Add Service* Wizard and select *Cask DAP*.
    :align: center
    :class: bordered-image
 
-   **Add Service Wizard:** Selecting CDAP (Cask DAP) as the service to be added.
+   **Add Service Wizard:** Selecting CDAP as the service to be added.
 
 
 Add Service Wizard: Specifying Dependencies
@@ -289,7 +297,7 @@ with service *or* gateway roles for HBase, HDFS, YARN, and (optionally) Hive and
    :align: center
    :class: bordered-image
 
-   **Add Service Wizard, Page 3:** When customizing Role Assignments, the *CDAP Security
+   **Add Service Wizard, Page 2:** When customizing Role Assignments, the *CDAP Security
    Auth Service* can be added later, if required.
    
 
@@ -302,7 +310,7 @@ Add Service Wizard: Customize Role Assignments
    :align: center
    :class: bordered-image
 
-   **Add Service Wizard, Page 3:** Assigning the CDAP Master Role to a host with the
+   **Add Service Wizard, Page 2 (dialog):** Assigning the CDAP Master Role to a host with the
    HBase, HDFS, YARN, Hive, and Spark Gateway roles. It could also be on a host with
    running services instead.
 
@@ -316,8 +324,8 @@ Add Service Wizard: Customize Role Assignments
    :align: center
    :class: bordered-image
 
-   **Add Service Wizard, Page 3:** Completing assignments with CDAP Gateway client
-   added to all nodes of the cluster including those with CDAP roles.
+   **Add Service Wizard, Page 2 (dialog):** Completing assignments with the CDAP Gateway client
+   added to other nodes of the cluster; it can be added to those with CDAP roles.
    
 
 Add Service Wizard: Customize Role Assignments
@@ -329,7 +337,7 @@ Add Service Wizard: Customize Role Assignments
    :align: center
    :class: bordered-image
 
-   **Add Service Wizard, Page 3:** Completed role assignments.
+   **Add Service Wizard, Page 2:** Completed role assignments.
    
 
 Add Service Wizard: Reviewing Configuration
@@ -355,12 +363,13 @@ Port* is used by the CDAP UI to connect to the CDAP Router service.
 
    **Add Service Wizard, Page 4:** Reviewing changes and (initial) configuration.
 
-**Additional CDAP configuration properties** can be added after using the Cloudera Manager's 
-*Safety Valve* Advanced Configuration Snippets. Documentation of the available CDAP
+**Additional CDAP configuration properties** can be added using the Cloudera Manager's 
+*Safety Valve Advanced Configuration Snippets.* Documentation of the available CDAP
 properties is in the :ref:`appendix-cdap-site.xml`.
 
-**Additional environment variables** can be set after, as required, using the Cloudera Manager's
-"Cask DAP Service Environment Advanced Configuration Snippet (Safety Valve)".
+**Additional environment variables** can be set, as required, using the Cloudera Manager's
+*CDAP Service Environment Advanced Configuration Snippet (Safety Valve).* See the example below for
+:ref:`configuring Spark <cloudera-configuring-spark>`.
 
 .. Environment variables
 .. ---------------------
@@ -398,13 +407,13 @@ Add Service Wizard: Completion Page
    :align: center
    :class: bordered-image
 
-   **Add Service Wizard, Page 7:** Congratulations screen, though there is still work to be done.
+   **Add Service Wizard, Page 6:** Congratulations screen, though there is still work to be done.
 
 
 Cluster Home Page: Status Tab
 -----------------------------
 
-.. figure:: ../_images/cloudera/cloudera-csd-09.png
+.. figure:: ../_images/cloudera/cloudera-csd-09a.png
    :figwidth: 100%
    :width: 800px
    :align: center
@@ -412,6 +421,15 @@ Cluster Home Page: Status Tab
 
    **Cluster Home Page, Status Tab:** Showing all CDAP services running. *Gateway* is not an actual service.
 
+.. figure:: ../_images/cloudera/cloudera-csd-09b.png
+   :figwidth: 100%
+   :width: 800px
+   :align: center
+   :class: bordered-image
+
+   **Cloudera Manager Home Page:** Showing CDAP installed on the cluster as a service.
+
+.. _cloudera-configuring-spark:
 
 Cluster Home Page: Configuring for Spark
 ----------------------------------------
@@ -420,9 +438,7 @@ needs to contain the location of the Spark libraries, typically as
 ``SPARK_HOME=/opt/cloudera/parcels/CDH/lib/spark``.
 
 **Additional environment variables** are set using the Cloudera Manager's
-"Cask DAP Service Environment Advanced Configuration Snippet (Safety Valve)".
-
-
+"CDAP Service Environment Advanced Configuration Snippet (Safety Valve)".
 
 .. figure:: ../_images/cloudera/cloudera-csd-10.png
    :figwidth: 100%
@@ -449,7 +465,16 @@ You will then have a stale configuration and need to restart the CDAP services.
 Cluster Home Page: Restarting CDAP
 ----------------------------------------
 
-.. figure:: ../_images/cloudera/cloudera-csd-12.png
+.. figure:: ../_images/cloudera/cloudera-csd-12.1.png
+   :figwidth: 100%
+   :width: 800px
+   :align: center
+   :class: bordered-image
+
+   **Cluster Stale Configurations:** Restarting CDAP services.
+
+
+.. figure:: ../_images/cloudera/cloudera-csd-12.2.png
    :figwidth: 100%
    :width: 800px
    :align: center
@@ -477,21 +502,31 @@ Verification
 
 Service Checks in Cloudera Manager
 ----------------------------------
-After the Cloudera Manager Admin Console's *Add Service* Wizard completes, *Cask DAP* will
-show in the list for the cluster where you installed it. You can select it, and go to the
-*Cask DAP* page, with *Quick Links* and *Status Summary*. The lights of the *Status
-Summary* should all turn green, showing completion of startup. 
+After the Cloudera Manager Admin Console's *Add Service* Wizard completes, *CDAP* will
+show in the list for the cluster where you installed it. 
 
-The *Quick Links* includes a link to the **CDAP UI**, which by default is running on
-port ``9999`` of the host where the UI role instance is running.
-
-.. figure:: ../_images/cloudera/cloudera-csd-09.png
+.. figure:: ../_images/cloudera/cloudera-csd-09b.png
    :figwidth: 100%
    :width: 800px
    :align: center
    :class: bordered-image
 
-   **Cloudera Manager:** CDAP (Cask DAP) added to the cluster.
+   **Cloudera Manager:** CDAP added to the cluster.
+
+You can select it, and go to the *CDAP* page, with *Quick Links* and *Status Summary*. The
+lights of the *Status Summary* should all turn green, showing completion of startup.
+(**Note:** *Gateway* is not an actual service, and does not show a green status indicator.)
+
+The *Quick Links* includes a link to the **CDAP UI**, which by default is running on
+port ``9999`` of the host where the UI role instance is running.
+
+.. figure:: ../_images/cloudera/cloudera-csd-09a.png
+   :figwidth: 100%
+   :width: 800px
+   :align: center
+   :class: bordered-image
+
+   **Cloudera Manager:** CDAP page showing available services and their status.
    
 .. _cloudera-cdap-ui:
 
