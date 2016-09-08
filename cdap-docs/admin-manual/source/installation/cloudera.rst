@@ -486,7 +486,7 @@ Cluster Home Page: Restarting CDAP
 Cluster Home Page: CDAP Services Restarted
 ------------------------------------------
 
-.. figure:: ../_images/cloudera/cloudera-csd-13.png
+.. figure:: ../_images/cloudera/cloudera-csd-09a.png
    :figwidth: 100%
    :width: 800px
    :align: center
