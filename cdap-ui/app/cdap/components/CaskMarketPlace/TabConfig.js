@@ -18,47 +18,56 @@ import React from 'react';
 
 import AllTabContents from './AllTabContents';
 
-const WizardConfig = {
-  defaultTab: 0,
-  mode: 'vertical',
+const TabConfig = {
+  defaultTab: 1,
+  layout: 'vertical',
   tabs: [
     {
-      title: 'All',
+      id: 1,
+      name: 'All',
       content: <AllTabContents />
     },
     {
-      title: 'Examples',
+      id: 2,
+      name: 'Examples',
       content: 'Examples Tab Content'
     },
     {
-      title: 'Use Cases',
+      id: 3,
+      name: 'Use Cases',
       content: 'Use cases Tab Content'
     },
     {
-      title: 'Pipeline',
+      id: 4,
+      name: 'Pipeline',
       content: 'Pipeline Tab Content'
     },
     {
-      title: 'Applications',
+      id: 5,
+      name: 'Applications',
       content: 'Applications Tab Content'
     },
     {
-      title: 'Datasets',
+      id: 6,
+      name: 'Datasets',
       content: 'Datasets Tab Content'
     },
     {
-      title: 'Plugins',
+      id: 7,
+      name: 'Plugins',
       content: 'Plugins Tab Content'
     },
     {
-      title: 'Dashboards',
+      id: 8,
+      name: 'Dashboards',
       content: 'Dashboards Tab Content'
     },
     {
-      title: 'Artifacts',
+      id: 9,
+      name: 'Artifacts',
       content: 'Artifacts Tab Content'
     }
   ]
 };
 
-export {WizardConfig};
+export default TabConfig;

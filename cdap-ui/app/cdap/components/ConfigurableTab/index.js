@@ -20,9 +20,9 @@ import TabContents from '../TabContents';
 import TabContent from '../TabContent';
 import TabHeaders from '../TabHeaders';
 import TabHead from '../TabHead';
-require('./Wizard.less');
+require('./ConfigurableTab.less');
 
-export default class Wizard extends Component{
+export default class ConfigurableTab extends Component{
   constructor(props) {
     super(props);
     /* Eventually we will be adding more to the state,
@@ -34,11 +34,10 @@ export default class Wizard extends Component{
         - left tab section?
         - right container section?
         - highlighting tabs (both completed and errored/missing tabs)
-      - a Redux store with a common api for wizard?? O-o
       - and more...
     */
-    let {tabs, mode, defaultTab} = this.props.wizardConfig;
-    this.state = { tabId: defaultTab, tabs, mode, defaultTab };
+    let {tabs, layout, defaultTab} = this.props.tabConfig;
+    this.state = { tabId: defaultTab, tabs, layout, defaultTab };
   }
   setTab(tabId) {
     this.setState({tabId});
@@ -49,17 +48,17 @@ export default class Wizard extends Component{
   render() {
     return (
       <div className="cask-wizard">
-        <Tabs mode={this.state.mode}>
+        <Tabs layout={this.state.layout}>
           <TabHeaders>
             {this.state.tabs.map((tab, index) => {
               return(
                 <TabHead
-                  mode={this.state.mode}
+                  layout={this.state.layout}
                   key={index}
-                  onClick={() => this.setTab(index)}
-                  activeTab={this.isActiveTab(index)}
+                  onClick={() => this.setTab(tab.id)}
+                  activeTab={this.isActiveTab(tab.id)}
                 >
-                  <span>{tab.title}</span>
+                  <span>{tab.name}</span>
                 </TabHead>
               );
             })}
@@ -69,7 +68,7 @@ export default class Wizard extends Component{
               this.state.tabs.map((tab, index) => {
                 return (
                   <TabContent
-                    name={index}
+                    tabId={tab.id}
                     key={index}
                   >
                     {tab.content}
@@ -84,16 +83,16 @@ export default class Wizard extends Component{
   }
 }
 const TabConfig = PropTypes.shape({
-  title: PropTypes.string,
+  name: PropTypes.string,
   content: PropTypes.oneOfType([
     PropTypes.string,
     PropTypes.node
   ])
 });
-Wizard.propTypes = {
-  wizardConfig: PropTypes.shape({
+ConfigurableTab.propTypes = {
+  tabConfig: PropTypes.shape({
     tabs: PropTypes.arrayOf(TabConfig),
-    mode: PropTypes.string,
+    layout: PropTypes.string,
     defaultTab: PropTypes.oneOfType([
       PropTypes.string,
       PropTypes.number
