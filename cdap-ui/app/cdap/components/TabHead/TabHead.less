@@ -24,10 +24,12 @@
   font-size: 14px;
 
   &.active-tab {
-    transition: border-bottom 0.2s ease;
-    border-bottom: 3px solid @cdap-orange;
-    color: #000;
-    
+    &.horizontal {
+      transition: border-bottom 0.2s ease;
+      border-bottom: 3px solid @cdap-orange;
+      color: #000;
+    }
+
     &.vertical {
       transition: border-left 0.2s ease;
       border-bottom: 0;

@@ -51,7 +51,7 @@ export default class TabContents extends Component {
     }
     // FIXME: Here we are not doing type checking for active tab.
     // Today we don't enforce what 'type' activeTab should be. Ideally a tab could
-    // be named using numbers or strings (name of the tab).
+    // be ID'd using numbers or strings (name of the tab).
     // User uses number for tab names. Object.keys(this.childRefs) will give an array of
     // strings (numbers in strings). Thank you javascript.
 
@@ -66,7 +66,7 @@ export default class TabContents extends Component {
           React.Children.map(this.props.children, (child) => {
             return <div
               className="cask-tab-content-wrapper"
-              ref={(ref) => this.childRefs[child.props.name] = ref}
+              ref={(ref) => this.childRefs[child.props.tabId] = ref}
             >
               {child}
             </div>;

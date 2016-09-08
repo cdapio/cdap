@@ -36,8 +36,16 @@
       display: flex;
     }
   }
-  > div {
-    width: 100%;
-    display: flex;
+  &.horizontal {
+    > div {
+      width: 100%;
+      display: flex;
+      &:first-child {
+        height: 35px;
+      }
+      &:nth-child(2) {
+        height: ~"calc(100% - 35px)";
+      }
+    }
   }
 }

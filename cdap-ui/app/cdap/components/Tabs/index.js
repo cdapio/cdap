@@ -19,14 +19,14 @@ var classnames = require('classnames');
 
 require('./Tabs.less');
 
-export default function Tabs({mode, children}) {
+export default function Tabs({layout, children}) {
   return (
-    <div className={classnames('cask-tabs', mode)}>
+    <div className={classnames('cask-tabs', layout)}>
       {children}
     </div>
   );
 }
 Tabs.propTypes = {
-  mode: PropTypes.string,
+  layout: PropTypes.string,
   children: PropTypes.node.isRequired
 };

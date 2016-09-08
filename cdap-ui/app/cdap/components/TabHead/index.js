@@ -22,7 +22,7 @@ export default class TabHead extends Component {
     super(props);
     this.state = {
       activeTab: this.props.activeTab,
-      mode: this.props.mode
+      layout: this.props.layout
     };
   }
   componentWillReceiveProps(newProps) {
@@ -35,7 +35,8 @@ export default class TabHead extends Component {
       <div
         className={classnames("cask-tab-head", {
           'active-tab': this.state.activeTab,
-          'vertical': this.state.mode === 'vertical'
+          'vertical': this.state.layout === 'vertical',
+          'horizontal': this.state.layout === 'horizontal'
         })}
         onClick={this.props.onClick}
       >
@@ -48,5 +49,5 @@ TabHead.propTypes = {
   children: PropTypes.node,
   onClick: PropTypes.func,
   activeTab: PropTypes.bool,
-  mode: PropTypes.string
+  layout: PropTypes.string
 };
