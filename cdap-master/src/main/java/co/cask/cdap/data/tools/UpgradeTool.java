@@ -69,9 +69,11 @@ import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.NamespaceStore;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -110,8 +112,9 @@ public class UpgradeTool {
   private final DatasetSpecificationUpgrader dsSpecUpgrader;
   private final MetadataStore metadataStore;
   private final ExistingEntitySystemMetadataWriter existingEntitySystemMetadataWriter;
-  private final DatasetServiceManager datasetServiceManager;
+  private final UpgradeDatasetServiceManager upgradeDatasetServiceManager;
   private final NamespaceStore nsStore;
+  private final AuthorizationEnforcementService authorizationService;
 
   /**
    * Set of Action available in this tool.
@@ -154,6 +157,7 @@ public class UpgradeTool {
     this.dsSpecUpgrader = injector.getInstance(DatasetSpecificationUpgrader.class);
     this.queueAdmin = injector.getInstance(QueueAdmin.class);
     this.nsStore = injector.getInstance(NamespaceStore.class);
+    this.authorizationService = injector.getInstance(AuthorizationEnforcementService.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -166,10 +170,11 @@ public class UpgradeTool {
       }
     });
     this.existingEntitySystemMetadataWriter = injector.getInstance(ExistingEntitySystemMetadataWriter.class);
-    this.datasetServiceManager = injector.getInstance(DatasetServiceManager.class);
+    this.upgradeDatasetServiceManager = injector.getInstance(UpgradeDatasetServiceManager.class);
   }
 
-  private Injector createInjector() throws Exception {
+  @VisibleForTesting
+  Injector createInjector() throws Exception {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new LocationRuntimeModule().getDistributedModules(),
@@ -252,6 +257,7 @@ public class UpgradeTool {
     // Start all the services.
     zkClientService.startAndWait();
     txService.startAndWait();
+    authorizationService.startAndWait();
     initializeDSFramework(cConf, dsFramework);
   }
 
@@ -262,6 +268,7 @@ public class UpgradeTool {
     try {
       txService.stopAndWait();
       zkClientService.stopAndWait();
+      authorizationService.stopAndWait();
     } catch (Throwable e) {
       LOG.error("Exception while trying to stop upgrade process", e);
       Runtime.getRuntime().halt(1);
@@ -379,20 +386,20 @@ public class UpgradeTool {
     LOG.info("Upgrading stream state store table...");
     streamStateStoreUpgrader.upgrade();
 
-    datasetServiceManager.startUp();
+    upgradeDatasetServiceManager.startUp();
     LOG.info("Writing system metadata to existing entities...");
     try {
-      existingEntitySystemMetadataWriter.write(datasetServiceManager.getDSFramework());
+      existingEntitySystemMetadataWriter.write(upgradeDatasetServiceManager.getDSFramework());
       LOG.info("Removing metadata for deleted datasets...");
       DeletedDatasetMetadataRemover datasetMetadataRemover = new DeletedDatasetMetadataRemover(
-        nsStore, metadataStore, datasetServiceManager.getDSFramework());
+        nsStore, metadataStore, upgradeDatasetServiceManager.getDSFramework());
       datasetMetadataRemover.remove();
       LOG.info("Deleting old metadata indexes...");
       metadataStore.deleteAllIndexes();
       LOG.info("Re-building metadata indexes...");
       metadataStore.rebuildIndexes();
     } finally {
-      datasetServiceManager.shutDown();
+      upgradeDatasetServiceManager.shutDown();
     }
   }
 
