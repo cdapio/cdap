@@ -20,6 +20,7 @@ import TabContents from '../TabContents';
 import TabContent from '../TabContent';
 import TabHeaders from '../TabHeaders';
 import TabHead from '../TabHead';
+require('./Wizard.less');
 
 export default class Wizard extends Component{
   constructor(props) {
@@ -47,36 +48,38 @@ export default class Wizard extends Component{
   }
   render() {
     return (
-      <Tabs mode={this.state.mode}>
-        <TabHeaders>
-          {this.state.tabs.map((tab, index) => {
-            return(
-              <TabHead
-                mode={this.state.mode}
-                key={index}
-                onClick={() => this.setTab(index)}
-                activeTab={this.isActiveTab(index)}
-              >
-                <span>{tab.title}</span>
-              </TabHead>
-            );
-          })}
-        </TabHeaders>
-        <TabContents activeTab={this.state.tabId}>
-          {
-            this.state.tabs.map((tab, index) => {
-              return (
-                <TabContent
-                  name={index}
+      <div className="cask-wizard">
+        <Tabs mode={this.state.mode}>
+          <TabHeaders>
+            {this.state.tabs.map((tab, index) => {
+              return(
+                <TabHead
+                  mode={this.state.mode}
                   key={index}
+                  onClick={() => this.setTab(index)}
+                  activeTab={this.isActiveTab(index)}
                 >
-                  {tab.content}
-                </TabContent>
+                  <span>{tab.title}</span>
+                </TabHead>
               );
-            })
-          }
-        </TabContents>
-      </Tabs>
+            })}
+          </TabHeaders>
+          <TabContents activeTab={this.state.tabId}>
+            {
+              this.state.tabs.map((tab, index) => {
+                return (
+                  <TabContent
+                    name={index}
+                    key={index}
+                  >
+                    {tab.content}
+                  </TabContent>
+                );
+              })
+            }
+          </TabContents>
+        </Tabs>
+      </div>
     );
   }
 }
