@@ -16,6 +16,8 @@
 
 import React, {Component} from 'react';
 import SearchTextBox from '../SearchTextBox';
+import MarketPlaceEntity from '../MarketPlaceEntity';
+require('./AllTabContents.less');
 
 export default class AllTabContents extends Component {
   constructor(props) {
@@ -30,13 +32,26 @@ export default class AllTabContents extends Component {
   }
   render() {
     return (
-      <div>
+      <div className="all-tab-content">
         <SearchTextBox
           placeholder="Search"
           value={this.state.searchStr}
           onChange={this.onSearch.bind(this)}
         />
-        <h1> All Tab Content </h1>
+        <div className="header-section">
+        {
+          Array
+            .apply(null, {length: 3})
+            .map(() => <MarketPlaceEntity name="Entity Name" subtitle="Version: 1.0" size="large" />)
+        }
+        </div>
+        <div className="body-section">
+          {
+            Array
+              .apply(null, {length: 50})
+              .map(() => <MarketPlaceEntity name="Entity Name" subtitle="Version: 1.0" size="small" />)
+          }
+        </div>
       </div>
     );
   }
