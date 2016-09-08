@@ -325,7 +325,7 @@ Add Service Wizard: Customize Role Assignments
    :class: bordered-image
 
    **Add Service Wizard, Page 2 (dialog):** Completing assignments with the CDAP Gateway client
-   added to other nodes of the cluster; it can be added to those with CDAP roles.
+   added to other nodes of the cluster; it can be added to nodes with CDAP roles.
    
 
 Add Service Wizard: Customize Role Assignments
@@ -363,11 +363,11 @@ Port* is used by the CDAP UI to connect to the CDAP Router service.
 
    **Add Service Wizard, Page 4:** Reviewing changes and (initial) configuration.
 
-**Additional CDAP configuration properties** can be added using the Cloudera Manager's 
+**Additional CDAP configuration properties** can be added using Cloudera Manager's 
 *Safety Valve Advanced Configuration Snippets.* Documentation of the available CDAP
 properties is in the :ref:`appendix-cdap-site.xml`.
 
-**Additional environment variables** can be set, as required, using the Cloudera Manager's
+**Additional environment variables** can be set, as required, using Cloudera Manager's
 *CDAP Service Environment Advanced Configuration Snippet (Safety Valve).* See the example below for
 :ref:`configuring Spark <cloudera-configuring-spark>`.
 
@@ -503,7 +503,7 @@ Verification
 Service Checks in Cloudera Manager
 ----------------------------------
 After the Cloudera Manager Admin Console's *Add Service* Wizard completes, *CDAP* will
-show in the list for the cluster where you installed it. 
+show in your cluster's list of services. 
 
 .. figure:: ../_images/cloudera/cloudera-csd-09b.png
    :figwidth: 100%
