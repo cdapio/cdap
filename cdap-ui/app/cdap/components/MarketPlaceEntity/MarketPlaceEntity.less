@@ -15,41 +15,17 @@
  */
 
 .cask-entity-card {
-  &.large {
-    width: 200px;
+  // FIXME: Need to add large and small sizes
+  &.medium {
+    width: 125px;
+    height: 200px;
     text-align: center;
     display: inline-block;
-    margin-bottom: 20px;
-    
-    .image-container {
-      width: 100px;
-      height: 100px;
-      background-color: gray;
-      display: inline-block;
-    }
-    .metadata-container {
-      text-align: center;
-
-      .metadata-name {
-        font-size: 20px;
-        color: #333;
-      }
-      .metadata-version {
-        font-size: 12px;
-        color: #333;
-      }
-    }
-  }
-
-  &.small {
-    width: 100px;
-    text-align: center;
-    display: inline-block;
-    margin-bottom: 10px;
+    margin: 30px;
 
     .image-container {
-      min-width: 50px;
-      min-height: 50px;
+      min-width: 125px;
+      min-height: 125px;
       background-color: gray;
       display: inline-block;
     }
