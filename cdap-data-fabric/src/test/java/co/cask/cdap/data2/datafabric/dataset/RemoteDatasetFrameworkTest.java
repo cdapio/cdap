@@ -19,6 +19,7 @@ package co.cask.cdap.data2.datafabric.dataset;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
@@ -183,7 +184,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                                               authenticationContext);
     DatasetInstanceService instanceService = new DatasetInstanceService(
       typeService, instanceManager, opExecutor, exploreFacade, namespaceQueryAdmin, authorizationEnforcer,
-      privilegesManager, authenticationContext);
+      privilegesManager, authenticationContext, injector.getInstance(MetricStore.class));
     instanceService.setAuditPublisher(inMemoryAuditPublisher);
 
     service = new DatasetService(cConf, discoveryService, discoveryServiceClient, metricsCollectionService,

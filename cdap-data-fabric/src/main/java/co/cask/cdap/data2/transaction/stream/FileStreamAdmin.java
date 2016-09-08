@@ -16,9 +16,12 @@
 package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.metrics.MetricDeleteQuery;
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.StreamNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -110,6 +113,7 @@ public class FileStreamAdmin implements StreamAdmin {
   private final RuntimeUsageRegistry runtimeUsageRegistry;
   private final LineageWriter lineageWriter;
   private final StreamMetaStore streamMetaStore;
+  private final MetricStore metricStore;
   private final ExploreTableNaming tableNaming;
   private final ViewAdmin viewAdmin;
   private final MetadataStore metadataStore;
@@ -130,6 +134,7 @@ public class FileStreamAdmin implements StreamAdmin {
                          RuntimeUsageRegistry runtimeUsageRegistry,
                          LineageWriter lineageWriter,
                          StreamMetaStore streamMetaStore,
+                         MetricStore metricStore,
                          ExploreTableNaming tableNaming,
                          MetadataStore metadataStore,
                          ViewAdmin viewAdmin,
@@ -147,6 +152,7 @@ public class FileStreamAdmin implements StreamAdmin {
     this.runtimeUsageRegistry = runtimeUsageRegistry;
     this.lineageWriter = lineageWriter;
     this.streamMetaStore = streamMetaStore;
+    this.metricStore = metricStore;
     this.tableNaming = tableNaming;
     this.metadataStore = metadataStore;
     this.viewAdmin = viewAdmin;
@@ -638,8 +644,7 @@ public class FileStreamAdmin implements StreamAdmin {
           if (configLocation == null) {
             return;
           }
-          alterExploreStream(new StreamId(streamId.getNamespaceId(),
-                                          StreamUtils.getStreamNameFromLocation(streamLocation)).toId(), false, null);
+          alterExploreStream(streamId, false, null);
 
           // Drop the associated views
           List<Id.Stream.View> views = viewAdmin.list(streamId);
@@ -666,6 +671,8 @@ public class FileStreamAdmin implements StreamAdmin {
             }
           });
 
+          deleteMetrics(streamId.toEntityId());
+
           streamMetaStore.removeStream(streamId);
           metadataStore.removeMetadata(streamId);
           // revoke all privileges on the stream
@@ -676,6 +683,15 @@ public class FileStreamAdmin implements StreamAdmin {
         }
       }
     });
+  }
+
+  private void deleteMetrics(StreamId streamId) throws Exception {
+    long endTs = System.currentTimeMillis() / 1000;
+    Map<String, String> tags = Maps.newHashMap();
+    tags.put(Constants.Metrics.Tag.NAMESPACE, streamId.getNamespace());
+    tags.put(Constants.Metrics.Tag.STREAM, streamId.getStream());
+    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, tags);
+    metricStore.delete(deleteQuery);
   }
 
   private StreamProperties updateProperties(Id.Stream streamId, StreamProperties properties) throws Exception {
