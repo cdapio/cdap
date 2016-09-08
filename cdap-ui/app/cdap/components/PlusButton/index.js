@@ -14,7 +14,7 @@
  * the License.
  */
 
-import React, {Component} from 'react';
+import React, {Component, PropTypes} from 'react';
 import CaskMarketPlace from '../CaskMarketPlace';
 
 export default class PlusButton extends Component {
@@ -31,7 +31,10 @@ export default class PlusButton extends Component {
   }
   render() {
     return (
-      <div>
+      <div
+        className={this.props.className}
+        onClick={this.onClickHandler.bind(this)}
+      >
         <span
           className="fa fa-plus-circle text-success"
           onClick={this.onClickHandler.bind(this)}
@@ -44,3 +47,6 @@ export default class PlusButton extends Component {
     );
   }
 }
+PlusButton.propTypes = {
+  className: PropTypes.string
+};

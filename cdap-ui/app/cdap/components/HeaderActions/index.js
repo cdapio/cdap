@@ -26,9 +26,7 @@ export default function HeaderActions() {
       <div className="navbar-item">
         <span className="fa fa-bolt"></span>
       </div>
-      <div className="navbar-item">
-        <PlusButton />
-      </div>
+      <PlusButton className="navbar-item" />
       <div className="navbar-item">
         <span className="fa fa-cog"></span>
       </div>
