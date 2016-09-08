@@ -114,7 +114,7 @@ with JSON-formatted name of the dataset type, properties, and description in a b
      - Creates a dataset named *mydataset* of the type ``Table`` in the namespace *default*
        with the time-to-live property set to 1 hour and a description of ``My Dataset Description``
 
-.. _http-restful-api-dataset-updating:
+.. _http-restful-api-dataset-properties:
 
 Properties of an Existing Dataset
 =================================
@@ -151,12 +151,15 @@ The response |---| if successful |---| will contain the JSON-formatted propertie
 
   {
      "key1":"value1",
-     "key2":"value2"
+     "key2":"value2",
+     ...
   }
 
 Note that this will return the original properties that were submitted when the dataset was created or updated.
 You can use these properties to create a clone of the dataset, or as a basis for updating some properties of this
 dataset without modifying the remaining properties.
+
+.. _http-restful-api-dataset-updating:
 
 Updating an Existing Dataset
 ============================
@@ -169,10 +172,18 @@ with JSON-formatted properties in the body::
 
   {
      "key1":"value1",
-     "key2":"value2"
+     "key2":"value2",
+     ...
   }
 
-**Note:** The dataset must already exist.
+**Notes:** 
+
+- The dataset must already exist.
+- The properties given in this request replace all existing properties; that is, if you
+  have set other properties for this table, such as time-to-live (``dataset.table.ttl``),
+  you must also include those properties in the update request.
+- You can retrieve the existing properties using the :ref:`http-restful-api-dataset-properties`
+  and use that as the basis for constructing your request. 
 
 .. list-table::
    :widths: 20 80
