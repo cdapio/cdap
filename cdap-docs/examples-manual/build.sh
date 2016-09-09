@@ -35,7 +35,9 @@ function guide_rewrite_sed() {
   local project_version=${PROJECT_SHORT_VERSION}
   
   local source1="https://raw.githubusercontent.com/cdap-guides"
-  if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
+  if [ "x${GIT_BRANCH_CDAP_APPS}" != "x" ]; then
+    local source2="${GIT_BRANCH_CDAP_APPS}"
+  elif [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
     local source2="develop"
   else
     local source2="release/cdap-${project_version}-compatible"
@@ -83,7 +85,9 @@ function download_includes() {
   local project_version=${PROJECT_SHORT_VERSION}
 
   local source1="https://raw.githubusercontent.com/caskdata/cdap-apps"
-  if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
+  if [ "x${GIT_BRANCH_CDAP_APPS}" != "x" ]; then
+    local source2="${GIT_BRANCH_CDAP_APPS}"
+  elif [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
     local source2="develop"
   else
     local source2="release/cdap-${project_version}-compatible"

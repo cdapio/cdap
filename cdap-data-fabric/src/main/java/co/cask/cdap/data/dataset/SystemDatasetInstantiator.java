@@ -49,6 +49,14 @@ public class SystemDatasetInstantiator implements Closeable {
   private final Iterable<? extends Id> owners;
   private final ClassLoader parentClassLoader;
 
+  /**
+   * Creates a new instance with the given {@link DatasetFramework}. It will always use the context classloader
+   * for loading dataset classes.
+   */
+  public SystemDatasetInstantiator(DatasetFramework datasetFramework) {
+    this(datasetFramework, null, null);
+  }
+
   public SystemDatasetInstantiator(DatasetFramework datasetFramework,
                                    @Nullable ClassLoader classLoader,
                                    @Nullable Iterable<? extends Id> owners) {

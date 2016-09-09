@@ -13,52 +13,114 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
+/*
+  Usage:
+    <Card
+      header={<div>Header</div>}
+      title='some title'
+      body={<div>Body</div>} | 'some string'
+      footer={<div>Footer</div>}
+      cardClass='custom-class-name'
+      size='SM | MD | LG'
+      cardStyle={{width: '50%';}}
+      closeable
+      onClose={this.onCloseFunction.bind(this)}
+    >
+      <div>
+        the content in here will overwrite the body prop
+      </div>
+    </Card>
+*/
+
 import React, {Component, PropTypes} from 'react';
-var classNames = require('classnames');
 require('./Card.less');
+
+var classNames = require('classnames');
+
 export default class Card extends Component {
-  constructor(props) {
-    super(props);
-    this.props = props;
-  }
-  render() {
-    var statusClasses = classNames('card-status',
-      { 'error' : this.props.error },
-      { 'success': this.props.success },
-      { 'hide': !this.props.error && !this.props.success }
+  getHeader () {
+    let closeButton;
+    if (this.props.closeable) {
+      closeButton = (
+        <span
+          className='fa fa-times'
+          onClick={this.props.onClose}
+        >
+        </span>
+      );
+    }
+
+    const titleHeader = (
+      <h3 className="card-title">
+        {this.props.title}
+      </h3>
     );
+    const headerContent = this.props.title ? titleHeader : this.props.header;
+
+    const headerElem = (
+      <div className="card-header">
+        {headerContent}
+        {closeButton}
+      </div>
+    );
+
+    return this.props.header || this.props.title ? headerElem : null;
+  }
+
+  getBody () {
+    const content = this.props.children ? this.props.children : this.props.body;
+
+    const bodyElem = (
+      <div className="card-body">
+        {content}
+      </div>
+    );
+
+    return content ? bodyElem : null;
+  }
+
+  getFooter () {
+    const footerElem = (
+      <div className="card-footer">
+        {this.props.footer}
+      </div>
+    );
+
+    return this.props.footer ? footerElem : null;
+  }
+
+  render() {
+    const cardClass = classNames('cask-card', this.props.cardClass,
+      { [`card-${this.props.size}`]: this.props.size },
+      { 'card-LG': !this.props.size }
+    );
+
     return (
-      <div className="cask-card">
-        <div className="card">
-          <div className="card-head">
-            <h3 className="card-title">
-              {this.props.title}
-            </h3>
-            {/* For now just closing. No context is being passed out*/}
-            <span
-              className={!this.props.closeable ? 'hide': 'fa fa-times'}
-              onClick={this.props.onClose}
-            >
-            </span>
-          </div>
-          <div className="card-body">
-            {this.props.content ? this.props.content : this.props.children}
-          </div>
-          <div className={statusClasses}>
-            {this.props.error ? this.props.error : this.props.success}
-          </div>
-        </div>
+      <div
+        className={cardClass}
+        style={this.props.cardStyle}
+      >
+        {this.getHeader()}
+        {this.getBody()}
+        {this.getFooter()}
       </div>
     );
   }
 }
 
 Card.propTypes = {
+  header: PropTypes.element,
+  body: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.element
+  ]),
+  footer: PropTypes.element,
   title: PropTypes.string,
-  content: PropTypes.string,
   children: PropTypes.node,
-  closeable: PropTypes.boolean,
-  success: PropTypes.string,
-  error: PropTypes.string,
-  onClose: PropTypes.function
+  closeable: PropTypes.bool,
+  onClose: PropTypes.func,
+  cardClass: PropTypes.string,
+  size: PropTypes.oneOf(['SM', 'MD', 'LG']),
+  cardStyle: PropTypes.object
 };

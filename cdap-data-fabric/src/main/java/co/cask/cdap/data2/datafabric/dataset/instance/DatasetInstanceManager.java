@@ -53,7 +53,7 @@ public class DatasetInstanceManager {
     this.txExecutorFactory = txExecutorFactory;
 
     Map<String, String> emptyArgs = Collections.emptyMap();
-    this.datasetCache = new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework, null, null),
+    this.datasetCache = new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
                                                     txClientService, NamespaceId.SYSTEM, emptyArgs, null,
                                                     ImmutableMap.of(
                                                       DatasetMetaTableUtil.INSTANCE_TABLE_NAME, emptyArgs

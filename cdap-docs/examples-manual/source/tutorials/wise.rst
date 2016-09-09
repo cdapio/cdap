@@ -607,21 +607,27 @@ called *Explore*, can be accessed through the CDAP UI:
 1. After deploying WISE in your Standalone CDAP instance, go to the *WISE* 
    `overview page <http://localhost:11011/ns/default/apps/Wise/overview/status>`__:
 
-   .. image:: ../_images/wise_overview.png 
-     :width: 8in
-     :align: center
+   .. figure:: ../_images/wise_overview.png
+      :figwidth: 100%
+      :width: 800px
+      :align: center
+      :class: bordered-image
 
 #. Click on the *Datasets* tab to display the list of datasets used by WISE:
 
-   .. image:: ../_images/wise_datasets.png 
-     :width: 8in
-     :align: center
+   .. figure:: ../_images/wise_datasets.png
+      :figwidth: 100%
+      :width: 800px
+      :align: center
+      :class: bordered-image
 
 #. Click on *bouncecountstore*, and then the *Explore* tab:
 
-   .. image:: ../_images/wise_bouncecountstore.png 
-     :width: 8in
-     :align: center
+   .. figure:: ../_images/wise_bouncecountstore.png
+      :figwidth: 100%
+      :width: 800px
+      :align: center
+      :class: bordered-image
 
 This is the **Explore** tab, where you can run ad-hoc SQL queries and see information about
 the datasets that expose a SQL interface.

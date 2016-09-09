@@ -320,11 +320,11 @@ Streams
    * - View
      - At least one of *READ*, *WRITE*, *ADMIN*, or *EXECUTE*
 
+
 .. _security-bootstrapping-authorization:
 
 Bootstrapping Authorization
 ===========================
-
 When CDAP is first started with authorization enabled, no users are granted privileges on
 any CDAP entities. Without any privileges, it can be impossible to bootstrap CDAP (create
 a new namespace or create entities in the *default* namespace) unless an
@@ -348,3 +348,31 @@ select users:
   required privileges to create namespaces and grant other users access to the *default*
   namespace. It is recommended that this property be set to the list of users that will
   administer and manage the CDAP installation.
+
+
+.. _security-auth-policy-pushdown:
+
+Authorization Policy Pushdown
+=============================
+Currently, CDAP does not support the pushing of authorization policy grants and revokes to
+:term:`storage providers <storage provider>`. As a result, when a user is granted *READ*
+or *WRITE* access on existing datasets or streams, permissions are not updated in the
+storage providers. The same applies when authorization policies are revoked.
+
+A newly-applied authorization policy will be enforced when the dataset or stream is
+accessed from CDAP, but not when it is accessed directly in the storage provider. If the
+pushdown of permissions to storage providers is desired, it needs to be done manually.
+This will be done automatically in a future release of CDAP.
+
+This limitation has a larger implication when :ref:`Cross-namespace Dataset Access
+<cross-namespace-dataset-access>` is used. When accessing a dataset from a different
+namespace, CDAP currently presumes that the user accessing the dataset has been granted
+permissions on the dataset in the storage provider prior to accessing the dataset from
+CDAP. 
+
+For example, if a program in the namespace *ns1* tries to access a :term:`fileset` in the
+namespace *ns2*, the user running the program should be granted the appropriate (*READ*,
+*WRITE*, or both) privileges on the fileset. Additionally, the user needs to be granted
+appropriate permissions on the HDFS directory that the fileset points to. When
+:ref:`impersonation <admin-impersonation>` is used in the program's namespace, this user
+is the impersonated user, otherwise it is the user that the CDAP Master runs as.

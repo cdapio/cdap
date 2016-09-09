@@ -16,6 +16,7 @@
 package co.cask.cdap.internal.app.runtime.customaction;
 
 import co.cask.cdap.api.ProgramState;
+import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.customaction.CustomActionContext;
 import co.cask.cdap.api.customaction.CustomActionSpecification;
@@ -26,16 +27,13 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
-import com.google.common.base.Throwables;
-import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import javax.annotation.Nullable;
@@ -45,9 +43,9 @@ import javax.annotation.Nullable;
  */
 public class BasicCustomActionContext extends AbstractContext implements CustomActionContext {
 
-  private static final Logger LOG = LoggerFactory.getLogger(BasicCustomActionContext.class);
   private final CustomActionSpecification customActionSpecification;
   private final WorkflowProgramInfo workflowProgramInfo;
+  private final Transactional transactional;
   private ProgramState state;
 
   public BasicCustomActionContext(Program workflow, ProgramOptions programOptions,
@@ -66,6 +64,7 @@ public class BasicCustomActionContext extends AbstractContext implements CustomA
 
     this.customActionSpecification = customActionSpecification;
     this.workflowProgramInfo = workflowProgramInfo;
+    this.transactional = Transactions.createTransactional(getDatasetCache());
   }
 
   @Override
@@ -87,27 +86,7 @@ public class BasicCustomActionContext extends AbstractContext implements CustomA
 
   @Override
   public void execute(TxRunnable runnable) throws TransactionFailureException {
-    final TransactionContext context = datasetCache.newTransactionContext();
-    try {
-      context.start();
-      runnable.run(datasetCache);
-      context.finish();
-    } catch (TransactionFailureException e) {
-      abortTransaction(e, "Failed to commit. Aborting transaction.", context);
-    } catch (Exception e) {
-      abortTransaction(e, "Exception occurred running user code. Aborting transaction.", context);
-    }
-  }
-
-  private void abortTransaction(Exception e, String message, TransactionContext context) {
-    try {
-      LOG.error(message, e);
-      context.abort();
-      throw Throwables.propagate(e);
-    } catch (TransactionFailureException e1) {
-      LOG.error("Failed to abort transaction.", e1);
-      throw Throwables.propagate(e1);
-    }
+    transactional.execute(runnable);
   }
 
   @Override

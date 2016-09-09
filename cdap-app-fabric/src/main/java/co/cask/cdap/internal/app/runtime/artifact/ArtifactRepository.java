@@ -60,6 +60,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
@@ -462,12 +463,10 @@ public class ArtifactRepository {
     }
 
     parentArtifacts = parentArtifacts == null ? Collections.<ArtifactRange>emptySet() : parentArtifacts;
-    CloseableClassLoader parentClassLoader;
+    CloseableClassLoader parentClassLoader = null;
     NamespacedImpersonator namespacedImpersonator = new NamespacedImpersonator(artifactId.getNamespace().toEntityId(),
                                                                                impersonator);
-    if (parentArtifacts.isEmpty()) {
-      parentClassLoader = createArtifactClassLoader(Locations.toLocation(artifactFile), namespacedImpersonator);
-    } else {
+    if (!parentArtifacts.isEmpty()) {
       validateParentSet(artifactId, parentArtifacts);
       parentClassLoader = createParentClassLoader(artifactId, parentArtifacts, namespacedImpersonator);
     }
@@ -484,7 +483,7 @@ public class ArtifactRepository {
       writeSystemMetadata(artifactId, artifactInfo);
       return artifactDetail;
     } finally {
-      parentClassLoader.close();
+      Closeables.closeQuietly(parentClassLoader);
     }
   }
 
@@ -580,7 +579,8 @@ public class ArtifactRepository {
 
   private ArtifactClasses inspectArtifact(Id.Artifact artifactId, File artifactFile,
                                           @Nullable Set<PluginClass> additionalPlugins,
-                                          ClassLoader parentClassLoader) throws IOException, InvalidArtifactException {
+                                          @Nullable  ClassLoader parentClassLoader) throws IOException,
+                                                                                           InvalidArtifactException {
     ArtifactClasses artifactClasses = artifactInspector.inspectArtifact(artifactId, artifactFile, parentClassLoader);
     validatePluginSet(artifactClasses.getPlugins());
     if (additionalPlugins == null || additionalPlugins.isEmpty()) {

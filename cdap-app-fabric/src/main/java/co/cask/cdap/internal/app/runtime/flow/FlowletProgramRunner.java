@@ -51,8 +51,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
-import co.cask.cdap.common.logging.common.LogWriter;
-import co.cask.cdap.common.logging.logback.CAppender;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
@@ -166,12 +164,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.runtimeUsageRegistry = runtimeUsageRegistry;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
-  }
-
-  @SuppressWarnings("unused")
-  @Inject(optional = true)
-  void setLogWriter(LogWriter logWriter) {
-    CAppender.logWriter = logWriter;
   }
 
   @SuppressWarnings("unchecked")

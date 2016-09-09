@@ -92,14 +92,30 @@ This application demonstrates:
 .. |example| replace:: WikipediaPipeline
 .. |example-italic| replace:: *WikipediaPipeline*
 .. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <WikipediaPipeline>`
+.. |example-dir|      replace:: |example|
+.. |example-artifact| replace:: |example|
 
-.. include:: _includes/_building-starting-running.txt
+.. .. include:: _includes/_building-starting-running.txt
+
+.. include:: _includes/_building-running-base.txt
+  
+- Once the application (|example-italic|) has been deployed, you can start its components, as described in general in
+  :ref:`Starting an Application <cdap-building-running-starting-application>`, and
+  detailed for this example in `deploying the example <#deploying-the-example>`__.
+  
+- Once all components are deployed, `run the example <#running-the-example>`__.
+
+- When finished, you can `stop and remove the application <#stopping-and-removing-the-application>`__.
 
 
 Deploying the Example
 =====================
-Since deploying the WikipediaPipelineApp involves loading an artifact and creating two applications from it, the
-preferred method of deploying it is to use the CDAP CLI.
+After deploying the |example-italic| application, the Apache Spark program
+*SparkWikipediaClustering* needs to be loaded as the *WikipediaPipelineApp* and two
+versions of it be created.
+
+Since deploying the *WikipediaPipelineApp* involves loading an artifact and creating two
+applications from it, the preferred method of deploying it is to use the CDAP CLI.
 
 - Load the Artifact:
 
@@ -176,15 +192,21 @@ These runtime arguments can be set for the *WikipediaPipelineWorkflow*:
 If you run with the default arguments, you will find that the pipeline starts but then
 stops after the first node, as the number of pages is less than the *min.pages.threshold*:
 
-.. image:: _images/wikipedia-data-pipeline-1.png
-   :width: 8in
+.. figure:: _images/wikipedia-data-pipeline-1.png
+   :figwidth: 100%
+   :width: 800px
+   :align: center
+   :class: bordered-image
 
-Reduce the number of minimum number of pages to zero, and change the mode to *online*, by
-setting either the runtime arguments (which changes the *next* run) or the preferences
-(which changes *all* subsequent runs):
+Reduce the number of minimum number of pages (``min.pages.threshold``) to zero, and change
+the ``mode`` to ``online``, by setting either the runtime arguments (which changes the
+*next* run) or the preferences (which changes *all* subsequent runs):
 
-.. image:: _images/wikipedia-data-pipeline-2.png
-   :width: 8in
+.. figure:: _images/wikipedia-data-pipeline-2.png
+   :figwidth: 100%
+   :width: 800px
+   :align: center
+   :class: bordered-image
 
 You can also do this from a terminal:
 
@@ -207,8 +229,11 @@ You can also do this from a terminal:
 
 Once the pipeline has run through to the end (below), you can start the service and query the results.
 
-.. image:: _images/wikipedia-data-pipeline-3.png
-   :width: 8in
+.. figure:: _images/wikipedia-data-pipeline-3.png
+   :figwidth: 100%
+   :width: 800px
+   :align: center
+   :class: bordered-image
 
 .. Start the Service
 .. -----------------

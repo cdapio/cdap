@@ -19,7 +19,7 @@ package co.cask.cdap.security.authorization;
 import co.cask.cdap.common.FeatureDisabledException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.test.AppJarHelper;
+import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.security.spi.authorization.AuthorizationContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;

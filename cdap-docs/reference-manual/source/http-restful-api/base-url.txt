@@ -2,3 +2,5 @@
 All methods or endpoints described in this API have a base URL (typically
 ``http://<host>:11015`` or ``https://<host>:10443``) that precedes the resource
 identifier, as described in the :ref:`RESTful API Conventions <http-restful-api-conventions-base-url>`.
+These methods return a status code, as listed in the :ref:`RESTful API  Status Codes
+<http-restful-api-status-codes>`.

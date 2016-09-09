@@ -135,7 +135,7 @@ public class DatasetTypeService extends AbstractIdleService {
     this.txExecutorFactory = txExecutorFactory;
     Map<String, String> emptyArgs = Collections.emptyMap();
     this.datasetCache = new MultiThreadDatasetCache(
-      new SystemDatasetInstantiator(datasetFramework, null, null), txClientService, NamespaceId.SYSTEM, emptyArgs, null,
+      new SystemDatasetInstantiator(datasetFramework), txClientService, NamespaceId.SYSTEM, emptyArgs, null,
       ImmutableMap.of(
         DatasetMetaTableUtil.META_TABLE_NAME, emptyArgs,
         DatasetMetaTableUtil.INSTANCE_TABLE_NAME, emptyArgs

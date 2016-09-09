@@ -13,37 +13,31 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 @import '../../styles/variables.less';
 .cask-card {
-  .card {
-    background: #ffffff;
-    border-radius: 4px;
-    padding-top: 15px;
-    .card-head {
-      display: flex;
-      justify-content: center;
-      h3 {
-        margin-top: 0;
-      }
-      .fa.fa-times {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        cursor: pointer;
-      }
+  background: #fff;
+  border-radius: 4px;
+  padding-top: 15px;
+
+  &.card-SM { width: 33%; }
+  &.card-MD { width: 66%; }
+  &.card-LG { width: 100%; }
+
+  .card-header {
+    display: flex;
+    justify-content: center;
+    h3 {
+      margin-top: 0;
     }
-    .card-body {
-      padding: 15px;
+    .fa.fa-times {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      cursor: pointer;
     }
-    .card-status {
-      color: white;
-      padding: 15px;
-      &.success {
-        background: @brand-success;
-      }
-      &.error {
-        background: @brand-danger;
-      }
-    }
+  }
+  .card-body {
+    padding: 15px;
   }
 }

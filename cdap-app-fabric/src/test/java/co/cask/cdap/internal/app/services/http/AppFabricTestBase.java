@@ -33,6 +33,8 @@ import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import co.cask.cdap.common.test.AppJarHelper;
+import co.cask.cdap.common.test.PluginJarHelper;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
@@ -40,8 +42,6 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsService;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
-import co.cask.cdap.internal.test.AppJarHelper;
-import co.cask.cdap.internal.test.PluginJarHelper;
 import co.cask.cdap.metadata.MetadataService;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.Id;
@@ -217,7 +217,7 @@ public abstract class AppFabricTestBase {
 
   protected static CConfiguration createBasicCConf() throws IOException {
     CConfiguration cConf = CConfiguration.create();
-    cConf.set(Constants.AppFabric.SERVER_ADDRESS, hostname);
+    cConf.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, hostname);
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
     cConf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
     cConf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));

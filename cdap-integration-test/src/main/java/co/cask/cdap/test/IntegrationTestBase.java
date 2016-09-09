@@ -157,20 +157,10 @@ public abstract class IntegrationTestBase {
         if (!getMonitorClient().allSystemServicesOk()) {
           return false;
         }
-        // Check that the dataset service is up, and also that the default namespace exists
-        // Using list and checking if default namespace exists, as opposed to using get()
-        // so we don't have to unnecessarily add a try-catch for NamespaceNotFoundException, since that exception is
-        // not handled in checkServicesWithRetry.
-        List<NamespaceMeta> namespaces = getNamespaceClient().list();
-
-        if (namespaces.size() == 0) {
-          return false;
-        }
-        if (namespaces.contains(NamespaceMeta.DEFAULT)) {
-          return true;
-        }
-        throw new IllegalStateException("Default namespace not found. Instead found unexpected namespaces: "
-                                          + namespaces);
+        // Check that the dataset service is up with list(). If list() does not throw exception, which means the http
+        // request receives response status HTTP_OK and dataset service is up, return true.
+        getNamespaceClient().list();
+        return true;
       }
     };
 

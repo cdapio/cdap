@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,18 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.common.logging.common;
+package co.cask.cdap.data2.transaction;
+
+import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.data.DatasetContext;
 
 /**
- * Defines log writer interface.
+ * A callable that provides a {@link DatasetContext} to programs which may be used to get
+ * access to and use datasets.
+ *
+ * @param <V> type of the return value from the {@link #call(DatasetContext)}.
+ *
+ * TODO: CDAP-6103 Move to api and have {@link Transactional} to support this when revamping tx supports in program.
  */
-public interface LogWriter {
-  /**
-   * Write a log message with a given log level.
-   * @param tag   tag
-   * @param level log level
-   * @param message log message
-   * @return  true on successful write
-   */
-  boolean write(String tag, String level, String message);
+public interface TxCallable<V> {
+
+  V call(DatasetContext context) throws Exception;
 }

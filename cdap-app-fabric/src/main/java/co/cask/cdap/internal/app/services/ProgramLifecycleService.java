@@ -65,6 +65,7 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -77,6 +78,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -231,6 +233,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @param programId the {@link ProgramId} to start/stop
    * @param overrides the arguments to override in the program's configured user arguments before starting
    * @param debug {@code true} if the program is to be started in debug mode, {@code false} otherwise
+   * @return {@link ProgramController}
    * @throws ConflictException if the specified program is already running, and if concurrent runs are not allowed
    * @throws NotFoundException if the specified program or the app it belongs to is not found in the specified namespace
    * @throws IOException if there is an error starting the program
@@ -238,7 +241,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
    *                               a user requires {@link Action#EXECUTE} on the program
    * @throws Exception if there were other exceptions checking if the current user is authorized to start the program
    */
-  public synchronized void start(ProgramId programId, Map<String, String> overrides, boolean debug) throws Exception {
+  public synchronized ProgramController start(ProgramId programId, Map<String, String> overrides, boolean debug)
+    throws Exception {
     if (isRunning(programId) && !isConcurrentRunsAllowed(programId.getType())) {
       throw new ConflictException(String.format("Program %s is already running", programId));
     }
@@ -253,6 +257,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     if (runtimeInfo == null) {
       throw new IOException(String.format("Failed to start program %s", programId));
     }
+    return runtimeInfo.getController();
   }
 
   /**
@@ -357,8 +362,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * Stops the specified run of the specified program.
    *
    * @param programId the {@link ProgramId program} to stop
-   * @param runId the runId of the program run to stop. If null, the first run of the program as returned by
-   *              {@link ProgramRuntimeService} is stopped.
+   * @param runId the runId of the program run to stop. If null, all runs of the program as returned by
+   *              {@link ProgramRuntimeService} are stopped.
    * @throws NotFoundException if the app, program or run was not found
    * @throws BadRequestException if an attempt is made to stop a program that is either not running or
    *                             was started by a workflow
@@ -366,7 +371,22 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @throws ExecutionException if there was a problem while waiting for the stop call to complete
    */
   public void stop(ProgramId programId, @Nullable String runId) throws Exception {
-    issueStop(programId, runId).get();
+    List<ListenableFuture<ProgramController>> futures = issueStop(programId, runId);
+    ListenableFuture<List<ProgramController>> future = Futures.successfulAsList(futures);
+    future.get();
+
+    List<Throwable> causes = new ArrayList<>();
+    for (ListenableFuture<ProgramController> f : futures) {
+      try {
+        f.get();
+      } catch (ExecutionException | InterruptedException e) {
+        causes.add(e.getCause());
+      }
+    }
+    if (!causes.isEmpty()) {
+      throw new Exception(String.format("%d out of %d runs of the program %s failed to stop",
+                                        causes.size(), futures.size(), programId));
+    }
   }
 
   /**
@@ -375,19 +395,21 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * Clients can wait for completion of the {@link ListenableFuture}.
    *
    * @param programId the {@link ProgramId program} to issue a stop for
-   * @param runId the runId of the program run to stop. If null, the first run of the program as returned by
-   *              {@link ProgramRuntimeService} is stopped.
-   * @return a {@link ListenableFuture} with a {@link ProgramController} that clients can wait on for stop to complete.
+   * @param runId the runId of the program run to stop. If null, all runs of the program as returned by
+   *              {@link ProgramRuntimeService} are stopped.
+   * @return a list of {@link ListenableFuture} with a {@link ProgramController} that clients can wait on for stop
+   *         to complete.
    * @throws NotFoundException if the app, program or run was not found
    * @throws BadRequestException if an attempt is made to stop a program that is either not running or
    *                             was started by a workflow
    * @throws UnauthorizedException if the user issuing the command is not authorized to stop the program. To stop a
    *                               program, a user requires {@link Action#EXECUTE} permission on the program.
    */
-  public ListenableFuture<ProgramController> issueStop(ProgramId programId, @Nullable String runId) throws Exception {
+  public List<ListenableFuture<ProgramController>> issueStop(ProgramId programId, @Nullable String runId)
+    throws Exception {
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runId);
-    if (runtimeInfo == null) {
+    List<ProgramRuntimeService.RuntimeInfo> runtimeInfos = findRuntimeInfo(programId, runId);
+    if (runtimeInfos.isEmpty()) {
       if (!store.applicationExists(programId.toId().getApplication())) {
         throw new ApplicationNotFoundException(programId.toId().getApplication());
       } else if (!store.programExists(programId.toId())) {
@@ -407,7 +429,11 @@ public class ProgramLifecycleService extends AbstractIdleService {
       }
       throw new BadRequestException(String.format("Program '%s' is not running.", programId));
     }
-    return runtimeInfo.getController().stop();
+    List<ListenableFuture<ProgramController>> futures = new ArrayList<>();
+    for (ProgramRuntimeService.RuntimeInfo runtimeInfo : runtimeInfos) {
+      futures.add(runtimeInfo.getController().stop());
+    }
+    return futures;
   }
 
   /**
@@ -441,11 +467,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
     return EnumSet.of(ProgramType.WORKFLOW, ProgramType.MAPREDUCE).contains(type);
   }
 
-  @Nullable
-  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId programId,
+  private List<ProgramRuntimeService.RuntimeInfo> findRuntimeInfo(ProgramId programId,
                                                             @Nullable String runId) throws BadRequestException {
-    Map<RunId, ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(programId.getType());
-
     if (runId != null) {
       RunId run;
       try {
@@ -453,21 +476,16 @@ public class ProgramLifecycleService extends AbstractIdleService {
       } catch (IllegalArgumentException e) {
         throw new BadRequestException("Error parsing run-id.", e);
       }
-      return runtimeInfos.get(run);
+      ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.lookup(programId.toId(), run);
+      return runtimeInfo == null ? Collections.<RuntimeInfo>emptyList() : Collections.singletonList(runtimeInfo);
     }
-
-    return findRuntimeInfo(programId);
+    return new ArrayList<>(runtimeService.list(programId.toId()).values());
   }
 
   @Nullable
-  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId programId) {
-    Map<RunId, ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(programId.getType());
-    for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos.values()) {
-      if (programId.equals(info.getProgramId().toEntityId())) {
-        return info;
-      }
-    }
-    return null;
+  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId programId) throws BadRequestException {
+    List<ProgramRuntimeService.RuntimeInfo> runtimeInfos = findRuntimeInfo(programId, null);
+    return runtimeInfos.isEmpty() ? null : runtimeInfos.iterator().next();
   }
 
   /**
@@ -564,7 +582,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
     return filter.apply(programId);
   }
 
-  private void setWorkerInstances(ProgramId programId, int instances) throws ExecutionException, InterruptedException {
+  private void setWorkerInstances(ProgramId programId, int instances)
+    throws ExecutionException, InterruptedException, BadRequestException {
     int oldInstances = store.getWorkerInstances(programId.toId());
     if (oldInstances != instances) {
       store.setWorkerInstances(programId.toId(), instances);
@@ -579,7 +598,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
   }
 
   private void setFlowletInstances(ProgramId programId, String flowletId,
-                                   int instances) throws ExecutionException, InterruptedException {
+                                   int instances) throws ExecutionException, InterruptedException, BadRequestException {
     int oldInstances = store.getFlowletInstances(programId.toId(), flowletId);
     if (oldInstances != instances) {
       FlowSpecification flowSpec = store.setFlowletInstances(programId.toId(), flowletId, instances);
@@ -594,7 +613,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
     }
   }
 
-  private void setServiceInstances(ProgramId programId, int instances) throws ExecutionException, InterruptedException {
+  private void setServiceInstances(ProgramId programId, int instances)
+    throws ExecutionException, InterruptedException, BadRequestException {
     int oldInstances = store.getServiceInstances(programId.toId());
     if (oldInstances != instances) {
       store.setServiceInstances(programId.toId(), instances);

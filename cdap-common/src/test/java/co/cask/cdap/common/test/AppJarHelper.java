@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,16 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.internal.test;
+package co.cask.cdap.common.test;
 
 import co.cask.cdap.common.lang.ClassLoaders;
-import com.google.common.collect.ImmutableList;
+import co.cask.cdap.common.lang.ProgramResources;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
+import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.ApplicationBundler;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.jar.Attributes;
@@ -33,36 +37,42 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 /**
- * Helper class for building application template plugin jars.
+ * Helper class for building application jar.
  */
-public final class PluginJarHelper {
+public final class AppJarHelper {
 
-  private PluginJarHelper() {
+  private AppJarHelper() {
     // No-op
   }
 
-  public static Location createPluginJar(LocationFactory locationFactory, Manifest manifest,
-                                         Class<?> clz, Class<?>... classes) throws IOException {
+  public static Location createDeploymentJar(LocationFactory locationFactory, Class<?> clz, Manifest manifest,
+                                             File... bundleEmbeddedJars) throws IOException {
+    return createDeploymentJar(locationFactory, clz, manifest, new ClassAcceptor() {
+      final Set<String> visibleResources = ProgramResources.getVisibleResources();
 
-    // include all packages from the given plugin classes
-    // for example, a plugin may use the org.apache.spark.streaming.kafka.KafkaUtils class,
-    // which would otherwise get filtered out by the org.apache.spark package filter.
-    Set<String> includePackages = new HashSet<>();
-    includePackages.add("org.apache.hadoop.hbase");
-    includePackages.add(clz.getPackage().getName());
-    for (Class<?> clazz : classes) {
-      includePackages.add(clazz.getPackage().getName());
-    }
+      @Override
+      public boolean accept(String className, URL classUrl, URL classPathUrl) {
+        if (visibleResources.contains(className.replace('.', '/') + ".class")) {
+          return false;
+        }
+        // TODO: Fix it with CDAP-5800
+        if (className.startsWith("org.apache.spark.")) {
+          return false;
+        }
+        return true;
+      }
+    }, bundleEmbeddedJars);
+  }
 
-    ApplicationBundler bundler = new ApplicationBundler(ImmutableList.of("co.cask.cdap.api",
-                                                                         "org.apache.hadoop",
-                                                                         "org.apache.hive",
-                                                                         "org.apache.spark"),
-                                                        includePackages);
+  public static Location createDeploymentJar(LocationFactory locationFactory, Class<?> clz, Manifest manifest,
+                                             ClassAcceptor classAcceptor,
+                                             File... bundleEmbeddedJars) throws IOException {
+    // Exclude all classes that are visible form the system to the program classloader.
+    ApplicationBundler bundler = new ApplicationBundler(classAcceptor);
     Location jarLocation = locationFactory.create(clz.getName()).getTempFile(".jar");
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(clz.getClassLoader());
     try {
-      bundler.createBundle(jarLocation, clz, classes);
+      bundler.createBundle(jarLocation, clz);
     } finally {
       ClassLoaders.setContextClassLoader(oldClassLoader);
     }
@@ -70,9 +80,12 @@ public final class PluginJarHelper {
     Location deployJar = locationFactory.create(clz.getName()).getTempFile(".jar");
     Manifest jarManifest = new Manifest(manifest);
     jarManifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+    jarManifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, clz.getName());
+
 
     // Create the program jar for deployment. It removes the "classes/" prefix as that's the convention taken
     // by the ApplicationBundler inside Twill.
+    Set<String> seenEntries = new HashSet<>();
     try (
       JarOutputStream jarOutput = new JarOutputStream(deployJar.getOutputStream(), jarManifest);
       JarInputStream jarInput = new JarInputStream(jarLocation.getInputStream())
@@ -95,16 +108,33 @@ public final class PluginJarHelper {
             continue;
           }
 
-          jarOutput.putNextEntry(jarEntry);
-          if (!isDir) {
-            ByteStreams.copy(jarInput, jarOutput);
+          if (seenEntries.add(jarEntry.getName())) {
+            jarOutput.putNextEntry(jarEntry);
+            if (!isDir) {
+              ByteStreams.copy(jarInput, jarOutput);
+            }
           }
         }
 
         jarEntry = jarInput.getNextJarEntry();
       }
+
+      for (File embeddedJar : bundleEmbeddedJars) {
+        jarEntry = new JarEntry("lib/" + embeddedJar.getName());
+        if (seenEntries.add(jarEntry.getName())) {
+          jarOutput.putNextEntry(jarEntry);
+          Files.copy(embeddedJar, jarOutput);
+        }
+      }
     }
 
     return deployJar;
+  }
+
+  public static Location createDeploymentJar(LocationFactory locationFactory,
+                                             Class<?> clz, File... bundleEmbeddedJars) throws IOException {
+    // Creates Manifest
+    Manifest manifest = new Manifest();
+    return createDeploymentJar(locationFactory, clz, manifest, bundleEmbeddedJars);
   }
 }

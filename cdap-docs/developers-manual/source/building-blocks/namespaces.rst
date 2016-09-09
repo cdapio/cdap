@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2016 Cask Data, Inc.
 
 .. _namespaces:
 
@@ -65,9 +65,9 @@ the entity ID, since an entity cannot exist independently of a namespace.
 
 Using Namespaces
 ================
-The best practices with using namespaces would be to create desired namespaces and use
-them for all operations. Otherwise, CDAP will use the ``default`` namespace for any operations
-undertaken.
+The best practice with using namespaces would be to create desired namespaces and use
+them for all operations. Otherwise, CDAP will use the ``default`` namespace for any
+operations undertaken.
 
 Once a namespace has been created, you can edit its description and configuration
 preferences, either by using a :ref:`RESTful API <http-restful-api-namespace>` or the 
@@ -94,6 +94,22 @@ namespaces. It can only be done if all programs of the namespace have been stopp
 the ``cdap-site.xml`` parameter ``enable.unrecoverable.reset`` has been enabled.
 
 
+.. _namespaces-custom-mapping:
+
+Custom Mapping of Storage Providers
+===================================
+When creating a namespace, the underlying storage provider can also be configured for the
+namespace. For example, a custom HBase namespace, Hive database, or HDFS directory can be
+specified to be used for the data in a particular namespace.
+See :ref:`Namespace Configurations <http-restful-api-namespace-configs>` for how to specify
+the properties of a namespace.
+
+When configuring an underlying storage provider, CDAP will not manage the lifecycle of these
+entities; they must exist before the CDAP namespace is created, and they will not be removed
+upon the deletion of the CDAP namespace. The contents (the data) of the storage provider are
+deleted when a CDAP namespace is deleted through CDAP.
+
+
 Namespace Examples
 ==================
 - All examples, starting with :ref:`Hello World <examples-hello-world>`, demonstrate using
@@ -101,8 +117,3 @@ Namespace Examples
   
 - The CDAP :ref:`Command Line Interface <cli>` is namespace-aware. You set the
   namespace you are currently using; the command prompt displays it as a visual reminder.
-
-
-<Update this entire document with namespace mapping features>
-
-<Currently this seems to be the place to document impersonation too>
