@@ -23,7 +23,7 @@
     <name>app.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-      App Fabric service bind address (deprecated: use master.services.bind.address instead)
+      App Fabric service bind address (deprecated: replaced with ${master.services.bind.address})
     </description>
   </property>
 
@@ -31,7 +31,7 @@
     <name>dataset.service.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-       Dataset service bind address (deprecated: use master.services.bind.address instead)
+       Dataset service bind address (deprecated: replaced with ${master.services.bind.address})
     </description>
   </property>
  
@@ -139,10 +139,7 @@
     <name>metadata.updates.publish.enabled</name>
     <value>false</value>
     <description>
-      Determines if metadata updates will be published to Apache Kafka.
-      External systems can subscribe to the Kafka topic determined by
-      ${metadata.updates.kafka.topic} to receive notifications of metadata
-      updates (deprecated).
+      Determines if metadata updates will be published to Apache Kafka (deprecated)
     </description>
   </property>
 
@@ -176,7 +173,7 @@
     <value>0.0.0.0</value>
     <description>
       CDAP Authentication service bind address
-      (deprecated; use security.auth.server.bind.address instead)
+      (deprecated; replaced with ${security.auth.server.bind.address})
     </description>
   </property>
 
