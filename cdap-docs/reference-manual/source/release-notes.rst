@@ -26,12 +26,35 @@ Cask Data Application Platform Release Notes
 `Release 3.5.1 <http://docs.cask.co/cdap/3.5.1/index.html>`__
 =============================================================
 
+Known Issues
+------------
+
+- :cask-issue:`CDAP-7175` - Though an underlying issue has been fixed in the upgrade tool
+  to allow it to run on a CDAP instance with authorization enabled, if you are upgrading
+  an authorization-enabled CDAP instance, you will need to give the *cdap* user *ADMIN*
+  privileges on all existing CDAP namespaces. **Note:** the *ADMIN* privilege does not
+  give the *cdap* user *READ* or *WRITE* privileges on the namespaces. As these are
+  temporary grants required only for the purpose of running the upgrade tool, once the
+  upgrade is complete, these grants can be revoked.
+  
 Improvements
 ------------
 
-- :cask-issue:`CDAP-7192` - 
+- :cask-issue:`CDAP-7192` - Added the ability to specify an announce address and port for
+  the ``appfabric`` and ``dataset`` services.
 
-- :cask-issue:`CDAP-7240` - 
+  Deprecated the properties ``app.bind.address`` and ``dataset.service.bind.address``,
+  replacing them with ``master.services.bind.address`` as the bind address for master
+  services.
+
+  Added the properties ``master.services.announce.address``, ``app.announce.port``, and
+  ``dataset.service.announce.port`` for use as announce addresses that are different from
+  the bind address.
+
+- :cask-issue:`CDAP-7240` - Upgraded the version of ``netty-http`` used in CDAP to version
+  0.15, resolving a problem with a NullPointerException being logged on the closing of a
+  network connection.
+
 
 Bug Fixes
 ---------
@@ -42,15 +65,18 @@ Bug Fixes
 - :cask-issue:`CDAP-6215` - PartitionConsumer appropriately drops partitions that have
   been deleted from a corresponding PartitionedFileSet.
   
-- :cask-issue:`CDAP-6404` -
+- :cask-issue:`CDAP-6404` - Fixed an issue with searching for an entity in Cask Tracker by
+  metadata after a tag with the same prefix has been removed.
 
-- :cask-issue:`CDAP-7138` -
+- :cask-issue:`CDAP-7138` - Fixed a problem with duplicate logs showing for a running program.
 
-- :cask-issue:`CDAP-7175` -
+- :cask-issue:`CDAP-7175` - Fixed a bug in the upgrade tool to allow it to run on a CDAP
+  instance with authorization enabled.
 
-- :cask-issue:`CDAP-7178` -
+- :cask-issue:`CDAP-7178` - Fixed an issue with uploading an application JAR or file to a
+  stream through the CDAP UI.
 
-- :cask-issue:`CDAP-7179` -
+- :cask-issue:`CDAP-7179` - ??
 
 - :cask-issue:`CDAP-7187` - Fixed a problem with the property
   ``dataset.service.bind.address`` having no effect.
@@ -61,17 +87,21 @@ Bug Fixes
 - :cask-issue:`CDAP-7222` - Fixed a problem with being unable to delete a namespace if a
   configured keytab file doesn't exist.
 
-- :cask-issue:`CDAP-7224` - 
+- :cask-issue:`CDAP-7224` - ??
 
-- :cask-issue:`CDAP-7235` - 
+- :cask-issue:`CDAP-7235` - Fixed a problem with a NullPointerException when the CDAP UI fetches a log.
+
+- :cask-issue:`CDAP-7237` - Prevented accidental grant of additional actions to a user as
+  part of a grant operation when using Apache Sentry as the authorization provider.
 
 - :cask-issue:`HYDRATOR-922` - Fixed a bug that caused the Database Source, Joiner,
-  GroupByAggregate, and De-dup plugins to fail on certain versions of Spark.
+  GroupByAggregate, and Deduplicate plugins to fail on certain versions of Spark.
 
 - :cask-issue:`HYDRATOR-932` - Fixed an error in the documentation of the HDFS Source and
   Sink with respect to the alias under high-availability.
 
-- :cask-issue:`TRACKER-217` - Fixed
+- :cask-issue:`TRACKER-217` - Fixed an issue preventing the adding of additional tags
+  after an existing tag had been deleted.
 
 
 `Release 3.5.0 <http://docs.cask.co/cdap/3.5.0/index.html>`__
