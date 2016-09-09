@@ -155,7 +155,7 @@ Assign CDAP Services to Hosts
    #. **CDAP Auth Server:** For managing authentication tokens on CDAP clusters with perimeter security enabled
    #. **CDAP Kafka Server:** For transporting CDAP metrics and CDAP system service log data
    #. **CDAP UI:** Web interface to CDAP, :ref:`Cask Hydrator <cask-hydrator>`, and
-      :ref:`Cask Tracker <cask-tracker>` (for CDAP 3.2.x and later installations)
+      :ref:`Cask Tracker <cask-tracker-index>` (for CDAP 3.2.x and later installations)
  
    .. figure:: ../_images/ambari/ss03-assign-masters.png
       :figwidth: 100%
