@@ -18,6 +18,7 @@ import React, {Component} from 'react';
 import {MySearchApi} from '../../api/search';
 import {parseMetadata} from '../../services/metadata-parser';
 import Card from '../Card';
+import HomeHeader from './HomeHeader';
 require('./Home.less');
 
 export default class Home extends Component {
@@ -49,7 +50,7 @@ export default class Home extends Component {
   render() {
     return (
       <div>
-        <h1> Home Screen </h1>
+        <HomeHeader />
 
         <div className="entity-list">
           {this.state.entities.map(
