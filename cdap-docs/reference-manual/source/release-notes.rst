@@ -107,6 +107,9 @@ Bug Fixes
 - :cask-issue:`CDAP-7237` - Prevented accidental grant of additional actions to a user as
   part of a grant operation when using Apache Sentry as the authorization provider.
 
+- :cask-issue:`HYDRATOR-912` - Fixed an issue where the Joiner plugin was failing in
+  Hydrator pipelines executing in a Spark environment.
+
 - :cask-issue:`HYDRATOR-922` - Fixed a bug that caused the Database Source, Joiner,
   GroupByAggregate, and Deduplicate plugins to fail on certain versions of Spark.
 
