@@ -13,45 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import React, {PropTypes, Component} from 'react';
-import { Modal, ModalHeader, ModalBody } from 'reactstrap';
-require('./CaskMarketPlace.less');
+import React from 'react';
 
 import TabConfig from './TabConfig';
 import ConfigurableTab from '../ConfigurableTab';
 
-export default class CaskMarketPlace extends Component{
-  constructor(props) {
-    super(props);
-  }
-
-  render() {
-    return (
-      <Modal
-        isOpen={this.props.isOpen}
-        toggle={this.props.onCloseHandler}
-        className="cask-market-place"
-        size="lg"
-      >
-        <ModalHeader>
-          <span className="pull-left">
-            Cask Market Place
-          </span>
-          <div className="pull-right">
-            <button className="btn btn-sm btn-resource-center">
-              Resource Center
-            </button>
-          </div>
-        </ModalHeader>
-        <ModalBody>
-          <ConfigurableTab tabConfig={TabConfig} />
-        </ModalBody>
-      </Modal>
-    );
-  }
+export default function CaskMarketPlace() {
+  return (
+    <ConfigurableTab tabConfig={TabConfig} />
+  );
 }
-
-CaskMarketPlace.propTypes = {
-  onCloseHandler: PropTypes.func,
-  isOpen: PropTypes.bool
-};
