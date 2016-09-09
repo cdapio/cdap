@@ -498,7 +498,7 @@ expecting that it would be replaced with::
 
 Escaping Macros
 ---------------
-Macro syntax can be escaped using a backslash '\' character. For example::
+Macro syntax can be escaped using a backslash (``\``) character. For example::
 
   ${\${escaped-macro-literal\}}
   
