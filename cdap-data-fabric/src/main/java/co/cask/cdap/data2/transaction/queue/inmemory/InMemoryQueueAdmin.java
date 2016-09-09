@@ -69,7 +69,7 @@ public class InMemoryQueueAdmin implements QueueAdmin {
     return new NoopQueueConfigurer();
   }
 
-  // Only used by InMemoryStreadmAdmin
+  // Only used by InMemoryStreamAdmin
   void drop(QueueName queueName) throws Exception {
     queueService.drop(queueName);
   }

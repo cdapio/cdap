@@ -17,6 +17,8 @@
 package co.cask.cdap.data2.transaction.queue.inmemory;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.metrics.MetricDeleteQuery;
+import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.common.StreamNotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
@@ -36,7 +38,9 @@ import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -55,6 +59,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   private final UsageRegistry usageRegistry;
   private final LineageWriter lineageWriter;
   private final MetadataStore metadataStore;
+  private final MetricStore metricStore;
   private final ViewAdmin viewAdmin;
 
   private AuditPublisher auditPublisher;
@@ -65,12 +70,14 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
                              LineageWriter lineageWriter,
                              StreamMetaStore streamMetaStore,
                              MetadataStore metadataStore,
+                             MetricStore metricStore,
                              ViewAdmin viewAdmin) {
     super(queueService);
     this.usageRegistry = usageRegistry;
     this.streamMetaStore = streamMetaStore;
     this.lineageWriter = lineageWriter;
     this.metadataStore = metadataStore;
+    this.metricStore = metricStore;
     this.viewAdmin = viewAdmin;
   }
 
@@ -84,6 +91,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   public void dropAllInNamespace(Id.Namespace namespace) throws Exception {
     queueService.resetStreamsWithPrefix(QueueName.prefixForNamedspacedStream(namespace.getId()));
     for (StreamSpecification spec : streamMetaStore.listStreams(namespace)) {
+      deleteMetrics(namespace.toEntityId().stream(spec.getName()));
       // Remove metadata for the stream
       metadataStore.removeMetadata(Id.Stream.from(namespace, spec.getName()));
       streamMetaStore.removeStream(Id.Stream.from(namespace, spec.getName()));
@@ -153,9 +161,19 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
     Preconditions.checkArgument(exists(streamId), "Stream '%s' does not exist.", streamId);
     // Remove metadata for the stream
     metadataStore.removeMetadata(streamId);
-    drop(QueueName.fromStream(streamId));
     streamMetaStore.removeStream(streamId);
+    deleteMetrics(streamId.toEntityId());
+    drop(QueueName.fromStream(streamId));
     publishAudit(streamId, AuditType.DELETE);
+  }
+
+  private void deleteMetrics(StreamId streamId) throws Exception {
+    long endTs = System.currentTimeMillis() / 1000;
+    Map<String, String> tags = Maps.newHashMap();
+    tags.put(Constants.Metrics.Tag.NAMESPACE, streamId.getNamespace());
+    tags.put(Constants.Metrics.Tag.STREAM, streamId.getStream());
+    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, tags);
+    metricStore.delete(deleteQuery);
   }
 
   @Override
