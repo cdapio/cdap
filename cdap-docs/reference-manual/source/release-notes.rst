@@ -35,7 +35,10 @@ Known Issues
   privileges on all existing CDAP namespaces. **Note:** the *ADMIN* privilege does not
   give the *cdap* user *READ* or *WRITE* privileges on the namespaces. As these are
   temporary grants required only for the purpose of running the upgrade tool, once the
-  upgrade is complete, these grants can be revoked.
+  upgrade is complete, these grants can be revoked. (Alternatively, you can disable
+  authorization before running the upgrade tool and then re-enable it after the upgrade is
+  completed. See the :ref:`Administration Manual: Authorization <admin-authorization>` for
+  details.)
 
 - :cask-issue:`CDAP-7179` - In CDAP 3.5.0, new ``kafka.server.*`` properties replace older
   properties such as ``kafka.log.dir``. Though the older properties were marked as
