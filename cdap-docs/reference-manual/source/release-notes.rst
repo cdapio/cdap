@@ -97,6 +97,8 @@ Bug Fixes
 - :cask-issue:`CDAP-7199` - Corrected errors in the documentation to correctly show how to
   set the schema on an existing table.
 
+- :cask-issue:`CDAP-7204` - Lineage information is now returned for deleted datasets.
+
 - :cask-issue:`CDAP-7222` - Fixed a problem with being unable to delete a namespace if a
   configured keytab file doesn't exist.
 
