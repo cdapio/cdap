@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-require('./MetadataPaneApplication.less');
+require('./AdminNodeMetadataPane.less');
 import StatContainer from '../StatContainer/index.js';
 var classNames = require('classnames');
 
@@ -27,7 +27,7 @@ function simulateLoading() {
   }, 1500);
 }
 
-function MetadataPaneApplication(){
+function AdminNodeMetadataPane(){
 
   simulateLoading();
 
@@ -59,9 +59,9 @@ function MetadataPaneApplication(){
   }
 
   return (
-    <div className="metadata-pane-application">
+    <div className="metadata-pane-node">
       <div className="pane-header">
-        Application
+        Nodes
       </div>
       <div className={classNames("spinner-container", {"hidden" : !loading})}>
         <div className={classNames("fa", "fa-spinner", "fa-spin", "spinner", "fa-3x", {"hidden" : !loading})}></div>
@@ -73,4 +73,4 @@ function MetadataPaneApplication(){
   );
 }
 
-export default MetadataPaneApplication;
+export default AdminNodeMetadataPane;

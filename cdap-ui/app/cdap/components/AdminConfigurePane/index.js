@@ -15,11 +15,11 @@
  */
 
 import React from 'react';
-require('./ConfigurePane.less');
+require('./AdminConfigurePane.less');
 import ConfigureButton from '../ConfigureButton/index.js';
 var shortid = require('shortid');
 
-export default function ConfigurePane(){
+export default function AdminConfigurePane(){
   var buttons = [];
   for(var i = 0 ; i < 20; i++){
     buttons.push(

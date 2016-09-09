@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-require('./MetadataPaneMemory.less');
+require('./AdminVirtualCoresMetadataPane.less');
 import StatContainer from '../StatContainer/index.js';
 var classNames = require('classnames');
 
@@ -27,7 +27,7 @@ function simulateLoading() {
   }, 1500);
 }
 
-function MetadataPaneMemory(){
+function AdminVirtualCoresMetadataPane(){
 
   simulateLoading();
 
@@ -39,8 +39,7 @@ function MetadataPaneMemory(){
         isLoading={loading}
         number={25}
         label="Total"
-      />
-    );
+      />);
   }
 
   var containers = [];
@@ -59,9 +58,9 @@ function MetadataPaneMemory(){
   }
 
   return (
-    <div className="metadata-pane-memory">
+    <div className="metadata-pane-virtual-cores">
       <div className="pane-header">
-        Memory
+        Virtual Cores
       </div>
       <div className={classNames("spinner-container", {"hidden" : !loading})}>
         <div className={classNames("fa", "fa-spinner", "fa-spin", "spinner", "fa-3x", {"hidden" : !loading})}></div>
@@ -73,4 +72,4 @@ function MetadataPaneMemory(){
   );
 }
 
-export default MetadataPaneMemory;
+export default AdminVirtualCoresMetadataPane;

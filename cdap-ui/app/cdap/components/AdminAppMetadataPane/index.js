@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-require('./MetadataPaneVirtualCores.less');
+require('./AdminAppMetadataPane.less');
 import StatContainer from '../StatContainer/index.js';
 var classNames = require('classnames');
 
@@ -27,19 +27,20 @@ function simulateLoading() {
   }, 1500);
 }
 
-function MetadataPaneVirtualCores(){
+function AdminAppMetadataPane(){
 
   simulateLoading();
 
   var stats = [];
 
-  for(var i = 0; i < 4; i++){
+  for(var i = 0; i < 6; i++){
     stats.push(
       <StatContainer
         isLoading={loading}
         number={25}
         label="Total"
-      />);
+      />
+    );
   }
 
   var containers = [];
@@ -48,7 +49,17 @@ function MetadataPaneVirtualCores(){
     var temp;
 
     if(j+1 < stats.length){
-      temp = <div><span>{stats[j]}</span><br/><span>{stats[j+1]}</span></div>;
+      temp = (
+        <div>
+          <span>
+            {stats[j]}
+          </span>
+          <br/>
+          <span>
+            {stats[j+1]}
+          </span>
+        </div>
+      );
     }
     else {
       temp = stats[j];
@@ -58,12 +69,14 @@ function MetadataPaneVirtualCores(){
   }
 
   return (
-    <div className="metadata-pane-virtual-cores">
+    <div className="metadata-pane-application">
       <div className="pane-header">
-        Virtual Cores
+        Application
       </div>
       <div className={classNames("spinner-container", {"hidden" : !loading})}>
-        <div className={classNames("fa", "fa-spinner", "fa-spin", "spinner", "fa-3x", {"hidden" : !loading})}></div>
+        <div
+          className={classNames("fa", "fa-spinner", "fa-spin", "spinner", "fa-3x", {"hidden" : !loading})}
+        ></div>
       </div>
       <div className="pane-body">
         {containers}
@@ -72,4 +85,4 @@ function MetadataPaneVirtualCores(){
   );
 }
 
-export default MetadataPaneVirtualCores;
+export default AdminAppMetadataPane;

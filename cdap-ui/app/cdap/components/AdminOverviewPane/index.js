@@ -15,7 +15,7 @@
  */
 
 import React, {PropTypes} from 'react';
-require('./OverviewPane.less');
+require('./AdminOverviewPane.less');
 import OverviewPaneCard from '../OverviewPaneCard/index.js';
 var classNames = require('classnames');
 var shortid = require('shortid');
@@ -24,7 +24,7 @@ const propTypes = {
   isLoading: PropTypes.bool
 };
 
-function OverviewPane({isLoading}) {
+function AdminOverviewPane({isLoading}) {
 
   var cards = [];
   for(var i = 0; i < 8; i++){
@@ -51,6 +51,6 @@ function OverviewPane({isLoading}) {
   );
 }
 
-OverviewPane.propTypes = propTypes;
+AdminOverviewPane.propTypes = propTypes;
 
-export default OverviewPane;
+export default AdminOverviewPane;

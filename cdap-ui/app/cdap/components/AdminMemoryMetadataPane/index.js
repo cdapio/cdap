@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-require('./MetadataPaneNode.less');
+require('./AdminMemoryMetadataPane.less');
 import StatContainer from '../StatContainer/index.js';
 var classNames = require('classnames');
 
@@ -27,13 +27,13 @@ function simulateLoading() {
   }, 1500);
 }
 
-function MetadataPaneNode(){
+function AdminMemoryMetadataPane(){
 
   simulateLoading();
 
   var stats = [];
 
-  for(var i = 0; i < 6; i++){
+  for(var i = 0; i < 4; i++){
     stats.push(
       <StatContainer
         isLoading={loading}
@@ -59,9 +59,9 @@ function MetadataPaneNode(){
   }
 
   return (
-    <div className="metadata-pane-node">
+    <div className="metadata-pane-memory">
       <div className="pane-header">
-        Nodes
+        Memory
       </div>
       <div className={classNames("spinner-container", {"hidden" : !loading})}>
         <div className={classNames("fa", "fa-spinner", "fa-spin", "spinner", "fa-3x", {"hidden" : !loading})}></div>
@@ -73,4 +73,4 @@ function MetadataPaneNode(){
   );
 }
 
-export default MetadataPaneNode;
+export default AdminMemoryMetadataPane;

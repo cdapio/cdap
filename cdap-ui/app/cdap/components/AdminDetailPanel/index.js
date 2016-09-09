@@ -14,10 +14,10 @@
  * the License.
  */
 
-import MetadataPaneApplication from '../MetadataPaneApplication/index.js';
-import MetadataPaneMemory from '../MetadataPaneMemory/index.js';
-import MetadataPaneNode from '../MetadataPaneNode/index.js';
-import MetadataPaneVirtualCores from '../MetadataPaneVirtualCores/index.js';
+import AdminAppMetadataPane from '../AdminAppMetadataPane/index.js';
+import AdminMemoryMetadataPane from '../AdminMemoryMetadataPane/index.js';
+import AdminNodeMetadataPane from '../AdminNodeMetadataPane/index.js';
+import AdminVirtualCoresMetadataPane from '../AdminVirtualCoresMetadataPane/index.js';
 
 import React, {PropTypes} from 'react';
 require('./AdminDetailPanel.less');
@@ -49,13 +49,13 @@ function AdminDetailPanel({applicationName, timeFromUpdate, clickLeftButton, cli
       </div>
       <div className="admin-detail-panel-body">
         <div className="end-line" />
-        <MetadataPaneNode />
+        <AdminNodeMetadataPane />
         <div className="vertical-line" />
-        <MetadataPaneVirtualCores />
+        <AdminVirtualCoresMetadataPane />
         <div className="vertical-line" />
-        <MetadataPaneMemory />
+        <AdminMemoryMetadataPane />
         <div className="vertical-line" />
-        <MetadataPaneApplication />
+        <AdminAppMetadataPane />
         <div className="end-line" />
       </div>
     </div>
