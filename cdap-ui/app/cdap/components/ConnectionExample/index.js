@@ -17,7 +17,7 @@
 import React, {Component} from 'react';
 import Datasource from '../../services/datasource';
 import Rx from 'rx';
-import myNamespaceApi from '../../services/namespace';
+import {MyNamespaceApi} from '../../api/namespace';
 
 export default class ConnectionExample extends Component {
   constructor(props) {
@@ -25,9 +25,13 @@ export default class ConnectionExample extends Component {
 
     this.dataSrc = new Datasource();
 
-    let namespace = new myNamespaceApi().getApi();
 
-    namespace.get({namespaceI: 'default'})
+    MyNamespaceApi.get({
+      namespace: 'default',
+      haha: 'yoo',
+      peace: 'ful',
+      target: ['one', 'two', 'three']
+    })
       .subscribe((res) => {
         console.log('res', res);
       });

@@ -14,18 +14,12 @@
  * the License.
  */
 
-@import "./fonts";
-@import "./variables.less";
+import Datasource from '../../services/datasource';
+import {apiCreator} from '../../services/resource-helper';
 
-html {
-  position: relative;
-  min-height: 100%;
-}
-body {
-  #app-container {
-    margin-top: 50px;
-  }
-  .container-fluid {
-    padding-bottom: 52px; // footer height
-  }
-}
+let dataSrc = new Datasource();
+let searchpath = '/namespaces/:namespace/metadata/search';
+
+export const MySearchApi = {
+  search: apiCreator(dataSrc, 'GET', 'REQUEST', searchpath),
+};

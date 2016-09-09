@@ -15,15 +15,58 @@
  */
 
 import React, {Component} from 'react';
+import {MySearchApi} from '../../api/search';
+import {parseMetadata} from '../../services/metadata-parser';
+import Card from '../Card';
+require('./Home.less');
+
 export default class Home extends Component {
   constructor(props) {
     super(props);
-    this.props = props;
+
+    this.state = {
+      filter: ['artifact', 'app', 'dataset', 'program', 'stream', 'view'],
+      sort: '',
+      entities: []
+    };
+
+    let params = {
+      namespace: 'default',
+      query: '*',
+      target: this.state.filter
+    };
+
+    MySearchApi.search(params)
+      .map((res) => {
+        return res.map(parseMetadata);
+      })
+      .subscribe(
+        (res) => {
+          this.setState({entities: res});
+        }
+      );
   }
   render() {
     return (
       <div>
         <h1> Home Screen </h1>
+
+        <div className="entity-list">
+          {this.state.entities.map(
+            (entity) => {
+              return (
+                <Card
+                  key={entity.id}
+                  title={entity.id}
+                  cardClass='home-cards'
+                >
+                  <h4>Type: {entity.type}</h4>
+                </Card>
+              );
+            })
+          }
+        </div>
+
       </div>
     );
   }

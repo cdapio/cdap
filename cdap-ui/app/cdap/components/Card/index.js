@@ -92,8 +92,7 @@ export default class Card extends Component {
 
   render() {
     const cardClass = classNames('cask-card', this.props.cardClass,
-      { [`card-${this.props.size}`]: this.props.size },
-      { 'card-LG': !this.props.size }
+      { [`card-${this.props.size}`]: this.props.size }
     );
 
     return (
