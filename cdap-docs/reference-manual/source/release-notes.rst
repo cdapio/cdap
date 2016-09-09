@@ -89,8 +89,6 @@ Bug Fixes
 - :cask-issue:`CDAP-7178` - Fixed an issue with uploading an application JAR or file to a
   stream through the CDAP UI.
 
-- :cask-issue:`CDAP-7179` - ??
-
 - :cask-issue:`CDAP-7187` - Fixed a problem with the property
   ``dataset.service.bind.address`` having no effect.
 
