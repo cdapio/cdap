@@ -14,7 +14,7 @@
  * the License.
  */
 
-import React, {Component} from 'react';
+import React, {Component, PropTypes} from 'react';
 require('./HomeHeader.less');
 var classNames = require('classnames');
 
@@ -45,54 +45,24 @@ export default class HomeHeader extends Component {
           onClick={this.handlePreventPropagation.bind(this)}
         >
           <ul className="list-unstyled">
-            <li>
-              <div className="checkbox">
-                <label>
-                  <input type="checkbox"/>
-                  Applications
-                </label>
-              </div>
-            </li>
-            <li>
-              <div className="checkbox">
-                <label>
-                  <input type="checkbox"/>
-                  Artifacts
-                </label>
-              </div>
-            </li>
-            <li>
-              <div className="checkbox">
-                <label>
-                  <input type="checkbox"/>
-                  Programs
-                </label>
-              </div>
-            </li>
-            <li>
-              <div className="checkbox">
-                <label>
-                  <input type="checkbox"/>
-                  Datasets
-                </label>
-              </div>
-            </li>
-            <li>
-              <div className="checkbox">
-                <label>
-                  <input type="checkbox"/>
-                  Streams
-                </label>
-              </div>
-            </li>
-            <li>
-              <div className="checkbox">
-                <label>
-                  <input type="checkbox"/>
-                  Views
-                </label>
-              </div>
-            </li>
+            {
+              this.props.filterOptions.map((option) => {
+                return (
+                  <li key={option.id}>
+                    <div className="checkbox">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={this.props.activeFilter.includes(option.id)}
+                          onChange={this.props.onFilterClick.bind(this, option)}
+                        />
+                        {option.displayName}
+                      </label>
+                    </div>
+                  </li>
+                );
+              })
+            }
           </ul>
         </div>
       );
@@ -117,11 +87,11 @@ export default class HomeHeader extends Component {
           <span className="fa fa-caret-down pull-right"></span>
         </div>
 
-        <div className={classNames('filter', { 'active': this.state.isFilterExpanded })}
-          onClick={this.handleFilterToggle.bind(this)}
-        >
-          <span>Filters</span>
-          <span className="fa fa-filter pull-right"></span>
+        <div className={classNames('filter', { 'active': this.state.isFilterExpanded })}>
+          <div onClick={this.handleFilterToggle.bind(this)}>
+            <span>Filters</span>
+            <span className="fa fa-filter pull-right"></span>
+          </div>
 
           {filterDropdown}
 
@@ -136,3 +106,9 @@ export default class HomeHeader extends Component {
     );
   }
 }
+
+HomeHeader.propTypes = {
+  filterOptions: PropTypes.array,
+  onFilterClick: PropTypes.func,
+  activeFilter: PropTypes.array
+};

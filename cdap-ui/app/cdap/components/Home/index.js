@@ -25,16 +25,29 @@ export default class Home extends Component {
   constructor(props) {
     super(props);
 
+    this.filterOptions = [
+      { displayName: 'Applications', id: 'app' },
+      { displayName: 'Artifacts', id: 'artifact' },
+      { displayName: 'Programs', id: 'program' },
+      { displayName: 'Datasets', id: 'dataset' },
+      { displayName: 'Streams', id: 'stream' },
+      { displayName: 'Views', id: 'view' },
+    ];
+
     this.state = {
       filter: ['artifact', 'app', 'dataset', 'program', 'stream', 'view'],
       sort: '',
       entities: []
     };
 
+    this.search();
+  }
+
+  search(filter) {
     let params = {
       namespace: 'default',
       query: '*',
-      target: this.state.filter
+      target: filter || this.state.filter
     };
 
     MySearchApi.search(params)
@@ -47,10 +60,28 @@ export default class Home extends Component {
         }
       );
   }
+
+  handleFilterClick(option) {
+    let arr = [...this.state.filter];
+    if (this.state.filter.includes(option.id)) {
+      let index = arr.indexOf(option.id);
+      arr.splice(index, 1);
+    } else {
+      arr.push(option.id);
+    }
+
+    this.search(arr);
+    this.setState({filter: arr});
+  }
+
   render() {
     return (
       <div>
-        <HomeHeader />
+        <HomeHeader
+          filterOptions={this.filterOptions}
+          onFilterClick={this.handleFilterClick.bind(this)}
+          activeFilter={this.state.filter}
+        />
 
         <div className="entity-list">
           {this.state.entities.map(
