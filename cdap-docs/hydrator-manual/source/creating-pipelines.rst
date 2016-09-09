@@ -39,8 +39,8 @@ Studio*), using command-line tools such the CDAP CLI and ``curl``, or programmat
 with scripts or Java programs.
 
 
-Tools for Creating Pipelines
-============================
+Methods for Creating Pipelines
+==============================
 There are two different methods for creating pipelines:
 
 1. Using Hydrator Studio
