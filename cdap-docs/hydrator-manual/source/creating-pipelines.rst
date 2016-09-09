@@ -39,8 +39,8 @@ Studio*), using command-line tools such the CDAP CLI and ``curl``, or programmat
 with scripts or Java programs.
 
 
-Methods for Creating Pipelines
-==============================
+Tools for Creating Pipelines
+============================
 There are two different methods for creating pipelines:
 
 1. Using Hydrator Studio
@@ -353,41 +353,51 @@ section on :ref:`developing pipelines: creating a real-time pipeline
 <hydrator-developing-pipelines-creating-real-time>`.
 
 
-Common Configuration Settings
-=============================
+Field Configuration Settings
+============================
 These settings can be used in both batch and real-time pipelines.
 
 Required Fields
 ---------------
 Certain fields are required to be configured in order for the plugin to work. These are
-identified in the Hydrator Studio configuration panel by a red dot, and are
-described in the :ref:`Hydrator Plugin Reference <cask-hydrator-plugins>`
-documentation as *required*.
+identified in the Hydrator Studio configuration panel by a red dot, and are described in
+the :ref:`Hydrator Plugin Reference <cask-hydrator-plugins>` documentation as *required*.
 
 .. Configuring Resources
 .. ---------------------
 
 .. _cask-hydrator-runtime-arguments-macros:
 
-Macro Substitution
-------------------
-Plugins now support macro-substitutable properties that allow placeholders for properties
-that are unknown at configure time but known and provided at runtime.
+Field Macro Substitution
+========================
+Plugins can support macro-substitutable properties that allow placeholders for properties
+that are unknown at configure time but are known and provided at runtime.
 
-There are two types of macro's supported in CDAP:
+There are two types of macros supported in CDAP:
 
-- ``Property Lookups``
-- ``Macro Functions``
+- :ref:`Property Lookups <cask-hydrator-macros-property-lookups>`
+- :ref:`Macro Functions <cask-hydrator-macros-macro-functions>`
 
-Macro Property Lookups are specified using the syntax ``${macro-name}``, where ``macro-name`` is a key that's looked up.
+Fields that are macro-enabled are identified in the Hydrator Studio UI and documented in
+the :ref:`Hydrator Plugin Reference <cask-hydrator-plugins>`.
 
-Property lookup process for the key ``${user-name}``:
- -  lookup workflow token for the key ``user-name``, return value if found
- -  lookup runtime arguments for the key ``user-name``, return value if found
- -  lookup preference store for the key ``user-name``, return value if found else throw macro not found exception.
+.. _cask-hydrator-macros-property-lookups:
+
+Property Lookups
+----------------
+**Property lookups** are specified using the syntax ``${macro-name}``, 
+where ``macro-name`` is a key that is looked up in a hierarchy of sources.
+
+The property lookup process for the key ``${user-name}`` follows these steps:
+
+#. lookup in the *workflow token* for the key ``user-name``, return value if found; else
+#. lookup in the *runtime arguments* for the key ``user-name``, return value if found; else
+#. lookup in the *preference store* for the key ``user-name``, return value if found; else
+#. throw a "macro not found" exception.
+ 
 This order is used so that the most volatile source (the workflow token) takes precedence.
 
-For instance, you might not know the name of a source stream until runtime. You could use,
+For instance, you might not know the name of a source stream until runtime. You could use
 in the source stream's *Stream Name* configuration::
 
   ${source-stream-name}
@@ -396,9 +406,21 @@ and in the runtime arguments set a key-value pair such as::
 
   source-stream-name: myDemoStream
 
+*Notes:*
+
+- Information on setting preferences and runtime arguments is in the :ref:`CDAP
+  Administration Manual, Preferences <preferences>`. These can be set with the
+  :ref:`Lifecycle <http-restful-api-lifecycle-start>` and :ref:`Preferences
+  <http-restful-api-preferences>` HTTP RESTful APIs.
+
+- To set values for macro keys through a Hydrator pipeline's preferences, see the
+  :ref:`Preferences HTTP RESTful API <http-restful-api-preferences>`.
+
+.. _cask-hydrator-macros-macro-functions:
+
 Macro Functions
 ---------------
-In addition to macro substitution, you can use predefined macro functions. Currently,
+In addition to property lookups, you can use predefined **macro functions**. Currently,
 these functions are predefined and available:
 
 - ``logicalStartTime``
@@ -440,7 +462,7 @@ this macro is provided::
 The format is ``yyyy-MM-dd'T'HH-mm-ss`` and the offset is ``1d-4h+30m`` before the logical
 start time. This means the macro will be replaced with ``2015-12-31T03:30:00``, since the
 offset translates to 20.5 hours. The entire macro evaluates to 20.5 hours before midnight
-of January 1 2016.
+of January 1, 2016.
 
 Secure Function
 ...............
@@ -456,12 +478,10 @@ For example, for a plugin that connects to a MySQL database, you could configure
 
 which will pull the *password* from the Secure Store at runtime.
 
-Advanced
---------
-Recursive Macros:
-
+Recursive Macros
+----------------
 Macros can be referential (refer to other macros), up to ten levels deep. For instance,
-you might have an server that refers to a hostname and port, and supply these runtime
+you might have a server that refers to a hostname and port, and supply these runtime
 arguments, one of which is a definition of a macro that uses other macros::
 
   hostname: my-demo-host.example.com
@@ -476,23 +496,14 @@ expecting that it would be replaced with::
 
   my-demo-host.example.com:9991
 
-Escaping Macros:
+Escaping Macros
+---------------
+Macro syntax can be escaped using a backslash '\' character. For example::
 
-Macro syntax can be escaped. To escape existing syntax, use the backslash '\' character.
-Example : ${\${escaped-macro-literal\}} would lookup the key ${escaped-macro-literal}
-
-Reference:
-
-Information on setting preferences and runtime arguments is in the :ref:`CDAP
-Administration Manual, Preferences <preferences>`. These can be set with the HTTP
-:ref:`Lifecycle <http-restful-api-lifecycle-start>` and :ref:`Preferences
-<http-restful-api-preferences>` RESTful APIs.
-
-To set values for macro keys through a Hydrator pipeline's preferences, see the
-:ref:`Preferences HTTP RESTful API <http-restful-api-preferences>`.
-
-Fields that are macro-enabled are identified in the Hydrator Studio UI and documented in
-the :ref:`Hydrator Plugin Reference <cask-hydrator-plugins>`.
+  ${\${escaped-macro-literal\}}
+  
+will lookup the key ``${escaped-macro-literal}``, which includes the special characters of
+the macro syntax.
 
 
 Validation
