@@ -14,18 +14,24 @@
  * the License.
  */
 
-@home-header-background-color: #dddddd;
+@import "../../../styles/variables.less";
+
+@home-header-background-color: @panel-default-border;
 @home-header-border-color: darken(@home-header-background-color, 15%);
 @icon-inactive-color: #999999;
-@icon-active-color: #333333;
+@icon-active-color: @gray-dark;
 
 @home-header-height: 40px;
 
 .home-header {
-  margin: 0 -15px;
+  // margin: 0 -15px;
   background-color: @home-header-background-color;
   height: @home-header-height;
   border-bottom: 2px solid @home-header-border-color;
+  position: fixed;
+  top: 50px;
+  left: 0;
+  right: 0;
 
   .search-box,
   .sort,

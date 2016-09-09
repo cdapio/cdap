@@ -85,10 +85,10 @@ export default class Home extends Component {
 
         <div className="entity-list">
           {this.state.entities.map(
-            (entity) => {
+            (entity, index) => {
               return (
                 <Card
-                  key={entity.id}
+                  key={index}
                   title={entity.id}
                   cardClass='home-cards'
                 >
