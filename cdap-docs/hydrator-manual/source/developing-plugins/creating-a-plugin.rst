@@ -64,12 +64,12 @@ the types, only one method is required to be implemented::
 .. rubric:: Methods
 
 - ``prepareRun()``: Used to configure the input for each run of the pipeline.
-  If the fieldName for stream or dataset is a macro, their creation will happen during this stage. This is called by
-  the client that will submit the job for the pipeline run.
+  If the fieldName for a stream or dataset is a macro, their creation will happen during this stage. 
+  This is called by the client that will submit the job for the pipeline run.
 - ``onRunFinish()``: Used to run any required logic at the end of a pipeline run. This is called
   by the client that submitted the job for the pipeline run.
-- ``configurePipeline()``: Used to perform any validation on the application configuration that are required
-  by this plugin or create any streams or datasets if the fieldName for stream or dataset is not a macro.
+- ``configurePipeline()``: Used to perform any validation on the application configuration that is required
+  by this plugin or create any streams or datasets if the fieldName for a stream or dataset is not a macro.
 - ``initialize()``: Initialize the Batch Source. Guaranteed to be executed before any call
   to the plugin’s ``transform`` method. This is called by each executor of the job. For example,
   if the MapReduce engine is being used, each mapper will call this method.
@@ -144,7 +144,7 @@ Example::
     // Any static configuration should be performed here.
     @Override
     public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-      // if the user has set createIfNotExists to true, and the fileSetName is not a macro, create the FileSet here.
+      // If the user has set createIfNotExists to true, and the fileSetName is not a macro, create the FileSet here.
       if (config.createIfNotExists && !config.containsMacro("fileSetName")) {
         pipelineConfigurer.createDataset(config.fileSetName,
                                          FileSet.class,
@@ -165,8 +165,8 @@ Example::
     // as well as any arguments the input should use. It is called by the client that is submitting the batch job.
     @Override
     public void prepareRun(BatchSourceContext context) throws IOException {
-      // if the user has set createIfNotExists to true, and the fileSetName is a macro,
-      // the fileSet name would be available now, so create the FileSet here.
+      // If the user has set createIfNotExists to true, and the fileSetName is a macro,
+      // the FileSet name will be available now, so create the FileSet here.
       if (config.containsMacro("fileSetName") && config.createIfNotExists) {
         pipelineConfigurer.createDataset(config.fileSetName,
                                          FileSet.class,
