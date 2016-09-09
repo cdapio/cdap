@@ -32,17 +32,13 @@ export default class HomeHeader extends Component {
     this.setState({isFilterExpanded: !this.state.isFilterExpanded});
   }
 
-  handlePreventPropagation(event) {
-    event.stopPropagation();
-  }
-
   render() {
     let filterDropdown;
 
     if (this.state.isFilterExpanded) {
       filterDropdown = (
         <div className="dropdown"
-          onClick={this.handlePreventPropagation.bind(this)}
+          onClick={e => e.stopPropagation()}
         >
           <ul className="list-unstyled">
             {

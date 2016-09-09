@@ -35,7 +35,7 @@ export default class Home extends Component {
     ];
 
     this.state = {
-      filter: ['artifact', 'app', 'dataset', 'program', 'stream', 'view'],
+      filter: ['artifact', 'app', 'dataset', 'stream', 'view'],
       sort: '',
       entities: []
     };
