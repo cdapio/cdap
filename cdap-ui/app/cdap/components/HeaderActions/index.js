@@ -16,6 +16,8 @@
 
 import React, {Component} from 'react';
 import { Dropdown, DropdownMenu, DropdownItem } from 'reactstrap';
+import cookie from 'react-cookie';
+
 require('./HeaderActions.less');
 var classNames = require('classnames');
 import PlusButton from '../PlusButton';
@@ -25,9 +27,11 @@ export default class HeaderActions extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      settingsOpen : false
+      settingsOpen : false,
+      name : cookie.load('CDAP_Auth_User')
     };
-    this.name = "Patrick";
+    this.logout = this.logout.bind(this);
+    this.toggleDropdown = this.toggleDropdown.bind(this);
   }
 
   toggleDropdown(){
@@ -36,8 +40,35 @@ export default class HeaderActions extends Component {
     });
   }
 
+  logout() {
+    cookie.remove('CDAP_Auth_User');
+    this.setState({
+      name : ''
+    });
+  }
+
   render() {
 
+    let topRow = '';
+    let signoutRow = '';
+
+    if(this.state.name){
+      topRow = (
+        <div>
+          <div className="dropdown-item dropdown-name-row">
+            Signed in as <span className="dropdown-name">{this.state.name}</span> <span className="dropdown-name-icon fa fa-cog"></span>
+          </div>
+          <DropdownItem divider />
+        </div>
+      );
+
+      signoutRow = (
+        <div>
+          <DropdownItem divider />
+          <div className="dropdown-item" onClick={this.logout}><span className="dropdown-icon fa fa-sign-out"></span>Logout</div>
+        </div>
+      );
+    }
     return (
       <div className="header-actions">
         <ul className="navbar-list pull-right">
@@ -56,13 +87,11 @@ export default class HeaderActions extends Component {
             <span className={classNames('navbar-cog-arrow', {'hidden' : !this.state.settingsOpen})}></span>
             <Dropdown isOpen={this.state.settingsOpen} toggle={this.toggleDropdown.bind(this)}>
               <DropdownMenu>
-                <div className="dropdown-item dropdown-name-row">Signed in as <span className="dropdown-name">{this.name}</span> <span className="dropdown-name-icon fa fa-cog"></span></div>
-                <DropdownItem divider />
+                {topRow}
                 <div className="dropdown-item"><span className="dropdown-icon fa fa-life-ring"></span>Support</div>
                 <div className="dropdown-item"><span className="dropdown-icon fa fa-home"></span>Cask home</div>
                 <div className="dropdown-item"><span className="dropdown-icon fa fa-file"></span>Documentation</div>
-                <DropdownItem divider />
-                <div className="dropdown-item"><span className="dropdown-icon fa fa-sign-out"></span>Logout</div>
+                {signoutRow}
               </DropdownMenu>
             </Dropdown>
           </div>
