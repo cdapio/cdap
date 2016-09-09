@@ -15,6 +15,7 @@
  */
 @import '../../styles/variables.less';
 @module-color-lightgrey: #f1f1f1;
+@spinner-icon-dimension: 50px;
 
 .overview-pane {
   margin-top: 25px;
@@ -30,10 +31,10 @@
   }
 
   .spinner-container {
-    width: 50px;
-    height: 50px;
+    width: @spinner-icon-dimension;
+    height: @spinner-icon-dimension;
     margin: 0 auto;
-    font-size: 50px;
+    font-size: @spinner-icon-dimension;
     position: relative;
     top: 45%;
     transform: translateY(-50%);

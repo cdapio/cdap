@@ -16,6 +16,10 @@
 @import '../../styles/variables.less';
 @grey-theme-color: #e3e3e3;
 @header-color: #e2e2e2;
+@side-button-height: 40px;
+@side-button-width: 20px;
+@side-button-top-offset: 100px;
+@side-button-margin: -20px;
 
 .admin-detail-panel {
   border: solid 5px @grey-theme-color;
@@ -74,14 +78,14 @@
   }
 
   .admin-detail-panel-button-right {
-    height:40px;
-    width:20px;
+    height:@side-button-height;
+    width:@side-button-width;
     border-radius: 0 40px 40px 0;
     background: @grey-theme-color;
     float: right;
     position: relative;
-    top: 100px;
-    margin-right: -20px;
+    top: @side-button-top-offset;
+    margin-right: @side-button-margin;
   }
 
   .admin-detail-panel-button-right .fa {
@@ -91,14 +95,14 @@
   }
 
   .admin-detail-panel-button-left {
-    height:40px;
-    width:20px;
+    height:@side-button-height;
+    width:@side-button-width;
     border-radius: 40px 0 0 40px;
     background: @grey-theme-color;
     position: relative;
     float: left;
-    top: 100px;
-    margin-left: -20px;
+    top: @side-button-top-offset;
+    margin-left: @side-button-margin;
   }
   .admin-detail-panel-button-left .fa {
     position: relative;
