@@ -13,26 +13,64 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import React from 'react';
 
+import React, {Component} from 'react';
+import { Dropdown, DropdownMenu, DropdownItem } from 'reactstrap';
+require('./HeaderActions.less');
+var classNames = require('classnames');
 import PlusButton from '../PlusButton';
 
-export default function HeaderActions() {
-  return (
-    <ul className="navbar-list pull-right">
-      <div className="navbar-item">
-        <span className="fa fa-search"></span>
+export default class HeaderActions extends Component {
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      settingsOpen : false
+    };
+    this.name = "Patrick";
+  }
+
+  toggleDropdown(){
+    this.setState({
+      settingsOpen : !this.state.settingsOpen
+    });
+  }
+
+  render() {
+
+    return (
+      <div className="header-actions">
+        <ul className="navbar-list pull-right">
+          <div className="navbar-item">
+            <span className="fa fa-search"></span>
+          </div>
+          <div className="navbar-item">
+            <span className="fa fa-bolt"></span>
+          </div>
+          <PlusButton className="navbar-item" />
+          <div
+            className="navbar-item navbar-cog"
+            onClick={this.toggleDropdown.bind(this)}
+          >
+            <span className={classNames('fa', 'fa-cog', {'menu-open' : this.state.settingsOpen})}></span>
+            <span className={classNames('navbar-cog-arrow', {'hidden' : !this.state.settingsOpen})}></span>
+            <Dropdown isOpen={this.state.settingsOpen} toggle={this.toggleDropdown.bind(this)}>
+              <DropdownMenu>
+                <div className="dropdown-item dropdown-name-row">Signed in as <span className="dropdown-name">{this.name}</span> <span className="dropdown-name-icon fa fa-cog"></span></div>
+                <DropdownItem divider />
+                <div className="dropdown-item"><span className="dropdown-icon fa fa-life-ring"></span>Support</div>
+                <div className="dropdown-item"><span className="dropdown-icon fa fa-home"></span>Cask home</div>
+                <div className="dropdown-item"><span className="dropdown-icon fa fa-file"></span>Documentation</div>
+                <DropdownItem divider />
+                <div className="dropdown-item"><span className="dropdown-icon fa fa-sign-out"></span>Logout</div>
+              </DropdownMenu>
+            </Dropdown>
+          </div>
+          <div className="navbar-item namespace-dropdown dropdown">
+            <span> Namespace </span>
+          </div>
+        </ul>
       </div>
-      <div className="navbar-item">
-        <span className="fa fa-bolt"></span>
-      </div>
-      <PlusButton className="navbar-item" />
-      <div className="navbar-item">
-        <span className="fa fa-cog"></span>
-      </div>
-      <div className="navbar-item namespace-dropdown dropdown">
-        <span> Namespace </span>
-      </div>
-    </ul>
-  );
+    );
+  }
 }
