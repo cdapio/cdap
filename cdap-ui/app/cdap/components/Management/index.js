@@ -16,12 +16,12 @@
 
 import React, {Component} from 'react';
 require('./Management.less');
-import InfoCard from '../InfoCard/index.js';
-import ServiceLabel from '../ServiceLabel/index.js';
-import ServiceStatusPanel from '../ServiceStatusPanel/index.js';
-import AdminDetailPanel from '../AdminDetailPanel/index.js';
-import ConfigurePane from '../ConfigurePane/index.js';
-import OverviewPane from '../OverviewPane/index.js';
+import InfoCard from '../InfoCard';
+import ServiceLabel from '../ServiceLabel';
+import ServiceStatusPanel from '../ServiceStatusPanel';
+import AdminDetailPanel from '../AdminDetailPanel';
+import AdminConfigurePane from '../AdminConfigurePane';
+import AdminOverviewPane from '../AdminOverviewPane';
 var shortid = require('shortid');
 var classNames = require('classnames');
 
@@ -127,10 +127,12 @@ class Management extends Component {
 
     var navItems = this.applications.map( (item) => {
       return (
-        <li className={classNames({'active' : this.state.application === item})}
-            key={shortid.generate()}
-            onClick={this.setToContext.bind(this, item)}>
-            {item}
+        <li
+          className={classNames({'active' : this.state.application === item})}
+          key={shortid.generate()}
+          onClick={this.setToContext.bind(this, item)}
+        >
+          {item}
         </li>
       );
     });
@@ -171,8 +173,8 @@ class Management extends Component {
             </ul>
           </div>
         </div>
-        <ConfigurePane />
-        <OverviewPane isLoading={this.state.loading} />
+        <AdminConfigurePane />
+        <AdminOverviewPane isLoading={this.state.loading} />
       </div>
     );
   }

@@ -19,27 +19,31 @@ require('./InfoCard.less');
 var classNames = require('classnames');
 
 const propTypes = {
- primaryText: PropTypes.string,
- secondaryText: PropTypes.string,
- superscriptText: PropTypes.string,
- isLoading: PropTypes.bool
+  primaryText: PropTypes.string,
+  secondaryText: PropTypes.string,
+  superscriptText: PropTypes.string,
+  isLoading: PropTypes.bool
 };
 
 function InfoCard({isLoading, primaryText, secondaryText, superscriptText}) {
 
   return (
-  <div className="info-card">
-    <div className={classNames("superscript-text", {'hidden' : isLoading})}> {superscriptText} </div>
-    <i className={classNames("fa", "fa-spinner", "fa-spin", "fa-3x", {"hidden" : !isLoading})} />
-    <div className={classNames("info-card-text", {'hidden' : isLoading})}>
-      <div className="info-card-main-text">
-        {primaryText}
+    <div className="info-card">
+      <div
+        className={classNames("superscript-text", {'hidden' : isLoading})}
+      >
+        {superscriptText}
       </div>
-      <div className="info-card-secondary-text">
-        {secondaryText}
+      <i className={classNames("fa", "fa-spinner", "fa-spin", "fa-3x", {"hidden" : !isLoading})} />
+      <div className={classNames("info-card-text", {'hidden' : isLoading})}>
+        <div className="info-card-main-text">
+          {primaryText}
+        </div>
+        <div className="info-card-secondary-text">
+          {secondaryText}
+        </div>
       </div>
     </div>
-  </div>
   );
 }
 

@@ -27,11 +27,11 @@ const propTypes = {
 
 function StatContainer({number, label, isLoading}) {
   return (
-    <div className="stat-container">
-      <div className={classNames("stat", {"hidden" : isLoading})}>
+    <div className={classNames("stat-container", {"hidden" : isLoading})}>
+      <div className="stat">
         {number}
       </div>
-      <div className={classNames("stat-label", {"hidden" : isLoading})}>
+      <div className="stat-label">
         {label}
       </div>
     </div>
