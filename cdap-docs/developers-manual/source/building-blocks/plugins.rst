@@ -76,6 +76,7 @@ to modify our no-op runnable to print a configurable message. We can do this by 
 
     public static class Conf extends PluginConfig {
       @Nullable
+      @Macro
       private String message;
 
       public Conf() {
@@ -110,7 +111,8 @@ The ``@Nullable`` annotation tells CDAP that the field is not required. Without 
 CDAP will complain if no plugin property for ``delimiter`` is given. In addition, config fields
 can be annotated with a ``@Description`` that will be returned by the
 :ref:`Artifact HTTP RESTful API <http-restful-api-artifact-plugin-detail>` *Plugin Detail*.
-
+The ``@Macro`` annotation makes the field ``message`` macro enabled,
+this allows the value of the field ``message`` to be a macro key whose value will be set during runtime.
 .. _plugins-third-party:
 
 .. highlight:: console
