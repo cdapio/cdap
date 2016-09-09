@@ -25,16 +25,22 @@ import javax.annotation.Nullable;
 public class BatchProgramResult extends BatchProgram {
   private final int statusCode;
   private final String error;
+  private final String runId;
 
   public BatchProgramResult(BatchProgram program, int statusCode, @Nullable String error) {
-    this(program.appId, program.programType, program.programId, statusCode, error);
+    this(program, statusCode, error, null);
   }
 
   public BatchProgramResult(String appId, ProgramType programType, String programId,
-                            int statusCode, @Nullable String error) {
+                            int statusCode, @Nullable String error, @Nullable String runId) {
     super(appId, programType, programId);
     this.statusCode = statusCode;
     this.error = error;
+    this.runId = runId;
+  }
+
+  public BatchProgramResult(BatchProgram program, int statusCode, @Nullable String error, @Nullable String runId) {
+    this(program.appId, program.programType, program.programId, statusCode, error, runId);
   }
 
   /**
@@ -50,6 +56,11 @@ public class BatchProgramResult extends BatchProgram {
   @Nullable
   public String getError() {
     return error;
+  }
+
+  @Nullable
+  public String getRunId() {
+    return runId;
   }
 
   @Override
