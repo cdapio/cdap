@@ -16,14 +16,90 @@
 
 import React, {Component} from 'react';
 require('./HomeHeader.less');
+var classNames = require('classnames');
 
 export default class HomeHeader extends Component {
   constructor(props) {
     super(props);
+
+    this.state = {
+      isFilterExpanded: false,
+      isSortExpanded: false
+    };
   }
+
+  handleFilterToggle() {
+    this.setState({isFilterExpanded: !this.state.isFilterExpanded});
+  }
+
+  handlePreventPropagation(event) {
+    event.stopPropagation();
+  }
+
   render() {
+    let filterDropdown;
+
+    if (this.state.isFilterExpanded) {
+      filterDropdown = (
+        <div className="dropdown"
+          onClick={this.handlePreventPropagation.bind(this)}
+        >
+          <ul className="list-unstyled">
+            <li>
+              <div className="checkbox">
+                <label>
+                  <input type="checkbox"/>
+                  Applications
+                </label>
+              </div>
+            </li>
+            <li>
+              <div className="checkbox">
+                <label>
+                  <input type="checkbox"/>
+                  Artifacts
+                </label>
+              </div>
+            </li>
+            <li>
+              <div className="checkbox">
+                <label>
+                  <input type="checkbox"/>
+                  Programs
+                </label>
+              </div>
+            </li>
+            <li>
+              <div className="checkbox">
+                <label>
+                  <input type="checkbox"/>
+                  Datasets
+                </label>
+              </div>
+            </li>
+            <li>
+              <div className="checkbox">
+                <label>
+                  <input type="checkbox"/>
+                  Streams
+                </label>
+              </div>
+            </li>
+            <li>
+              <div className="checkbox">
+                <label>
+                  <input type="checkbox"/>
+                  Views
+                </label>
+              </div>
+            </li>
+          </ul>
+        </div>
+      );
+    }
+
     return (
-      <div className='home-header'>
+      <div className="home-header">
         <div className="search-box">
           <div className="form-group has-feedback">
             <label className="control-label sr-only">Search Entity</label>
@@ -41,9 +117,14 @@ export default class HomeHeader extends Component {
           <span className="fa fa-caret-down pull-right"></span>
         </div>
 
-        <div className="filter">
+        <div className={classNames('filter', { 'active': this.state.isFilterExpanded })}
+          onClick={this.handleFilterToggle.bind(this)}
+        >
           <span>Filters</span>
           <span className="fa fa-filter pull-right"></span>
+
+          {filterDropdown}
+
         </div>
 
         <div className="view-selector pull-right">

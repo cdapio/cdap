@@ -65,6 +65,8 @@
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
+
+    &.active { background-color: white; }
   }
 
   .sort {
@@ -73,6 +75,25 @@
 
   .filter {
     width: 150px;
+    position: relative;
+
+    .dropdown {
+      background-color: white;
+      padding: 0 15px;
+      border: 2px solid @home-header-border-color;
+      border-top: 0;
+      line-height: initial;
+      font-size: 13px;
+      position: absolute;
+      top: 40px;
+      left: -2px;
+      width: 152px;
+      box-shadow: 0px 3px 10px 3px rgba(0,0,0, 0.3);
+
+      input[type="checkbox"] {
+        margin: 2px 0 0 -20px;
+      }
+    }
   }
 
   .view-selector {
