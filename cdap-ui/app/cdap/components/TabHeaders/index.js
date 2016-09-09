@@ -13,26 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import React from 'react';
+import React, {PropTypes} from 'react';
 
-import PlusButton from '../PlusButton';
+require('./TabHeaders.less');
 
-export default function HeaderActions() {
+export default function TabHeaders({children}) {
   return (
-    <ul className="navbar-list pull-right">
-      <div className="navbar-item">
-        <span className="fa fa-search"></span>
-      </div>
-      <div className="navbar-item">
-        <span className="fa fa-bolt"></span>
-      </div>
-      <PlusButton className="navbar-item" />
-      <div className="navbar-item">
-        <span className="fa fa-cog"></span>
-      </div>
-      <div className="navbar-item namespace-dropdown dropdown">
-        <span> Namespace </span>
-      </div>
-    </ul>
+    <div className="cask-tab-headers">
+      {children}
+    </div>
   );
 }
+TabHeaders.propTypes = {
+  children: PropTypes.node.isRequired
+};
