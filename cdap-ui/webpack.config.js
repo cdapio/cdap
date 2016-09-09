@@ -103,7 +103,8 @@ const cdapWebpackConfig = {
       'node-uuid',
       'sockjs-client',
       'rx',
-      'reactstrap'
+      'reactstrap',
+      'react-addons-css-transition-group'
     ]
   },
   module: {
