@@ -30,12 +30,25 @@ Known Issues
 ------------
 
 - :cask-issue:`CDAP-7175` - Though an underlying issue has been fixed in the upgrade tool
-  to allow it to run on a CDAP instance with authorization enabled, if you are upgrading
-  an authorization-enabled CDAP instance, you will need to give the *cdap* user *ADMIN*
+  to allow it to run on a CDAP instance with authorization enabled, **if you are upgrading
+  an authorization-enabled CDAP instance,** you will need to give the *cdap* user *ADMIN*
   privileges on all existing CDAP namespaces. **Note:** the *ADMIN* privilege does not
   give the *cdap* user *READ* or *WRITE* privileges on the namespaces. As these are
   temporary grants required only for the purpose of running the upgrade tool, once the
   upgrade is complete, these grants can be revoked.
+
+- :cask-issue:`CDAP-7179` - In CDAP 3.5.0, new ``kafka.server.*`` properties replace older
+  properties such as ``kafka.log.dir``. Though the older properties were marked as
+  deprecated, they are in fact being ignored, and need to be replaced with the current
+  properties as described in the :ref:`Administration Manual: Appendices: cdap-site.xml
+  <appendix-cdap-default-deprecated-properties>`. 
+  
+  **If you are upgrading from CDAP 3.4.x to 3.5.x,** and you have set a value for
+  ``kafka.log.dir`` (either through the ``cdap-site.xml`` or by using Cloudera Manager's
+  :ref:`safety-valve mechanism <cloudera-installation-add-service-wizard-configuration>`),
+  you need to **change** to the new property ``kafka.server.log.dirs``, as the deprecated
+  ``kafka.log.dir`` is being overridden by the new property.
+  
   
 Improvements
 ------------
