@@ -28,23 +28,21 @@ import java.util.Objects;
 /**
  * Uniquely identifies a program.
  */
-public class ProgramId extends EntityId implements NamespacedId, ParentedId<ApplicationId> {
-  private final String namespace;
+public class ProgramId extends NamespacedEntityId implements ParentedId<ApplicationId> {
   private final String application;
   private final ProgramType type;
   private final String program;
   private transient Integer hashCode;
 
   public ProgramId(String namespace, String application, ProgramType type, String program) {
-    super(EntityType.PROGRAM);
-    this.namespace = namespace;
+    super(namespace, EntityType.PROGRAM);
     this.application = application;
     this.type = type;
     this.program = program;
   }
 
-  public String getNamespace() {
-    return namespace;
+  public ProgramId(String namespace, String application, String type, String program) {
+    this(namespace, application, ProgramType.valueOf(type), program);
   }
 
   public String getApplication() {

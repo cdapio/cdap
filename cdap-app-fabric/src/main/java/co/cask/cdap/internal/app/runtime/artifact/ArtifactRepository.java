@@ -480,7 +480,7 @@ public class ArtifactRepository {
       ArtifactInfo artifactInfo = new ArtifactInfo(descriptor.getArtifactId(), artifactDetail.getMeta().getClasses(),
                                                    artifactDetail.getMeta().getProperties());
       // add system metadata for artifacts
-      writeSystemMetadata(artifactId, artifactInfo);
+      writeSystemMetadata(artifactId.toEntityId(), artifactInfo);
       return artifactDetail;
     } finally {
       Closeables.closeQuietly(parentClassLoader);
@@ -727,7 +727,7 @@ public class ArtifactRepository {
     // delete the artifact first and then privileges. Not the other way to avoid orphan artifact
     // which does not have any privilege if the artifact delete from store fails. see CDAP-6648
     artifactStore.delete(artifactId);
-    metadataStore.removeMetadata(artifactId);
+    metadataStore.removeMetadata(artifactId.toEntityId());
     // revoke all privileges on the artifact
     privilegesManager.revoke(artifactId.toEntityId());
   }
@@ -916,7 +916,7 @@ public class ArtifactRepository {
     }
   }
 
-  private void writeSystemMetadata(Id.Artifact artifactId, ArtifactInfo artifactInfo) {
+  private void writeSystemMetadata(co.cask.cdap.proto.id.ArtifactId artifactId, ArtifactInfo artifactInfo) {
     // add system metadata for artifacts
     ArtifactSystemMetadataWriter writer = new ArtifactSystemMetadataWriter(metadataStore, artifactId, artifactInfo);
     writer.write();

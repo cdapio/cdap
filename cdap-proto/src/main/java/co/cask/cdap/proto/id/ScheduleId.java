@@ -26,21 +26,15 @@ import java.util.Objects;
 /**
  * Uniquely identifies a schedule.
  */
-public class ScheduleId extends EntityId implements NamespacedId, ParentedId<ApplicationId> {
-  private final String namespace;
+public class ScheduleId extends NamespacedEntityId implements ParentedId<ApplicationId> {
   private final String application;
   private final String schedule;
   private transient Integer hashCode;
 
   public ScheduleId(String namespace, String application, String schedule) {
-    super(EntityType.SCHEDULE);
-    this.namespace = namespace;
+    super(namespace, EntityType.SCHEDULE);
     this.application = application;
     this.schedule = schedule;
-  }
-
-  public String getNamespace() {
-    return namespace;
   }
 
   public String getApplication() {

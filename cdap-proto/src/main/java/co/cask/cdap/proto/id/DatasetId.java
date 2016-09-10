@@ -26,17 +26,15 @@ import java.util.Objects;
 /**
  * Uniquely identifies a dataset.
  */
-public class DatasetId extends EntityId implements NamespacedId, ParentedId<NamespaceId> {
+public class DatasetId extends NamespacedEntityId implements ParentedId<NamespaceId> {
 
-  private final String namespace;
   private final String dataset;
   private transient Integer hashCode;
   private final transient NamespaceId namespaceId;
 
   public DatasetId(String namespace, String dataset) {
-    super(EntityType.DATASET);
+    super(namespace, EntityType.DATASET);
 
-    this.namespace = namespace;
     // Preconstruct the parent since it will get used many times for authorization for each dataset op.
     this.namespaceId = new NamespaceId(namespace);
     this.dataset = dataset;
@@ -46,10 +44,6 @@ public class DatasetId extends EntityId implements NamespacedId, ParentedId<Name
         String.format("Invalid characters found in dataset instance Id %s. Allowed characters are letters, numbers, " +
                         "and _, -, ., or $.", dataset));
     }
-  }
-
-  public String getNamespace() {
-    return namespace;
   }
 
   public String getDataset() {

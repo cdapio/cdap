@@ -36,6 +36,7 @@ import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -85,7 +86,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
     queueService.resetStreamsWithPrefix(QueueName.prefixForNamedspacedStream(namespace.getId()));
     for (StreamSpecification spec : streamMetaStore.listStreams(namespace)) {
       // Remove metadata for the stream
-      metadataStore.removeMetadata(Id.Stream.from(namespace, spec.getName()));
+      metadataStore.removeMetadata(new StreamId(namespace.getId(), spec.getName()));
       streamMetaStore.removeStream(Id.Stream.from(namespace, spec.getName()));
     }
   }
@@ -152,7 +153,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   public void drop(Id.Stream streamId) throws Exception {
     Preconditions.checkArgument(exists(streamId), "Stream '%s' does not exist.", streamId);
     // Remove metadata for the stream
-    metadataStore.removeMetadata(streamId);
+    metadataStore.removeMetadata(streamId.toEntityId());
     drop(QueueName.fromStream(streamId));
     streamMetaStore.removeStream(streamId);
     publishAudit(streamId, AuditType.DELETE);
@@ -202,6 +203,6 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   }
 
   private void publishAudit(Id.Stream stream, AuditType auditType) {
-    AuditPublishers.publishAudit(auditPublisher, stream, auditType, AuditPayload.EMPTY_PAYLOAD);
+    AuditPublishers.publishAudit(auditPublisher, stream.toEntityId(), auditType, AuditPayload.EMPTY_PAYLOAD);
   }
 }

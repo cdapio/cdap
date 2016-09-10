@@ -26,19 +26,13 @@ import java.util.Objects;
 /**
  * Uniquely identifies a stream.
  */
-public class StreamId extends EntityId implements NamespacedId, ParentedId<NamespaceId> {
-  private final String namespace;
+public class StreamId extends NamespacedEntityId implements ParentedId<NamespaceId> {
   private final String stream;
   private transient Integer hashCode;
 
   public StreamId(String namespace, String stream) {
-    super(EntityType.STREAM);
-    this.namespace = namespace;
+    super(namespace, EntityType.STREAM);
     this.stream = stream;
-  }
-
-  public String getNamespace() {
-    return namespace;
   }
 
   public String getStream() {

@@ -73,15 +73,15 @@ public final class LineageSerializer {
     Set<CollapsedRelation> collapsedRelations =
       LineageCollapser.collapseRelations(lineage.getRelations(), collapseTypes);
     for (CollapsedRelation relation : collapsedRelations) {
-      String dataKey = makeDataKey(relation.getData());
-      String programKey = makeProgramKey(relation.getProgram());
+      String dataKey = makeDataKey((Id.NamespacedId) relation.getData().toId());
+      String programKey = makeProgramKey(relation.getProgram().toId());
       RelationRecord relationRecord = new RelationRecord(dataKey, programKey,
                                                          convertAccessType(relation.getAccess()),
                                                          convertRuns(relation.getRuns()),
-                                                         convertComponents(relation.getComponents()));
+                                                         convertComponents(relation.getIdComponents()));
       relationBuilder.add(relationRecord);
-      programBuilder.put(programKey, new ProgramRecord(relation.getProgram()));
-      dataBuilder.put(dataKey, new DataRecord(relation.getData()));
+      programBuilder.put(programKey, new ProgramRecord(relation.getProgram().toId()));
+      dataBuilder.put(dataKey, new DataRecord((Id.NamespacedId) relation.getData().toId()));
     }
     return new LineageRecord(start, end, relationBuilder, programBuilder, dataBuilder);
   }

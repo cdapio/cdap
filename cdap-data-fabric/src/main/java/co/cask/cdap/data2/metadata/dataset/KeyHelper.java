@@ -17,8 +17,17 @@
 package co.cask.cdap.data2.metadata.dataset;
 
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
-import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.id.StreamViewId;
+import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
+import com.google.common.collect.ImmutableMap;
+
+import java.util.Map;
 
 /**
  * Helper methods for keys of {@link MetadataDataset}.
@@ -26,49 +35,59 @@ import co.cask.cdap.proto.ProgramType;
 // Note: these methods were refactored from MetadataDataset class. Once CDAP-3657 is fixed, these methods will need
 // to be cleaned up CDAP-4291
 final class KeyHelper {
-  static void addTargetIdToKey(MDSKey.Builder builder, Id.NamespacedId namespacedId) {
-    String type = getTargetType(namespacedId);
-    if (type.equals(Id.Program.class.getSimpleName())) {
-      Id.Program program = (Id.Program) namespacedId;
-      String namespaceId = program.getNamespaceId();
-      String appId = program.getApplicationId();
+  static final Map<Class<? extends NamespacedEntityId>, String> TYPE_MAP =
+    ImmutableMap.<Class<? extends NamespacedEntityId>, String>builder()
+    .put(ArtifactId.class, MetadataSearchTargetType.ARTIFACT.getSerializedForm())
+    .put(ApplicationId.class, MetadataSearchTargetType.APP.getSerializedForm())
+    .put(ProgramId.class, MetadataSearchTargetType.PROGRAM.getSerializedForm())
+    .put(DatasetId.class, MetadataSearchTargetType.DATASET.getSerializedForm())
+    .put(StreamId.class, MetadataSearchTargetType.STREAM.getSerializedForm())
+    .put(StreamViewId.class, MetadataSearchTargetType.VIEW.getSerializedForm())
+    .build();
+
+  static void addTargetIdToKey(MDSKey.Builder builder, NamespacedEntityId namespacedEntityId) {
+    String type = getTargetType(namespacedEntityId);
+    if (type.equals(TYPE_MAP.get(ProgramId.class))) {
+      ProgramId program = (ProgramId) namespacedEntityId;
+      String namespaceId = program.getNamespace();
+      String appId = program.getApplication();
       String programType = program.getType().name();
-      String programId = program.getId();
+      String programId = program.getProgram();
       builder.add(namespaceId);
       builder.add(appId);
       builder.add(programType);
       builder.add(programId);
-    } else if (type.equals(Id.Application.class.getSimpleName())) {
-      Id.Application application = (Id.Application) namespacedId;
-      String namespaceId = application.getNamespaceId();
-      String instanceId = application.getId();
+    } else if (type.equals(TYPE_MAP.get(ApplicationId.class))) {
+      ApplicationId application = (ApplicationId) namespacedEntityId;
+      String namespaceId = application.getNamespace();
+      String appId = application.getApplication();
       builder.add(namespaceId);
-      builder.add(instanceId);
-    } else if (type.equals(Id.DatasetInstance.class.getSimpleName())) {
-      Id.DatasetInstance datasetInstance = (Id.DatasetInstance) namespacedId;
-      String namespaceId = datasetInstance.getNamespaceId();
-      String instanceId = datasetInstance.getId();
+      builder.add(appId);
+    } else if (type.equals(TYPE_MAP.get(DatasetId.class))) {
+      DatasetId datasetInstance = (DatasetId) namespacedEntityId;
+      String namespaceId = datasetInstance.getNamespace();
+      String datasetId = datasetInstance.getDataset();
       builder.add(namespaceId);
-      builder.add(instanceId);
-    } else if (type.equals(Id.Stream.class.getSimpleName())) {
-      Id.Stream stream = (Id.Stream) namespacedId;
-      String namespaceId = stream.getNamespaceId();
-      String instanceId = stream.getId();
+      builder.add(datasetId);
+    } else if (type.equals(TYPE_MAP.get(StreamId.class))) {
+      StreamId stream = (StreamId) namespacedEntityId;
+      String namespaceId = stream.getNamespace();
+      String streamId = stream.getStream();
       builder.add(namespaceId);
-      builder.add(instanceId);
-    } else if (type.equals(Id.Stream.View.class.getSimpleName())) {
-      Id.Stream.View view = (Id.Stream.View) namespacedId;
-      String namespaceId = view.getNamespaceId();
-      String streamId = view.getStreamId();
-      String viewId = view.getId();
+      builder.add(streamId);
+    } else if (type.equals(TYPE_MAP.get(StreamViewId.class))) {
+      StreamViewId view = (StreamViewId) namespacedEntityId;
+      String namespaceId = view.getNamespace();
+      String streamId = view.getStream();
+      String viewId = view.getView();
       builder.add(namespaceId);
       builder.add(streamId);
       builder.add(viewId);
-    } else if (type.equals(Id.Artifact.class.getSimpleName())) {
-      Id.Artifact artifactId = (Id.Artifact) namespacedId;
-      String namespaceId = artifactId.getNamespace().getId();
-      String name = artifactId.getName();
-      String version = artifactId.getVersion().getVersion();
+    } else if (type.equals(TYPE_MAP.get(ArtifactId.class))) {
+      ArtifactId artifactId = (ArtifactId) namespacedEntityId;
+      String namespaceId = artifactId.getNamespace();
+      String name = artifactId.getArtifact();
+      String version = artifactId.getVersion();
       builder.add(namespaceId);
       builder.add(name);
       builder.add(version);
@@ -77,44 +96,41 @@ final class KeyHelper {
     }
   }
 
-  static Id.NamespacedId getTargetIdIdFromKey(MDSKey.Splitter keySplitter, String type) {
-    if (type.equals(Id.Program.class.getSimpleName())) {
+  static NamespacedEntityId getTargetIdIdFromKey(MDSKey.Splitter keySplitter, String type) {
+    if (type.equals(TYPE_MAP.get(ProgramId.class))) {
       String namespaceId = keySplitter.getString();
       String appId = keySplitter.getString();
       String programType = keySplitter.getString();
       String programId = keySplitter.getString();
-      return Id.Program.from(namespaceId, appId, ProgramType.valueOf(programType), programId);
-    } else if (type.equals(Id.Application.class.getSimpleName())) {
+      return new ProgramId(namespaceId, appId, programType, programId);
+    } else if (type.equals(TYPE_MAP.get(ApplicationId.class))) {
       String namespaceId = keySplitter.getString();
       String appId = keySplitter.getString();
-      return Id.Application.from(namespaceId, appId);
-    } else if (type.equals(Id.Artifact.class.getSimpleName())) {
+      return new ApplicationId(namespaceId, appId);
+    } else if (type.equals(TYPE_MAP.get(ArtifactId.class))) {
       String namespaceId = keySplitter.getString();
       String name = keySplitter.getString();
       String version = keySplitter.getString();
-      return Id.Artifact.from(Id.Namespace.from(namespaceId), name, version);
-    } else if (type.equals(Id.DatasetInstance.class.getSimpleName())) {
+      return new ArtifactId(namespaceId, name, version);
+    } else if (type.equals(TYPE_MAP.get(DatasetId.class))) {
       String namespaceId = keySplitter.getString();
       String instanceId  = keySplitter.getString();
-      return Id.DatasetInstance.from(namespaceId, instanceId);
-    } else if (type.equals(Id.Stream.class.getSimpleName())) {
+      return new DatasetId(namespaceId, instanceId);
+    } else if (type.equals(TYPE_MAP.get(StreamId.class))) {
       String namespaceId = keySplitter.getString();
       String instanceId  = keySplitter.getString();
-      return Id.Stream.from(namespaceId, instanceId);
-    } else if (type.equals(Id.Stream.View.class.getSimpleName())) {
+      return new StreamId(namespaceId, instanceId);
+    } else if (type.equals(TYPE_MAP.get(StreamViewId.class))) {
       String namespaceId = keySplitter.getString();
       String streamId  = keySplitter.getString();
       String viewId = keySplitter.getString();
-      return Id.Stream.View.from(Id.Stream.from(namespaceId, streamId), viewId);
+      return new StreamViewId(namespaceId, streamId, viewId);
     }
     throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
   }
 
-  static String getTargetType(Id.NamespacedId namespacedId) {
-    if (namespacedId instanceof Id.Program) {
-      return Id.Program.class.getSimpleName();
-    }
-    return namespacedId.getClass().getSimpleName();
+  static String getTargetType(NamespacedEntityId namespacedEntityId) {
+    return TYPE_MAP.get(namespacedEntityId.getClass());
   }
 
   private KeyHelper() {

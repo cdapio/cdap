@@ -27,16 +27,14 @@ import java.util.Objects;
 /**
  * Uniquely identifies a flowlet.
  */
-public class FlowletId extends EntityId implements NamespacedId, ParentedId<ProgramId> {
-  private final String namespace;
+public class FlowletId extends NamespacedEntityId implements ParentedId<ProgramId> {
   private final String application;
   private final String flow;
   private final String flowlet;
   private transient Integer hashCode;
 
   public FlowletId(String namespace, String application, String flow, String flowlet) {
-    super(EntityType.FLOWLET);
-    this.namespace = namespace;
+    super(namespace, EntityType.FLOWLET);
     this.application = application;
     this.flow = flow;
     this.flowlet = flowlet;
@@ -62,11 +60,6 @@ public class FlowletId extends EntityId implements NamespacedId, ParentedId<Prog
   @Override
   public ProgramId getParent() {
     return new ProgramId(namespace, application, ProgramType.FLOW, flow);
-  }
-
-  @Override
-  public String getNamespace() {
-    return namespace;
   }
 
   @Override

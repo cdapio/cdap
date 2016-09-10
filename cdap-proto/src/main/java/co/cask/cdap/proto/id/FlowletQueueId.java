@@ -26,8 +26,7 @@ import java.util.Objects;
 /**
  * Uniquely identifies a flowlet queue.
  */
-public class FlowletQueueId extends EntityId implements NamespacedId, ParentedId<FlowletId> {
-  private final String namespace;
+public class FlowletQueueId extends NamespacedEntityId implements ParentedId<FlowletId> {
   private final String application;
   private final String flow;
   private final String flowlet;
@@ -35,8 +34,7 @@ public class FlowletQueueId extends EntityId implements NamespacedId, ParentedId
   private transient Integer hashCode;
 
   public FlowletQueueId(String namespace, String application, String flow, String flowlet, String queue) {
-    super(EntityType.FLOWLET_QUEUE);
-    this.namespace = namespace;
+    super(namespace, EntityType.FLOWLET_QUEUE);
     this.application = application;
     this.flow = flow;
     this.flowlet = flowlet;
@@ -76,11 +74,6 @@ public class FlowletQueueId extends EntityId implements NamespacedId, ParentedId
       next(iterator, "namespace"), next(iterator, "application"),
       next(iterator, "flow"), next(iterator, "flowlet"),
       nextAndEnd(iterator, "queue"));
-  }
-
-  @Override
-  public String getNamespace() {
-    return namespace;
   }
 
   @Override

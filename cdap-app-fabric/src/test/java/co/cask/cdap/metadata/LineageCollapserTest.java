@@ -20,7 +20,10 @@ import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.CollapsedRelation;
 import co.cask.cdap.data2.metadata.lineage.LineageCollapser;
 import co.cask.cdap.data2.metadata.lineage.Relation;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
 import com.google.common.collect.ImmutableSet;
 import org.apache.twill.api.RunId;
@@ -33,20 +36,20 @@ import java.util.Set;
  * Test {@link LineageCollapser}.
  */
 public class LineageCollapserTest {
-  private final Id.DatasetInstance data1 = Id.DatasetInstance.from("n1", "d1");
-  private final Id.DatasetInstance data2 = Id.DatasetInstance.from("n1", "d2");
+  private final DatasetId data1 = new DatasetId("n1", "d1");
+  private final DatasetId data2 = new DatasetId("n1", "d2");
 
-  private final Id.Flow flow1 = Id.Flow.from("n1", "app1", "flow1");
-  private final Id.Flow flow2 = Id.Flow.from("n1", "app2", "flow1");
+  private final ProgramId flow1 = new ProgramId("n1", "app1", ProgramType.FLOW, "flow1");
+  private final ProgramId flow2 = new ProgramId("n1", "app2", ProgramType.FLOW, "flow1");
   
   private final RunId runId1 = new TestRunId("r1");
   private final RunId runId2 = new TestRunId("r2");
   private final RunId runId3 = new TestRunId("r3");
 
-  private final Id.NamespacedId flowlet11 = Id.Flow.Flowlet.from(flow1, "flowlet1");
-  private final Id.NamespacedId flowlet12 = Id.Flow.Flowlet.from(flow1, "flowlet2");
-  private final Id.NamespacedId flowlet21 = Id.Flow.Flowlet.from(flow2, "flowlet1");
-  private final Id.NamespacedId flowlet22 = Id.Flow.Flowlet.from(flow2, "flowlet2");
+  private final NamespacedEntityId flowlet11 = flow1.flowlet("flowlet1");
+  private final NamespacedEntityId flowlet12 = flow1.flowlet("flowlet2");
+  private final NamespacedEntityId flowlet21 = flow2.flowlet("flowlet1");
+  private final NamespacedEntityId flowlet22 = flow2.flowlet("flowlet2");
 
   @Test
   public void testCollapseAccess() throws Exception {

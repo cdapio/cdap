@@ -16,7 +16,7 @@
 package co.cask.cdap.proto.metadata;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 
 import java.util.Collections;
 import java.util.Map;
@@ -27,20 +27,20 @@ import java.util.Objects;
  */
 @Beta
 public class MetadataSearchResultRecord {
-  private final Id.NamespacedId entityId;
+  private final NamespacedEntityId entityId;
   private final Map<MetadataScope, Metadata> metadata;
 
-  public MetadataSearchResultRecord(Id.NamespacedId entityId) {
+  public MetadataSearchResultRecord(NamespacedEntityId entityId) {
     this.entityId = entityId;
     this.metadata = Collections.emptyMap();
   }
 
-  public MetadataSearchResultRecord(Id.NamespacedId entityId, Map<MetadataScope, Metadata> metadata) {
+  public MetadataSearchResultRecord(NamespacedEntityId entityId, Map<MetadataScope, Metadata> metadata) {
     this.entityId = entityId;
     this.metadata = metadata;
   }
 
-  public Id.NamespacedId getEntityId() {
+  public NamespacedEntityId getEntityId() {
     return entityId;
   }
 

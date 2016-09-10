@@ -26,6 +26,7 @@ import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.HashSet;
@@ -39,7 +40,7 @@ public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
 
   private final ApplicationSpecification appSpec;
 
-  public AppSystemMetadataWriter(MetadataStore metadataStore, Id.Application entityId,
+  public AppSystemMetadataWriter(MetadataStore metadataStore, ApplicationId entityId,
                                  ApplicationSpecification appSpec) {
     super(metadataStore, entityId);
     this.appSpec = appSpec;

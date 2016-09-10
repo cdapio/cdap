@@ -17,9 +17,14 @@
 package co.cask.cdap.data2.metadata.dataset;
 
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.id.StreamViewId;
 
-import java.util.Arrays;
 import javax.annotation.Nullable;
 
 /**
@@ -43,26 +48,26 @@ final class MdsKey {
     keySplitter.skipString();
 
     // Skip targetId
-    if (type.equals(Id.Program.class.getSimpleName())) {
+    if (type.equals(KeyHelper.TYPE_MAP.get(ProgramId.class))) {
       keySplitter.skipString();
       keySplitter.skipString();
       keySplitter.skipString();
       keySplitter.skipString();
-    } else if (type.equals(Id.Application.class.getSimpleName())) {
+    } else if (type.equals(KeyHelper.TYPE_MAP.get(ApplicationId.class))) {
       keySplitter.skipString();
       keySplitter.skipString();
-    } else if (type.equals(Id.DatasetInstance.class.getSimpleName())) {
+    } else if (type.equals(KeyHelper.TYPE_MAP.get(DatasetId.class))) {
       keySplitter.skipString();
       keySplitter.skipString();
-    } else if (type.equals(Id.Stream.class.getSimpleName())) {
+    } else if (type.equals(KeyHelper.TYPE_MAP.get(StreamId.class))) {
       keySplitter.skipString();
       keySplitter.skipString();
-    } else if (type.equals(Id.Stream.View.class.getSimpleName())) {
+    } else if (type.equals(KeyHelper.TYPE_MAP.get(StreamViewId.class))) {
       // skip namespace, stream, view
       keySplitter.skipString();
       keySplitter.skipString();
       keySplitter.skipString();
-    } else if (type.equals(Id.Artifact.class.getSimpleName())) {
+    } else if (type.equals(KeyHelper.TYPE_MAP.get(ArtifactId.class))) {
       // skip namespace, name, version
       keySplitter.skipString();
       keySplitter.skipString();
@@ -86,7 +91,7 @@ final class MdsKey {
    * Creates a key for metadata value row in the format:
    * [{@link #VALUE_ROW_PREFIX}][targetType][targetId][key] for value index rows
    */
-  static MDSKey getMDSValueKey(Id.NamespacedId targetId, @Nullable String key) {
+  static MDSKey getMDSValueKey(NamespacedEntityId targetId, @Nullable String key) {
     MDSKey.Builder builder = getMDSKeyPrefix(targetId, VALUE_ROW_PREFIX);
     if (key != null) {
       builder.add(key);
@@ -98,7 +103,7 @@ final class MdsKey {
    * Creates a key for metadata index row in the format:
    * [{@link #INDEX_ROW_PREFIX}][targetType][targetId][key][index] for value index rows
    */
-  static MDSKey getMDSIndexKey(Id.NamespacedId targetId, String key, @Nullable String index) {
+  static MDSKey getMDSIndexKey(NamespacedEntityId targetId, String key, @Nullable String index) {
     MDSKey.Builder builder = getMDSKeyPrefix(targetId, INDEX_ROW_PREFIX);
     builder.add(key);
     if (index != null) {
@@ -107,7 +112,7 @@ final class MdsKey {
     return builder.build();
   }
 
-  static Id.NamespacedId getNamespacedIdFromKey(String type, byte[] rowKey) {
+  static NamespacedEntityId getNamespacedIdFromKey(String type, byte[] rowKey) {
     MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
 
     // The rowkey is
@@ -142,7 +147,7 @@ final class MdsKey {
     return key.getKey();
   }
 
-  private static MDSKey.Builder getMDSKeyPrefix(Id.NamespacedId targetId, byte[] rowPrefix) {
+  private static MDSKey.Builder getMDSKeyPrefix(NamespacedEntityId targetId, byte[] rowPrefix) {
     String targetType = KeyHelper.getTargetType(targetId);
     MDSKey.Builder builder = new MDSKey.Builder();
     builder.add(rowPrefix);

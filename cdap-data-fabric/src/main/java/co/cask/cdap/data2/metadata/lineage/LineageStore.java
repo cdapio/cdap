@@ -23,6 +23,7 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
@@ -131,10 +132,10 @@ public class LineageStore implements LineageStoreReader, LineageStoreWriter {
    * @return a set of entities (program and data it accesses) associated with a program run.
    */
   @Override
-  public Set<Id.NamespacedId> getEntitiesForRun(final Id.Run run) {
-    return execute(new TransactionExecutor.Function<LineageDataset, Set<Id.NamespacedId>>() {
+  public Set<NamespacedEntityId> getEntitiesForRun(final Id.Run run) {
+    return execute(new TransactionExecutor.Function<LineageDataset, Set<NamespacedEntityId>>() {
       @Override
-      public Set<Id.NamespacedId> apply(LineageDataset input) throws Exception {
+      public Set<NamespacedEntityId> apply(LineageDataset input) throws Exception {
         return input.getEntitiesForRun(run);
       }
     });

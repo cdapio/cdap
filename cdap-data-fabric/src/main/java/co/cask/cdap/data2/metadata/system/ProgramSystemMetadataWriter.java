@@ -42,7 +42,7 @@ public class ProgramSystemMetadataWriter extends AbstractSystemMetadataWriter {
 
   public ProgramSystemMetadataWriter(MetadataStore metadataStore, ProgramId programId,
                                      ProgramSpecification programSpec) {
-    super(metadataStore, programId.toId());
+    super(metadataStore, programId);
     this.programId = programId;
     this.programSpec = programSpec;
   }

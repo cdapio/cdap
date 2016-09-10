@@ -16,7 +16,7 @@
 
 package co.cask.cdap.data2.metadata.dataset;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
@@ -25,28 +25,28 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Represents the complete metadata of a {@link Id.NamespacedId} including its properties and tags.
+ * Represents the complete metadata of a {@link NamespacedEntityId} including its properties and tags.
  */
 public class Metadata {
-  private final Id.NamespacedId entityId;
+  private final NamespacedEntityId namespacedEntityId;
   private final Map<String, String> properties;
   private final Set<String> tags;
 
   /**
    * Returns an empty {@link Metadata}
    */
-  public Metadata(Id.NamespacedId entityId) {
-    this(entityId, ImmutableMap.<String, String>of(), ImmutableSet.<String>of());
+  public Metadata(NamespacedEntityId namespacedEntityId) {
+    this(namespacedEntityId, ImmutableMap.<String, String>of(), ImmutableSet.<String>of());
   }
 
-  public Metadata(Id.NamespacedId entityId, Map<String, String> properties, Set<String> tags) {
-    this.entityId = entityId;
+  public Metadata(NamespacedEntityId namespacedEntityId, Map<String, String> properties, Set<String> tags) {
+    this.namespacedEntityId = namespacedEntityId;
     this.properties = properties;
     this.tags = tags;
   }
 
-  public Id.NamespacedId getEntityId() {
-    return entityId;
+  public NamespacedEntityId getEntityId() {
+    return namespacedEntityId;
   }
 
   public Map<String, String> getProperties() {
@@ -68,20 +68,20 @@ public class Metadata {
 
     Metadata that = (Metadata) o;
 
-    return Objects.equals(entityId, that.entityId) &&
+    return Objects.equals(namespacedEntityId, that.namespacedEntityId) &&
       Objects.equals(properties, that.properties) &&
       Objects.equals(tags, that.tags);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(entityId, properties, tags);
+    return Objects.hash(namespacedEntityId, properties, tags);
   }
 
   @Override
   public String toString() {
     return "Metadata{" +
-      "entityId=" + entityId +
+      "namespacedEntityId=" + namespacedEntityId +
       ", properties=" + properties +
       ", tags=" + tags +
       '}';

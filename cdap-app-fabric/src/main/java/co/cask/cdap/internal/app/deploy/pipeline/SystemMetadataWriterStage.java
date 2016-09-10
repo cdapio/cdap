@@ -45,7 +45,7 @@ public class SystemMetadataWriterStage extends AbstractStage<ApplicationWithProg
     // add system metadata for apps
     ApplicationId appId = input.getApplicationId();
     ApplicationSpecification appSpec = input.getSpecification();
-    SystemMetadataWriter appSystemMetadataWriter = new AppSystemMetadataWriter(metadataStore, appId.toId(), appSpec);
+    SystemMetadataWriter appSystemMetadataWriter = new AppSystemMetadataWriter(metadataStore, appId, appSpec);
     appSystemMetadataWriter.write();
 
     // add system metadata for programs

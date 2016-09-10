@@ -27,6 +27,9 @@ import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.Relation;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import com.google.common.annotations.VisibleForTesting;
@@ -60,7 +63,7 @@ public class LineageAdmin {
     new Function<Relation, Id.Program>() {
       @Override
       public Id.Program apply(Relation input) {
-        return input.getProgram();
+        return input.getProgram().toId();
       }
     };
 
@@ -68,7 +71,7 @@ public class LineageAdmin {
     new Function<Relation, Id.NamespacedId>() {
       @Override
       public Id.NamespacedId apply(Relation input) {
-        return input.getData();
+        return (Id.NamespacedId) input.getData().toId();
       }
     };
 
@@ -137,18 +140,20 @@ public class LineageAdmin {
    * @return metadata associated with a run
    */
   public Set<MetadataRecord> getMetadataForRun(Id.Run run) throws NotFoundException {
-    entityExistenceVerifier.ensureExists(run.toEntityId());
+    ProgramRunId programRunId = run.toEntityId();
+    entityExistenceVerifier.ensureExists(programRunId);
 
-    Set<Id.NamespacedId> runEntities = new HashSet<>(lineageStoreReader.getEntitiesForRun(run));
+    Set<NamespacedEntityId> runEntities = new HashSet<>(lineageStoreReader.getEntitiesForRun(run));
+
     // No entities associated with the run, but run exists.
     if (runEntities.isEmpty()) {
       return ImmutableSet.of();
     }
 
-    RunId runId = RunIds.fromString(run.getId());
+    RunId runId = RunIds.fromString(programRunId.getRun());
 
     // The entities returned by lineageStore does not contain application
-    Id.Application application = run.getProgram().getApplication();
+    ApplicationId application = programRunId.getParent().getParent();
     runEntities.add(application);
     return metadataStore.getSnapshotBeforeTime(MetadataScope.USER, runEntities,
                                                RunIds.getTime(runId, TimeUnit.MILLISECONDS));

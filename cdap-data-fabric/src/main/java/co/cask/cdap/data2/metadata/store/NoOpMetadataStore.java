@@ -16,7 +16,7 @@
 package co.cask.cdap.data2.metadata.store;
 
 import co.cask.cdap.data2.metadata.indexer.Indexer;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
@@ -33,84 +33,85 @@ import java.util.Set;
 public class NoOpMetadataStore implements MetadataStore {
 
   @Override
-  public void setProperties(MetadataScope scope, Id.NamespacedId entityId, Map<String, String> properties) {
+  public void setProperties(MetadataScope scope, NamespacedEntityId namespacedEntityId,
+                            Map<String, String> properties) {
     // NO-OP
   }
 
   @Override
-  public void setProperties(MetadataScope scope, Id.NamespacedId entityId, Map<String, String> properties,
+  public void setProperties(MetadataScope scope, NamespacedEntityId namespacedEntityId, Map<String, String> properties,
                             Indexer indexer) {
     // NO-OP
   }
 
   @Override
-  public void addTags(MetadataScope scope, Id.NamespacedId entityId, String... tagsToAdd) {
+  public void addTags(MetadataScope scope, NamespacedEntityId namespacedEntityId, String... tagsToAdd) {
     // NO-OP
   }
 
   @Override
-  public Set<MetadataRecord> getMetadata(Id.NamespacedId entityId) {
-    return ImmutableSet.of(new MetadataRecord(entityId, MetadataScope.USER),
-                           new MetadataRecord(entityId, MetadataScope.SYSTEM));
+  public Set<MetadataRecord> getMetadata(NamespacedEntityId namespacedEntityId) {
+    return ImmutableSet.of(new MetadataRecord(namespacedEntityId, MetadataScope.USER),
+                           new MetadataRecord(namespacedEntityId, MetadataScope.SYSTEM));
   }
 
   @Override
-  public MetadataRecord getMetadata(MetadataScope scope, Id.NamespacedId entityId) {
-    return new MetadataRecord(entityId, scope);
+  public MetadataRecord getMetadata(MetadataScope scope, NamespacedEntityId namespacedEntityId) {
+    return new MetadataRecord(namespacedEntityId, scope);
   }
 
   @Override
-  public Set<MetadataRecord> getMetadata(MetadataScope scope, Set<Id.NamespacedId> entityIds) {
+  public Set<MetadataRecord> getMetadata(MetadataScope scope, Set<NamespacedEntityId> namespacedEntityIds) {
     return Collections.emptySet();
   }
 
   @Override
-  public Map<String, String> getProperties(Id.NamespacedId entityId) {
+  public Map<String, String> getProperties(NamespacedEntityId namespacedEntityId) {
     return Collections.emptyMap();
   }
 
   @Override
-  public Map<String, String> getProperties(MetadataScope scope, Id.NamespacedId entityId) {
+  public Map<String, String> getProperties(MetadataScope scope, NamespacedEntityId namespacedEntityId) {
     return Collections.emptyMap();
   }
 
   @Override
-  public Set<String> getTags(Id.NamespacedId entityId) {
+  public Set<String> getTags(NamespacedEntityId namespacedEntityId) {
     return Collections.emptySet();
   }
 
   @Override
-  public Set<String> getTags(MetadataScope scope, Id.NamespacedId entityId) {
+  public Set<String> getTags(MetadataScope scope, NamespacedEntityId namespacedEntityId) {
     return Collections.emptySet();
   }
 
   @Override
-  public void removeMetadata(Id.NamespacedId entityId) {
+  public void removeMetadata(NamespacedEntityId namespacedEntityId) {
     // NO-OP
   }
 
   @Override
-  public void removeMetadata(MetadataScope scope, Id.NamespacedId entityId) {
+  public void removeMetadata(MetadataScope scope, NamespacedEntityId namespacedEntityId) {
     // NO-OP
   }
 
   @Override
-  public void removeProperties(MetadataScope scope, Id.NamespacedId entityId) {
+  public void removeProperties(MetadataScope scope, NamespacedEntityId namespacedEntityId) {
     // NO-OP
   }
 
   @Override
-  public void removeProperties(MetadataScope scope, Id.NamespacedId entityId, String... keys) {
+  public void removeProperties(MetadataScope scope, NamespacedEntityId namespacedEntityId, String... keys) {
     // NO-OP
   }
 
   @Override
-  public void removeTags(MetadataScope scope, Id.NamespacedId entityId) {
+  public void removeTags(MetadataScope scope, NamespacedEntityId namespacedEntityId) {
     // NO-OP
   }
 
   @Override
-  public void removeTags(MetadataScope scope, Id.NamespacedId entityId, String... tagsToRemove) {
+  public void removeTags(MetadataScope scope, NamespacedEntityId namespacedEntityId, String... tagsToRemove) {
     // NO-OP
   }
 
@@ -137,19 +138,19 @@ public class NoOpMetadataStore implements MetadataStore {
   }
 
   @Override
-  public Set<MetadataRecord> getSnapshotBeforeTime(Set<Id.NamespacedId> entityIds, long timeMillis) {
+  public Set<MetadataRecord> getSnapshotBeforeTime(Set<NamespacedEntityId> namespacedEntityIds, long timeMillis) {
     return ImmutableSet.<MetadataRecord>builder()
-      .addAll(getSnapshotBeforeTime(MetadataScope.USER, entityIds, timeMillis))
-      .addAll(getSnapshotBeforeTime(MetadataScope.SYSTEM, entityIds, timeMillis))
+      .addAll(getSnapshotBeforeTime(MetadataScope.USER, namespacedEntityIds, timeMillis))
+      .addAll(getSnapshotBeforeTime(MetadataScope.SYSTEM, namespacedEntityIds, timeMillis))
       .build();
   }
 
   @Override
-  public Set<MetadataRecord> getSnapshotBeforeTime(MetadataScope scope, Set<Id.NamespacedId> entityIds,
+  public Set<MetadataRecord> getSnapshotBeforeTime(MetadataScope scope, Set<NamespacedEntityId> namespacedEntityIds,
                                                    long timeMillis) {
     ImmutableSet.Builder<MetadataRecord> builder = ImmutableSet.builder();
-    for (Id.NamespacedId entityId : entityIds) {
-      builder.add(new MetadataRecord(entityId, scope));
+    for (NamespacedEntityId namespacedEntityId : namespacedEntityIds) {
+      builder.add(new MetadataRecord(namespacedEntityId, scope));
     }
     return builder.build();
   }

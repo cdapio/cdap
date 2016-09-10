@@ -616,13 +616,13 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   private void deleteAppMetadata(Id.Application appId, ApplicationSpecification appSpec) {
     // Remove metadata for the Application itself.
-    metadataStore.removeMetadata(appId);
+    metadataStore.removeMetadata(appId.toEntityId());
 
     // Remove metadata for the programs of the Application
     // TODO: Need to remove this we support prefix search of metadata type.
     // See https://issues.cask.co/browse/CDAP-3669
     for (ProgramId programId : getAllPrograms(appId.toEntityId(), appSpec)) {
-      metadataStore.removeMetadata(programId.toId());
+      metadataStore.removeMetadata(programId);
     }
   }
 

@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.metadata.lineage;
 
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 import com.google.common.base.Predicate;
 
 import java.util.Set;
@@ -30,7 +31,7 @@ public interface LineageStoreReader {
   /**
    * @return a set of entities (program and data it accesses) associated with a program run.
    */
-  Set<Id.NamespacedId> getEntitiesForRun(Id.Run run);
+  Set<NamespacedEntityId> getEntitiesForRun(Id.Run run);
 
   /**
    * Fetch program-dataset access information for a dataset for a given period.
