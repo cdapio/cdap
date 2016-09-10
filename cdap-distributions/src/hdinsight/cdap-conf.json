@@ -3,6 +3,7 @@
     "cdap_site": {
       "dashboard.bind.port": "11011",
       "explore.enabled": "{{EXPLORE_ENABLED}}",
+      "http.client.read.timeout.ms": "120000",
       "kafka.server.log.dirs": "/var/cdap/kafka-logs",
       "router.bind.port": "11015",
       "zookeeper.quorum": "{{ZK_QUORUM}}"
