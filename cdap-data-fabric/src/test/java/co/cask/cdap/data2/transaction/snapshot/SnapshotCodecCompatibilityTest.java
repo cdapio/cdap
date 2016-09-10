@@ -32,6 +32,8 @@ import org.apache.tephra.ChangeId;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionType;
 import org.apache.tephra.TxConstants;
+import org.apache.tephra.metrics.TxMetricsCollector;
+import org.apache.tephra.persist.LocalFileTransactionStateStorage;
 import org.apache.tephra.persist.TransactionSnapshot;
 import org.apache.tephra.persist.TransactionStateStorage;
 import org.apache.tephra.runtime.ConfigModule;
@@ -189,7 +191,10 @@ public class SnapshotCodecCompatibilityTest {
     // shutdown to force a snapshot
     txManager.stopAndWait();
 
-    TransactionStateStorage txStorage = injector.getInstance(TransactionStateStorage.class);
+    TransactionStateStorage txStorage =
+      new LocalFileTransactionStateStorage(conf,
+                                           new SnapshotCodecProvider(conf),
+                                           new TxMetricsCollector());
     txStorage.startAndWait();
 
     // confirm that the in-progress entry is missing a type
@@ -227,7 +232,10 @@ public class SnapshotCodecCompatibilityTest {
     // save a new snapshot
     txManager2.stopAndWait();
 
-    TransactionStateStorage txStorage2 = injector2.getInstance(TransactionStateStorage.class);
+    TransactionStateStorage txStorage2 =
+      new LocalFileTransactionStateStorage(conf,
+                                           new SnapshotCodecProvider(conf2),
+                                           new TxMetricsCollector());
     txStorage2.startAndWait();
 
     TransactionSnapshot snapshot3 = txStorage2.getLatestSnapshot();
