@@ -31,10 +31,10 @@ export default class HeaderActions extends Component {
       name : cookie.load('CDAP_Auth_User')
     };
     this.logout = this.logout.bind(this);
-    this.toggleDropdown = this.toggleDropdown.bind(this);
+    this.toggleSettingsDropdown = this.toggleSettingsDropdown.bind(this);
   }
 
-  toggleDropdown(){
+  toggleSettingsDropdown(){
     this.setState({
       settingsOpen : !this.state.settingsOpen
     });
@@ -84,11 +84,11 @@ export default class HeaderActions extends Component {
           <PlusButton className="navbar-item" />
           <div
             className="navbar-item navbar-cog"
-            onClick={this.toggleDropdown.bind(this)}
+            onClick={this.toggleSettingsDropdown}
           >
             <span className={classNames('fa', 'fa-cog', {'menu-open' : this.state.settingsOpen})}></span>
             <span className={classNames('navbar-cog-arrow', {'hidden' : !this.state.settingsOpen})}></span>
-            <Dropdown isOpen={this.state.settingsOpen} toggle={this.toggleDropdown.bind(this)}>
+            <Dropdown isOpen={this.state.settingsOpen} toggle={this.toggleSettingsDropdown}>
               <DropdownMenu>
                 {topRow}
                 <div className="dropdown-item"><a href="http://cask.co/community"><span className="dropdown-icon fa fa-life-ring"></span>Support</a></div>
