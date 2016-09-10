@@ -1,0 +1,112 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+@import '../../styles/variables.less';
+@grey-theme-color: #e3e3e3;
+@header-color: #e2e2e2;
+@side-button-height: 40px;
+@side-button-width: 20px;
+@side-button-top-offset: 100px;
+@side-button-margin: -20px;
+
+.admin-detail-panel {
+  border: solid 5px @grey-theme-color;
+  height: 230px;
+  width: 100%;
+
+  .admin-detail-panel-body {
+    height: 200px;
+    overflow: hidden;
+    display: flex;
+    justify-content: space-between;
+
+    .vertical-line {
+      width: 2px;
+      height: 90%;
+      border-right: dotted 2px @grey-theme-color;
+      position: relative;
+      top: 5px;
+    }
+
+    .end-line {
+      width: 2px;
+      height: 100%;
+      border: none;
+    }
+  }
+
+  .admin-detail-panel-header {
+    height: 30px;
+    background-color: @header-color;
+  }
+
+  .admin-detail-panel-header-name {
+    display: inline-block;
+    margin-left: 15px;
+    float: left;
+    font-size: 18px;
+    font-weight: bold;
+    font-color: #000000;
+  }
+
+  .admin-detail-panel-header-status {
+    display: inline-block;
+    float: right;
+    margin-right: 20px;
+    font-size: 12px;
+    margin-top: 4px;
+    color: #999999;
+  }
+
+  .admin-detail-panel-button-left:hover,
+  .admin-detail-panel-button-right:hover {
+    background-color: #656565;
+    color: #ffffff;
+    cursor: pointer;
+  }
+
+  .admin-detail-panel-button-right {
+    height:@side-button-height;
+    width:@side-button-width;
+    border-radius: 0 40px 40px 0;
+    background: @grey-theme-color;
+    float: right;
+    position: relative;
+    top: @side-button-top-offset;
+    margin-right: @side-button-margin;
+  }
+
+  .admin-detail-panel-button-right .fa {
+    position: relative;
+    top: 11px;
+    left: 4px;
+  }
+
+  .admin-detail-panel-button-left {
+    height:@side-button-height;
+    width:@side-button-width;
+    border-radius: 40px 0 0 40px;
+    background: @grey-theme-color;
+    position: relative;
+    float: left;
+    top: @side-button-top-offset;
+    margin-left: @side-button-margin;
+  }
+  .admin-detail-panel-button-left .fa {
+    position: relative;
+    top: 11px;
+    left: 4px;
+  }
+}

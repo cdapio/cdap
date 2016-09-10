@@ -1,0 +1,68 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+@import '../../styles/variables.less';
+@grey-theme-color: #e3e3e3;
+@info-card-text-color: #656565;
+
+.info-card {
+  position: relative;
+  min-width: 130px;
+  flex-shrink: 0;
+  height: 110px;
+  background-color: @grey-theme-color;
+  display: inline-block;
+  margin: 5px 10px 5px 0;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+
+  .superscript-text {
+    position: absolute;
+    top: 7px;
+    right: 9px;
+    font-weight: bold;
+    color: #9A9A9A;
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  .info-card-main-text {
+    white-space: nowrap;
+    font-size: 38px;
+    color: @info-card-text-color;
+    width: 100%;
+    margin: auto;
+    padding-left : 5px;
+    padding-right: 5px;
+    text-align: center;
+    position: relative;
+    top: 6px;
+    font-weight: 500;
+  }
+
+  .info-card-secondary-text {
+    font-size: 14px;
+    font-weight: 900;
+    color: @info-card-text-color;
+    margin: auto;
+    text-align: center;
+    padding-top: 8px;
+    position: relative;
+    bottom: 1px;
+  }
+}

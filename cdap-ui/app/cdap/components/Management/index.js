@@ -15,16 +15,171 @@
  */
 
 import React, {Component} from 'react';
-export default class Management extends Component {
+require('./Management.less');
+import InfoCard from '../InfoCard';
+import ServiceLabel from '../ServiceLabel';
+import ServiceStatusPanel from '../ServiceStatusPanel';
+import AdminDetailPanel from '../AdminDetailPanel';
+import AdminConfigurePane from '../AdminConfigurePane';
+import AdminOverviewPane from '../AdminOverviewPane';
+var shortid = require('shortid');
+var classNames = require('classnames');
+
+var dummyData = {
+  version: '4.0-SNAPSHOT',
+  uptime: {
+    duration: '0.2',
+    unit: 'hr'
+  },
+  services: [
+    {
+      name: 'App Fabric',
+      status: 'Green'
+    },
+    {
+      name: 'Explore',
+      status: 'Green'
+    },
+    {
+      name: 'Metadata',
+      status: 'Green'
+    },
+    {
+      name: 'Metrics Processor',
+      status: 'Green'
+    },
+    {
+      name: 'Tephra Transaction',
+      status: 'Red'
+    },
+    {
+      name: 'Dataset Executor',
+      status: 'Green'
+    },
+    {
+      name: 'Log Saver',
+      status: 'Green'
+    },
+    {
+      name: 'Streams',
+      status: 'Yellow'
+    }
+  ]
+};
+
+class Management extends Component {
+
   constructor(props) {
     super(props);
-    this.props = props;
+    this.state = {
+      application: 'CDAP',
+      lastUpdated: 15,
+      loading: true
+    };
+    this.interval = undefined;
+    this.clickLeft = this.clickLeft.bind(this);
+    this.clickRight = this.clickRight.bind(this);
+    this.setToContext = this.setToContext.bind(this);
+
+    this.applications = ['CDAP', 'YARN', 'HBASE'];
   }
-  render() {
+
+  clickLeft() {
+    var index = this.applications.indexOf(this.state.application);
+    if(index === -1 || index === 0){
+      return;
+    }
+    this.setToContext(this.applications[index-1]);
+  }
+
+  clickRight() {
+    var index = this.applications.indexOf(this.state.application);
+    if(index === -1 || index === this.applications.length-1){
+      return;
+    }
+    this.setToContext(this.applications[index+1]);
+  }
+
+  setToContext(contextName) {
+
+    if(this.state.application !== contextName){
+
+      this.setState({
+        application: contextName
+      });
+
+    }
+  }
+
+  // FIXME: This for giving it a strcture. Eventually will be removed.
+  // Simulates the page loading
+  simulateLoading() {
+    setTimeout( () => {
+      this.setState({
+        loading: false
+      });
+    }, 1500);
+  }
+  componentDidMount() {
+    this.simulateLoading();
+  }
+  render () {
+
+    var navItems = this.applications.map( (item) => {
+      return (
+        <li
+          className={classNames({'active' : this.state.application === item})}
+          key={shortid.generate()}
+          onClick={this.setToContext.bind(this, item)}
+        >
+          {item}
+        </li>
+      );
+    });
+
     return (
-      <div>
-        <h1> Management Screen </h1>
+       <div className="management">
+        <div className="top-panel">
+          <div className="admin-row top-row">
+            <InfoCard
+              isLoading={this.state.loading}
+              primaryText={dummyData.version}
+              secondaryText="Version"
+            />
+            <InfoCard
+              isLoading={this.state.loading}
+              primaryText={dummyData.uptime.duration}
+              secondaryText="Uptime"
+              superscriptText={dummyData.uptime.unit}
+            />
+            <ServiceLabel/>
+            <ServiceStatusPanel
+              isLoading={this.state.loading}
+              services={dummyData.services}
+            />
+          </div>
+          <div className="admin-row">
+            <AdminDetailPanel
+              isLoading={this.state.loading}
+              applicationName={this.state.application}
+              timeFromUpdate={this.state.lastUpdated}
+              clickLeftButton={this.clickLeft}
+              clickRightButton={this.clickRight}
+            />
+          </div>
+          <div className="container">
+            <ul className="nav nav-pills nav-justified centering-container">
+                {navItems}
+            </ul>
+          </div>
+        </div>
+        <div className="admin-bottom-panel">
+          <AdminConfigurePane />
+          <AdminOverviewPane isLoading={this.state.loading} />
+        </div>
       </div>
     );
   }
 }
+
+export default Management;
