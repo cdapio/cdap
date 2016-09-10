@@ -67,7 +67,6 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
 
   private static InMemoryZKServer zkServer;
   private static TransactionService server;
-  private static TransactionStateStorage txStateStorage;
   private static ZKClientService zkClient;
   private static Injector injector;
 
@@ -78,7 +77,8 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
 
   @Override
   protected TransactionStateStorage getStateStorage() throws Exception {
-    return txStateStorage;
+    Assert.assertNotNull(server.getTransactionManager());
+    return server.getTransactionManager().getTransactionStateStorage();
   }
 
   @BeforeClass
@@ -128,9 +128,6 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
 
     zkClient = injector.getInstance(ZKClientService.class);
     zkClient.startAndWait();
-
-    txStateStorage = injector.getInstance(TransactionStateStorage.class);
-    txStateStorage.startAndWait();
   }
 
   @AfterClass
@@ -140,11 +137,9 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
         server.stopAndWait();
       } finally {
         zkClient.stopAndWait();
-        txStateStorage.stopAndWait();
       }
     } finally {
       zkServer.stopAndWait();
-      txStateStorage.stopAndWait();
     }
   }
 

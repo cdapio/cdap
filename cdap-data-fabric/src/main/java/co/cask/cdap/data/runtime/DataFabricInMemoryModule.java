@@ -23,6 +23,7 @@ import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryQueueAdmin;
 import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryQueueClientFactory;
 import com.google.inject.AbstractModule;
+import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import org.apache.tephra.metrics.TxMetricsCollector;
@@ -43,7 +44,11 @@ public class DataFabricInMemoryModule extends AbstractModule {
     // bind transactions
     bind(TxMetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
     bind(TransactionSystemClientService.class).to(DelegatingTransactionSystemClientService.class);
-    install(new TransactionModules().getInMemoryModules());
+    install(getTransactionModule());
     install(new TransactionExecutorModule());
+  }
+
+  protected Module getTransactionModule() {
+    return new TransactionModules().getInMemoryModules();
   }
 }

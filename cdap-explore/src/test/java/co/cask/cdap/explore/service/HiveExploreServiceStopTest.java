@@ -16,10 +16,15 @@
 
 package co.cask.cdap.explore.service;
 
+import co.cask.cdap.common.conf.CConfigurationUtil;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.metrics.TxMetricsCollector;
+import org.apache.tephra.persist.LocalFileTransactionStateStorage;
 import org.apache.tephra.persist.TransactionSnapshot;
 import org.apache.tephra.persist.TransactionStateStorage;
+import org.apache.tephra.snapshot.SnapshotCodecProvider;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -28,6 +33,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests whether txns get closed on stopping explore service.
@@ -63,13 +69,21 @@ public class HiveExploreServiceStopTest extends BaseHiveExploreServiceTest {
     stopServices();
 
     // Make sure that the transaction got closed
-    TransactionStateStorage transactionStateStorage = injector.getInstance(TransactionStateStorage.class);
+    Configuration txConf = new Configuration();
+    txConf.clear();
+    CConfigurationUtil.copyTxProperties(cConfiguration, txConf);
+    TransactionStateStorage transactionStateStorage =
+      new LocalFileTransactionStateStorage(txConf, new SnapshotCodecProvider(txConf), new TxMetricsCollector());
+    transactionStateStorage.startAndWait();
     TransactionSnapshot latestSnapshot = transactionStateStorage.getLatestSnapshot();
+    Assert.assertNotNull(latestSnapshot);
+    Assert.assertTrue(latestSnapshot.getTimestamp() > System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(20));
     Assert.assertEquals(ImmutableSet.<Long>of(),
                         Sets.intersection(
                           queryTxns,
                           latestSnapshot.getInProgress().keySet()).immutableCopy()
     );
+    transactionStateStorage.stopAndWait();
   }
 
 }

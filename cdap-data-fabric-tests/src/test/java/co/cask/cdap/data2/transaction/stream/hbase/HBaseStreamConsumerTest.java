@@ -53,6 +53,7 @@ import co.cask.cdap.test.SlowTests;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
 import com.google.inject.Singleton;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
@@ -61,6 +62,7 @@ import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.inmemory.InMemoryTxSystemClient;
 import org.apache.tephra.persist.NoOpTransactionStateStorage;
 import org.apache.tephra.persist.TransactionStateStorage;
+import org.apache.tephra.runtime.TransactionModules;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
@@ -117,12 +119,23 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getNoOpModule(),
-      Modules.override(new DataFabricDistributedModule(), new StreamAdminModules().getDistributedModules())
+      new DataFabricDistributedModule() {
+        @Override
+        protected Module getTransactionModule() {
+          return Modules.override(new TransactionModules().getDistributedModules())
+            .with(new AbstractModule() {
+              @Override
+              protected void configure() {
+                bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class);
+                bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);
+              }
+            });
+        }
+      },
+      Modules.override(new StreamAdminModules().getDistributedModules())
         .with(new AbstractModule() {
           @Override
           protected void configure() {
-            bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class);
-            bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);
             bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
             bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
             bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);

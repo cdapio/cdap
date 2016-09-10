@@ -29,6 +29,7 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.security.UGIProvider;
 import co.cask.cdap.common.security.UnsupportedUGIProvider;
+import co.cask.cdap.data.runtime.DataFabricInMemoryModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -84,7 +85,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
-import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
@@ -93,6 +93,7 @@ import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TxConstants;
 import org.apache.tephra.persist.LocalFileTransactionStateStorage;
 import org.apache.tephra.persist.TransactionStateStorage;
+import org.apache.tephra.runtime.TransactionModules;
 import org.apache.tephra.runtime.TransactionStateStorageProvider;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -141,6 +142,7 @@ public class BaseHiveExploreServiceTest {
   public static boolean runBefore = true;
   public static boolean runAfter = true;
 
+  protected static CConfiguration cConfiguration;
   protected static TransactionManager transactionManager;
   protected static DatasetFramework datasetFramework;
   protected static DatasetOpExecutor dsOpService;
@@ -175,6 +177,7 @@ public class BaseHiveExploreServiceTest {
       return;
     }
 
+    cConfiguration = cConf;
     Configuration hConf = new Configuration();
     if (enableAuthorization) {
       LocationFactory locationFactory = new LocalLocationFactory(tmpFolder.newFolder());
@@ -444,16 +447,23 @@ public class BaseHiveExploreServiceTest {
           CommonHandlers.add(handlerBinder);
           bind(StreamHttpService.class).in(Scopes.SINGLETON);
 
-          // Use LocalFileTransactionStateStorage, so that we can use transaction snapshots for assertions in test
-          install(Modules.override(new DataFabricModules().getInMemoryModules()).with(new AbstractModule() {
+          install(new DataFabricInMemoryModule() {
             @Override
-            protected void configure() {
-              bind(TransactionStateStorage.class)
-                .annotatedWith(Names.named("persist"))
-                .to(LocalFileTransactionStateStorage.class).in(Scopes.SINGLETON);
-              bind(TransactionStateStorage.class).toProvider(TransactionStateStorageProvider.class).in(Singleton.class);
+            protected Module getTransactionModule() {
+              // Use LocalFileTransactionStateStorage, so that we can use transaction snapshots for assertions in test
+              return Modules.override(new TransactionModules().getInMemoryModules())
+                .with(new AbstractModule() {
+                  @Override
+                  protected void configure() {
+                    bind(TransactionStateStorage.class)
+                      .annotatedWith(Names.named("persist"))
+                      .to(LocalFileTransactionStateStorage.class).in(Scopes.SINGLETON);
+                    bind(TransactionStateStorage.class)
+                      .toProvider(TransactionStateStorageProvider.class).in(Scopes.SINGLETON);
+                  }
+                });
             }
-          }));
+          });
         }
       }
     );

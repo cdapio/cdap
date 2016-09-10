@@ -28,6 +28,7 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
+import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
@@ -63,10 +64,13 @@ public class DataFabricDistributedModule extends AbstractModule {
     // bind transactions
     bind(TxMetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
     bind(TransactionSystemClientService.class).to(DistributedTransactionSystemClientService.class);
-    install(new TransactionModules().getDistributedModules());
+    install(getTransactionModule());
     install(new TransactionExecutorModule());
   }
 
+  protected Module getTransactionModule() {
+    return new TransactionModules().getDistributedModules();
+  }
   /**
    * Provides implementation of {@link ThriftClientProvider} based on configuration.
    */
