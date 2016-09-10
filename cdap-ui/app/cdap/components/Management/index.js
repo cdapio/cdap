@@ -173,8 +173,10 @@ class Management extends Component {
             </ul>
           </div>
         </div>
-        <AdminConfigurePane />
-        <AdminOverviewPane isLoading={this.state.loading} />
+        <div className="admin-bottom-panel">
+          <AdminConfigurePane />
+          <AdminOverviewPane isLoading={this.state.loading} />
+        </div>
       </div>
     );
   }
