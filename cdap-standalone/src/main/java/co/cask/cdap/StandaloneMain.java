@@ -85,7 +85,7 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.counters.Limits;
-import org.apache.tephra.inmemory.InMemoryTransactionService;
+import org.apache.tephra.TransactionManager;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.apache.zookeeper.server.ZooKeeperServerMain;
@@ -120,7 +120,7 @@ public class StandaloneMain {
   private final StreamService streamService;
   private final MetricsCollectionService metricsCollectionService;
   private final LogAppenderInitializer logAppenderInitializer;
-  private final InMemoryTransactionService txService;
+  private final TransactionManager transactionManager;
   private final MetadataService metadataService;
   private final boolean securityEnabled;
   private final boolean sslEnabled;
@@ -171,7 +171,7 @@ public class StandaloneMain {
 
     authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
     authorizationBootstrapper = injector.getInstance(AuthorizationBootstrapper.class);
-    txService = injector.getInstance(InMemoryTransactionService.class);
+    transactionManager = injector.getInstance(TransactionManager.class);
     router = injector.getInstance(NettyRouter.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
     authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
@@ -258,7 +258,7 @@ public class StandaloneMain {
     // Authorization bootstrapping is a blocking call, because CDAP will not start successfully if it does not
     // succeed on an authorization-enabled cluster
     authorizationBootstrapper.run();
-    txService.startAndWait();
+    transactionManager.startAndWait();
     metricsCollectionService.startAndWait();
     authorizationEnforcementService.startAndWait();
     datasetService.startAndWait();
@@ -337,7 +337,7 @@ public class StandaloneMain {
       datasetService.stopAndWait();
       authorizationEnforcementService.stopAndWait();
       metricsQueryService.stopAndWait();
-      txService.stopAndWait();
+      transactionManager.stopAndWait();
 
       if (securityEnabled) {
         // auth service is on the side anyway
