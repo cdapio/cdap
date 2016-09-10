@@ -36,11 +36,12 @@ import co.cask.cdap.etl.proto.Engine;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.format.StructuredRecordStringConverter;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.PluginInstanceDetail;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
@@ -78,9 +79,9 @@ public class ETLWorkflowTestRun extends ETLBatchTestBase {
       .build();
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
 
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "badConfig");
+    ApplicationId appId = NamespaceId.DEFAULT.app("badConfig");
     try {
-      deployApplication(appId, appRequest);
+      deployApplication(appId.toId(), appRequest);
       Assert.fail();
     } catch (Exception e) {
       // expected
@@ -97,8 +98,8 @@ public class ETLWorkflowTestRun extends ETLBatchTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "ActionApp");
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationId appId = NamespaceId.DEFAULT.app("ActionApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     Schema schema = Schema.recordOf(
       "testRecord",
@@ -109,14 +110,14 @@ public class ETLWorkflowTestRun extends ETLBatchTestBase {
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
     StructuredRecord recordJane = StructuredRecord.builder(schema).set("name", "jane").build();
 
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "actionInput");
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.toId(), "actionInput");
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(ETLWorkflow.NAME);
     workflowManager.start();
     workflowManager.waitForFinish(5, TimeUnit.MINUTES);
 
-    DataSetManager<Table> tokenTableManager = getDataset(Id.Namespace.DEFAULT, "tokenTable");
+    DataSetManager<Table> tokenTableManager = getDataset(NamespaceId.DEFAULT.toId(), "tokenTable");
     Table tokenTable = tokenTableManager.get();
     NodeStatus status = NodeStatus.valueOf(Bytes.toString(
       tokenTable.get(Bytes.toBytes(ETLMapReduce.NAME), Bytes.toBytes("status"))));
@@ -147,8 +148,8 @@ public class ETLWorkflowTestRun extends ETLBatchTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "DagApp");
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationId appId = NamespaceId.DEFAULT.app("DagApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     Schema schema = Schema.recordOf(
       "testRecord",
@@ -159,7 +160,7 @@ public class ETLWorkflowTestRun extends ETLBatchTestBase {
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
     StructuredRecord recordJane = StructuredRecord.builder(schema).set("name", "jane").build();
 
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "daginput");
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.toId(), "daginput");
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
 
     MapReduceManager mrManager = appManager.getMapReduceManager(ETLMapReduce.NAME);
@@ -234,8 +235,8 @@ public class ETLWorkflowTestRun extends ETLBatchTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "DagApp");
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationId appId = NamespaceId.DEFAULT.app("DagApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
     Set<String> expectedPluginIds = new HashSet<String>();
     expectedPluginIds.add("source");
     expectedPluginIds.add("sink1");
@@ -266,8 +267,8 @@ public class ETLWorkflowTestRun extends ETLBatchTestBase {
 
     if (!backwardsCompatible) {
       // Assert that there are no external datasets
-      Assert.assertNull(getDataset(Id.Namespace.DEFAULT, expectedExternalDatasetInput).get());
-      Assert.assertNull(getDataset(Id.Namespace.DEFAULT, expectedExternalDatasetOutput).get());
+      Assert.assertNull(getDataset(NamespaceId.DEFAULT.toId(), expectedExternalDatasetInput).get());
+      Assert.assertNull(getDataset(NamespaceId.DEFAULT.toId(), expectedExternalDatasetOutput).get());
     }
 
     ETLBatchConfig.Builder builder = ETLBatchConfig.builder("* * * * *");
@@ -285,8 +286,8 @@ public class ETLWorkflowTestRun extends ETLBatchTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "ExternalDatasetApp-" + suffix);
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationId appId = NamespaceId.DEFAULT.app("ExternalDatasetApp-" + suffix);
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     Schema schema = Schema.recordOf(
       "testRecord",
@@ -322,8 +323,8 @@ public class ETLWorkflowTestRun extends ETLBatchTestBase {
 
     if (!backwardsCompatible) {
       // Assert that external datasets got created
-      Assert.assertNotNull(getDataset(Id.Namespace.DEFAULT, expectedExternalDatasetInput).get());
-      Assert.assertNotNull(getDataset(Id.Namespace.DEFAULT, expectedExternalDatasetOutput).get());
+      Assert.assertNotNull(getDataset(NamespaceId.DEFAULT.toId(), expectedExternalDatasetInput).get());
+      Assert.assertNotNull(getDataset(NamespaceId.DEFAULT.toId(), expectedExternalDatasetOutput).get());
     }
   }
 }
