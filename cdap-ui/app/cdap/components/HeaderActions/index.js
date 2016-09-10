@@ -41,9 +41,12 @@ export default class HeaderActions extends Component {
   }
 
   logout() {
-    cookie.remove('CDAP_Auth_User');
-    this.setState({
-      name : ''
+    cookie.remove('CDAP_Auth_Token', { path: '/' });
+    cookie.remove('CDAP_Auth_User', { path: '/' });
+    window.location.href = window.getAbsUIUrl({
+      uiApp: 'login',
+      redirectUrl: location.href,
+      clientId: 'cdap'
     });
   }
 
@@ -88,9 +91,9 @@ export default class HeaderActions extends Component {
             <Dropdown isOpen={this.state.settingsOpen} toggle={this.toggleDropdown.bind(this)}>
               <DropdownMenu>
                 {topRow}
-                <div className="dropdown-item"><span className="dropdown-icon fa fa-life-ring"></span>Support</div>
-                <div className="dropdown-item"><span className="dropdown-icon fa fa-home"></span>Cask home</div>
-                <div className="dropdown-item"><span className="dropdown-icon fa fa-file"></span>Documentation</div>
+                <div className="dropdown-item"><a href="http://cask.co/community"><span className="dropdown-icon fa fa-life-ring"></span>Support</a></div>
+                <div className="dropdown-item"><a href="http://cask.co/"><span className="dropdown-icon fa fa-home"></span>Cask home</a></div>
+                <div className="dropdown-item"><a href="http://docs.cask.co/"><span className="dropdown-icon fa fa-file"></span>Documentation</a></div>
                 {signoutRow}
               </DropdownMenu>
             </Dropdown>

@@ -31,6 +31,7 @@ import Footer from './components/Footer';
 import SplashScreen from './components/SplashScreen';
 import ConnectionExample from './components/ConnectionExample';
 import Experimental from './components/Experimental';
+import cookie from 'react-cookie';
 
 require('./styles/lib-styles.less');
 require('./styles/common.less');
@@ -42,6 +43,17 @@ class CDAP extends Component {
     this.version = '4.0.0';
   }
   render() {
+    if(!cookie.load('CDAP_Auth_User') || !cookie.load('CDAP_Auth_Token')){
+      //authentication failed ; redirect to another page
+      window.location.href = window.getAbsUIUrl({
+        uiApp: 'login',
+        redirectUrl: location.href,
+        clientId: 'cdap'
+      });
+
+      return null;
+    }
+
     return (
       <div>
         <CdapHeader />
