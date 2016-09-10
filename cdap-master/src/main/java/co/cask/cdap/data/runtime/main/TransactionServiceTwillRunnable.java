@@ -102,7 +102,7 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
     services.add(injector.getInstance(TransactionService.class));
   }
 
-  static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
+  private static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new IOModule(),
