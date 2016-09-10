@@ -25,6 +25,7 @@ import co.cask.cdap.common.guice.NamespaceClientUnitTestModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.Networks;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
@@ -87,7 +88,6 @@ import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionExecutorFactory;
-import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.TxConstants;
 import org.apache.tephra.distributed.TransactionService;
@@ -107,6 +107,8 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * HBase queue tests.
@@ -180,18 +182,28 @@ public abstract class HBaseQueueTest extends QueueTest {
     zkClientService.startAndWait();
 
     txService = injector.getInstance(TransactionService.class);
-    Thread t = new Thread() {
-      @Override
-      public void run() {
-        txService.start();
-      }
-    };
-    t.start();
+    txService.startAndWait();
+
+    txSystemClient = injector.getInstance(TransactionSystemClient.class);
+    Tasks.waitFor(true,
+                  new Callable<Boolean>() {
+                    @Override
+                    public Boolean call() throws Exception {
+                      try {
+                        if (TxConstants.STATUS_OK.equals(txSystemClient.status())) {
+                          return true;
+                        }
+                      } catch (Exception e) {
+                        return false;
+                      }
+                      return false;
+                    }
+                  }, 20, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS,
+                  "Timeout waiting for transaction service to start");
 
     // The TransactionManager should be started by the txService.
     // We just want a reference to that so that we can ask for tx snapshot
-    transactionManager = injector.getInstance(TransactionManager.class);
-    txSystemClient = injector.getInstance(TransactionSystemClient.class);
+    transactionManager = txService.getTransactionManager();
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     queueAdmin = injector.getInstance(QueueAdmin.class);
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
