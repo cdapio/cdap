@@ -47,13 +47,12 @@ import co.cask.cdap.etl.proto.Engine;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.etl.proto.v2.ETLStage;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
@@ -85,8 +84,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class DataPipelineTest extends HydratorTestBase {
 
-  protected static final ArtifactId APP_ARTIFACT_ID =
-    new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "app", "1.0.0");
+  protected static final ArtifactId APP_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("app", "1.0.0");
   protected static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("app", "1.0.0");
   private static int startCount = 0;
   @ClassRule
@@ -101,8 +99,7 @@ public class DataPipelineTest extends HydratorTestBase {
     setupBatchArtifacts(APP_ARTIFACT_ID, DataPipelineApp.class);
 
     // add some test plugins
-    addPluginArtifact(new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "spark-plugins", "1.0.0"),
-                      APP_ARTIFACT_ID,
+    addPluginArtifact(NamespaceId.DEFAULT.artifact("spark-plugins", "1.0.0"), APP_ARTIFACT_ID,
                       NaiveBayesTrainer.class, NaiveBayesClassifier.class);
   }
 
@@ -136,8 +133,8 @@ public class DataPipelineTest extends HydratorTestBase {
 
       AppRequest<co.cask.cdap.etl.proto.v2.ETLBatchConfig> appRequest =
         new AppRequest<>(APP_ARTIFACT, etlConfig);
-      Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "macroActionTest");
-      ApplicationManager appManager = deployApplication(appId, appRequest);
+      ApplicationId appId = NamespaceId.DEFAULT.app("macroActionTest");
+      ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
       WorkflowManager manager = appManager.getWorkflowManager(SmartWorkflow.NAME);
       manager.setRuntimeArgs(runtimeArguments);
       manager.start(ImmutableMap.of("logical.start.time", "0"));
@@ -146,7 +143,7 @@ public class DataPipelineTest extends HydratorTestBase {
       DataSetManager<Table> actionTableDS = getDataset("actionTable");
       Assert.assertEquals("macroValue", MockAction.readOutput(actionTableDS, "action1.row", "action1.column"));
 
-      List<RunRecord> history = appManager.getHistory(new Id.Program(appId, ProgramType.WORKFLOW, SmartWorkflow.NAME),
+      List<RunRecord> history = appManager.getHistory(appId.workflow(SmartWorkflow.NAME).toId(),
                                                       ProgramRunStatus.FAILED);
   }
 
@@ -177,8 +174,8 @@ public class DataPipelineTest extends HydratorTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "MyActionOnlyApp");
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationId appId = NamespaceId.DEFAULT.app("MyActionOnlyApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start();
@@ -255,8 +252,8 @@ public class DataPipelineTest extends HydratorTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "MyApp");
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationId appId = NamespaceId.DEFAULT.app("MyApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
 
     Schema schema = Schema.recordOf(
@@ -267,7 +264,7 @@ public class DataPipelineTest extends HydratorTestBase {
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
 
     // write records to source
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, sourceTableName);
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.toId(), sourceTableName);
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -301,8 +298,8 @@ public class DataPipelineTest extends HydratorTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "SinglePhaseApp");
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationId appId = NamespaceId.DEFAULT.app("SinglePhaseApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     Schema schema = Schema.recordOf(
       "testRecord",
@@ -312,7 +309,7 @@ public class DataPipelineTest extends HydratorTestBase {
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
 
     // write records to source
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "singleInput");
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.toId(), "singleInput");
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -359,8 +356,8 @@ public class DataPipelineTest extends HydratorTestBase {
 
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "SimpleMultiSourceApp");
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationId appId = NamespaceId.DEFAULT.app("SimpleMultiSourceApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     // there should be only two programs - one workflow and one mapreduce/spark
     Assert.assertEquals(2, appManager.getInfo().getPrograms().size());
@@ -372,9 +369,9 @@ public class DataPipelineTest extends HydratorTestBase {
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
 
     // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, source1Name);
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.toId(), source1Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel));
-    inputManager = getDataset(Id.Namespace.DEFAULT, source2Name);
+    inputManager = getDataset(NamespaceId.DEFAULT.toId(), source2Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordBob));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -435,8 +432,8 @@ public class DataPipelineTest extends HydratorTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "MultiSourceApp");
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationId appId = NamespaceId.DEFAULT.app("MultiSourceApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     // there should be only two programs - one workflow and one mapreduce/spark
     Assert.assertEquals(2, appManager.getInfo().getPrograms().size());
@@ -450,11 +447,11 @@ public class DataPipelineTest extends HydratorTestBase {
     StructuredRecord recordJane = StructuredRecord.builder(schema).set("name", "jane").build();
 
     // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, source1Name);
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.toId(), source1Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel));
-    inputManager = getDataset(Id.Namespace.DEFAULT, source2Name);
+    inputManager = getDataset(NamespaceId.DEFAULT.toId(), source2Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordBob));
-    inputManager = getDataset(Id.Namespace.DEFAULT, source3Name);
+    inputManager = getDataset(NamespaceId.DEFAULT.toId(), source3Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordJane));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -526,8 +523,8 @@ public class DataPipelineTest extends HydratorTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "LinearAggApp");
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationId appId = NamespaceId.DEFAULT.app("LinearAggApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     Schema schema = Schema.recordOf(
       "testRecord",
@@ -539,7 +536,7 @@ public class DataPipelineTest extends HydratorTestBase {
     StructuredRecord recordJane = StructuredRecord.builder(schema).set("name", "jane").build();
 
     // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, sourceName);
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.toId(), sourceName);
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -591,8 +588,8 @@ public class DataPipelineTest extends HydratorTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "ParallelAggApp");
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationId appId = NamespaceId.DEFAULT.app("ParallelAggApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
     Schema inputSchema = Schema.recordOf(
       "testRecord",
       Schema.Field.of("user", Schema.of(Schema.Type.STRING)),
@@ -600,12 +597,12 @@ public class DataPipelineTest extends HydratorTestBase {
     );
 
     // write few records to each source
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, source1Name);
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.toId(), source1Name);
     MockSource.writeInput(inputManager, ImmutableList.of(
       StructuredRecord.builder(inputSchema).set("user", "samuel").set("item", 1L).build(),
       StructuredRecord.builder(inputSchema).set("user", "samuel").set("item", 2L).build()));
 
-    inputManager = getDataset(Id.Namespace.DEFAULT, source2Name);
+    inputManager = getDataset(NamespaceId.DEFAULT.toId(), source2Name);
     MockSource.writeInput(inputManager, ImmutableList.of(
       StructuredRecord.builder(inputSchema).set("user", "samuel").set("item", 3L).build(),
       StructuredRecord.builder(inputSchema).set("user", "john").set("item", 4L).build(),
@@ -677,8 +674,8 @@ public class DataPipelineTest extends HydratorTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "ActionApp");
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationId appId = NamespaceId.DEFAULT.app("ActionApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     Schema schema = Schema.recordOf(
       "testRecord",
@@ -689,14 +686,14 @@ public class DataPipelineTest extends HydratorTestBase {
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
     StructuredRecord recordJane = StructuredRecord.builder(schema).set("name", "jane").build();
 
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "actionInput");
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.toId(), "actionInput");
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.start();
     workflowManager.waitForFinish(5, TimeUnit.MINUTES);
 
-    DataSetManager<Table> tokenTableManager = getDataset(Id.Namespace.DEFAULT, "tokenTable");
+    DataSetManager<Table> tokenTableManager = getDataset(NamespaceId.DEFAULT.toId(), "tokenTable");
     Table tokenTable = tokenTableManager.get();
     NodeStatus status = NodeStatus.valueOf(Bytes.toString(
       tokenTable.get(Bytes.toBytes("phase-1"), Bytes.toBytes("status"))));
@@ -724,8 +721,8 @@ public class DataPipelineTest extends HydratorTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "SparkSinkApp");
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationId appId = NamespaceId.DEFAULT.app("SparkSinkApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
 
     // set up five spam messages and five non-spam messages to be used for classification
@@ -737,7 +734,7 @@ public class DataPipelineTest extends HydratorTestBase {
     messagesToWrite.add(new SpamMessage("you won the lottery", 1.0).toStructuredRecord());
 
     // write records to source1
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, "messages1");
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.toId(), "messages1");
     MockSource.writeInput(inputManager, messagesToWrite);
 
     messagesToWrite.clear();
@@ -748,7 +745,7 @@ public class DataPipelineTest extends HydratorTestBase {
     messagesToWrite.add(new SpamMessage("could you send me the report", 0.0).toStructuredRecord());
 
     // write records to source2
-    inputManager = getDataset(Id.Namespace.DEFAULT, "messages2");
+    inputManager = getDataset(NamespaceId.DEFAULT.toId(), "messages2");
     MockSource.writeInput(inputManager, messagesToWrite);
 
     // ingest in some messages to be classified
@@ -798,8 +795,8 @@ public class DataPipelineTest extends HydratorTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "SparkComputeApp");
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationId appId = NamespaceId.DEFAULT.app("SparkComputeApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
 
     // write some some messages to be classified
@@ -809,7 +806,7 @@ public class DataPipelineTest extends HydratorTestBase {
     messagesToWrite.add(new SpamMessage("what are you doing today").toStructuredRecord());
     messagesToWrite.add(new SpamMessage("genuine report").toStructuredRecord());
 
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, NaiveBayesTrainer.TEXTS_TO_CLASSIFY);
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.toId(), NaiveBayesTrainer.TEXTS_TO_CLASSIFY);
     MockSource.writeInput(inputManager, messagesToWrite);
 
     // manually trigger the pipeline
@@ -905,8 +902,8 @@ public class DataPipelineTest extends HydratorTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "JoinerApp");
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationId appId = NamespaceId.DEFAULT.app("JoinerApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     Schema outSchema = Schema.recordOf(
       "join.output",
@@ -939,11 +936,11 @@ public class DataPipelineTest extends HydratorTestBase {
       .set("c_name", "jane").build();
 
     // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, input1Name);
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.toId(), input1Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
-    inputManager = getDataset(Id.Namespace.DEFAULT, input2Name);
+    inputManager = getDataset(NamespaceId.DEFAULT.toId(), input2Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordCar, recordBike));
-    inputManager = getDataset(Id.Namespace.DEFAULT, input3Name);
+    inputManager = getDataset(NamespaceId.DEFAULT.toId(), input3Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordTrasCar, recordTrasBike));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -1034,8 +1031,8 @@ public class DataPipelineTest extends HydratorTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "JoinerApp");
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationId appId = NamespaceId.DEFAULT.app("JoinerApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     Schema outSchema = Schema.recordOf(
       "join.output",
@@ -1071,11 +1068,11 @@ public class DataPipelineTest extends HydratorTestBase {
       .set("c_name", "jane").build();
 
     // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, input1Name);
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.toId(), input1Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane, recordMartha));
-    inputManager = getDataset(Id.Namespace.DEFAULT, input2Name);
+    inputManager = getDataset(NamespaceId.DEFAULT.toId(), input2Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordCar, recordBike));
-    inputManager = getDataset(Id.Namespace.DEFAULT, input3Name);
+    inputManager = getDataset(NamespaceId.DEFAULT.toId(), input3Name);
     MockSource.writeInput(inputManager, ImmutableList.of(recordTrasCar, recordTrasPlane, recordTrasBike));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -1205,8 +1202,8 @@ public class DataPipelineTest extends HydratorTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "JoinerApp");
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationId appId = NamespaceId.DEFAULT.app("JoinerApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     StructuredRecord recordSamuel = StructuredRecord.builder(inputSchema1).set("customer_id", "1")
       .set("customer_name", "samuel").build();
@@ -1228,11 +1225,11 @@ public class DataPipelineTest extends HydratorTestBase {
       .set("i_id", "33").build();
 
     // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(Id.Namespace.DEFAULT, source1MulitJoinInput);
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.toId(), source1MulitJoinInput);
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
-    inputManager = getDataset(Id.Namespace.DEFAULT, source2MultiJoinInput);
+    inputManager = getDataset(NamespaceId.DEFAULT.toId(), source2MultiJoinInput);
     MockSource.writeInput(inputManager, ImmutableList.of(recordCar, recordBike));
-    inputManager = getDataset(Id.Namespace.DEFAULT, source3MultiJoinInput);
+    inputManager = getDataset(NamespaceId.DEFAULT.toId(), source3MultiJoinInput);
     MockSource.writeInput(inputManager, ImmutableList.of(recordTrasCar, recordTrasBike, recordTrasPlane));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -1291,8 +1288,8 @@ public class DataPipelineTest extends HydratorTestBase {
                                           "secure dataset name", new HashMap<String, String>());
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "App");
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationId appId = NamespaceId.DEFAULT.app("App");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
 
@@ -1308,10 +1305,10 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertNotNull(getDataset(prefix + "MockSecureSinkDataset").get());
   }
 
-  private void validateMetric(long expected, Id.Application appId,
+  private void validateMetric(long expected, ApplicationId appId,
                               String metric) throws TimeoutException, InterruptedException {
-    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, appId.getNamespaceId(),
-                                               Constants.Metrics.Tag.APP, appId.getId(),
+    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, appId.getNamespace(),
+                                               Constants.Metrics.Tag.APP, appId.getEntityName(),
                                                Constants.Metrics.Tag.WORKFLOW, SmartWorkflow.NAME);
     getMetricsManager().waitForTotalMetricCount(tags, "user." + metric, expected, 20, TimeUnit.SECONDS);
     // wait for won't throw an exception if the metric count is greater than expected

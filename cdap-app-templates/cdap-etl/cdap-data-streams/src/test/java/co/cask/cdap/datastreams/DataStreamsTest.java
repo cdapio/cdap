@@ -32,9 +32,9 @@ import co.cask.cdap.etl.mock.transform.FieldsPrefixTransform;
 import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
 import co.cask.cdap.etl.proto.v2.DataStreamsConfig;
 import co.cask.cdap.etl.proto.v2.ETLStage;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
@@ -64,8 +64,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class DataStreamsTest extends HydratorTestBase {
 
-  protected static final ArtifactId APP_ARTIFACT_ID =
-    new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "app", "1.0.0");
+  protected static final ArtifactId APP_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("app", "1.0.0");
   protected static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("app", "1.0.0");
   private static int startCount = 0;
   @ClassRule
@@ -108,9 +107,9 @@ public class DataStreamsTest extends HydratorTestBase {
       .setBatchInterval("1s")
       .build();
 
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "simpleApp");
+    ApplicationId appId = NamespaceId.DEFAULT.app("simpleApp");
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
     sparkManager.start();
@@ -187,8 +186,8 @@ public class DataStreamsTest extends HydratorTestBase {
       .build();
 
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, pipelineConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "ParallelAggApp");
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationId appId = NamespaceId.DEFAULT.app("ParallelAggApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
     sparkManager.start();
@@ -288,8 +287,8 @@ public class DataStreamsTest extends HydratorTestBase {
       .build();
 
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "WindowerApp");
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationId appId = NamespaceId.DEFAULT.app("WindowerApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
     sparkManager.start();
@@ -428,8 +427,8 @@ public class DataStreamsTest extends HydratorTestBase {
       .build();
 
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "JoinerApp");
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationId appId = NamespaceId.DEFAULT.app("JoinerApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
     sparkManager.start();
@@ -485,11 +484,11 @@ public class DataStreamsTest extends HydratorTestBase {
     validateMetric(appId, "multijoinSink.records.in", 3);
   }
 
-  private void validateMetric(Id.Application appId, String metric,
+  private void validateMetric(ApplicationId appId, String metric,
                               long expected) throws TimeoutException, InterruptedException {
     MetricsManager metricsManager = getMetricsManager();
-    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, appId.getNamespaceId(),
-                                               Constants.Metrics.Tag.APP, appId.getId(),
+    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, appId.getNamespace(),
+                                               Constants.Metrics.Tag.APP, appId.getEntityName(),
                                                Constants.Metrics.Tag.SPARK, DataStreamsSparkLauncher.NAME);
     metricsManager.waitForTotalMetricCount(tags, "user." + metric, expected, 10, TimeUnit.SECONDS);
     metricsManager.waitForTotalMetricCount(tags, "user." + metric, expected, 10, TimeUnit.SECONDS);

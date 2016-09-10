@@ -21,9 +21,10 @@ import co.cask.cdap.client.ArtifactClient;
 import co.cask.cdap.etl.proto.ArtifactSelectorConfig;
 import co.cask.cdap.etl.proto.UpgradeContext;
 import co.cask.cdap.etl.tool.ETLVersion;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.artifact.PluginInfo;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 
 import java.util.List;
 import javax.annotation.Nullable;
@@ -33,26 +34,25 @@ import javax.annotation.Nullable;
  */
 public class ClientUpgradeContext implements UpgradeContext {
   protected final ArtifactClient artifactClient;
-  protected final Id.Artifact artifactId;
+  protected final ArtifactId artifactId;
 
-  public static ClientUpgradeContext getBatchContext(Id.Namespace namespace, ArtifactClient artifactClient) {
+  public static ClientUpgradeContext getBatchContext(NamespaceId namespace, ArtifactClient artifactClient) {
     return new ClientUpgradeContext(artifactClient,
-                                    Id.Artifact.from(namespace, "cdap-etl-batch", ETLVersion.getVersion()));
+                                    namespace.artifact("cdap-etl-batch", ETLVersion.getVersion()));
   }
 
-  public static ClientUpgradeContext getRealtimeContext(Id.Namespace namespace, ArtifactClient artifactClient) {
-    return new ClientUpgradeContext(artifactClient,
-                                    Id.Artifact.from(namespace, "cdap-etl-realtime", ETLVersion.getVersion()));
-  }
-
-
-  public static ClientUpgradeContext getDataPipelineContext(Id.Namespace namespace, ArtifactClient artifactClient) {
-    return new ClientUpgradeContext(artifactClient,
-                                    Id.Artifact.from(namespace, "cdap-data-pipeline", ETLVersion.getVersion()));
+  public static ClientUpgradeContext getRealtimeContext(NamespaceId namespace, ArtifactClient artifactClient) {
+    return new ClientUpgradeContext(artifactClient, namespace.artifact("cdap-etl-realtime", ETLVersion.getVersion()));
   }
 
 
-  public ClientUpgradeContext(ArtifactClient artifactClient, Id.Artifact artifactId) {
+  public static ClientUpgradeContext getDataPipelineContext(NamespaceId namespace, ArtifactClient artifactClient) {
+    return new ClientUpgradeContext(artifactClient,
+                                    namespace.artifact("cdap-data-pipeline", ETLVersion.getVersion()));
+  }
+
+
+  public ClientUpgradeContext(ArtifactClient artifactClient, ArtifactId artifactId) {
     this.artifactClient = artifactClient;
     this.artifactId = artifactId;
   }
@@ -62,7 +62,7 @@ public class ClientUpgradeContext implements UpgradeContext {
   public ArtifactSelectorConfig getPluginArtifact(String pluginType, String pluginName) {
     try {
       List<PluginInfo> plugins =
-        artifactClient.getPluginInfo(artifactId, pluginType, pluginName, ArtifactScope.SYSTEM);
+        artifactClient.getPluginInfo(artifactId.toId(), pluginType, pluginName, ArtifactScope.SYSTEM);
 
       if (plugins.isEmpty()) {
         return null;

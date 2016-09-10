@@ -32,10 +32,11 @@ import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.etl.tool.config.ClientUpgradeContext;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.ApplicationRecord;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
@@ -92,20 +93,20 @@ public class UpgradeTool {
     this.errorDir = errorDir;
   }
 
-  private Set<Id.Application> upgrade() throws Exception {
-    Set<Id.Application> upgraded = new HashSet<>();
+  private Set<ApplicationId> upgrade() throws Exception {
+    Set<ApplicationId> upgraded = new HashSet<>();
     for (NamespaceMeta namespaceMeta : namespaceClient.list()) {
-      Id.Namespace namespace = Id.Namespace.from(namespaceMeta.getName());
+      NamespaceId namespace = new NamespaceId(namespaceMeta.getName());
       upgraded.addAll(upgrade(namespace));
     }
     return upgraded;
   }
 
-  private Set<Id.Application> upgrade(Id.Namespace namespace) throws Exception {
-    Set<Id.Application> upgraded = new HashSet<>();
+  private Set<ApplicationId> upgrade(NamespaceId namespace) throws Exception {
+    Set<ApplicationId> upgraded = new HashSet<>();
     Set<String> artifactNames = ImmutableSet.of(BATCH_NAME, REALTIME_NAME, DATA_PIPELINE_NAME);
-    for (ApplicationRecord appRecord : appClient.list(namespace, artifactNames, null)) {
-      Id.Application appId = Id.Application.from(namespace, appRecord.getName());
+    for (ApplicationRecord appRecord : appClient.list(namespace.toId(), artifactNames, null)) {
+      ApplicationId appId = namespace.app(appRecord.getName());
       if (upgrade(appId)) {
         upgraded.add(appId);
       }
@@ -113,8 +114,8 @@ public class UpgradeTool {
     return upgraded;
   }
 
-  private boolean upgrade(Id.Application appId) throws Exception {
-    ApplicationDetail appDetail = appClient.get(appId);
+  private boolean upgrade(ApplicationId appId) throws Exception {
+    ApplicationDetail appDetail = appClient.get(appId.toId());
 
     if (!shouldUpgrade(appDetail.getArtifact())) {
       return false;
@@ -124,15 +125,15 @@ public class UpgradeTool {
     String artifactName = appDetail.getArtifact().getName();
     String artifactVersion = appDetail.getVersion();
     if (BATCH_NAME.equals(artifactName)) {
-      UpgradeContext upgradeContext = ClientUpgradeContext.getBatchContext(appId.getNamespace(), artifactClient);
+      UpgradeContext upgradeContext = ClientUpgradeContext.getBatchContext(appId.getParent(), artifactClient);
       ETLBatchConfig upgradedConfig = convertBatchConfig(artifactVersion, appDetail.getConfiguration(), upgradeContext);
       upgrade(appId, batchArtifact, upgradedConfig);
     } else if (DATA_PIPELINE_NAME.equals(artifactName)) {
-      UpgradeContext upgradeContext = ClientUpgradeContext.getDataPipelineContext(appId.getNamespace(), artifactClient);
+      UpgradeContext upgradeContext = ClientUpgradeContext.getDataPipelineContext(appId.getParent(), artifactClient);
       ETLBatchConfig upgradedConfig = convertBatchConfig(artifactVersion, appDetail.getConfiguration(), upgradeContext);
       upgrade(appId, dataPipelineArtifact, upgradedConfig);
     } else if (REALTIME_NAME.equals(artifactName)) {
-      UpgradeContext upgradeContext = ClientUpgradeContext.getRealtimeContext(appId.getNamespace(), artifactClient);
+      UpgradeContext upgradeContext = ClientUpgradeContext.getRealtimeContext(appId.getParent(), artifactClient);
       ETLRealtimeConfig upgradedConfig =
         convertRealtimeConfig(artifactVersion, appDetail.getConfiguration(), upgradeContext);
       upgrade(appId, realtimeArtifact, upgradedConfig);
@@ -144,15 +145,15 @@ public class UpgradeTool {
     return true;
   }
 
-  private <T extends ETLConfig> void upgrade(Id.Application appId, ArtifactSummary appArtifact,
+  private <T extends ETLConfig> void upgrade(ApplicationId appId, ArtifactSummary appArtifact,
                                              T config) throws IOException {
     AppRequest<T> updateRequest = new AppRequest<>(appArtifact, config);
     try {
-      appClient.update(appId, updateRequest);
+      appClient.update(appId.toId(), updateRequest);
     } catch (Exception e) {
       LOG.error("Error upgrading pipeline {}.", appId, e);
       if (errorDir != null) {
-        File errorFile = new File(errorDir, String.format("%s-%s.json", appId.getNamespaceId(), appId.getId()));
+        File errorFile = new File(errorDir, String.format("%s-%s.json", appId.getParent(), appId.getEntityName()));
         LOG.error("Writing config for pipeline {} to {} for further manual investigation.",
                   appId, errorFile.getAbsolutePath());
         try (OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(errorFile))) {
@@ -240,7 +241,7 @@ public class UpgradeTool {
       if (namespace == null) {
         throw new IllegalArgumentException("Must specify a namespace when specifying a pipeline.");
       }
-      Id.Application appId = Id.Application.from(namespace, pipelineName);
+      ApplicationId appId = new ApplicationId(namespace, pipelineName);
       if (upgradeTool.upgrade(appId)) {
         LOG.info("Successfully upgraded {}.", appId);
       } else {
@@ -250,20 +251,20 @@ public class UpgradeTool {
     }
 
     if (namespace != null) {
-      printUpgraded(upgradeTool.upgrade(Id.Namespace.from(namespace)));
+      printUpgraded(upgradeTool.upgrade(new NamespaceId(namespace)));
       System.exit(0);
     }
 
     printUpgraded(upgradeTool.upgrade());
   }
 
-  private static void printUpgraded(Set<Id.Application> pipelines) {
+  private static void printUpgraded(Set<ApplicationId> pipelines) {
     if (pipelines.size() == 0) {
       LOG.info("Did not find any pipelines that needed upgrading.");
       return;
     }
     LOG.info("Successfully upgraded {} pipelines:", pipelines.size());
-    for (Id.Application pipeline : pipelines) {
+    for (ApplicationId pipeline : pipelines) {
       LOG.info("  {}", pipeline);
     }
   }
@@ -330,7 +331,7 @@ public class UpgradeTool {
     String oldArtifactVersion = artifactFile.artifact.getVersion();
     if (BATCH_NAME.equals(artifactFile.artifact.getName())) {
       ArtifactSummary artifact = new ArtifactSummary(BATCH_NAME, version, ArtifactScope.SYSTEM);
-      UpgradeContext upgradeContext = ClientUpgradeContext.getBatchContext(Id.Namespace.DEFAULT, artifactClient);
+      UpgradeContext upgradeContext = ClientUpgradeContext.getBatchContext(NamespaceId.DEFAULT, artifactClient);
       ETLBatchConfig config = convertBatchConfig(oldArtifactVersion, artifactFile.config.toString(), upgradeContext);
       AppRequest<ETLBatchConfig> updated = new AppRequest<>(artifact, config);
       try (BufferedWriter writer = Files.newBufferedWriter(outputFile.toPath(), StandardCharsets.UTF_8)) {
@@ -338,7 +339,7 @@ public class UpgradeTool {
       }
     } else if (DATA_PIPELINE_NAME.equals(artifactFile.artifact.getName())) {
       ArtifactSummary artifact = new ArtifactSummary(DATA_PIPELINE_NAME, version, ArtifactScope.SYSTEM);
-      UpgradeContext upgradeContext = ClientUpgradeContext.getDataPipelineContext(Id.Namespace.DEFAULT, artifactClient);
+      UpgradeContext upgradeContext = ClientUpgradeContext.getDataPipelineContext(NamespaceId.DEFAULT, artifactClient);
       ETLBatchConfig config = convertBatchConfig(oldArtifactVersion, artifactFile.config.toString(), upgradeContext);
       AppRequest<ETLBatchConfig> updated = new AppRequest<>(artifact, config);
       try (BufferedWriter writer = Files.newBufferedWriter(outputFile.toPath(), StandardCharsets.UTF_8)) {
@@ -346,7 +347,7 @@ public class UpgradeTool {
       }
     } else {
       ArtifactSummary artifact = new ArtifactSummary(REALTIME_NAME, version, ArtifactScope.SYSTEM);
-      UpgradeContext upgradeContext = ClientUpgradeContext.getRealtimeContext(Id.Namespace.DEFAULT, artifactClient);
+      UpgradeContext upgradeContext = ClientUpgradeContext.getRealtimeContext(NamespaceId.DEFAULT, artifactClient);
       ETLRealtimeConfig config =
         convertRealtimeConfig(oldArtifactVersion, artifactFile.config.toString(), upgradeContext);
       AppRequest<ETLRealtimeConfig> updated = new AppRequest<>(artifact, config);

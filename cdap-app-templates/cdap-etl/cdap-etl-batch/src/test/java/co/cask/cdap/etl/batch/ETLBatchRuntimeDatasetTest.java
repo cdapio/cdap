@@ -21,8 +21,9 @@ import co.cask.cdap.etl.mock.batch.MockRuntimeDatasetSource;
 import co.cask.cdap.etl.proto.Engine;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLStage;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.WorkflowManager;
 import com.google.common.collect.ImmutableMap;
@@ -51,8 +52,8 @@ public class ETLBatchRuntimeDatasetTest extends ETLBatchTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "MRApp");
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationId appId = NamespaceId.DEFAULT.app("MRApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     // set runtime arguments for macro substitution
     Map<String, String> runtimeArguments = ImmutableMap.<String, String>of("runtime", "mockRuntime",
@@ -93,8 +94,8 @@ public class ETLBatchRuntimeDatasetTest extends ETLBatchTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "SparkApp");
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationId appId = NamespaceId.DEFAULT.app("SparkApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     // set runtime arguments for macro substitution
     Map<String, String> runtimeArguments = ImmutableMap.<String, String>of("runtime", "mockRuntime",
@@ -136,8 +137,8 @@ public class ETLBatchRuntimeDatasetTest extends ETLBatchTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "MRApp");
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationId appId = NamespaceId.DEFAULT.app("MRApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     // set runtime arguments for macro substitution
     Map<String, String> runtimeArguments = ImmutableMap.<String, String>of("runtime", "mockRuntime",
