@@ -99,12 +99,6 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
     res.send('window.CDAP_CONFIG = '+data+';');
   });
 
-  app.post('/resetWelcomeMessage', function(req, res) {
-    var writer = require('./config/writer.js');
-    writer.resetStandaloneWelcomeMessage()
-      .then(() => res.sendStatus(200))
-      .catch((err) => res.status(500).send(err));
-  });
   app.get('/ui-config.js', function (req, res) {
     var path = __dirname + '/config/cdap-ui-config.json';
 
