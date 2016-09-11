@@ -16,9 +16,9 @@
 import React, {PropTypes, Component} from 'react';
 
 import Tabs from '../Tabs';
-import TabContents from '../TabContents';
-import TabContent from '../TabContent';
 import TabHeaders from '../TabHeaders';
+import {TabContent, TabPane} from 'reactstrap';
+
 import TabHead from '../TabHead';
 require('./ConfigurableTab.less');
 
@@ -63,20 +63,20 @@ export default class ConfigurableTab extends Component{
               );
             })}
           </TabHeaders>
-          <TabContents activeTab={this.state.tabId}>
+          <TabContent activeTab={this.state.tabId}>
             {
               this.state.tabs.map((tab, index) => {
                 return (
-                  <TabContent
+                  <TabPane
                     tabId={tab.id}
                     key={index}
                   >
                     {tab.content}
-                  </TabContent>
+                  </TabPane>
                 );
               })
             }
-          </TabContents>
+          </TabContent>
         </Tabs>
       </div>
     );
