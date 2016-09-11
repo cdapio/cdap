@@ -25,8 +25,9 @@ import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
 import co.cask.cdap.etl.proto.Engine;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLStage;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.WorkflowManager;
@@ -65,8 +66,8 @@ public class ETLSparkTestRun extends ETLBatchTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "DagApp");
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationId appId = NamespaceId.DEFAULT.app("DagApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     // write input
     Schema schema = Schema.recordOf(
@@ -78,7 +79,7 @@ public class ETLSparkTestRun extends ETLBatchTestBase {
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
     StructuredRecord recordJane = StructuredRecord.builder(schema).set("name", "jane").build();
 
-    DataSetManager<Table> sourceManager = getDataset(Id.Namespace.DEFAULT, "sparkinput");
+    DataSetManager<Table> sourceManager = getDataset(NamespaceId.DEFAULT.toId(), "sparkinput");
     MockSource.writeInput(sourceManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
 
     // run the pipeline

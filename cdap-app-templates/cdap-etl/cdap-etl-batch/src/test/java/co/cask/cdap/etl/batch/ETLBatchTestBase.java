@@ -41,8 +41,7 @@ import java.util.List;
  * Base test class that sets up plugins and the batch template.
  */
 public class ETLBatchTestBase extends HydratorTestBase {
-  protected static final ArtifactId APP_ARTIFACT_ID =
-    new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "app", "1.0.0");
+  protected static final ArtifactId APP_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("app", "1.0.0");
   protected static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("app", "1.0.0");
   private static int startCount = 0;
 
