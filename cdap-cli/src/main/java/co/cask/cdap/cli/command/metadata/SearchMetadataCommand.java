@@ -62,7 +62,7 @@ public class SearchMetadataCommand extends AbstractCommand {
     String searchQuery = arguments.get(ArgumentName.SEARCH_QUERY.toString());
     String type = arguments.getOptional(ArgumentName.TARGET_TYPE.toString());
     Set<MetadataSearchResultRecord> searchResults =
-      metadataClient.searchMetadata(cliConfig.getCurrentNamespace(), searchQuery, parseTargetType(type));
+      metadataClient.searchMetadata(cliConfig.getCurrentNamespace().toId(), searchQuery, parseTargetType(type));
     Table table = Table.builder()
       .setHeader("Entity")
       .setRows(Lists.newArrayList(searchResults), new RowMaker<MetadataSearchResultRecord>() {

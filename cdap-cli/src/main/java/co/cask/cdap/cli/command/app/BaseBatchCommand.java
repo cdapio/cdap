@@ -26,9 +26,9 @@ import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.BatchProgram;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
@@ -60,7 +60,7 @@ public abstract class BaseBatchCommand<T extends BatchProgram> extends AbstractA
     Args<T> args = readArgs(arguments);
     if (args.programs.isEmpty()) {
       output.printf(String.format("application '%s' contains no programs of type '%s'",
-        args.appId.getId(), Joiner.on(',').join(args.programTypes)));
+        args.appId.getEntityName(), Joiner.on(',').join(args.programTypes)));
       return;
     }
 
@@ -74,7 +74,7 @@ public abstract class BaseBatchCommand<T extends BatchProgram> extends AbstractA
     throws ApplicationNotFoundException, UnauthenticatedException, IOException, UnauthorizedException {
 
     String appName = arguments.get(ArgumentName.APP.getName());
-    Id.Application appId = Id.Application.from(cliConfig.getCurrentNamespace(), appName);
+    ApplicationId appId = cliConfig.getCurrentNamespace().app(appName);
 
     Set<ProgramType> programTypes = getDefaultProgramTypes();
     if (arguments.hasArgument(ArgumentName.PROGRAM_TYPES.getName())) {
@@ -87,7 +87,7 @@ public abstract class BaseBatchCommand<T extends BatchProgram> extends AbstractA
     }
 
     List<T> programs = new ArrayList<>();
-    Map<ProgramType, List<ProgramRecord>> appPrograms = appClient.listProgramsByType(appId);
+    Map<ProgramType, List<ProgramRecord>> appPrograms = appClient.listProgramsByType(appId.toId());
     for (ProgramType programType : programTypes) {
       List<ProgramRecord> programRecords = appPrograms.get(programType);
       if (programRecords != null) {
@@ -131,11 +131,11 @@ public abstract class BaseBatchCommand<T extends BatchProgram> extends AbstractA
    * @param <T> type of input object
    */
   protected static class Args<T> {
-    protected final Id.Application appId;
+    protected final ApplicationId appId;
     protected final Set<ProgramType> programTypes;
     protected final List<T> programs;
 
-    public Args(Id.Application appId, Set<ProgramType> programTypes, List<T> programs) {
+    public Args(ApplicationId appId, Set<ProgramType> programTypes, List<T> programs) {
       this.appId = appId;
       this.programTypes = programTypes;
       this.programs = programs;

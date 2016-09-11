@@ -25,7 +25,7 @@ import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.StreamClient;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.cli.Arguments;
 
 import java.io.PrintStream;
@@ -46,11 +46,10 @@ public class SendStreamEventCommand extends AbstractAuthCommand implements Categ
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    Id.Stream streamId = Id.Stream.from(cliConfig.getCurrentNamespace(),
-                                        arguments.get(ArgumentName.STREAM.toString()));
+    StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
     String streamEvent = arguments.get(ArgumentName.STREAM_EVENT.toString());
-    streamClient.sendEvent(streamId, streamEvent);
-    output.printf("Successfully sent stream event to stream '%s'\n", streamId.getId());
+    streamClient.sendEvent(streamId.toId(), streamEvent);
+    output.printf("Successfully sent stream event to stream '%s'\n", streamId.getEntityName());
   }
 
   @Override

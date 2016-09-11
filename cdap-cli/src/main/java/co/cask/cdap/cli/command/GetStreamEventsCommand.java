@@ -26,7 +26,7 @@ import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.StreamClient;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -51,14 +51,13 @@ public class GetStreamEventsCommand extends AbstractCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     long currentTime = System.currentTimeMillis();
 
-    Id.Stream streamId = Id.Stream.from(cliConfig.getCurrentNamespace(),
-                                        arguments.get(ArgumentName.STREAM.toString()));
+    StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
     long startTime = getTimestamp(arguments.get(ArgumentName.START_TIME.toString(), "min"), currentTime);
     long endTime = getTimestamp(arguments.get(ArgumentName.END_TIME.toString(), "max"), currentTime);
     int limit = arguments.getInt(ArgumentName.LIMIT.toString(), Integer.MAX_VALUE);
 
     // Get a list of stream events and prints it.
-    List<StreamEvent> events = streamClient.getEvents(streamId, startTime, endTime,
+    List<StreamEvent> events = streamClient.getEvents(streamId.toId(), startTime, endTime,
                                                       limit, Lists.<StreamEvent>newArrayList());
     Table table = Table.builder()
       .setHeader("timestamp", "headers", "body size", "body")
@@ -73,7 +72,7 @@ public class GetStreamEventsCommand extends AbstractCommand {
       }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
 
-    output.printf("Fetched %d events from stream '%s'", events.size(), streamId.getId());
+    output.printf("Fetched %d events from stream '%s'", events.size(), streamId.getEntityName());
     output.println();
   }
 

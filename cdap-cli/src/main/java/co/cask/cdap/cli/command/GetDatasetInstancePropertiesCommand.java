@@ -23,7 +23,7 @@ import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.client.DatasetClient;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.common.cli.Arguments;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -47,10 +47,10 @@ public class GetDatasetInstancePropertiesCommand extends AbstractCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    Id.DatasetInstance instance = Id.DatasetInstance.from(cliConfig.getCurrentNamespace(),
-                                                          arguments.get(ArgumentName.DATASET.toString()));
+    DatasetId instance = cliConfig.getCurrentNamespace().dataset(
+      arguments.get(ArgumentName.DATASET.toString()));
 
-    Map<String, String> properties = datasetClient.getProperties(instance);
+    Map<String, String> properties = datasetClient.getProperties(instance.toId());
     output.printf(GSON.toJson(properties));
   }
 

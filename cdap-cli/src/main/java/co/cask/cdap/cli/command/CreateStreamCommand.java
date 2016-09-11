@@ -25,7 +25,6 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Charsets;
@@ -71,7 +70,7 @@ public class CreateStreamCommand extends AbstractAuthCommand {
       }
     }
 
-    streamClient.create(Id.Stream.from(cliConfig.getCurrentNamespace(), streamId), streamProperties);
+    streamClient.create(cliConfig.getCurrentNamespace().stream(streamId).toId(), streamProperties);
     output.printf("Successfully created stream with ID '%s'\n", streamId);
   }
 

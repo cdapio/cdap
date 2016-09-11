@@ -25,6 +25,10 @@ import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.FlowletId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ServiceId;
 import co.cask.common.cli.Arguments;
 
 import java.io.PrintStream;
@@ -46,7 +50,7 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
-    Id.Application appId = Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]);
+    ApplicationId appId = cliConfig.getCurrentNamespace().app(programIdParts[0]);
     int numInstances = arguments.getInt(ArgumentName.NUM_INSTANCES.toString());
 
     switch (elementType) {
@@ -56,30 +60,30 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
         }
         String flowId = programIdParts[1];
         String flowletName = programIdParts[2];
-        Id.Flow.Flowlet flowletId = Id.Flow.Flowlet.from(appId, flowId, flowletName);
-        programClient.setFlowletInstances(flowletId, numInstances);
+        FlowletId flowletId = appId.flow(flowId).flowlet(flowletName);
+        programClient.setFlowletInstances(flowletId.toId(), numInstances);
         output.printf("Successfully set flowlet '%s' of flow '%s' of app '%s' to %d instances\n",
-                      flowId, flowletId, appId.getId(), numInstances);
+                      flowId, flowletId, appId.getEntityName(), numInstances);
         break;
       case WORKER:
         if (programIdParts.length < 2) {
           throw new CommandInputError(this);
         }
         String workerName = programIdParts[1];
-        Id.Worker workerId = Id.Worker.from(appId, workerName);
-        programClient.setWorkerInstances(workerId, numInstances);
+        ProgramId workerId = appId.worker(workerName);
+        programClient.setWorkerInstances((Id.Worker) workerId.toId(), numInstances);
         output.printf("Successfully set worker '%s' of app '%s' to %d instances\n",
-                      workerName, appId.getId(), numInstances);
+                      workerName, appId.getEntityName(), numInstances);
         break;
       case SERVICE:
         if (programIdParts.length < 2) {
           throw new CommandInputError(this);
         }
         String serviceName = programIdParts[1];
-        Id.Service service = Id.Service.from(appId, serviceName);
-        programClient.setServiceInstances(service, numInstances);
+        ServiceId service = appId.service(serviceName);
+        programClient.setServiceInstances(service.toId(), numInstances);
         output.printf("Successfully set service '%s' of app '%s' to %d instances\n",
-                      serviceName, appId.getId(), numInstances);
+                      serviceName, appId.getEntityName(), numInstances);
         break;
       default:
         // TODO: remove this

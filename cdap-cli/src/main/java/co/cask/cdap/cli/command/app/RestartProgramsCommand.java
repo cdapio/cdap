@@ -23,6 +23,7 @@ import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.proto.BatchProgram;
 import co.cask.cdap.proto.BatchProgramStart;
 import co.cask.cdap.proto.ProgramRecord;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
@@ -48,15 +49,17 @@ public class RestartProgramsCommand extends BaseBatchCommand<BatchProgram> {
 
   @Override
   protected void runBatchCommand(PrintStream printStream, Args<BatchProgram> args) throws Exception {
+    NamespaceId namespace = args.appId.getParent();
+
     printStream.print("Stopping programs...\n");
-    programClient.stop(args.appId.getNamespace(), args.programs);
+    programClient.stop(namespace.toId(), args.programs);
 
     printStream.print("Starting programs...\n");
     List<BatchProgramStart> startList = new ArrayList<>(args.programs.size());
     for (BatchProgram program : args.programs) {
       startList.add(new BatchProgramStart(program));
     }
-    programClient.start(args.appId.getNamespace(), startList);
+    programClient.start(namespace.toId(), startList);
   }
 
   @Override

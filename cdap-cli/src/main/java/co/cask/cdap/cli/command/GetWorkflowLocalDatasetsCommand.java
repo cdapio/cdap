@@ -26,7 +26,6 @@ import co.cask.cdap.client.WorkflowClient;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.cli.Arguments;
@@ -59,9 +58,8 @@ public class GetWorkflowLocalDatasetsCommand extends AbstractCommand {
       throw new CommandInputError(this);
     }
 
-    ProgramRunId programRunId = new ProgramRunId(cliConfig.getCurrentNamespace().getId(), programIdParts[0],
-                                          ProgramType.WORKFLOW, programIdParts[1],
-                                          arguments.get(ArgumentName.RUN_ID.toString()));
+    ProgramRunId programRunId = cliConfig.getCurrentNamespace().app(programIdParts[0]).workflow(programIdParts[1])
+      .run(arguments.get(ArgumentName.RUN_ID.toString()));
 
     Table table = getWorkflowLocalDatasets(programRunId);
     cliConfig.getTableRenderer().render(cliConfig, printStream, table);

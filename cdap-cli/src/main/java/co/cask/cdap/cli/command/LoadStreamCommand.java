@@ -26,7 +26,7 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.client.StreamClient;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
@@ -68,8 +68,7 @@ public class LoadStreamCommand extends AbstractAuthCommand implements Categorize
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    Id.Stream streamId = Id.Stream.from(cliConfig.getCurrentNamespace(),
-                                        arguments.get(ArgumentName.STREAM.toString()));
+    StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
     File file = resolver.resolvePathToFile(arguments.get(ArgumentName.LOCAL_FILE_PATH.toString()));
     String contentType = arguments.get(ArgumentName.CONTENT_TYPE.toString(), "");
 
@@ -83,8 +82,8 @@ public class LoadStreamCommand extends AbstractAuthCommand implements Categorize
       throw new IllegalArgumentException("Unsupported file format.");
     }
 
-    streamClient.sendFile(streamId, contentType, file);
-    output.printf("Successfully loaded file to stream '%s'\n", streamId.getId());
+    streamClient.sendFile(streamId.toId(), contentType, file);
+    output.printf("Successfully loaded file to stream '%s'\n", streamId.getEntityName());
   }
 
   @Override

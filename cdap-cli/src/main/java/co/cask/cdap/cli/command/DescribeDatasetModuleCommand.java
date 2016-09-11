@@ -26,7 +26,7 @@ import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.DatasetModuleClient;
 import co.cask.cdap.proto.DatasetModuleMeta;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -51,9 +51,9 @@ public class DescribeDatasetModuleCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    Id.DatasetModule moduleId = Id.DatasetModule.from(cliConfig.getCurrentNamespace(),
-                                                      arguments.get(ArgumentName.DATASET_MODULE.toString()));
-    DatasetModuleMeta datasetModuleMeta = datasetModuleClient.get(moduleId);
+    DatasetModuleId moduleId = cliConfig.getCurrentNamespace().datasetModule(
+      arguments.get(ArgumentName.DATASET_MODULE.toString()));
+    DatasetModuleMeta datasetModuleMeta = datasetModuleClient.get(moduleId.toId());
 
     Table table = Table.builder()
       .setHeader("name", "className", "jarLocation", "types", "usesModules", "usedByModules")

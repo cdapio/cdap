@@ -24,7 +24,7 @@ import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.ArtifactClient;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -50,14 +50,14 @@ public class ListArtifactPluginTypesCommand extends AbstractAuthCommand {
 
     String artifactName = arguments.get(ArgumentName.ARTIFACT_NAME.toString());
     String artifactVersion = arguments.get(ArgumentName.ARTIFACT_VERSION.toString());
-    Id.Artifact artifactId = Id.Artifact.from(cliConfig.getCurrentNamespace(), artifactName, artifactVersion);
+    ArtifactId artifactId = cliConfig.getCurrentNamespace().artifact(artifactName, artifactVersion);
 
     List<String> types;
     String scopeStr = arguments.getOptional(ArgumentName.SCOPE.toString());
     if (scopeStr == null) {
-      types = artifactClient.getPluginTypes(artifactId);
+      types = artifactClient.getPluginTypes(artifactId.toId());
     } else {
-      types = artifactClient.getPluginTypes(artifactId, ArtifactScope.valueOf(scopeStr.toUpperCase()));
+      types = artifactClient.getPluginTypes(artifactId.toId(), ArtifactScope.valueOf(scopeStr.toUpperCase()));
     }
 
     Table table = Table.builder()

@@ -84,8 +84,12 @@ public class ApplicationId extends NamespacedEntityId implements ParentedId<Name
     return new ProgramId(this, ProgramType.WORKER, program);
   }
 
-  public ProgramId service(String program) {
-    return new ProgramId(this, ProgramType.SERVICE, program);
+  public ServiceId service(String program) {
+    return new ServiceId(this, program);
+  }
+
+  public ScheduleId schedule(String schedule) {
+    return new ScheduleId(namespace, application, schedule);
   }
 
   @Override

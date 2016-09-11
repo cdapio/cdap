@@ -23,7 +23,8 @@ import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.client.ArtifactClient;
 import co.cask.cdap.common.conf.ArtifactConfig;
 import co.cask.cdap.common.conf.ArtifactConfigReader;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.common.cli.Arguments;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
@@ -55,34 +56,36 @@ public class LoadArtifactCommand extends AbstractAuthCommand {
 
     String name = arguments.getOptional(ArgumentName.ARTIFACT_NAME.toString());
     String version = arguments.getOptional(ArgumentName.ARTIFACT_VERSION.toString());
-    Id.Artifact artifactId;
+    ArtifactId artifactId;
     if (name == null && version != null) {
       throw new IllegalArgumentException("If a version is specified, name must also be specified.");
     } else if (name != null && version == null) {
       throw new IllegalArgumentException("If a name is specified, a version must also be specified.");
     } else if (name == null) {
-      artifactId = Id.Artifact.parse(cliConfig.getCurrentNamespace(), artifactFile.getName());
+      artifactId = new ArtifactId(cliConfig.getCurrentNamespace().getNamespace(), artifactFile.getName());
     } else {
-      artifactId = Id.Artifact.from(cliConfig.getCurrentNamespace(), name, version);
+      artifactId = cliConfig.getCurrentNamespace().artifact(name, version);
     }
 
     String configPath = arguments.getOptional(ArgumentName.ARTIFACT_CONFIG_FILE.toString());
+    NamespaceId namespace = artifactId.getParent();
     if (configPath == null) {
-      artifactClient.add(artifactId.getNamespace(), artifactId.getName(), Files.newInputStreamSupplier(artifactFile),
-                         artifactId.getVersion().getVersion());
+      artifactClient.add(namespace.toId(), artifactId.getEntityName(),
+                         Files.newInputStreamSupplier(artifactFile), artifactId.getVersion());
     } else {
       File configFile = resolver.resolvePathToFile(configPath);
-      ArtifactConfig artifactConfig = configReader.read(artifactId.getNamespace(), configFile);
-      artifactClient.add(artifactId.getNamespace(), artifactId.getName(), Files.newInputStreamSupplier(artifactFile),
-        artifactId.getVersion().getVersion(), artifactConfig.getParents(), artifactConfig.getPlugins());
+      ArtifactConfig artifactConfig = configReader.read(namespace.toId(), configFile);
+      artifactClient.add(namespace.toId(), artifactId.getEntityName(),
+                         Files.newInputStreamSupplier(artifactFile), artifactId.getVersion(),
+                         artifactConfig.getParents(), artifactConfig.getPlugins());
 
       Map<String, String> properties = artifactConfig.getProperties();
       if (properties != null && !properties.isEmpty()) {
-        artifactClient.writeProperties(artifactId, properties);
+        artifactClient.writeProperties(artifactId.toId(), properties);
       }
     }
 
-    output.printf("Successfully added artifact with name '%s'\n", artifactId.getName());
+    output.printf("Successfully added artifact with name '%s'\n", artifactId.getEntityName());
   }
 
   @Override

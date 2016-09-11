@@ -25,7 +25,7 @@ import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.ProgramClient;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.common.cli.Arguments;
 import com.google.gson.Gson;
 
@@ -58,20 +58,19 @@ public class StartProgramCommand extends AbstractAuthCommand {
 
     String appId = programIdParts[0];
     String programName = programIdParts[1];
-    Id.Program programId = Id.Program.from(cliConfig.getCurrentNamespace(), appId,
-                                           elementType.getProgramType(), programName);
+    ProgramId programId = cliConfig.getCurrentNamespace().app(appId).program(elementType.getProgramType(), programName);
 
     String runtimeArgsString = arguments.get(ArgumentName.RUNTIME_ARGS.toString(), "");
     if (runtimeArgsString == null || runtimeArgsString.isEmpty()) {
       // run with stored runtime args
-      programClient.start(programId, isDebug);
-      runtimeArgsString = GSON.toJson(programClient.getRuntimeArgs(programId));
+      programClient.start(programId.toId(), isDebug);
+      runtimeArgsString = GSON.toJson(programClient.getRuntimeArgs(programId.toId()));
       output.printf("Successfully started %s '%s' of application '%s' with stored runtime arguments '%s'\n",
                     elementType.getName(), programName, appId, runtimeArgsString);
     } else {
       // run with user-provided runtime args
       Map<String, String> runtimeArgs = ArgumentParser.parseMap(runtimeArgsString);
-      programClient.start(programId, isDebug, runtimeArgs);
+      programClient.start(programId.toId(), isDebug, runtimeArgs);
       output.printf("Successfully started %s '%s' of application '%s' with provided runtime arguments '%s'\n",
                     elementType.getName(), programName, appId, runtimeArgsString);
     }

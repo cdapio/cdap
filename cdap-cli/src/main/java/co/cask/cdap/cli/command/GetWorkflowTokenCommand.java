@@ -27,9 +27,11 @@ import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.WorkflowClient;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
@@ -59,13 +61,13 @@ public class GetWorkflowTokenCommand extends AbstractCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
-    Id.Application appId = Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]);
+    ApplicationId appId = cliConfig.getCurrentNamespace().app(programIdParts[0]);
 
     if (programIdParts.length < 2) {
       throw new CommandInputError(this);
     }
-    Id.Workflow workflowId = Id.Workflow.from(appId, programIdParts[1]);
-    Id.Run runId = new Id.Run(workflowId, arguments.get(ArgumentName.RUN_ID.toString()));
+    ProgramId workflowId = appId.workflow(programIdParts[1]);
+    ProgramRunId runId = workflowId.run(arguments.get(ArgumentName.RUN_ID.toString()));
     WorkflowToken.Scope workflowTokenScope = null;
     if (arguments.hasArgument(ArgumentName.WORKFLOW_TOKEN_SCOPE.toString())) {
       String scope = arguments.get(ArgumentName.WORKFLOW_TOKEN_SCOPE.toString()).toUpperCase();
@@ -98,9 +100,9 @@ public class GetWorkflowTokenCommand extends AbstractCommand {
     return "Gets the workflow token of a workflow for a given run ID";
   }
 
-  private Table getWorkflowToken(Id.Run runId, WorkflowToken.Scope workflowTokenScope, String key)
+  private Table getWorkflowToken(ProgramRunId runId, WorkflowToken.Scope workflowTokenScope, String key)
     throws UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
-    WorkflowTokenDetail workflowToken = workflowClient.getWorkflowToken(runId, workflowTokenScope, key);
+    WorkflowTokenDetail workflowToken = workflowClient.getWorkflowToken(runId.toId(), workflowTokenScope, key);
     List<Map.Entry<String, List<WorkflowTokenDetail.NodeValueDetail>>> tokenKeys = new ArrayList<>();
     tokenKeys.addAll(workflowToken.getTokenData().entrySet());
     return Table.builder()
@@ -115,9 +117,10 @@ public class GetWorkflowTokenCommand extends AbstractCommand {
       .build();
   }
 
-  private Table getWorkflowToken(Id.Run runId, WorkflowToken.Scope workflowTokenScope, String key, String nodeName)
+  private Table getWorkflowToken(ProgramRunId runId, WorkflowToken.Scope workflowTokenScope,
+                                 String key, String nodeName)
     throws UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
-    WorkflowTokenNodeDetail workflowToken = workflowClient.getWorkflowTokenAtNode(runId, nodeName,
+    WorkflowTokenNodeDetail workflowToken = workflowClient.getWorkflowTokenAtNode(runId.toId(), nodeName,
                                                                                   workflowTokenScope, key);
     List<Map.Entry<String, String>> tokenKeys = new ArrayList<>();
     tokenKeys.addAll(workflowToken.getTokenDataAtNode().entrySet());

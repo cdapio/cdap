@@ -28,9 +28,9 @@ import co.cask.cdap.client.QueryClient;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Strings;
 import com.google.common.collect.HashMultiset;
@@ -73,17 +73,16 @@ public class GetStreamStatsCommand extends AbstractCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     long currentTime = System.currentTimeMillis();
 
-    Id.Stream streamId = Id.Stream.from(cliConfig.getCurrentNamespace(),
-                                        arguments.get(ArgumentName.STREAM.toString()));
+    StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
     // limit limit to [1, MAX_LIMIT]
     int limit = Math.max(1, Math.min(MAX_LIMIT, arguments.getInt(ArgumentName.LIMIT.toString(), DEFAULT_LIMIT)));
     long startTime = getTimestamp(arguments.get(ArgumentName.START_TIME.toString(), "min"), currentTime);
     long endTime = getTimestamp(arguments.get(ArgumentName.END_TIME.toString(), "max"), currentTime);
 
     // hack to validate streamId
-    StreamProperties config = streamClient.getConfig(streamId);
+    StreamProperties config = streamClient.getConfig(streamId.toId());
     if (config.getFormat().getName().equals("text")) {
-      output.printf("No schema found for stream '%s'", streamId.getId());
+      output.printf("No schema found for stream '%s'", streamId.getEntityName());
       output.println();
       return;
     }
@@ -100,7 +99,7 @@ public class GetStreamStatsCommand extends AbstractCommand {
     // get a list of stream events and calculates various statistics about the events
     String timestampCol = getTimestampHiveColumn(streamId);
     ListenableFuture<ExploreExecutionResult> resultsFuture = queryClient.execute(
-      streamId.getNamespace(),
+      streamId.getParent().toId(),
       "SELECT * FROM " + getHiveTableName(streamId)
         + " WHERE " + timestampCol + " BETWEEN " + startTime + " AND " + endTime
         + " LIMIT " + limit);
@@ -151,7 +150,7 @@ public class GetStreamStatsCommand extends AbstractCommand {
     output.println();
   }
 
-  private String getTruncatedColumnName(Id.Stream streamId, String hiveColumnName) {
+  private String getTruncatedColumnName(StreamId streamId, String hiveColumnName) {
     String hiveTableName = getHiveTableName(streamId);
     String hiveTablePrefix = hiveTableName + ".";
     if (hiveColumnName.startsWith(hiveTablePrefix)) {
@@ -160,21 +159,21 @@ public class GetStreamStatsCommand extends AbstractCommand {
     return hiveColumnName;
   }
 
-  private String getTimestampHiveColumn(Id.Stream streamId) {
+  private String getTimestampHiveColumn(StreamId streamId) {
     return cdapSchemaColumName2HiveColumnName(streamId, "ts");
   }
 
-  private boolean isUserHiveColumn(Id.Stream streamId, String hiveColumName) {
+  private boolean isUserHiveColumn(StreamId streamId, String hiveColumName) {
     // TODO: hardcoded
     return !cdapSchemaColumName2HiveColumnName(streamId, "ts").equals(hiveColumName)
       && !cdapSchemaColumName2HiveColumnName(streamId, "headers").equals(hiveColumName);
   }
 
-  private String getHiveTableName(Id.Stream streamId) {
-    return String.format("stream_%s", streamId.getId());
+  private String getHiveTableName(StreamId streamId) {
+    return String.format("stream_%s", streamId.getEntityName());
   }
 
-  private String cdapSchemaColumName2HiveColumnName(Id.Stream streamId, String schemaColumName) {
+  private String cdapSchemaColumName2HiveColumnName(StreamId streamId, String schemaColumName) {
     return (getHiveTableName(streamId) + "." + schemaColumName).toLowerCase();
   }
 

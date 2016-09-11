@@ -25,8 +25,8 @@ import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.StreamViewClient;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ViewDetail;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
@@ -55,8 +55,8 @@ public class DescribeStreamViewCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    Id.Stream streamId = Id.Stream.from(cliConfig.getCurrentNamespace(), arguments.get(ArgumentName.STREAM.toString()));
-    ViewDetail detail = client.get(Id.Stream.View.from(streamId, arguments.get(ArgumentName.VIEW.toString())));
+    StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
+    ViewDetail detail = client.get(streamId.view(arguments.get(ArgumentName.VIEW.toString())).toId());
 
     Table table = Table.builder()
       .setHeader("id", "format", "table", "schema", "settings")

@@ -39,13 +39,18 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.WorkflowTokenDetail;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ServiceId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.cli.CLI;
@@ -101,15 +106,15 @@ public class CLIMainTest extends CLITestBase {
   private static final Gson GSON = new Gson();
   private static final String PREFIX = "123ff1_";
 
-  private final Id.Artifact fakeArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, FakeApp.NAME, "1.0");
-  private final Id.Application fakeAppId = Id.Application.from(Id.Namespace.DEFAULT, FakeApp.NAME);
-  private final Id.Workflow fakeWorkflowId = Id.Workflow.from(fakeAppId, FakeWorkflow.NAME);
-  private final Id.Flow fakeFlowId = Id.Flow.from(fakeAppId, FakeFlow.NAME);
-  private final Id.Program fakeSparkId = Id.Program.from(fakeAppId, ProgramType.SPARK, FakeSpark.NAME);
-  private final Id.Service pingServiceId = Id.Service.from(fakeAppId, PingService.NAME);
-  private final Id.Service prefixedEchoHandlerId = Id.Service.from(fakeAppId, PrefixedEchoHandler.NAME);
-  private final Id.DatasetInstance fakeDsId = Id.DatasetInstance.from(Id.Namespace.DEFAULT, FakeApp.DS_NAME);
-  private final Id.Stream fakeStreamId = Id.Stream.from(Id.Namespace.DEFAULT, FakeApp.STREAM_NAME);
+  private final ArtifactId fakeArtifactId = NamespaceId.DEFAULT.artifact(FakeApp.NAME, "1.0");
+  private final ApplicationId fakeAppId = NamespaceId.DEFAULT.app(FakeApp.NAME);
+  private final ProgramId fakeWorkflowId = fakeAppId.workflow(FakeWorkflow.NAME);
+  private final ProgramId fakeFlowId = fakeAppId.flow(FakeFlow.NAME);
+  private final ProgramId fakeSparkId = fakeAppId.spark(FakeSpark.NAME);
+  private final ServiceId pingServiceId = fakeAppId.service(PingService.NAME);
+  private final ServiceId prefixedEchoHandlerId = fakeAppId.service(PrefixedEchoHandler.NAME);
+  private final DatasetId fakeDsId = NamespaceId.DEFAULT.dataset(FakeApp.DS_NAME);
+  private final StreamId fakeStreamId = NamespaceId.DEFAULT.stream(FakeApp.STREAM_NAME);
 
   private static ProgramClient programClient;
   private static QueryClient queryClient;
@@ -161,24 +166,24 @@ public class CLIMainTest extends CLITestBase {
     String prompt = cliMain.getPrompt(cliConfig.getConnectionConfig());
     Assert.assertFalse(prompt.contains("@"));
     Assert.assertTrue(prompt.contains(STANDALONE.getBaseURI().getHost()));
-    Assert.assertTrue(prompt.contains(cliConfig.getCurrentNamespace().getId()));
+    Assert.assertTrue(prompt.contains(cliConfig.getCurrentNamespace().getEntityName()));
 
     CLIConnectionConfig oldConnectionConfig = cliConfig.getConnectionConfig();
     CLIConnectionConfig authConnectionConfig = new CLIConnectionConfig(
-      oldConnectionConfig, Id.Namespace.DEFAULT, "test-username");
+      oldConnectionConfig, NamespaceId.DEFAULT, "test-username");
     cliConfig.setConnectionConfig(authConnectionConfig);
     prompt = cliMain.getPrompt(cliConfig.getConnectionConfig());
     Assert.assertTrue(prompt.contains("test-username@"));
     Assert.assertTrue(prompt.contains(STANDALONE.getBaseURI().getHost()));
-    Assert.assertTrue(prompt.contains(cliConfig.getCurrentNamespace().getId()));
+    Assert.assertTrue(prompt.contains(cliConfig.getCurrentNamespace().getEntityName()));
     cliConfig.setConnectionConfig(oldConnectionConfig);
   }
 
   @Test
   public void testProgram() throws Exception {
     String flowId = FakeApp.FLOWS.get(0);
-    Id.Application app = Id.Application.from(Id.Namespace.DEFAULT, FakeApp.NAME);
-    Id.Flow flow = Id.Flow.from(app, flowId);
+    ApplicationId app = NamespaceId.DEFAULT.app(FakeApp.NAME);
+    ProgramId flow = app.flow(flowId);
 
     String qualifiedFlowId = FakeApp.NAME + "." + flowId;
     testCommandOutputContains(cli, "start flow " + qualifiedFlowId, "Successfully started flow");
@@ -298,23 +303,23 @@ public class CLIMainTest extends CLITestBase {
     String datasetName = PREFIX + "sdf123lkj";
 
     DatasetTypeClient datasetTypeClient = new DatasetTypeClient(cliConfig.getClientConfig());
-    DatasetTypeMeta datasetType = datasetTypeClient.list(Id.Namespace.DEFAULT).get(0);
+    DatasetTypeMeta datasetType = datasetTypeClient.list(NamespaceId.DEFAULT.toId()).get(0);
     testCommandOutputContains(cli, "create dataset instance " + datasetType.getName() + " " + datasetName + " \"a=1\"",
                               "Successfully created dataset");
     testCommandOutputContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
     testCommandOutputContains(cli, "get dataset instance properties " + datasetName, "\"a\":\"1\"");
 
     NamespaceClient namespaceClient = new NamespaceClient(cliConfig.getClientConfig());
-    Id.Namespace barspace = Id.Namespace.from("bar");
-    namespaceClient.create(new NamespaceMeta.Builder().setName(barspace).build());
+    NamespaceId barspace = new NamespaceId("bar");
+    namespaceClient.create(new NamespaceMeta.Builder().setName(barspace.toId()).build());
     cliConfig.setNamespace(barspace);
     // list of dataset instances is different in 'foo' namespace
     testCommandOutputNotContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
 
     // also can not create dataset instances if the type it depends on exists only in a different namespace.
-    Id.DatasetType datasetType1 = Id.DatasetType.from(barspace, datasetType.getName());
+    DatasetTypeId datasetType1 = barspace.datasetType(datasetType.getName());
     testCommandOutputContains(cli, "create dataset instance " + datasetType.getName() + " " + datasetName,
-                              new DatasetTypeNotFoundException(datasetType1).getMessage());
+                              new DatasetTypeNotFoundException(datasetType1.toId()).getMessage());
 
     testCommandOutputContains(cli, "use namespace default", "Now using namespace 'default'");
     try {
@@ -334,7 +339,7 @@ public class CLIMainTest extends CLITestBase {
 
   @Test
   public void testService() throws Exception {
-    Id.Service service = Id.Service.from(Id.Namespace.DEFAULT, FakeApp.NAME, PrefixedEchoHandler.NAME);
+    ServiceId service = NamespaceId.DEFAULT.app(FakeApp.NAME).service(PrefixedEchoHandler.NAME);
     String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, PrefixedEchoHandler.NAME);
     testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started service");
     assertProgramStatus(programClient, service, "RUNNING");
@@ -353,7 +358,7 @@ public class CLIMainTest extends CLITestBase {
   @Test
   public void testRuntimeArgs() throws Exception {
     String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, PrefixedEchoHandler.NAME);
-    Id.Service service = Id.Service.from(Id.Namespace.DEFAULT, FakeApp.NAME, PrefixedEchoHandler.NAME);
+    ServiceId service = NamespaceId.DEFAULT.app(FakeApp.NAME).service(PrefixedEchoHandler.NAME);
 
     Map<String, String> runtimeArgs = ImmutableMap.of("sdf", "bacon");
     String runtimeArgsKV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs);
@@ -385,7 +390,7 @@ public class CLIMainTest extends CLITestBase {
   public void testSpark() throws Exception {
     String sparkId = FakeApp.SPARK.get(0);
     String qualifiedSparkId = FakeApp.NAME + "." + sparkId;
-    Id.Program spark = Id.Program.from(Id.Namespace.DEFAULT, FakeApp.NAME, ProgramType.SPARK, sparkId);
+    ProgramId spark = NamespaceId.DEFAULT.app(FakeApp.NAME).spark(sparkId);
 
     testCommandOutputContains(cli, "list spark", sparkId);
     testCommandOutputContains(cli, "start spark " + qualifiedSparkId, "Successfully started Spark");
@@ -664,13 +669,13 @@ public class CLIMainTest extends CLITestBase {
     return appJarFile;
   }
 
-  protected void assertProgramStatus(ProgramClient programClient, Id.Program programId, String programStatus, int tries)
+  protected void assertProgramStatus(ProgramClient programClient, ProgramId programId, String programStatus, int tries)
     throws IOException, ProgramNotFoundException, UnauthenticatedException, UnauthorizedException {
 
     String status;
     int numTries = 0;
     do {
-      status = programClient.getStatus(programId);
+      status = programClient.getStatus(programId.toId());
       numTries++;
       try {
         TimeUnit.SECONDS.sleep(1);
@@ -681,7 +686,7 @@ public class CLIMainTest extends CLITestBase {
     Assert.assertEquals(programStatus, status);
   }
 
-  protected void assertProgramStatus(ProgramClient programClient, Id.Program programId, String programStatus)
+  protected void assertProgramStatus(ProgramClient programClient, ProgramId programId, String programStatus)
     throws IOException, ProgramNotFoundException, UnauthenticatedException, UnauthorizedException {
 
     assertProgramStatus(programClient, programId, programStatus, 180);

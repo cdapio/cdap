@@ -51,10 +51,10 @@ public class ListArtifactVersionsCommand extends AbstractAuthCommand {
     String artifactName = arguments.get(ArgumentName.ARTIFACT_NAME.toString());
     List<ArtifactSummary> artifactSummaries;
     if (scopeStr == null) {
-      artifactSummaries = artifactClient.listVersions(cliConfig.getCurrentNamespace(), artifactName);
+      artifactSummaries = artifactClient.listVersions(cliConfig.getCurrentNamespace().toId(), artifactName);
     } else {
       ArtifactScope scope = ArtifactScope.valueOf(scopeStr.toUpperCase());
-      artifactSummaries = artifactClient.listVersions(cliConfig.getCurrentNamespace(), artifactName, scope);
+      artifactSummaries = artifactClient.listVersions(cliConfig.getCurrentNamespace().toId(), artifactName, scope);
     }
 
     Table table = Table.builder()

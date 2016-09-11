@@ -49,7 +49,7 @@ public class DeleteWorkflowLocalDatasetsCommand extends AbstractCommand {
       throw new CommandInputError(this);
     }
 
-    ProgramRunId programRunId = new ProgramRunId(cliConfig.getCurrentNamespace().getId(), programIdParts[0],
+    ProgramRunId programRunId = new ProgramRunId(cliConfig.getCurrentNamespace().getNamespace(), programIdParts[0],
                                                  ProgramType.WORKFLOW, programIdParts[1],
                                                  arguments.get(ArgumentName.RUN_ID.toString()));
 

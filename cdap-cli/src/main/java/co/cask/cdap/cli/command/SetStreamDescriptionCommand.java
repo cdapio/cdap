@@ -23,7 +23,7 @@ import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.StreamClient;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
 
@@ -44,10 +44,11 @@ public class SetStreamDescriptionCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    Id.Stream streamId = Id.Stream.from(cliConfig.getCurrentNamespace(), arguments.get(ArgumentName.STREAM.toString()));
+    StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
     String description = arguments.get(ArgumentName.STREAM_DESCRIPTION.toString());
-    streamClient.setDescription(streamId, description);
-    output.printf("Successfully set stream description of stream '%s' to '%s'\n", streamId.getId(), description);
+    streamClient.setDescription(streamId.toId(), description);
+    output.printf("Successfully set stream description of stream '%s' to '%s'\n", streamId.getEntityName(),
+                  description);
   }
 
   @Override

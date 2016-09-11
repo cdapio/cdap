@@ -27,8 +27,8 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.StreamClient;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
 import com.google.gson.Gson;
@@ -56,9 +56,8 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    Id.Stream streamId = Id.Stream.from(cliConfig.getCurrentNamespace(),
-                                        arguments.get(ArgumentName.STREAM.toString()));
-    StreamProperties currentProperties = streamClient.getConfig(streamId);
+    StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
+    StreamProperties currentProperties = streamClient.getConfig(streamId.toId());
 
     String formatName = arguments.get(ArgumentName.FORMAT.toString());
     Schema schema = getSchema(arguments);
@@ -71,8 +70,8 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
                                                              formatSpecification,
                                                              currentProperties.getNotificationThresholdMB(),
                                                              currentProperties.getDescription());
-    streamClient.setStreamProperties(streamId, streamProperties);
-    output.printf("Successfully set format of stream '%s'\n", streamId.getId());
+    streamClient.setStreamProperties(streamId.toId(), streamProperties);
+    output.printf("Successfully set format of stream '%s'\n", streamId.getEntityName());
   }
 
   private Schema getSchema(Arguments arguments) throws IOException {

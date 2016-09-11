@@ -60,12 +60,12 @@ public class DeletePreferencesCommand extends AbstractCommand {
 
       case NAMESPACE:
         checkInputLength(programIdParts, 0);
-        client.deleteNamespacePreferences(cliConfig.getCurrentNamespace());
+        client.deleteNamespacePreferences(cliConfig.getCurrentNamespace().toId());
         printStream.printf(SUCCESS + "\n", type.getName());
         break;
 
       case APP:
-        client.deleteApplicationPreferences(parseAppId(programIdParts));
+        client.deleteApplicationPreferences(parseAppId(programIdParts).toId());
         printStream.printf(SUCCESS + "\n", type.getName());
         break;
 
@@ -75,7 +75,7 @@ public class DeletePreferencesCommand extends AbstractCommand {
       case SERVICE:
       case SPARK:
         checkInputLength(programIdParts, 2);
-        client.deleteProgramPreferences(parseProgramId(programIdParts, type.getProgramType()));
+        client.deleteProgramPreferences(parseProgramId(programIdParts, type.getProgramType()).toId());
         printStream.printf(SUCCESS + "\n", type.getName());
         break;
 

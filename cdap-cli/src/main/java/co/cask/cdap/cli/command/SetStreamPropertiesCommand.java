@@ -22,8 +22,8 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -53,8 +53,7 @@ public class SetStreamPropertiesCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    Id.Stream streamId = Id.Stream.from(cliConfig.getCurrentNamespace(),
-                                        arguments.get(ArgumentName.STREAM.toString()));
+    StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
     File file = new File(arguments.get(ArgumentName.LOCAL_FILE_PATH.toString()));
 
     if (!file.isFile()) {
@@ -68,8 +67,8 @@ public class SetStreamPropertiesCommand extends AbstractAuthCommand {
       throw new IllegalArgumentException("Stream properties are malformed.", e);
     }
 
-    streamClient.setStreamProperties(streamId, streamProperties);
-    output.printf("Successfully set properties of stream '%s'\n", streamId.getId());
+    streamClient.setStreamProperties(streamId.toId(), streamProperties);
+    output.printf("Successfully set properties of stream '%s'\n", streamId.getEntityName());
   }
 
   @Override
