@@ -43,7 +43,7 @@ class Socket {
     this.socket.onmessage = (event) => {
       try {
         let data = JSON.parse(event.data);
-        if (window.CDAP_DEBUG) {
+        if (window.CDAP_CONFIG.cdap.uiDebugEnabled) {
           console.group(data.resource.url);
           console.log(data.resource);
           console.log(data.response);

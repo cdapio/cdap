@@ -27,7 +27,7 @@ export default class SplashScreen extends Component {
     this.props = props;
     this.state = {
       error: '',
-      showRegistration: window.CDAP_CONFIG.cdap.standaloneWebsiteSDKDownload === 'true',
+      showRegistration: window.CDAP_CONFIG.cdap.standaloneWebsiteSDKDownload,
       showSplashScreen: false
     };
   }

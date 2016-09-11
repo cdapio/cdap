@@ -81,8 +81,8 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
         routerServerUrl: cdapConfig['router.server.address'],
         routerServerPort: cdapConfig['router.server.port'],
         routerSSLServerPort: cdapConfig['router.ssl.bind.port'],
-        showStandaloneWelcomeMessage: uiSettings['standalone.welcome.message'] || false,
-        standaloneWebsiteSDKDownload: uiSettings['standalone.website.sdk.download'] || false
+        standaloneWebsiteSDKDownload: uiSettings['standalone.website.sdk.download'] === 'true' || false,
+        uiDebugEnabled: uiSettings['ui.debug.enabled'] === 'true' || false
       },
       hydrator: {
         previewEnabled: cdapConfig['enable.alpha.preview'] === 'true'
