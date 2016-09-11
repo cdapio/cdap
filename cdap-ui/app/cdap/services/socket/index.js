@@ -43,6 +43,12 @@ class Socket {
     this.socket.onmessage = (event) => {
       try {
         let data = JSON.parse(event.data);
+        if (window.CDAP_DEBUG) {
+          console.group(data.resource.url);
+          console.log(data.resource);
+          console.log(data.response);
+          console.groupEnd();
+        }
         this.observable.onNext(data);
       } catch (e) {
         console.log('error', e);

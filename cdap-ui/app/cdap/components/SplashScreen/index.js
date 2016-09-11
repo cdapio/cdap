@@ -19,6 +19,7 @@ import 'whatwg-fetch';
 require('./SplashScreen.less');
 
 import Card from '../Card';
+import MyUserStoreApi from '../../api/userstore';
 
 export default class SplashScreen extends Component {
   constructor(props) {
@@ -27,22 +28,29 @@ export default class SplashScreen extends Component {
     this.state = {
       error: '',
       showRegistration: window.CDAP_CONFIG.cdap.standaloneWebsiteSDKDownload === 'true',
-      showSplashScreen: window.CDAP_CONFIG.cdap.showStandaloneWelcomeMessage === 'true'
+      showSplashScreen: false
     };
   }
-  resetWelcomeMessage() {
-    fetch('/resetWelcomeMessage', {
-      method: 'POST',
-      headers: {
-        'Accept': 'text/javascript'
-      }
-    })
-      .then((response) => {
-        // TODO: do something??
-        if (response.status > 300) {
-          this.setState({error: response.statusText});
-        }
+  componentDidMount() {
+    MyUserStoreApi
+      .get()
+      .subscribe(res => {
+        this.setState({
+          showSplashScreen: (typeof res.property['standalone-welcome-message'] === 'undefined' ? true : res.property['standalone-welcome-message'])
+        });
       });
+  }
+  resetWelcomeMessage() {
+    MyUserStoreApi
+      .get()
+      .flatMap(res => {
+        res.property['standalone-welcome-message'] = false;
+        return MyUserStoreApi.set({}, res.property);
+      })
+      .subscribe(
+        () => {},
+        (err) => { this.setState({error: err}); }
+      );
   }
   onClose() {
     this.setState({
