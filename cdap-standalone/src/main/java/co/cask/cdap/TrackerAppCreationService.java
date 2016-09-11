@@ -24,8 +24,6 @@ import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
-import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -49,13 +47,9 @@ public class TrackerAppCreationService extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(TrackerAppCreationService.class);
   private static final String TRACKER_CONFIG = "tracker.app.config";
-  private static final ApplicationId TRACKER_APPID = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), "_Tracker");
-  private static final ProgramId AUDIT_FLOWID = new ProgramId(TRACKER_APPID.getNamespace(),
-                                                              TRACKER_APPID.getApplication(), ProgramType.FLOW,
-                                                              "AuditLogFlow");
-  private static final ProgramId TRACKER_SERVICEID = new ProgramId(TRACKER_APPID.getNamespace(),
-                                                                 TRACKER_APPID.getApplication(), ProgramType.SERVICE,
-                                                                 "TrackerService");
+  private static final ApplicationId TRACKER_APPID = NamespaceId.DEFAULT.app("_Tracker");
+  private static final ProgramId AUDIT_FLOWID = TRACKER_APPID.flow("AuditLogFlow");
+  private static final ProgramId TRACKER_SERVICEID = TRACKER_APPID.service("TrackerService");
 
   private final CConfiguration cConf;
   private final ArtifactRepository artifactRepository;
@@ -127,8 +121,8 @@ public class TrackerAppCreationService extends AbstractExecutionThreadService {
     String trackerAppConfig = cConf.get(TRACKER_CONFIG);
     LOG.info("Creating and starting Tracker App with config : {}", trackerAppConfig);
     applicationLifecycleService.deployApp(
-      Id.Namespace.from(TRACKER_APPID.getNamespace()), TRACKER_APPID.getApplication(),
-      Id.Artifact.from(Id.Namespace.SYSTEM, artifactSummary.getName(), artifactSummary.getVersion()),
+      new NamespaceId(TRACKER_APPID.getNamespace()).toId(), TRACKER_APPID.getApplication(),
+      NamespaceId.SYSTEM.artifact(artifactSummary.getName(), artifactSummary.getVersion()).toId(),
       trackerAppConfig, new TrackerProgramTerminator(programLifecycleService));
     try {
       programLifecycleService.start(AUDIT_FLOWID, ImmutableMap.<String, String>of(), false);
@@ -152,7 +146,7 @@ public class TrackerAppCreationService extends AbstractExecutionThreadService {
     }
 
     @Override
-    public void stop(Id.Program programId) throws Exception {
+    public void stop(ProgramId programId) throws Exception {
       switch (programId.getType()) {
         case FLOW:
           programLifecycleService.stop(AUDIT_FLOWID);

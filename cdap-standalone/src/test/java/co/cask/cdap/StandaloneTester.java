@@ -22,8 +22,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.rules.ExternalResource;
@@ -128,8 +129,8 @@ public class StandaloneTester extends ExternalResource {
                                 @Nullable Set<ArtifactRange> parentArtifacts) throws Exception {
     ArtifactRepository artifactRepository = standaloneMain.getInjector().getInstance(ArtifactRepository.class);
 
-    Id.Artifact artifactId = new Id.Artifact(Id.Namespace.SYSTEM, name, version);
-    artifactRepository.addArtifact(artifactId, artifactFile, parentArtifacts);
+    ArtifactId artifactId = NamespaceId.SYSTEM.artifact(name, version.getVersion());
+    artifactRepository.addArtifact(artifactId.toId(), artifactFile, parentArtifacts);
   }
 
   private String getLocalHostname() {

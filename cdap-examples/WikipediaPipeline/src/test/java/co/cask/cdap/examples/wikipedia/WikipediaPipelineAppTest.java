@@ -16,17 +16,18 @@
 
 package co.cask.cdap.examples.wikipedia;
 
-import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
@@ -54,10 +55,8 @@ public class WikipediaPipelineAppTest extends TestBase {
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
-  private static final Id.Artifact ARTIFACT_ID =
-    Id.Artifact.from(Id.Namespace.DEFAULT, "WikipediaPipelineArtifact", new ArtifactVersion("1.0"));
-  private static final Id.Application APP_ID =
-    Id.Application.from(Id.Namespace.DEFAULT, WikipediaPipelineApp.class.getSimpleName());
+  private static final ArtifactId ARTIFACT_ID = NamespaceId.DEFAULT.artifact("WikipediaPipelineArtifact", "1.0");
+  private static final ApplicationId APP_ID = NamespaceId.DEFAULT.app(WikipediaPipelineApp.class.getSimpleName());
   private static final ArtifactSummary ARTIFACT_SUMMARY = new ArtifactSummary("WikipediaPipelineArtifact", "1.0");
 
   @BeforeClass
@@ -70,7 +69,7 @@ public class WikipediaPipelineAppTest extends TestBase {
   public void test() throws Exception {
     WikipediaPipelineApp.WikipediaAppConfig appConfig = new WikipediaPipelineApp.WikipediaAppConfig();
     AppRequest<WikipediaPipelineApp.WikipediaAppConfig> appRequest = new AppRequest<>(ARTIFACT_SUMMARY, appConfig);
-    ApplicationManager appManager = deployApplication(APP_ID, appRequest);
+    ApplicationManager appManager = deployApplication(APP_ID.toId(), appRequest);
     // Setup input streams with test data
     createTestData();
 
@@ -84,7 +83,7 @@ public class WikipediaPipelineAppTest extends TestBase {
     // Test K-Means
     appConfig = new WikipediaPipelineApp.WikipediaAppConfig("kmeans");
     appRequest = new AppRequest<>(ARTIFACT_SUMMARY, appConfig);
-    appManager = deployApplication(APP_ID, appRequest);
+    appManager = deployApplication(APP_ID.toId(), appRequest);
     workflowManager = appManager.getWorkflowManager(WikipediaPipelineWorkflow.NAME);
     testWorkflow(workflowManager, appConfig, 1);
   }

@@ -27,7 +27,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.SecureKeyId;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -50,10 +50,8 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
-import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -244,9 +242,9 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
   }
 
   private void checkNamespaceExists(String namespace) throws Exception {
-    Id.Namespace namespaceId = new Id.Namespace(namespace);
-    if (!namespaceQueryAdmin.exists(namespaceId)) {
-      throw new NamespaceNotFoundException(namespaceId);
+    NamespaceId namespaceId = new NamespaceId(namespace);
+    if (!namespaceQueryAdmin.exists(namespaceId.toId())) {
+      throw new NamespaceNotFoundException(namespaceId.toId());
     }
   }
 
