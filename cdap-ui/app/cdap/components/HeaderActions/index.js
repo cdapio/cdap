@@ -55,11 +55,11 @@ export default class HeaderActions extends Component {
     let topRow = '';
     let signoutRow = '';
 
-    if(this.state.name){
+    if(this.state.name && window.CDAP_CONFIG.securityEnabled){
       topRow = (
         <div>
           <div className="dropdown-item dropdown-name-row">
-            Signed in as
+            <span>Signed in as</span>
             <span className="dropdown-name">
               {this.state.name}
             </span>
@@ -95,8 +95,14 @@ export default class HeaderActions extends Component {
             className="navbar-item navbar-cog"
             onClick={this.toggleSettingsDropdown}
           >
-            <span className={classNames('fa', 'fa-cog', {'menu-open' : this.state.settingsOpen})}></span>
-            <span className={classNames('navbar-cog-arrow', {'hidden' : !this.state.settingsOpen})}></span>
+            <span
+              className={classNames('fa', 'fa-cog', {'menu-open' : this.state.settingsOpen})}
+            >
+            </span>
+            <span
+              className={classNames('navbar-cog-arrow', {'hidden' : !this.state.settingsOpen})}
+            >
+            </span>
             <Dropdown
               isOpen={this.state.settingsOpen}
               toggle={this.toggleSettingsDropdown}
