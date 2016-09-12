@@ -13,26 +13,129 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import React from 'react';
 
+import React, {Component} from 'react';
+import { Dropdown, DropdownMenu, DropdownItem } from 'reactstrap';
+import cookie from 'react-cookie';
+
+require('./HeaderActions.less');
+var classNames = require('classnames');
 import PlusButton from '../PlusButton';
 
-export default function HeaderActions() {
-  return (
-    <ul className="navbar-list pull-right">
-      <div className="navbar-item">
-        <span className="fa fa-search"></span>
+export default class HeaderActions extends Component {
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      settingsOpen : false,
+      name : cookie.load('CDAP_Auth_User')
+    };
+    this.logout = this.logout.bind(this);
+    this.toggleSettingsDropdown = this.toggleSettingsDropdown.bind(this);
+  }
+
+  toggleSettingsDropdown(){
+    this.setState({
+      settingsOpen : !this.state.settingsOpen
+    });
+  }
+
+  logout() {
+    cookie.remove('CDAP_Auth_Token', { path: '/' });
+    cookie.remove('CDAP_Auth_User', { path: '/' });
+    window.location.href = window.getAbsUIUrl({
+      uiApp: 'login',
+      redirectUrl: location.href,
+      clientId: 'cdap'
+    });
+  }
+
+  render() {
+
+    let topRow = '';
+    let signoutRow = '';
+
+    if(this.state.name && window.CDAP_CONFIG.securityEnabled){
+      topRow = (
+        <div>
+          <div className="dropdown-item dropdown-name-row">
+            <span>Signed in as</span>
+            <span className="dropdown-name">
+              {this.state.name}
+            </span>
+          </div>
+          <DropdownItem divider />
+        </div>
+      );
+
+      signoutRow = (
+        <div>
+          <DropdownItem divider />
+          <div
+            className="dropdown-item"
+            onClick={this.logout}
+          >
+            <span className="dropdown-icon fa fa-sign-out"></span>
+            Logout
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="header-actions">
+        <ul className="navbar-list pull-right">
+          <div className="navbar-item">
+            <span className="fa fa-search"></span>
+          </div>
+          <div className="navbar-item">
+            <span className="fa fa-bolt"></span>
+          </div>
+          <PlusButton className="navbar-item" />
+          <div
+            className="navbar-item navbar-cog"
+            onClick={this.toggleSettingsDropdown}
+          >
+            <span
+              className={classNames('fa', 'fa-cog', {'menu-open' : this.state.settingsOpen})}
+            >
+            </span>
+            <span
+              className={classNames('navbar-cog-arrow', {'hidden' : !this.state.settingsOpen})}
+            >
+            </span>
+            <Dropdown
+              isOpen={this.state.settingsOpen}
+              toggle={this.toggleSettingsDropdown}
+            >
+              <DropdownMenu>
+                {topRow}
+                <div className="dropdown-item">
+                  <a href="http://cask.co/community">
+                    <span className="dropdown-icon fa fa-life-ring"></span>
+                    Support
+                  </a>
+                </div>
+                <div className="dropdown-item">
+                  <a href="http://cask.co/">
+                    <span className="dropdown-icon fa fa-home"></span>
+                    Cask home
+                  </a>
+                </div>
+                <div className="dropdown-item">
+                  <a href="http://docs.cask.co/">
+                    <span className="dropdown-icon fa fa-file"></span>
+                    Documentation
+                  </a>
+                </div>
+                {signoutRow}
+              </DropdownMenu>
+            </Dropdown>
+          </div>
+          <div className="navbar-item namespace-dropdown dropdown">
+            <span> Namespace </span>
+          </div>
+        </ul>
       </div>
-      <div className="navbar-item">
-        <span className="fa fa-bolt"></span>
-      </div>
-      <PlusButton className="navbar-item" />
-      <div className="navbar-item">
-        <span className="fa fa-cog"></span>
-      </div>
-      <div className="navbar-item namespace-dropdown dropdown">
-        <span> Namespace </span>
-      </div>
-    </ul>
-  );
+    );
+  }
 }
