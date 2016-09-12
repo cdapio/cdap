@@ -17,12 +17,13 @@
 import React, {Component} from 'react';
 import { Dropdown, DropdownMenu, DropdownItem } from 'reactstrap';
 import cookie from 'react-cookie';
+import {Link} from 'react-router';
 import PlusButton from '../PlusButton';
 import T from 'i18n-react';
-
 require('./HeaderActions.less');
 var classNames = require('classnames');
-
+import Store from '../../services/store/store.js';
+const shortid = require('shortid');
 
 export default class HeaderActions extends Component {
 
@@ -30,10 +31,44 @@ export default class HeaderActions extends Component {
     super(props);
     this.state = {
       settingsOpen : false,
-      name : cookie.load('CDAP_Auth_User')
+      name : Store.getState().userName,
+      namespaceList : [],
+      namespaceOpen : false,
+      currentNamespace: Store.getState().selectedNamespace
     };
     this.logout = this.logout.bind(this);
     this.toggleSettingsDropdown = this.toggleSettingsDropdown.bind(this);
+    this.namespaceList = [];
+    this.namespaceMap = '';
+    this.toggleNamespaceDropdown = this.toggleNamespaceDropdown.bind(this);
+    this.loadNamespacesFromStore = this.loadNamespacesFromStore.bind(this);
+    this.selectNamespace = this.selectNamespace.bind(this);
+  }
+
+  componentWillMount(){
+
+    //Load the namespaces into the dropdown from the store
+    this.namespaceList = Store.getState().namespaces;
+    if(this.namespaceList){
+      this.loadNamespacesFromStore(this.namespaceList, Store.getState().selectedNamespace);
+    }
+
+    //Load updated data into the namespace dropdown
+    Store.subscribe(() => {
+
+      this.namespaceList = Store.getState().namespaces;
+      let namespaceToUpdate = Store.getState().selectedNamespace;
+      let username = Store.getState().userName;
+
+      if(this.namespaceList){
+        this.loadNamespacesFromStore(this.namespaceList, namespaceToUpdate);
+      }
+
+      this.setState({
+        currentNamespace : namespaceToUpdate,
+        name : username
+      });
+    });
   }
 
   toggleSettingsDropdown(){
@@ -49,6 +84,52 @@ export default class HeaderActions extends Component {
       uiApp: 'login',
       redirectUrl: location.href,
       clientId: 'cdap'
+    });
+  }
+
+  toggleNamespaceDropdown(){
+    this.setState({
+      namespaceOpen : !this.state.namespaceOpen
+    });
+  }
+
+  loadNamespacesFromStore (namespaceList, currentNamespace) {
+
+    if(typeof namespaceList === 'undefined'){
+      return;
+    }
+
+    this.namespaceMap = namespaceList.map( (item) => {
+
+      //If there is no current namespace, set it to default if possible
+      if(!this.state.currentNamespace && item.name === 'default'){
+        this.defaultNamespace = item.name;
+      }
+
+      let checkClass = classNames({ "fa fa-check selected-namespace-check": currentNamespace === item.name });
+      let check = <span className={checkClass}></span>;
+
+      return (
+          <Link to={`/ns/${item.name}`} key={shortid.generate()}>
+            <div>
+              {check}
+              {item.name}
+            </div>
+          </Link>
+      );
+    });
+  }
+
+  selectNamespace(name){
+    this.setState({
+      namespaceOpen: false
+    });
+
+    Store.dispatch({
+      type: 'SELECT_NAMESPACE',
+      payload: {
+        selectedNamespace : name
+      }
     });
   }
 
@@ -83,6 +164,7 @@ export default class HeaderActions extends Component {
         </div>
       );
     }
+
     return (
       <div className="header-actions">
         <ul className="navbar-list pull-right">
@@ -94,7 +176,7 @@ export default class HeaderActions extends Component {
           </div>
           <PlusButton className="navbar-item" />
           <div
-            className="navbar-item navbar-cog"
+            className="navbar-item settings-dropdown navbar-cog"
             onClick={this.toggleSettingsDropdown}
           >
             <span
@@ -133,8 +215,25 @@ export default class HeaderActions extends Component {
               </DropdownMenu>
             </Dropdown>
           </div>
-          <div className="navbar-item namespace-dropdown dropdown">
-            <span> Namespace </span>
+          <div className="navbar-item namespace-dropdown">
+            <Dropdown
+              isOpen={this.state.namespaceOpen}
+              toggle={this.toggleNamespaceDropdown}
+            >
+              <div
+                className="current-namespace"
+                onClick={this.toggleNamespaceDropdown}
+              >
+                <div className="namespace-text">
+                  {this.state.currentNamespace}
+                </div>
+                <span className="fa fa-angle-down pull-right">
+                </span>
+              </div>
+              <DropdownMenu>
+                {this.namespaceMap}
+              </DropdownMenu>
+            </Dropdown>
           </div>
         </ul>
       </div>

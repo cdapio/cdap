@@ -14,19 +14,19 @@
  * the License.
  */
 
-import React, {Component} from 'react';
+import React, {Component, PropTypes} from 'react';
 import {MySearchApi} from '../../api/search';
 import {parseMetadata} from '../../services/metadata-parser';
 import Card from '../Card';
 import HomeHeader from './HomeHeader';
 import T from 'i18n-react';
+import Store from '../../services/store/store.js';
 
 require('./Home.less');
 
-export default class Home extends Component {
+class Home extends Component {
   constructor(props) {
     super(props);
-
     this.filterOptions = [
       {
         displayName: T.translate('commons.entity.application.plural'),
@@ -61,6 +61,48 @@ export default class Home extends Component {
     };
 
     this.search();
+    this.doesNsExist = this.doesNsExist.bind(this);
+  }
+
+  findNamespace(){
+    let namespaces = Store.getState().namespaces;
+    let name = this.props.params.namespace;
+
+    let result = _.find(namespaces, { 'name' : name });
+    return result ? true : false;
+  }
+
+  doesNsExist(ns){
+    let namespaces = Store.getState().namespaces.map(function(item){
+      return item.name;
+    });
+    return namespaces.indexOf(ns) !== -1;
+  }
+
+  componentWillMount(){
+    if(this.findNamespace()){
+      Store.dispatch({
+        type : 'SELECT_NAMESPACE',
+        payload : {
+          selectedNamespace : this.props.params.namespace
+        }
+      });
+    } else {
+      //FIXME: Must redirect if passed invalid namespace
+    }
+  }
+
+  componentWillUpdate(nextProps) {
+    if(this.doesNsExist(nextProps.params.namespace)){
+      Store.dispatch({
+        type : 'SELECT_NAMESPACE',
+        payload : {
+          selectedNamespace : nextProps.params.namespace
+        }
+      });
+    } else {
+      //FIXME: Must redirect if passed invalid namespace
+    }
   }
 
   search(filter) {
@@ -95,6 +137,7 @@ export default class Home extends Component {
   }
 
   render() {
+
     return (
       <div>
         <HomeHeader
@@ -120,8 +163,15 @@ export default class Home extends Component {
             })
           }
         </div>
-
       </div>
     );
   }
 }
+
+Home.propTypes = {
+  params: PropTypes.shape({
+    namespace : PropTypes.string
+  })
+};
+
+export default Home;
