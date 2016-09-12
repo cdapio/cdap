@@ -23,14 +23,14 @@ const history = useRouterHistory(createHistory)({ basename: '/cask-cdap/' });
 require('../ui-utils/url-generator');
 require('font-awesome-webpack!./styles/font-awesome.config.js');
 
-import Management from './components/Management';
-import Dashboard from './components/Dashboard';
-import Home from './components/Home';
-import CdapHeader from './components/CdapHeader';
-import Footer from './components/Footer';
-import SplashScreen from './components/SplashScreen';
-import ConnectionExample from './components/ConnectionExample';
-import Experimental from './components/Experimental';
+import Management from './components/features/Management';
+import Dashboard from './components/features/Dashboard';
+import Home from './components/features/Home';
+import CdapHeader from './components/features/CdapHeader';
+import Footer from './components/common/Footer';
+import SplashScreen from './components/features/SplashScreen';
+import ConnectionExample from './components/features/ConnectionExample';
+import Experimental from './components/features/Experimental';
 
 require('./styles/lib-styles.less');
 require('./styles/common.less');
