@@ -17,6 +17,7 @@
 import React, {Component} from 'react';
 import SearchTextBox from '../SearchTextBox';
 import MarketPlaceEntity from '../MarketPlaceEntity';
+import T from 'i18n-react';
 require('./AllTabContents.less');
 
 export default class AllTabContents extends Component {
@@ -34,7 +35,7 @@ export default class AllTabContents extends Component {
     return (
       <div className="all-tab-content">
         <SearchTextBox
-          placeholder="Search"
+          placeholder={T.translate('features.Market.search-placeholder')}
           value={this.state.searchStr}
           onChange={this.onSearch.bind(this)}
         />

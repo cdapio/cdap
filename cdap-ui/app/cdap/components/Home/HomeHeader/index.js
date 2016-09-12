@@ -15,6 +15,8 @@
  */
 
 import React, {Component, PropTypes} from 'react';
+import T from 'i18n-react';
+
 require('./HomeHeader.less');
 var classNames = require('classnames');
 
@@ -33,6 +35,7 @@ export default class HomeHeader extends Component {
   }
 
   render() {
+    const placeholder = T.translate('features.Home.Header.search-placeholder');
     let filterDropdown;
 
     if (this.state.isFilterExpanded) {
@@ -68,24 +71,26 @@ export default class HomeHeader extends Component {
       <div className="home-header">
         <div className="search-box">
           <div className="form-group has-feedback">
-            <label className="control-label sr-only">Search Entity</label>
+            <label className="control-label sr-only">
+              <T.span text={{ key: "features.Home.Header.search-placeholder"}} />
+            </label>
             <input
               type="text"
               className="form-control"
-              placeholder="Search cards"
+              placeholder={placeholder}
             />
             <span className="fa fa-search form-control-feedback"></span>
           </div>
         </div>
 
         <div className="sort">
-          <span>Sort</span>
+          <T.span text={{ key: "features.Home.Header.sort"}} />
           <span className="fa fa-caret-down pull-right"></span>
         </div>
 
         <div className={classNames('filter', { 'active': this.state.isFilterExpanded })}>
           <div onClick={this.handleFilterToggle.bind(this)}>
-            <span>Filters</span>
+            <T.span text={{ key: "features.Home.Header.filters"}} />
             <span className="fa fa-filter pull-right"></span>
           </div>
 

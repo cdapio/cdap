@@ -15,8 +15,8 @@
  */
 
 import React from 'react';
-
 import AllTabContents from './AllTabContents';
+import T from 'i18n-react';
 
 const TabConfig = {
   defaultTab: 1,
@@ -24,47 +24,47 @@ const TabConfig = {
   tabs: [
     {
       id: 1,
-      name: 'All',
+      name: T.translate('features.Market.tabs.all'),
       content: <AllTabContents />
     },
     {
       id: 2,
-      name: 'Examples',
+      name: T.translate('features.Market.tabs.examples'),
       content: <AllTabContents />
     },
     {
       id: 3,
-      name: 'Use Cases',
+      name: T.translate('features.Market.tabs.useCases'),
       content: <AllTabContents />
     },
     {
       id: 4,
-      name: 'Pipeline',
+      name: T.translate('features.Market.tabs.pipelines'),
       content: <AllTabContents />
     },
     {
       id: 5,
-      name: 'Applications',
+      name: T.translate('features.Market.tabs.applications'),
       content: <AllTabContents />
     },
     {
       id: 6,
-      name: 'Datasets',
+      name: T.translate('features.Market.tabs.datasets'),
       content: <AllTabContents />
     },
     {
       id: 7,
-      name: 'Plugins',
+      name: T.translate('features.Market.tabs.plugins'),
       content: <AllTabContents />
     },
     {
       id: 8,
-      name: 'Dashboards',
+      name: T.translate('features.Market.tabs.dashboards'),
       content: <AllTabContents />
     },
     {
       id: 9,
-      name: 'Artifacts',
+      name: T.translate('features.Market.tabs.artifacts'),
       content: <AllTabContents />
     }
   ]

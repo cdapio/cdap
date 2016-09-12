@@ -1,0 +1,87 @@
+---
+# Please keep this file alphabetically sorted!
+commons:
+  cask: CASK
+  cdap: CDAP
+  entity:
+    application:
+      plural: Applications
+      short-singular: App
+      short-plural: Apps
+      singular: Application
+    artifact:
+      plural: Artifacts
+      singular: Artifact
+    dataset:
+      plural: Datasets
+      singular: Dataset
+    flow:
+      plural: Flows
+      singular: Flow
+    mapreduce:
+      plural: Mapreduce
+      singular: Mapreduce
+    program:
+      plural: Programs
+      singular: Program
+    service:
+      plural: Services
+      singular: Service
+    spark:
+      plural: Spark
+      singular: Spark
+    stream:
+      plural: Streams
+      singular: Stream
+    worker:
+      plural: Workers
+      singular: Worker
+    workflow:
+      plural: Workflows
+      singular: Workflow
+    view:
+      plural: Stream Views
+      singular: Stream View
+  hydrator: Cask Hydrator
+  market: Cask Market Place
+  resource-center: Resource Center
+  tracker: Cask Tracker
+
+features:
+  Home:
+    Cards:
+      type: "Type: "
+    Header:
+      filters: Filters
+      search-placeholder: Search cards
+      sort: Sort
+
+  Market:
+    search-placeholder: Search
+    tabs:
+      all: All
+      applications: Applications
+      artifacts: Artifacts
+      dashboards: Dashboards
+      datasets: Datasets
+      examples: Examples
+      pipelines: Pipelines
+      plugins: Plugins
+      useCases: Use Cases
+
+  Navbar:
+    CDAP:
+      dashboard: Dashboard
+      home: Home
+      management: Management
+    Sidebar:
+      extension: "Extensions:"
+
+  SplashScreen:
+    buttons:
+      getStarted: Get Started
+      introduction: Introduction to CDAP
+      register: Register for Updates
+    intro-message: Your platform for building exciting analytical data applications
+    title: Welcome to Cask Data Application Platform
+...
