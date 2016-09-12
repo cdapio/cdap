@@ -288,11 +288,15 @@ public class DataPipelineTest extends HydratorTestBase {
 
   @Test
   public void testSinglePhase() throws Exception {
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
     /*
      * source --> sink
      */
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(new ETLStage("source", MockSource.getPlugin("singleInput")))
+      .addStage(new ETLStage("source", MockSource.getPlugin("singleInput", schema)))
       .addStage(new ETLStage("sink", MockSink.getPlugin("singleOutput")))
       .addConnection("source", "sink")
       .build();
@@ -301,10 +305,6 @@ public class DataPipelineTest extends HydratorTestBase {
     ApplicationId appId = NamespaceId.DEFAULT.app("SinglePhaseApp");
     ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
-    Schema schema = Schema.recordOf(
-      "testRecord",
-      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
-    );
     StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
 

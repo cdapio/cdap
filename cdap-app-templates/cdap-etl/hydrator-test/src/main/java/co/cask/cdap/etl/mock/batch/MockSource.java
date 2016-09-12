@@ -37,9 +37,11 @@ import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.format.StructuredRecordStringConverter;
 import co.cask.cdap.test.DataSetManager;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 /**
  * Mock source that can be used to write a list of records in a Table and reads them out in a pipeline run.
@@ -61,12 +63,22 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
    */
   public static class Config extends PluginConfig {
     private String tableName;
+
+    @Nullable
+    private String schema;
   }
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     super.configurePipeline(pipelineConfigurer);
     pipelineConfigurer.createDataset(config.tableName, Table.class);
+    if (config.schema != null) {
+      try {
+        pipelineConfigurer.getStageConfigurer().setOutputSchema(Schema.parseJson(config.schema));
+      } catch (IOException e) {
+        throw new IllegalArgumentException("Could not parse schema " + config.schema, e);
+      }
+    }
   }
 
   @Override
@@ -86,9 +98,30 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
     context.setInput(Input.ofDataset(config.tableName));
   }
 
+  /**
+   * Get the plugin config to be used in a pipeline config. If the source outputs records of the same schema,
+   * {@link #getPlugin(String, Schema)} should be used instead, so that the source will set an output schema.
+   *
+   * @param tableName the table backing the mock source
+   * @return the plugin config to be used in a pipeline config
+   */
   public static ETLPlugin getPlugin(String tableName) {
     Map<String, String> properties = new HashMap<>();
     properties.put("tableName", tableName);
+    return new ETLPlugin("Mock", BatchSource.PLUGIN_TYPE, properties, null);
+  }
+
+  /**
+   * Get the plugin config to be used in a pipeline config. The source must only output records with the given schema.
+   *
+   * @param tableName the table backing the mock source
+   * @param schema the schema of records output by this source
+   * @return the plugin config to be used in a pipeline config
+   */
+  public static ETLPlugin getPlugin(String tableName, Schema schema) {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("tableName", tableName);
+    properties.put("schema", schema.toString());
     return new ETLPlugin("Mock", BatchSource.PLUGIN_TYPE, properties, null);
   }
 
@@ -115,6 +148,7 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("tableName", new PluginPropertyField("tableName", "", "string", true, false));
+    properties.put("schema", new PluginPropertyField("schema", "", "string", false, false));
     return new PluginClass(BatchSource.PLUGIN_TYPE, "Mock", "", MockSource.class.getName(), "config", properties);
   }
 }
