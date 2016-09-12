@@ -81,8 +81,8 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
         routerServerUrl: cdapConfig['router.server.address'],
         routerServerPort: cdapConfig['router.server.port'],
         routerSSLServerPort: cdapConfig['router.ssl.bind.port'],
-        showStandaloneWelcomeMessage: uiSettings['standalone.welcome.message'] || false,
-        standaloneWebsiteSDKDownload: uiSettings['standalone.website.sdk.download'] || false
+        standaloneWebsiteSDKDownload: uiSettings['standalone.website.sdk.download'] === 'true' || false,
+        uiDebugEnabled: uiSettings['ui.debug.enabled'] === 'true' || false
       },
       hydrator: {
         previewEnabled: cdapConfig['enable.alpha.preview'] === 'true'
@@ -99,12 +99,6 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
     res.send('window.CDAP_CONFIG = '+data+';');
   });
 
-  app.post('/resetWelcomeMessage', function(req, res) {
-    var writer = require('./config/writer.js');
-    writer.resetStandaloneWelcomeMessage()
-      .then(() => res.sendStatus(200))
-      .catch((err) => res.status(500).send(err));
-  });
   app.get('/ui-config.js', function (req, res) {
     var path = __dirname + '/config/cdap-ui-config.json';
 
