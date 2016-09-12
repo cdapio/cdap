@@ -49,7 +49,7 @@ Known Issues
   <cloudera-installation-add-service-wizard-configuration>`, you need **to change** to the
   new property ``kafka.server.log.dirs``, as the deprecated ``kafka.log.dir`` is being
   ignored in favor of the new property. If you don't, your custom value will be replaced
-  with the default value of ``/tmp/kafka-logs``.
+  with the default value.
   
   
 Improvements
