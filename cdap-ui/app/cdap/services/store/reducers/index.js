@@ -13,15 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+import { combineReducers } from 'redux';
+import namespaces from './namespaces';
+import selectedNamespace from './selectedNamespace';
+import userName from './userName';
 
-import Datasource from '../../services/datasource';
-import {apiCreator} from '../../services/resource-helper';
-
-let dataSrc = new Datasource();
-let basepath = '/namespaces';
-
-export const MyNamespaceApi = {
-  list: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
-  get: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:namespace`),
-  pollList: apiCreator(dataSrc, 'GET', 'POLL', basepath)
-};
+export default combineReducers({
+  namespaces,
+  selectedNamespace,
+  userName
+});

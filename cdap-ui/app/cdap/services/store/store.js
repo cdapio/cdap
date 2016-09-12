@@ -14,14 +14,9 @@
  * the License.
  */
 
-import Datasource from '../../services/datasource';
-import {apiCreator} from '../../services/resource-helper';
+import { createStore } from 'redux';
+import reducer from './reducers/index';
 
-let dataSrc = new Datasource();
-let basepath = '/namespaces';
+const Store = createStore(reducer);
 
-export const MyNamespaceApi = {
-  list: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
-  get: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:namespace`),
-  pollList: apiCreator(dataSrc, 'GET', 'POLL', basepath)
-};
+export default Store;
