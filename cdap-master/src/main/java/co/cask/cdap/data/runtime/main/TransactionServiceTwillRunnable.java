@@ -29,7 +29,7 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.twill.AbstractMasterTwillRunnable;
-import co.cask.cdap.data.runtime.DataFabricModules;
+import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.HDFSTransactionStateStorageProvider;
 import co.cask.cdap.data.runtime.TransactionManagerProvider;
@@ -53,6 +53,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.distributed.TransactionService;
 import org.apache.tephra.persist.TransactionStateStorage;
+import org.apache.tephra.runtime.TransactionModules;
 import org.apache.tephra.runtime.TransactionStateStorageProvider;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.kafka.client.KafkaClientService;
@@ -123,15 +124,20 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
   }
 
   private static Module createDataFabricModule() {
-    return Modules.override(new DataFabricModules().getDistributedModules()).with(new AbstractModule() {
+    return new DataFabricDistributedModule() {
       @Override
-      protected void configure() {
-        // Bind to provider that create new instances of storage and tx manager every time.
-        bind(TransactionStateStorage.class).annotatedWith(Names.named("persist"))
-          .toProvider(HDFSTransactionStateStorageProvider.class);
-        bind(TransactionStateStorage.class).toProvider(TransactionStateStorageProvider.class);
-        bind(TransactionManager.class).toProvider(TransactionManagerProvider.class);
+      protected Module getTransactionModule() {
+        return Modules.override(new TransactionModules().getDistributedModules()).with(new AbstractModule() {
+          @Override
+          protected void configure() {
+            // Bind to provider that create new instances of storage and tx manager every time.
+            bind(TransactionStateStorage.class).annotatedWith(Names.named("persist"))
+              .toProvider(HDFSTransactionStateStorageProvider.class);
+            bind(TransactionStateStorage.class).toProvider(TransactionStateStorageProvider.class);
+            bind(TransactionManager.class).toProvider(TransactionManagerProvider.class);
+          }
+        });
       }
-    });
+    };
   }
 }
