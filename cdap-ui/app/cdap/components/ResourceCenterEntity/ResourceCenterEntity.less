@@ -12,14 +12,39 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
-import React from 'react';
+*/
 
-import TabConfig from './TabConfig';
-import ConfigurableTab from '../ConfigurableTab';
+@import '../../styles/variables.less';
 
-export default function CaskMarketPlace() {
-  return (
-    <ConfigurableTab tabConfig={TabConfig} />
-  );
+.resourcecenter-entity-card {
+  width: 290px;
+  height: 120px;
+  padding: 10px;
+  padding-bottom: 0;
+  margin-bottom: 20px;
+  display: inline-block;
+
+  .entity-image {
+    width: 110px;
+    height: 110px;
+    display: inline-block;
+    background: gray;
+    vertical-align: top;
+  }
+  .content-container {
+    display: inline-block;
+    width: 150px;
+    margin-left: 10px;
+    h4 {
+      margin: 0;
+      font-weight: 500;
+    }
+    p {
+      margin: 0;
+    }
+    .action-label {
+      color: @cdap-orange;
+      cursor: pointer;
+    }
+  }
 }

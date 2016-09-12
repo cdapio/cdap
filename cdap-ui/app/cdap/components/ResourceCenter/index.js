@@ -14,12 +14,25 @@
  * the License.
  */
 import React from 'react';
+import ResourceCenterEntity from '../ResourceCenterEntity';
+require('./ResourceCenter.less');
 
-import TabConfig from './TabConfig';
-import ConfigurableTab from '../ConfigurableTab';
-
-export default function CaskMarketPlace() {
+export default function ResourceCenter() {
   return (
-    <ConfigurableTab tabConfig={TabConfig} />
+    <div className="cask-resource-center">
+      {
+        Array
+          .apply(null, {length: 8})
+          .map((e, index) => (
+            <ResourceCenterEntity
+              title="Stream"
+              description="Lorem Ipsum has been the industry's standard dummy text ever since the 1500s"
+              actionLabel="Create"
+              key={index}
+              onClick={() => {console.log('Create Stream clicked');}}
+            />
+        ))
+      }
+    </div>
   );
 }

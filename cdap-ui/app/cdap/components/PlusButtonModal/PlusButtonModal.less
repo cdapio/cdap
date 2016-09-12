@@ -16,7 +16,8 @@
 
 @import '../../styles/variables.less';
 
-.cask-market-place {
+.plus-button-modal {
+  overflow-x: hidden;
   &.modal-dialog {
     height: 75vh;
     width: 70vw;
@@ -49,8 +50,33 @@
           background-color: @cdap-darkorange;
           border-color: none;
           color: lightgray;
+          &:focus {
+            outline: 0;
+          }
         }
       }
     }
+  }
+}
+
+.plus-button-modal {
+  position: relative;
+  .plus-button-modal-content-enter {
+    opacity: 0.01;
+    position: absolute;
+  }
+  .plus-button-modal-content-enter-active {
+    opacity: 1;
+    transition: opacity 500ms ease-in;
+  }
+
+  .plus-button-modal-content-leave {
+    opacity: 1;
+    position: absolute;
+  }
+
+  .plus-button-modal-content-leave-active {
+    opacity: 0.01;
+    transition: opacity 300ms ease-in;
   }
 }
