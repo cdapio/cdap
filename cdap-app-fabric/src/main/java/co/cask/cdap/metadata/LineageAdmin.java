@@ -26,10 +26,12 @@ import co.cask.cdap.data2.metadata.lineage.LineageStore;
 import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.Relation;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import com.google.common.annotations.VisibleForTesting;
@@ -59,19 +61,19 @@ import java.util.concurrent.TimeUnit;
 public class LineageAdmin {
   private static final Logger LOG = LoggerFactory.getLogger(LineageAdmin.class);
 
-  private static final Function<Relation, Id.Program> RELATION_TO_PROGRAM_FUNCTION =
-    new Function<Relation, Id.Program>() {
+  private static final Function<Relation, ProgramId> RELATION_TO_PROGRAM_FUNCTION =
+    new Function<Relation, ProgramId>() {
       @Override
-      public Id.Program apply(Relation input) {
-        return input.getProgram().toId();
+      public ProgramId apply(Relation input) {
+        return input.getProgram();
       }
     };
 
-  private static final Function<Relation, Id.NamespacedId> RELATION_TO_DATA_FUNCTION =
-    new Function<Relation, Id.NamespacedId>() {
+  private static final Function<Relation, NamespacedEntityId> RELATION_TO_DATA_FUNCTION =
+    new Function<Relation, NamespacedEntityId>() {
       @Override
-      public Id.NamespacedId apply(Relation input) {
-        return (Id.NamespacedId) input.getData().toId();
+      public NamespacedEntityId apply(Relation input) {
+        return input.getData();
       }
     };
 
@@ -117,7 +119,7 @@ public class LineageAdmin {
    * @param levels number of levels to compute lineage for
    * @return lineage for sourceDataset
    */
-  public Lineage computeLineage(final Id.DatasetInstance sourceDataset, long startMillis, long endMillis, int levels)
+  public Lineage computeLineage(final DatasetId sourceDataset, long startMillis, long endMillis, int levels)
     throws NotFoundException {
     return doComputeLineage(sourceDataset, startMillis, endMillis, levels);
   }
@@ -131,7 +133,7 @@ public class LineageAdmin {
    * @param levels number of levels to compute lineage for
    * @return lineage for sourceStream
    */
-  public Lineage computeLineage(final Id.Stream sourceStream, long startMillis, long endMillis, int levels)
+  public Lineage computeLineage(final StreamId sourceStream, long startMillis, long endMillis, int levels)
     throws NotFoundException {
     return doComputeLineage(sourceStream, startMillis, endMillis, levels);
   }
@@ -139,9 +141,8 @@ public class LineageAdmin {
   /**
    * @return metadata associated with a run
    */
-  public Set<MetadataRecord> getMetadataForRun(Id.Run run) throws NotFoundException {
-    ProgramRunId programRunId = run.toEntityId();
-    entityExistenceVerifier.ensureExists(programRunId);
+  public Set<MetadataRecord> getMetadataForRun(ProgramRunId run) throws NotFoundException {
+    entityExistenceVerifier.ensureExists(run);
 
     Set<NamespacedEntityId> runEntities = new HashSet<>(lineageStoreReader.getEntitiesForRun(run));
 
@@ -150,16 +151,16 @@ public class LineageAdmin {
       return ImmutableSet.of();
     }
 
-    RunId runId = RunIds.fromString(programRunId.getRun());
+    RunId runId = RunIds.fromString(run.getRun());
 
     // The entities returned by lineageStore does not contain application
-    ApplicationId application = programRunId.getParent().getParent();
+    ApplicationId application = run.getParent().getParent();
     runEntities.add(application);
     return metadataStore.getSnapshotBeforeTime(MetadataScope.USER, runEntities,
                                                RunIds.getTime(runId, TimeUnit.MILLISECONDS));
   }
 
-  private Lineage doComputeLineage(final Id.NamespacedId sourceData, long startMillis, long endMillis, int levels)
+  private Lineage doComputeLineage(final NamespacedEntityId sourceData, long startMillis, long endMillis, int levels)
     throws NotFoundException {
     LOG.trace("Computing lineage for data {}, startMillis {}, endMillis {}, levels {}",
               sourceData, startMillis, endMillis, levels);
@@ -175,16 +176,16 @@ public class LineageAdmin {
     LOG.trace("Using scan start = {}, scan end = {}", scanRange.getStart(), scanRange.getEnd());
 
     Multimap<RelationKey, Relation> relations = HashMultimap.create();
-    Set<Id.NamespacedId> visitedDatasets = new HashSet<>();
-    Set<Id.NamespacedId> toVisitDatasets = new HashSet<>();
-    Set<Id.Program> visitedPrograms = new HashSet<>();
-    Set<Id.Program> toVisitPrograms = new HashSet<>();
+    Set<NamespacedEntityId> visitedDatasets = new HashSet<>();
+    Set<NamespacedEntityId> toVisitDatasets = new HashSet<>();
+    Set<ProgramId> visitedPrograms = new HashSet<>();
+    Set<ProgramId> toVisitPrograms = new HashSet<>();
 
     toVisitDatasets.add(sourceData);
     for (int i = 0; i < levels; ++i) {
       LOG.trace("Level {}", i);
       toVisitPrograms.clear();
-      for (Id.NamespacedId d : toVisitDatasets) {
+      for (NamespacedEntityId d : toVisitDatasets) {
         if (visitedDatasets.add(d)) {
           LOG.trace("Visiting dataset {}", d);
           // Fetch related programs
@@ -199,7 +200,7 @@ public class LineageAdmin {
       }
 
       toVisitDatasets.clear();
-      for (Id.Program p : toVisitPrograms) {
+      for (ProgramId p : toVisitPrograms) {
         if (visitedPrograms.add(p)) {
           LOG.trace("Visiting program {}", p);
           // Fetch related datasets
@@ -223,14 +224,14 @@ public class LineageAdmin {
     return lineage;
   }
 
-  private Iterable<Relation> getProgramRelations(Id.NamespacedId data, long start, long end,
+  private Iterable<Relation> getProgramRelations(NamespacedEntityId data, long start, long end,
                                                  Predicate<Relation> filter) {
-    if (data instanceof Id.DatasetInstance) {
-      return lineageStoreReader.getRelations((Id.DatasetInstance) data, start, end, filter);
+    if (data instanceof DatasetId) {
+      return lineageStoreReader.getRelations((DatasetId) data, start, end, filter);
     }
 
-    if (data instanceof Id.Stream) {
-      return lineageStoreReader.getRelations((Id.Stream) data, start, end, filter);
+    if (data instanceof StreamId) {
+      return lineageStoreReader.getRelations((StreamId) data, start, end, filter);
     }
 
     throw new IllegalStateException("Unknown data type " + data);

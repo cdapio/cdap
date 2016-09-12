@@ -16,7 +16,8 @@
 
 package co.cask.cdap.data2.metadata.writer;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramRunId;
 
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
@@ -25,25 +26,25 @@ import javax.annotation.Nullable;
  * Helper classs to store program context for lineage writing.
  */
 public class ProgramContext {
-  private final AtomicReference<Id.Run> runRef = new AtomicReference<>();
-  private final AtomicReference<Id.NamespacedId> componentIdRef = new AtomicReference<>();
+  private final AtomicReference<ProgramRunId> runRef = new AtomicReference<>();
+  private final AtomicReference<NamespacedEntityId> componentIdRef = new AtomicReference<>();
 
-  public void initContext(Id.Run run) {
+  public void initContext(ProgramRunId run) {
     runRef.set(run);
   }
 
-  public void initContext(Id.Run run, Id.NamespacedId componentId) {
+  public void initContext(ProgramRunId run, NamespacedEntityId componentId) {
     runRef.set(run);
     componentIdRef.set(componentId);
   }
 
   @Nullable
-  public Id.Run getRun() {
+  public ProgramRunId getRun() {
     return runRef.get();
   }
 
   @Nullable
-  public Id.NamespacedId getComponentId() {
+  public NamespacedEntityId getComponentId() {
     return componentIdRef.get();
   }
 }

@@ -20,10 +20,12 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.FlowletId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
@@ -50,19 +52,16 @@ public class LineageDatasetTest {
     RunId runId = RunIds.generate(10000);
     DatasetId datasetInstance = new DatasetId("default", "dataset1");
     ProgramId program = new ProgramId("default", "app1", ProgramType.FLOW, "flow1");
-    Id.Flow.Flowlet flowlet = Id.Flow.Flowlet.from(program.toId().getApplication(), program.getEntityName(),
-                                                   "flowlet1");
-    Id.Run run = new Id.Run(program.toId(), runId.getId());
+    FlowletId flowlet = program.flowlet("flowlet1");
+    ProgramRunId run = program.run(runId.getId());
 
     long accessTimeMillis = System.currentTimeMillis();
-    lineageDataset.addAccess(run,
-                             datasetInstance.toId(), AccessType.READ, accessTimeMillis,
-                             flowlet);
+    lineageDataset.addAccess(run, datasetInstance, AccessType.READ, accessTimeMillis, flowlet);
 
     Relation expected = new Relation(datasetInstance, program, AccessType.READ,
-                                     runId, ImmutableSet.of(flowlet.toEntityId()));
+                                     runId, ImmutableSet.of(flowlet));
 
-    Set<Relation> relations = lineageDataset.getRelations(datasetInstance.toId(), 0, 100000,
+    Set<Relation> relations = lineageDataset.getRelations(datasetInstance, 0, 100000,
                                                           Predicates.<Relation>alwaysTrue());
     Assert.assertEquals(1, relations.size());
     Assert.assertEquals(expected, relations.iterator().next());
@@ -81,42 +80,40 @@ public class LineageDatasetTest {
     RunId runId3 = RunIds.generate(30000);
     RunId runId4 = RunIds.generate(40000);
 
-    DatasetId datasetInstance1 = new DatasetId("default", "dataset1");
-    DatasetId datasetInstance2 = new DatasetId("default", "dataset2");
+    DatasetId datasetInstance1 = NamespaceId.DEFAULT.dataset("dataset1");
+    DatasetId datasetInstance2 = NamespaceId.DEFAULT.dataset("dataset2");
 
-    StreamId stream1 = new StreamId("default", "stream1");
-    StreamId stream2 = new StreamId("default", "stream2");
+    StreamId stream1 = NamespaceId.DEFAULT.stream("stream1");
+    StreamId stream2 = NamespaceId.DEFAULT.stream("stream2");
 
-    ProgramId program1 = new ProgramId("default", "app1", ProgramType.FLOW, "flow1");
-    Id.Flow.Flowlet flowlet1 = Id.Flow.Flowlet.from(program1.toId().getApplication(), program1.getEntityName(),
-                                                    "flowlet1");
-    ProgramId program2 = new ProgramId("default", "app2", ProgramType.WORKER, "worker2");
-    ProgramId program3 = new ProgramId("default", "app3", ProgramType.SERVICE, "service3");
+    ProgramId program1 = NamespaceId.DEFAULT.app("app1").flow("flow1");
+    FlowletId flowlet1 = program1.flowlet("flowlet1");
+    ProgramId program2 = NamespaceId.DEFAULT.app("app2").worker("worker2");
+    ProgramId program3 = NamespaceId.DEFAULT.app("app3").service("service3");
 
-    Id.Run run11 = new Id.Run(program1.toId(), runId1.getId());
-    Id.Run run22 = new Id.Run(program2.toId(), runId2.getId());
-    Id.Run run23 = new Id.Run(program2.toId(), runId3.getId());
-    Id.Run run34 = new Id.Run(program3.toId(), runId4.getId());
+    ProgramRunId run11 = program1.run(runId1.getId());
+    ProgramRunId run22 = program2.run(runId2.getId());
+    ProgramRunId run23 = program2.run(runId3.getId());
+    ProgramRunId run34 = program3.run(runId4.getId());
 
     long now = System.currentTimeMillis();
     //noinspection UnnecessaryLocalVariable
     long run11Data1AccessTime = now;
-    lineageDataset.addAccess(run11, datasetInstance1.toId(), AccessType.READ, run11Data1AccessTime, flowlet1);
+    lineageDataset.addAccess(run11, datasetInstance1, AccessType.READ, run11Data1AccessTime, flowlet1);
     long run22Data2AccessTime = now + 1;
-    lineageDataset.addAccess(run22, datasetInstance2.toId(), AccessType.WRITE, run22Data2AccessTime);
+    lineageDataset.addAccess(run22, datasetInstance2, AccessType.WRITE, run22Data2AccessTime);
     long run22Stream1AccessTime = now + 2;
-    lineageDataset.addAccess(run22, stream1.toId(), AccessType.READ, run22Stream1AccessTime);
+    lineageDataset.addAccess(run22, stream1, AccessType.READ, run22Stream1AccessTime);
     long run23Stream2AccessTime = now + 1;
-    lineageDataset.addAccess(run23, stream2.toId(), AccessType.READ, run23Stream2AccessTime);
+    lineageDataset.addAccess(run23, stream2, AccessType.READ, run23Stream2AccessTime);
     long run23Data2AccessTime = now + 3;
-    lineageDataset.addAccess(run23, datasetInstance2.toId(), AccessType.WRITE, run23Data2AccessTime);
-    lineageDataset.addAccess(run34, datasetInstance2.toId(), AccessType.READ_WRITE, System.currentTimeMillis());
-    lineageDataset.addAccess(run34, stream2.toId(), AccessType.UNKNOWN, System.currentTimeMillis());
+    lineageDataset.addAccess(run23, datasetInstance2, AccessType.WRITE, run23Data2AccessTime);
+    lineageDataset.addAccess(run34, datasetInstance2, AccessType.READ_WRITE, System.currentTimeMillis());
+    lineageDataset.addAccess(run34, stream2, AccessType.UNKNOWN, System.currentTimeMillis());
 
     Assert.assertEquals(
-      ImmutableSet.of(new Relation(datasetInstance1, program1, AccessType.READ, runId1,
-                                   ImmutableSet.of(flowlet1.toEntityId()))),
-      lineageDataset.getRelations(datasetInstance1.toId(), 0, 100000, Predicates.<Relation>alwaysTrue())
+      ImmutableSet.of(new Relation(datasetInstance1, program1, AccessType.READ, runId1, ImmutableSet.of(flowlet1))),
+      lineageDataset.getRelations(datasetInstance1, 0, 100000, Predicates.<Relation>alwaysTrue())
     );
 
     Assert.assertEquals(
@@ -124,18 +121,18 @@ public class LineageDatasetTest {
                       new Relation(datasetInstance2, program2, AccessType.WRITE, runId3),
                       new Relation(datasetInstance2, program3, AccessType.READ_WRITE, runId4)
       ),
-      lineageDataset.getRelations(datasetInstance2.toId(), 0, 100000, Predicates.<Relation>alwaysTrue())
+      lineageDataset.getRelations(datasetInstance2, 0, 100000, Predicates.<Relation>alwaysTrue())
     );
 
     Assert.assertEquals(
       ImmutableSet.of(new Relation(stream1, program2, AccessType.READ, runId2)),
-      lineageDataset.getRelations(stream1.toId(), 0, 100000, Predicates.<Relation>alwaysTrue())
+      lineageDataset.getRelations(stream1, 0, 100000, Predicates.<Relation>alwaysTrue())
     );
 
     Assert.assertEquals(
       ImmutableSet.of(new Relation(stream2, program2, AccessType.READ, runId3),
                       new Relation(stream2, program3, AccessType.UNKNOWN, runId4)),
-      lineageDataset.getRelations(stream2.toId(), 0, 100000, Predicates.<Relation>alwaysTrue())
+      lineageDataset.getRelations(stream2, 0, 100000, Predicates.<Relation>alwaysTrue())
     );
 
     Assert.assertEquals(
@@ -144,7 +141,7 @@ public class LineageDatasetTest {
                       new Relation(datasetInstance2, program2, AccessType.WRITE, runId3),
                       new Relation(stream2, program2, AccessType.READ, runId3)
       ),
-      lineageDataset.getRelations(program2.toId(), 0, 100000, Predicates.<Relation>alwaysTrue())
+      lineageDataset.getRelations(program2, 0, 100000, Predicates.<Relation>alwaysTrue())
     );
 
     // Reduced time range
@@ -152,7 +149,7 @@ public class LineageDatasetTest {
       ImmutableSet.of(new Relation(datasetInstance2, program2, AccessType.WRITE, runId2),
                       new Relation(datasetInstance2, program2, AccessType.WRITE, runId3)
       ),
-      lineageDataset.getRelations(datasetInstance2.toId(), 0, 35000, Predicates.<Relation>alwaysTrue())
+      lineageDataset.getRelations(datasetInstance2, 0, 35000, Predicates.<Relation>alwaysTrue())
     );
 
     Assert.assertEquals(toSet(program1, datasetInstance1), lineageDataset.getEntitiesForRun(run11));
@@ -170,8 +167,8 @@ public class LineageDatasetTest {
   }
 
   private static LineageDataset getLineageDataset(String instanceId) throws Exception {
-    Id.DatasetInstance id = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, instanceId);
-    return DatasetsUtil.getOrCreateDataset(dsFrameworkUtil.getFramework(), id,
+    DatasetId id = DatasetFrameworkTestUtil.NAMESPACE_ID.toEntityId().dataset(instanceId);
+    return DatasetsUtil.getOrCreateDataset(dsFrameworkUtil.getFramework(), id.toId(),
                                            LineageDataset.class.getName(), DatasetProperties.EMPTY, null, null);
   }
 

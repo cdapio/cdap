@@ -198,7 +198,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
 
   @Override
   public void addAccess(Id.Run run, Id.Stream streamId, AccessType accessType) {
-    lineageWriter.addAccess(run, streamId, accessType);
+    lineageWriter.addAccess(run.toEntityId(), streamId.toEntityId(), accessType);
     AuditPublishers.publishAccess(auditPublisher, streamId, accessType, run);
   }
 

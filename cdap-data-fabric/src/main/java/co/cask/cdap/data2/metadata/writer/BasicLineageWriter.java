@@ -19,7 +19,10 @@ package co.cask.cdap.data2.metadata.writer;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.LineageStore;
 import co.cask.cdap.data2.metadata.lineage.LineageStoreWriter;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,13 +48,13 @@ public class BasicLineageWriter implements LineageWriter {
   }
 
   @Override
-  public void addAccess(Id.Run run, Id.DatasetInstance datasetInstance, AccessType accessType) {
+  public void addAccess(ProgramRunId run, DatasetId datasetInstance, AccessType accessType) {
     addAccess(run, datasetInstance, accessType, null);
   }
 
   @Override
-  public void addAccess(Id.Run run, Id.DatasetInstance datasetInstance, AccessType accessType,
-                        @Nullable Id.NamespacedId component) {
+  public void addAccess(ProgramRunId run, DatasetId datasetInstance, AccessType accessType,
+                        @Nullable NamespacedEntityId component) {
     if (alreadyRegistered(run, datasetInstance, accessType, component)) {
       return;
     }
@@ -63,12 +66,13 @@ public class BasicLineageWriter implements LineageWriter {
   }
 
   @Override
-  public void addAccess(Id.Run run, Id.Stream stream, AccessType accessType) {
+  public void addAccess(ProgramRunId run, StreamId stream, AccessType accessType) {
     addAccess(run, stream, accessType, null);
   }
 
   @Override
-  public void addAccess(Id.Run run, Id.Stream stream, AccessType accessType, @Nullable Id.NamespacedId component) {
+  public void addAccess(ProgramRunId run, StreamId stream, AccessType accessType,
+                        @Nullable NamespacedEntityId component) {
     if (alreadyRegistered(run, stream, accessType, component)) {
       return;
     }
@@ -79,8 +83,8 @@ public class BasicLineageWriter implements LineageWriter {
     lineageStoreWriter.addAccess(run, stream, accessType, accessTime, component);
   }
 
-  private boolean alreadyRegistered(Id.Run run, Id.NamespacedId data, AccessType accessType,
-                                    @Nullable Id.NamespacedId component) {
+  private boolean alreadyRegistered(ProgramRunId run, NamespacedEntityId data, AccessType accessType,
+                                    @Nullable NamespacedEntityId component) {
     return registered.putIfAbsent(new DataAccessKey(run, data, accessType, component), true) != null;
   }
 
@@ -88,12 +92,13 @@ public class BasicLineageWriter implements LineageWriter {
    * Key used to keep track of whether a particular access has been recorded already or not (for lineage).
    */
   public static final class DataAccessKey {
-    private final Id.Run run;
-    private final Id.NamespacedId data;
+    private final ProgramRunId run;
+    private final NamespacedEntityId data;
     private final AccessType accessType;
-    private final Id.NamespacedId component;
+    private final NamespacedEntityId component;
 
-    public DataAccessKey(Id.Run run, Id.NamespacedId data, AccessType accessType, @Nullable Id.NamespacedId component) {
+    public DataAccessKey(ProgramRunId run, NamespacedEntityId data, AccessType accessType, 
+                         @Nullable NamespacedEntityId component) {
       this.run = run;
       this.data = data;
       this.accessType = accessType;

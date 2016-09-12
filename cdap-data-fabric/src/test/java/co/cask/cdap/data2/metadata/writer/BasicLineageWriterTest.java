@@ -71,8 +71,8 @@ public class BasicLineageWriterTest {
     // Tag stream
     metadataStore.addTags(MetadataScope.USER, stream, "stag1", "stag2");
     // Write access for run1
-    lineageWriter.addAccess(run1.toId(), stream.toId(), AccessType.READ);
-    Assert.assertEquals(ImmutableSet.of(program, stream), lineageStore.getEntitiesForRun(run1.toId()));
+    lineageWriter.addAccess(run1, stream, AccessType.READ);
+    Assert.assertEquals(ImmutableSet.of(program, stream), lineageStore.getEntitiesForRun(run1));
 
     // Record time to verify duplicate writes.
     long beforeSecondTag = System.currentTimeMillis();
@@ -82,14 +82,14 @@ public class BasicLineageWriterTest {
     // Add another tag to stream
     metadataStore.addTags(MetadataScope.USER, stream, "stag3");
     // Write access for run1 again
-    lineageWriter.addAccess(run1.toId(), stream.toId(), AccessType.READ);
+    lineageWriter.addAccess(run1, stream, AccessType.READ);
     // The write should be no-op, and access time for run1 should not be updated
-    Assert.assertTrue(lineageStore.getAccessTimesForRun(run1.toId()).get(0) < beforeSecondTag);
+    Assert.assertTrue(lineageStore.getAccessTimesForRun(run1).get(0) < beforeSecondTag);
 
     // However, you can write access for another run
-    lineageWriter.addAccess(run2.toId(), stream.toId(), AccessType.READ);
+    lineageWriter.addAccess(run2, stream, AccessType.READ);
     // Assert new access time is written
-    Assert.assertTrue(lineageStore.getAccessTimesForRun(run2.toId()).get(0) >= beforeSecondTag);
+    Assert.assertTrue(lineageStore.getAccessTimesForRun(run2).get(0) >= beforeSecondTag);
   }
 
   private static Injector getInjector() {

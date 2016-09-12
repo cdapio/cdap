@@ -202,6 +202,6 @@ public class DefaultStreamWriter implements StreamWriter {
     }
 
     // Lineage writer handles duplicate accesses internally
-    lineageWriter.addAccess(run, stream, AccessType.WRITE);
+    lineageWriter.addAccess(run.toEntityId(), stream.toEntityId(), AccessType.WRITE);
   }
 }

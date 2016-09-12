@@ -34,6 +34,7 @@ import co.cask.cdap.data2.transaction.stream.ForwardingStreamConsumer;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import org.apache.tephra.TransactionAware;
@@ -73,7 +74,7 @@ public final class LineageWriterDataFabricFacade implements DataFabricFacade, Pr
 
   @Override
   public void initContext(Id.Run run) {
-    programContext.initContext(run);
+    programContext.initContext(run.toEntityId());
     if (queueClientFactory instanceof ProgramContextAware) {
       ((ProgramContextAware) queueClientFactory).initContext(run);
     }
@@ -81,7 +82,7 @@ public final class LineageWriterDataFabricFacade implements DataFabricFacade, Pr
 
   @Override
   public void initContext(Id.Run run, Id.NamespacedId componentId) {
-    programContext.initContext(run, componentId);
+    programContext.initContext(run.toEntityId(), (NamespacedEntityId) componentId.toEntityId());
     if (queueClientFactory instanceof ProgramContextAware) {
       ((ProgramContextAware) queueClientFactory).initContext(run, componentId);
     }
@@ -135,7 +136,8 @@ public final class LineageWriterDataFabricFacade implements DataFabricFacade, Pr
     datasetCache.addExtraTransactionAware(consumer);
 
     if (programContext.getRun() != null) {
-      lineageWriter.addAccess(programContext.getRun(), streamName, AccessType.READ, programContext.getComponentId());
+      lineageWriter.addAccess(programContext.getRun(), streamName.toEntityId(), AccessType.READ,
+                              (NamespacedEntityId) programContext.getComponentId());
     }
 
     return new ForwardingStreamConsumer(consumer) {
