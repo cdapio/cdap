@@ -128,6 +128,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
               protected void configure() {
                 bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class);
                 bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);
+                bind(TransactionManager.class).in(Singleton.class);
               }
             });
         }
