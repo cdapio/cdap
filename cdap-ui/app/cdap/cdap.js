@@ -43,7 +43,9 @@ class CDAP extends Component {
     this.version = '4.0.0';
   }
   render() {
-    if(!cookie.load('CDAP_Auth_User') || !cookie.load('CDAP_Auth_Token')){
+    if( window.CDAP_CONFIG.securityEnabled &&
+        !cookie.load('CDAP_Auth_Token')
+     ){
       //authentication failed ; redirect to another page
       window.location.href = window.getAbsUIUrl({
         uiApp: 'login',

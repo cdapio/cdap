@@ -59,7 +59,10 @@ export default class HeaderActions extends Component {
       topRow = (
         <div>
           <div className="dropdown-item dropdown-name-row">
-            Signed in as <span className="dropdown-name">{this.state.name}</span> <span className="dropdown-name-icon fa fa-cog"></span>
+            Signed in as
+            <span className="dropdown-name">
+              {this.state.name}
+            </span>
           </div>
           <DropdownItem divider />
         </div>
@@ -68,7 +71,13 @@ export default class HeaderActions extends Component {
       signoutRow = (
         <div>
           <DropdownItem divider />
-          <div className="dropdown-item" onClick={this.logout}><span className="dropdown-icon fa fa-sign-out"></span>Logout</div>
+          <div
+            className="dropdown-item"
+            onClick={this.logout}
+          >
+            <span className="dropdown-icon fa fa-sign-out"></span>
+            Logout
+          </div>
         </div>
       );
     }
@@ -88,12 +97,30 @@ export default class HeaderActions extends Component {
           >
             <span className={classNames('fa', 'fa-cog', {'menu-open' : this.state.settingsOpen})}></span>
             <span className={classNames('navbar-cog-arrow', {'hidden' : !this.state.settingsOpen})}></span>
-            <Dropdown isOpen={this.state.settingsOpen} toggle={this.toggleSettingsDropdown}>
+            <Dropdown
+              isOpen={this.state.settingsOpen}
+              toggle={this.toggleSettingsDropdown}
+            >
               <DropdownMenu>
                 {topRow}
-                <div className="dropdown-item"><a href="http://cask.co/community"><span className="dropdown-icon fa fa-life-ring"></span>Support</a></div>
-                <div className="dropdown-item"><a href="http://cask.co/"><span className="dropdown-icon fa fa-home"></span>Cask home</a></div>
-                <div className="dropdown-item"><a href="http://docs.cask.co/"><span className="dropdown-icon fa fa-file"></span>Documentation</a></div>
+                <div className="dropdown-item">
+                  <a href="http://cask.co/community">
+                    <span className="dropdown-icon fa fa-life-ring"></span>
+                    Support
+                  </a>
+                </div>
+                <div className="dropdown-item">
+                  <a href="http://cask.co/">
+                    <span className="dropdown-icon fa fa-home"></span>
+                    Cask home
+                  </a>
+                </div>
+                <div className="dropdown-item">
+                  <a href="http://docs.cask.co/">
+                    <span className="dropdown-icon fa fa-file"></span>
+                    Documentation
+                  </a>
+                </div>
                 {signoutRow}
               </DropdownMenu>
             </Dropdown>
