@@ -103,7 +103,7 @@ public class HBaseVersion {
             ver.getClassifier().startsWith(CDH58_CLASSIFIER))) {
           currentVersion = Version.HBASE_12_CDH57;
         } else {
-          currentVersion = Version.UNKNOWN;
+          currentVersion = Version.HBASE_11;
         }
       } else {
         currentVersion = Version.UNKNOWN;
