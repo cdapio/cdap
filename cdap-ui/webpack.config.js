@@ -115,7 +115,8 @@ const cdapWebpackConfig = {
       'react-addons-css-transition-group',
       'i18n-react',
       'fuse.js',
-      'react-redux'
+      'react-redux',
+      'react-router'
     ]
   },
   module: {

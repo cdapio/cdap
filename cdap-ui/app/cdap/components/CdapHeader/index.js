@@ -14,14 +14,16 @@
  * the License.
  */
 
-import React from 'react';
+import React, {PropTypes} from 'react';
+
 import Header from '../Header';
 import T from 'i18n-react';
 
-export default function CdapHeader() {
+export default function CdapHeader({ pathname }) {
+
   var navbarItemList = [
     {
-      linkTo: 'home',
+      linkTo: '',
       title: T.translate('features.Navbar.CDAP.home')
     },
     {
@@ -33,9 +35,14 @@ export default function CdapHeader() {
       title: T.translate('features.Navbar.CDAP.management')
     }
   ];
+
   return (
     <Header
-      navbarItemList={navbarItemList}
+      pathname={pathname} navbarItemList={navbarItemList}
     />
   );
 }
+
+CdapHeader.propTypes = {
+  pathname : PropTypes.string
+};
