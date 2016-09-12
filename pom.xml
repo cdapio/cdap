@@ -111,6 +111,7 @@
     <hbase11.version>1.1.1</hbase11.version>
     <hbase12cdh570.version>1.2.0-cdh5.7.0</hbase12cdh570.version>
     <hive.version>1.2.1</hive.version>
+    <tez.version>0.8.4</tez.version>
     <hsql.version>2.2.4</hsql.version>
     <http.component.version>4.2.5</http.component.version>
     <jetty.version>6.1.22</jetty.version>
@@ -1433,6 +1434,11 @@
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-compress</artifactId>
         <version>${commons.compress.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.tez</groupId>
+        <artifactId>tez-api</artifactId>
+        <version>${tez.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mockftpserver</groupId>
