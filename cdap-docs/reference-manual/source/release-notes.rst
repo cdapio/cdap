@@ -106,9 +106,9 @@ Bug Fixes
 - :cask-issue:`CDAP-7237` - Prevented accidental grant of additional actions to a user as
   part of a grant operation when using Apache Sentry as the authorization provider.
 
-- :cask-issue:`CDAP-7248` - ??
+- :cask-issue:`CDAP-7248` - Fixed a problem with the FileBatchSource not working with Azure Blob Storage.
 
-- :cask-issue:`CDAP-7249` - ??
+- :cask-issue:`CDAP-7249` - Fixed a problem with CDAP Explore using Tez on Azure HDInsight.
 
 - :cask-issue:`HYDRATOR-912` - Fixed an issue where the Joiner plugin was failing in
   Hydrator pipelines executing in a Spark environment.
