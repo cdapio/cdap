@@ -38,7 +38,6 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
 import java.util.Set;
 
 /**
@@ -73,18 +72,8 @@ public class MetricsProcessorStatusService extends AbstractIdleService {
 
     httpService.startAndWait();
 
-    cancellable = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
-      @Override
-      public String getName() {
-        return Constants.Service.METRICS_PROCESSOR;
-      }
-
-      @Override
-      public InetSocketAddress getSocketAddress() {
-        return httpService.getBindAddress();
-      }
-    }));
-
+    cancellable = discoveryService.register(
+      ResolvingDiscoverable.of(new Discoverable(Constants.Service.METRICS_PROCESSOR, httpService.getBindAddress())));
     LOG.info("Started MetricsProcessor Status Service.");
   }
 

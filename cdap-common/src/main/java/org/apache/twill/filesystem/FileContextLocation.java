@@ -80,6 +80,32 @@ final class FileContextLocation implements Location {
   }
 
   @Override
+  public boolean createNew(String permission) throws IOException {
+    try {
+      FsPermission fsPermission = parsePermissions(permission);
+      fc.create(path, EnumSet.of(CreateFlag.CREATE),
+                Options.CreateOpts.createParent(),
+                Options.CreateOpts.perms(fsPermission)).close();
+      // Set the permission explicitly again to skip the umask
+      fc.setPermission(path, fsPermission);
+      return true;
+    } catch (FileAlreadyExistsException e) {
+      return false;
+    }
+  }
+
+  @Override
+  public String getPermissions() throws IOException {
+    FsPermission permission = fc.getFileStatus(path).getPermission();
+    return permission.getUserAction().SYMBOL + permission.getGroupAction().SYMBOL + permission.getOtherAction().SYMBOL;
+  }
+
+  @Override
+  public void setPermissions(String permission) throws IOException {
+    fc.setPermission(path, parsePermissions(permission));
+  }
+
+  @Override
   public InputStream getInputStream() throws IOException {
     return fc.open(path);
   }
@@ -222,5 +248,24 @@ final class FileContextLocation implements Location {
   @Override
   public String toString() {
     return toURI().toString();
+  }
+
+  /**
+   * Parses the given permission to {@link FsPermission}.
+   *
+   * @param permission the permission as passed to the {@link #createNew(String)} or {@link #getOutputStream(String)}
+   *                   methods.
+   * @return a new {@link FsPermission}.
+   */
+  private FsPermission parsePermissions(String permission) {
+    if (permission.length() == 3) {
+      return new FsPermission(permission);
+    } else if (permission.length() == 9) {
+      // The FsPermission expect a 10 characters string, which it will ignore the first character
+      return FsPermission.valueOf("-" + permission);
+    } else {
+      throw new IllegalArgumentException("Invalid permission " + permission +
+                                           ". Permission should either be a three digit or nine character string.");
+    }
   }
 }

@@ -79,17 +79,7 @@ public final class StreamHttpService extends AbstractIdleService implements Supp
                                                                        Constants.Service.STREAMS));
     httpService.startAndWait();
 
-    discoverable = ResolvingDiscoverable.of(new Discoverable() {
-      @Override
-      public String getName() {
-        return Constants.Service.STREAMS;
-      }
-
-      @Override
-      public InetSocketAddress getSocketAddress() {
-        return httpService.getBindAddress();
-      }
-    });
+    discoverable = ResolvingDiscoverable.of(new Discoverable(Constants.Service.STREAMS, httpService.getBindAddress()));
     cancellable = discoveryService.register(discoverable);
 }
 

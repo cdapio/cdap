@@ -154,17 +154,14 @@ public final class InMemoryProgramRunnerModule extends PrivateModule {
 
     @Override
     public Cancellable announce(final String serviceName, final int port) {
-      return discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
-        @Override
-        public String getName() {
-          return serviceName;
-        }
+      return discoveryService.register(
+        ResolvingDiscoverable.of(new Discoverable(serviceName, new InetSocketAddress(hostname, port))));
+    }
 
-        @Override
-        public InetSocketAddress getSocketAddress() {
-          return new InetSocketAddress(hostname, port);
-        }
-      }));
+    @Override
+    public Cancellable announce(String serviceName, int port, byte[] payload) {
+      return discoveryService.register(
+        ResolvingDiscoverable.of(new Discoverable(serviceName, new InetSocketAddress(hostname, port), payload)));
     }
   }
 }

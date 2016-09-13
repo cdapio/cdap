@@ -74,7 +74,6 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -655,17 +654,8 @@ public abstract class NettyRouterTestBase {
     public void registerServer() {
       // Register services of test server
       log.info("Registering service {}", serviceNameSupplier.get());
-      cancelDiscovery = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
-        @Override
-        public String getName() {
-          return serviceNameSupplier.get();
-        }
-
-        @Override
-        public InetSocketAddress getSocketAddress() {
-          return httpService.getBindAddress();
-        }
-      }));
+      cancelDiscovery = discoveryService.register(
+        ResolvingDiscoverable.of(new Discoverable(serviceNameSupplier.get(), httpService.getBindAddress())));
     }
 
     public void cancelRegistration() {

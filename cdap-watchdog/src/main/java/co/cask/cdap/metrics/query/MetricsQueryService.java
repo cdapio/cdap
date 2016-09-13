@@ -37,7 +37,6 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -95,18 +94,8 @@ public class MetricsQueryService extends AbstractIdleService {
     httpService.startAndWait();
     LOG.info("Started Metrics HTTP Service...");
     // Register the service
-    cancelDiscovery = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
-      @Override
-      public String getName() {
-        return Constants.Service.METRICS;
-      }
-
-      @Override
-      public InetSocketAddress getSocketAddress() {
-        return httpService.getBindAddress();
-      }
-    }));
-
+    cancelDiscovery = discoveryService.register(
+      ResolvingDiscoverable.of(new Discoverable(Constants.Service.METRICS, httpService.getBindAddress())));
     LOG.info("Metrics Service started successfully on {}", httpService.getBindAddress());
   }
 

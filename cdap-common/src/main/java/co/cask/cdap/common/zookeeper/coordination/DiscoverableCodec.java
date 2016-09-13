@@ -47,21 +47,10 @@ public class DiscoverableCodec implements JsonSerializer<Discoverable>, JsonDese
   public Discoverable deserialize(JsonElement json, Type typeOfT,
                                   JsonDeserializationContext context) throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
-    final String service = jsonObj.get("service").getAsString();
+    String service = jsonObj.get("service").getAsString();
     String hostname = jsonObj.get("hostname").getAsString();
     int port = jsonObj.get("port").getAsInt();
-    final InetSocketAddress address = new InetSocketAddress(hostname, port);
-
-    return new Discoverable() {
-      @Override
-      public String getName() {
-        return service;
-      }
-
-      @Override
-      public InetSocketAddress getSocketAddress() {
-        return address;
-      }
-    };
+    InetSocketAddress address = new InetSocketAddress(hostname, port);
+    return new Discoverable(service, address);
   }
 }
