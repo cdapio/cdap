@@ -23,8 +23,10 @@ import com.google.common.collect.Sets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -239,8 +241,63 @@ public class ConnectorDag extends Dag {
     }
 
     Set<String> remainingSources = Sets.intersection(remainingNodes, possibleNewSources);
+    Set<String> processedNodes = new HashSet<>();
+
+    /* Since there can be remaining sources from subdags which don't overlap, they should be split as seperate subdags.
+     For example:
+
+             n1 --|
+                  |--- n3(r) ---|
+             n2 --|             |-- n5(c) --- n5(r) --|
+                    n4 ---------|                     |
+                                                      |--- n7(c) --- n7(r) --- n8
+                                                      |
+                                          n6 ---------|
+                                                      |
+                                          n9 ---------|
+
+      Here, remainingSources are n4, n6 and n9.
+
+      Now, n6, n9, n7.connector should be in the same subdag and n4, n5.connector should be another subdag. So, the
+      algorithm will first create dag1(n4, n5.connector), dag2(n6, n7.connector) and dag3(n9, n7.connector) and
+      then it will merge dag2 and dag3 into (n6, n9, n7.connector) and keep (n4, n5.connector) as seperate dag since
+      it does not overlap with nodes from dag2 and dag3.
+    */
+
+    // For that, we first create all the subdags from remaining sources and keep track of accessible nodes for those
+    // subdags. Then we merge overlapping subdags.
     if (!remainingSources.isEmpty()) {
-      dags.add(subsetFrom(remainingSources, possibleNewSinks));
+      // source -> [ nodes accessible by the source ]
+      Map<String, Set<String>> nodesAccessibleBySources = new HashMap<>();
+
+      for (String remainingSource : remainingSources) {
+        Dag remainingNodesDag = subsetFrom(remainingSource, possibleNewSinks);
+        nodesAccessibleBySources.put(remainingSource, remainingNodesDag.getNodes());
+      }
+
+      for (String remainingSource : remainingSources) {
+        // Skip remainingSource if it is already processed.
+        if (processedNodes.contains(remainingSource)) {
+          continue;
+        }
+        Set<String> remainingAccessibleNodes = nodesAccessibleBySources.get(remainingSource);
+        // Island of all the remaining nodes
+        Set<String> islandNodes = new HashSet<>();
+        islandNodes.addAll(remainingAccessibleNodes);
+        for (String otherSource : remainingSources) {
+          if (remainingSource.equals(otherSource)) {
+            continue;
+          }
+          Set<String> otherAccessibleNodes = nodesAccessibleBySources.get(otherSource);
+          // If there is an overlap, add those nodes to the island.
+          if (!Sets.intersection(remainingAccessibleNodes, otherAccessibleNodes).isEmpty()) {
+            islandNodes.addAll(otherAccessibleNodes);
+          }
+        }
+        dags.add(createSubDag(islandNodes));
+        // keep track of processed nodes
+        processedNodes.addAll(islandNodes);
+      }
     }
     return dags;
   }

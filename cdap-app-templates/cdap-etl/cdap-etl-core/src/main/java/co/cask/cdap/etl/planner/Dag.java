@@ -295,6 +295,23 @@ public class Dag {
   }
 
   /**
+   * Creates dag from provided list of nodes
+   * @param nodes list of nodes to create subdag
+   * @return Dag with connections among nodes
+   */
+  public Dag createSubDag(Set<String> nodes) {
+    Set<Connection> connections = new HashSet<>();
+    for (String node : nodes) {
+      for (String outputNode : outgoingConnections.get(node)) {
+        if (nodes.contains(outputNode)) {
+          connections.add(new Connection(node, outputNode));
+        }
+      }
+    }
+    return new Dag(connections);
+  }
+
+  /**
    * Get the dag in topological order.
    * The returned list guarantees that for each item in the list, that item has no path to an
    * item that comes before it in the list. In the process, if a cycle is found, an exception will be thrown.

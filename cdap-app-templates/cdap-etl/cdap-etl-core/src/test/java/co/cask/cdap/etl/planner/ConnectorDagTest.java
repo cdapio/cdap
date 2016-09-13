@@ -435,6 +435,56 @@ public class ConnectorDagTest {
   }
 
   @Test
+  public void testSplitDagWithMultiReduces() {
+    /*
+   n1 --|
+        |--- n3(r) ---|
+   n2 --|             |-- n5(r) --|
+          n4 ---------|           |
+                                  |-- n7(r) -- n8
+                                  |
+                      n6 ---------|
+                                  |
+                      n9 ---------|
+     */
+    ConnectorDag cdag = ConnectorDag.builder()
+      .addConnection("n1", "n3")
+      .addConnection("n2", "n3")
+      .addConnection("n3", "n5")
+      .addConnection("n4", "n5")
+      .addConnection("n5", "n7")
+      .addConnection("n6", "n7")
+      .addConnection("n9", "n7")
+      .addConnection("n7", "n8")
+      .addReduceNodes("n3", "n5", "n7")
+      .build();
+    cdag.insertConnectors();
+    Set<Dag> actual = new HashSet<>(cdag.split());
+    Dag dag1 = new Dag(
+      ImmutableSet.of(
+        new Connection("n1", "n3"),
+        new Connection("n2", "n3"),
+        new Connection("n3", "n5.connector")));
+    Dag dag2 = new Dag(
+      ImmutableSet.of(
+        new Connection("n4", "n5.connector")));
+    Dag dag3 = new Dag(
+      ImmutableSet.of(
+        new Connection("n5.connector", "n5"),
+        new Connection("n5", "n7.connector")));
+    Dag dag4 = new Dag(
+      ImmutableSet.of(
+        new Connection("n6", "n7.connector"),
+        new Connection("n9", "n7.connector")));
+    Dag dag5 = new Dag(
+      ImmutableSet.of(
+        new Connection("n7.connector", "n7"),
+        new Connection("n7", "n8")));
+    Set<Dag> expected = ImmutableSet.of(dag1, dag2, dag3, dag4, dag5);
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test
   public void testIsolateNoOp() {
     /*
         n1(i) --> n2(i)
