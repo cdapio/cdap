@@ -17,14 +17,8 @@
 package co.cask.cdap.api.worker;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.internal.api.AbstractPluginConfigurable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 /**

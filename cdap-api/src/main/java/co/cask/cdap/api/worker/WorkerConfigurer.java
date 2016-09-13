@@ -19,9 +19,6 @@ package co.cask.cdap.api.worker;
 import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.ProgramConfigurer;
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 
 /**

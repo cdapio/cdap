@@ -16,9 +16,7 @@
 
 package co.cask.cdap.test.app;
 
-import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;

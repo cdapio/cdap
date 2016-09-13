@@ -16,13 +16,13 @@
 
 package co.cask.cdap.spark.app
 
+import co.cask.cdap.api.ProgramStatus
 import co.cask.cdap.api.annotation.{Property, UseDataSet}
 import co.cask.cdap.api.app.AbstractApplication
 import co.cask.cdap.api.common.Bytes
 import co.cask.cdap.api.data.stream.Stream
-import co.cask.cdap.api.dataset.lib.{FileSet, FileSetProperties, KeyValueTable, ObjectMappedTable, ObjectMappedTableProperties, TimeseriesTable}
-import co.cask.cdap.api.ProgramStatus
-import co.cask.cdap.api.spark.{AbstractSpark, SparkClientContext}
+import co.cask.cdap.api.dataset.lib._
+import co.cask.cdap.api.spark.AbstractSpark
 import co.cask.cdap.api.workflow.{AbstractWorkflow, AbstractWorkflowAction}
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat
 

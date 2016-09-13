@@ -22,7 +22,6 @@ import co.cask.cdap.common.lang.ClassPathResources;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;

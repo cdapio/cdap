@@ -75,7 +75,7 @@ the ``PageRankSpark``, the amount of memory is specified:
 
 .. literalinclude:: /../../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
    :language: java
-   :lines: 111-123
+   :lines: 110-122
    :dedent: 2
 
 If both the memory and the number of cores needs to be set, this can be done using::

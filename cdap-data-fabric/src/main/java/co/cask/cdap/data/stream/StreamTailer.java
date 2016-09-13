@@ -38,7 +38,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.Location;
-import sun.security.krb5.internal.AuthContext;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;

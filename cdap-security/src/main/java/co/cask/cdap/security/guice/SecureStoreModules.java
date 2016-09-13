@@ -27,7 +27,6 @@ import co.cask.cdap.security.store.DummySecureStore;
 import co.cask.cdap.security.store.FileSecureStore;
 import co.cask.cdap.security.store.SecureStoreUtils;
 import com.google.common.base.Strings;
-import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;

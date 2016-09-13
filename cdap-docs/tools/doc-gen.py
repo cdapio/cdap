@@ -52,11 +52,10 @@ RST2PDF_PAGE_BREAK_TEXT = """.. raw:: pdf
 
 DIRECTIVE_HIGHLIGHT      = ".. highlight::" # Highlight directive, not supported by rst2pdf
 
-from optparse import OptionParser
 import os
 import subprocess
 import sys
-import tempfile
+from optparse import OptionParser
 
 
 def parse_options():

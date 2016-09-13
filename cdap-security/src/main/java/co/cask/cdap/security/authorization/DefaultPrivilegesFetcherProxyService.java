@@ -27,7 +27,6 @@ import co.cask.cdap.security.spi.authorization.PrivilegesFetcher;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

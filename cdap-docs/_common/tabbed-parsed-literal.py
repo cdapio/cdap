@@ -126,10 +126,8 @@ http://spark.apache.org/examples.html
 
 """
 
-import ast
-
 from docutils import nodes
-from docutils.parsers.rst import Directive, directives
+from docutils.parsers.rst import directives
 from docutils.parsers.rst.directives.body import ParsedLiteral
 from docutils.parsers.rst.roles import set_classes
 

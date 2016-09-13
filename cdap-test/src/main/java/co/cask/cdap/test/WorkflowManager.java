@@ -22,7 +22,6 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
-import co.cask.cdap.proto.id.ProgramRunId;
 
 import java.util.List;
 import java.util.Map;

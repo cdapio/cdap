@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import sys
 import os
+import sys
 
 # Import the common config file
 # Note that paths in the common config are interpreted as if they were 

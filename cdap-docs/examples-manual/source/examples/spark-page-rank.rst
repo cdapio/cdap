@@ -42,7 +42,7 @@ of the application are tied together by the class ``SparkPageRankApp``:
 
 .. literalinclude:: /../../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
    :language: java
-   :lines: 55-96
+   :lines: 54-95
    :append: ...
 
 The *ranks* and *rankscount* ObjectStore Data Storage
@@ -63,7 +63,7 @@ When a Spark program is running inside a workflow, the memory requirements confi
 
 .. literalinclude:: /../../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
     :language: java
-    :lines: 120-121
+    :lines: 119-120
     :dedent: 6
 
 .. Building and Starting

@@ -19,7 +19,6 @@ package co.cask.cdap.etl.realtime;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.plugin.PluginConfigurer;
-import co.cask.cdap.etl.batch.BatchPipelineSpec;
 import co.cask.cdap.etl.proto.v2.ETLRealtimeConfig;
 import co.cask.cdap.etl.spec.PipelineSpec;
 import co.cask.cdap.etl.spec.PipelineSpecGenerator;
