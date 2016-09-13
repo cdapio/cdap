@@ -424,8 +424,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Category(SlowTests.class)
   @Test
   public void testMapperDatasetAccess() throws Exception {
-    addDatasetInstance("keyValueTable", "table1").create();
-    addDatasetInstance("keyValueTable", "table2").create();
+    addDatasetInstance("keyValueTable", "table1");
+    addDatasetInstance("keyValueTable", "table2");
     DataSetManager<KeyValueTable> tableManager = getDataset("table1");
     KeyValueTable inputTable = tableManager.get();
     inputTable.write("hello", "world");
@@ -450,8 +450,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     getNamespaceAdmin().create(inputNS);
     getNamespaceAdmin().create(outputNS);
 
-    addDatasetInstance(inputNS.getNamespaceId().toId(), "keyValueTable", "table1").create();
-    addDatasetInstance(outputNS.getNamespaceId().toId(), "keyValueTable", "table2").create();
+    addDatasetInstance(inputNS.getNamespaceId().toId(), "keyValueTable", "table1");
+    addDatasetInstance(outputNS.getNamespaceId().toId(), "keyValueTable", "table2");
     DataSetManager<KeyValueTable> tableManager = getDataset(inputNS.getNamespaceId().toId(), "table1");
     KeyValueTable inputTable = tableManager.get();
     inputTable.write("hello", "world");
@@ -553,8 +553,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Category(SlowTests.class)
   @Test
   public void testCustomActionDatasetAccess() throws Exception {
-    addDatasetInstance("keyValueTable", DatasetWithCustomActionApp.CUSTOM_TABLE).create();
-    addDatasetInstance("fileSet", DatasetWithCustomActionApp.CUSTOM_FILESET).create();
+    addDatasetInstance("keyValueTable", DatasetWithCustomActionApp.CUSTOM_TABLE);
+    addDatasetInstance("fileSet", DatasetWithCustomActionApp.CUSTOM_FILESET);
 
     ApplicationManager appManager = deployApplication(DatasetWithCustomActionApp.class);
     ServiceManager serviceManager = appManager.getServiceManager(DatasetWithCustomActionApp.CUSTOM_SERVICE).start();
@@ -1523,14 +1523,14 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Test(timeout = 60000L)
   public void testAppWithExistingDataset() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
+    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY);
     testAppWithDataset(AppsWithDataset.AppWithExisting.class, "MyService");
   }
 
   @Test(timeout = 60000L)
   public void testAppWithExistingDatasetInjectedByAnnotation() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
+    addDatasetInstance("myKeyValueTable", "myTable", DatasetProperties.EMPTY);
     testAppWithDataset(AppsWithDataset.AppUsesAnnotation.class, "MyServiceWithUseDataSetAnnotation");
   }
 
@@ -1539,7 +1539,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     // TODO: Although this has nothing to do with this testcase, deploying a dummy app to create the default namespace
     deployApplication(testSpace, DummyApp.class);
     deployDatasetModule(testSpace, "my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    addDatasetInstance(testSpace, "myKeyValueTable", "myTable", DatasetProperties.EMPTY).create();
+    addDatasetInstance(testSpace, "myKeyValueTable", "myTable", DatasetProperties.EMPTY);
     DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> dataSetManager =
       getDataset(testSpace, "myTable");
     AppsWithDataset.KeyValueTableDefinition.KeyValueTable kvTable = dataSetManager.get();
