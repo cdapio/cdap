@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.appender;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.status.OnConsoleStatusListener;
@@ -27,7 +28,10 @@ import org.slf4j.ILoggerFactory;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
+import javax.annotation.Nullable;
 
 /**
  * Creates and sets the logback log appender.
@@ -43,40 +47,45 @@ public class LogAppenderInitializer implements Closeable {
   }
 
   public void initialize() {
-    if (initMap.putIfAbsent(org.slf4j.Logger.ROOT_LOGGER_NAME, logAppender.getName()) != null) {
+    if (initMap.putIfAbsent(Logger.ROOT_LOGGER_NAME, logAppender.getName()) != null) {
       // Already initialized.
       LOG.warn("Log appender {} is already initialized.", logAppender.getName());
       return;
     }
-
-    initialize(org.slf4j.Logger.ROOT_LOGGER_NAME);
+    initialize(Logger.ROOT_LOGGER_NAME);
   }
 
   @VisibleForTesting
-  public void initialize(String rootLoggerName) {
-    ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
-    // TODO: fix logging issue in mapreduce:  ENG-3279
-    if (!(loggerFactory instanceof LoggerContext)) {
-      LOG.warn("LoggerFactory is not a logback LoggerContext. No log appender is added. " +
-                 "Logback might not be in the classpath");
-      return;
+  public void initialize(String loggerName) {
+    LoggerContext loggerContext = getLoggerContext();
+    if (loggerContext != null) {
+      Logger rootLogger = loggerContext.getLogger(loggerName);
+
+      LOG.info("Initializing log appender {}", logAppender.getName());
+
+      // Display any errors during initialization of log appender to console
+      StatusManager statusManager = loggerContext.getStatusManager();
+      OnConsoleStatusListener onConsoleListener = new OnConsoleStatusListener();
+      statusManager.add(onConsoleListener);
+
+      logAppender.setContext(loggerContext);
+      logAppender.start();
+
+      rootLogger.addAppender(logAppender);
     }
+  }
 
-    LoggerContext loggerContext = (LoggerContext) loggerFactory;
-    Logger rootLogger = loggerContext.getLogger(rootLoggerName);
-
-    LOG.info("Initializing log appender {}", logAppender.getName());
-
-
-    // Display any errors during initialization of log appender to console
-    StatusManager statusManager = loggerContext.getStatusManager();
-    OnConsoleStatusListener onConsoleListener = new OnConsoleStatusListener();
-    statusManager.add(onConsoleListener);
-
-    logAppender.setContext(loggerContext);
-    logAppender.start();
-
-    rootLogger.addAppender(logAppender);
+  public void setLogLevels(Map<String, String> logPairs) {
+    LoggerContext loggerContext = getLoggerContext();
+    if (loggerContext != null) {
+      for (Map.Entry<String, String> entry : logPairs.entrySet()) {
+        String loggerName = entry.getKey();
+        String logLevel = entry.getValue();
+        Logger logger = loggerContext.getLogger(loggerName);
+        LOG.info("Log level of {} changed from {} to {}", loggerName, logger.getLevel(), logLevel);
+        logger.setLevel(Level.toLevel(logLevel));
+      }
+    }
   }
 
   @Override
@@ -86,5 +95,20 @@ public class LogAppenderInitializer implements Closeable {
       logAppender.stop();
       LOG.info("Done stopping log appender {}", logAppender.getName());
     }
+  }
+  
+  /**
+   * Helper function to get the {@link LoggerContext}
+   * @return the {@link LoggerContext} or null if {@link LoggerFactory} is not a logback LoggerContext.
+   */
+  @Nullable
+  private LoggerContext getLoggerContext() {
+    ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
+    if (!(loggerFactory instanceof LoggerContext)) {
+      LOG.warn("LoggerFactory is not a logback LoggerContext. No log appender is added. " +
+                 "Logback might not be in the classpath");
+      return null;
+    }
+    return (LoggerContext) loggerFactory;
   }
 }

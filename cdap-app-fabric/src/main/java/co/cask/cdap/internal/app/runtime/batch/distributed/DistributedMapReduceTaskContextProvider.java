@@ -18,8 +18,11 @@ package co.cask.cdap.internal.app.runtime.batch.distributed;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.DistributedProgramRunnableModule;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceClassLoader;
+import co.cask.cdap.internal.app.runtime.batch.MapReduceContextConfig;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceTaskContextProvider;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
@@ -44,8 +47,9 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
   private final ZKClientService zkClientService;
   private final KafkaClientService kafkaClientService;
   private final MetricsCollectionService metricsCollectionService;
-  private final LogAppenderInitializer logAppenderInitializer;
   private final AuthorizationEnforcementService authorizationEnforcementService;
+  private final MapReduceContextConfig mapReduceContextConfig;
+  private final LogAppenderInitializer logAppenderInitializer;
 
   public DistributedMapReduceTaskContextProvider(CConfiguration cConf, Configuration hConf) {
     super(createInjector(cConf, hConf));
@@ -57,6 +61,7 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
     this.metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     this.logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     this.authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
+    this.mapReduceContextConfig = new MapReduceContextConfig(hConf);
   }
 
   @Override
@@ -74,6 +79,8 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
                                  authorizationEnforcementService);
       }
       logAppenderInitializer.initialize();
+      ProgramOptions programOptions = mapReduceContextConfig.getProgramOptions();
+      SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
     } catch (Exception e) {
       // Try our best to stop services. Chain stop guarantees it will stop everything, even some of them failed.
       try {

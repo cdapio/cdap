@@ -407,9 +407,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       String key = batch.key();
       if (!key.isEmpty()) {
         // Try to lookup the value from runtime arguments
-        Map<String, String> args = RuntimeArguments.extractScope(FlowUtils.FLOWLET_SCOPE, flowletContext.getName(),
-                                                                 flowletContext.getRuntimeArguments());
-        String value = args.get(key);
+        String value = flowletContext.getRuntimeArguments().get(key);
         String sourceName = "runtime arguments";
         if (value == null) {
           // Try to lookup the value from the flowlet properties
