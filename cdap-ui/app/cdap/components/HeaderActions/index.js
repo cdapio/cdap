@@ -17,10 +17,12 @@
 import React, {Component} from 'react';
 import { Dropdown, DropdownMenu, DropdownItem } from 'reactstrap';
 import cookie from 'react-cookie';
+import PlusButton from '../PlusButton';
+import T from 'i18n-react';
 
 require('./HeaderActions.less');
 var classNames = require('classnames');
-import PlusButton from '../PlusButton';
+
 
 export default class HeaderActions extends Component {
 
@@ -59,7 +61,7 @@ export default class HeaderActions extends Component {
       topRow = (
         <div>
           <div className="dropdown-item dropdown-name-row">
-            <span>Signed in as</span>
+            <span>{T.translate('features.Navbar.HeaderActions.signedInAs')}</span>
             <span className="dropdown-name">
               {this.state.name}
             </span>
@@ -76,7 +78,7 @@ export default class HeaderActions extends Component {
             onClick={this.logout}
           >
             <span className="dropdown-icon fa fa-sign-out"></span>
-            Logout
+            {T.translate('features.Navbar.HeaderActions.logout')}
           </div>
         </div>
       );
@@ -112,19 +114,19 @@ export default class HeaderActions extends Component {
                 <div className="dropdown-item">
                   <a href="http://cask.co/community">
                     <span className="dropdown-icon fa fa-life-ring"></span>
-                    Support
+                    {T.translate('features.Navbar.HeaderActions.support')}
                   </a>
                 </div>
                 <div className="dropdown-item">
                   <a href="http://cask.co/">
                     <span className="dropdown-icon fa fa-home"></span>
-                    Cask home
+                    {T.translate('features.Navbar.HeaderActions.caskHome')}
                   </a>
                 </div>
                 <div className="dropdown-item">
                   <a href="http://docs.cask.co/">
                     <span className="dropdown-icon fa fa-file"></span>
-                    Documentation
+                    {T.translate('features.Navbar.HeaderActions.documentation')}
                   </a>
                 </div>
                 {signoutRow}

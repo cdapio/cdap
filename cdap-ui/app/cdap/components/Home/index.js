@@ -112,7 +112,7 @@ export default class Home extends Component {
                   cardClass='home-cards'
                 >
                   <h4>
-                    <T.span text={{ key: "features.Home.Cards.type" }} />
+                    <span>{T.translate('features.Home.Cards.type')}</span>
                     <span>{entity.type}</span>
                   </h4>
                 </Card>

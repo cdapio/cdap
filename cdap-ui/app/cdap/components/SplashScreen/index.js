@@ -72,18 +72,18 @@ export default class SplashScreen extends Component {
             <div className="text-center">
               <span className="fa fa-5x icon-fist"></span>
               <h4>
-                <T.span text={{ key: "features.SplashScreen.intro-message" }} />
+                {T.translate('features.SplashScreen.intro-message')}
               </h4>
               <br />
               <div className={this.state.showRegistration ? 'group' : 'group no-registration'}>
                 <div className="btn btn-default">
-                  <T.span text={{ key: "features.SplashScreen.buttons.getStarted" }} />
+                  {T.translate('features.SplashScreen.buttons.getStarted')}
                 </div>
                 <div className={this.state.showRegistration ? 'btn btn-default' : 'hide'}>
-                  <T.span text={{ key: "features.SplashScreen.buttons.introduction" }} />
+                  {T.translate('features.SplashScreen.buttons.introduction')}
                 </div>
                 <div className={this.state.showRegistration ? 'btn btn-default' : 'hide'}>
-                  <T.span text={{ key: "features.SplashScreen.buttons.register" }} />
+                  {T.translate('features.SplashScreen.buttons.register')}
                 </div>
               </div>
             </div>

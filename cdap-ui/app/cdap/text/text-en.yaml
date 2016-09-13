@@ -74,8 +74,15 @@ features:
       dashboard: Dashboard
       home: Home
       management: Management
+    HeaderActions:
+      caskHome: Cask Home
+      documentation: Documentation
+      logout: Logout
+      signedInAs: Signed in as
+      support: Support
     Sidebar:
       extension: "Extensions:"
+
 
   SplashScreen:
     buttons:

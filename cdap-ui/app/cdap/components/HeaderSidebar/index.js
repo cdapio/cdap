@@ -42,12 +42,10 @@ export default function HeaderSidebar ({onClickHandlerNoOp}) {
         </div>
         {/* This will change once we introduce navbar for hydraotr & tracker in react*/}
         <div className="product-name">
-          <T.span text={{ key: "commons.cdap" }} />
+          <span>{T.translate('commons.cdap')}</span>
         </div>
       </a>
-      <h5>
-        <T.span text={{ key: "features.Navbar.Sidebar.extension" }} />
-      </h5>
+      <h5>{T.translate('features.Navbar.Sidebar.extension')}</h5>
       <AbsLinkTo
         context={getContext('hydrator')}
         className="brand sidebar-item"
@@ -57,7 +55,7 @@ export default function HeaderSidebar ({onClickHandlerNoOp}) {
         </div>
 
         <div className="product-name">
-          <T.span text={{ key: "commons.hydrator" }} />
+          <span>{T.translate('commons.hydrator')}</span>
         </div>
       </AbsLinkTo>
       <AbsLinkTo
@@ -69,7 +67,7 @@ export default function HeaderSidebar ({onClickHandlerNoOp}) {
         </div>
 
         <div className="product-name">
-          <T.span text={{ key: "commons.tracker" }} />
+          <span>{T.translate('commons.tracker')}</span>
         </div>
       </AbsLinkTo>
     </div>

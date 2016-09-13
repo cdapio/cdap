@@ -72,7 +72,7 @@ export default class HomeHeader extends Component {
         <div className="search-box">
           <div className="form-group has-feedback">
             <label className="control-label sr-only">
-              <T.span text={{ key: "features.Home.Header.search-placeholder"}} />
+              {T.translate('features.Home.Header.search-placeholder')}
             </label>
             <input
               type="text"
@@ -84,13 +84,13 @@ export default class HomeHeader extends Component {
         </div>
 
         <div className="sort">
-          <T.span text={{ key: "features.Home.Header.sort"}} />
+          <span>{T.translate('features.Home.Header.sort')}</span>
           <span className="fa fa-caret-down pull-right"></span>
         </div>
 
         <div className={classNames('filter', { 'active': this.state.isFilterExpanded })}>
           <div onClick={this.handleFilterToggle.bind(this)}>
-            <T.span text={{ key: "features.Home.Header.filters"}} />
+            <span>{T.translate('features.Home.Header.filters')}</span>
             <span className="fa fa-filter pull-right"></span>
           </div>
 
