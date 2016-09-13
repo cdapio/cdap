@@ -30,15 +30,21 @@ import java.util.Objects;
 public class ProgramRunId extends EntityId implements NamespacedId, ParentedId<ProgramId> {
   private final String namespace;
   private final String application;
+  private final String version;
   private final ProgramType type;
   private final String program;
   private final String run;
   private transient Integer hashCode;
 
   public ProgramRunId(String namespace, String application, ProgramType type, String program, String run) {
+    this(new ApplicationId(namespace, application), type, program, run);
+  }
+
+  public ProgramRunId(ApplicationId appId, ProgramType type, String program, String run) {
     super(EntityType.PROGRAM_RUN);
-    this.namespace = namespace;
-    this.application = application;
+    this.namespace = appId.getNamespace();
+    this.application = appId.getApplication();
+    this.version = appId.getVersion();
     this.type = type;
     this.program = program;
     this.run = run;
@@ -50,6 +56,10 @@ public class ProgramRunId extends EntityId implements NamespacedId, ParentedId<P
 
   public String getApplication() {
     return application;
+  }
+
+  public String getVersion() {
+    return version;
   }
 
   public ProgramType getType() {
@@ -66,7 +76,7 @@ public class ProgramRunId extends EntityId implements NamespacedId, ParentedId<P
 
   @Override
   public ProgramId getParent() {
-    return new ProgramId(namespace, application, type, program);
+    return new ProgramId(new ApplicationId(getNamespace(), getApplication(), getVersion()), getType(), getProgram());
   }
 
   @Override
@@ -75,10 +85,7 @@ public class ProgramRunId extends EntityId implements NamespacedId, ParentedId<P
       return false;
     }
     ProgramRunId that = (ProgramRunId) o;
-    return Objects.equals(namespace, that.namespace) &&
-      Objects.equals(application, that.application) &&
-      Objects.equals(type, that.type) &&
-      Objects.equals(program, that.program) &&
+    return Objects.equals(getParent(), that.getParent()) &&
       Objects.equals(run, that.run);
   }
 
@@ -86,21 +93,22 @@ public class ProgramRunId extends EntityId implements NamespacedId, ParentedId<P
   public int hashCode() {
     Integer hashCode = this.hashCode;
     if (hashCode == null) {
-      this.hashCode = hashCode = Objects.hash(super.hashCode(), namespace, application, type, program, run);
+      this.hashCode = hashCode = Objects.hash(super.hashCode(), getNamespace(), getApplication(), getVersion(),
+                                              getType(), getProgram(), run);
     }
     return hashCode;
   }
 
   @Override
   public Id.Program.Run toId() {
-    return new Id.Program.Run(Id.Program.from(namespace, application, type, program), run);
+    return new Id.Program.Run(Id.Program.from(getNamespace(), getApplication(), getType(), getProgram()), run);
   }
 
   @SuppressWarnings("unused")
   public static ProgramRunId fromIdParts(Iterable<String> idString) {
     Iterator<String> iterator = idString.iterator();
     return new ProgramRunId(
-      next(iterator, "namespace"), next(iterator, "category"),
+      new ApplicationId(next(iterator, "namespace"), next(iterator, "application"), next(iterator, "version")),
       ProgramType.valueOfPrettyName(next(iterator, "type")),
       next(iterator, "program"), nextAndEnd(iterator, "run"));
   }
@@ -108,7 +116,8 @@ public class ProgramRunId extends EntityId implements NamespacedId, ParentedId<P
   @Override
   protected Iterable<String> toIdParts() {
     return Collections.unmodifiableList(
-      Arrays.asList(namespace, application, type.getPrettyName().toLowerCase(), program, run)
+      Arrays.asList(getNamespace(), getApplication(), getVersion(), getType().getPrettyName().toLowerCase(),
+                    getProgram(), run)
     );
   }
 

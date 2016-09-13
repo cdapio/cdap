@@ -30,12 +30,18 @@ import java.util.Objects;
 public class ApplicationId extends EntityId implements NamespacedId, ParentedId<NamespaceId> {
   private final String namespace;
   private final String application;
+  private final String version;
   private transient Integer hashCode;
 
   public ApplicationId(String namespace, String application) {
+    this(namespace, application, "-SNAPSHOT");
+  }
+
+  public ApplicationId(String namespace, String application, String version) {
     super(EntityType.APPLICATION);
     this.namespace = namespace;
     this.application = application;
+    this.version = version;
   }
 
   public String getNamespace() {
@@ -46,37 +52,41 @@ public class ApplicationId extends EntityId implements NamespacedId, ParentedId<
     return application;
   }
 
+  public String getVersion() {
+    return version;
+  }
+
   @Override
   public NamespaceId getParent() {
     return new NamespaceId(namespace);
   }
 
   public ProgramId program(ProgramType type, String program) {
-    return new ProgramId(namespace, application, type, program);
+    return new ProgramId(this, type, program);
   }
 
   public ProgramId flow(String program) {
-    return new ProgramId(namespace, application, ProgramType.FLOW, program);
+    return new ProgramId(this, ProgramType.FLOW, program);
   }
 
   public ProgramId workflow(String program) {
-    return new ProgramId(namespace, application, ProgramType.WORKFLOW, program);
+    return new ProgramId(this, ProgramType.WORKFLOW, program);
   }
 
   public ProgramId mr(String program) {
-    return new ProgramId(namespace, application, ProgramType.MAPREDUCE, program);
+    return new ProgramId(this, ProgramType.MAPREDUCE, program);
   }
 
   public ProgramId spark(String program) {
-    return new ProgramId(namespace, application, ProgramType.SPARK, program);
+    return new ProgramId(this, ProgramType.SPARK, program);
   }
 
   public ProgramId worker(String program) {
-    return new ProgramId(namespace, application, ProgramType.WORKER, program);
+    return new ProgramId(this, ProgramType.WORKER, program);
   }
 
   public ProgramId service(String program) {
-    return new ProgramId(namespace, application, ProgramType.SERVICE, program);
+    return new ProgramId(this, ProgramType.SERVICE, program);
   }
 
   @Override
@@ -91,14 +101,15 @@ public class ApplicationId extends EntityId implements NamespacedId, ParentedId<
     }
     ApplicationId that = (ApplicationId) o;
     return Objects.equals(namespace, that.namespace) &&
-      Objects.equals(application, that.application);
+      Objects.equals(application, that.application) &&
+      Objects.equals(version, that.version);
   }
 
   @Override
   public int hashCode() {
     Integer hashCode = this.hashCode;
     if (hashCode == null) {
-      this.hashCode = hashCode = Objects.hash(super.hashCode(), namespace, application);
+      this.hashCode = hashCode = Objects.hash(super.hashCode(), namespace, application, version);
     }
     return hashCode;
   }
@@ -106,12 +117,13 @@ public class ApplicationId extends EntityId implements NamespacedId, ParentedId<
   @SuppressWarnings("unused")
   public static ApplicationId fromIdParts(Iterable<String> idString) {
     Iterator<String> iterator = idString.iterator();
-    return new ApplicationId(next(iterator, "namespace"), nextAndEnd(iterator, "application"));
+    return new ApplicationId(next(iterator, "namespace"), next(iterator, "application"),
+                             nextAndEnd(iterator, "version"));
   }
 
   @Override
   protected Iterable<String> toIdParts() {
-    return Collections.unmodifiableList(Arrays.asList(namespace, application));
+    return Collections.unmodifiableList(Arrays.asList(namespace, application, version));
   }
 
   public static ApplicationId fromString(String string) {
