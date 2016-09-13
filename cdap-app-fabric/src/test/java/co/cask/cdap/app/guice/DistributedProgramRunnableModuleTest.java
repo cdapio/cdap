@@ -112,6 +112,11 @@ public class DistributedProgramRunnableModuleTest {
       public Cancellable announce(String serviceName, int port) {
         return null;
       }
+
+      @Override
+      public Cancellable announce(String serviceName, int port, byte[] payload) {
+        return null;
+      }
     }));
   }
 }

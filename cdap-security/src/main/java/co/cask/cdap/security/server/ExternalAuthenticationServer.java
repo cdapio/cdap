@@ -209,20 +209,11 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
 
     // assumes we only have one connector
     final Connector connector = server.getConnectors()[0];
-    serviceCancellable = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
-      @Override
-      public String getName() {
-        return Constants.Service.EXTERNAL_AUTHENTICATION;
-      }
-
-      @Override
-      public InetSocketAddress getSocketAddress() throws RuntimeException {
-        if (announceAddress != null) {
-          return new InetSocketAddress(announceAddress, connector.getLocalPort());
-        }
-        return new InetSocketAddress(connector.getHost(), connector.getLocalPort());
-      }
-    }));
+    InetSocketAddress inetSocketAddress = (announceAddress != null) ?
+      new InetSocketAddress(announceAddress, connector.getLocalPort()) :
+      new InetSocketAddress(connector.getHost(), connector.getLocalPort());
+    serviceCancellable = discoveryService.register(
+      ResolvingDiscoverable.of(new Discoverable(Constants.Service.EXTERNAL_AUTHENTICATION, inetSocketAddress)));
   }
 
   /**

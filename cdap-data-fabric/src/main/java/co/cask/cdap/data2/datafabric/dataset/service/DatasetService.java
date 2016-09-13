@@ -151,17 +151,8 @@ public class DatasetService extends AbstractExecutionThreadService {
     final InetSocketAddress socketAddress = new InetSocketAddress(announceAddress, announcePort);
     LOG.info("Announcing DatasetService for discovery...");
     // Register the service
-    cancelDiscovery = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
-      @Override
-      public String getName() {
-        return Constants.Service.DATASET_MANAGER;
-      }
-
-      @Override
-      public InetSocketAddress getSocketAddress() {
-        return socketAddress;
-      }
-    }));
+    cancelDiscovery = discoveryService.register(
+      ResolvingDiscoverable.of(new Discoverable(Constants.Service.DATASET_MANAGER, socketAddress)));
 
     LOG.info("DatasetService started successfully on {}", socketAddress);
     while (isRunning()) {
