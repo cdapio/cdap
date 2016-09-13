@@ -62,9 +62,9 @@
       <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
     </repository>
     <repository>
-      <id>apache.snapshots</id>
-      <name>Apache Snapshot Repository</name>
-      <url>http://repository.apache.org/snapshots</url>
+      <id>apache.staging</id>
+      <name>Apache Staging Repository</name>
+      <url>https://repository.apache.org/content/repositories/orgapachetephra-1004</url>
       <releases>
         <enabled>false</enabled>
       </releases>
