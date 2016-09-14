@@ -627,8 +627,12 @@ public final class Constants {
    */
   public static final class LogSaver {
     public static final String NUM_INSTANCES = "log.saver.num.instances";
-    public static final String MEMORY_MB = "log.saver.run.memory.megs";
-    public static final String NUM_CORES = "log.saver.run.num.cores";
+    @Deprecated
+    public static final String MEMORY_MB_DEPRECATED = "log.saver.run.memory.megs";
+    @Deprecated
+    public static final String NUM_CORES_DEPRECATED = "log.saver.run.num.cores";
+    public static final String MEMORY_MB = "log.saver.container.memory.mb";
+    public static final String NUM_CORES = "log.saver.container.num.cores";
     public static final String MAX_INSTANCES = "log.saver.max.instances";
 
     public static final String LOG_SAVER_STATUS_HANDLER = "log.saver.status.handler";

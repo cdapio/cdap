@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Frequently Asked Questions about starting the Cask Data Application Platform
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2016 Cask Data, Inc.
 
 :titles-only-global-toc: true
 
@@ -301,8 +301,8 @@ However, decreasing the number of in-memory buckets may lead to out-of-order log
 
 In the ``cdap-site.xml``, you can:
 
-- Increase the memory by adjusting ``log.saver.run.memory.megs``;
-- Increase the number of Log Saver instances using ``log.saver.num.instances``; and
+- Increase the memory by adjusting ``log.saver.container.memory.mb``;
+- Increase the number of Log Saver instances using ``log.saver.container.num.cores``; and
 - Adjust the number of in-memory log buckets ``log.saver.event.max.inmemory.buckets``.
 
 See the ``log.saver`` parameter section of the :ref:`Appendix cdap-site.xml

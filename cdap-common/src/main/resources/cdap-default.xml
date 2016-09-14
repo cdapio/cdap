@@ -595,7 +595,7 @@
 
   <property>
     <name>dataset.executor.container.memory.mb</name>
-    <value>512</value>
+    <value>${master.service.memory.mb}</value>
     <description>
       Size of Memory in megabytes for each dataset executor instance
     </description>
@@ -687,6 +687,8 @@
 
   <property>
     <name>explore.executor.container.memory.mb</name>
+    <!--This is explicitly set differently than 'master.service.memory.mb' on purpose.
+    Explore requires more memory to run than the Master service.-->
     <value>1024</value>
     <description>
       Size of memory in megabytes for each explore executor instance
@@ -940,7 +942,9 @@
   </property>
 
   <property>
-    <name>log.saver.run.memory.megs</name>
+    <name>log.saver.container.memory.mb</name>
+    <!--This is explicitly set differently than 'master.service.memory.mb' on purpose.
+    Log saver requires more memory to run than the Master service.-->
     <value>1024</value>
     <description>
       Memory in megabytes allocated for log saver instances to run in YARN
@@ -948,7 +952,7 @@
   </property>
 
   <property>
-    <name>log.saver.run.num.cores</name>
+    <name>log.saver.container.num.cores</name>
     <value>2</value>
     <description>
       Number of cores for each log saver instance in YARN
@@ -1241,7 +1245,7 @@
 
   <property>
     <name>metrics.processor.memory.mb</name>
-    <value>512</value>
+    <value>${master.service.memory.mb}</value>
     <description>
       Size of memory in megabytes for metrics processor service Apache Twill
       runnable
@@ -1871,7 +1875,7 @@
 
   <property>
     <name>stream.container.memory.mb</name>
-    <value>512</value>
+    <value>${master.service.memory.mb}</value>
     <description>
       Amount of memory in megabytes for the YARN container that runs the
       stream handler

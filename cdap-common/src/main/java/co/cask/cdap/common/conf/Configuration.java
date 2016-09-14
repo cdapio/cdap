@@ -246,6 +246,10 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
           new DeprecatedKeyInfo(Constants.Service.MASTER_SERVICES_BIND_ADDRESS));
       put(Constants.Dataset.Manager.ADDRESS_DEPRECATED,
           new DeprecatedKeyInfo(Constants.Service.MASTER_SERVICES_BIND_ADDRESS));
+      put(Constants.LogSaver.MEMORY_MB_DEPRECATED,
+          new DeprecatedKeyInfo(Constants.LogSaver.MEMORY_MB));
+      put(Constants.LogSaver.NUM_CORES_DEPRECATED,
+          new DeprecatedKeyInfo(Constants.LogSaver.NUM_CORES));
     }
   };
 
