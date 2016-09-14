@@ -17,7 +17,10 @@
 package co.cask.cdap.data2.metadata.writer;
 
 import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.StreamId;
 
 import javax.annotation.Nullable;
 
@@ -26,23 +29,24 @@ import javax.annotation.Nullable;
  */
 public class NoOpLineageWriter implements LineageWriter {
   @Override
-  public void addAccess(Id.Run run, Id.DatasetInstance datasetInstance, AccessType accessType) {
+  public void addAccess(ProgramRunId run, DatasetId datasetInstance, AccessType accessType) {
     // no-op
   }
 
   @Override
-  public void addAccess(Id.Run run, Id.DatasetInstance datasetInstance, AccessType accessType,
-                        @Nullable Id.NamespacedId component) {
+  public void addAccess(ProgramRunId run, DatasetId datasetInstance, AccessType accessType,
+                        @Nullable NamespacedEntityId component) {
     // no-op
   }
 
   @Override
-  public void addAccess(Id.Run run, Id.Stream stream, AccessType accessType) {
+  public void addAccess(ProgramRunId run, StreamId stream, AccessType accessType) {
     // no-op
   }
 
   @Override
-  public void addAccess(Id.Run run, Id.Stream stream, AccessType accessType, @Nullable Id.NamespacedId component) {
+  public void addAccess(ProgramRunId run, StreamId stream, AccessType accessType,
+                        @Nullable NamespacedEntityId component) {
     // no-op
   }
 }

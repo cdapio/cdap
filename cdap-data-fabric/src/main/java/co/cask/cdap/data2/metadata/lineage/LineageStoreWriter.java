@@ -16,7 +16,10 @@
 
 package co.cask.cdap.data2.metadata.lineage;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.StreamId;
 
 import javax.annotation.Nullable;
 
@@ -34,7 +37,7 @@ public interface LineageStoreWriter {
    * @param accessType access type
    * @param accessTimeMillis time of access
    */
-  void addAccess(Id.Run run, Id.DatasetInstance datasetInstance, AccessType accessType, long accessTimeMillis);
+  void addAccess(ProgramRunId run, DatasetId datasetInstance, AccessType accessType, long accessTimeMillis);
 
   /**
    * Add a program-dataset access.
@@ -45,9 +48,9 @@ public interface LineageStoreWriter {
    * @param accessTimeMillis time of access
    * @param component program component such as flowlet id, etc.
    */
-  void addAccess(Id.Run run, Id.DatasetInstance datasetInstance,
+  void addAccess(ProgramRunId run, DatasetId datasetInstance,
                  AccessType accessType, long accessTimeMillis,
-                 @Nullable Id.NamespacedId component);
+                 @Nullable NamespacedEntityId component);
 
   /**
    * Add a program-stream access.
@@ -57,7 +60,7 @@ public interface LineageStoreWriter {
    * @param accessType access type
    * @param accessTimeMillis time of access
    */
-  void addAccess(Id.Run run, Id.Stream stream, AccessType accessType, long accessTimeMillis);
+  void addAccess(ProgramRunId run, StreamId stream, AccessType accessType, long accessTimeMillis);
 
   /**
    * Add a program-stream access.
@@ -68,7 +71,7 @@ public interface LineageStoreWriter {
    * @param accessTimeMillis time of access
    * @param component program component such as flowlet id, etc.
    */
-  void addAccess(Id.Run run, Id.Stream stream,
+  void addAccess(ProgramRunId run, StreamId stream,
                  AccessType accessType, long accessTimeMillis,
-                 @Nullable Id.NamespacedId component);
+                 @Nullable NamespacedEntityId component);
 }

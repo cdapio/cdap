@@ -17,7 +17,10 @@
 package co.cask.cdap.data2.metadata.writer;
 
 import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.StreamId;
 
 import javax.annotation.Nullable;
 
@@ -32,7 +35,7 @@ public interface LineageWriter {
    * @param datasetInstance dataset accessed by the program
    * @param accessType access type
    */
-  void addAccess(Id.Run run, Id.DatasetInstance datasetInstance, AccessType accessType);
+  void addAccess(ProgramRunId run, DatasetId datasetInstance, AccessType accessType);
 
   /**
    * Add a program-dataset access.
@@ -42,8 +45,8 @@ public interface LineageWriter {
    * @param accessType access type
    * @param component program component such as flowlet id, etc.
    */
-  void addAccess(Id.Run run, Id.DatasetInstance datasetInstance,
-                 AccessType accessType, @Nullable Id.NamespacedId component);
+  void addAccess(ProgramRunId run, DatasetId datasetInstance,
+                 AccessType accessType, @Nullable NamespacedEntityId component);
 
   /**
    * Add a program-stream access.
@@ -52,7 +55,7 @@ public interface LineageWriter {
    * @param stream stream accessed by the program
    * @param accessType access type
    */
-  void addAccess(Id.Run run, Id.Stream stream, AccessType accessType);
+  void addAccess(ProgramRunId run, StreamId stream, AccessType accessType);
 
   /**
    * Add a program-stream access.
@@ -62,6 +65,6 @@ public interface LineageWriter {
    * @param accessType access type
    * @param component program component such as flowlet id, etc.
    */
-  void addAccess(Id.Run run, Id.Stream stream,
-                 AccessType accessType, @Nullable Id.NamespacedId component);
+  void addAccess(ProgramRunId run, StreamId stream,
+                 AccessType accessType, @Nullable NamespacedEntityId component);
 }

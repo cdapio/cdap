@@ -25,7 +25,10 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
 import co.cask.cdap.proto.codec.NamespacedIdCodec;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
@@ -82,7 +85,7 @@ public class LineageHandler extends AbstractHttpHandler {
     checkLevels(levels);
     TimeRange range = parseRange(startStr, endStr);
 
-    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespaceId, datasetId);
+    DatasetId datasetInstance = new DatasetId(namespaceId, datasetId);
     Lineage lineage = lineageAdmin.computeLineage(datasetInstance, range.getStart(), range.getEnd(), levels);
     responder.sendJson(HttpResponseStatus.OK,
                        LineageSerializer.toLineageRecord(TimeUnit.MILLISECONDS.toSeconds(range.getStart()),
@@ -104,7 +107,7 @@ public class LineageHandler extends AbstractHttpHandler {
     checkLevels(levels);
     TimeRange range = parseRange(startStr, endStr);
 
-    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
+    StreamId streamId = new StreamId(namespaceId, stream);
     Lineage lineage = lineageAdmin.computeLineage(streamId, range.getStart(), range.getEnd(), levels);
     responder.sendJson(HttpResponseStatus.OK,
                        LineageSerializer.toLineageRecord(TimeUnit.MILLISECONDS.toSeconds(range.getStart()),
@@ -121,9 +124,8 @@ public class LineageHandler extends AbstractHttpHandler {
                                 @PathParam("program-type") String programType,
                                 @PathParam("program-id") String programId,
                                 @PathParam("run-id") String runId) throws Exception {
-    Id.Run run = new Id.Run(
-      Id.Program.from(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId),
-      runId);
+    ProgramRunId run = new ProgramRunId(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId,
+                                        runId);
     responder.sendJson(HttpResponseStatus.OK, lineageAdmin.getMetadataForRun(run), SET_METADATA_RECORD_TYPE, GSON);
   }
 

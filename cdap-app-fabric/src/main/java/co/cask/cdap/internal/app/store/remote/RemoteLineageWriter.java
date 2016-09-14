@@ -22,7 +22,10 @@ import co.cask.cdap.common.internal.remote.RemoteOpsClient;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.writer.BasicLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -44,14 +47,14 @@ public class RemoteLineageWriter extends RemoteOpsClient implements LineageWrite
   }
 
   @Override
-  public void addAccess(Id.Run run, Id.DatasetInstance datasetInstance, AccessType accessType) {
+  public void addAccess(ProgramRunId run, DatasetId datasetInstance, AccessType accessType) {
     // delegates on client side; so corresponding method is not required to be implemented on server side
     addAccess(run, datasetInstance, accessType, null);
   }
 
   @Override
-  public void addAccess(Id.Run run, Id.DatasetInstance datasetInstance, AccessType accessType,
-                        @Nullable Id.NamespacedId component) {
+  public void addAccess(ProgramRunId run, DatasetId datasetInstance, AccessType accessType,
+                        @Nullable NamespacedEntityId component) {
     if (alreadyRegistered(run, datasetInstance, accessType, component)) {
       return;
     }
@@ -59,21 +62,22 @@ public class RemoteLineageWriter extends RemoteOpsClient implements LineageWrite
   }
 
   @Override
-  public void addAccess(Id.Run run, Id.Stream stream, AccessType accessType) {
+  public void addAccess(ProgramRunId run, StreamId stream, AccessType accessType) {
     // delegates on client side; so corresponding method is not required to be implemented on server side
     addAccess(run, stream, accessType, null);
   }
 
   @Override
-  public void addAccess(Id.Run run, Id.Stream stream, AccessType accessType, @Nullable Id.NamespacedId component) {
+  public void addAccess(ProgramRunId run, StreamId stream, AccessType accessType,
+                        @Nullable NamespacedEntityId component) {
     if (alreadyRegistered(run, stream, accessType, component)) {
       return;
     }
     executeRequest("addStreamAccess", run, stream, accessType, component);
   }
 
-  private boolean alreadyRegistered(Id.Run run, Id.NamespacedId data, AccessType accessType,
-                                    @Nullable Id.NamespacedId component) {
+  private boolean alreadyRegistered(ProgramRunId run, NamespacedEntityId data, AccessType accessType,
+                                    @Nullable NamespacedEntityId component) {
     return registered.putIfAbsent(new BasicLineageWriter.DataAccessKey(run, data, accessType, component), true) != null;
   }
 }

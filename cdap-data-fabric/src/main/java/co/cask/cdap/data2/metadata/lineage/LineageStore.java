@@ -22,8 +22,12 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
@@ -40,11 +44,11 @@ import javax.annotation.Nullable;
  * Store for storing/retrieving lineage information for a Dataset.
  */
 public class LineageStore implements LineageStoreReader, LineageStoreWriter {
-  private static final Id.DatasetInstance LINEAGE_DATASET_ID = Id.DatasetInstance.from(Id.Namespace.SYSTEM, "lineage");
+  private static final DatasetId LINEAGE_DATASET_ID = NamespaceId.SYSTEM.dataset("lineage");
 
   private final TransactionExecutorFactory executorFactory;
   private final DatasetFramework datasetFramework;
-  private final Id.DatasetInstance lineageDatasetId;
+  private final DatasetId lineageDatasetId;
 
   @Inject
   public LineageStore(TransactionExecutorFactory executorFactory, DatasetFramework datasetFramework) {
@@ -53,7 +57,7 @@ public class LineageStore implements LineageStoreReader, LineageStoreWriter {
 
   @VisibleForTesting
   public LineageStore(TransactionExecutorFactory executorFactory, DatasetFramework datasetFramework,
-                      Id.DatasetInstance lineageDatasetId) {
+                      DatasetId lineageDatasetId) {
     this.executorFactory = executorFactory;
     this.datasetFramework = datasetFramework;
     this.lineageDatasetId = lineageDatasetId;
@@ -68,7 +72,7 @@ public class LineageStore implements LineageStoreReader, LineageStoreWriter {
    * @param accessTimeMillis time of access
    */
   @Override
-  public void addAccess(Id.Run run, Id.DatasetInstance datasetInstance, AccessType accessType,
+  public void addAccess(ProgramRunId run, DatasetId datasetInstance, AccessType accessType,
                         long accessTimeMillis) {
     addAccess(run, datasetInstance, accessType, accessTimeMillis, null);
   }
@@ -83,9 +87,9 @@ public class LineageStore implements LineageStoreReader, LineageStoreWriter {
    * @param component program component such as flowlet id, etc.
    */
   @Override
-  public void addAccess(final Id.Run run, final Id.DatasetInstance datasetInstance,
+  public void addAccess(final ProgramRunId run, final DatasetId datasetInstance,
                         final AccessType accessType, final long accessTimeMillis,
-                        @Nullable final Id.NamespacedId component) {
+                        @Nullable final NamespacedEntityId component) {
     execute(new TransactionExecutor.Procedure<LineageDataset>() {
       @Override
       public void apply(LineageDataset input) throws Exception {
@@ -103,7 +107,7 @@ public class LineageStore implements LineageStoreReader, LineageStoreWriter {
    * @param accessTimeMillis time of access
    */
   @Override
-  public void addAccess(Id.Run run, Id.Stream stream, AccessType accessType, long accessTimeMillis) {
+  public void addAccess(ProgramRunId run, StreamId stream, AccessType accessType, long accessTimeMillis) {
     addAccess(run, stream, accessType, accessTimeMillis, null);
   }
 
@@ -117,9 +121,9 @@ public class LineageStore implements LineageStoreReader, LineageStoreWriter {
    * @param component program component such as flowlet id, etc.
    */
   @Override
-  public void addAccess(final Id.Run run, final Id.Stream stream,
+  public void addAccess(final ProgramRunId run, final StreamId stream,
                         final AccessType accessType, final long accessTimeMillis,
-                        @Nullable final Id.NamespacedId component) {
+                        @Nullable final NamespacedEntityId component) {
     execute(new TransactionExecutor.Procedure<LineageDataset>() {
       @Override
       public void apply(LineageDataset input) throws Exception {
@@ -132,7 +136,7 @@ public class LineageStore implements LineageStoreReader, LineageStoreWriter {
    * @return a set of entities (program and data it accesses) associated with a program run.
    */
   @Override
-  public Set<NamespacedEntityId> getEntitiesForRun(final Id.Run run) {
+  public Set<NamespacedEntityId> getEntitiesForRun(final ProgramRunId run) {
     return execute(new TransactionExecutor.Function<LineageDataset, Set<NamespacedEntityId>>() {
       @Override
       public Set<NamespacedEntityId> apply(LineageDataset input) throws Exception {
@@ -151,7 +155,7 @@ public class LineageStore implements LineageStoreReader, LineageStoreWriter {
    * @return program-dataset access information
    */
   @Override
-  public Set<Relation> getRelations(final Id.DatasetInstance datasetInstance, final long start, final long end,
+  public Set<Relation> getRelations(final DatasetId datasetInstance, final long start, final long end,
                                     final Predicate<Relation> filter) {
     return execute(new TransactionExecutor.Function<LineageDataset, Set<Relation>>() {
       @Override
@@ -171,7 +175,7 @@ public class LineageStore implements LineageStoreReader, LineageStoreWriter {
    * @return program-stream access information
    */
   @Override
-  public Set<Relation> getRelations(final Id.Stream stream, final long start, final long end,
+  public Set<Relation> getRelations(final StreamId stream, final long start, final long end,
                                     final Predicate<Relation> filter) {
     return execute(new TransactionExecutor.Function<LineageDataset, Set<Relation>>() {
       @Override
@@ -191,7 +195,7 @@ public class LineageStore implements LineageStoreReader, LineageStoreWriter {
    * @return program-dataset access information
    */
   @Override
-  public Set<Relation> getRelations(final Id.Program program, final long start, final long end,
+  public Set<Relation> getRelations(final ProgramId program, final long start, final long end,
                                     final Predicate<Relation> filter) {
     return execute(new TransactionExecutor.Function<LineageDataset, Set<Relation>>() {
       @Override
@@ -205,7 +209,7 @@ public class LineageStore implements LineageStoreReader, LineageStoreWriter {
    * @return a set of access times (for program and data it accesses) associated with a program run.
    */
   @VisibleForTesting
-  public List<Long> getAccessTimesForRun(final Id.Run run) {
+  public List<Long> getAccessTimesForRun(final ProgramRunId run) {
     return execute(new TransactionExecutor.Function<LineageDataset, List<Long>>() {
       @Override
       public List<Long> apply(LineageDataset input) throws Exception {
@@ -229,7 +233,7 @@ public class LineageStore implements LineageStoreReader, LineageStoreWriter {
   private LineageDataset newLineageDataset() {
     try {
       return DatasetsUtil.getOrCreateDataset(
-        datasetFramework, lineageDatasetId, LineageDataset.class.getName(),
+        datasetFramework, lineageDatasetId.toId(), LineageDataset.class.getName(),
         DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS, null);
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -242,6 +246,6 @@ public class LineageStore implements LineageStoreReader, LineageStoreWriter {
    * @param framework framework to add types and datasets to
    */
   public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
-    framework.addInstance(LineageDataset.class.getName(), LINEAGE_DATASET_ID, DatasetProperties.EMPTY);
+    framework.addInstance(LineageDataset.class.getName(), LINEAGE_DATASET_ID.toId(), DatasetProperties.EMPTY);
   }
 }

@@ -67,24 +67,24 @@ public class RemoteLineageWriterTest extends AppFabricTestBase {
     Set<Relation> expectedRelations = new HashSet<>();
 
     // test null serialization
-    remoteLineageWriter.addAccess(runId.toId(), datasetId.toId(), AccessType.READ, null);
+    remoteLineageWriter.addAccess(runId, datasetId, AccessType.READ, null);
     expectedRelations.add(new Relation(datasetId, flowId, AccessType.READ, twillRunId));
 
-    Assert.assertEquals(ImmutableSet.of(flowId, datasetId), lineageStore.getEntitiesForRun(runId.toId()));
+    Assert.assertEquals(ImmutableSet.of(flowId, datasetId), lineageStore.getEntitiesForRun(runId));
 
     Assert.assertEquals(expectedRelations,
-                        lineageStore.getRelations(flowId.toId(), now, now + 1, Predicates.<Relation>alwaysTrue()));
+                        lineageStore.getRelations(flowId, now, now + 1, Predicates.<Relation>alwaysTrue()));
 
-    remoteLineageWriter.addAccess(runId.toId(), streamId.toId(), AccessType.READ);
+    remoteLineageWriter.addAccess(runId, streamId, AccessType.READ);
     expectedRelations.add(new Relation(streamId, flowId, AccessType.READ, twillRunId));
 
     Assert.assertEquals(expectedRelations,
-                        lineageStore.getRelations(flowId.toId(), now, now + 1, Predicates.<Relation>alwaysTrue()));
+                        lineageStore.getRelations(flowId, now, now + 1, Predicates.<Relation>alwaysTrue()));
 
-    remoteLineageWriter.addAccess(runId.toId(), streamId.toId(), AccessType.WRITE);
+    remoteLineageWriter.addAccess(runId, streamId, AccessType.WRITE);
     expectedRelations.add(new Relation(streamId, flowId, AccessType.WRITE, twillRunId));
 
     Assert.assertEquals(expectedRelations,
-                        lineageStore.getRelations(flowId.toId(), now, now + 1, Predicates.<Relation>alwaysTrue()));
+                        lineageStore.getRelations(flowId, now, now + 1, Predicates.<Relation>alwaysTrue()));
   }
 }

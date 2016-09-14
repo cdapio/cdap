@@ -16,8 +16,11 @@
 
 package co.cask.cdap.data2.metadata.lineage;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Predicate;
 
 import java.util.Set;
@@ -31,7 +34,7 @@ public interface LineageStoreReader {
   /**
    * @return a set of entities (program and data it accesses) associated with a program run.
    */
-  Set<NamespacedEntityId> getEntitiesForRun(Id.Run run);
+  Set<NamespacedEntityId> getEntitiesForRun(ProgramRunId run);
 
   /**
    * Fetch program-dataset access information for a dataset for a given period.
@@ -42,7 +45,7 @@ public interface LineageStoreReader {
    * @param filter filter to be applied on result set
    * @return program-dataset access information
    */
-  Set<Relation> getRelations(Id.DatasetInstance datasetInstance, long start, long end,
+  Set<Relation> getRelations(DatasetId datasetInstance, long start, long end,
                              Predicate<Relation> filter);
 
   /**
@@ -54,7 +57,7 @@ public interface LineageStoreReader {
    * @param filter filter to be applied on result set
    * @return program-stream access information
    */
-  Set<Relation> getRelations(Id.Stream stream, long start, long end,
+  Set<Relation> getRelations(StreamId stream, long start, long end,
                              Predicate<Relation> filter);
 
   /**
@@ -66,6 +69,6 @@ public interface LineageStoreReader {
    * @param filter filter to be applied on result set
    * @return program-dataset access information
    */
-  Set<Relation> getRelations(Id.Program program, long start, long end,
+  Set<Relation> getRelations(ProgramId program, long start, long end,
                              Predicate<Relation> filter);
 }

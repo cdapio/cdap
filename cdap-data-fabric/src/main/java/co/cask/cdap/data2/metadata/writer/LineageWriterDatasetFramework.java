@@ -34,6 +34,8 @@ import co.cask.cdap.data2.dataset2.ForwardingDatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
@@ -99,12 +101,12 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
 
   @Override
   public void initContext(Id.Run run) {
-    programContext.initContext(run);
+    programContext.initContext(run.toEntityId());
   }
 
   @Override
   public void initContext(Id.Run run, Id.NamespacedId componentId) {
-    programContext.initContext(run, componentId);
+    programContext.initContext(run.toEntityId(), (NamespacedEntityId) componentId.toEntityId());
   }
 
   @Override
@@ -188,11 +190,11 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
   }
 
   private void doWriteLineage(Id.DatasetInstance datasetInstanceId, AccessType accessType) {
-    Id.Run programRunId = programContext.getRun();
+    ProgramRunId programRunId = programContext.getRun();
     if (programRunId != null) {
-      Id.NamespacedId componentId = programContext.getComponentId();
+      NamespacedEntityId componentId = programContext.getComponentId();
       try {
-        lineageWriter.addAccess(programRunId, datasetInstanceId, accessType, componentId);
+        lineageWriter.addAccess(programRunId, datasetInstanceId.toEntityId(), accessType, componentId);
       } catch (Throwable t) {
         // Failure to write to lineage shouldn't cause dataset operation failure
         LOG.warn("Failed to write lineage information for dataset {} with access type {} from {},{}",
@@ -205,10 +207,10 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
   }
 
   private void publishAudit(Id.DatasetInstance datasetInstanceId, AccessType accessType) {
-    Id.Run programRunId = programContext.getRun();
+    ProgramRunId programRunId = programContext.getRun();
     if (programRunId != null) {
       try {
-        AuditPublishers.publishAccess(auditPublisher, datasetInstanceId, accessType, programRunId);
+        AuditPublishers.publishAccess(auditPublisher, datasetInstanceId, accessType, programRunId.toId());
       } catch (Throwable t) {
         // TODO: CDAP-5244. Ideally we should fail if failed to publish audit.
         LOG.warn("Failed to write audit information for dataset {} with access type {} from {}",

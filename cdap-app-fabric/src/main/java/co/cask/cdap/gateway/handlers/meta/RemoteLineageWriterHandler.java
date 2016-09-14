@@ -19,7 +19,10 @@ package co.cask.cdap.gateway.handlers.meta;
 import co.cask.cdap.common.internal.remote.MethodArgument;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -47,10 +50,10 @@ public class RemoteLineageWriterHandler extends AbstractRemoteSystemOpsHandler {
   public void addDatasetAccess(HttpRequest request, HttpResponder responder) throws Exception {
     Iterator<MethodArgument> arguments = parseArguments(request);
 
-    Id.Run run = deserializeNext(arguments);
-    Id.DatasetInstance datasetInstance = deserializeNext(arguments);
+    ProgramRunId run = deserializeNext(arguments);
+    DatasetId datasetInstance = deserializeNext(arguments);
     AccessType accessType = deserializeNext(arguments);
-    Id.NamespacedId component = deserializeNext(arguments);
+    NamespacedEntityId component = deserializeNext(arguments);
     lineageWriter.addAccess(run, datasetInstance, accessType, component);
 
     responder.sendStatus(HttpResponseStatus.OK);
@@ -61,10 +64,10 @@ public class RemoteLineageWriterHandler extends AbstractRemoteSystemOpsHandler {
   public void addStreamAccess(HttpRequest request, HttpResponder responder) throws Exception {
     Iterator<MethodArgument> arguments = parseArguments(request);
 
-    Id.Run run = deserializeNext(arguments);
-    Id.Stream stream = deserializeNext(arguments);
+    ProgramRunId run = deserializeNext(arguments);
+    StreamId stream = deserializeNext(arguments);
     AccessType accessType = deserializeNext(arguments);
-    Id.NamespacedId component = deserializeNext(arguments);
+    NamespacedEntityId component = deserializeNext(arguments);
     lineageWriter.addAccess(run, stream, accessType, component);
 
     responder.sendStatus(HttpResponseStatus.OK);
