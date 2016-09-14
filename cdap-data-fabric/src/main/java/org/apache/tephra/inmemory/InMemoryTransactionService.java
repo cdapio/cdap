@@ -32,8 +32,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 
 /**
- * Note: Had to copy this class since Tephra depends on old Twill release where Discoverable is an interface. We can
- * remove this class once Tephra switches to using 0.8.0 or later release of Twill.
+ * Note: CDAP-7260 - Remove this class once Tephra updates its Twill dependency to 0.8.0 or later
  *
  * Transaction server that manages transaction data for the Reactor.
  * <p>
@@ -46,7 +45,6 @@ public class InMemoryTransactionService extends AbstractService {
 
   private final DiscoveryService discoveryService;
   private final String serviceName;
-  // this is Provider, so that we can have multiple instances of it (use a new instance after leader election)
   protected final Provider<TransactionManager> txManagerProvider;
   private Cancellable cancelDiscovery;
   protected TransactionManager txManager;
