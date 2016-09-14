@@ -29,27 +29,25 @@ Cask Data Application Platform Release Notes
 Known Issues
 ------------
 
-- :cask-issue:`CDAP-7175` - Though an underlying issue has been fixed in the upgrade tool
-  to allow it to run on a CDAP instance with authorization enabled, **if you are upgrading
-  an authorization-enabled CDAP instance,** you will need to give the *cdap* user *ADMIN*
-  privileges on all existing CDAP namespaces. **Note:** the *ADMIN* privilege does not
-  give the *cdap* user *READ* or *WRITE* privileges on the namespaces. As these are
-  temporary grants required only for the purpose of running the upgrade tool, once the
-  upgrade is complete, these grants can be revoked. (Alternatively, you can disable
-  authorization before running the upgrade tool and then re-enable it after the upgrade is
-  completed. See the :ref:`Administration Manual: Authorization <admin-authorization>` for
-  details.)
+- :cask-issue:`CDAP-7175` - If you are upgrading an authorization-enabled CDAP instance,
+  you will need to give the *cdap* user *ADMIN* privileges on all existing CDAP
+  namespaces. **Note:** the *ADMIN* privilege does not give the *cdap* user *READ* or
+  *WRITE* privileges on the namespaces. As these are temporary grants required only for
+  the purpose of running the upgrade tool, once the upgrade is complete, these grants can
+  be revoked. (Alternatively, you can disable authorization before running the upgrade
+  tool and then re-enable it after the upgrade is completed. See the :ref:`Administration
+  Manual: Authorization <admin-authorization>` for details.)
 
 - :cask-issue:`CDAP-7179` - In CDAP 3.5.0, new ``kafka.server.*`` properties replace older
   properties such as ``kafka.log.dir``, as described in the :ref:`Administration Manual: 
   Appendices: cdap-site.xml <appendix-cdap-default-deprecated-properties>`. 
   
-  **If you are upgrading from CDAP 3.4.x to 3.5.x,** and you have set a value for
+  If you are upgrading from CDAP 3.4.x to 3.5.x, and you have set a value for
   ``kafka.log.dir`` by using Cloudera Manager's :ref:`safety-valve mechanism
-  <cloudera-installation-add-service-wizard-configuration>`, you need to change to the
-  new property ``kafka.server.log.dirs``, as the deprecated ``kafka.log.dir`` is being
-  ignored in favor of the new property. If you don't, your custom value will be replaced
-  with the default value.
+  <cloudera-installation-add-service-wizard-configuration>`, you need to change to the new
+  property ``kafka.server.log.dirs``, as the deprecated ``kafka.log.dir`` is being ignored
+  in favor of the new property. If you don't, your custom value will be replaced with the
+  default value.
   
   
 Improvements
