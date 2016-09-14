@@ -1,0 +1,92 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+// require('./services/i18n');
+// import Test from './services/i18n';
+import React, {Component} from 'react';
+import ReactDOM from 'react-dom';
+import {Router, Route, useRouterHistory, IndexRedirect} from 'react-router';
+import {createHistory} from 'history';
+
+
+const history = useRouterHistory(createHistory)({ basename: '/cask-cdap/' });
+
+require('../ui-utils/url-generator');
+require('font-awesome-webpack!./styles/font-awesome.config.js');
+
+import Management from './components/Management';
+import Dashboard from './components/Dashboard';
+import Home from './components/Home';
+import CdapHeader from './components/CdapHeader';
+import Footer from './components/Footer';
+import SplashScreen from './components/SplashScreen';
+import ConnectionExample from './components/ConnectionExample';
+import Experimental from './components/Experimental';
+import cookie from 'react-cookie';
+
+require('./styles/lib-styles.less');
+require('./styles/common.less');
+
+class CDAP extends Component {
+  constructor(props) {
+    super(props);
+    this.props = props;
+    this.version = '4.0.0';
+  }
+
+  render() {
+    if( window.CDAP_CONFIG.securityEnabled &&
+        !cookie.load('CDAP_Auth_Token')
+     ){
+      //authentication failed ; redirect to another page
+      window.location.href = window.getAbsUIUrl({
+        uiApp: 'login',
+        redirectUrl: location.href,
+        clientId: 'cdap'
+      });
+
+      return null;
+    }
+
+    return (
+      <div>
+        <CdapHeader />
+        <SplashScreen />
+        <div className="container-fluid">
+          {this.props.children}
+        </div>
+        <Footer version={this.version}/>
+      </div>
+    );
+  }
+}
+CDAP.propTypes = {
+  children: React.PropTypes.node
+};
+
+ReactDOM.render(
+  <Router history={history}>
+    <Route path="/" component={CDAP}>
+      <IndexRedirect to="/home" />
+      <Route name="home" path="home" component={Home}/>
+      <Route name="dashboard" path="dashboard" component={Dashboard}/>
+      <Route path="management" component={Management}/>
+      <Route name="socket" path="socket-example" component={ConnectionExample} />
+      <Route path="experimental" component={Experimental} />
+    </Route>
+  </Router>,
+  document.getElementById('app-container')
+);

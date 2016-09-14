@@ -79,6 +79,10 @@ var commonLoaders = [
     loader: 'style-loader!css-loader!less-loader'
   },
   {
+    test: /\.ya?ml$/,
+    loader: 'yml',
+  },
+  {
     test: /\.js$/,
     loader: 'babel',
     exclude: /node_modules/,
@@ -104,7 +108,8 @@ const cdapWebpackConfig = {
       'sockjs-client',
       'rx',
       'reactstrap',
-      'react-addons-css-transition-group'
+      'react-addons-css-transition-group',
+      'i18n-react'
     ]
   },
   module: {

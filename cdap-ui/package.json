@@ -83,6 +83,7 @@
     "finalhandler": "0.4.1",
     "font-awesome": "4.6.3",
     "history": "2.1.2",
+    "i18n-react": "0.3.0",
     "lodash": "https://registry.npmjs.org/lodash/-/lodash-4.0.1.tgz",
     "log4js": "0.6.30",
     "node-uuid": "https://registry.npmjs.org/node-uuid/-/node-uuid-1.4.7.tgz",
@@ -105,7 +106,8 @@
     "sockjs": "0.3.15",
     "sockjs-client": "1.1.1",
     "webpack": "1.13.2",
-    "whatwg-fetch": "https://registry.npmjs.org/whatwg-fetch/-/whatwg-fetch-1.0.0.tgz"
+    "whatwg-fetch": "https://registry.npmjs.org/whatwg-fetch/-/whatwg-fetch-1.0.0.tgz",
+    "yml-loader": "1.1.0"
   },
   "engines": {
     "node": ">= 0.10.0"

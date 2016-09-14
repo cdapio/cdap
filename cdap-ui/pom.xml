@@ -129,6 +129,7 @@
                   <exclude>**/npm-debug.log</exclude>
                   <exclude>**/node/**</exclude>
                   <exclude>**/*.json</exclude>
+                  <exclude>**/*.yaml</exclude>
                   <exclude>**/LICENSE-node</exclude>
                 </excludes>
               </configuration>

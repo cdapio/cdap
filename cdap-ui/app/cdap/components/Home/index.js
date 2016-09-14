@@ -19,6 +19,8 @@ import {MySearchApi} from '../../api/search';
 import {parseMetadata} from '../../services/metadata-parser';
 import Card from '../Card';
 import HomeHeader from './HomeHeader';
+import T from 'i18n-react';
+
 require('./Home.less');
 
 export default class Home extends Component {
@@ -26,12 +28,30 @@ export default class Home extends Component {
     super(props);
 
     this.filterOptions = [
-      { displayName: 'Applications', id: 'app' },
-      { displayName: 'Artifacts', id: 'artifact' },
-      { displayName: 'Programs', id: 'program' },
-      { displayName: 'Datasets', id: 'dataset' },
-      { displayName: 'Streams', id: 'stream' },
-      { displayName: 'Views', id: 'view' },
+      {
+        displayName: T.translate('commons.entity.application.plural'),
+        id: 'app'
+      },
+      {
+        displayName: T.translate('commons.entity.artifact.plural'),
+        id: 'artifact'
+      },
+      {
+        displayName: T.translate('commons.entity.program.plural'),
+        id: 'program'
+      },
+      {
+        displayName: T.translate('commons.entity.dataset.plural'),
+        id: 'dataset'
+      },
+      {
+        displayName: T.translate('commons.entity.stream.plural'),
+        id: 'stream'
+      },
+      {
+        displayName: T.translate('commons.entity.view.plural'),
+        id: 'view'
+      },
     ];
 
     this.state = {
@@ -82,7 +102,6 @@ export default class Home extends Component {
           onFilterClick={this.handleFilterClick.bind(this)}
           activeFilter={this.state.filter}
         />
-
         <div className="entity-list">
           {this.state.entities.map(
             (entity, index) => {
@@ -92,7 +111,10 @@ export default class Home extends Component {
                   title={entity.id}
                   cardClass='home-cards'
                 >
-                  <h4>Type: {entity.type}</h4>
+                  <h4>
+                    <span>{T.translate('features.Home.Cards.type')}</span>
+                    <span>{entity.type}</span>
+                  </h4>
                 </Card>
               );
             })

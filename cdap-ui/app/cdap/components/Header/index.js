@@ -21,6 +21,7 @@ import HeaderBrand from '../HeaderBrand';
 import HeaderNavbarList from '../HeaderNavbarList';
 import HeaderActions from '../HeaderActions';
 import HeaderSidebar from '../HeaderSidebar';
+import T from 'i18n-react';
 
 export default class Header extends Component {
   constructor(props) {
@@ -45,7 +46,7 @@ export default class Header extends Component {
         <div className="navbar navbar-fixed-top">
           <nav className="navbar cdap">
             <HeaderBrand
-              title="CDAP"
+              title={T.translate('commons.cdap')}
               icon="icon-fist"
               onClickHandler={this.toggleSidebar.bind(this)}
             />

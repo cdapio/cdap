@@ -20,6 +20,7 @@ require('./SplashScreen.less');
 
 import Card from '../Card';
 import MyUserStoreApi from '../../api/userstore';
+import T from 'i18n-react';
 
 export default class SplashScreen extends Component {
   constructor(props) {
@@ -65,24 +66,24 @@ export default class SplashScreen extends Component {
         <div className="splash-screen">
           <Card
             closeable
-            title="Welcome to Cask Data Application Platform"
+            title={T.translate('features.SplashScreen.title')}
             onClose={this.onClose.bind(this)}
           >
             <div className="text-center">
               <span className="fa fa-5x icon-fist"></span>
               <h4>
-                Your platform for building exciting analytical data applications
+                {T.translate('features.SplashScreen.intro-message')}
               </h4>
               <br />
               <div className={this.state.showRegistration ? 'group' : 'group no-registration'}>
                 <div className="btn btn-default">
-                  Get Started
+                  {T.translate('features.SplashScreen.buttons.getStarted')}
                 </div>
                 <div className={this.state.showRegistration ? 'btn btn-default' : 'hide'}>
-                  Introduction to CDAP
+                  {T.translate('features.SplashScreen.buttons.introduction')}
                 </div>
                 <div className={this.state.showRegistration ? 'btn btn-default' : 'hide'}>
-                  Register for Updates
+                  {T.translate('features.SplashScreen.buttons.register')}
                 </div>
               </div>
             </div>

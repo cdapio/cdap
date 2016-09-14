@@ -16,6 +16,7 @@
 
 import React, {PropTypes} from 'react';
 import AbsLinkTo from '../AbsLinkTo';
+import T from 'i18n-react';
 
 export default function HeaderSidebar ({onClickHandlerNoOp}) {
   const getContext = (extension) => {
@@ -41,10 +42,10 @@ export default function HeaderSidebar ({onClickHandlerNoOp}) {
         </div>
         {/* This will change once we introduce navbar for hydraotr & tracker in react*/}
         <div className="product-name">
-          <span>CDAP</span>
+          <span>{T.translate('commons.cdap')}</span>
         </div>
       </a>
-      <h5>Extensions:</h5>
+      <h5>{T.translate('features.Navbar.Sidebar.extension')}</h5>
       <AbsLinkTo
         context={getContext('hydrator')}
         className="brand sidebar-item"
@@ -54,7 +55,7 @@ export default function HeaderSidebar ({onClickHandlerNoOp}) {
         </div>
 
         <div className="product-name">
-          <span>Cask Hydrator</span>
+          <span>{T.translate('commons.hydrator')}</span>
         </div>
       </AbsLinkTo>
       <AbsLinkTo
@@ -66,7 +67,7 @@ export default function HeaderSidebar ({onClickHandlerNoOp}) {
         </div>
 
         <div className="product-name">
-          <span>Cask Tracker</span>
+          <span>{T.translate('commons.tracker')}</span>
         </div>
       </AbsLinkTo>
     </div>

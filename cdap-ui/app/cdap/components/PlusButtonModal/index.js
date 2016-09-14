@@ -16,10 +16,13 @@
 
 import React, {PropTypes, Component} from 'react';
 import { Modal, ModalHeader, ModalBody } from 'reactstrap';
+
 import CaskMarketPlace from '../CaskMarketPlace';
 import ResourceCenter from '../ResourceCenter';
 
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
+
+import T from 'i18n-react';
 
 require('./PlusButtonModal.less');
 
@@ -42,6 +45,9 @@ export default class PlusButtonModal extends Component {
     this.props.onCloseHandler();
   }
   render() {
+    const market = T.translate('commons.market');
+    const resourceCenter = T.translate('commons.resource-center');
+
     return (
       <Modal
         isOpen={this.props.isOpen}
@@ -51,14 +57,14 @@ export default class PlusButtonModal extends Component {
       >
         <ModalHeader>
           <span className="pull-left">
-            { this.state.viewMode === 'resourcecenter' ? 'Resource Center' : 'Cask Market Place' }
+            { this.state.viewMode === 'resourcecenter' ? resourceCenter : market }
           </span>
           <div className="pull-right">
             <button
               className="btn btn-sm btn-resource-center"
               onClick={this.toggleView.bind(this)}
             >
-              { this.state.viewMode === 'resourcecenter' ? 'Cask Market Place' : 'Resource Center' }
+              { this.state.viewMode === 'resourcecenter' ? market : resourceCenter }
             </button>
           </div>
         </ModalHeader>
