@@ -1,0 +1,251 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+import React, {Component, PropTypes} from 'react';
+import Rx from 'rx';
+import findIndex from 'lodash/findIndex';
+import first from 'lodash/head';
+
+require('./Wizard.less');
+import shortid from 'shortid';
+import WizardStepHeader from './WizardStepHeader';
+import WizardStepContent from './WizardStepContent';
+import CardActionFeedback from 'components/CardActionFeedback';
+
+const currentStepIndex = (arr, id) => {
+  return findIndex(arr, (step) => id === step.id);
+};
+const canFinish = (id, wizardConfig) => {
+  let stepIndex = currentStepIndex(wizardConfig.steps, id);
+  let canFinish = true;
+  for (var i = stepIndex + 1; i < wizardConfig.steps.length; i++) {
+    let reqsFields = Array.isArray(wizardConfig.steps[i].requiredFields);
+    canFinish = canFinish && (!reqsFields || (reqsFields && reqsFields.length === 0));
+  }
+  return canFinish;
+};
+
+export default class Wizard extends Component{
+  constructor(props) {
+    super(props);
+    this.state = {
+      activeStep: this.props.wizardConfig.steps[0].id,
+      success: '',
+      error: ''
+    };
+  }
+  getChildContext() {
+    return {
+      activeStep: this.state.activeStep
+    };
+  }
+  setActiveStep(stepId) {
+    this.setState({
+      activeStep: stepId
+    });
+  }
+  goToNextStep(stepId) {
+    let currentStep = findIndex(
+      this.props.wizardConfig.steps,
+      (step) => stepId === step.id
+    );
+    this.setActiveStep(this.props.wizardConfig.steps[currentStep + 1].id);
+  }
+  goToPreviousStep(stepId) {
+    let currentStep = findIndex(
+      this.props.wizardConfig.steps,
+      (step) => stepId === step.id
+    );
+    this.setActiveStep(this.props.wizardConfig.steps[currentStep - 1].id);
+  }
+  submitForm() {
+    let onSubmitReturn = this.props.onSubmit(this.props.store);
+    if (onSubmitReturn instanceof Rx.Observable) {
+      onSubmitReturn
+        .subscribe(
+          success => {
+            if (success) {
+              this.setState({
+                success: success,
+                error: false
+              });
+            }
+            let steps = this.props.wizardConfig.steps;
+            let currentIndex = currentStepIndex(steps, this.state.activeStep);
+            if(currentIndex < (steps.length - 1)) {
+              this.setState({
+                activeStep: steps[currentIndex].onSubmitGoTo
+              });
+            }
+          },
+          err => {
+            if (err) {
+              this.setState({
+                error: err,
+                success: false
+              });
+            }
+          }
+        );
+    }
+
+  }
+  render() {
+
+    const getNavigationButtons = (matchedStep) => {
+      let matchedIndex = currentStepIndex(this.props.wizardConfig.steps, matchedStep.id);
+      let navButtons;
+      let nextButton = (
+        <button
+          className="btn btn-default"
+          onClick={this.goToNextStep.bind(this, matchedStep.id)}
+        >
+          Next
+        </button>
+      );
+      let prevButton = (
+        <button
+          className="btn btn-default"
+          onClick={this.goToPreviousStep.bind(this, matchedStep.id)}
+        >
+          Previous
+        </button>
+      );
+      let finishButton = (
+        <button
+          className="btn btn-primary"
+          onClick={this.submitForm.bind(this)}
+        >
+          Finish
+        </button>
+      );
+      if (matchedIndex === 0) {
+        navButtons = ( {nextButton} );
+      }
+      if (matchedIndex === this.props.wizardConfig.steps.length - 1) {
+        navButtons = ( {prevButton} );
+      }
+      navButtons = (
+        <span>
+          {prevButton}
+          {nextButton}
+        </span>
+      );
+      if (canFinish(matchedStep.id, this.props.wizardConfig)) {
+        return (
+          <div>
+            {finishButton}
+            {navButtons}
+          </div>
+        );
+      }
+      return navButtons;
+    };
+    const isStepComplete = (stepId) => {
+      let state = this.props.store.getState()[stepId];
+      return state && state.__complete;
+    };
+    let stepHeaders = this.props
+      .wizardConfig
+      .steps
+      .map( (step, index) => (
+        <WizardStepHeader
+          label={`${index + 1} - ${step.shorttitle}`}
+          className={ isStepComplete(step.id) ? 'completed' : null}
+          id={step.id}
+          key={shortid.generate()}
+          onClick={this.setActiveStep.bind(this, step.id)}
+        />
+      ));
+    let stepContent = this.props
+      .wizardConfig
+      .steps
+      .filter(step => step.id === this.state.activeStep)
+      .map((matchedStep) => {
+        return (
+          <WizardStepContent
+            title={matchedStep.title}
+            description={matchedStep.description}
+            stepsCount={this.props.wizardConfig.steps.length}
+            currentStep={currentStepIndex(this.props.wizardConfig.steps, matchedStep.id) + 1}
+          >
+            {matchedStep.content}
+            <div className="text-right wizard-navigation">
+              {getNavigationButtons(matchedStep)}
+            </div>
+          </WizardStepContent>
+        );
+      });
+    let wizardFooter;
+    if(this.state.success){
+      wizardFooter = (
+        <CardActionFeedback
+          type='SUCCESS'
+          message={this.state.success}
+        />
+      );
+    }
+    if (this.state.error) {
+      wizardFooter = (
+        <CardActionFeedback
+          type='DANGER'
+          message={this.state.error}
+        />
+      );
+    }
+    stepContent = first(stepContent);
+    return (
+      <div className="cask-wizard">
+        <div className="wizard-body">
+          <div className="wizard-steps-header">
+            {stepHeaders}
+          </div>
+          <div className="wizard-steps-content">
+            {stepContent}
+          </div>
+        </div>
+        <div className="wizard-footer">
+          {wizardFooter}
+        </div>
+      </div>
+    );
+  }
+}
+
+const wizardConfigType = PropTypes.shape({
+  steps: PropTypes.arrayOf(
+    PropTypes.shape({
+      name: PropTypes.string,
+      title: PropTypes.string,
+      description: PropTypes.string,
+      content: PropTypes.node,
+      skipToComplete: PropTypes.bool
+    })
+  )
+});
+
+Wizard.childContextTypes = {
+  activeStep: PropTypes.string
+};
+Wizard.propTypes = {
+  wizardConfig: wizardConfigType,
+  store: PropTypes.shape({
+    getState: PropTypes.func,
+    dispatch: PropTypes.func,
+    subscribe: PropTypes.func,
+    replaceReducer: PropTypes.func
+  }),
+  onSubmit: PropTypes.func
+};
