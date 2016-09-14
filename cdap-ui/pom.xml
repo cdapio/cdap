@@ -284,6 +284,9 @@
                     <copy todir = "${stage.opt.dir}/cdap_dist">
                       <fileset dir = "cdap_dist" />
                     </copy>
+                    <copy todir = "${stage.opt.dir}/login_dist">
+                      <fileset dir = "login_dist" />
+                    </copy>
                     <copy todir = "${stage.opt.dir}/bin">
                       <fileset dir = "node">
                         <include name="node" />
