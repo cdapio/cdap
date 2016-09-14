@@ -15,13 +15,14 @@
  */
 
 @import '../../styles/variables.less';
+@wizard-header-color: #262933;
 
-.plus-button-modal {
+.wizard-modal {
   overflow-x: hidden;
   &.modal-dialog {
-    height: 75vh;
-    width: 70vw;
-    margin-top: 70px;
+    height: 65vh;
+    width: 60vw;
+    margin-top: 140px;
 
     .modal-content {
       border-radius: 0;
@@ -35,12 +36,14 @@
         height: ~"calc(100% - 51px)"; // 100% - 51px for modal header
         height: ~"-moz-calc(100% - 51px)";
         height: ~"-webkit-calc(100% - 51px)";
-        border: 1px solid #ff6600;
-        background: #fff;
+
+        > div {
+          height: 100%;
+        }
       }
       .modal-header {
         padding: 10px 20px;
-        background: @cdap-orange;
+        background: @wizard-header-color;
         color: white;
         border-bottom: 0;
 
@@ -63,23 +66,23 @@
   }
 }
 
-.plus-button-modal {
+.wizard-modal {
   position: relative;
-  .plus-button-modal-content-enter {
+  .wizard-modal-content-enter {
     opacity: 0.01;
     position: absolute;
   }
-  .plus-button-modal-content-enter-active {
+  .wizard-modal-content-enter-active {
     opacity: 1;
     transition: opacity 500ms ease-in;
   }
 
-  .plus-button-modal-content-leave {
+  .wizard-modal-content-leave {
     opacity: 1;
     position: absolute;
   }
 
-  .plus-button-modal-content-leave-active {
+  .wizard-modal-content-leave-active {
     opacity: 0.01;
     transition: opacity 300ms ease-in;
   }

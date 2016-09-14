@@ -14,6 +14,32 @@
  * the License.
  */
 
-.cask-configurable-tab {
+.wizard-step-content-container {
   height: 100%;
+  .step-content {
+    padding: 10px;
+  }
+  .step-banner {
+    background: #464a57;
+    color: #fff;
+    padding: 5px 15px;
+    height: 52px;
+
+    h4 {
+      margin: 5px 0;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    p {
+      margin: 0;
+      font-size: 12px;
+    }
+  }
+  .step-content {
+    height: ~"calc(100% - 52px)";
+    height: ~"-moz-calc(100% - 52px)";
+    height: ~"-webkit-calc(100% - 52px)";
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
 }
