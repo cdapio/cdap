@@ -99,8 +99,6 @@ Bug Fixes
 - :cask-issue:`CDAP-7222` - Fixed a problem with being unable to delete a namespace if a
   configured keytab file doesn't exist.
 
-- :cask-issue:`CDAP-7224` - ??
-
 - :cask-issue:`CDAP-7235` - Fixed a problem with a NullPointerException when the CDAP UI fetches a log.
 
 - :cask-issue:`CDAP-7237` - Prevented accidental grant of additional actions to a user as
