@@ -16,5 +16,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-default['cdap']['ambari']['version'] = '3.4.1-1'
+default['cdap']['ambari']['version'] = '3.5.2-1'
 default['cdap']['ambari']['install'] = false
