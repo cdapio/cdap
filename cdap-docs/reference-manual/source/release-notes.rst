@@ -31,12 +31,8 @@ Known Issues
 
 - :cask-issue:`CDAP-7175` - If you are upgrading an authorization-enabled CDAP instance,
   you will need to give the *cdap* user *ADMIN* privileges on all existing CDAP
-  namespaces. **Note:** the *ADMIN* privilege does not give the *cdap* user *READ* or
-  *WRITE* privileges on the namespaces. As these are temporary grants required only for
-  the purpose of running the upgrade tool, once the upgrade is complete, these grants can
-  be revoked. (Alternatively, you can disable authorization before running the upgrade
-  tool and then re-enable it after the upgrade is completed. See the :ref:`Administration
-  Manual: Authorization <admin-authorization>` for details.)
+  namespaces. See the :ref:`Administration Manual: Upgrading <upgrading-index>` for your
+  distribution for details.
 
 - :cask-issue:`CDAP-7179` - In CDAP 3.5.0, new ``kafka.server.*`` properties replace older
   properties such as ``kafka.log.dir``, as described in the :ref:`Administration Manual: 
