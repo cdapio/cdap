@@ -65,9 +65,6 @@
       <id>apache.staging</id>
       <name>Apache Staging Repository</name>
       <url>https://repository.apache.org/content/repositories/orgapachetephra-1004</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
     </repository>
   </repositories>
 
