@@ -64,6 +64,10 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
   @Override
   public void create() throws IOException {
     if (!isExternal) {
+      if (exists()) {
+        throw new IOException(String.format(
+          "Base location for file set '%s' at %s already exists", name, baseLocation));
+      }
       baseLocation.mkdirs();
     } else if (!exists()) {
         throw new IOException(String.format(
