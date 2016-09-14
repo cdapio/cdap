@@ -33,6 +33,7 @@ import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.URLConnections;
+import co.cask.cdap.common.service.Services;
 import co.cask.cdap.common.startup.ConfigurationLogger;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.OSDetector;
@@ -97,6 +98,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Standalone Main.
@@ -248,7 +250,11 @@ public class StandaloneMain {
     }
 
     if (zkClient != null) {
-      zkClient.startAndWait();
+      Services.startAndWait(zkClient, cConf.getLong(Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
+                            TimeUnit.MILLISECONDS,
+                            String.format("Connection timed out while trying to start ZooKeeper client. Please " +
+                                            "verify that the ZooKeeper quorum settings are correct in cdap-site.xml. " +
+                                            "Currently configured as: %s", cConf.get(Constants.Zookeeper.QUORUM)));
     }
 
     if (kafkaClient != null) {

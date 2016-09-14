@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.KafkaConstants;
 import co.cask.cdap.common.runtime.DaemonMain;
+import co.cask.cdap.common.service.Services;
 import co.cask.cdap.common.utils.Networks;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -38,6 +39,7 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Runs embedded Kafka server.
@@ -62,7 +64,12 @@ public class KafkaServerMain extends DaemonMain {
     if (zkNamespace != null) {
       ZKClientService client = ZKClientService.Builder.of(zkConnectStr).build();
       try {
-        client.startAndWait();
+        Services.startAndWait(client, cConf.getLong(Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
+                              TimeUnit.MILLISECONDS,
+                              String.format("Connection timed out while trying to start ZooKeeper client. Please " +
+                                            "verify that the ZooKeeper quorum settings are correct in " +
+                                            "cdap-site.xml. Currently configured as: %s",
+                                            cConf.get(Constants.Zookeeper.QUORUM)));
 
         String path = "/" + zkNamespace;
         LOG.info(String.format("Creating zookeeper namespace %s", path));
