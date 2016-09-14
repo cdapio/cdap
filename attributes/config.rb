@@ -88,14 +88,19 @@ hdp_version =
     end
   end
 
-if node.key?('hadoop') && node['hadoop'].key?('distribution') && node['hadoop'].key?('distribution_version') &&
-   node['hadoop']['distribution'] == 'hdp' && node['hadoop']['distribution_version'].to_f >= 2.2 &&
-   node['cdap']['version'].to_f >= 3.1
-  default['cdap']['cdap_env']['opts'] = "${OPTS} -Dhdp.version=#{hdp_version}"
-  default['cdap']['cdap_site']['app.program.jvm.opts'] = "-XX:MaxPermSize=128M ${twill.jvm.gc.opts} -Dhdp.version=#{hdp_version} -Dspark.yarn.am.extraJavaOptions=-Dhdp.version=#{hdp_version}"
-  if node['cdap']['version'].to_f < 3.4
-    default['cdap']['cdap_env']['spark_home'] = "/usr/hdp/#{hdp_version}/spark"
+if node.key?('hadoop') && node['hadoop'].key?('distribution') && node['hadoop'].key?('distribution_version')
+  if node['hadoop']['distribution'] == 'hdp' && node['hadoop']['distribution_version'].to_f >= 2.2 &&
+     node['cdap']['version'].to_f >= 3.1
+    default['cdap']['cdap_env']['opts'] = "${OPTS} -Dhdp.version=#{hdp_version}"
+    default['cdap']['cdap_site']['app.program.jvm.opts'] = "-XX:MaxPermSize=128M ${twill.jvm.gc.opts} -Dhdp.version=#{hdp_version} -Dspark.yarn.am.extraJavaOptions=-Dhdp.version=#{hdp_version}"
+    if node['cdap']['version'].to_f < 3.4
+      default['cdap']['cdap_env']['spark_home'] = "/usr/hdp/#{hdp_version}/spark"
+    end
+  elsif node['hadoop']['distribution'] == 'iop'
+    iop_version = node['hadoop']['distribution_version']
+    default['cdap']['cdap_env']['opts'] = "${OPTS} -Diop.version=#{iop_version}"
+    default['cdap']['cdap_site']['app.program.jvm.opts'] = "-XX:MaxPermSize=128M ${twill.jvm.gc.opts} -Diop.version=#{iop_version} -Dspark.yarn.am.extraJavaOptions=-Diop.version=#{iop_version}"
+  elsif node['cdap']['version'].to_f < 3.4 # CDAP 3.4 determines SPARK_HOME on its own (CDAP-5086)
+    default['cdap']['cdap_env']['spark_home'] = '/usr/lib/spark'
   end
-elsif node['cdap']['version'].to_f < 3.4 # CDAP 3.4 determines SPARK_HOME on its own (CDAP-5086)
-  default['cdap']['cdap_env']['spark_home'] = '/usr/lib/spark'
 end
