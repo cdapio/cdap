@@ -19,8 +19,8 @@ package co.cask.cdap.explore.jdbc;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.MockExploreClient;
 import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryResult;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -80,7 +80,7 @@ public class ExploreResultSetTest {
         ))
     );
 
-    ResultSet resultSet = new ExploreResultSet(exploreClient.submit(Id.Namespace.from(ns), "mock_query").get(),
+    ResultSet resultSet = new ExploreResultSet(exploreClient.submit(new NamespaceId(ns).toId(), "mock_query").get(),
                                                new ExploreStatement(null, exploreClient, ns), 0);
     Assert.assertTrue(resultSet.next());
     Assert.assertEquals(resultSet.getObject(1), resultSet.getObject("column1"));
@@ -121,7 +121,7 @@ public class ExploreResultSetTest {
         ))
     );
 
-    ResultSet resultSet = new ExploreResultSet(exploreClient.submit(Id.Namespace.from(ns), "mock_query").get(),
+    ResultSet resultSet = new ExploreResultSet(exploreClient.submit(new NamespaceId(ns).toId(), "mock_query").get(),
                                                new ExploreStatement(null, exploreClient, ns), 0);
     Assert.assertTrue(resultSet.next());
     Assert.assertEquals(1, resultSet.findColumn("column1"));

@@ -24,7 +24,7 @@ import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -81,7 +81,7 @@ public class IncrementSummingScannerTest {
 
   @Test
   public void testIncrementScanning() throws Exception {
-    TableId tableId = TableId.from(Id.Namespace.DEFAULT.getId(), "TestIncrementSummingScanner");
+    TableId tableId = TableId.from(NamespaceId.DEFAULT.getNamespace(), "TestIncrementSummingScanner");
     byte[] familyBytes = Bytes.toBytes("f");
     byte[] columnBytes = Bytes.toBytes("c");
     HRegion region = createRegion(tableId, familyBytes);
@@ -221,7 +221,7 @@ public class IncrementSummingScannerTest {
 
   @Test
   public void testFlushAndCompact() throws Exception {
-    TableId tableId = TableId.from(Id.Namespace.DEFAULT.getId(), "TestFlushAndCompact");
+    TableId tableId = TableId.from(NamespaceId.DEFAULT.getNamespace(), "TestFlushAndCompact");
     byte[] familyBytes = Bytes.toBytes("f");
     byte[] columnBytes = Bytes.toBytes("c");
     HRegion region = createRegion(tableId, familyBytes);
@@ -314,7 +314,7 @@ public class IncrementSummingScannerTest {
 
   @Test
   public void testMultiColumnFlushAndCompact() throws Exception {
-    TableId tableId = TableId.from(Id.Namespace.DEFAULT.getId(), "testMultiColumnFlushAndCompact");
+    TableId tableId = TableId.from(NamespaceId.DEFAULT.getNamespace(), "testMultiColumnFlushAndCompact");
     byte[] familyBytes = Bytes.toBytes("f");
     byte[] columnBytes = Bytes.toBytes("c");
     byte[] columnBytes2 = Bytes.toBytes("c2");
@@ -381,7 +381,8 @@ public class IncrementSummingScannerTest {
 
   @Test
   public void testIncrementScanningWithBatchAndUVB() throws Exception {
-    TableId tableId = TableId.from(Id.Namespace.DEFAULT.getId(), "TestIncrementSummingScannerWithUpperVisibilityBound");
+    TableId tableId = TableId.from(NamespaceId.DEFAULT.getNamespace(),
+                                   "TestIncrementSummingScannerWithUpperVisibilityBound");
     byte[] familyBytes = Bytes.toBytes("f");
     byte[] columnBytes = Bytes.toBytes("c");
     HRegion region = createRegion(tableId, familyBytes);

@@ -280,14 +280,15 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
           // Service was killed
           runStatus = ProgramController.State.KILLED.getRunStatus();
         }
-        runtimeStore.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                             runStatus);
+        runtimeStore.setStop(programId, runId.getId(),
+                             TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), runStatus);
       }
 
       @Override
       public void failed(Service.State from, @Nullable Throwable failure) {
         closeAll(closeables);
-        runtimeStore.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+        runtimeStore.setStop(programId, runId.getId(),
+                             TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                              ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(failure));
       }
     };

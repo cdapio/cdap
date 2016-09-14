@@ -24,7 +24,7 @@ import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
@@ -230,7 +230,7 @@ public class DataCleansingMapReduceTest extends TestBase {
   private long getValidityMetrics(boolean invalid) throws Exception {
     String metric = "user.records." + (invalid ? "invalid" : "valid");
 
-    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.DEFAULT.getId(),
+    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NamespaceId.DEFAULT.getNamespace(),
                                                Constants.Metrics.Tag.APP, DataCleansing.NAME,
                                                Constants.Metrics.Tag.MAPREDUCE, DataCleansingMapReduce.NAME);
     MetricDataQuery metricQuery = new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, metric,

@@ -24,7 +24,7 @@ import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.security.DelegationTokensUpdater;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.SecureKeyId;
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
@@ -235,9 +235,9 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager, Delegati
   }
 
   private void checkNamespaceExists(String namespace) throws Exception {
-    Id.Namespace namespaceId = new Id.Namespace(namespace);
-    if (!namespaceQueryAdmin.exists(namespaceId)) {
-      throw new NamespaceNotFoundException(namespaceId);
+    NamespaceId namespaceId = new NamespaceId(namespace);
+    if (!namespaceQueryAdmin.exists(namespaceId.toId())) {
+      throw new NamespaceNotFoundException(namespaceId.toId());
     }
   }
 

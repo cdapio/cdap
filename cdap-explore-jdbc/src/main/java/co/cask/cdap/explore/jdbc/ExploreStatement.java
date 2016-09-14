@@ -19,7 +19,7 @@ package co.cask.cdap.explore.jdbc;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.service.HandleNotFoundException;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
@@ -69,12 +69,12 @@ public class ExploreStatement implements Statement {
 
   private Connection connection;
   private ExploreClient exploreClient;
-  private final Id.Namespace namespace;
+  private final NamespaceId namespace;
 
   ExploreStatement(Connection connection, ExploreClient exploreClient, String namespace) {
     this.connection = connection;
     this.exploreClient = exploreClient;
-    this.namespace = Id.Namespace.from(namespace);
+    this.namespace = new NamespaceId(namespace);
   }
 
   @Override
@@ -103,7 +103,7 @@ public class ExploreStatement implements Statement {
       resultSet = null;
     }
 
-    futureResults = exploreClient.submit(namespace, sql);
+    futureResults = exploreClient.submit(namespace.toId(), sql);
     try {
       resultSet = new ExploreResultSet(futureResults.get(), this, maxRows);
       // NOTE: Javadoc states: "returns false if the first result is an update count or there is no result"

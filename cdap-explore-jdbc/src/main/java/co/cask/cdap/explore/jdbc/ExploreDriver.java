@@ -20,7 +20,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.FixedAddressExploreClient;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +63,7 @@ public class ExploreDriver implements Driver {
     ExploreConnectionParams params = ExploreConnectionParams.parseConnectionUrl(url);
 
     String authToken = getString(params, ExploreConnectionParams.Info.EXPLORE_AUTH_TOKEN, null);
-    String namespace = getString(params, ExploreConnectionParams.Info.NAMESPACE, Id.Namespace.DEFAULT.getId());
+    String namespace = getString(params, ExploreConnectionParams.Info.NAMESPACE, NamespaceId.DEFAULT.getNamespace());
     boolean sslEnabled = getBoolean(params, ExploreConnectionParams.Info.SSL_ENABLED, false);
     boolean verifySSLCert = getBoolean(params, ExploreConnectionParams.Info.VERIFY_SSL_CERT, true);
 

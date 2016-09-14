@@ -25,7 +25,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.io.Charsets;
@@ -76,11 +75,11 @@ public class FileSecureStoreTest {
     sConf.set(Constants.Security.Store.FILE_PASSWORD, "secret");
     InMemoryNamespaceClient namespaceClient = new InMemoryNamespaceClient();
     NamespaceMeta namespaceMeta = new NamespaceMeta.Builder()
-      .setName(new Id.Namespace(NAMESPACE1))
+      .setName(NAMESPACE1)
       .build();
     namespaceClient.create(namespaceMeta);
     namespaceMeta = new NamespaceMeta.Builder()
-      .setName(new Id.Namespace(NAMESPACE2))
+      .setName(NAMESPACE2)
       .build();
     namespaceClient.create(namespaceMeta);
     FileSecureStore fileSecureStore = new FileSecureStore(conf, sConf, namespaceClient);

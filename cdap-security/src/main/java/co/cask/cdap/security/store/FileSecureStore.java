@@ -27,7 +27,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.SecureKeyId;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -242,9 +242,9 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
   }
 
   private void checkNamespaceExists(String namespace) throws Exception {
-    Id.Namespace namespaceId = new Id.Namespace(namespace);
-    if (!namespaceQueryAdmin.exists(namespaceId)) {
-      throw new NamespaceNotFoundException(namespaceId);
+    NamespaceId namespaceId = new NamespaceId(namespace);
+    if (!namespaceQueryAdmin.exists(namespaceId.toId())) {
+      throw new NamespaceNotFoundException(namespaceId.toId());
     }
   }
 
