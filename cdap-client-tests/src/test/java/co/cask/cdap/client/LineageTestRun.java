@@ -323,24 +323,12 @@ public class LineageTestRun extends MetadataTestBase {
     String namespace = "nonExistent";
     Id.Application app = Id.Application.from(namespace, AllProgramsApp.NAME);
     Id.Flow flow = Id.Flow.from(app, AllProgramsApp.NoOpFlow.NAME);
-    Id.DatasetInstance dataset = Id.DatasetInstance.from(namespace, AllProgramsApp.DATASET_NAME);
-    Id.Stream stream = Id.Stream.from(namespace, AllProgramsApp.STREAM_NAME);
-
-    fetchLineage(dataset, 0, 10000, 10, NotFoundException.class);
-
-    try {
-      fetchLineage(stream, 0, 10000, 10);
-      Assert.fail("Expected not to be able to fetch lineage for nonexistent stream: " + stream);
-    } catch (NotFoundException expected) {
-    }
-
     assertRunMetadataNotFound(new Id.Run(flow, RunIds.generate(1000).getId()));
   }
 
   @Test
   public void testLineageForNonExistingEntity() throws Exception {
     Id.DatasetInstance datasetInstance = Id.DatasetInstance.from("default", "dummy");
-    fetchLineage(datasetInstance, 100, 200, 10, NotFoundException.class);
     fetchLineage(datasetInstance, -100, 200, 10, BadRequestException.class);
     fetchLineage(datasetInstance, 100, -200, 10, BadRequestException.class);
     fetchLineage(datasetInstance, 200, 100, 10, BadRequestException.class);
