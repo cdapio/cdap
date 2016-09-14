@@ -52,6 +52,10 @@ public class NamespaceId extends EntityId implements NamespacedId {
     return new ApplicationId(namespace, application);
   }
 
+  public ApplicationId app(String application, String version) {
+    return new ApplicationId(namespace, application, version);
+  }
+
   public DatasetId dataset(String dataset) {
     return new DatasetId(namespace, dataset);
   }

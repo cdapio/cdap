@@ -22,7 +22,8 @@ import co.cask.cdap.proto.audit.payload.metadata.MetadataPayload;
 import co.cask.cdap.proto.codec.AuditMessageTypeAdapter;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.SystemServiceId;
 import co.cask.cdap.proto.metadata.Metadata;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import com.google.gson.Gson;
@@ -51,7 +52,7 @@ public class AuditMessageTest {
     String dsCreateJson =
       "{\"version\":1,\"time\":1000,\"entityId\":{\"namespace\":\"ns1\",\"dataset\":\"ds1\",\"entity\":\"DATASET\"}," +
         "\"user\":\"user1\",\"type\":\"CREATE\",\"payload\":{}}";
-    AuditMessage dsCreate = new AuditMessage(1000L, Ids.namespace("ns1").dataset("ds1"), "user1",
+    AuditMessage dsCreate = new AuditMessage(1000L, new NamespaceId("ns1").dataset("ds1"), "user1",
                                              AuditType.CREATE, AuditPayload.EMPTY_PAYLOAD);
     Assert.assertEquals(dsCreateJson, GSON.toJson(dsCreate));
     Assert.assertEquals(dsCreate, GSON.fromJson(dsCreateJson, AuditMessage.class));
@@ -62,11 +63,12 @@ public class AuditMessageTest {
     String flowAccessJson =
       "{\"version\":1,\"time\":2000,\"entityId\":{\"namespace\":\"ns1\",\"stream\":\"stream1\"," +
         "\"entity\":\"STREAM\"},\"user\":\"user1\",\"type\":\"ACCESS\",\"payload\":{\"accessType\":\"WRITE\"," +
-        "\"accessor\":{\"namespace\":\"ns1\",\"application\":\"app1\",\"type\":\"Flow\",\"program\":\"flow1\"," +
-        "\"run\":\"run1\",\"entity\":\"PROGRAM_RUN\"}}}";
+        "\"accessor\":{\"namespace\":\"ns1\",\"application\":\"app1\",\"version\":\"v1\",\"type\":\"Flow\"," +
+        "\"program\":\"flow1\",\"run\":\"run1\",\"entity\":\"PROGRAM_RUN\"}}}";
     AuditMessage flowAccess =
-      new AuditMessage(2000L, Ids.namespace("ns1").stream("stream1"), "user1", AuditType.ACCESS,
-                       new AccessPayload(AccessType.WRITE, Ids.namespace("ns1").app("app1").flow("flow1").run("run1")));
+      new AuditMessage(2000L, new NamespaceId("ns1").stream("stream1"), "user1", AuditType.ACCESS,
+                       new AccessPayload(AccessType.WRITE, new NamespaceId("ns1").app("app1", "v1").flow("flow1")
+                         .run("run1")));
     Assert.assertEquals(flowAccessJson, GSON.toJson(flowAccess));
     Assert.assertEquals(flowAccess, GSON.fromJson(flowAccessJson, AuditMessage.class));
 
@@ -75,8 +77,8 @@ public class AuditMessageTest {
         "\"user\":\"user1\",\"type\":\"ACCESS\",\"payload\":{\"accessType\":\"UNKNOWN\"," +
         "\"accessor\":{\"service\":\"explore\",\"entity\":\"SYSTEM_SERVICE\"}}}";
     AuditMessage exploreAccess =
-      new AuditMessage(2500L, Ids.namespace("ns1").dataset("ds1"), "user1", AuditType.ACCESS,
-                       new AccessPayload(AccessType.UNKNOWN, Ids.systemService("explore")));
+      new AuditMessage(2500L, new NamespaceId("ns1").dataset("ds1"), "user1", AuditType.ACCESS,
+                       new AccessPayload(AccessType.UNKNOWN, new SystemServiceId("explore")));
     Assert.assertEquals(exploreAccessJson, GSON.toJson(exploreAccess));
     Assert.assertEquals(exploreAccess, GSON.fromJson(exploreAccessJson, AuditMessage.class));
   }
@@ -84,7 +86,7 @@ public class AuditMessageTest {
   @Test
   public void testMetadataChange() throws Exception {
     String metadataJson =
-      "{\"version\":1,\"time\":3000,\"entityId\":{\"namespace\":\"ns1\",\"application\":\"app1\"," +
+      "{\"version\":1,\"time\":3000,\"entityId\":{\"namespace\":\"ns1\",\"application\":\"app1\",\"version\":\"v1\"," +
         "\"entity\":\"APPLICATION\"},\"user\":\"user1\",\"type\":\"METADATA_CHANGE\",\"payload\":{" +
         "\"previous\":{\"USER\":{\"properties\":{\"uk\":\"uv\",\"uk1\":\"uv2\"},\"tags\":[\"ut1\",\"ut2\"]}," +
         "\"SYSTEM\":{\"properties\":{\"sk\":\"sv\"},\"tags\":[]}}," +
@@ -120,7 +122,7 @@ public class AuditMessageTest {
     deletions.put(MetadataScope.USER, new Metadata(Collections.unmodifiableMap(userPropertiesDeleted),
                                                               Collections.unmodifiableSet(userTagsDeleted)));
     AuditMessage metadataChange =
-      new AuditMessage(3000L, Ids.namespace("ns1").app("app1"), "user1", AuditType.METADATA_CHANGE,
+      new AuditMessage(3000L, new NamespaceId("ns1").app("app1", "v1"), "user1", AuditType.METADATA_CHANGE,
                        new MetadataPayload(previous, additions, deletions));
     Assert.assertEquals(metadataJson, GSON.toJson(metadataChange));
     Assert.assertEquals(metadataChange, GSON.fromJson(metadataJson, AuditMessage.class));
