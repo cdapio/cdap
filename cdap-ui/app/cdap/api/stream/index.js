@@ -14,6 +14,14 @@
  * the License.
  */
 
-.cask-configurable-tab {
-  height: 100%;
-}
+import Datasource from '../../services/datasource';
+import {apiCreator} from '../../services/resource-helper';
+
+let dataSrc = new Datasource();
+let basepath = '/:namespaces/streams';
+
+export const MyStreamsApi = {
+  list: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}`),
+  get: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:streamId`),
+  create: apiCreator(dataSrc, 'PUT', 'REQUEST', `${basepath}/:streamId`)
+};

@@ -13,7 +13,25 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+@import '../../../styles/variables.less';
 
-.cask-configurable-tab {
-  height: 100%;
+.cask-wizard-step-header {
+  height: 40px;
+  border: 0;
+  border-bottom: 1px solid #dbdbdb;
+  font-size: 12px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  padding-left: 10px;
+  cursor: pointer;
+
+  &.active {
+    background: #464a57;
+    color: #fff;
+  }
+  &.completed {
+    background: #cfcfcf;
+    color: #666;
+  }
 }

@@ -14,6 +14,17 @@
  * the License.
  */
 
-.cask-configurable-tab {
-  height: 100%;
-}
+const CreateStreamActions = {
+  setNamespace: 'SET-STREAM-NAMESPACE',
+  setType: 'SET-STREAM-TYPE',
+  setName: 'SET-STREAM-NAME',
+  setDescription: 'SET-STREAM-DESCRIPTION',
+  setTTL: 'SET-STREAM-TTL',
+  setThreshold: 'SET-STREAM-THRESHOLD',
+  setSchemaFormat: 'SET-STREAM-SCHEMA-FORMAT',
+  setSchema: 'SET-STREAM-SCHEMA',
+  createStream: 'CREATE-STREAM',
+  onError: 'FORM-SUBMIT-FAILURE',
+  onSuccess: 'FORM-SUBMIT-SUCCESS'
+};
+export default CreateStreamActions;

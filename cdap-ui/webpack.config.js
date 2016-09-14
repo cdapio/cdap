@@ -80,7 +80,11 @@ var commonLoaders = [
   },
   {
     test: /\.ya?ml$/,
-    loader: 'yml',
+    loader: 'yml'
+  },
+  {
+    test: /\.css$/,
+    loader: 'style-loader!css-loader!less-loader'
   },
   {
     test: /\.js$/,
@@ -110,7 +114,8 @@ const cdapWebpackConfig = {
       'reactstrap',
       'react-addons-css-transition-group',
       'i18n-react',
-      'fuse.js'
+      'fuse.js',
+      'react-redux'
     ]
   },
   module: {
@@ -132,7 +137,14 @@ const cdapWebpackConfig = {
     filename: './[name].js',
     path: __dirname + '/cdap_dist/cdap_assets'
   },
-  plugins: cdapPlugins
+  plugins: cdapPlugins,
+  resolve: {
+    alias: {
+      components: __dirname + '/app/cdap/components',
+      services: __dirname + '/app/cdap/services',
+      api: __dirname + '/app/cdap/api'
+    }
+  }
 };
 const loginWebpackConfig = {
   context: __dirname + '/app/login',

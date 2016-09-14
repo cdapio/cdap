@@ -13,7 +13,28 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-.cask-configurable-tab {
-  height: 100%;
+.cask-time-to-live {
+  width: 100%;
+  > div {
+    display: inline-block;
+    margin: 0 10px;
+    .control-label {
+      text-align: left;
+      padding: 0;
+    }
+  }
+  select,
+  > div {
+    &:first-child {
+      margin-left: 0;
+    }
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+  select {
+    width: 50px;
+    display: inline-block;
+    margin: 0;
+  }
 }
