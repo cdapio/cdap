@@ -64,6 +64,9 @@ Improvements
   0.15, resolving a problem with a NullPointerException being logged on the closing of a
   network connection.
 
+- :cask-issue:`HYDRATOR-578` - Snapshot sinks now allow users to specify a property
+  ``cleanPartitionsOlderThan`` that cleans up any snapshots older than "x" days.
+
 
 Bug Fixes
 ---------
