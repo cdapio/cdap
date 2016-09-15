@@ -18,6 +18,7 @@ package co.cask.cdap.etl.spark.batch;
 
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
+import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
@@ -34,6 +35,7 @@ import scala.Tuple2;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -61,7 +63,8 @@ final class SparkBatchSourceFactory {
     if (input instanceof Input.DatasetInput) {
       // Note if input format provider is trackable then it comes in as DatasetInput
       Input.DatasetInput datasetInput = (Input.DatasetInput) input;
-      addInput(stageName, datasetInput.getName(), datasetInput.getAlias(), datasetInput.getArguments());
+      addInput(stageName, datasetInput.getName(), datasetInput.getAlias(), datasetInput.getArguments(),
+               datasetInput.getSplits());
     } else if (input instanceof Input.InputFormatProviderInput) {
       Input.InputFormatProviderInput ifpInput = (Input.InputFormatProviderInput) input;
       addInput(stageName, ifpInput.getAlias(),
@@ -79,9 +82,10 @@ final class SparkBatchSourceFactory {
     addStageInput(stageName, alias);
   }
 
-  private void addInput(String stageName, String datasetName, String alias, Map<String, String> datasetArgs) {
+  private void addInput(String stageName, String datasetName, String alias, Map<String, String> datasetArgs,
+                        List<Split> splits) {
     duplicateAliasCheck(alias);
-    datasetInfos.put(alias, new DatasetInfo(datasetName, datasetArgs, null));
+    datasetInfos.put(alias, new DatasetInfo(datasetName, datasetArgs, splits));
     addStageInput(stageName, alias);
   }
 
