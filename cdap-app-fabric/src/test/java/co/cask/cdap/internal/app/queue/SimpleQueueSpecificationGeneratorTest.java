@@ -27,6 +27,8 @@ import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
@@ -81,7 +83,7 @@ public class SimpleQueueSpecificationGeneratorTest {
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
     QueueSpecificationGenerator generator =
-      new SimpleQueueSpecificationGenerator(Id.Application.from(TEST_NAMESPACE_ID, newSpec.getName()));
+      new SimpleQueueSpecificationGenerator(NamespaceId.DEFAULT.app(newSpec.getName()));
     table = generator.create(newSpec.getFlows().values().iterator().next());
 
     dumpConnectionQueue(table);
@@ -128,7 +130,7 @@ public class SimpleQueueSpecificationGeneratorTest {
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
 
     QueueSpecificationGenerator generator =
-      new SimpleQueueSpecificationGenerator(Id.Application.from(TEST_NAMESPACE_ID, newSpec.getName()));
+      new SimpleQueueSpecificationGenerator(NamespaceId.DEFAULT.app(newSpec.getName()));
     table = generator.create(newSpec.getFlows().values().iterator().next());
 
     Assert.assertEquals(get(FlowletConnection.Type.STREAM, "text", "StreamSource")

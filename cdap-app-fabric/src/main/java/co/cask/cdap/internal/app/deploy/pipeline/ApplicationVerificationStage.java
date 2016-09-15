@@ -45,10 +45,12 @@ import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
+import org.apache.hadoop.mapreduce.v2.app.webapp.App;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,7 +89,7 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
     Preconditions.checkNotNull(input);
 
     ApplicationSpecification specification = input.getSpecification();
-    Id.Application appId = input.getApplicationId().toId();
+    ApplicationId appId = input.getApplicationId();
 
     verifySpec(appId, specification);
     verifyData(appId, specification);
@@ -97,7 +99,7 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
     emit(input);
   }
 
-  protected void verifySpec(Id.Application appId,
+  protected void verifySpec(ApplicationId appId,
                             ApplicationSpecification specification) {
     VerifyResult result = getVerifier(ApplicationSpecification.class).verify(appId, specification);
     if (!result.isSuccess()) {
@@ -105,7 +107,7 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
     }
   }
 
-  protected void verifyData(Id.Application appId,
+  protected void verifyData(ApplicationId appId,
                             ApplicationSpecification specification) throws DatasetManagementException {
     // NOTE: no special restrictions on dataset module names, etc
     VerifyResult result;
@@ -133,7 +135,7 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
     }
   }
 
-  protected void verifyPrograms(Id.Application appId, ApplicationSpecification specification) {
+  protected void verifyPrograms(ApplicationId appId, ApplicationSpecification specification) {
     Iterable<ProgramSpecification> programSpecs = Iterables.concat(specification.getFlows().values(),
                                                                    specification.getMapReduce().values(),
                                                                    specification.getWorkflows().values());
@@ -169,7 +171,7 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
         StreamSizeSchedule streamSizeSchedule = (StreamSizeSchedule) schedule;
         String streamName = streamSizeSchedule.getStreamName();
         if (!specification.getStreams().containsKey(streamName) &&
-          store.getStream(appId.getNamespace(), streamName) == null) {
+          store.getStream(appId.getParent(), streamName) == null) {
           throw new RuntimeException(String.format("Schedule '%s' uses a Stream '%s' that does not exit",
                                                    streamSizeSchedule.getName(), streamName));
         }

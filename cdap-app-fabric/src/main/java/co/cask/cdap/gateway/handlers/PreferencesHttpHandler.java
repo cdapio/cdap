@@ -22,6 +22,8 @@ import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.store.NamespaceStore;
 import co.cask.http.HttpResponder;
 import com.google.gson.JsonSyntaxException;
@@ -135,7 +137,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAppPrefs(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId,
                           @QueryParam("resolved") String resolved) throws Exception {
-    if (store.getApplication(Id.Application.from(namespace, appId)) == null) {
+    if (store.getApplication(new ApplicationId(namespace, appId)) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application %s in Namespace %s not present",
                                                                        appId, namespace));
     } else {
@@ -152,7 +154,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   public void putAppPrefs(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId)
     throws Exception {
-    if (store.getApplication(Id.Application.from(namespace, appId)) == null) {
+    if (store.getApplication(new ApplicationId(namespace, appId)) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application %s in Namespace %s not present",
                                                                        appId, namespace));
       return;
@@ -172,7 +174,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   public void deleteAppPrefs(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId)
     throws Exception {
-    if (store.getApplication(Id.Application.from(namespace, appId)) == null) {
+    if (store.getApplication(new ApplicationId(namespace, appId)) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Application %s in Namespace %s not present",
                                                                        appId, namespace));
     } else {
@@ -240,7 +242,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
       return false;
     }
 
-    if (!store.programExists(Id.Program.from(namespace, appId, type, programId))) {
+    if (!store.programExists(new ProgramId(namespace, appId, type, programId))) {
       responder.sendString(HttpResponseStatus.NOT_FOUND,
                            String.format("Program %s of Type %s in AppId %s in Namespace %s not present",
                                          programId, programType, appId, namespace));

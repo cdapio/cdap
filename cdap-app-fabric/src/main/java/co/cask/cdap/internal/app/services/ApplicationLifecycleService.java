@@ -176,7 +176,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param artifactVersion the artifact version to match. If null, all artifact versions are valid
    * @return list of all applications in the namespace that match the specified artifact names and version
    */
-  public List<ApplicationRecord> getApps(Id.Namespace namespace,
+  public List<ApplicationRecord> getApps(NamespaceId namespace,
                                          Set<String> artifactNames,
                                          @Nullable String artifactVersion) throws Exception {
     return getApps(namespace, getAppPredicate(artifactNames, artifactVersion));
@@ -189,7 +189,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param predicate the predicate that must be satisfied in order to be returned
    * @return list of all applications in the namespace that satisfy the specified predicate
    */
-  public List<ApplicationRecord> getApps(final Id.Namespace namespace,
+  public List<ApplicationRecord> getApps(final NamespaceId namespace,
                                          com.google.common.base.Predicate<ApplicationRecord> predicate)
     throws Exception {
     List<ApplicationRecord> appRecords = new ArrayList<>();
@@ -209,7 +209,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     return Lists.newArrayList(Iterables.filter(appRecords, new com.google.common.base.Predicate<ApplicationRecord>() {
       @Override
       public boolean apply(ApplicationRecord appRecord) {
-        return filter.apply(namespace.toEntityId().app(appRecord.getName()));
+        return filter.apply(namespace.app(appRecord.getName()));
       }
     }));
   }
@@ -222,7 +222,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws ApplicationNotFoundException if the specified application does not exist
    */
   public ApplicationDetail getAppDetail(Id.Application appId) throws Exception {
-    ApplicationSpecification appSpec = store.getApplication(appId);
+    ApplicationSpecification appSpec = store.getApplication(appId.toEntityId());
     if (appSpec == null) {
       throw new ApplicationNotFoundException(appId);
     }
@@ -249,7 +249,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                            ProgramTerminator programTerminator) throws Exception {
 
     // check that app exists
-    ApplicationSpecification currentSpec = store.getApplication(appId);
+    ApplicationSpecification currentSpec = store.getApplication(appId.toEntityId());
     if (currentSpec == null) {
       throw new ApplicationNotFoundException(appId);
     }
@@ -367,7 +367,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   public void removeAll(final Id.Namespace namespaceId) throws Exception {
     List<ApplicationSpecification> allSpecs = new ArrayList<>(
-      store.getAllApplications(namespaceId));
+      store.getAllApplications(namespaceId.toEntityId()));
     //Check if any program associated with this namespace is running
     Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
       Iterables.filter(runtimeService.listAll(ProgramType.values()),
@@ -392,7 +392,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
     //All Apps are STOPPED, delete them
     for (ApplicationSpecification appSpec : allSpecs) {
-      Id.Application id = Id.Application.from(namespaceId.getId(), appSpec.getName());
+      ApplicationId id = new ApplicationId(namespaceId.getId(), appSpec.getName());
       deleteApp(id, appSpec);
     }
   }
@@ -426,11 +426,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                          "The following programs are still running: " + appAllRunningPrograms);
     }
 
-    ApplicationSpecification spec = store.getApplication(appId);
+    ApplicationSpecification spec = store.getApplication(appId.toEntityId());
     if (spec == null) {
       throw new NotFoundException(appId);
     }
-    deleteApp(appId, spec);
+    deleteApp(appId.toEntityId(), spec);
   }
 
   /**
@@ -442,7 +442,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   public List<PluginInstanceDetail> getPlugins(ApplicationId appId)
     throws ApplicationNotFoundException {
-    ApplicationSpecification appSpec = store.getApplication(appId.toId());
+    ApplicationSpecification appSpec = store.getApplication(appId);
     if (appSpec == null) {
       throw new ApplicationNotFoundException(appId.toId());
     }
@@ -453,7 +453,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     return pluginInstanceDetails;
   }
 
-  private Iterable<ProgramSpecification> getProgramSpecs(Id.Application appId) {
+  private Iterable<ProgramSpecification> getProgramSpecs(ApplicationId appId) {
     ApplicationSpecification appSpec = store.getApplication(appId);
     return Iterables.concat(appSpec.getFlows().values(),
                             appSpec.getMapReduce().values(),
@@ -471,11 +471,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   private void deleteMetrics(String namespaceId, String applicationId) throws Exception {
     Collection<ApplicationSpecification> applications = Lists.newArrayList();
+    NamespaceId namespace = new NamespaceId(namespaceId);
     if (applicationId == null) {
-      applications = this.store.getAllApplications(new Id.Namespace(namespaceId));
+      applications = this.store.getAllApplications(namespace);
     } else {
-      ApplicationSpecification spec = this.store.getApplication
-        (new Id.Application(new Id.Namespace(namespaceId), applicationId));
+      ApplicationSpecification spec = this.store.getApplication(namespace.app(applicationId));
       applications.add(spec);
     }
 
@@ -495,17 +495,17 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    *
    * @param appId applicationId
    */
-  private void deletePreferences(Id.Application appId) {
+  private void deletePreferences(ApplicationId appId) {
     Iterable<ProgramSpecification> programSpecs = getProgramSpecs(appId);
     for (ProgramSpecification spec : programSpecs) {
 
-      preferencesStore.deleteProperties(appId.getNamespaceId(), appId.getId(),
+      preferencesStore.deleteProperties(appId.getNamespace(), appId.getApplication(),
                                         ProgramTypes.fromSpecification(spec).getCategoryName(), spec.getName());
-      LOG.trace("Deleted Preferences of Program : {}, {}, {}, {}", appId.getNamespaceId(), appId.getId(),
+      LOG.trace("Deleted Preferences of Program : {}, {}, {}, {}", appId.getNamespace(), appId.getApplication(),
                 ProgramTypes.fromSpecification(spec).getCategoryName(), spec.getName());
     }
-    preferencesStore.deleteProperties(appId.getNamespaceId(), appId.getId());
-    LOG.trace("Deleted Preferences of Application : {}, {}", appId.getNamespaceId(), appId.getId());
+    preferencesStore.deleteProperties(appId.getNamespace(), appId.getApplication());
+    LOG.trace("Deleted Preferences of Application : {}, {}", appId.getNamespace(), appId.getApplication());
   }
 
   private ApplicationWithPrograms deployApp(NamespaceId namespaceId, @Nullable String appName,
@@ -543,19 +543,20 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param spec the spec of the application to delete
    * @throws Exception
    */
-  private void deleteApp(final Id.Application appId, ApplicationSpecification spec) throws Exception {
+  private void deleteApp(final ApplicationId appId, ApplicationSpecification spec) throws Exception {
+    Id.Application idApplication = appId.toId();
     // enforce ADMIN privileges on the app
-    authorizationEnforcer.enforce(appId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
+    authorizationEnforcer.enforce(appId, authenticationContext.getPrincipal(), Action.ADMIN);
     // first remove all privileges on the app
-    revokePrivileges(appId.toEntityId(), spec);
+    revokePrivileges(appId, spec);
 
     //Delete the schedules
     for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
-      Id.Program workflowProgramId = Id.Program.from(appId, ProgramType.WORKFLOW, workflowSpec.getName());
+      Id.Program workflowProgramId = Id.Program.from(idApplication, ProgramType.WORKFLOW, workflowSpec.getName());
       scheduler.deleteSchedules(workflowProgramId, SchedulableProgramType.WORKFLOW);
     }
 
-    deleteMetrics(appId.getNamespaceId(), appId.getId());
+    deleteMetrics(appId.getNamespace(), appId.getApplication());
 
     //Delete all preferences of the application and of all its programs
     deletePreferences(appId);
@@ -563,7 +564,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     // Delete all streams and queues state of each flow
     // TODO: This should be unified with the DeletedProgramHandlerStage
     for (FlowSpecification flowSpecification : spec.getFlows().values()) {
-      Id.Program flowProgramId = Id.Program.from(appId, ProgramType.FLOW, flowSpecification.getName());
+      Id.Program flowProgramId = Id.Program.from(idApplication, ProgramType.FLOW, flowSpecification.getName());
 
       // Collects stream name to all group ids consuming that stream
       final Multimap<String, Long> streamGroups = HashMultimap.create();
@@ -576,13 +577,13 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       // Remove all process states and group states for each stream
       final String namespace = String.format("%s.%s", flowProgramId.getApplicationId(), flowProgramId.getId());
 
-      final Id.Flow flowId = Id.Flow.from(appId, flowSpecification.getName());
-      impersonator.doAs(new NamespaceId(appId.getNamespaceId()), new Callable<Void>() {
+      final Id.Flow flowId = Id.Flow.from(idApplication, flowSpecification.getName());
+      impersonator.doAs(appId.getParent(), new Callable<Void>() {
 
         @Override
         public Void call() throws Exception {
           for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
-            streamConsumerFactory.dropAll(Id.Stream.from(appId.getNamespaceId(), entry.getKey()),
+            streamConsumerFactory.dropAll(Id.Stream.from(appId.getNamespace(), entry.getKey()),
                                           namespace, entry.getValue());
           }
           queueAdmin.dropAllForFlow(flowId);
@@ -593,11 +594,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     ApplicationSpecification appSpec = store.getApplication(appId);
     deleteAppMetadata(appId, appSpec);
-    store.deleteWorkflowStats(appId.toEntityId());
-    store.removeApplication(appId.toEntityId());
+    store.deleteWorkflowStats(appId);
+    store.removeApplication(appId);
 
     try {
-      usageRegistry.unregister(appId);
+      usageRegistry.unregister(idApplication);
     } catch (Exception e) {
       LOG.warn("Failed to unregister usage of app: {}", appId, e);
     }
@@ -614,14 +615,14 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   /**
    * Delete the metadata for the application and the programs.
    */
-  private void deleteAppMetadata(Id.Application appId, ApplicationSpecification appSpec) {
+  private void deleteAppMetadata(ApplicationId appId, ApplicationSpecification appSpec) {
     // Remove metadata for the Application itself.
-    metadataStore.removeMetadata(appId);
+    metadataStore.removeMetadata(appId.toId());
 
     // Remove metadata for the programs of the Application
     // TODO: Need to remove this we support prefix search of metadata type.
     // See https://issues.cask.co/browse/CDAP-3669
-    for (ProgramId programId : getAllPrograms(appId.toEntityId(), appSpec)) {
+    for (ProgramId programId : getAllPrograms(appId, appSpec)) {
       metadataStore.removeMetadata(programId.toId());
     }
   }

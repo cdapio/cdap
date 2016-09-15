@@ -78,6 +78,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.inject.Injector;
+import org.apache.hadoop.mapreduce.v2.app.webapp.App;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.Before;
@@ -127,7 +128,7 @@ public class DefaultStoreTest {
   public void testLoadingProgram() throws Exception {
     ApplicationSpecification appSpec = Specifications.from(new ToyApp());
     ApplicationId appId = NamespaceId.DEFAULT.app(appSpec.getName());
-    store.addApplication(appId.toId(), appSpec);
+    store.addApplication(appId, appSpec);
 
     ProgramDescriptor descriptor = store.loadProgram(appId.flow("ToyFlow"));
     Assert.assertNotNull(descriptor);
@@ -409,9 +410,9 @@ public class DefaultStoreTest {
   public void testAddApplication() throws Exception {
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
     ApplicationId appId = new ApplicationId("account1", "application1");
-    store.addApplication(appId.toId(), spec);
+    store.addApplication(appId, spec);
 
-    ApplicationSpecification stored = store.getApplication(appId.toId());
+    ApplicationSpecification stored = store.getApplication(appId);
     assertWordCountAppSpecAndInMetadataStore(stored);
   }
 
@@ -419,11 +420,11 @@ public class DefaultStoreTest {
   public void testUpdateChangedApplication() throws Exception {
     ApplicationId id = new ApplicationId("account1", "application1");
 
-    store.addApplication(id.toId(), Specifications.from(new FooApp()));
+    store.addApplication(id, Specifications.from(new FooApp()));
     // update
-    store.addApplication(id.toId(), Specifications.from(new ChangedFooApp()));
+    store.addApplication(id, Specifications.from(new ChangedFooApp()));
 
-    ApplicationSpecification stored = store.getApplication(id.toId());
+    ApplicationSpecification stored = store.getApplication(id);
     assertChangedFooAppSpecAndInMetadataStore(stored);
   }
 
@@ -542,7 +543,7 @@ public class DefaultStoreTest {
     AbstractApplication app = new AppWithServices();
 
     ApplicationSpecification appSpec = Specifications.from(app);
-    Id.Application appId = new Id.Application(new Id.Namespace(DefaultId.NAMESPACE.getId()), appSpec.getName());
+    ApplicationId appId = NamespaceId.DEFAULT.app(appSpec.getName());
     store.addApplication(appId, appSpec);
 
     AbstractApplication newApp = new AppWithNoServices();
@@ -558,11 +559,11 @@ public class DefaultStoreTest {
   @Test
   public void testServiceInstances() throws Exception {
     ApplicationSpecification appSpec = Specifications.from(new AppWithServices());
-    Id.Application appId = new Id.Application(new Id.Namespace(DefaultId.NAMESPACE.getId()), appSpec.getName());
+    ApplicationId appId = NamespaceId.DEFAULT.app(appSpec.getName());
     store.addApplication(appId, appSpec);
 
     // Test setting of service instances
-    Id.Program programId = Id.Program.from(appId, ProgramType.SERVICE, "NoOpService");
+    ProgramId programId = appId.program(ProgramType.SERVICE, "NoOpService");
     int count = store.getServiceInstances(programId);
     Assert.assertEquals(1, count);
 
@@ -584,13 +585,13 @@ public class DefaultStoreTest {
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
     int initialInstances = spec.getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances();
     ApplicationId appId = NamespaceId.DEFAULT.app(spec.getName());
-    store.addApplication(appId.toId(), spec);
+    store.addApplication(appId, spec);
 
     ProgramId programId = appId.flow("WordCountFlow");
-    store.setFlowletInstances(programId.toId(), "StreamSource",
+    store.setFlowletInstances(programId, "StreamSource",
                               initialInstances + 5);
     // checking that app spec in store was adjusted
-    ApplicationSpecification adjustedSpec = store.getApplication(appId.toId());
+    ApplicationSpecification adjustedSpec = store.getApplication(appId);
     Assert.assertNotNull(adjustedSpec);
     Assert.assertEquals(initialInstances + 5,
                         adjustedSpec.getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances());
@@ -607,7 +608,7 @@ public class DefaultStoreTest {
   public void testWorkerInstances() throws Exception {
     ApplicationSpecification spec = Specifications.from(new AppWithWorker());
     ApplicationId appId = NamespaceId.DEFAULT.app(spec.getName());
-    store.addApplication(appId.toId(), spec);
+    store.addApplication(appId, spec);
 
     ProgramId programId = appId.worker(AppWithWorker.WORKER);
 
@@ -626,14 +627,14 @@ public class DefaultStoreTest {
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
     NamespaceId namespaceId = new NamespaceId("account1");
     ApplicationId appId = namespaceId.app(spec.getName());
-    store.addApplication(appId.toId(), spec);
+    store.addApplication(appId, spec);
 
-    Assert.assertNotNull(store.getApplication(appId.toId()));
+    Assert.assertNotNull(store.getApplication(appId));
 
     // removing flow
     store.removeAllApplications(namespaceId);
 
-    Assert.assertNull(store.getApplication(appId.toId()));
+    Assert.assertNull(store.getApplication(appId));
   }
 
   @Test
@@ -641,14 +642,14 @@ public class DefaultStoreTest {
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
     NamespaceId namespaceId = new NamespaceId("account1");
     ApplicationId appId = namespaceId.app("application1");
-    store.addApplication(appId.toId(), spec);
+    store.addApplication(appId, spec);
 
-    Assert.assertNotNull(store.getApplication(appId.toId()));
+    Assert.assertNotNull(store.getApplication(appId));
 
     // removing flow
     store.removeAll(namespaceId);
 
-    Assert.assertNull(store.getApplication(appId.toId()));
+    Assert.assertNull(store.getApplication(appId));
   }
 
   @Test
@@ -656,23 +657,23 @@ public class DefaultStoreTest {
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
     NamespaceId namespaceId = new NamespaceId("account1");
     ApplicationId appId = namespaceId.app(spec.getName());
-    store.addApplication(appId.toId(), spec);
+    store.addApplication(appId, spec);
 
-    Assert.assertNotNull(store.getApplication(appId.toId()));
+    Assert.assertNotNull(store.getApplication(appId));
 
     // removing application
     store.removeApplication(appId);
 
-    Assert.assertNull(store.getApplication(appId.toId()));
+    Assert.assertNull(store.getApplication(appId));
   }
 
   @Test
   public void testRuntimeArgsDeletion() throws Exception {
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     ApplicationId appId = new ApplicationId("testDeleteRuntimeArgs", spec.getName());
-    store.addApplication(appId.toId(), spec);
+    store.addApplication(appId, spec);
 
-    Assert.assertNotNull(store.getApplication(appId.toId()));
+    Assert.assertNotNull(store.getApplication(appId));
 
     ProgramId flowProgramId = appId.flow("NoOpFlow");
     ProgramId mapreduceProgramId = appId.mr("NoOpMR");
@@ -693,15 +694,15 @@ public class DefaultStoreTest {
     store.setStart(workflowProgramId, workflowRunId, System.currentTimeMillis(), null,
                    ImmutableMap.of("whitelist", "cask"), null);
 
-    Map<String, String> args = store.getRuntimeArguments(flowProgramRunId.toId());
+    Map<String, String> args = store.getRuntimeArguments(flowProgramRunId);
     Assert.assertEquals(1, args.size());
     Assert.assertEquals("click", args.get("model"));
 
-    args = store.getRuntimeArguments(mapreduceProgramRunId.toId());
+    args = store.getRuntimeArguments(mapreduceProgramRunId);
     Assert.assertEquals(1, args.size());
     Assert.assertEquals("/data", args.get("path"));
 
-    args = store.getRuntimeArguments(workflowProgramRunId.toId());
+    args = store.getRuntimeArguments(workflowProgramRunId);
     Assert.assertEquals(1, args.size());
     Assert.assertEquals("cask", args.get("whitelist"));
 
@@ -709,13 +710,13 @@ public class DefaultStoreTest {
     store.removeApplication(appId);
 
     //Check if args are deleted.
-    args = store.getRuntimeArguments(flowProgramRunId.toId());
+    args = store.getRuntimeArguments(flowProgramRunId);
     Assert.assertEquals(0, args.size());
 
-    args = store.getRuntimeArguments(mapreduceProgramRunId.toId());
+    args = store.getRuntimeArguments(mapreduceProgramRunId);
     Assert.assertEquals(0, args.size());
 
-    args = store.getRuntimeArguments(workflowProgramRunId.toId());
+    args = store.getRuntimeArguments(workflowProgramRunId);
     Assert.assertEquals(0, args.size());
   }
 
@@ -728,11 +729,11 @@ public class DefaultStoreTest {
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     NamespaceId namespaceId = new NamespaceId("testDeleteAll");
     ApplicationId appId1 = namespaceId.app(spec.getName());
-    store.addApplication(appId1.toId(), spec);
+    store.addApplication(appId1, spec);
 
     spec = Specifications.from(new WordCountApp());
     ApplicationId appId2 = namespaceId.app(spec.getName());
-    store.addApplication(appId2.toId(), spec);
+    store.addApplication(appId2, spec);
 
     ProgramId flowProgramId1 = appId1.flow("NoOpFlow");
     ProgramId mapreduceProgramId1 = appId1.mr("NoOpMR");
@@ -740,8 +741,8 @@ public class DefaultStoreTest {
 
     ProgramId flowProgramId2 = appId2.flow("WordCountFlow");
 
-    Assert.assertNotNull(store.getApplication(appId1.toId()));
-    Assert.assertNotNull(store.getApplication(appId2.toId()));
+    Assert.assertNotNull(store.getApplication(appId1));
+    Assert.assertNotNull(store.getApplication(appId2));
 
     long now = System.currentTimeMillis();
 
@@ -767,8 +768,8 @@ public class DefaultStoreTest {
     // removing application
     store.removeApplication(appId1);
 
-    Assert.assertNull(store.getApplication(appId1.toId()));
-    Assert.assertNotNull(store.getApplication(appId2.toId()));
+    Assert.assertNull(store.getApplication(appId1));
+    Assert.assertNotNull(store.getApplication(appId2));
 
     verifyRunHistory(flowProgramId1, 0);
     verifyRunHistory(mapreduceProgramId1, 0);
@@ -792,7 +793,7 @@ public class DefaultStoreTest {
   @Test
   public void testRunsLimit() throws Exception {
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
-    Id.Application appId = Id.Application.from("testRunsLimit", spec.getName());
+    ApplicationId appId = new ApplicationId("testRunsLimit", spec.getName());
     store.addApplication(appId, spec);
 
     ProgramId flowProgramId = new ProgramId("testRunsLimit", spec.getName(), ProgramType.FLOW, "NoOpFlow");
@@ -816,7 +817,7 @@ public class DefaultStoreTest {
     //Deploy program with all types of programs.
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     ApplicationId appId = NamespaceId.DEFAULT.app(spec.getName());
-    store.addApplication(appId.toId(), spec);
+    store.addApplication(appId, spec);
 
     Set<String> specsToBeVerified = Sets.newHashSet();
     specsToBeVerified.addAll(spec.getMapReduce().keySet());
@@ -830,14 +831,14 @@ public class DefaultStoreTest {
     Assert.assertEquals(7, specsToBeVerified.size());
 
     // Check the diff with the same app - re-deployment scenario where programs are not removed.
-    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appId.toId(),  spec);
+    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appId, spec);
     Assert.assertEquals(0, deletedSpecs.size());
 
     //Get the spec for app that contains no programs.
     spec = Specifications.from(new NoProgramsApp());
 
     //Get the deleted program specs by sending a spec with same name as AllProgramsApp but with no programs
-    deletedSpecs = store.getDeletedProgramSpecifications(appId.toId(), spec);
+    deletedSpecs = store.getDeletedProgramSpecifications(appId, spec);
     Assert.assertEquals(7, deletedSpecs.size());
 
     for (ProgramSpecification specification : deletedSpecs) {
@@ -854,7 +855,7 @@ public class DefaultStoreTest {
     //Deploy program with all types of programs.
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     ApplicationId appId = NamespaceId.DEFAULT.app(spec.getName());
-    store.addApplication(appId.toId(), spec);
+    store.addApplication(appId, spec);
 
     Set<String> specsToBeDeleted = Sets.newHashSet();
     specsToBeDeleted.addAll(spec.getWorkflows().keySet());
@@ -865,7 +866,7 @@ public class DefaultStoreTest {
     spec = Specifications.from(new FlowMapReduceApp());
 
     //Get the deleted program specs by sending a spec with same name as AllProgramsApp but with no programs
-    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appId.toId(), spec);
+    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appId, spec);
     Assert.assertEquals(2, deletedSpecs.size());
 
     for (ProgramSpecification specification : deletedSpecs) {
@@ -907,7 +908,7 @@ public class DefaultStoreTest {
   public void testDynamicScheduling() throws Exception {
     ApplicationSpecification spec = Specifications.from(new AppWithWorkflow());
     ApplicationId appId = NamespaceId.DEFAULT.app(spec.getName());
-    store.addApplication(appId.toId(), spec);
+    store.addApplication(appId, spec);
 
     Map<String, ScheduleSpecification> schedules = getSchedules(appId);
     Assert.assertEquals(0, schedules.size());
@@ -946,7 +947,7 @@ public class DefaultStoreTest {
   }
 
   private Map<String, ScheduleSpecification> getSchedules(ApplicationId appId) {
-    ApplicationSpecification application = store.getApplication(appId.toId());
+    ApplicationSpecification application = store.getApplication(appId);
     Assert.assertNotNull(application);
     return application.getSchedules();
   }

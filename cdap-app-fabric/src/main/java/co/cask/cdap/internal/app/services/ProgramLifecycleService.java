@@ -160,7 +160,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   public ProgramStatus getProgramStatus(ProgramId programId) throws Exception {
     // check that app exists
-    ApplicationSpecification appSpec = store.getApplication(programId.toId().getApplication());
+    ApplicationSpecification appSpec = store.getApplication(programId.getParent());
     if (appSpec == null) {
       throw new NotFoundException(Ids.namespace(programId.getNamespace()).app(programId.getApplication()).toId());
     }
@@ -198,7 +198,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
   @Nullable
   public ProgramSpecification getProgramSpecification(ProgramId programId) throws Exception {
     ApplicationSpecification appSpec;
-    appSpec = store.getApplication(Ids.namespace(programId.getNamespace()).app(programId.getApplication()).toId());
+    appSpec = store.getApplication(programId.getParent());
     if (appSpec == null) {
       return null;
     }
@@ -388,9 +388,9 @@ public class ProgramLifecycleService extends AbstractIdleService {
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
     ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runId);
     if (runtimeInfo == null) {
-      if (!store.applicationExists(programId.getParent().toId())) {
+      if (!store.applicationExists(programId.getParent())) {
         throw new ApplicationNotFoundException(programId.getParent().toId());
-      } else if (!store.programExists(programId.toId())) {
+      } else if (!store.programExists(programId)) {
         throw new ProgramNotFoundException(programId.toId());
       } else if (runId != null) {
         ProgramRunId programRunId = programId.run(runId);
@@ -423,7 +423,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   public void saveRuntimeArgs(ProgramId programId, Map<String, String> runtimeArgs) throws Exception {
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.ADMIN);
-    if (!store.programExists(programId.toId())) {
+    if (!store.programExists(programId)) {
       throw new NotFoundException(programId.toId());
     }
 
@@ -519,7 +519,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @return the programs in the provided namespace
    */
   public List<ProgramRecord> list(NamespaceId namespaceId, ProgramType type) throws Exception {
-    Collection<ApplicationSpecification> appSpecs = store.getAllApplications(namespaceId.toId());
+    Collection<ApplicationSpecification> appSpecs = store.getAllApplications(namespaceId);
     List<ProgramRecord> programRecords = new ArrayList<>();
     for (ApplicationSpecification appSpec : appSpecs) {
       switch (type) {
@@ -580,9 +580,9 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
   private void setFlowletInstances(ProgramId programId, String flowletId,
                                    int instances) throws ExecutionException, InterruptedException {
-    int oldInstances = store.getFlowletInstances(programId.toId(), flowletId);
+    int oldInstances = store.getFlowletInstances(programId, flowletId);
     if (oldInstances != instances) {
-      FlowSpecification flowSpec = store.setFlowletInstances(programId.toId(), flowletId, instances);
+      FlowSpecification flowSpec = store.setFlowletInstances(programId, flowletId, instances);
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId);
       if (runtimeInfo != null) {
         runtimeInfo.getController()
@@ -595,9 +595,9 @@ public class ProgramLifecycleService extends AbstractIdleService {
   }
 
   private void setServiceInstances(ProgramId programId, int instances) throws ExecutionException, InterruptedException {
-    int oldInstances = store.getServiceInstances(programId.toId());
+    int oldInstances = store.getServiceInstances(programId);
     if (oldInstances != instances) {
-      store.setServiceInstances(programId.toId(), instances);
+      store.setServiceInstances(programId, instances);
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId);
       if (runtimeInfo != null) {
         runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
@@ -762,7 +762,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     ProgramId targetProgramId = null;
     for (NamespaceMeta nm : namespaceMetas) {
       NamespaceId namespace = Ids.namespace(nm.getName());
-      Collection<ApplicationSpecification> appSpecs = store.getAllApplications(namespace.toId());
+      Collection<ApplicationSpecification> appSpecs = store.getAllApplications(namespace);
 
       // For each application get the programs checked against run records
       for (ApplicationSpecification appSpec : appSpecs) {

@@ -84,7 +84,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
 
   @Override
   public void process(ApplicationDeployable appSpec) throws Exception {
-    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appSpec.getApplicationId().toId(),
+    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appSpec.getApplicationId(),
                                                                                     appSpec.getSpecification());
 
     // TODO: this should also delete logs and run records (or not?), and do it for all program types [CDAP-2187]
