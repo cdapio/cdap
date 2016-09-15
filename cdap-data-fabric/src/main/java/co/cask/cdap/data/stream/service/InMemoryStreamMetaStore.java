@@ -17,7 +17,8 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultimap;
@@ -42,38 +43,38 @@ public class InMemoryStreamMetaStore implements StreamMetaStore {
   }
 
   @Override
-  public void addStream(Id.Stream streamId) throws Exception {
-    streams.put(streamId.getNamespaceId(), streamId.getId());
+  public void addStream(StreamId streamId) throws Exception {
+    streams.put(streamId.getNamespace(), streamId.getEntityName());
   }
 
   @Override
-  public void addStream(Id.Stream streamId, @Nullable String description) throws Exception {
+  public void addStream(StreamId streamId, @Nullable String description) throws Exception {
     addStream(streamId);
   }
 
   @Override
-  public StreamSpecification getStream(Id.Stream streamId) throws Exception {
+  public StreamSpecification getStream(StreamId streamId) throws Exception {
     if (!streamExists(streamId)) {
       return null;
     }
-    return new StreamSpecification.Builder().setName(streamId.getId()).create();
+    return new StreamSpecification.Builder().setName(streamId.getEntityName()).create();
   }
 
   @Override
-  public void removeStream(Id.Stream streamId) throws Exception {
-    streams.remove(streamId.getNamespaceId(), streamId.getId());
+  public void removeStream(StreamId streamId) throws Exception {
+    streams.remove(streamId.getNamespace(), streamId.getEntityName());
   }
 
   @Override
-  public boolean streamExists(Id.Stream streamId) throws Exception {
-    return streams.containsEntry(streamId.getNamespaceId(), streamId.getId());
+  public boolean streamExists(StreamId streamId) throws Exception {
+    return streams.containsEntry(streamId.getNamespace(), streamId.getEntityName());
   }
 
   @Override
-  public List<StreamSpecification> listStreams(Id.Namespace namespaceId) throws Exception {
+  public List<StreamSpecification> listStreams(NamespaceId namespaceId) throws Exception {
     ImmutableList.Builder<StreamSpecification> builder = ImmutableList.builder();
     synchronized (streams) {
-      for (String stream : streams.get(namespaceId.getId())) {
+      for (String stream : streams.get(namespaceId.getEntityName())) {
         builder.add(new StreamSpecification.Builder().setName(stream).create());
       }
     }
@@ -81,12 +82,12 @@ public class InMemoryStreamMetaStore implements StreamMetaStore {
   }
 
   @Override
-  public synchronized Multimap<Id.Namespace, StreamSpecification> listStreams() throws Exception {
-    ImmutableMultimap.Builder<Id.Namespace, StreamSpecification> builder = ImmutableMultimap.builder();
+  public synchronized Multimap<NamespaceId, StreamSpecification> listStreams() throws Exception {
+    ImmutableMultimap.Builder<NamespaceId, StreamSpecification> builder = ImmutableMultimap.builder();
     for (String namespaceId : streams.keySet()) {
       synchronized (streams) {
         Collection<String> streamNames = streams.get(namespaceId);
-        builder.putAll(Id.Namespace.from(namespaceId),
+        builder.putAll(new NamespaceId(namespaceId),
                        Collections2.transform(streamNames, new Function<String, StreamSpecification>() {
                          @Nullable
                          @Override

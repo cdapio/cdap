@@ -18,6 +18,7 @@ package co.cask.cdap.app.stream;
 
 import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.EntityId;
 import com.google.inject.assistedinject.Assisted;
 
 /**
@@ -29,6 +30,6 @@ public interface StreamWriterFactory {
    * @param run run information
    * @return a {@link StreamWriter} for the specified namespaceId
    */
-  StreamWriter create(@Assisted("run") Id.Run run, @Assisted("owners") Iterable<? extends Id> owners);
+  StreamWriter create(@Assisted("run") Id.Run run, @Assisted("owners") Iterable<? extends EntityId> owners);
 }
 

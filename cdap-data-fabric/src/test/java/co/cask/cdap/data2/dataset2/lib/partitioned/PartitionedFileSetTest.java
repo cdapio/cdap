@@ -30,7 +30,7 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -97,10 +97,8 @@ public class PartitionedFileSetTest {
     .addStringField("s", "x")
     .build();
 
-  private static final Id.DatasetInstance pfsInstance =
-    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "pfs");
-  private static final Id.DatasetInstance pfsExternalInstance =
-    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "ext");
+  private static final DatasetId pfsInstance = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("pfs");
+  private static final DatasetId pfsExternalInstance = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("ext");
   private static Location pfsBaseLocation;
 
   private InMemoryTxSystemClient txClient;
@@ -160,7 +158,7 @@ public class PartitionedFileSetTest {
       pfs.addMetadata(key, "metaKey", "metaValue");
       Assert.fail("Expected not to find key: " + key);
     } catch (PartitionNotFoundException e) {
-      Assert.assertEquals(pfsInstance.getId(), e.getPartitionedFileSetName());
+      Assert.assertEquals(pfsInstance.getEntityName(), e.getPartitionedFileSetName());
       Assert.assertEquals(key, e.getPartitionKey());
     }
   }

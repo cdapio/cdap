@@ -54,7 +54,7 @@ public class StreamStateStoreUpgrader extends AbstractQueueUpgrader {
     return Lists.transform(namespaceQueryAdmin.list(), new Function<NamespaceMeta, TableId>() {
       @Override
       public TableId apply(NamespaceMeta input) {
-        return StreamUtils.getStateStoreTableId(Id.Namespace.from(input.getName()));
+        return StreamUtils.getStateStoreTableId(input.getNamespaceId());
       }
     });
   }

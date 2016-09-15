@@ -17,19 +17,19 @@
 package co.cask.cdap.data2.registry.internal.pair;
 
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.EntityId;
 import com.google.common.collect.Sets;
 
 import java.util.Set;
 
 /**
- * Represents a mapping between two {@link Id}s - FIRST and SECOND using MDSKey.
+ * Represents a mapping between two {@link EntityId}s - FIRST and SECOND using MDSKey.
  * Uses {@link KeyMaker} to serialize/deserialzie ids into MDSKey.
  *
  * @param <FIRST> type of first element
  * @param <SECOND> type of second element
  */
-public class OrderedPair<FIRST extends Id, SECOND extends Id> {
+public class OrderedPair<FIRST extends EntityId, SECOND extends EntityId> {
   private final KeyMaker<FIRST> keyMaker1;
   private final KeyMaker<SECOND> keyMaker2;
   private final String prefix;

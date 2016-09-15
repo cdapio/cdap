@@ -19,14 +19,14 @@ package co.cask.cdap.data2.metadata.system;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * A {@link AbstractSystemMetadataWriter} for a {@link Id.Stream stream}.
+ * A {@link AbstractSystemMetadataWriter} for a {@link StreamId stream}.
  */
 public class StreamSystemMetadataWriter extends AbstractSystemMetadataWriter {
 
@@ -34,14 +34,14 @@ public class StreamSystemMetadataWriter extends AbstractSystemMetadataWriter {
   private final long creationTime;
   private final String description;
 
-  public StreamSystemMetadataWriter(MetadataStore metadataStore, Id.Stream streamId, StreamConfig config,
+  public StreamSystemMetadataWriter(MetadataStore metadataStore, StreamId streamId, StreamConfig config,
                                     @Nullable String description) {
     this(metadataStore, streamId, config, -1, description);
   }
 
-  public StreamSystemMetadataWriter(MetadataStore metadataStore, Id.Stream streamId, StreamConfig config,
+  public StreamSystemMetadataWriter(MetadataStore metadataStore, StreamId streamId, StreamConfig config,
                                     long creationTime, @Nullable String description) {
-    super(metadataStore, streamId.toEntityId());
+    super(metadataStore, streamId);
     this.config = config;
     this.creationTime = creationTime;
     this.description = description;
@@ -63,7 +63,7 @@ public class StreamSystemMetadataWriter extends AbstractSystemMetadataWriter {
   @Override
   protected String[] getSystemTagsToAdd() {
     return new String[] {
-      config.getStreamId().getId(),
+      config.getStreamId().getEntityName(),
       EXPLORE_TAG
     };
   }

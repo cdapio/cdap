@@ -50,7 +50,6 @@ import co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework;
 import co.cask.cdap.data2.metadata.writer.NoOpLineageWriter;
 import co.cask.cdap.data2.registry.NoOpUsageRegistry;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.audit.AuditMessage;
@@ -58,6 +57,12 @@ import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.audit.payload.access.AccessPayload;
 import co.cask.cdap.proto.audit.payload.access.AccessType;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.DatasetModuleId;
+import co.cask.cdap.proto.id.DatasetTypeId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.auth.context.AuthenticationTestContext;
 import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
 import com.google.common.collect.Maps;
@@ -99,21 +104,20 @@ public abstract class AbstractDatasetFrameworkTest {
     DEFAULT_MODULES.put("core", new CoreDatasetsModule());
   }
 
-  protected static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
-  private static final Id.DatasetModule IN_MEMORY = Id.DatasetModule.from(NAMESPACE_ID, "inMemory");
-  private static final Id.DatasetModule CORE = Id.DatasetModule.from(NAMESPACE_ID, "core");
-  private static final Id.DatasetModule FILE = Id.DatasetModule.from(NAMESPACE_ID, "file");
-  private static final Id.DatasetModule PFS = Id.DatasetModule.from(NAMESPACE_ID, "pfs");
-  private static final Id.DatasetModule KEY_VALUE = Id.DatasetModule.from(NAMESPACE_ID, "keyValue");
-  private static final Id.DatasetModule TWICE = Id.DatasetModule.from(NAMESPACE_ID, "embedTwice");
-  private static final Id.DatasetModule DOUBLE_KV = Id.DatasetModule.from(NAMESPACE_ID, "doubleKeyValue");
-  private static final Id.DatasetInstance MY_TABLE = Id.DatasetInstance.from(NAMESPACE_ID, "my_table");
-  private static final Id.DatasetInstance MY_TABLE2 = Id.DatasetInstance.from(NAMESPACE_ID, "my_table2");
-  private static final Id.DatasetInstance MY_DS = Id.DatasetInstance.from(NAMESPACE_ID, "myds");
-  private static final Id.DatasetType IN_MEMORY_TYPE = Id.DatasetType.from(NAMESPACE_ID, "table");
-  private static final Id.DatasetType SIMPLE_KV_TYPE = Id.DatasetType.from(NAMESPACE_ID, SimpleKVTable.class.getName());
-  private static final Id.DatasetType DOUBLE_KV_TYPE = Id.DatasetType.from(NAMESPACE_ID,
-                                                                           DoubleWrappedKVTable.class.getName());
+  protected static final NamespaceId NAMESPACE_ID = new NamespaceId("myspace");
+  private static final DatasetModuleId IN_MEMORY = NAMESPACE_ID.datasetModule("inMemory");
+  private static final DatasetModuleId CORE = NAMESPACE_ID.datasetModule("core");
+  private static final DatasetModuleId FILE = NAMESPACE_ID.datasetModule("file");
+  private static final DatasetModuleId PFS = NAMESPACE_ID.datasetModule("pfs");
+  private static final DatasetModuleId KEY_VALUE = NAMESPACE_ID.datasetModule("keyValue");
+  private static final DatasetModuleId TWICE = NAMESPACE_ID.datasetModule("embedTwice");
+  private static final DatasetModuleId DOUBLE_KV = NAMESPACE_ID.datasetModule("doubleKeyValue");
+  private static final DatasetId MY_TABLE = NAMESPACE_ID.dataset("my_table");
+  private static final DatasetId MY_TABLE2 = NAMESPACE_ID.dataset("my_table2");
+  private static final DatasetId MY_DS = NAMESPACE_ID.dataset("myds");
+  private static final DatasetTypeId IN_MEMORY_TYPE = NAMESPACE_ID.datasetType("table");
+  private static final DatasetTypeId SIMPLE_KV_TYPE = NAMESPACE_ID.datasetType(SimpleKVTable.class.getName());
+  private static final DatasetTypeId DOUBLE_KV_TYPE = NAMESPACE_ID.datasetType(DoubleWrappedKVTable.class.getName());
   protected static NamespaceAdmin namespaceAdmin;
   protected static NamespaceQueryAdmin namespaceQueryAdmin;
   protected static DatasetDefinitionRegistryFactory registryFactory;
@@ -180,7 +184,7 @@ public abstract class AbstractDatasetFrameworkTest {
     // verify it got added to the right namespace
     Assert.assertTrue(framework.hasInstance(MY_TABLE));
     // and not to the system namespace
-    Assert.assertFalse(framework.hasInstance(Id.DatasetInstance.from(Id.Namespace.SYSTEM, "my_table")));
+    Assert.assertFalse(framework.hasInstance(NamespaceId.SYSTEM.dataset("my_table")));
 
     // Doing some admin and data ops
     DatasetAdmin admin = framework.getAdmin(MY_TABLE, null);
@@ -351,7 +355,7 @@ public abstract class AbstractDatasetFrameworkTest {
 
   @Test
   public void testBasicManagement() throws Exception {
-    Id.DatasetType tableType = Id.DatasetType.from(NAMESPACE_ID, Table.class.getName());
+    DatasetTypeId tableType = NAMESPACE_ID.datasetType(Table.class.getName());
 
     // Adding modules
     DatasetFramework framework = getFramework();
@@ -371,7 +375,7 @@ public abstract class AbstractDatasetFrameworkTest {
     Assert.assertTrue(framework.hasInstance(MY_TABLE));
     DatasetSpecification spec = framework.getDatasetSpec(MY_TABLE);
     Assert.assertNotNull(spec);
-    Assert.assertEquals(MY_TABLE.getId(), spec.getName());
+    Assert.assertEquals(MY_TABLE.getEntityName(), spec.getName());
     Assert.assertEquals(Table.class.getName(), spec.getType());
     framework.addInstance(Table.class.getName(), MY_TABLE2, DatasetProperties.EMPTY);
     Assert.assertTrue(framework.hasInstance(MY_TABLE2));
@@ -430,16 +434,16 @@ public abstract class AbstractDatasetFrameworkTest {
     DatasetFramework framework = getFramework();
 
     // create 2 namespaces
-    Id.Namespace namespace1 = Id.Namespace.from("ns1");
-    Id.Namespace namespace2 = Id.Namespace.from("ns2");
+    NamespaceId namespace1 = new NamespaceId("ns1");
+    NamespaceId namespace2 = new NamespaceId("ns2");
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace1).build());
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace2).build());
-    namespacedLocationFactory.get(namespace1).mkdirs();
-    namespacedLocationFactory.get(namespace2).mkdirs();
+    namespacedLocationFactory.get(namespace1.toId()).mkdirs();
+    namespacedLocationFactory.get(namespace2.toId()).mkdirs();
 
     // create 2 tables, one in each namespace. both tables have the same name.
-    Id.DatasetInstance table1ID = Id.DatasetInstance.from(namespace1, "table");
-    Id.DatasetInstance table2ID = Id.DatasetInstance.from(namespace2, "table");
+    DatasetId table1ID = namespace1.dataset("table");
+    DatasetId table2ID = namespace2.dataset("table");
     // have slightly different properties so that we can distinguish between them
     framework.addInstance(Table.class.getName(), table1ID, DatasetProperties.builder().add("tag", "table1").build());
     framework.addInstance(Table.class.getName(), table2ID, DatasetProperties.builder().add("tag", "table2").build());
@@ -485,7 +489,7 @@ public abstract class AbstractDatasetFrameworkTest {
     Assert.assertTrue(framework.hasInstance(table2ID));
 
     // delete one namespace and make sure the other still exists
-    namespacedLocationFactory.get(namespace1).delete(true);
+    namespacedLocationFactory.get(namespace1.toId()).delete(true);
     Assert.assertTrue(framework.hasInstance(table2ID));
   }
 
@@ -494,17 +498,17 @@ public abstract class AbstractDatasetFrameworkTest {
     DatasetFramework framework = getFramework();
 
     // create 2 namespaces
-    Id.Namespace namespace1 = Id.Namespace.from("ns1");
-    Id.Namespace namespace2 = Id.Namespace.from("ns2");
+    NamespaceId namespace1 = new NamespaceId("ns1");
+    NamespaceId namespace2 = new NamespaceId("ns2");
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace1).build());
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace2).build());
-    namespacedLocationFactory.get(namespace1).mkdirs();
-    namespacedLocationFactory.get(namespace2).mkdirs();
+    namespacedLocationFactory.get(namespace1.toId()).mkdirs();
+    namespacedLocationFactory.get(namespace2.toId()).mkdirs();
 
     // add modules in each namespace, with one module that shares the same name
-    Id.DatasetModule simpleModuleNs1 = Id.DatasetModule.from(namespace1, SimpleKVTable.class.getName());
-    Id.DatasetModule simpleModuleNs2 = Id.DatasetModule.from(namespace2, SimpleKVTable.class.getName());
-    Id.DatasetModule doubleModuleNs2 = Id.DatasetModule.from(namespace2, DoubleWrappedKVTable.class.getName());
+    DatasetModuleId simpleModuleNs1 = namespace1.datasetModule(SimpleKVTable.class.getName());
+    DatasetModuleId simpleModuleNs2 = namespace2.datasetModule(SimpleKVTable.class.getName());
+    DatasetModuleId doubleModuleNs2 = namespace2.datasetModule(DoubleWrappedKVTable.class.getName());
     DatasetModule module1 = new SingleTypeModule(SimpleKVTable.class);
     DatasetModule module2 = new SingleTypeModule(DoubleWrappedKVTable.class);
     framework.addModule(simpleModuleNs1, module1);
@@ -513,16 +517,16 @@ public abstract class AbstractDatasetFrameworkTest {
 
     // check that we can add instances of datasets in those modules
     framework.addInstance(SimpleKVTable.class.getName(),
-                          Id.DatasetInstance.from(namespace1, "kv1"), DatasetProperties.EMPTY);
+                          namespace1.dataset("kv1"), DatasetProperties.EMPTY);
     framework.addInstance(SimpleKVTable.class.getName(),
-                          Id.DatasetInstance.from(namespace2, "kv1"), DatasetProperties.EMPTY);
+                          namespace2.dataset("kv1"), DatasetProperties.EMPTY);
 
     // check that only namespace2 can add an instance of this type, since the module should only be in namespace2
-    framework.addInstance(DoubleWrappedKVTable.class.getName(),
-                          Id.DatasetInstance.from(namespace2, "kv2"), DatasetProperties.EMPTY);
+    framework.addInstance(DoubleWrappedKVTable.class.getName(), 
+                          namespace2.dataset("kv2"), DatasetProperties.EMPTY);
     try {
-      framework.addInstance(DoubleWrappedKVTable.class.getName(),
-                            Id.DatasetInstance.from(namespace2, "kv2"), DatasetProperties.EMPTY);
+      framework.addInstance(DoubleWrappedKVTable.class.getName(), 
+                            namespace2.dataset("kv2"), DatasetProperties.EMPTY);
       Assert.fail();
     } catch (Exception e) {
       // expected
@@ -533,11 +537,11 @@ public abstract class AbstractDatasetFrameworkTest {
     framework.deleteAllModules(namespace2);
     // should still be able to add an instance in namespace1
     framework.addInstance(SimpleKVTable.class.getName(),
-                          Id.DatasetInstance.from(namespace1, "kv3"), DatasetProperties.EMPTY);
+                          namespace1.dataset("kv3"), DatasetProperties.EMPTY);
     // but not in namespace2
     try {
       framework.addInstance(SimpleKVTable.class.getName(),
-                            Id.DatasetInstance.from(namespace2, "kv3"), DatasetProperties.EMPTY);
+                            namespace2.dataset("kv3"), DatasetProperties.EMPTY);
       Assert.fail();
     } catch (Exception e) {
       // expected
@@ -551,11 +555,11 @@ public abstract class AbstractDatasetFrameworkTest {
     framework.deleteModule(simpleModuleNs1);
     // should still be able to add an instance in namespace2
     framework.addInstance(DoubleWrappedKVTable.class.getName(),
-                          Id.DatasetInstance.from(namespace2, "kv1"), DatasetProperties.EMPTY);
+                          namespace2.dataset("kv1"), DatasetProperties.EMPTY);
     // but not in namespace1
     try {
       framework.addInstance(SimpleKVTable.class.getName(),
-                            Id.DatasetInstance.from(namespace1, "kv1"), DatasetProperties.EMPTY);
+                            namespace1.dataset("kv1"), DatasetProperties.EMPTY);
       Assert.fail();
     } catch (Exception e) {
       // expected
@@ -574,37 +578,37 @@ public abstract class AbstractDatasetFrameworkTest {
 
     // Creating instances
     framework.addInstance(Table.class.getName(), MY_TABLE, DatasetProperties.EMPTY);
-    expectedMessages.add(new AuditMessage(0, MY_TABLE.toEntityId(), "", AuditType.CREATE, AuditPayload.EMPTY_PAYLOAD));
+    expectedMessages.add(new AuditMessage(0, MY_TABLE, "", AuditType.CREATE, AuditPayload.EMPTY_PAYLOAD));
     framework.addInstance(Table.class.getName(), MY_TABLE2, DatasetProperties.EMPTY);
-    expectedMessages.add(new AuditMessage(0, MY_TABLE2.toEntityId(), "", AuditType.CREATE, AuditPayload.EMPTY_PAYLOAD));
+    expectedMessages.add(new AuditMessage(0, MY_TABLE2, "", AuditType.CREATE, AuditPayload.EMPTY_PAYLOAD));
 
     // Update instance
     framework.updateInstance(MY_TABLE, DatasetProperties.EMPTY);
-    expectedMessages.add(new AuditMessage(0, MY_TABLE.toEntityId(), "", AuditType.UPDATE, AuditPayload.EMPTY_PAYLOAD));
+    expectedMessages.add(new AuditMessage(0, MY_TABLE, "", AuditType.UPDATE, AuditPayload.EMPTY_PAYLOAD));
 
     // Access instance
-    Id.Run runId = new Id.Run(Id.Program.from("ns", "app", ProgramType.FLOW, "flow"), RunIds.generate().getId());
+    ProgramRunId runId = new ProgramId("ns", "app", ProgramType.FLOW, "flow").run(RunIds.generate().getId());
     LineageWriterDatasetFramework lineageFramework =
       new LineageWriterDatasetFramework(framework, new NoOpLineageWriter(), new NoOpUsageRegistry(),
                                         new AuthenticationTestContext(), new NoOpAuthorizer());
-    lineageFramework.initContext(runId);
+    lineageFramework.initContext(runId.toId());
     lineageFramework.setAuditPublisher(inMemoryAuditPublisher);
     lineageFramework.getDataset(MY_TABLE, null, getClass().getClassLoader());
-    expectedMessages.add(new AuditMessage(0, MY_TABLE.toEntityId(), "", AuditType.ACCESS,
-                                          new AccessPayload(AccessType.UNKNOWN, runId.toEntityId())));
+    expectedMessages.add(new AuditMessage(0, MY_TABLE, "", AuditType.ACCESS,
+                                          new AccessPayload(AccessType.UNKNOWN, runId)));
 
     // Truncate instance
     framework.truncateInstance(MY_TABLE);
-    expectedMessages.add(new AuditMessage(0, MY_TABLE.toEntityId(), "", AuditType.TRUNCATE,
+    expectedMessages.add(new AuditMessage(0, MY_TABLE, "", AuditType.TRUNCATE,
                                           AuditPayload.EMPTY_PAYLOAD));
 
     // Delete instance
     framework.deleteInstance(MY_TABLE);
-    expectedMessages.add(new AuditMessage(0, MY_TABLE.toEntityId(), "", AuditType.DELETE, AuditPayload.EMPTY_PAYLOAD));
+    expectedMessages.add(new AuditMessage(0, MY_TABLE, "", AuditType.DELETE, AuditPayload.EMPTY_PAYLOAD));
 
     // Delete all instances in a namespace
-    framework.deleteAllInstances(MY_TABLE2.getNamespace());
-    expectedMessages.add(new AuditMessage(0, MY_TABLE2.toEntityId(), "", AuditType.DELETE, AuditPayload.EMPTY_PAYLOAD));
+    framework.deleteAllInstances(MY_TABLE2.getParent());
+    expectedMessages.add(new AuditMessage(0, MY_TABLE2, "", AuditType.DELETE, AuditPayload.EMPTY_PAYLOAD));
 
     Assert.assertEquals(expectedMessages, inMemoryAuditPublisher.popMessages());
 

@@ -50,7 +50,7 @@ final class LengthBasedContentWriter implements ContentWriter {
     this.bufferedContentWriter = (BufferedContentWriter) new BufferedContentWriterFactory(
       streamConfig.getStreamId(), streamWriter, headers).create(ImmutableMap.<String, String>of());
     this.fileContentWriterFactory = new FileContentWriterFactory(streamConfig, streamWriter, headers);
-    this.streamId = streamConfig.getStreamId().toEntityId();
+    this.streamId = streamConfig.getStreamId();
     this.impersonator = impersonator;
     bodySize = 0;
     fileContentWriter = null;

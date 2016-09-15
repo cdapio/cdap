@@ -17,9 +17,10 @@
 package co.cask.cdap.data.view;
 
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ViewDetail;
 import co.cask.cdap.proto.ViewSpecification;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.id.StreamViewId;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Table;
@@ -34,7 +35,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public final class InMemoryViewStore implements ViewStore {
 
-  private final Table<Id.Stream.View, Id.Stream, ViewSpecification> views;
+  private final Table<StreamViewId, StreamId, ViewSpecification> views;
   private final ReadWriteLock viewsLock;
 
   public InMemoryViewStore() {
@@ -43,34 +44,34 @@ public final class InMemoryViewStore implements ViewStore {
   }
 
   @Override
-  public boolean createOrUpdate(Id.Stream.View viewId, ViewSpecification config) {
+  public boolean createOrUpdate(StreamViewId viewId, ViewSpecification config) {
     Lock lock = viewsLock.writeLock();
     lock.lock();
     try {
-      return views.put(viewId, viewId.getStream(), config) == null;
+      return views.put(viewId, viewId.getParent(), config) == null;
     } finally {
       lock.unlock();
     }
   }
 
   @Override
-  public boolean exists(Id.Stream.View viewId) {
+  public boolean exists(StreamViewId viewId) {
     Lock lock = viewsLock.readLock();
     lock.lock();
     try {
-      return views.contains(viewId, viewId.getStream());
+      return views.contains(viewId, viewId.getParent());
     } finally {
       lock.unlock();
     }
   }
 
   @Override
-  public void delete(Id.Stream.View viewId) throws NotFoundException {
+  public void delete(StreamViewId viewId) throws NotFoundException {
     ViewSpecification removed;
     Lock lock = viewsLock.writeLock();
     lock.lock();
     try {
-      removed = views.remove(viewId, viewId.getStream());
+      removed = views.remove(viewId, viewId.getParent());
     } finally {
       lock.unlock();
     }
@@ -80,18 +81,18 @@ public final class InMemoryViewStore implements ViewStore {
   }
 
   @Override
-  public List<Id.Stream.View> list(Id.Stream streamId) {
+  public List<StreamViewId> list(StreamId streamId) {
     Lock lock = viewsLock.readLock();
     lock.lock();
     try {
-      return ImmutableList.<Id.Stream.View>builder().addAll(views.column(streamId).keySet()).build();
+      return ImmutableList.<StreamViewId>builder().addAll(views.column(streamId).keySet()).build();
     } finally {
       lock.unlock();
     }
   }
 
   @Override
-  public ViewDetail get(Id.Stream.View viewId) throws NotFoundException {
+  public ViewDetail get(StreamViewId viewId) throws NotFoundException {
     Lock lock = viewsLock.readLock();
     lock.lock();
     try {
@@ -99,7 +100,7 @@ public final class InMemoryViewStore implements ViewStore {
         throw new NotFoundException(viewId);
       }
 
-      return new ViewDetail(viewId.getId(), views.get(viewId, viewId.getStream()));
+      return new ViewDetail(viewId.getEntityName(), views.get(viewId, viewId.getParent()));
     } finally {
       lock.unlock();
     }

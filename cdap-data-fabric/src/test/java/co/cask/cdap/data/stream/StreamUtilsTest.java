@@ -17,7 +17,7 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -47,21 +47,21 @@ public class StreamUtilsTest {
     LocationFactory locationFactory = new LocalLocationFactory();
     String path = "/cdap/namespaces/default/streams/fooStream";
     Location streamBaseLocation = locationFactory.create(path);
-    Id.Stream expectedId = Id.Stream.from("default", "fooStream");
+    StreamId expectedId = NamespaceId.DEFAULT.stream("fooStream");
     Assert.assertEquals(expectedId, new StreamId("default",
-                                                 StreamUtils.getStreamNameFromLocation(streamBaseLocation)).toId());
+                                                 StreamUtils.getStreamNameFromLocation(streamBaseLocation)));
 
 
     path = "/customLocation/streams/otherstream";
     streamBaseLocation = locationFactory.create(path);
-    expectedId = Id.Stream.from("othernamespace", "otherstream");
+    expectedId = new StreamId("othernamespace", "otherstream");
     Assert.assertEquals(expectedId, new StreamId("othernamespace",
-                                                 StreamUtils.getStreamNameFromLocation(streamBaseLocation)).toId());
+                                                 StreamUtils.getStreamNameFromLocation(streamBaseLocation)));
   }
 
   @Test
   public void testGetStateStoreTableId() {
-    Id.Namespace namespace = Id.Namespace.from("foonamespace");
+    NamespaceId namespace = new NamespaceId("foonamespace");
     TableId expected = TableId.from("foonamespace", "system.stream.state.store");
     Assert.assertEquals(expected, StreamUtils.getStateStoreTableId(namespace));
   }

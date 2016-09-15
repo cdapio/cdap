@@ -23,7 +23,9 @@ import co.cask.cdap.explore.service.datasets.KeyExtendedStructValueTableDefiniti
 import co.cask.cdap.explore.service.datasets.KeyStructValueTableDefinition;
 import co.cask.cdap.explore.service.datasets.KeyValueTableDefinition;
 import co.cask.cdap.explore.service.datasets.WritableKeyStructValueTableDefinition;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.DatasetModuleId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -50,17 +52,16 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  private static final Id.DatasetModule keyExtendedStructValueTable =
-    Id.DatasetModule.from(NAMESPACE_ID, "keyExtendedStructValueTable");
-  private static final Id.DatasetModule kvTable = Id.DatasetModule.from(NAMESPACE_ID, "kvTable");
-  private static final Id.DatasetModule writableKeyStructValueTable =
-    Id.DatasetModule.from(NAMESPACE_ID, "writableKeyStructValueTable");
+  private static final DatasetModuleId keyExtendedStructValueTable =
+    NAMESPACE_ID.datasetModule("keyExtendedStructValueTable");
+  private static final DatasetModuleId kvTable = NAMESPACE_ID.datasetModule("kvTable");
+  private static final DatasetModuleId writableKeyStructValueTable =
+    NAMESPACE_ID.datasetModule("writableKeyStructValueTable");
 
-  private static final Id.DatasetInstance extendedTable = Id.DatasetInstance.from(NAMESPACE_ID, "extended_table");
-  private static final Id.DatasetInstance simpleTable = Id.DatasetInstance.from(NAMESPACE_ID, "simple_table");
-  private static final Id.DatasetModule otherKvTable = Id.DatasetModule.from(OTHER_NAMESPACE_ID, "kvTable");
-  private static final Id.DatasetInstance otherSimpleTable =
-    Id.DatasetInstance.from(OTHER_NAMESPACE_ID, "simple_table");
+  private static final DatasetId extendedTable = NAMESPACE_ID.dataset("extended_table");
+  private static final DatasetId simpleTable = NAMESPACE_ID.dataset("simple_table");
+  private static final DatasetModuleId otherKvTable = OTHER_NAMESPACE_ID.datasetModule("kvTable");
+  private static final DatasetId otherSimpleTable = OTHER_NAMESPACE_ID.dataset("simple_table");
   private static final String simpleTableName = getDatasetHiveName(simpleTable);
   private static final String otherSimpleTableName = getDatasetHiveName(otherSimpleTable);
   private static final String extendedTableName = getDatasetHiveName(extendedTable);
@@ -73,7 +74,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
     datasetFramework.addModule(OTHER_KEY_STRUCT_VALUE, new KeyStructValueTableDefinition.KeyStructValueTableModule());
   }
 
-  private static void initKeyValueTable(Id.DatasetInstance datasetInstanceId, boolean addData) throws Exception {
+  private static void initKeyValueTable(DatasetId datasetInstanceId, boolean addData) throws Exception {
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("keyStructValueTable", datasetInstanceId, DatasetProperties.EMPTY);
     if (!addData) {
@@ -115,7 +116,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
     try {
       initKeyValueTable(MY_TABLE, true);
       ListenableFuture<ExploreExecutionResult> future =
-        exploreClient.submit(NAMESPACE_ID, String.format("insert into table %s select * from %s",
+        exploreClient.submit(NAMESPACE_ID.toId(), String.format("insert into table %s select * from %s",
                                                          MY_TABLE_NAME, MY_TABLE_NAME));
       ExploreExecutionResult result = future.get();
       result.close();
@@ -139,7 +140,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
       table.postTxCommit();
 
       // Make sure Hive also sees those values
-      result = exploreClient.submit(NAMESPACE_ID, "select * from " + MY_TABLE_NAME).get();
+      result = exploreClient.submit(NAMESPACE_ID.toId(), "select * from " + MY_TABLE_NAME).get();
       Assert.assertEquals("1", result.next().getColumns().get(0).toString());
       Assert.assertEquals("1_2", result.next().getColumns().get(0).toString());
       Assert.assertEquals("2", result.next().getColumns().get(0).toString());
@@ -154,19 +155,20 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
   @Test
   public void testTablesWithSpecialChars() throws Exception {
     // '.' are replaced with "_" in hive, so create a dataset with . in name.
-    Id.DatasetInstance myTable1 = Id.DatasetInstance.from(NAMESPACE_ID, "dot.table");
+    DatasetId myTable1 = NAMESPACE_ID.dataset("dot.table");
     // '_' are replaced with "_" in hive, so create a dataset with . in name.
-    Id.DatasetInstance myTable2 = Id.DatasetInstance.from(NAMESPACE_ID, "hyphen-table");
+    DatasetId myTable2 = NAMESPACE_ID.dataset("hyphen-table");
     try {
       initKeyValueTable(myTable1, true);
       initKeyValueTable(myTable2, true);
 
-      ExploreExecutionResult result = exploreClient.submit(NAMESPACE_ID, "select * from dataset_dot_table").get();
+      ExploreExecutionResult result = exploreClient.submit(NAMESPACE_ID.toId(),
+                                                           "select * from dataset_dot_table").get();
 
       Assert.assertEquals("1", result.next().getColumns().get(0).toString());
       result.close();
 
-      result = exploreClient.submit(NAMESPACE_ID, "select * from dataset_hyphen_table").get();
+      result = exploreClient.submit(NAMESPACE_ID.toId(), "select * from dataset_hyphen_table").get();
       Assert.assertEquals("1", result.next().getColumns().get(0).toString());
       result.close();
 
@@ -207,11 +209,11 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
 
       String query = String.format("insert into table %s select key,value from %s",
                                    MY_TABLE_NAME, extendedTableName);
-      ListenableFuture<ExploreExecutionResult> future = exploreClient.submit(NAMESPACE_ID, query);
+      ListenableFuture<ExploreExecutionResult> future = exploreClient.submit(NAMESPACE_ID.toId(), query);
       ExploreExecutionResult result = future.get();
       result.close();
 
-      result = exploreClient.submit(NAMESPACE_ID, "select * from " + MY_TABLE_NAME).get();
+      result = exploreClient.submit(NAMESPACE_ID.toId(), "select * from " + MY_TABLE_NAME).get();
       Assert.assertEquals("1", result.next().getColumns().get(0).toString());
       Assert.assertEquals("10_2", result.next().getColumns().get(0).toString());
       Assert.assertEquals("2", result.next().getColumns().get(0).toString());
@@ -220,10 +222,10 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
 
       // Test insert overwrite
       query = String.format("insert overwrite table %s select key,value from %s", MY_TABLE_NAME, extendedTableName);
-      result = exploreClient.submit(NAMESPACE_ID,
+      result = exploreClient.submit(NAMESPACE_ID.toId(),
                                     query).get();
       result.close();
-      result = exploreClient.submit(NAMESPACE_ID, "select * from " + MY_TABLE_NAME).get();
+      result = exploreClient.submit(NAMESPACE_ID.toId(), "select * from " + MY_TABLE_NAME).get();
       result.hasNext();
 
     } finally {
@@ -235,7 +237,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
 
   @Test
   public void writeIntoNonScannableDataset() throws Exception {
-    Id.DatasetInstance writableTable = Id.DatasetInstance.from(NAMESPACE_ID, "writable_table");
+    DatasetId writableTable = NAMESPACE_ID.dataset("writable_table");
     String writableTableName = getDatasetHiveName(writableTable);
     datasetFramework.addModule(keyExtendedStructValueTable,
                                new KeyExtendedStructValueTableDefinition.KeyExtendedStructValueTableModule());
@@ -267,7 +269,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
       table.postTxCommit();
 
       String query = "insert into table " + writableTableName + " select key,value from " + extendedTableName;
-      ListenableFuture<ExploreExecutionResult> future = exploreClient.submit(NAMESPACE_ID, query);
+      ListenableFuture<ExploreExecutionResult> future = exploreClient.submit(NAMESPACE_ID.toId(), query);
       ExploreExecutionResult result = future.get();
       result.close();
 
@@ -296,9 +298,9 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
 
   @Test
   public void multipleInsertsTest() throws Exception {
-    Id.DatasetInstance myTable1 = Id.DatasetInstance.from(NAMESPACE_ID, "my_table_1");
-    Id.DatasetInstance myTable2 = Id.DatasetInstance.from(NAMESPACE_ID, "my_table_2");
-    Id.DatasetInstance myTable3 = Id.DatasetInstance.from(NAMESPACE_ID, "my_table_3");
+    DatasetId myTable1 = NAMESPACE_ID.dataset("my_table_1");
+    DatasetId myTable2 = NAMESPACE_ID.dataset("my_table_2");
+    DatasetId myTable3 = NAMESPACE_ID.dataset("my_table_3");
     String myTable1HiveName = getDatasetHiveName(myTable1);
     String myTable2HiveName = getDatasetHiveName(myTable2);
     String myTable3HiveName = getDatasetHiveName(myTable3);
@@ -308,7 +310,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
       initKeyValueTable(myTable2, false);
       initKeyValueTable(myTable3, false);
       ListenableFuture<ExploreExecutionResult> future =
-        exploreClient.submit(NAMESPACE_ID, String.format("from %s insert into table %s select * where key='1' " +
+        exploreClient.submit(NAMESPACE_ID.toId(), String.format("from %s insert into table %s select * where key='1' " +
                                                            "insert into table %s select * where key='2' " +
                                                            "insert into table %s select *",
                                                          MY_TABLE_NAME, myTable1HiveName,
@@ -316,17 +318,17 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
       ExploreExecutionResult result = future.get();
       result.close();
 
-      result = exploreClient.submit(NAMESPACE_ID, "select * from " + myTable2HiveName).get();
+      result = exploreClient.submit(NAMESPACE_ID.toId(), "select * from " + myTable2HiveName).get();
       Assert.assertEquals("2_2", result.next().getColumns().get(0).toString());
       Assert.assertFalse(result.hasNext());
       result.close();
 
-      result = exploreClient.submit(NAMESPACE_ID, "select * from " + myTable1HiveName).get();
+      result = exploreClient.submit(NAMESPACE_ID.toId(), "select * from " + myTable1HiveName).get();
       Assert.assertEquals("1_2", result.next().getColumns().get(0).toString());
       Assert.assertFalse(result.hasNext());
       result.close();
 
-      result = exploreClient.submit(NAMESPACE_ID, "select * from " + myTable3HiveName).get();
+      result = exploreClient.submit(NAMESPACE_ID.toId(), "select * from " + myTable3HiveName).get();
       Assert.assertEquals("1_2", result.next().getColumns().get(0).toString());
       Assert.assertEquals("2_2", result.next().getColumns().get(0).toString());
       Assert.assertFalse(result.hasNext());
@@ -348,14 +350,14 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
       URL loadFileUrl = getClass().getResource("/test_table.dat");
       Assert.assertNotNull(loadFileUrl);
 
-      exploreClient.submit(NAMESPACE_ID,
+      exploreClient.submit(NAMESPACE_ID.toId(),
                            "create table test (first INT, second STRING) ROW FORMAT " +
                              "DELIMITED FIELDS TERMINATED BY '\\t'").get().close();
-      exploreClient.submit(NAMESPACE_ID,
+      exploreClient.submit(NAMESPACE_ID.toId(),
                            "LOAD DATA LOCAL INPATH '" + new File(loadFileUrl.toURI()).getAbsolutePath() +
                              "' INTO TABLE test").get().close();
 
-      exploreClient.submit(NAMESPACE_ID,
+      exploreClient.submit(NAMESPACE_ID.toId(),
                            "insert into table " + simpleTableName + " select * from test").get().close();
 
       assertSelectAll(NAMESPACE_ID, simpleTableName, ImmutableList.<List<Object>>of(
@@ -367,7 +369,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
       ));
 
     } finally {
-      exploreClient.submit(NAMESPACE_ID, "drop table if exists test").get().close();
+      exploreClient.submit(NAMESPACE_ID.toId(), "drop table if exists test").get().close();
       datasetFramework.deleteInstance(simpleTable);
       datasetFramework.deleteModule(kvTable);
     }
@@ -379,7 +381,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
     datasetFramework.addModule(kvTable, new KeyValueTableDefinition.KeyValueTableModule());
     datasetFramework.addInstance("kvTable", simpleTable, DatasetProperties.EMPTY);
     try {
-      exploreClient.submit(NAMESPACE_ID, "create table test (first INT, second STRING) ROW FORMAT " +
+      exploreClient.submit(NAMESPACE_ID.toId(), "create table test (first INT, second STRING) ROW FORMAT " +
                              "DELIMITED FIELDS TERMINATED BY '\\t'").get().close();
 
       // Accessing dataset instance to perform data operations
@@ -398,14 +400,15 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
       transactionManager.commit(tx1);
       table.postTxCommit();
 
-      exploreClient.submit(NAMESPACE_ID, "insert into table test select * from " + simpleTableName).get().close();
+      exploreClient.submit(NAMESPACE_ID.toId(),
+                           "insert into table test select * from " + simpleTableName).get().close();
 
       assertSelectAll(NAMESPACE_ID, "test", ImmutableList.<List<Object>>of(
         ImmutableList.<Object>of(10, "ten")
       ));
 
     } finally {
-      exploreClient.submit(NAMESPACE_ID, "drop table if exists test").get().close();
+      exploreClient.submit(NAMESPACE_ID.toId(), "drop table if exists test").get().close();
       datasetFramework.deleteInstance(simpleTable);
       datasetFramework.deleteModule(kvTable);
     }
@@ -421,7 +424,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
 
     try {
 
-      ExploreExecutionResult result = exploreClient.submit(OTHER_NAMESPACE_ID,
+      ExploreExecutionResult result = exploreClient.submit(OTHER_NAMESPACE_ID.toId(),
                                                            "select * from " + simpleTableName).get();
       Assert.assertFalse(result.hasNext());
 
@@ -442,7 +445,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
 
       String query = String.format("insert into table %s select * from cdap_namespace.%s",
                                    otherSimpleTableName, simpleTableName);
-      exploreClient.submit(OTHER_NAMESPACE_ID, query).get().close();
+      exploreClient.submit(OTHER_NAMESPACE_ID.toId(), query).get().close();
 
       assertSelectAll(NAMESPACE_ID, simpleTableName, ImmutableList.<List<Object>>of(
         ImmutableList.<Object>of(1, "one")
@@ -479,9 +482,9 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
     }
   }
 
-  private void assertSelectAll(Id.Namespace namespace, String table,
+  private void assertSelectAll(NamespaceId namespace, String table,
                                List<List<Object>> expectedResults) throws Exception {
-    ExploreExecutionResult result = exploreClient.submit(namespace, "select * from " + table).get();
+    ExploreExecutionResult result = exploreClient.submit(namespace.toId(), "select * from " + table).get();
     for (List<Object> expectedResult : expectedResults) {
       Assert.assertEquals(expectedResult, result.next().getColumns());
     }

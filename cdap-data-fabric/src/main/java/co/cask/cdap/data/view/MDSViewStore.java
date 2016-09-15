@@ -31,11 +31,12 @@ import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.TxCallable;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ViewDetail;
 import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.id.StreamViewId;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -55,10 +56,10 @@ public final class MDSViewStore implements ViewStore {
 
   private static final DatasetId STORE_DATASET_ID = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
   private static final String TYPE_STREAM_VIEW = "stream.view";
-  private static final Function<StreamViewEntry, Id.Stream.View> VIEW_ENTRY_TO_ID =
-    new Function<StreamViewEntry, Id.Stream.View>() {
+  private static final Function<StreamViewEntry, StreamViewId> VIEW_ENTRY_TO_ID =
+    new Function<StreamViewEntry, StreamViewId>() {
       @Override
-      public Id.Stream.View apply(StreamViewEntry entry) {
+      public StreamViewId apply(StreamViewEntry entry) {
         return entry.getId();
       }
     };
@@ -93,7 +94,7 @@ public final class MDSViewStore implements ViewStore {
   }
 
   @Override
-  public boolean createOrUpdate(final Id.Stream.View viewId, final ViewSpecification spec) {
+  public boolean createOrUpdate(final StreamViewId viewId, final ViewSpecification spec) {
     return execute(new TxCallable<Boolean>() {
       @Override
       public Boolean call(DatasetContext context) throws Exception {
@@ -106,7 +107,7 @@ public final class MDSViewStore implements ViewStore {
   }
 
   @Override
-  public boolean exists(final Id.Stream.View viewId) {
+  public boolean exists(final StreamViewId viewId) {
     return execute(new TxCallable<Boolean>() {
       @Override
       public Boolean call(DatasetContext context) throws Exception {
@@ -116,7 +117,7 @@ public final class MDSViewStore implements ViewStore {
   }
 
   @Override
-  public void delete(final Id.Stream.View viewId) throws NotFoundException {
+  public void delete(final StreamViewId viewId) throws NotFoundException {
     try {
       transactional.execute(new TxRunnable() {
         @Override
@@ -135,10 +136,10 @@ public final class MDSViewStore implements ViewStore {
   }
 
   @Override
-  public List<Id.Stream.View> list(final Id.Stream streamId) {
-    return execute(new TxCallable<List<Id.Stream.View>>() {
+  public List<StreamViewId> list(final StreamId streamId) {
+    return execute(new TxCallable<List<StreamViewId>>() {
       @Override
-      public List<Id.Stream.View> call(DatasetContext context) throws Exception {
+      public List<StreamViewId> call(DatasetContext context) throws Exception {
         List<StreamViewEntry> views = getViewDataset(context).list(getKey(streamId), StreamViewEntry.class);
         return ImmutableList.copyOf(Lists.transform(views, VIEW_ENTRY_TO_ID));
       }
@@ -146,7 +147,7 @@ public final class MDSViewStore implements ViewStore {
   }
 
   @Override
-  public ViewDetail get(final Id.Stream.View viewId) throws NotFoundException {
+  public ViewDetail get(final StreamViewId viewId) throws NotFoundException {
     try {
       return Transactions.execute(transactional, new TxCallable<ViewDetail>() {
         @Override
@@ -155,7 +156,7 @@ public final class MDSViewStore implements ViewStore {
           if (viewEntry == null) {
             throw new NotFoundException(viewId);
           }
-          return new ViewDetail(viewId.getId(), viewEntry.getSpec());
+          return new ViewDetail(viewId.getEntityName(), viewEntry.getSpec());
         }
       });
     } catch (TransactionFailureException e) {
@@ -163,28 +164,28 @@ public final class MDSViewStore implements ViewStore {
     }
   }
 
-  private MDSKey getKey(Id.Stream id) {
+  private MDSKey getKey(StreamId id) {
     return new MDSKey.Builder()
-      .add(TYPE_STREAM_VIEW, id.getNamespaceId(), id.getId())
+      .add(TYPE_STREAM_VIEW, id.getNamespace(), id.getEntityName())
       .build();
   }
 
-  private MDSKey getKey(Id.Stream.View id) {
+  private MDSKey getKey(StreamViewId id) {
     return new MDSKey.Builder()
-      .add(TYPE_STREAM_VIEW, id.getNamespaceId(), id.getStreamId(), id.getId())
+      .add(TYPE_STREAM_VIEW, id.getNamespace(), id.getStream(), id.getEntityName())
       .build();
   }
 
   private static final class StreamViewEntry {
-    private final Id.Stream.View id;
+    private final StreamViewId id;
     private final ViewSpecification spec;
 
-    private StreamViewEntry(Id.Stream.View id, ViewSpecification spec) {
+    private StreamViewEntry(StreamViewId id, ViewSpecification spec) {
       this.id = id;
       this.spec = spec;
     }
 
-    public Id.Stream.View getId() {
+    public StreamViewId getId() {
       return id;
     }
 

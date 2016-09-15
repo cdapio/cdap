@@ -30,13 +30,15 @@ import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.id.StreamViewId;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -82,60 +84,61 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   }
 
   @Override
-  public void dropAllInNamespace(Id.Namespace namespace) throws Exception {
-    queueService.resetStreamsWithPrefix(QueueName.prefixForNamedspacedStream(namespace.getId()));
+  public void dropAllInNamespace(NamespaceId namespace) throws Exception {
+    queueService.resetStreamsWithPrefix(QueueName.prefixForNamedspacedStream(namespace.getNamespace()));
     for (StreamSpecification spec : streamMetaStore.listStreams(namespace)) {
       // Remove metadata for the stream
-      metadataStore.removeMetadata(new StreamId(namespace.getId(), spec.getName()));
-      streamMetaStore.removeStream(Id.Stream.from(namespace, spec.getName()));
+      StreamId stream = namespace.stream(spec.getName());
+      metadataStore.removeMetadata(stream);
+      streamMetaStore.removeStream(stream);
     }
   }
 
   @Override
-  public void configureInstances(Id.Stream streamId, long groupId, int instances) throws Exception {
+  public void configureInstances(StreamId streamId, long groupId, int instances) throws Exception {
     // No-op
   }
 
   @Override
-  public void configureGroups(Id.Stream streamId, Map<Long, Integer> groupInfo) throws Exception {
+  public void configureGroups(StreamId streamId, Map<Long, Integer> groupInfo) throws Exception {
     // No-op
   }
 
   @Override
   public List<StreamSpecification> listStreams(NamespaceId namespaceId) throws Exception {
-    return streamMetaStore.listStreams(namespaceId.toId());
+    return streamMetaStore.listStreams(namespaceId);
   }
 
   @Override
-  public StreamConfig getConfig(Id.Stream streamId) {
+  public StreamConfig getConfig(StreamId streamId) {
     throw new UnsupportedOperationException("Stream config not supported for non-file based stream.");
   }
 
   @Override
-  public StreamProperties getProperties(Id.Stream streamId) {
+  public StreamProperties getProperties(StreamId streamId) {
     throw new UnsupportedOperationException("Stream properties not supported for non-file based stream.");
   }
 
   @Override
-  public void updateConfig(Id.Stream streamId, StreamProperties properties) throws IOException {
+  public void updateConfig(StreamId streamId, StreamProperties properties) throws IOException {
     throw new UnsupportedOperationException("Stream config not supported for non-file based stream.");
   }
 
   @Override
-  public boolean exists(Id.Stream streamId) throws Exception {
-    return exists(QueueName.fromStream(streamId));
+  public boolean exists(StreamId streamId) throws Exception {
+    return exists(QueueName.fromStream(streamId.toId()));
   }
 
   @Override
-  public StreamConfig create(Id.Stream streamId) throws Exception {
-    create(QueueName.fromStream(streamId));
+  public StreamConfig create(StreamId streamId) throws Exception {
+    create(QueueName.fromStream(streamId.toId()));
     publishAudit(streamId, AuditType.CREATE);
     return null;
   }
 
   @Override
-  public StreamConfig create(Id.Stream streamId, @Nullable Properties props) throws Exception {
-    create(QueueName.fromStream(streamId), props);
+  public StreamConfig create(StreamId streamId, @Nullable Properties props) throws Exception {
+    create(QueueName.fromStream(streamId.toId()), props);
     String description = (props != null) ? props.getProperty(Constants.Stream.DESCRIPTION) : null;
     streamMetaStore.addStream(streamId, description);
     publishAudit(streamId, AuditType.CREATE);
@@ -143,66 +146,66 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   }
 
   @Override
-  public void truncate(Id.Stream streamId) throws Exception {
+  public void truncate(StreamId streamId) throws Exception {
     Preconditions.checkArgument(exists(streamId), "Stream '%s' does not exist.", streamId);
-    truncate(QueueName.fromStream(streamId));
+    truncate(QueueName.fromStream(streamId.toId()));
     publishAudit(streamId, AuditType.TRUNCATE);
   }
 
   @Override
-  public void drop(Id.Stream streamId) throws Exception {
+  public void drop(StreamId streamId) throws Exception {
     Preconditions.checkArgument(exists(streamId), "Stream '%s' does not exist.", streamId);
     // Remove metadata for the stream
-    metadataStore.removeMetadata(streamId.toEntityId());
-    drop(QueueName.fromStream(streamId));
+    metadataStore.removeMetadata(streamId);
+    drop(QueueName.fromStream(streamId.toId()));
     streamMetaStore.removeStream(streamId);
     publishAudit(streamId, AuditType.DELETE);
   }
 
   @Override
-  public boolean createOrUpdateView(Id.Stream.View viewId, ViewSpecification spec) throws Exception {
-    Preconditions.checkArgument(exists(viewId.getStream()), "Stream '%s' does not exist.", viewId.getStreamId());
+  public boolean createOrUpdateView(StreamViewId viewId, ViewSpecification spec) throws Exception {
+    Preconditions.checkArgument(exists(viewId.getParent()), "Stream '%s' does not exist.", viewId.getStream());
     return viewAdmin.createOrUpdate(viewId, spec);
   }
 
   @Override
-  public void deleteView(Id.Stream.View viewId) throws Exception {
-    Preconditions.checkArgument(exists(viewId.getStream()), "Stream '%s' does not exist.", viewId.getStreamId());
+  public void deleteView(StreamViewId viewId) throws Exception {
+    Preconditions.checkArgument(exists(viewId.getParent()), "Stream '%s' does not exist.", viewId.getStream());
     viewAdmin.delete(viewId);
   }
 
   @Override
-  public List<Id.Stream.View> listViews(Id.Stream streamId) throws Exception {
+  public List<StreamViewId> listViews(StreamId streamId) throws Exception {
     Preconditions.checkArgument(exists(streamId), "Stream '%s' does not exist.", streamId);
     return viewAdmin.list(streamId);
   }
 
   @Override
-  public ViewSpecification getView(Id.Stream.View viewId) throws Exception {
-    Preconditions.checkArgument(exists(viewId.getStream()), "Stream '%s' does not exist.", viewId.getStreamId());
+  public ViewSpecification getView(StreamViewId viewId) throws Exception {
+    Preconditions.checkArgument(exists(viewId.getParent()), "Stream '%s' does not exist.", viewId.getStream());
     return viewAdmin.get(viewId);
   }
 
   @Override
-  public boolean viewExists(Id.Stream.View viewId) throws Exception {
-    if (!exists(viewId.getStream())) {
-      throw new StreamNotFoundException(viewId.getStream());
+  public boolean viewExists(StreamViewId viewId) throws Exception {
+    if (!exists(viewId.getParent())) {
+      throw new StreamNotFoundException(viewId.getParent().toId());
     }
     return viewAdmin.exists(viewId);
   }
 
   @Override
-  public void register(Iterable<? extends Id> owners, Id.Stream streamId) {
+  public void register(Iterable<? extends EntityId> owners, StreamId streamId) {
     usageRegistry.registerAll(owners, streamId);
   }
 
   @Override
-  public void addAccess(Id.Run run, Id.Stream streamId, AccessType accessType) {
-    lineageWriter.addAccess(run.toEntityId(), streamId.toEntityId(), accessType);
+  public void addAccess(ProgramRunId run, StreamId streamId, AccessType accessType) {
+    lineageWriter.addAccess(run, streamId, accessType);
     AuditPublishers.publishAccess(auditPublisher, streamId, accessType, run);
   }
 
-  private void publishAudit(Id.Stream stream, AuditType auditType) {
-    AuditPublishers.publishAudit(auditPublisher, stream.toEntityId(), auditType, AuditPayload.EMPTY_PAYLOAD);
+  private void publishAudit(StreamId stream, AuditType auditType) {
+    AuditPublishers.publishAudit(auditPublisher, stream, auditType, AuditPayload.EMPTY_PAYLOAD);
   }
 }

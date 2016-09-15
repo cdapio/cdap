@@ -32,7 +32,8 @@ import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -263,9 +264,9 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       Assert.assertEquals(2, getInstances().getResponseObject().size());
 
       // we want to verify that data is also gone, so we write smth to tables first
-      final Table table1 = dsFramework.getDataset(Id.DatasetInstance.from(Id.Namespace.DEFAULT, "myTable1"),
+      final Table table1 = dsFramework.getDataset(NamespaceId.DEFAULT.dataset("myTable1"),
                                                   DatasetDefinition.NO_ARGUMENTS, null);
-      final Table table2 = dsFramework.getDataset(Id.DatasetInstance.from(Id.Namespace.DEFAULT, "myTable2"),
+      final Table table2 = dsFramework.getDataset(NamespaceId.DEFAULT.dataset("myTable2"),
                                                   DatasetDefinition.NO_ARGUMENTS, null);
       Assert.assertNotNull(table1);
       Assert.assertNotNull(table2);
@@ -336,10 +337,10 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
   @Test
   public void testNotFound() throws IOException {
-    Id.Namespace nonExistent = Id.Namespace.from("nonexistent");
-    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(nonExistent, "ds");
+    NamespaceId nonExistent = new NamespaceId("nonexistent");
+    DatasetId datasetInstance = nonExistent.dataset("ds");
 
-    HttpResponse response = makeInstancesRequest(nonExistent.getId());
+    HttpResponse response = makeInstancesRequest(nonExistent.getNamespace());
     assertNamespaceNotFound(response, nonExistent);
 
     // TODO: commented out for now until we add back namespace checks on get dataset CDAP-3901
@@ -356,30 +357,30 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     assertNamespaceNotFound(response, nonExistent);
 
     // it should be ok to use system
-    response = getInstances(Id.Namespace.SYSTEM.getId());
+    response = getInstances(NamespaceId.SYSTEM.getNamespace());
     Assert.assertEquals(200, response.getResponseCode());
   }
 
   private HttpResponse createInstance(String instanceName, String typeName,
                                       DatasetProperties props) throws IOException {
-    return createInstance(Id.DatasetInstance.from(Id.Namespace.DEFAULT, instanceName), typeName, props);
+    return createInstance(NamespaceId.DEFAULT.dataset(instanceName), typeName, props);
   }
 
   private HttpResponse createInstance(String instanceName, String typeName, String description,
                                       DatasetProperties props) throws IOException {
-    return createInstance(Id.DatasetInstance.from(Id.Namespace.DEFAULT, instanceName), typeName, description, props);
+    return createInstance(NamespaceId.DEFAULT.dataset(instanceName), typeName, description, props);
   }
 
   private HttpResponse createInstance(String instanceName, String typeName) throws IOException {
-    return createInstance(Id.DatasetInstance.from(Id.Namespace.DEFAULT, instanceName), typeName, null);
+    return createInstance(NamespaceId.DEFAULT.dataset(instanceName), typeName, null);
   }
 
-  private HttpResponse createInstance(Id.DatasetInstance instance, String typeName,
+  private HttpResponse createInstance(DatasetId instance, String typeName,
                                       @Nullable DatasetProperties props) throws IOException {
     return createInstance(instance, typeName, null, props);
   }
 
-  private HttpResponse createInstance(Id.DatasetInstance instance, String typeName, @Nullable String description,
+  private HttpResponse createInstance(DatasetId instance, String typeName, @Nullable String description,
                                       @Nullable DatasetProperties props) throws IOException {
     DatasetInstanceConfiguration creationProperties;
     if (props != null) {
@@ -387,24 +388,24 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     } else {
       creationProperties = new DatasetInstanceConfiguration(typeName, null, description);
     }
-    HttpRequest request = HttpRequest.put(getUrl(instance.getNamespaceId(), "/data/datasets/" + instance.getId()))
+    HttpRequest request = HttpRequest.put(getUrl(instance.getNamespace(), "/data/datasets/" + instance.getEntityName()))
       .withBody(GSON.toJson(creationProperties)).build();
     return HttpRequests.execute(request);
   }
 
   private HttpResponse updateInstance(String instanceName, DatasetProperties props) throws IOException {
-    return updateInstance(Id.DatasetInstance.from(Id.Namespace.DEFAULT, instanceName), props);
+    return updateInstance(NamespaceId.DEFAULT.dataset(instanceName), props);
   }
 
-  private HttpResponse updateInstance(Id.DatasetInstance instance, DatasetProperties props) throws IOException {
-    HttpRequest request = HttpRequest.put(getUrl(instance.getNamespaceId(),
-                                                 "/data/datasets/" + instance.getId() + "/properties"))
+  private HttpResponse updateInstance(DatasetId instance, DatasetProperties props) throws IOException {
+    HttpRequest request = HttpRequest.put(getUrl(instance.getNamespace(),
+                                                 "/data/datasets/" + instance.getEntityName() + "/properties"))
       .withBody(GSON.toJson(props.getProperties())).build();
     return HttpRequests.execute(request);
   }
 
   private ObjectResponse<List<DatasetSpecificationSummary>> getInstances() throws IOException {
-    return getInstances(Id.Namespace.DEFAULT.getId());
+    return getInstances(NamespaceId.DEFAULT.getEntityName());
   }
 
   private ObjectResponse<List<DatasetSpecificationSummary>> getInstances(String namespace) throws IOException {
@@ -418,11 +419,11 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   }
 
   private HttpResponse getInstance(String instanceName) throws IOException {
-    return getInstance(Id.DatasetInstance.from(Id.Namespace.DEFAULT, instanceName));
+    return getInstance(NamespaceId.DEFAULT.dataset(instanceName));
   }
 
-  private HttpResponse getInstance(Id.DatasetInstance instance) throws IOException {
-    URL instanceUrl = getUrl(instance.getNamespaceId(), "/data/datasets/" + instance.getId());
+  private HttpResponse getInstance(DatasetId instance) throws IOException {
+    URL instanceUrl = getUrl(instance.getNamespace(), "/data/datasets/" + instance.getEntityName());
     HttpRequest request = HttpRequest.get(instanceUrl).build();
     return HttpRequests.execute(request);
   }
@@ -440,12 +441,12 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   }
 
   private HttpResponse deleteInstance(String instanceName) throws IOException {
-    return deleteInstance(Id.DatasetInstance.from(Id.Namespace.DEFAULT, instanceName));
+    return deleteInstance(NamespaceId.DEFAULT.dataset(instanceName));
   }
 
-  private HttpResponse deleteInstance(Id.DatasetInstance instance) throws IOException {
-    HttpRequest request = HttpRequest.delete(getUrl(instance.getNamespaceId(),
-                                                    "/data/datasets/" + instance.getId())).build();
+  private HttpResponse deleteInstance(DatasetId instance) throws IOException {
+    HttpRequest request = HttpRequest.delete(getUrl(instance.getNamespace(),
+                                                    "/data/datasets/" + instance.getEntityName())).build();
     return HttpRequests.execute(request);
   }
 

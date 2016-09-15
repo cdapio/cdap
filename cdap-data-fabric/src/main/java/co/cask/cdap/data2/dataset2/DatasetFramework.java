@@ -33,7 +33,11 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.DatasetModuleId;
+import co.cask.cdap.proto.id.DatasetTypeId;
+import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.twill.filesystem.Location;
 
@@ -67,7 +71,7 @@ public interface DatasetFramework {
    * Adds dataset types by adding dataset module to the system. Calling this method to add {@link DatasetModule} may
    * result in tracing class dependencies if the {@link DatasetModule} is not a system dataset, which can takes
    * couple seconds for the tracing. If the jar {@link Location} containing the {@link DatasetModule} is known, it's
-   * better to call {@link #addModule(Id.DatasetModule, DatasetModule, Location)} instead.
+   * better to call {@link #addModule(DatasetModuleId, DatasetModule, Location)} instead.
    *
    * @param moduleId dataset module id
    * @param module dataset module
@@ -76,7 +80,7 @@ public interface DatasetFramework {
    * @throws DatasetManagementException in case of problems
    * @throws ServiceUnavailableException when the dataset service is not running
    */
-  void addModule(Id.DatasetModule moduleId, DatasetModule module) throws DatasetManagementException;
+  void addModule(DatasetModuleId moduleId, DatasetModule module) throws DatasetManagementException;
 
   /**
    * Adds dataset types by adding dataset module to the system with a jar location containing all dataset classes
@@ -90,7 +94,7 @@ public interface DatasetFramework {
    * @throws DatasetManagementException in case of problems
    * @throws ServiceUnavailableException when the dataset service is not running
    */
-  void addModule(Id.DatasetModule moduleId, DatasetModule module,
+  void addModule(DatasetModuleId moduleId, DatasetModule module,
                  Location jarLocation) throws DatasetManagementException;
 
   /**
@@ -101,17 +105,17 @@ public interface DatasetFramework {
    * @throws DatasetManagementException
    * @throws ServiceUnavailableException when the dataset service is not running
    */
-  void deleteModule(Id.DatasetModule moduleId) throws DatasetManagementException;
+  void deleteModule(DatasetModuleId moduleId) throws DatasetManagementException;
 
   /**
    * Deletes dataset modules and its types in the specified namespace.
    *
-   * @param namespaceId the {@link Id.Namespace} to delete all modules from.
+   * @param namespaceId the {@link NamespaceId} to delete all modules from.
    * @throws ModuleConflictException when some of modules can't be deleted because of its dependant modules or instances
    * @throws DatasetManagementException
    * @throws ServiceUnavailableException when the dataset service is not running
    */
-  void deleteAllModules(Id.Namespace namespaceId) throws DatasetManagementException;
+  void deleteAllModules(NamespaceId namespaceId) throws DatasetManagementException;
 
   /**
    * Adds information about dataset instance to the system.
@@ -129,7 +133,7 @@ public interface DatasetFramework {
    * @throws DatasetManagementException
    * @throws ServiceUnavailableException when the dataset service is not running
    */
-  void addInstance(String datasetTypeName, Id.DatasetInstance datasetInstanceId, DatasetProperties props)
+  void addInstance(String datasetTypeName, DatasetId datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException, IOException;
 
   /**
@@ -147,7 +151,7 @@ public interface DatasetFramework {
    * @throws DatasetManagementException
    * @throws ServiceUnavailableException when the dataset service is not running
    */
-  void updateInstance(Id.DatasetInstance datasetInstanceId, DatasetProperties props)
+  void updateInstance(DatasetId datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException, IOException;
 
   /**
@@ -156,24 +160,24 @@ public interface DatasetFramework {
    * @param namespaceId the specified namespace id
    * @return a collection of {@link DatasetSpecification}s for all datasets in the specified namespace
    */
-  Collection<DatasetSpecificationSummary> getInstances(Id.Namespace namespaceId) throws DatasetManagementException;
+  Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId) throws DatasetManagementException;
 
   /**
    * Gets the {@link DatasetSpecification} for the specified dataset instance id
    *
-   * @param datasetInstanceId the {@link Id.DatasetInstance} for which the {@link DatasetSpecification} is desired
+   * @param datasetInstanceId the {@link DatasetId} for which the {@link DatasetSpecification} is desired
    * @return {@link DatasetSpecification} of the dataset or {@code null} if dataset not not exist
    */
   @Nullable
-  DatasetSpecification getDatasetSpec(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException;
+  DatasetSpecification getDatasetSpec(DatasetId datasetInstanceId) throws DatasetManagementException;
 
   /**
-   * @param datasetInstanceId the {@link Id.DatasetInstance} to check for existence
+   * @param datasetInstanceId the {@link DatasetId} to check for existence
    * @return true if instance exists, false otherwise
    * @throws DatasetManagementException
    * @throws ServiceUnavailableException when the dataset service is not running
    */
-  boolean hasInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException;
+  boolean hasInstance(DatasetId datasetInstanceId) throws DatasetManagementException;
 
   /**
    * Checks if the specified type exists in the 'system' namespace
@@ -192,7 +196,7 @@ public interface DatasetFramework {
    * @throws ServiceUnavailableException when the dataset service is not running
    */
   @VisibleForTesting
-  boolean hasType(Id.DatasetType datasetTypeId) throws DatasetManagementException;
+  boolean hasType(DatasetTypeId datasetTypeId) throws DatasetManagementException;
 
   /**
    * @return the meta data for a dataset type or null if it does not exist.
@@ -200,7 +204,7 @@ public interface DatasetFramework {
    * @throws ServiceUnavailableException when the dataset service is not running
    */
   @Nullable
-  DatasetTypeMeta getTypeInfo(Id.DatasetType datasetTypeId) throws DatasetManagementException;
+  DatasetTypeMeta getTypeInfo(DatasetTypeId datasetTypeId) throws DatasetManagementException;
 
   /**
    * Truncates a dataset instance.
@@ -211,7 +215,7 @@ public interface DatasetFramework {
    * @throws DatasetManagementException
    * @throws ServiceUnavailableException when the dataset service is not running
    */
-  void truncateInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException, IOException;
+  void truncateInstance(DatasetId datasetInstanceId) throws DatasetManagementException, IOException;
 
   /**
    * Deletes dataset instance from the system.
@@ -223,7 +227,7 @@ public interface DatasetFramework {
    * @throws DatasetManagementException
    * @throws ServiceUnavailableException when the dataset service is not running
    */
-  void deleteInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException, IOException;
+  void deleteInstance(DatasetId datasetInstanceId) throws DatasetManagementException, IOException;
 
   /**
    * Deletes all dataset instances in the specified namespace.
@@ -233,7 +237,7 @@ public interface DatasetFramework {
    * @throws DatasetManagementException
    * @throws ServiceUnavailableException when the dataset service is not running
    */
-  void deleteAllInstances(Id.Namespace namespaceId) throws DatasetManagementException, IOException;
+  void deleteAllInstances(NamespaceId namespaceId) throws DatasetManagementException, IOException;
 
   /**
    * Gets dataset instance admin to be used to perform administrative operations. The given classloader must
@@ -249,7 +253,7 @@ public interface DatasetFramework {
    * @throws ServiceUnavailableException when the dataset service is not running
    */
   @Nullable
-  <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId, @Nullable ClassLoader classLoader)
+  <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId, @Nullable ClassLoader classLoader)
     throws DatasetManagementException, IOException;
 
   /**
@@ -267,7 +271,7 @@ public interface DatasetFramework {
    * @throws ServiceUnavailableException when the dataset service is not running
    */
   @Nullable
-  <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId,
+  <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId,
                                       @Nullable ClassLoader classLoader,
                                       DatasetClassLoaderProvider classLoaderProvider)
     throws DatasetManagementException, IOException;
@@ -285,7 +289,7 @@ public interface DatasetFramework {
    * @throws ServiceUnavailableException when the dataset service is not running
    */
   @Nullable
-  <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
+  <T extends Dataset> T getDataset(DatasetId datasetInstanceId, @Nullable Map<String, String> arguments,
                                    @Nullable ClassLoader classLoader)
     throws DatasetManagementException, IOException;
 
@@ -306,10 +310,10 @@ public interface DatasetFramework {
    * @throws ServiceUnavailableException when the dataset service is not running
    */
   @Nullable
-  <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
+  <T extends Dataset> T getDataset(DatasetId datasetInstanceId, @Nullable Map<String, String> arguments,
                                    @Nullable ClassLoader classLoader,
                                    DatasetClassLoaderProvider classLoaderProvider,
-                                   @Nullable Iterable<? extends Id> owners,
+                                   @Nullable Iterable<? extends EntityId> owners,
                                    AccessType accessType)
     throws DatasetManagementException, IOException;
 
@@ -319,5 +323,5 @@ public interface DatasetFramework {
    * @param datasetInstanceId dataset instance id
    * @param accessType accessType to be recorded
    */
-  void writeLineage(Id.DatasetInstance datasetInstanceId, AccessType accessType);
+  void writeLineage(DatasetId datasetInstanceId, AccessType accessType);
 }

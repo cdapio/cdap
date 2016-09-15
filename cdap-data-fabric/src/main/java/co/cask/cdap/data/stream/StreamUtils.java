@@ -24,7 +24,8 @@ import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -303,7 +304,7 @@ public final class StreamUtils {
     return new StreamFileOffset(eventLocation, offset, generation);
   }
 
-  public static StreamConfig ensureExists(StreamAdmin admin, Id.Stream streamId) throws IOException {
+  public static StreamConfig ensureExists(StreamAdmin admin, StreamId streamId) throws IOException {
     try {
       return admin.getConfig(streamId);
     } catch (Exception e) {
@@ -434,10 +435,10 @@ public final class StreamUtils {
    * @param namespace the namespace for which the table is for.
    * @return constructed TableId
    */
-  public static TableId getStateStoreTableId(Id.Namespace namespace) {
+  public static TableId getStateStoreTableId(NamespaceId namespace) {
     String tableName = String.format("%s.%s.state.store",
-                                     Id.Namespace.SYSTEM.getId(), QueueConstants.QueueType.STREAM.toString());
-    return TableId.from(namespace.getId(), tableName);
+                                     NamespaceId.SYSTEM.getNamespace(), QueueConstants.QueueType.STREAM.toString());
+    return TableId.from(namespace.getNamespace(), tableName);
   }
 
   /**

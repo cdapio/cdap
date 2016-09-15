@@ -27,8 +27,9 @@ import co.cask.cdap.common.security.UnsupportedUGIProvider;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.store.NamespaceStore;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -63,7 +64,7 @@ public abstract class StreamFileJanitorTestBase {
 
   protected abstract CConfiguration getCConfiguration();
 
-  protected abstract FileWriter<StreamEvent> createWriter(Id.Stream streamId) throws IOException;
+  protected abstract FileWriter<StreamEvent> createWriter(StreamId streamId) throws IOException;
 
   private Impersonator impersonator;
 
@@ -72,7 +73,7 @@ public abstract class StreamFileJanitorTestBase {
     // FileStreamAdmin expects namespace directory to exist.
     // Simulate namespace create, since its an inmemory-namespace admin
     getNamespaceAdmin().create(NamespaceMeta.DEFAULT);
-    getNamespacedLocationFactory().get(Id.Namespace.DEFAULT).mkdirs();
+    getNamespacedLocationFactory().get(NamespaceId.DEFAULT.toId()).mkdirs();
     impersonator = new DefaultImpersonator(cConf, new UnsupportedUGIProvider(), null);
   }
 
@@ -80,7 +81,7 @@ public abstract class StreamFileJanitorTestBase {
   public void testCleanupGeneration() throws Exception {
     // Create a stream and performs couple truncate
     String streamName = "testCleanupGeneration";
-    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
+    StreamId streamId = NamespaceId.DEFAULT.stream(streamName);
 
     StreamAdmin streamAdmin = getStreamAdmin();
     streamAdmin.create(streamId);
@@ -118,7 +119,7 @@ public abstract class StreamFileJanitorTestBase {
   public void testCleanupTTL() throws Exception {
     // Create a stream with 5 seconds TTL, partition duration of 2 seconds
     String streamName = "testCleanupTTL";
-    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
+    StreamId streamId = NamespaceId.DEFAULT.stream(streamName);
 
     StreamAdmin streamAdmin = getStreamAdmin();
     StreamFileJanitor janitor = new StreamFileJanitor(getCConfiguration(), getStreamAdmin(),
@@ -160,7 +161,7 @@ public abstract class StreamFileJanitorTestBase {
 
   @Test
   public void testCleanupDeletedStream() throws Exception {
-    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, "cleanupDelete");
+    StreamId streamId = NamespaceId.DEFAULT.stream("cleanupDelete");
     StreamAdmin streamAdmin = getStreamAdmin();
     StreamFileJanitor janitor = new StreamFileJanitor(getCConfiguration(), streamAdmin, getNamespacedLocationFactory(),
                                                       getNamespaceAdmin(), impersonator);

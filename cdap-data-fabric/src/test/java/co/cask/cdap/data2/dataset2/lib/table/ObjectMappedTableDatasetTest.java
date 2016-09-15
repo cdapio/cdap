@@ -25,7 +25,7 @@ import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -43,8 +43,7 @@ public class ObjectMappedTableDatasetTest {
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
-  private static final Id.DatasetInstance RECORDS_ID =
-    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "records");
+  private static final DatasetId RECORDS_ID = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("records");
 
   @Test
   public void testGetPutDelete() throws Exception {
@@ -185,14 +184,14 @@ public class ObjectMappedTableDatasetTest {
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidTypeFails() throws Exception {
     dsFrameworkUtil.createInstance(ObjectMappedTable.class.getName(),
-                                   Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "custom"),
+                                   DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("custom"),
                                    ObjectMappedTableProperties.builder().setType(Custom.class).build());
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testRowKeyConflict() throws Exception {
     dsFrameworkUtil.createInstance(ObjectMappedTable.class.getName(),
-                                   Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "record"),
+                                   DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("record"),
                                    ObjectMappedTableProperties.builder()
                                      .setType(Record.class)
                                      .setRowKeyExploreName("intfield")

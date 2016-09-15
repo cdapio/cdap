@@ -18,7 +18,7 @@ package co.cask.cdap.data2.transaction.stream;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamUtils;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Maps;
@@ -46,7 +46,7 @@ public abstract class StreamConsumerStateStore implements ConsumerStateStore<Str
                                                                              Iterable<StreamFileOffset>> {
 
   protected final StreamConfig streamConfig;
-  protected final Id.Stream streamId;
+  protected final StreamId streamId;
 
   protected StreamConsumerStateStore(StreamConfig streamConfig) {
     this.streamConfig = streamConfig;

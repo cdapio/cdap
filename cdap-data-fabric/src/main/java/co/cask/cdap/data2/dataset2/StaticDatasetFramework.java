@@ -19,7 +19,8 @@ package co.cask.cdap.data2.dataset2;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetModuleId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -65,7 +66,7 @@ public class StaticDatasetFramework extends InMemoryDatasetFramework implements 
   }
 
   @Override
-  protected LinkedHashSet<String> getAvailableModuleClasses(final Id.Namespace namespace) {
+  protected LinkedHashSet<String> getAvailableModuleClasses(final NamespaceId namespace) {
     try {
       // It is okay to have an unchecked cast here, as the same line populates the cache for MODULES_CACHE_KEY
       @SuppressWarnings("unchecked")
@@ -82,26 +83,26 @@ public class StaticDatasetFramework extends InMemoryDatasetFramework implements 
   }
 
   @Override
-  public void addModule(Id.DatasetModule moduleId, DatasetModule module) {
+  public void addModule(DatasetModuleId moduleId, DatasetModule module) {
     throw new UnsupportedOperationException("Cannot change modules of "
                                               + StaticDatasetFramework.class.getSimpleName());
   }
 
   @Override
-  public void addModule(Id.DatasetModule moduleId, DatasetModule module,
+  public void addModule(DatasetModuleId moduleId, DatasetModule module,
                         Location jarLocation) throws DatasetManagementException {
     throw new UnsupportedOperationException("Cannot change modules of "
                                               + StaticDatasetFramework.class.getSimpleName());
   }
 
   @Override
-  public void deleteModule(Id.DatasetModule moduleId) {
+  public void deleteModule(DatasetModuleId moduleId) {
     throw new UnsupportedOperationException("Cannot change modules of "
                                               + StaticDatasetFramework.class.getSimpleName());
   }
 
   @Override
-  public void deleteAllModules(Id.Namespace namespaceId) {
+  public void deleteAllModules(NamespaceId namespaceId) {
     throw new UnsupportedOperationException("Cannot change modules of "
                                               + StaticDatasetFramework.class.getSimpleName());
   }

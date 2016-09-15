@@ -30,8 +30,8 @@ import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryResult;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -88,7 +88,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
 
   @Test
   public void testOrcFileset() throws Exception {
-    final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, "orcfiles");
+    final DatasetId datasetInstanceId = NAMESPACE_ID.dataset("orcfiles");
     final String tableName = getDatasetHiveName(datasetInstanceId);
 
     // create a time partitioned file set
@@ -108,7 +108,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
     // insert data into the table
 
     ExploreExecutionResult result = exploreClient.submit(
-      NAMESPACE_ID, String.format("insert into table %s values (1, 'samuel'), (2, 'dwayne')", tableName)).get();
+      NAMESPACE_ID.toId(), String.format("insert into table %s values (1, 'samuel'), (2, 'dwayne')", tableName)).get();
     result.close();
 
     // verify that we can query the key-values in the file with Hive
@@ -131,7 +131,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
 
   @Test
   public void testCreateAddDrop() throws Exception {
-    final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, "files");
+    final DatasetId datasetInstanceId = NAMESPACE_ID.dataset("files");
     final String tableName = getDatasetHiveName(datasetInstanceId);
 
     // create a time partitioned file set
@@ -188,7 +188,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
 
   @Test
   public void testPartitionedFileSet() throws Exception {
-    final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, "parted");
+    final DatasetId datasetInstanceId = NAMESPACE_ID.dataset("parted");
     final String tableName = getDatasetHiveName(datasetInstanceId);
 
     // create a time partitioned file set
@@ -325,7 +325,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
 
   // this tests mainly the support for different text formats. Other features (partitioning etc.) are tested above.
   private void testPartitionedTextFile(String name, String format, String delim, String fileDelim) throws Exception {
-    final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, name);
+    final DatasetId datasetInstanceId = NAMESPACE_ID.dataset(name);
     final String tableName = getDatasetHiveName(datasetInstanceId);
     // create a time partitioned file set
     PartitionedFileSetProperties.Builder builder = (PartitionedFileSetProperties.Builder)
@@ -387,7 +387,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
 
   @Test
   public void testPartitionedAvroSchemaUpdate() throws Exception {
-    final Id.DatasetInstance datasetId = Id.DatasetInstance.from(NAMESPACE_ID, "avroupd");
+    final DatasetId datasetId = NAMESPACE_ID.dataset("avroupd");
     final String tableName = getDatasetHiveName(datasetId);
 
     // create a time partitioned file set
@@ -442,7 +442,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
 
   @Test
   public void testPartitionedTextSchemaUpdate() throws Exception {
-    final Id.DatasetInstance datasetId = Id.DatasetInstance.from(NAMESPACE_ID, "txtschemaupd");
+    final DatasetId datasetId = NAMESPACE_ID.dataset("txtschemaupd");
     final String tableName = getDatasetHiveName(datasetId);
 
     // create a time partitioned file set
@@ -504,7 +504,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
 
   @Test
     public void testPartitionedTextFileUpdate() throws Exception {
-    final Id.DatasetInstance datasetId = Id.DatasetInstance.from(NAMESPACE_ID, "txtupd");
+    final DatasetId datasetId = NAMESPACE_ID.dataset("txtupd");
     final String tableName = getDatasetHiveName(datasetId);
 
     // create a time partitioned file set
@@ -606,7 +606,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
 
   @Test
   public void testTimePartitionedFileSet() throws Exception {
-    final Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(NAMESPACE_ID, "parts");
+    final DatasetId datasetInstanceId = NAMESPACE_ID.dataset("parts");
     final String tableName = getDatasetHiveName(datasetInstanceId);
 
     // create a time partitioned file set

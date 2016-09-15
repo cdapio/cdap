@@ -27,7 +27,8 @@ import co.cask.cdap.data.stream.StreamFileType;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -58,7 +59,7 @@ public class StreamFileSizeFetcherTest {
   @Test
   public void testFetchSize() throws Exception {
     final String streamName = "testFetchSize";
-    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
+    StreamId streamId = NamespaceId.DEFAULT.stream(streamName);
     final int nbEvents = 100;
     StreamAdmin streamAdmin = new TestStreamAdmin(namespacedLocationFactory, Long.MAX_VALUE, 1000);
 
@@ -108,12 +109,12 @@ public class StreamFileSizeFetcherTest {
     }
 
     @Override
-    public boolean exists(Id.Stream streamId) throws Exception {
+    public boolean exists(StreamId streamId) throws Exception {
       return true;
     }
 
     @Override
-    public StreamConfig getConfig(Id.Stream streamId) throws IOException {
+    public StreamConfig getConfig(StreamId streamId) throws IOException {
       Location streamLocation = StreamFileTestUtils.getStreamBaseLocation(namespacedLocationFactory, streamId);
       return new StreamConfig(streamId, partitionDuration, indexInterval, Long.MAX_VALUE, streamLocation, null, 1000);
     }

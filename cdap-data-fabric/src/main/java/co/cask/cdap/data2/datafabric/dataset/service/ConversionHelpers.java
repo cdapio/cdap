@@ -23,6 +23,10 @@ import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.DatasetTypeId;
+import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -45,48 +49,48 @@ class ConversionHelpers {
 
   private static final Gson GSON = new Gson();
 
-  static Id.Namespace toNamespaceId(String namespace) throws BadRequestException {
+  static NamespaceId toNamespaceId(String namespace) throws BadRequestException {
     try {
-      return Id.Namespace.from(namespace);
+      return Id.Namespace.from(namespace).toEntityId();
     } catch (IllegalArgumentException | NullPointerException e) {
       throw new BadRequestException(e.getMessage());
     }
   }
 
-  static Id.DatasetInstance toDatasetInstanceId(String namespace, String name) throws BadRequestException {
+  static DatasetId toDatasetInstanceId(String namespace, String name) throws BadRequestException {
     try {
-      return Id.DatasetInstance.from(namespace, name);
+      return Id.DatasetInstance.from(namespace, name).toEntityId();
     } catch (IllegalArgumentException | NullPointerException e) {
       throw new BadRequestException(e.getMessage());
     }
   }
 
-  static Id.DatasetType toDatasetTypeId(String namespace, String typeName) throws BadRequestException {
+  static DatasetTypeId toDatasetTypeId(String namespace, String typeName) throws BadRequestException {
     try {
-      return Id.DatasetType.from(namespace, typeName);
+      return Id.DatasetType.from(namespace, typeName).toEntityId();
     } catch (IllegalArgumentException | NullPointerException e) {
       throw new BadRequestException(e.getMessage());
     }
   }
 
-  static Id.DatasetType toDatasetTypeId(Id.Namespace namespace, String typeName) throws BadRequestException {
+  static DatasetTypeId toDatasetTypeId(NamespaceId namespace, String typeName) throws BadRequestException {
     try {
-      return Id.DatasetType.from(namespace, typeName);
+      return Id.DatasetType.from(namespace.getNamespace(), typeName).toEntityId();
     } catch (IllegalArgumentException | NullPointerException e) {
       throw new BadRequestException(e.getMessage());
     }
   }
 
-  static List<? extends Id> strings2ProgramIds(List<String> strings) throws BadRequestException {
+  static List<? extends EntityId> strings2ProgramIds(List<String> strings) throws BadRequestException {
     try {
-      return Lists.transform(strings, new Function<String, Id>() {
+      return Lists.transform(strings, new Function<String, EntityId>() {
         @Nullable
         @Override
-        public Id apply(@Nullable String input) {
+        public EntityId apply(@Nullable String input) {
           if (input == null || input.isEmpty()) {
             return null;
           }
-          return Id.fromString(input, Id.Program.class);
+          return Id.fromString(input, Id.Program.class).toEntityId();
         }
       });
     } catch (IllegalArgumentException | NullPointerException e) {

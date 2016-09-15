@@ -88,8 +88,7 @@ public abstract class AbstractSystemMetadataWriter implements SystemMetadataWrit
   @Override
   public void write() {
     // Delete existing system metadata before writing new metadata
-    Set<String> existingProperties = metadataStore.getProperties(MetadataScope.SYSTEM,
-                                                                 entityId).keySet();
+    Set<String> existingProperties = metadataStore.getProperties(MetadataScope.SYSTEM, entityId).keySet();
     Sets.SetView<String> removeProperties = Sets.difference(existingProperties, PRESERVE_PROPERTIES);
     if (!removeProperties.isEmpty()) {
       String[] propertiesArray = removeProperties.toArray(new String[removeProperties.size()]);

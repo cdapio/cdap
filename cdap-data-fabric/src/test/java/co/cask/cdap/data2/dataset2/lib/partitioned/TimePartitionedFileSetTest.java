@@ -26,7 +26,7 @@ import co.cask.cdap.api.dataset.lib.TimePartitionDetail;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -64,8 +64,7 @@ public class TimePartitionedFileSetTest {
   static final long HOUR = TimeUnit.HOURS.toMillis(1);
   static final long MAX = Long.MAX_VALUE;
 
-  private static final Id.DatasetInstance TPFS_INSTANCE =
-    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "tpfs");
+  private static final DatasetId TPFS_INSTANCE = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("tpfs");
 
   @Before
   public void before() throws Exception {

@@ -29,6 +29,7 @@ import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
@@ -106,7 +107,7 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
   }
 
   @Override
-  public final StreamConsumer create(Id.Stream streamId, String namespace,
+  public final StreamConsumer create(StreamId streamId, String namespace,
                                      ConsumerConfig consumerConfig) throws IOException {
 
     StreamConfig streamConfig = StreamUtils.ensureExists(streamAdmin, streamId);
@@ -121,7 +122,7 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
   }
 
   @Override
-  public void dropAll(Id.Stream streamId, String namespace, Iterable<Long> groupIds) throws IOException {
+  public void dropAll(StreamId streamId, String namespace, Iterable<Long> groupIds) throws IOException {
     // Delete the entry table
     dropTable(getTableId(streamId, namespace));
 
@@ -139,9 +140,9 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
 
   }
 
-  private TableId getTableId(Id.Stream streamId, String namespace) {
-    return TableId.from(streamId.getNamespace().getId(),
-                        String.format("%s.%s.%s", tablePrefix, streamId.getId(), namespace));
+  private TableId getTableId(StreamId streamId, String namespace) {
+    return TableId.from(streamId.getNamespace(),
+                        String.format("%s.%s.%s", tablePrefix, streamId.getEntityName(), namespace));
   }
 
   private MultiLiveStreamFileReader createReader(final StreamConfig streamConfig,

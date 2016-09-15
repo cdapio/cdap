@@ -19,7 +19,8 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetModuleId;
+import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
@@ -126,14 +127,14 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
     verifyAll(ONLY_MODULE1X, ONLY_1X_DEPENDENCIES);
 
     // create a dataset instance, verify that we cannot redeploy the module with fewer types, even with force option
-    instanceService.create(Id.Namespace.DEFAULT.getId(), "instance1x",
+    instanceService.create(NamespaceId.DEFAULT.getNamespace(), "instance1x",
                            new DatasetInstanceConfiguration("datasetType1x", new HashMap<String, String>()));
     Assert.assertEquals(HttpStatus.SC_CONFLICT, deployModule("module1", TestModule1.class).getResponseCode());
     Assert.assertEquals(HttpStatus.SC_CONFLICT, deployModule("module1", TestModule1.class, true).getResponseCode());
     verifyAll(ONLY_MODULE1X, ONLY_1X_DEPENDENCIES);
 
     // drop the instance, now we should be able to redeploy, dropping type1x
-    instanceService.drop(Id.DatasetInstance.from(Id.Namespace.DEFAULT.getId(), "instance1x"));
+    instanceService.drop(NamespaceId.DEFAULT.dataset("instance1x"));
     Assert.assertEquals(HttpStatus.SC_OK, deployModule("module1", TestModule1.class).getResponseCode());
     verifyAll(ONLY_MODULE1, ONLY_1_DEPENDENCIES);
 
@@ -157,15 +158,15 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
     verifyAll(MODULES_1X_AND_2, BOTH_1X_2_DEPENDENCIES);
 
     // create dataset instances, try force deploy of same module again with fewer types - should fail
-    instanceService.create(Id.Namespace.DEFAULT.getId(), "instance1",
+    instanceService.create(NamespaceId.DEFAULT.getNamespace(), "instance1",
                            new DatasetInstanceConfiguration("datasetType1", new HashMap<String, String>()));
-    instanceService.create(Id.Namespace.DEFAULT.getId(), "instance1x",
+    instanceService.create(NamespaceId.DEFAULT.getNamespace(), "instance1x",
                            new DatasetInstanceConfiguration("datasetType1x", new HashMap<String, String>()));
     Assert.assertEquals(HttpStatus.SC_CONFLICT, deployModule("module1", TestModule1.class, true).getResponseCode());
     verifyAll(MODULES_1X_AND_2, BOTH_1X_2_DEPENDENCIES);
 
     // drop the instance of type1x, now forced deploy should work
-    instanceService.drop(Id.DatasetInstance.from(Id.Namespace.DEFAULT.getId(), "instance1x"));
+    instanceService.drop(NamespaceId.DEFAULT.dataset("instance1x"));
     Assert.assertEquals(HttpStatus.SC_OK, deployModule("module1", TestModule1.class, true).getResponseCode());
     verifyAll(MODULES_1_AND_2, BOTH_1_2_DEPENDENCIES);
 
@@ -182,7 +183,7 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
     verifyAll(ONLY_MODULE1, ONLY_1_DEPENDENCIES);
 
     // drop the instance of type1, now delete of module1 should work
-    instanceService.drop(Id.DatasetInstance.from(Id.Namespace.DEFAULT.getId(), "instance1"));
+    instanceService.drop(NamespaceId.DEFAULT.dataset("instance1"));
     Assert.assertEquals(HttpStatus.SC_OK, deleteModules().getResponseCode());
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getMissingType("datasetType1").getResponseCode());
     verifyAll(NO_MODULES, NO_DEPENDENCIES);
@@ -203,18 +204,18 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
 
   @Test
   public void testNotFound() throws Exception {
-    Id.Namespace nonExistent = Id.Namespace.from("nonExistent");
+    NamespaceId nonExistent = new NamespaceId("nonExistent");
     HttpResponse response = makeModulesRequest(nonExistent);
     assertNamespaceNotFound(response, nonExistent);
 
     response = makeTypesRequest(nonExistent);
     assertNamespaceNotFound(response, nonExistent);
 
-    Id.DatasetModule datasetModule = Id.DatasetModule.from(nonExistent, "module");
+    DatasetModuleId datasetModule = nonExistent.datasetModule("module");
     response = makeModuleInfoRequest(datasetModule);
     assertNamespaceNotFound(response, nonExistent);
 
-    Id.DatasetType datasetType = Id.DatasetType.from(nonExistent, "type");
+    DatasetTypeId datasetType = nonExistent.datasetType("type");
     response = makeTypeInfoRequest(datasetType);
     assertNamespaceNotFound(response, nonExistent);
 
@@ -285,47 +286,48 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
   }
 
   private ObjectResponse<List<DatasetTypeMeta>> getTypes() throws IOException {
-    return getTypes(Id.Namespace.DEFAULT);
+    return getTypes(NamespaceId.DEFAULT);
   }
 
-  private ObjectResponse<List<DatasetTypeMeta>> getTypes(Id.Namespace namespaceId) throws IOException {
+  private ObjectResponse<List<DatasetTypeMeta>> getTypes(NamespaceId namespaceId) throws IOException {
     return ObjectResponse.fromJsonBody(makeTypesRequest(namespaceId),
                                        new TypeToken<List<DatasetTypeMeta>>() { }.getType());
   }
 
-  private HttpResponse makeTypesRequest(Id.Namespace namespaceId) throws IOException {
-    HttpRequest request = HttpRequest.get(getUrl(namespaceId.getId(), "/data/types")).build();
+  private HttpResponse makeTypesRequest(NamespaceId namespaceId) throws IOException {
+    HttpRequest request = HttpRequest.get(getUrl(namespaceId.getEntityName(), "/data/types")).build();
     return HttpRequests.execute(request);
   }
 
   private ObjectResponse<DatasetModuleMeta> getModule(String moduleName) throws IOException {
-    return getModule(Id.DatasetModule.from(Id.Namespace.DEFAULT, moduleName));
+    return getModule(NamespaceId.DEFAULT.datasetModule(moduleName));
   }
 
-  private ObjectResponse<DatasetModuleMeta> getModule(Id.DatasetModule module) throws IOException {
+  private ObjectResponse<DatasetModuleMeta> getModule(DatasetModuleId module) throws IOException {
     return ObjectResponse.fromJsonBody(makeModuleInfoRequest(module), DatasetModuleMeta.class);
   }
 
-  private HttpResponse makeModuleInfoRequest(Id.DatasetModule module) throws IOException {
-    HttpRequest request = HttpRequest.get(getUrl(module.getNamespaceId(), "/data/modules/" + module.getId())).build();
+  private HttpResponse makeModuleInfoRequest(DatasetModuleId module) throws IOException {
+    HttpRequest request = HttpRequest.get(getUrl(module.getNamespace(),
+                                                 "/data/modules/" + module.getEntityName())).build();
     return HttpRequests.execute(request);
   }
 
   private ObjectResponse<DatasetTypeMeta> getType(String typeName) throws IOException {
-    return getType(Id.DatasetType.from(Id.Namespace.DEFAULT, typeName));
+    return getType(NamespaceId.DEFAULT.datasetType(typeName));
   }
 
   private HttpResponse getMissingType(String typeName) throws IOException {
-    return makeTypeInfoRequest(NamespaceId.DEFAULT.datasetType(typeName).toId());
+    return makeTypeInfoRequest(NamespaceId.DEFAULT.datasetType(typeName));
   }
 
-  private ObjectResponse<DatasetTypeMeta> getType(Id.DatasetType datasetType) throws IOException {
+  private ObjectResponse<DatasetTypeMeta> getType(DatasetTypeId datasetType) throws IOException {
     return ObjectResponse.fromJsonBody(makeTypeInfoRequest(datasetType), DatasetTypeMeta.class);
   }
 
-  private HttpResponse makeTypeInfoRequest(Id.DatasetType datasetType) throws IOException {
+  private HttpResponse makeTypeInfoRequest(DatasetTypeId datasetType) throws IOException {
     HttpRequest request = HttpRequest.get(
-      getUrl(datasetType.getNamespaceId(), "/data/types/" + datasetType.getId())).build();
+      getUrl(datasetType.getNamespace(), "/data/types/" + datasetType.getEntityName())).build();
     return HttpRequests.execute(request);
   }
 }

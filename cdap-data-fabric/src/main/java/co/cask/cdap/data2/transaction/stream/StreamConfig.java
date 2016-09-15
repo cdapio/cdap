@@ -18,7 +18,7 @@ package co.cask.cdap.data2.transaction.stream;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Objects;
 import org.apache.twill.filesystem.Location;
 
@@ -35,7 +35,7 @@ public final class StreamConfig {
       Schema.recordOf("stringBody", Schema.Field.of("body", Schema.of(Schema.Type.STRING))),
       Collections.<String, String>emptyMap());
 
-  private final transient Id.Stream streamId;
+  private final transient StreamId streamId;
   private final long partitionDuration;
   private final long indexInterval;
   private final long ttl;
@@ -44,7 +44,7 @@ public final class StreamConfig {
 
   private final transient Location location;
 
-  public StreamConfig(Id.Stream streamId, long partitionDuration, long indexInterval, long ttl,
+  public StreamConfig(StreamId streamId, long partitionDuration, long indexInterval, long ttl,
                       Location location, FormatSpecification format, int notificationThresholdMB) {
     this.streamId = streamId;
     this.partitionDuration = partitionDuration;
@@ -58,7 +58,7 @@ public final class StreamConfig {
   /**
    * @return Id of the stream.
    */
-  public Id.Stream getStreamId() {
+  public StreamId getStreamId() {
     return streamId;
   }
 

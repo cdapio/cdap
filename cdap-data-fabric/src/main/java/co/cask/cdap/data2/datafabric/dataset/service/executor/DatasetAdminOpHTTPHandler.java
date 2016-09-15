@@ -24,7 +24,8 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
@@ -67,9 +68,9 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("name") String instanceName) {
     propagateUserId(request);
-    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+    NamespaceId namespace = new NamespaceId(namespaceId);
     try {
-      Id.DatasetInstance instanceId = Id.DatasetInstance.from(namespace, instanceName);
+      DatasetId instanceId = namespace.dataset(instanceName);
       responder.sendJson(HttpResponseStatus.OK,
                          new DatasetAdminOpResponse(datasetAdminService.exists(instanceId), null));
     } catch (NotFoundException e) {
@@ -96,7 +97,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
     DatasetTypeMeta typeMeta = params.getTypeMeta();
 
     try {
-      Id.DatasetInstance instanceId = Id.DatasetInstance.from(namespaceId, name);
+      DatasetId instanceId = new DatasetId(namespaceId, name);
       DatasetSpecification spec = datasetAdminService.createOrUpdate(instanceId, typeMeta, props, null);
       responder.sendJson(HttpResponseStatus.OK, spec);
     } catch (BadRequestException e) {
@@ -123,7 +124,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
     DatasetTypeMeta typeMeta = params.getTypeMeta();
 
     try {
-      Id.DatasetInstance instanceId = Id.DatasetInstance.from(namespaceId, name);
+      DatasetId instanceId = new DatasetId(namespaceId, name);
       DatasetSpecification spec = datasetAdminService.createOrUpdate(instanceId, typeMeta, props, existing);
       responder.sendJson(HttpResponseStatus.OK, spec);
     } catch (NotFoundException e) {
@@ -153,7 +154,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
     DatasetTypeMeta typeMeta = params.getTypeMeta();
 
     try {
-      datasetAdminService.drop(Id.DatasetInstance.from(namespaceId, instanceName), typeMeta, spec);
+      datasetAdminService.drop(new DatasetId(namespaceId, instanceName), typeMeta, spec);
       responder.sendJson(HttpResponseStatus.OK, spec);
     } catch (BadRequestException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -167,7 +168,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
                        @PathParam("name") String instanceName) {
     propagateUserId(request);
     try {
-      Id.DatasetInstance instanceId = Id.DatasetInstance.from(namespaceId, instanceName);
+      DatasetId instanceId = new DatasetId(namespaceId, instanceName);
       datasetAdminService.truncate(instanceId);
       responder.sendJson(HttpResponseStatus.OK, new DatasetAdminOpResponse(null, null));
     } catch (NotFoundException e) {
@@ -186,7 +187,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
                       @PathParam("name") String instanceName) {
     propagateUserId(request);
     try {
-      Id.DatasetInstance instanceId = Id.DatasetInstance.from(namespaceId, instanceName);
+      DatasetId instanceId = new DatasetId(namespaceId, instanceName);
       datasetAdminService.upgrade(instanceId);
       responder.sendJson(HttpResponseStatus.OK, new DatasetAdminOpResponse(null, null));
     } catch (NotFoundException e) {

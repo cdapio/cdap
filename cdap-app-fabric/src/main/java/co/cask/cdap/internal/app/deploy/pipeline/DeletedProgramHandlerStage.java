@@ -122,7 +122,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
           @Override
           public Void call() throws Exception {
             for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
-              streamConsumerFactory.dropAll(namespaceId.stream(entry.getKey()).toId(), namespace, entry.getValue());
+              streamConsumerFactory.dropAll(namespaceId.stream(entry.getKey()), namespace, entry.getValue());
             }
             queueAdmin.dropAllForFlow(Id.Flow.from(programId.getApplication(), programId.getEntityName()));
             return null;

@@ -20,8 +20,8 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.service.datasets.KeyStructValueTableDefinition;
 import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryResult;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -45,10 +45,9 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  private static final Id.DatasetInstance otherTable = Id.DatasetInstance.from(NAMESPACE_ID, "other_table");
+  private static final DatasetId otherTable = NAMESPACE_ID.dataset("other_table");
   private static final String otherTableName = getDatasetHiveName(otherTable);
-  private static final Id.DatasetInstance namespacedOtherTable =
-    Id.DatasetInstance.from(OTHER_NAMESPACE_ID, "other_table");
+  private static final DatasetId namespacedOtherTable = OTHER_NAMESPACE_ID.dataset("other_table");
   private static final String namespacedOtherTableName = getDatasetHiveName(namespacedOtherTable);
 
   @BeforeClass
@@ -120,7 +119,7 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
     );
 
     // Pattern on database
-    future = getExploreClient().tables(null, OTHER_NAMESPACE_ID.getId(), "%", null);
+    future = getExploreClient().tables(null, OTHER_NAMESPACE_ID.getNamespace(), "%", null);
     assertStatementResult(future, true,
                           Lists.newArrayList(
                             new ColumnDesc("TABLE_CAT", "STRING", 1, "Catalog name. NULL if not applicable."),
@@ -164,7 +163,7 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
                                              new QueryResult(Lists.<Object>newArrayList(DEFAULT_DATABASE, "")))
     );
 
-    future = getExploreClient().schemas(null, NAMESPACE_ID.getId());
+    future = getExploreClient().schemas(null, NAMESPACE_ID.getNamespace());
     assertStatementResult(future, true,
                           Lists.newArrayList(
                             new ColumnDesc("TABLE_SCHEM", "STRING", 1, "Schema name."),
@@ -173,7 +172,7 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
                           Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(NAMESPACE_DATABASE, "")))
     );
 
-    future = getExploreClient().schemas(null, OTHER_NAMESPACE_ID.getId());
+    future = getExploreClient().schemas(null, OTHER_NAMESPACE_ID.getNamespace());
     assertStatementResult(future, true,
                           Lists.newArrayList(
                             new ColumnDesc("TABLE_SCHEM", "STRING", 1, "Schema name."),
@@ -355,7 +354,7 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
                           expectedColumnDescs, expectedColumns);
 
     // Get all columns in a namespace
-    future = getExploreClient().columns(null, OTHER_NAMESPACE_ID.getId(), "%", "%");
+    future = getExploreClient().columns(null, OTHER_NAMESPACE_ID.getNamespace(), "%", "%");
     assertStatementResult(future, true,
                           expectedColumnDescs,
                           getExpectedColumns(OTHER_NAMESPACE_DATABASE)

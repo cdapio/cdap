@@ -39,7 +39,7 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
@@ -148,9 +148,9 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
 
   @Test
   public void testMapreduceWithDynamicDatasets() throws Exception {
-    Id.DatasetInstance rtInput1 = Id.DatasetInstance.from(DefaultId.NAMESPACE, "rtInput1");
-    Id.DatasetInstance rtInput2 = Id.DatasetInstance.from(DefaultId.NAMESPACE, "rtInput2");
-    Id.DatasetInstance rtOutput1 = Id.DatasetInstance.from(DefaultId.NAMESPACE, "rtOutput1");
+    DatasetId rtInput1 = DefaultId.NAMESPACE.dataset("rtInput1");
+    DatasetId rtInput2 = DefaultId.NAMESPACE.dataset("rtInput2");
+    DatasetId rtOutput1 = DefaultId.NAMESPACE.dataset("rtOutput1");
     // create the datasets here because they are not created by the app
     dsFramework.addInstance("fileSet", rtInput1, FileSetProperties.builder()
       .setBasePath("rtInput1")
@@ -190,7 +190,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
         Integer.MAX_VALUE,
         "system." + Constants.Metrics.Name.Dataset.OP_COUNT,
         AggregationFunction.SUM,
-        ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, DefaultId.NAMESPACE.getId(),
+        ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, DefaultId.NAMESPACE.getNamespace(),
                         Constants.Metrics.Tag.APP, AppWithMapReduceUsingRuntimeDatasets.APP_NAME,
                         Constants.Metrics.Tag.MAPREDUCE, AppWithMapReduceUsingRuntimeDatasets.MR_NAME,
                         Constants.Metrics.Tag.DATASET, "rtt"),

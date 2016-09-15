@@ -21,9 +21,12 @@ import co.cask.cdap.client.app.AllProgramsApp;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramStatus;
-import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.reflect.TypeToken;
@@ -52,37 +55,37 @@ public class UsageHandlerTestRun extends ClientTestBase {
   private static final Gson GSON = new Gson();
 
   private void deployApp(Class<? extends Application> appCls) throws Exception {
-    new ApplicationClient(getClientConfig()).deploy(Id.Namespace.DEFAULT, createAppJarFile(appCls));
+    new ApplicationClient(getClientConfig()).deploy(NamespaceId.DEFAULT.toId(), createAppJarFile(appCls));
   }
 
-  private void deleteApp(Id.Application appId) throws Exception {
-    new ApplicationClient(getClientConfig()).delete(appId);
+  private void deleteApp(ApplicationId appId) throws Exception {
+    new ApplicationClient(getClientConfig()).delete(appId.toId());
   }
 
-  private void startProgram(Id.Program programId) throws Exception {
-    new ProgramClient(getClientConfig()).start(programId);
+  private void startProgram(ProgramId programId) throws Exception {
+    new ProgramClient(getClientConfig()).start(programId.toId());
   }
 
-  private void stopProgram(Id.Program programId) throws Exception {
-    new ProgramClient(getClientConfig()).stop(programId);
+  private void stopProgram(ProgramId programId) throws Exception {
+    new ProgramClient(getClientConfig()).stop(programId.toId());
   }
 
-  private void waitState(final Id.Program programId, ProgramStatus status) throws Exception {
+  private void waitState(final ProgramId programId, ProgramStatus status) throws Exception {
     final ProgramClient programclient = new ProgramClient(getClientConfig());
     Tasks.waitFor(status, new Callable<ProgramStatus>() {
       @Override
       public ProgramStatus call() throws Exception {
-        return ProgramStatus.valueOf(programclient.getStatus(programId));
+        return ProgramStatus.valueOf(programclient.getStatus(programId.toId()));
       }
     }, 60, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
   @Test
   public void testFlowUsage() throws Exception {
-    final Id.Application app = Id.Application.from("default", AllProgramsApp.NAME);
-    final Id.Program program = Id.Program.from(app, ProgramType.FLOW, AllProgramsApp.NoOpFlow.NAME);
-    final Id.Stream stream = Id.Stream.from("default", AllProgramsApp.STREAM_NAME);
-    final Id.DatasetInstance dataset = Id.DatasetInstance.from("default", AllProgramsApp.DATASET_NAME);
+    final ApplicationId app = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
+    final ProgramId program = app.flow(AllProgramsApp.NoOpFlow.NAME);
+    final StreamId stream = NamespaceId.DEFAULT.stream(AllProgramsApp.STREAM_NAME);
+    final DatasetId dataset = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME);
 
     Assert.assertEquals(0, getAppStreamUsage(app).size());
     Assert.assertEquals(0, getProgramStreamUsage(program).size());
@@ -113,10 +116,10 @@ public class UsageHandlerTestRun extends ClientTestBase {
 
   @Test
   public void testWorkerUsage() throws Exception {
-    final Id.Application app = Id.Application.from("default", AllProgramsApp.NAME);
-    final Id.Program program = Id.Program.from(app, ProgramType.WORKER, AllProgramsApp.NoOpWorker.NAME);
-    final Id.Stream stream = Id.Stream.from("default", AllProgramsApp.STREAM_NAME);
-    final Id.DatasetInstance dataset = Id.DatasetInstance.from("default", AllProgramsApp.DATASET_NAME);
+    final ApplicationId app = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
+    final ProgramId program = app.worker(AllProgramsApp.NoOpWorker.NAME);
+    final StreamId stream = NamespaceId.DEFAULT.stream(AllProgramsApp.STREAM_NAME);
+    final DatasetId dataset = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME);
 
     Assert.assertEquals(0, getAppStreamUsage(app).size());
     Assert.assertEquals(0, getProgramStreamUsage(program).size());
@@ -154,10 +157,10 @@ public class UsageHandlerTestRun extends ClientTestBase {
 
   @Test
   public void testMapReduceUsage() throws Exception {
-    final Id.Application app = Id.Application.from("default", AllProgramsApp.NAME);
-    final Id.Program program = Id.Program.from(app, ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR.NAME);
-    final Id.Stream stream = Id.Stream.from("default", AllProgramsApp.STREAM_NAME);
-    final Id.DatasetInstance dataset = Id.DatasetInstance.from("default", AllProgramsApp.DATASET_NAME);
+    final ApplicationId app = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
+    final ProgramId program = app.mr(AllProgramsApp.NoOpMR.NAME);
+    final StreamId stream = NamespaceId.DEFAULT.stream(AllProgramsApp.STREAM_NAME);
+    final DatasetId dataset = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME);
 
     Assert.assertEquals(0, getAppStreamUsage(app).size());
     Assert.assertEquals(0, getProgramStreamUsage(program).size());
@@ -194,10 +197,10 @@ public class UsageHandlerTestRun extends ClientTestBase {
 
   @Test
   public void testSparkUsage() throws Exception {
-    final Id.Application app = Id.Application.from("default", AllProgramsApp.NAME);
-    final Id.Program program = Id.Program.from(app, ProgramType.SPARK, AllProgramsApp.NoOpSpark.NAME);
-    final Id.Stream stream = Id.Stream.from("default", AllProgramsApp.STREAM_NAME);
-    final Id.DatasetInstance dataset = Id.DatasetInstance.from("default", AllProgramsApp.DATASET_NAME);
+    final ApplicationId app = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
+    final ProgramId program = app.spark(AllProgramsApp.NoOpSpark.NAME);
+    final StreamId stream = NamespaceId.DEFAULT.stream(AllProgramsApp.STREAM_NAME);
+    final DatasetId dataset = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME);
 
     Assert.assertEquals(0, getAppStreamUsage(app).size());
     Assert.assertEquals(0, getProgramStreamUsage(program).size());
@@ -259,9 +262,9 @@ public class UsageHandlerTestRun extends ClientTestBase {
 
   @Test
   public void testServiceUsage() throws Exception {
-    final Id.Application app = Id.Application.from("default", AllProgramsApp.NAME);
-    final Id.Program program = Id.Program.from(app, ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
-    final Id.DatasetInstance dataset = Id.DatasetInstance.from("default", AllProgramsApp.DATASET_NAME);
+    final ApplicationId app = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
+    final ProgramId program = app.service(AllProgramsApp.NoOpService.NAME);
+    final DatasetId dataset = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME);
 
     Assert.assertEquals(0, getAppDatasetUsage(app).size());
     Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
@@ -297,42 +300,42 @@ public class UsageHandlerTestRun extends ClientTestBase {
     }
   }
 
-  private Set<Id.DatasetInstance> getAppDatasetUsage(Id.Application app) throws Exception {
-    return doGet(String.format("/v3/namespaces/%s/apps/%s/datasets", app.getNamespaceId(), app.getId()),
-                 new TypeToken<Set<Id.DatasetInstance>>() { }.getType());
+  private Set<DatasetId> getAppDatasetUsage(ApplicationId app) throws Exception {
+    return doGet(String.format("/v3/namespaces/%s/apps/%s/datasets", app.getNamespace(), app.getEntityName()),
+                 new TypeToken<Set<DatasetId>>() { }.getType());
   }
 
-  private Set<Id.Stream> getAppStreamUsage(Id.Application app) throws Exception {
-    return doGet(String.format("/v3/namespaces/%s/apps/%s/streams", app.getNamespaceId(), app.getId()),
-                 new TypeToken<Set<Id.Stream>>() { }.getType());
+  private Set<StreamId> getAppStreamUsage(ApplicationId app) throws Exception {
+    return doGet(String.format("/v3/namespaces/%s/apps/%s/streams", app.getNamespace(), app.getEntityName()),
+                 new TypeToken<Set<StreamId>>() { }.getType());
   }
 
-  private Set<Id.DatasetInstance> getProgramDatasetUsage(Id.Program program) throws Exception {
+  private Set<DatasetId> getProgramDatasetUsage(ProgramId program) throws Exception {
     return doGet(String.format("/v3/namespaces/%s/apps/%s/%s/%s/datasets",
-                               program.getNamespaceId(), program.getApplicationId(),
-                               program.getType().getCategoryName(), program.getId()),
-                 new TypeToken<Set<Id.DatasetInstance>>() { }.getType());
+                               program.getNamespace(), program.getApplication(),
+                               program.getType().getCategoryName(), program.getEntityName()),
+                 new TypeToken<Set<DatasetId>>() { }.getType());
   }
 
-  private Set<Id.Stream> getProgramStreamUsage(Id.Program program) throws Exception {
+  private Set<StreamId> getProgramStreamUsage(ProgramId program) throws Exception {
     return doGet(String.format("/v3/namespaces/%s/apps/%s/%s/%s/streams",
-                               program.getNamespaceId(), program.getApplicationId(),
+                               program.getNamespace(), program.getApplication(),
                                program.getType().getCategoryName(),
-                               program.getId()),
-                 new TypeToken<Set<Id.Stream>>() { }.getType());
+                               program.getEntityName()),
+                 new TypeToken<Set<StreamId>>() { }.getType());
   }
 
   // dataset/stream -> program
 
-  private Set<Id.Program> getStreamProgramUsage(Id.Stream stream) throws Exception {
+  private Set<ProgramId> getStreamProgramUsage(StreamId stream) throws Exception {
     return doGet(String.format("/v3/namespaces/%s/streams/%s/programs",
-                               stream.getNamespaceId(), stream.getId()),
-                 new TypeToken<Set<Id.Program>>() { }.getType());
+                               stream.getNamespace(), stream.getEntityName()),
+                 new TypeToken<Set<ProgramId>>() { }.getType());
   }
 
-  private Set<Id.Program> getDatasetProgramUsage(Id.DatasetInstance dataset) throws Exception {
+  private Set<ProgramId> getDatasetProgramUsage(DatasetId dataset) throws Exception {
     return doGet(String.format("/v3/namespaces/%s/data/datasets/%s/programs",
-                               dataset.getNamespaceId(), dataset.getId()),
-                 new TypeToken<Set<Id.Program>>() { }.getType());
+                               dataset.getNamespace(), dataset.getEntityName()),
+                 new TypeToken<Set<ProgramId>>() { }.getType());
   }
 }

@@ -19,7 +19,8 @@ package co.cask.cdap.data2.datafabric;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetNamespace;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 
 import javax.annotation.Nullable;
@@ -27,7 +28,7 @@ import javax.annotation.Nullable;
 /**
  * Default dataset namespace, which namespaces by configuration setting 
  * {@link co.cask.cdap.common.conf.Constants.Dataset#TABLE_PREFIX} and
- * the {@link Id.Namespace} in which the dataset instance was created.
+ * the {@link NamespaceId} in which the dataset instance was created.
  */
 public class DefaultDatasetNamespace implements DatasetNamespace {
   private final String rootPrefix;
@@ -38,23 +39,23 @@ public class DefaultDatasetNamespace implements DatasetNamespace {
   }
 
   @Override
-  public Id.DatasetInstance namespace(String datasetInstanceName) {
-    return namespace(Id.DatasetInstance.from(Id.Namespace.SYSTEM, datasetInstanceName));
+  public DatasetId namespace(String datasetInstanceName) {
+    return namespace(NamespaceId.SYSTEM.dataset(datasetInstanceName));
   }
 
   @Override
-  public Id.DatasetInstance namespace(Id.DatasetInstance datasetInstanceId) {
-    String namespaced = namespace(datasetInstanceId.getNamespace(), datasetInstanceId.getId());
-    return Id.DatasetInstance.from(datasetInstanceId.getNamespace(), namespaced);
+  public DatasetId namespace(DatasetId datasetInstanceId) {
+    String namespaced = namespace(datasetInstanceId.getParent(), datasetInstanceId.getEntityName());
+    return datasetInstanceId.getParent().dataset(namespaced);
   }
 
   @Override
-  public String namespace(Id.Namespace namespaceId, String suffix) {
-    return rootPrefix + namespaceId.getId() + "." + suffix;
+  public String namespace(NamespaceId namespaceId, String suffix) {
+    return rootPrefix + namespaceId.getNamespace() + "." + suffix;
   }
 
   @Override
-  public Id.DatasetInstance fromNamespaced(String namespaced) {
+  public DatasetId fromNamespaced(String namespaced) {
     Preconditions.checkArgument(namespaced != null, "Dataset name should not be null");
     // Dataset name is of the format <table-prefix>.<namespace>.<dataset-name>
     Preconditions.checkArgument(namespaced.startsWith(rootPrefix), "Dataset name should start with " + rootPrefix);
@@ -67,24 +68,24 @@ public class DefaultDatasetNamespace implements DatasetNamespace {
     Preconditions.checkArgument(namespaceIndex > rootIndex,
                                 "Dataset name is expected to be in the format %s<namespace>.<dataset-name>. Found - %s",
                                 rootPrefix, namespaced);
-    String namespace = namespaced.substring(rootIndex, namespaceIndex);
+    NamespaceId namespace = new NamespaceId(namespaced.substring(rootIndex, namespaceIndex));
     String datasetName = namespaced.substring(namespaceIndex + 1);
     Preconditions.checkArgument(!datasetName.isEmpty(),
                                 "Dataset name is expected to be in the format %s<namespace>.<dataset-name>. Found - %s",
                                 rootPrefix, namespaced);
-    return Id.DatasetInstance.from(Id.Namespace.from(namespace), datasetName);
+    return namespace.dataset(datasetName);
   }
 
   @Override
   @Nullable
-  public Id.DatasetInstance fromNamespaced(Id.DatasetInstance datasetInstanceId) {
-    String namespacedDatasetName = datasetInstanceId.getId();
-    if (!contains(namespacedDatasetName, datasetInstanceId.getNamespaceId())) {
+  public DatasetId fromNamespaced(DatasetId datasetInstanceId) {
+    String namespacedDatasetName = datasetInstanceId.getEntityName();
+    if (!contains(namespacedDatasetName, datasetInstanceId.getNamespace())) {
       return null;
     }
-    String prefix = rootPrefix + datasetInstanceId.getNamespaceId() + ".";
+    String prefix = rootPrefix + datasetInstanceId.getNamespace() + ".";
     String nonNamespaced = namespacedDatasetName.substring(prefix.length());
-    return Id.DatasetInstance.from(datasetInstanceId.getNamespace(), nonNamespaced);
+    return datasetInstanceId.getParent().dataset(nonNamespaced);
   }
 
   @Override

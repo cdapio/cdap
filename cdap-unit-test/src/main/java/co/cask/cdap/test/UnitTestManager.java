@@ -48,6 +48,8 @@ import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
@@ -344,7 +346,7 @@ public class UnitTestManager implements TestManager {
   public final void deployDatasetModule(Id.Namespace namespace,
                                         String moduleName, Class<? extends DatasetModule> datasetModule)
     throws Exception {
-    datasetFramework.addModule(Id.DatasetModule.from(namespace, moduleName), datasetModule.newInstance());
+    datasetFramework.addModule(new DatasetModuleId(namespace.getId(), moduleName), datasetModule.newInstance());
   }
 
   @Beta
@@ -352,7 +354,7 @@ public class UnitTestManager implements TestManager {
   public final <T extends DatasetAdmin> T addDatasetInstance(Id.Namespace namespace,
                                                              String datasetTypeName, String datasetInstanceName,
                                                              DatasetProperties props) throws Exception {
-    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespace, datasetInstanceName);
+    DatasetId datasetInstanceId = new DatasetId(namespace.getId(), datasetInstanceName);
     datasetFramework.addInstance(datasetTypeName, datasetInstanceId, props);
     return datasetFramework.getAdmin(datasetInstanceId, null);
   }
@@ -368,7 +370,7 @@ public class UnitTestManager implements TestManager {
   @Beta
   @Override
   public final void deleteDatasetInstance(NamespaceId namespaceId, String datasetInstanceName) throws Exception {
-    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId.toId(), datasetInstanceName);
+    DatasetId datasetInstanceId = namespaceId.dataset(datasetInstanceName);
     datasetFramework.deleteInstance(datasetInstanceId);
   }
 
@@ -381,7 +383,7 @@ public class UnitTestManager implements TestManager {
   @Beta
   @Override
   public final <T> DataSetManager<T> getDataset(Id.Namespace namespace, String datasetInstanceName) throws Exception {
-    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespace, datasetInstanceName);
+    DatasetId datasetInstanceId = new DatasetId(namespace.getId(), datasetInstanceName);
     @SuppressWarnings("unchecked")
     final T dataSet = datasetFramework.getDataset(datasetInstanceId, new HashMap<String, String>(), null);
     try {

@@ -33,8 +33,8 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetDataset;
 import co.cask.cdap.data2.metadata.lineage.LineageDataset;
 import co.cask.cdap.data2.registry.UsageDataset;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
@@ -61,7 +61,7 @@ public final class DatasetsUtil {
    * NOTE: does poor job guarding against races, i.e. only one client for this dataset instance is supported at a time
    */
   public static <T extends Dataset> T getOrCreateDataset(DatasetFramework datasetFramework,
-                                                         Id.DatasetInstance datasetInstanceId, String typeName,
+                                                         DatasetId datasetInstanceId, String typeName,
                                                          DatasetProperties props,
                                                          Map<String, String> arguments,
                                                          ClassLoader cl)
@@ -85,7 +85,7 @@ public final class DatasetsUtil {
     try {
       return datasetContext.getDataset(datasetId.getNamespace(), datasetId.getDataset());
     } catch (DatasetInstantiationException e) {
-      createIfNotExists(datasetFramework, datasetId.toId(), datasetTypename, datasetProperties);
+      createIfNotExists(datasetFramework, datasetId, datasetTypename, datasetProperties);
       return datasetContext.getDataset(datasetId.getNamespace(), datasetId.getDataset());
     }
   }
@@ -94,7 +94,7 @@ public final class DatasetsUtil {
    * Creates instance of the data set if not exists
    */
   public static void createIfNotExists(DatasetFramework datasetFramework,
-                                       Id.DatasetInstance datasetInstanceId, String typeName,
+                                       DatasetId datasetInstanceId, String typeName,
                                        DatasetProperties props) throws DatasetManagementException, IOException {
 
     if (!datasetFramework.hasInstance(datasetInstanceId)) {
@@ -158,11 +158,11 @@ public final class DatasetsUtil {
   }
 
   //TODO: CDAP-4627 - Figure out a better way to identify system datasets in user namespaces
-  public static boolean isUserDataset(Id.DatasetInstance datasetInstanceId) {
-    return !Id.Namespace.SYSTEM.equals(datasetInstanceId.getNamespace()) &&
-      !"system.queue.config".equals(datasetInstanceId.getId()) &&
-      !datasetInstanceId.getId().startsWith("system.sharded.queue") &&
-      !datasetInstanceId.getId().startsWith("system.queue") &&
-      !datasetInstanceId.getId().startsWith("system.stream");
+  public static boolean isUserDataset(DatasetId datasetInstanceId) {
+    return !NamespaceId.SYSTEM.equals(datasetInstanceId.getParent()) &&
+      !"system.queue.config".equals(datasetInstanceId.getEntityName()) &&
+      !datasetInstanceId.getEntityName().startsWith("system.sharded.queue") &&
+      !datasetInstanceId.getEntityName().startsWith("system.queue") &&
+      !datasetInstanceId.getEntityName().startsWith("system.stream");
   }
 }

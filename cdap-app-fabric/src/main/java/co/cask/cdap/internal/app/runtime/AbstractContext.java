@@ -46,8 +46,9 @@ import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.Maps;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
@@ -68,7 +69,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final Program program;
   private final ProgramOptions programOptions;
   private final RunId runId;
-  private final Iterable<? extends Id> owners;
+  private final Iterable<? extends EntityId> owners;
   private final Map<String, String> runtimeArguments;
   private final Metrics userMetrics;
   private final MetricsContext programMetrics;
@@ -107,7 +108,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.programOptions = programOptions;
     this.runId = ProgramRunners.getRunId(programOptions);
     this.discoveryServiceClient = discoveryServiceClient;
-    this.owners = createOwners(program.getId());
+    this.owners = createOwners(program.getId().toEntityId());
     this.programMetrics = createProgramMetrics(program, runId, metricsService, metricsTags);
     this.userMetrics = new ProgramUserMetrics(programMetrics);
 
@@ -133,7 +134,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.secureStore = secureStore;
   }
 
-  private Iterable<? extends Id> createOwners(Id.Program programId) {
+  private Iterable<? extends EntityId> createOwners(ProgramId programId) {
     return Collections.singletonList(programId);
   }
 
@@ -162,7 +163,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   /**
    * Returns a list of ID who owns this program context.
    */
-  public Iterable<? extends Id> getOwners() {
+  public Iterable<? extends EntityId> getOwners() {
     return owners;
   }
 

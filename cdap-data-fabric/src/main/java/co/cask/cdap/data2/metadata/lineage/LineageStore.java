@@ -233,7 +233,7 @@ public class LineageStore implements LineageStoreReader, LineageStoreWriter {
   private LineageDataset newLineageDataset() {
     try {
       return DatasetsUtil.getOrCreateDataset(
-        datasetFramework, lineageDatasetId.toId(), LineageDataset.class.getName(),
+        datasetFramework, lineageDatasetId, LineageDataset.class.getName(),
         DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS, null);
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -246,6 +246,6 @@ public class LineageStore implements LineageStoreReader, LineageStoreWriter {
    * @param framework framework to add types and datasets to
    */
   public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
-    framework.addInstance(LineageDataset.class.getName(), LINEAGE_DATASET_ID.toId(), DatasetProperties.EMPTY);
+    framework.addInstance(LineageDataset.class.getName(), LINEAGE_DATASET_ID, DatasetProperties.EMPTY);
   }
 }

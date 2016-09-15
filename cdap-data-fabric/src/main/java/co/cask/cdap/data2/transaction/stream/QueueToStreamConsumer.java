@@ -24,7 +24,7 @@ import co.cask.cdap.common.stream.StreamEventDataCodec;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.DequeueResult;
 import co.cask.cdap.data2.queue.QueueConsumer;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.io.ByteBufferInputStream;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -46,18 +46,18 @@ public final class QueueToStreamConsumer implements StreamConsumer {
 
   private static final StreamEventCodec STREAM_EVENT_CODEC = new StreamEventCodec();
 
-  private final Id.Stream streamId;
+  private final StreamId streamId;
   private final ConsumerConfig consumerConfig;
   private final QueueConsumer consumer;
 
-  public QueueToStreamConsumer(Id.Stream streamId, ConsumerConfig consumerConfig, QueueConsumer consumer) {
+  public QueueToStreamConsumer(StreamId streamId, ConsumerConfig consumerConfig, QueueConsumer consumer) {
     this.streamId = streamId;
     this.consumerConfig = consumerConfig;
     this.consumer = consumer;
   }
 
   @Override
-  public Id.Stream getStreamId() {
+  public StreamId getStreamId() {
     return streamId;
   }
 

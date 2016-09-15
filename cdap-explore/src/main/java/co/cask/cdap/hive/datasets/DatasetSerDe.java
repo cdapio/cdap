@@ -129,7 +129,7 @@ public class DatasetSerDe implements SerDe {
       // conf is null if this is a query that writes to a dataset
       ClassLoader parentClassLoader = conf == null ? null : conf.getClassLoader();
       try (SystemDatasetInstantiator datasetInstantiator = hiveContext.createDatasetInstantiator(parentClassLoader)) {
-        Dataset dataset = datasetInstantiator.getDataset(datasetId);
+        Dataset dataset = datasetInstantiator.getDataset(datasetId.toEntityId());
         if (dataset == null) {
           throw new SerDeException("Could not find dataset " + datasetId);
         }

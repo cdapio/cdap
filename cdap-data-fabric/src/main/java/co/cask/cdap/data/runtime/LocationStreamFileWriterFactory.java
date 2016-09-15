@@ -59,7 +59,7 @@ public final class LocationStreamFileWriterFactory implements StreamFileWriterFa
     try {
       Preconditions.checkNotNull(config.getLocation(), "Location for stream %s is unknown.", config.getStreamId());
 
-      Location baseLocation = impersonator.doAs(new NamespaceId(config.getStreamId().getNamespaceId()),
+      Location baseLocation = impersonator.doAs(new NamespaceId(config.getStreamId().getNamespace()),
                                                 new Callable<Location>() {
         @Override
         public Location call() throws Exception {
@@ -71,7 +71,7 @@ public final class LocationStreamFileWriterFactory implements StreamFileWriterFa
 
       return new TimePartitionedStreamFileWriter(baseLocation, config.getPartitionDuration(),
                                                  filePrefix, config.getIndexInterval(),
-                                                 config.getStreamId().toEntityId(), impersonator);
+                                                 config.getStreamId(), impersonator);
     } catch (Exception e) {
       Throwables.propagateIfPossible(e, IOException.class);
       throw new IOException(e);

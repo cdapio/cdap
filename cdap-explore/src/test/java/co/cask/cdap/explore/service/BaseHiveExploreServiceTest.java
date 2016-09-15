@@ -65,7 +65,10 @@ import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -123,17 +126,16 @@ public class BaseHiveExploreServiceTest {
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
 
-  protected static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("namespace");
-  protected static final Id.Namespace OTHER_NAMESPACE_ID = Id.Namespace.from("other");
+  protected static final NamespaceId NAMESPACE_ID = new NamespaceId("namespace");
+  protected static final NamespaceId OTHER_NAMESPACE_ID = new NamespaceId("other");
   protected static final String DEFAULT_DATABASE = "default";
   protected static final String NAMESPACE_DATABASE = "cdap_namespace";
   protected static final String OTHER_NAMESPACE_DATABASE = "cdap_other";
-  protected static final Id.DatasetModule KEY_STRUCT_VALUE = Id.DatasetModule.from(NAMESPACE_ID, "keyStructValue");
-  protected static final Id.DatasetInstance MY_TABLE = Id.DatasetInstance.from(NAMESPACE_ID, "my_table");
+  protected static final DatasetModuleId KEY_STRUCT_VALUE = NAMESPACE_ID.datasetModule("keyStructValue");
+  protected static final DatasetId MY_TABLE = NAMESPACE_ID.dataset("my_table");
   protected static final String MY_TABLE_NAME = getDatasetHiveName(MY_TABLE);
-  protected static final Id.DatasetModule OTHER_KEY_STRUCT_VALUE =
-    Id.DatasetModule.from(OTHER_NAMESPACE_ID, "keyStructValue");
-  protected static final Id.DatasetInstance OTHER_MY_TABLE = Id.DatasetInstance.from(OTHER_NAMESPACE_ID, "my_table");
+  protected static final DatasetModuleId OTHER_KEY_STRUCT_VALUE = OTHER_NAMESPACE_ID.datasetModule("keyStructValue");
+  protected static final DatasetId OTHER_MY_TABLE = OTHER_NAMESPACE_ID.dataset("my_table");
   protected static final String OTHER_MY_TABLE_NAME = getDatasetHiveName(OTHER_MY_TABLE);
 
   // Controls for test suite for whether to run BeforeClass/AfterClass
@@ -230,8 +232,8 @@ public class BaseHiveExploreServiceTest {
     // This happens when you create a namespace via REST APIs. However, since we do not start AppFabricServer in
     // Explore tests, simulating that scenario by explicitly calling DatasetFramework APIs.
     createNamespace(NamespaceId.DEFAULT);
-    createNamespace(NAMESPACE_ID.toEntityId());
-    createNamespace(OTHER_NAMESPACE_ID.toEntityId());
+    createNamespace(NAMESPACE_ID);
+    createNamespace(OTHER_NAMESPACE_ID);
 
   }
 
@@ -243,8 +245,8 @@ public class BaseHiveExploreServiceTest {
 
     // Delete namespaces
     deleteNamespace(NamespaceId.DEFAULT);
-    deleteNamespace(NAMESPACE_ID.toEntityId());
-    deleteNamespace(OTHER_NAMESPACE_ID.toEntityId());
+    deleteNamespace(NAMESPACE_ID);
+    deleteNamespace(OTHER_NAMESPACE_ID);
     streamHttpService.stopAndWait();
     streamService.stopAndWait();
     notificationService.stopAndWait();
@@ -280,8 +282,8 @@ public class BaseHiveExploreServiceTest {
     namespaceAdmin.delete(namespaceId.toId());
   }
 
-  protected static String getDatasetHiveName(Id.DatasetInstance datasetID) {
-    return "dataset_" + datasetID.getId().replaceAll("\\.", "_").replaceAll("-", "_");
+  protected static String getDatasetHiveName(DatasetId datasetID) {
+    return "dataset_" + datasetID.getEntityName().replaceAll("\\.", "_").replaceAll("-", "_");
   }
 
   protected static ExploreClient getExploreClient() {
@@ -304,11 +306,11 @@ public class BaseHiveExploreServiceTest {
     return status;
   }
 
-  protected static void runCommand(Id.Namespace namespace, String command, boolean expectedHasResult,
+  protected static void runCommand(NamespaceId namespace, String command, boolean expectedHasResult,
                                    List<ColumnDesc> expectedColumnDescs, List<QueryResult> expectedResults)
     throws Exception {
 
-    ListenableFuture<ExploreExecutionResult> future = exploreClient.submit(namespace, command);
+    ListenableFuture<ExploreExecutionResult> future = exploreClient.submit(namespace.toId(), command);
     assertStatementResult(future, expectedHasResult, expectedColumnDescs, expectedResults);
   }
 
@@ -354,14 +356,14 @@ public class BaseHiveExploreServiceTest {
     return newResults;
   }
 
-  protected static void createStream(Id.Stream streamId) throws Exception {
+  protected static void createStream(StreamId streamId) throws Exception {
     streamAdmin.create(streamId);
     streamMetaStore.addStream(streamId);
   }
 
   protected static void dropStream(Id.Stream streamId) throws Exception {
-    streamAdmin.drop(streamId);
-    streamMetaStore.removeStream(streamId);
+    streamAdmin.drop(streamId.toEntityId());
+    streamMetaStore.removeStream(streamId.toEntityId());
   }
 
   protected static void setStreamProperties(String namespace, String streamName,

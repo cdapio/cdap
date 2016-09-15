@@ -144,7 +144,7 @@ public class MapReduceRunnerTestBase {
   public void after() throws Exception {
     // cleanup user data (only user datasets)
     for (DatasetSpecificationSummary spec : dsFramework.getInstances(DefaultId.NAMESPACE)) {
-      dsFramework.deleteInstance(Id.DatasetInstance.from(DefaultId.NAMESPACE, spec.getName()));
+      dsFramework.deleteInstance(DefaultId.NAMESPACE.dataset(spec.getName()));
     }
   }
 

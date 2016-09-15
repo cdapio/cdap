@@ -34,7 +34,7 @@ import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.common.http.HttpMethod;
@@ -119,13 +119,13 @@ class DatasetServiceClient {
   }
 
   @Nullable
-  public DatasetMeta getInstance(String instanceName, @Nullable Iterable<? extends Id> owners)
+  public DatasetMeta getInstance(String instanceName, @Nullable Iterable<? extends EntityId> owners)
     throws DatasetManagementException {
 
     String query = "";
     if (owners != null) {
       Set<String> ownerParams = Sets.newHashSet();
-      for (Id owner : owners) {
+      for (EntityId owner : owners) {
         ownerParams.add("owner=" + owner.toString());
       }
       query = ownerParams.isEmpty() ? "" : "?" + Joiner.on("&").join(ownerParams);

@@ -54,7 +54,7 @@ public class HiveExploreServiceStopTest extends BaseHiveExploreServiceTest {
     ExploreService exploreService = injector.getInstance(ExploreService.class);
     Set<Long> beforeTxns = transactionManager.getCurrentState().getInProgress().keySet();
 
-    exploreService.execute(NAMESPACE_ID, "show tables");
+    exploreService.execute(NAMESPACE_ID.toId(), "show tables");
 
     Set<Long> queryTxns = Sets.difference(transactionManager.getCurrentState().getInProgress().keySet(), beforeTxns);
     Assert.assertFalse(queryTxns.isEmpty());

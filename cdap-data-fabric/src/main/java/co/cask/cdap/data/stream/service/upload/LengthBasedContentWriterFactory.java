@@ -19,7 +19,7 @@ package co.cask.cdap.data.stream.service.upload;
 import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data.stream.service.ConcurrentStreamWriter;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
@@ -48,7 +48,7 @@ public final class LengthBasedContentWriterFactory implements ContentWriterFacto
   }
 
   @Override
-  public Id.Stream getStream() {
+  public StreamId getStream() {
     return streamConfig.getStreamId();
   }
 

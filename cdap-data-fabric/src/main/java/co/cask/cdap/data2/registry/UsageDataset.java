@@ -25,7 +25,11 @@ import co.cask.cdap.data2.registry.internal.keymaker.StreamKeyMaker;
 import co.cask.cdap.data2.registry.internal.pair.KeyMaker;
 import co.cask.cdap.data2.registry.internal.pair.OrderedPair;
 import co.cask.cdap.data2.registry.internal.pair.OrderedPairs;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
@@ -45,8 +49,8 @@ public class UsageDataset extends MetadataStoreDataset {
   public UsageDataset(Table table) {
     super(table);
 
-    Map<String, KeyMaker<? extends Id>> keyMakers =
-      ImmutableMap.<String, KeyMaker<? extends Id>>builder()
+    Map<String, KeyMaker<? extends EntityId>> keyMakers =
+      ImmutableMap.<String, KeyMaker<? extends EntityId>>builder()
         .put(PROGRAM, new ProgramKeyMaker())
         .put(DATASET, new DatasetKeyMaker())
         .put(STREAM, new StreamKeyMaker())
@@ -59,7 +63,7 @@ public class UsageDataset extends MetadataStoreDataset {
    * @param programId program
    * @param datasetInstanceId dataset
    */
-  public void register(Id.Program programId, Id.DatasetInstance datasetInstanceId) {
+  public void register(ProgramId programId, DatasetId datasetInstanceId) {
     write(orderedPairs.get(PROGRAM, DATASET).makeKey(programId, datasetInstanceId), true);
     write(orderedPairs.get(DATASET, PROGRAM).makeKey(datasetInstanceId, programId), true);
   }
@@ -69,7 +73,7 @@ public class UsageDataset extends MetadataStoreDataset {
    * @param programId program
    * @param streamId stream
    */
-  public void register(Id.Program programId, Id.Stream streamId) {
+  public void register(ProgramId programId, StreamId streamId) {
     write(orderedPairs.get(PROGRAM, STREAM).makeKey(programId, streamId), true);
     write(orderedPairs.get(STREAM, PROGRAM).makeKey(streamId, programId), true);
   }
@@ -78,16 +82,16 @@ public class UsageDataset extends MetadataStoreDataset {
    * Unregisters all usage information of an application.
    * @param applicationId application
    */
-  public void unregister(Id.Application applicationId) {
-    Id.Program programId = ProgramKeyMaker.getProgramId(applicationId);
+  public void unregister(ApplicationId applicationId) {
+    ProgramId programId = ProgramKeyMaker.getProgramId(applicationId);
 
     // Delete datasets associated with applicationId
-    for (Id.DatasetInstance datasetInstanceId : getDatasets(applicationId)) {
+    for (DatasetId datasetInstanceId : getDatasets(applicationId)) {
       deleteAll(orderedPairs.get(DATASET, PROGRAM).makeKey(datasetInstanceId, programId));
     }
 
     // Delete streams associated with applicationId
-    for (Id.Stream streamId : getStreams(applicationId)) {
+    for (StreamId streamId : getStreams(applicationId)) {
       deleteAll(orderedPairs.get(STREAM, PROGRAM).makeKey(streamId, programId));
     }
 
@@ -101,8 +105,8 @@ public class UsageDataset extends MetadataStoreDataset {
    * @param programId program
    * @return datasets used by programId
    */
-  public Set<Id.DatasetInstance> getDatasets(Id.Program programId) {
-    OrderedPair<Id.Program, Id.DatasetInstance> orderedPair = orderedPairs.get(PROGRAM, DATASET);
+  public Set<DatasetId> getDatasets(ProgramId programId) {
+    OrderedPair<ProgramId, DatasetId> orderedPair = orderedPairs.get(PROGRAM, DATASET);
     Map<MDSKey, Boolean> datasetKeys = listKV(orderedPair.makeScanKey(programId), Boolean.TYPE);
     return orderedPair.getSecond(datasetKeys.keySet());
   }
@@ -112,9 +116,9 @@ public class UsageDataset extends MetadataStoreDataset {
    * @param applicationId application
    * @return datasets used by applicaionId
    */
-  public Set<Id.DatasetInstance> getDatasets(Id.Application applicationId) {
-    Id.Program programId = ProgramKeyMaker.getProgramId(applicationId);
-    OrderedPair<Id.Program, Id.DatasetInstance> orderedPair = orderedPairs.get(PROGRAM, DATASET);
+  public Set<DatasetId> getDatasets(ApplicationId applicationId) {
+    ProgramId programId = ProgramKeyMaker.getProgramId(applicationId);
+    OrderedPair<ProgramId, DatasetId> orderedPair = orderedPairs.get(PROGRAM, DATASET);
     Map<MDSKey, Boolean> datasetKeys = listKV(orderedPair.makeScanKey(programId), Boolean.TYPE);
     return orderedPair.getSecond(datasetKeys.keySet());
   }
@@ -124,8 +128,8 @@ public class UsageDataset extends MetadataStoreDataset {
    * @param programId program
    * @return streams used by programId
    */
-  public Set<Id.Stream> getStreams(Id.Program programId) {
-    OrderedPair<Id.Program, Id.Stream> orderedPair = orderedPairs.get(PROGRAM, STREAM);
+  public Set<StreamId> getStreams(ProgramId programId) {
+    OrderedPair<ProgramId, StreamId> orderedPair = orderedPairs.get(PROGRAM, STREAM);
     Map<MDSKey, Boolean> datasetKeys = listKV(orderedPair.makeScanKey(programId), Boolean.TYPE);
     return orderedPair.getSecond(datasetKeys.keySet());
   }
@@ -135,9 +139,9 @@ public class UsageDataset extends MetadataStoreDataset {
    * @param applicationId application
    * @return streams used by applicaionId
    */
-  public Set<Id.Stream> getStreams(Id.Application applicationId) {
-    Id.Program programId = ProgramKeyMaker.getProgramId(applicationId);
-    OrderedPair<Id.Program, Id.Stream> orderedPair = orderedPairs.get(PROGRAM, STREAM);
+  public Set<StreamId> getStreams(ApplicationId applicationId) {
+    ProgramId programId = ProgramKeyMaker.getProgramId(applicationId);
+    OrderedPair<ProgramId, StreamId> orderedPair = orderedPairs.get(PROGRAM, STREAM);
     Map<MDSKey, Boolean> datasetKeys = listKV(orderedPair.makeScanKey(programId), Boolean.TYPE);
     return orderedPair.getSecond(datasetKeys.keySet());
   }
@@ -147,8 +151,8 @@ public class UsageDataset extends MetadataStoreDataset {
    * @param datasetInstanceId dataset
    * @return programs using datasetInstanceId
    */
-  public Set<Id.Program> getPrograms(Id.DatasetInstance datasetInstanceId) {
-    OrderedPair<Id.DatasetInstance, Id.Program> orderedPair = orderedPairs.get(DATASET, PROGRAM);
+  public Set<ProgramId> getPrograms(DatasetId datasetInstanceId) {
+    OrderedPair<DatasetId, ProgramId> orderedPair = orderedPairs.get(DATASET, PROGRAM);
     Map<MDSKey, Boolean> programKeys = listKV(orderedPair.makeScanKey(datasetInstanceId), Boolean.TYPE);
     return orderedPair.getSecond(programKeys.keySet());
   }
@@ -158,8 +162,8 @@ public class UsageDataset extends MetadataStoreDataset {
    * @param streamId stream
    * @return programs using streamId
    */
-  public Set<Id.Program> getPrograms(Id.Stream streamId) {
-    OrderedPair<Id.Stream, Id.Program> orderedPair = orderedPairs.get(STREAM, PROGRAM);
+  public Set<ProgramId> getPrograms(StreamId streamId) {
+    OrderedPair<StreamId, ProgramId> orderedPair = orderedPairs.get(STREAM, PROGRAM);
     Map<MDSKey, Boolean> programKeys = listKV(orderedPair.makeScanKey(streamId), Boolean.TYPE);
     return orderedPair.getSecond(programKeys.keySet());
   }

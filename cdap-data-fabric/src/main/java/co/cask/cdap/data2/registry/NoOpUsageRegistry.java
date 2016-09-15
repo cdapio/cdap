@@ -16,7 +16,11 @@
 
 package co.cask.cdap.data2.registry;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
 
 import java.util.Collections;
 import java.util.Set;
@@ -27,53 +31,53 @@ import java.util.Set;
 public class NoOpUsageRegistry implements UsageRegistry {
 
   @Override
-  public void registerAll(final Iterable<? extends Id> users, final Id.Stream streamId) { }
+  public void registerAll(final Iterable<? extends EntityId> users, final StreamId streamId) { }
 
   @Override
-  public void register(Id user, Id.Stream streamId) { }
+  public void register(EntityId user, StreamId streamId) { }
 
   @Override
-  public void registerAll(final Iterable<? extends Id> users, final Id.DatasetInstance datasetId) { }
+  public void registerAll(final Iterable<? extends EntityId> users, final DatasetId datasetId) { }
 
   @Override
-  public void register(Id user, Id.DatasetInstance datasetId) { }
+  public void register(EntityId user, DatasetId datasetId) { }
 
   @Override
-  public void register(final Id.Program programId, final Id.DatasetInstance datasetInstanceId) { }
+  public void register(final ProgramId programId, final DatasetId datasetInstanceId) { }
 
   @Override
-  public void register(final Id.Program programId, final Id.Stream streamId) { }
+  public void register(final ProgramId programId, final StreamId streamId) { }
 
   @Override
-  public void unregister(final Id.Application applicationId) { }
+  public void unregister(final ApplicationId applicationId) { }
 
   @Override
-  public Set<Id.DatasetInstance> getDatasets(final Id.Application id) {
+  public Set<DatasetId> getDatasets(final ApplicationId id) {
     return Collections.emptySet();
   }
 
   @Override
-  public Set<Id.Stream> getStreams(final Id.Application id) {
+  public Set<StreamId> getStreams(final ApplicationId id) {
     return Collections.emptySet();
   }
 
   @Override
-  public Set<Id.DatasetInstance> getDatasets(final Id.Program id) {
+  public Set<DatasetId> getDatasets(final ProgramId id) {
     return Collections.emptySet();
   }
 
   @Override
-  public Set<Id.Stream> getStreams(final Id.Program id) {
+  public Set<StreamId> getStreams(final ProgramId id) {
     return Collections.emptySet();
   }
 
   @Override
-  public Set<Id.Program> getPrograms(final Id.Stream id) {
+  public Set<ProgramId> getPrograms(final StreamId id) {
     return Collections.emptySet();
   }
 
   @Override
-  public Set<Id.Program> getPrograms(final Id.DatasetInstance id) {
+  public Set<ProgramId> getPrograms(final DatasetId id) {
     return Collections.emptySet();
   }
 }

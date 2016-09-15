@@ -39,7 +39,6 @@ import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Supplier;
@@ -137,7 +136,7 @@ public class WorkerProgramRunnerTest {
     }
     // cleanup user data (only user datasets)
     for (DatasetSpecificationSummary spec : dsFramework.getInstances(DefaultId.NAMESPACE)) {
-      dsFramework.deleteInstance(Id.DatasetInstance.from(DefaultId.NAMESPACE, spec.getName()));
+      dsFramework.deleteInstance(DefaultId.NAMESPACE.dataset(spec.getName()));
     }
   }
 
@@ -190,7 +189,7 @@ public class WorkerProgramRunnerTest {
             Integer.MAX_VALUE,
             "system." + Constants.Metrics.Name.Dataset.OP_COUNT,
             AggregationFunction.SUM,
-            ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, DefaultId.NAMESPACE.getId(),
+            ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, DefaultId.NAMESPACE.getEntityName(),
                             Constants.Metrics.Tag.APP, AppWithWorker.NAME,
                             Constants.Metrics.Tag.WORKER, AppWithWorker.WORKER,
                             Constants.Metrics.Tag.DATASET, AppWithWorker.DATASET),

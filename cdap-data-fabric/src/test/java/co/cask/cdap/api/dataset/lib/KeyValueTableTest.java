@@ -21,7 +21,7 @@ import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.collect.Sets;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionFailureException;
@@ -51,8 +51,7 @@ public class KeyValueTableTest {
   static final byte[] VAL2 = Bytes.toBytes("VAL2");
   static final byte[] VAL3 = Bytes.toBytes("VAL3");
 
-  private static final Id.DatasetInstance testInstance =
-    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "test");
+  private static final DatasetId testInstance = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("test");
 
   private static KeyValueTable kvTable;
 
@@ -187,8 +186,8 @@ public class KeyValueTableTest {
 
   @Test
   public void testTransactionAcrossTables() throws Exception {
-    Id.DatasetInstance t1 = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "t1");
-    Id.DatasetInstance t2 = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "t2");
+    DatasetId t1 = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("t1");
+    DatasetId t2 = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("t2");
     dsFrameworkUtil.createInstance("keyValueTable", t1, DatasetProperties.EMPTY);
     dsFrameworkUtil.createInstance("keyValueTable", t2, DatasetProperties.EMPTY);
 
@@ -253,7 +252,7 @@ public class KeyValueTableTest {
 
   @Test
   public void testScanning() throws Exception {
-    Id.DatasetInstance tScan = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "tScan");
+    DatasetId tScan = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("tScan");
     dsFrameworkUtil.createInstance("keyValueTable", tScan, DatasetProperties.EMPTY);
 
     final KeyValueTable t = dsFrameworkUtil.getInstance(tScan);
@@ -311,7 +310,7 @@ public class KeyValueTableTest {
 
   @Test
   public void testBatchReads() throws Exception {
-    Id.DatasetInstance tBatch = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "tBatch");
+    DatasetId tBatch = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("tBatch");
     dsFrameworkUtil.createInstance("keyValueTable", tBatch, DatasetProperties.EMPTY);
 
     final KeyValueTable t = dsFrameworkUtil.getInstance(tBatch);

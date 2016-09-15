@@ -25,7 +25,6 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
@@ -112,13 +111,13 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
 
   @Test
   public void testNoOpOnMissingSchema() throws Exception {
-    DatasetId datasetId = new DatasetId(NAMESPACE_ID.getId(), "noschema");
-    datasetFramework.addInstance(Table.class.getName(), datasetId.toId(), DatasetProperties.EMPTY);
+    DatasetId datasetId = NAMESPACE_ID.dataset("noschema");
+    datasetFramework.addInstance(Table.class.getName(), datasetId, DatasetProperties.EMPTY);
     try {
-      DatasetSpecification spec = datasetFramework.getDatasetSpec(datasetId.toId());
+      DatasetSpecification spec = datasetFramework.getDatasetSpec(datasetId);
       Assert.assertEquals(QueryHandle.NO_OP, exploreTableManager.enableDataset(datasetId, spec));
     } finally {
-      datasetFramework.deleteInstance(datasetId.toId());
+      datasetFramework.deleteInstance(datasetId);
     }
   }
 
@@ -154,7 +153,7 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
       new ColumnDesc(MY_TABLE_NAME + ".bytes_field", "BINARY", 6, null),
       new ColumnDesc(MY_TABLE_NAME + ".string_field", "STRING", 7, null)
     );
-    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID, "select * from " + MY_TABLE_NAME).get();
+    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID.toId(), "select * from " + MY_TABLE_NAME).get();
     // check SCHEMA
     Assert.assertEquals(expectedSchema, results.getResultSchema());
     List<Object> columns = results.next().getColumns();
@@ -185,12 +184,12 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
   @Test
   public void testUpdateNoSchemaThenWithSchema() throws Exception {
     // make sure we can get the table info
-    exploreService.getTableInfo(NAMESPACE_ID.getId(), MY_TABLE_NAME);
+    exploreService.getTableInfo(NAMESPACE_ID.getNamespace(), MY_TABLE_NAME);
     // update the properties to be not explorable
     datasetFramework.updateInstance(MY_TABLE, DatasetProperties.EMPTY);
     // validate the new table SCHEMA
     try {
-      exploreService.getTableInfo(NAMESPACE_ID.getId(), MY_TABLE_NAME);
+      exploreService.getTableInfo(NAMESPACE_ID.getNamespace(), MY_TABLE_NAME);
       Assert.fail("Expected TableNotFoundException");
     } catch (TableNotFoundException e) {
       // expected
@@ -252,7 +251,7 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
       new ColumnDesc(MY_TABLE_NAME + ".new_field", "STRING", 6, null),
       new ColumnDesc(MY_TABLE_NAME + ".string_field", "STRING", 7, null)
     );
-    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID, "select * from " + MY_TABLE_NAME).get();
+    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID.toId(), "select * from " + MY_TABLE_NAME).get();
     // check SCHEMA
     Assert.assertEquals(expectedSchema, results.getResultSchema());
     List<Object> columns = results.next().getColumns();
@@ -271,7 +270,7 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
 
   @Test
   public void testInsert() throws Exception {
-    Id.DatasetInstance otherTable = Id.DatasetInstance.from(NAMESPACE_ID, "othertable");
+    DatasetId otherTable = NAMESPACE_ID.dataset("othertable");
 
     Schema schema = Schema.recordOf(
       "record",
@@ -285,7 +284,7 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
     try {
       String command = String.format("insert into %s select int_field, string_field from %s",
                                      getDatasetHiveName(otherTable), MY_TABLE_NAME);
-      ExploreExecutionResult result = exploreClient.submit(NAMESPACE_ID, command).get();
+      ExploreExecutionResult result = exploreClient.submit(NAMESPACE_ID.toId(), command).get();
       Assert.assertEquals(QueryStatus.OpStatus.FINISHED, result.getStatus().getStatus());
 
       command = String.format("select id, value from %s", getDatasetHiveName(otherTable));
@@ -302,9 +301,9 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
 
   @Test
   public void testInsertFromJoin() throws Exception {
-    Id.DatasetInstance userTableID = Id.DatasetInstance.from(NAMESPACE_ID, "users");
-    Id.DatasetInstance purchaseTableID = Id.DatasetInstance.from(NAMESPACE_ID, "purchases");
-    Id.DatasetInstance expandedTableID = Id.DatasetInstance.from(NAMESPACE_ID, "expanded");
+    DatasetId userTableID = NAMESPACE_ID.dataset("users");
+    DatasetId purchaseTableID = NAMESPACE_ID.dataset("purchases");
+    DatasetId expandedTableID = NAMESPACE_ID.dataset("expanded");
 
     Schema userSchema = Schema.recordOf(
       "user",
@@ -383,7 +382,7 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
         "insert into table %s select P.purchaseid, P.itemid, P.userid, P.ct, P.price, U.name, U.email from " +
           "%s P join %s U on (P.userid = U.id)",
         getDatasetHiveName(expandedTableID), getDatasetHiveName(purchaseTableID), getDatasetHiveName(userTableID));
-      ExploreExecutionResult result = exploreClient.submit(NAMESPACE_ID, command).get();
+      ExploreExecutionResult result = exploreClient.submit(NAMESPACE_ID.toId(), command).get();
       Assert.assertEquals(QueryStatus.OpStatus.FINISHED, result.getStatus().getStatus());
 
       command = String.format("select purchaseid, itemid, userid, ct, price, username, email from %s",

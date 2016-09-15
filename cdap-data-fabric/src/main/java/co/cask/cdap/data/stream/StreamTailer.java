@@ -26,7 +26,8 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import com.google.common.base.Charsets;
@@ -71,7 +72,7 @@ public class StreamTailer {
     StreamAdmin streamAdmin = injector.getInstance(StreamAdmin.class);
 
     //TODO: get namespace from commandline arguments
-    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
+    StreamId streamId = NamespaceId.DEFAULT.stream(streamName);
     StreamConfig streamConfig = streamAdmin.getConfig(streamId);
     Location streamLocation = streamConfig.getLocation();
     List<Location> eventFiles = Lists.newArrayList();

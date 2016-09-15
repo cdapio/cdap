@@ -18,8 +18,12 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.registry.UsageRegistry;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
@@ -49,8 +53,8 @@ public class UsageHandler extends AbstractHttpHandler {
   public void getAppDatasetUsage(HttpRequest request, HttpResponder responder,
                                  @PathParam("namespace-id") String namespaceId,
                                  @PathParam("app-id") String appId) {
-    final Id.Application id = Id.Application.from(namespaceId, appId);
-    Set<? extends Id> ids = registry.getDatasets(id);
+    final ApplicationId id = new ApplicationId(namespaceId, appId);
+    Set<? extends EntityId> ids = registry.getDatasets(id);
     responder.sendJson(HttpResponseStatus.OK, ids);
   }
 
@@ -59,8 +63,8 @@ public class UsageHandler extends AbstractHttpHandler {
   public void getAppStreamUsage(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespaceId,
                                 @PathParam("app-id") String appId) {
-    final Id.Application id = Id.Application.from(namespaceId, appId);
-    Set<? extends Id> ids = registry.getStreams(id);
+    final ApplicationId id = new ApplicationId(namespaceId, appId);
+    Set<? extends EntityId> ids = registry.getStreams(id);
     responder.sendJson(HttpResponseStatus.OK, ids);
   }
 
@@ -72,8 +76,8 @@ public class UsageHandler extends AbstractHttpHandler {
                                      @PathParam("program-type") String programType,
                                      @PathParam("program-id") String programId) {
     ProgramType type = ProgramType.valueOfCategoryName(programType);
-    final Id.Program id = Id.Program.from(namespaceId, appId, type, programId);
-    Set<? extends Id> ids = registry.getDatasets(id);
+    final ProgramId id = new ProgramId(namespaceId, appId, type, programId);
+    Set<? extends EntityId> ids = registry.getDatasets(id);
     responder.sendJson(HttpResponseStatus.OK, ids);
   }
 
@@ -85,8 +89,8 @@ public class UsageHandler extends AbstractHttpHandler {
                                     @PathParam("program-type") String programType,
                                     @PathParam("program-id") String programId) {
     ProgramType type = ProgramType.valueOfCategoryName(programType);
-    final Id.Program id = Id.Program.from(namespaceId, appId, type, programId);
-    Set<? extends Id> ids = registry.getStreams(id);
+    final ProgramId id = new ProgramId(namespaceId, appId, type, programId);
+    Set<? extends EntityId> ids = registry.getStreams(id);
     responder.sendJson(HttpResponseStatus.OK, ids);
   }
 
@@ -95,8 +99,8 @@ public class UsageHandler extends AbstractHttpHandler {
   public void getStreamProgramUsage(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespaceId,
                                 @PathParam("stream-id") String streamId) {
-    final Id.Stream id = Id.Stream.from(namespaceId, streamId);
-    Set<? extends Id> ids = registry.getPrograms(id);
+    final StreamId id = new StreamId(namespaceId, streamId);
+    Set<? extends EntityId> ids = registry.getPrograms(id);
     responder.sendJson(HttpResponseStatus.OK, ids);
   }
 
@@ -105,8 +109,8 @@ public class UsageHandler extends AbstractHttpHandler {
   public void getDatasetAppUsage(HttpRequest request, HttpResponder responder,
                                  @PathParam("namespace-id") String namespaceId,
                                  @PathParam("dataset-id") String datasetId) {
-    final Id.DatasetInstance id = Id.DatasetInstance.from(namespaceId, datasetId);
-    Set<? extends Id> ids = registry.getPrograms(id);
+    final DatasetId id = new DatasetId(namespaceId, datasetId);
+    Set<? extends EntityId> ids = registry.getPrograms(id);
     responder.sendJson(HttpResponseStatus.OK, ids);
   }
 }

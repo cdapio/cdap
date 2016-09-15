@@ -35,6 +35,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import org.apache.tephra.TransactionAware;
@@ -129,14 +130,14 @@ public final class LineageWriterDataFabricFacade implements DataFabricFacade, Pr
   }
 
   @Override
-  public StreamConsumer createStreamConsumer(Id.Stream streamName, ConsumerConfig consumerConfig) throws IOException {
+  public StreamConsumer createStreamConsumer(StreamId streamName, ConsumerConfig consumerConfig) throws IOException {
     String namespace = String.format("%s.%s", programId.getApplicationId(), programId.getId());
     final StreamConsumer consumer = streamConsumerFactory.create(streamName, namespace, consumerConfig);
 
     datasetCache.addExtraTransactionAware(consumer);
 
     if (programContext.getRun() != null) {
-      lineageWriter.addAccess(programContext.getRun(), streamName.toEntityId(), AccessType.READ,
+      lineageWriter.addAccess(programContext.getRun(), streamName, AccessType.READ,
                               (NamespacedEntityId) programContext.getComponentId());
     }
 

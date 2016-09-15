@@ -23,7 +23,7 @@ import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
@@ -90,7 +90,7 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
       @Override
       @ParametersAreNonnullByDefault
       public Dataset load(DatasetCacheKey key) throws Exception {
-        Dataset dataset = instantiator.getDataset(Id.DatasetInstance.from(key.getNamespace(), key.getName()),
+        Dataset dataset = instantiator.getDataset(new DatasetId(key.getNamespace(), key.getName()),
                                                   key.getArguments(), key.getAccessType());
         if (dataset instanceof MeteredDataset && metricsContext != null) {
           ((MeteredDataset) dataset).setMetricsCollector(
@@ -141,7 +141,7 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
     @Override
     public Dataset get(DatasetCacheKey key) throws ExecutionException {
       // write lineage information on each get call
-      instantiator.writeLineage(namespaceId.dataset(key.getName()).toId(), key.getAccessType());
+      instantiator.writeLineage(namespaceId.dataset(key.getName()), key.getAccessType());
       return super.get(key);
     }
   }

@@ -47,7 +47,7 @@ import java.util.Set;
  */
 public class SimpleQueueSpecificationGeneratorTest {
 
-  private static final String TEST_NAMESPACE_ID = DefaultId.NAMESPACE.getId();
+  private static final String TEST_NAMESPACE_ID = DefaultId.NAMESPACE.getEntityName();
 
   private static Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> table
     = HashBasedTable.create();

@@ -30,7 +30,7 @@ public class InMemoryDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     InMemoryDatasetFramework framework = new InMemoryDatasetFramework(registryFactory, DEFAULT_MODULES);
     framework.setAuditPublisher(inMemoryAuditPublisher);
     try {
-      namespacedLocationFactory.get(NAMESPACE_ID).mkdirs();
+      namespacedLocationFactory.get(NAMESPACE_ID.toId()).mkdirs();
     } catch (IOException e) {
       throw new DatasetManagementException(e.getMessage());
     }

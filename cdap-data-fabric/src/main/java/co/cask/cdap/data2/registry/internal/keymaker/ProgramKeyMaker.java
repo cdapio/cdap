@@ -18,29 +18,30 @@ package co.cask.cdap.data2.registry.internal.keymaker;
 
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.registry.internal.pair.KeyMaker;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ProgramId;
 
 /**
- * {@link KeyMaker} for {@link Id.Program}.
+ * {@link KeyMaker} for {@link ProgramId}.
  */
-public class ProgramKeyMaker implements KeyMaker<Id.Program> {
+public class ProgramKeyMaker implements KeyMaker<ProgramId> {
 
-  public static Id.Program getProgramId(Id.Application applicationId) {
+  public static ProgramId getProgramId(ApplicationId applicationId) {
     // Use empty programId to denote applicationId
-    return Id.Program.from(applicationId, ProgramType.FLOW, "");
+    return applicationId.flow("");
   }
 
   @Override
-  public MDSKey getKey(Id.Program programId) {
+  public MDSKey getKey(ProgramId programId) {
     MDSKey.Builder keyBuilder = new MDSKey.Builder()
-      .add(programId.getNamespaceId())
-      .add(programId.getApplicationId());
+      .add(programId.getNamespace())
+      .add(programId.getApplication());
 
     // If programId is empty, this is actually applicationId
-    if (!programId.getId().isEmpty()) {
+    if (!programId.getEntityName().isEmpty()) {
       keyBuilder.add(programId.getType().getCategoryName());
-      keyBuilder.add(programId.getId());
+      keyBuilder.add(programId.getEntityName());
     }
 
     return keyBuilder.build();
@@ -55,8 +56,8 @@ public class ProgramKeyMaker implements KeyMaker<Id.Program> {
   }
 
   @Override
-  public Id.Program getElement(MDSKey.Splitter splitter) {
-    return Id.Program.from(splitter.getString(), splitter.getString(),
+  public ProgramId getElement(MDSKey.Splitter splitter) {
+    return new ProgramId(splitter.getString(), splitter.getString(),
                            ProgramType.valueOfCategoryName(splitter.getString()),
                            splitter.getString());
   }

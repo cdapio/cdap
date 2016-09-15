@@ -181,7 +181,7 @@ public class ExploreTableManager {
     Dataset dataset = null;
     String createStatement;
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
-      dataset = datasetInstantiator.getDataset(datasetId.toId());
+      dataset = datasetInstantiator.getDataset(datasetId);
       if (dataset == null) {
         throw new DatasetNotFoundException(datasetId.toId());
       }
@@ -233,7 +233,7 @@ public class ExploreTableManager {
     Dataset dataset = null;
     List<String> alterStatements;
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
-      dataset = datasetInstantiator.getDataset(datasetId.toId());
+      dataset = datasetInstantiator.getDataset(datasetId);
       if (dataset == null) {
         throw new DatasetNotFoundException(datasetId.toId());
       }
@@ -282,7 +282,7 @@ public class ExploreTableManager {
     Dataset dataset = null;
     String deleteStatement;
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
-      dataset = datasetInstantiator.getDataset(datasetId.toId());
+      dataset = datasetInstantiator.getDataset(datasetId);
       if (dataset == null) {
         throw new DatasetNotFoundException(datasetId.toId());
       }

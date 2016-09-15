@@ -90,8 +90,7 @@ public final class StreamFileJanitor {
       Iterable<Location> streamLocations = StreamUtils.listAllStreams(streamBaseLocation);
 
       for (final Location streamLocation : streamLocations) {
-        Id.Stream streamId = new StreamId(namespace.getNamespaceId().getNamespace(),
-                                          StreamUtils.getStreamNameFromLocation(streamLocation)).toId();
+        StreamId streamId = namespace.getNamespaceId().stream(StreamUtils.getStreamNameFromLocation(streamLocation));
         final AtomicLong ttl = new AtomicLong(0);
         if (isStreamExists(streamId)) {
           ttl.set(streamAdmin.getConfig(streamId).getTTL());
@@ -150,7 +149,7 @@ public final class StreamFileJanitor {
     return (location.isDirectory() && location.getName().indexOf('.') > 0);
   }
 
-  private boolean isStreamExists(Id.Stream streamId) throws IOException {
+  private boolean isStreamExists(StreamId streamId) throws IOException {
     try {
       return streamAdmin.exists(streamId);
     } catch (Exception e) {

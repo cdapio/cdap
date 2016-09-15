@@ -19,7 +19,7 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -48,8 +48,7 @@ public class TimeseriesTableScannerTest {
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
-  private static final Id.DatasetInstance facts =
-    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "facts");
+  private static final DatasetId facts = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("facts");
   private static final byte[] ALL_KEY = Bytes.toBytes("a");
   private static final String SRC_TAG = "src";
   private static final String DST_TAG = "dst";

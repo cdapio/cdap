@@ -25,7 +25,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetDataset;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.Maps;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.filesystem.Location;
@@ -52,19 +53,18 @@ public class FileSetTest {
 
   static FileSet fileSet1;
   static FileSet fileSet2;
-  private static final Id.Namespace OTHER_NAMESPACE = Id.Namespace.from("yourspace");
-  private static final Id.DatasetInstance testFileSetInstance1 =
-    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "testFileSet");
-  private static final Id.DatasetInstance testFileSetInstance2 =
-    Id.DatasetInstance.from(OTHER_NAMESPACE, "testFileSet");
-  private static final Id.DatasetInstance testFileSetInstance3 =
-    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "absoluteFileSet");
-  private static final Id.DatasetInstance testFileSetInstance4 =
-    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "lookAlikeFileSet");
-  private static final Id.DatasetInstance testFileSetInstance5 =
-    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "externalFileSet");
-  private static final Id.DatasetInstance testFileSetInstance6 =
-    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "nonExternalFileSet1");
+  private static final NamespaceId OTHER_NAMESPACE = new NamespaceId("yourspace");
+  private static final DatasetId testFileSetInstance1 =
+    DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("testFileSet");
+  private static final DatasetId testFileSetInstance2 = OTHER_NAMESPACE.dataset("testFileSet");
+  private static final DatasetId testFileSetInstance3 =
+    DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("absoluteFileSet");
+  private static final DatasetId testFileSetInstance4 =
+    DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("lookAlikeFileSet");
+  private static final DatasetId testFileSetInstance5 =
+    DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("externalFileSet");
+  private static final DatasetId testFileSetInstance6 =
+    DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("nonExternalFileSet1");
 
   @Before
   public void before() throws Exception {
@@ -93,7 +93,7 @@ public class FileSetTest {
     deleteInstance(testFileSetInstance6);
   }
 
-  static void deleteInstance(Id.DatasetInstance id) throws Exception {
+  static void deleteInstance(DatasetId id) throws Exception {
     if (dsFrameworkUtil.getInstance(id) != null) {
       dsFrameworkUtil.deleteInstance(id);
     }
@@ -107,8 +107,8 @@ public class FileSetTest {
     Location fileSet2NsDir = Locations.getParent(Locations.getParent(Locations.getParent(fileSet2Output)));
     Assert.assertNotNull(fileSet1NsDir);
     Assert.assertNotNull(fileSet2NsDir);
-    Assert.assertEquals(fileSet1NsDir.getName(), DatasetFrameworkTestUtil.NAMESPACE_ID.getId());
-    Assert.assertEquals(fileSet2NsDir.getName(), OTHER_NAMESPACE.getId());
+    Assert.assertEquals(fileSet1NsDir.getName(), DatasetFrameworkTestUtil.NAMESPACE_ID.getNamespace());
+    Assert.assertEquals(fileSet2NsDir.getName(), OTHER_NAMESPACE.getNamespace());
 
     Assert.assertNotEquals(fileSet1.getInputLocations().get(0).toURI().getPath(),
                            fileSet2.getInputLocations().get(0).toURI().getPath());
@@ -156,7 +156,7 @@ public class FileSetTest {
   public void testAbsolutePathInsideCDAP() throws IOException, DatasetManagementException {
     String absolutePath = dsFrameworkUtil.getConfiguration().get(Constants.CFG_LOCAL_DATA_DIR).concat("/hello");
     dsFrameworkUtil.createInstance("fileSet",
-                                   Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "badFileSet"),
+                                   DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("badFileSet"),
                                    FileSetProperties.builder().setBasePath(absolutePath).build());
   }
 
@@ -166,7 +166,7 @@ public class FileSetTest {
     String absolutePath = dsFrameworkUtil.getConfiguration()
       .get(Constants.CFG_LOCAL_DATA_DIR).replace("/", "//").concat("/hello");
     dsFrameworkUtil.createInstance("fileSet",
-                                   Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "badFileSet"),
+                                   DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("badFileSet"),
                                    FileSetProperties.builder().setBasePath(absolutePath).build());
   }
 

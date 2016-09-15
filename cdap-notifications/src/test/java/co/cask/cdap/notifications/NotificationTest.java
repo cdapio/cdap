@@ -45,6 +45,8 @@ import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.notifications.service.TxRetryPolicy;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
@@ -96,11 +98,11 @@ public abstract class NotificationTest {
   private static NamespaceAdmin namespaceAdmin;
   private static NotificationService notificationService;
 
-  private static final Id.Namespace namespace = Id.Namespace.from("namespace");
+  private static final NamespaceId namespace = new NamespaceId("namespace");
   protected static final Id.NotificationFeed FEED1 = new Id.NotificationFeed.Builder()
-    .setNamespaceId(namespace.getId()).setCategory("stream").setName("foo").setDescription("").build();
+    .setNamespaceId(namespace.getNamespace()).setCategory("stream").setName("foo").setDescription("").build();
   protected static final Id.NotificationFeed FEED2 = new Id.NotificationFeed.Builder()
-    .setNamespaceId(namespace.getId()).setCategory("stream").setName("bar").setDescription("").build();
+    .setNamespaceId(namespace.getNamespace()).setCategory("stream").setName("bar").setDescription("").build();
 
   protected static NotificationService getNotificationService() {
     return notificationService;
@@ -171,24 +173,24 @@ public abstract class NotificationTest {
   @Test
   public void testCreateGetAndListFeeds() throws Exception {
     // no feeds at the beginning
-    Assert.assertEquals(0, feedManager.listFeeds(namespace).size());
+    Assert.assertEquals(0, feedManager.listFeeds(namespace.toId()).size());
     // create feed 1
     feedManager.createFeed(FEED1);
     // check get and list feed
     Assert.assertEquals(FEED1, feedManager.getFeed(FEED1));
-    Assert.assertEquals(ImmutableList.of(FEED1), feedManager.listFeeds(namespace));
+    Assert.assertEquals(ImmutableList.of(FEED1), feedManager.listFeeds(namespace.toId()));
 
     // create feed 2
     feedManager.createFeed(FEED2);
     // check get and list feed
     Assert.assertEquals(FEED2, feedManager.getFeed(FEED2));
-    Assert.assertTrue(checkFeedList(ImmutableSet.of(FEED1, FEED2), feedManager.listFeeds(namespace)));
+    Assert.assertTrue(checkFeedList(ImmutableSet.of(FEED1, FEED2), feedManager.listFeeds(namespace.toId())));
 
     // clear the feeds
     feedManager.deleteFeed(FEED1);
     feedManager.deleteFeed(FEED2);
-    namespaceAdmin.delete(namespace);
-    Assert.assertEquals(0, feedManager.listFeeds(namespace).size());
+    namespaceAdmin.delete(namespace.toId());
+    Assert.assertEquals(0, feedManager.listFeeds(namespace.toId()).size());
   }
 
   private boolean checkFeedList(ImmutableSet<Id.NotificationFeed> expected, List<Id.NotificationFeed> actual) {
@@ -206,7 +208,7 @@ public abstract class NotificationTest {
     // Performing admin operations to create dataset instance
     // keyValueTable is a system dataset module
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
-    Id.DatasetInstance myTableInstance = Id.DatasetInstance.from(namespace, "myTable");
+    DatasetId myTableInstance = namespace.dataset("myTable");
     dsFramework.addInstance("keyValueTable", myTableInstance, DatasetProperties.EMPTY);
 
     final CountDownLatch receivedLatch = new CountDownLatch(1);
@@ -264,7 +266,7 @@ public abstract class NotificationTest {
     } finally {
       dsFramework.deleteInstance(myTableInstance);
       feedManager.deleteFeed(FEED1);
-      namespaceAdmin.delete(namespace);
+      namespaceAdmin.delete(namespace.toId());
     }
   }
 

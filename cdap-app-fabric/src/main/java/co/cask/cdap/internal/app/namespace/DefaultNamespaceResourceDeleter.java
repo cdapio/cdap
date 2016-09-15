@@ -94,11 +94,11 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
     // Delete all the schedules
     scheduler.deleteAllSchedules(namespaceId.toId());
     // Delete datasets and modules
-    dsFramework.deleteAllInstances(namespaceId.toId());
-    dsFramework.deleteAllModules(namespaceId.toId());
+    dsFramework.deleteAllInstances(namespaceId);
+    dsFramework.deleteAllModules(namespaceId);
     // Delete queues and streams data
     queueAdmin.dropAllInNamespace(namespaceId.toId());
-    streamAdmin.dropAllInNamespace(namespaceId.toId());
+    streamAdmin.dropAllInNamespace(namespaceId);
     // Delete all meta data
     store.removeAll(namespaceId);
 

@@ -32,7 +32,8 @@ import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.io.TypeRepresentation;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.DatasetModuleId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
@@ -66,8 +67,8 @@ public class ObjectStoreDatasetTest {
 
   private static final byte[] a = { 'a' };
 
-  private static final Id.DatasetModule integerStore = 
-    Id.DatasetModule.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "integerStore");
+  private static final DatasetModuleId integerStore =
+    DatasetFrameworkTestUtil.NAMESPACE_ID.datasetModule("integerStore");
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -79,13 +80,13 @@ public class ObjectStoreDatasetTest {
     dsFrameworkUtil.deleteModule(integerStore);
   }
 
-  private void addIntegerStoreInstance(Id.DatasetInstance datasetInstanceId) throws Exception {
+  private void addIntegerStoreInstance(DatasetId datasetInstanceId) throws Exception {
     dsFrameworkUtil.createInstance("integerStore", datasetInstanceId, DatasetProperties.EMPTY);
   }
 
   @Test
   public void testStringStore() throws Exception {
-    Id.DatasetInstance strings = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "strings");
+    DatasetId strings = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("strings");
     createObjectStoreInstance(strings, String.class);
     
     ObjectStoreDataset<String> stringStore = dsFrameworkUtil.getInstance(strings);
@@ -101,7 +102,7 @@ public class ObjectStoreDatasetTest {
 
   @Test
   public void testPairStore() throws Exception {
-    Id.DatasetInstance pairs = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "pairs");
+    DatasetId pairs = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("pairs");
     createObjectStoreInstance(pairs, new TypeToken<ImmutablePair<Integer, String>>() { }.getType());
 
     ObjectStoreDataset<ImmutablePair<Integer, String>> pairStore = dsFrameworkUtil.getInstance(pairs);
@@ -117,7 +118,7 @@ public class ObjectStoreDatasetTest {
 
   @Test
   public void testCustomStore() throws Exception {
-    Id.DatasetInstance customs = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "customs");
+    DatasetId customs = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("customs");
     createObjectStoreInstance(customs, new TypeToken<Custom>() { }.getType());
 
     ObjectStoreDataset<Custom> customStore = dsFrameworkUtil.getInstance(customs);
@@ -137,7 +138,7 @@ public class ObjectStoreDatasetTest {
 
   @Test
   public void testInnerStore() throws Exception {
-    Id.DatasetInstance inners = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "inners");
+    DatasetId inners = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("inners");
     createObjectStoreInstance(inners, new TypeToken<CustomWithInner.Inner<Integer>>() { }.getType());
 
     ObjectStoreDataset<CustomWithInner.Inner<Integer>> innerStore = dsFrameworkUtil.getInstance(inners);
@@ -153,7 +154,7 @@ public class ObjectStoreDatasetTest {
 
   @Test
   public void testInstantiateWrongClass() throws Exception {
-    Id.DatasetInstance pairs = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "pairs");
+    DatasetId pairs = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("pairs");
     createObjectStoreInstance(pairs, new TypeToken<ImmutablePair<Integer, String>>() { }.getType());
 
     // note: due to type erasure, this succeeds
@@ -214,7 +215,7 @@ public class ObjectStoreDatasetTest {
 
   @Test
   public void testWithCustomClassLoader() throws Exception {
-    Id.DatasetInstance kv = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "kv");
+    DatasetId kv = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("kv");
     // create a dummy class loader that records the name of the class it loaded
     final AtomicReference<String> lastClassLoaded = new AtomicReference<>(null);
     ClassLoader loader = new ClassLoader() {
@@ -248,7 +249,7 @@ public class ObjectStoreDatasetTest {
 
   @Test
   public void testBatchCustomList() throws Exception {
-    Id.DatasetInstance customlist = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "customlist");
+    DatasetId customlist = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("customlist");
     createObjectStoreInstance(customlist, new TypeToken<List<Custom>>() { }.getType());
 
     final ObjectStoreDataset<List<Custom>> customStore = dsFrameworkUtil.getInstance(customlist);
@@ -307,7 +308,7 @@ public class ObjectStoreDatasetTest {
 
   @Test
   public void testBatchReads() throws Exception {
-    Id.DatasetInstance batch = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "batch");
+    DatasetId batch = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("batch");
     createObjectStoreInstance(batch, String.class);
 
     final ObjectStoreDataset<String> t = dsFrameworkUtil.getInstance(batch);
@@ -359,7 +360,7 @@ public class ObjectStoreDatasetTest {
 
   @Test
   public void testScanObjectStore() throws Exception {
-    Id.DatasetInstance scan = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "scan");
+    DatasetId scan = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("scan");
     createObjectStoreInstance(scan, String.class);
 
     final ObjectStoreDataset<String> t = dsFrameworkUtil.getInstance(scan);
@@ -436,7 +437,7 @@ public class ObjectStoreDatasetTest {
 
   @Test
   public void testSubclass() throws Exception {
-    Id.DatasetInstance intsInstance = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "ints");
+    DatasetId intsInstance = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("ints");
     addIntegerStoreInstance(intsInstance);
 
     IntegerStore ints = dsFrameworkUtil.getInstance(intsInstance);
@@ -450,7 +451,7 @@ public class ObjectStoreDatasetTest {
     dsFrameworkUtil.deleteInstance(intsInstance);
   }
 
-  private void createObjectStoreInstance(Id.DatasetInstance datasetInstanceId, Type type) throws Exception {
+  private void createObjectStoreInstance(DatasetId datasetInstanceId, Type type) throws Exception {
     dsFrameworkUtil.createInstance("objectStore", datasetInstanceId, 
                                    ObjectStores.objectStoreProperties(type, DatasetProperties.EMPTY));
   }

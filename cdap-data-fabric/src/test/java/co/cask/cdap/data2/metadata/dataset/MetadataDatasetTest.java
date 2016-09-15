@@ -55,8 +55,7 @@ public class MetadataDatasetTest {
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
-  private static final Id.DatasetInstance datasetInstance =
-    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "meta");
+  private static final DatasetId datasetInstance = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("meta");
 
   private MetadataDataset dataset;
 
@@ -567,7 +566,7 @@ public class MetadataDatasetTest {
   @Test
   public void testHistory() throws Exception {
     MetadataDataset dataset =
-      getDataset(Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "testHistory"));
+      getDataset(DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("testHistory"));
 
     doTestHistory(dataset, flow1, "f_");
     doTestHistory(dataset, app1, "a_");
@@ -578,7 +577,7 @@ public class MetadataDatasetTest {
   @Test
   public void testIndexRebuilding() throws Exception {
     MetadataDataset dataset =
-      getDataset(Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "testIndexRebuilding"));
+      getDataset(DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("testIndexRebuilding"));
     dataset.setProperty(flow1, "flowKey", "flowValue", new ReversingIndexer());
     dataset.setProperty(dataset1, "datasetKey", "datasetValue", new ReversingIndexer());
     String namespaceId = flow1.getNamespace();
@@ -625,7 +624,7 @@ public class MetadataDatasetTest {
   @Test
   public void testIndexDeletion() throws Exception {
     MetadataDataset dataset =
-      getDataset(Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "testIndexRebuilding"));
+      getDataset(DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("testIndexRebuilding"));
     dataset.setProperty(flow1, "flowKey", "flowValue");
     dataset.setProperty(dataset1, "datasetKey", "datasetValue");
     String namespaceId = flow1.getNamespace();
@@ -821,7 +820,7 @@ public class MetadataDatasetTest {
     return iterable.iterator().next();
   }
 
-  private static MetadataDataset getDataset(Id.DatasetInstance instance) throws Exception {
+  private static MetadataDataset getDataset(DatasetId instance) throws Exception {
     return DatasetsUtil.getOrCreateDataset(dsFrameworkUtil.getFramework(), instance,
                                            MetadataDataset.class.getName(),
                                            DatasetProperties.EMPTY, null, null);

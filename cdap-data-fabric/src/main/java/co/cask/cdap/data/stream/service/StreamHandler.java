@@ -41,6 +41,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamDetail;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
@@ -111,7 +112,7 @@ public final class StreamHandler extends AbstractHttpHandler {
   private final StreamAdmin streamAdmin;
   private final MetricsContext streamHandlerMetricsContext;
 
-  private final LoadingCache<Id.Namespace, MetricsContext> streamMetricsCollectors;
+  private final LoadingCache<NamespaceId, MetricsContext> streamMetricsCollectors;
   private final ConcurrentStreamWriter streamWriter;
   private final long batchBufferThreshold;
   private final StreamBodyConsumerFactory streamBodyConsumerFactory;
@@ -139,9 +140,9 @@ public final class StreamHandler extends AbstractHttpHandler {
     this.streamBodyConsumerFactory = new StreamBodyConsumerFactory();
     this.streamHandlerMetricsContext = metricsCollectionService.getContext(getStreamHandlerMetricsContext());
     streamMetricsCollectors = CacheBuilder.newBuilder()
-      .build(new CacheLoader<Id.Namespace, MetricsContext>() {
+      .build(new CacheLoader<NamespaceId, MetricsContext>() {
         @Override
-        public MetricsContext load(Id.Namespace namespaceId) {
+        public MetricsContext load(NamespaceId namespaceId) {
           return metricsCollectionService.getContext(getStreamMetricsContext(namespaceId));
         }
       });
@@ -200,7 +201,7 @@ public final class StreamHandler extends AbstractHttpHandler {
   public void getInfo(HttpRequest request, HttpResponder responder,
                       @PathParam("namespace-id") String namespaceId,
                       @PathParam("stream") String stream) throws Exception {
-    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
+    StreamId streamId = Id.Stream.from(namespaceId, stream).toEntityId();
     checkStreamExists(streamId);
     StreamProperties properties = streamAdmin.getProperties(streamId);
     responder.sendJson(HttpResponseStatus.OK, properties, StreamProperties.class, GSON);
@@ -212,12 +213,12 @@ public final class StreamHandler extends AbstractHttpHandler {
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("stream") String stream) throws Exception {
     // Check for namespace existence. Throws NotFoundException if namespace doesn't exist
-    namespaceQueryAdmin.get(Id.Namespace.from(namespaceId));
+    namespaceQueryAdmin.get(new NamespaceId(namespaceId).toId());
 
-    Id.Stream streamId;
+    StreamId streamId;
     try {
       // Verify stream name
-      streamId = Id.Stream.from(namespaceId, stream);
+      streamId = Id.Stream.from(namespaceId, stream).toEntityId();
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(e);
     }
@@ -258,8 +259,8 @@ public final class StreamHandler extends AbstractHttpHandler {
   public void enqueue(HttpRequest request, HttpResponder responder,
                       @PathParam("namespace-id") String namespaceId,
                       @PathParam("stream") String stream) throws Exception {
-    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
-    authorizationEnforcer.enforce(streamId.toEntityId(), authenticationContext.getPrincipal(), Action.WRITE);
+    StreamId streamId = Id.Stream.from(namespaceId, stream).toEntityId();
+    authorizationEnforcer.enforce(streamId, authenticationContext.getPrincipal(), Action.WRITE);
     try {
       streamWriter.enqueue(streamId, getHeaders(request, stream), request.getContent().toByteBuffer());
       responder.sendStatus(HttpResponseStatus.OK);
@@ -274,10 +275,10 @@ public final class StreamHandler extends AbstractHttpHandler {
   public void asyncEnqueue(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId,
                            @PathParam("stream") String stream) throws Exception {
-    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
+    StreamId streamId = Id.Stream.from(namespaceId, stream).toEntityId();
     // No need to copy the content buffer as we always uses a ChannelBufferFactory that won't reuse buffer.
     // See StreamHttpService
-    authorizationEnforcer.enforce(streamId.toEntityId(), authenticationContext.getPrincipal(), Action.WRITE);
+    authorizationEnforcer.enforce(streamId, authenticationContext.getPrincipal(), Action.WRITE);
     streamWriter.asyncEnqueue(streamId, getHeaders(request, stream),
                               request.getContent().toByteBuffer(), asyncExecutor);
     responder.sendStatus(HttpResponseStatus.ACCEPTED);
@@ -288,9 +289,9 @@ public final class StreamHandler extends AbstractHttpHandler {
   public BodyConsumer batch(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("stream") String stream) throws Exception {
-    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
+    StreamId streamId = Id.Stream.from(namespaceId, stream).toEntityId();
     checkStreamExists(streamId);
-    authorizationEnforcer.enforce(streamId.toEntityId(), authenticationContext.getPrincipal(), Action.WRITE);
+    authorizationEnforcer.enforce(streamId, authenticationContext.getPrincipal(), Action.WRITE);
     try {
       return streamBodyConsumerFactory.create(request, createContentWriterFactory(streamId, request));
     } catch (UnsupportedOperationException e) {
@@ -304,7 +305,7 @@ public final class StreamHandler extends AbstractHttpHandler {
   public void truncate(HttpRequest request, HttpResponder responder,
                        @PathParam("namespace-id") String namespaceId,
                        @PathParam("stream") String stream) throws Exception {
-    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
+    StreamId streamId = Id.Stream.from(namespaceId, stream).toEntityId();
     checkStreamExists(streamId);
 
     streamAdmin.truncate(streamId);
@@ -316,7 +317,7 @@ public final class StreamHandler extends AbstractHttpHandler {
   public void delete(HttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("stream") String stream) throws Exception {
-    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
+    StreamId streamId = Id.Stream.from(namespaceId, stream).toEntityId();
     checkStreamExists(streamId);
     // On Windows, we can not move the file if it is open, and the stream writer may have an open file in this dir.
     // Since Windows is only supported in SDK/standalone, we don't need to worry about multiple stream writers here.
@@ -330,7 +331,7 @@ public final class StreamHandler extends AbstractHttpHandler {
   public void setConfig(HttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") String namespaceId,
                         @PathParam("stream") String stream) throws Exception {
-    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
+    StreamId streamId = Id.Stream.from(namespaceId, stream).toEntityId();
     checkStreamExists(streamId);
 
     StreamProperties properties = getAndValidateConfig(request, responder);
@@ -344,7 +345,7 @@ public final class StreamHandler extends AbstractHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
-  private void checkStreamExists(Id.Stream streamId) throws Exception {
+  private void checkStreamExists(StreamId streamId) throws Exception {
     if (!streamAdmin.exists(streamId)) {
       throw new NotFoundException(streamId);
     }
@@ -353,10 +354,10 @@ public final class StreamHandler extends AbstractHttpHandler {
   private StreamMetricsCollectorFactory createStreamMetricsCollectorFactory() {
     return new StreamMetricsCollectorFactory() {
       @Override
-      public StreamMetricsCollector createMetricsCollector(final Id.Stream streamId) {
-        MetricsContext streamMetricsContext = streamMetricsCollectors.getUnchecked(streamId.getNamespace());
+      public StreamMetricsCollector createMetricsCollector(final StreamId streamId) {
+        MetricsContext streamMetricsContext = streamMetricsCollectors.getUnchecked(streamId.getParent());
         final MetricsContext childCollector =
-          streamMetricsContext.childContext(Constants.Metrics.Tag.STREAM, streamId.getId());
+          streamMetricsContext.childContext(Constants.Metrics.Tag.STREAM, streamId.getEntityName());
         return new StreamMetricsCollector() {
           @Override
           public void emitMetrics(long bytesWritten, long eventsWritten) {
@@ -374,14 +375,14 @@ public final class StreamHandler extends AbstractHttpHandler {
   }
 
   private Map<String, String> getStreamHandlerMetricsContext() {
-    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.SYSTEM.getId(),
+    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
                            Constants.Metrics.Tag.COMPONENT, Constants.Gateway.METRICS_CONTEXT,
                            Constants.Metrics.Tag.HANDLER, Constants.Gateway.STREAM_HANDLER_NAME,
                            Constants.Metrics.Tag.INSTANCE_ID, cConf.get(Constants.Stream.CONTAINER_INSTANCE_ID, "0"));
   }
 
-  private Map<String, String> getStreamMetricsContext(Id.Namespace namespaceId) {
-    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespaceId.getId(),
+  private Map<String, String> getStreamMetricsContext(NamespaceId namespaceId) {
+    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespaceId.getNamespace(),
                            Constants.Metrics.Tag.COMPONENT, Constants.Gateway.METRICS_CONTEXT,
                            Constants.Metrics.Tag.HANDLER, Constants.Gateway.STREAM_HANDLER_NAME,
                            Constants.Metrics.Tag.INSTANCE_ID, cConf.get(Constants.Stream.CONTAINER_INSTANCE_ID, "0"));
@@ -484,11 +485,11 @@ public final class StreamHandler extends AbstractHttpHandler {
   /**
    * Creates a {@link ContentWriterFactory} based on the request size. Used by the batch endpoint.
    */
-  private ContentWriterFactory createContentWriterFactory(Id.Stream streamId, HttpRequest request) throws IOException {
+  private ContentWriterFactory createContentWriterFactory(StreamId streamId, HttpRequest request) throws IOException {
     String contentType = HttpHeaders.getHeader(request, HttpHeaders.Names.CONTENT_TYPE, "");
 
     // The content-type is guaranteed to be non-empty, otherwise the batch request itself will fail.
-    Map<String, String> headers = getHeaders(request, streamId.getId(),
+    Map<String, String> headers = getHeaders(request, streamId.getEntityName(),
                                              ImmutableMap.<String, String>builder().put("content.type", contentType));
 
     StreamConfig config = streamAdmin.getConfig(streamId);

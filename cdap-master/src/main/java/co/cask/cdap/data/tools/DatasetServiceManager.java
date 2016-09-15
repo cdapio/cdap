@@ -50,7 +50,7 @@ import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreModules;
@@ -111,7 +111,7 @@ public class DatasetServiceManager extends AbstractIdleService {
       @Override
       public Boolean call() throws Exception {
         try {
-          getDSFramework().getInstances(Id.Namespace.DEFAULT);
+          getDSFramework().getInstances(NamespaceId.DEFAULT);
           return true;
         } catch (ServiceUnavailableException sue) {
           return false;

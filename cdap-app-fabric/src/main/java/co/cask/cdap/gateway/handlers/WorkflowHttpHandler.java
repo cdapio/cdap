@@ -55,6 +55,7 @@ import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -389,7 +390,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       String mappedDatasetName = localDatasetEntry.getKey() + "." + runId;
       String datasetType = localDatasetEntry.getValue().getTypeName();
       Map<String, String> datasetProperties = localDatasetEntry.getValue().getProperties().getProperties();
-      if (datasetFramework.hasInstance(Id.DatasetInstance.from(namespaceId, mappedDatasetName))) {
+      if (datasetFramework.hasInstance(new DatasetId(namespaceId, mappedDatasetName))) {
         localDatasetSummaries.put(localDatasetEntry.getKey(),
                                   new DatasetSpecificationSummary(mappedDatasetName, datasetType, datasetProperties));
       }
@@ -411,7 +412,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       String mappedDatasetName = localDatasetEntry.getKey() + "." + runId;
       // try best to delete the local datasets.
       try {
-        datasetFramework.deleteInstance(Id.DatasetInstance.from(namespaceId, mappedDatasetName));
+        datasetFramework.deleteInstance(new DatasetId(namespaceId, mappedDatasetName));
       } catch (InstanceNotFoundException e) {
         // Dataset instance is already deleted. so its no-op.
       } catch (Throwable t) {

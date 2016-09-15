@@ -124,7 +124,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     StreamId streamId = new StreamId(namespace, streamName);
     try {
       // throws io exception if there is no stream
-      streamAdmin.getConfig(streamId.toId());
+      streamAdmin.getConfig(streamId);
     } catch (IOException e) {
       LOG.debug("Could not find stream {} to disable explore on.", streamName, e);
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Could not find stream " + streamName);
@@ -162,7 +162,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     DatasetId datasetId = new DatasetId(namespace, datasetName);
     DatasetSpecification datasetSpec;
     try {
-      datasetSpec = datasetFramework.getDatasetSpec(datasetId.toId());
+      datasetSpec = datasetFramework.getDatasetSpec(datasetId);
       if (datasetSpec == null) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetId);
         return;
@@ -283,7 +283,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     propagateUserId(request);
     Dataset dataset;
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
-      dataset = datasetInstantiator.getDataset(datasetId.toId());
+      dataset = datasetInstantiator.getDataset(datasetId);
 
       if (dataset == null) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetId);
@@ -350,7 +350,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     propagateUserId(request);
     Dataset dataset;
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
-      dataset = datasetInstantiator.getDataset(datasetId.toId());
+      dataset = datasetInstantiator.getDataset(datasetId);
       if (dataset == null) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetId);
         return;

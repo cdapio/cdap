@@ -44,7 +44,7 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
@@ -128,9 +128,9 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
 
     tableUtil = injector.getInstance(HBaseTableUtil.class);
     tableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(),
-                                         tableUtil.getHBaseNamespace(TEST_NAMESPACE.toEntityId()));
+                                         tableUtil.getHBaseNamespace(TEST_NAMESPACE));
     tableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(),
-                                         tableUtil.getHBaseNamespace(OTHER_NAMESPACE.toEntityId()));
+                                         tableUtil.getHBaseNamespace(OTHER_NAMESPACE));
 
     setupNamespaces(injector.getInstance(NamespacedLocationFactory.class));
   }
@@ -152,9 +152,9 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
     }
   }
 
-  private static void deleteNamespace(Id.Namespace namespace) throws IOException {
-    tableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), tableUtil.getHBaseNamespace(namespace.toEntityId()));
-    tableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), tableUtil.getHBaseNamespace(namespace.toEntityId()));
+  private static void deleteNamespace(NamespaceId namespace) throws IOException {
+    tableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), tableUtil.getHBaseNamespace(namespace));
+    tableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), tableUtil.getHBaseNamespace(namespace));
   }
 
   @Override

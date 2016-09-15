@@ -66,7 +66,7 @@ public class DatasetAccessor implements Closeable {
 
   public void initialize() throws IOException, DatasetManagementException,
     DatasetNotFoundException, ClassNotFoundException {
-    dataset = datasetInstantiator.getDataset(datasetId);
+    dataset = datasetInstantiator.getDataset(datasetId.toEntityId());
     if (dataset instanceof TransactionAware) {
       ((TransactionAware) dataset).startTx(transaction);
     }

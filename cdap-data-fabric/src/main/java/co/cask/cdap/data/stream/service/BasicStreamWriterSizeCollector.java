@@ -16,7 +16,7 @@
 
 package co.cask.cdap.data.stream.service;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class BasicStreamWriterSizeCollector extends AbstractIdleService implements StreamWriterSizeCollector {
   private static final Logger LOG = LoggerFactory.getLogger(BasicStreamWriterSizeCollector.class);
 
-  private final ConcurrentMap<Id.Stream, AtomicLong> streamSizes;
+  private final ConcurrentMap<StreamId, AtomicLong> streamSizes;
   private final List<Cancellable> truncationSubscriptions;
 
   public BasicStreamWriterSizeCollector() {
@@ -56,18 +56,18 @@ public class BasicStreamWriterSizeCollector extends AbstractIdleService implemen
     }
   }
 
-  public Map<Id.Stream, AtomicLong> getStreamSizes() {
+  public Map<StreamId, AtomicLong> getStreamSizes() {
     return ImmutableMap.copyOf(streamSizes);
   }
 
   @Override
-  public long getTotalCollected(Id.Stream streamId) {
+  public long getTotalCollected(StreamId streamId) {
     AtomicLong collected = streamSizes.get(streamId);
     return collected != null ? collected.get() : 0;
   }
 
   @Override
-  public synchronized void received(Id.Stream streamId, long dataSize) {
+  public synchronized void received(StreamId streamId, long dataSize) {
     AtomicLong value = streamSizes.get(streamId);
     if (value == null) {
       value = streamSizes.putIfAbsent(streamId, new AtomicLong(dataSize));

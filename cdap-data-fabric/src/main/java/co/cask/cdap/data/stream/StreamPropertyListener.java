@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.data.stream;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 
 /**
  * Listener for changes in stream properties.
@@ -29,7 +29,7 @@ public abstract class StreamPropertyListener {
    * @param streamId Id of the stream
    * @param generation The generation id updated to.
    */
-  public void generationChanged(Id.Stream streamId, int generation) {
+  public void generationChanged(StreamId streamId, int generation) {
     // Default no-op
   }
 
@@ -39,7 +39,7 @@ public abstract class StreamPropertyListener {
    * @param streamId Id of the stream
    * @param ttl TTL of the stream
    */
-  public void ttlChanged(Id.Stream streamId, long ttl) {
+  public void ttlChanged(StreamId streamId, long ttl) {
     // Default no-op
   }
 
@@ -49,7 +49,7 @@ public abstract class StreamPropertyListener {
    * @param streamId Id of the stream
    * @param threshold Notification threshold of the stream
    */
-  public void thresholdChanged(Id.Stream streamId, int threshold) {
+  public void thresholdChanged(StreamId streamId, int threshold) {
     // Default no-op
   }
 
@@ -58,7 +58,7 @@ public abstract class StreamPropertyListener {
    *
    * @param streamId Id of the stream
    */
-  public void deleted(Id.Stream streamId) {
+  public void deleted(StreamId streamId) {
     // Default no-op
   }
 }

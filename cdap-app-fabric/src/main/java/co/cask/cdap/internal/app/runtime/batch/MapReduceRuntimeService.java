@@ -56,6 +56,7 @@ import co.cask.cdap.internal.app.runtime.batch.stream.StreamInputFormatProvider;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
@@ -700,10 +701,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Type inputValueType = getInputValueType(job.getConfiguration(), StreamEvent.class, mapperTypeToken);
     streamProvider.setDecoderType(inputFormatConfiguration, inputValueType);
 
-    Id.Stream streamId = streamProvider.getStreamId();
+    StreamId streamId = streamProvider.getStreamId().toEntityId();
     try {
-      streamAdmin.register(ImmutableList.of(context.getProgram().getId()), streamId);
-      streamAdmin.addAccess(new Id.Run(context.getProgram().getId(), context.getRunId().getId()),
+      streamAdmin.register(ImmutableList.of(context.getProgram().getId().toEntityId()), streamId);
+      streamAdmin.addAccess(context.getProgram().getId().toEntityId().run(context.getRunId().getId()),
                             streamId, AccessType.READ);
     } catch (Exception e) {
       LOG.warn("Failed to register usage {} -> {}", context.getProgram().getId(), streamId, e);

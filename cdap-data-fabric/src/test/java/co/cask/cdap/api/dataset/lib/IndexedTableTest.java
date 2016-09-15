@@ -25,7 +25,7 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.dataset2.TableAssert;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import org.apache.tephra.TransactionExecutor;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -46,8 +46,7 @@ public class IndexedTableTest {
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
-  private static final Id.DatasetInstance tabInstance =
-    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "tab");
+  private static final DatasetId tabInstance = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("tab");
 
   private static IndexedTable table;
 
@@ -270,8 +269,7 @@ public class IndexedTableTest {
 
   @Test
   public void testIndexedRangeLookups() throws Exception {
-    Id.DatasetInstance indexRangedLookupDs =
-      Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "rangeLookup");
+    DatasetId indexRangedLookupDs = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("rangeLookup");
     dsFrameworkUtil.createInstance("indexedTable", indexRangedLookupDs, DatasetProperties.builder()
       .add(IndexedTable.INDEX_COLUMNS_CONF_KEY, idxColString)
       .build());
@@ -353,7 +351,7 @@ public class IndexedTableTest {
     final byte[] x = { 'x' };
     final byte[] y = { 'y' };
     final byte[] z = { 'z' };
-    Id.DatasetInstance delimTabInstance = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "delimtab");
+    DatasetId delimTabInstance = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("delimtab");
     dsFrameworkUtil.createInstance("indexedTable", delimTabInstance, DatasetProperties.builder()
       .add(IndexedTable.INDEX_COLUMNS_CONF_KEY, Bytes.toString(a) + "," + Bytes.toString(ab))
       .build());
@@ -427,8 +425,8 @@ public class IndexedTableTest {
 
   @Test
   public void testMultipleIndexedColumns() throws Exception {
-    Id.DatasetInstance multiColumnTabInstance =
-      Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "multicolumntab");
+    DatasetId multiColumnTabInstance =
+      DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("multicolumntab");
     dsFrameworkUtil.createInstance("indexedTable", multiColumnTabInstance, DatasetProperties.builder()
       .add(IndexedTable.INDEX_COLUMNS_CONF_KEY, "idx1,idx2,idx3")
       .build());
@@ -623,7 +621,7 @@ public class IndexedTableTest {
    */
   @Test
   public void testIndexKeyDelimiterHandling() throws Exception {
-    Id.DatasetInstance delimTabInstance = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "delimtab");
+    DatasetId delimTabInstance = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("delimtab");
     dsFrameworkUtil.createInstance("indexedTable", delimTabInstance, DatasetProperties.builder()
       .add(IndexedTable.INDEX_COLUMNS_CONF_KEY, idxColString)
       .build());
@@ -679,7 +677,7 @@ public class IndexedTableTest {
 
   @Test
   public void testIncrementIndexing() throws Exception {
-    Id.DatasetInstance incrTabInstance = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "incrtab");
+    DatasetId incrTabInstance = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("incrtab");
     dsFrameworkUtil.createInstance("indexedTable", incrTabInstance, DatasetProperties.builder()
       .add(IndexedTable.INDEX_COLUMNS_CONF_KEY, "idx1,idx2,idx3")
       .build());

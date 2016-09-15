@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.proto.id;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
 
@@ -29,6 +30,7 @@ import java.util.Objects;
 public class StreamId extends NamespacedEntityId implements ParentedId<NamespaceId> {
   private final String stream;
   private transient Integer hashCode;
+  private transient byte[] idBytes;
 
   public StreamId(String namespace, String stream) {
     super(namespace, EntityType.STREAM);
@@ -90,5 +92,12 @@ public class StreamId extends NamespacedEntityId implements ParentedId<Namespace
 
   public StreamViewId view(String view) {
     return new StreamViewId(namespace, stream, view);
+  }
+
+  public byte[] toBytes() {
+    if (idBytes == null) {
+      idBytes = Bytes.toBytes(toString());
+    }
+    return idBytes;
   }
 }

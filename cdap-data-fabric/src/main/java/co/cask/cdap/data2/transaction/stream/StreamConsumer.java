@@ -18,7 +18,7 @@ package co.cask.cdap.data2.transaction.stream;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.DequeueResult;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import org.apache.tephra.TransactionAware;
 
 import java.io.Closeable;
@@ -37,7 +37,7 @@ public interface StreamConsumer extends Closeable, TransactionAware {
   /**
    * @return Id of the stream this consumer is consuming.
    */
-  Id.Stream getStreamId();
+  StreamId getStreamId();
 
   /**
    * @return Configuration of this consumer.

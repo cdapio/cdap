@@ -95,19 +95,19 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
     initialize(CConfiguration.create(), tmpFolder, true, true);
     authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
     SecurityRequestContext.setUserId(USER.getName());
-    grantAndAssertSuccess(NAMESPACE_ID.toEntityId(), USER, EnumSet.allOf(Action.class));
+    grantAndAssertSuccess(NAMESPACE_ID, USER, EnumSet.allOf(Action.class));
 
-    Id.Stream streamId = Id.Stream.from(NAMESPACE_ID, streamName);
+    StreamId streamId = NAMESPACE_ID.stream(streamName);
     createStream(streamId);
-    sendStreamEvent(streamId, headers, Bytes.toBytes(body1));
-    sendStreamEvent(streamId, headers, Bytes.toBytes(body2));
-    sendStreamEvent(streamId, headers, Bytes.toBytes(body3));
+    sendStreamEvent(streamId.toId(), headers, Bytes.toBytes(body1));
+    sendStreamEvent(streamId.toId(), headers, Bytes.toBytes(body2));
+    sendStreamEvent(streamId.toId(), headers, Bytes.toBytes(body3));
   }
 
   @AfterClass
   public static void finish() throws Exception {
-    dropStream(Id.Stream.from(NAMESPACE_ID, streamName));
-    revokeAndAssertSuccess(NAMESPACE_ID.toEntityId(), USER, EnumSet.allOf(Action.class));
+    dropStream(NAMESPACE_ID.stream(streamName).toId());
+    revokeAndAssertSuccess(NAMESPACE_ID, USER, EnumSet.allOf(Action.class));
   }
 
   @Test
@@ -130,9 +130,9 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testStreamAuthorization() throws Exception {
-    StreamId streamId = NAMESPACE_ID.toEntityId().stream(streamName);
-    revokeAndAssertSuccess(NAMESPACE_ID.toEntityId(), USER, EnumSet.allOf(Action.class));
-    grantAndAssertSuccess(NAMESPACE_ID.toEntityId(), USER, EnumSet.of(Action.ADMIN, Action.WRITE, Action.EXECUTE));
+    StreamId streamId = NAMESPACE_ID.stream(streamName);
+    revokeAndAssertSuccess(NAMESPACE_ID, USER, EnumSet.allOf(Action.class));
+    grantAndAssertSuccess(NAMESPACE_ID, USER, EnumSet.of(Action.ADMIN, Action.WRITE, Action.EXECUTE));
     revokeAndAssertSuccess(streamId, USER, EnumSet.allOf(Action.class));
     grantAndAssertSuccess(streamId, USER, EnumSet.of(Action.ADMIN, Action.WRITE));
     // without READ privilege, explore test should fail
@@ -150,13 +150,14 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
     // now grant ALL privilege as
     grantAndAssertSuccess(streamId, USER, EnumSet.of(Action.ADMIN));
     // revert the permissions on NAMESPACE to the original value
-    revokeAndAssertSuccess(NAMESPACE_ID.toEntityId(), USER, EnumSet.of(Action.ADMIN, Action.WRITE,
+    revokeAndAssertSuccess(NAMESPACE_ID, USER, EnumSet.of(Action.ADMIN, Action.WRITE,
                                                                             Action.EXECUTE));
-    grantAndAssertSuccess(NAMESPACE_ID.toEntityId(), USER, EnumSet.allOf(Action.class));
+    grantAndAssertSuccess(NAMESPACE_ID, USER, EnumSet.allOf(Action.class));
   }
 
   private void testSelectStarOnStream() throws Exception {
-    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID, "select * from " + streamTableName).get();
+    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID.toId(),
+                                                          "select * from " + streamTableName).get();
     // check schema
     List<ColumnDesc> expectedSchema = Lists.newArrayList(
       new ColumnDesc(streamTableName + ".ts", "BIGINT", 1, null),
@@ -215,10 +216,10 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testStreamNameWithHyphen() throws Exception {
-    Id.Stream streamId = Id.Stream.from(NAMESPACE_ID, "stream-test");
+    StreamId streamId = NAMESPACE_ID.stream("stream-test");
     createStream(streamId);
     try {
-      sendStreamEvent(streamId, Collections.<String, String>emptyMap(), Bytes.toBytes("Dummy"));
+      sendStreamEvent(streamId.toId(), Collections.<String, String>emptyMap(), Bytes.toBytes("Dummy"));
 
       // Streams with '-' are replaced with '_'
       String cleanStreamName = "stream_test";
@@ -227,50 +228,50 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
                  Lists.newArrayList(new ColumnDesc("body", "STRING", 1, null)),
                  Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("Dummy"))));
     } finally {
-      dropStream(streamId);
+      dropStream(streamId.toId());
     }
   }
 
 
   @Test
   public void testJoinOnStreams() throws Exception {
-    Id.Stream streamId1 = Id.Stream.from(NAMESPACE_ID, "jointest1");
-    Id.Stream streamId2 = Id.Stream.from(NAMESPACE_ID, "jointest2");
+    StreamId streamId1 = NAMESPACE_ID.stream("jointest1");
+    StreamId streamId2 = NAMESPACE_ID.stream("jointest2");
     createStream(streamId1);
     try {
       createStream(streamId2);
       try {
-        sendStreamEvent(streamId1, Collections.<String, String>emptyMap(), Bytes.toBytes("ABC"));
-        sendStreamEvent(streamId1, Collections.<String, String>emptyMap(), Bytes.toBytes("XYZ"));
-        sendStreamEvent(streamId2, Collections.<String, String>emptyMap(), Bytes.toBytes("ABC"));
-        sendStreamEvent(streamId2, Collections.<String, String>emptyMap(), Bytes.toBytes("DEF"));
+        sendStreamEvent(streamId1.toId(), Collections.<String, String>emptyMap(), Bytes.toBytes("ABC"));
+        sendStreamEvent(streamId1.toId(), Collections.<String, String>emptyMap(), Bytes.toBytes("XYZ"));
+        sendStreamEvent(streamId2.toId(), Collections.<String, String>emptyMap(), Bytes.toBytes("ABC"));
+        sendStreamEvent(streamId2.toId(), Collections.<String, String>emptyMap(), Bytes.toBytes("DEF"));
 
         runCommand(NAMESPACE_ID,
-                   "select " + getTableName(streamId1) + ".body, " + getTableName(streamId2) + ".body" +
-                     " from " + getTableName(streamId1) + " join " + getTableName(streamId2) +
-                     " on (" + getTableName(streamId1) + ".body = " + getTableName(streamId2) + ".body)",
+                   "select " + getTableName(streamId1.toId()) + ".body, " + getTableName(streamId2.toId()) + ".body" +
+                     " from " + getTableName(streamId1.toId()) + " join " + getTableName(streamId2.toId()) +
+                     " on (" + getTableName(streamId1.toId()) + ".body = " + getTableName(streamId2.toId()) + ".body)",
                    true,
-                   Lists.newArrayList(new ColumnDesc(getTableName(streamId1) + ".body", "STRING", 1, null),
-                                      new ColumnDesc(getTableName(streamId2) + ".body", "STRING", 2, null)),
+                   Lists.newArrayList(new ColumnDesc(getTableName(streamId1.toId()) + ".body", "STRING", 1, null),
+                                      new ColumnDesc(getTableName(streamId2.toId()) + ".body", "STRING", 2, null)),
                    Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("ABC", "ABC")))
         );
       } finally {
-        dropStream(streamId2);
+        dropStream(streamId2.toId());
       }
     } finally {
-      dropStream(streamId1);
+      dropStream(streamId1.toId());
     }
   }
 
   @Test(expected = ExecutionException.class)
   public void testWriteToStreamFails() throws Exception {
-    exploreClient.submit(NAMESPACE_ID,
+    exploreClient.submit(NAMESPACE_ID.toId(),
                          "insert into table " + streamTableName + " select * from " + streamTableName).get();
   }
 
   @Test
   public void testAvroFormattedStream() throws Exception {
-    Id.Stream streamId = Id.Stream.from(NAMESPACE_ID, "avroStream");
+    StreamId streamId = NAMESPACE_ID.stream("avroStream");
     createStream(streamId);
     try {
       Schema schema = Schema.recordOf(
@@ -282,15 +283,15 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
       FormatSpecification formatSpecification = new FormatSpecification(
         Formats.AVRO, schema, Collections.<String, String>emptyMap());
       StreamProperties properties = new StreamProperties(Long.MAX_VALUE, formatSpecification, 1000);
-      setStreamProperties(NAMESPACE_ID.getId(), "avroStream", properties);
+      setStreamProperties(NAMESPACE_ID.getNamespace(), "avroStream", properties);
 
       // our schemas are compatible
       org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(schema.toString());
-      sendStreamEvent(streamId, createAvroEvent(avroSchema, "userX", 5, 3.14));
-      sendStreamEvent(streamId, createAvroEvent(avroSchema, "userX", 10, 2.34));
-      sendStreamEvent(streamId, createAvroEvent(avroSchema, "userY", 1, 1.23));
-      sendStreamEvent(streamId, createAvroEvent(avroSchema, "userZ", 50, 45.67));
-      sendStreamEvent(streamId, createAvroEvent(avroSchema, "userZ", 100, 98.76));
+      sendStreamEvent(streamId.toId(), createAvroEvent(avroSchema, "userX", 5, 3.14));
+      sendStreamEvent(streamId.toId(), createAvroEvent(avroSchema, "userX", 10, 2.34));
+      sendStreamEvent(streamId.toId(), createAvroEvent(avroSchema, "userY", 1, 1.23));
+      sendStreamEvent(streamId.toId(), createAvroEvent(avroSchema, "userZ", 50, 45.67));
+      sendStreamEvent(streamId.toId(), createAvroEvent(avroSchema, "userZ", 100, 98.76));
 
       Double xPrice = 5 * 3.14 + 10 * 2.34;
       Double yPrice = 1.23;
@@ -298,9 +299,9 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
 
 
       ExploreExecutionResult result = exploreClient.submit(
-        NAMESPACE_ID,
+        NAMESPACE_ID.toId(),
         "SELECT `user`, sum(num) as total_num, sum(price * num) as total_price " +
-          "FROM " + getTableName(streamId) + " GROUP BY `user` ORDER BY total_price DESC").get();
+          "FROM " + getTableName(streamId.toId()) + " GROUP BY `user` ORDER BY total_price DESC").get();
 
       Assert.assertTrue(result.hasNext());
       Assert.assertEquals(
@@ -332,7 +333,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
       // shouldn't be any more results
       Assert.assertFalse(result.hasNext());
     } finally {
-      dropStream(streamId);
+      dropStream(streamId.toId());
     }
   }
 

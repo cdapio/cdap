@@ -18,17 +18,17 @@ package co.cask.cdap.data2.registry.internal.keymaker;
 
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.registry.internal.pair.KeyMaker;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 
 /**
- * {@link KeyMaker} for {@link Id.Stream}.
+ * {@link KeyMaker} for {@link StreamId}.
  */
-public class StreamKeyMaker implements KeyMaker<Id.Stream> {
+public class StreamKeyMaker implements KeyMaker<StreamId> {
   @Override
-  public MDSKey getKey(Id.Stream streamId) {
+  public MDSKey getKey(StreamId streamId) {
     return new MDSKey.Builder()
-      .add(streamId.getNamespaceId())
-      .add(streamId.getId())
+      .add(streamId.getNamespace())
+      .add(streamId.getEntityName())
       .build();
   }
 
@@ -39,7 +39,7 @@ public class StreamKeyMaker implements KeyMaker<Id.Stream> {
   }
 
   @Override
-  public Id.Stream getElement(MDSKey.Splitter splitter) {
-    return Id.Stream.from(splitter.getString(), splitter.getString());
+  public StreamId getElement(MDSKey.Splitter splitter) {
+    return new StreamId(splitter.getString(), splitter.getString());
   }
 }

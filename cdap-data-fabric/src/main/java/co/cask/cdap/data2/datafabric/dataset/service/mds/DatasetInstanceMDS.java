@@ -22,7 +22,8 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 
@@ -48,24 +49,24 @@ public final class DatasetInstanceMDS extends MetadataStoreDataset {
   }
 
   @Nullable
-  public DatasetSpecification get(Id.DatasetInstance datasetInstanceId) {
-    return get(getInstanceKey(datasetInstanceId.getNamespace(), datasetInstanceId.getId()),
+  public DatasetSpecification get(DatasetId datasetInstanceId) {
+    return get(getInstanceKey(datasetInstanceId.getParent(), datasetInstanceId.getEntityName()),
                DatasetSpecification.class);
   }
 
-  public void write(Id.Namespace namespaceId, DatasetSpecification instanceSpec) {
+  public void write(NamespaceId namespaceId, DatasetSpecification instanceSpec) {
     write(getInstanceKey(namespaceId, instanceSpec.getName()), instanceSpec);
   }
 
-  public boolean delete(Id.DatasetInstance datasetInstanceId) {
+  public boolean delete(DatasetId datasetInstanceId) {
     if (get(datasetInstanceId) == null) {
       return false;
     }
-    deleteAll(getInstanceKey(datasetInstanceId.getNamespace(), datasetInstanceId.getId()));
+    deleteAll(getInstanceKey(datasetInstanceId.getParent(), datasetInstanceId.getEntityName()));
     return true;
   }
 
-  public Collection<DatasetSpecification> getAll(Id.Namespace namespaceId) {
+  public Collection<DatasetSpecification> getAll(NamespaceId namespaceId) {
     Predicate<DatasetSpecification> localDatasetFilter = new Predicate<DatasetSpecification>() {
       @Override
       public boolean apply(@Nullable DatasetSpecification input) {
@@ -79,7 +80,7 @@ public final class DatasetInstanceMDS extends MetadataStoreDataset {
     return instances.values();
   }
 
-  public Collection<DatasetSpecification> getByTypes(Id.Namespace namespaceId, Set<String> typeNames) {
+  public Collection<DatasetSpecification> getByTypes(NamespaceId namespaceId, Set<String> typeNames) {
     List<DatasetSpecification> filtered = Lists.newArrayList();
 
     for (DatasetSpecification spec : getAll(namespaceId)) {
@@ -91,12 +92,12 @@ public final class DatasetInstanceMDS extends MetadataStoreDataset {
     return filtered;
   }
 
-  private MDSKey getInstanceKey(Id.Namespace namespaceId) {
+  private MDSKey getInstanceKey(NamespaceId namespaceId) {
     return getInstanceKey(namespaceId, null);
   }
 
-  private MDSKey getInstanceKey(Id.Namespace namespaceId, @Nullable String instanceName) {
-    MDSKey.Builder builder = new MDSKey.Builder().add(INSTANCE_PREFIX).add(namespaceId.getId());
+  private MDSKey getInstanceKey(NamespaceId namespaceId, @Nullable String instanceName) {
+    MDSKey.Builder builder = new MDSKey.Builder().add(INSTANCE_PREFIX).add(namespaceId.getEntityName());
     if (instanceName != null) {
       builder.add(instanceName);
     }

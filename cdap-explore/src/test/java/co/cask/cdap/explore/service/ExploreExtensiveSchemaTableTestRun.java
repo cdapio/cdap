@@ -20,9 +20,9 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.explore.service.datasets.ExtensiveSchemaTableDefinition;
 import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.TableInfo;
+import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -45,7 +45,7 @@ public class ExploreExtensiveSchemaTableTestRun extends BaseHiveExploreServiceTe
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  private static final Id.DatasetModule extensiveSchema = Id.DatasetModule.from(NAMESPACE_ID, "extensiveSchema");
+  private static final DatasetModuleId extensiveSchema = NAMESPACE_ID.datasetModule("extensiveSchema");
 
   @BeforeClass
   public static void start() throws Exception {
@@ -272,6 +272,6 @@ public class ExploreExtensiveSchemaTableTestRun extends BaseHiveExploreServiceTe
                                                                   null),
                                          new TableInfo.ColumnInfo("date", "bigint", null)
                                          ),
-                        exploreService.getTableInfo(NAMESPACE_ID.getId(), MY_TABLE_NAME).getSchema());
+                        exploreService.getTableInfo(NAMESPACE_ID.getNamespace(), MY_TABLE_NAME).getSchema());
   }
 }

@@ -20,10 +20,13 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.ViewSpecification;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.id.StreamViewId;
 import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
@@ -38,15 +41,15 @@ import javax.annotation.Nullable;
 public class NoopStreamAdmin implements StreamAdmin {
 
   @Override
-  public void dropAllInNamespace(Id.Namespace namespace) throws Exception {
+  public void dropAllInNamespace(NamespaceId namespace) throws Exception {
   }
 
   @Override
-  public void configureInstances(Id.Stream streamId, long groupId, int instances) throws Exception {
+  public void configureInstances(StreamId streamId, long groupId, int instances) throws Exception {
   }
 
   @Override
-  public void configureGroups(Id.Stream streamId, Map<Long, Integer> groupInfo) throws Exception {
+  public void configureGroups(StreamId streamId, Map<Long, Integer> groupInfo) throws Exception {
   }
 
   @Override
@@ -59,72 +62,72 @@ public class NoopStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public StreamConfig getConfig(Id.Stream streamId) throws IOException {
+  public StreamConfig getConfig(StreamId streamId) throws IOException {
     throw new IllegalStateException("Stream " + streamId + " not exists.");
   }
 
   @Override
-  public StreamProperties getProperties(Id.Stream streamId) throws IOException {
+  public StreamProperties getProperties(StreamId streamId) throws IOException {
     throw new IllegalStateException("Stream " + streamId + " not exists.");
   }
 
   @Override
-  public void updateConfig(Id.Stream streamId, StreamProperties properties) throws IOException {
+  public void updateConfig(StreamId streamId, StreamProperties properties) throws IOException {
   }
 
   @Override
-  public boolean exists(Id.Stream streamId) throws Exception {
+  public boolean exists(StreamId streamId) throws Exception {
     return false;
   }
 
   @Override
-  public StreamConfig create(Id.Stream streamId) throws Exception {
+  public StreamConfig create(StreamId streamId) throws Exception {
     return null;
   }
 
   @Override
-  public StreamConfig create(Id.Stream streamId, @Nullable Properties props) throws Exception {
+  public StreamConfig create(StreamId streamId, @Nullable Properties props) throws Exception {
     return null;
   }
 
   @Override
-  public void truncate(Id.Stream streamId) throws Exception {
+  public void truncate(StreamId streamId) throws Exception {
   }
 
   @Override
-  public void drop(Id.Stream streamId) throws Exception {
+  public void drop(StreamId streamId) throws Exception {
   }
 
   @Override
-  public boolean createOrUpdateView(Id.Stream.View viewId, ViewSpecification spec) throws Exception {
+  public boolean createOrUpdateView(StreamViewId viewId, ViewSpecification spec) throws Exception {
     return false;
   }
 
   @Override
-  public void deleteView(Id.Stream.View viewId) throws Exception {
+  public void deleteView(StreamViewId viewId) throws Exception {
 
   }
 
   @Override
-  public List<Id.Stream.View> listViews(Id.Stream streamId) {
+  public List<StreamViewId> listViews(StreamId streamId) {
     return null;
   }
 
   @Override
-  public ViewSpecification getView(Id.Stream.View viewId) {
+  public ViewSpecification getView(StreamViewId viewId) {
     return null;
   }
 
   @Override
-  public boolean viewExists(Id.Stream.View viewId) throws Exception {
+  public boolean viewExists(StreamViewId viewId) throws Exception {
     return false;
   }
 
   @Override
-  public void register(Iterable<? extends Id> owners, Id.Stream streamId) {
+  public void register(Iterable<? extends EntityId> owners, StreamId streamId) {
   }
 
   @Override
-  public void addAccess(Id.Run run, Id.Stream streamId, AccessType accessType) {
+  public void addAccess(ProgramRunId run, StreamId streamId, AccessType accessType) {
   }
 }

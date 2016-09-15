@@ -23,7 +23,7 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.InstanceNotFoundException;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 
 import java.io.IOException;
@@ -44,8 +44,8 @@ public class DefaultAdmin implements Admin {
     this.secureStoreManager = secureStoreManager;
   }
 
-  private Id.DatasetInstance createInstanceId(String name) {
-    return Id.DatasetInstance.from(namespace.getNamespace(), name);
+  private DatasetId createInstanceId(String name) {
+    return namespace.dataset(name);
   }
 
   @Override

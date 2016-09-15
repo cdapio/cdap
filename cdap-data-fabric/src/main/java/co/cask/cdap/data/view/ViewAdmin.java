@@ -21,8 +21,9 @@ import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.system.ViewSystemMetadataWriter;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.explore.utils.ExploreTableNaming;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ViewSpecification;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.id.StreamViewId;
 import com.google.inject.Inject;
 
 import java.util.List;
@@ -46,7 +47,7 @@ public class ViewAdmin {
     this.metadataStore = metadataStore;
   }
 
-  public boolean createOrUpdate(Id.Stream.View viewId, ViewSpecification spec) throws Exception {
+  public boolean createOrUpdate(StreamViewId viewId, ViewSpecification spec) throws Exception {
     try {
       ViewSpecification previousSpec = store.get(viewId);
       if (spec.getTableName() == null) {
@@ -55,37 +56,37 @@ public class ViewAdmin {
       } else if (!spec.getTableName().equals(previousSpec.getTableName())) {
         throw new IllegalArgumentException(String.format("Cannot change table name for view %s", viewId));
       }
-      explore.disableExploreStream(viewId.getStream(), previousSpec.getTableName());
+      explore.disableExploreStream(viewId.getParent().toId(), previousSpec.getTableName());
     } catch (NotFoundException e) {
       // pass through
     }
 
     if (spec.getTableName() == null) {
-      spec = new ViewSpecification(spec.getFormat(), naming.getTableName(viewId));
+      spec = new ViewSpecification(spec.getFormat(), naming.getTableName(viewId.toId()));
     }
-    explore.enableExploreStream(viewId.getStream(), spec.getTableName(), spec.getFormat());
+    explore.enableExploreStream(viewId.getParent().toId(), spec.getTableName(), spec.getFormat());
     boolean result = store.createOrUpdate(viewId, spec);
     ViewSystemMetadataWriter systemMetadataWriter = new ViewSystemMetadataWriter(metadataStore, viewId, spec);
     systemMetadataWriter.write();
     return result;
   }
 
-  public void delete(Id.Stream.View viewId) throws Exception {
+  public void delete(StreamViewId viewId) throws Exception {
     ViewSpecification spec = store.get(viewId);
-    explore.disableExploreStream(viewId.getStream(), spec.getTableName());
+    explore.disableExploreStream(viewId.getParent().toId(), spec.getTableName());
     store.delete(viewId);
-    metadataStore.removeMetadata(viewId.toEntityId());
+    metadataStore.removeMetadata(viewId);
   }
 
-  public List<Id.Stream.View> list(Id.Stream streamId) {
+  public List<StreamViewId> list(StreamId streamId) {
     return store.list(streamId);
   }
 
-  public ViewSpecification get(Id.Stream.View viewId) throws NotFoundException {
+  public ViewSpecification get(StreamViewId viewId) throws NotFoundException {
     return store.get(viewId);
   }
 
-  public boolean exists(Id.Stream.View viewId) {
+  public boolean exists(StreamViewId viewId) {
     return store.exists(viewId);
   }
 }

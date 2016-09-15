@@ -16,22 +16,22 @@
 
 package co.cask.cdap.data2.registry.internal.pair;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.EntityId;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
 
 /**
- * Registry of {@link KeyMaker}s for {@link Id}s.
+ * Registry of {@link KeyMaker}s for {@link EntityId}s.
  */
 public class OrderedPairs {
-  private final Map<String, KeyMaker<? extends Id>> keyMakers;
+  private final Map<String, KeyMaker<? extends EntityId>> keyMakers;
 
-  public OrderedPairs(Map<String, KeyMaker<? extends Id>> keyMakers) {
+  public OrderedPairs(Map<String, KeyMaker<? extends EntityId>> keyMakers) {
     this.keyMakers = ImmutableMap.copyOf(keyMakers);
   }
 
-  public <FIRST extends Id, SECOND extends Id>
+  public <FIRST extends EntityId, SECOND extends EntityId>
   OrderedPair<FIRST, SECOND> get(String first, String second) {
     @SuppressWarnings("unchecked")
     KeyMaker<FIRST> keyMaker1 = (KeyMaker<FIRST>) keyMakers.get(first);

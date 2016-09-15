@@ -32,8 +32,8 @@ import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data.stream.TimeRangeReadFilter;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
@@ -124,13 +124,13 @@ public final class StreamFetchHandler extends AbstractHttpHandler {
     long startTime = TimeMathParser.parseTime(start, TimeUnit.MILLISECONDS);
     long endTime = TimeMathParser.parseTime(end, TimeUnit.MILLISECONDS);
 
-    Id.Stream streamId = Id.Stream.from(namespaceId, stream);
+    StreamId streamId = new StreamId(namespaceId, stream);
     if (!verifyGetEventsRequest(streamId, startTime, endTime, limitEvents, responder)) {
       return;
     }
 
     // Make sure the user has READ permission on the stream since getConfig doesn't check for the same.
-    authorizationEnforcer.enforce(streamId.toEntityId(), authenticationContext.getPrincipal(), Action.READ);
+    authorizationEnforcer.enforce(streamId, authenticationContext.getPrincipal(), Action.READ);
     final StreamConfig streamConfig = streamAdmin.getConfig(streamId);
     long now = System.currentTimeMillis();
     startTime = Math.max(startTime, now - streamConfig.getTTL());
@@ -223,7 +223,7 @@ public final class StreamFetchHandler extends AbstractHttpHandler {
   /**
    * Verifies query properties.
    */
-  private boolean verifyGetEventsRequest(Id.Stream streamId, long startTime, long endTime,
+  private boolean verifyGetEventsRequest(StreamId streamId, long startTime, long endTime,
                                          int count, HttpResponder responder) throws Exception {
     if (startTime < 0) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Start time must be >= 0");

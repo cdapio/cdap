@@ -35,7 +35,7 @@ import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.dataset2.TestObject;
 import co.cask.cdap.data2.metadata.lineage.LineageDataset;
 import co.cask.cdap.data2.registry.UsageDataset;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -84,7 +84,7 @@ public class DatasetsUtilTest extends DatasetServiceTestBase {
 
   private void testFix(String type, DatasetProperties props) {
     DatasetDefinition def = DatasetFrameworkTestUtil.getDatasetDefinition(
-      inMemoryDatasetFramework, Id.Namespace.DEFAULT, type);
+      inMemoryDatasetFramework, NamespaceId.DEFAULT, type);
     Assert.assertNotNull(def);
     DatasetSpecification spec = def.configure("nn", props);
     Map<String, String> originalProperties = DatasetsUtil.fixOriginalProperties(spec).getOriginalProperties();

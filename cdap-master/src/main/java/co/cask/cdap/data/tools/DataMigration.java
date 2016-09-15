@@ -36,6 +36,7 @@ import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.upgrade.DataMigrationException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -223,11 +224,11 @@ public class DataMigration {
     DatasetFramework datasetFramework =
       new InMemoryDatasetFramework(registryFactory);
     // TODO: this doesn't sound right. find out why its needed.
-    datasetFramework.addModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, "table"), new HBaseTableModule());
-    datasetFramework.addModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, "metricsTable"),
+    datasetFramework.addModule(NamespaceId.SYSTEM.datasetModule("table"), new HBaseTableModule());
+    datasetFramework.addModule(NamespaceId.SYSTEM.datasetModule("metricsTable"),
                                new HBaseMetricsTableModule());
-    datasetFramework.addModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, "core"), new CoreDatasetsModule());
-    datasetFramework.addModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, "fileSet"), new FileSetModule());
+    datasetFramework.addModule(NamespaceId.SYSTEM.datasetModule("core"), new CoreDatasetsModule());
+    datasetFramework.addModule(NamespaceId.SYSTEM.datasetModule("fileSet"), new FileSetModule());
     return datasetFramework;
   }
 

@@ -82,7 +82,7 @@ final class DatasetModulesDeployer {
     }
     for (String typeName : implicitModules) {
       DatasetTypeId typeId = namespaceId.datasetType(typeName);
-      DatasetTypeMeta typeMeta = datasetFramework.getTypeInfo(typeId.toId());
+      DatasetTypeMeta typeMeta = datasetFramework.getTypeInfo(typeId);
       if (typeMeta != null) {
         String existingModule = Iterables.getLast(typeMeta.getModules()).getName();
         if (modules.containsKey(existingModule)) {
@@ -114,7 +114,7 @@ final class DatasetModulesDeployer {
           return;
         }
         DatasetTypeId typeId = namespaceId.datasetType(clazz.getName());
-        if (datasetFramework.hasType(typeId.toId()) && !allowDatasetUncheckedUpgrade) {
+        if (datasetFramework.hasType(typeId) && !allowDatasetUncheckedUpgrade) {
           return;
         }
         module = new SingleTypeModule(clazz);
@@ -123,7 +123,7 @@ final class DatasetModulesDeployer {
           "Cannot use class %s to add dataset module: it must be of type DatasetModule or Dataset", clazz.getName()));
       }
       LOG.info("Adding module: {}", clazz.getName());
-      datasetFramework.addModule(moduleId.toId(), module, jarLocation);
+      datasetFramework.addModule(moduleId, module, jarLocation);
     } catch (ModuleConflictException e) {
       LOG.info("Conflict while deploying module {}: {}", moduleName, e.getMessage());
       throw e;

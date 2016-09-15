@@ -133,7 +133,7 @@ public class FlowTest {
                                                     getInstance(DiscoveryServiceClient.class);
     Discoverable discoverable = discoveryServiceClient.discover(
       String.format("service.%s.%s.%s",
-                    DefaultId.NAMESPACE.getId(), "ArgumentCheckApp", "SimpleService")).iterator().next();
+                    DefaultId.NAMESPACE.getNamespace(), "ArgumentCheckApp", "SimpleService")).iterator().next();
 
     URL url = new URL(String.format("http://%s:%d/v3/namespaces/default/apps/%s/services/%s/methods/%s",
                                     discoverable.getSocketAddress().getHostName(),
@@ -197,7 +197,7 @@ public class FlowTest {
     DiscoveryServiceClient discoveryServiceClient = AppFabricTestHelper.getInjector().
       getInstance(DiscoveryServiceClient.class);
     ServiceDiscovered serviceDiscovered = discoveryServiceClient.discover(
-      String.format("service.%s.%s.%s", DefaultId.NAMESPACE.getId(), "WordCountApp", "WordFrequencyService"));
+      String.format("service.%s.%s.%s", DefaultId.NAMESPACE.getNamespace(), "WordCountApp", "WordFrequencyService"));
     EndpointStrategy endpointStrategy = new RandomEndpointStrategy(serviceDiscovered);
     int trials = 0;
     while (trials++ < 10) {
@@ -362,7 +362,7 @@ public class FlowTest {
 
   private static Map<String, String> metricTagsForQueue(String producer, String queue, String consumer) {
     Map<String, String> tags = Maps.newHashMap();
-    tags.put(Constants.Metrics.Tag.NAMESPACE, DefaultId.NAMESPACE.getId());
+    tags.put(Constants.Metrics.Tag.NAMESPACE, DefaultId.NAMESPACE.getNamespace());
     tags.put(Constants.Metrics.Tag.APP, "PendingMetricTestApp");
     tags.put(Constants.Metrics.Tag.FLOW, "TestPendingFlow");
     if (producer != null) {

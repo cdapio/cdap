@@ -18,7 +18,7 @@ package co.cask.cdap.data.stream.service.upload;
 
 import co.cask.cdap.data.stream.service.ConcurrentStreamWriter;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.twill.filesystem.Location;
@@ -52,7 +52,7 @@ public final class FileContentWriterFactory implements ContentWriterFactory {
   }
 
   @Override
-  public Id.Stream getStream() {
+  public StreamId getStream() {
     return streamConfig.getStreamId();
   }
 

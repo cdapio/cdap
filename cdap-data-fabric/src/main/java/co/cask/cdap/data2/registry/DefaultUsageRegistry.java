@@ -22,7 +22,12 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -41,8 +46,7 @@ import java.util.Set;
  */
 public class DefaultUsageRegistry implements UsageRegistry {
 
-  private static final Id.DatasetInstance USAGE_INSTANCE_ID =
-    Id.DatasetInstance.from(Id.Namespace.SYSTEM, "usage.registry");
+  private static final DatasetId USAGE_INSTANCE_ID = NamespaceId.SYSTEM.dataset("usage.registry");
 
   private final TransactionExecutorFactory executorFactory;
   private final DatasetFramework datasetFramework;
@@ -101,8 +105,8 @@ public class DefaultUsageRegistry implements UsageRegistry {
    * @param streamId the stream
    */
   @Override
-  public void registerAll(final Iterable<? extends Id> users, final Id.Stream streamId) {
-    for (Id user : users) {
+  public void registerAll(final Iterable<? extends EntityId> users, final StreamId streamId) {
+    for (EntityId user : users) {
       register(user, streamId);
     }
   }
@@ -114,9 +118,9 @@ public class DefaultUsageRegistry implements UsageRegistry {
    * @param streamId the stream
    */
   @Override
-  public void register(Id user, Id.Stream streamId) {
-    if (user instanceof Id.Program) {
-      register((Id.Program) user, streamId);
+  public void register(EntityId user, StreamId streamId) {
+    if (user instanceof ProgramId) {
+      register((ProgramId) user, streamId);
     }
   }
 
@@ -127,8 +131,8 @@ public class DefaultUsageRegistry implements UsageRegistry {
    * @param datasetId the stream
    */
   @Override
-  public void registerAll(final Iterable<? extends Id> users, final Id.DatasetInstance datasetId) {
-    for (Id user : users) {
+  public void registerAll(final Iterable<? extends EntityId> users, final DatasetId datasetId) {
+    for (EntityId user : users) {
       register(user, datasetId);
     }
   }
@@ -140,9 +144,9 @@ public class DefaultUsageRegistry implements UsageRegistry {
    * @param datasetId the dataset
    */
   @Override
-  public void register(Id user, Id.DatasetInstance datasetId) {
-    if (user instanceof Id.Program) {
-      register((Id.Program) user, datasetId);
+  public void register(EntityId user, DatasetId datasetId) {
+    if (user instanceof ProgramId) {
+      register((ProgramId) user, datasetId);
     }
   }
 
@@ -153,7 +157,7 @@ public class DefaultUsageRegistry implements UsageRegistry {
    * @param datasetInstanceId dataset
    */
   @Override
-  public void register(final Id.Program programId, final Id.DatasetInstance datasetInstanceId) {
+  public void register(final ProgramId programId, final DatasetId datasetInstanceId) {
     usageCache.getUnchecked(new DatasetUsageKey(datasetInstanceId, programId));
   }
 
@@ -163,7 +167,7 @@ public class DefaultUsageRegistry implements UsageRegistry {
    * @param programId program
    * @param datasetInstanceId  dataset
    */
-  private void doRegister(final Id.Program programId, final Id.DatasetInstance datasetInstanceId) {
+  private void doRegister(final ProgramId programId, final DatasetId datasetInstanceId) {
     execute(new TransactionExecutor.Procedure<UsageDataset>() {
       @Override
       public void apply(UsageDataset usageDataset) throws Exception {
@@ -179,7 +183,7 @@ public class DefaultUsageRegistry implements UsageRegistry {
    * @param streamId  stream
    */
   @Override
-  public void register(final Id.Program programId, final Id.Stream streamId) {
+  public void register(final ProgramId programId, final StreamId streamId) {
     execute(new TransactionExecutor.Procedure<UsageDataset>() {
       @Override
       public void apply(UsageDataset usageDataset) throws Exception {
@@ -194,7 +198,7 @@ public class DefaultUsageRegistry implements UsageRegistry {
    * @param applicationId application
    */
   @Override
-  public void unregister(final Id.Application applicationId) {
+  public void unregister(final ApplicationId applicationId) {
     execute(new TransactionExecutor.Procedure<UsageDataset>() {
       @Override
       public void apply(UsageDataset usageDataset) throws Exception {
@@ -206,67 +210,67 @@ public class DefaultUsageRegistry implements UsageRegistry {
     // application is deleted, its usage is removed from the registry. If it is redeployed later, we
     // must register its usage again. That would not happen if the cache still holds these entries.
     for (DatasetUsageKey key : usageCache.asMap().keySet()) {
-      if (applicationId.equals(key.getOwner().getApplication())) {
+      if (applicationId.equals(key.getOwner().getParent())) {
         usageCache.invalidate(key);
       }
     }
   }
 
   @Override
-  public Set<Id.DatasetInstance> getDatasets(final Id.Application id) {
-    return execute(new TransactionExecutor.Function<UsageDataset, Set<Id.DatasetInstance>>() {
+  public Set<DatasetId> getDatasets(final ApplicationId id) {
+    return execute(new TransactionExecutor.Function<UsageDataset, Set<DatasetId>>() {
       @Override
-      public Set<Id.DatasetInstance> apply(UsageDataset usageDataset) throws Exception {
+      public Set<DatasetId> apply(UsageDataset usageDataset) throws Exception {
         return usageDataset.getDatasets(id);
       }
     });
   }
 
   @Override
-  public Set<Id.Stream> getStreams(final Id.Application id) {
-    return execute(new TransactionExecutor.Function<UsageDataset, Set<Id.Stream>>() {
+  public Set<StreamId> getStreams(final ApplicationId id) {
+    return execute(new TransactionExecutor.Function<UsageDataset, Set<StreamId>>() {
       @Override
-      public Set<Id.Stream> apply(UsageDataset usageDataset) throws Exception {
+      public Set<StreamId> apply(UsageDataset usageDataset) throws Exception {
         return usageDataset.getStreams(id);
       }
     });
   }
 
   @Override
-  public Set<Id.DatasetInstance> getDatasets(final Id.Program id) {
-    return execute(new TransactionExecutor.Function<UsageDataset, Set<Id.DatasetInstance>>() {
+  public Set<DatasetId> getDatasets(final ProgramId id) {
+    return execute(new TransactionExecutor.Function<UsageDataset, Set<DatasetId>>() {
       @Override
-      public Set<Id.DatasetInstance> apply(UsageDataset usageDataset) throws Exception {
+      public Set<DatasetId> apply(UsageDataset usageDataset) throws Exception {
         return usageDataset.getDatasets(id);
       }
     });
   }
 
   @Override
-  public Set<Id.Stream> getStreams(final Id.Program id) {
-    return execute(new TransactionExecutor.Function<UsageDataset, Set<Id.Stream>>() {
+  public Set<StreamId> getStreams(final ProgramId id) {
+    return execute(new TransactionExecutor.Function<UsageDataset, Set<StreamId>>() {
       @Override
-      public Set<Id.Stream> apply(UsageDataset usageDataset) throws Exception {
+      public Set<StreamId> apply(UsageDataset usageDataset) throws Exception {
         return usageDataset.getStreams(id);
       }
     });
   }
 
   @Override
-  public Set<Id.Program> getPrograms(final Id.Stream id) {
-    return execute(new TransactionExecutor.Function<UsageDataset, Set<Id.Program>>() {
+  public Set<ProgramId> getPrograms(final StreamId id) {
+    return execute(new TransactionExecutor.Function<UsageDataset, Set<ProgramId>>() {
       @Override
-      public Set<Id.Program> apply(UsageDataset usageDataset) throws Exception {
+      public Set<ProgramId> apply(UsageDataset usageDataset) throws Exception {
         return usageDataset.getPrograms(id);
       }
     });
   }
 
   @Override
-  public Set<Id.Program> getPrograms(final Id.DatasetInstance id) {
-    return execute(new TransactionExecutor.Function<UsageDataset, Set<Id.Program>>() {
+  public Set<ProgramId> getPrograms(final DatasetId id) {
+    return execute(new TransactionExecutor.Function<UsageDataset, Set<ProgramId>>() {
       @Override
-      public Set<Id.Program> apply(UsageDataset usageDataset) throws Exception {
+      public Set<ProgramId> apply(UsageDataset usageDataset) throws Exception {
         return usageDataset.getPrograms(id);
       }
     });

@@ -19,8 +19,9 @@ package co.cask.cdap.data.view;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.internal.io.SQLSchemaParser;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ViewSpecification;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.id.StreamViewId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
@@ -39,10 +40,10 @@ public abstract class ViewStoreTestBase {
   public void testExploreViewStore() throws Exception {
     ViewStore store = getExploreViewStore();
 
-    Id.Stream stream = Id.Stream.from("foo", "s");
-    Id.Stream.View view1 = Id.Stream.View.from(stream, "bar1");
-    Id.Stream.View view2 = Id.Stream.View.from(stream, "bar2");
-    Id.Stream.View view3 = Id.Stream.View.from(stream, "bar3");
+    StreamId stream = new StreamId("foo", "s");
+    StreamViewId view1 = stream.view("bar1");
+    StreamViewId view2 = stream.view("bar2");
+    StreamViewId view3 = stream.view("bar3");
 
     Assert.assertFalse(store.exists(view1));
 

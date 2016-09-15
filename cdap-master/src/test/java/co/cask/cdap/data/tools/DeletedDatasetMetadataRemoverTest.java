@@ -84,10 +84,10 @@ public class DeletedDatasetMetadataRemoverTest {
     DatasetId ds1 = NamespaceId.DEFAULT.dataset("ds1");
     DatasetId ds2 = NamespaceId.DEFAULT.dataset("ds2");
     DatasetId ds3 = NamespaceId.DEFAULT.dataset("ds3");
-    DS_FRAMEWORK_TEST_UTIL.createInstance("table", ds1.toId(), DatasetProperties.EMPTY);
-    DS_FRAMEWORK_TEST_UTIL.createInstance("table", ds2.toId(), DatasetProperties.EMPTY);
-    DS_FRAMEWORK_TEST_UTIL.createInstance("table", ds3.toId(), DatasetProperties.EMPTY);
-    Assert.assertEquals(3, DS_FRAMEWORK_TEST_UTIL.list(NamespaceId.DEFAULT.toId()).size());
+    DS_FRAMEWORK_TEST_UTIL.createInstance("table", ds1, DatasetProperties.EMPTY);
+    DS_FRAMEWORK_TEST_UTIL.createInstance("table", ds2, DatasetProperties.EMPTY);
+    DS_FRAMEWORK_TEST_UTIL.createInstance("table", ds3, DatasetProperties.EMPTY);
+    Assert.assertEquals(3, DS_FRAMEWORK_TEST_UTIL.list(NamespaceId.DEFAULT).size());
     metadataStore.addTags(MetadataScope.USER, ds1, "ds1Tag1", "ds1Tag2");
     metadataStore.setProperties(MetadataScope.USER, ds2, Collections.singletonMap("ds2Key", "ds2Value"));
     metadataStore.addTags(MetadataScope.USER, ds3, "ds3Tag1", "ds3Tag2");
@@ -98,7 +98,7 @@ public class DeletedDatasetMetadataRemoverTest {
   }
 
   private void verifyMetadataRemoval(DatasetId dsId) throws IOException, DatasetManagementException {
-    DS_FRAMEWORK_TEST_UTIL.deleteInstance(dsId.toId());
+    DS_FRAMEWORK_TEST_UTIL.deleteInstance(dsId);
     assertNonEmptyMetadata(dsId);
     metadataRemover.remove();
     assertEmptyMetadata(dsId);

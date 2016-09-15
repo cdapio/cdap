@@ -25,7 +25,6 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -51,7 +50,7 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
 
   @Override
   public synchronized StreamConsumerStateStore create(StreamConfig streamConfig) throws IOException {
-    Id.Namespace namespace = streamConfig.getStreamId().getNamespace();
+    NamespaceId namespace = streamConfig.getStreamId().getParent();
     TableId streamStateStoreTableId = StreamUtils.getStateStoreTableId(namespace);
     TableId hbaseTableId = tableUtil.createHTableId(new NamespaceId(streamStateStoreTableId.getNamespace()),
                                                     streamStateStoreTableId.getTableName());
@@ -76,7 +75,7 @@ public final class HBaseStreamConsumerStateStoreFactory implements StreamConsume
   }
 
   @Override
-  public synchronized void dropAllInNamespace(Id.Namespace namespace) throws IOException {
+  public synchronized void dropAllInNamespace(NamespaceId namespace) throws IOException {
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
       TableId tableId = StreamUtils.getStateStoreTableId(namespace);
       TableId hbaseTableId = tableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());

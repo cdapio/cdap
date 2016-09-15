@@ -16,7 +16,7 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.common.Cancellable;
 
@@ -35,7 +35,7 @@ public interface StreamCoordinatorClient extends Service {
    * @param listener listener to get called when there is change in stream properties.
    * @return A {@link Cancellable} to cancel the watch
    */
-  Cancellable addListener(Id.Stream streamId, StreamPropertyListener listener);
+  Cancellable addListener(StreamId streamId, StreamPropertyListener listener);
 
   /**
    * Creates a stream by performing the given action. The execution of the action is protected by a lock
@@ -49,7 +49,7 @@ public interface StreamCoordinatorClient extends Service {
    * @throws Exception if the action throws Exception
    */
   @Nullable
-  StreamConfig createStream(Id.Stream streamId, Callable<StreamConfig> action) throws Exception;
+  StreamConfig createStream(StreamId streamId, Callable<StreamConfig> action) throws Exception;
 
   /**
    * Updates the stream properties by performing the given action. The execution of the action is protected by a lock
@@ -61,7 +61,7 @@ public interface StreamCoordinatorClient extends Service {
    *               about the update properties.
    * @throws Exception if failed to update properties
    */
-  void updateProperties(Id.Stream streamId, Callable<CoordinatorStreamProperties> action) throws Exception;
+  void updateProperties(StreamId streamId, Callable<CoordinatorStreamProperties> action) throws Exception;
 
   /**
    * Deletes a stream by performing the given action. The execution of the action is protected by a lock
@@ -72,7 +72,7 @@ public interface StreamCoordinatorClient extends Service {
    * @param action action to perform.
    * @throws Exception if the action throws Exception
    */
-  void deleteStream(Id.Stream streamId, Runnable action) throws Exception;
+  void deleteStream(StreamId streamId, Runnable action) throws Exception;
 
   /**
    * Performs an action on a stream while holding the lock for the stream.
@@ -81,5 +81,5 @@ public interface StreamCoordinatorClient extends Service {
    * @param action action to perform.
    * @throws Exception if the action throws Exception
    */
-  <T> T exclusiveAction(Id.Stream streamId, Callable<T> action) throws Exception;
+  <T> T exclusiveAction(StreamId streamId, Callable<T> action) throws Exception;
 }

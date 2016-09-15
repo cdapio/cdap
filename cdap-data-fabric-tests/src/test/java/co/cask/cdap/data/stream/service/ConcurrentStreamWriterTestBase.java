@@ -38,6 +38,8 @@ import co.cask.cdap.data.stream.TimestampCloseable;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Charsets;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableMap;
@@ -93,8 +95,8 @@ public abstract class ConcurrentStreamWriterTestBase {
   @Test
   public void testConcurrentWrite() throws Exception {
     final String streamName = "testConcurrentWrite";
-    String namespace = "namespace";
-    Id.Stream streamId = Id.Stream.from(namespace, streamName);
+    NamespaceId namespace = new NamespaceId("namespace");
+    StreamId streamId = namespace.stream(streamName);
     StreamAdmin streamAdmin = new TestStreamAdmin(getNamespacedLocationFactory(), Long.MAX_VALUE, 1000);
     int threads = Runtime.getRuntime().availableProcessors() * 4;
 
@@ -139,8 +141,8 @@ public abstract class ConcurrentStreamWriterTestBase {
   @Test
   public void testConcurrentAppendFile() throws Exception {
     final String streamName = "testConcurrentFile";
-    String namespace = "namespace";
-    Id.Stream streamId = Id.Stream.from(namespace, streamName);
+    NamespaceId namespace = new NamespaceId("namespace");
+    StreamId streamId = namespace.stream(streamName);
     StreamAdmin streamAdmin = new TestStreamAdmin(getNamespacedLocationFactory(), Long.MAX_VALUE, 1000);
     int threads = Runtime.getRuntime().availableProcessors() * 4;
 
@@ -205,7 +207,7 @@ public abstract class ConcurrentStreamWriterTestBase {
     return true;
   }
 
-  private ConcurrentStreamWriter createStreamWriter(Id.Stream streamId, StreamAdmin streamAdmin,
+  private ConcurrentStreamWriter createStreamWriter(StreamId streamId, StreamAdmin streamAdmin,
                                                     int threads, StreamFileWriterFactory writerFactory)
     throws Exception {
     StreamConfig streamConfig = streamAdmin.getConfig(streamId);
@@ -215,7 +217,7 @@ public abstract class ConcurrentStreamWriterTestBase {
                                       writerFactory, threads, new TestMetricsCollectorFactory(), impersonator);
   }
 
-  private Runnable createWriterTask(final Id.Stream streamId,
+  private Runnable createWriterTask(final StreamId streamId,
                                     final ConcurrentStreamWriter streamWriter,
                                     final int threadId, final int msgCount, final int batchSize,
                                     final CountDownLatch startLatch, final CountDownLatch completion) {
@@ -262,7 +264,7 @@ public abstract class ConcurrentStreamWriterTestBase {
     };
   }
 
-  private Runnable createAppendFileTask(final Id.Stream streamId,
+  private Runnable createAppendFileTask(final StreamId streamId,
                                         final ConcurrentStreamWriter streamWriter, final FileInfo fileInfo,
                                         final CountDownLatch startLatch, final CountDownLatch completion) {
     return new Runnable() {
@@ -332,12 +334,12 @@ public abstract class ConcurrentStreamWriterTestBase {
     }
 
     @Override
-    public boolean exists(Id.Stream streamId) throws Exception {
+    public boolean exists(StreamId streamId) throws Exception {
       return true;
     }
 
     @Override
-    public StreamConfig getConfig(Id.Stream streamId) throws IOException {
+    public StreamConfig getConfig(StreamId streamId) throws IOException {
       Location streamLocation = StreamFileTestUtils.getStreamBaseLocation(namespacedLocationFactory, streamId);
       return new StreamConfig(streamId, partitionDuration, indexInterval, Long.MAX_VALUE, streamLocation, null, 1000);
     }
@@ -345,7 +347,7 @@ public abstract class ConcurrentStreamWriterTestBase {
 
   private static final class TestMetricsCollectorFactory implements StreamMetricsCollectorFactory {
     @Override
-    public StreamMetricsCollector createMetricsCollector(Id.Stream streamId) {
+    public StreamMetricsCollector createMetricsCollector(StreamId streamId) {
       return new StreamMetricsCollector() {
         @Override
         public void emitMetrics(long bytesWritten, long eventsWritten) {

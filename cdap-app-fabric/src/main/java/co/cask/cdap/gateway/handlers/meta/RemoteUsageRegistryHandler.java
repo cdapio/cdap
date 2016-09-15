@@ -18,7 +18,9 @@ package co.cask.cdap.gateway.handlers.meta;
 
 import co.cask.cdap.common.internal.remote.MethodArgument;
 import co.cask.cdap.data2.registry.UsageRegistry;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -46,8 +48,8 @@ public class RemoteUsageRegistryHandler extends AbstractRemoteSystemOpsHandler {
   public void registerDataset(HttpRequest request, HttpResponder responder) throws Exception {
     Iterator<MethodArgument> arguments = parseArguments(request);
 
-    Id.Program programId = deserializeNext(arguments);
-    Id.DatasetInstance datasetInstance = deserializeNext(arguments);
+    ProgramId programId = deserializeNext(arguments);
+    DatasetId datasetInstance = deserializeNext(arguments);
     usageRegistry.register(programId, datasetInstance);
 
     responder.sendStatus(HttpResponseStatus.OK);
@@ -58,8 +60,8 @@ public class RemoteUsageRegistryHandler extends AbstractRemoteSystemOpsHandler {
   public void registerStream(HttpRequest request, HttpResponder responder) throws Exception {
     Iterator<MethodArgument> arguments = parseArguments(request);
 
-    Id.Program programId = deserializeNext(arguments);
-    Id.Stream streamId = deserializeNext(arguments);
+    ProgramId programId = deserializeNext(arguments);
+    StreamId streamId = deserializeNext(arguments);
     usageRegistry.register(programId, streamId);
 
     responder.sendStatus(HttpResponseStatus.OK);

@@ -48,8 +48,10 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.DatasetModuleId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
@@ -74,7 +76,7 @@ import java.util.List;
  * Test deployment behavior when explore module is disabled.
  */
 public class ExploreDisabledTest {
-  private static final Id.Namespace namespaceId = Id.Namespace.from("myspace");
+  private static final NamespaceId namespaceId = new NamespaceId("myspace");
 
   private static TransactionManager transactionManager;
   private static DatasetFramework datasetFramework;
@@ -107,14 +109,14 @@ public class ExploreDisabledTest {
     namespaceAdmin.create(namespaceMeta);
     // This happens when you create a namespace via REST APIs. However, since we do not start AppFabricServer in
     // Explore tests, simulating that scenario by explicitly calling DatasetFramework APIs.
-    namespacedLocationFactory.get(namespaceId).mkdirs();
+    namespacedLocationFactory.get(namespaceId.toId()).mkdirs();
     exploreClient.addNamespace(namespaceMeta);
   }
 
   @AfterClass
   public static void stop() throws Exception {
-    exploreClient.removeNamespace(namespaceId);
-    namespaceAdmin.delete(namespaceId);
+    exploreClient.removeNamespace(namespaceId.toId());
+    namespaceAdmin.delete(namespaceId.toId());
     exploreClient.close();
     datasetService.stopAndWait();
     dsOpExecutor.stopAndWait();
@@ -125,8 +127,8 @@ public class ExploreDisabledTest {
   public void testDeployRecordScannable() throws Exception {
     // Try to deploy a dataset that is not record scannable, when explore is enabled.
     // This should be processed with no exception being thrown
-    Id.DatasetModule module1 = Id.DatasetModule.from(namespaceId, "module1");
-    Id.DatasetInstance instance1 = Id.DatasetInstance.from(namespaceId, "table1");
+    DatasetModuleId module1 = new DatasetModuleId(namespaceId.getNamespace(), "module1");
+    DatasetId instance1 = namespaceId.dataset("table1");
     datasetFramework.addModule(module1, new KeyStructValueTableDefinition.KeyStructValueTableModule());
 
     // Performing admin operations to create dataset instance
@@ -168,8 +170,8 @@ public class ExploreDisabledTest {
   public void testDeployNotRecordScannable() throws Exception {
     // Try to deploy a dataset that is not record scannable, when explore is enabled.
     // This should be processed with no exceptionbeing thrown
-    Id.DatasetModule module2 = Id.DatasetModule.from(namespaceId, "module2");
-    Id.DatasetInstance instance2 = Id.DatasetInstance.from(namespaceId, "table1");
+    DatasetModuleId module2 = namespaceId.datasetModule("module2");
+    DatasetId instance2 = namespaceId.dataset("table1");
     datasetFramework.addModule(module2, new NotRecordScannableTableDefinition.NotRecordScannableTableModule());
 
     // Performing admin operations to create dataset instance

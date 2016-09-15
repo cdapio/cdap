@@ -19,7 +19,7 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import org.apache.tephra.TransactionExecutor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -40,8 +40,7 @@ public class CounterTimeseriesTableTest {
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
   private static CounterTimeseriesTable table = null;
-  private static Id.DatasetInstance counterTable =
-    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "counterTable");
+  private static DatasetId counterTable = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("counterTable");
 
   @BeforeClass
   public static void setup() throws Exception {

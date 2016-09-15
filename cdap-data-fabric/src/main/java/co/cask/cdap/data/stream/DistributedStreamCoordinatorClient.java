@@ -23,7 +23,7 @@ import co.cask.cdap.common.zookeeper.coordination.ResourceCoordinatorClient;
 import co.cask.cdap.common.zookeeper.coordination.ResourceModifier;
 import co.cask.cdap.common.zookeeper.coordination.ResourceRequirement;
 import co.cask.cdap.common.zookeeper.store.ZKPropertyStore;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -73,14 +73,14 @@ public final class DistributedStreamCoordinatorClient extends AbstractStreamCoor
   }
 
   @Override
-  protected Lock getLock(Id.Stream streamId) {
+  protected Lock getLock(StreamId streamId) {
     // It's ok to create new locks every time as it's backed by ZK for distributed lock
     ZKClient lockZKClient = ZKClients.namespace(zkClient, "/" + Constants.Service.STREAMS + "/locks");
     return new ReentrantDistributedLock(lockZKClient, streamId.toString());
   }
 
   @Override
-  protected void streamCreated(final Id.Stream streamId) {
+  protected void streamCreated(final StreamId streamId) {
     resourceCoordinatorClient.modifyRequirement(
       Constants.Service.STREAMS, new ResourceModifier() {
         @Nullable
@@ -110,7 +110,7 @@ public final class DistributedStreamCoordinatorClient extends AbstractStreamCoor
   }
 
   @Override
-  protected void streamDeleted(final Id.Stream streamId) {
+  protected void streamDeleted(final StreamId streamId) {
     resourceCoordinatorClient.modifyRequirement(Constants.Service.STREAMS, new ResourceModifier() {
       @Nullable
       @Override

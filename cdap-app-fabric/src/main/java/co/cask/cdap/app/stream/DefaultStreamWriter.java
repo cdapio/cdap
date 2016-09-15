@@ -28,6 +28,7 @@ import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -69,7 +70,7 @@ public class DefaultStreamWriter implements StreamWriter {
   /**
    * The owners of this {@link StreamWriter}.
    */
-  private final Iterable<? extends Id> owners;
+  private final Iterable<? extends EntityId> owners;
   private final Id.Run run;
   private final LineageWriter lineageWriter;
   private final AuthenticationContext authenticationContext;
@@ -77,7 +78,7 @@ public class DefaultStreamWriter implements StreamWriter {
 
   @Inject
   public DefaultStreamWriter(@Assisted("run") Id.Run run,
-                             @Assisted("owners") Iterable<? extends Id> owners,
+                             @Assisted("owners") Iterable<? extends EntityId> owners,
                              RuntimeUsageRegistry runtimeUsageRegistry,
                              LineageWriter lineageWriter,
                              DiscoveryServiceClient discoveryServiceClient,
@@ -197,7 +198,7 @@ public class DefaultStreamWriter implements StreamWriter {
   private void registerStream(Id.Stream stream) {
     // prone to being entered multiple times, but OK since usageRegistry.register is not an expensive operation
     if (!isStreamRegistered.containsKey(stream)) {
-      runtimeUsageRegistry.registerAll(owners, stream);
+      runtimeUsageRegistry.registerAll(owners, stream.toEntityId());
       isStreamRegistered.put(stream, true);
     }
 

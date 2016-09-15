@@ -18,13 +18,14 @@ package co.cask.cdap.data2.registry.internal.pair;
 
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.EntityId;
 
 /**
  * Used to serialize/deserialize {@link Id}s into {@link MDSKey}.
  *
  * @param <T> type of Id.
  */
-public interface KeyMaker<T extends Id> {
+public interface KeyMaker<T extends EntityId> {
   /**
    * Serializes Id as MDSKey.
    *

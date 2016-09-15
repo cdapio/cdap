@@ -59,8 +59,8 @@ import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.DatasetModuleMeta;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -145,8 +145,8 @@ public abstract class DatasetServiceTestBase {
   @AfterClass
   public static void tearDown() throws Exception {
     Services.chainStop(service, opExecutorService, txManager, authEnforcementService);
-    namespaceAdmin.delete(Id.Namespace.DEFAULT);
-    Locations.deleteQuietly(locationFactory.create(Id.Namespace.DEFAULT.getId()));
+    namespaceAdmin.delete(NamespaceId.DEFAULT.toId());
+    Locations.deleteQuietly(locationFactory.create(NamespaceId.DEFAULT.getNamespace()));
   }
 
   protected static void initializeAndStartService(CConfiguration cConf) throws Exception {
@@ -246,7 +246,7 @@ public abstract class DatasetServiceTestBase {
     waitForService(Constants.Service.DATASET_EXECUTOR);
     waitForService(Constants.Service.DATASET_MANAGER);
     // this usually happens while creating a namespace, however not doing that in data fabric tests
-    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(Id.Namespace.DEFAULT));
+    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(NamespaceId.DEFAULT.toId()));
   }
 
   private static void waitForService(String service) {
@@ -305,22 +305,22 @@ public abstract class DatasetServiceTestBase {
   }
 
   protected HttpResponse deployModule(String moduleName, Class moduleClass) throws Exception {
-    return deployModule(Id.DatasetModule.from(Id.Namespace.DEFAULT, moduleName), moduleClass);
+    return deployModule(NamespaceId.DEFAULT.datasetModule(moduleName), moduleClass);
   }
 
-  protected HttpResponse deployModule(Id.DatasetModule module, Class moduleClass) throws Exception {
+  protected HttpResponse deployModule(DatasetModuleId module, Class moduleClass) throws Exception {
     return deployModule(module, moduleClass, false);
   }
 
   protected HttpResponse deployModule(String moduleName, Class moduleClass, boolean force) throws Exception {
-    return deployModule(Id.DatasetModule.from(Id.Namespace.DEFAULT, moduleName), moduleClass, force);
+    return deployModule(NamespaceId.DEFAULT.datasetModule(moduleName), moduleClass, force);
   }
 
-  protected HttpResponse deployModule(Id.DatasetModule module, Class moduleClass, boolean force) throws Exception {
+  protected HttpResponse deployModule(DatasetModuleId module, Class moduleClass, boolean force) throws Exception {
     Location moduleJar = createModuleJar(moduleClass);
-    String urlPath = "/data/modules/" + module.getId();
+    String urlPath = "/data/modules/" + module.getEntityName();
     urlPath = force ? urlPath + "?force=true" : urlPath;
-    HttpRequest request = HttpRequest.put(getUrl(module.getNamespaceId(), urlPath))
+    HttpRequest request = HttpRequest.put(getUrl(module.getNamespace(), urlPath))
       .addHeader("X-Class-Name", moduleClass.getName())
       .withBody(Locations.newInputSupplier(moduleJar)).build();
     return HttpRequests.execute(request);
@@ -338,37 +338,37 @@ public abstract class DatasetServiceTestBase {
   }
 
   protected ObjectResponse<List<DatasetModuleMeta>> getModules() throws IOException {
-    return getModules(Id.Namespace.DEFAULT);
+    return getModules(NamespaceId.DEFAULT);
   }
 
-  protected ObjectResponse<List<DatasetModuleMeta>> getModules(Id.Namespace namespace) throws IOException {
+  protected ObjectResponse<List<DatasetModuleMeta>> getModules(NamespaceId namespace) throws IOException {
     return ObjectResponse.fromJsonBody(makeModulesRequest(namespace),
                                        new TypeToken<List<DatasetModuleMeta>>() { }.getType());
   }
 
-  protected HttpResponse makeModulesRequest(Id.Namespace namespaceId) throws IOException {
-    HttpRequest request = HttpRequest.get(getUrl(namespaceId.getId(), "/data/modules")).build();
+  protected HttpResponse makeModulesRequest(NamespaceId namespaceId) throws IOException {
+    HttpRequest request = HttpRequest.get(getUrl(namespaceId.getEntityName(), "/data/modules")).build();
     return HttpRequests.execute(request);
   }
 
   protected HttpResponse deleteModule(String moduleName) throws Exception {
-    return deleteModule(Id.DatasetModule.from(Id.Namespace.DEFAULT, moduleName));
+    return deleteModule(NamespaceId.DEFAULT.datasetModule(moduleName));
   }
 
-  protected HttpResponse deleteModule(Id.DatasetModule module) throws Exception {
+  protected HttpResponse deleteModule(DatasetModuleId module) throws Exception {
     return HttpRequests.execute(
-      HttpRequest.delete(getUrl(module.getNamespaceId(), "/data/modules/" + module.getId())).build());
+      HttpRequest.delete(getUrl(module.getNamespace(), "/data/modules/" + module.getEntityName())).build());
   }
 
   protected HttpResponse deleteModules() throws IOException {
-    return deleteModules(Id.Namespace.DEFAULT);
+    return deleteModules(NamespaceId.DEFAULT);
   }
 
-  protected HttpResponse deleteModules(Id.Namespace namespace) throws IOException {
-    return HttpRequests.execute(HttpRequest.delete(getUrl(namespace.getId(), "/data/modules/")).build());
+  protected HttpResponse deleteModules(NamespaceId namespace) throws IOException {
+    return HttpRequests.execute(HttpRequest.delete(getUrl(namespace.getEntityName(), "/data/modules/")).build());
   }
 
-  protected void assertNamespaceNotFound(HttpResponse response, Id.Namespace namespaceId) {
+  protected void assertNamespaceNotFound(HttpResponse response, NamespaceId namespaceId) {
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, response.getResponseCode());
     Assert.assertTrue(response.getResponseBodyAsString().contains(namespaceId.toString()));
   }

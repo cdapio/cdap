@@ -21,7 +21,7 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.io.ByteBuffers;
 import co.cask.cdap.data.stream.service.ConcurrentStreamWriter;
 import co.cask.cdap.data.stream.service.MutableStreamEventData;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableMap;
@@ -38,12 +38,12 @@ import java.util.Map;
  */
 final class BufferedContentWriter implements ContentWriter, Iterable<ByteBuffer> {
 
-  private final Id.Stream streamId;
+  private final StreamId streamId;
   private final ConcurrentStreamWriter streamWriter;
   private final Map<String, String> headers;
   private final List<ByteBuffer> bodies;
 
-  BufferedContentWriter(Id.Stream streamId, ConcurrentStreamWriter streamWriter, Map<String, String> headers) {
+  BufferedContentWriter(StreamId streamId, ConcurrentStreamWriter streamWriter, Map<String, String> headers) {
     this.streamId = streamId;
     this.streamWriter = streamWriter;
     this.headers = ImmutableMap.copyOf(headers);

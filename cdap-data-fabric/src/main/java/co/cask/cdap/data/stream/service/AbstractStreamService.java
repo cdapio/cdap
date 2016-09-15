@@ -23,7 +23,7 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -119,13 +119,13 @@ public abstract class AbstractStreamService extends AbstractScheduledService imp
    * @return Size of events ingested by a stream since its creation
    * @throws IOException when getting an error retrieving the metric
    */
-  protected long getStreamEventsSize(Id.Stream streamId) throws IOException {
+  protected long getStreamEventsSize(StreamId streamId) throws IOException {
     MetricDataQuery metricDataQuery = new MetricDataQuery(
       0L, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
       Integer.MAX_VALUE, "system.collect.bytes",
       AggregationFunction.SUM,
-      ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, streamId.getNamespaceId(),
-                      Constants.Metrics.Tag.STREAM, streamId.getId()),
+      ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, streamId.getNamespace(),
+                      Constants.Metrics.Tag.STREAM, streamId.getEntityName()),
       ImmutableList.<String>of()
     );
 

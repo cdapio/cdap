@@ -16,7 +16,10 @@
 
 package co.cask.cdap.data2.registry;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
 
 /**
  * Store program -> dataset/stream usage information. Differs from UsageRegistry in that UsageRegistry does not have
@@ -30,7 +33,7 @@ public interface RuntimeUsageRegistry {
    * @param users the users of the stream
    * @param streamId the stream
    */
-  void registerAll(final Iterable<? extends Id> users, final Id.Stream streamId);
+  void registerAll(final Iterable<? extends EntityId> users, final StreamId streamId);
 
   /**
    * Register usage of a stream by an id.
@@ -38,7 +41,7 @@ public interface RuntimeUsageRegistry {
    * @param user the user of the stream
    * @param streamId the stream
    */
-  void register(Id user, Id.Stream streamId);
+  void register(EntityId user, StreamId streamId);
 
   /**
    * Registers usage of a stream by multiple ids.
@@ -46,7 +49,7 @@ public interface RuntimeUsageRegistry {
    * @param users the users of the stream
    * @param datasetId the stream
    */
-  void registerAll(final Iterable<? extends Id> users, final Id.DatasetInstance datasetId);
+  void registerAll(final Iterable<? extends EntityId> users, final DatasetId datasetId);
 
   /**
    * Registers usage of a dataset by multiple ids.
@@ -54,7 +57,7 @@ public interface RuntimeUsageRegistry {
    * @param user the user of the dataset
    * @param datasetId the dataset
    */
-  void register(Id user, Id.DatasetInstance datasetId);
+  void register(EntityId user, DatasetId datasetId);
 
   /**
    * Registers usage of a dataset by a program.
@@ -62,7 +65,7 @@ public interface RuntimeUsageRegistry {
    * @param programId program
    * @param datasetInstanceId dataset
    */
-  void register(final Id.Program programId, final Id.DatasetInstance datasetInstanceId);
+  void register(final ProgramId programId, final DatasetId datasetInstanceId);
 
   /**
    * Registers usage of a stream by a program.
@@ -70,5 +73,5 @@ public interface RuntimeUsageRegistry {
    * @param programId program
    * @param streamId  stream
    */
-  void register(final Id.Program programId, final Id.Stream streamId);
+  void register(final ProgramId programId, final StreamId streamId);
 }

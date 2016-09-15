@@ -20,6 +20,10 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
@@ -43,41 +47,48 @@ public class DatasetInstanceServiceTest extends DatasetServiceTestBase {
                            new DatasetInstanceConfiguration("table", new HashMap<String, String>()));
 
     // get the dataset meta for two different owners, assert it is the same
-    DatasetMeta meta = instanceService.get(Id.DatasetInstance.from(Id.Namespace.DEFAULT, "testds"),
-                                           ImmutableList.<Id>of(Id.Flow.from("app1", "flow1")));
-    DatasetMeta met2 = instanceService.get(Id.DatasetInstance.from(Id.Namespace.DEFAULT, "testds"),
-                                           ImmutableList.<Id>of(Id.Flow.from("app2", "flow2")));
+    DatasetMeta meta = instanceService.get(NamespaceId.DEFAULT.dataset("testds"),
+                                           ImmutableList.<EntityId>of(new ProgramId(NamespaceId.DEFAULT.getNamespace(),
+                                                                                    "app1", ProgramType.FLOW,
+                                                                                    "flow1")));
+    DatasetMeta met2 = instanceService.get(NamespaceId.DEFAULT.dataset("testds"),
+                                           ImmutableList.<EntityId>of(new ProgramId(NamespaceId.DEFAULT.getNamespace(),
+                                                                                    "app2", ProgramType.FLOW,
+                                                                                    "flow2")));
     Assert.assertSame(meta, met2);
 
     // update the dataset
-    instanceService.update(Id.DatasetInstance.from(Id.Namespace.DEFAULT, "testds"),
+    instanceService.update(NamespaceId.DEFAULT.dataset("testds"),
                            ImmutableMap.of("ttl", "12345678"));
 
     // get the dataset meta, validate it changed
-    met2 = instanceService.get(Id.DatasetInstance.from(Id.Namespace.DEFAULT, "testds"),
-                               ImmutableList.<Id>of(Id.Flow.from("app2", "flow2")));
+    met2 = instanceService.get(NamespaceId.DEFAULT.dataset("testds"),
+                               ImmutableList.<EntityId>of(new ProgramId(NamespaceId.DEFAULT.getNamespace(),
+                                                                        "app2", ProgramType.FLOW, "flow2")));
     Assert.assertNotSame(meta, met2);
     Assert.assertEquals("12345678", met2.getSpec().getProperty("ttl"));
 
     // delete the dataset
-    instanceService.drop(Id.DatasetInstance.from(Id.Namespace.DEFAULT, "testds"));
+    instanceService.drop(NamespaceId.DEFAULT.dataset("testds"));
 
     // get the dataset meta, validate not found
     try {
-      instanceService.get(Id.DatasetInstance.from(Id.Namespace.DEFAULT, "testds"),
-                          ImmutableList.<Id>of(Id.Flow.from("app1", "flow2")));
+      instanceService.get(NamespaceId.DEFAULT.dataset("testds"),
+                          ImmutableList.<EntityId>of(new ProgramId(NamespaceId.DEFAULT.getNamespace(), "app1",
+                                                                   ProgramType.FLOW, "flow2")));
       Assert.fail("get() should have thrown NotFoundException");
     } catch (NotFoundException e) {
       // expected
     }
 
     // recreate the dataset
-    instanceService.create(Id.Namespace.DEFAULT.getId(), "testds",
+    instanceService.create(NamespaceId.DEFAULT.getNamespace(), "testds",
                            new DatasetInstanceConfiguration("table", new HashMap<String, String>()));
 
     // get the dataset meta, validate it is up to date
-    met2 = instanceService.get(Id.DatasetInstance.from(Id.Namespace.DEFAULT, "testds"),
-                               ImmutableList.<Id>of(Id.Flow.from("app2", "flow2")));
+    met2 = instanceService.get(NamespaceId.DEFAULT.dataset("testds"),
+                               ImmutableList.<EntityId>of(new ProgramId(NamespaceId.DEFAULT.getNamespace(), "app2",
+                                                                        ProgramType.FLOW, "flow2")));
     Assert.assertEquals(meta.getSpec(), met2.getSpec());
   }
 

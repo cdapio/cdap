@@ -29,9 +29,9 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.pipeline.AbstractStage;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.reflect.TypeToken;
 
 import java.net.URI;
@@ -68,45 +68,45 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
     NamespaceId namespaceId = appId.getParent();
 
     for (FlowSpecification flow : appSpec.getFlows().values()) {
-      Id.Program programId = appId.flow(flow.getName()).toId();
+      ProgramId programId = appId.flow(flow.getName());
       for (FlowletConnection connection : flow.getConnections()) {
         if (connection.getSourceType().equals(FlowletConnection.Type.STREAM)) {
-          usageRegistry.register(programId, namespaceId.stream(connection.getSourceName()).toId());
+          usageRegistry.register(programId, namespaceId.stream(connection.getSourceName()));
         }
       }
       for (FlowletDefinition flowlet : flow.getFlowlets().values()) {
         for (String dataset : flowlet.getDatasets()) {
-          usageRegistry.register(programId, namespaceId.dataset(dataset).toId());
+          usageRegistry.register(programId, namespaceId.dataset(dataset));
         }
       }
     }
 
     for (MapReduceSpecification program : appSpec.getMapReduce().values()) {
-      Id.Program programId = appId.mr(program.getName()).toId();
+      ProgramId programId = appId.mr(program.getName());
       for (String dataset : program.getDataSets()) {
         if (!dataset.startsWith(Constants.Stream.URL_PREFIX)) {
-          usageRegistry.register(programId, namespaceId.dataset(dataset).toId());
+          usageRegistry.register(programId, namespaceId.dataset(dataset));
         }
       }
       String inputDatasetName = program.getInputDataSet();
       if (inputDatasetName != null && inputDatasetName.startsWith(Constants.Stream.URL_PREFIX)) {
         StreamBatchReadable stream = new StreamBatchReadable(URI.create(inputDatasetName));
-        usageRegistry.register(programId, namespaceId.stream(stream.getStreamName()).toId());
+        usageRegistry.register(programId, namespaceId.stream(stream.getStreamName()));
       }
     }
 
     for (SparkSpecification sparkSpec : appSpec.getSpark().values()) {
-      Id.Program programId = appId.spark(sparkSpec.getName()).toId();
+      ProgramId programId = appId.spark(sparkSpec.getName());
       for (String dataset : sparkSpec.getDatasets()) {
-        usageRegistry.register(programId, namespaceId.dataset(dataset).toId());
+        usageRegistry.register(programId, namespaceId.dataset(dataset));
       }
     }
 
     for (ServiceSpecification serviceSpecification : appSpec.getServices().values()) {
-      Id.Program programId = appId.service(serviceSpecification.getName()).toId();
+      ProgramId programId = appId.service(serviceSpecification.getName());
       for (HttpServiceHandlerSpecification handlerSpecification : serviceSpecification.getHandlers().values()) {
         for (String dataset : handlerSpecification.getDatasets()) {
-          usageRegistry.register(programId, namespaceId.dataset(dataset).toId());
+          usageRegistry.register(programId, namespaceId.dataset(dataset));
         }
       }
     }

@@ -17,7 +17,7 @@
 package co.cask.cdap.data.stream.service.upload;
 
 import co.cask.cdap.data.stream.service.ConcurrentStreamWriter;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
@@ -30,11 +30,11 @@ import java.util.Map;
  */
 public final class BufferedContentWriterFactory implements ContentWriterFactory {
 
-  private final Id.Stream streamId;
+  private final StreamId streamId;
   private final ConcurrentStreamWriter streamWriter;
   private final Map<String, String> headers;
 
-  public BufferedContentWriterFactory(Id.Stream streamId, ConcurrentStreamWriter streamWriter,
+  public BufferedContentWriterFactory(StreamId streamId, ConcurrentStreamWriter streamWriter,
                                       Map<String, String> headers) {
     this.streamId = streamId;
     this.streamWriter = streamWriter;
@@ -42,7 +42,7 @@ public final class BufferedContentWriterFactory implements ContentWriterFactory 
   }
 
   @Override
-  public Id.Stream getStream() {
+  public StreamId getStream() {
     return streamId;
   }
 

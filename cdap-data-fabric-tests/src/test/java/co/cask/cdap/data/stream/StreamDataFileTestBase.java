@@ -26,7 +26,8 @@ import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.file.ReadFilter;
 import co.cask.cdap.data.file.filter.TTLReadFilter;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
@@ -687,7 +688,7 @@ public abstract class StreamDataFileTestBase {
   @Test
   public void testLiveStream() throws Exception {
     String streamName = "live";
-    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
+    StreamId streamId = NamespaceId.DEFAULT.stream(streamName);
     final String filePrefix = "prefix";
     long partitionDuration = 5000;    // 5 seconds
     Location location = getLocationFactory().create(streamName);
@@ -995,7 +996,7 @@ public abstract class StreamDataFileTestBase {
 
   private FileWriter<StreamEvent> createWriter(StreamConfig config, String prefix) {
     return new TimePartitionedStreamFileWriter(config.getLocation(), config.getPartitionDuration(),
-                                               prefix, config.getIndexInterval(), config.getStreamId().toEntityId(),
+                                               prefix, config.getIndexInterval(), config.getStreamId(),
                                                impersonator);
   }
 }

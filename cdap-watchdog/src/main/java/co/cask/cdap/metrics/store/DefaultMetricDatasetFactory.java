@@ -32,7 +32,8 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.metrics.process.KafkaConsumerMetaTable;
 import co.cask.cdap.metrics.store.upgrade.DataMigrationException;
 import co.cask.cdap.metrics.store.upgrade.MetricsDataMigrator;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
@@ -117,7 +118,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties props) {
     MetricsTable table = null;
     // metrics tables are in the system namespace
-    Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Id.Namespace.SYSTEM, tableName);
+    DatasetId metricsDatasetInstanceId = NamespaceId.SYSTEM.dataset(tableName);
     while (table == null) {
       try {
         table = DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
