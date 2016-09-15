@@ -27,7 +27,6 @@ import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
@@ -36,7 +35,6 @@ import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
@@ -52,7 +50,6 @@ import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.app.ForwardingFlowSpecification;
 import co.cask.cdap.proto.BasicThrowable;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
@@ -550,7 +547,7 @@ public class DefaultStore implements Store {
                                                                        workerSpec.getDatasets(),
                                                                        workerSpec.getResources(),
                                                                        instances);
-        ApplicationSpecification newAppSpec = replaceWorkerInAppSpec(appSpec, id.toId(), newSpecification);
+        ApplicationSpecification newAppSpec = replaceWorkerInAppSpec(appSpec, id, newSpecification);
         metaStore.updateAppSpec(id.getNamespace(), id.getApplication(), newAppSpec);
 
       }
@@ -653,11 +650,10 @@ public class DefaultStore implements Store {
 
   @Override
   public Map<String, String> getRuntimeArguments(final ProgramRunId programRunId) {
-    final Id.Run runId = programRunId.toId();
     return txExecute(transactional, new TxCallable<Map<String, String>>() {
       @Override
       public Map<String, String> call(DatasetContext context) throws Exception {
-        RunRecordMeta runRecord = getAppMetadataStore(context).getRun(runId.getProgram().toEntityId(), runId.getId());
+        RunRecordMeta runRecord = getAppMetadataStore(context).getRun(programRunId.getParent(), programRunId.getRun());
         if (runRecord != null) {
           Map<String, String> properties = runRecord.getProperties();
           Map<String, String> runtimeArgs = GSON.fromJson(properties.get("runtimeArgs"), STRING_MAP_TYPE);
@@ -666,7 +662,7 @@ public class DefaultStore implements Store {
           }
         }
         LOG.debug("Runtime arguments for program {}, run {} not found. Returning empty.",
-                  runId.getProgram(), runId.getId());
+                  programRunId.getProgram(), programRunId.getRun());
         return EMPTY_STRING_MAP;
       }
     });
@@ -790,7 +786,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public WorkflowToken getWorkflowToken(final ProgramId workflowId, final String workflowRunId) {
+  public WorkflowToken getWorkflowToken(final WorkflowId workflowId, final String workflowRunId) {
     return txExecute(transactional, new TxCallable<WorkflowToken>() {
       @Override
       public WorkflowToken call(DatasetContext context) throws Exception {
@@ -939,24 +935,6 @@ public class DefaultStore implements Store {
     }
   }
 
-  private static final class FlowSpecificationWithChangedFlowletsAndConnections
-    extends FlowSpecificationWithChangedFlowlets {
-
-    private final List<FlowletConnection> connections;
-
-    private FlowSpecificationWithChangedFlowletsAndConnections(FlowSpecification delegate,
-                                                               FlowletDefinition adjustedFlowletDef,
-                                                               List<FlowletConnection> connections) {
-      super(delegate, adjustedFlowletDef);
-      this.connections = connections;
-    }
-
-    @Override
-    public List<FlowletConnection> getConnections() {
-      return connections;
-    }
-  }
-
   private static ApplicationSpecification replaceFlowletInAppSpec(final ApplicationSpecification appSpec,
                                                                   final ProgramId id,
                                                                   final FlowSpecification flowSpec,
@@ -992,9 +970,9 @@ public class DefaultStore implements Store {
   }
 
   private static ApplicationSpecification replaceWorkerInAppSpec(final ApplicationSpecification appSpec,
-                                                                 final Id.Program id,
+                                                                 final ProgramId id,
                                                                  final WorkerSpecification workerSpecification) {
-    return new ApplicationSpecificationWithChangedWorkers(appSpec, id.getId(), workerSpecification);
+    return new ApplicationSpecificationWithChangedWorkers(appSpec, id.getProgram(), workerSpecification);
   }
 
   private static final class ApplicationSpecificationWithChangedWorkers extends ForwardingApplicationSpecification {
