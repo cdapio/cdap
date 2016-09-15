@@ -85,7 +85,7 @@ public final class MapReduceContainerHelper {
    * @return the framework URI or {@code null} if not present or if the URI in the config is invalid.
    */
   @Nullable
-  public static URI getFrameworkURI(Configuration hConf) {
+  private static URI getFrameworkURI(Configuration hConf) {
     String framework = hConf.get(MRJobConfig.MAPREDUCE_APPLICATION_FRAMEWORK_PATH);
     if (framework == null) {
       return null;
