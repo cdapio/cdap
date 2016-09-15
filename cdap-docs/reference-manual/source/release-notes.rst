@@ -26,13 +26,16 @@ Cask Data Application Platform Release Notes
 `Release 3.5.0 <http://docs.cask.co/cdap/3.5.0/index.html>`__
 =============================================================
 
-Known Issues
-------------
 - :cask-issue:`CDAP-7179` - In CDAP 3.5.0, new ``kafka.server.*`` properties replace older
-  properties such as ``kafka.log.dir``. Though the older properties were marked as
-  deprecated, they are in fact being ignored, and need to be replaced with the current
-  properties as described in the :ref:`Administration Manual: Appendices: cdap-site.xml
-  <appendix-cdap-default-deprecated-properties>`.
+  properties such as ``kafka.log.dir``, as described in the :ref:`Administration Manual: 
+  Appendices: cdap-site.xml <appendix-cdap-default-deprecated-properties>`. 
+  
+  **If you are upgrading from CDAP 3.4.x to 3.5.x,** and you have set a value for
+  ``kafka.log.dir`` by using Cloudera Manager's :ref:`safety-valve mechanism
+  <cloudera-installation-add-service-wizard-configuration>`, you need to change to the
+  new property ``kafka.server.log.dirs``, as the deprecated ``kafka.log.dir`` is being
+  ignored in favor of the new property. If you don't, your custom value will be replaced
+  with the default value.
 
 
 API Changes
