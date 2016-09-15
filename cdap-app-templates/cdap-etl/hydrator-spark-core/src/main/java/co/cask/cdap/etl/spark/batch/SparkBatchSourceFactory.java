@@ -32,14 +32,6 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import scala.Tuple2;
 
-import java.io.DataInput;
-import java.io.DataInputStream;
-import java.io.DataOutput;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URI;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -53,40 +45,6 @@ import static java.lang.Thread.currentThread;
  */
 final class SparkBatchSourceFactory {
 
-  static SparkBatchSourceFactory deserialize(InputStream inputStream) throws IOException {
-    DataInput input = new DataInputStream(inputStream);
-
-    Map<String, StreamBatchReadable> streamBatchReadables = Serializations.deserializeMap(
-      input, new Serializations.ObjectReader<StreamBatchReadable>() {
-      @Override
-      public StreamBatchReadable read(DataInput input) throws IOException {
-        return new StreamBatchReadable(URI.create(input.readUTF()));
-      }
-    });
-
-    Map<String, InputFormatProvider> inputFormatProviders = Serializations.deserializeMap(
-      input, new Serializations.ObjectReader<InputFormatProvider>() {
-      @Override
-      public InputFormatProvider read(DataInput input) throws IOException {
-        return new BasicInputFormatProvider(input.readUTF(),
-                                            Serializations.deserializeMap(input,
-                                                                          Serializations.createStringObjectReader()));
-      }
-    });
-
-    Map<String, DatasetInfo> datasetInfos = Serializations.deserializeMap(
-      input, new Serializations.ObjectReader<DatasetInfo>() {
-      @Override
-      public DatasetInfo read(DataInput input) throws IOException {
-        return DatasetInfo.deserialize(input);
-      }
-    });
-
-    Map<String, Set<String>> sourceInputs = Serializations.deserializeMap(
-      input, Serializations.createStringSetObjectReader());
-    return new SparkBatchSourceFactory(streamBatchReadables, inputFormatProviders, datasetInfos, sourceInputs);
-  }
-
   private final Map<String, StreamBatchReadable> streamBatchReadables;
   private final Map<String, InputFormatProvider> inputFormatProviders;
   private final Map<String, DatasetInfo> datasetInfos;
@@ -99,14 +57,30 @@ final class SparkBatchSourceFactory {
     this.sourceInputs = new HashMap<>();
   }
 
-  private SparkBatchSourceFactory(Map<String, StreamBatchReadable> streamBatchReadables,
-                                  Map<String, InputFormatProvider> inputFormatProviders,
-                                  Map<String, DatasetInfo> datasetInfos,
-                                  Map<String, Set<String>> sourceInputs) {
+  SparkBatchSourceFactory(Map<String, StreamBatchReadable> streamBatchReadables,
+                          Map<String, InputFormatProvider> inputFormatProviders,
+                          Map<String, DatasetInfo> datasetInfos,
+                          Map<String, Set<String>> sourceInputs) {
     this.streamBatchReadables = streamBatchReadables;
     this.inputFormatProviders = inputFormatProviders;
     this.datasetInfos = datasetInfos;
     this.sourceInputs = sourceInputs;
+  }
+
+  public Map<String, StreamBatchReadable> getStreamBatchReadables() {
+    return streamBatchReadables;
+  }
+
+  public Map<String, InputFormatProvider> getInputFormatProviders() {
+    return inputFormatProviders;
+  }
+
+  public Map<String, DatasetInfo> getDatasetInfos() {
+    return datasetInfos;
+  }
+
+  public Map<String, Set<String>> getSourceInputs() {
+    return sourceInputs;
   }
 
   public void addInput(String stageName, Input input) {
@@ -149,35 +123,6 @@ final class SparkBatchSourceFactory {
       // this will never happen since alias will be unique since we append it with UUID
       throw new IllegalStateException(alias + " has already been added. Can't add an input with the same alias.");
     }
-  }
-
-  public void serialize(OutputStream outputStream) throws IOException {
-    DataOutput output = new DataOutputStream(outputStream);
-
-    Serializations.serializeMap(streamBatchReadables, new Serializations.ObjectWriter<StreamBatchReadable>() {
-      @Override
-      public void write(StreamBatchReadable streamBatchReadable, DataOutput output) throws IOException {
-        output.writeUTF(streamBatchReadable.toURI().toString());
-      }
-    }, output);
-
-    Serializations.serializeMap(inputFormatProviders, new Serializations.ObjectWriter<InputFormatProvider>() {
-      @Override
-      public void write(InputFormatProvider inputFormatProvider, DataOutput output) throws IOException {
-        output.writeUTF(inputFormatProvider.getInputFormatClassName());
-        Serializations.serializeMap(inputFormatProvider.getInputFormatConfiguration(),
-                                    Serializations.createStringObjectWriter(), output);
-      }
-    }, output);
-
-    Serializations.serializeMap(datasetInfos, new Serializations.ObjectWriter<DatasetInfo>() {
-      @Override
-      public void write(DatasetInfo datasetInfo, DataOutput output) throws IOException {
-        datasetInfo.serialize(output);
-      }
-    }, output);
-
-    Serializations.serializeMap(sourceInputs, Serializations.createStringSetObjectWriter(), output);
   }
 
   public <K, V> JavaPairRDD<K, V> createRDD(JavaSparkExecutionContext sec, JavaSparkContext jsc, String sourceName,
@@ -267,14 +212,19 @@ final class SparkBatchSourceFactory {
     sourceInputs.put(stageName, inputs);
   }
 
-  private static final class BasicInputFormatProvider implements InputFormatProvider {
+  static final class BasicInputFormatProvider implements InputFormatProvider {
 
     private final String inputFormatClassName;
     private final Map<String, String> configuration;
 
-    private BasicInputFormatProvider(String inputFormatClassName, Map<String, String> configuration) {
+    BasicInputFormatProvider(String inputFormatClassName, Map<String, String> configuration) {
       this.inputFormatClassName = inputFormatClassName;
       this.configuration = ImmutableMap.copyOf(configuration);
+    }
+
+    BasicInputFormatProvider() {
+      this.inputFormatClassName = "";
+      this.configuration = new HashMap<>();
     }
 
     @Override

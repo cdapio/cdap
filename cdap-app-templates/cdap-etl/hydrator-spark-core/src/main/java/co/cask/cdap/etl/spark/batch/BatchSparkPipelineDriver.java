@@ -18,7 +18,10 @@ package co.cask.cdap.etl.spark.batch;
 
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.data.batch.InputFormatProvider;
+import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
 import co.cask.cdap.etl.api.batch.BatchSource;
@@ -30,16 +33,18 @@ import co.cask.cdap.etl.spark.SparkPipelineDriver;
 import co.cask.cdap.etl.spark.function.BatchSourceFunction;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import com.google.common.base.Charsets;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.DataInputStream;
+import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.lang.reflect.Type;
+import java.io.InputStreamReader;
 import java.util.Map;
 
 /**
@@ -47,10 +52,14 @@ import java.util.Map;
  */
 public class BatchSparkPipelineDriver extends SparkPipelineDriver
   implements JavaSparkMain, TxRunnable {
-  private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Logger LOG = LoggerFactory.getLogger(BatchSparkPipelineDriver.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .registerTypeAdapter(DatasetInfo.class, new DatasetInfoTypeAdapter())
+    .registerTypeAdapter(OutputFormatProvider.class, new OutputFormatProviderTypeAdapter())
+    .registerTypeAdapter(InputFormatProvider.class, new InputFormatProviderTypeAdapter())
+    .registerTypeAdapter(StreamBatchReadable.class, new StreamBatchReadableTypeAdapter())
     .create();
 
   private transient JavaSparkContext jsc;
@@ -84,10 +93,21 @@ public class BatchSparkPipelineDriver extends SparkPipelineDriver
                                              BatchPhaseSpec.class);
 
     try (InputStream is = new FileInputStream(sec.getLocalizationContext().getLocalFile("HydratorSpark.config"))) {
-      sourceFactory = SparkBatchSourceFactory.deserialize(is);
-      sinkFactory = SparkBatchSinkFactory.deserialize(is);
-      DataInputStream dataInputStream = new DataInputStream(is);
-      stagePartitions = GSON.fromJson(dataInputStream.readUTF(), MAP_TYPE);
+      BufferedReader reader = new BufferedReader(new InputStreamReader(is, Charsets.UTF_8));
+      String object = reader.readLine();
+      SparkBatchSourceSinkFactoryInfo sparkBatchSourceSinkFactoryInfo = GSON.fromJson(object,
+                                                                                      SparkBatchSourceSinkFactoryInfo
+                                                                                        .class);
+      sourceFactory = new SparkBatchSourceFactory(sparkBatchSourceSinkFactoryInfo.getStreamBatchReadables(),
+                                                  sparkBatchSourceSinkFactoryInfo.getInputFormatProviders(),
+                                                  sparkBatchSourceSinkFactoryInfo.getSourceDatasetInfos(),
+                                                  sparkBatchSourceSinkFactoryInfo.getSourceInputs());
+
+      sinkFactory = new SparkBatchSinkFactory(sparkBatchSourceSinkFactoryInfo.getOutputFormatProviders(),
+                                              sparkBatchSourceSinkFactoryInfo.getSinkDatasetInfos(),
+                                              sparkBatchSourceSinkFactoryInfo.getSinkOutputs());
+
+      stagePartitions = sparkBatchSourceSinkFactoryInfo.getStagePartitions();
     }
     datasetContext = context;
     runPipeline(phaseSpec.getPhase(), BatchSource.PLUGIN_TYPE, sec, stagePartitions);

@@ -17,7 +17,10 @@
 package co.cask.cdap.etl.spark.batch;
 
 import co.cask.cdap.api.ProgramStatus;
+import co.cask.cdap.api.data.batch.InputFormatProvider;
+import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.SparkClientContext;
@@ -40,6 +43,7 @@ import co.cask.cdap.etl.common.Finisher;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import com.google.common.base.Charsets;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -47,11 +51,10 @@ import org.apache.spark.SparkConf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.DataOutput;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -64,7 +67,12 @@ public class ETLSpark extends AbstractSpark {
   private static final Logger LOG = LoggerFactory.getLogger(ETLSpark.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>()).create();
+    .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
+    .registerTypeAdapter(DatasetInfo.class, new DatasetInfoTypeAdapter())
+    .registerTypeAdapter(OutputFormatProvider.class, new OutputFormatProviderTypeAdapter())
+    .registerTypeAdapter(InputFormatProvider.class, new InputFormatProviderTypeAdapter())
+    .registerTypeAdapter(StreamBatchReadable.class, new StreamBatchReadableTypeAdapter())
+    .create();
 
   private final BatchPhaseSpec phaseSpec;
   private Finisher finisher;
@@ -148,11 +156,11 @@ public class ETLSpark extends AbstractSpark {
 
     File configFile = File.createTempFile("HydratorSpark", ".config");
     cleanupFiles.add(configFile);
-    try (OutputStream os = new FileOutputStream(configFile)) {
-      sourceFactory.serialize(os);
-      sinkFactory.serialize(os);
-      DataOutput dataOutput = new DataOutputStream(os);
-      dataOutput.writeUTF(GSON.toJson(stagePartitions));
+    try (FileOutputStream os = new FileOutputStream(configFile);
+         Writer out = new OutputStreamWriter(os, Charsets.UTF_8)) {
+      SparkBatchSourceSinkFactoryInfo sparkBatchSourceSinkFactoryInfo = new SparkBatchSourceSinkFactoryInfo
+        (sourceFactory, sinkFactory, stagePartitions);
+      out.write(GSON.toJson(sparkBatchSourceSinkFactoryInfo));
     }
 
     finisher = finishers.build();
