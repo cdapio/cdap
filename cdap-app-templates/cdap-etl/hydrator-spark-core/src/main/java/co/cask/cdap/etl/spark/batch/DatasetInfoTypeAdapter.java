@@ -20,7 +20,6 @@ import co.cask.cdap.api.data.batch.Split;
 import com.google.common.base.Objects;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -53,7 +52,7 @@ public class DatasetInfoTypeAdapter implements JsonSerializer<DatasetInfo>, Json
                                                    SparkBatchSourceFactory.class.getClassLoader());
     try {
       Class<?> splitClass = classLoader.loadClass(datasetSplitClass);
-      List<Split> splits = new Gson().fromJson("datasetSplits", getListType(splitClass));
+      List<Split> splits = context.deserialize(obj.get("datasetSplits"), getListType(splitClass));
       return new DatasetInfo(datasetName, datasetArgs, splits);
     } catch (ClassNotFoundException e) {
       throw new JsonParseException("Unable to deserialize splits", e);

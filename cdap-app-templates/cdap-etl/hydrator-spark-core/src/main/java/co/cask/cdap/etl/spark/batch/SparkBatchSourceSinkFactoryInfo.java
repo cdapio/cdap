@@ -16,67 +16,30 @@
 
 package co.cask.cdap.etl.spark.batch;
 
-import co.cask.cdap.api.data.batch.InputFormatProvider;
-import co.cask.cdap.api.data.batch.OutputFormatProvider;
-import co.cask.cdap.api.data.stream.StreamBatchReadable;
-
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Stores all the information of {@link SparkBatchSinkFactory} and stagePartitions
  */
 public class SparkBatchSourceSinkFactoryInfo {
-  private final Map<String, StreamBatchReadable> streamBatchReadables;
-  private final Map<String, InputFormatProvider> inputFormatProviders;
-  private final Map<String, DatasetInfo> sourceDatasetInfos;
-  private final Map<String, Set<String>> sourceInputs;
-
-  private final Map<String, OutputFormatProvider> outputFormatProviders;
-  private final Map<String, DatasetInfo> sinkDatasetInfos;
-  private final Map<String, Set<String>> sinkOutputs;
+  private final SparkBatchSourceFactory sparkBatchSourceFactory;
+  private final SparkBatchSinkFactory sparkBatchSinkFactory;
   private final Map<String, Integer> stagePartitions;
 
   public SparkBatchSourceSinkFactoryInfo(SparkBatchSourceFactory sparkBatchSourceFactory,
                                          SparkBatchSinkFactory sparkBatchSinkFactory,
                                          Map<String, Integer> stagePartitions) {
-    this.streamBatchReadables = sparkBatchSourceFactory.getStreamBatchReadables();
-    this.inputFormatProviders = sparkBatchSourceFactory.getInputFormatProviders();
-    this.sourceDatasetInfos = sparkBatchSourceFactory.getDatasetInfos();
-    this.sourceInputs = sparkBatchSourceFactory.getSourceInputs();
-
-    this.outputFormatProviders = sparkBatchSinkFactory.getOutputFormatProviders();
-    this.sinkDatasetInfos = sparkBatchSinkFactory.getDatasetInfos();
-    this.sinkOutputs = sparkBatchSinkFactory.getSinkOutputs();
+    this.sparkBatchSourceFactory = sparkBatchSourceFactory;
+    this.sparkBatchSinkFactory = sparkBatchSinkFactory;
     this.stagePartitions = stagePartitions;
   }
 
-  public Map<String, StreamBatchReadable> getStreamBatchReadables() {
-    return streamBatchReadables;
+  public SparkBatchSourceFactory getSparkBatchSourceFactory() {
+    return sparkBatchSourceFactory;
   }
 
-  public Map<String, InputFormatProvider> getInputFormatProviders() {
-    return inputFormatProviders;
-  }
-
-  public Map<String, DatasetInfo> getSourceDatasetInfos() {
-    return sourceDatasetInfos;
-  }
-
-  public Map<String, Set<String>> getSourceInputs() {
-    return sourceInputs;
-  }
-
-  public Map<String, OutputFormatProvider> getOutputFormatProviders() {
-    return outputFormatProviders;
-  }
-
-  public Map<String, DatasetInfo> getSinkDatasetInfos() {
-    return sinkDatasetInfos;
-  }
-
-  public Map<String, Set<String>> getSinkOutputs() {
-    return sinkOutputs;
+  public SparkBatchSinkFactory getSparkBatchSinkFactory() {
+    return sparkBatchSinkFactory;
   }
 
   public Map<String, Integer> getStagePartitions() {

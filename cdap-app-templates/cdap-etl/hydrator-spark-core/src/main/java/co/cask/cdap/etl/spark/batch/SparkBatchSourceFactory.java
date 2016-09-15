@@ -57,32 +57,6 @@ final class SparkBatchSourceFactory {
     this.sourceInputs = new HashMap<>();
   }
 
-  SparkBatchSourceFactory(Map<String, StreamBatchReadable> streamBatchReadables,
-                          Map<String, InputFormatProvider> inputFormatProviders,
-                          Map<String, DatasetInfo> datasetInfos,
-                          Map<String, Set<String>> sourceInputs) {
-    this.streamBatchReadables = streamBatchReadables;
-    this.inputFormatProviders = inputFormatProviders;
-    this.datasetInfos = datasetInfos;
-    this.sourceInputs = sourceInputs;
-  }
-
-  public Map<String, StreamBatchReadable> getStreamBatchReadables() {
-    return streamBatchReadables;
-  }
-
-  public Map<String, InputFormatProvider> getInputFormatProviders() {
-    return inputFormatProviders;
-  }
-
-  public Map<String, DatasetInfo> getDatasetInfos() {
-    return datasetInfos;
-  }
-
-  public Map<String, Set<String>> getSourceInputs() {
-    return sourceInputs;
-  }
-
   public void addInput(String stageName, Input input) {
     if (input instanceof Input.DatasetInput) {
       // Note if input format provider is trackable then it comes in as DatasetInput

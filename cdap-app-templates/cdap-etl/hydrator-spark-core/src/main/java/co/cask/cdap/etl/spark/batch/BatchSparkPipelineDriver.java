@@ -33,18 +33,16 @@ import co.cask.cdap.etl.spark.SparkPipelineDriver;
 import co.cask.cdap.etl.spark.function.BatchSourceFunction;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import com.google.common.base.Charsets;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 /**
@@ -52,7 +50,6 @@ import java.util.Map;
  */
 public class BatchSparkPipelineDriver extends SparkPipelineDriver
   implements JavaSparkMain, TxRunnable {
-  private static final Logger LOG = LoggerFactory.getLogger(BatchSparkPipelineDriver.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
@@ -93,21 +90,12 @@ public class BatchSparkPipelineDriver extends SparkPipelineDriver
                                              BatchPhaseSpec.class);
 
     try (InputStream is = new FileInputStream(sec.getLocalizationContext().getLocalFile("HydratorSpark.config"))) {
-      BufferedReader reader = new BufferedReader(new InputStreamReader(is, Charsets.UTF_8));
+      BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
       String object = reader.readLine();
-      SparkBatchSourceSinkFactoryInfo sparkBatchSourceSinkFactoryInfo = GSON.fromJson(object,
-                                                                                      SparkBatchSourceSinkFactoryInfo
-                                                                                        .class);
-      sourceFactory = new SparkBatchSourceFactory(sparkBatchSourceSinkFactoryInfo.getStreamBatchReadables(),
-                                                  sparkBatchSourceSinkFactoryInfo.getInputFormatProviders(),
-                                                  sparkBatchSourceSinkFactoryInfo.getSourceDatasetInfos(),
-                                                  sparkBatchSourceSinkFactoryInfo.getSourceInputs());
-
-      sinkFactory = new SparkBatchSinkFactory(sparkBatchSourceSinkFactoryInfo.getOutputFormatProviders(),
-                                              sparkBatchSourceSinkFactoryInfo.getSinkDatasetInfos(),
-                                              sparkBatchSourceSinkFactoryInfo.getSinkOutputs());
-
-      stagePartitions = sparkBatchSourceSinkFactoryInfo.getStagePartitions();
+      SparkBatchSourceSinkFactoryInfo sourceSinkInfo = GSON.fromJson(object, SparkBatchSourceSinkFactoryInfo.class);
+      sourceFactory = sourceSinkInfo.getSparkBatchSourceFactory();
+      sinkFactory = sourceSinkInfo.getSparkBatchSinkFactory();
+      stagePartitions = sourceSinkInfo.getStagePartitions();
     }
     datasetContext = context;
     runPipeline(phaseSpec.getPhase(), BatchSource.PLUGIN_TYPE, sec, stagePartitions);

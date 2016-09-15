@@ -43,7 +43,6 @@ import co.cask.cdap.etl.common.Finisher;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import com.google.common.base.Charsets;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -52,9 +51,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -156,11 +155,11 @@ public class ETLSpark extends AbstractSpark {
 
     File configFile = File.createTempFile("HydratorSpark", ".config");
     cleanupFiles.add(configFile);
-    try (FileOutputStream os = new FileOutputStream(configFile);
-         Writer out = new OutputStreamWriter(os, Charsets.UTF_8)) {
-      SparkBatchSourceSinkFactoryInfo sparkBatchSourceSinkFactoryInfo = new SparkBatchSourceSinkFactoryInfo
-        (sourceFactory, sinkFactory, stagePartitions);
-      out.write(GSON.toJson(sparkBatchSourceSinkFactoryInfo));
+    try (Writer writer = Files.newBufferedWriter(configFile.toPath(), StandardCharsets.UTF_8)) {
+      SparkBatchSourceSinkFactoryInfo sourceSinkInfo = new SparkBatchSourceSinkFactoryInfo(sourceFactory,
+                                                                                           sinkFactory,
+                                                                                           stagePartitions);
+      writer.write(GSON.toJson(sourceSinkInfo));
     }
 
     finisher = finishers.build();

@@ -44,26 +44,6 @@ public final class SparkBatchSinkFactory {
     this.sinkOutputs = new HashMap<>();
   }
 
-  SparkBatchSinkFactory(Map<String, OutputFormatProvider> providers,
-                        Map<String, DatasetInfo> datasetInfos,
-                        Map<String, Set<String>> sinkOutputs) {
-    this.outputFormatProviders = providers;
-    this.datasetInfos = datasetInfos;
-    this.sinkOutputs = sinkOutputs;
-  }
-
-  public Map<String, OutputFormatProvider> getOutputFormatProviders() {
-    return outputFormatProviders;
-  }
-
-  public Map<String, DatasetInfo> getDatasetInfos() {
-    return datasetInfos;
-  }
-
-  public Map<String, Set<String>> getSinkOutputs() {
-    return sinkOutputs;
-  }
-
   void addOutput(String stageName, Output output) {
     if (output instanceof Output.DatasetOutput) {
       // Note if output format provider is trackable then it comes in as DatasetOutput
