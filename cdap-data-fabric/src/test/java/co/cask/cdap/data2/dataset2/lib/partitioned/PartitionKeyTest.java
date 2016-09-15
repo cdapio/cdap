@@ -17,8 +17,12 @@
 package co.cask.cdap.data2.dataset2.lib.partitioned;
 
 import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.dataset.lib.Partitioning;
+import com.google.common.base.Function;
 import org.junit.Assert;
 import org.junit.Test;
+
+import javax.annotation.Nullable;
 
 /**
  * Tests for partition keys.
@@ -48,6 +52,120 @@ public class PartitionKeyTest {
   @Test(expected = IllegalArgumentException.class)
   public void testBuilderDuplicateField() {
     PartitionKey.builder().addField("x", 10).addField("y", 10L).addField("x", 14).build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testBuilderUnknownField() {
+    PartitionKey.builder(
+      Partitioning.builder().addIntField("x").addLongField("y").build())
+      .addField("x", 10).addField("y", 10L).addField("z", 15).build();
+  }
+
+  @Test()
+  @SuppressWarnings("ConstantConditions")
+  public void testBuilderIllegalFieldValue() {
+    testIllegalFieldValue(new Function<PartitionKey.Builder, PartitionKey.Builder>() {
+      @Nullable
+      @Override
+      public PartitionKey.Builder apply(@Nullable PartitionKey.Builder builder) {
+        return builder.addLongField("x", 1L);
+      }
+    });
+    testIllegalFieldValue(new Function<PartitionKey.Builder, PartitionKey.Builder>() {
+      @Nullable
+      @Override
+      public PartitionKey.Builder apply(@Nullable PartitionKey.Builder builder) {
+        return builder.addField("x", 1L);
+      }
+    });
+    testIllegalFieldValue(new Function<PartitionKey.Builder, PartitionKey.Builder>() {
+      @Nullable
+      @Override
+      public PartitionKey.Builder apply(@Nullable PartitionKey.Builder builder) {
+        return builder.addStringField("x", "a");
+      }
+    });
+    testIllegalFieldValue(new Function<PartitionKey.Builder, PartitionKey.Builder>() {
+      @Nullable
+      @Override
+      public PartitionKey.Builder apply(@Nullable PartitionKey.Builder builder) {
+        return builder.addField("x", "a");
+      }
+    });
+    testIllegalFieldValue(new Function<PartitionKey.Builder, PartitionKey.Builder>() {
+      @Nullable
+      @Override
+      public PartitionKey.Builder apply(@Nullable PartitionKey.Builder builder) {
+        return builder.addIntField("y", 1);
+      }
+    });
+    testIllegalFieldValue(new Function<PartitionKey.Builder, PartitionKey.Builder>() {
+      @Nullable
+      @Override
+      public PartitionKey.Builder apply(@Nullable PartitionKey.Builder builder) {
+        return builder.addField("y", 1);
+      }
+    });
+    testIllegalFieldValue(new Function<PartitionKey.Builder, PartitionKey.Builder>() {
+      @Nullable
+      @Override
+      public PartitionKey.Builder apply(@Nullable PartitionKey.Builder builder) {
+        return builder.addStringField("y", "a");
+      }
+    });
+    testIllegalFieldValue(new Function<PartitionKey.Builder, PartitionKey.Builder>() {
+      @Nullable
+      @Override
+      public PartitionKey.Builder apply(@Nullable PartitionKey.Builder builder) {
+        return builder.addField("y", "a");
+      }
+    });
+    testIllegalFieldValue(new Function<PartitionKey.Builder, PartitionKey.Builder>() {
+      @Nullable
+      @Override
+      public PartitionKey.Builder apply(@Nullable PartitionKey.Builder builder) {
+        return builder.addIntField("z", 1);
+      }
+    });
+    testIllegalFieldValue(new Function<PartitionKey.Builder, PartitionKey.Builder>() {
+      @Nullable
+      @Override
+      public PartitionKey.Builder apply(@Nullable PartitionKey.Builder builder) {
+        return builder.addField("z", 1);
+      }
+    });
+    testIllegalFieldValue(new Function<PartitionKey.Builder, PartitionKey.Builder>() {
+      @Nullable
+      @Override
+      public PartitionKey.Builder apply(@Nullable PartitionKey.Builder builder) {
+        return builder.addLongField("z", 1L);
+      }
+    });
+    testIllegalFieldValue(new Function<PartitionKey.Builder, PartitionKey.Builder>() {
+      @Nullable
+      @Override
+      public PartitionKey.Builder apply(@Nullable PartitionKey.Builder builder) {
+        return builder.addField("z", 1L);
+      }
+    });
+  }
+
+  private void testIllegalFieldValue(Function<PartitionKey.Builder, PartitionKey.Builder> function) {
+    PartitionKey.Builder builder = PartitionKey.builder(
+      Partitioning.builder().addIntField("x").addLongField("y").addStringField("z").build());
+    try {
+      function.apply(builder);
+      Assert.fail("builder should have thrown exception for invalid field type");
+    } catch (IllegalArgumentException e) {
+      //expected
+    }
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testBuilderMissingField() {
+    PartitionKey.builder(
+      Partitioning.builder().addIntField("x").addLongField("y").addStringField("z").build())
+      .addField("x", 10).addField("y", 10L).build();
   }
 
   @Test

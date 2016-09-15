@@ -699,6 +699,58 @@ public class PartitionedFileSetTest {
   }
 
   @Test
+  public void testInvalidPartitionKey() throws Exception {
+    final PartitionedFileSet pfs = dsFrameworkUtil.getInstance(pfsInstance);
+
+    dsFrameworkUtil.newTransactionExecutor((TransactionAware) pfs).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        try {
+          PartitionOutput output = pfs.getPartitionOutput(
+            PartitionKey.builder().addField("i", 1).addField("l", 2L).build());
+          Assert.fail("should have thrown exception due to missing field");
+        } catch (IllegalArgumentException e) {
+          // expected
+        }
+        try {
+          pfs.addPartition(
+            PartitionKey.builder().addField("i", 1).addField("l", "2").addField("s", "a").build(),
+            "some/location");
+          Assert.fail("should have thrown exception due to incompatible field");
+        } catch (IllegalArgumentException e) {
+          // expected
+        }
+        try {
+          pfs.addPartition(
+            PartitionKey.builder().addField("i", 1).addField("l", 2L).addField("s", "a").addField("x", "x").build(),
+            "some/location", ImmutableMap.of("a", "b"));
+          Assert.fail("should have thrown exception due to extra field");
+        } catch (IllegalArgumentException e) {
+          // expected
+        }
+        pfs.addPartition(
+          PartitionKey.builder().addField("i", 1).addField("l", 2L).addField("s", "a").build(),
+          "some/location", ImmutableMap.of("a", "b"));
+        try {
+          pfs.addMetadata(
+            PartitionKey.builder().addField("i", 1).addField("l", 2L).addField("s", "a").addField("x", "x").build(),
+            ImmutableMap.of("abc", "xyz"));
+          Assert.fail("should have thrown exception due to extra field");
+        } catch (IllegalArgumentException e) {
+          // expected
+        }
+        try {
+          pfs.dropPartition(PartitionKey.builder().addField("i", 1).addField("l", 2L).addField("s", 0).build());
+          Assert.fail("should have thrown exception due to incompatible field");
+        } catch (IllegalArgumentException e) {
+          // expected
+        }
+      }
+    });
+  }
+
+
+  @Test
   public void testAddRemoveGetPartition() throws Exception {
     final PartitionedFileSet pfs = dsFrameworkUtil.getInstance(pfsInstance);
 

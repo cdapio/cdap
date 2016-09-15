@@ -39,17 +39,32 @@ public class Partitioning {
       public String parse(String value) {
         return value;
       }
+
+      @Override
+      public void validate(Comparable value) {
+        validate(value, String.class);
+      }
     },
     LONG {
       @Override
       public Long parse(String value) {
         return Long.parseLong(value);
       }
+
+      @Override
+      public void validate(Comparable value) {
+        validate(value, Long.class);
+      }
     },
     INT {
       @Override
       public Integer parse(String value) {
         return Integer.parseInt(value);
+      }
+
+      @Override
+      public void validate(Comparable value) {
+        validate(value, Integer.class);
       }
     };
 
@@ -59,6 +74,20 @@ public class Partitioning {
      * @param value the string to parse
      */
     public abstract Comparable parse(String value);
+
+    /**
+     * Validate that a value has the correct type for this field type.
+     * @param value the value to validate
+     * @throws IllegalArgumentException if the value is of wrong type.
+     */
+    public abstract void validate(Comparable value);
+
+    protected void validate(Comparable value, Class<? extends Comparable> expectedClass) {
+      if (!expectedClass.equals(value.getClass())) {
+        throw new IllegalArgumentException(String.format("Value %s of type %s cannot be assigned to a %s field",
+                                                         value, value.getClass().getSimpleName(), this));
+      }
+    }
   }
 
   private final Map<String, FieldType> fields;
@@ -118,6 +147,7 @@ public class Partitioning {
      * @throws java.lang.IllegalArgumentException if the field name is null, empty, or already exists,
      *         or if the type is null.
      */
+    @SuppressWarnings("ConstantConditions")
     public Builder addField(@Nonnull String name, @Nonnull FieldType type) {
       if (name == null || name.isEmpty()) {
         throw new IllegalArgumentException("Field name cannot be null or empty.");

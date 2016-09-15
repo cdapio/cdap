@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Types and methods to specify partitioning keys for datasets.
@@ -67,10 +68,18 @@ public class PartitionKey {
   }
 
   /**
-   * @return a builder for a partitioning
+   * @return a builder for a partition key.
    */
   public static Builder builder() {
     return new Builder();
+  }
+
+  /**
+   * @return a builder for a partition key with a known partitioning. This builder will
+   *         only accept fields that are defined in the partitioning.
+   */
+  public static Builder builder(Partitioning partitioning) {
+    return new Builder(partitioning);
   }
 
   /**
@@ -79,8 +88,15 @@ public class PartitionKey {
   public static class Builder {
 
     private final LinkedHashMap<String, Comparable> fields = new LinkedHashMap<>();
+    private final Partitioning partitioning;
 
-    private Builder() { }
+    public Builder() {
+      this(null);
+    }
+
+    private Builder(@Nullable Partitioning partitioning) {
+      this.partitioning = partitioning;
+    }
 
     /**
      * Add a field with a given name and value.
@@ -89,7 +105,8 @@ public class PartitionKey {
      * @param value the value of the field
      *
      * @throws java.lang.IllegalArgumentException if the field name is null, empty, or already exists,
-     *         or if the value is null.
+     *         if the value is null, or if the partitioning is known and does not contain the field name,
+     *         or the field is defined with a different type.
      */
     public Builder addField(String name, Comparable value) {
       if (name == null || name.isEmpty()) {
@@ -100,6 +117,18 @@ public class PartitionKey {
       }
       if (fields.containsKey(name)) {
         throw new IllegalArgumentException(String.format("Field '%s' already exists in partition key.", name));
+      }
+      if (partitioning != null) {
+        if (!partitioning.getFields().containsKey(name)) {
+          throw new IllegalArgumentException(String.format("Field '%s' is an unknown field in partitioning %s",
+                                                           name, partitioning));
+        }
+        try {
+          partitioning.getFields().get(name).validate(value);
+        } catch (IllegalArgumentException e) {
+          throw new IllegalArgumentException(String.format(
+            "Value for field '%s' is incompatible with the partitioning: %s", name, e.getMessage()));
+        }
       }
       fields.put(name, value);
       return this;
@@ -112,7 +141,8 @@ public class PartitionKey {
      * @param value the value of the field
      *
      * @throws java.lang.IllegalArgumentException if the field name is null, empty, or already exists,
-     *         or if the value is null.
+     *         if the value is null, or if the partitioning is known and does not contain the field name,
+     *         or the field is defined with a different type.
      */
     public Builder addStringField(String name, String value) {
       return addField(name, value);
@@ -125,7 +155,8 @@ public class PartitionKey {
      * @param value the value of the field
      *
      * @throws java.lang.IllegalArgumentException if the field name is null, empty, or already exists,
-     *         or if the value is null.
+     *         if the value is null, or if the partitioning is known and does not contain the field name,
+     *         or the field is defined with a different type.
      */
     public Builder addIntField(String name, int value) {
       return addField(name, value);
@@ -138,7 +169,8 @@ public class PartitionKey {
      * @param value the value of the field
      *
      * @throws java.lang.IllegalArgumentException if the field name is null, empty, or already exists,
-     *         or if the value is null.
+     *         if the value is null, or if the partitioning is known and does not contain the field name,
+     *         or the field is defined with a different type.
      */
     public Builder addLongField(String name, long value) {
       return addField(name, value);
@@ -147,14 +179,19 @@ public class PartitionKey {
     /**
      * Create the partition key.
      *
-     * @throws java.lang.IllegalStateException if no fields have been added
+     * @throws IllegalStateException if no fields have been added,
+     *         or the partitioning is known and not all fields have been added.
      */
     public PartitionKey build() {
       if (fields.isEmpty()) {
         throw new IllegalStateException("Partition key cannot be empty.");
       }
+      if (partitioning != null && !partitioning.getFields().keySet().equals(fields.keySet())) {
+        throw new IllegalStateException(String.format(
+          "Partition key is incomplete: It only contains fields %s, but the partitioning requires %s",
+          fields.keySet(), partitioning.getFields().keySet()));
+      }
       return new PartitionKey(fields);
     }
   }
-
 }

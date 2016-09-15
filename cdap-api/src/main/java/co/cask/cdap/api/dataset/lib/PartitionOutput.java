@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.dataset.lib;
 
+import co.cask.cdap.api.dataset.DataSetException;
+
 import java.util.Map;
 
 /**
@@ -25,6 +27,8 @@ public interface PartitionOutput extends Partition {
 
   /**
    * Add the partition to the partitioned file set.
+   *
+   * @throws DataSetException if a partition for the same key already exists
    */
   void addPartition();
 

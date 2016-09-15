@@ -128,22 +128,6 @@ public class FieldTypes {
   }
 
   /**
-   * Validate that a given value has the type that is required by this field type.
-   */
-  public static boolean validateType(Comparable value, FieldType type) {
-    switch(type) {
-      case STRING:
-        return value instanceof String;
-      case LONG:
-        return value instanceof Long;
-      case INT:
-        return value instanceof Integer;
-      default:
-        throw new IllegalArgumentException("Unhandled field type: " + type.name());
-    }
-  }
-
-  /**
    * @return the type name used by the Hive DDL to represent this field type
    */
   public static String toHiveType(FieldType type) {

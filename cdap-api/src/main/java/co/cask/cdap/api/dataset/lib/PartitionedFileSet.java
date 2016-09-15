@@ -30,8 +30,10 @@ import javax.annotation.Nullable;
 
 /**
  * Represents a dataset that is split into partitions that can be uniquely addressed
- * by partitioning keys along multiple dimensions. Each partition is a path in a file set,
- * the partitioning keys attached as meta data.
+ * by partition keys along multiple dimensions. Each partition is a path in a file set,
+ * the partition key attached as meta data. Note that the partitioning of the dataset
+ * is fixed, that is, all operations that accept a partition key as a parameter require
+ * that that key has exactly the same schema as the partitioning.
  *
  * This dataset can be made available for querying with SQL (explore). This is enabled through dataset
  * properties when the dataset is created. See {@link FileSetProperties}
@@ -48,12 +50,18 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
 
   /**
    * Add a partition for a given partition key, stored at a given path (relative to the file set's base path).
+   *
+   * @throws DataSetException if a partition for the same key already exists
+   * @throws IllegalArgumentException if the partition key does not match the partitioning of the dataset
    */
   void addPartition(PartitionKey key, String path);
 
   /**
    * Add a partition for a given partition key, stored at a given path (relative to the file set's base path),
    * with the given metadata.
+   *
+   * @throws DataSetException if a partition for the same key already exists
+   * @throws IllegalArgumentException if the partition key does not match the partitioning of the dataset
    */
   void addPartition(PartitionKey key, String path, Map<String, String> metadata);
 
@@ -61,8 +69,9 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
    * Adds a new metadata entry for a particular partition.
    * Note that existing entries cannot be updated.
    * 
-   * @throws DataSetException when an attempt is made to either update an existing entry
+   * @throws DataSetException when an attempt is made to update an existing entry
    * @throws PartitionNotFoundException when a partition for the given key is not found
+   * @throws IllegalArgumentException if the partition key does not match the partitioning of the dataset
    */
   void addMetadata(PartitionKey key, String metadataKey, String metadataValue);
 
@@ -70,18 +79,23 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
    * Adds a set of new metadata entries for a particular partition.
    * Note that existing entries cannot be updated.
    *
-   * @throws DataSetException when an attempt is made to either update existing entries
+   * @throws DataSetException when an attempt is made to update existing entries
    * @throws PartitionNotFoundException when a partition for the given key is not found
+   * @throws IllegalArgumentException if the partition key does not match the partitioning of the dataset
    */
   void addMetadata(PartitionKey key, Map<String, String> metadata);
 
   /**
    * Remove a partition for a given partition key, silently ignoring if the key is not found.
+   *
+   * @throws IllegalArgumentException if the partition key does not match the partitioning of the dataset
    */
   void dropPartition(PartitionKey key);
 
   /**
    * Return the partition for a specific partition key, or null if key is not found.
+   *
+   * @throws IllegalArgumentException if the partition key does not match the partitioning of the dataset
    */
   @Nullable
   PartitionDetail getPartition(PartitionKey key);
@@ -124,6 +138,8 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
    * Return a partition output for a specific partition key, in preparation for creating a new partition.
    * Obtain the location to write from the PartitionOutput, then call the {@link PartitionOutput#addPartition}
    * to add the partition to this dataset.
+   *
+   * @throws IllegalArgumentException if the partition key does not match the partitioning of the dataset
    */
   PartitionOutput getPartitionOutput(PartitionKey key);
 

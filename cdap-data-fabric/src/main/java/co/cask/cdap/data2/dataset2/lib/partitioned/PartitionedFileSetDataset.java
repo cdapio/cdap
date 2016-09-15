@@ -649,6 +649,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   }
 
   public static String getOutputPath(PartitionKey key, Partitioning partitioning) {
+    validatePartitionKey(key, partitioning);
     StringBuilder builder = new StringBuilder();
     String sep = "";
     for (String fieldName : partitioning.getFields().keySet()) {
@@ -926,8 +927,40 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   }
 
   //------ private helpers below here --------------------------------------------------------------
+
+  /**
+   * Validates the partition key against the partitioning.
+   */
+  private static void validatePartitionKey(PartitionKey key, Partitioning partitioning) {
+    if (!partitioning.getFields().keySet().equals(key.getFields().keySet())) {
+      throw new IllegalArgumentException(String.format(
+        "Partition key is invalid: It contains fields %s, but the partitioning requires %s",
+        key.getFields().keySet(), partitioning.getFields().keySet()));
+    }
+    for (Map.Entry<String, FieldType> entry : partitioning.getFields().entrySet()) {
+      String fieldName = entry.getKey();
+      FieldType fieldType = entry.getValue();
+      Comparable fieldValue = key.getField(fieldName);
+      if (fieldValue == null) {
+        throw new IllegalArgumentException(
+          String.format("Incomplete partition key: value for field '%s' is missing", fieldName));
+      }
+      try {
+        fieldType.validate(fieldValue);
+      } catch (IllegalArgumentException e) {
+        throw new IllegalArgumentException(String.format(
+          "Invalid partition key: Value for field '%s' is incompatible with the partitioning: %s",
+          fieldName, e.getMessage()));
+      }
+    }
+  }
+
+  /**
+   * Validates the partition key against the partitioning and gererates the row key for that partition key.
+   */
   @VisibleForTesting
   static byte[] generateRowKey(PartitionKey key, Partitioning partitioning) {
+    validatePartitionKey(key, partitioning);
     // validate partition key, convert values, and compute size of output
     Map<String, FieldType> partitionFields = partitioning.getFields();
     int totalSize = partitionFields.size() - 1; // one \0 between each of the fields
@@ -936,15 +969,6 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       String fieldName = entry.getKey();
       FieldType fieldType = entry.getValue();
       Comparable fieldValue = key.getField(fieldName);
-      if (fieldValue == null) {
-        throw new IllegalArgumentException(
-          String.format("Incomplete partition key: value for field '%s' is missing", fieldName));
-      }
-      if (!FieldTypes.validateType(fieldValue, fieldType)) {
-        throw new IllegalArgumentException(
-          String.format("Invalid partition key: value for %s field '%s' has incompatible type %s",
-                        fieldType.name(), fieldName, fieldValue.getClass().getName()));
-      }
       byte[] bytes = FieldTypes.toBytes(fieldValue, fieldType);
       totalSize += bytes.length;
       values.add(bytes);
@@ -977,10 +1001,12 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       if (lowerValue == null) {
         break; // this field has no lower bound; we can't include any more fields in the start key
       }
-      if (!FieldTypes.validateType(lowerValue, fieldType)) {
-        throw new IllegalArgumentException(
-          String.format("Invalid partition filter: lower bound for %s field '%s' has incompatible type %s",
-                        fieldType.name(), fieldName, lowerValue.getClass().getName()));
+      try {
+        fieldType.validate(lowerValue);
+      } catch (IllegalArgumentException e) {
+        throw new IllegalArgumentException(String.format(
+          "Invalid partition filter: Lower bound for field '%s' is incompatible with the partitioning: %s",
+          fieldName, e.getMessage()));
       }
       byte[] bytes = FieldTypes.toBytes(lowerValue, fieldType);
       totalSize += bytes.length;
@@ -1019,10 +1045,12 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       if (upperValue == null) {
         break; // this field is not present; we can't include any more fields in the stop key
       }
-      if (!FieldTypes.validateType(upperValue, fieldType)) {
-        throw new IllegalArgumentException(
-          String.format("Invalid partition filter: upper bound for %s field '%s' has incompatible type %s",
-                        fieldType.name(), fieldName, upperValue.getClass().getName()));
+      try {
+        fieldType.validate(upperValue);
+      } catch (IllegalArgumentException e) {
+        throw new IllegalArgumentException(String.format(
+          "Invalid partition filter: Upper bound for field '%s' is incompatible with the partitioning: %s",
+          fieldName, e.getMessage()));
       }
       byte[] bytes = FieldTypes.toBytes(upperValue, fieldType);
       totalSize += bytes.length;
