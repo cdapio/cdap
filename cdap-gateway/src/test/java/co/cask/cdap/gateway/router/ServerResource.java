@@ -38,7 +38,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -100,17 +99,8 @@ public class ServerResource extends ExternalResource {
   public void registerServer() {
     // Register services of test server
     LOG.info("Registering service {}", serviceName);
-    cancelDiscovery = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
-      @Override
-      public String getName() {
-        return serviceName;
-      }
-
-      @Override
-      public InetSocketAddress getSocketAddress() {
-        return httpService.getBindAddress();
-      }
-    }));
+    cancelDiscovery = discoveryService.register(
+      ResolvingDiscoverable.of(new Discoverable(serviceName, httpService.getBindAddress())));
   }
 
   public void cancelRegistration() {

@@ -215,25 +215,13 @@ public class ResourceCoordinatorTest {
     });
   }
 
-  private Discoverable createDiscoverable(final String serviceName, final int port) {
+  private Discoverable createDiscoverable(String serviceName, final int port) {
     InetSocketAddress address;
     try {
       address = new InetSocketAddress(InetAddress.getLocalHost(), port);
     } catch (UnknownHostException e) {
       address = new InetSocketAddress(port);
     }
-    final InetSocketAddress finalAddress = address;
-
-    return new Discoverable() {
-      @Override
-      public String getName() {
-        return serviceName;
-      }
-
-      @Override
-      public InetSocketAddress getSocketAddress() {
-        return finalAddress;
-      }
-    };
+    return new Discoverable(serviceName, address);
   }
 }

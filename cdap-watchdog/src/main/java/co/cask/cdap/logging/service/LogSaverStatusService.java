@@ -35,7 +35,6 @@ import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 
-import java.net.InetSocketAddress;
 import java.util.Set;
 
 /**
@@ -66,17 +65,8 @@ public class LogSaverStatusService extends AbstractIdleService {
                                                                        Constants.Service.LOGSAVER));
     httpService.startAndWait();
 
-    cancellable = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
-      @Override
-      public String getName() {
-        return Constants.Service.LOGSAVER;
-      }
-
-      @Override
-      public InetSocketAddress getSocketAddress() {
-        return httpService.getBindAddress();
-      }
-    }));
+    cancellable = discoveryService.register(
+      ResolvingDiscoverable.of(new Discoverable(Constants.Service.LOGSAVER, httpService.getBindAddress())));
   }
 
   @Override

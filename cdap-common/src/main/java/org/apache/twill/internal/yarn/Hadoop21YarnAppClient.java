@@ -38,9 +38,7 @@ import org.apache.twill.internal.appmaster.ApplicationSubmitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -192,6 +190,11 @@ public final class Hadoop21YarnAppClient extends AbstractIdleService implements 
         LOG.error("Failed to kill application {}", appId, e);
         throw Throwables.propagate(e);
       }
+    }
+
+    @Override
+    public void close() throws Exception {
+      yarnClient.close();
     }
   }
 }
