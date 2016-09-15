@@ -170,8 +170,7 @@
     <name>twill.no.container.timeout</name>
     <value>120000</value>
     <description>
-      Amount of time in milliseconds to wait for at least one container for
-      Apache Twill runnable
+      Duration in milliseconds to wait for at least one container for Apache Twill runnable
     </description>
   </property>
 
@@ -204,8 +203,8 @@
     <name>zookeeper.client.startup.timeout.millis</name>
     <value>60000</value>
     <description>
-      Maximum amount of time in milliseconds to wait for a successful
-      connection to a server in the ZooKeeper quorum.
+      Maximum duration in milliseconds to wait for a successful connection to a server in the
+      ZooKeeper quorum
     </description>
   </property>
 
@@ -217,7 +216,7 @@
     <description>
       By default, any changes made to existing datasets are not deployed
       when an app is redeployed; setting this value to true allows the
-      dataset changes to be deployed upon app redeployment.
+      dataset changes to be deployed upon app redeployment
     </description>
   </property>
 
@@ -287,8 +286,8 @@
     <name>app.program.runid.corrector.interval</name>
     <value>180</value>
     <description>
-      The interval of how often the run id corrector thread will run in
-      seconds; this value should be greater than 0
+      Interval in seconds of how often the run id corrector thread will run; this value
+      should be greater than 0
     </description>
   </property>
 
@@ -305,8 +304,8 @@
     <name>app.program.spark.yarn.client.rewrite.enabled</name>
     <value>true</value>
     <description>
-      Specify whether to rewrite the yarn.Client class in Spark to work
-      around the issue SPARK-13441 in CDM clusters.
+      Specify whether to rewrite the yarn.client class in Spark to work
+      around the issue SPARK-13441 in CDM clusters
     </description>
   </property>
 
@@ -328,7 +327,7 @@
     <name>app.program.max.start.seconds</name>
     <value>300</value>
     <description>
-      The maximum number of seconds to wait for a program to start before killing it.
+      Maximum number of seconds to wait for a program to start before killing it
     </description>
   </property>
 
@@ -336,7 +335,7 @@
     <name>app.program.max.stop.seconds</name>
     <value>300</value>
     <description>
-      The maximum number of seconds to wait for a program to stop before killing it.
+      Maximum number of seconds to wait for a program to stop before killing it
     </description>
   </property>
 
@@ -352,7 +351,7 @@
     <name>workflow.token.max.size.mb</name>
     <value>30</value>
     <description>
-      Maximum allowed size of a Workflow Token, in megabytes; if the
+      Maximum allowed size in megabytes of a Workflow Token; if the
       workflow token exceeds this size, no further updates are allowed
     </description>
   </property>
@@ -416,7 +415,7 @@
     <name>data.tx.bind.port</name>
     <value>0</value>
     <description>
-      Transaction service bind port. Binds to random port by default.
+      Transaction service bind port; binds to a random port by default
     </description>
   </property>
 
@@ -475,7 +474,7 @@
     <name>data.tx.memory.mb</name>
     <value>${master.service.memory.mb}</value>
     <description>
-      Memory in megabytes of the transaction service
+      Memory in megabytes for each transaction service instance
     </description>
   </property>
 
@@ -597,7 +596,7 @@
     <name>dataset.executor.container.memory.mb</name>
     <value>${master.service.memory.mb}</value>
     <description>
-      Size of Memory in megabytes for each dataset executor instance
+      Memory in megabytes for each dataset executor instance
     </description>
   </property>
 
@@ -673,7 +672,7 @@
     <name>explore.cleanup.job.schedule.secs</name>
     <value>60</value>
     <description>
-      Time in seconds to schedule clean-up job to timeout operations
+      Interval in seconds to schedule the clean-up of timed-out operations
     </description>
   </property>
 
@@ -687,11 +686,11 @@
 
   <property>
     <name>explore.executor.container.memory.mb</name>
-    <!--This is explicitly set differently than 'master.service.memory.mb' on purpose.
-    Explore requires more memory to run than the Master service.-->
     <value>1024</value>
     <description>
-      Size of memory in megabytes for each explore executor instance
+      Memory in megabytes for each CDAP Explore executor instance.
+      This is explicitly set differently than ${master.service.memory.mb} as
+      Explore requires more memory to run than the Master service.
     </description>
   </property>
 
@@ -861,7 +860,7 @@
     <name>kafka.server.zookeeper.connection.timeout.ms</name>
     <value>1000000</value>
     <description>
-      The maximum time (in milliseconds) that the client will wait to
+      Maximum time in milliseconds that the client will wait to
       establish a connection to Zookeeper
     </description>
   </property>
@@ -921,7 +920,7 @@
     <name>log.retention.duration.days</name>
     <value>7</value>
     <description>
-      Log file HDFS retention duration in days
+      Duration in days of log file HDFS retention
     </description>
   </property>
 
@@ -943,11 +942,11 @@
 
   <property>
     <name>log.saver.container.memory.mb</name>
-    <!--This is explicitly set differently than 'master.service.memory.mb' on purpose.
-    Log saver requires more memory to run than the Master service.-->
     <value>1024</value>
     <description>
-      Memory in megabytes allocated for log saver instances to run in YARN
+      Memory in megabytes for each log saver instance to run in YARN.
+      This is explicitly set differently than ${master.service.memory.mb} as
+      Log saver requires more memory to run than the Master service.
     </description>
   </property>
 
@@ -1033,7 +1032,7 @@
     <name>master.service.memory.mb</name>
     <value>512</value>
     <description>
-      Size of memory in megabytes for master service instance
+      Memory in megabytes for each master service instance
     </description>
   </property>
 
@@ -1131,7 +1130,7 @@
     <name>metrics.data.table.retention.resolution.1.seconds</name>
     <value>7200</value>
     <description>
-      Retention resolution of the 1-second resolution table in seconds;
+      Retention resolution in seconds of the 1-second resolution table;
       default retention period is 2 hours
     </description>
   </property>
@@ -1140,7 +1139,7 @@
     <name>metrics.data.table.retention.resolution.3600.seconds</name>
     <value>2592000</value>
     <description>
-      Retention resolution 1-hour resolution table (in seconds); default
+      Retention resolution in seconds of the 1-hour resolution table; default
       retention period is 30 days
     </description>
   </property>
@@ -1149,7 +1148,7 @@
     <name>metrics.data.table.retention.resolution.60.seconds</name>
     <value>2592000</value>
     <description>
-      Retention resolution for 1-minute resolution table (in seconds);
+      Retention resolution in seconds for the 1-minute resolution table;
       default retention period is 30 days
     </description>
   </property>
@@ -1174,7 +1173,7 @@
     <name>metrics.dataset.hbase.stats.report.interval</name>
     <value>60</value>
     <description>
-      Report interval for HBase stats, in seconds
+      Report interval in seconds for HBase stats
     </description>
   </property>
 
@@ -1182,7 +1181,7 @@
     <name>metrics.dataset.leveldb.stats.report.interval</name>
     <value>60</value>
     <description>
-      Report interval for LevelDB stats, in seconds
+      Report interval in seconds for LevelDB stats
     </description>
   </property>
 
@@ -1214,7 +1213,7 @@
     <name>metrics.memory.mb</name>
     <value>${master.service.memory.mb}</value>
     <description>
-      Memory assigned to the metrics service in megabytes
+      Memory in megabytes for each metrics service instance
     </description>
   </property>
 
@@ -1247,8 +1246,8 @@
     <name>metrics.processor.memory.mb</name>
     <value>${master.service.memory.mb}</value>
     <description>
-      Size of memory in megabytes for metrics processor service Apache Twill
-      runnable
+      Memory in megabytes for each metrics processor service Apache Twill
+      runnable instance
     </description>
   </property>
 
@@ -1340,7 +1339,7 @@
     <name>data.queue.config.update.interval</name>
     <value>5</value>
     <description>
-      Frequency, in seconds, of updates to the queue consumer configuration
+      Frequency in seconds of updates to the queue consumer configuration
       used in evicting queue entries on flush and compaction
     </description>
   </property>
@@ -1436,7 +1435,7 @@
     <name>router.connection.idle.timeout.secs</name>
     <value>15</value>
     <description>
-      The number of seconds after an HTTP request completes that idle router
+      Time in seconds after an HTTP request completes that idle router
       connections are closed
     </description>
   </property>
@@ -1549,7 +1548,7 @@
     <name>kerberos.auth.relogin.interval.seconds</name>
     <value>300</value>
     <description>
-      Relogin interval for Kerberos keytab
+      Relogin interval in seconds for Kerberos keytab
     </description>
   </property>
 
@@ -1633,13 +1632,11 @@
     <name>security.authorization.cache.refresh.interval.secs</name>
     <value>50</value>
     <description>
-      Determines the interval in seconds after which a background thread
-      will refresh cached authorization policies. Defaults to 50 seconds. It
-      is recommended to keep this value slightly lower than
-      ${security.authorization.cache.ttl.secs}, so that the cached
-      authorization policies do not expire unless they have been explicitly
-      revoked. This setting only takes effect if
-      ${security.authorization.cache.enabled} is set to true.
+      The interval in seconds after which a background thread will refresh cached
+      authorization policies. It is recommended to keep this value slightly lower than
+      ${security.authorization.cache.ttl.secs}, so that the cached authorization policies
+      do not expire unless they have been explicitly revoked. This setting only takes
+      effect if ${security.authorization.cache.enabled} is set to true.
     </description>
   </property>
 
@@ -1647,10 +1644,9 @@
     <name>security.authorization.cache.ttl.secs</name>
     <value>60</value>
     <description>
-      Determines the time to live in seconds for entries in the
-      authorization cache used by programs. Defaults to 60 seconds. This
-      setting only takes effect if ${security.authorization.cache.enabled}
-      is set to true.
+      The time-to-live in seconds for entries in the authorization cache used by programs.
+      This setting only takes effect if ${security.authorization.cache.enabled} is set to
+      true.
     </description>
   </property>
 
@@ -1764,8 +1760,8 @@
     <name>security.token.digest.key.expiration.ms</name>
     <value>3600000</value>
     <description>
-      Time duration (in milliseconds) after which an active secret key used
-      for signing tokens should be retired
+      Duration in milliseconds after which an active secret key used for signing tokens should
+      be retired
     </description>
   </property>
 
@@ -1877,7 +1873,7 @@
     <name>stream.container.memory.mb</name>
     <value>${master.service.memory.mb}</value>
     <description>
-      Amount of memory in megabytes for the YARN container that runs the
+      Memory in megabytes for each YARN container that runs the
       stream handler
     </description>
   </property>
@@ -1895,7 +1891,7 @@
     <name>stream.event.ttl</name>
     <value>9223372036854775807</value>
     <description>
-      Default time to live in milliseconds (Long.MAX_VALUE) for stream
+      Default time-to-live in milliseconds (Long.MAX_VALUE) for stream
       events
     </description>
   </property>
@@ -1904,8 +1900,7 @@
     <name>stream.file.cleanup.period</name>
     <value>300000</value>
     <description>
-      Default time interval in milliseconds for running the stream file
-      cleanup process
+      Interval in milliseconds for running the stream file cleanup process
     </description>
   </property>
 
@@ -1921,7 +1916,7 @@
     <name>stream.index.interval</name>
     <value>10000</value>
     <description>
-      Default time interval in milliseconds for emitting new index entry in
+      Interval in milliseconds for emitting new index entry in
       stream file
     </description>
   </property>
@@ -1939,7 +1934,7 @@
     <name>stream.notification.threshold</name>
     <value>1024</value>
     <description>
-      Size of data, in megabytes, to be ingested by a stream before a
+      Size of data in megabytes to be ingested by a stream before a
       notification is published
     </description>
   </property>
@@ -1948,7 +1943,7 @@
     <name>stream.partition.duration</name>
     <value>3600000</value>
     <description>
-      The default duration of a stream partition in milliseconds
+      Duration in milliseconds of a stream partition
     </description>
   </property>
 
@@ -1956,7 +1951,7 @@
     <name>stream.size.schedule.polling.delay</name>
     <value>600</value>
     <description>
-      Delay, in seconds, to poll a stream in a StreamSizeSchedule if no
+      Delay in seconds to poll a stream in a StreamSizeSchedule if no
       notification is received
     </description>
   </property>
@@ -1992,9 +1987,8 @@
     <name>dashboard.router.check.timeout.secs</name>
     <value>0</value>
     <description>
-      Amount of time, in seconds, CDAP UI waits before exiting when unable
-      to connect to CDAP Router service on startup; use a timeout of 0 to
-      wait indefinitely
+      Interval in seconds that the CDAP UI waits before exiting when unable to connect to
+      CDAP Router service on startup; use a timeout of 0 to wait indefinitely
     </description>
   </property>
 
