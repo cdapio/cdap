@@ -24,6 +24,8 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -52,7 +54,7 @@ public class RunConstraintsCheckerTest {
       .setMaxConcurrentRuns(2)
       .createTimeSchedule("* * * * *");
 
-    Id.Program programId = Id.Program.from(Id.Namespace.DEFAULT, "app", ProgramType.WORKFLOW, "workflow");
+    ProgramId programId = NamespaceId.DEFAULT.app("app").workflow("workflow");
     Assert.assertTrue(requirementChecker.checkSatisfied(programId, schedule));
 
     // add a run for the schedule

@@ -21,6 +21,7 @@ import co.cask.cdap.app.verification.AbstractVerifier;
 import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.error.Err;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
 
 /**
  * This class is responsible for verifying the Application details of
@@ -43,7 +44,7 @@ public class ApplicationVerification extends AbstractVerifier<ApplicationSpecifi
    * @return An instance of {@link VerifyResult} depending of status of verification.
    */
   @Override
-  public VerifyResult verify(Id.Application appId, final ApplicationSpecification input) {
+  public VerifyResult verify(ApplicationId appId, final ApplicationSpecification input) {
     VerifyResult verifyResult = super.verify(appId, input);
 
     if (!verifyResult.isSuccess()) {

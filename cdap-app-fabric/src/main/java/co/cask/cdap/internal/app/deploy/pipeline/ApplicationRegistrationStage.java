@@ -52,7 +52,7 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
 
   @Override
   public void process(ApplicationWithPrograms input) throws Exception {
-    store.addApplication(input.getApplicationId().toId(), input.getSpecification());
+    store.addApplication(input.getApplicationId(), input.getSpecification());
     registerDatasets(input);
     emit(input);
   }

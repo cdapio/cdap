@@ -17,6 +17,7 @@
 package co.cask.cdap.app.verification;
 
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -38,7 +39,7 @@ public class AbstractVerifierTest {
       }
     };
 
-    Id.Application appId = Id.Application.from("test", "some");
+    ApplicationId appId = new ApplicationId("test", "some");
 
     Assert.assertTrue(v.verify(appId, "foo").isSuccess());
     Assert.assertTrue(v.verify(appId, "mydataset").isSuccess());

@@ -29,19 +29,34 @@ import java.util.Objects;
  */
 public class FlowletId extends NamespacedEntityId implements ParentedId<ProgramId> {
   private final String application;
+  private final String version;
   private final String flow;
   private final String flowlet;
   private transient Integer hashCode;
 
   public FlowletId(String namespace, String application, String flow, String flowlet) {
-    super(namespace, EntityType.FLOWLET);
-    this.application = application;
+    this(new ApplicationId(namespace, application), flow, flowlet);
+  }
+
+  public FlowletId(ApplicationId appId, String flow, String flowlet) {
+    super(appId.getNamespace(), EntityType.FLOWLET);
+    this.application = appId.getApplication();
+    this.version = appId.getVersion();
     this.flow = flow;
     this.flowlet = flowlet;
   }
 
+  @Override
+  public String getNamespace() {
+    return namespace;
+  }
+
   public String getApplication() {
     return application;
+  }
+
+  public String getVersion() {
+    return version;
   }
 
   public String getFlow() {
@@ -59,7 +74,8 @@ public class FlowletId extends NamespacedEntityId implements ParentedId<ProgramI
 
   @Override
   public ProgramId getParent() {
-    return new ProgramId(namespace, application, ProgramType.FLOW, flow);
+    return new ProgramId(new ApplicationId(getNamespace(), getApplication(), getVersion()),
+                         ProgramType.FLOW, getFlow());
   }
 
   @Override
@@ -68,9 +84,7 @@ public class FlowletId extends NamespacedEntityId implements ParentedId<ProgramI
       return false;
     }
     FlowletId flowletId = (FlowletId) o;
-    return Objects.equals(namespace, flowletId.namespace) &&
-      Objects.equals(application, flowletId.application) &&
-      Objects.equals(flow, flowletId.flow) &&
+    return Objects.equals(getParent(), flowletId.getParent()) &&
       Objects.equals(flowlet, flowletId.flowlet);
   }
 
@@ -78,31 +92,34 @@ public class FlowletId extends NamespacedEntityId implements ParentedId<ProgramI
   public int hashCode() {
     Integer hashCode = this.hashCode;
     if (hashCode == null) {
-      this.hashCode = hashCode = Objects.hash(super.hashCode(), namespace, application, flow, flowlet);
+      this.hashCode = hashCode = Objects.hash(super.hashCode(), getNamespace(), getApplication(), getVersion(),
+                                              getFlow(), flowlet);
     }
     return hashCode;
   }
 
   public FlowletQueueId queue(String queue) {
-    return new FlowletQueueId(namespace, application, flow, flowlet, queue);
+    // Note: FlowletQueueId is not versioned
+    return new FlowletQueueId(getNamespace(), getApplication(), getFlow(), flowlet, queue);
   }
 
   @SuppressWarnings("unused")
   public static FlowletId fromIdParts(Iterable<String> idString) {
     Iterator<String> iterator = idString.iterator();
     return new FlowletId(
-      next(iterator, "namespace"), next(iterator, "application"),
+      new ApplicationId(next(iterator, "namespace"), next(iterator, "application"), next(iterator, "version")),
       next(iterator, "flow"), nextAndEnd(iterator, "flowlet"));
   }
 
   @Override
   protected Iterable<String> toIdParts() {
-    return Collections.unmodifiableList(Arrays.asList(namespace, application, flow, flowlet));
+    return Collections.unmodifiableList(Arrays.asList(getNamespace(), getApplication(), getVersion(),
+                                                      getFlow(), flowlet));
   }
 
   @Override
   public Id.Flow.Flowlet toId() {
-    return Id.Flow.Flowlet.from(Id.Application.from(namespace, application), flow, flowlet);
+    return Id.Flow.Flowlet.from(Id.Application.from(getNamespace(), getApplication()), getFlow(), flowlet);
   }
 
   public static FlowletId fromString(String string) {

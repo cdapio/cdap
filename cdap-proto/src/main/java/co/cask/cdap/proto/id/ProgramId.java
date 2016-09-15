@@ -30,13 +30,19 @@ import java.util.Objects;
  */
 public class ProgramId extends NamespacedEntityId implements ParentedId<ApplicationId> {
   private final String application;
+  private final String version;
   private final ProgramType type;
   private final String program;
   private transient Integer hashCode;
 
   public ProgramId(String namespace, String application, ProgramType type, String program) {
-    super(namespace, EntityType.PROGRAM);
-    this.application = application;
+    this(new ApplicationId(namespace, application), type, program);
+  }
+
+  ProgramId(ApplicationId appId, ProgramType type, String program) {
+    super(appId.getNamespace(), EntityType.PROGRAM);
+    this.application = appId.getApplication();
+    this.version = appId.getVersion();
     this.type = type;
     this.program = program;
   }
@@ -47,6 +53,10 @@ public class ProgramId extends NamespacedEntityId implements ParentedId<Applicat
 
   public String getApplication() {
     return application;
+  }
+
+  public String getVersion() {
+    return version;
   }
 
   public ProgramType getType() {
@@ -63,26 +73,26 @@ public class ProgramId extends NamespacedEntityId implements ParentedId<Applicat
   }
 
   public NamespaceId getNamespaceId() {
-    return new NamespaceId(namespace);
+    return new NamespaceId(getNamespace());
   }
 
   @Override
   public ApplicationId getParent() {
-    return new ApplicationId(namespace, application);
+    return new ApplicationId(namespace, application, version);
   }
 
   public FlowletId flowlet(String flowlet) {
     if (type != ProgramType.FLOW) {
       throw new IllegalArgumentException("Expected program type for flowlet to be " + ProgramType.FLOW);
     }
-    return new FlowletId(namespace, application, program, flowlet);
+    return new FlowletId(new ApplicationId(getNamespace(), getApplication(), getVersion()), program, flowlet);
   }
 
   /**
    * Creates a {@link ProgramRunId} of this program id with the given run id.
    */
   public ProgramRunId run(String run) {
-    return new ProgramRunId(namespace, application, type, program, run);
+    return new ProgramRunId(new ApplicationId(getNamespace(), getApplication(), getVersion()), type, program, run);
   }
 
   /**
@@ -98,8 +108,7 @@ public class ProgramId extends NamespacedEntityId implements ParentedId<Applicat
       return false;
     }
     ProgramId programId = (ProgramId) o;
-    return Objects.equals(namespace, programId.namespace) &&
-      Objects.equals(application, programId.application) &&
+    return Objects.equals(getParent(), programId.getParent()) &&
       Objects.equals(type, programId.type) &&
       Objects.equals(program, programId.program);
   }
@@ -108,21 +117,22 @@ public class ProgramId extends NamespacedEntityId implements ParentedId<Applicat
   public int hashCode() {
     Integer hashCode = this.hashCode;
     if (hashCode == null) {
-      this.hashCode = hashCode = Objects.hash(super.hashCode(), namespace, application, type, program);
+      this.hashCode = hashCode = Objects.hash(super.hashCode(), getNamespace(), getApplication(), getVersion(),
+                                              type, program);
     }
     return hashCode;
   }
 
   @Override
   public Id.Program toId() {
-    return Id.Program.from(namespace, application, type, program);
+    return Id.Program.from(getNamespace(), getApplication(), type, program);
   }
 
   @SuppressWarnings("unused")
   public static ProgramId fromIdParts(Iterable<String> idString) {
     Iterator<String> iterator = idString.iterator();
     return new ProgramId(
-      next(iterator, "namespace"), next(iterator, "category"),
+      new ApplicationId(next(iterator, "namespace"), next(iterator, "application"), next(iterator, "version")),
       ProgramType.valueOfPrettyName(next(iterator, "type")),
       nextAndEnd(iterator, "program"));
   }
@@ -130,8 +140,7 @@ public class ProgramId extends NamespacedEntityId implements ParentedId<Applicat
   @Override
   protected Iterable<String> toIdParts() {
     return Collections.unmodifiableList(
-      Arrays.asList(namespace, application, type.getPrettyName().toLowerCase(), program)
-    );
+      Arrays.asList(getNamespace(), getApplication(), getVersion(), type.getPrettyName().toLowerCase(), program));
   }
 
   public static ProgramId fromString(String string) {

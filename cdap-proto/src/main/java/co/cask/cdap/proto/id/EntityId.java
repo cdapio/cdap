@@ -117,14 +117,20 @@ public abstract class EntityId implements IdCompatible {
     }
 
     String typeString = typeAndId[0];
-    EntityType type = EntityType.valueOf(typeString.toUpperCase());
-    if (idClass != null && !type.getIdClass().equals(idClass)) {
+    EntityType typeFromString = EntityType.valueOf(typeString.toUpperCase());
+    Class<T> idClassFromString = (Class<T>) typeFromString.getIdClass();
+    if (idClass != null && !idClassFromString.equals(idClass)) {
+      /* idClass can differ from idClassFromString only when typeFromString is EntityType.PROGRAM and idClass is
+       * of WorkflowId.class, because when toString method is called for WorkflowId, its superclass ProgramId calls
+       * EntityId's toString() method and the string always contains ProgramId as type. */
+      if (!idClassFromString.isAssignableFrom(idClass) || !typeFromString.equals(EntityType.PROGRAM)) {
         throw new IllegalArgumentException(String.format("Expected EntityId of class '%s' but got '%s'",
-                                                         idClass.getName(), type.getIdClass().getName()));
+                                                         idClass.getName(), typeFromString.getIdClass().getName()));
+      }
     }
     String idString = typeAndId[1];
     try {
-      return type.fromIdParts(Arrays.asList(IDSTRING_PART_SEPARATOR_PATTERN.split(idString)));
+      return typeFromString.fromIdParts(Arrays.asList(IDSTRING_PART_SEPARATOR_PATTERN.split(idString)));
     } catch (IllegalArgumentException e) {
       String message = idClass == null ? String.format("Invalid ID: %s", string) :
         String.format("Invalid ID for type '%s': %s", idClass.getName(), string);
@@ -150,11 +156,11 @@ public abstract class EntityId implements IdCompatible {
     if (this == o) {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
+    if (!(o instanceof EntityId)) {
       return false;
     }
     EntityId entityId = (EntityId) o;
-    return Objects.equals(entity, entityId.entity);
+    return entity == entityId.entity;
   }
 
   @Override

@@ -25,6 +25,7 @@ import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.internal.app.SchemaFinder;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
 
@@ -41,7 +42,7 @@ public abstract class AbstractQueueSpecificationGenerator implements QueueSpecif
    * Finds a equal or compatible schema connection between <code>source</code> and <code>target</code>
    * flowlet.
    */
-  protected Set<QueueSpecification> generateQueueSpecification(Id.Application app,
+  protected Set<QueueSpecification> generateQueueSpecification(ApplicationId app,
                                                                String flow,
                                                                FlowletConnection connection,
                                                                Map<String, Set<Schema>> inputSchemas,
@@ -72,12 +73,12 @@ public abstract class AbstractQueueSpecificationGenerator implements QueueSpecif
       }
 
       if (connection.getSourceType() == FlowletConnection.Type.STREAM) {
-        String namespace = connection.getSourceNamespace() == null ? app.getNamespaceId() :
+        String namespace = connection.getSourceNamespace() == null ? app.getNamespace() :
           connection.getSourceNamespace();
         builder.add(createSpec(QueueName.fromStream(namespace, outputName),
                                schemas.getFirst(), schemas.getSecond()));
       } else {
-        builder.add(createSpec(QueueName.fromFlowlet(app.getNamespaceId(), app.getId(), flow,
+        builder.add(createSpec(QueueName.fromFlowlet(app.getNamespace(), app.getApplication(), flow,
                                                      connection.getSourceName(), outputName),
                                schemas.getFirst(), schemas.getSecond()));
       }

@@ -27,6 +27,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -257,11 +258,11 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
 
   @Test
   public void testWorkflowRunLogs() throws Exception {
-    ProgramId workflowId = Ids.namespace(MockLogReader.TEST_NAMESPACE).app(MockLogReader.SOME_WORKFLOW_APP)
+    ProgramId workflowId = MockLogReader.SOME_WORKFLOW_APP
       .workflow(MockLogReader.SOME_WORKFLOW);
-    RunRecord runRecord = mockLogReader.getRunRecord(workflowId.toId());
-    List<LogLine> logLines = getLogs(MockLogReader.TEST_NAMESPACE, MockLogReader.SOME_WORKFLOW_APP, "workflows",
-                                     MockLogReader.SOME_WORKFLOW, runRecord.getPid(), "next");
+    RunRecord runRecord = mockLogReader.getRunRecord(workflowId);
+    List<LogLine> logLines = getLogs(MockLogReader.TEST_NAMESPACE, MockLogReader.SOME_WORKFLOW_APP.getApplication(),
+                                     "workflows", MockLogReader.SOME_WORKFLOW, runRecord.getPid(), "next");
     Assert.assertEquals(320, logLines.size());
     // First 80 lines correspond to the Workflow
     String log = logLines.get(5).getLog();
@@ -279,10 +280,9 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     Assert.assertFalse(log.contains(MockLogReader.SOME_MAPREDUCE));
     Assert.assertTrue(log.contains(MockLogReader.SOME_SPARK));
 
-    ProgramId mapReduceId = Ids.namespace(MockLogReader.TEST_NAMESPACE).app(MockLogReader.SOME_WORKFLOW_APP)
-      .mr(MockLogReader.SOME_MAPREDUCE);
-    runRecord = mockLogReader.getRunRecord(mapReduceId.toId());
-    logLines = getLogs(MockLogReader.TEST_NAMESPACE, MockLogReader.SOME_WORKFLOW_APP, "mapreduce",
+    ProgramId mapReduceId = MockLogReader.SOME_WORKFLOW_APP.mr(MockLogReader.SOME_MAPREDUCE);
+    runRecord = mockLogReader.getRunRecord(mapReduceId);
+    logLines = getLogs(MockLogReader.TEST_NAMESPACE, MockLogReader.SOME_WORKFLOW_APP.getApplication(), "mapreduce",
                        MockLogReader.SOME_MAPREDUCE, runRecord.getPid(), "next");
     // Only 80 lines should correspond to MapReduce
     Assert.assertEquals(80, logLines.size());
@@ -291,10 +291,9 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     Assert.assertTrue(log.contains(MockLogReader.SOME_MAPREDUCE));
     Assert.assertFalse(log.contains(MockLogReader.SOME_SPARK));
 
-    ProgramId sparkId = Ids.namespace(MockLogReader.TEST_NAMESPACE).app(MockLogReader.SOME_WORKFLOW_APP)
-      .spark(MockLogReader.SOME_SPARK);
-    runRecord = mockLogReader.getRunRecord(sparkId.toId());
-    logLines = getLogs(MockLogReader.TEST_NAMESPACE, MockLogReader.SOME_WORKFLOW_APP, "spark",
+    ProgramId sparkId = MockLogReader.SOME_WORKFLOW_APP.spark(MockLogReader.SOME_SPARK);
+    runRecord = mockLogReader.getRunRecord(sparkId);
+    logLines = getLogs(MockLogReader.TEST_NAMESPACE, MockLogReader.SOME_WORKFLOW_APP.getApplication(), "spark",
                        MockLogReader.SOME_SPARK, runRecord.getPid(), "next");
     // Only 80 lines should correspond to Spark
     Assert.assertEquals(80, logLines.size());
@@ -343,8 +342,9 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
   private void testNextRunId(String appId, String entityType, String entityId, String namespace, String format,
                              List<String> suppress)
     throws Exception {
-    Id.Program id = Id.Program.from(namespace, appId, ProgramType.valueOfCategoryName(entityType), entityId);
-    RunRecord runRecord = mockLogReader.getRunRecord(id);
+    ProgramId programId =
+      new NamespaceId(namespace).app(appId).program(ProgramType.valueOfCategoryName(entityType), entityId);
+    RunRecord runRecord = mockLogReader.getRunRecord(programId);
     int expectedEvents = 20;
     if (runRecord.getStatus() == ProgramRunStatus.RUNNING || runRecord.getStatus() == ProgramRunStatus.SUSPENDED) {
       expectedEvents = 30;
@@ -372,8 +372,9 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
   private void testPrevRunId(String appId, String entityType, String entityId, String namespace, String format,
                              List<String> suppress)
     throws Exception {
-    Id.Program id = Id.Program.from(namespace, appId, ProgramType.valueOfCategoryName(entityType), entityId);
-    RunRecord runRecord = mockLogReader.getRunRecord(id);
+    ProgramId programId =
+      new NamespaceId(namespace).app(appId).program(ProgramType.valueOfCategoryName(entityType), entityId);
+    RunRecord runRecord = mockLogReader.getRunRecord(programId);
     int expectedEvents = 20;
     if (runRecord.getStatus() == ProgramRunStatus.RUNNING || runRecord.getStatus() == ProgramRunStatus.SUSPENDED) {
       expectedEvents = 30;
@@ -428,8 +429,9 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
 
   private void testLogsRunId(String appId, String entityType, String entityId, String namespace, String format,
                              List<String> suppress) throws Exception {
-    Id.Program id = Id.Program.from(namespace, appId, ProgramType.valueOfCategoryName(entityType), entityId);
-    RunRecord runRecord = mockLogReader.getRunRecord(id);
+    ProgramId programId =
+      new NamespaceId(namespace).app(appId).program(ProgramType.valueOfCategoryName(entityType), entityId);
+    RunRecord runRecord = mockLogReader.getRunRecord(programId);
     int expectedEvents = 20;
     if (runRecord.getStatus() == ProgramRunStatus.RUNNING || runRecord.getStatus() == ProgramRunStatus.SUSPENDED) {
       expectedEvents = 30;

@@ -81,6 +81,7 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.FlowletMethod;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.common.io.ByteBufferInputStream;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
@@ -225,7 +226,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
 
       // Creates QueueSpecification
       Table<Node, String, Set<QueueSpecification>> queueSpecs =
-        new SimpleQueueSpecificationGenerator(Id.Application.from(program.getNamespaceId(), program.getApplicationId()))
+        new SimpleQueueSpecificationGenerator(new ApplicationId(program.getNamespaceId(), program.getApplicationId()))
           .create(flowSpec);
 
       Flowlet flowlet = new InstantiatorFactory(false).get(TypeToken.of(flowletClass)).create();

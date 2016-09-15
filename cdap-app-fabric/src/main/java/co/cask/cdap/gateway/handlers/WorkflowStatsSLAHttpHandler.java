@@ -22,6 +22,7 @@ import co.cask.cdap.api.metrics.MetricSearchQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.TagValue;
+import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.BadRequestException;
@@ -34,6 +35,8 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowStatistics;
 import co.cask.cdap.proto.WorkflowStatsComparison;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
@@ -114,7 +117,7 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
       }
     }
 
-    Id.Workflow workflow = Id.Workflow.from(Id.Namespace.from(namespaceId), appId, workflowId);
+    WorkflowId workflow = new WorkflowId(namespaceId, appId, workflowId);
     WorkflowStatistics workflowStatistics = store.getWorkflowStatistics(workflow, startTime, endTime, percentiles);
 
     if (workflowStatistics == null) {
@@ -163,7 +166,7 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
       throw new BadRequestException("Interval should be greater than 0 and should be specified with one of the 'ms'," +
                                       " 's', 'm', 'h', 'd' units. Entered value was : " + interval);
     }
-    Id.Workflow workflow = Id.Workflow.from(Id.Namespace.from(namespaceId), appId, workflowId);
+    WorkflowId workflow = new WorkflowId(namespaceId, appId, workflowId);
     Collection<WorkflowDataset.WorkflowRunRecord> workflowRunRecords =
       store.retrieveSpacedRecords(workflow, runId, limit, timeInterval);
 
@@ -198,7 +201,7 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
                       @PathParam("workflow-id") String workflowId,
                       @PathParam("run-id") String runId,
                       @QueryParam("other-run-id") String otherRunId) throws Exception {
-    Id.Workflow workflow = Id.Workflow.from(Id.Namespace.from(namespaceId), appId, workflowId);
+    WorkflowId workflow = new WorkflowId(namespaceId, appId, workflowId);
     WorkflowRunMetrics detailedStatistics = getDetailedRecord(workflow, runId);
     WorkflowRunMetrics otherDetailedStatistics = getDetailedRecord(workflow, otherRunId);
     if (detailedStatistics == null) {
@@ -241,7 +244,7 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
    * @return Return the Workflow Run Metrics
    */
   @Nullable
-  private WorkflowRunMetrics getDetailedRecord(Id.Workflow workflowId, String runId) throws Exception {
+  private WorkflowRunMetrics getDetailedRecord(WorkflowId workflowId, String runId) throws Exception {
     WorkflowDataset.WorkflowRunRecord workflowRunRecord = store.getWorkflowRun(workflowId, runId);
     if (workflowRunRecord == null) {
       return null;
@@ -252,8 +255,8 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
       Map<String, Long> programMap = new HashMap<>();
       String programName = programRun.getName();
       ProgramType programType = programRun.getProgramType();
-      Id.Program program = Id.Program.from(workflowId.getNamespaceId(), workflowId.getApplicationId(),
-                                           programType, programName);
+      ProgramId program = new ProgramId(workflowId.getNamespace(), workflowId.getApplication(),
+                                        programType, programName);
       String programRunId = programRun.getRunId();
       if (programType == ProgramType.MAPREDUCE) {
         programMap = getMapreduceDetails(program, programRunId);
@@ -267,16 +270,15 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
     return new WorkflowRunMetrics(runId, programMetricsList);
   }
 
-  private Map<String, Long> getMapreduceDetails(Id.Program mapreduceProgram, String runId) throws Exception {
-    Id.Run mrRun = new Id.Run(mapreduceProgram, runId);
-    return mrJobInfoFetcher.getMRJobInfo(mrRun).getCounters();
+  private Map<String, Long> getMapreduceDetails(ProgramId mapreduceProgram, String runId) throws Exception {
+    return mrJobInfoFetcher.getMRJobInfo(mapreduceProgram.run(runId).toId()).getCounters();
   }
 
-  private Map<String, Long> getSparkDetails(Id.Program sparkProgram, String runId) throws Exception {
+  private Map<String, Long> getSparkDetails(ProgramId sparkProgram, String runId) throws Exception {
     Map<String, String> context = new HashMap<>();
-    context.put(Constants.Metrics.Tag.NAMESPACE, sparkProgram.getNamespaceId());
-    context.put(Constants.Metrics.Tag.APP, sparkProgram.getApplicationId());
-    context.put(Constants.Metrics.Tag.SPARK, sparkProgram.getId());
+    context.put(Constants.Metrics.Tag.NAMESPACE, sparkProgram.getNamespace());
+    context.put(Constants.Metrics.Tag.APP, sparkProgram.getApplication());
+    context.put(Constants.Metrics.Tag.SPARK, sparkProgram.getProgram());
     context.put(Constants.Metrics.Tag.RUN_ID, runId);
 
     List<TagValue> tags = new ArrayList<>();

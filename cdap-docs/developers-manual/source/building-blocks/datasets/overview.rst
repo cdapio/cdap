@@ -142,7 +142,7 @@ the dataset in a member variable at that time (similar to static datasets, but a
       counters.increment(key.getBytes(), 1L);
     }
 
-See the :ref:`Word Count <examples-word-count>` for an example of how this can be used to configure
+See :ref:`Word Count <examples-word-count>` for an example of how this can be used to configure
 the dataset names used by an application.
 
 Contrary to static datasets, dynamic datasets allow the release of the resources held by their Java classes

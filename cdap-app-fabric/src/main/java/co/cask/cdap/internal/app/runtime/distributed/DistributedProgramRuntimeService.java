@@ -156,7 +156,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       }
 
       // Program matched
-      RunRecordMeta record = store.getRun(programId, runId.getId());
+      RunRecordMeta record = store.getRun(programId.toEntityId(), runId.getId());
       if (record == null) {
         return null;
       }
@@ -249,7 +249,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   @Nullable
   private RuntimeInfo createRuntimeInfo(Id.Program programId, TwillController controller, RunId runId) {
     try {
-      ProgramDescriptor programDescriptor = store.loadProgram(programId);
+      ProgramDescriptor programDescriptor = store.loadProgram(programId.toEntityId());
       ProgramController programController = createController(programDescriptor, controller, runId);
       return programController == null ? null : new SimpleRuntimeInfo(programController, programId.toEntityId(),
                                                                       controller.getRunId());
@@ -297,7 +297,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   private Multimap<String, QueueName> getFlowletQueues(ApplicationId appId, FlowSpecification flowSpec) {
     // Generate all queues specifications
     Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queueSpecs
-      = new SimpleQueueSpecificationGenerator(appId.toId()).create(flowSpec);
+      = new SimpleQueueSpecificationGenerator(appId).create(flowSpec);
 
     // For storing result from flowletId to queue.
     ImmutableSetMultimap.Builder<String, QueueName> resultBuilder = ImmutableSetMultimap.builder();

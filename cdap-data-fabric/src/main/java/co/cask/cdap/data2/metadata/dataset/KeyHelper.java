@@ -24,6 +24,7 @@ import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.StreamViewId;
+import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import com.google.common.collect.ImmutableMap;
 
@@ -40,6 +41,7 @@ final class KeyHelper {
     .put(ArtifactId.class, MetadataSearchTargetType.ARTIFACT.getSerializedForm())
     .put(ApplicationId.class, MetadataSearchTargetType.APP.getSerializedForm())
     .put(ProgramId.class, MetadataSearchTargetType.PROGRAM.getSerializedForm())
+    .put(WorkflowId.class, MetadataSearchTargetType.PROGRAM.getSerializedForm())
     .put(DatasetId.class, MetadataSearchTargetType.DATASET.getSerializedForm())
     .put(StreamId.class, MetadataSearchTargetType.STREAM.getSerializedForm())
     .put(StreamViewId.class, MetadataSearchTargetType.VIEW.getSerializedForm())

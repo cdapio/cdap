@@ -26,6 +26,7 @@ import co.cask.cdap.app.queue.QueueSpecification;
 import co.cask.cdap.app.queue.QueueSpecificationGenerator;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -56,14 +57,14 @@ public final class SimpleQueueSpecificationGenerator extends AbstractQueueSpecif
   /**
    * Account Name under which the stream names to generated.
    */
-  private final Id.Application appId;
+  private final ApplicationId appId;
 
   /**
    * Constructor that takes an appId.
    *
    * @param appId under which the stream is represented.
    */
-  public SimpleQueueSpecificationGenerator(Id.Application appId) {
+  public SimpleQueueSpecificationGenerator(ApplicationId appId) {
     this.appId = appId;
   }
 
@@ -84,7 +85,7 @@ public final class SimpleQueueSpecificationGenerator extends AbstractQueueSpecif
     for (FlowletConnection connection : input.getConnections()) {
       final String source = connection.getSourceName();
       final String target = connection.getTargetName();
-      String sourceNamespace = connection.getSourceNamespace() == null ? appId.getNamespaceId() :
+      String sourceNamespace = connection.getSourceNamespace() == null ? appId.getNamespace() :
         connection.getSourceNamespace();
       Node sourceNode;
 

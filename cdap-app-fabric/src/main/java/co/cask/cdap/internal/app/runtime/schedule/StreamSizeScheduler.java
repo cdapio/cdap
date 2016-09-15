@@ -394,7 +394,7 @@ public class StreamSizeScheduler implements Scheduler {
 
   @Override
   public void deleteAllSchedules(Id.Namespace namespaceId) throws SchedulerException {
-    for (ApplicationSpecification appSpec : store.getAllApplications(namespaceId)) {
+    for (ApplicationSpecification appSpec : store.getAllApplications(namespaceId.toEntityId())) {
       deleteAllSchedules(namespaceId, appSpec);
     }
   }

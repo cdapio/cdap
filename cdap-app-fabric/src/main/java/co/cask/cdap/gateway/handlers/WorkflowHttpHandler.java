@@ -58,6 +58,7 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
@@ -222,20 +223,20 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   private void getScheduledRuntime(HttpResponder responder, String namespaceId, String appName, String workflowName,
                                    boolean previousRuntimeRequested) throws SchedulerException, NotFoundException {
     try {
-      Id.Application appId = Id.Application.from(namespaceId, appName);
-      Id.Program workflowId = Id.Program.from(appId, ProgramType.WORKFLOW, workflowName);
+      ApplicationId appId = new ApplicationId(namespaceId, appName);
+      WorkflowId workflowId = new WorkflowId(appId, workflowName);
       ApplicationSpecification appSpec = store.getApplication(appId);
       if (appSpec == null) {
-        throw new ApplicationNotFoundException(appId);
+        throw new ApplicationNotFoundException(appId.toId());
       }
       if (appSpec.getWorkflows().get(workflowName) == null) {
-        throw new ProgramNotFoundException(workflowId);
+        throw new ProgramNotFoundException(workflowId.toId());
       }
       List<ScheduledRuntime> runtimes;
       if (previousRuntimeRequested) {
-        runtimes = scheduler.previousScheduledRuntime(workflowId, SchedulableProgramType.WORKFLOW);
+        runtimes = scheduler.previousScheduledRuntime(workflowId.toId(), SchedulableProgramType.WORKFLOW);
       } else {
-        runtimes = scheduler.nextScheduledRuntime(workflowId, SchedulableProgramType.WORKFLOW);
+        runtimes = scheduler.nextScheduledRuntime(workflowId.toId(), SchedulableProgramType.WORKFLOW);
       }
       responder.sendJson(HttpResponseStatus.OK, runtimes);
     } catch (SecurityException e) {
@@ -252,7 +253,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                    @PathParam("namespace-id") String namespaceId,
                                    @PathParam("app-id") String appId,
                                    @PathParam("workflow-id") String workflowId) {
-    ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, appId));
+    ApplicationSpecification appSpec = store.getApplication(new ApplicationId(namespaceId, appId));
     if (appSpec == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "App:" + appId + " not found");
       return;
@@ -324,17 +325,17 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
 
   private WorkflowToken getWorkflowToken(String namespaceId, String appName, String workflow,
                                          String runId) throws NotFoundException {
-    Id.Application appId = Id.Application.from(namespaceId, appName);
+    ApplicationId appId = new ApplicationId(namespaceId, appName);
     ApplicationSpecification appSpec = store.getApplication(appId);
     if (appSpec == null) {
       throw new NotFoundException(appId);
     }
-    Id.Workflow workflowId = Id.Workflow.from(appId, workflow);
+    WorkflowId workflowId = appId.workflow(workflow);
     if (!appSpec.getWorkflows().containsKey(workflow)) {
       throw new NotFoundException(workflowId);
     }
     if (store.getRun(workflowId, runId) == null) {
-      throw new NotFoundException(new Id.Run(workflowId, runId));
+      throw new NotFoundException(workflowId.run(runId));
     }
     return store.getWorkflowToken(workflowId, runId);
   }
@@ -348,7 +349,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                     @PathParam("run-id") String runId)
     throws NotFoundException {
     ApplicationId appId = Ids.namespace(namespaceId).app(applicationId);
-    ApplicationSpecification appSpec = store.getApplication(appId.toId());
+    ApplicationSpecification appSpec = store.getApplication(appId);
     if (appSpec == null) {
       throw new ApplicationNotFoundException(appId.toId());
     }
@@ -361,7 +362,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     }
 
     ProgramRunId workflowRunId = workflowProgramId.run(runId);
-    if (store.getRun(workflowProgramId.toId(), runId) == null) {
+    if (store.getRun(workflowProgramId, runId) == null) {
       throw new NotFoundException(workflowRunId);
     }
 
@@ -440,7 +441,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   private WorkflowSpecification getWorkflowSpecForValidRun(String namespaceId, String applicationId,
                                                            String workflowId, String runId) throws NotFoundException {
     ApplicationId appId = new ApplicationId(namespaceId, applicationId);
-    ApplicationSpecification appSpec = store.getApplication(appId.toId());
+    ApplicationSpecification appSpec = store.getApplication(appId);
     if (appSpec == null) {
       throw new ApplicationNotFoundException(appId.toId());
     }
@@ -451,7 +452,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       throw new ProgramNotFoundException(programId.toId());
     }
 
-    if (store.getRun(programId.toId(), runId) == null) {
+    if (store.getRun(programId, runId) == null) {
       throw new NotFoundException(new ProgramRunId(programId.getNamespace(), programId.getApplication(),
                                                    programId.getType(), programId.getProgram(), runId));
     }
