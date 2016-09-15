@@ -67,6 +67,8 @@ public abstract class EntityId implements IdCompatible {
   private static final Pattern idPattern = Pattern.compile("[a-zA-Z0-9_-]+");
   // Allow '.' and '$' for dataset ids since they can be fully qualified class names
   private static final Pattern datasetIdPattern = Pattern.compile("[$\\.a-zA-Z0-9_-]+");
+  // Allow '.' for versionId
+  private static final Pattern versionIdPattern = Pattern.compile("[\\.a-zA-Z0-9_-]+");
 
   public static boolean isValidId(String name) {
     return idPattern.matcher(name).matches();
@@ -74,6 +76,10 @@ public abstract class EntityId implements IdCompatible {
 
   public static boolean isValidDatasetId(String datasetId) {
     return datasetIdPattern.matcher(datasetId).matches();
+  }
+
+  public static boolean isValidVersionId(String datasetId) {
+    return versionIdPattern.matcher(datasetId).matches();
   }
 
   private final EntityType entity;

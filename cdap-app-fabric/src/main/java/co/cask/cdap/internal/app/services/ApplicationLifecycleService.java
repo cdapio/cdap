@@ -225,13 +225,31 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @return detail about the specified application
    * @throws ApplicationNotFoundException if the specified application does not exist
    */
-  public ApplicationDetail getAppDetail(Id.Application appId) throws Exception {
-    ApplicationSpecification appSpec = store.getApplication(appId.toEntityId());
+  public ApplicationDetail getAppDetail(ApplicationId appId) throws Exception {
+    ApplicationSpecification appSpec = store.getApplication(appId);
     if (appSpec == null) {
       throw new ApplicationNotFoundException(appId);
     }
-    ensureAccess(appId.toEntityId());
+    ensureAccess(appId);
     return ApplicationDetail.fromSpec(appSpec);
+  }
+
+  /**
+   * To determine whether updating an app is allowed
+   *
+   * @param appId the id of the application to be determined
+   * @return true:
+   * @throws Exception if ensureAccess throws exception
+   */
+  public boolean updateAppAllowed(ApplicationId appId) throws Exception {
+    ensureAccess(appId);
+    ApplicationSpecification appSpec = store.getApplication(appId);
+    if (appSpec == null) {
+      // App does not exist. Allow to create a new one
+      return true;
+    }
+    String version = appId.getVersion();
+    return version.endsWith(ApplicationId.DEFAULT_VERSION);
   }
 
   /**
@@ -249,17 +267,17 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception if there was an exception during the deployment pipeline. This exception will often wrap
    *                   the actual exception
    */
-  public ApplicationWithPrograms updateApp(Id.Application appId, AppRequest appRequest,
+  public ApplicationWithPrograms updateApp(ApplicationId appId, AppRequest appRequest,
                                            ProgramTerminator programTerminator) throws Exception {
 
     // check that app exists
-    ApplicationSpecification currentSpec = store.getApplication(appId.toEntityId());
+    ApplicationSpecification currentSpec = store.getApplication(appId);
     if (currentSpec == null) {
       throw new ApplicationNotFoundException(appId);
     }
     // App exists. Check if the current user has admin privileges on it before updating. The user's write privileges on
     // the namespace will get enforced in the deployApp method.
-    authorizationEnforcer.enforce(appId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
+    authorizationEnforcer.enforce(appId, authenticationContext.getPrincipal(), Action.ADMIN);
     ArtifactId currentArtifact = currentSpec.getArtifactId();
 
     // if no artifact is given, use the current one.
@@ -294,8 +312,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     String requestedConfigStr = requestedConfigObj == null ?
       currentSpec.getConfiguration() : new Gson().toJson(requestedConfigObj);
 
-    Id.Artifact artifactId = Artifacts.toArtifactId(appId.getNamespace().toEntityId(), newArtifactId).toId();
-    return deployApp(appId.getNamespace(), appId.getId(), artifactId, requestedConfigStr, programTerminator);
+    Id.Artifact artifactId = Artifacts.toArtifactId(appId.getParent(), newArtifactId).toId();
+    return deployApp(appId.getParent(), appId.getApplication(), null, artifactId, requestedConfigStr,
+                     programTerminator);
   }
 
   /**
@@ -314,14 +333,14 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws ArtifactAlreadyExistsException if the specified artifact already exists
    * @throws IOException if there was an IO error writing the artifact
    */
-  public ApplicationWithPrograms deployAppAndArtifact(Id.Namespace namespace, @Nullable String appName,
+  public ApplicationWithPrograms deployAppAndArtifact(NamespaceId namespace, @Nullable String appName,
                                                       Id.Artifact artifactId, File jarFile,
                                                       @Nullable String configStr,
                                                       ProgramTerminator programTerminator) throws Exception {
 
     ArtifactDetail artifactDetail = artifactRepository.addArtifact(artifactId, jarFile);
     try {
-      return deployApp(namespace.toEntityId(), appName, configStr, programTerminator, artifactDetail);
+      return deployApp(namespace, appName, null, configStr, programTerminator, artifactDetail);
     } catch (Exception e) {
       // if we added the artifact, but failed to deploy the application, delete the artifact to bring us back
       // to the state we were in before this call.
@@ -355,12 +374,12 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception if there was an exception during the deployment pipeline. This exception will often wrap
    *                   the actual exception
    */
-  public ApplicationWithPrograms deployApp(Id.Namespace namespace, @Nullable String appName,
+  public ApplicationWithPrograms deployApp(NamespaceId namespace, @Nullable String appName, @Nullable String appVersion,
                                            Id.Artifact artifactId,
                                            @Nullable String configStr,
                                            ProgramTerminator programTerminator) throws Exception {
     ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
-    return deployApp(namespace.toEntityId(), appName, configStr, programTerminator, artifactDetail);
+    return deployApp(namespace, appName, appVersion, configStr, programTerminator, artifactDetail);
   }
 
   /**
@@ -376,11 +395,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
       Iterables.filter(runtimeService.listAll(ProgramType.values()),
                        new com.google.common.base.Predicate<ProgramRuntimeService.RuntimeInfo>() {
-      @Override
-      public boolean apply(ProgramRuntimeService.RuntimeInfo runtimeInfo) {
-        return runtimeInfo.getProgramId().toEntityId().getNamespace().equals(namespaceId.getId());
-      }
-    });
+                         @Override
+                         public boolean apply(ProgramRuntimeService.RuntimeInfo runtimeInfo) {
+                           return runtimeInfo.getProgramId().toEntityId().getNamespace().equals(namespaceId.getId());
+                         }
+                       });
 
     Set<String> runningPrograms = new HashSet<>();
     for (ProgramRuntimeService.RuntimeInfo runtimeInfo : runtimeInfos) {
@@ -404,19 +423,20 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   /**
    * Delete an application specified by appId.
    *
-   * @param appId the {@link Id.Application} of the application to be removed
+   * @param appId the {@link ApplicationId} of the application to be removed
    * @throws Exception
    */
-  public void removeApplication(final Id.Application appId) throws Exception {
+  public void removeApplication(final ApplicationId appId) throws Exception {
     //Check if all are stopped.
     Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
       Iterables.filter(runtimeService.listAll(ProgramType.values()),
                        new com.google.common.base.Predicate<ProgramRuntimeService.RuntimeInfo>() {
-      @Override
-      public boolean apply(ProgramRuntimeService.RuntimeInfo runtimeInfo) {
-        return runtimeInfo.getProgramId().toEntityId().getApplication().equals(appId.getId());
-      }
-    });
+                         @Override
+                         public boolean apply(ProgramRuntimeService.RuntimeInfo runtimeInfo) {
+                           return runtimeInfo.getProgramId().toEntityId().getApplication()
+                             .equals(appId.getApplication());
+                         }
+                       });
 
     Set<String> runningPrograms = new HashSet<>();
     for (ProgramRuntimeService.RuntimeInfo runtimeInfo : runtimeInfos) {
@@ -426,16 +446,17 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     if (!runningPrograms.isEmpty()) {
       String appAllRunningPrograms = Joiner.on(',')
         .join(runningPrograms);
-      throw new CannotBeDeletedException(appId,
+      throw new CannotBeDeletedException(appId.toId(),
                                          "The following programs are still running: " + appAllRunningPrograms);
     }
 
-    ApplicationSpecification spec = store.getApplication(appId.toEntityId());
+    ApplicationSpecification spec = store.getApplication(appId);
     if (spec == null) {
       throw new NotFoundException(appId);
     }
-    deleteApp(appId.toEntityId(), spec);
+    deleteApp(appId, spec);
   }
+
 
   /**
    * Get detail about the plugin in the specified application
@@ -448,7 +469,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     throws ApplicationNotFoundException {
     ApplicationSpecification appSpec = store.getApplication(appId);
     if (appSpec == null) {
-      throw new ApplicationNotFoundException(appId.toId());
+      throw new ApplicationNotFoundException(appId);
     }
     List<PluginInstanceDetail> pluginInstanceDetails = new ArrayList<>();
     for (Map.Entry<String, Plugin> entry : appSpec.getPlugins().entrySet()) {
@@ -513,6 +534,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   private ApplicationWithPrograms deployApp(NamespaceId namespaceId, @Nullable String appName,
+                                            @Nullable String appVersion,
                                             @Nullable String configStr,
                                             ProgramTerminator programTerminator,
                                             ArtifactDetail artifactDetail) throws Exception {
@@ -527,7 +549,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     // deploy application with newly added artifact
     AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactDetail.getDescriptor(), namespaceId,
-                                                             appClass.getClassName(), appName, configStr);
+                                                             appClass.getClassName(), appName, appVersion, configStr);
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.

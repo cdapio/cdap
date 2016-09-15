@@ -83,7 +83,7 @@ public class LocalApplicationManagerTest {
     ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifactId, jarLoc);
 
     AppDeploymentInfo info = new AppDeploymentInfo(artifactDescriptor, NamespaceId.DEFAULT,
-                                                   "some.class.name", null, null);
+                                                   "some.class.name", null, null, null);
     AppFabricTestHelper.getLocalManager().deploy(info).get();
   }
 
@@ -96,7 +96,7 @@ public class LocalApplicationManagerTest {
     ArtifactId artifactId = new ArtifactId("toyapp", new ArtifactVersion("1.0.0-SNAPSHOT"), ArtifactScope.USER);
     ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifactId, deployedJar);
     AppDeploymentInfo info = new AppDeploymentInfo(artifactDescriptor, NamespaceId.DEFAULT,
-                                                   ToyApp.class.getName(), null, null);
+                                                   ToyApp.class.getName(), null, null, null);
     ApplicationWithPrograms input = AppFabricTestHelper.getLocalManager().deploy(info).get();
 
     Assert.assertEquals(input.getPrograms().iterator().next().getProgramId().getType(), ProgramType.FLOW);
@@ -110,7 +110,7 @@ public class LocalApplicationManagerTest {
     ArtifactId artifactId = new ArtifactId("configtest", new ArtifactVersion("1.0.0-SNAPSHOT"), ArtifactScope.USER);
     ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifactId, deployedJar);
     AppDeploymentInfo info = new AppDeploymentInfo(artifactDescriptor, NamespaceId.DEFAULT,
-                                                   ConfigTestApp.class.getName(), "MyApp", GSON.toJson(config));
+                                                   ConfigTestApp.class.getName(), "MyApp", null, GSON.toJson(config));
     AppFabricTestHelper.getLocalManager().deploy(info).get();
   }
 
@@ -120,7 +120,8 @@ public class LocalApplicationManagerTest {
     ArtifactId artifactId = new ArtifactId("configtest", new ArtifactVersion("1.0.0-SNAPSHOT"), ArtifactScope.USER);
     ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifactId, deployedJar);
     AppDeploymentInfo info = new AppDeploymentInfo(artifactDescriptor, NamespaceId.DEFAULT,
-                                                   ConfigTestApp.class.getName(), "BadApp", GSON.toJson("invalid"));
+                                                   ConfigTestApp.class.getName(), "BadApp", null,
+                                                   GSON.toJson("invalid"));
     AppFabricTestHelper.getLocalManager().deploy(info).get();
   }
 }

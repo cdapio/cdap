@@ -111,20 +111,22 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   @Nullable
-  public ApplicationMeta getApplication(String namespaceId, String appId) {
-    return getFirst(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build(), ApplicationMeta.class);
+  public ApplicationMeta getApplication(String namespaceId, String appId, String versionId) {
+    return getFirst(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId, versionId).build(),
+                    ApplicationMeta.class);
   }
 
   public List<ApplicationMeta> getAllApplications(String namespaceId) {
     return list(new MDSKey.Builder().add(TYPE_APP_META, namespaceId).build(), ApplicationMeta.class);
   }
 
-  public void writeApplication(String namespaceId, String appId, ApplicationSpecification spec) {
-    write(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build(), new ApplicationMeta(appId, spec));
+  public void writeApplication(String namespaceId, String appId, String versionId, ApplicationSpecification spec) {
+    write(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId, versionId).build(),
+          new ApplicationMeta(appId, spec));
   }
 
-  public void deleteApplication(String namespaceId, String appId) {
-    deleteAll(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build());
+  public void deleteApplication(String namespaceId, String appId, String versionId) {
+    deleteAll(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId, versionId).build());
   }
 
   public void deleteApplications(String namespaceId) {
@@ -132,9 +134,9 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   // todo: do we need appId? may be use from appSpec?
-  public void updateAppSpec(String namespaceId, String appId, ApplicationSpecification spec) {
+  public void updateAppSpec(String namespaceId, String appId, String versionId, ApplicationSpecification spec) {
     LOG.trace("App spec to be updated: id: {}: spec: {}", appId, GSON.toJson(spec));
-    MDSKey key = new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build();
+    MDSKey key = new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId, versionId).build();
     ApplicationMeta existing = getFirst(key, ApplicationMeta.class);
     if (existing == null) {
       String msg = String.format("No meta for namespace %s app %s exists", namespaceId, appId);

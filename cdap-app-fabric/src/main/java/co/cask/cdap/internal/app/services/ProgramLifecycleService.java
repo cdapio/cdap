@@ -389,7 +389,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runId);
     if (runtimeInfo == null) {
       if (!store.applicationExists(programId.getParent())) {
-        throw new ApplicationNotFoundException(programId.getParent().toId());
+        throw new ApplicationNotFoundException(programId.getParent());
       } else if (!store.programExists(programId)) {
         throw new ProgramNotFoundException(programId.toId());
       } else if (runId != null) {
