@@ -31,7 +31,6 @@ import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.internal.app.store.WorkflowDataset;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowStatistics;
@@ -297,11 +296,11 @@ public interface Store extends RuntimeStore {
   /**
    * Retrieves the {@link WorkflowToken} for a specified run of a workflow.
    *
-   * @param workflowId {@link ProgramId} of the workflow whose {@link WorkflowToken} is to be retrieved
+   * @param workflowId {@link WorkflowId} of the workflow whose {@link WorkflowToken} is to be retrieved
    * @param workflowRunId Run Id of the workflow for which the {@link WorkflowToken} is to be retrieved
    * @return the {@link WorkflowToken} for the specified workflow run
    */
-  WorkflowToken getWorkflowToken(ProgramId workflowId, String workflowRunId);
+  WorkflowToken getWorkflowToken(WorkflowId workflowId, String workflowRunId);
 
   /**
    * Get the node states for a given {@link Workflow} run.
