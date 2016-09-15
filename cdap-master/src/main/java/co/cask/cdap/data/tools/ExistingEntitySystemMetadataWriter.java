@@ -111,7 +111,7 @@ public class ExistingEntitySystemMetadataWriter {
   }
 
   private void writeSystemMetadataForApps(NamespaceId namespace) {
-    for (ApplicationSpecification appSpec : store.getAllApplications(namespace.toId())) {
+    for (ApplicationSpecification appSpec : store.getAllApplications(namespace)) {
       ApplicationId app = namespace.app(appSpec.getName());
       SystemMetadataWriter writer = new AppSystemMetadataWriter(metadataStore, app, appSpec);
       writer.write();
@@ -168,7 +168,7 @@ public class ExistingEntitySystemMetadataWriter {
   }
 
   private void writeSystemMetadataForStreams(NamespaceId namespace) throws Exception {
-    for (StreamSpecification streamSpec : store.getAllStreams(namespace.toId())) {
+    for (StreamSpecification streamSpec : store.getAllStreams(namespace)) {
       StreamId streamId = namespace.stream(streamSpec.getName());
       SystemMetadataWriter writer =
         new StreamSystemMetadataWriter(metadataStore, streamId.toId(), streamAdmin.getConfig(streamId.toId()),

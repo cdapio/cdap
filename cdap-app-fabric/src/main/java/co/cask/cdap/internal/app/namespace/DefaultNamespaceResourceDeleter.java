@@ -100,7 +100,7 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
     queueAdmin.dropAllInNamespace(namespaceId.toId());
     streamAdmin.dropAllInNamespace(namespaceId.toId());
     // Delete all meta data
-    store.removeAll(namespaceId.toId());
+    store.removeAll(namespaceId);
 
     deleteMetrics(namespaceId);
     // delete all artifacts in the namespace

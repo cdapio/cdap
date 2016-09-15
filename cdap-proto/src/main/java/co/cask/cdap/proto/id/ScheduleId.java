@@ -28,17 +28,31 @@ import java.util.Objects;
  */
 public class ScheduleId extends NamespacedEntityId implements ParentedId<ApplicationId> {
   private final String application;
+  private final String version;
   private final String schedule;
   private transient Integer hashCode;
 
-  public ScheduleId(String namespace, String application, String schedule) {
+  public ScheduleId(String namespace, String application, String version, String schedule) {
     super(namespace, EntityType.SCHEDULE);
     this.application = application;
+    this.version = version;
     this.schedule = schedule;
+  }
+
+  public ScheduleId(String namespace, String application, String schedule) {
+    this(namespace, application, "-SNAPSHOT", schedule);
+  }
+
+  public String getNamespace() {
+    return namespace;
   }
 
   public String getApplication() {
     return application;
+  }
+
+  public String getVersion() {
+    return version;
   }
 
   public String getSchedule() {
@@ -58,6 +72,7 @@ public class ScheduleId extends NamespacedEntityId implements ParentedId<Applica
     ScheduleId that = (ScheduleId) o;
     return Objects.equals(namespace, that.namespace) &&
       Objects.equals(application, that.application) &&
+      Objects.equals(version, that.version) &&
       Objects.equals(schedule, that.schedule);
   }
 
@@ -65,14 +80,14 @@ public class ScheduleId extends NamespacedEntityId implements ParentedId<Applica
   public int hashCode() {
     Integer hashCode = this.hashCode;
     if (hashCode == null) {
-      this.hashCode = hashCode = Objects.hash(super.hashCode(), namespace, application, schedule);
+      this.hashCode = hashCode = Objects.hash(super.hashCode(), namespace, application, version, schedule);
     }
     return hashCode;
   }
 
   @Override
   public ApplicationId getParent() {
-    return new ApplicationId(namespace, application);
+    return new ApplicationId(namespace, application, version);
   }
 
   @Override
@@ -84,13 +99,13 @@ public class ScheduleId extends NamespacedEntityId implements ParentedId<Applica
   public static ScheduleId fromIdParts(Iterable<String> idString) {
     Iterator<String> iterator = idString.iterator();
     return new ScheduleId(
-      next(iterator, "namespace"), next(iterator, "application"),
+      next(iterator, "namespace"), next(iterator, "application"), next(iterator, "version"),
       nextAndEnd(iterator, "schedule"));
   }
 
   @Override
   protected Iterable<String> toIdParts() {
-    return Collections.unmodifiableList(Arrays.asList(namespace, application, schedule));
+    return Collections.unmodifiableList(Arrays.asList(namespace, application, version, schedule));
   }
 
   public static ScheduleId fromString(String string) {

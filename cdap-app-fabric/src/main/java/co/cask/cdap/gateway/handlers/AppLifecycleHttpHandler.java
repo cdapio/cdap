@@ -181,7 +181,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         names.add(name);
       }
     }
-    responder.sendJson(HttpResponseStatus.OK, applicationLifecycleService.getApps(namespace, names, artifactVersion));
+    responder.sendJson(HttpResponseStatus.OK, applicationLifecycleService.getApps(namespace.toEntityId(),
+                                                                                  names, artifactVersion));
   }
 
   /**

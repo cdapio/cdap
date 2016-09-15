@@ -29,6 +29,7 @@ import co.cask.cdap.proto.PercentileInformation;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowStatistics;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.WorkflowId;
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Longs;
 import com.google.gson.Gson;
@@ -104,11 +105,11 @@ public class WorkflowDataset extends AbstractDataset {
    * @param timeRangeEnd End of the time range that the scan should end at
    * @return List of WorkflowRunRecords
    */
-  private List<WorkflowRunRecord> scan(Id.Workflow id, long timeRangeStart, long timeRangeEnd) {
-    byte[] startRowKey = new MDSKey.Builder().add(id.getApplication().getNamespaceId()).add(id.getApplicationId()).
-      add(id.getId()).add(timeRangeStart).build().getKey();
-    byte[] endRowKey = new MDSKey.Builder().add(id.getApplication().getNamespaceId()).add(id.getApplicationId()).
-      add(id.getId()).add(timeRangeEnd).build().getKey();
+  private List<WorkflowRunRecord> scan(WorkflowId id, long timeRangeStart, long timeRangeEnd) {
+    byte[] startRowKey = new MDSKey.Builder().add(id.getNamespace()).add(id.getApplication()).
+      add(id.getProgram()).add(timeRangeStart).build().getKey();
+    byte[] endRowKey = new MDSKey.Builder().add(id.getNamespace()).add(id.getApplication()).
+      add(id.getProgram()).add(timeRangeEnd).build().getKey();
     Scan scan = new Scan(startRowKey, endRowKey);
 
     Scanner scanner = table.scan(scan);
@@ -139,7 +140,7 @@ public class WorkflowDataset extends AbstractDataset {
    * @throws Exception
    */
   @Nullable
-  public WorkflowStatistics getStatistics(Id.Workflow id, long startTime,
+  public WorkflowStatistics getStatistics(WorkflowId id, long startTime,
                                           long endTime, List<Double> percentiles) throws Exception {
     List<WorkflowRunRecord> workflowRunRecords = scan(id, startTime, endTime);
     int runs = workflowRunRecords.size();
@@ -226,11 +227,11 @@ public class WorkflowDataset extends AbstractDataset {
   }
 
   @Nullable
-  WorkflowRunRecord getRecord(Id.Workflow id, String pid) {
+  WorkflowRunRecord getRecord(WorkflowId id, String pid) {
     RunId runId = RunIds.fromString(pid);
     long startTime = RunIds.getTime(runId, TimeUnit.SECONDS);
-    MDSKey mdsKey = new MDSKey.Builder().add(id.getNamespaceId())
-      .add(id.getApplicationId()).add(id.getId()).add(startTime).build();
+    MDSKey mdsKey = new MDSKey.Builder().add(id.getNamespace())
+      .add(id.getApplication()).add(id.getProgram()).add(startTime).build();
     byte[] startRowKey = mdsKey.getKey();
 
     Row indexRow = table.get(startRowKey);
@@ -245,7 +246,7 @@ public class WorkflowDataset extends AbstractDataset {
     return new WorkflowRunRecord(workflowRunId, timeTaken, actionRunsList);
   }
 
-  Collection<WorkflowRunRecord> getDetailsOfRange(Id.Workflow workflow, String runId, int limit, long timeInterval) {
+  Collection<WorkflowRunRecord> getDetailsOfRange(WorkflowId workflow, String runId, int limit, long timeInterval) {
     Map<String, WorkflowRunRecord> mainRunRecords = getNeighbors(workflow, RunIds.fromString(runId),
                                                                  limit, timeInterval);
     WorkflowRunRecord workflowRunRecord = getRecord(workflow, runId);
@@ -265,7 +266,7 @@ public class WorkflowDataset extends AbstractDataset {
    * @return A Map of WorkflowRunId to the corresponding Workflow Run Record. A map is used so that duplicates of
    * the WorkflowRunRecord are not obtained
    */
-  private Map<String, WorkflowRunRecord> getNeighbors(Id.Workflow id, RunId runId, int limit, long timeInterval) {
+  private Map<String, WorkflowRunRecord> getNeighbors(WorkflowId id, RunId runId, int limit, long timeInterval) {
     long startTime = RunIds.getTime(runId, TimeUnit.SECONDS);
     Map<String, WorkflowRunRecord> workflowRunRecords = new HashMap<>();
     int i = -limit;
@@ -275,8 +276,8 @@ public class WorkflowDataset extends AbstractDataset {
     // Since we want to stop getting the same key, we have the prevStartTime become 1 more than the time at which
     // the last record was found if the (interval * the count of the loop) is less than the time.
     while (prevStartTime <= startTime + (limit * timeInterval)) {
-      MDSKey mdsKey = new MDSKey.Builder().add(id.getNamespaceId())
-        .add(id.getApplicationId()).add(id.getId()).add(prevStartTime).build();
+      MDSKey mdsKey = new MDSKey.Builder().add(id.getNamespace())
+        .add(id.getApplication()).add(id.getProgram()).add(prevStartTime).build();
       byte[] startRowKey = mdsKey.getKey();
       Scan scan = new Scan(startRowKey, null);
       Scanner scanner = table.scan(scan);

@@ -118,7 +118,7 @@ public abstract class SchedulerTestBase {
                         streamSizeScheduler.scheduleState(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1));
     Assert.assertEquals(Scheduler.ScheduleState.SCHEDULED,
                         streamSizeScheduler.scheduleState(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2));
-    int runs = store.getRuns(PROGRAM_ID, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, 100).size();
+    int runs = store.getRuns(PROGRAM_ID.toEntityId(), ProgramRunStatus.ALL, 0, Long.MAX_VALUE, 100).size();
     Assert.assertEquals(0, runs);
 
     StreamMetricsPublisher metricsPublisher = createMetricsPublisher(STREAM_ID);
@@ -191,7 +191,7 @@ public abstract class SchedulerTestBase {
     Tasks.waitFor(expectedRuns, new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
-        return store.getRuns(programId, ProgramRunStatus.COMPLETED, 0, Long.MAX_VALUE, 100).size();
+        return store.getRuns(programId.toEntityId(), ProgramRunStatus.COMPLETED, 0, Long.MAX_VALUE, 100).size();
       }
     }, timeoutSeconds, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
   }

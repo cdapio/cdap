@@ -39,7 +39,9 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Function;
@@ -65,7 +67,8 @@ public class MockLogReader implements LogReader {
   private static final Logger LOG = LoggerFactory.getLogger(MockLogReader.class);
 
   public static final String TEST_NAMESPACE = "testNamespace";
-  public static final String SOME_WORKFLOW_APP = "someWorkflowApp";
+  public static final NamespaceId TEST_NAMESPACE_ID = new NamespaceId(TEST_NAMESPACE);
+  public static final ApplicationId SOME_WORKFLOW_APP = TEST_NAMESPACE_ID.app("someWorkflowApp");
   public static final String SOME_WORKFLOW = "someWorkflow";
   public static final String SOME_MAPREDUCE = "someMapReduce";
   public static final String SOME_SPARK = "someSpark";
@@ -73,7 +76,7 @@ public class MockLogReader implements LogReader {
 
   private final DefaultStore store;
   private final List<LogEvent> logEvents = Lists.newArrayList();
-  private final Map<Id, RunRecord> runRecordMap = Maps.newHashMap();
+  private final Map<ProgramId, RunRecord> runRecordMap = Maps.newHashMap();
 
   @Inject
   MockLogReader(DefaultStore store) {
@@ -84,48 +87,48 @@ public class MockLogReader implements LogReader {
     // Add logs for app testApp2, flow testFlow1
     generateLogs(new FlowletLoggingContext(Id.Namespace.DEFAULT.getId(),
                                            "testApp2", "testFlow1", "testFlowlet1", "", ""),
-                 Id.Program.from(Id.Namespace.DEFAULT.getId(), "testApp2", ProgramType.FLOW, "testFlow1"),
+                 NamespaceId.DEFAULT.app("testApp2").flow("testFlow1"),
                  ProgramRunStatus.RUNNING);
 
     // Add logs for app testApp3, mapreduce testMapReduce1
     generateLogs(new MapReduceLoggingContext(Id.Namespace.DEFAULT.getId(),
                                              "testApp3", "testMapReduce1", ""),
-                 Id.Program.from(Id.Namespace.DEFAULT.getId(), "testApp3", ProgramType.MAPREDUCE, "testMapReduce1"),
+                 NamespaceId.DEFAULT.app("testApp3").mr("testMapReduce1"),
                  ProgramRunStatus.SUSPENDED);
 
     // Add logs for app testApp1, service testService1
     generateLogs(new UserServiceLoggingContext(Id.Namespace.DEFAULT.getId(),
                                                "testApp4", "testService1", "test1", "", ""),
-                 Id.Program.from(Id.Namespace.DEFAULT.getId(), "testApp4", ProgramType.SERVICE, "testService1"),
+                 NamespaceId.DEFAULT.app("testApp4").service("testService1"),
                  ProgramRunStatus.RUNNING);
 
     // Add logs for app testApp1, mapreduce testMapReduce1
-    generateLogs(new MapReduceLoggingContext(TEST_NAMESPACE,
+    generateLogs(new MapReduceLoggingContext(TEST_NAMESPACE_ID.getNamespace(),
                                              "testTemplate1", "testMapReduce1", ""),
-                 Id.Program.from(TEST_NAMESPACE, "testTemplate1", ProgramType.MAPREDUCE, "testMapReduce1"),
+                 TEST_NAMESPACE_ID.app("testTemplate1").mr("testMapReduce1"),
                  ProgramRunStatus.COMPLETED);
 
     // Add logs for app testApp1, flow testFlow1 in testNamespace
-    generateLogs(new FlowletLoggingContext(TEST_NAMESPACE,
+    generateLogs(new FlowletLoggingContext(TEST_NAMESPACE_ID.getNamespace(),
                                            "testApp1", "testFlow1", "testFlowlet1", "", ""),
-                 Id.Program.from(TEST_NAMESPACE, "testApp1", ProgramType.FLOW, "testFlow1"),
+                 TEST_NAMESPACE_ID.app("testApp1").flow("testFlow1"),
                  ProgramRunStatus.COMPLETED);
 
     // Add logs for app testApp1, service testService1 in testNamespace
-    generateLogs(new UserServiceLoggingContext(TEST_NAMESPACE,
+    generateLogs(new UserServiceLoggingContext(TEST_NAMESPACE_ID.getNamespace(),
                                                "testApp4", "testService1", "test1", "", ""),
-                 Id.Program.from(TEST_NAMESPACE, "testApp4", ProgramType.SERVICE, "testService1"),
+                 TEST_NAMESPACE_ID.app("testApp4").service("testService1"),
                  ProgramRunStatus.KILLED);
 
     // Add logs for testWorkflow1 in testNamespace
-    generateLogs(new WorkflowLoggingContext(TEST_NAMESPACE,
+    generateLogs(new WorkflowLoggingContext(TEST_NAMESPACE_ID.getNamespace(),
                                             "testTemplate1", "testWorkflow1", "testRun1"),
-                 Id.Program.from(TEST_NAMESPACE, "testTemplate1", ProgramType.WORKFLOW, "testWorkflow1"),
+                 TEST_NAMESPACE_ID.app("testTemplate1").workflow("testWorkflow1"),
                  ProgramRunStatus.COMPLETED);
     // Add logs for testWorkflow1 in default namespace
     generateLogs(new WorkflowLoggingContext(Id.Namespace.DEFAULT.getId(),
                                             "testTemplate1", "testWorkflow1", "testRun2"),
-                 Id.Program.from(Id.Namespace.DEFAULT.getId(), "testTemplate1", ProgramType.WORKFLOW, "testWorkflow1"),
+                 NamespaceId.DEFAULT.app("testTemplate1").workflow("testWorkflow1"),
                  ProgramRunStatus.COMPLETED);
 
     generateWorkflowLogs();
@@ -135,11 +138,11 @@ public class MockLogReader implements LogReader {
    * Generate Workflow logs.
    */
   private void generateWorkflowLogs() {
-    ProgramId workflowId = Ids.namespace(TEST_NAMESPACE).app(SOME_WORKFLOW_APP).workflow(SOME_WORKFLOW);
+    ProgramId workflowId = SOME_WORKFLOW_APP.workflow(SOME_WORKFLOW);
     long currentTime = TimeUnit.SECONDS.toMillis(10);
     RunId workflowRunId = RunIds.generate();
-    store.setStart(workflowId.toId(), workflowRunId.getId(), currentTime);
-    runRecordMap.put(workflowId.toId(), store.getRun(workflowId.toId(), workflowRunId.getId()));
+    store.setStart(workflowId, workflowRunId.getId(), currentTime);
+    runRecordMap.put(workflowId, store.getRun(workflowId, workflowRunId.getId()));
     WorkflowLoggingContext wfLoggingContext = new WorkflowLoggingContext(workflowId.getNamespace(),
                                                                          workflowId.getApplication(),
                                                                          workflowId.getProgram(),
@@ -147,17 +150,17 @@ public class MockLogReader implements LogReader {
     generateWorkflowRunLogs(wfLoggingContext);
 
     // Generate logs for MapReduce program started by above Workflow run
-    ProgramId mapReduceId = Ids.namespace(TEST_NAMESPACE).app(SOME_WORKFLOW_APP).mr(SOME_MAPREDUCE);
+    ProgramId mapReduceId = SOME_WORKFLOW_APP.mr(SOME_MAPREDUCE);
     currentTime = TimeUnit.SECONDS.toMillis(20);
     RunId mapReduceRunId = RunIds.generate();
     Map<String, String> systemArgs = ImmutableMap.of(ProgramOptionConstants.WORKFLOW_NODE_ID, SOME_MAPREDUCE,
                                                      ProgramOptionConstants.WORKFLOW_NAME, SOME_WORKFLOW,
                                                      ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId.getId());
 
-    store.setStart(mapReduceId.toId(), mapReduceRunId.getId(), currentTime, null, new HashMap<String, String>(),
+    store.setStart(mapReduceId, mapReduceRunId.getId(), currentTime, null, new HashMap<String, String>(),
                    systemArgs);
 
-    runRecordMap.put(mapReduceId.toId(), store.getRun(mapReduceId.toId(), mapReduceRunId.getId()));
+    runRecordMap.put(mapReduceId, store.getRun(mapReduceId, mapReduceRunId.getId()));
     WorkflowProgramLoggingContext context = new WorkflowProgramLoggingContext(workflowId.getNamespace(),
                                                                               workflowId.getApplication(),
                                                                               workflowId.getProgram(),
@@ -167,16 +170,15 @@ public class MockLogReader implements LogReader {
     generateWorkflowRunLogs(context);
 
     // Generate logs for Spark program started by Workflow run above
-    ProgramId sparkId = Ids.namespace(TEST_NAMESPACE).app(SOME_WORKFLOW_APP).spark(SOME_SPARK);
+    ProgramId sparkId = SOME_WORKFLOW_APP.spark(SOME_SPARK);
     currentTime = TimeUnit.SECONDS.toMillis(40);
     RunId sparkRunId = RunIds.generate();
     systemArgs = ImmutableMap.of(ProgramOptionConstants.WORKFLOW_NODE_ID, SOME_SPARK,
                                  ProgramOptionConstants.WORKFLOW_NAME, SOME_WORKFLOW,
                                  ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId.getId());
 
-    store.setStart(sparkId.toId(), sparkRunId.getId(), currentTime, null, new HashMap<String, String>(),
-                   systemArgs);
-    runRecordMap.put(sparkId.toId(), store.getRun(sparkId.toId(), sparkRunId.getId()));
+    store.setStart(sparkId, sparkRunId.getId(), currentTime, null, new HashMap<String, String>(), systemArgs);
+    runRecordMap.put(sparkId, store.getRun(sparkId, sparkRunId.getId()));
     context = new WorkflowProgramLoggingContext(workflowId.getNamespace(), workflowId.getApplication(),
                                                 workflowId.getProgram(), workflowRunId.getId(), ProgramType.SPARK,
                                                 SOME_SPARK, sparkRunId.getId());
@@ -186,8 +188,8 @@ public class MockLogReader implements LogReader {
     generateWorkflowRunLogs(wfLoggingContext);
   }
 
-  public RunRecord getRunRecord(Id id) {
-    return runRecordMap.get(id);
+  RunRecord getRunRecord(ProgramId programId) {
+    return runRecordMap.get(programId);
   }
 
   @Override
@@ -324,7 +326,7 @@ public class MockLogReader implements LogReader {
    * Last 20 events are not tagged with {@code ApplicationLoggingContext#TAG_RUN_ID}.
    * All events are alternately marked as {@link Level#ERROR} and {@link Level#WARN}.
    */
-  private void generateLogs(LoggingContext loggingContext, Id.Program id, ProgramRunStatus runStatus)
+  private void generateLogs(LoggingContext loggingContext, ProgramId programId, ProgramRunStatus runStatus)
     throws InterruptedException {
     String entityId = LoggingContextHelper.getEntityId(loggingContext).getValue();
     RunId runId = null;
@@ -355,12 +357,12 @@ public class MockLogReader implements LogReader {
     }
 
     long startTs = RunIds.getTime(runId, TimeUnit.SECONDS);
-    if (id != null) {
+    if (programId != null) {
       //noinspection ConstantConditions
-      runRecordMap.put(id, new RunRecord(runId.getId(), startTs, stopTs, runStatus, null));
-      store.setStart(id, runId.getId(), startTs);
+      runRecordMap.put(programId, new RunRecord(runId.getId(), startTs, stopTs, runStatus, null));
+      store.setStart(programId, runId.getId(), startTs);
       if (stopTs != null) {
-        store.setStop(id, runId.getId(), stopTs, runStatus);
+        store.setStop(programId, runId.getId(), stopTs, runStatus);
       }
     }
   }

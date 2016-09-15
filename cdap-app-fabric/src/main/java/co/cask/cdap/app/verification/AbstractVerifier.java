@@ -18,6 +18,7 @@ package co.cask.cdap.app.verification;
 
 import co.cask.cdap.error.Err;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.EntityId;
 
 
@@ -27,7 +28,7 @@ import co.cask.cdap.proto.id.EntityId;
 public abstract class AbstractVerifier<T> implements Verifier<T> {
 
   @Override
-  public VerifyResult verify(Id.Application appId, T input) {
+  public VerifyResult verify(ApplicationId appId, T input) {
     // Checks if DataSet name is an ID
     String name = getName(input);
     if (!EntityId.isValidId(name)) {

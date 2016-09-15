@@ -36,7 +36,10 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowStatistics;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.WorkflowId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
 import org.apache.twill.api.RunId;
@@ -60,19 +63,19 @@ public interface Store extends RuntimeStore {
    * @return An instance of {@link ProgramDescriptor} if found.
    * @throws IOException
    */
-  ProgramDescriptor loadProgram(Id.Program program) throws IOException, ApplicationNotFoundException,
-                                                           ProgramNotFoundException;
+  ProgramDescriptor loadProgram(ProgramId program) throws IOException, ApplicationNotFoundException,
+                                                          ProgramNotFoundException;
 
   /**
    * Logs start of program run. This is a convenience method for testing, actual run starts should be recorded using
-   * {@link #setStart(Id.Program, String, long, String, Map, Map)}.
+   * {@link #setStart(ProgramId, String, long, String, Map, Map)}.
    *
-   * @param id        id of the program
+   * @param id        Info about program
    * @param pid       run id
    * @param startTime start timestamp in seconds; if run id is time-based pass the time from the run id
    */
   @VisibleForTesting
-  void setStart(Id.Program id, String pid, long startTime);
+  void setStart(ProgramId id, String pid, long startTime);
 
   /**
    * Fetches run records for particular program. Returns only finished runs.
@@ -85,7 +88,7 @@ public interface Store extends RuntimeStore {
    * @param limit     max number of entries to fetch for this history call
    * @return          list of logged runs
    */
-  List<RunRecordMeta> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit);
+  List<RunRecordMeta> getRuns(ProgramId id, ProgramRunStatus status, long startTime, long endTime, int limit);
 
   /**
    * Fetches run records for particular program. Returns only finished runs.
@@ -99,7 +102,7 @@ public interface Store extends RuntimeStore {
    * @param filter    predicate to be passed to filter the records
    * @return          list of logged runs
    */
-  List<RunRecordMeta> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit,
+  List<RunRecordMeta> getRuns(ProgramId id, ProgramRunStatus status, long startTime, long endTime, int limit,
                               Predicate<RunRecordMeta> filter);
 
   /**
@@ -118,28 +121,28 @@ public interface Store extends RuntimeStore {
    * @return          run record for the specified program and runid, null if not found
    */
   @Nullable
-  RunRecordMeta getRun(Id.Program id, String runid);
+  RunRecordMeta getRun(ProgramId id, String runid);
 
   /**
    * Creates a new stream if it does not exist.
    * @param id the namespace id
    * @param stream the stream to create
    */
-  void addStream(Id.Namespace id, StreamSpecification stream);
+  void addStream(NamespaceId id, StreamSpecification stream);
 
   /**
    * Get the spec of a named stream.
    * @param id the namespace id
    * @param name the name of the stream
    */
-  StreamSpecification getStream(Id.Namespace id, String name);
+  StreamSpecification getStream(NamespaceId id, String name);
 
   /**
    * Get the specs of all streams for a namespace.
    *
    * @param id the namespace id
    */
-  Collection<StreamSpecification> getAllStreams(Id.Namespace id);
+  Collection<StreamSpecification> getAllStreams(NamespaceId id);
 
   /**
    * Creates new application if it doesn't exist. Updates existing one otherwise.
@@ -147,7 +150,7 @@ public interface Store extends RuntimeStore {
    * @param id            application id
    * @param specification application specification to store
    */
-  void addApplication(Id.Application id, ApplicationSpecification specification);
+  void addApplication(ApplicationId id, ApplicationSpecification specification);
 
 
   /**
@@ -158,7 +161,7 @@ public interface Store extends RuntimeStore {
    * @param specification        Application specification
    * @return                     List of ProgramSpecifications that are deleted
    */
-  List<ProgramSpecification> getDeletedProgramSpecifications(Id.Application id,
+  List<ProgramSpecification> getDeletedProgramSpecifications(ApplicationId id,
                                                              ApplicationSpecification specification);
 
   /**
@@ -168,7 +171,7 @@ public interface Store extends RuntimeStore {
    * @return application specification
    */
   @Nullable
-  ApplicationSpecification getApplication(Id.Application id);
+  ApplicationSpecification getApplication(ApplicationId id);
 
   /**
    * Returns a collection of all application specs in the specified namespace
@@ -176,7 +179,7 @@ public interface Store extends RuntimeStore {
    * @param id the namespace to get application specs from
    * @return collection of all application specs in the namespace
    */
-  Collection<ApplicationSpecification> getAllApplications(Id.Namespace id);
+  Collection<ApplicationSpecification> getAllApplications(NamespaceId id);
 
   /**
    * Sets number of instances of specific flowlet.
@@ -186,7 +189,7 @@ public interface Store extends RuntimeStore {
    * @param count new number of instances
    * @return The {@link FlowSpecification} before the instance change
    */
-  FlowSpecification setFlowletInstances(Id.Program id, String flowletId, int count);
+  FlowSpecification setFlowletInstances(ProgramId id, String flowletId, int count);
 
   /**
    * Gets number of instances of specific flowlet.
@@ -194,7 +197,7 @@ public interface Store extends RuntimeStore {
    * @param id flow id
    * @param flowletId flowlet id
    */
-  int getFlowletInstances(Id.Program id, String flowletId);
+  int getFlowletInstances(ProgramId id, String flowletId);
 
   /**
    * Sets the number of instances of a service.
@@ -202,14 +205,14 @@ public interface Store extends RuntimeStore {
    * @param id id of the program
    * @param instances number of instances
    */
-  void setServiceInstances(Id.Program id, int instances);
+  void setServiceInstances(ProgramId id, int instances);
 
   /**
    * Returns the number of instances of a service.
    * @param id id of the program
    * @return number of instances
    */
-  int getServiceInstances(Id.Program id);
+  int getServiceInstances(ProgramId id);
 
   /**
    * Sets the number of instances of a {@link Worker}
@@ -217,7 +220,7 @@ public interface Store extends RuntimeStore {
    * @param id id of the program
    * @param instances number of instances
    */
-  void setWorkerInstances(Id.Program id, int instances);
+  void setWorkerInstances(ProgramId id, int instances);
 
   /**
    * Gets the number of instances of a {@link Worker}
@@ -225,28 +228,28 @@ public interface Store extends RuntimeStore {
    * @param id id of the program
    * @return number of instances
    */
-  int getWorkerInstances(Id.Program id);
+  int getWorkerInstances(ProgramId id);
 
   /**
    * Removes all program under the given application and also the application itself.
    *
    * @param id Application id
    */
-  void removeApplication(Id.Application id);
+  void removeApplication(ApplicationId id);
 
   /**
    * Removes all applications (with programs) associated with the given namespace.
    *
    * @param id namespace id whose applications to remove
    */
-  void removeAllApplications(Id.Namespace id);
+  void removeAllApplications(NamespaceId id);
 
   /**
    * Remove all metadata associated with the given namespace.
    *
    * @param id namespace id whose items to remove
    */
-  void removeAll(Id.Namespace id);
+  void removeAll(NamespaceId id);
 
   /**
    * Get run time arguments for a program.
@@ -254,7 +257,7 @@ public interface Store extends RuntimeStore {
    * @param runId id of the program run
    * @return Map of key, value pairs
    */
-  Map<String, String> getRuntimeArguments(Id.Run runId);
+  Map<String, String> getRuntimeArguments(ProgramRunId runId);
 
   /**
    * Adds a schedule for a particular program. If the schedule with the name already exists, the method will
@@ -262,7 +265,7 @@ public interface Store extends RuntimeStore {
    * @param program defines program to which a schedule is being added
    * @param scheduleSpecification defines the schedule to be added for the program
    */
-  void addSchedule(Id.Program program, ScheduleSpecification scheduleSpecification);
+  void addSchedule(ProgramId program, ScheduleSpecification scheduleSpecification);
 
   /**
    * Deletes data for an application from the WorkflowDataset table
@@ -275,30 +278,30 @@ public interface Store extends RuntimeStore {
    * @param program defines program from which a schedule is being deleted
    * @param scheduleName the name of the schedule to be removed from the program
    */
-  void deleteSchedule(Id.Program program, String scheduleName);
+  void deleteSchedule(ProgramId program, String scheduleName);
 
   /**
    * Check if an application exists.
    * @param id id of application.
    * @return true if the application exists, false otherwise.
    */
-  boolean applicationExists(Id.Application id);
+  boolean applicationExists(ApplicationId id);
 
   /**
    * Check if a program exists.
    * @param id id of the program
    * @return true if the program exists, false otherwise.
    */
-  boolean programExists(Id.Program id);
+  boolean programExists(ProgramId id);
 
   /**
    * Retrieves the {@link WorkflowToken} for a specified run of a workflow.
    *
-   * @param workflowId {@link Id.Workflow} of the workflow whose {@link WorkflowToken} is to be retrieved
+   * @param workflowId {@link ProgramId} of the workflow whose {@link WorkflowToken} is to be retrieved
    * @param workflowRunId Run Id of the workflow for which the {@link WorkflowToken} is to be retrieved
    * @return the {@link WorkflowToken} for the specified workflow run
    */
-  WorkflowToken getWorkflowToken(Id.Workflow workflowId, String workflowRunId);
+  WorkflowToken getWorkflowToken(ProgramId workflowId, String workflowRunId);
 
   /**
    * Get the node states for a given {@link Workflow} run.
@@ -318,7 +321,7 @@ public interface Store extends RuntimeStore {
    * @param percentiles List of percentiles that the user wants to see
    * @return the statistics for a given workflow
    */
-  WorkflowStatistics getWorkflowStatistics(Id.Workflow workflowId, long startTime,
+  WorkflowStatistics getWorkflowStatistics(WorkflowId workflowId, long startTime,
                                            long endTime, List<Double> percentiles);
 
   /**
@@ -328,18 +331,18 @@ public interface Store extends RuntimeStore {
    * @param runId RunId of the workflow run
    * @return A workflow run record corresponding to the runId
    */
-  WorkflowDataset.WorkflowRunRecord getWorkflowRun(Id.Workflow workflowId, String runId);
+  WorkflowDataset.WorkflowRunRecord getWorkflowRun(WorkflowId workflowId, String runId);
 
   /**
    * Get a list of workflow runs that are spaced apart by time interval in both directions from the run id provided.
    *
-   * @param workflow The workflow whose statistics need to be obtained
+   * @param workflowId The workflow whose statistics need to be obtained
    * @param runId The run id of the workflow
    * @param limit The number of the records that the user wants to compare against on either side of the run
    * @param timeInterval The timeInterval with which the user wants to space out the runs
    * @return Map of runId of Workflow to DetailedStatistics of the run
    */
-  Collection<WorkflowDataset.WorkflowRunRecord> retrieveSpacedRecords(Id.Workflow workflow, String runId,
+  Collection<WorkflowDataset.WorkflowRunRecord> retrieveSpacedRecords(WorkflowId workflowId, String runId,
                                                                       int limit, long timeInterval);
 
   /**

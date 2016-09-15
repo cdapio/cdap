@@ -23,6 +23,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.gateway.handlers.PreferencesHttpHandler;
 import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -48,7 +49,7 @@ public class PreferencesHttpHandlerTest extends AppFabricTestBase {
 
   private void addApplication(String namespace, Application app) {
     ApplicationSpecification appSpec = Specifications.from(app);
-    store.addApplication(new NamespaceId(namespace).app(appSpec.getName()).toId(), appSpec);
+    store.addApplication(new ApplicationId(namespace, appSpec.getName()), appSpec);
   }
 
   @Test

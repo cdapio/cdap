@@ -99,9 +99,9 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   };
 
   this.openRaw = () => {
-    function RawLogsModalCtrl($scope, MyCDAPDataSource, rAppId, rProgramType, rProgramId, rRunId, rStartTimeSec, rIsApplicationRunning) {
+    function RawLogsModalCtrl($scope, MyCDAPDataSource, rAppId, rProgramType, rProgramId, rRunId, rStartTimeMs, rIsApplicationRunning) {
       this.applicationName = rProgramId;
-      this.startTime = formatDate(new Date(rStartTimeSec*1000));
+      this.startTime = formatDate(new Date(rStartTimeMs));
       this.rawIsLoaded = false;
       this.noRawData = false;
       this.windowMode = 'regular';
@@ -111,7 +111,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       };
       let loadFromCache = !rIsApplicationRunning &&
        rawLogs &&
-       rawLogs.startTime === rStartTimeSec &&
+       rawLogs.startTime === rStartTimeMs &&
        rawLogs.log &&
        rawLogs.log.length > 0;
       if (loadFromCache) {
@@ -120,8 +120,10 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         return;
       }
       var modalDataSrc = new MyCDAPDataSource($scope);
+
+      let requestStartTime = Math.floor(rStartTimeMs/1000);
       modalDataSrc.request({
-        _cdapNsPath: `/apps/${rAppId}/${rProgramType}/${rProgramId}/runs/${rRunId}/logs?start=${rStartTimeSec}`
+        _cdapNsPath: `/apps/${rAppId}/${rProgramType}/${rProgramId}/runs/${rRunId}/logs?start=${requestStartTime}`
       }).then((res) => {
         if(typeof res === 'undefined' || res.length === 0){
           this.noRawData = true;
@@ -130,7 +132,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
           if (!rIsApplicationRunning) {
             rawLogs = rawLogs || {};
             rawLogs.log = res;
-            rawLogs.startTime = rStartTimeSec;
+            rawLogs.startTime = rStartTimeMs;
           }
           this.rawIsLoaded = true;
         }
@@ -143,7 +145,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       templateUrl: 'log-viewer/raw.html',
       windowClass: 'node-config-modal raw-modal cdap-modal',
       animation: false,
-      controller: ['$scope', 'MyCDAPDataSource', 'rAppId', 'rProgramType', 'rProgramId', 'rRunId', 'rStartTimeSec', 'rIsApplicationRunning', RawLogsModalCtrl],
+      controller: ['$scope', 'MyCDAPDataSource', 'rAppId', 'rProgramType', 'rProgramId', 'rRunId', 'rStartTimeMs', 'rIsApplicationRunning', RawLogsModalCtrl],
       controllerAs: 'RawLogsModalCtrl',
       resolve: {
         rAppId: () => {
@@ -158,8 +160,8 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
         rRunId: () => {
           return this.runId;
         },
-        rStartTimeSec: () => {
-          return this.startTimeSec;
+        rStartTimeMs: () => {
+          return this.startTimeMs;
         },
         rIsApplicationRunning: () => {
           return this.statusCode === 0;
@@ -187,25 +189,25 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   this.toggleExpandAll = false;
 
   let unsub = LogViewerStore.subscribe(() => {
+    this.totalCount = LogViewerStore.getState().totalLogs;
+    this.warningCount = LogViewerStore.getState().totalWarnings;
+    this.errorCount = LogViewerStore.getState().totalErrors;
 
     this.fullScreen = LogViewerStore.getState().fullScreen;
-    if(this.logStartTime === LogViewerStore.getState().startTime){
+    if (this.logStartTime === LogViewerStore.getState().startTime){
       return;
     }
 
     this.logStartTime = LogViewerStore.getState().startTime;
 
 
-    if(this.startTimeSec === Math.floor(this.logStartTime/1000)){
+    if (!this.logStartTime || this.startTimeMs === this.logStartTime){
       return;
     }
 
-    this.totalCount = LogViewerStore.getState().totalLogs;
-    this.warningCount = LogViewerStore.getState().totalWarnings;
-    this.errorCount = LogViewerStore.getState().totalErrors;
+    this.startTimeMs = (this.logStartTime instanceof Date) ? this.logStartTime.getTime() : this.logStartTime;
 
-    this.startTimeSec = (this.logStartTime instanceof Date) ? (Math.floor(this.logStartTime.getTime()/1000)) : (this.logStartTime/1000);
-    this.fromOffset = -1 + '.' + this.startTimeSec*1000;
+    this.fromOffset = -10000 + '.' + this.startTimeMs;
     startTimeRequest();
   });
 
@@ -214,36 +216,36 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
   this.inViewScrollUpdate = (index, isInview, event) => {
 
-      if(isInview) {
+    if(isInview) {
 
-        //tbody extends beyond the viewport when scrolling down the table
-        let topOfTable = event.inViewTarget.parentElement.getBoundingClientRect().top;
+      //tbody extends beyond the viewport when scrolling down the table
+      let topOfTable = event.inViewTarget.parentElement.getBoundingClientRect().top;
 
-        //measures the scroll position of the window within the viewport
-        let pageScrollPosition = page[0].scrollY;
+      //measures the scroll position of the window within the viewport
+      let pageScrollPosition = page[0].scrollY;
 
-        //gives the offsetTop property for a row that is within the viewport
-        let rowTopVal = event.inViewTarget.offsetTop;
+      //gives the offsetTop property for a row that is within the viewport
+      let rowTopVal = event.inViewTarget.offsetTop;
 
-        //Adjusted val combines the tbody absolute offset that may extend beyond the viewport, with it's relatively positioned table row, giving us an absolute positioning for the row
-        let adjustedVal = topOfTable + pageScrollPosition + rowTopVal;
+      //Adjusted val combines the tbody absolute offset that may extend beyond the viewport, with it's relatively positioned table row, giving us an absolute positioning for the row
+      let adjustedVal = topOfTable + pageScrollPosition + rowTopVal;
 
-        //Difference accounts for the difference between the top of the logviewer table container and the table rows
-        let difference = adjustedVal - $scope.tableEl[0].offsetTop;
+      //Difference accounts for the difference between the top of the logviewer table container and the table rows
+      let difference = adjustedVal - $scope.tableEl[0].offsetTop;
 
-        //Offset the height of the bottom timeline and scrollpin row (55 + 15) if in full-screen
-        if(this.fullScreen){
-          difference-=70;
-        }
+      //Offset the height of the bottom timeline and scrollpin row (55 + 15) if in full-screen
+      if (this.fullScreen){
+        difference-=70;
+      }
 
-        //By taking the smallest non-negative value, we have found the top-most row
-        if(difference > 0 && (proximityVal > difference || proximityVal < 0)){
-          index++;
-          newTime = this.displayData[index].log.timestamp;
-          this.updateScrollPositionInStore(newTime);
-        }
+      //By taking the smallest non-negative value, we have found the top-most row
+      if (difference > 0 && (proximityVal > difference || proximityVal < 0)){
+        index++;
+        newTime = this.displayData[index].log.timestamp;
+        this.updateScrollPositionInStore(newTime);
+      }
 
-        proximityVal = difference;
+      proximityVal = difference;
     }
   };
 
@@ -365,13 +367,16 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   };
 
   const requestWithOffset = () => {
+    if (this.loading) { return; }
 
-    if(!validUrl()){
+    if (!validUrl()){
        this.loading = false;
        return;
     }
 
-    if(pollPromise){
+    this.loading = true;
+
+    if (pollPromise){
       dataSrc.stopPoll(pollPromise.__pollId__);
       pollPromise = null;
     }
@@ -386,6 +391,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     }).$promise.then(
       (res) => {
         this.errorRetrievingLogs = false;
+        this.loading = false;
 
         if(res.length === 0){
           getStatus();
@@ -410,6 +416,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       (err) => {
         console.log('ERROR: ', err);
         this.errorRetrievingLogs = true;
+        this.loading = false;
       });
   };
 
@@ -479,7 +486,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   var exportTimeout = null;
 
   const downloadLogs = () => {
-    if (this.statusType !== 0 && rawLogs && rawLogs.startTime === this.startTimeSec) {
+    if (this.statusType !== 0 && rawLogs && rawLogs.startTime === this.startTimeMs) {
       return $q.resolve(rawLogs.log);
     }
     return myLogsApi.getLogsStartAsRaw({
@@ -488,7 +495,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       programType : this.programType,
       programId : this.programId,
       runId : this.runId,
-      start : this.startTimeSec
+      start : Math.floor(this.startTimeMs/1000)
     })
       .$promise
       .then(
@@ -496,7 +503,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
           if (!this.isApplicationRunning) {
             rawLogs = {
               log: res,
-              startTime: this.startTimeSec
+              startTime: this.startTimeMs
             };
           }
           return res;
@@ -516,9 +523,9 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       this.url = URL.createObjectURL(blob);
       let filename = '';
       if ('undefined' !== typeof this.getDownloadFilename()) {
-        filename = this.getDownloadFilename() + '-' + formatDate(new Date(this.startTimeSec*1000), true);
+        filename = this.getDownloadFilename() + '-' + formatDate(new Date(this.startTimeMs), true);
       } else {
-        filename = this.namespaceId + '-' + this.appId + '-' + this.programType + '-' + this.programId + '-' + formatDate(new Date(this.startTimeSec*1000), true);
+        filename = this.namespaceId + '-' + this.appId + '-' + this.programType + '-' + this.programId + '-' + formatDate(new Date(this.startTimeMs), true);
       }
       this.exportFileName = filename;
       $scope.$on('$destroy', () => {
@@ -536,29 +543,21 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   };
 
   const startTimeRequest = () => {
-
-    this.data = [];
-    this.renderData();
-    this.loading = true;
-    if(pollPromise){
-      dataSrc.stopPoll(pollPromise.__pollId__);
-      pollPromise = null;
-    }
-
     if(!validUrl()){
        this.loading = false;
        return;
     }
 
+    this.loading = true;
+    this.data = [];
+    this.renderData();
+    if(pollPromise){
+      dataSrc.stopPoll(pollPromise.__pollId__);
+      pollPromise = null;
+    }
+
     //Scroll table to the top
     angular.element(document.getElementsByClassName('logs-table'))[0].scrollTop = 0;
-
-    // FIXME: This should be provided by $resource or MyCdapResource. Thank you $resource & angular
-    const url = myCdapUrl.constructUrl({
-      _cdapNsPath: `/apps/${this.appId}/${this.programType}/${this.programId}/runs/${this.runId}/logs?&start=${this.startTimeSec}`
-    });
-
-    this.rawUrl = url;
 
     myLogsApi.nextLogsJsonOffset({
         namespace : this.namespaceId,
@@ -719,13 +718,12 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
   };
 
   $scope.$on('$destroy', function() {
-
-    LogViewerStore.dispatch({
-      type: 'RESET'
-    });
     if (unsub) {
       unsub();
     }
+    LogViewerStore.dispatch({
+      type: 'RESET'
+    });
     if(pollPromise){
       dataSrc.stopPoll(pollPromise.__pollId__);
       pollPromise = null;

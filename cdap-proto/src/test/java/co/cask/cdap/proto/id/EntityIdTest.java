@@ -94,17 +94,30 @@ public class EntityIdTest {
     idsToString.put(Ids.namespace("foo").datasetModule("moo"), "dataset_module:foo.moo");
     idsToString.put(Ids.namespace("foo").datasetType("typ"), "dataset_type:foo.typ");
     idsToString.put(Ids.namespace("foo").stream("sdf"), "stream:foo.sdf");
-    idsToString.put(Ids.namespace("foo").app("app"), "application:foo.app");
-    idsToString.put(Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo"), "program:foo.app.flow.flo");
+    idsToString.put(Ids.namespace("foo").app("app"), "application:foo.app.-SNAPSHOT");
+    idsToString.put(Ids.namespace("foo").app("app", "v1"), "application:foo.app.v1");
+    idsToString.put(Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo"),
+                    "program:foo.app.-SNAPSHOT.flow.flo");
+    idsToString.put(Ids.namespace("foo").app("app", "v1").program(ProgramType.FLOW, "flo"),
+                    "program:foo.app.v1.flow.flo");
     idsToString.put(
         Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").run("run1"),
-        "program_run:foo.app.flow.flo.run1");
+        "program_run:foo.app.-SNAPSHOT.flow.flo.run1");
+    idsToString.put(Ids.namespace("foo").app("app", "v1").program(ProgramType.FLOW, "flo").run("run1"),
+                    "program_run:foo.app.v1.flow.flo.run1");
     idsToString.put(
         Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").flowlet("flol"),
-        "flowlet:foo.app.flo.flol");
+        "flowlet:foo.app.-SNAPSHOT.flo.flol");
+    idsToString.put(
+      Ids.namespace("foo").app("app", "v2").program(ProgramType.FLOW, "flo").flowlet("flol"),
+      "flowlet:foo.app.v2.flo.flol");
     idsToString.put(
         Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").flowlet("flol").queue("q"),
         "flowlet_queue:foo.app.flo.flol.q");
+    // Even though app has version, queue id won't contain the version id
+    idsToString.put(
+      Ids.namespace("foo").app("app", "v1").program(ProgramType.FLOW, "flo").flowlet("flol").queue("q"),
+      "flowlet_queue:foo.app.flo.flol.q");
   }
 
   /**
@@ -130,19 +143,40 @@ public class EntityIdTest {
       "{\"namespace\":\"foo\",\"stream\":\"t\",\"entity\":\"STREAM\"}");
     idsToJson.put(
       Ids.namespace("foo").app("app"),
-      "{\"namespace\":\"foo\",\"application\":\"app\",\"entity\":\"APPLICATION\"}");
+      "{\"namespace\":\"foo\",\"application\":\"app\",\"version\":\"-SNAPSHOT\",\"entity\":\"APPLICATION\"}");
+    idsToJson.put(
+      Ids.namespace("foo").app("app", "v1"),
+      "{\"namespace\":\"foo\",\"application\":\"app\",\"version\":\"v1\",\"entity\":\"APPLICATION\"}");
     idsToJson.put(
       Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo"),
-      "{\"namespace\":\"foo\",\"application\":\"app\",\"type\":\"Flow\",\"program\":\"flo\",\"entity\":\"PROGRAM\"}");
+      "{\"namespace\":\"foo\",\"application\":\"app\",\"version\":\"-SNAPSHOT\",\"type\":\"Flow\"," +
+        "\"program\":\"flo\",\"entity\":\"PROGRAM\"}");
+    idsToJson.put(
+      Ids.namespace("foo").app("app", "v1").program(ProgramType.FLOW, "flo"),
+      "{\"namespace\":\"foo\",\"application\":\"app\",\"version\":\"v1\",\"type\":\"Flow\"," +
+        "\"program\":\"flo\",\"entity\":\"PROGRAM\"}");
     idsToJson.put(
       Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").run("run1"),
-      "{\"namespace\":\"foo\",\"application\":\"app\",\"type\":\"Flow\",\"program\":\"flo\"," +
-        "\"run\":\"run1\",\"entity\":\"PROGRAM_RUN\"}");
+      "{\"namespace\":\"foo\",\"application\":\"app\",\"version\":\"-SNAPSHOT\",\"type\":\"Flow\"," +
+        "\"program\":\"flo\",\"run\":\"run1\",\"entity\":\"PROGRAM_RUN\"}");
+    idsToJson.put(
+      Ids.namespace("foo").app("app", "v1").program(ProgramType.FLOW, "flo").run("run1"),
+      "{\"namespace\":\"foo\",\"application\":\"app\",\"version\":\"v1\",\"type\":\"Flow\"," +
+        "\"program\":\"flo\",\"run\":\"run1\",\"entity\":\"PROGRAM_RUN\"}");
     idsToJson.put(
       Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").flowlet("flol"),
-      "{\"namespace\":\"foo\",\"application\":\"app\",\"flow\":\"flo\",\"flowlet\":\"flol\",\"entity\":\"FLOWLET\"}");
+      "{\"namespace\":\"foo\",\"application\":\"app\",\"version\":\"-SNAPSHOT\",\"flow\":\"flo\"," +
+        "\"flowlet\":\"flol\",\"entity\":\"FLOWLET\"}");
+    idsToJson.put(
+      Ids.namespace("foo").app("app", "v1").program(ProgramType.FLOW, "flo").flowlet("flol"),
+      "{\"namespace\":\"foo\",\"application\":\"app\",\"version\":\"v1\",\"flow\":\"flo\"," +
+        "\"flowlet\":\"flol\",\"entity\":\"FLOWLET\"}");
     idsToJson.put(
       Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").flowlet("flol").queue("q"),
+      "{\"namespace\":\"foo\",\"application\":\"app\",\"flow\":\"flo\"," +
+        "\"flowlet\":\"flol\",\"queue\":\"q\",\"entity\":\"FLOWLET_QUEUE\"}");
+    idsToJson.put(
+      Ids.namespace("foo").app("app", "v1").program(ProgramType.FLOW, "flo").flowlet("flol").queue("q"),
       "{\"namespace\":\"foo\",\"application\":\"app\",\"flow\":\"flo\"," +
         "\"flowlet\":\"flol\",\"queue\":\"q\",\"entity\":\"FLOWLET_QUEUE\"}");
   }

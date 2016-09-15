@@ -27,6 +27,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
@@ -55,7 +56,7 @@ public class RemoteRuntimeStoreTest extends AppFabricTestBase {
 
   @Test
   public void testSimpleCase() {
-    Id.Program flowId = Id.Flow.from(Id.Namespace.DEFAULT, "test_app", "test_flow");
+    ProgramId flowId = new ProgramId(Id.Namespace.DEFAULT.getId(), "test_app", ProgramType.FLOW, "test_flow");
     long stopTime = System.currentTimeMillis() / 2000;
     long startTime = stopTime - 20;
     String pid = RunIds.generate(startTime * 1000).getId();
@@ -96,7 +97,8 @@ public class RemoteRuntimeStoreTest extends AppFabricTestBase {
 
   @Test
   public void testWorkflowMethods() {
-    Id.Workflow workflowId = Id.Workflow.from(Id.Namespace.DEFAULT, "test_app", "test_workflow");
+    ProgramId workflowId =
+      new ProgramId(Id.Namespace.DEFAULT.getId(), "test_app", ProgramType.WORKFLOW, "test_workflow");
     long stopTime = System.currentTimeMillis() / 1000;
     long startTime = stopTime - 20;
     String pid = RunIds.generate(startTime * 1000).getId();
@@ -110,13 +112,13 @@ public class RemoteRuntimeStoreTest extends AppFabricTestBase {
     runtimeStore.setStart(workflowId, pid, startTime, twillRunId, runtimeArgs, systemArgs);
     Assert.assertEquals(initialRunRecord, store.getRun(workflowId, pid));
 
-
-    Id.Program mapreduceId = Id.Program.from(workflowId.getApplication(), ProgramType.MAPREDUCE, "test_mr");
+    ProgramId mapreduceId =
+      new ProgramId(workflowId.getNamespace(), workflowId.getApplication(), ProgramType.MAPREDUCE, "test_mr");
     String mapreducePid = RunIds.generate(startTime * 1000).getId();
     // these system properties just have to be set on the system arguments of the program, in order for it to be
     // understood as a program in a workflow node
     Map<String, String> mrSystemArgs = ImmutableMap.of(ProgramOptionConstants.WORKFLOW_NODE_ID, "test_node_id",
-                                                       ProgramOptionConstants.WORKFLOW_NAME, workflowId.getId(),
+                                                       ProgramOptionConstants.WORKFLOW_NAME, workflowId.getProgram(),
                                                        ProgramOptionConstants.WORKFLOW_RUN_ID, pid);
     runtimeStore.setStart(mapreduceId, mapreducePid, startTime, twillRunId, runtimeArgs, mrSystemArgs);
 
@@ -136,7 +138,7 @@ public class RemoteRuntimeStoreTest extends AppFabricTestBase {
     Assert.assertEquals(systemArgs, completedWorkflowRecord.getSystemArgs());
 
     // test that the BasicThrowable was serialized properly by RemoteRuntimeStore
-    ProgramRunId workflowRunId = workflowId.toEntityId().run(pid);
+    ProgramRunId workflowRunId = workflowId.run(pid);
     List<WorkflowNodeStateDetail> workflowNodeStates = store.getWorkflowNodeStates(workflowRunId);
     Assert.assertEquals(1, workflowNodeStates.size());
     WorkflowNodeStateDetail workflowNodeStateDetail = workflowNodeStates.get(0);

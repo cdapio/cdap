@@ -106,7 +106,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     ApplicationSpecification specification = adapter.fromJson(response.get());
     ApplicationId applicationId = deploymentInfo.getNamespaceId().app(specification.getName());
     emit(new ApplicationDeployable(deploymentInfo.getArtifactId(), deploymentInfo.getArtifactLocation(),
-                                   applicationId, specification, store.getApplication(applicationId.toId()),
+                                   applicationId, specification, store.getApplication(applicationId),
                                    ApplicationDeployScope.USER));
   }
 }

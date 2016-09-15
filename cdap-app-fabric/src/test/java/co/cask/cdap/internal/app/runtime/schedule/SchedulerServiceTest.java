@@ -32,6 +32,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ScheduledRuntime;
+import co.cask.cdap.proto.id.ApplicationId;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -59,9 +60,8 @@ public class SchedulerServiceTest {
   private static Store store;
   private static NamespaceAdmin namespaceAdmin;
   private static final Id.Namespace namespace = new Id.Namespace("notdefault");
-  private static final Id.Application appId = new Id.Application(namespace, AppWithWorkflow.NAME);
-  private static final Id.Program program = new Id.Program(appId, ProgramType.WORKFLOW,
-                                                           AppWithWorkflow.SampleWorkflow.NAME);
+  private static final ApplicationId appId = new ApplicationId(namespace.getId(), AppWithWorkflow.NAME);
+  private static final Id.Program program = appId.workflow(AppWithWorkflow.SampleWorkflow.NAME).toId();
   private static final SchedulableProgramType programType = SchedulableProgramType.WORKFLOW;
   private static final Id.Stream STREAM_ID = Id.Stream.from(namespace, "stream");
   private static final Schedule TIME_SCHEDULE_0 = Schedules.builder("Schedule0")
@@ -143,7 +143,7 @@ public class SchedulerServiceTest {
                                                        programType, TIME_SCHEDULE_1));
 
     Id.Program programInOtherNamespace =
-      Id.Program.from(new Id.Application(new Id.Namespace("otherNamespace"), appId.getId()),
+      Id.Program.from(new Id.Application(new Id.Namespace("otherNamespace"), appId.getApplication()),
                       program.getType(), program.getId());
 
     List<String> scheduleIds = schedulerService.getScheduleIds(program, programType);

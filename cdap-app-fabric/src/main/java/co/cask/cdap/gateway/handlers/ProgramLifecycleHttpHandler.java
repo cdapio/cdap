@@ -64,6 +64,7 @@ import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -185,9 +186,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("app-id") String appId,
                                @PathParam("mapreduce-id") String mapreduceId,
                                @PathParam("run-id") String runId) throws IOException, NotFoundException {
-    Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.MAPREDUCE, mapreduceId);
-    Id.Run run = new Id.Run(programId, runId);
-    ApplicationSpecification appSpec = store.getApplication(programId.getApplication());
+    ProgramId programId = new ProgramId(namespaceId, appId, ProgramType.MAPREDUCE, mapreduceId);
+    ProgramRunId run = programId.run(runId);
+    ApplicationSpecification appSpec = store.getApplication(programId.getParent());
     if (appSpec == null) {
       throw new NotFoundException(programId.getApplication());
     }
@@ -199,7 +200,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new NotFoundException(run);
     }
 
-    MRJobInfo mrJobInfo = mrJobInfoFetcher.getMRJobInfo(run);
+    MRJobInfo mrJobInfo = mrJobInfoFetcher.getMRJobInfo(run.toId());
 
     mrJobInfo.setState(runRecordMeta.getStatus().name());
     // Multiple startTs / endTs by 1000, to be consistent with Task-level start/stop times returned by JobClient
@@ -245,7 +246,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private void getScheduleStatus(HttpResponder responder, String appId, String namespaceId, String scheduleName)
     throws NotFoundException, SchedulerException {
-    Id.Application applicationId = Id.Application.from(namespaceId, appId);
+    ApplicationId applicationId = new ApplicationId(namespaceId, appId);
     ApplicationSpecification appSpec = store.getApplication(applicationId);
     if (appSpec == null) {
       throw new NotFoundException(applicationId);
@@ -254,7 +255,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ScheduleSpecification scheduleSpec = appSpec.getSchedules().get(scheduleName);
     if (scheduleSpec == null) {
       throw new NotFoundException(scheduleName, String.format("Schedule: %s for application: %s",
-                                                              scheduleName, applicationId.getId()));
+                                                              scheduleName, applicationId.getApplication()));
     }
 
     String programName = scheduleSpec.getProgram().getProgramName();
@@ -339,7 +340,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, appId));
+      ApplicationSpecification appSpec = store.getApplication(new ApplicationId(namespaceId, appId));
       if (appSpec == null) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "App: " + appId + " not found");
         return;
@@ -415,7 +416,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     if (specification == null) {
       throw new NotFoundException(program);
     }
-    getRuns(responder, program.toId(), status, start, end, resultLimit);
+    getRuns(responder, program, status, start, end, resultLimit);
   }
 
   /**
@@ -434,14 +435,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new NotFoundException(String.format("Program run record is not supported for program type '%s'.",
                                                 programType));
     }
-    Id.Program progId = Id.Program.from(namespaceId, appId, type, programId);
+    ProgramId progId = new ProgramId(namespaceId, appId, type, programId);
     RunRecordMeta runRecordMeta = store.getRun(progId, runid);
     if (runRecordMeta != null) {
       RunRecord runRecord = CONVERT_TO_RUN_RECORD.apply(runRecordMeta);
       responder.sendJson(HttpResponseStatus.OK, runRecord);
       return;
     }
-    throw new NotFoundException(new ProgramRunId(namespaceId, appId, type, programId, runid));
+    throw new NotFoundException(progId.run(runid));
   }
 
   /**
@@ -461,12 +462,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                                   "type '%s'.", programType));
     }
 
-    Id.Program id = Id.Program.from(namespaceId, appId, type, programId);
+    ProgramId id = new ProgramId(namespaceId, appId, type, programId);
     if (!store.programExists(id)) {
       throw new NotFoundException(id);
     }
 
-    Map<String, String> runtimeArgs = preferencesStore.getProperties(id.getNamespaceId(), appId,
+    Map<String, String> runtimeArgs = preferencesStore.getProperties(id.getNamespace(), appId,
                                                                      programType, programId);
     responder.sendJson(HttpResponseStatus.OK, runtimeArgs);
   }
@@ -737,7 +738,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     List<BatchRunnable> runnables = validateAndGetBatchInput(request, BATCH_RUNNABLES_TYPE);
 
     // cache app specs to perform fewer store lookups
-    Map<Id.Application, ApplicationSpecification> appSpecs = new HashMap<>();
+    Map<ApplicationId, ApplicationSpecification> appSpecs = new HashMap<>();
 
     List<BatchRunnableInstances> output = new ArrayList<>(runnables.size());
     for (BatchRunnable runnable : runnables) {
@@ -749,7 +750,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         continue;
       }
 
-      Id.Application appId = Id.Application.from(namespaceId, runnable.getAppId());
+      ApplicationId appId = new ApplicationId(namespaceId, runnable.getAppId());
 
       // populate spec cache if this is the first time we've seen the appid.
       if (!appSpecs.containsKey(appId)) {
@@ -763,8 +764,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         continue;
       }
 
-      Id.Program programId = Id.Program.from(appId, runnable.getProgramType(), runnable.getProgramId());
-      output.add(getProgramInstances(runnable, spec, programId));
+      ProgramId programId = appId.program(runnable.getProgramType(), runnable.getProgramId());
+      output.add(getProgramInstances(runnable, spec, programId.toId()));
     }
     responder.sendJson(HttpResponseStatus.OK, output);
   }
@@ -842,7 +843,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("app-id") String appId,
                                  @PathParam("worker-id") String workerId) {
     try {
-      int count = store.getWorkerInstances(Id.Program.from(namespaceId, appId, ProgramType.WORKER, workerId));
+      int count = store.getWorkerInstances(new NamespaceId(namespaceId).app(appId).worker(workerId));
       responder.sendJson(HttpResponseStatus.OK, new Instances(count));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -888,7 +889,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("app-id") String appId, @PathParam("flow-id") String flowId,
                                   @PathParam("flowlet-id") String flowletId) {
     try {
-      int count = store.getFlowletInstances(Id.Program.from(namespaceId, appId, ProgramType.FLOW, flowId), flowletId);
+      int count = store.getFlowletInstances(new ProgramId(namespaceId, appId, ProgramType.FLOW, flowId), flowletId);
       responder.sendJson(HttpResponseStatus.OK, new Instances(count));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -975,7 +976,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("service-id") String serviceId) throws Exception {
     try {
       ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
-      if (!store.programExists(programId.toId())) {
+      if (!store.programExists(programId)) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Service not found");
         return;
       }
@@ -1033,7 +1034,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     throws Exception {
     try {
       ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
-      if (!store.programExists(programId.toId())) {
+      if (!store.programExists(programId)) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Service not found");
         return;
       }
@@ -1141,7 +1142,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     return new BatchRunnableInstances(runnable, HttpResponseStatus.OK.getCode(), provisioned, requested);
   }
 
-  private void getRuns(HttpResponder responder, Id.Program programId, String status,
+  private void getRuns(HttpResponder responder, ProgramId programId, String status,
                        long start, long end, int limit) throws BadRequestException {
     try {
       ProgramRunStatus runStatus = (status == null) ? ProgramRunStatus.ALL :
@@ -1177,14 +1178,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     // Doing this only for services to keep it consistent with the existing contract for flowlets right now.
     // The get instances contract for both flowlets and services should be re-thought and fixed as part of CDAP-1091
     if (programId.getType() == ProgramType.SERVICE) {
-      return getRequestedServiceInstances(programId.toId());
+      return getRequestedServiceInstances(programId);
     }
 
     // Not running on YARN default 1
     return 1;
   }
 
-  private int getRequestedServiceInstances(Id.Program serviceId) {
+  private int getRequestedServiceInstances(ProgramId serviceId) {
     // Not running on YARN, get it from store
     return store.getServiceInstances(serviceId);
   }

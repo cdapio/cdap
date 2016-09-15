@@ -79,18 +79,18 @@ public final class ScheduleTaskRunner {
     Map<String, String> systemArgs = Maps.newHashMap();
 
     String scheduleName = systemOverrides.get(ProgramOptionConstants.SCHEDULE_NAME);
-    ApplicationSpecification appSpec = store.getApplication(programId.getApplication());
+    ApplicationSpecification appSpec = store.getApplication(programId.getApplication().toEntityId());
     if (appSpec == null || appSpec.getSchedules().get(scheduleName) == null) {
       throw new TaskExecutionException(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), programId),
                                        false);
     }
 
     ScheduleSpecification spec = appSpec.getSchedules().get(scheduleName);
-    if (!requirementsChecker.checkSatisfied(programId, spec.getSchedule())) {
+    if (!requirementsChecker.checkSatisfied(programId.toEntityId(), spec.getSchedule())) {
       return Futures.<Void>immediateFuture(null);
     }
 
-    // Schedule properties are overriden by resolved preferences
+    // Schedule properties are overridden by resolved preferences
     userArgs.putAll(spec.getProperties());
     userArgs.putAll(propertiesResolver.getUserProperties(programId));
     userArgs.putAll(userOverrides);

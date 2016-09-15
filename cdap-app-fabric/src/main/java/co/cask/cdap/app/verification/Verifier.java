@@ -17,6 +17,7 @@
 package co.cask.cdap.app.verification;
 
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
 
 /**
  * A verifier for verifying the specifications provided.
@@ -43,5 +44,5 @@ public interface Verifier<T> {
    * @param input to be verified
    * @return An instance of {@link VerifyResult}
    */
-  VerifyResult verify(Id.Application appId, T input);
+  VerifyResult verify(ApplicationId appId, T input);
 }

@@ -75,6 +75,8 @@ import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
@@ -159,17 +161,15 @@ public class HBaseQueueDebugger extends AbstractIdleService {
 
     List<NamespaceMeta> namespaceMetas = namespaceQueryAdmin.list();
     for (NamespaceMeta namespaceMeta : namespaceMetas) {
-      Id.Namespace namespaceId = Id.Namespace.from(namespaceMeta.getName());
-
-      Collection<ApplicationSpecification> apps = store.getAllApplications(namespaceId);
+      Collection<ApplicationSpecification> apps = store.getAllApplications(namespaceMeta.getNamespaceId());
       for (ApplicationSpecification app : apps) {
-        Id.Application appId = Id.Application.from(namespaceId, app.getName());
+        ApplicationId appId = new ApplicationId(namespaceMeta.getName(), app.getName());
 
         for (FlowSpecification flow : app.getFlows().values()) {
-          Id.Flow flowId = Id.Flow.from(appId, flow.getName());
+          ProgramId flowId = appId.program(ProgramType.FLOW, flow.getName());
 
           SimpleQueueSpecificationGenerator queueSpecGenerator =
-            new SimpleQueueSpecificationGenerator(flowId.getApplication());
+            new SimpleQueueSpecificationGenerator(flowId.getParent());
 
           Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> table =
             queueSpecGenerator.create(flow);

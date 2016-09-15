@@ -18,7 +18,6 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.client.app.AllProgramsApp;
 import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.common.utils.TimeMathParser;

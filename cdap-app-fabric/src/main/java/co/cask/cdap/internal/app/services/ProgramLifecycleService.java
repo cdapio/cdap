@@ -162,7 +162,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   public ProgramStatus getProgramStatus(ProgramId programId) throws Exception {
     // check that app exists
-    ApplicationSpecification appSpec = store.getApplication(programId.toId().getApplication());
+    ApplicationSpecification appSpec = store.getApplication(programId.getParent());
     if (appSpec == null) {
       throw new NotFoundException(Ids.namespace(programId.getNamespace()).app(programId.getApplication()).toId());
     }
@@ -180,7 +180,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
         ensureAccess(programId);
 
         if ((programId.getType() == ProgramType.MAPREDUCE || programId.getType() == ProgramType.SPARK) &&
-          !store.getRuns(programId.toId(), ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, 1).isEmpty()) {
+          !store.getRuns(programId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, 1).isEmpty()) {
           // MapReduce program exists and running as a part of Workflow
           return ProgramStatus.RUNNING;
         }
@@ -200,7 +200,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
   @Nullable
   public ProgramSpecification getProgramSpecification(ProgramId programId) throws Exception {
     ApplicationSpecification appSpec;
-    appSpec = store.getApplication(Ids.namespace(programId.getNamespace()).app(programId.getApplication()).toId());
+    appSpec = store.getApplication(programId.getParent());
     if (appSpec == null) {
       return null;
     }
@@ -277,7 +277,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
   public ProgramRuntimeService.RuntimeInfo start(final ProgramId programId, final Map<String, String> systemArgs,
                                                  final Map<String, String> userArgs, boolean debug) throws Exception {
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
-    ProgramDescriptor programDescriptor = store.loadProgram(programId.toId());
+    ProgramDescriptor programDescriptor = store.loadProgram(programId);
     BasicArguments systemArguments = new BasicArguments(systemArgs);
     BasicArguments userArguments = new BasicArguments(userArgs);
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.run(programDescriptor, new SimpleProgramOptions(
@@ -287,7 +287,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     final String runId = controller.getRunId().getId();
     final String twillRunId = runtimeInfo.getTwillRunId() == null ? null : runtimeInfo.getTwillRunId().getId();
     if (programId.getType() != ProgramType.MAPREDUCE && programId.getType() != ProgramType.SPARK) {
-      // MapReduce state recording is done by the MapReduceProgramRunner
+      // MapReduce/Spark state recording is done by the MapReduceProgramRunner/SparkProgramRunner
       // TODO [JIRA: CDAP-2013] Same needs to be done for other programs as well
       controller.addListener(new AbstractListener() {
         @Override
@@ -298,7 +298,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
             // If RunId is not time-based, use current time as start time
             startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
           }
-          store.setStart(programId.toId(), runId, startTimeInSeconds, twillRunId, userArgs, systemArgs);
+          store.setStart(programId, runId, startTimeInSeconds, twillRunId, userArgs, systemArgs);
           if (state == ProgramController.State.COMPLETED) {
             completed();
           }
@@ -310,33 +310,33 @@ public class ProgramLifecycleService extends AbstractIdleService {
         @Override
         public void completed() {
           LOG.debug("Program {} completed successfully.", programId);
-          store.setStop(programId.toId(), runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+          store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                         ProgramController.State.COMPLETED.getRunStatus());
         }
 
         @Override
         public void killed() {
           LOG.debug("Program {} killed.", programId);
-          store.setStop(programId.toId(), runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+          store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                         ProgramController.State.KILLED.getRunStatus());
         }
 
         @Override
         public void suspended() {
           LOG.debug("Suspending Program {} {}.", programId, runId);
-          store.setSuspend(programId.toId(), runId);
+          store.setSuspend(programId, runId);
         }
 
         @Override
         public void resuming() {
           LOG.debug("Resuming Program {} {}.", programId, runId);
-          store.setResume(programId.toId(), runId);
+          store.setResume(programId, runId);
         }
 
         @Override
         public void error(Throwable cause) {
           LOG.info("Program stopped with error {}, {}", programId, runId, cause);
-          store.setStop(programId.toId(), runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+          store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                         ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
         }
       }, Threads.SAME_THREAD_EXECUTOR);
@@ -410,14 +410,14 @@ public class ProgramLifecycleService extends AbstractIdleService {
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
     List<ProgramRuntimeService.RuntimeInfo> runtimeInfos = findRuntimeInfo(programId, runId);
     if (runtimeInfos.isEmpty()) {
-      if (!store.applicationExists(programId.toId().getApplication())) {
+      if (!store.applicationExists(programId.getParent())) {
         throw new ApplicationNotFoundException(programId.toId().getApplication());
-      } else if (!store.programExists(programId.toId())) {
+      } else if (!store.programExists(programId)) {
         throw new ProgramNotFoundException(programId.toId());
       } else if (runId != null) {
         ProgramRunId programRunId = programId.run(runId);
         // Check if the program is running and is started by the Workflow
-        RunRecordMeta runRecord = store.getRun(programId.toId(), runId);
+        RunRecordMeta runRecord = store.getRun(programId, runId);
         if (runRecord != null && runRecord.getProperties().containsKey("workflowrunid")
           && runRecord.getStatus().equals(ProgramRunStatus.RUNNING)) {
           String workflowRunId = runRecord.getProperties().get("workflowrunid");
@@ -449,7 +449,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   public void saveRuntimeArgs(ProgramId programId, Map<String, String> runtimeArgs) throws Exception {
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.ADMIN);
-    if (!store.programExists(programId.toId())) {
+    if (!store.programExists(programId)) {
       throw new NotFoundException(programId.toId());
     }
 
@@ -537,7 +537,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @return the programs in the provided namespace
    */
   public List<ProgramRecord> list(NamespaceId namespaceId, ProgramType type) throws Exception {
-    Collection<ApplicationSpecification> appSpecs = store.getAllApplications(namespaceId.toId());
+    Collection<ApplicationSpecification> appSpecs = store.getAllApplications(namespaceId);
     List<ProgramRecord> programRecords = new ArrayList<>();
     for (ApplicationSpecification appSpec : appSpecs) {
       switch (type) {
@@ -584,9 +584,9 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
   private void setWorkerInstances(ProgramId programId, int instances)
     throws ExecutionException, InterruptedException, BadRequestException {
-    int oldInstances = store.getWorkerInstances(programId.toId());
+    int oldInstances = store.getWorkerInstances(programId);
     if (oldInstances != instances) {
-      store.setWorkerInstances(programId.toId(), instances);
+      store.setWorkerInstances(programId, instances);
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId);
       if (runtimeInfo != null) {
         runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
@@ -599,9 +599,9 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
   private void setFlowletInstances(ProgramId programId, String flowletId,
                                    int instances) throws ExecutionException, InterruptedException, BadRequestException {
-    int oldInstances = store.getFlowletInstances(programId.toId(), flowletId);
+    int oldInstances = store.getFlowletInstances(programId, flowletId);
     if (oldInstances != instances) {
-      FlowSpecification flowSpec = store.setFlowletInstances(programId.toId(), flowletId, instances);
+      FlowSpecification flowSpec = store.setFlowletInstances(programId, flowletId, instances);
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId);
       if (runtimeInfo != null) {
         runtimeInfo.getController()
@@ -615,9 +615,9 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
   private void setServiceInstances(ProgramId programId, int instances)
     throws ExecutionException, InterruptedException, BadRequestException {
-    int oldInstances = store.getServiceInstances(programId.toId());
+    int oldInstances = store.getServiceInstances(programId);
     if (oldInstances != instances) {
-      store.setServiceInstances(programId.toId(), instances);
+      store.setServiceInstances(programId, instances);
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId);
       if (runtimeInfo != null) {
         runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
@@ -724,7 +724,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
       LOG.warn("Fixing RunRecord {} in program {} of type {} with RUNNING status but the program is not running",
                runId, targetProgramId, programType.getPrettyName());
 
-      store.compareAndSetStatus(targetProgramId.toId(), runId, ProgramController.State.ALIVE.getRunStatus(),
+      store.compareAndSetStatus(targetProgramId, runId, ProgramController.State.ALIVE.getRunStatus(),
                                 ProgramController.State.ERROR.getRunStatus());
 
       processedInvalidRunRecordIds.add(runId);
@@ -750,7 +750,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
         ProgramId workflowProgramId = retrieveProgramIdForRunRecord(ProgramType.WORKFLOW, workflowRunId);
         if (workflowProgramId != null) {
           // lets see if the parent workflow run records state is still running
-          RunRecordMeta wfRunRecord = store.getRun(workflowProgramId.toId(), workflowRunId);
+          RunRecordMeta wfRunRecord = store.getRun(workflowProgramId, workflowRunId);
           RuntimeInfo wfRuntimeInfo = runtimeService.lookup(workflowProgramId.toId(), RunIds.fromString(workflowRunId));
 
           // Check of the parent workflow run record exists and it is running and runtime info said it is still there
@@ -782,7 +782,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     ProgramId targetProgramId = null;
     for (NamespaceMeta nm : namespaceMetas) {
       NamespaceId namespace = Ids.namespace(nm.getName());
-      Collection<ApplicationSpecification> appSpecs = store.getAllApplications(namespace.toId());
+      Collection<ApplicationSpecification> appSpecs = store.getAllApplications(namespace);
 
       // For each application get the programs checked against run records
       for (ApplicationSpecification appSpec : appSpecs) {
@@ -888,7 +888,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private ProgramId validateProgramForRunRecord(String namespaceName, String appName, ProgramType programType,
                                                 String programName, String runId) {
     ProgramId programId = Ids.namespace(namespaceName).app(appName).program(programType, programName);
-    RunRecordMeta runRecord = store.getRun(programId.toId(), runId);
+    RunRecordMeta runRecord = store.getRun(programId, runId);
     if (runRecord == null) {
       return null;
     }

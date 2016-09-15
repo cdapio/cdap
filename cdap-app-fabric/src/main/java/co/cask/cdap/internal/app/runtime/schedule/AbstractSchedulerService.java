@@ -210,7 +210,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
   @Override
   public void deleteAllSchedules(Id.Namespace namespaceId) throws SchedulerException {
-    for (ApplicationSpecification appSpec : store.getAllApplications(namespaceId)) {
+    for (ApplicationSpecification appSpec : store.getAllApplications(namespaceId.toEntityId())) {
       deleteAllSchedules(namespaceId, appSpec);
     }
   }
@@ -246,7 +246,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   }
 
   private Scheduler getSchedulerForSchedule(Id.Program program, String scheduleName) throws NotFoundException {
-    ApplicationSpecification appSpec = store.getApplication(program.getApplication());
+    ApplicationSpecification appSpec = store.getApplication(program.getApplication().toEntityId());
     if (appSpec == null) {
       throw new ApplicationNotFoundException(program.getApplication());
     }

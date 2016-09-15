@@ -50,6 +50,7 @@ import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Preconditions;
@@ -188,7 +189,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                                                             runtimeContext, submitter);
 
       sparkRuntimeService.addListener(
-        createRuntimeServiceListener(program.getId(), runId, arguments, options.getUserArguments(),
+        createRuntimeServiceListener(program.getId().toEntityId(), runId, arguments, options.getUserArguments(),
                                      closeables, runtimeStore),
         Threads.SAME_THREAD_EXECUTOR);
       ProgramController controller = new SparkProgramController(sparkRuntimeService, runtimeContext);
@@ -252,7 +253,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   /**
    * Creates a service listener to reactor on state changes on {@link SparkRuntimeService}.
    */
-  private Service.Listener createRuntimeServiceListener(final Id.Program programId, final RunId runId,
+  private Service.Listener createRuntimeServiceListener(final ProgramId programId, final RunId runId,
                                                         final Arguments arguments, final Arguments userArgs,
                                                         final Iterable<Closeable> closeables,
                                                         final RuntimeStore runtimeStore) {

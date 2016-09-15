@@ -24,6 +24,7 @@ import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
@@ -54,7 +55,7 @@ public class RemoteRuntimeStoreHandler extends AbstractRemoteSystemOpsHandler {
   public void compareAndSetStatus(HttpRequest request, HttpResponder responder) throws Exception {
     Iterator<MethodArgument> arguments = parseArguments(request);
 
-    Id.Program program = deserializeNext(arguments);
+    ProgramId program = deserializeNext(arguments);
     String pid = deserializeNext(arguments);
     ProgramRunStatus expectedStatus = deserializeNext(arguments);
     ProgramRunStatus updateStatus = deserializeNext(arguments);
@@ -68,7 +69,7 @@ public class RemoteRuntimeStoreHandler extends AbstractRemoteSystemOpsHandler {
   public void setStart(HttpRequest request, HttpResponder responder) throws Exception {
     Iterator<MethodArgument> arguments = parseArguments(request);
 
-    Id.Program program = deserializeNext(arguments);
+    ProgramId program = deserializeNext(arguments);
     String pid = deserializeNext(arguments);
     long startTime = deserializeNext(arguments);
     String twillRunId = deserializeNext(arguments);
@@ -84,7 +85,7 @@ public class RemoteRuntimeStoreHandler extends AbstractRemoteSystemOpsHandler {
   public void setStop(HttpRequest request, HttpResponder responder) throws Exception {
     Iterator<MethodArgument> arguments = parseArguments(request);
 
-    Id.Program program = deserializeNext(arguments);
+    ProgramId program = deserializeNext(arguments);
     String pid = deserializeNext(arguments);
     long endTime = deserializeNext(arguments);
     ProgramRunStatus runStatus = deserializeNext(arguments);
@@ -99,7 +100,7 @@ public class RemoteRuntimeStoreHandler extends AbstractRemoteSystemOpsHandler {
   public void setSuspend(HttpRequest request, HttpResponder responder) throws Exception {
     Iterator<MethodArgument> arguments = parseArguments(request);
 
-    Id.Program program = deserializeNext(arguments);
+    ProgramId program = deserializeNext(arguments);
     String pid = deserializeNext(arguments);
     store.setSuspend(program, pid);
 
@@ -111,7 +112,7 @@ public class RemoteRuntimeStoreHandler extends AbstractRemoteSystemOpsHandler {
   public void setResume(HttpRequest request, HttpResponder responder) throws Exception {
     Iterator<MethodArgument> arguments = parseArguments(request);
 
-    Id.Program program = deserializeNext(arguments);
+    ProgramId program = deserializeNext(arguments);
     String pid = deserializeNext(arguments);
     store.setResume(program, pid);
 
