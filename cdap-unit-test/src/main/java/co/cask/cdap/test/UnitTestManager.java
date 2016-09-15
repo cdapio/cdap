@@ -69,6 +69,8 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -89,6 +91,8 @@ import javax.annotation.Nullable;
  */
 public class UnitTestManager implements TestManager {
 
+  private static final Logger LOG = LoggerFactory.getLogger(TestBase.class);
+
   private static final ClassAcceptor CLASS_ACCEPTOR = new ClassAcceptor() {
     final Set<String> visibleResources = ProgramResources.getVisibleResources();
 
@@ -102,8 +106,15 @@ public class UnitTestManager implements TestManager {
       if (resourceName.startsWith("scala/")) {
         return true;
       }
-      // If it is loading by spark framework, don't include it in the app JAR
-      return !SparkRuntimeUtils.SPARK_PROGRAM_CLASS_LOADER_FILTER.acceptResource(resourceName);
+      try {
+        // allow developers to exclude spark-core module from their unit tests (it'll work if they don't use spark)
+        getClass().getClassLoader().loadClass("co.cask.cdap.app.runtime.spark.SparkRuntimeUtils");
+        // If it is loading by spark framework, don't include it in the app JAR
+        return !SparkRuntimeUtils.SPARK_PROGRAM_CLASS_LOADER_FILTER.acceptResource(resourceName);
+      } catch (ClassNotFoundException e) {
+        LOG.warn("Spark will not be available for unit tests.", e);
+        return true;
+      }
     }
   };
 
