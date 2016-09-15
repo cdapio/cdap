@@ -236,7 +236,7 @@ Customize CDAP
       :align: center
       :class: bordered-image
  
-      **Ambari Dashboard:** Customizing Services for CDAP, setting *router.bin.port*
+      **Ambari Dashboard:** Customizing Services for CDAP, setting *router.bind.port*
 
    **Additional CDAP configuration properties**, not shown in the web interface, can be
    added using Ambari's *Advanced custom cdap-site* properties, located towards the end of the page.
