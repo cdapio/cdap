@@ -786,7 +786,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public WorkflowToken getWorkflowToken(final ProgramId workflowId, final String workflowRunId) {
+  public WorkflowToken getWorkflowToken(final WorkflowId workflowId, final String workflowRunId) {
     return txExecute(transactional, new TxCallable<WorkflowToken>() {
       @Override
       public WorkflowToken call(DatasetContext context) throws Exception {
@@ -972,7 +972,7 @@ public class DefaultStore implements Store {
   private static ApplicationSpecification replaceWorkerInAppSpec(final ApplicationSpecification appSpec,
                                                                  final ProgramId id,
                                                                  final WorkerSpecification workerSpecification) {
-    return new ApplicationSpecificationWithChangedWorkers(appSpec, id.getEntityName(), workerSpecification);
+    return new ApplicationSpecificationWithChangedWorkers(appSpec, id.getProgram(), workerSpecification);
   }
 
   private static final class ApplicationSpecificationWithChangedWorkers extends ForwardingApplicationSpecification {
