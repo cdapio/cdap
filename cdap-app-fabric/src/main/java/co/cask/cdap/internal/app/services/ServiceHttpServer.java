@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.services;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.security.store.SecureStore;
@@ -235,7 +236,9 @@ public class ServiceHttpServer extends AbstractIdleService {
     // announce the twill runnable
     InetSocketAddress bindAddress = service.getBindAddress();
     int port = bindAddress.getPort();
-    cancelDiscovery = serviceAnnouncer.announce(ServiceDiscoverable.getName(programId), port);
+    // Announce the service with its version as the payload
+    cancelDiscovery = serviceAnnouncer.announce(ServiceDiscoverable.getName(programId), port,
+                                                Bytes.toBytes(programId.getVersion()));
     LOG.info("Announced HTTP Service for Service {} at {}", programId, bindAddress);
 
     // Create a Timer thread to periodically collect handler that are no longer in used and call destroy on it

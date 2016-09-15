@@ -59,6 +59,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -106,6 +107,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final String WORDCOUNT_FLOW_NAME = "WordCountFlow";
   private static final String WORDCOUNT_MAPREDUCE_NAME = "VoidMapReduceJob";
   private static final String WORDCOUNT_FLOWLET_NAME = "StreamSource";
+  private static final String WORDCOUNT_SERVICE_NAME = "WordFrequencyService";
   private static final String DUMMY_APP_ID = "dummy";
   private static final String DUMMY_MR_NAME = "dummy-batch";
   private static final String SLEEP_WORKFLOW_APP_ID = "SleepWorkflowApp";
@@ -216,6 +218,27 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void testRouteStore() throws Exception {
+    // deploy, check the status
+    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    Map<String, Integer> routes = ImmutableMap.<String, Integer>builder().put("v1", 30).put("v2", 70).build();
+    String routeAPI = getVersionedAPIPath(
+      String.format("apps/%s/services/%s/routeconfig", WORDCOUNT_APP_NAME, WORDCOUNT_SERVICE_NAME),
+      Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    doPut(routeAPI, GSON.toJson(routes));
+    String getResult = EntityUtils.toString(doGet(routeAPI).getEntity());
+    JsonObject jsonObject = GSON.fromJson(getResult, JsonObject.class);
+    Assert.assertNotNull(jsonObject);
+    Assert.assertEquals(30, jsonObject.get("v1").getAsInt());
+    Assert.assertEquals(70, jsonObject.get("v2").getAsInt());
+    doDelete(routeAPI);
+    Assert.assertEquals(404, doGet(routeAPI).getStatusLine().getStatusCode());
+    Assert.assertEquals(404, doDelete(routeAPI).getStatusLine().getStatusCode());
   }
 
   @Category(XSlowTests.class)

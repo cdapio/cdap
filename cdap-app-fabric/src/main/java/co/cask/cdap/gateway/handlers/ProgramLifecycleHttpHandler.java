@@ -69,6 +69,8 @@ import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.route.store.RouteConfig;
+import co.cask.cdap.route.store.RouteStore;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -119,6 +121,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Type BATCH_PROGRAMS_TYPE = new TypeToken<List<BatchProgram>>() { }.getType();
   private static final Type BATCH_RUNNABLES_TYPE = new TypeToken<List<BatchRunnable>>() { }.getType();
   private static final Type BATCH_STARTS_TYPE = new TypeToken<List<BatchProgramStart>>() { }.getType();
+  private static final Type ROUTE_CONFIG_TYPE = new TypeToken<Map<String, Integer>>() { }.getType();
   /**
    * Json serializer/deserializer.
    */
@@ -141,6 +144,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final PreferencesStore preferencesStore;
   private final MetricStore metricStore;
   private final MRJobInfoFetcher mrJobInfoFetcher;
+  private final RouteStore routeStore;
 
   /**
    * Store manages non-runtime lifecycle.
@@ -164,7 +168,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                               QueueAdmin queueAdmin,
                               Scheduler scheduler, PreferencesStore preferencesStore,
                               MRJobInfoFetcher mrJobInfoFetcher,
-                              MetricStore metricStore) {
+                              MetricStore metricStore, RouteStore routeStore) {
     this.store = store;
     this.runtimeService = runtimeService;
     this.discoveryServiceClient = discoveryServiceClient;
@@ -174,6 +178,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.scheduler = scheduler;
     this.preferencesStore = preferencesStore;
     this.mrJobInfoFetcher = mrJobInfoFetcher;
+    this.routeStore = routeStore;
   }
 
   /**
@@ -956,6 +961,89 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         FlowUtils.deleteFlowPendingMetrics(metricStore, namespaceId, appId, flowId);
         responder.sendStatus(HttpResponseStatus.OK);
       }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    }
+  }
+
+  @GET
+  @Path("/apps/{app-id}/services/{service-id}/routeconfig")
+  public void getRouteConfig(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId,
+                             @PathParam("app-id") String appId,
+                             @PathParam("service-id") String serviceId) throws Exception {
+    try {
+      ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
+      if (!store.programExists(programId)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Service not found");
+        return;
+      }
+
+      ServiceSpecification spec = (ServiceSpecification) lifecycleService.getProgramSpecification(programId);
+      if (spec == null) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        return;
+      }
+
+      RouteConfig routeConfig = routeStore.fetch(programId);
+      if (routeConfig == null) {
+        responder.sendStatus(HttpResponseStatus.OK);
+        return;
+      }
+      responder.sendJson(HttpResponseStatus.OK, routeConfig.getRoutes());
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    }
+  }
+
+  @PUT
+  @Path("/apps/{app-id}/services/{service-id}/routeconfig")
+  public void storeRouteConfig(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId,
+                               @PathParam("app-id") String appId,
+                               @PathParam("service-id") String serviceId) throws Exception {
+    try {
+      ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
+      if (!store.programExists(programId)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Service not found");
+        return;
+      }
+
+      ServiceSpecification spec = (ServiceSpecification) lifecycleService.getProgramSpecification(programId);
+      if (spec == null) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        return;
+      }
+
+      Map<String, Integer> routes = parseBody(request, ROUTE_CONFIG_TYPE);
+      routeStore.store(programId, new RouteConfig(routes));
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    }
+  }
+
+  @DELETE
+  @Path("/apps/{app-id}/services/{service-id}/routeconfig")
+  public void deleteRouteConfig(HttpRequest request, HttpResponder responder,
+                                @PathParam("namespace-id") String namespaceId,
+                                @PathParam("app-id") String appId,
+                                @PathParam("service-id") String serviceId) throws Exception {
+    try {
+      ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
+      if (!store.programExists(programId)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Service not found");
+        return;
+      }
+
+      ServiceSpecification spec = (ServiceSpecification) lifecycleService.getProgramSpecification(programId);
+      if (spec == null) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        return;
+      }
+
+      routeStore.delete(programId);
+      responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     }
