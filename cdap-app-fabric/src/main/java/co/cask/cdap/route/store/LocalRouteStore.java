@@ -124,4 +124,9 @@ public class LocalRouteStore implements RouteStore  {
       throw Transactions.propagate(e, NotFoundException.class);
     }
   }
+
+  @Override
+  public void close() throws Exception {
+    // nothing to close
+  }
 }

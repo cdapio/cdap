@@ -18,71 +18,113 @@ package co.cask.cdap.route.store;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.common.service.ServiceDiscoverable;
+import co.cask.cdap.common.zookeeper.ZKExtOperations;
 import co.cask.cdap.internal.guava.reflect.TypeToken;
 import co.cask.cdap.proto.id.ProgramId;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import org.apache.twill.common.Threads;
 import org.apache.twill.zookeeper.NodeData;
+import org.apache.twill.zookeeper.OperationFuture;
 import org.apache.twill.zookeeper.ZKClient;
-import org.apache.twill.zookeeper.ZKOperations;
-import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.WatchedEvent;
+import org.apache.zookeeper.Watcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.Future;
 
 /**
  * RouteStore where the routes are stored in a ZK persistent node. This is intended for use in distributed mode.
  */
 public class ZKRouteStore implements RouteStore {
+  private static final Logger LOG = LoggerFactory.getLogger(ZKRouteStore.class);
   private static final Gson GSON = new Gson();
   private static final Type MAP_STRING_INTEGER_TYPE = new TypeToken<Map<String, Integer>>() { }.getType();
 
   private final ZKClient zkClient;
+  private final Map<ProgramId, RouteConfig> routeConfigMap;
 
   @Inject
   public ZKRouteStore(ZKClient zkClient) {
     this.zkClient = zkClient;
+    this.routeConfigMap = Maps.newConcurrentMap();
   }
 
   @Override
-  public void store(ProgramId serviceId, RouteConfig routeConfig) {
-    byte[] payload = Bytes.toBytes(GSON.toJson(routeConfig.getRoutes()));
-    Futures.getUnchecked(
-      ZKOperations.ignoreError(zkClient.create(getZKPath(serviceId), payload, CreateMode.PERSISTENT),
-                               KeeperException.NodeExistsException.class, null));
-  }
+  public void store(final ProgramId serviceId, final RouteConfig routeConfig) {
+    Supplier<RouteConfig> supplier = Suppliers.ofInstance(routeConfig);
+    final SettableFuture settableFuture = SettableFuture.create();
+    Futures.addCallback(ZKExtOperations.createOrSet(zkClient, getZKPath(serviceId), supplier, ROUTE_CONFIG_CODEC, 10),
+                        new FutureCallback<RouteConfig>() {
+                          @Override
+                          public void onSuccess(RouteConfig result) {
+                            routeConfigMap.put(serviceId, routeConfig);
+                          }
 
-  @Override
-  public void delete(final ProgramId serviceId) throws NotFoundException {
+                          @Override
+                          public void onFailure(Throwable t) {
+                            settableFuture.setException(t);
+                          }
+                        });
     try {
-      zkClient.delete(getZKPath(serviceId)).get(5, TimeUnit.SECONDS);
-    } catch (InterruptedException | TimeoutException e) {
-      throw Throwables.propagate(e);
-    } catch (ExecutionException e) {
-      if (e.getCause() instanceof KeeperException.NoNodeException) {
-        throw new NotFoundException(String.format("Route Config for Service %s was not found.", serviceId));
-      }
-      throw Throwables.propagate(e);
+      settableFuture.get();
+    } catch (ExecutionException | InterruptedException ex) {
+      throw Throwables.propagate(ex);
     }
   }
 
   @Override
-  public RouteConfig fetch(ProgramId serviceId) throws NotFoundException {
+  public void delete(final ProgramId serviceId) throws NotFoundException {
+    OperationFuture<String> future = zkClient.delete(getZKPath(serviceId));
+    final SettableFuture settableFuture = SettableFuture.create();
+    Futures.addCallback(future, new FutureCallback<String>() {
+      @Override
+      public void onSuccess(String result) {
+        routeConfigMap.remove(serviceId);
+      }
+
+      @Override
+      public void onFailure(Throwable t) {
+        settableFuture.setException(t);
+      }
+    }, Threads.SAME_THREAD_EXECUTOR);
+
     try {
-      zkClient.getData(getZKPath(serviceId)).get(5, TimeUnit.SECONDS);
-      NodeData nodeData = Futures.getUnchecked(zkClient.getData(getZKPath(serviceId)));
-      Map<String, Integer> routes = GSON.fromJson(Bytes.toString(nodeData.getData()), MAP_STRING_INTEGER_TYPE);
-      return new RouteConfig(routes);
-    } catch (InterruptedException | TimeoutException e) {
-      throw Throwables.propagate(e);
-    } catch (ExecutionException e) {
+      settableFuture.get();
+    } catch (ExecutionException | InterruptedException ex) {
+      if (ex.getCause() instanceof KeeperException.NoNodeException) {
+        throw new NotFoundException(String.format("Route Config for Service %s was not found.", serviceId));
+      }
+      throw Throwables.propagate(ex);
+    }
+  }
+
+  @Override
+  public RouteConfig fetch(final ProgramId serviceId) throws NotFoundException {
+    RouteConfig routeConfig = routeConfigMap.get(serviceId);
+    if (routeConfig != null) {
+      return routeConfig;
+    }
+
+    Future<RouteConfig> settableFuture = getAndWatchData(serviceId, new ZKRouteWatcher(serviceId));
+    try {
+      return settableFuture.get();
+    } catch (InterruptedException | ExecutionException e) {
       if (e.getCause() instanceof KeeperException.NoNodeException) {
         throw new NotFoundException(String.format("Route Config for Service %s was not found.", serviceId));
       }
@@ -92,5 +134,68 @@ public class ZKRouteStore implements RouteStore {
 
   private static String getZKPath(ProgramId serviceId) {
     return String.format("/routestore/%s", ServiceDiscoverable.getName(serviceId));
+  }
+
+  static final Codec<RouteConfig> ROUTE_CONFIG_CODEC = new Codec<RouteConfig>() {
+
+    @Override
+    public byte[] encode(RouteConfig object) throws IOException {
+      return Bytes.toBytes(GSON.toJson(object.getRoutes()));
+    }
+
+    @Override
+    public RouteConfig decode(byte[] data) throws IOException {
+      Map<String, Integer> routes = GSON.fromJson(Bytes.toString(data), MAP_STRING_INTEGER_TYPE);
+      return new RouteConfig(routes);
+    }
+  };
+
+  private Future<RouteConfig> getAndWatchData(final ProgramId serviceId, Watcher watcher) {
+    OperationFuture<NodeData> future = zkClient.getData(getZKPath(serviceId), watcher);
+    final SettableFuture<RouteConfig> settableFuture = SettableFuture.create();
+    Futures.addCallback(future, new FutureCallback<NodeData>() {
+      @Override
+      public void onSuccess(NodeData result) {
+        Map<String, Integer> routes = GSON.fromJson(Bytes.toString(result.getData()), MAP_STRING_INTEGER_TYPE);
+        RouteConfig route = new RouteConfig(routes);
+        routeConfigMap.put(serviceId, route);
+        settableFuture.set(route);
+      }
+
+      @Override
+      public void onFailure(Throwable t) {
+        settableFuture.setException(t);
+      }
+    });
+    return settableFuture;
+  }
+
+  @Override
+  public void close() throws Exception {
+    // Clear the map, so that any active watches will expire.
+    routeConfigMap.clear();
+  }
+
+  private class ZKRouteWatcher implements Watcher {
+    private final ProgramId serviceId;
+
+    ZKRouteWatcher(ProgramId serviceId) {
+      this.serviceId = serviceId;
+    }
+
+    @Override
+    public void process(WatchedEvent event) {
+      // If service name doesn't exist in the map, then don't re-watch it.
+      if (!routeConfigMap.containsKey(serviceId)) {
+        return;
+      }
+
+      if (event.getType() == Event.EventType.NodeDeleted) {
+        // Remove the mapping from cache
+        routeConfigMap.remove(serviceId);
+        return;
+      }
+      getAndWatchData(serviceId, this);
+    }
   }
 }

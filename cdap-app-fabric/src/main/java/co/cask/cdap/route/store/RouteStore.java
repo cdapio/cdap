@@ -22,7 +22,7 @@ import co.cask.cdap.proto.id.ProgramId;
 /**
  * Provides the ability to store and retrieve user service routing configuration.
  */
-public interface RouteStore {
+public interface RouteStore extends AutoCloseable {
 
   /**
    * Store a {@link RouteConfig} for a given {@link ProgramId}. If a {@link RouteConfig} already exists,
