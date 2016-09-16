@@ -76,6 +76,7 @@ to modify our no-op runnable to print a configurable message. We can do this by 
 
     public static class Conf extends PluginConfig {
       @Nullable
+      @Macro
       private String message;
 
       public Conf() {
@@ -106,10 +107,12 @@ specified when the *Plugin* was registered. In this example, if we want the mess
     }
   }
 
-The ``@Nullable`` annotation tells CDAP that the field is not required. Without that annotation,
-CDAP will complain if no plugin property for ``delimiter`` is given. In addition, config fields
-can be annotated with a ``@Description`` that will be returned by the
-:ref:`Artifact HTTP RESTful API <http-restful-api-artifact-plugin-detail>` *Plugin Detail*.
+- The ``@Nullable`` annotation tells CDAP that the field is not required. Without that annotation,
+  CDAP will complain if no plugin property for ``delimiter`` is given. 
+- Configuration fields can be annotated with an ``@Description`` that will be returned by the
+  :ref:`Artifact HTTP RESTful API <http-restful-api-artifact-plugin-detail>` *Plugin Detail*.
+- The ``@Macro`` annotation makes the field ``message`` *macro-enabled*; this allows the value of
+  the field ``message`` to be a "macro key" whose value will be set at runtime.
 
 .. _plugins-third-party:
 
@@ -520,7 +523,7 @@ introduce a ``Tokenizer`` interface::
 Now we change our ``WordCountMapper`` to use the plugin framework to instantiate and use a ``Tokenizer``::
 
   public static class WordCountMapper extends Mapper<LongWritable, Text, Text, LongWritable>
-    implements ProgramLifecycle<MapReduceContext> {
+    implements ProgramLifecycle<MapReduceTaskContext> {
     private static final LongWritable ONE = new LongWritable(1);
     private Text word = new Text();
     private Tokenizer tokenizer;
@@ -535,7 +538,7 @@ Now we change our ``WordCountMapper`` to use the plugin framework to instantiate
     }
 
     @Override
-    public void initialize(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceTaskContext context) throws Exception {
       tokenizer = context.newPluginInstance("tokenizerId");
     }
 
