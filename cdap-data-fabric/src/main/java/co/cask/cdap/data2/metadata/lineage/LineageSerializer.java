@@ -16,7 +16,10 @@
 
 package co.cask.cdap.data2.metadata.lineage;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
 import co.cask.cdap.proto.metadata.lineage.DataRecord;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
@@ -37,13 +40,12 @@ import java.util.Set;
 /**
  * Serializes {@link Lineage} into a {@link LineageRecord}.
  */
-// TODO: Clean up this class (make data/program keys) when new Id classes are used CDAP-4291
 public final class LineageSerializer {
-  private static final Function<Id.NamespacedId, String> ID_STRING_FUNCTION =
-    new Function<Id.NamespacedId, String>() {
+  private static final Function<NamespacedEntityId, String> ID_STRING_FUNCTION =
+    new Function<NamespacedEntityId, String>() {
       @Override
-      public String apply(Id.NamespacedId input) {
-        return input.getId();
+      public String apply(NamespacedEntityId input) {
+        return input.getEntityName();
       }
     };
 
@@ -73,15 +75,15 @@ public final class LineageSerializer {
     Set<CollapsedRelation> collapsedRelations =
       LineageCollapser.collapseRelations(lineage.getRelations(), collapseTypes);
     for (CollapsedRelation relation : collapsedRelations) {
-      String dataKey = makeDataKey((Id.NamespacedId) relation.getData().toId());
-      String programKey = makeProgramKey(relation.getProgram().toId());
+      String dataKey = makeDataKey(relation.getData());
+      String programKey = makeProgramKey(relation.getProgram());
       RelationRecord relationRecord = new RelationRecord(dataKey, programKey,
                                                          convertAccessType(relation.getAccess()),
                                                          convertRuns(relation.getRuns()),
-                                                         convertComponents(relation.getIdComponents()));
+                                                         convertComponents(relation.getComponents()));
       relationBuilder.add(relationRecord);
       programBuilder.put(programKey, new ProgramRecord(relation.getProgram().toId()));
-      dataBuilder.put(dataKey, new DataRecord((Id.NamespacedId) relation.getData().toId()));
+      dataBuilder.put(dataKey, new DataRecord(relation.getData()));
     }
     return new LineageRecord(start, end, relationBuilder, programBuilder, dataBuilder);
   }
@@ -94,32 +96,32 @@ public final class LineageSerializer {
     return ImmutableSet.copyOf((Iterables.transform(runIds, RUN_ID_STRING_FUNCTION)));
   }
 
-  private static Set<String> convertComponents(Set<Id.NamespacedId> components) {
+  private static Set<String> convertComponents(Set<NamespacedEntityId> components) {
     return Sets.newHashSet(Iterables.transform(components, ID_STRING_FUNCTION));
   }
 
-  private static String makeProgramKey(Id.Program program) {
+  private static String makeProgramKey(ProgramId program) {
     return Joiner.on('.').join(program.getType().getCategoryName().toLowerCase(), program.getNamespaceId(),
-                               program.getApplicationId(), program.getId());
+                               program.getApplication(), program.getEntityName());
   }
 
-  private static String makeDataKey(Id.NamespacedId data) {
-    if (data instanceof Id.DatasetInstance) {
-      return makeDatasetKey((Id.DatasetInstance) data);
+  private static String makeDataKey(NamespacedEntityId data) {
+    if (data instanceof DatasetId) {
+      return makeDatasetKey((DatasetId) data);
     }
 
-    if (data instanceof  Id.Stream) {
-      return makeStreamKey((Id.Stream) data);
+    if (data instanceof StreamId) {
+      return makeStreamKey((StreamId) data);
     }
 
     throw new IllegalArgumentException("Unknown data object " + data);
   }
 
-  private static String makeDatasetKey(Id.DatasetInstance datasetInstance) {
-    return Joiner.on('.').join("dataset", datasetInstance.getNamespaceId(), datasetInstance.getId());
+  private static String makeDatasetKey(DatasetId datasetInstance) {
+    return Joiner.on('.').join("dataset", datasetInstance.getNamespace(), datasetInstance.getEntityName());
   }
 
-  private static String makeStreamKey(Id.Stream stream) {
-    return Joiner.on('.').join("stream", stream.getNamespaceId(), stream.getId());
+  private static String makeStreamKey(StreamId stream) {
+    return Joiner.on('.').join("stream", stream.getNamespace(), stream.getEntityName());
   }
 }
