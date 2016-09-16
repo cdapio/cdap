@@ -23,8 +23,9 @@ extend the ``Action`` class. Only one method is required to be implemented::
 .. rubric:: Methods
 
 - ``run()``: Used to implement the functionality of the plugin.
-- ``configurePipeline()``: Used to create any streams or datasets or perform any validation
-  on the application configuration required by this plugin.
+- ``configurePipeline()``: Used to perform any validation on the application configuration
+  that is required by this plugin or create any streams or datasets if the fieldName for a
+  stream or dataset is not a macro.
 
 Post-run Action Plugin
 ======================
@@ -45,7 +46,8 @@ Only one method is required to be implemented::
 
 - ``run()``: Used to implement the functionality of the plugin.
 - ``configurePipeline()``: Used to perform any validation on the application configuration
-  required by this plugin.
+  that is required by this plugin or create any streams or datasets if the fieldName for a
+  stream or dataset is not a macro.
 
 
 Batch Source Plugin
@@ -63,12 +65,14 @@ the types, only one method is required to be implemented::
 
 .. rubric:: Methods
 
-- ``prepareRun()``: Used to configure the input for each run of the pipeline. This is called by
-  the client that will submit the job for the pipeline run.
+- ``prepareRun()``: Used to configure the input for each run of the pipeline.
+  If the fieldName for a stream or dataset is a macro, their creation will happen during this stage. 
+  This is called by the client that will submit the job for the pipeline run.
 - ``onRunFinish()``: Used to run any required logic at the end of a pipeline run. This is called
   by the client that submitted the job for the pipeline run.
-- ``configurePipeline()``: Used to create any streams or datasets or perform any validation
-  on the application configuration that are required by this plugin.
+- ``configurePipeline()``: Used to perform any validation on the application configuration
+  that is required by this plugin or create any streams or datasets if the fieldName for a
+  stream or dataset is not a macro.
 - ``initialize()``: Initialize the Batch Source. Guaranteed to be executed before any call
   to the plugin’s ``transform`` method. This is called by each executor of the job. For example,
   if the MapReduce engine is being used, each mapper will call this method.
@@ -112,6 +116,7 @@ Example::
       // Note: only primitives (including boxed types) and string are the types that are supported.
       @Name(FILESET_NAME)
       @Description("The name of the FileSet to read from.")
+      @Macro
       private String fileSetName;
 
       // A nullable fields tells CDAP that this is an optional field.
@@ -142,8 +147,8 @@ Example::
     // Any static configuration should be performed here.
     @Override
     public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-      // if the user has set createIfNotExists to true, create the FileSet here.
-      if (config.createIfNotExists) {
+      // If the user has set createIfNotExists to true, and the fileSetName is not a macro, create the FileSet here.
+      if (config.createIfNotExists && !config.containsMacro("fileSetName")) {
         pipelineConfigurer.createDataset(config.fileSetName,
                                          FileSet.class,
                                          FileSetProperties.builder()
@@ -163,6 +168,20 @@ Example::
     // as well as any arguments the input should use. It is called by the client that is submitting the batch job.
     @Override
     public void prepareRun(BatchSourceContext context) throws IOException {
+      // If the user has set createIfNotExists to true, and the fileSetName is a macro,
+      // the FileSet name will be available now, so create the FileSet here.
+      if (config.containsMacro("fileSetName") && config.createIfNotExists) {
+        pipelineConfigurer.createDataset(config.fileSetName,
+                                         FileSet.class,
+                                         FileSetProperties.builder()
+                                           .setInputFormat(TextInputFormat.class)
+                                           .setOutputFormat(TextOutputFormat.class)
+                                           .setEnableExploreOnCreate(true)
+                                           .setExploreFormat("text")
+                                           .setExploreSchema("text string")
+                                           .build()
+        );
+      }
       context.setInput(Input.ofDataset(config.fileSetName));
     }
 
@@ -218,8 +237,9 @@ After defining the types, only one method is required to be implemented::
   the client that will submit the job for the pipeline run.
 - ``onRunFinish()``: Used to run any required logic at the end of a pipeline run. This is called
   by the client that submitted the job for the pipeline run.
-- ``configurePipeline()``: Used to create any streams or datasets or perform any validation
-  on the application configuration that are required by this plugin.
+- ``configurePipeline()``: Used to perform any validation on the application configuration
+  that is required by this plugin or create any streams or datasets if the fieldName for a
+  stream or dataset is not a macro.
 - ``initialize()``: Initialize the Batch Sink. Guaranteed to be executed before any call
   to the plugin’s ``transform`` method. This is called by each executor of the job. For example,
   if the MapReduce engine is being used, each mapper will call this method.
@@ -488,8 +508,9 @@ In order to implement a Batch Aggregator, you extend the
 
 .. rubric:: Methods
 
-- ``configurePipeline()``: Used to create any streams or datasets or perform any validation
-  on the application configuration that are required by this plugin.
+- ``configurePipeline()``: Used to perform any validation on the application configuration
+  that is required by this plugin or create any streams or datasets if the fieldName for a
+  stream or dataset is not a macro.
 - ``initialize()``: Initialize the Batch Aggregator. Guaranteed to be executed before any call
   to the plugin’s ``groupBy`` or ``aggregate`` methods. This is called by each executor of the job.
   For example, if the MapReduce engine is being used, each mapper will call this method.
@@ -643,8 +664,9 @@ In order to implement a Spark Compute Plugin, you extend the ``SparkCompute`` cl
 
 .. rubric:: Methods
 
-- ``configurePipeline()``: Used to create any streams or datasets or perform any validation
-  on the application configuration that are required by this plugin.
+- ``configurePipeline()``: Used to perform any validation on the application configuration
+  that is required by this plugin or create any streams or datasets if the fieldName for a
+  stream or dataset is not a macro.
 - ``transform()``: This method is given a Spark RDD (Resilient Distributed Dataset) containing 
   every object that is received from the previous stage. This method then performs Spark operations
   on the input to transform it into an output RDD that will be sent to the next stage.
@@ -725,8 +747,9 @@ In order to implement a Spark Sink Plugin, you extend the ``SparkSink`` class.
 
 .. rubric:: Methods
 
-- ``configurePipeline()``: Used to create any streams or datasets or perform any validation
-  on the application configuration that are required by this plugin.
+- ``configurePipeline()``: Used to perform any validation on the application configuration
+  that is required by this plugin or create any streams or datasets if the fieldName for a
+  stream or dataset is not a macro.
 - ``run()``: This method is given a Spark RDD (Resilient Distributed Dataset) containing every 
   object that is received from the previous stage. This method then performs Spark operations
   on the input, and usually saves the result to a dataset.
@@ -798,8 +821,9 @@ In order to implement a Streaming Source Plugin, you extend the ``StreamingSourc
 
 .. rubric:: Methods
 
-- ``configurePipeline()``: Used to create any streams or datasets or perform any validation
-  on the application configuration that are required by this plugin.
+- ``configurePipeline()``: Used to perform any validation on the application configuration
+  that is required by this plugin or create any streams or datasets if the fieldName for a
+  stream or dataset is not a macro.
 - ``getStream()``: Returns the ``JavaDStream`` that will be used as a source in the pipeline.
 
 Example::
@@ -887,8 +911,9 @@ In order to implement a Windower Plugin, you extend the ``Windower`` class.
 
 .. rubric:: Methods
 
-- ``configurePipeline()``: Used to create any streams or datasets or perform any validation
-  on the application configuration that are required by this plugin.
+- ``configurePipeline()``: Used to perform any validation on the application configuration
+  that is required by this plugin or create any streams or datasets if the fieldName for a
+  stream or dataset is not a macro.
 - ``getWidth()``: Return the width in seconds of windows created by this plugin.
   Must be a multiple of the ``batchInterval`` of the pipeline.
 - ``getSlideInterval()``: Get the slide interval in seconds of windows created by this plugin.
