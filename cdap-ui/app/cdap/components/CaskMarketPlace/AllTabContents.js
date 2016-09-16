@@ -20,6 +20,8 @@ import MarketPlaceEntity from '../MarketPlaceEntity';
 import T from 'i18n-react';
 import MarketStore from './store/market-store.js';
 import Fuse from 'fuse.js';
+import CaskMarketEntityModal from '../CaskMarketEntityModal';
+import {MyCaskMarketApi} from '../../api/caskmarket';
 require('./AllTabContents.less');
 
 export default class AllTabContents extends Component {
@@ -28,7 +30,9 @@ export default class AllTabContents extends Component {
     this.state = {
       searchStr: '',
       entities: [],
-      loading: MarketStore.getState().loading
+      loading: MarketStore.getState().loading,
+      activeEntity: null,
+      entityModalIsOpen: false
     };
 
     this.unsub = MarketStore.subscribe(() => {
@@ -73,15 +77,63 @@ export default class AllTabContents extends Component {
   }
 
   generateIconPath(entity) {
-    return `http://marketplace.cask.co.s3.amazonaws.com/packages/${entity.name}/${entity.version}/icon.jpg`;
+    return MyCaskMarketApi.getIcon(entity);
   }
 
-  render() {
+  handleEntityClick(e) {
+    this.setState({
+      activeEntity: e,
+      entityModalIsOpen: true
+    });
+  }
+
+  handleEntityModalClose() {
+    this.setState({entityModalIsOpen: false});
+  }
+
+  handleBodyRender() {
     const loadingElem = (
       <h4>
         <span className="fa fa-refresh fa-spin"></span>
       </h4>
     );
+    const empty = <h3>Empty</h3>;
+    const entities = (
+      this.state.entities
+        .map((e, index) => (
+          <MarketPlaceEntity
+            name={e.label}
+            subtitle={e.version}
+            key={index}
+            icon={this.generateIconPath(e)}
+            size="medium"
+            onClick={this.handleEntityClick.bind(this, e)}
+          />
+        )
+      )
+    );
+
+    if (this.state.loading) {
+      return loadingElem;
+    } else if (this.state.entities.length === 0) {
+      return empty;
+    } else {
+      return entities;
+    }
+  }
+
+  render() {
+    let marketEntityModal;
+
+    if (this.state.entityModalIsOpen) {
+      marketEntityModal = (
+        <CaskMarketEntityModal
+          isOpen={this.state.entityModalIsOpen}
+          onCloseHandler={this.handleEntityModalClose.bind(this)}
+          entity={this.state.activeEntity}
+        />
+      );
+    }
 
     return (
       <div className="all-tab-content">
@@ -91,21 +143,9 @@ export default class AllTabContents extends Component {
           onChange={this.onSearch.bind(this)}
         />
         <div className="body-section">
-          {
-            this.state.loading ? loadingElem :
-            this.state.entities.length === 0 ?
-            ( <h3>Empty</h3> ) :
-            this.state.entities
-              .map((e, index) => (
-                <MarketPlaceEntity
-                  name={e.name}
-                  subtitle={e.version}
-                  key={index}
-                  icon={this.generateIconPath(e)}
-                  size="medium"
-                />
-              ))
-          }
+          {this.handleBodyRender()}
+
+          {marketEntityModal}
         </div>
       </div>
     );

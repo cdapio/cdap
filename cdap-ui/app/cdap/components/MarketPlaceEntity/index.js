@@ -17,13 +17,16 @@ import React, {PropTypes} from 'react';
 import classnames from 'classnames';
 require('./MarketPlaceEntity.less');
 
-export default function MarketPlaceEntity({size, className, style, name, subtitle, icon}) {
+export default function MarketPlaceEntity({size, className, style, name, subtitle, icon, onClick}) {
   return (
     <div
       className={classnames("cask-entity-card", className, size)}
       style={style}
     >
-      <div className="image-container">
+      <div
+        className="image-container"
+        onClick={onClick}
+      >
         <img src={icon} />
       </div>
       <div className="metadata-container">
@@ -44,5 +47,6 @@ MarketPlaceEntity.propTypes = {
   style: PropTypes.object,
   name: PropTypes.string,
   subtitle: PropTypes.string,
-  icon: PropTypes.string
+  icon: PropTypes.string,
+  onClick: PropTypes.func
 };

@@ -14,37 +14,40 @@
  * the License.
  */
 
-.cask-entity-card {
-  // FIXME: Need to add large and small sizes
-  &.medium {
-    width: 125px;
-    height: 200px;
-    text-align: center;
-    margin: 30px;
-    float: left;
+.market-entity-modal.modal-dialog {
+  width: 60vw;
 
-    .image-container {
-      width: 125px;
-      height: 125px;
-      background-color: gray;
+  .entity-information {
+    padding: 25px;
+
+    .entity-modal-image,
+    .entity-description {
       display: inline-block;
+    }
+
+    .entity-modal-image {
+      width: 200px;
+      height: 200px;
 
       img {
-        width: 125px;
-        height: 125px;
+        width: 200px;
+        height: 200px;
       }
     }
-    .metadata-container {
-      text-align: center;
 
-      .metadata-name {
-        font-size: 14px;
-        color: #333;
-      }
-      .metadata-version {
-        font-size: 12px;
-        color: #333;
-      }
+    .entity-description { margin-left: 25px; }
+  }
+
+  .action {
+    display: inline-block;
+    width: 250px;
+    padding: 10px;
+
+    .action-image {
+      width: 125px;
+      height: 125px;
+      background-color: grey;
+      margin: 0 auto;
     }
   }
 }

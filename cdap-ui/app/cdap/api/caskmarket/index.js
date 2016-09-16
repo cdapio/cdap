@@ -21,6 +21,9 @@ let dataSrc = new Datasource();
 const basepath = 'http://marketplace.cask.co.s3.amazonaws.com';
 
 export const MyCaskMarketApi = {
- list: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `${basepath}/packages.json`),
- get: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `${basepath}/:packageName/:version/spec.json`)
+  list: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `${basepath}/packages.json`),
+  get: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `${basepath}/packages/:packageName/:version/spec.json`),
+  getIcon: (entity) => {
+    return `${basepath}/packages/${entity.name}/${entity.version}/icon.jpg`;
+  }
 };
