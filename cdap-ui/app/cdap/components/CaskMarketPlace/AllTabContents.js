@@ -18,20 +18,63 @@ import React, {Component} from 'react';
 import SearchTextBox from '../SearchTextBox';
 import MarketPlaceEntity from '../MarketPlaceEntity';
 import T from 'i18n-react';
+import MarketStore from './store/market-store.js';
+import Fuse from 'fuse.js';
 require('./AllTabContents.less');
 
 export default class AllTabContents extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      searchStr: ''
+      searchStr: '',
+      entities: []
     };
+
+    this.unsub = MarketStore.subscribe(() => {
+      this.filterEntities();
+    });
   }
+
+  componentWillUnmount () {
+    this.unsub();
+    MarketStore.dispatch({type: 'RESET'});
+  }
+
+  filterEntities() {
+    const {list, filter} = MarketStore.getState();
+    if (filter === '*') {
+      this.setState({entities: list});
+      return;
+    }
+
+    const fuseOptions = {
+      caseSensitive: true,
+      threshold: 0,
+      location: 0,
+      distance: 100,
+      maxPatternLength: 32,
+      keys: [
+        "categories"
+      ]
+    };
+
+    let fuse = new Fuse(list, fuseOptions);
+    let search = fuse.search(filter);
+
+    this.setState({entities: search});
+  }
+
   onSearch(changeEvent) {
     // For now just save. Eventually we will make a backend call to get the search result.
     this.setState({searchStr: changeEvent.target.value});
   }
+
+  generateIconPath(entity) {
+    return `http://marketplace.cask.co.s3.amazonaws.com/packages/${entity.name}/${entity.version}/icon.jpg`;
+  }
+
   render() {
+
     return (
       <div className="all-tab-content">
         <SearchTextBox
@@ -41,14 +84,17 @@ export default class AllTabContents extends Component {
         />
         <div className="body-section">
           {
-            Array
-              .apply(null, {length: 50})
+            this.state.entities.length === 0 ?
+            ( <h3>Empty</h3> ) :
+            this.state.entities
               .map((e, index) => (
                 <MarketPlaceEntity
-                  name="Entity Name"
-                  subtitle="Version: 1.0"
+                  name={e.name}
+                  subtitle={e.version}
                   key={index}
-                  size="medium" />
+                  icon={this.generateIconPath(e)}
+                  size="medium"
+                />
               ))
           }
         </div>

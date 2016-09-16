@@ -14,18 +14,29 @@
  * the License.
  */
 
-.plus-button-modal {
-  .cask-wizard {
-    .tab-content {
-      overflow-y: auto;
+import {createStore} from 'redux';
 
-      .tab-pane { width: 100%; }
-      .all-tab-content {
-        .body-section {
-          text-align: center;
-          padding-top: 10px;
-        }
-      }
-    }
+const initialState = {
+  list: [],
+  filter: '*'
+};
+
+const market = (state=initialState, action) => {
+  switch (action.type) {
+    case 'SET_ENTITIES':
+      return Object.assign({}, state, { list: action.payload });
+    case 'SET_FILTER':
+      return Object.assign({}, state, { filter: action.payload });
+    case 'RESET':
+      return Object.assign({}, initialState);
+    default:
+      return state;
   }
-}
+};
+
+const createMarketStore = () => {
+  return createStore(market);
+};
+
+const MarketStore = createMarketStore();
+export default MarketStore;

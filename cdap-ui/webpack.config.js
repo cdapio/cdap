@@ -109,7 +109,8 @@ const cdapWebpackConfig = {
       'rx',
       'reactstrap',
       'react-addons-css-transition-group',
-      'i18n-react'
+      'i18n-react',
+      'fuse.js'
     ]
   },
   module: {

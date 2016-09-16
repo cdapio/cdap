@@ -41,6 +41,10 @@ export default class ConfigurableTab extends Component{
   }
   setTab(tabId) {
     this.setState({tabId});
+
+    if (typeof this.props.onTabClick === 'function') {
+      this.props.onTabClick(tabId);
+    }
   }
   isActiveTab(tabId) {
     return this.state.tabId === tabId;
@@ -65,7 +69,7 @@ export default class ConfigurableTab extends Component{
           </TabHeaders>
           <TabContent activeTab={this.state.tabId}>
             {
-              this.state.tabs.map((tab, index) => {
+              this.state.tabs.filter((tab) => tab.id === this.state.tabId).map((tab, index) => {
                 return (
                   <TabPane
                     tabId={tab.id}
@@ -87,6 +91,7 @@ const TabConfig = PropTypes.shape({
   content: PropTypes.node
 });
 ConfigurableTab.propTypes = {
+  onTabClick: PropTypes.func,
   tabConfig: PropTypes.shape({
     tabs: PropTypes.arrayOf(TabConfig),
     layout: PropTypes.string,

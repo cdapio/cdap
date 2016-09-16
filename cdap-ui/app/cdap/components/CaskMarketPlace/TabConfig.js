@@ -18,52 +18,63 @@ import React from 'react';
 import AllTabContents from './AllTabContents';
 import T from 'i18n-react';
 
+
+
 const TabConfig = {
   defaultTab: 1,
   layout: 'vertical',
   tabs: [
     {
       id: 1,
+      filter: '*',
       name: T.translate('features.Market.tabs.all'),
       content: <AllTabContents />
     },
     {
       id: 2,
+      filter: 'example',
       name: T.translate('features.Market.tabs.examples'),
       content: <AllTabContents />
     },
     {
       id: 3,
+      filter: 'usecase',
       name: T.translate('features.Market.tabs.useCases'),
       content: <AllTabContents />
     },
     {
       id: 4,
+      filter: 'hydrator-pipeline',
       name: T.translate('features.Market.tabs.pipelines'),
       content: <AllTabContents />
     },
     {
       id: 5,
+      filter: 'application',
       name: T.translate('features.Market.tabs.applications'),
       content: <AllTabContents />
     },
     {
       id: 6,
+      filter: 'dataset',
       name: T.translate('features.Market.tabs.datasets'),
       content: <AllTabContents />
     },
     {
       id: 7,
+      filter: 'hydrator-plugin',
       name: T.translate('features.Market.tabs.plugins'),
       content: <AllTabContents />
     },
     {
       id: 8,
+      filter: 'dashboard',
       name: T.translate('features.Market.tabs.dashboards'),
       content: <AllTabContents />
     },
     {
       id: 9,
+      filter: 'artifact',
       name: T.translate('features.Market.tabs.artifacts'),
       content: <AllTabContents />
     }
