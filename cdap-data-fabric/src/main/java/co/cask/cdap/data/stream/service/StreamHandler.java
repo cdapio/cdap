@@ -37,7 +37,6 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.format.RecordFormats;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamDetail;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -201,7 +200,7 @@ public final class StreamHandler extends AbstractHttpHandler {
   public void getInfo(HttpRequest request, HttpResponder responder,
                       @PathParam("namespace-id") String namespaceId,
                       @PathParam("stream") String stream) throws Exception {
-    StreamId streamId = Id.Stream.from(namespaceId, stream).toEntityId();
+    StreamId streamId = validateAndGetStreamId(namespaceId, stream);
     checkStreamExists(streamId);
     StreamProperties properties = streamAdmin.getProperties(streamId);
     responder.sendJson(HttpResponseStatus.OK, properties, StreamProperties.class, GSON);
@@ -215,13 +214,7 @@ public final class StreamHandler extends AbstractHttpHandler {
     // Check for namespace existence. Throws NotFoundException if namespace doesn't exist
     namespaceQueryAdmin.get(new NamespaceId(namespaceId).toId());
 
-    StreamId streamId;
-    try {
-      // Verify stream name
-      streamId = Id.Stream.from(namespaceId, stream).toEntityId();
-    } catch (IllegalArgumentException e) {
-      throw new BadRequestException(e);
-    }
+    StreamId streamId = validateAndGetStreamId(namespaceId, stream);
 
     Properties props = new Properties();
     StreamProperties streamProperties;
@@ -259,7 +252,7 @@ public final class StreamHandler extends AbstractHttpHandler {
   public void enqueue(HttpRequest request, HttpResponder responder,
                       @PathParam("namespace-id") String namespaceId,
                       @PathParam("stream") String stream) throws Exception {
-    StreamId streamId = Id.Stream.from(namespaceId, stream).toEntityId();
+    StreamId streamId = validateAndGetStreamId(namespaceId, stream);
     authorizationEnforcer.enforce(streamId, authenticationContext.getPrincipal(), Action.WRITE);
     try {
       streamWriter.enqueue(streamId, getHeaders(request, stream), request.getContent().toByteBuffer());
@@ -275,7 +268,7 @@ public final class StreamHandler extends AbstractHttpHandler {
   public void asyncEnqueue(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId,
                            @PathParam("stream") String stream) throws Exception {
-    StreamId streamId = Id.Stream.from(namespaceId, stream).toEntityId();
+    StreamId streamId = validateAndGetStreamId(namespaceId, stream);
     // No need to copy the content buffer as we always uses a ChannelBufferFactory that won't reuse buffer.
     // See StreamHttpService
     authorizationEnforcer.enforce(streamId, authenticationContext.getPrincipal(), Action.WRITE);
@@ -289,7 +282,7 @@ public final class StreamHandler extends AbstractHttpHandler {
   public BodyConsumer batch(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("stream") String stream) throws Exception {
-    StreamId streamId = Id.Stream.from(namespaceId, stream).toEntityId();
+    StreamId streamId = validateAndGetStreamId(namespaceId, stream);
     checkStreamExists(streamId);
     authorizationEnforcer.enforce(streamId, authenticationContext.getPrincipal(), Action.WRITE);
     try {
@@ -305,7 +298,7 @@ public final class StreamHandler extends AbstractHttpHandler {
   public void truncate(HttpRequest request, HttpResponder responder,
                        @PathParam("namespace-id") String namespaceId,
                        @PathParam("stream") String stream) throws Exception {
-    StreamId streamId = Id.Stream.from(namespaceId, stream).toEntityId();
+    StreamId streamId = validateAndGetStreamId(namespaceId, stream);
     checkStreamExists(streamId);
 
     streamAdmin.truncate(streamId);
@@ -317,7 +310,7 @@ public final class StreamHandler extends AbstractHttpHandler {
   public void delete(HttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("stream") String stream) throws Exception {
-    StreamId streamId = Id.Stream.from(namespaceId, stream).toEntityId();
+    StreamId streamId = validateAndGetStreamId(namespaceId, stream);
     checkStreamExists(streamId);
     // On Windows, we can not move the file if it is open, and the stream writer may have an open file in this dir.
     // Since Windows is only supported in SDK/standalone, we don't need to worry about multiple stream writers here.
@@ -331,7 +324,7 @@ public final class StreamHandler extends AbstractHttpHandler {
   public void setConfig(HttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") String namespaceId,
                         @PathParam("stream") String stream) throws Exception {
-    StreamId streamId = Id.Stream.from(namespaceId, stream).toEntityId();
+    StreamId streamId = validateAndGetStreamId(namespaceId, stream);
     checkStreamExists(streamId);
 
     StreamProperties properties = getAndValidateConfig(request, responder);
@@ -536,6 +529,15 @@ public final class StreamHandler extends AbstractHttpHandler {
 
       String description = jsonObj.has("description") ? jsonObj.get("description").getAsString() : null;
       return new StreamProperties(ttl, format, threshold, description);
+    }
+  }
+
+  private StreamId validateAndGetStreamId(String namespace, String stream) throws BadRequestException {
+    try {
+      // Verify stream name
+      return new StreamId(namespace, stream);
+    } catch (IllegalArgumentException | NullPointerException e) {
+      throw new BadRequestException(e);
     }
   }
 }

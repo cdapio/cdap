@@ -37,6 +37,9 @@ public class SecureKeyId extends NamespacedEntityId implements ParentedId<Namesp
 
   public SecureKeyId(String namespace, String name) {
     super(namespace, EntityType.SECUREKEY);
+    if (name == null) {
+      throw new NullPointerException("Secure key cannot be null.");
+    }
     if (!isValidSecureKey(name)) {
       throw new IllegalArgumentException(String.format("Improperly formatted secure key name '%s'." +
                                                          " The name can contain lower case alphabets," +

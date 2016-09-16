@@ -34,6 +34,14 @@ public class NotificationFeedId extends NamespacedEntityId implements ParentedId
 
   public NotificationFeedId(String namespace, String category, String feed) {
     super(namespace, EntityType.NOTIFICATION_FEED);
+    if (category == null) {
+      throw new NullPointerException("Category cannot be null.");
+    }
+    if (feed == null) {
+      throw new NullPointerException("Feed ID cannot be null.");
+    }
+    ensureValidId("category", category);
+    ensureValidId("feed", feed);
     this.category = category;
     this.feed = feed;
   }

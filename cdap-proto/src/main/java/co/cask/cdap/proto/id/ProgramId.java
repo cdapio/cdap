@@ -41,6 +41,12 @@ public class ProgramId extends NamespacedEntityId implements ParentedId<Applicat
 
   ProgramId(ApplicationId appId, ProgramType type, String program) {
     super(appId.getNamespace(), EntityType.PROGRAM);
+    if (type == null) {
+      throw new NullPointerException("Program type cannot be null.");
+    }
+    if (program == null) {
+      throw new NullPointerException("Program ID cannot be null.");
+    }
     this.application = appId.getApplication();
     this.version = appId.getVersion();
     this.type = type;

@@ -32,6 +32,10 @@ public class DatasetModuleId extends NamespacedEntityId implements ParentedId<Na
 
   public DatasetModuleId(String namespace, String module) {
     super(namespace, EntityType.DATASET_MODULE);
+    if (module == null) {
+      throw new NullPointerException("Module ID cannot be null.");
+    }
+    ensureValidDatasetId("dataset module", module);
     this.module = module;
   }
 

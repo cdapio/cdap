@@ -22,11 +22,11 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -44,14 +44,13 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
-//TODO: CDAP-5411 Cannot use EntityId in this class until EntityId classes do name validation
 class ConversionHelpers {
 
   private static final Gson GSON = new Gson();
 
   static NamespaceId toNamespaceId(String namespace) throws BadRequestException {
     try {
-      return Id.Namespace.from(namespace).toEntityId();
+      return new NamespaceId(namespace);
     } catch (IllegalArgumentException | NullPointerException e) {
       throw new BadRequestException(e.getMessage());
     }
@@ -59,7 +58,7 @@ class ConversionHelpers {
 
   static DatasetId toDatasetInstanceId(String namespace, String name) throws BadRequestException {
     try {
-      return Id.DatasetInstance.from(namespace, name).toEntityId();
+      return new DatasetId(namespace, name);
     } catch (IllegalArgumentException | NullPointerException e) {
       throw new BadRequestException(e.getMessage());
     }
@@ -67,7 +66,7 @@ class ConversionHelpers {
 
   static DatasetTypeId toDatasetTypeId(String namespace, String typeName) throws BadRequestException {
     try {
-      return Id.DatasetType.from(namespace, typeName).toEntityId();
+      return new DatasetTypeId(namespace, typeName);
     } catch (IllegalArgumentException | NullPointerException e) {
       throw new BadRequestException(e.getMessage());
     }
@@ -75,7 +74,7 @@ class ConversionHelpers {
 
   static DatasetTypeId toDatasetTypeId(NamespaceId namespace, String typeName) throws BadRequestException {
     try {
-      return Id.DatasetType.from(namespace.getNamespace(), typeName).toEntityId();
+      return new DatasetTypeId(namespace.getNamespace(), typeName);
     } catch (IllegalArgumentException | NullPointerException e) {
       throw new BadRequestException(e.getMessage());
     }
@@ -90,7 +89,7 @@ class ConversionHelpers {
           if (input == null || input.isEmpty()) {
             return null;
           }
-          return Id.fromString(input, Id.Program.class).toEntityId();
+          return ProgramId.fromString(input);
         }
       });
     } catch (IllegalArgumentException | NullPointerException e) {

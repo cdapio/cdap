@@ -33,6 +33,13 @@ public class ArtifactId extends NamespacedEntityId implements ParentedId<Namespa
 
   public ArtifactId(String namespace, String artifact, String version) {
     super(namespace, EntityType.ARTIFACT);
+    if (artifact == null) {
+      throw new NullPointerException("Artifact ID cannot be null.");
+    }
+    if (version == null) {
+      throw new NullPointerException("Version cannot be null.");
+    }
+    ensureValidId("artifact", artifact);
     this.artifact = artifact;
     this.version = version;
   }

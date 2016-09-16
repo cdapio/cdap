@@ -67,19 +67,49 @@ public abstract class EntityId implements IdCompatible {
   private static final Pattern idPattern = Pattern.compile("[a-zA-Z0-9_-]+");
   // Allow '.' and '$' for dataset ids since they can be fully qualified class names
   private static final Pattern datasetIdPattern = Pattern.compile("[$\\.a-zA-Z0-9_-]+");
+  // Only allow alphanumeric and _ character for namespace
+  private static final Pattern namespacePattern = Pattern.compile("[a-zA-Z0-9_]+");
+
+  public static void ensureValidId(String propertyName, String name) {
+    if (!isValidId(name)) {
+      throw new IllegalArgumentException(String.format("Invalid %s ID: %s. Should only contain alphanumeric " +
+                                                         "characters and _ or -.", propertyName, name));
+    }
+  }
 
   public static boolean isValidId(String name) {
     return idPattern.matcher(name).matches();
+  }
+
+  public static void ensureValidDatasetId(String propertyName, String datasetId) {
+    if (!isValidDatasetId(datasetId)) {
+      throw new IllegalArgumentException(String.format("Invalid %s ID: %s. Should only contain alphanumeric " +
+                                                         "characters, $, ., _, or -.", propertyName, datasetId));
+    }
   }
 
   public static boolean isValidDatasetId(String datasetId) {
     return datasetIdPattern.matcher(datasetId).matches();
   }
 
+  public static void ensureValidNamespace(String namespace) {
+    if (!isValidNamespace(namespace)) {
+      throw new IllegalArgumentException(String.format("Invalid namespace ID: %s. Should only contain alphanumeric " +
+                                                         "characters or _.", namespace));
+    }
+  }
+
+  public static boolean isValidNamespace(String namespace) {
+    return namespacePattern.matcher(namespace).matches();
+  }
+
   private final EntityType entity;
   private Vector<EntityId> hierarchy;
 
   protected EntityId(EntityType entity) {
+    if (entity == null) {
+      throw new NullPointerException("Entity type cannot be null.");
+    }
     this.entity = entity;
   }
 
