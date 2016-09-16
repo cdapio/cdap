@@ -616,7 +616,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       } catch (BadRequestException e) {
         issuedStops.add(Futures.immediateFuture(
           new BatchProgramResult(program, HttpResponseStatus.BAD_REQUEST.getCode(), e.getMessage())));
-      }App
+      }
     }
 
     List<BatchProgramResult> output = new ArrayList<>(programs.size());
