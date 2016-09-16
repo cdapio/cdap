@@ -295,7 +295,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         classpath.add("job.jar/classes");
 
         // Add the mapreduce application classpath at last
-        MapReduceContainerHelper.getMapReduceClassPath(mapredConf, classpath);
+        MapReduceContainerHelper.addMapReduceClassPath(mapredConf, classpath);
 
         mapredConf.set(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH, Joiner.on(",").join(classpath));
         mapredConf.set(YarnConfiguration.YARN_APPLICATION_CLASSPATH, Joiner.on(",").join(classpath));
@@ -1054,7 +1054,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   /**
-   * Creates a launcher jar.
+   * Creates a launcher jar that contains the MR AM main class and the MR task main class. It is for ClassLoader
+   * construction before delegating the actual execution to the actual MR main classes.
    *
    * @see MapReduceContainerLauncher
    * @see ContainerLauncherGenerator
