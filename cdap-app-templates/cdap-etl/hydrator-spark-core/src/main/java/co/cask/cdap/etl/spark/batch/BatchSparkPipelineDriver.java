@@ -39,10 +39,9 @@ import com.google.gson.GsonBuilder;
 import org.apache.spark.api.java.JavaSparkContext;
 
 import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 
 /**
@@ -89,8 +88,8 @@ public class BatchSparkPipelineDriver extends SparkPipelineDriver
     BatchPhaseSpec phaseSpec = GSON.fromJson(sec.getSpecification().getProperty(Constants.PIPELINEID),
                                              BatchPhaseSpec.class);
 
-    try (InputStream is = new FileInputStream(sec.getLocalizationContext().getLocalFile("HydratorSpark.config"))) {
-      BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
+    Path configFile = sec.getLocalizationContext().getLocalFile("HydratorSpark.config").toPath();
+    try (BufferedReader reader = Files.newBufferedReader(configFile, StandardCharsets.UTF_8)) {
       String object = reader.readLine();
       SparkBatchSourceSinkFactoryInfo sourceSinkInfo = GSON.fromJson(object, SparkBatchSourceSinkFactoryInfo.class);
       sourceFactory = sourceSinkInfo.getSparkBatchSourceFactory();
