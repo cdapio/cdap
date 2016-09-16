@@ -51,20 +51,6 @@ public class RemoteRuntimeStoreHandler extends AbstractRemoteSystemOpsHandler {
   }
 
   @POST
-  @Path("/compareAndSetStatus")
-  public void compareAndSetStatus(HttpRequest request, HttpResponder responder) throws Exception {
-    Iterator<MethodArgument> arguments = parseArguments(request);
-
-    ProgramId program = deserializeNext(arguments);
-    String pid = deserializeNext(arguments);
-    ProgramRunStatus expectedStatus = deserializeNext(arguments);
-    ProgramRunStatus updateStatus = deserializeNext(arguments);
-    store.compareAndSetStatus(program, pid, expectedStatus, updateStatus);
-
-    responder.sendStatus(HttpResponseStatus.OK);
-  }
-
-  @POST
   @Path("/setStart")
   public void setStart(HttpRequest request, HttpResponder responder) throws Exception {
     Iterator<MethodArgument> arguments = parseArguments(request);

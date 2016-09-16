@@ -44,12 +44,6 @@ public class RemoteRuntimeStore extends RemoteOpsClient implements RuntimeStore 
   }
 
   @Override
-  public void compareAndSetStatus(ProgramId id, String pid, ProgramRunStatus expectedStatus,
-                                  ProgramRunStatus newStatus) {
-    executeRequest("compareAndSetStatus", id, pid, expectedStatus, newStatus);
-  }
-
-  @Override
   public void setStart(ProgramId id, String pid, long startTime, @Nullable String twillRunId,
                        Map<String, String> runtimeArgs, Map<String, String> systemArgs) {
     executeRequest("setStart", id, pid, startTime, twillRunId, runtimeArgs, systemArgs);
