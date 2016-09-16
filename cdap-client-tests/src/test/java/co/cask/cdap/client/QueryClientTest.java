@@ -48,7 +48,8 @@ import java.util.concurrent.ExecutionException;
 public class QueryClientTest extends AbstractClientTest {
 
   @ClassRule
-  public static final SingletonExternalResource STANDALONE = new SingletonExternalResource(new StandaloneTester());
+  public static final SingletonExternalResource STANDALONE = new SingletonExternalResource(
+    new StandaloneTester(Constants.Explore.EXPLORE_ENABLED, true));
 
   private static final Logger LOG = LoggerFactory.getLogger(QueryClientTest.class);
 

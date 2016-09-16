@@ -57,7 +57,7 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
   }
 
   /**
-   * Create a namespace in the File System and Hive.
+   * Create a namespace in the File System and Hive. The hive database is only created for non-default namespaces.
    *
    * @param namespaceMeta {@link NamespaceMeta} for the namespace to create
    * @throws IOException if there are errors while creating the namespace in the File System
@@ -69,7 +69,9 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
 
     createLocation(namespaceMeta);
 
-    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
+    // only create non-default namespaces in Hive
+    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED) &&
+      !NamespaceId.DEFAULT.equals(namespaceMeta.getNamespaceId())) {
       try {
         exploreFacade.createNamespace(namespaceMeta);
       } catch (ExploreException | SQLException e) {
@@ -93,7 +95,7 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
 
     deleteLocation(namespaceId);
 
-    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
+    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED) && !NamespaceId.DEFAULT.equals(namespaceId)) {
       exploreFacade.removeNamespace(namespaceId.toId());
     }
   }
