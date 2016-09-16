@@ -83,6 +83,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
@@ -95,6 +96,7 @@ public class UnitTestManager implements TestManager {
 
   private static final ClassAcceptor CLASS_ACCEPTOR = new ClassAcceptor() {
     final Set<String> visibleResources = ProgramResources.getVisibleResources();
+    private final AtomicBoolean logWarnOnce = new AtomicBoolean();
 
     @Override
     public boolean accept(String className, URL classUrl, URL classPathUrl) {
@@ -112,7 +114,9 @@ public class UnitTestManager implements TestManager {
         // If it is loading by spark framework, don't include it in the app JAR
         return !SparkRuntimeUtils.SPARK_PROGRAM_CLASS_LOADER_FILTER.acceptResource(resourceName);
       } catch (ClassNotFoundException e) {
-        LOG.warn("Spark will not be available for unit tests.", e);
+        if (logWarnOnce.compareAndSet(false, true)) {
+          LOG.warn("Spark will not be available for unit tests.");
+        }
         return true;
       }
     }
