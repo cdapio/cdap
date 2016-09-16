@@ -73,7 +73,7 @@ public class EntityExistenceTest {
     artifactRepository.addArtifact(ARTIFACT.toId(), artifactFile);
     AppFabricTestHelper.deployApplication(NAMESPACE.toId(), AllProgramsApp.class, null, cConf);
     StreamAdmin streamAdmin = injector.getInstance(StreamAdmin.class);
-    streamAdmin.createOrUpdateView(VIEW.toId(), new ViewSpecification(new FormatSpecification("csv", null)));
+    streamAdmin.createOrUpdateView(VIEW, new ViewSpecification(new FormatSpecification("csv", null)));
   }
 
   @Test

@@ -21,7 +21,6 @@ import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.audit.payload.access.AccessPayload;
 import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.EntityIdCompatible;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import org.slf4j.Logger;
@@ -52,8 +51,8 @@ public final class AuditPublishers {
    * @param accessType access type
    * @param accessor the entity accessing entityId
    */
-  public static void publishAccess(@Nullable AuditPublisher publisher, EntityIdCompatible entityId,
-                                   AccessType accessType, EntityIdCompatible accessor) {
+  public static void publishAccess(@Nullable AuditPublisher publisher, EntityId entityId,
+                                   AccessType accessType, EntityId accessor) {
     if (publisher == null) {
       logWarning();
       return;
@@ -70,27 +69,27 @@ public final class AuditPublishers {
 
     switch (accessType) {
       case READ:
-        publisher.publish(entityId.toEntityId(), AuditType.ACCESS,
+        publisher.publish(entityId, AuditType.ACCESS,
                           new AccessPayload(co.cask.cdap.proto.audit.payload.access.AccessType.READ,
-                                            accessor.toEntityId()));
+                                            accessor));
         break;
       case WRITE:
-        publisher.publish(entityId.toEntityId(), AuditType.ACCESS,
+        publisher.publish(entityId, AuditType.ACCESS,
                           new AccessPayload(co.cask.cdap.proto.audit.payload.access.AccessType.WRITE,
-                                            accessor.toEntityId()));
+                                            accessor));
         break;
       case READ_WRITE:
-        publisher.publish(entityId.toEntityId(), AuditType.ACCESS,
+        publisher.publish(entityId, AuditType.ACCESS,
                           new AccessPayload(co.cask.cdap.proto.audit.payload.access.AccessType.READ,
-                                            accessor.toEntityId()));
-        publisher.publish(entityId.toEntityId(), AuditType.ACCESS,
+                                            accessor));
+        publisher.publish(entityId, AuditType.ACCESS,
                           new AccessPayload(co.cask.cdap.proto.audit.payload.access.AccessType.WRITE,
-                                            accessor.toEntityId()));
+                                            accessor));
         break;
       case UNKNOWN:
-        publisher.publish(entityId.toEntityId(), AuditType.ACCESS,
+        publisher.publish(entityId, AuditType.ACCESS,
                           new AccessPayload(co.cask.cdap.proto.audit.payload.access.AccessType.UNKNOWN,
-                                            accessor.toEntityId()));
+                                            accessor));
         break;
     }
   }
@@ -127,21 +126,21 @@ public final class AuditPublishers {
    * Contains the accessed entity info and the access type.
    */
   private static class AccessAuditInfo {
-    private final EntityIdCompatible accessorEntity;
-    private final EntityIdCompatible accessedEntity;
+    private final EntityId accessorEntity;
+    private final EntityId accessedEntity;
     private final AccessType accessType;
 
-    AccessAuditInfo(EntityIdCompatible accessorEntity, EntityIdCompatible accessedEntity, AccessType accessType) {
+    AccessAuditInfo(EntityId accessorEntity, EntityId accessedEntity, AccessType accessType) {
       this.accessorEntity = accessorEntity;
       this.accessedEntity = accessedEntity;
       this.accessType = accessType;
     }
 
-    public EntityIdCompatible getAccessorEntity() {
+    public EntityId getAccessorEntity() {
       return accessorEntity;
     }
 
-    public EntityIdCompatible getAccessedEntity() {
+    public EntityId getAccessedEntity() {
       return accessedEntity;
     }
 

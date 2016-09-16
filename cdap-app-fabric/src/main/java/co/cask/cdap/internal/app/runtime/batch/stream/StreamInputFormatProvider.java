@@ -87,7 +87,7 @@ public class StreamInputFormatProvider implements InputFormatProvider {
   public Map<String, String> getInputFormatConfiguration() {
     Id.Stream streamId = Id.Stream.from(namespaceId, streamBatchReadable.getStreamName());
     try {
-      StreamConfig streamConfig = streamAdmin.getConfig(streamId);
+      StreamConfig streamConfig = streamAdmin.getConfig(streamId.toEntityId());
       Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
                                                                  StreamUtils.getGeneration(streamConfig));
       Configuration hConf = new Configuration();

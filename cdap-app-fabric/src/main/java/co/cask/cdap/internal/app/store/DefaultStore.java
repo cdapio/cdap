@@ -125,8 +125,8 @@ public class DefaultStore implements Store {
    * @param framework framework to add types and datasets to
    */
   public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
-    framework.addInstance(Table.class.getName(), APP_META_INSTANCE_ID.toId(), DatasetProperties.EMPTY);
-    framework.addInstance(Table.class.getName(), WORKFLOW_STATS_INSTANCE_ID.toId(), DatasetProperties.EMPTY);
+    framework.addInstance(Table.class.getName(), APP_META_INSTANCE_ID, DatasetProperties.EMPTY);
+    framework.addInstance(Table.class.getName(), WORKFLOW_STATS_INSTANCE_ID, DatasetProperties.EMPTY);
   }
 
   private AppMetadataStore getAppMetadataStore(DatasetContext datasetContext) throws IOException,
@@ -817,8 +817,8 @@ public class DefaultStore implements Store {
 
   @VisibleForTesting
   void clear() throws Exception {
-    truncate(dsFramework.getAdmin(APP_META_INSTANCE_ID.toId(), null));
-    truncate(dsFramework.getAdmin(WORKFLOW_STATS_INSTANCE_ID.toId(), null));
+    truncate(dsFramework.getAdmin(APP_META_INSTANCE_ID, null));
+    truncate(dsFramework.getAdmin(WORKFLOW_STATS_INSTANCE_ID, null));
   }
 
   private void truncate(DatasetAdmin admin) throws Exception {

@@ -58,8 +58,8 @@ import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
@@ -197,7 +197,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
                                "%s service is not up after 5 seconds", service);
 
-    createNamespace(Id.Namespace.SYSTEM);
+    createNamespace(NamespaceId.SYSTEM);
     createNamespace(NAMESPACE_ID);
   }
 
@@ -209,37 +209,37 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     DatasetFramework framework = getFramework();
     // Adding module to system namespace should fail
     try {
-      framework.addModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, "keyValue"),
+      framework.addModule(NamespaceId.SYSTEM.datasetModule("keyValue"),
                           new SingleTypeModule(SimpleKVTable.class));
       Assert.fail("Should not be able to add a module to system namespace");
     } catch (DatasetManagementException e) {
       // expected
     }
     try {
-      framework.deleteModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, "orderedTable-memory"));
+      framework.deleteModule(NamespaceId.SYSTEM.datasetModule("orderedTable-memory"));
       Assert.fail("Should not be able to delete a default module.");
     } catch (DatasetManagementException e) {
       // expected
     }
     try {
-      framework.deleteAllModules(Id.Namespace.SYSTEM);
+      framework.deleteAllModules(NamespaceId.SYSTEM);
       Assert.fail("Should not be able to delete modules from system namespace");
     } catch (DatasetManagementException e) {
       // expected
     }
   }
 
-  private void createNamespace (Id.Namespace namespaceId) throws Exception {
+  private void createNamespace (NamespaceId namespaceId) throws Exception {
     // since the namespace admin here is an in memory one we need to create the location explicitly
-    namespacedLocationFactory.get(namespaceId).mkdirs();
+    namespacedLocationFactory.get(namespaceId.toId()).mkdirs();
     // the framework.delete looks up namespace config through namespaceadmin add the meta there too.
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespaceId).build());
   }
 
-  private void deleteNamespace (Id.Namespace namespaceId) throws Exception {
+  private void deleteNamespace (NamespaceId namespaceId) throws Exception {
     // since the namespace admin here is an in memory one we need to delete the location explicitly
-    namespacedLocationFactory.get(namespaceId).delete(true);
-    namespaceAdmin.delete(namespaceId);
+    namespacedLocationFactory.get(namespaceId.toId()).delete(true);
+    namespaceAdmin.delete(namespaceId.toId());
   }
 
   @After
@@ -247,7 +247,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     // since we stored namespace meta through admin so that framework.delete can lookup namespaceconfig clean the
     // meta from there too
     deleteNamespace(NAMESPACE_ID);
-    deleteNamespace(Id.Namespace.SYSTEM);
+    deleteNamespace(NamespaceId.SYSTEM);
     Futures.getUnchecked(Services.chainStop(service, opExecutorService, txManager));
   }
 

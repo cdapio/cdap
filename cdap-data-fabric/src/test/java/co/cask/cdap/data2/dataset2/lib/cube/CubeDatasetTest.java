@@ -26,7 +26,7 @@ import co.cask.cdap.api.dataset.lib.cube.CubeQuery;
 import co.cask.cdap.api.dataset.lib.cube.DimensionValue;
 import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -64,7 +64,7 @@ public class CubeDatasetTest extends AbstractCubeTest {
   private Cube getCubeInternal(String name, int[] resolutions,
                                   Map<String, ? extends Aggregation> aggregations) throws Exception {
     DatasetProperties props = configureProperties(resolutions, aggregations);
-    Id.DatasetInstance id = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, name);
+    DatasetId id = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset(name);
     if (dsFrameworkUtil.getInstance(id) == null) {
       dsFrameworkUtil.createInstance(Cube.class.getName(), id, props);
     }

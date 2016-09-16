@@ -20,7 +20,10 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.data2.dataset2.ForwardingDatasetFramework;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.apache.tephra.Transaction;
@@ -51,7 +54,7 @@ public class UsageRegistryTest extends UsageDatasetTest {
       }, new ForwardingDatasetFramework(dsFrameworkUtil.getFramework()) {
       @Nullable
       @Override
-      public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
+      public <T extends Dataset> T getDataset(DatasetId datasetInstanceId,
                                               @Nullable Map<String, String> arguments,
                                               @Nullable ClassLoader classLoader)
         throws DatasetManagementException, IOException {
@@ -103,7 +106,7 @@ public class UsageRegistryTest extends UsageDatasetTest {
     Assert.assertEquals(ImmutableSet.of(flow12, flow21, flow22), registry.getPrograms(stream1));
 
     // unregister app
-    registry.unregister(flow11.getApplication());
+    registry.unregister(flow11.getParent());
 
     // validate usage for that app is gone
     Assert.assertEquals(ImmutableSet.of(), registry.getDatasets(flow11));
@@ -151,49 +154,49 @@ public class UsageRegistryTest extends UsageDatasetTest {
     }
 
     @Override
-    public void register(Id.Program programId, Id.DatasetInstance datasetInstanceId) {
+    public void register(ProgramId programId, DatasetId datasetInstanceId) {
       registerCount++;
       uds.register(programId, datasetInstanceId);
     }
 
     @Override
-    public void register(Id.Program programId, Id.Stream streamId) {
+    public void register(ProgramId programId, StreamId streamId) {
       registerCount++;
       uds.register(programId, streamId);
     }
 
     @Override
-    public void unregister(Id.Application applicationId) {
+    public void unregister(ApplicationId applicationId) {
       uds.unregister(applicationId);
     }
 
     @Override
-    public Set<Id.DatasetInstance> getDatasets(Id.Program programId) {
+    public Set<DatasetId> getDatasets(ProgramId programId) {
       return uds.getDatasets(programId);
     }
 
     @Override
-    public Set<Id.DatasetInstance> getDatasets(Id.Application applicationId) {
+    public Set<DatasetId> getDatasets(ApplicationId applicationId) {
       return uds.getDatasets(applicationId);
     }
 
     @Override
-    public Set<Id.Stream> getStreams(Id.Program programId) {
+    public Set<StreamId> getStreams(ProgramId programId) {
       return uds.getStreams(programId);
     }
 
     @Override
-    public Set<Id.Stream> getStreams(Id.Application applicationId) {
+    public Set<StreamId> getStreams(ApplicationId applicationId) {
       return uds.getStreams(applicationId);
     }
 
     @Override
-    public Set<Id.Program> getPrograms(Id.DatasetInstance datasetInstanceId) {
+    public Set<ProgramId> getPrograms(DatasetId datasetInstanceId) {
       return uds.getPrograms(datasetInstanceId);
     }
 
     @Override
-    public Set<Id.Program> getPrograms(Id.Stream streamId) {
+    public Set<ProgramId> getPrograms(StreamId streamId) {
       return uds.getPrograms(streamId);
     }
 

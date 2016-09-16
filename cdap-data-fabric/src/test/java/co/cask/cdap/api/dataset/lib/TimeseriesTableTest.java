@@ -19,7 +19,7 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionFailureException;
 import org.junit.AfterClass;
@@ -41,8 +41,7 @@ public class TimeseriesTableTest {
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
-  private static final Id.DatasetInstance metricsTableInstance =
-    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "metricsTable");
+  private static final DatasetId metricsTableInstance = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("metricsTable");
   private static TimeseriesTable table;
 
   @BeforeClass

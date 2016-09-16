@@ -20,7 +20,7 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionExecutor;
 
@@ -37,5 +37,5 @@ public interface DataFabricFacade extends QueueClientFactory {
 
   TransactionExecutor createTransactionExecutor();
 
-  StreamConsumer createStreamConsumer(Id.Stream streamName, ConsumerConfig consumerConfig) throws IOException;
+  StreamConsumer createStreamConsumer(StreamId streamName, ConsumerConfig consumerConfig) throws IOException;
 }

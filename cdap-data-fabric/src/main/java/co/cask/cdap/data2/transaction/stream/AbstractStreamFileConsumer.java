@@ -29,7 +29,7 @@ import co.cask.cdap.data2.queue.DequeueResult;
 import co.cask.cdap.data2.queue.DequeueStrategy;
 import co.cask.cdap.data2.transaction.queue.ConsumerEntryState;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Stopwatch;
@@ -140,7 +140,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
   protected final byte[] stateColumnName;
 
   private final long txTimeoutNano;
-  private final Id.Stream streamName;
+  private final StreamId streamId;
   private final StreamConfig streamConfig;
   private final ConsumerConfig consumerConfig;
   private final StreamConsumerStateStore consumerStateStore;
@@ -181,7 +181,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
 
     this.txTimeoutNano = TimeUnit.SECONDS.toNanos(cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT,
                                                                TxConstants.Manager.DEFAULT_TX_TIMEOUT));
-    this.streamName = streamConfig.getStreamId();
+    this.streamId = streamConfig.getStreamId();
     this.streamConfig = streamConfig;
     this.consumerConfig = consumerConfig;
     this.consumerStateStore = consumerStateStore;
@@ -210,8 +210,8 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
   protected abstract StateScanner scanStates(byte[] startRow, byte[] endRow) throws IOException;
 
   @Override
-  public final Id.Stream getStreamId() {
-    return streamName;
+  public final StreamId getStreamId() {
+    return streamId;
   }
 
   @Override

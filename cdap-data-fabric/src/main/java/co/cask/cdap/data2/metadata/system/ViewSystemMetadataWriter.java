@@ -22,8 +22,8 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.format.RecordFormats;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ViewSpecification;
+import co.cask.cdap.proto.id.StreamViewId;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,15 +32,15 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * A {@link AbstractSystemMetadataWriter} for an {@link Id.Stream.View view}.
+ * A {@link AbstractSystemMetadataWriter} for an {@link StreamViewId view}.
  */
 public class ViewSystemMetadataWriter extends AbstractSystemMetadataWriter {
   private static final Logger LOG = LoggerFactory.getLogger(ViewSystemMetadataWriter.class);
-  private final Id.Stream.View viewId;
+  private final StreamViewId viewId;
   private final ViewSpecification viewSpec;
 
-  public ViewSystemMetadataWriter(MetadataStore metadataStore, Id.Stream.View viewId, ViewSpecification viewSpec) {
-    super(metadataStore, viewId.toEntityId());
+  public ViewSystemMetadataWriter(MetadataStore metadataStore, StreamViewId viewId, ViewSpecification viewSpec) {
+    super(metadataStore, viewId);
     this.viewId = viewId;
     this.viewSpec = viewSpec;
   }
@@ -54,8 +54,8 @@ public class ViewSystemMetadataWriter extends AbstractSystemMetadataWriter {
   @Override
   protected String[] getSystemTagsToAdd() {
     return new String[] {
-      viewId.getId(),
-      viewId.getStreamId()
+      viewId.getEntityName(),
+      viewId.getStream()
     };
   }
 

@@ -19,8 +19,9 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Throwables;
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -55,21 +56,21 @@ public abstract class StreamCoordinatorTestBase {
   protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws IOException {
     // FileStreamAdmin expects namespace directory to exist.
     // Simulate namespace create
-    namespacedLocationFactory.get(Id.Namespace.DEFAULT).mkdirs();
+    namespacedLocationFactory.get(NamespaceId.DEFAULT.toId()).mkdirs();
   }
 
   @Test
   public void testGeneration() throws Exception {
     final StreamAdmin streamAdmin = getStreamAdmin();
     final String streamName = "testGen";
-    final Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
+    final StreamId streamId = NamespaceId.DEFAULT.stream(streamName);
     streamAdmin.create(streamId);
 
     StreamCoordinatorClient coordinator = getStreamCoordinator();
     final CountDownLatch genIdChanged = new CountDownLatch(1);
     coordinator.addListener(streamId, new StreamPropertyListener() {
       @Override
-      public void generationChanged(Id.Stream streamId, int generation) {
+      public void generationChanged(StreamId streamId, int generation) {
         if (generation == 10) {
           genIdChanged.countDown();
         }
@@ -102,7 +103,7 @@ public abstract class StreamCoordinatorTestBase {
   public void testConfig() throws Exception {
     final StreamAdmin streamAdmin = getStreamAdmin();
     final String streamName = "testConfig";
-    final Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
+    final StreamId streamId = NamespaceId.DEFAULT.stream(streamName);
     streamAdmin.create(streamId);
 
 
@@ -111,12 +112,12 @@ public abstract class StreamCoordinatorTestBase {
     final BlockingDeque<Long> ttls = new LinkedBlockingDeque<>();
     coordinator.addListener(streamId, new StreamPropertyListener() {
       @Override
-      public void thresholdChanged(Id.Stream streamId, int threshold) {
+      public void thresholdChanged(StreamId streamId, int threshold) {
         thresholds.add(threshold);
       }
 
       @Override
-      public void ttlChanged(Id.Stream streamId, long ttl) {
+      public void ttlChanged(StreamId streamId, long ttl) {
         ttls.add(ttl);
       }
     });
@@ -161,7 +162,7 @@ public abstract class StreamCoordinatorTestBase {
 
   @Test
   public void testDeleteStream() throws Exception {
-    final Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, "test");
+    final StreamId streamId = NamespaceId.DEFAULT.stream("test");
 
     StreamAdmin streamAdmin = getStreamAdmin();
     streamAdmin.create(streamId);
@@ -173,7 +174,7 @@ public abstract class StreamCoordinatorTestBase {
     final CountDownLatch latch = new CountDownLatch(1);
     streamCoordinator.addListener(streamId, new StreamPropertyListener() {
       @Override
-      public void deleted(Id.Stream id) {
+      public void deleted(StreamId id) {
         if (id.equals(streamId)) {
           latch.countDown();
         }

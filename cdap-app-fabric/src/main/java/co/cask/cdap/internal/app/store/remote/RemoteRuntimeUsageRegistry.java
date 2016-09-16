@@ -21,7 +21,10 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.internal.remote.RemoteOpsClient;
 import co.cask.cdap.data2.registry.DatasetUsageKey;
 import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -42,35 +45,35 @@ public class RemoteRuntimeUsageRegistry extends RemoteOpsClient implements Runti
   }
 
   @Override
-  public void registerAll(Iterable<? extends Id> users, Id.Stream streamId) {
-    for (Id user : users) {
+  public void registerAll(Iterable<? extends EntityId> users, StreamId streamId) {
+    for (EntityId user : users) {
       register(user, streamId);
     }
   }
 
   @Override
-  public void register(Id user, Id.Stream streamId) {
-    if (user instanceof Id.Program) {
-      register((Id.Program) user, streamId);
+  public void register(EntityId user, StreamId streamId) {
+    if (user instanceof ProgramId) {
+      register((ProgramId) user, streamId);
     }
   }
 
   @Override
-  public void registerAll(Iterable<? extends Id> users, Id.DatasetInstance datasetId) {
-    for (Id user : users) {
+  public void registerAll(Iterable<? extends EntityId> users, DatasetId datasetId) {
+    for (EntityId user : users) {
       register(user, datasetId);
     }
   }
 
   @Override
-  public void register(Id user, Id.DatasetInstance datasetId) {
-    if (user instanceof Id.Program) {
-      register((Id.Program) user, datasetId);
+  public void register(EntityId user, DatasetId datasetId) {
+    if (user instanceof ProgramId) {
+      register((ProgramId) user, datasetId);
     }
   }
 
   @Override
-  public void register(Id.Program programId, Id.DatasetInstance datasetInstanceId) {
+  public void register(ProgramId programId, DatasetId datasetInstanceId) {
     if (alreadyRegistered(datasetInstanceId, programId)) {
       return;
     }
@@ -78,11 +81,11 @@ public class RemoteRuntimeUsageRegistry extends RemoteOpsClient implements Runti
   }
 
   @Override
-  public void register(Id.Program programId, Id.Stream streamId) {
+  public void register(ProgramId programId, StreamId streamId) {
     executeRequest("registerStream", programId, streamId);
   }
 
-  private boolean alreadyRegistered(Id.DatasetInstance dataset, Id.Program owner) {
+  private boolean alreadyRegistered(DatasetId dataset, ProgramId owner) {
     return registered.putIfAbsent(new DatasetUsageKey(dataset, owner), true) != null;
   }
 }

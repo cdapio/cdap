@@ -525,7 +525,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       DatasetId instanceId = new DatasetId(workflowRunId.getNamespace(), localInstanceName);
       DatasetCreationSpec instanceSpec = workflowSpec.getLocalDatasetSpecs().get(entry.getKey());
       LOG.debug("Adding Workflow local dataset instance: {}", localInstanceName);
-      datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId.toId(),
+      datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId,
                                    addLocalDatasetProperty(instanceSpec.getProperties()));
     }
   }
@@ -542,7 +542,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       DatasetId instanceId = new DatasetId(workflowRunId.getNamespace(), localInstanceName);
       LOG.debug("Deleting Workflow local dataset instance: {}", localInstanceName);
       try {
-        datasetFramework.deleteInstance(instanceId.toId());
+        datasetFramework.deleteInstance(instanceId);
       } catch (Throwable t) {
         LOG.warn("Failed to delete the Workflow local dataset instance {}", localInstanceName, t);
       }

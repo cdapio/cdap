@@ -16,7 +16,8 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.Multimap;
 
 import java.util.List;
@@ -32,35 +33,35 @@ public interface StreamMetaStore {
   /**
    * Adds a stream to the meta store.
    */
-  void addStream(Id.Stream streamId) throws Exception;
+  void addStream(StreamId streamId) throws Exception;
 
   /**
    * Adds a stream to the meta store (or updates the description of stream, if stream exists).
    */
-  void addStream(Id.Stream streamId, @Nullable String description) throws Exception;
+  void addStream(StreamId streamId, @Nullable String description) throws Exception;
 
   /**
-   * Fetches the {@link StreamSpecification} of the given {@link Id.Stream}.
+   * Fetches the {@link StreamSpecification} of the given {@link StreamId}.
    */
-  StreamSpecification getStream(Id.Stream streamId) throws Exception;
+  StreamSpecification getStream(StreamId streamId) throws Exception;
 
   /**
    * Removes a stream from the meta store.
    */
-  void removeStream(Id.Stream streamId) throws Exception;
+  void removeStream(StreamId streamId) throws Exception;
 
   /**
    * Checks if a stream exists in the meta store.
    */
-  boolean streamExists(Id.Stream streamId) throws Exception;
+  boolean streamExists(StreamId streamId) throws Exception;
 
   /**
    * List all stream specifications stored for the {@code namespaceId}.
    */
-  List<StreamSpecification> listStreams(Id.Namespace namespaceId) throws Exception;
+  List<StreamSpecification> listStreams(NamespaceId namespaceId) throws Exception;
 
   /**
-   * List all stream specifications with their associated {@link Id.Namespace}.
+   * List all stream specifications with their associated {@link NamespaceId}.
    */
-  Multimap<Id.Namespace, StreamSpecification> listStreams() throws Exception;
+  Multimap<NamespaceId, StreamSpecification> listStreams() throws Exception;
 }

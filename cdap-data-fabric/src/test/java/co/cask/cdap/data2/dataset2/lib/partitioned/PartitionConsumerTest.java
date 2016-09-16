@@ -34,7 +34,7 @@ import co.cask.cdap.api.dataset.lib.partitioned.PartitionConsumerResult;
 import co.cask.cdap.api.dataset.lib.partitioned.ProcessState;
 import co.cask.cdap.api.dataset.lib.partitioned.StatePersistor;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -75,10 +75,8 @@ public class PartitionConsumerTest {
     .addLongField("l")
     .build();
 
-  private static final Id.DatasetInstance pfsInstance =
-    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "pfs");
-  private static final Id.DatasetInstance pfsExternalInstance =
-    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "ext");
+  private static final DatasetId pfsInstance = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("pfs");
+  private static final DatasetId pfsExternalInstance = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("ext");
   private static Location pfsBaseLocation;
 
   @Before

@@ -33,6 +33,8 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -286,8 +288,8 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     deploy(AppWithStreamSizeSchedule.class, Constants.Gateway.API_VERSION_3_TOKEN, OTHER_NAME);
     deploy(AppForUnrecoverableResetTest.class, Constants.Gateway.API_VERSION_3_TOKEN, OTHER_NAME);
 
-    Id.DatasetInstance myDataset = Id.DatasetInstance.from(NAME, "myds");
-    Id.Stream myStream = Id.Stream.from(OTHER_NAME, "stream");
+    DatasetId myDataset = new DatasetId(NAME, "myds");
+    StreamId myStream = new StreamId(OTHER_NAME, "stream");
 
     Assert.assertTrue(dsFramework.hasInstance(myDataset));
     Assert.assertTrue(streamAdmin.exists(myStream));
@@ -335,7 +337,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, NAME);
     deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, NAME);
 
-    Id.DatasetInstance myDataset = Id.DatasetInstance.from(NAME, "myds");
+    DatasetId myDataset = new DatasetId(NAME, "myds");
 
     Assert.assertTrue(dsFramework.hasInstance(myDataset));
     Id.Program program = Id.Program.from(NAME_ID, "AppWithServices", ProgramType.SERVICE, "NoOpService");

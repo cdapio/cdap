@@ -19,7 +19,7 @@ package co.cask.cdap.data2.metadata.system;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -74,7 +74,7 @@ public class DatasetSystemMetadataWriterTest {
 
   private void assertDatasetSchema(String expected, DatasetProperties properties) {
     DatasetSystemMetadataWriter metadataWriter =
-      new DatasetSystemMetadataWriter(new NoOpMetadataStore(), Id.DatasetInstance.from("ns1", "avro1"),
+      new DatasetSystemMetadataWriter(new NoOpMetadataStore(), new DatasetId("ns1", "avro1"),
                                       properties, null, null, null);
     Assert.assertEquals(expected, metadataWriter.getSchemaToAdd());
   }

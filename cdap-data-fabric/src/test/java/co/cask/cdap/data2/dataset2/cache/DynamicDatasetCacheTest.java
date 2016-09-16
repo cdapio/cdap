@@ -24,7 +24,6 @@ import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -63,10 +62,8 @@ public abstract class DynamicDatasetCacheTest {
   private static final Map<String, String> C_ARGUMENTS = ImmutableMap.of("key", "c", "value", "c");
   private static final Map<String, String> X_ARGUMENTS = ImmutableMap.of("value", "x");
 
-  protected static final Id.Namespace NAMESPACE = DatasetFrameworkTestUtil.NAMESPACE_ID;
-  protected static final Id.Namespace NAMESPACE2 = DatasetFrameworkTestUtil.NAMESPACE2_ID;
-  protected static final NamespaceId NAMESPACE_ID = new NamespaceId(NAMESPACE.getId());
-  protected static final NamespaceId NAMESPACE2_ID = new NamespaceId(NAMESPACE2.getId());
+  protected static final NamespaceId NAMESPACE = DatasetFrameworkTestUtil.NAMESPACE_ID;
+  protected static final NamespaceId NAMESPACE2 = DatasetFrameworkTestUtil.NAMESPACE2_ID;
   protected static DatasetFramework dsFramework;
   protected static TransactionSystemClient txClient;
   protected DynamicDatasetCache cache;
@@ -74,25 +71,25 @@ public abstract class DynamicDatasetCacheTest {
   @BeforeClass
   public static void init() throws DatasetManagementException, IOException {
     dsFramework = dsFrameworkUtil.getFramework();
-    dsFramework.addModule(Id.DatasetModule.from(NAMESPACE, "testDataset"), new TestDatasetModule());
-    dsFramework.addModule(Id.DatasetModule.from(NAMESPACE2, "testDataset"), new TestDatasetModule());
+    dsFramework.addModule(NAMESPACE.datasetModule("testDataset"), new TestDatasetModule());
+    dsFramework.addModule(NAMESPACE2.datasetModule("testDataset"), new TestDatasetModule());
     txClient = new InMemoryTxSystemClient(dsFrameworkUtil.getTxManager());
-    dsFrameworkUtil.createInstance("testDataset", Id.DatasetInstance.from(NAMESPACE, "a"), DatasetProperties.EMPTY);
-    dsFrameworkUtil.createInstance("testDataset", Id.DatasetInstance.from(NAMESPACE, "b"), DatasetProperties.EMPTY);
-    dsFrameworkUtil.createInstance("testDataset", Id.DatasetInstance.from(NAMESPACE, "c"), DatasetProperties.EMPTY);
-    dsFrameworkUtil.createInstance("testDataset", Id.DatasetInstance.from(NAMESPACE2, "a2"), DatasetProperties.EMPTY);
-    dsFrameworkUtil.createInstance("testDataset", Id.DatasetInstance.from(NAMESPACE2, "c2"), DatasetProperties.EMPTY);
+    dsFrameworkUtil.createInstance("testDataset", NAMESPACE.dataset("a"), DatasetProperties.EMPTY);
+    dsFrameworkUtil.createInstance("testDataset", NAMESPACE.dataset("b"), DatasetProperties.EMPTY);
+    dsFrameworkUtil.createInstance("testDataset", NAMESPACE.dataset("c"), DatasetProperties.EMPTY);
+    dsFrameworkUtil.createInstance("testDataset", NAMESPACE2.dataset("a2"), DatasetProperties.EMPTY);
+    dsFrameworkUtil.createInstance("testDataset", NAMESPACE2.dataset("c2"), DatasetProperties.EMPTY);
   }
 
   @AfterClass
   public static void tearDown() throws IOException, DatasetManagementException {
-    dsFrameworkUtil.deleteInstance(Id.DatasetInstance.from(NAMESPACE, "a"));
-    dsFrameworkUtil.deleteInstance(Id.DatasetInstance.from(NAMESPACE, "b"));
-    dsFrameworkUtil.deleteInstance(Id.DatasetInstance.from(NAMESPACE, "c"));
-    dsFrameworkUtil.deleteInstance(Id.DatasetInstance.from(NAMESPACE2, "a2"));
-    dsFrameworkUtil.deleteInstance(Id.DatasetInstance.from(NAMESPACE2, "c2"));
-    dsFrameworkUtil.deleteModule(Id.DatasetModule.from(NAMESPACE, "testDataset"));
-    dsFrameworkUtil.deleteModule(Id.DatasetModule.from(NAMESPACE2, "testDataset"));
+    dsFrameworkUtil.deleteInstance(NAMESPACE.dataset("a"));
+    dsFrameworkUtil.deleteInstance(NAMESPACE.dataset("b"));
+    dsFrameworkUtil.deleteInstance(NAMESPACE.dataset("c"));
+    dsFrameworkUtil.deleteInstance(NAMESPACE2.dataset("a2"));
+    dsFrameworkUtil.deleteInstance(NAMESPACE2.dataset("c2"));
+    dsFrameworkUtil.deleteModule(NAMESPACE.datasetModule("testDataset"));
+    dsFrameworkUtil.deleteModule(NAMESPACE2.datasetModule("testDataset"));
   }
 
   @Before
@@ -134,9 +131,9 @@ public abstract class DynamicDatasetCacheTest {
     Assert.assertSame(b1, b2);
 
     // Test this for cross namespace access
-    TestDataset an2 = cache.getDataset(NAMESPACE2.getId(), "a2");
-    TestDataset a1n2 = cache.getDataset(NAMESPACE2.getId(), "a2");
-    TestDataset a2n2 = cache.getDataset(NAMESPACE2.getId(), "a2", A_ARGUMENTS);
+    TestDataset an2 = cache.getDataset(NAMESPACE2.getEntityName(), "a2");
+    TestDataset a1n2 = cache.getDataset(NAMESPACE2.getEntityName(), "a2");
+    TestDataset a2n2 = cache.getDataset(NAMESPACE2.getEntityName(), "a2", A_ARGUMENTS);
     Assert.assertSame(an2, a1n2);
     Assert.assertSame(an2, a2n2);
     Assert.assertNotSame(a, an2);
@@ -171,7 +168,7 @@ public abstract class DynamicDatasetCacheTest {
     Assert.assertEquals(a.getCurrentTransaction(), c.getCurrentTransaction());
 
     // another dataset from different namespace
-    TestDataset cn2 = cache.getDataset(NAMESPACE2.getId(), "c2", C_ARGUMENTS);
+    TestDataset cn2 = cache.getDataset(NAMESPACE2.getEntityName(), "c2", C_ARGUMENTS);
     Assert.assertEquals(an2.getCurrentTransaction(), cn2.getCurrentTransaction());
 
     // validate runtime arguments of c and c2
@@ -203,7 +200,7 @@ public abstract class DynamicDatasetCacheTest {
     // get b and c again, validate that they are the same
     TestDataset b3 = cache.getDataset("b", B_ARGUMENTS);
     TestDataset c1 = cache.getDataset("c", C_ARGUMENTS);
-    TestDataset c1n2 = cache.getDataset(NAMESPACE2.getId(), "c2", C_ARGUMENTS);
+    TestDataset c1n2 = cache.getDataset(NAMESPACE2.getEntityName(), "c2", C_ARGUMENTS);
     Assert.assertSame(b3, b);
     Assert.assertSame(c1, c);
     Assert.assertSame(c1n2, cn2);

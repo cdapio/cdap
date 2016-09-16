@@ -67,6 +67,7 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
@@ -585,8 +586,7 @@ ApplicationLifecycleService extends AbstractIdleService {
         @Override
         public Void call() throws Exception {
           for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
-            streamConsumerFactory.dropAll(Id.Stream.from(appId.getNamespace(), entry.getKey()),
-                                          namespace, entry.getValue());
+            streamConsumerFactory.dropAll(appId.getParent().stream(entry.getKey()), namespace, entry.getValue());
           }
           queueAdmin.dropAllForFlow(flowId);
           return null;
@@ -600,7 +600,7 @@ ApplicationLifecycleService extends AbstractIdleService {
     store.removeApplication(appId);
 
     try {
-      usageRegistry.unregister(idApplication);
+      usageRegistry.unregister(appId);
     } catch (Exception e) {
       LOG.warn("Failed to unregister usage of app: {}", appId, e);
     }

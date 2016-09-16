@@ -40,7 +40,7 @@ public class ViewExistenceVerifier implements EntityExistenceVerifier<StreamView
   public void ensureExists(StreamViewId viewId) throws StreamNotFoundException, ViewNotFoundException {
     boolean exists;
     try {
-      exists = streamAdmin.viewExists(viewId.toId());
+      exists = streamAdmin.viewExists(viewId);
     } catch (StreamNotFoundException e) {
       throw e;
     } catch (Exception e) {

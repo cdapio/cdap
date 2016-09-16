@@ -39,7 +39,7 @@ public class StreamExistenceVerifier implements EntityExistenceVerifier<StreamId
   public void ensureExists(StreamId streamId) throws StreamNotFoundException {
     boolean exists;
     try {
-      exists = streamAdmin.exists(streamId.toId());
+      exists = streamAdmin.exists(streamId);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

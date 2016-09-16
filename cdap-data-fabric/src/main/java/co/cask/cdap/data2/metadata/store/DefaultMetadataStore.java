@@ -29,8 +29,9 @@ import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
 import co.cask.cdap.data2.metadata.indexer.Indexer;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.audit.AuditType;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
@@ -64,10 +65,8 @@ import javax.annotation.Nullable;
  */
 public class DefaultMetadataStore implements MetadataStore {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultMetadataStore.class);
-  private static final Id.DatasetInstance BUSINESS_METADATA_INSTANCE_ID =
-    Id.DatasetInstance.from(Id.Namespace.SYSTEM, "business.metadata");
-  private static final Id.DatasetInstance SYSTEM_METADATA_INSTANCE_ID =
-    Id.DatasetInstance.from(Id.Namespace.SYSTEM, "system.metadata");
+  private static final DatasetId BUSINESS_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("business.metadata");
+  private static final DatasetId SYSTEM_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("system.metadata");
   private static final Map<String, String> EMPTY_PROPERTIES = ImmutableMap.of();
   private static final Set<String> EMPTY_TAGS = ImmutableSet.of();
   private static final int BATCH_SIZE = 1000;
@@ -549,7 +548,7 @@ public class DefaultMetadataStore implements MetadataStore {
     }
   }
 
-  private Id.DatasetInstance getMetadataDatasetInstance(MetadataScope scope) {
+  private DatasetId getMetadataDatasetInstance(MetadataScope scope) {
     return MetadataScope.USER == scope ? BUSINESS_METADATA_INSTANCE_ID : SYSTEM_METADATA_INSTANCE_ID;
   }
 

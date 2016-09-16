@@ -21,9 +21,10 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ViewDetail;
 import co.cask.cdap.proto.ViewSpecification;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Function;
@@ -72,9 +73,9 @@ public class StreamViewHttpHandler extends AbstractHttpHandler {
                              @PathParam("stream") String stream,
                              @PathParam("view") String view) throws Exception {
 
-    Id.Stream.View viewId;
+    StreamViewId viewId;
     try {
-      viewId = Id.Stream.View.from(namespace, stream, view);
+      viewId = new StreamViewId(namespace, stream, view);
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(e);
     }
@@ -100,7 +101,7 @@ public class StreamViewHttpHandler extends AbstractHttpHandler {
                      @PathParam("stream") String stream,
                      @PathParam("view") String view) throws Exception {
 
-    Id.Stream.View viewId = Id.Stream.View.from(namespace, stream, view);
+    StreamViewId viewId = new StreamViewId(namespace, stream, view);
     admin.deleteView(viewId);
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -111,12 +112,12 @@ public class StreamViewHttpHandler extends AbstractHttpHandler {
                    @PathParam("namespace") String namespace,
                    @PathParam("stream") String stream) throws Exception {
 
-    Id.Stream streamId = Id.Stream.from(namespace, stream);
+    StreamId streamId = new StreamId(namespace, stream);
     Collection<String> list = Collections2.transform(
-      admin.listViews(streamId), new Function<Id.Stream.View, String>() {
+      admin.listViews(streamId), new Function<StreamViewId, String>() {
         @Override
-        public String apply(Id.Stream.View input) {
-          return input.getId();
+        public String apply(StreamViewId input) {
+          return input.getEntityName();
         }
       });
     responder.sendJson(HttpResponseStatus.OK, list);
@@ -129,8 +130,8 @@ public class StreamViewHttpHandler extends AbstractHttpHandler {
                   @PathParam("stream") String stream,
                   @PathParam("view") String view) throws Exception {
 
-    Id.Stream.View viewId = Id.Stream.View.from(namespace, stream, view);
-    ViewDetail detail = new ViewDetail(viewId.getId(), admin.getView(viewId));
+    StreamViewId viewId = new StreamViewId(namespace, stream, view);
+    ViewDetail detail = new ViewDetail(viewId.getEntityName(), admin.getView(viewId));
     responder.sendJson(HttpResponseStatus.OK, detail, ViewDetail.class, GSON);
   }
 }

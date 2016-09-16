@@ -30,7 +30,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.DistributedScanner;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTable;
@@ -154,10 +154,10 @@ public final class HBaseStreamFileConsumer extends AbstractStreamFileConsumer {
     };
   }
 
-  private ExecutorService createScanExecutor(Id.Stream streamId) {
+  private ExecutorService createScanExecutor(StreamId streamId) {
     ThreadFactory threadFactory = Threads.newDaemonThreadFactory(String.format("stream-%s-%s-consumer-scanner-",
-                                                   streamId.getNamespaceId(),
-                                                   streamId.getId()));
+                                                                               streamId.getNamespace(),
+                                                                               streamId.getEntityName()));
     ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 20, 60, TimeUnit.SECONDS,
                                                          new SynchronousQueue<Runnable>(), threadFactory);
     executor.allowCoreThreadTimeOut(true);

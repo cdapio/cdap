@@ -28,7 +28,7 @@ import co.cask.cdap.internal.io.ReflectionPutWriter;
 import co.cask.cdap.internal.io.ReflectionRowReader;
 import co.cask.cdap.internal.io.ReflectionRowRecordReader;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.base.Objects;
 import com.google.common.reflect.TypeToken;
 import org.apache.tephra.TransactionAware;
@@ -47,8 +47,7 @@ public class ReflectionTableTest {
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
-  private static final Id.DatasetInstance users =
-    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "users");
+  private static final DatasetId users = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("users");
   private static final User SAMUEL = new User(
     "Samuel L.", "Jackson",
     123,

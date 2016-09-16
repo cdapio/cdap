@@ -63,7 +63,7 @@ final class DeletedDatasetMetadataRemover {
                                  MetadataSearchTargetType.DATASET, Id.DatasetInstance.class.getSimpleName(),
                                  entityId.getClass().getName());
         DatasetId datasetInstance = (DatasetId) entityId;
-        if (!dsFramework.hasInstance(datasetInstance.toId())) {
+        if (!dsFramework.hasInstance(datasetInstance)) {
           metadataStore.removeMetadata(datasetInstance);
           removedDatasets.add(datasetInstance.toId());
         }

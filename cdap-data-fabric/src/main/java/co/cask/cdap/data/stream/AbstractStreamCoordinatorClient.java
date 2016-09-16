@@ -23,7 +23,7 @@ import co.cask.cdap.common.conf.SyncPropertyUpdater;
 import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Objects;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -75,20 +75,20 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
   /**
    * Returns a {@link Lock} for performing exclusive operation for the given stream.
    */
-  protected abstract Lock getLock(Id.Stream streamId);
+  protected abstract Lock getLock(StreamId streamId);
 
   /**
    * Gets invoked when a stream of the given name is created.
    */
-  protected abstract void streamCreated(Id.Stream streamId);
+  protected abstract void streamCreated(StreamId streamId);
 
   /**
    * Gets invoked when a stream is deleted.
    */
-  protected abstract void streamDeleted(Id.Stream streamId);
+  protected abstract void streamDeleted(StreamId streamId);
 
   @Override
-  public StreamConfig createStream(Id.Stream streamId, Callable<StreamConfig> action) throws Exception {
+  public StreamConfig createStream(StreamId streamId, Callable<StreamConfig> action) throws Exception {
     Lock lock = getLock(streamId);
     lock.lock();
     try {
@@ -103,7 +103,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
   }
 
   @Override
-  public void updateProperties(Id.Stream streamId, Callable<CoordinatorStreamProperties> action) throws Exception {
+  public void updateProperties(StreamId streamId, Callable<CoordinatorStreamProperties> action) throws Exception {
     Lock lock = getLock(streamId);
     lock.lock();
     try {
@@ -114,7 +114,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
   }
 
   @Override
-  public void deleteStream(Id.Stream streamId, Runnable action) throws Exception {
+  public void deleteStream(StreamId streamId, Runnable action) throws Exception {
     Lock lock = getLock(streamId);
     lock.lock();
     try {
@@ -128,7 +128,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
   }
 
   @Override
-  public <T> T exclusiveAction(Id.Stream streamId, Callable<T> action) throws Exception {
+  public <T> T exclusiveAction(StreamId streamId, Callable<T> action) throws Exception {
     Lock lock = getLock(streamId);
     lock.lock();
     try {
@@ -139,7 +139,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
   }
 
   @Override
-  public Cancellable addListener(Id.Stream streamId, StreamPropertyListener listener) {
+  public Cancellable addListener(StreamId streamId, StreamPropertyListener listener) {
     return propertyStore.addChangeListener(streamId.toString(), new StreamPropertyChangeListener(listener));
   }
 
@@ -184,7 +184,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
   /**
    * Updates stream properties in the property store.
    */
-  private ListenableFuture<CoordinatorStreamProperties> updateProperties(Id.Stream streamId,
+  private ListenableFuture<CoordinatorStreamProperties> updateProperties(StreamId streamId,
                                                                          final CoordinatorStreamProperties properties) {
     return propertyStore.update(streamId.toString(), new SyncPropertyUpdater<CoordinatorStreamProperties>() {
 
@@ -219,7 +219,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
 
     @Override
     public void onChange(String name, CoordinatorStreamProperties properties) {
-      Id.Stream streamId = Id.Stream.fromString(name, Id.Stream.class);
+      StreamId streamId = StreamId.fromString(name);
       if (properties == null) {
         deleted(streamId);
         oldProperties = null;
@@ -253,7 +253,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
     }
 
     @Override
-    public void generationChanged(Id.Stream streamId, int generation) {
+    public void generationChanged(StreamId streamId, int generation) {
       try {
         listener.generationChanged(streamId, generation);
       } catch (Throwable t) {
@@ -262,7 +262,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
     }
 
     @Override
-    public void ttlChanged(Id.Stream streamId, long ttl) {
+    public void ttlChanged(StreamId streamId, long ttl) {
       try {
         listener.ttlChanged(streamId, ttl);
       } catch (Throwable t) {
@@ -271,7 +271,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
     }
 
     @Override
-    public void thresholdChanged(Id.Stream streamId, int threshold) {
+    public void thresholdChanged(StreamId streamId, int threshold) {
       try {
         listener.thresholdChanged(streamId, threshold);
       } catch (Throwable t) {
@@ -280,7 +280,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
     }
 
     @Override
-    public void deleted(Id.Stream streamId) {
+    public void deleted(StreamId streamId) {
       try {
         listener.deleted(streamId);
       } catch (Throwable t) {

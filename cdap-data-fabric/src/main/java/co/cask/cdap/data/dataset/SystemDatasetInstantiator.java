@@ -26,8 +26,8 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.EntityId;
 import com.google.common.base.Objects;
 
 import java.io.Closeable;
@@ -46,7 +46,7 @@ public class SystemDatasetInstantiator implements Closeable {
   private final DatasetFramework datasetFramework;
   // provides classloaders to use for different dataset modules
   private final DatasetClassLoaderProvider classLoaderProvider;
-  private final Iterable<? extends Id> owners;
+  private final Iterable<? extends EntityId> owners;
   private final ClassLoader parentClassLoader;
 
   /**
@@ -59,14 +59,14 @@ public class SystemDatasetInstantiator implements Closeable {
 
   public SystemDatasetInstantiator(DatasetFramework datasetFramework,
                                    @Nullable ClassLoader classLoader,
-                                   @Nullable Iterable<? extends Id> owners) {
+                                   @Nullable Iterable<? extends EntityId> owners) {
     this(datasetFramework, classLoader, new ConstantClassLoaderProvider(classLoader), owners);
   }
 
   SystemDatasetInstantiator(DatasetFramework datasetFramework,
                             @Nullable ClassLoader parentClassLoader,
                             DatasetClassLoaderProvider classLoaderProvider,
-                            @Nullable Iterable<? extends Id> owners) {
+                            @Nullable Iterable<? extends EntityId> owners) {
     this.owners = owners;
     this.classLoaderProvider = classLoaderProvider;
     this.datasetFramework = datasetFramework;
@@ -76,28 +76,23 @@ public class SystemDatasetInstantiator implements Closeable {
   }
 
   @Nullable
-  public <T extends DatasetAdmin> T getDatasetAdmin(Id.DatasetInstance datasetId) throws DatasetManagementException,
+  public <T extends DatasetAdmin> T getDatasetAdmin(DatasetId datasetId) throws DatasetManagementException,
     IOException {
     return datasetFramework.getAdmin(datasetId, parentClassLoader, classLoaderProvider);
   }
 
-  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetId)
+  public <T extends Dataset> T getDataset(DatasetId datasetId)
     throws DatasetInstantiationException {
     return getDataset(datasetId, DatasetDefinition.NO_ARGUMENTS);
   }
 
   public <T extends Dataset> T getDataset(DatasetId datasetId, Map<String, String> arguments)
     throws DatasetInstantiationException {
-    return getDataset(datasetId.toId(), arguments);
-  }
-
-  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetId, Map<String, String> arguments)
-    throws DatasetInstantiationException {
     return getDataset(datasetId, arguments, AccessType.UNKNOWN);
   }
 
   @SuppressWarnings("unchecked")
-  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetId, Map<String, String> arguments,
+  public <T extends Dataset> T getDataset(DatasetId datasetId, Map<String, String> arguments,
                                           AccessType accessType) throws DatasetInstantiationException {
 
     try {
@@ -112,7 +107,7 @@ public class SystemDatasetInstantiator implements Closeable {
     }
   }
 
-  public void writeLineage(Id.DatasetInstance datasetId, AccessType accessType) {
+  public void writeLineage(DatasetId datasetId, AccessType accessType) {
     datasetFramework.writeLineage(datasetId, accessType);
   }
 

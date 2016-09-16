@@ -16,7 +16,7 @@
 
 package co.cask.cdap.data.stream.service;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.util.concurrent.Service;
 
 import java.util.Map;
@@ -32,7 +32,7 @@ public interface StreamWriterSizeCollector extends Service {
   /**
    * @return the streamSizes tracked by this StreamWriterSizeCollector.
    */
-  Map<Id.Stream, AtomicLong> getStreamSizes();
+  Map<StreamId, AtomicLong> getStreamSizes();
 
   /**
    * Get the total amount of bytes collected for the stream {@code streamId} so far.
@@ -40,7 +40,7 @@ public interface StreamWriterSizeCollector extends Service {
    * @param streamId stream Id to get the total amount of data collected for
    * @return the total amount of bytes collected for the stream {@code streamId} so far
    */
-  long getTotalCollected(Id.Stream streamId);
+  long getTotalCollected(StreamId streamId);
 
   /**
    * Called to notify this manager that {@code dataSize} bytes of data has been ingested by the stream
@@ -50,5 +50,5 @@ public interface StreamWriterSizeCollector extends Service {
    * @param streamId Id of the stream that ingested data.
    * @param dataSize amount of data ingested in bytes.
    */
-  void received(Id.Stream streamId, long dataSize);
+  void received(StreamId streamId, long dataSize);
 }

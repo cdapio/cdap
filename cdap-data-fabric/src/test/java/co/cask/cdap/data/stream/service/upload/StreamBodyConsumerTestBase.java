@@ -16,7 +16,7 @@
 
 package co.cask.cdap.data.stream.service.upload;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.io.ByteBufferInputStream;
 import co.cask.http.AbstractHttpResponder;
 import co.cask.http.BodyConsumer;
@@ -69,8 +69,8 @@ public abstract class StreamBodyConsumerTestBase {
     final TestContentWriter contentWriter = new TestContentWriter();
     BodyConsumer bodyConsumer = createBodyConsumer(new ContentWriterFactory() {
       @Override
-      public Id.Stream getStream() {
-        return Id.Stream.from("test_namespace", "test-stream");
+      public StreamId getStream() {
+        return new StreamId("test_namespace", "test-stream");
       }
 
       @Override

@@ -18,7 +18,8 @@ package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.DatasetModuleId;
 import org.apache.tephra.TransactionExecutor;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -35,10 +36,8 @@ public class DatasetWithArgumentsTest {
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
-  private static final Id.DatasetModule prefix =
-    Id.DatasetModule.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "prefix");
-  private static final Id.DatasetInstance pret =
-    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "pret");
+  private static final DatasetModuleId prefix = DatasetFrameworkTestUtil.NAMESPACE_ID.datasetModule("prefix");
+  private static final DatasetId pret = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("pret");
 
   @BeforeClass
   public static void beforeClass() throws Exception {

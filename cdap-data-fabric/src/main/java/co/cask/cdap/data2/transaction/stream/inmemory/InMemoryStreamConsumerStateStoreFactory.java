@@ -25,7 +25,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.inject.Inject;
 
 import java.io.IOException;
@@ -43,7 +43,7 @@ public final class InMemoryStreamConsumerStateStoreFactory implements StreamCons
 
   @Override
   public synchronized StreamConsumerStateStore create(StreamConfig streamConfig) throws IOException {
-    Id.Namespace namespace = streamConfig.getStreamId().getNamespace();
+    NamespaceId namespace = streamConfig.getStreamId().getParent();
     TableId tableId = StreamUtils.getStateStoreTableId(namespace);
     InMemoryTableAdmin admin =
       new InMemoryTableAdmin(DatasetContext.from(tableId.getNamespace()), tableId.getTableName(), cConf);
@@ -56,7 +56,7 @@ public final class InMemoryStreamConsumerStateStoreFactory implements StreamCons
   }
 
   @Override
-  public synchronized void dropAllInNamespace(Id.Namespace namespace) throws IOException {
+  public synchronized void dropAllInNamespace(NamespaceId namespace) throws IOException {
     TableId tableId = StreamUtils.getStateStoreTableId(namespace);
     InMemoryTableAdmin admin =
       new InMemoryTableAdmin(DatasetContext.from(tableId.getNamespace()), tableId.getTableName(), cConf);

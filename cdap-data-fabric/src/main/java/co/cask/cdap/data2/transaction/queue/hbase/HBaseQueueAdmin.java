@@ -39,6 +39,7 @@ import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
@@ -245,7 +246,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
     for (TableId tableId : stateStoreTableIds) {
       LOG.info("Upgrading queue state store: {}", tableId);
       String cdapNamespace = reverseHBaseNamespace.get(tableId.getNamespace());
-      Id.DatasetInstance stateStoreId = createStateStoreDataset(cdapNamespace);
+      DatasetId stateStoreId = createStateStoreDataset(cdapNamespace);
       co.cask.cdap.api.dataset.DatasetAdmin admin = datasetFramework.getAdmin(stateStoreId, null);
       if (admin == null) {
         LOG.error("No dataset admin available for {}", stateStoreId);
@@ -261,7 +262,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
   }
 
   public HBaseConsumerStateStore getConsumerStateStore(QueueName queueName) throws Exception {
-    Id.DatasetInstance stateStoreId = getStateStoreId(queueName.getFirstComponent());
+    DatasetId stateStoreId = getStateStoreId(queueName.getFirstComponent());
     Map<String, String> args = ImmutableMap.of(HBaseQueueDatasetModule.PROPERTY_QUEUE_NAME, queueName.toString());
     HBaseConsumerStateStore stateStore = datasetFramework.getDataset(stateStoreId, args, null);
     if (stateStore == null) {
@@ -270,13 +271,13 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
     return stateStore;
   }
 
-  private Id.DatasetInstance getStateStoreId(String namespaceId) {
-    return Id.DatasetInstance.from(namespaceId, QueueConstants.STATE_STORE_NAME);
+  private DatasetId getStateStoreId(String namespaceId) {
+    return new DatasetId(namespaceId, QueueConstants.STATE_STORE_NAME);
   }
 
-  private Id.DatasetInstance createStateStoreDataset(String namespace) throws IOException {
+  private DatasetId createStateStoreDataset(String namespace) throws IOException {
     try {
-      Id.DatasetInstance stateStoreId = getStateStoreId(namespace);
+      DatasetId stateStoreId = getStateStoreId(namespace);
       DatasetProperties configProperties = DatasetProperties.builder()
         .add(Table.PROPERTY_COLUMN_FAMILY, Bytes.toString(QueueEntryRow.COLUMN_FAMILY))
         .build();
@@ -304,7 +305,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
    * Deletes all consumer states associated with the given queue.
    */
   private void deleteConsumerStates(QueueName queueName) throws Exception {
-    Id.DatasetInstance id = getStateStoreId(queueName.getFirstComponent());
+    DatasetId id = getStateStoreId(queueName.getFirstComponent());
     if (!datasetFramework.hasInstance(id)) {
       return;
     }
@@ -325,7 +326,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
     final QueueName prefixName = QueueName.from(URI.create(
       QueueName.prefixForFlow(flowId)));
 
-    Id.DatasetInstance stateStoreId = getStateStoreId(flowId.getNamespaceId());
+    DatasetId stateStoreId = getStateStoreId(flowId.getNamespaceId());
     Map<String, String> args = ImmutableMap.of(HBaseQueueDatasetModule.PROPERTY_QUEUE_NAME, prefixName.toString());
     HBaseConsumerStateStore stateStore = datasetFramework.getDataset(stateStoreId, args, null);
     if (stateStore == null) {
@@ -383,7 +384,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
     }
 
     // Delete the state store in the namespace
-    Id.DatasetInstance id = getStateStoreId(namespaceId.getId());
+    DatasetId id = getStateStoreId(namespaceId.getId());
     if (datasetFramework.hasInstance(id)) {
       datasetFramework.deleteInstance(id);
     }

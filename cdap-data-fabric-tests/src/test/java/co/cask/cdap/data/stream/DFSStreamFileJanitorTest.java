@@ -45,7 +45,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
@@ -181,7 +181,7 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
   }
 
   @Override
-  protected FileWriter<StreamEvent> createWriter(Id.Stream streamId) throws IOException {
+  protected FileWriter<StreamEvent> createWriter(StreamId streamId) throws IOException {
     StreamConfig config = streamAdmin.getConfig(streamId);
     return fileWriterFactory.create(config, StreamUtils.getGeneration(config));
   }

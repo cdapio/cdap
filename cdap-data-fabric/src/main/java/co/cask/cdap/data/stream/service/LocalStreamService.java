@@ -27,6 +27,8 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.apache.twill.common.Cancellable;
@@ -49,7 +51,7 @@ public class LocalStreamService extends AbstractStreamService {
   private final StreamAdmin streamAdmin;
   private final StreamWriterSizeCollector streamWriterSizeCollector;
   private final StreamMetaStore streamMetaStore;
-  private final ConcurrentMap<Id.Stream, StreamSizeAggregator> aggregators;
+  private final ConcurrentMap<StreamId, StreamSizeAggregator> aggregators;
 
   @Inject
   public LocalStreamService(StreamCoordinatorClient streamCoordinatorClient,
@@ -69,8 +71,8 @@ public class LocalStreamService extends AbstractStreamService {
 
   @Override
   protected void initialize() throws Exception {
-    for (Map.Entry<Id.Namespace, StreamSpecification> streamSpecEntry : streamMetaStore.listStreams().entries()) {
-      Id.Stream streamId = Id.Stream.from(streamSpecEntry.getKey(), streamSpecEntry.getValue().getName());
+    for (Map.Entry<NamespaceId, StreamSpecification> streamSpecEntry : streamMetaStore.listStreams().entries()) {
+      StreamId streamId = streamSpecEntry.getKey().stream(streamSpecEntry.getValue().getName());
       StreamConfig config;
       try {
         config = streamAdmin.getConfig(streamId);
@@ -99,8 +101,8 @@ public class LocalStreamService extends AbstractStreamService {
   @Override
   protected void runOneIteration() throws Exception {
     // Get stream size - which will be the entire size - and send a notification if the size is big enough
-    for (Map.Entry<Id.Namespace, StreamSpecification> streamSpecEntry : streamMetaStore.listStreams().entries()) {
-      Id.Stream streamId = Id.Stream.from(streamSpecEntry.getKey(), streamSpecEntry.getValue().getName());
+    for (Map.Entry<NamespaceId, StreamSpecification> streamSpecEntry : streamMetaStore.listStreams().entries()) {
+      StreamId streamId = streamSpecEntry.getKey().stream(streamSpecEntry.getValue().getName());
       StreamSizeAggregator streamSizeAggregator = aggregators.get(streamId);
       try {
         if (streamSizeAggregator == null) {
@@ -133,13 +135,13 @@ public class LocalStreamService extends AbstractStreamService {
    * @param threshold notification threshold after which to publish a notification - in MB
    * @return the created {@link StreamSizeAggregator}
    */
-  private StreamSizeAggregator createSizeAggregator(Id.Stream streamId, long baseCount, int threshold) {
+  private StreamSizeAggregator createSizeAggregator(StreamId streamId, long baseCount, int threshold) {
 
     // Handle threshold changes
     final Cancellable thresholdSubscription =
       getStreamCoordinatorClient().addListener(streamId, new StreamPropertyListener() {
         @Override
-        public void thresholdChanged(Id.Stream streamId, int threshold) {
+        public void thresholdChanged(StreamId streamId, int threshold) {
           StreamSizeAggregator aggregator = aggregators.get(streamId);
           while (aggregator == null) {
             Thread.yield();
@@ -162,21 +164,21 @@ public class LocalStreamService extends AbstractStreamService {
   private final class StreamSizeAggregator implements Cancellable {
     private final long streamInitSize;
     private final Id.NotificationFeed streamFeed;
-    private final Id.Stream streamId;
+    private final StreamId streamId;
     private final AtomicLong streamBaseCount;
     private final AtomicInteger streamThresholdMB;
     private final Cancellable cancellable;
     private boolean published;
 
-    protected StreamSizeAggregator(Id.Stream streamId, long baseCount, int streamThresholdMB, Cancellable cancellable) {
+    protected StreamSizeAggregator(StreamId streamId, long baseCount, int streamThresholdMB, Cancellable cancellable) {
       this.streamId = streamId;
       this.streamInitSize = baseCount;
       this.streamBaseCount = new AtomicLong(baseCount);
       this.cancellable = cancellable;
       this.streamFeed = new Id.NotificationFeed.Builder()
-        .setNamespaceId(streamId.getNamespaceId())
+        .setNamespaceId(streamId.getNamespace())
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-        .setName(String.format("%sSize", streamId.getId()))
+        .setName(String.format("%sSize", streamId.getEntityName()))
         .build();
       this.streamThresholdMB = new AtomicInteger(streamThresholdMB);
     }

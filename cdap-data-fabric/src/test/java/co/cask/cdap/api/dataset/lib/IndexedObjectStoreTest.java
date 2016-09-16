@@ -19,7 +19,7 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.collect.ImmutableList;
 import org.apache.tephra.TransactionExecutor;
 import org.junit.After;
@@ -38,8 +38,7 @@ public class IndexedObjectStoreTest {
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
-  private static final Id.DatasetInstance index =
-    Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "index");
+  private static final DatasetId index = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("index");
 
   @Before
   public void createDataset() throws Exception {
@@ -200,7 +199,7 @@ public class IndexedObjectStoreTest {
     });
   }
 
-  protected void createIndexedObjectStoreInstance(Id.DatasetInstance datasetInstanceId, Type type) throws Exception {
+  protected void createIndexedObjectStoreInstance(DatasetId datasetInstanceId, Type type) throws Exception {
     dsFrameworkUtil.createInstance("indexedObjectStore", datasetInstanceId,
                                    ObjectStores.objectStoreProperties(type, DatasetProperties.EMPTY));
   }

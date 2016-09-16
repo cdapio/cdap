@@ -40,7 +40,7 @@ import co.cask.cdap.data.stream.{AbstractStreamInputFormat, StreamUtils}
 import co.cask.cdap.data2.metadata.lineage.AccessType
 import co.cask.cdap.internal.app.runtime.DefaultTaskLocalizationContext
 import co.cask.cdap.proto.Id
-import co.cask.cdap.proto.id.StreamId
+import co.cask.cdap.proto.id.{ProgramId, StreamId}
 import co.cask.cdap.proto.security.Action
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.LongWritable
@@ -295,7 +295,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
 
   private def configureStreamInput(configuration: Configuration, streamId: StreamId, startTime: Long,
                                    endTime: Long, formatSpec: Option[FormatSpecification]): Configuration = {
-    val streamConfig = runtimeContext.getStreamAdmin.getConfig(streamId.toId)
+    val streamConfig = runtimeContext.getStreamAdmin.getConfig(streamId)
     val streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation,
                                                           StreamUtils.getGeneration(streamConfig))
     AbstractStreamInputFormat.setStreamId(configuration, streamId)
@@ -315,11 +315,12 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
     val oldStreamId = streamId.toId
 
     // Register for stream usage for the Spark program
-    val oldProgramId = runtimeContext.getProgram.getId
+    val oldProgramId = runtimeContext.getProgram.getId.toEntityId
     val owners = List(oldProgramId)
     try {
-      runtimeContext.getStreamAdmin.register(owners, oldStreamId)
-      runtimeContext.getStreamAdmin.addAccess(new Id.Run(oldProgramId, getRunId.getId), oldStreamId, AccessType.READ)
+      runtimeContext.getStreamAdmin.register(owners, oldStreamId.toEntityId)
+      runtimeContext.getStreamAdmin.addAccess(oldProgramId.run(getRunId.getId), oldStreamId.toEntityId,
+        AccessType.READ)
     }
     catch {
       case e: Exception =>

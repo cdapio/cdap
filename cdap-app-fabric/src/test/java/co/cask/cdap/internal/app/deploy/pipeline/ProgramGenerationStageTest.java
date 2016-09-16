@@ -53,7 +53,7 @@ public class ProgramGenerationStageTest {
     LocationFactory lf = new LocalLocationFactory(TEMP_FOLDER.newFolder());
     // have to do this since we are not going through the route of create namespace -> deploy application
     // in real scenarios, the namespace directory would already be created
-    Location namespaceLocation = lf.create(DefaultId.APPLICATION.getNamespaceId());
+    Location namespaceLocation = lf.create(DefaultId.APPLICATION.getNamespace());
     Locations.mkdirsIfNotExists(namespaceLocation);
     LocationFactory jarLf = new LocalLocationFactory(TEMP_FOLDER.newFolder());
     Location appArchive = AppJarHelper.createDeploymentJar(jarLf, ToyApp.class);
@@ -63,7 +63,7 @@ public class ProgramGenerationStageTest {
     ProgramGenerationStage pgmStage = new ProgramGenerationStage(new NoOpAuthorizer(), new AuthenticationTestContext());
     pgmStage.process(new StageContext(Object.class));  // Can do better here - fixed right now to run the test.
     pgmStage.process(new ApplicationDeployable(NamespaceId.DEFAULT.artifact("ToyApp", "1.0"), appArchive,
-                                               DefaultId.APPLICATION.toEntityId(), newSpec, null,
+                                               DefaultId.APPLICATION, newSpec, null,
                                                ApplicationDeployScope.USER));
     Assert.assertTrue(true);
   }

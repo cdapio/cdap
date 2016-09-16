@@ -48,7 +48,6 @@ import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.proto.id.EntityId;
@@ -171,7 +170,7 @@ public class DatasetTypeService extends AbstractIdleService {
   List<DatasetModuleMeta> listModules(final NamespaceId namespaceId) throws Exception {
     ensureNamespaceExists(namespaceId);
     // Sorting by name for convenience
-    List<DatasetModuleMeta> allModules = Lists.newArrayList(typeManager.getModules(namespaceId.toId()));
+    List<DatasetModuleMeta> allModules = Lists.newArrayList(typeManager.getModules(namespaceId));
     Collections.sort(allModules, new Comparator<DatasetModuleMeta>() {
       @Override
       public int compare(DatasetModuleMeta o1, DatasetModuleMeta o2) {
@@ -196,10 +195,9 @@ public class DatasetTypeService extends AbstractIdleService {
    */
   DatasetModuleMeta getModule(DatasetModuleId datasetModuleId) throws Exception {
     ensureNamespaceExists(datasetModuleId.getParent());
-    Id.DatasetModule moduleId = datasetModuleId.toId();
-    DatasetModuleMeta moduleMeta = typeManager.getModule(moduleId);
+    DatasetModuleMeta moduleMeta = typeManager.getModule(datasetModuleId);
     if (moduleMeta == null) {
-      throw new DatasetModuleNotFoundException(moduleId);
+      throw new DatasetModuleNotFoundException(datasetModuleId.toId());
     }
     Principal principal = authenticationContext.getPrincipal();
     final Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
@@ -260,17 +258,16 @@ public class DatasetTypeService extends AbstractIdleService {
     }
     ensureNamespaceExists(namespaceId);
 
-    Id.DatasetModule module = datasetModuleId.toId();
-    DatasetModuleMeta moduleMeta = typeManager.getModule(module);
+    DatasetModuleMeta moduleMeta = typeManager.getModule(datasetModuleId);
     if (moduleMeta == null) {
-      throw new DatasetModuleNotFoundException(module);
+      throw new DatasetModuleNotFoundException(datasetModuleId.toId());
     }
 
     Principal principal = authenticationContext.getPrincipal();
     authorizationEnforcer.enforce(datasetModuleId, principal, Action.ADMIN);
 
     try {
-      typeManager.deleteModule(module);
+      typeManager.deleteModule(datasetModuleId);
     } catch (DatasetModuleConflictException e) {
       throw new DatasetModuleCannotBeDeletedException(datasetModuleId, e.getMessage());
     }
@@ -292,12 +289,11 @@ public class DatasetTypeService extends AbstractIdleService {
     ensureNamespaceExists(namespaceId);
 
     // revoke all privileges on all modules
-    Id.Namespace namespace = namespaceId.toId();
-    for (DatasetModuleMeta meta : typeManager.getModules(namespace)) {
+    for (DatasetModuleMeta meta : typeManager.getModules(namespaceId)) {
       privilegesManager.revoke(namespaceId.datasetModule(meta.getName()));
     }
     try {
-      typeManager.deleteModules(namespace);
+      typeManager.deleteModules(namespaceId);
     } catch (DatasetModuleConflictException e) {
       throw new ConflictException(e.getMessage(), e);
     }
@@ -309,7 +305,7 @@ public class DatasetTypeService extends AbstractIdleService {
   List<DatasetTypeMeta> listTypes(final NamespaceId namespaceId) throws Exception {
     ensureNamespaceExists(namespaceId);
     // Sorting by name for convenience
-    List<DatasetTypeMeta> allTypes = Lists.newArrayList(typeManager.getTypes(namespaceId.toId()));
+    List<DatasetTypeMeta> allTypes = Lists.newArrayList(typeManager.getTypes(namespaceId));
     Collections.sort(allTypes, new Comparator<DatasetTypeMeta>() {
       @Override
       public int compare(DatasetTypeMeta o1, DatasetTypeMeta o2) {
@@ -335,10 +331,9 @@ public class DatasetTypeService extends AbstractIdleService {
    */
   DatasetTypeMeta getType(DatasetTypeId datasetTypeId) throws Exception {
     ensureNamespaceExists(datasetTypeId.getParent());
-    Id.DatasetType datasetType = datasetTypeId.toId();
-    DatasetTypeMeta typeMeta = typeManager.getTypeInfo(datasetType);
+    DatasetTypeMeta typeMeta = typeManager.getTypeInfo(datasetTypeId);
     if (typeMeta == null) {
-      throw new DatasetTypeNotFoundException(datasetType);
+      throw new DatasetTypeNotFoundException(datasetTypeId.toId());
     }
 
     // All principals can access system dataset types
@@ -428,7 +423,7 @@ public class DatasetTypeService extends AbstractIdleService {
                                                 tmpLocation, archive));
           }
 
-          typeManager.addModule(datasetModuleId.toId(), className, archive, forceUpdate);
+          typeManager.addModule(datasetModuleId, className, archive, forceUpdate);
           // todo: response with DatasetModuleMeta of just added module (and log this info)
           // Ideally this should have been done before, but we cannot grant privileges on types until they've been
           // added to the type MDS. First revoke any orphaned privileges for types left behind by past failed revokes
@@ -460,13 +455,13 @@ public class DatasetTypeService extends AbstractIdleService {
     txExecutorFactory.createExecutor(datasetCache).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        Collection<DatasetModuleMeta> allDatasets = datasetTypeMDS.getModules(Id.Namespace.SYSTEM);
+        Collection<DatasetModuleMeta> allDatasets = datasetTypeMDS.getModules(NamespaceId.SYSTEM);
         for (DatasetModuleMeta ds : allDatasets) {
           if (ds.getJarLocation() == null) {
             LOG.debug("Deleting system dataset module: {}", ds.toString());
-            Id.DatasetModule moduleId = Id.DatasetModule.from(Id.Namespace.SYSTEM, ds.getName());
+            DatasetModuleId moduleId = NamespaceId.SYSTEM.datasetModule(ds.getName());
             datasetTypeMDS.deleteModule(moduleId);
-            revokeAllPrivilegesOnModule(moduleId.toEntityId(), ds);
+            revokeAllPrivilegesOnModule(moduleId, ds);
           }
         }
       }
@@ -479,9 +474,9 @@ public class DatasetTypeService extends AbstractIdleService {
       try {
         // NOTE: we assume default modules are always in classpath, hence passing null for jar location
         // NOTE: we add default modules in the system namespace
-        Id.DatasetModule defaultModule = Id.DatasetModule.from(Id.Namespace.SYSTEM, module.getKey());
+        DatasetModuleId defaultModule = NamespaceId.SYSTEM.datasetModule(module.getKey());
         typeManager.addModule(defaultModule, module.getValue().getClass().getName(), null, false);
-        grantAllPrivilegesOnModule(defaultModule.toEntityId(), authenticationContext.getPrincipal());
+        grantAllPrivilegesOnModule(defaultModule, authenticationContext.getPrincipal());
       } catch (DatasetModuleConflictException e) {
         // perfectly fine: we need to add default modules only the very first time service is started
         LOG.debug("Not adding {} module: it already exists", module.getKey());
@@ -516,9 +511,9 @@ public class DatasetTypeService extends AbstractIdleService {
       try {
         // NOTE: we assume extension modules are always in classpath, hence passing null for jar location
         // NOTE: we add extension modules in the system namespace
-        Id.DatasetModule theModule = Id.DatasetModule.from(Id.Namespace.SYSTEM, module.getKey());
+        DatasetModuleId theModule = NamespaceId.SYSTEM.datasetModule(module.getKey());
         typeManager.addModule(theModule, module.getValue().getClass().getName(), null, false);
-        grantAllPrivilegesOnModule(theModule.toEntityId(), authenticationContext.getPrincipal());
+        grantAllPrivilegesOnModule(theModule, authenticationContext.getPrincipal());
       } catch (DatasetModuleConflictException e) {
         // perfectly fine: we need to add the modules only the very first time service is started
         LOG.debug("Not adding {} extension module: it already exists", module.getKey());
@@ -537,7 +532,7 @@ public class DatasetTypeService extends AbstractIdleService {
                                           @Nullable DatasetModuleMeta moduleMeta) throws Exception {
     privilegesManager.grant(moduleId, principal, EnumSet.allOf(Action.class));
     if (moduleMeta == null) {
-      moduleMeta = typeManager.getModule(moduleId.toId());
+      moduleMeta = typeManager.getModule(moduleId);
     }
     if (moduleMeta == null) {
       LOG.debug("Could not find metadata for module {}. Not granting privileges for its types.", moduleId);
@@ -556,7 +551,7 @@ public class DatasetTypeService extends AbstractIdleService {
   private void revokeAllPrivilegesOnModule(DatasetModuleId moduleId,
                                            @Nullable DatasetModuleMeta moduleMeta) throws Exception {
     privilegesManager.revoke(moduleId);
-    moduleMeta = moduleMeta == null ? typeManager.getModule(moduleId.toId()) : moduleMeta;
+    moduleMeta = moduleMeta == null ? typeManager.getModule(moduleId) : moduleMeta;
     if (moduleMeta == null) {
       LOG.debug("Could not find metadata for module {}. Will not revoke privileges for its types.", moduleId);
       return;
@@ -572,9 +567,8 @@ public class DatasetTypeService extends AbstractIdleService {
    */
   private void ensureNamespaceExists(NamespaceId namespaceId) throws Exception {
     if (!NamespaceId.SYSTEM.equals(namespaceId)) {
-      Id.Namespace namespace = namespaceId.toId();
-      if (namespaceQueryAdmin.get(namespace) == null) {
-        throw new NamespaceNotFoundException(namespace);
+      if (!namespaceQueryAdmin.exists(namespaceId.toId())) {
+        throw new NamespaceNotFoundException(namespaceId.toId());
       }
     }
   }

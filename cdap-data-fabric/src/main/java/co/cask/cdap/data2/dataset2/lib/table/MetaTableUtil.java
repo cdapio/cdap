@@ -23,7 +23,8 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 
 import java.io.IOException;
 
@@ -39,7 +40,7 @@ public abstract class MetaTableUtil {
   }
 
   public Table getMetaTable() throws IOException, DatasetManagementException {
-    Id.DatasetInstance metaTableInstanceId = Id.DatasetInstance.from(Id.Namespace.SYSTEM, getMetaTableName());
+    DatasetId metaTableInstanceId = NamespaceId.SYSTEM.dataset(getMetaTableName());
     return DatasetsUtil.getOrCreateDataset(dsFramework, metaTableInstanceId, Table.class.getName(),
                                            DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS, null);
   }

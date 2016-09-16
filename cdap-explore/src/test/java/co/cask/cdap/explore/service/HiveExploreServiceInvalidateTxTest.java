@@ -54,7 +54,7 @@ public class HiveExploreServiceInvalidateTxTest extends BaseHiveExploreServiceTe
     // check that BaseHiveExploreService invalidates read-write transaction that failed
     Assert.assertEquals(0, transactionManager.getCurrentState().getInvalid().size());
     try {
-      waitForCompletionStatus(exploreService.execute(NAMESPACE_ID, "select * from dataset_nonexistent"),
+      waitForCompletionStatus(exploreService.execute(NAMESPACE_ID.toId(), "select * from dataset_nonexistent"),
                               5, TimeUnit.SECONDS, 10);
       Assert.fail("Expected HiveSQLException");
     } catch (HiveSQLException e) {

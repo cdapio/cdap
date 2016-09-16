@@ -17,8 +17,11 @@
 package co.cask.cdap.data2.audit;
 
 import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.audit.AuditMessage;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -37,8 +40,8 @@ public class AuditPublishersTest {
     String workerName = "dummyWorker";
     String workerName2 = "dummyWorker2";
     InMemoryAuditPublisher auditPublisher = new InMemoryAuditPublisher();
-    Id.Worker workerId = Id.Worker.from(Id.Namespace.DEFAULT, appName, workerName);
-    Id.DatasetInstance datasetId = Id.DatasetInstance.from(Id.Namespace.DEFAULT, datasetName);
+    ProgramId workerId = new ProgramId(NamespaceId.DEFAULT.getNamespace(), appName, ProgramType.WORKER, workerName);
+    DatasetId datasetId = NamespaceId.DEFAULT.dataset(datasetName);
     AuditPublishers.publishAccess(auditPublisher, datasetId, AccessType.READ_WRITE, workerId);
     List<AuditMessage> messages = auditPublisher.popMessages();
     // Since it is a READ_WRITE access, two messages are expected
@@ -55,13 +58,13 @@ public class AuditPublishersTest {
     Assert.assertEquals(1, messages.size());
 
     // Different dataset name, hence a message should be published
-    datasetId = Id.DatasetInstance.from(Id.Namespace.DEFAULT, datasetName2);
+    datasetId = NamespaceId.DEFAULT.dataset(datasetName2);
     AuditPublishers.publishAccess(auditPublisher, datasetId, AccessType.READ_WRITE, workerId);
     messages = auditPublisher.popMessages();
     Assert.assertEquals(2, messages.size());
 
     // Different worker name, hence a message should be published
-    workerId = Id.Worker.from(Id.Namespace.DEFAULT, appName, workerName2);
+    workerId = new ProgramId(NamespaceId.DEFAULT.getNamespace(), appName, ProgramType.WORKER, workerName2);
     AuditPublishers.publishAccess(auditPublisher, datasetId, AccessType.READ_WRITE, workerId);
     messages = auditPublisher.popMessages();
     Assert.assertEquals(2, messages.size());

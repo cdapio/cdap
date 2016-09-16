@@ -276,7 +276,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
             Integer.MAX_VALUE,
             "system." + Constants.Metrics.Name.Dataset.OP_COUNT,
             AggregationFunction.SUM,
-            ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, DefaultId.NAMESPACE.getId(),
+            ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, DefaultId.NAMESPACE.getNamespace(),
                             Constants.Metrics.Tag.APP, SparkAppUsingObjectStore.class.getSimpleName(),
                             Constants.Metrics.Tag.SPARK, CharCountProgram.class.getSimpleName(),
                             Constants.Metrics.Tag.DATASET, "totals"),

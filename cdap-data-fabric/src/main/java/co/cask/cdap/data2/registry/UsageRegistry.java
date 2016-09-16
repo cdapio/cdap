@@ -16,7 +16,10 @@
 
 package co.cask.cdap.data2.registry;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
 
 import java.util.Set;
 
@@ -30,17 +33,17 @@ public interface UsageRegistry extends RuntimeUsageRegistry {
    *
    * @param applicationId application
    */
-  void unregister(final Id.Application applicationId);
+  void unregister(final ApplicationId applicationId);
 
-  Set<Id.DatasetInstance> getDatasets(final Id.Application id);
+  Set<DatasetId> getDatasets(final ApplicationId id);
 
-  Set<Id.Stream> getStreams(final Id.Application id);
+  Set<StreamId> getStreams(final ApplicationId id);
 
-  Set<Id.DatasetInstance> getDatasets(final Id.Program id);
+  Set<DatasetId> getDatasets(final ProgramId id);
 
-  Set<Id.Stream> getStreams(final Id.Program id);
+  Set<StreamId> getStreams(final ProgramId id);
 
-  Set<Id.Program> getPrograms(final Id.Stream id);
+  Set<ProgramId> getPrograms(final StreamId id);
 
-  Set<Id.Program> getPrograms(final Id.DatasetInstance id);
+  Set<ProgramId> getPrograms(final DatasetId id);
 }

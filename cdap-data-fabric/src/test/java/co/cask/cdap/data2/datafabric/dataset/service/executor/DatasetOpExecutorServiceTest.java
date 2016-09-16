@@ -44,8 +44,9 @@ import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
@@ -86,8 +87,8 @@ import java.util.concurrent.TimeUnit;
 public class DatasetOpExecutorServiceTest {
 
   private static final Gson GSON = new Gson();
-  private static final Id.Namespace namespace = Id.Namespace.from("myspace");
-  private static final Id.DatasetInstance bob = Id.DatasetInstance.from(namespace, "bob");
+  private static final NamespaceId namespace = new NamespaceId("myspace");
+  private static final DatasetId bob = namespace.dataset("bob");
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
@@ -149,7 +150,7 @@ public class DatasetOpExecutorServiceTest {
 
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(NamespaceMeta.DEFAULT);
-    namespaceAdmin.create(new NamespaceMeta.Builder().setName(bob.getNamespace()).build());
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(bob.getParent()).build());
   }
 
   @After
@@ -159,8 +160,8 @@ public class DatasetOpExecutorServiceTest {
     managerService.stopAndWait();
     managerService = null;
 
-    namespaceAdmin.delete(Id.Namespace.DEFAULT);
-    namespaceAdmin.delete(bob.getNamespace());
+    namespaceAdmin.delete(NamespaceId.DEFAULT.toId());
+    namespaceAdmin.delete(bob.getParent().toId());
   }
 
   @Test
@@ -235,15 +236,15 @@ public class DatasetOpExecutorServiceTest {
 
   private void testAdminOp(String instanceName, String opName, int expectedStatus, Object expectedResult)
     throws URISyntaxException, IOException {
-    testAdminOp(Id.DatasetInstance.from(Id.Namespace.DEFAULT, instanceName), opName, expectedStatus,
+    testAdminOp(NamespaceId.DEFAULT.dataset(instanceName), opName, expectedStatus,
                 expectedResult);
   }
 
-  private void testAdminOp(Id.DatasetInstance datasetInstanceId, String opName, int expectedStatus,
+  private void testAdminOp(DatasetId datasetInstanceId, String opName, int expectedStatus,
                            Object expectedResult)
     throws URISyntaxException, IOException {
     String path = String.format("/namespaces/%s/data/datasets/%s/admin/%s",
-                                datasetInstanceId.getNamespaceId(), datasetInstanceId.getId(), opName);
+                                datasetInstanceId.getNamespace(), datasetInstanceId.getEntityName(), opName);
 
     URL targetUrl = resolve(path);
     HttpResponse response = HttpRequests.execute(HttpRequest.post(targetUrl).build());

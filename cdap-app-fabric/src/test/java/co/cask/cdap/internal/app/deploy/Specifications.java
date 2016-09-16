@@ -29,7 +29,8 @@ public final class Specifications {
   private Specifications() {}
 
   public static ApplicationSpecification from(Application app) {
-    DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(DefaultId.NAMESPACE, DefaultId.ARTIFACT.toId(), app);
+    DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(DefaultId.NAMESPACE.toId(), DefaultId.ARTIFACT.toId(),
+                                                                  app);
     app.configure(appConfigurer, new DefaultApplicationContext());
     return appConfigurer.createSpecification(null);
   }

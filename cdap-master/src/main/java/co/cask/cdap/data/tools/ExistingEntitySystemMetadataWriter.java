@@ -40,7 +40,6 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
@@ -50,6 +49,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;
@@ -142,20 +142,20 @@ public class ExistingEntitySystemMetadataWriter {
     SystemDatasetInstantiatorFactory systemDatasetInstantiatorFactory =
       new SystemDatasetInstantiatorFactory(locationFactory, dsFramework, cConf);
     try (SystemDatasetInstantiator systemDatasetInstantiator = systemDatasetInstantiatorFactory.create()) {
-      for (DatasetSpecificationSummary summary : dsFramework.getInstances(namespace.toId())) {
+      for (DatasetSpecificationSummary summary : dsFramework.getInstances(namespace)) {
         DatasetId dsInstance = namespace.dataset(summary.getName());
         DatasetProperties dsProperties = DatasetProperties.of(summary.getProperties());
         String dsType = summary.getType();
         Dataset dataset = null;
         try {
           try {
-            dataset = systemDatasetInstantiator.getDataset(dsInstance.toId());
+            dataset = systemDatasetInstantiator.getDataset(dsInstance);
           } catch (Exception e) {
             LOG.warn("Exception while instantiating dataset {}", dsInstance, e);
           }
 
           SystemMetadataWriter writer =
-            new DatasetSystemMetadataWriter(metadataStore, dsInstance.toId(), dsProperties, dataset, dsType,
+            new DatasetSystemMetadataWriter(metadataStore, dsInstance, dsProperties, dataset, dsType,
                                             summary.getDescription());
           writer.write();
         } finally {
@@ -171,10 +171,10 @@ public class ExistingEntitySystemMetadataWriter {
     for (StreamSpecification streamSpec : store.getAllStreams(namespace)) {
       StreamId streamId = namespace.stream(streamSpec.getName());
       SystemMetadataWriter writer =
-        new StreamSystemMetadataWriter(metadataStore, streamId.toId(), streamAdmin.getConfig(streamId.toId()),
+        new StreamSystemMetadataWriter(metadataStore, streamId, streamAdmin.getConfig(streamId),
                                        streamSpec.getDescription());
       writer.write();
-      for (Id.Stream.View view : streamAdmin.listViews(streamId.toId())) {
+      for (StreamViewId view : streamAdmin.listViews(streamId)) {
         writer = new ViewSystemMetadataWriter(metadataStore, view, viewAdmin.get(view));
         writer.write();
       }

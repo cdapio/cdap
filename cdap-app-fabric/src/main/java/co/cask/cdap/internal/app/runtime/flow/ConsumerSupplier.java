@@ -22,7 +22,8 @@ import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
@@ -46,18 +47,18 @@ final class ConsumerSupplier<T> implements Supplier<T>, Closeable {
   private final QueueName queueName;
   private final int numGroups;
   private final RuntimeUsageRegistry runtimeUsageRegistry;
-  private final Iterable<? extends Id> owners;
+  private final Iterable<? extends EntityId> owners;
   private ConsumerConfig consumerConfig;
   private Closeable consumer;
 
-  static <T> ConsumerSupplier<T> create(Iterable<? extends Id> owners,
+  static <T> ConsumerSupplier<T> create(Iterable<? extends EntityId> owners,
                                         RuntimeUsageRegistry runtimeUsageRegistry,
                                         DataFabricFacade dataFabricFacade,
                                         QueueName queueName, ConsumerConfig consumerConfig) {
     return create(owners, runtimeUsageRegistry, dataFabricFacade, queueName, consumerConfig, -1);
   }
 
-  static <T> ConsumerSupplier<T> create(Iterable<? extends Id> owners,
+  static <T> ConsumerSupplier<T> create(Iterable<? extends EntityId> owners,
                                         RuntimeUsageRegistry runtimeUsageRegistry,
                                         DataFabricFacade dataFabricFacade, QueueName queueName,
                                         ConsumerConfig consumerConfig, int numGroups) {
@@ -65,7 +66,7 @@ final class ConsumerSupplier<T> implements Supplier<T>, Closeable {
                                    queueName, consumerConfig, numGroups);
   }
 
-  private ConsumerSupplier(Iterable<? extends Id> owners, RuntimeUsageRegistry runtimeUsageRegistry,
+  private ConsumerSupplier(Iterable<? extends EntityId> owners, RuntimeUsageRegistry runtimeUsageRegistry,
                            DataFabricFacade dataFabricFacade, QueueName queueName,
                            ConsumerConfig consumerConfig, int numGroups) {
     this.owners = owners;
@@ -99,14 +100,16 @@ final class ConsumerSupplier<T> implements Supplier<T>, Closeable {
         consumerConfig = queueConsumer.getConfig();
         consumer = queueConsumer;
       } else {
-        for (Id owner : owners) {
+        StreamId queueStream = queueName.toStreamId().toEntityId();
+        for (EntityId owner : owners) {
           try {
-            runtimeUsageRegistry.register(owner, queueName.toStreamId());
+            runtimeUsageRegistry.register(owner, queueStream);
           } catch (Exception e) {
-            LOG.warn("Failed to register usage of {} -> {}", owner, queueName.toStreamId(), e);
+            LOG.warn("Failed to register usage of {} -> {}", owner, queueStream, e);
           }
         }
-        StreamConsumer streamConsumer = dataFabricFacade.createStreamConsumer(queueName.toStreamId(), config);
+        StreamConsumer streamConsumer = dataFabricFacade.createStreamConsumer(queueName.toStreamId().toEntityId(),
+                                                                              config);
         consumerConfig = streamConsumer.getConsumerConfig();
         consumer = streamConsumer;
       }

@@ -23,7 +23,7 @@ import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTableTest;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
 import org.junit.ClassRule;
@@ -44,7 +44,7 @@ public class MetricsTableOnTableTest extends MetricsTableTest {
 
   @Override
   protected MetricsTable getTable(String name) throws Exception {
-    Id.DatasetInstance id = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, name);
+    DatasetId id = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset(name);
     if (dsFrameworkUtil.getInstance(id) == null) {
       dsFrameworkUtil.createInstance(Table.class.getName(), id, DatasetProperties.EMPTY);
     }

@@ -20,7 +20,6 @@ import co.cask.cdap.api.annotation.Batch;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.Tick;
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -82,6 +81,7 @@ import co.cask.cdap.internal.specification.FlowletMethod;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.io.ByteBufferInputStream;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
@@ -683,11 +683,11 @@ public final class FlowletProgramRunner implements ProgramRunner {
    */
   private Service createServiceHook(String flowletName, Iterable<ConsumerSupplier<?>> consumerSuppliers,
                                     AtomicReference<FlowletProgramController> controller) {
-    final List<Id.Stream> streams = Lists.newArrayList();
+    final List<StreamId> streams = Lists.newArrayList();
     for (ConsumerSupplier<?> consumerSupplier : consumerSuppliers) {
       QueueName queueName = consumerSupplier.getQueueName();
       if (queueName.isStream()) {
-        streams.add(queueName.toStreamId());
+        streams.add(queueName.toStreamId().toEntityId());
       }
     }
 
@@ -731,7 +731,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private static final class FlowletServiceHook extends AbstractService {
 
     private final StreamCoordinatorClient streamCoordinatorClient;
-    private final List<Id.Stream> streams;
+    private final List<StreamId> streams;
     private final AtomicReference<FlowletProgramController> controller;
     private final Executor executor;
     private final Lock suspendLock = new ReentrantLock();
@@ -739,26 +739,26 @@ public final class FlowletProgramRunner implements ProgramRunner {
     private Cancellable cancellable;
 
     private FlowletServiceHook(final String flowletName, StreamCoordinatorClient streamCoordinatorClient,
-                               List<Id.Stream> streams, AtomicReference<FlowletProgramController> controller) {
+                               List<StreamId> streams, AtomicReference<FlowletProgramController> controller) {
       this.streamCoordinatorClient = streamCoordinatorClient;
       this.streams = streams;
       this.controller = controller;
       this.executor = ExecutorUtils.newThreadExecutor(Threads.createDaemonThreadFactory("flowlet-stream-update-%d"));
       this.propertyListener = new StreamPropertyListener() {
         @Override
-        public void ttlChanged(Id.Stream streamId, long ttl) {
+        public void ttlChanged(StreamId streamId, long ttl) {
           LOG.debug("TTL for stream '{}' changed to {} for flowlet '{}'", streamId, ttl, flowletName);
           suspendAndResume();
         }
 
         @Override
-        public void generationChanged(Id.Stream streamId, int generation) {
+        public void generationChanged(StreamId streamId, int generation) {
           LOG.debug("Generation for stream '{}' changed to {} for flowlet '{}'", streamId, generation, flowletName);
           suspendAndResume();
         }
 
         @Override
-        public void deleted(Id.Stream streamId) {
+        public void deleted(StreamId streamId) {
           LOG.debug("Properties deleted for stream '{}'", streamId);
           suspendAndResume();
         }
@@ -777,7 +777,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
         }
       };
 
-      for (Id.Stream stream : streams) {
+      for (StreamId stream : streams) {
         cancellables.add(streamCoordinatorClient.addListener(stream, propertyListener));
       }
       notifyStarted();

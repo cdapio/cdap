@@ -22,9 +22,12 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Function;
 import com.google.common.base.Ticker;
 import com.google.common.collect.ImmutableMap;
@@ -50,14 +53,14 @@ public class AppMetadataStoreTest {
   @BeforeClass
   public static void beforeClass() throws Exception {
     Injector injector = AppFabricTestHelper.getInjector();
-    AppFabricTestHelper.ensureNamespaceExists(Id.Namespace.DEFAULT);
+    AppFabricTestHelper.ensureNamespaceExists(NamespaceId.DEFAULT.toId());
     datasetFramework = injector.getInstance(DatasetFramework.class);
     cConf = injector.getInstance(CConfiguration.class);
   }
 
   @Test
   public void testScanRunningInRangeWithBatch() throws Exception {
-    Id.DatasetInstance storeTable = Id.DatasetInstance.from(Id.Namespace.DEFAULT, "testScanRunningInRange");
+    DatasetId storeTable = NamespaceId.DEFAULT.dataset("testScanRunningInRange");
     datasetFramework.addInstance(Table.class.getName(), storeTable, DatasetProperties.EMPTY);
 
     Table table = datasetFramework.getDataset(storeTable, ImmutableMap.<String, String>of(), null);
@@ -67,17 +70,15 @@ public class AppMetadataStoreTest {
     // Add some run records
     TreeSet<Long> expected = new TreeSet<>();
     for (int i = 0; i < 100; ++i) {
-      Id.Application application = Id.Application.from(Id.Namespace.DEFAULT, "app" + i);
-      Id.Program program = Id.Program.from(application, ProgramType.values()[i % ProgramType.values().length],
-                                           "program" + i);
+      ApplicationId application = NamespaceId.DEFAULT.app("app" + i);
+      ProgramId program = application.program(ProgramType.values()[i % ProgramType.values().length],
+                                              "program" + i);
       RunId runId = RunIds.generate((i + 1) * 10000);
       expected.add(RunIds.getTime(runId, TimeUnit.MILLISECONDS));
       // Start the program and stop it
-      metadataStoreDataset.recordProgramStart(program.toEntityId(), runId.getId(),
-                                              RunIds.getTime(runId, TimeUnit.SECONDS),
+      metadataStoreDataset.recordProgramStart(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
                                               null, null, null);
-      metadataStoreDataset.recordProgramStop(program.toEntityId(), runId.getId(),
-                                             RunIds.getTime(runId, TimeUnit.SECONDS),
+      metadataStoreDataset.recordProgramStop(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
                                              ProgramRunStatus.values()[i % ProgramRunStatus.values().length], null);
     }
 

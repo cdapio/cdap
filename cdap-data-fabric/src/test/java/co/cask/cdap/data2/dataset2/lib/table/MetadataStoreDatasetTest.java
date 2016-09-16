@@ -20,7 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
@@ -39,7 +39,7 @@ public class MetadataStoreDatasetTest {
 
   @Test
   public void testList() throws Exception {
-    Id.DatasetInstance storeTable = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "testList");
+    DatasetId storeTable = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("testList");
     dsFrameworkUtil.createInstance(Table.class.getName(), storeTable, DatasetProperties.EMPTY);
 
     Table table = dsFrameworkUtil.getInstance(storeTable);
@@ -88,7 +88,7 @@ public class MetadataStoreDatasetTest {
 
   @Test
   public void testScan() throws Exception {
-    Id.DatasetInstance storeTable = Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "testScan");
+    DatasetId storeTable = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("testScan");
     dsFrameworkUtil.createInstance(Table.class.getName(), storeTable, DatasetProperties.EMPTY);
 
     Table table = dsFrameworkUtil.getInstance(storeTable);

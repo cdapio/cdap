@@ -68,7 +68,7 @@ public final class StreamQueueReader<T> implements QueueReader<T> {
       throw new IOException(e);
     }
     StreamConsumer consumer = consumerSupplier.get();
-    return new BasicInputDatum<>(QueueName.fromStream(consumer.getStreamId()),
+    return new BasicInputDatum<>(QueueName.fromStream(consumer.getStreamId().toId()),
                                  consumer.poll(batchSize, timeout, timeoutUnit), eventTransform);
   }
 }

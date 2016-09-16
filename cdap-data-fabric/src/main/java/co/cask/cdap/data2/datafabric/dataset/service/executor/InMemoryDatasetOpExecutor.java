@@ -28,7 +28,7 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetType;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 
@@ -47,12 +47,12 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
   }
 
   @Override
-  public boolean exists(Id.DatasetInstance datasetInstanceId) throws Exception {
+  public boolean exists(DatasetId datasetInstanceId) throws Exception {
     return getAdmin(datasetInstanceId).exists();
   }
 
   @Override
-  public DatasetSpecification create(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta,
+  public DatasetSpecification create(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta,
                                      DatasetProperties props)
     throws Exception {
 
@@ -62,23 +62,23 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
       throw new IllegalArgumentException("Dataset type cannot be instantiated for provided type meta: " + typeMeta);
     }
 
-    DatasetSpecification spec = type.configure(datasetInstanceId.getId(), props);
-    DatasetAdmin admin = type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec);
+    DatasetSpecification spec = type.configure(datasetInstanceId.getEntityName(), props);
+    DatasetAdmin admin = type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespace()), spec);
     admin.create();
 
     return spec;
   }
 
   @Override
-  public DatasetSpecification update(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta,
+  public DatasetSpecification update(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta,
                                      DatasetProperties props, DatasetSpecification existing) throws Exception {
     DatasetType type = client.getDatasetType(typeMeta, null, new ConstantClassLoaderProvider());
     if (type == null) {
       throw new IllegalArgumentException("Dataset type cannot be instantiated for provided type meta: " + typeMeta);
     }
     try {
-      DatasetSpecification spec = type.reconfigure(datasetInstanceId.getId(), props, existing);
-      DatasetAdmin admin = type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec);
+      DatasetSpecification spec = type.reconfigure(datasetInstanceId.getEntityName(), props, existing);
+      DatasetAdmin admin = type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespace()), spec);
       if (admin instanceof Updatable) {
         ((Updatable) admin).update(existing);
       } else {
@@ -94,7 +94,7 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
   }
 
   @Override
-  public void drop(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta,
+  public void drop(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta,
                    DatasetSpecification spec) throws Exception {
     DatasetType type = client.getDatasetType(typeMeta, null, new ConstantClassLoaderProvider());
 
@@ -102,17 +102,17 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
       throw new IllegalArgumentException("Dataset type cannot be instantiated for provided type meta: " + typeMeta);
     }
 
-    DatasetAdmin admin = type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), spec);
+    DatasetAdmin admin = type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespace()), spec);
     admin.drop();
   }
 
   @Override
-  public void truncate(Id.DatasetInstance datasetInstanceId) throws Exception {
+  public void truncate(DatasetId datasetInstanceId) throws Exception {
     getAdmin(datasetInstanceId).truncate();
   }
 
   @Override
-  public void upgrade(Id.DatasetInstance datasetInstanceId) throws Exception {
+  public void upgrade(DatasetId datasetInstanceId) throws Exception {
     getAdmin(datasetInstanceId).upgrade();
   }
 
@@ -126,7 +126,7 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
 
   }
 
-  private DatasetAdmin getAdmin(Id.DatasetInstance datasetInstanceId) throws IOException, DatasetManagementException {
+  private DatasetAdmin getAdmin(DatasetId datasetInstanceId) throws IOException, DatasetManagementException {
     return client.getAdmin(datasetInstanceId, null);
   }
 }

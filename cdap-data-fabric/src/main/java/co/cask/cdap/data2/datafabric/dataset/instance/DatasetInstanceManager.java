@@ -25,7 +25,7 @@ import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
@@ -62,10 +62,10 @@ public class DatasetInstanceManager {
 
   /**
    * Adds dataset instance metadata
-   * @param namespaceId the {@link Id.Namespace} to add the dataset instance to
+   * @param namespaceId the {@link NamespaceId} to add the dataset instance to
    * @param spec {@link DatasetSpecification} of the dataset instance to be added
    */
-  public void add(final Id.Namespace namespaceId, final DatasetSpecification spec) {
+  public void add(final NamespaceId namespaceId, final DatasetSpecification spec) {
     final DatasetInstanceMDS instanceMDS = datasetCache.getDataset(DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
     txExecutorFactory.createExecutor(datasetCache).executeUnchecked(new TransactionExecutor.Subroutine() {
       @Override
@@ -76,11 +76,11 @@ public class DatasetInstanceManager {
   }
 
   /**
-   * @param datasetInstanceId {@link Id.DatasetInstance} of the dataset instance
+   * @param datasetInstanceId {@link DatasetId} of the dataset instance
    * @return dataset instance's {@link DatasetSpecification}
    */
   @Nullable
-  public DatasetSpecification get(final Id.DatasetInstance datasetInstanceId) {
+  public DatasetSpecification get(final DatasetId datasetInstanceId) {
     final DatasetInstanceMDS instanceMDS = datasetCache.getDataset(DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
     return txExecutorFactory.createExecutor(datasetCache).executeUnchecked(new Callable<DatasetSpecification>() {
       @Override
@@ -91,10 +91,10 @@ public class DatasetInstanceManager {
   }
 
   /**
-   * @param namespaceId {@link Id.Namespace} for which dataset instances are required
+   * @param namespaceId {@link NamespaceId} for which dataset instances are required
    * @return collection of {@link DatasetSpecification} of all dataset instances in the given namespace
    */
-  public Collection<DatasetSpecification> getAll(final Id.Namespace namespaceId) {
+  public Collection<DatasetSpecification> getAll(final NamespaceId namespaceId) {
     final DatasetInstanceMDS instanceMDS = datasetCache.getDataset(DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
     return txExecutorFactory.createExecutor(datasetCache)
       .executeUnchecked(new Callable<Collection<DatasetSpecification>>() {
@@ -107,10 +107,10 @@ public class DatasetInstanceManager {
 
   /**
    * Deletes dataset instance
-   * @param datasetInstanceId {@link Id.DatasetInstance} of the instance to delete
+   * @param datasetInstanceId {@link DatasetId} of the instance to delete
    * @return true if deletion succeeded, false otherwise
    */
-  public boolean delete(final Id.DatasetInstance datasetInstanceId) {
+  public boolean delete(final DatasetId datasetInstanceId) {
     final DatasetInstanceMDS instanceMDS = datasetCache.getDataset(DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
     return txExecutorFactory.createExecutor(datasetCache).executeUnchecked(new Callable<Boolean>() {
       @Override

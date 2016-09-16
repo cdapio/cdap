@@ -54,7 +54,9 @@ import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
@@ -169,10 +171,10 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void dropAllInNamespace(final Id.Namespace namespace) throws Exception {
+  public void dropAllInNamespace(final NamespaceId namespace) throws Exception {
     // To delete all streams in a namespace, one should have admin privileges on that namespace
-    ensureAccess(namespace.toEntityId(), Action.ADMIN);
-    UserGroupInformation ugi = impersonator.getUGI(namespace.toEntityId());
+    ensureAccess(namespace, Action.ADMIN);
+    UserGroupInformation ugi = impersonator.getUGI(namespace);
     Iterable<Location> locations = ImpersonationUtils.doAs(ugi, new Callable<Iterable<Location>>() {
       @Override
       public Iterable<Location> call() throws Exception {
@@ -186,7 +188,7 @@ public class FileStreamAdmin implements StreamAdmin {
     });
 
     for (final Location location : locations) {
-      doDrop(new StreamId(namespace.getId(), StreamUtils.getStreamNameFromLocation(location)).toId(), location, ugi);
+      doDrop(namespace.stream(StreamUtils.getStreamNameFromLocation(location)), location, ugi);
     }
 
     // Also drop the state table
@@ -200,7 +202,7 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void configureInstances(Id.Stream streamId, long groupId, int instances) throws Exception {
+  public void configureInstances(StreamId streamId, long groupId, int instances) throws Exception {
     Preconditions.checkArgument(instances > 0, "Number of consumer instances must be > 0.");
 
     LOG.info("Configure instances: {} {}", groupId, instances);
@@ -227,7 +229,7 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void configureGroups(Id.Stream streamId, Map<Long, Integer> groupInfo) throws Exception {
+  public void configureGroups(StreamId streamId, Map<Long, Integer> groupInfo) throws Exception {
     Preconditions.checkArgument(!groupInfo.isEmpty(), "Consumer group information must not be empty.");
 
     LOG.info("Configure groups for {}: {}", streamId, groupInfo);
@@ -280,7 +282,7 @@ public class FileStreamAdmin implements StreamAdmin {
   @Override
   public List<StreamSpecification> listStreams(final NamespaceId namespaceId) throws Exception {
     final Predicate<EntityId> filter = authorizationEnforcer.createFilter(authenticationContext.getPrincipal());
-    List<StreamSpecification> streamSpecifications = streamMetaStore.listStreams(namespaceId.toId());
+    List<StreamSpecification> streamSpecifications = streamMetaStore.listStreams(namespaceId);
     return Lists.newArrayList(Iterables.filter(streamSpecifications,
                                                new com.google.common.base.Predicate<StreamSpecification>() {
       @Override
@@ -291,9 +293,9 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public StreamConfig getConfig(final Id.Stream streamId) throws IOException {
+  public StreamConfig getConfig(final StreamId streamId) throws IOException {
     // No Authorization check performed in this method. If required, it should be added before this method is invoked
-    UserGroupInformation ugi = impersonator.getUGI(new NamespaceId(streamId.getNamespaceId()));
+    UserGroupInformation ugi = impersonator.getUGI(streamId.getParent());
     try {
       return ImpersonationUtils.doAs(ugi, new Callable<StreamConfig>() {
         @Override
@@ -324,9 +326,9 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public StreamProperties getProperties(Id.Stream streamId) throws Exception {
+  public StreamProperties getProperties(StreamId streamId) throws Exception {
     // User should have any access on the stream to read its properties
-    ensureAccess(streamId.toEntityId());
+    ensureAccess(streamId);
     StreamConfig config = getConfig(streamId);
     StreamSpecification spec = streamMetaStore.getStream(streamId);
     return new StreamProperties(config.getTTL(), config.getFormat(), config.getNotificationThresholdMB(),
@@ -334,11 +336,11 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void updateConfig(final Id.Stream streamId, final StreamProperties properties) throws Exception {
+  public void updateConfig(final StreamId streamId, final StreamProperties properties) throws Exception {
     Location streamLocation;
     // User should have admin access on the stream to update its configuration
-    ensureAccess(streamId.toEntityId(), Action.ADMIN);
-    streamLocation = impersonator.doAs(new NamespaceId(streamId.getNamespaceId()), new Callable<Location>() {
+    ensureAccess(streamId, Action.ADMIN);
+    streamLocation = impersonator.doAs(streamId.getParent(), new Callable<Location>() {
       @Override
       public Location call() throws Exception {
         return getStreamLocation(streamId);
@@ -374,13 +376,13 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public boolean exists(final Id.Stream streamId) throws Exception {
+  public boolean exists(final StreamId streamId) throws Exception {
     try {
       boolean metaExists = streamMetaStore.streamExists(streamId);
       if (!metaExists) {
         return false;
       }
-      UserGroupInformation ugi = impersonator.getUGI(new NamespaceId(streamId.getNamespaceId()));
+      UserGroupInformation ugi = impersonator.getUGI(streamId.getParent());
       return ImpersonationUtils.doAs(ugi, new Callable<Boolean>() {
         @Override
         public Boolean call() throws Exception {
@@ -394,24 +396,25 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public StreamConfig create(Id.Stream streamId) throws Exception {
+  public StreamConfig create(StreamId streamId) throws Exception {
     return create(streamId, new Properties());
   }
 
   @Override
-  public StreamConfig create(final Id.Stream streamId, @Nullable final Properties props) throws Exception {
+  public StreamConfig create(final StreamId streamId, @Nullable final Properties props) throws Exception {
     // User should have write access to the namespace
-    ensureAccess(streamId.getNamespace().toEntityId(), Action.WRITE);
+    NamespaceId streamNamespace = streamId.getParent();
+    ensureAccess(streamNamespace, Action.WRITE);
     // revoke privleges to make sure there is no orphaned privleges
-    privilegesManager.revoke(streamId.toEntityId());
+    privilegesManager.revoke(streamId);
     try {
       // Grant All access to the stream created to the User
-      privilegesManager.grant(streamId.toEntityId(), authenticationContext.getPrincipal(), EnumSet.allOf(Action.class));
-      final UserGroupInformation ugi = impersonator.getUGI(new NamespaceId(streamId.getNamespaceId()));
+      privilegesManager.grant(streamId, authenticationContext.getPrincipal(), EnumSet.allOf(Action.class));
+      final UserGroupInformation ugi = impersonator.getUGI(streamNamespace);
       final Location streamLocation = ImpersonationUtils.doAs(ugi, new Callable<Location>() {
         @Override
         public Location call() throws Exception {
-          assertNamespaceHomeExists(streamId.getNamespace());
+          assertNamespaceHomeExists(streamId.getParent());
           Location streamLocation = getStreamLocation(streamId);
           Locations.mkdirsIfNotExists(streamLocation);
           return streamLocation;
@@ -464,12 +467,12 @@ public class FileStreamAdmin implements StreamAdmin {
       });
     } catch (Exception e) {
       // there was a problem creating the stream. so revoke privilege.
-      privilegesManager.revoke(streamId.toEntityId());
+      privilegesManager.revoke(streamId);
       throw e;
     }
   }
 
-  private void assertNamespaceHomeExists(Id.Namespace namespaceId) throws IOException {
+  private void assertNamespaceHomeExists(NamespaceId namespaceId) throws IOException {
     Location namespaceHomeLocation = Locations.getParent(getStreamBaseLocation(namespaceId));
     Preconditions.checkArgument(namespaceHomeLocation != null && namespaceHomeLocation.exists(),
                                 "Home directory %s for namespace %s not found", namespaceHomeLocation, namespaceId);
@@ -483,9 +486,9 @@ public class FileStreamAdmin implements StreamAdmin {
   private void createStreamFeeds(StreamConfig config) {
     try {
       Id.NotificationFeed streamFeed = new Id.NotificationFeed.Builder()
-        .setNamespaceId(config.getStreamId().getNamespaceId())
+        .setNamespaceId(config.getStreamId().getNamespace())
         .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-        .setName(String.format("%sSize", config.getStreamId().getId()))
+        .setName(String.format("%sSize", config.getStreamId().getEntityName()))
         .setDescription(String.format("Size updates feed for Stream %s every %dMB",
                                       config.getStreamId(), config.getNotificationThresholdMB()))
         .build();
@@ -496,10 +499,10 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void truncate(final Id.Stream streamId) throws Exception {
+  public void truncate(final StreamId streamId) throws Exception {
     // User should have ADMIN access to truncate the stream
-    ensureAccess(streamId.toEntityId(), Action.ADMIN);
-    impersonator.doAs(new NamespaceId(streamId.getNamespaceId()), new Callable<Void>() {
+    ensureAccess(streamId, Action.ADMIN);
+    impersonator.doAs(streamId.getParent(), new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         doTruncate(streamId, getStreamLocation(streamId));
@@ -509,10 +512,10 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void drop(final Id.Stream streamId) throws Exception {
+  public void drop(final StreamId streamId) throws Exception {
     // User should have ADMIN access to drop the stream
-    ensureAccess(streamId.toEntityId(), Action.ADMIN);
-    UserGroupInformation ugi = impersonator.getUGI(new NamespaceId(streamId.getNamespaceId()));
+    ensureAccess(streamId, Action.ADMIN);
+    UserGroupInformation ugi = impersonator.getUGI(streamId.getParent());
     Location streamLocation = ImpersonationUtils.doAs(ugi, new Callable<Location>() {
       @Override
       public Location call() throws Exception {
@@ -523,13 +526,14 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public boolean createOrUpdateView(final Id.Stream.View viewId, final ViewSpecification spec) throws Exception {
+  public boolean createOrUpdateView(final StreamViewId viewId, final ViewSpecification spec) throws Exception {
+    final StreamId stream = viewId.getParent();
     return streamCoordinatorClient.exclusiveAction(
-      viewId.getStream(), new Callable<Boolean>() {
+      stream, new Callable<Boolean>() {
         @Override
         public Boolean call() throws Exception {
-          if (!exists(viewId.getStream())) {
-            throw new NotFoundException(viewId.getStream());
+          if (!exists(stream)) {
+            throw new NotFoundException(stream);
           }
           return viewAdmin.createOrUpdate(viewId, spec);
         }
@@ -537,13 +541,14 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public void deleteView(final Id.Stream.View viewId) throws Exception {
+  public void deleteView(final StreamViewId viewId) throws Exception {
+    final StreamId stream = viewId.getParent();
     streamCoordinatorClient.exclusiveAction(
-      viewId.getStream(), new Callable<Void>() {
+      stream, new Callable<Void>() {
         @Override
         public Void call() throws Exception {
-          if (!exists(viewId.getStream())) {
-            throw new StreamNotFoundException(viewId.getStream());
+          if (!exists(stream)) {
+            throw new StreamNotFoundException(stream.toId());
           }
           viewAdmin.delete(viewId);
           return null;
@@ -552,62 +557,64 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public List<Id.Stream.View> listViews(final Id.Stream streamId) throws Exception {
+  public List<StreamViewId> listViews(final StreamId streamId) throws Exception {
     if (!exists(streamId)) {
-      throw new StreamNotFoundException(streamId);
+      throw new StreamNotFoundException(streamId.toId());
     }
     return viewAdmin.list(streamId);
   }
 
   @Override
-  public ViewSpecification getView(final Id.Stream.View viewId) throws Exception {
-    if (!exists(viewId.getStream())) {
-      throw new StreamNotFoundException(viewId.getStream());
+  public ViewSpecification getView(final StreamViewId viewId) throws Exception {
+    final StreamId stream = viewId.getParent();
+    if (!exists(stream)) {
+      throw new StreamNotFoundException(stream.toId());
     }
     return viewAdmin.get(viewId);
   }
 
   @Override
-  public boolean viewExists(Id.Stream.View viewId) throws Exception {
-    if (!exists(viewId.getStream())) {
-      throw new StreamNotFoundException(viewId.getStream());
+  public boolean viewExists(StreamViewId viewId) throws Exception {
+    StreamId stream = viewId.getParent();
+    if (!exists(stream)) {
+      throw new StreamNotFoundException(stream.toId());
     }
     return viewAdmin.exists(viewId);
   }
 
   @Override
-  public void register(Iterable<? extends Id> owners, Id.Stream streamId) {
+  public void register(Iterable<? extends EntityId> owners, StreamId streamId) {
     runtimeUsageRegistry.registerAll(owners, streamId);
   }
 
   @Override
-  public void addAccess(Id.Run run, Id.Stream streamId, AccessType accessType) {
-    lineageWriter.addAccess(run.toEntityId(), streamId.toEntityId(), accessType);
+  public void addAccess(ProgramRunId run, StreamId streamId, AccessType accessType) {
+    lineageWriter.addAccess(run, streamId, accessType);
     AuditPublishers.publishAccess(auditPublisher, streamId, accessType, run);
   }
 
   /**
    * Returns the location that points the config file for the given stream.
    */
-  private Location getConfigLocation(Id.Stream streamId) throws IOException {
+  private Location getConfigLocation(StreamId streamId) throws IOException {
     return getStreamLocation(streamId).append(CONFIG_FILE_NAME);
   }
 
   /**
    * Returns the location for the given stream.
    */
-  private Location getStreamLocation(Id.Stream streamId) throws IOException {
-    return getStreamBaseLocation(streamId.getNamespace()).append(streamId.getId());
+  private Location getStreamLocation(StreamId streamId) throws IOException {
+    return getStreamBaseLocation(streamId.getParent()).append(streamId.getEntityName());
   }
 
   /**
    * Returns the location for the given namespace that contains all streams belong to that namespace.
    */
-  private Location getStreamBaseLocation(Id.Namespace namespace) throws IOException {
-    return namespacedLocationFactory.get(namespace).append(streamBaseDirPath);
+  private Location getStreamBaseLocation(NamespaceId namespace) throws IOException {
+    return namespacedLocationFactory.get(namespace.toId()).append(streamBaseDirPath);
   }
 
-  private void doTruncate(final Id.Stream streamId, final Location streamLocation) throws Exception {
+  private void doTruncate(final StreamId streamId, final Location streamLocation) throws Exception {
     streamCoordinatorClient.updateProperties(streamId, new Callable<CoordinatorStreamProperties>() {
       @Override
       public CoordinatorStreamProperties call() throws Exception {
@@ -619,7 +626,7 @@ public class FileStreamAdmin implements StreamAdmin {
     });
   }
 
-  private void doDrop(final Id.Stream streamId, final Location streamLocation,
+  private void doDrop(final StreamId streamId, final Location streamLocation,
                       final UserGroupInformation ugi) throws Exception {
     // Delete the stream config so that calls that try to access the stream will fail after this call returns.
     // The stream coordinator client will notify all clients that stream has been deleted.
@@ -638,12 +645,12 @@ public class FileStreamAdmin implements StreamAdmin {
           if (configLocation == null) {
             return;
           }
-          alterExploreStream(new StreamId(streamId.getNamespaceId(),
-                                          StreamUtils.getStreamNameFromLocation(streamLocation)).toId(), false, null);
+          alterExploreStream(streamId.getParent().stream(StreamUtils.getStreamNameFromLocation(streamLocation)), false,
+                                                         null);
 
           // Drop the associated views
-          List<Id.Stream.View> views = viewAdmin.list(streamId);
-          for (Id.Stream.View view : views) {
+          List<StreamViewId> views = viewAdmin.list(streamId);
+          for (StreamViewId view : views) {
             viewAdmin.delete(view);
           }
 
@@ -659,17 +666,17 @@ public class FileStreamAdmin implements StreamAdmin {
               // The target directory has a timestamp appended to the stream name
               // It is for the case when a stream is created and deleted in a short period of time before
               // the stream janitor kicks in.
-              Location deleted = StreamUtils.getDeletedLocation(getStreamBaseLocation(streamId.getNamespace()));
+              Location deleted = StreamUtils.getDeletedLocation(getStreamBaseLocation(streamId.getParent()));
               Locations.mkdirsIfNotExists(deleted);
-              streamLocation.renameTo(deleted.append(streamId.getId() + System.currentTimeMillis()));
+              streamLocation.renameTo(deleted.append(streamId.getEntityName() + System.currentTimeMillis()));
               return null;
             }
           });
 
           streamMetaStore.removeStream(streamId);
-          metadataStore.removeMetadata(streamId.toEntityId());
+          metadataStore.removeMetadata(streamId);
           // revoke all privileges on the stream
-          privilegesManager.revoke(streamId.toEntityId());
+          privilegesManager.revoke(streamId);
           publishAudit(streamId, AuditType.DELETE);
         } catch (Exception e) {
           throw Throwables.propagate(e);
@@ -678,7 +685,7 @@ public class FileStreamAdmin implements StreamAdmin {
     });
   }
 
-  private StreamProperties updateProperties(Id.Stream streamId, StreamProperties properties) throws Exception {
+  private StreamProperties updateProperties(StreamId streamId, StreamProperties properties) throws Exception {
     StreamConfig config = getConfig(streamId);
 
     StreamConfig.Builder builder = StreamConfig.builder(config);
@@ -699,7 +706,7 @@ public class FileStreamAdmin implements StreamAdmin {
     }
 
     final StreamConfig newConfig = builder.build();
-    UserGroupInformation ugi = impersonator.getUGI(new NamespaceId(streamId.getNamespaceId()));
+    UserGroupInformation ugi = impersonator.getUGI(streamId.getParent());
     ImpersonationUtils.doAs(ugi, new Callable<Void>() {
       @Override
       public Void call() throws Exception {
@@ -776,15 +783,15 @@ public class FileStreamAdmin implements StreamAdmin {
     }
   }
 
-  private void alterExploreStream(Id.Stream stream, boolean enable, @Nullable FormatSpecification format) {
+  private void alterExploreStream(StreamId stream, boolean enable, @Nullable FormatSpecification format) {
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       // It shouldn't happen.
       Preconditions.checkNotNull(exploreFacade, "Explore enabled but no ExploreFacade instance is available");
       try {
         if (enable) {
-          exploreFacade.enableExploreStream(stream, tableNaming.getTableName(stream), format);
+          exploreFacade.enableExploreStream(stream.toId(), tableNaming.getTableName(stream), format);
         } else {
-          exploreFacade.disableExploreStream(stream, tableNaming.getTableName(stream));
+          exploreFacade.disableExploreStream(stream.toId(), tableNaming.getTableName(stream));
         }
       } catch (Exception e) {
         // at this time we want to still allow using stream even if it cannot be used for exploration
@@ -794,8 +801,8 @@ public class FileStreamAdmin implements StreamAdmin {
     }
   }
 
-  private void publishAudit(Id.Stream stream, AuditType auditType) {
-    AuditPublishers.publishAudit(auditPublisher, stream.toEntityId(), auditType, AuditPayload.EMPTY_PAYLOAD);
+  private void publishAudit(StreamId stream, AuditType auditType) {
+    AuditPublishers.publishAudit(auditPublisher, stream, auditType, AuditPayload.EMPTY_PAYLOAD);
   }
 
   private <T extends EntityId> void ensureAccess(T entityId, Action action) throws Exception {

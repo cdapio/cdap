@@ -25,7 +25,8 @@ import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.DequeueResult;
 import co.cask.cdap.data2.queue.DequeueStrategy;
 import co.cask.cdap.data2.queue.QueueClientFactory;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -56,8 +57,8 @@ import java.util.concurrent.TimeUnit;
 public abstract class StreamConsumerTestBase {
 
   protected static CConfiguration cConf = CConfiguration.create();
-  protected static final Id.Namespace TEST_NAMESPACE = Id.Namespace.from("streamConsumerTestNamespace");
-  protected static final Id.Namespace OTHER_NAMESPACE = Id.Namespace.from("otherNamespace");
+  protected static final NamespaceId TEST_NAMESPACE = new NamespaceId("streamConsumerTestNamespace");
+  protected static final NamespaceId OTHER_NAMESPACE = new NamespaceId("otherNamespace");
   private static final Comparator<StreamEvent> STREAM_EVENT_COMPARATOR = new Comparator<StreamEvent>() {
     @Override
     public int compare(StreamEvent o1, StreamEvent o2) {
@@ -80,8 +81,8 @@ public abstract class StreamConsumerTestBase {
   protected abstract StreamFileWriterFactory getFileWriterFactory();
 
   protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws IOException {
-    namespacedLocationFactory.get(TEST_NAMESPACE).mkdirs();
-    namespacedLocationFactory.get(OTHER_NAMESPACE).mkdirs();
+    namespacedLocationFactory.get(TEST_NAMESPACE.toId()).mkdirs();
+    namespacedLocationFactory.get(OTHER_NAMESPACE.toId()).mkdirs();
   }
 
   @Test
@@ -89,8 +90,8 @@ public abstract class StreamConsumerTestBase {
     // Test two consumers for two streams with the same name, but in different namespaces. Their consumption should be
     // independent of the other.
     String stream = "testNamespacedStreamConsumers";
-    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, stream);
-    Id.Stream otherStreamId = Id.Stream.from(OTHER_NAMESPACE, stream);
+    StreamId streamId = TEST_NAMESPACE.stream(stream);
+    StreamId otherStreamId = OTHER_NAMESPACE.stream(stream);
 
     StreamAdmin streamAdmin = getStreamAdmin();
     streamAdmin.create(streamId);
@@ -163,7 +164,7 @@ public abstract class StreamConsumerTestBase {
   @Test
   public void testFIFORollback() throws Exception {
     String stream = "testFIFORollback";
-    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, stream);
+    StreamId streamId = TEST_NAMESPACE.stream(stream);
     StreamAdmin streamAdmin = getStreamAdmin();
     streamAdmin.create(streamId);
     StreamConfig streamConfig = streamAdmin.getConfig(streamId);
@@ -220,7 +221,7 @@ public abstract class StreamConsumerTestBase {
   @Test
   public void testFIFOReconfigure() throws Exception {
     String stream = "testReconfigure";
-    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, stream);
+    StreamId streamId = TEST_NAMESPACE.stream(stream);
     StreamAdmin streamAdmin = getStreamAdmin();
     streamAdmin.create(streamId);
     StreamConfig streamConfig = streamAdmin.getConfig(streamId);
@@ -314,7 +315,7 @@ public abstract class StreamConsumerTestBase {
   @Test
   public void testTTL() throws Exception {
     String stream = "testTTL";
-    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, stream);
+    StreamId streamId = TEST_NAMESPACE.stream(stream);
     StreamAdmin streamAdmin = getStreamAdmin();
 
     // Create stream with ttl of 1 day
@@ -371,7 +372,7 @@ public abstract class StreamConsumerTestBase {
   @Test
   public void testTTLMultipleEventsWithSameTimestamp() throws Exception {
     String stream = "testTTLMultipleEventsWithSameTimestamp";
-    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, stream);
+    StreamId streamId = TEST_NAMESPACE.stream(stream);
     StreamAdmin streamAdmin = getStreamAdmin();
 
     // Create stream with ttl of 1 day
@@ -430,7 +431,7 @@ public abstract class StreamConsumerTestBase {
   @Test
   public void testTTLStartingFile() throws Exception {
     String stream = "testTTLStartingFile";
-    Id.Stream streamId = Id.Stream.from(TEST_NAMESPACE, stream);
+    StreamId streamId = TEST_NAMESPACE.stream(stream);
     StreamAdmin streamAdmin = getStreamAdmin();
 
     // Create stream with ttl of 3 seconds and partition duration of 3 seconds

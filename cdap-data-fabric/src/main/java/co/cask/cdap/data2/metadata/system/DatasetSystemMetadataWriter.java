@@ -30,7 +30,7 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
@@ -42,7 +42,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * A {@link AbstractSystemMetadataWriter} for a {@link Id.DatasetInstance dataset}.
+ * A {@link AbstractSystemMetadataWriter} for a {@link DatasetId dataset}.
  */
 public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetSystemMetadataWriter.class);
@@ -56,7 +56,7 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
   static final String FILESET_PARQUET_SCHEMA_OUTPUT_KEY = "parquet.avro.schema";
   static final String FILESET_AVRO_SCHEMA_OUTPUT_KEY = "avro.schema.output.key";
 
-  private final Id.DatasetInstance dsInstance;
+  private final DatasetId dsInstance;
   private final String dsType;
   private final DatasetProperties dsProperties;
   private final Dataset dataset;
@@ -64,18 +64,18 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
   private final String description;
 
   public DatasetSystemMetadataWriter(MetadataStore metadataStore,
-                                     Id.DatasetInstance dsInstance, DatasetProperties dsProperties,
+                                     DatasetId dsInstance, DatasetProperties dsProperties,
                                      @Nullable Dataset dataset, @Nullable String dsType,
                                      @Nullable String description) {
     this(metadataStore, dsInstance, dsProperties, -1, dataset, dsType, description);
   }
 
   public DatasetSystemMetadataWriter(MetadataStore metadataStore,
-                                     Id.DatasetInstance dsInstance, DatasetProperties dsProperties,
+                                     DatasetId dsInstance, DatasetProperties dsProperties,
                                      long createTime,
                                      @Nullable Dataset dataset, @Nullable String dsType,
                                      @Nullable String description) {
-    super(metadataStore, dsInstance.toEntityId());
+    super(metadataStore, dsInstance);
     this.dsInstance = dsInstance;
     this.dsType = dsType;
     this.dsProperties = dsProperties;
@@ -109,7 +109,7 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
   @Override
   protected String[] getSystemTagsToAdd() {
     List<String> tags = new ArrayList<>();
-    tags.add(dsInstance.getId());
+    tags.add(dsInstance.getEntityName());
     if (dataset instanceof RecordScannable) {
       tags.add(EXPLORE_TAG);
     }

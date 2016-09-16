@@ -16,7 +16,7 @@
 
 package co.cask.cdap.data.stream.service.upload;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Throwables;
@@ -41,7 +41,7 @@ final class TextStreamBodyConsumer extends BodyConsumer {
 
   private static final Logger LOG = LoggerFactory.getLogger(TextStreamBodyConsumer.class);
 
-  private final Id.Stream streamId;
+  private final StreamId streamId;
   private final ContentWriterFactory contentWriterFactory;
   private ContentWriter contentWriter;
   private boolean failed;

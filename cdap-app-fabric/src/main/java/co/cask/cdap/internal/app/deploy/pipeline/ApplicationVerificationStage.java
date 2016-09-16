@@ -44,13 +44,12 @@ import co.cask.cdap.internal.app.verification.StreamVerification;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.pipeline.AbstractStage;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
-import org.apache.hadoop.mapreduce.v2.app.webapp.App;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -117,7 +116,7 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
         throw new RuntimeException(result.getMessage());
       }
       String dsName = dataSetCreateSpec.getInstanceName();
-      Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(appId.getNamespace(), dsName);
+      DatasetId datasetInstanceId = appId.getParent().dataset(dsName);
       DatasetSpecification existingSpec = dsFramework.getDatasetSpec(datasetInstanceId);
       if (existingSpec != null && !existingSpec.getType().equals(dataSetCreateSpec.getTypeName())) {
         // New app trying to deploy an dataset with same instanceName but different Type than that of existing.

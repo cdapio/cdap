@@ -31,7 +31,6 @@ import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.security.ImpersonationInfo;
 import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -64,7 +63,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.sql.SQLException;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -311,7 +309,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     // Namespace data can be deleted. Revoke all privileges first
     authorizationEnforcer.enforce(namespaceId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
     try {
-      dsFramework.deleteAllInstances(namespaceId);
+      dsFramework.deleteAllInstances(namespaceId.toEntityId());
     } catch (DatasetManagementException | IOException e) {
       LOG.warn("Error while deleting datasets in namespace {}", namespaceId, e);
       throw new NamespaceCannotBeDeletedException(namespaceId, e);

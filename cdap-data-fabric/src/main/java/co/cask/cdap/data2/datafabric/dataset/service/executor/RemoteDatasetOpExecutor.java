@@ -29,7 +29,7 @@ import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.common.service.UncaughtExceptionIdleService;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequestConfig;
@@ -114,12 +114,12 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
   }
 
   @Override
-  public boolean exists(Id.DatasetInstance datasetInstanceId) throws Exception {
+  public boolean exists(DatasetId datasetInstanceId) throws Exception {
     return (Boolean) executeAdminOp(datasetInstanceId, "exists", null).getResult();
   }
 
   @Override
-  public DatasetSpecification create(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta,
+  public DatasetSpecification create(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta,
                                      DatasetProperties props) throws Exception {
     InternalDatasetCreationParams creationParams = new InternalDatasetCreationParams(typeMeta, props);
     HttpResponse response = doRequest(datasetInstanceId, "create", GSON.toJson(creationParams));
@@ -127,7 +127,7 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
   }
 
   @Override
-  public DatasetSpecification update(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta,
+  public DatasetSpecification update(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta,
                                      DatasetProperties props, DatasetSpecification existing) throws Exception {
     InternalDatasetCreationParams updateParams = new InternalDatasetUpdateParams(typeMeta, existing, props);
     HttpResponse response = doRequest(datasetInstanceId, "update", GSON.toJson(updateParams));
@@ -135,30 +135,30 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
   }
 
   @Override
-  public void drop(Id.DatasetInstance datasetInstanceId, DatasetTypeMeta typeMeta, DatasetSpecification spec)
+  public void drop(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta, DatasetSpecification spec)
     throws Exception {
     InternalDatasetDropParams dropParams = new InternalDatasetDropParams(typeMeta, spec);
     doRequest(datasetInstanceId, "drop", GSON.toJson(dropParams));
   }
 
   @Override
-  public void truncate(Id.DatasetInstance datasetInstanceId) throws Exception {
+  public void truncate(DatasetId datasetInstanceId) throws Exception {
     executeAdminOp(datasetInstanceId, "truncate", null);
   }
 
   @Override
-  public void upgrade(Id.DatasetInstance datasetInstanceId) throws Exception {
+  public void upgrade(DatasetId datasetInstanceId) throws Exception {
     executeAdminOp(datasetInstanceId, "upgrade", null);
   }
 
   private DatasetAdminOpResponse executeAdminOp(
-    Id.DatasetInstance datasetInstanceId, String opName,
+    DatasetId datasetInstanceId, String opName,
     @Nullable String body) throws IOException, HandlerException, ConflictException {
     HttpResponse httpResponse = doRequest(datasetInstanceId, opName, body);
     return GSON.fromJson(Bytes.toString(httpResponse.getResponseBody()), DatasetAdminOpResponse.class);
   }
 
-  private HttpResponse doRequest(Id.DatasetInstance datasetInstanceId, String opName,
+  private HttpResponse doRequest(DatasetId datasetInstanceId, String opName,
                                  @Nullable String body) throws IOException, ConflictException {
     HttpRequest.Builder builder = HttpRequest.post(resolve(datasetInstanceId, opName));
     if (body != null) {
@@ -173,9 +173,9 @@ public abstract class RemoteDatasetOpExecutor extends UncaughtExceptionIdleServi
     return httpResponse;
   }
 
-  private URL resolve(Id.DatasetInstance datasetInstanceId, String opName) throws MalformedURLException {
-    return resolve(String.format("namespaces/%s/data/datasets/%s/admin/%s", datasetInstanceId.getNamespaceId(),
-                                 datasetInstanceId.getId(), opName));
+  private URL resolve(DatasetId datasetInstanceId, String opName) throws MalformedURLException {
+    return resolve(String.format("namespaces/%s/data/datasets/%s/admin/%s", datasetInstanceId.getNamespace(),
+                                 datasetInstanceId.getEntityName(), opName));
   }
 
   private URL resolve(String path) throws MalformedURLException {

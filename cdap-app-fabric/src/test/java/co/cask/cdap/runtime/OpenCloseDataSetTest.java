@@ -94,7 +94,7 @@ public class OpenCloseDataSetTest {
   public static void setup() throws Exception {
     NamespacedLocationFactory namespacedLocationFactory =
       AppFabricTestHelper.getInjector().getInstance(NamespacedLocationFactory.class);
-    namespaceHomeLocation = namespacedLocationFactory.get(DefaultId.NAMESPACE);
+    namespaceHomeLocation = namespacedLocationFactory.get(DefaultId.NAMESPACE.toId());
     NamespaceAdmin namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(DefaultId.NAMESPACE).build());
     Locations.mkdirsIfNotExists(namespaceHomeLocation);
@@ -161,7 +161,7 @@ public class OpenCloseDataSetTest {
       getInstance(DiscoveryServiceClient.class);
 
     Discoverable discoverable = new RandomEndpointStrategy(discoveryServiceClient.discover(
-      String.format("service.%s.%s.%s", DefaultId.NAMESPACE.getId(), "dummy", "DummyService")))
+      String.format("service.%s.%s.%s", DefaultId.NAMESPACE.getEntityName(), "dummy", "DummyService")))
       .pick(5, TimeUnit.SECONDS);
     Assert.assertNotNull(discoverable);
 

@@ -26,7 +26,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractScheduledService;
@@ -102,10 +102,9 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
       }
       String tableName = statEntry.getKey().getTableName();
 
-      Collection<DatasetSpecificationSummary> instances = dsFramework.getInstances(Id.Namespace.from(namespace));
+      Collection<DatasetSpecificationSummary> instances = dsFramework.getInstances(new NamespaceId(namespace));
       for (DatasetSpecificationSummary spec : instances) {
-        DatasetSpecification specification = dsFramework.getDatasetSpec(Id.DatasetInstance.from(namespace,
-                                                                                                spec.getName()));
+        DatasetSpecification specification = dsFramework.getDatasetSpec(new DatasetId(namespace, spec.getName()));
         if (specification.isParent(tableName)) {
           MetricsContext collector =
             metricsService.getContext(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespace,

@@ -18,7 +18,7 @@ package co.cask.cdap.data2.transaction.stream;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.DequeueResult;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import org.apache.tephra.Transaction;
 
 import java.io.IOException;
@@ -37,7 +37,7 @@ public abstract class ForwardingStreamConsumer implements StreamConsumer {
   }
 
   @Override
-  public Id.Stream getStreamId() {
+  public StreamId getStreamId() {
     return delegate.getStreamId();
   }
 

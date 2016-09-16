@@ -51,7 +51,8 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.notifications.service.NotificationService;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
@@ -180,12 +181,12 @@ public class DFSStreamHeartbeatsTest {
     hostname = streamHttpService.getBindAddress().getHostName();
     port = streamHttpService.getBindAddress().getPort();
 
-    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(Id.Namespace.DEFAULT));
+    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(NamespaceId.DEFAULT.toId()));
   }
 
   @AfterClass
   public static void afterClass() throws IOException {
-    Locations.deleteQuietly(namespacedLocationFactory.get(Id.Namespace.DEFAULT), true);
+    Locations.deleteQuietly(namespacedLocationFactory.get(NamespaceId.DEFAULT.toId()), true);
 
     notificationService.startAndWait();
     datasetService.startAndWait();
@@ -207,7 +208,7 @@ public class DFSStreamHeartbeatsTest {
   public void streamPublishesHeartbeatTest() throws Exception {
     final int entries = 10;
     final String streamName = "test_stream";
-    final Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
+    final StreamId streamId = NamespaceId.DEFAULT.stream(streamName);
     // Create a new stream.
     streamAdmin.create(streamId);
 
@@ -231,7 +232,7 @@ public class DFSStreamHeartbeatsTest {
     }, Constants.Stream.HEARTBEAT_INTERVAL * 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
-  private long getStreamSize(Id.Stream streamId, MockHeartbeatPublisher heartbeatPublisher) {
+  private long getStreamSize(StreamId streamId, MockHeartbeatPublisher heartbeatPublisher) {
     StreamWriterHeartbeat heartbeat = heartbeatPublisher.getHeartbeat();
     if (heartbeat == null) {
       return 0L;

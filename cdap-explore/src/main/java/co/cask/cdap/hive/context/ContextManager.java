@@ -221,11 +221,11 @@ public class ContextManager {
     }
 
     public StreamConfig getStreamConfig(Id.Stream streamId) throws IOException {
-      return streamAdmin.getConfig(streamId);
+      return streamAdmin.getConfig(streamId.toEntityId());
     }
 
     public DatasetSpecification getDatasetSpec(Id.DatasetInstance datasetId) throws DatasetManagementException {
-      return datasetFramework.getDatasetSpec(datasetId);
+      return datasetFramework.getDatasetSpec(datasetId.toEntityId());
     }
 
     @Nullable

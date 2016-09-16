@@ -90,7 +90,7 @@ public class AbstractSystemMetadataWriterTest {
   public void testMetadataOverwrite() throws Exception {
     DatasetId dsInstance = new DatasetId("ns1", "ds1");
     DatasetSystemMetadataWriter datasetSystemMetadataWriter =
-      new DatasetSystemMetadataWriter(store, dsInstance.toId(),
+      new DatasetSystemMetadataWriter(store, dsInstance,
                                       DatasetProperties.builder()
                                         .add(Table.PROPERTY_TTL, "100")
                                         .build(),
@@ -107,8 +107,7 @@ public class AbstractSystemMetadataWriterTest {
 
     // Now remove TTL, and add dsType
     datasetSystemMetadataWriter =
-      new DatasetSystemMetadataWriter(store, dsInstance.toId(),
-                                      DatasetProperties.EMPTY, null, "dsType", "description2");
+      new DatasetSystemMetadataWriter(store, dsInstance, DatasetProperties.EMPTY, null, "dsType", "description2");
     datasetSystemMetadataWriter.write();
 
     expected =

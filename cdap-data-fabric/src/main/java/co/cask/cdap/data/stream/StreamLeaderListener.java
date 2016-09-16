@@ -16,7 +16,7 @@
 
 package co.cask.cdap.data.stream;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 
 import java.util.Set;
 
@@ -31,5 +31,5 @@ public interface StreamLeaderListener {
    *
    * @param streamIds stream Ids of which the current Stream handler became leader
    */
-  void leaderOf(Set<Id.Stream> streamIds);
+  void leaderOf(Set<StreamId> streamIds);
 }

@@ -18,17 +18,17 @@ package co.cask.cdap.data2.registry.internal.keymaker;
 
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.registry.internal.pair.KeyMaker;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 
 /**
- * {@link KeyMaker} for {@link Id.DatasetInstance}.
+ * {@link KeyMaker} for {@link DatasetId}.
  */
-public class DatasetKeyMaker implements KeyMaker<Id.DatasetInstance> {
+public class DatasetKeyMaker implements KeyMaker<DatasetId> {
   @Override
-  public MDSKey getKey(Id.DatasetInstance datasetInstance) {
+  public MDSKey getKey(DatasetId datasetInstance) {
     return new MDSKey.Builder()
-      .add(datasetInstance.getNamespaceId())
-      .add(datasetInstance.getId())
+      .add(datasetInstance.getNamespace())
+      .add(datasetInstance.getEntityName())
       .build();
   }
 
@@ -39,7 +39,7 @@ public class DatasetKeyMaker implements KeyMaker<Id.DatasetInstance> {
   }
 
   @Override
-  public Id.DatasetInstance getElement(MDSKey.Splitter splitter) {
-    return Id.DatasetInstance.from(splitter.getString(), splitter.getString());
+  public DatasetId getElement(MDSKey.Splitter splitter) {
+    return new DatasetId(splitter.getString(), splitter.getString());
   }
 }

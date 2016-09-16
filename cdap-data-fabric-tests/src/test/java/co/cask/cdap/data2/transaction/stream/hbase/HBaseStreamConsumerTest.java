@@ -145,16 +145,16 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
     tableUtil = injector.getInstance(HBaseTableUtil.class);
     tableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
     tableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(),
-                                         tableUtil.getHBaseNamespace(TEST_NAMESPACE.toEntityId()));
+                                         tableUtil.getHBaseNamespace(TEST_NAMESPACE));
     tableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(),
-                                         tableUtil.getHBaseNamespace(OTHER_NAMESPACE.toEntityId()));
+                                         tableUtil.getHBaseNamespace(OTHER_NAMESPACE));
     setupNamespaces(injector.getInstance(NamespacedLocationFactory.class));
   }
 
   @AfterClass
   public static void finish() throws Exception {
-    deleteNamespace(OTHER_NAMESPACE);
-    deleteNamespace(TEST_NAMESPACE);
+    deleteNamespace(OTHER_NAMESPACE.toId());
+    deleteNamespace(TEST_NAMESPACE.toId());
     deleteNamespace(Id.Namespace.SYSTEM);
     txManager.stopAndWait();
   }

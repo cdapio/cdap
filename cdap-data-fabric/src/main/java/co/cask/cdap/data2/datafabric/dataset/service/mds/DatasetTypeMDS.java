@@ -23,7 +23,9 @@ import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetModuleId;
+import co.cask.cdap.proto.id.DatasetTypeId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
@@ -58,58 +60,58 @@ public class DatasetTypeMDS extends MetadataStoreDataset {
   /**
    * Retrieves a module from the given namespace
    *
-   * @param datasetModuleId the {@link Id.DatasetModule} for the module to retrieve
+   * @param datasetModuleId the {@link DatasetModuleId} for the module to retrieve
    * @return {@link DatasetModuleMeta} for the module if found in the specified namespace, null otherwise
    */
   @Nullable
-  public DatasetModuleMeta getModule(Id.DatasetModule datasetModuleId) {
-    return get(getModuleKey(datasetModuleId.getNamespaceId(), datasetModuleId.getId()), DatasetModuleMeta.class);
+  public DatasetModuleMeta getModule(DatasetModuleId datasetModuleId) {
+    return get(getModuleKey(datasetModuleId.getNamespace(), datasetModuleId.getEntityName()), DatasetModuleMeta.class);
   }
 
   /**
    * Tries to find a module in the specified namespace first. If it fails, tries to find it in the system namespace
    *
-   * @param datasetModuleId {@link Id.DatasetModule} for the module to retrieve
+   * @param datasetModuleId {@link DatasetModuleId} for the module to retrieve
    * @return {@link DatasetModuleMeta} for the module if found either in the specified namespace or in the system
    * namespace, null otherwise
    */
   @Nullable
-  public DatasetModuleMeta getModuleWithFallback(Id.DatasetModule datasetModuleId) {
+  public DatasetModuleMeta getModuleWithFallback(DatasetModuleId datasetModuleId) {
     // Try to find module in the specified namespace first
     DatasetModuleMeta moduleMeta = getModule(datasetModuleId);
     // if not found, try to load it from system namespace
     if (moduleMeta == null) {
-      moduleMeta = getModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, datasetModuleId.getId()));
+      moduleMeta = getModule(NamespaceId.SYSTEM.datasetModule(datasetModuleId.getEntityName()));
     }
     return moduleMeta;
   }
 
   @Nullable
-  public DatasetModuleMeta getModuleByType(Id.DatasetType datasetTypeId) {
-    Id.DatasetModule datasetModuleId = get(getTypeKey(datasetTypeId.getNamespaceId(), datasetTypeId.getTypeName()),
-                                           Id.DatasetModule.class);
+  public DatasetModuleMeta getModuleByType(DatasetTypeId datasetTypeId) {
+    DatasetModuleId datasetModuleId = get(getTypeKey(datasetTypeId.getNamespace(), datasetTypeId.getEntityName()),
+                                           DatasetModuleId.class);
     if (datasetModuleId == null) {
       return null;
     }
-    // TODO: Slightly strange. Maybe change signature to accept Id.Namespace separately from typeName
+    // TODO: Slightly strange. Maybe change signature to accept NamespaceId separately from typeName
     return getModule(datasetModuleId);
   }
 
-  public DatasetTypeMeta getType(Id.DatasetType datasetTypeId) {
+  public DatasetTypeMeta getType(DatasetTypeId datasetTypeId) {
     DatasetModuleMeta moduleName = getModuleByType(datasetTypeId);
     if (moduleName == null) {
       return null;
     }
-    return getTypeMeta(datasetTypeId.getNamespace(), datasetTypeId.getTypeName(), moduleName);
+    return getTypeMeta(datasetTypeId.getParent(), datasetTypeId.getEntityName(), moduleName);
   }
 
-  public Collection<DatasetModuleMeta> getModules(Id.Namespace namespaceId) {
-    return list(getModuleKey(namespaceId.getId()), DatasetModuleMeta.class);
+  public Collection<DatasetModuleMeta> getModules(NamespaceId namespaceId) {
+    return list(getModuleKey(namespaceId.getEntityName()), DatasetModuleMeta.class);
   }
 
-  public Collection<DatasetTypeMeta> getTypes(Id.Namespace namespaceId) {
+  public Collection<DatasetTypeMeta> getTypes(NamespaceId namespaceId) {
     List<DatasetTypeMeta> types = Lists.newArrayList();
-    for (Map.Entry<MDSKey, Id.DatasetModule> entry : getTypesMapping(namespaceId).entrySet()) {
+    for (Map.Entry<MDSKey, DatasetModuleId> entry : getTypesMapping(namespaceId).entrySet()) {
       MDSKey.Splitter splitter = entry.getKey().split();
       // first part is TYPE_TO_MODULE_PREFIX
       splitter.skipString();
@@ -122,54 +124,54 @@ public class DatasetTypeMDS extends MetadataStoreDataset {
     return types;
   }
 
-  public void writeModule(Id.Namespace namespaceId, DatasetModuleMeta moduleMeta) {
-    Id.DatasetModule datasetModuleId = Id.DatasetModule.from(namespaceId, moduleMeta.getName());
+  public void writeModule(NamespaceId namespaceId, DatasetModuleMeta moduleMeta) {
+    DatasetModuleId datasetModuleId = namespaceId.datasetModule(moduleMeta.getName());
     DatasetModuleMeta existing = getModule(datasetModuleId);
-    write(getModuleKey(namespaceId.getId(), moduleMeta.getName()), moduleMeta);
+    write(getModuleKey(namespaceId.getEntityName(), moduleMeta.getName()), moduleMeta);
     for (String type : moduleMeta.getTypes()) {
-      writeTypeToModuleMapping(Id.DatasetType.from(namespaceId, type), datasetModuleId);
+      writeTypeToModuleMapping(namespaceId.datasetType(type), datasetModuleId);
     }
     if (existing != null) {
       Set<String> removed = new HashSet<>(existing.getTypes());
       removed.removeAll(moduleMeta.getTypes());
       for (String type : removed) {
-        deleteAll(getTypeKey(datasetModuleId.getNamespaceId(), type));
+        deleteAll(getTypeKey(datasetModuleId.getNamespace(), type));
       }
     }
   }
 
-  public void deleteModule(Id.DatasetModule datasetModuleId) {
+  public void deleteModule(DatasetModuleId datasetModuleId) {
     DatasetModuleMeta module = getModule(datasetModuleId);
     if (module == null) {
       // that's fine: module is not there
       return;
     }
 
-    deleteAll(getModuleKey(datasetModuleId.getNamespaceId(), datasetModuleId.getId()));
+    deleteAll(getModuleKey(datasetModuleId.getNamespace(), datasetModuleId.getEntityName()));
 
     for (String type : module.getTypes()) {
-      deleteAll(getTypeKey(datasetModuleId.getNamespaceId(), type));
+      deleteAll(getTypeKey(datasetModuleId.getNamespace(), type));
     }
   }
 
-  public void deleteModules(Id.Namespace namespaceId) {
+  public void deleteModules(NamespaceId namespaceId) {
     Collection<DatasetModuleMeta> modules = getModules(namespaceId);
     for (DatasetModuleMeta module : modules) {
-      deleteModule(Id.DatasetModule.from(namespaceId, module.getName()));
+      deleteModule(namespaceId.datasetModule(module.getName()));
     }
   }
 
-  private DatasetTypeMeta getTypeMeta(Id.Namespace namespaceId, String typeName, Id.DatasetModule datasetModuleId) {
+  private DatasetTypeMeta getTypeMeta(NamespaceId namespaceId, String typeName, DatasetModuleId datasetModuleId) {
     DatasetModuleMeta moduleMeta = getModule(datasetModuleId);
     return getTypeMeta(namespaceId, typeName, moduleMeta);
   }
 
-  private DatasetTypeMeta getTypeMeta(Id.Namespace namespaceId, String typeName, DatasetModuleMeta moduleMeta) {
+  private DatasetTypeMeta getTypeMeta(NamespaceId namespaceId, String typeName, DatasetModuleMeta moduleMeta) {
     List<DatasetModuleMeta> modulesToLoad = Lists.newArrayList();
     // adding first all modules we depend on, then myself
     for (String usedModule : moduleMeta.getUsesModules()) {
       // Try to find module in the specified namespace first, then the system namespace
-      DatasetModuleMeta usedModuleMeta = getModuleWithFallback(Id.DatasetModule.from(namespaceId, usedModule));
+      DatasetModuleMeta usedModuleMeta = getModuleWithFallback(namespaceId.datasetModule(usedModule));
       // Module could not be found in either user or system namespace, bail out
       Preconditions.checkState(usedModuleMeta != null,
                                String.format("Unable to find metadata about module %s that module %s uses.",
@@ -182,12 +184,12 @@ public class DatasetTypeMDS extends MetadataStoreDataset {
   }
 
   // type -> moduleName
-  private Map<MDSKey, Id.DatasetModule> getTypesMapping(Id.Namespace namespaceId) {
-    return listKV(getTypeKey(namespaceId.getId()), Id.DatasetModule.class);
+  private Map<MDSKey, DatasetModuleId> getTypesMapping(NamespaceId namespaceId) {
+    return listKV(getTypeKey(namespaceId.getEntityName()), DatasetModuleId.class);
   }
 
-  private void writeTypeToModuleMapping(Id.DatasetType datasetTypeId, Id.DatasetModule datasetModuleId) {
-    write(getTypeKey(datasetTypeId.getNamespaceId(), datasetTypeId.getTypeName()), datasetModuleId);
+  private void writeTypeToModuleMapping(DatasetTypeId datasetTypeId, DatasetModuleId datasetModuleId) {
+    write(getTypeKey(datasetTypeId.getNamespace(), datasetTypeId.getEntityName()), datasetModuleId);
   }
 
   private MDSKey getModuleKey(String namespace) {

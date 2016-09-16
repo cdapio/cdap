@@ -39,7 +39,11 @@ import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.DatasetModuleId;
+import co.cask.cdap.proto.id.DatasetTypeId;
+import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
@@ -76,7 +80,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
   private static final Logger LOG = LoggerFactory.getLogger(RemoteDatasetFramework.class);
 
   private final CConfiguration cConf;
-  private final LoadingCache<Id.Namespace, DatasetServiceClient> clientCache;
+  private final LoadingCache<NamespaceId, DatasetServiceClient> clientCache;
   private final DatasetDefinitionRegistryFactory registryFactory;
 
   @Inject
@@ -84,23 +88,23 @@ public class RemoteDatasetFramework implements DatasetFramework {
                                 DatasetDefinitionRegistryFactory registryFactory,
                                 final AuthenticationContext authenticationContext) {
     this.cConf = cConf;
-    this.clientCache = CacheBuilder.newBuilder().build(new CacheLoader<Id.Namespace, DatasetServiceClient>() {
+    this.clientCache = CacheBuilder.newBuilder().build(new CacheLoader<NamespaceId, DatasetServiceClient>() {
       @Override
-      public DatasetServiceClient load(Id.Namespace namespace) throws Exception {
-        return new DatasetServiceClient(discoveryClient, namespace.toEntityId(), cConf, authenticationContext);
+      public DatasetServiceClient load(NamespaceId namespace) throws Exception {
+        return new DatasetServiceClient(discoveryClient, namespace, cConf, authenticationContext);
       }
     });
     this.registryFactory = registryFactory;
   }
 
   @Override
-  public void addModule(Id.DatasetModule moduleId, DatasetModule module) throws DatasetManagementException {
+  public void addModule(DatasetModuleId moduleId, DatasetModule module) throws DatasetManagementException {
     Class<?> moduleClass = DatasetModules.getDatasetModuleClass(module);
     try {
       Location deploymentJar = createDeploymentJar(moduleClass);
       try {
-        clientCache.getUnchecked(moduleId.getNamespace())
-          .addModule(moduleId.getId(), moduleClass.getName(), deploymentJar);
+        clientCache.getUnchecked(moduleId.getParent())
+          .addModule(moduleId.getEntityName(), moduleClass.getName(), deploymentJar);
       } finally {
         try {
           deploymentJar.delete();
@@ -118,110 +122,111 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void addModule(Id.DatasetModule moduleId, DatasetModule module,
+  public void addModule(DatasetModuleId moduleId, DatasetModule module,
                         Location jarLocation) throws DatasetManagementException {
-    clientCache.getUnchecked(moduleId.getNamespace())
-      .addModule(moduleId.getId(), DatasetModules.getDatasetModuleClass(module).getName(), jarLocation);
+    clientCache.getUnchecked(moduleId.getParent())
+      .addModule(moduleId.getEntityName(), DatasetModules.getDatasetModuleClass(module).getName(), jarLocation);
   }
 
   @Override
-  public void deleteModule(Id.DatasetModule moduleId) throws DatasetManagementException {
-    clientCache.getUnchecked(moduleId.getNamespace()).deleteModule(moduleId.getId());
+  public void deleteModule(DatasetModuleId moduleId) throws DatasetManagementException {
+    clientCache.getUnchecked(moduleId.getParent()).deleteModule(moduleId.getEntityName());
   }
 
   @Override
-  public void deleteAllModules(Id.Namespace namespaceId) throws DatasetManagementException {
+  public void deleteAllModules(NamespaceId namespaceId) throws DatasetManagementException {
     clientCache.getUnchecked(namespaceId).deleteModules();
   }
 
   @Override
-  public void addInstance(String datasetType, Id.DatasetInstance datasetInstanceId, DatasetProperties props)
+  public void addInstance(String datasetType, DatasetId datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException {
-    clientCache.getUnchecked(datasetInstanceId.getNamespace())
-      .addInstance(datasetInstanceId.getId(), datasetType, props);
+    clientCache.getUnchecked(datasetInstanceId.getParent())
+      .addInstance(datasetInstanceId.getEntityName(), datasetType, props);
   }
 
   @Override
-  public void updateInstance(Id.DatasetInstance datasetInstanceId, DatasetProperties props)
+  public void updateInstance(DatasetId datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException {
-    clientCache.getUnchecked(datasetInstanceId.getNamespace())
-      .updateInstance(datasetInstanceId.getId(), props);
+    clientCache.getUnchecked(datasetInstanceId.getParent())
+      .updateInstance(datasetInstanceId.getEntityName(), props);
   }
 
   @Override
-  public Collection<DatasetSpecificationSummary> getInstances(Id.Namespace namespaceId)
+  public Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId)
     throws DatasetManagementException {
     return clientCache.getUnchecked(namespaceId).getAllInstances();
   }
 
   @Nullable
   @Override
-  public DatasetSpecification getDatasetSpec(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
-    DatasetMeta meta = clientCache.getUnchecked(datasetInstanceId.getNamespace())
-      .getInstance(datasetInstanceId.getId());
+  public DatasetSpecification getDatasetSpec(DatasetId datasetInstanceId) throws DatasetManagementException {
+    DatasetMeta meta = clientCache.getUnchecked(datasetInstanceId.getParent())
+      .getInstance(datasetInstanceId.getEntityName());
     return meta == null ? null : meta.getSpec();
   }
 
   @Override
-  public boolean hasInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
-    return clientCache.getUnchecked(datasetInstanceId.getNamespace()).getInstance(datasetInstanceId.getId()) != null;
+  public boolean hasInstance(DatasetId datasetInstanceId) throws DatasetManagementException {
+    return clientCache.getUnchecked(datasetInstanceId.getParent())
+      .getInstance(datasetInstanceId.getEntityName()) != null;
   }
 
   @Override
   public boolean hasSystemType(String typeName) throws DatasetManagementException {
-    return hasType(Id.DatasetType.from(Id.Namespace.SYSTEM, typeName));
+    return hasType(NamespaceId.SYSTEM.datasetType(typeName));
   }
 
   @Override
-  public boolean hasType(Id.DatasetType datasetTypeId) throws DatasetManagementException {
-    return clientCache.getUnchecked(datasetTypeId.getNamespace()).getType(datasetTypeId.getTypeName()) != null;
+  public boolean hasType(DatasetTypeId datasetTypeId) throws DatasetManagementException {
+    return clientCache.getUnchecked(datasetTypeId.getParent()).getType(datasetTypeId.getEntityName()) != null;
   }
 
   @Override
-  public DatasetTypeMeta getTypeInfo(Id.DatasetType datasetTypeId) throws DatasetManagementException {
-    return clientCache.getUnchecked(datasetTypeId.getNamespace()).getType(datasetTypeId.getTypeName());
+  public DatasetTypeMeta getTypeInfo(DatasetTypeId datasetTypeId) throws DatasetManagementException {
+    return clientCache.getUnchecked(datasetTypeId.getParent()).getType(datasetTypeId.getEntityName());
   }
 
   @Override
-  public void truncateInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
-    clientCache.getUnchecked(datasetInstanceId.getNamespace()).truncateInstance(datasetInstanceId.getId());
+  public void truncateInstance(DatasetId datasetInstanceId) throws DatasetManagementException {
+    clientCache.getUnchecked(datasetInstanceId.getParent()).truncateInstance(datasetInstanceId.getEntityName());
   }
 
   @Override
-  public void deleteInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
-    clientCache.getUnchecked(datasetInstanceId.getNamespace()).deleteInstance(datasetInstanceId.getId());
+  public void deleteInstance(DatasetId datasetInstanceId) throws DatasetManagementException {
+    clientCache.getUnchecked(datasetInstanceId.getParent()).deleteInstance(datasetInstanceId.getEntityName());
   }
 
   @Override
-  public void deleteAllInstances(Id.Namespace namespaceId) throws DatasetManagementException, IOException {
+  public void deleteAllInstances(NamespaceId namespaceId) throws DatasetManagementException, IOException {
     clientCache.getUnchecked(namespaceId).deleteInstances();
   }
 
   @Override
-  public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId, ClassLoader classLoader)
+  public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId, ClassLoader classLoader)
     throws DatasetManagementException, IOException {
     return getAdmin(datasetInstanceId, classLoader, new ConstantClassLoaderProvider(classLoader));
   }
 
   @Nullable
   @Override
-  public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId,
+  public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId,
                                              @Nullable ClassLoader parentClassLoader,
                                              DatasetClassLoaderProvider classLoaderProvider)
     throws DatasetManagementException, IOException {
-    DatasetMeta instanceInfo = clientCache.getUnchecked(datasetInstanceId.getNamespace())
-      .getInstance(datasetInstanceId.getId());
+    DatasetMeta instanceInfo = clientCache.getUnchecked(datasetInstanceId.getParent())
+      .getInstance(datasetInstanceId.getEntityName());
     if (instanceInfo == null) {
       return null;
     }
 
     DatasetType type = getType(instanceInfo.getType(), parentClassLoader, classLoaderProvider);
-    return (T) type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), instanceInfo.getSpec());
+    return (T) type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespace()), instanceInfo.getSpec());
   }
 
   @Override
   public <T extends Dataset> T getDataset(
-    Id.DatasetInstance datasetInstanceId, Map<String, String> arguments,
+    DatasetId datasetInstanceId, Map<String, String> arguments,
     @Nullable ClassLoader classLoader) throws DatasetManagementException, IOException {
 
     return getDataset(datasetInstanceId, arguments, classLoader,
@@ -230,23 +235,23 @@ public class RemoteDatasetFramework implements DatasetFramework {
 
   @Nullable
   @Override
-  public <T extends Dataset> T getDataset(Id.DatasetInstance id, @Nullable Map<String, String> arguments,
+  public <T extends Dataset> T getDataset(DatasetId id, @Nullable Map<String, String> arguments,
                                           @Nullable ClassLoader classLoader,
                                           DatasetClassLoaderProvider classLoaderProvider,
-                                          @Nullable Iterable<? extends Id> owners, AccessType accessType)
+                                          @Nullable Iterable<? extends EntityId> owners, AccessType accessType)
     throws DatasetManagementException, IOException {
 
-    DatasetMeta datasetMeta = clientCache.getUnchecked(id.getNamespace()).getInstance(id.getId(), owners);
+    DatasetMeta datasetMeta = clientCache.getUnchecked(id.getParent()).getInstance(id.getEntityName(), owners);
     if (datasetMeta == null) {
       return null;
     }
 
     DatasetType type = getType(datasetMeta.getType(), classLoader, classLoaderProvider);
-    return (T) type.getDataset(DatasetContext.from(id.getNamespaceId()), datasetMeta.getSpec(), arguments);
+    return (T) type.getDataset(DatasetContext.from(id.getNamespace()), datasetMeta.getSpec(), arguments);
   }
 
   @Override
-  public void writeLineage(Id.DatasetInstance datasetInstanceId, AccessType accessType) {
+  public void writeLineage(DatasetId datasetInstanceId, AccessType accessType) {
     // no-op. The RemoteDatasetFramework doesn't need to do anything. The lineage should be recorded before this point.
   }
 

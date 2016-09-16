@@ -23,7 +23,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetaTableUtil;
 import co.cask.cdap.logging.LoggingConfiguration;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.inject.Inject;
 
 import java.io.IOException;
@@ -50,7 +51,7 @@ public class LogSaverTableUtil extends MetaTableUtil {
    * @param datasetFramework framework to add types and datasets to
    */
   public static void setupDatasets(DatasetFramework datasetFramework) throws IOException, DatasetManagementException {
-    Id.DatasetInstance logMetaDatasetInstance = Id.DatasetInstance.from(Id.Namespace.SYSTEM, TABLE_NAME);
+    DatasetId logMetaDatasetInstance = NamespaceId.SYSTEM.dataset(TABLE_NAME);
     datasetFramework.addInstance(Table.class.getName(), logMetaDatasetInstance, DatasetProperties.EMPTY);
   }
 }

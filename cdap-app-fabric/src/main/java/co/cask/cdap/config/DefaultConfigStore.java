@@ -75,7 +75,7 @@ public class DefaultConfigStore implements ConfigStore {
   }
 
   public static void setupDatasets(DatasetFramework dsFramework) throws DatasetManagementException, IOException {
-    dsFramework.addInstance(Table.class.getName(), CONFIG_STORE_DATASET_INSTANCE_ID.toId(), DatasetProperties.EMPTY);
+    dsFramework.addInstance(Table.class.getName(), CONFIG_STORE_DATASET_INSTANCE_ID, DatasetProperties.EMPTY);
   }
 
   private Table getConfigTable(DatasetContext context) throws IOException, DatasetManagementException {

@@ -25,10 +25,10 @@ import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.service.datasets.EmailTableDefinition;
 import co.cask.cdap.explore.service.datasets.TableWrapperDefinition;
 import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.Lists;
 import org.apache.tephra.Transaction;
@@ -54,7 +54,7 @@ public class HiveExploreStructuredRecordTestRun extends BaseHiveExploreServiceTe
   public static void start() throws Exception {
     initialize(tmpFolder);
 
-    Id.DatasetModule moduleId = Id.DatasetModule.from(NAMESPACE_ID, "email");
+    DatasetModuleId moduleId = NAMESPACE_ID.datasetModule("email");
     datasetFramework.addModule(moduleId, new EmailTableDefinition.EmailTableModule());
     datasetFramework.addInstance("email", MY_TABLE, DatasetProperties.EMPTY);
 
@@ -75,38 +75,38 @@ public class HiveExploreStructuredRecordTestRun extends BaseHiveExploreServiceTe
     table.postTxCommit();
 
 
-    datasetFramework.addModule(Id.DatasetModule.from(NAMESPACE_ID, "TableWrapper"),
+    datasetFramework.addModule(NAMESPACE_ID.datasetModule("TableWrapper"),
                                new TableWrapperDefinition.Module());
   }
 
   @AfterClass
   public static void stop() throws Exception {
     datasetFramework.deleteInstance(MY_TABLE);
-    datasetFramework.deleteModule(Id.DatasetModule.from(NAMESPACE_ID, "TableWrapper"));
+    datasetFramework.deleteModule(NAMESPACE_ID.datasetModule("TableWrapper"));
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testMissingSchemaFails() throws Exception {
-    DatasetId instanceId = new DatasetId(NAMESPACE_ID.getId(), "badtable");
-    datasetFramework.addInstance("TableWrapper", instanceId.toId(), DatasetProperties.EMPTY);
+    DatasetId instanceId = NAMESPACE_ID.dataset("badtable");
+    datasetFramework.addInstance("TableWrapper", instanceId, DatasetProperties.EMPTY);
 
-    DatasetSpecification spec = datasetFramework.getDatasetSpec(instanceId.toId());
+    DatasetSpecification spec = datasetFramework.getDatasetSpec(instanceId);
     try {
       exploreTableManager.enableDataset(instanceId, spec);
     } finally {
-      datasetFramework.deleteInstance(instanceId.toId());
+      datasetFramework.deleteInstance(instanceId);
     }
   }
 
   @Test
   public void testRecordScannableAndWritableIsOK() throws Exception {
-    DatasetId instanceId = new DatasetId(NAMESPACE_ID.getId(), "tabul");
-    datasetFramework.addInstance("TableWrapper", instanceId.toId(), DatasetProperties.builder()
+    DatasetId instanceId = NAMESPACE_ID.dataset("tabul");
+    datasetFramework.addInstance("TableWrapper", instanceId, DatasetProperties.builder()
       .add(DatasetProperties.SCHEMA,
            Schema.recordOf("intRecord", Schema.Field.of("x", Schema.of(Schema.Type.STRING))).toString())
       .build());
 
-    DatasetSpecification spec = datasetFramework.getDatasetSpec(instanceId.toId());
+    DatasetSpecification spec = datasetFramework.getDatasetSpec(instanceId);
     try {
       exploreTableManager.enableDataset(instanceId, spec);
       runCommand(NAMESPACE_ID, "describe dataset_tabul",
@@ -121,7 +121,7 @@ public class HiveExploreStructuredRecordTestRun extends BaseHiveExploreServiceTe
         )
       );
     } finally {
-      datasetFramework.deleteInstance(instanceId.toId());
+      datasetFramework.deleteInstance(instanceId);
     }
   }
 
@@ -151,7 +151,7 @@ public class HiveExploreStructuredRecordTestRun extends BaseHiveExploreServiceTe
       new ColumnDesc(MY_TABLE_NAME + ".body", "STRING", 3, null),
       new ColumnDesc(MY_TABLE_NAME + ".sender", "STRING", 4, null)
     );
-    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID, "select * from " + MY_TABLE_NAME).get();
+    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID.toId(), "select * from " + MY_TABLE_NAME).get();
     // check schema
     Assert.assertEquals(expectedSchema, results.getResultSchema());
     List<Object> columns = results.next().getColumns();
@@ -176,7 +176,7 @@ public class HiveExploreStructuredRecordTestRun extends BaseHiveExploreServiceTe
 
   @Test
   public void testInsert() throws Exception {
-    Id.DatasetInstance copyTable = Id.DatasetInstance.from(NAMESPACE_ID, "emailCopy");
+    DatasetId copyTable = NAMESPACE_ID.dataset("emailCopy");
     datasetFramework.addInstance(Table.class.getName(), copyTable, DatasetProperties.builder()
       .add(Table.PROPERTY_SCHEMA, EmailTableDefinition.SCHEMA.toString())
       .add(Table.PROPERTY_SCHEMA_ROW_FIELD, "id")
@@ -184,7 +184,7 @@ public class HiveExploreStructuredRecordTestRun extends BaseHiveExploreServiceTe
     try {
       String command = String.format("insert into %s select * from %s",
         getDatasetHiveName(copyTable), MY_TABLE_NAME);
-      ExploreExecutionResult result = exploreClient.submit(NAMESPACE_ID, command).get();
+      ExploreExecutionResult result = exploreClient.submit(NAMESPACE_ID.toId(), command).get();
       Assert.assertEquals(QueryStatus.OpStatus.FINISHED, result.getStatus().getStatus());
 
       command = String.format("select id, subject, body, sender from %s", getDatasetHiveName(copyTable));

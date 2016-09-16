@@ -47,7 +47,7 @@ final class StreamCreator {
       if (spec.getDescription() != null) {
         props.put(Constants.Stream.DESCRIPTION, spec.getDescription());
       }
-      streamAdmin.create(namespaceId.stream(spec.getName()).toId(), props);
+      streamAdmin.create(namespaceId.stream(spec.getName()), props);
     }
   }
 }

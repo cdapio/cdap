@@ -55,10 +55,10 @@ final class DatasetInstanceCreator {
       String instanceName = instanceEntry.getKey();
       DatasetId instanceId = namespaceId.dataset(instanceName);
       DatasetCreationSpec instanceSpec = instanceEntry.getValue();
-      DatasetSpecification existingSpec = datasetFramework.getDatasetSpec(instanceId.toId());
+      DatasetSpecification existingSpec = datasetFramework.getDatasetSpec(instanceId);
       if (existingSpec == null) {
         LOG.info("Adding dataset instance: {}", instanceName);
-        datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId.toId(), instanceSpec.getProperties());
+        datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId, instanceSpec.getProperties());
       } else {
         if (!existingSpec.getType().equals(instanceSpec.getTypeName())) {
           throw new IncompatibleUpdateException(
@@ -67,7 +67,7 @@ final class DatasetInstanceCreator {
         }
         if (allowDatasetUncheckedUpgrade) {
           LOG.info("Updating dataset instance: {}", instanceName);
-          datasetFramework.updateInstance(instanceId.toId(), instanceSpec.getProperties());
+          datasetFramework.updateInstance(instanceId, instanceSpec.getProperties());
         }
       }
     }

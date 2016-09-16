@@ -35,6 +35,8 @@ import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.proto.TableNameInfo;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -122,9 +124,8 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
   public void testDeployNotRecordScannable() throws Exception {
     // Try to deploy a dataset that is not record scannable, when explore is enabled.
     // This should be processed with no exception being thrown
-    Id.DatasetModule module2 = Id.DatasetModule.from(NAMESPACE_ID, "module2");
-    Id.DatasetInstance myTableNotRecordScannable = Id.DatasetInstance.from(NAMESPACE_ID,
-                                                                           "my_table_not_record_scannable");
+    DatasetModuleId module2 = NAMESPACE_ID.datasetModule("module2");
+    DatasetId myTableNotRecordScannable = NAMESPACE_ID.dataset("my_table_not_record_scannable");
     datasetFramework.addModule(module2, new NotRecordScannableTableDefinition.NotRecordScannableTableModule());
     datasetFramework.addInstance("NotRecordScannableTableDef", myTableNotRecordScannable,
                                  DatasetProperties.EMPTY);
@@ -146,7 +147,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
   @Test
   public void getUserTables() throws Exception {
-    exploreClient.submit(NAMESPACE_ID, "create table test (first INT, second STRING) " +
+    exploreClient.submit(NAMESPACE_ID.toId(), "create table test (first INT, second STRING) " +
                            "ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t'").get();
     List<TableNameInfo> tables = exploreService.getTables(null);
     Assert.assertEquals(ImmutableList.of(new TableNameInfo(NAMESPACE_DATABASE, MY_TABLE_NAME),
@@ -154,24 +155,24 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                                          new TableNameInfo(OTHER_NAMESPACE_DATABASE, OTHER_MY_TABLE_NAME)),
                         tables);
 
-    tables = exploreService.getTables(NAMESPACE_ID.getId());
+    tables = exploreService.getTables(NAMESPACE_ID.getNamespace());
     Assert.assertEquals(ImmutableList.of(new TableNameInfo(NAMESPACE_DATABASE, MY_TABLE_NAME),
                                          new TableNameInfo(NAMESPACE_DATABASE, "test")),
                         tables);
 
-    tables = exploreService.getTables(OTHER_NAMESPACE_ID.getId());
+    tables = exploreService.getTables(OTHER_NAMESPACE_ID.getNamespace());
     Assert.assertEquals(ImmutableList.of(new TableNameInfo(OTHER_NAMESPACE_DATABASE, MY_TABLE_NAME)),
                         tables);
 
     tables = exploreService.getTables("foobar");
     Assert.assertEquals(ImmutableList.<TableNameInfo>of(), tables);
 
-    exploreClient.submit(NAMESPACE_ID, "drop table if exists test").get();
+    exploreClient.submit(NAMESPACE_ID.toId(), "drop table if exists test").get();
   }
 
   @Test
   public void testHiveIntegration() throws Exception {
-    exploreClient.submit(OTHER_NAMESPACE_ID, "create table test (first INT, second STRING) " +
+    exploreClient.submit(OTHER_NAMESPACE_ID.toId(), "create table test (first INT, second STRING) " +
       "ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t'").get();
 
     runCommand(NAMESPACE_ID, "show tables",
@@ -266,7 +267,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                )
     );
 
-    exploreClient.submit(OTHER_NAMESPACE_ID, "drop table if exists test").get();
+    exploreClient.submit(OTHER_NAMESPACE_ID.toId(), "drop table if exists test").get();
   }
 
   @Test
@@ -392,11 +393,11 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
   @Test
   public void previewResultsTest() throws Exception {
-    Id.DatasetInstance myTable2 = Id.DatasetInstance.from(NAMESPACE_ID, "my_table_2");
-    Id.DatasetInstance myTable3 = Id.DatasetInstance.from(NAMESPACE_ID, "my_table_3");
-    Id.DatasetInstance myTable4 = Id.DatasetInstance.from(NAMESPACE_ID, "my_table_4");
-    Id.DatasetInstance myTable5 = Id.DatasetInstance.from(NAMESPACE_ID, "my_table_5");
-    Id.DatasetInstance myTable6 = Id.DatasetInstance.from(NAMESPACE_ID, "my_table_6");
+    DatasetId myTable2 = NAMESPACE_ID.dataset("my_table_2");
+    DatasetId myTable3 = NAMESPACE_ID.dataset("my_table_3");
+    DatasetId myTable4 = NAMESPACE_ID.dataset("my_table_4");
+    DatasetId myTable5 = NAMESPACE_ID.dataset("my_table_5");
+    DatasetId myTable6 = NAMESPACE_ID.dataset("my_table_6");
     datasetFramework.addInstance("keyStructValueTable", myTable2, DatasetProperties.EMPTY);
     datasetFramework.addInstance("keyStructValueTable", myTable3, DatasetProperties.EMPTY);
     datasetFramework.addInstance("keyStructValueTable", myTable4, DatasetProperties.EMPTY);
@@ -404,7 +405,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     datasetFramework.addInstance("keyStructValueTable", myTable6, DatasetProperties.EMPTY);
 
     try {
-      QueryHandle handle = exploreService.execute(NAMESPACE_ID, "show tables");
+      QueryHandle handle = exploreService.execute(NAMESPACE_ID.toId(), "show tables");
       QueryStatus status = waitForCompletionStatus(handle, 200, TimeUnit.MILLISECONDS, 50);
       Assert.assertEquals(QueryStatus.OpStatus.FINISHED, status.getStatus());
 
@@ -439,7 +440,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
       }
 
       // now test preview on a query that doesn't return any results
-      handle = exploreService.execute(NAMESPACE_ID, "select * from " + getDatasetHiveName(myTable2));
+      handle = exploreService.execute(NAMESPACE_ID.toId(), "select * from " + getDatasetHiveName(myTable2));
       status = waitForCompletionStatus(handle, 200, TimeUnit.MILLISECONDS, 50);
       Assert.assertEquals(QueryStatus.OpStatus.FINISHED, status.getStatus());
       Assert.assertTrue(exploreService.previewResults(handle).isEmpty());
@@ -456,7 +457,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
   @Test
   public void getDatasetSchemaTest() throws Exception {
-    TableInfo tableInfo = exploreService.getTableInfo(NAMESPACE_ID.getId(), MY_TABLE_NAME);
+    TableInfo tableInfo = exploreService.getTableInfo(NAMESPACE_ID.getNamespace(), MY_TABLE_NAME);
     Assert.assertEquals(new TableInfo(
                           MY_TABLE_NAME, NAMESPACE_DATABASE, System.getProperty("user.name"),
                           tableInfo.getCreationTime(), 0, 0,
@@ -469,14 +470,14 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                           tableInfo.getLocation(), null, null, false, -1,
                           DatasetSerDe.class.getName(),
                           ImmutableMap.of("serialization.format", "1",
-                                          Constants.Explore.DATASET_NAME, MY_TABLE.getId(),
-                                          Constants.Explore.DATASET_NAMESPACE, NAMESPACE_ID.getId()),
+                                          Constants.Explore.DATASET_NAME, MY_TABLE.getEntityName(),
+                                          Constants.Explore.DATASET_NAMESPACE, NAMESPACE_ID.getNamespace()),
                           true
                         ),
                         tableInfo);
     Assert.assertEquals(DatasetStorageHandler.class.getName(), tableInfo.getParameters().get("storage_handler"));
 
-    tableInfo = exploreService.getTableInfo(NAMESPACE_ID.getId(), MY_TABLE_NAME);
+    tableInfo = exploreService.getTableInfo(NAMESPACE_ID.getNamespace(), MY_TABLE_NAME);
     Assert.assertEquals(new TableInfo(
                           MY_TABLE_NAME, NAMESPACE_DATABASE, System.getProperty("user.name"),
                           tableInfo.getCreationTime(), 0, 0,
@@ -489,8 +490,8 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                           tableInfo.getLocation(), null, null, false, -1,
                           DatasetSerDe.class.getName(),
                           ImmutableMap.of("serialization.format", "1",
-                                          Constants.Explore.DATASET_NAME, MY_TABLE.getId(),
-                                          Constants.Explore.DATASET_NAMESPACE, NAMESPACE_ID.getId()),
+                                          Constants.Explore.DATASET_NAME, MY_TABLE.getEntityName(),
+                                          Constants.Explore.DATASET_NAMESPACE, NAMESPACE_ID.getNamespace()),
                           true
                         ),
                         tableInfo);
@@ -511,9 +512,9 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     }
 
     // Get info of a Hive table
-    exploreClient.submit(NAMESPACE_ID, "create table test (first INT, second STRING) " +
+    exploreClient.submit(NAMESPACE_ID.toId(), "create table test (first INT, second STRING) " +
                            "ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t'").get();
-    tableInfo = exploreService.getTableInfo(NAMESPACE_ID.getId(), "test");
+    tableInfo = exploreService.getTableInfo(NAMESPACE_ID.getNamespace(), "test");
     Assert.assertEquals(new TableInfo(
                           "test", NAMESPACE_DATABASE, System.getProperty("user.name"),
                           tableInfo.getCreationTime(), 0, 0,
@@ -529,14 +530,14 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                           false
                         ),
                         tableInfo);
-    exploreClient.submit(NAMESPACE_ID, "drop table if exists test").get();
+    exploreClient.submit(NAMESPACE_ID.toId(), "drop table if exists test").get();
 
     // Get info of a partitioned table
-    exploreClient.submit(NAMESPACE_ID,
+    exploreClient.submit(NAMESPACE_ID.toId(),
                          "CREATE TABLE page_view(viewTime INT, userid BIGINT, page_url STRING, referrer_url STRING, " +
                            "ip STRING COMMENT \"IP Address of the User\") COMMENT \"This is the page view table\" " +
                            "PARTITIONED BY(dt STRING, country STRING) STORED AS SEQUENCEFILE").get();
-    tableInfo = exploreService.getTableInfo(NAMESPACE_ID.getId(), "page_view");
+    tableInfo = exploreService.getTableInfo(NAMESPACE_ID.getNamespace(), "page_view");
     Assert.assertEquals(new TableInfo(
                           "page_view", NAMESPACE_DATABASE,
                           System.getProperty("user.name"), tableInfo.getCreationTime(), 0, 0,
@@ -564,7 +565,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                         ),
                         tableInfo);
     Assert.assertEquals("This is the page view table", tableInfo.getParameters().get("comment"));
-    exploreClient.submit(NAMESPACE_ID, "drop table if exists page_view").get();
+    exploreClient.submit(NAMESPACE_ID.toId(), "drop table if exists page_view").get();
   }
 
   @Test
@@ -580,7 +581,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     InetSocketAddress addr = discoverable.getSocketAddress();
     String serviceUrl = String.format("%s%s:%d?namespace=%s",
                                       Constants.Explore.Jdbc.URL_PREFIX, addr.getHostName(), addr.getPort(),
-                                      NAMESPACE_ID.getId());
+                                      NAMESPACE_ID.getNamespace());
 
     Connection connection = DriverManager.getConnection(serviceUrl);
     PreparedStatement stmt;
@@ -607,7 +608,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
   @Test
   public void testJoin() throws Exception {
-    Id.DatasetInstance myTable1 = Id.DatasetInstance.from(NAMESPACE_ID, "my_table_1");
+    DatasetId myTable1 = NAMESPACE_ID.dataset("my_table_1");
     String myTable1Name = getDatasetHiveName(myTable1);
     // Performing admin operations to create dataset instance
     datasetFramework.addInstance("keyStructValueTable", myTable1, DatasetProperties.EMPTY);
@@ -711,7 +712,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
   @Test
   public void testCancel() throws Exception {
-    ListenableFuture<ExploreExecutionResult> future = exploreClient.submit(NAMESPACE_ID,
+    ListenableFuture<ExploreExecutionResult> future = exploreClient.submit(NAMESPACE_ID.toId(),
                                                                            "select key, value from " + MY_TABLE_NAME);
     future.cancel(true);
     try {

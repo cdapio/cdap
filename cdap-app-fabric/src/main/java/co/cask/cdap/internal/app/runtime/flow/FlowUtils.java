@@ -181,7 +181,7 @@ public final class FlowUtils {
           for (ConsumerGroupConfig config : entry.getValue()) {
             configs.put(config.getGroupId(), config.getGroupSize());
           }
-          streamAdmin.configureGroups(entry.getKey().toStreamId(), configs);
+          streamAdmin.configureGroups(entry.getKey().toStreamId().toEntityId(), configs);
         } else {
           groupConfigurers.add(new ConsumerGroupConfigurer(queueAdmin.getQueueConfigurer(entry.getKey()),
                                                            entry.getValue()));
@@ -226,7 +226,7 @@ public final class FlowUtils {
     final List<QueueConfigurer> queueConfigurers = Lists.newArrayList();
     for (QueueName queueName : consumerQueues) {
       if (queueName.isStream()) {
-        streamAdmin.configureInstances(queueName.toStreamId(), groupId, instances);
+        streamAdmin.configureInstances(queueName.toStreamId().toEntityId(), groupId, instances);
       } else {
         queueConfigurers.add(queueAdmin.getQueueConfigurer(queueName));
       }

@@ -16,26 +16,27 @@
 
 package co.cask.cdap.data2.registry;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Objects;
 
 /**
  * Key used to keep track of whether a particular usage has been recorded already or not (for UsageRegistry).
  */
 public class DatasetUsageKey {
-  private final Id.DatasetInstance dataset;
-  private final Id.Program owner;
+  private final DatasetId dataset;
+  private final ProgramId owner;
 
-  public DatasetUsageKey(Id.DatasetInstance dataset, Id.Program owner) {
+  public DatasetUsageKey(DatasetId dataset, ProgramId owner) {
     this.dataset = dataset;
     this.owner = owner;
   }
 
-  Id.DatasetInstance getDataset() {
+  DatasetId getDataset() {
     return dataset;
   }
 
-  Id.Program getOwner() {
+  ProgramId getOwner() {
     return owner;
   }
 

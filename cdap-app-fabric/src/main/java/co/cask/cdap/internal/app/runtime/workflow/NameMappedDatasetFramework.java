@@ -26,7 +26,8 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.ForwardingProgramContextAwareDatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.EntityId;
 import com.google.common.base.Function;
 
 import java.io.IOException;
@@ -87,43 +88,43 @@ public class NameMappedDatasetFramework extends ForwardingProgramContextAwareDat
   }
 
   @Override
-  public void addInstance(String datasetTypeName, Id.DatasetInstance datasetInstanceId, DatasetProperties props)
+  public void addInstance(String datasetTypeName, DatasetId datasetInstanceId, DatasetProperties props)
     throws IOException, DatasetManagementException {
     super.addInstance(datasetTypeName, getMappedDatasetInstance(datasetInstanceId), props);
   }
 
   @Override
-  public void updateInstance(Id.DatasetInstance datasetInstanceId, DatasetProperties props)
+  public void updateInstance(DatasetId datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException, IOException {
     super.updateInstance(getMappedDatasetInstance(datasetInstanceId), props);
   }
 
   @Nullable
   @Override
-  public DatasetSpecification getDatasetSpec(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
+  public DatasetSpecification getDatasetSpec(DatasetId datasetInstanceId) throws DatasetManagementException {
     return super.getDatasetSpec(getMappedDatasetInstance(datasetInstanceId));
   }
 
   @Override
-  public boolean hasInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
+  public boolean hasInstance(DatasetId datasetInstanceId) throws DatasetManagementException {
     return super.hasInstance(getMappedDatasetInstance(datasetInstanceId));
   }
 
   @Override
-  public void deleteInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException, IOException {
+  public void deleteInstance(DatasetId datasetInstanceId) throws DatasetManagementException, IOException {
     super.deleteInstance(getMappedDatasetInstance(datasetInstanceId));
   }
 
   @Nullable
   @Override
-  public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId, @Nullable ClassLoader classLoader)
+  public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId, @Nullable ClassLoader classLoader)
     throws DatasetManagementException, IOException {
     return super.getAdmin(getMappedDatasetInstance(datasetInstanceId), classLoader);
   }
 
   @Nullable
   @Override
-  public <T extends DatasetAdmin> T getAdmin(Id.DatasetInstance datasetInstanceId, @Nullable ClassLoader classLoader,
+  public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId, @Nullable ClassLoader classLoader,
                                              DatasetClassLoaderProvider classLoaderProvider)
     throws DatasetManagementException, IOException {
     return super.getAdmin(getMappedDatasetInstance(datasetInstanceId), classLoader, classLoaderProvider);
@@ -131,7 +132,7 @@ public class NameMappedDatasetFramework extends ForwardingProgramContextAwareDat
 
   @Nullable
   @Override
-  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
+  public <T extends Dataset> T getDataset(DatasetId datasetInstanceId, @Nullable Map<String, String> arguments,
                                           @Nullable ClassLoader classLoader)
     throws DatasetManagementException, IOException {
     return super.getDataset(getMappedDatasetInstance(datasetInstanceId), arguments, classLoader);
@@ -139,24 +140,23 @@ public class NameMappedDatasetFramework extends ForwardingProgramContextAwareDat
 
   @Nullable
   @Override
-  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
+  public <T extends Dataset> T getDataset(DatasetId datasetInstanceId, @Nullable Map<String, String> arguments,
                                           @Nullable ClassLoader classLoader,
                                           DatasetClassLoaderProvider classLoaderProvider,
-                                          @Nullable Iterable<? extends Id> owners, AccessType accessType)
+                                          @Nullable Iterable<? extends EntityId> owners, AccessType accessType)
     throws DatasetManagementException, IOException {
     return super.getDataset(getMappedDatasetInstance(datasetInstanceId),
                             arguments, classLoader, classLoaderProvider, owners, accessType);
   }
 
   @Override
-  public void writeLineage(Id.DatasetInstance datasetInstanceId, AccessType accessType) {
+  public void writeLineage(DatasetId datasetInstanceId, AccessType accessType) {
     super.writeLineage(getMappedDatasetInstance(datasetInstanceId), accessType);
   }
 
-  private Id.DatasetInstance getMappedDatasetInstance(Id.DatasetInstance datasetInstanceId) {
-    if (datasetNameMapping.containsKey(datasetInstanceId.getId())) {
-      return Id.DatasetInstance.from(datasetInstanceId.getNamespaceId(),
-                                     datasetNameMapping.get(datasetInstanceId.getId()));
+  private DatasetId getMappedDatasetInstance(DatasetId datasetInstanceId) {
+    if (datasetNameMapping.containsKey(datasetInstanceId.getEntityName())) {
+      return datasetInstanceId.getParent().dataset(datasetNameMapping.get(datasetInstanceId.getEntityName()));
     }
     return datasetInstanceId;
   }

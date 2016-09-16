@@ -611,7 +611,6 @@ public class DefaultStoreTest {
     store.addApplication(appId, spec);
 
     ProgramId programId = appId.worker(AppWithWorker.WORKER);
-
     int instancesFromSpec = spec.getWorkers().get(AppWithWorker.WORKER).getInstances();
     Assert.assertEquals(1, instancesFromSpec);
     int instances = store.getWorkerInstances(programId);

@@ -186,7 +186,7 @@ public class ArtifactStore {
    * @param framework framework to add types and datasets to
    */
   public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
-    framework.addInstance(Table.class.getName(), META_ID.toId(), META_PROPERTIES);
+    framework.addInstance(Table.class.getName(), META_ID, META_PROPERTIES);
   }
 
   private Table getMetaTable(DatasetContext context) throws IOException, DatasetManagementException {

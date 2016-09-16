@@ -16,7 +16,8 @@
 
 package co.cask.cdap.data2.dataset2;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 
 import javax.annotation.Nullable;
 
@@ -28,59 +29,59 @@ public interface DatasetNamespace {
   /**
    * Namespaces (applies the namespace as a prefix) to the specified dataset instance name
    * Used for dataset instances in the system namespace
-   * Calls #namespace(Id.DatasetInstance.from(Id.Namespace.SYSTEM, datasetInstanceName)
-   * @see #namespace(Id.DatasetInstance)
+   * Calls #namespace(DatasetId.from(NamespaceId.SYSTEM, datasetInstanceName)
+   * @see #namespace(DatasetId)
    *
    * @param datasetInstanceName name of the dataset instance to be namespaced
-   * @return namespaced {@link Id.DatasetInstance} of the dataset
+   * @return namespaced {@link DatasetId} of the dataset
    */
-  Id.DatasetInstance namespace(String datasetInstanceName);
+  DatasetId namespace(String datasetInstanceName);
 
   /**
-   * Namespaces (applies the namespace as a prefix) to the specified {@link Id.DatasetInstance}
+   * Namespaces (applies the namespace as a prefix) to the specified {@link DatasetId}
    * {@code
    * String namespacedInstanceName = datasetInstanceId.getNamespace() + "." + datasetInstanceId.getId();
-   * return Id.DatasetInstance.from(datasetInstanceId.getNamespace(), namespacedInstanceName)
+   * return DatasetId.from(datasetInstanceId.getNamespace(), namespacedInstanceName)
    * }
-   * e.g. If Id.DatasetInstance(default, purchases) is passed, it will return
-   * Id.DatasetInstance(default, cdap.default.purchases)
+   * e.g. If DatasetId(default, purchases) is passed, it will return
+   * DatasetId(default, cdap.default.purchases)
    *
-   * @param datasetInstanceId {@link Id.DatasetInstance} for the dataset instance to be namespaced
-   * @return namespaced {@link Id.DatasetInstance} of the dataset
+   * @param datasetInstanceId {@link DatasetId} for the dataset instance to be namespaced
+   * @return namespaced {@link DatasetId} of the dataset
    */
-  Id.DatasetInstance namespace(Id.DatasetInstance datasetInstanceId);
+  DatasetId namespace(DatasetId datasetInstanceId);
 
   /**
    * Namespaces (applies the namespace as a prefix) to the specified suffix
    * Used for applying namespace to part table names
    *
-   * @param namespaceId the {@link Id.Namespace} to namespace the suffix with
+   * @param namespaceId the {@link NamespaceId} to namespace the suffix with
    * @param suffix the suffix to namespace
    * @return String containing the suffix prefixed with the specified namespace
    */
-  String namespace(Id.Namespace namespaceId, String suffix);
+  String namespace(NamespaceId namespaceId, String suffix);
 
   /**
-   * Returns a new {@link Id.DatasetInstance} with the namespaceId prefix removed from the specified instance name
-   * e.g. if cdap.myspace.myinstance is passed, this will return Id.DatasetInstance(myspace, myinstance)
-   * @see #fromNamespaced(Id.DatasetInstance)
+   * Returns a new {@link DatasetId} with the namespaceId prefix removed from the specified instance name
+   * e.g. if cdap.myspace.myinstance is passed, this will return DatasetId(myspace, myinstance)
+   * @see #fromNamespaced(DatasetId)
    *
    * @param namespaced namespaced name of the dataset
-   * @return original {@link Id.DatasetInstance} of the dataset or null if name is not within this namespace
+   * @return original {@link DatasetId} of the dataset or null if name is not within this namespace
    */
-  Id.DatasetInstance fromNamespaced(String namespaced);
+  DatasetId fromNamespaced(String namespaced);
 
   /**
-   * Returns a new {@link Id.DatasetInstance} with the namespaceId prefix removed from the instance name in the
-   * specified {@link Id.DatasetInstance}
-   * e.g. If Id.DatasetInstance(default, cdap.default.purchases) is passed, this will return
-   * Id.DatasetInstance(default, purchases)
+   * Returns a new {@link DatasetId} with the namespaceId prefix removed from the instance name in the
+   * specified {@link DatasetId}
+   * e.g. If DatasetId(default, cdap.default.purchases) is passed, this will return
+   * DatasetId(default, purchases)
    *
-   * @param datasetInstanceId namespaced {@link Id.DatasetInstance} of the dataset
-   * @return original {@link Id.DatasetInstance} of the dataset or null if name is not within this namespace
+   * @param datasetInstanceId namespaced {@link DatasetId} of the dataset
+   * @return original {@link DatasetId} of the dataset or null if name is not within this namespace
    */
   @Nullable
-  Id.DatasetInstance fromNamespaced(Id.DatasetInstance datasetInstanceId);
+  DatasetId fromNamespaced(DatasetId datasetInstanceId);
 
   /**
    * Checks if the specified namespace contains the specified dataset instance name

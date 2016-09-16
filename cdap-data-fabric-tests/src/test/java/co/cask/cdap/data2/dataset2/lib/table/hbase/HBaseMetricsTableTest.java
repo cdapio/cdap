@@ -37,7 +37,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTableTest;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -132,7 +132,7 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
 
   @Override
   protected MetricsTable getTable(String name) throws Exception {
-    Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Id.Namespace.SYSTEM, name);
+    DatasetId metricsDatasetInstanceId = NamespaceId.SYSTEM.dataset(name);
     DatasetProperties props = DatasetProperties.builder().add(Table.PROPERTY_READLESS_INCREMENT, "true").build();
     return DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
                                            MetricsTable.class.getName(), props, null, null);

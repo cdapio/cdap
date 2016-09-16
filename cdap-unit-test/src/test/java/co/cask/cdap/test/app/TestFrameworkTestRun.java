@@ -487,7 +487,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
           readCountName, AggregationFunction.SUM,
           writeCountName, AggregationFunction.SUM
         ),
-        ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, DefaultId.NAMESPACE.getId(),
+        ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, DefaultId.NAMESPACE.getNamespace(),
                         Constants.Metrics.Tag.APP, appClass.getSimpleName(),
                         Constants.Metrics.Tag.MAPREDUCE, DatasetWithMRApp.MAPREDUCE_PROGRAM),
         ImmutableList.<String>of()

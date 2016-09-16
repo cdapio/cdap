@@ -22,7 +22,8 @@ import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.common.security.UnsupportedUGIProvider;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -57,7 +58,7 @@ public abstract class MultiLiveStreamFileReaderTestBase {
   @Test
   public void testLiveFileReader() throws Exception {
     String streamName = "liveReader";
-    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
+    StreamId streamId = NamespaceId.DEFAULT.stream(streamName);
     Location location = getLocationFactory().create(streamName);
     location.mkdirs();
 
@@ -104,7 +105,7 @@ public abstract class MultiLiveStreamFileReaderTestBase {
   @Test
   public void testMultiFileReader() throws Exception {
     String streamName = "multiReader";
-    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
+    StreamId streamId = NamespaceId.DEFAULT.stream(streamName);
     Location location = getLocationFactory().create(streamName);
     location.mkdirs();
 
@@ -185,7 +186,7 @@ public abstract class MultiLiveStreamFileReaderTestBase {
   @Test
   public void testOffsets() throws Exception {
     String streamName = "offsets";
-    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
+    StreamId streamId = NamespaceId.DEFAULT.stream(streamName);
     Location location = getLocationFactory().create(streamName);
     location.mkdirs();
 
@@ -263,7 +264,7 @@ public abstract class MultiLiveStreamFileReaderTestBase {
 
   private FileWriter<StreamEvent> createWriter(StreamConfig config, String prefix) {
     return new TimePartitionedStreamFileWriter(config.getLocation(), config.getPartitionDuration(),
-                                               prefix, config.getIndexInterval(), config.getStreamId().toEntityId(),
+                                               prefix, config.getIndexInterval(), config.getStreamId(),
                                                impersonator);
   }
 }

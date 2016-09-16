@@ -17,9 +17,10 @@
 package co.cask.cdap.data.view;
 
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ViewDetail;
 import co.cask.cdap.proto.ViewSpecification;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.id.StreamViewId;
 
 import java.util.List;
 
@@ -34,30 +35,30 @@ public interface ViewStore {
    * @param config the view config
    * @return true if a new view was created
    */
-  boolean createOrUpdate(Id.Stream.View viewId, ViewSpecification config);
+  boolean createOrUpdate(StreamViewId viewId, ViewSpecification config);
 
   /**
    * @param viewId the view
    * @return true if the view exists
    */
-  boolean exists(Id.Stream.View viewId);
+  boolean exists(StreamViewId viewId);
 
   /**
    * Deletes a view.
    *
    * @param viewId the view
    */
-  void delete(Id.Stream.View viewId) throws NotFoundException;
+  void delete(StreamViewId viewId) throws NotFoundException;
 
   /**
    * @param streamId the stream
    * @return list of view IDs for a stream
    */
-  List<Id.Stream.View> list(Id.Stream streamId);
+  List<StreamViewId> list(StreamId streamId);
 
   /**
    * @param viewId the view
    * @return the details of a view
    */
-  ViewDetail get(Id.Stream.View viewId) throws NotFoundException;
+  ViewDetail get(StreamViewId viewId) throws NotFoundException;
 }
