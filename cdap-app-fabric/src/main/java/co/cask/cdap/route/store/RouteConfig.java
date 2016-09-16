@@ -34,10 +34,10 @@ public class RouteConfig {
       percentageSum += percent;
     }
     Preconditions.checkArgument(percentageSum == 100, "Route Percentage needs to add upto 100.");
-    this.routes = routes;
+    this.routes = ImmutableMap.copyOf(routes);
   }
 
   public Map<String, Integer> getRoutes() {
-    return ImmutableMap.copyOf(routes);
+    return routes;
   }
 }

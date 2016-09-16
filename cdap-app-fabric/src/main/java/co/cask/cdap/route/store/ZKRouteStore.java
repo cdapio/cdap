@@ -64,12 +64,12 @@ public class ZKRouteStore implements RouteStore {
     try {
       zkClient.delete(getZKPath(serviceId)).get(5, TimeUnit.SECONDS);
     } catch (InterruptedException | TimeoutException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     } catch (ExecutionException e) {
       if (e.getCause() instanceof KeeperException.NoNodeException) {
         throw new NotFoundException(String.format("Route Config for Service %s was not found.", serviceId));
       }
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
   }
 
@@ -81,14 +81,13 @@ public class ZKRouteStore implements RouteStore {
       Map<String, Integer> routes = GSON.fromJson(Bytes.toString(nodeData.getData()), MAP_STRING_INTEGER_TYPE);
       return new RouteConfig(routes);
     } catch (InterruptedException | TimeoutException e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     } catch (ExecutionException e) {
       if (e.getCause() instanceof KeeperException.NoNodeException) {
         throw new NotFoundException(String.format("Route Config for Service %s was not found.", serviceId));
       }
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
-    return null;
   }
 
   private static String getZKPath(ProgramId serviceId) {

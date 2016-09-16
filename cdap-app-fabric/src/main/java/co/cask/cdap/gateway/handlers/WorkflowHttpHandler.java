@@ -59,7 +59,6 @@ import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.WorkflowId;
-import co.cask.cdap.route.store.RouteStore;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
@@ -115,9 +114,9 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                       QueueAdmin queueAdmin, Scheduler scheduler, PreferencesStore preferencesStore,
                       MRJobInfoFetcher mrJobInfoFetcher, ProgramLifecycleService lifecycleService,
                       MetricStore metricStore, DatasetFramework datasetFramework,
-                      DiscoveryServiceClient discoveryServiceClient, RouteStore routeStore) {
+                      DiscoveryServiceClient discoveryServiceClient) {
     super(store, runtimeService, discoveryServiceClient, lifecycleService, queueAdmin, scheduler, preferencesStore,
-          mrJobInfoFetcher, metricStore, routeStore);
+          mrJobInfoFetcher, metricStore);
     this.workflowClient = workflowClient;
     this.datasetFramework = datasetFramework;
   }

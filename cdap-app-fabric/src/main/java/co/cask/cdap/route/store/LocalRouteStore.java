@@ -112,7 +112,7 @@ public class LocalRouteStore implements RouteStore  {
         @Override
         public RouteConfig call(DatasetContext context) throws Exception {
           byte[] value = getRouteTable(context).read(ServiceDiscoverable.getName(serviceId));
-          if (value == null || value.length == 0) {
+          if (value == null) {
             throw new NotFoundException(String.format("Route Config for Service %s was not found.", serviceId));
           }
 
