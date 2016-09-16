@@ -165,13 +165,13 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void compareAndSetStatus(final ProgramId id, final String pid, final ProgramRunStatus expectedStatus,
-                                  final ProgramRunStatus newStatus) {
+  public boolean compareAndSetStatus(final ProgramId id, final String pid, final ProgramRunStatus expectedStatus,
+                                     final ProgramRunStatus newStatus) {
     Preconditions.checkArgument(expectedStatus != null, "Expected of program run should be defined");
     Preconditions.checkArgument(newStatus != null, "New state of program run should be defined");
-    txExecute(transactional, new TxRunnable() {
+    return txExecute(transactional, new TxCallable<Boolean>() {
       @Override
-      public void run(DatasetContext context) throws Exception {
+      public Boolean call(DatasetContext context) throws Exception {
         AppMetadataStore mds = getAppMetadataStore(context);
         RunRecordMeta target = mds.getRun(id, pid);
         if (target.getStatus() == expectedStatus) {
@@ -205,7 +205,9 @@ public class DefaultStore implements Store {
             default:
               break;
           }
+          return true;
         }
+        return false;
       }
     });
   }

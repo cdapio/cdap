@@ -407,6 +407,24 @@ public class DefaultStoreTest {
   }
 
   @Test
+  public void testCompareAndSetStatus() throws Exception {
+    ProgramId programId = NamespaceId.DEFAULT.app("app1").flow("flow1");
+    long now = System.currentTimeMillis();
+
+    RunId run1 = RunIds.generate(now - 20000);
+    store.setStart(programId, run1.getId(), runIdToSecs(run1));
+    // this should succeed, because the program status is as expected (RUNNING)
+    Assert.assertTrue(store.compareAndSetStatus(programId, run1.getId(),
+                                                ProgramRunStatus.RUNNING, ProgramRunStatus.SUSPENDED));
+    Assert.assertEquals(ProgramRunStatus.SUSPENDED, store.getRun(programId, run1.getId()).getStatus());
+
+    // this will not change the status of the program, because the expected is no longer RUNNING
+    Assert.assertFalse(store.compareAndSetStatus(programId, run1.getId(),
+                                                ProgramRunStatus.RUNNING, ProgramRunStatus.FAILED));
+    Assert.assertEquals(ProgramRunStatus.SUSPENDED, store.getRun(programId, run1.getId()).getStatus());
+  }
+
+  @Test
   public void testAddApplication() throws Exception {
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
     ApplicationId appId = new ApplicationId("account1", "application1");

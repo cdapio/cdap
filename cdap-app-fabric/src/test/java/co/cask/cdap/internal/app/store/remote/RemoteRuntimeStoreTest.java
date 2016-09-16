@@ -77,22 +77,12 @@ public class RemoteRuntimeStoreTest extends AppFabricTestBase {
                         store.getRun(flowId, pid));
 
     runtimeStore.setResume(flowId, pid);
-    Assert.assertEquals(initialRunRecord,
-                        store.getRun(flowId, pid));
+    Assert.assertEquals(initialRunRecord, store.getRun(flowId, pid));
 
-    // this should be a no-op, since the status is actually RUNNING, and not SUSPENDED
-    runtimeStore.compareAndSetStatus(flowId, pid, ProgramRunStatus.SUSPENDED, ProgramRunStatus.COMPLETED);
-    Assert.assertEquals(initialRunRecord,
-                        store.getRun(flowId, pid));
-
-    // this call to compareAndSetStatus will correctly mark it as COMPLETED.
-    // we don't do direct equals comparison on the run record objects, because the method internally sets the stopTime
-    runtimeStore.compareAndSetStatus(flowId, pid, ProgramRunStatus.RUNNING, ProgramRunStatus.COMPLETED);
+    runtimeStore.setStop(flowId, pid, stopTime, ProgramRunStatus.COMPLETED);
     RunRecordMeta runRecordMeta = store.getRun(flowId, pid);
-    Assert.assertEquals(initialRunRecord.getStartTs(), runRecordMeta.getStartTs());
-    Assert.assertEquals(initialRunRecord.getPid(), runRecordMeta.getPid());
-    Assert.assertEquals(initialRunRecord.getTwillRunId(), runRecordMeta.getTwillRunId());
-    Assert.assertEquals(ProgramRunStatus.COMPLETED, runRecordMeta.getStatus());
+    RunRecordMeta finalRunRecord = new RunRecordMeta(initialRunRecord, stopTime, ProgramRunStatus.COMPLETED);
+    Assert.assertEquals(finalRunRecord, runRecordMeta);
   }
 
   @Test

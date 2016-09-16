@@ -77,6 +77,19 @@ public interface Store extends RuntimeStore {
   void setStart(ProgramId id, String pid, long startTime);
 
   /**
+   * Compare and set operation that allow to compare and set expected and update status.
+   * Implementation of this method should guarantee that the operation is atomic or in transaction.
+   *
+   * @param id id of the program
+   * @param pid the run id
+   * @param expectedStatus the expected value
+   * @param newStatus the new value
+   * @return true if successful. False return indicates that
+   * the actual value was not equal to the expected value.
+   */
+  boolean compareAndSetStatus(ProgramId id, String pid, ProgramRunStatus expectedStatus, ProgramRunStatus newStatus);
+
+  /**
    * Fetches run records for particular program. Returns only finished runs.
    * Returned ProgramRunRecords are sorted by their startTime.
    *
