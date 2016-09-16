@@ -61,23 +61,19 @@ public class RouteConfigHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("app-id") String appId,
                              @PathParam("service-id") String serviceId) throws Exception {
-    try {
-      ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
-      ServiceSpecification spec = (ServiceSpecification) lifecycleService.getProgramSpecification(programId);
-      if (spec == null) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
-
-      RouteConfig routeConfig = routeStore.fetch(programId);
-      if (routeConfig == null) {
-        responder.sendStatus(HttpResponseStatus.OK);
-        return;
-      }
-      responder.sendJson(HttpResponseStatus.OK, routeConfig.getRoutes());
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
+    ServiceSpecification spec = (ServiceSpecification) lifecycleService.getProgramSpecification(programId);
+    if (spec == null) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      return;
     }
+
+    RouteConfig routeConfig = routeStore.fetch(programId);
+    if (routeConfig == null) {
+      responder.sendStatus(HttpResponseStatus.OK);
+      return;
+    }
+    responder.sendJson(HttpResponseStatus.OK, routeConfig.getRoutes());
   }
 
   @PUT
@@ -86,20 +82,15 @@ public class RouteConfigHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("app-id") String appId,
                                @PathParam("service-id") String serviceId) throws Exception {
-    try {
-      ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
-      ServiceSpecification spec = (ServiceSpecification) lifecycleService.getProgramSpecification(programId);
-      if (spec == null) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
-
-      Map<String, Integer> routes = parseBody(request, ROUTE_CONFIG_TYPE);
-      routeStore.store(programId, new RouteConfig(routes));
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
+    ServiceSpecification spec = (ServiceSpecification) lifecycleService.getProgramSpecification(programId);
+    if (spec == null) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      return;
     }
+    Map<String, Integer> routes = parseBody(request, ROUTE_CONFIG_TYPE);
+    routeStore.store(programId, new RouteConfig(routes));
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @DELETE
@@ -108,18 +99,13 @@ public class RouteConfigHttpHandler extends AbstractAppFabricHttpHandler {
                                 @PathParam("namespace-id") String namespaceId,
                                 @PathParam("app-id") String appId,
                                 @PathParam("service-id") String serviceId) throws Exception {
-    try {
-      ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
-      ServiceSpecification spec = (ServiceSpecification) lifecycleService.getProgramSpecification(programId);
-      if (spec == null) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
-
-      routeStore.delete(programId);
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
+    ServiceSpecification spec = (ServiceSpecification) lifecycleService.getProgramSpecification(programId);
+    if (spec == null) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      return;
     }
+    routeStore.delete(programId);
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 }

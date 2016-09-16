@@ -68,12 +68,13 @@ public class ZKRouteStore implements RouteStore {
   @Override
   public void store(final ProgramId serviceId, final RouteConfig routeConfig) {
     Supplier<RouteConfig> supplier = Suppliers.ofInstance(routeConfig);
-    final SettableFuture settableFuture = SettableFuture.create();
+    final SettableFuture<RouteConfig> settableFuture = SettableFuture.create();
     Futures.addCallback(ZKExtOperations.createOrSet(zkClient, getZKPath(serviceId), supplier, ROUTE_CONFIG_CODEC, 10),
                         new FutureCallback<RouteConfig>() {
                           @Override
                           public void onSuccess(RouteConfig result) {
                             routeConfigMap.put(serviceId, routeConfig);
+                            settableFuture.set(result);
                           }
 
                           @Override
@@ -91,11 +92,12 @@ public class ZKRouteStore implements RouteStore {
   @Override
   public void delete(final ProgramId serviceId) throws NotFoundException {
     OperationFuture<String> future = zkClient.delete(getZKPath(serviceId));
-    final SettableFuture settableFuture = SettableFuture.create();
+    final SettableFuture<String> settableFuture = SettableFuture.create();
     Futures.addCallback(future, new FutureCallback<String>() {
       @Override
       public void onSuccess(String result) {
         routeConfigMap.remove(serviceId);
+        settableFuture.set(result);
       }
 
       @Override
