@@ -157,7 +157,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
                                bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
                                bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
-                               bind(RouteStore.class).to(LocalRouteStore.class);
+                               bind(RouteStore.class).to(LocalRouteStore.class).in(Scopes.SINGLETON);
                                addInMemoryBindings(binder());
 
                                Multibinder<String> servicesNamesBinder =
@@ -193,7 +193,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
                                bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
                                bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
-                               bind(RouteStore.class).to(LocalRouteStore.class);
+                               bind(RouteStore.class).to(LocalRouteStore.class).in(Scopes.SINGLETON);
                                addInMemoryBindings(binder());
 
                                Multibinder<String> servicesNamesBinder =
@@ -250,7 +250,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(StorageProviderNamespaceAdmin.class)
                                  .to(DistributedStorageProviderNamespaceAdmin.class);
                                bind(UGIProvider.class).to(DefaultUGIProvider.class);
-                               bind(RouteStore.class).to(ZKRouteStore.class);
+                               bind(RouteStore.class).to(ZKRouteStore.class).in(Scopes.SINGLETON);
                                MapBinder<String, MasterServiceManager> mapBinder = MapBinder.newMapBinder(
                                  binder(), String.class, MasterServiceManager.class);
                                mapBinder.addBinding(Constants.Service.LOGSAVER)

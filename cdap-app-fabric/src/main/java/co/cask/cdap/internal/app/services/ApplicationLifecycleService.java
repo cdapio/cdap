@@ -27,6 +27,7 @@ import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
@@ -69,6 +70,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
@@ -127,6 +129,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
   private final Impersonator impersonator;
+  private final RouteStore routeStore;
 
   @Inject
   ApplicationLifecycleService(ProgramRuntimeService runtimeService, Store store,
@@ -137,7 +140,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                               ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
                               MetadataStore metadataStore, PrivilegesManager privilegesManager,
                               AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
-                              Impersonator impersonator) {
+                              Impersonator impersonator, RouteStore routeStore) {
     this.runtimeService = runtimeService;
     this.store = store;
     this.scheduler = scheduler;
@@ -153,6 +156,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
     this.impersonator = impersonator;
+    this.routeStore = routeStore;
   }
 
   @Override
@@ -594,6 +598,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     ApplicationSpecification appSpec = store.getApplication(appId);
     deleteAppMetadata(appId, appSpec);
+    deleteRouteConfig(appId, appSpec);
     store.deleteWorkflowStats(appId);
     store.removeApplication(appId);
 
@@ -601,6 +606,18 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       usageRegistry.unregister(idApplication);
     } catch (Exception e) {
       LOG.warn("Failed to unregister usage of app: {}", appId, e);
+    }
+  }
+
+  // Delete route configs for all services, if they are present, in that Application
+  private void deleteRouteConfig(ApplicationId appId, ApplicationSpecification appSpec) {
+    for (ServiceSpecification serviceSpec : appSpec.getServices().values()) {
+      ProgramId serviceId = appId.service(serviceSpec.getName());
+      try {
+        routeStore.delete(serviceId);
+      } catch (NotFoundException ex) {
+        // expected if a config has not been stored for that service.
+      }
     }
   }
 

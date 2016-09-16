@@ -45,8 +45,11 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * RouteStore where the routes are stored in a ZK persistent node. This is intended for use in distributed mode.
@@ -55,9 +58,10 @@ public class ZKRouteStore implements RouteStore {
   private static final Logger LOG = LoggerFactory.getLogger(ZKRouteStore.class);
   private static final Gson GSON = new Gson();
   private static final Type MAP_STRING_INTEGER_TYPE = new TypeToken<Map<String, Integer>>() { }.getType();
+  private static final int ZK_TIMEOUT_SECS = 5;
 
   private final ZKClient zkClient;
-  private final Map<ProgramId, RouteConfig> routeConfigMap;
+  private final ConcurrentMap<ProgramId, RouteConfig> routeConfigMap;
 
   @Inject
   public ZKRouteStore(ZKClient zkClient) {
@@ -83,8 +87,8 @@ public class ZKRouteStore implements RouteStore {
                           }
                         });
     try {
-      settableFuture.get();
-    } catch (ExecutionException | InterruptedException ex) {
+      settableFuture.get(ZK_TIMEOUT_SECS, TimeUnit.SECONDS);
+    } catch (ExecutionException | InterruptedException | TimeoutException ex) {
       throw Throwables.propagate(ex);
     }
   }
@@ -107,8 +111,8 @@ public class ZKRouteStore implements RouteStore {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     try {
-      settableFuture.get();
-    } catch (ExecutionException | InterruptedException ex) {
+      settableFuture.get(ZK_TIMEOUT_SECS, TimeUnit.SECONDS);
+    } catch (ExecutionException | InterruptedException | TimeoutException ex) {
       if (ex.getCause() instanceof KeeperException.NoNodeException) {
         throw new NotFoundException(String.format("Route Config for Service %s was not found.", serviceId));
       }
@@ -118,15 +122,20 @@ public class ZKRouteStore implements RouteStore {
 
   @Override
   public RouteConfig fetch(final ProgramId serviceId) throws NotFoundException {
-    RouteConfig routeConfig = routeConfigMap.get(serviceId);
-    if (routeConfig != null) {
+    if (routeConfigMap.containsKey(serviceId)) {
+      RouteConfig routeConfig = routeConfigMap.get(serviceId);
+      // Key is present but the value is null. So we have cached that this key has no config as of now. We have placed
+      // a watch on it, so it will update it with the config if data is updated for that node.
+      if (routeConfig == null) {
+        throw new NotFoundException(String.format("Route Config for Service %s was not found.", serviceId));
+      }
       return routeConfig;
     }
 
     Future<RouteConfig> settableFuture = getAndWatchData(serviceId, new ZKRouteWatcher(serviceId));
     try {
-      return settableFuture.get();
-    } catch (InterruptedException | ExecutionException e) {
+      return settableFuture.get(ZK_TIMEOUT_SECS, TimeUnit.SECONDS);
+    } catch (InterruptedException | ExecutionException | TimeoutException e) {
       if (e.getCause() instanceof KeeperException.NoNodeException) {
         throw new NotFoundException(String.format("Route Config for Service %s was not found.", serviceId));
       }
@@ -170,6 +179,10 @@ public class ZKRouteStore implements RouteStore {
 
       @Override
       public void onFailure(Throwable t) {
+        if (t instanceof KeeperException.NoNodeException) {
+          // If node doesn't exist, add that info to the map.
+          routeConfigMap.put(serviceId, null);
+        }
         settableFuture.setException(t);
       }
     });
