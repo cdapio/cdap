@@ -30,7 +30,7 @@ PASSWD=$(python -c 'import hdinsight_common.ClusterManifestParser as ClusterMani
                     print base64.b64decode(base64pwd)')
 
 AMBARICREDS="-u ${USERID} -p ${PASSWD}"
-AMBARICURLCREDS="-u \"${USERID}\":\"${PASSWD}\""
+AMBARICURLCREDS="-u '${USERID}':'${PASSWD}'"
 
 
 # Function definitions
