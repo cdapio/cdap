@@ -61,7 +61,7 @@ public class ZKRouteStore implements RouteStore {
   private static final int ZK_TIMEOUT_SECS = 5;
 
   private final ZKClient zkClient;
-  private final ConcurrentMap<ProgramId, RouteConfig> routeConfigMap;
+  private final ConcurrentMap<ProgramId, SettableFuture<RouteConfig>> routeConfigMap;
 
   @Inject
   public ZKRouteStore(ZKClient zkClient) {
@@ -77,8 +77,8 @@ public class ZKRouteStore implements RouteStore {
                         new FutureCallback<RouteConfig>() {
                           @Override
                           public void onSuccess(RouteConfig result) {
-                            routeConfigMap.put(serviceId, routeConfig);
                             settableFuture.set(result);
+                            routeConfigMap.put(serviceId, settableFuture);
                           }
 
                           @Override
@@ -122,19 +122,16 @@ public class ZKRouteStore implements RouteStore {
 
   @Override
   public RouteConfig fetch(final ProgramId serviceId) throws NotFoundException {
-    if (routeConfigMap.containsKey(serviceId)) {
-      RouteConfig routeConfig = routeConfigMap.get(serviceId);
-      // Key is present but the value is null. So we have cached that this key has no config as of now. We have placed
-      // a watch on it, so it will update it with the config if data is updated for that node.
-      if (routeConfig == null) {
-        throw new NotFoundException(String.format("Route Config for Service %s was not found.", serviceId));
-      }
-      return routeConfig;
+    if (routeConfigMap.putIfAbsent(serviceId, SettableFuture.<RouteConfig>create()) != null) {
+      return getConfig(serviceId, routeConfigMap.get(serviceId));
     }
+    Future<RouteConfig> future = getAndWatchData(serviceId, new ZKRouteWatcher(serviceId));
+    return getConfig(serviceId, future);
+  }
 
-    Future<RouteConfig> settableFuture = getAndWatchData(serviceId, new ZKRouteWatcher(serviceId));
+  private RouteConfig getConfig(ProgramId serviceId, Future<RouteConfig> future) throws NotFoundException {
     try {
-      return settableFuture.get(ZK_TIMEOUT_SECS, TimeUnit.SECONDS);
+      return future.get(ZK_TIMEOUT_SECS, TimeUnit.SECONDS);
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
       if (e.getCause() instanceof KeeperException.NoNodeException) {
         throw new NotFoundException(String.format("Route Config for Service %s was not found.", serviceId));
@@ -169,8 +166,8 @@ public class ZKRouteStore implements RouteStore {
       public void onSuccess(NodeData result) {
         try {
           RouteConfig route = ROUTE_CONFIG_CODEC.decode(result.getData());
-          routeConfigMap.put(serviceId, route);
           settableFuture.set(route);
+          routeConfigMap.put(serviceId, settableFuture);
         } catch (IOException ex) {
           LOG.debug("Unable to deserialize the config for service {}. Got data {}", serviceId, result.getData());
           settableFuture.setException(ex);
@@ -179,10 +176,6 @@ public class ZKRouteStore implements RouteStore {
 
       @Override
       public void onFailure(Throwable t) {
-        if (t instanceof KeeperException.NoNodeException) {
-          // If node doesn't exist, add that info to the map.
-          routeConfigMap.put(serviceId, null);
-        }
         settableFuture.setException(t);
       }
     });

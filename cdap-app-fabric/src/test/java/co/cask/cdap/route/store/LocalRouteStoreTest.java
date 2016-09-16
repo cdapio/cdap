@@ -27,7 +27,7 @@ import org.junit.Test;
 /**
  * Route Configuration Store Test.
  */
-public class RouteStoreTest extends AppFabricTestBase {
+public class LocalRouteStoreTest extends AppFabricTestBase {
 
   @Test
   public void testRouteStorage() throws Exception {
