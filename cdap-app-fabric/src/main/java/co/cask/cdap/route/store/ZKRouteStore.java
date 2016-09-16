@@ -156,10 +156,14 @@ public class ZKRouteStore implements RouteStore {
     Futures.addCallback(future, new FutureCallback<NodeData>() {
       @Override
       public void onSuccess(NodeData result) {
-        Map<String, Integer> routes = GSON.fromJson(Bytes.toString(result.getData()), MAP_STRING_INTEGER_TYPE);
-        RouteConfig route = new RouteConfig(routes);
-        routeConfigMap.put(serviceId, route);
-        settableFuture.set(route);
+        try {
+          RouteConfig route = ROUTE_CONFIG_CODEC.decode(result.getData());
+          routeConfigMap.put(serviceId, route);
+          settableFuture.set(route);
+        } catch (IOException ex) {
+          LOG.debug("Unable to deserialize the config for service {}. Got data {}", serviceId, result.getData());
+          settableFuture.setException(ex);
+        }
       }
 
       @Override
