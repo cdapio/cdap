@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.context.TxnCodec;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.apache.hadoop.conf.Configuration;
@@ -46,7 +46,7 @@ import java.io.IOException;
  * will not get clobbered.
  */
 public class DatasetAccessor implements Closeable {
-  private final Id.DatasetInstance datasetId;
+  private final DatasetId datasetId;
   private final ContextManager.Context context;
   private final Transaction transaction;
   private final SystemDatasetInstantiator datasetInstantiator;
@@ -58,21 +58,22 @@ public class DatasetAccessor implements Closeable {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(datasetName), "dataset name not present in config");
     Preconditions.checkArgument(!Strings.isNullOrEmpty(namespace), "namespace not present in config");
 
-    this.datasetId = Id.DatasetInstance.from(namespace, datasetName);
+    this.datasetId = new DatasetId(namespace, datasetName);
     this.context = ContextManager.getContext(conf);
-    this.transaction = ConfigurationUtil.get(conf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE);
+    Preconditions.checkNotNull(context);
     this.datasetInstantiator = context.createDatasetInstantiator(conf.getClassLoader());
+    this.transaction = ConfigurationUtil.get(conf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE);
   }
 
   public void initialize() throws IOException, DatasetManagementException,
     DatasetNotFoundException, ClassNotFoundException {
-    dataset = datasetInstantiator.getDataset(datasetId.toEntityId());
+    dataset = datasetInstantiator.getDataset(datasetId);
     if (dataset instanceof TransactionAware) {
       ((TransactionAware) dataset).startTx(transaction);
     }
   }
 
-  public Id.DatasetInstance getDatasetId() {
+  public DatasetId getDatasetId() {
     return datasetId;
   }
 

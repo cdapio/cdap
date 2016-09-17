@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,8 @@ import co.cask.cdap.data.stream.StreamInputSplitFinder;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.hive.context.ContextManager;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -80,15 +81,16 @@ public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> 
     return new StreamRecordReader(split, conf);
   }
 
-  public static Id.Stream getStreamId(JobConf conf) {
+  public static StreamId getStreamId(JobConf conf) {
     String streamName = conf.get(Constants.Explore.STREAM_NAME);
     String streamNamespace = conf.get(Constants.Explore.STREAM_NAMESPACE);
-    return Id.Stream.from(streamNamespace, streamName);
+    return new StreamId(streamNamespace, streamName);
   }
 
   private StreamInputSplitFinder<InputSplit> getSplitFinder(JobConf conf) throws IOException {
     // first get the context we are in
     ContextManager.Context context = ContextManager.getContext(conf);
+    Preconditions.checkNotNull(context);
     StreamConfig streamConfig = context.getStreamConfig(getStreamId(conf));
     // make sure we get the current generation so we don't read events that occurred before a truncate.
     Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),

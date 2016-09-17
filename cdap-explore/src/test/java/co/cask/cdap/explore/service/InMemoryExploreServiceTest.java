@@ -39,11 +39,11 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
@@ -143,17 +143,17 @@ public class InMemoryExploreServiceTest {
     String otherNamespace = "otherNamespace";
     NamespaceMeta namespaceMeta = new NamespaceMeta.Builder().setName(otherNamespace).build();
     namespaceAdmin.create(namespaceMeta);
-    namespaceAdmin.create(new NamespaceMeta.Builder().setName(Id.Namespace.DEFAULT).build());
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(NamespaceId.DEFAULT).build());
     waitForCompletionStatus(exploreService.createNamespace(namespaceMeta));
 
-    runCleanup(ImmutableList.of(Id.Namespace.DEFAULT.getId(), otherNamespace));
+    runCleanup(ImmutableList.of(NamespaceId.DEFAULT.getEntityName(), otherNamespace));
 
-    runNamespacedTest(Id.Namespace.DEFAULT.getId());
+    runNamespacedTest(NamespaceId.DEFAULT.getEntityName());
     runNamespacedTest(otherNamespace);
 
-    runCleanup(ImmutableList.of(Id.Namespace.DEFAULT.getId(), otherNamespace));
+    runCleanup(ImmutableList.of(NamespaceId.DEFAULT.getEntityName(), otherNamespace));
 
-    waitForCompletionStatus(exploreService.deleteNamespace(Id.Namespace.from(otherNamespace)));
+    waitForCompletionStatus(exploreService.deleteNamespace(new NamespaceId(otherNamespace)));
   }
 
   private void runNamespacedTest(String namespace) throws Exception {
@@ -241,7 +241,7 @@ public class InMemoryExploreServiceTest {
   private static void runCommand(String namespace, String command, boolean expectedHasResult,
                                  List<ColumnDesc> expectedColumnDescs,
                                  List<QueryResult> expectedResults) throws Exception {
-    QueryHandle handle = exploreService.execute(Id.Namespace.from(namespace), command);
+    QueryHandle handle = exploreService.execute(new NamespaceId(namespace), command);
 
     QueryStatus status = waitForCompletionStatus(handle);
     Assert.assertEquals(QueryStatus.OpStatus.FINISHED, status.getStatus());

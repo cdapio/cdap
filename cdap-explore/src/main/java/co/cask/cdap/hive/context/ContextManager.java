@@ -46,7 +46,8 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.hive.datasets.DatasetSerDe;
 import co.cask.cdap.hive.stream.StreamSerDe;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
@@ -220,12 +221,12 @@ public class ContextManager {
            authorizationEnforcer, null);
     }
 
-    public StreamConfig getStreamConfig(Id.Stream streamId) throws IOException {
-      return streamAdmin.getConfig(streamId.toEntityId());
+    public StreamConfig getStreamConfig(StreamId streamId) throws IOException {
+      return streamAdmin.getConfig(streamId);
     }
 
-    public DatasetSpecification getDatasetSpec(Id.DatasetInstance datasetId) throws DatasetManagementException {
-      return datasetFramework.getDatasetSpec(datasetId.toEntityId());
+    public DatasetSpecification getDatasetSpec(DatasetId datasetId) throws DatasetManagementException {
+      return datasetFramework.getDatasetSpec(datasetId);
     }
 
     @Nullable

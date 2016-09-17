@@ -29,12 +29,10 @@ import co.cask.cdap.explore.service.Explore;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
-import co.cask.cdap.explore.service.ExploreTableManager;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.service.HiveStreamRedirector;
 import co.cask.cdap.explore.service.MetaDataInfo;
 import co.cask.cdap.explore.service.TableNotFoundException;
-import co.cask.cdap.explore.utils.ExploreTableNaming;
 import co.cask.cdap.hive.context.CConfCodec;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.context.HConfCodec;
@@ -63,7 +61,6 @@ import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
@@ -118,6 +115,7 @@ import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -162,15 +160,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final long cleanupJobSchedule;
   private final File previewsDir;
   private final ScheduledExecutorService metastoreClientsExecutorService;
-  private final StreamAdmin streamAdmin;
-  private final DatasetFramework datasetFramework;
-  private final ExploreTableManager exploreTableManager;
-  private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
-  private final ExploreTableNaming tableNaming;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final AuthorizationEnforcementService authorizationEnforcementService;
-  private final AuthorizationEnforcer authorizationEnforcer;
-  private final AuthenticationContext authenticationContext;
 
   private final ThreadLocal<Supplier<IMetaStoreClient>> metastoreClientLocal;
 
@@ -200,7 +191,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
                                    CConfiguration cConf, Configuration hConf,
                                    File previewsDir, StreamAdmin streamAdmin, NamespaceQueryAdmin namespaceQueryAdmin,
                                    SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
-                                   ExploreTableNaming tableNaming,
                                    AuthorizationEnforcementService authorizationEnforcementService,
                                    AuthorizationEnforcer authorizationEnforcer,
                                    AuthenticationContext authenticationContext) {
@@ -211,12 +201,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.metastoreClientLocal = new ThreadLocal<>();
     this.metastoreClientReferences = Maps.newConcurrentMap();
     this.metastoreClientReferenceQueue = new ReferenceQueue<>();
-    this.datasetFramework = datasetFramework;
-    this.streamAdmin = streamAdmin;
-    this.exploreTableManager = new ExploreTableManager(this, datasetInstantiatorFactory,
-                                                       new ExploreTableNaming(), hConf);
-    this.datasetInstantiatorFactory = datasetInstantiatorFactory;
-    this.tableNaming = tableNaming;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
 
     // Create a Timer thread to periodically collect metastore clients that are no longer in used and call close on them
@@ -239,9 +223,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.cliService = createCLIService();
 
     this.txClient = txClient;
-    this.authenticationContext = authenticationContext;
     this.authorizationEnforcementService = authorizationEnforcementService;
-    this.authorizationEnforcer = authorizationEnforcer;
 
     ContextManager.saveContext(datasetFramework, streamAdmin, datasetInstantiatorFactory, authorizationEnforcer,
                                authenticationContext);
@@ -753,7 +735,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       // Even with the "IF NOT EXISTS" in the create command, Hive still logs a non-fatal warning internally
       // when attempting to create the "default" namespace (since it already exists in Hive).
       // This check prevents the extra warn log.
-      if (Id.Namespace.DEFAULT.equals(namespaceMeta.getNamespaceId().toId())) {
+      if (NamespaceId.DEFAULT.equals(namespaceMeta.getNamespaceId())) {
         return QueryHandle.NO_OP;
       }
 
@@ -821,11 +803,11 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public QueryHandle deleteNamespace(Id.Namespace namespace) throws ExploreException, SQLException {
+  public QueryHandle deleteNamespace(NamespaceId namespace) throws ExploreException, SQLException {
     startAndWait();
     String customHiveDatabase;
     try {
-      customHiveDatabase = namespaceQueryAdmin.get(namespace).getConfig().getHiveDatabase();
+      customHiveDatabase = namespaceQueryAdmin.get(namespace.toId()).getConfig().getHiveDatabase();
     } catch (Exception e) {
       throw new ExploreException(String.format("Failed to get namespace meta for the namespace %s", namespace));
     }
@@ -838,7 +820,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         try {
           sessionHandle = openHiveSession(sessionConf);
 
-          String database = getHiveDatabase(namespace.getId());
+          String database = getHiveDatabase(namespace.getNamespace());
           String statement = String.format("DROP DATABASE %s", database);
           operationHandle = executeAsync(sessionHandle, statement);
           QueryHandle handle = saveReadOnlyOperation(operationHandle, sessionHandle, sessionConf, statement, database);
@@ -861,7 +843,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
   }
 
-  public QueryHandle execute(Id.Namespace namespace, String[] statements) throws ExploreException, SQLException {
+  @Override
+  public QueryHandle execute(NamespaceId namespace, String[] statements) throws ExploreException, SQLException {
     Preconditions.checkArgument(statements.length > 0, "There must be at least one statement");
     startAndWait();
     try {
@@ -870,7 +853,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       Map<String, String> sessionConf = startSession(namespace);
       try {
         sessionHandle = openHiveSession(sessionConf);
-        String database = getHiveDatabase(namespace.getId());
+        String database = getHiveDatabase(namespace.getNamespace());
         // Switch database to the one being passed in.
         setCurrentDatabase(database);
 
@@ -907,12 +890,12 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public QueryHandle execute(Id.Namespace namespace, String statement) throws ExploreException, SQLException {
+  public QueryHandle execute(NamespaceId namespace, String statement) throws ExploreException, SQLException {
     return execute(namespace, statement, null);
   }
 
   @Override
-  public QueryHandle execute(Id.Namespace namespace, String statement,
+  public QueryHandle execute(NamespaceId namespace, String statement,
                              @Nullable Map<String, String> additionalSessionConf)
     throws ExploreException, SQLException {
 
@@ -925,7 +908,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       Map<String, String> sessionConf = startSession(namespace, additionalSessionConf);
       try {
         sessionHandle = openHiveSession(sessionConf);
-        String database = getHiveDatabase(namespace.getId());
+        String database = getHiveDatabase(namespace.getNamespace());
         // Switch database to the one being passed in.
         setCurrentDatabase(database);
 
@@ -1118,7 +1101,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
    * Cancel a running Hive operation. After the operation moves into a {@link QueryStatus.OpStatus#CANCELED},
    * {@link #close(QueryHandle)} needs to be called to release resources.
    *
-   * @param handle handle returned by {@link Explore#execute(Id.Namespace, String)}.
+   * @param handle handle returned by {@link Explore#execute(NamespaceId, String)}.
    * @throws ExploreException on any error cancelling operation.
    * @throws HandleNotFoundException when handle is not found.
    * @throws SQLException if there are errors in the SQL statement.
@@ -1147,11 +1130,11 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public List<QueryInfo> getQueries(Id.Namespace namespace) throws ExploreException, SQLException {
+  public List<QueryInfo> getQueries(NamespaceId namespace) throws ExploreException, SQLException {
     startAndWait();
 
-    List<QueryInfo> result = Lists.newArrayList();
-    String namespaceHiveDb = getHiveDatabase(namespace.getId());
+    List<QueryInfo> result = new ArrayList<>();
+    String namespaceHiveDb = getHiveDatabase(namespace.getNamespace());
     for (Map.Entry<QueryHandle, OperationInfo> entry : activeHandleCache.asMap().entrySet()) {
       try {
         if (entry.getValue().getNamespace().equals(namespaceHiveDb)) {
@@ -1170,7 +1153,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     for (Map.Entry<QueryHandle, InactiveOperationInfo> entry : inactiveHandleCache.asMap().entrySet()) {
       InactiveOperationInfo inactiveOperationInfo = entry.getValue();
-      if (inactiveOperationInfo.getNamespace().equals(getHiveDatabase(namespace.getId()))) {
+      if (inactiveOperationInfo.getNamespace().equals(getHiveDatabase(namespace.getNamespace()))) {
         // we use empty query statement for get tables, get schemas, we don't need to return it this method call.
         if (!inactiveOperationInfo.getStatement().isEmpty()) {
           if (inactiveOperationInfo.getStatus() == null) {
@@ -1187,11 +1170,11 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   @Override
-  public int getActiveQueryCount(Id.Namespace namespace) throws ExploreException {
+  public int getActiveQueryCount(NamespaceId namespace) throws ExploreException {
     startAndWait();
 
     int count = 0;
-    String namespaceHiveDb = getHiveDatabase(namespace.getId());
+    String namespaceHiveDb = getHiveDatabase(namespace.getNamespace());
     for (Map.Entry<QueryHandle, OperationInfo> entry : activeHandleCache.asMap().entrySet()) {
       if (entry.getValue().getNamespace().equals(namespaceHiveDb)) {
         // we use empty query statement for get tables, get schemas, we don't need to return it this method call.
@@ -1291,21 +1274,21 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     return startSession(null);
   }
 
-  protected Map<String, String> startSession(@Nullable Id.Namespace namespace)
+  protected Map<String, String> startSession(@Nullable NamespaceId namespace)
     throws IOException, ExploreException, NamespaceNotFoundException {
     return startSession(namespace, null);
   }
 
-  protected Map<String, String> startSession(@Nullable Id.Namespace namespace,
+  protected Map<String, String> startSession(@Nullable NamespaceId namespace,
                                              @Nullable Map<String, String> additionalSessionConf)
     throws IOException, ExploreException, NamespaceNotFoundException {
 
-    Map<String, String> sessionConf = Maps.newHashMap();
+    Map<String, String> sessionConf = new HashMap<>();
 
     QueryHandle queryHandle = QueryHandle.generate();
     sessionConf.put(Constants.Explore.QUERY_ID, queryHandle.getHandle());
 
-    String schedulerQueue = namespace != null ? schedulerQueueResolver.getQueue(namespace)
+    String schedulerQueue = namespace != null ? schedulerQueueResolver.getQueue(namespace.toId())
                                               : schedulerQueueResolver.getDefaultQueue();
 
     if (schedulerQueue != null && !schedulerQueue.isEmpty()) {

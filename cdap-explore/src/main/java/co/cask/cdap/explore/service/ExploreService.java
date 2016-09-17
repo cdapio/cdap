@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,8 @@
 
 package co.cask.cdap.explore.service;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.util.concurrent.Service;
 
 import java.sql.SQLException;
@@ -38,6 +38,5 @@ public interface ExploreService extends Service, Explore {
    * @throws ExploreException on any error executing statement.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  QueryHandle execute(Id.Namespace namespace, String[] statements) throws ExploreException, SQLException;
-
+  QueryHandle execute(NamespaceId namespace, String[] statements) throws ExploreException, SQLException;
 }

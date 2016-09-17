@@ -23,7 +23,6 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.id.EntityId;
@@ -99,14 +98,14 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
 
     StreamId streamId = NAMESPACE_ID.stream(streamName);
     createStream(streamId);
-    sendStreamEvent(streamId.toId(), headers, Bytes.toBytes(body1));
-    sendStreamEvent(streamId.toId(), headers, Bytes.toBytes(body2));
-    sendStreamEvent(streamId.toId(), headers, Bytes.toBytes(body3));
+    sendStreamEvent(streamId, headers, Bytes.toBytes(body1));
+    sendStreamEvent(streamId, headers, Bytes.toBytes(body2));
+    sendStreamEvent(streamId, headers, Bytes.toBytes(body3));
   }
 
   @AfterClass
   public static void finish() throws Exception {
-    dropStream(NAMESPACE_ID.stream(streamName).toId());
+    dropStream(NAMESPACE_ID.stream(streamName));
     revokeAndAssertSuccess(NAMESPACE_ID, USER, EnumSet.allOf(Action.class));
   }
 
@@ -219,7 +218,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
     StreamId streamId = NAMESPACE_ID.stream("stream-test");
     createStream(streamId);
     try {
-      sendStreamEvent(streamId.toId(), Collections.<String, String>emptyMap(), Bytes.toBytes("Dummy"));
+      sendStreamEvent(streamId, Collections.<String, String>emptyMap(), Bytes.toBytes("Dummy"));
 
       // Streams with '-' are replaced with '_'
       String cleanStreamName = "stream_test";
@@ -228,7 +227,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
                  Lists.newArrayList(new ColumnDesc("body", "STRING", 1, null)),
                  Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("Dummy"))));
     } finally {
-      dropStream(streamId.toId());
+      dropStream(streamId);
     }
   }
 
@@ -241,25 +240,25 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
     try {
       createStream(streamId2);
       try {
-        sendStreamEvent(streamId1.toId(), Collections.<String, String>emptyMap(), Bytes.toBytes("ABC"));
-        sendStreamEvent(streamId1.toId(), Collections.<String, String>emptyMap(), Bytes.toBytes("XYZ"));
-        sendStreamEvent(streamId2.toId(), Collections.<String, String>emptyMap(), Bytes.toBytes("ABC"));
-        sendStreamEvent(streamId2.toId(), Collections.<String, String>emptyMap(), Bytes.toBytes("DEF"));
+        sendStreamEvent(streamId1, Collections.<String, String>emptyMap(), Bytes.toBytes("ABC"));
+        sendStreamEvent(streamId1, Collections.<String, String>emptyMap(), Bytes.toBytes("XYZ"));
+        sendStreamEvent(streamId2, Collections.<String, String>emptyMap(), Bytes.toBytes("ABC"));
+        sendStreamEvent(streamId2, Collections.<String, String>emptyMap(), Bytes.toBytes("DEF"));
 
         runCommand(NAMESPACE_ID,
-                   "select " + getTableName(streamId1.toId()) + ".body, " + getTableName(streamId2.toId()) + ".body" +
-                     " from " + getTableName(streamId1.toId()) + " join " + getTableName(streamId2.toId()) +
-                     " on (" + getTableName(streamId1.toId()) + ".body = " + getTableName(streamId2.toId()) + ".body)",
+                   "select " + getTableName(streamId1) + ".body, " + getTableName(streamId2) + ".body" +
+                     " from " + getTableName(streamId1) + " join " + getTableName(streamId2) +
+                     " on (" + getTableName(streamId1) + ".body = " + getTableName(streamId2) + ".body)",
                    true,
-                   Lists.newArrayList(new ColumnDesc(getTableName(streamId1.toId()) + ".body", "STRING", 1, null),
-                                      new ColumnDesc(getTableName(streamId2.toId()) + ".body", "STRING", 2, null)),
+                   Lists.newArrayList(new ColumnDesc(getTableName(streamId1) + ".body", "STRING", 1, null),
+                                      new ColumnDesc(getTableName(streamId2) + ".body", "STRING", 2, null)),
                    Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("ABC", "ABC")))
         );
       } finally {
-        dropStream(streamId2.toId());
+        dropStream(streamId2);
       }
     } finally {
-      dropStream(streamId1.toId());
+      dropStream(streamId1);
     }
   }
 
@@ -287,11 +286,11 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
 
       // our schemas are compatible
       org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(schema.toString());
-      sendStreamEvent(streamId.toId(), createAvroEvent(avroSchema, "userX", 5, 3.14));
-      sendStreamEvent(streamId.toId(), createAvroEvent(avroSchema, "userX", 10, 2.34));
-      sendStreamEvent(streamId.toId(), createAvroEvent(avroSchema, "userY", 1, 1.23));
-      sendStreamEvent(streamId.toId(), createAvroEvent(avroSchema, "userZ", 50, 45.67));
-      sendStreamEvent(streamId.toId(), createAvroEvent(avroSchema, "userZ", 100, 98.76));
+      sendStreamEvent(streamId, createAvroEvent(avroSchema, "userX", 5, 3.14));
+      sendStreamEvent(streamId, createAvroEvent(avroSchema, "userX", 10, 2.34));
+      sendStreamEvent(streamId, createAvroEvent(avroSchema, "userY", 1, 1.23));
+      sendStreamEvent(streamId, createAvroEvent(avroSchema, "userZ", 50, 45.67));
+      sendStreamEvent(streamId, createAvroEvent(avroSchema, "userZ", 100, 98.76));
 
       Double xPrice = 5 * 3.14 + 10 * 2.34;
       Double yPrice = 1.23;
@@ -301,7 +300,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
       ExploreExecutionResult result = exploreClient.submit(
         NAMESPACE_ID.toId(),
         "SELECT `user`, sum(num) as total_num, sum(price * num) as total_price " +
-          "FROM " + getTableName(streamId.toId()) + " GROUP BY `user` ORDER BY total_price DESC").get();
+          "FROM " + getTableName(streamId) + " GROUP BY `user` ORDER BY total_price DESC").get();
 
       Assert.assertTrue(result.hasNext());
       Assert.assertEquals(
@@ -333,12 +332,12 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
       // shouldn't be any more results
       Assert.assertFalse(result.hasNext());
     } finally {
-      dropStream(streamId.toId());
+      dropStream(streamId);
     }
   }
 
-  private static String getTableName(Id.Stream streamId) {
-    return getTableName(streamId.getId());
+  private static String getTableName(StreamId streamId) {
+    return getTableName(streamId.getEntityName());
   }
 
   private static String getTableName(String streamName) {

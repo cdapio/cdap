@@ -27,7 +27,6 @@ import co.cask.cdap.explore.service.datasets.NotRecordScannableTableDefinition;
 import co.cask.cdap.hive.datasets.DatasetSerDe;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
@@ -37,6 +36,7 @@ import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.proto.TableNameInfo;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetModuleId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -272,7 +272,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
   @Test
   public void testQueriesCount() throws Exception {
-    Id.Namespace testNamespace1 = Id.Namespace.from("testQueriesCount");
+    NamespaceId testNamespace1 = new NamespaceId("testQueriesCount");
     NamespaceMeta namespaceMeta = new NamespaceMeta.Builder().setName(testNamespace1).build();
     namespaceAdmin.create(namespaceMeta);
     exploreClient.addNamespace(namespaceMeta).get();
@@ -280,7 +280,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     try {
       Assert.assertEquals(0, exploreService.getActiveQueryCount(testNamespace1));
 
-      ListenableFuture<ExploreExecutionResult> future = exploreClient.submit(testNamespace1, "show tables");
+      ListenableFuture<ExploreExecutionResult> future = exploreClient.submit(testNamespace1.toId(), "show tables");
       ExploreExecutionResult result = null;
       try {
         result = future.get();
@@ -292,7 +292,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
         Assert.assertEquals(0, exploreService.getActiveQueryCount(testNamespace1));
       }
     } finally {
-      exploreClient.removeNamespace(testNamespace1).get();
+      exploreClient.removeNamespace(testNamespace1.toId()).get();
     }
   }
 
@@ -304,8 +304,8 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
     // Use different namespaces than the other tests so that when its run in a suite there isn't a chance of
     // stray queries polluting this test
-    Id.Namespace testNamespace1 = Id.Namespace.from("test1");
-    Id.Namespace testNamespace2 = Id.Namespace.from("test2");
+    NamespaceId testNamespace1 = new NamespaceId("test1");
+    NamespaceId testNamespace2 = new NamespaceId("test2");
 
     NamespaceMeta testNamespace1Meta = new NamespaceMeta.Builder().setName(testNamespace1).build();
     namespaceAdmin.create(testNamespace1Meta);
@@ -314,15 +314,15 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     exploreClient.addNamespace(testNamespace1Meta).get();
     exploreClient.addNamespace(testNamespace2Meta).get();
 
-    exploreClient.submit(testNamespace1, "create table my_table (first INT, second STRING)").get();
+    exploreClient.submit(testNamespace1.toId(), "create table my_table (first INT, second STRING)").get();
 
-    future = exploreClient.submit(testNamespace1, "show tables");
+    future = exploreClient.submit(testNamespace1.toId(), "show tables");
     future.get();
 
-    future = exploreClient.submit(testNamespace2, "show tables");
+    future = exploreClient.submit(testNamespace2.toId(), "show tables");
     future.get();
 
-    future = exploreClient.submit(testNamespace1, "select * from my_table");
+    future = exploreClient.submit(testNamespace1.toId(), "select * from my_table");
     results = future.get();
 
     queries = exploreService.getQueries(testNamespace1);
@@ -366,10 +366,10 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     Assert.assertTrue(queries.get(0).isActive());
 
     // Make sure queries are reverse ordered by timestamp
-    exploreClient.submit(testNamespace1, "show tables").get();
-    exploreClient.submit(testNamespace1, "show tables").get();
-    exploreClient.submit(testNamespace1, "show tables").get();
-    exploreClient.submit(testNamespace1, "show tables").get();
+    exploreClient.submit(testNamespace1.toId(), "show tables").get();
+    exploreClient.submit(testNamespace1.toId(), "show tables").get();
+    exploreClient.submit(testNamespace1.toId(), "show tables").get();
+    exploreClient.submit(testNamespace1.toId(), "show tables").get();
 
     queries = exploreService.getQueries(testNamespace1);
     List<Long> timestamps = Lists.newArrayList();
@@ -386,9 +386,9 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     // verify the ordering
     Assert.assertTrue(Ordering.natural().reverse().isOrdered(timestamps));
 
-    exploreClient.submit(testNamespace1, "drop table if exists my_table").get();
-    exploreClient.removeNamespace(testNamespace1).get();
-    exploreClient.removeNamespace(testNamespace2).get();
+    exploreClient.submit(testNamespace1.toId(), "drop table if exists my_table").get();
+    exploreClient.removeNamespace(testNamespace1.toId()).get();
+    exploreClient.removeNamespace(testNamespace2.toId()).get();
   }
 
   @Test
@@ -405,7 +405,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     datasetFramework.addInstance("keyStructValueTable", myTable6, DatasetProperties.EMPTY);
 
     try {
-      QueryHandle handle = exploreService.execute(NAMESPACE_ID.toId(), "show tables");
+      QueryHandle handle = exploreService.execute(NAMESPACE_ID, "show tables");
       QueryStatus status = waitForCompletionStatus(handle, 200, TimeUnit.MILLISECONDS, 50);
       Assert.assertEquals(QueryStatus.OpStatus.FINISHED, status.getStatus());
 
@@ -440,7 +440,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
       }
 
       // now test preview on a query that doesn't return any results
-      handle = exploreService.execute(NAMESPACE_ID.toId(), "select * from " + getDatasetHiveName(myTable2));
+      handle = exploreService.execute(NAMESPACE_ID, "select * from " + getDatasetHiveName(myTable2));
       status = waitForCompletionStatus(handle, 200, TimeUnit.MILLISECONDS, 50);
       Assert.assertEquals(QueryStatus.OpStatus.FINISHED, status.getStatus());
       Assert.assertTrue(exploreService.previewResults(handle).isEmpty());
@@ -749,7 +749,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                             new QueryResult(Lists.<Object>newArrayList("cdap_test", "")),
                             new QueryResult(Lists.<Object>newArrayList("default", ""))));
 
-    future = exploreClient.removeNamespace(Id.Namespace.from("test"));
+    future = exploreClient.removeNamespace(new NamespaceId("test").toId());
     future.get();
 
     future = exploreClient.schemas(null, null);

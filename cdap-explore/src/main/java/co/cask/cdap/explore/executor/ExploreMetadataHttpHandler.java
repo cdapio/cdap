@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,9 +20,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.MetaDataInfo;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryHandle;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
@@ -142,7 +142,7 @@ public class ExploreMetadataHttpHandler extends AbstractExploreMetadataHttpHandl
       @Override
       public QueryHandle execute(HttpRequest request, HttpResponder responder)
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
-        return exploreService.deleteNamespace(Id.Namespace.from(namespaceId));
+        return exploreService.deleteNamespace(new NamespaceId(namespaceId));
       }
     });
   }
