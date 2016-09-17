@@ -17,7 +17,9 @@
 package co.cask.cdap.common.service;
 
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
+import com.google.common.base.Preconditions;
 
 /**
  * Utility class to generate the service discoverable name (used for registering and discovering service endpoints in
@@ -32,6 +34,15 @@ public final class ServiceDiscoverable {
   public static String getName(String namespaceId, String applicationId, String serviceId) {
     return String.format("%s.%s.%s.%s", ProgramType.SERVICE.name().toLowerCase(), namespaceId,
                          applicationId, serviceId);
+  }
+
+  public static ProgramId getId(String name) {
+    String[] parts = name.split("\\.");
+    Preconditions.checkArgument(parts.length == 4);
+    String namespaceId = parts[1];
+    String appId = parts[2];
+    String serviceName = parts[3];
+    return new ApplicationId(namespaceId, appId).service(serviceName);
   }
 
   private ServiceDiscoverable() {
