@@ -19,6 +19,8 @@ package co.cask.cdap.route.store;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.id.ProgramId;
 
+import javax.annotation.Nullable;
+
 /**
  * Provides the ability to store and retrieve user service routing configuration.
  */
@@ -44,10 +46,11 @@ public interface RouteStore extends AutoCloseable {
 
   /**
    * Get the {@link RouteConfig} for a given {@link ProgramId}. If a {@link RouteConfig} doesn't exist,
-   * {@link NotFoundException} is thrown.
+   * null is returned.
    *
    * @param serviceId Id of the User Service
    * @return {@link RouteConfig}
    */
-  RouteConfig fetch(ProgramId serviceId) throws NotFoundException;
+  @Nullable
+  RouteConfig fetch(ProgramId serviceId);
 }

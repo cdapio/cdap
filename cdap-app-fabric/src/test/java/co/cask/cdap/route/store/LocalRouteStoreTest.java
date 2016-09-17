@@ -38,13 +38,7 @@ public class LocalRouteStoreTest extends AppFabricTestBase {
     routeStore.store(service1, routeConfig);
     Assert.assertEquals(routeConfig.getRoutes(), routeStore.fetch(service1).getRoutes());
     routeStore.delete(service1);
-
-    try {
-      routeStore.fetch(service1);
-      Assert.fail("Config should have been deleted and thus a NotFoundException must have been thrown.");
-    } catch (NotFoundException e) {
-      // expected
-    }
+    Assert.assertNull(routeStore.fetch(service1));
 
     try {
       routeStore.delete(service1);

@@ -62,6 +62,20 @@ public class ZKRouteStore implements RouteStore {
   private final ZKClient zkClient;
   private final ConcurrentMap<ProgramId, SettableFuture<RouteConfig>> routeConfigMap;
 
+  static final Codec<RouteConfig> ROUTE_CONFIG_CODEC = new Codec<RouteConfig>() {
+
+    @Override
+    public byte[] encode(RouteConfig object) throws IOException {
+      return Bytes.toBytes(GSON.toJson(object.getRoutes()));
+    }
+
+    @Override
+    public RouteConfig decode(byte[] data) throws IOException {
+      Map<String, Integer> routes = GSON.fromJson(Bytes.toString(data), MAP_STRING_INTEGER_TYPE);
+      return new RouteConfig(routes);
+    }
+  };
+
   @Inject
   public ZKRouteStore(ZKClient zkClient) {
     this.zkClient = zkClient;
@@ -94,7 +108,7 @@ public class ZKRouteStore implements RouteStore {
   }
 
   @Override
-  public RouteConfig fetch(final ProgramId serviceId) throws NotFoundException {
+  public RouteConfig fetch(final ProgramId serviceId) {
     SettableFuture<RouteConfig> settableFuture = SettableFuture.create();
     Future<RouteConfig> future = routeConfigMap.putIfAbsent(serviceId, settableFuture);
     if (future == null) {
@@ -103,12 +117,12 @@ public class ZKRouteStore implements RouteStore {
     return getConfig(serviceId, future);
   }
 
-  private RouteConfig getConfig(ProgramId serviceId, Future<RouteConfig> future) throws NotFoundException {
+  private RouteConfig getConfig(ProgramId serviceId, Future<RouteConfig> future) {
     try {
       return future.get(ZK_TIMEOUT_SECS, TimeUnit.SECONDS);
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
       if (e.getCause() instanceof KeeperException.NoNodeException) {
-        throw new NotFoundException(String.format("Route Config for Service %s was not found.", serviceId));
+        return null;
       }
       throw Throwables.propagate(e);
     }
@@ -117,20 +131,6 @@ public class ZKRouteStore implements RouteStore {
   private static String getZKPath(ProgramId serviceId) {
     return String.format("/routestore/%s", ServiceDiscoverable.getName(serviceId));
   }
-
-  static final Codec<RouteConfig> ROUTE_CONFIG_CODEC = new Codec<RouteConfig>() {
-
-    @Override
-    public byte[] encode(RouteConfig object) throws IOException {
-      return Bytes.toBytes(GSON.toJson(object.getRoutes()));
-    }
-
-    @Override
-    public RouteConfig decode(byte[] data) throws IOException {
-      Map<String, Integer> routes = GSON.fromJson(Bytes.toString(data), MAP_STRING_INTEGER_TYPE);
-      return new RouteConfig(routes);
-    }
-  };
 
   private Future<RouteConfig> getAndWatchData(final ProgramId serviceId,
                                               final SettableFuture<RouteConfig> settableFuture,

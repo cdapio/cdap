@@ -54,7 +54,10 @@ public class RouteConfigHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(30, jsonObject.get("v1").getAsInt());
     Assert.assertEquals(70, jsonObject.get("v2").getAsInt());
     doDelete(routeAPI);
-    Assert.assertEquals(404, doGet(routeAPI).getStatusLine().getStatusCode());
+    HttpResponse getResponse = doGet(routeAPI);
+    getResult = EntityUtils.toString(getResponse.getEntity());
+    Assert.assertEquals(200, getResponse.getStatusLine().getStatusCode());
+    Assert.assertEquals("{}", getResult);
     Assert.assertEquals(404, doDelete(routeAPI).getStatusLine().getStatusCode());
   }
 }

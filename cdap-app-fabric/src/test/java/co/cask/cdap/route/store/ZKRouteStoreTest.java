@@ -16,7 +16,6 @@
 
 package co.cask.cdap.route.store;
 
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -78,12 +77,7 @@ public class ZKRouteStoreTest {
       routeStore.store(s1, new RouteConfig(routeMap));
       Assert.assertEquals(routeMap, routeStore.fetch(s1).getRoutes());
       routeStore.delete(s1);
-      try {
-        routeStore.fetch(s1);
-        Assert.fail("Fetch should have thrown a NotFoundException since the config was deleted.");
-      } catch (NotFoundException ex) {
-        // expected since the config was deleted
-      }
+      Assert.assertNull(routeStore.fetch(s1));
     }
   }
 }

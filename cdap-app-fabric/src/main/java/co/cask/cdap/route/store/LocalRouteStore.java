@@ -106,14 +106,14 @@ public class LocalRouteStore implements RouteStore  {
   }
 
   @Override
-  public RouteConfig fetch(final ProgramId serviceId) throws NotFoundException {
+  public RouteConfig fetch(final ProgramId serviceId) {
     try {
       return Transactions.execute(transactional, new TxCallable<RouteConfig>() {
         @Override
         public RouteConfig call(DatasetContext context) throws Exception {
           byte[] value = getRouteTable(context).read(ServiceDiscoverable.getName(serviceId));
           if (value == null) {
-            throw new NotFoundException(String.format("Route Config for Service %s was not found.", serviceId));
+            return null;
           }
 
           Map<String, Integer> routeConfigs = GSON.fromJson(Bytes.toString(value), MAP_STRING_INTEGER_TYPE);
@@ -121,7 +121,7 @@ public class LocalRouteStore implements RouteStore  {
         }
       });
     } catch (TransactionFailureException e) {
-      throw Transactions.propagate(e, NotFoundException.class);
+      throw Transactions.propagate(e);
     }
   }
 
