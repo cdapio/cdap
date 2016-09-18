@@ -463,7 +463,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId programId) {
     Map<RunId, ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(programId.getType());
     for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos.values()) {
-      if (programId.equals(info.getProgramId().toEntityId())) {
+      if (programId.equals(info.getProgramId())) {
         return info;
       }
     }
@@ -731,7 +731,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
         if (workflowProgramId != null) {
           // lets see if the parent workflow run records state is still running
           RunRecordMeta wfRunRecord = store.getRun(workflowProgramId, workflowRunId);
-          RuntimeInfo wfRuntimeInfo = runtimeService.lookup(workflowProgramId.toId(), RunIds.fromString(workflowRunId));
+          RuntimeInfo wfRuntimeInfo = runtimeService.lookup(workflowProgramId, RunIds.fromString(workflowRunId));
 
           // Check of the parent workflow run record exists and it is running and runtime info said it is still there
           // then do not update it

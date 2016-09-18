@@ -697,6 +697,23 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public Collection<ApplicationSpecification> getAllAppVersions(final ApplicationId id) {
+    return txExecute(transactional, new TxCallable<Collection<ApplicationSpecification>>() {
+      @Override
+      public Collection<ApplicationSpecification> call(DatasetContext context) throws Exception {
+        return Lists.transform(
+          getAppMetadataStore(context).getAllAppVersions(id.getNamespace(), id.getApplication()),
+          new Function<ApplicationMeta, ApplicationSpecification>() {
+            @Override
+            public ApplicationSpecification apply(ApplicationMeta input) {
+              return input.getSpec();
+            }
+          });
+      }
+    });
+  }
+
+  @Override
   public void addSchedule(final ProgramId program, final ScheduleSpecification scheduleSpecification) {
     txExecute(transactional, new TxRunnable() {
       @Override

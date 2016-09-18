@@ -120,11 +120,23 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return list(new MDSKey.Builder().add(TYPE_APP_META, namespaceId).build(), ApplicationMeta.class);
   }
 
+<<<<<<< HEAD
   public void writeApplication(String namespaceId, String appId, String versionId, ApplicationSpecification spec) {
     write(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId, versionId).build(),
           new ApplicationMeta(appId, spec));
   }
 
+=======
+  public List<ApplicationMeta> getAllAppVersions(String namespaceId, String appId) {
+    return list(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build(), ApplicationMeta.class);
+  }
+
+  public void writeApplication(String namespaceId, String appId, String versionId, ApplicationSpecification spec) {
+    write(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId, versionId).build(),
+          new ApplicationMeta(appId, spec));
+  }
+
+>>>>>>> 0602a3f... partial delete app version
   public void deleteApplication(String namespaceId, String appId, String versionId) {
     deleteAll(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId, versionId).build());
   }

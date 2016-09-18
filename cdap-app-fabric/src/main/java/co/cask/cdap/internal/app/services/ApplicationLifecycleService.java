@@ -397,14 +397,14 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                        new com.google.common.base.Predicate<ProgramRuntimeService.RuntimeInfo>() {
                          @Override
                          public boolean apply(ProgramRuntimeService.RuntimeInfo runtimeInfo) {
-                           return runtimeInfo.getProgramId().toEntityId().getNamespace().equals(namespaceId.getId());
+                           return runtimeInfo.getProgramId().getNamespace().equals(namespaceId.getId());
                          }
                        });
 
     Set<String> runningPrograms = new HashSet<>();
     for (ProgramRuntimeService.RuntimeInfo runtimeInfo : runtimeInfos) {
-      runningPrograms.add(runtimeInfo.getProgramId().toEntityId().getApplication() +
-                            ": " + runtimeInfo.getProgramId().toEntityId().getProgram());
+      runningPrograms.add(runtimeInfo.getProgramId().getApplication() +
+                            ": " + runtimeInfo.getProgramId().getProgram());
     }
 
     if (!runningPrograms.isEmpty()) {
@@ -427,20 +427,96 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception
    */
   public void removeApplication(final ApplicationId appId) throws Exception {
+    Collection<ApplicationSpecification> appSpecs = store.getAllAppVersions(appId);
+    if (appSpecs.size() == 1) {
+
+    }
     //Check if all are stopped.
     Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
       Iterables.filter(runtimeService.listAll(ProgramType.values()),
                        new com.google.common.base.Predicate<ProgramRuntimeService.RuntimeInfo>() {
                          @Override
                          public boolean apply(ProgramRuntimeService.RuntimeInfo runtimeInfo) {
-                           return runtimeInfo.getProgramId().toEntityId().getApplication()
-                             .equals(appId.getApplication());
+                           return runtimeInfo.getProgramId().getParent().equals(appId);
                          }
                        });
 
     Set<String> runningPrograms = new HashSet<>();
     for (ProgramRuntimeService.RuntimeInfo runtimeInfo : runtimeInfos) {
-      runningPrograms.add(runtimeInfo.getProgramId().toEntityId().getProgram());
+      runningPrograms.add(runtimeInfo.getProgramId().getProgram());
+    }
+
+    if (!runningPrograms.isEmpty()) {
+      String appAllRunningPrograms = Joiner.on(',')
+        .join(runningPrograms);
+      throw new CannotBeDeletedException(appId.toId(),
+                                         "The following programs are still running: " + appAllRunningPrograms);
+    }
+
+    ApplicationSpecification spec = store.getApplication(appId);
+    if (spec == null) {
+      throw new NotFoundException(appId);
+    }
+    deleteApp(appId, spec);
+  }
+
+  /**
+   * TODO: Delete a version of an application specified by appId.
+   *
+   * @param appId the {@link ApplicationId} of the application to be removed
+   * @throws Exception
+   */
+  public void removeAppVersion(final ApplicationId appId) throws Exception {
+    //Check if all are stopped.
+    Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
+      Iterables.filter(runtimeService.listAll(ProgramType.values()),
+                       new com.google.common.base.Predicate<ProgramRuntimeService.RuntimeInfo>() {
+                         @Override
+                         public boolean apply(ProgramRuntimeService.RuntimeInfo runtimeInfo) {
+                           return runtimeInfo.getProgramId().getParent().equals(appId);
+                         }
+                       });
+
+    Set<String> runningPrograms = new HashSet<>();
+    for (ProgramRuntimeService.RuntimeInfo runtimeInfo : runtimeInfos) {
+      runningPrograms.add(runtimeInfo.getProgramId().getProgram());
+    }
+
+    if (!runningPrograms.isEmpty()) {
+      String appAllRunningPrograms = Joiner.on(',')
+        .join(runningPrograms);
+      throw new CannotBeDeletedException(appId.toId(),
+                                         "The following programs are still running: " + appAllRunningPrograms);
+    }
+
+    ApplicationSpecification spec = store.getApplication(appId);
+    if (spec == null) {
+      throw new NotFoundException(appId);
+    }
+    deleteApp(appId, spec);
+  }
+
+
+  /**
+   * TODO: Delete a version of an application specified by appId.
+   *
+   * @param appId the {@link ApplicationId} of the application to be removed
+   * @throws Exception
+   */
+  public void removeLastAppVersion(final ApplicationId appId) throws Exception {
+    //Check if all are stopped.
+    Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
+      Iterables.filter(runtimeService.listAll(ProgramType.values()),
+                       new com.google.common.base.Predicate<ProgramRuntimeService.RuntimeInfo>() {
+                         @Override
+                         public boolean apply(ProgramRuntimeService.RuntimeInfo runtimeInfo) {
+                           return runtimeInfo.getProgramId().getParent().equals(appId);
+                         }
+                       });
+
+    Set<String> runningPrograms = new HashSet<>();
+    for (ProgramRuntimeService.RuntimeInfo runtimeInfo : runtimeInfos) {
+      runningPrograms.add(runtimeInfo.getProgramId().getProgram());
     }
 
     if (!runningPrograms.isEmpty()) {
@@ -606,6 +682,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       final Id.Flow flowId = Id.Flow.from(idApplication, flowSpecification.getName());
       impersonator.doAs(appId.getParent(), new Callable<Void>() {
 
+        /* TODO since one worker or flow can only be ran by a single instance of APP, i.e. a single version, should
+         * delete flow for each version */
         @Override
         public Void call() throws Exception {
           for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
@@ -622,6 +700,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     deleteAppMetadata(appId, appSpec);
     deleteRouteConfig(appId, appSpec);
     store.deleteWorkflowStats(appId);
+    // TODO delete for a version. should be serperated from deletion on last version
     store.removeApplication(appId);
 
     try {

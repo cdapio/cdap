@@ -181,6 +181,15 @@ public interface Store extends RuntimeStore {
   Collection<ApplicationSpecification> getAllApplications(NamespaceId id);
 
   /**
+   * Returns a collection of all application specs of all the versions of the application by using its
+   * namespace and application
+   *
+   * @param id the namespace to get application specs from
+   * @return collection of all application specs in the namespace
+   */
+  Collection<ApplicationSpecification> getAllAppVersions(ApplicationId id);
+
+  /**
    * Sets number of instances of specific flowlet.
    *
    * @param id flow id

@@ -17,9 +17,9 @@
 package co.cask.cdap.app.runtime;
 
 import co.cask.cdap.app.program.ProgramDescriptor;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.RunId;
 
@@ -40,7 +40,7 @@ public interface ProgramRuntimeService extends Service {
 
     ProgramType getType();
 
-    Id.Program getProgramId();
+    ProgramId getProgramId();
 
     @Nullable
     RunId getTwillRunId();
@@ -62,7 +62,7 @@ public interface ProgramRuntimeService extends Service {
    * @param runId     The program {@link RunId}.
    * @return A {@link RuntimeInfo} for the running program or {@code null} if no such program is found.
    */
-  RuntimeInfo lookup(Id.Program programId, RunId runId);
+  RuntimeInfo lookup(ProgramId programId, RunId runId);
 
   /**
    * Get {@link RuntimeInfo} for all running programs of the given type.
@@ -77,14 +77,14 @@ public interface ProgramRuntimeService extends Service {
    * @param program The program for which the {@link RuntimeInfo} needs to be determined
    * @return An immutable map from {@link RunId} to {@link ProgramController}
    */
-  Map<RunId, RuntimeInfo> list(Id.Program program);
+  Map<RunId, RuntimeInfo> list(ProgramId program);
 
   /**
    * Get runtime information about a running program. The content of this information is different
    * for each runtime environment. For example, in a distributed environment, this would contain the
    * YARN application id and the container information for each runnable. For in-memory, it may be empty.
    */
-  ProgramLiveInfo getLiveInfo(Id.Program programId);
+  ProgramLiveInfo getLiveInfo(ProgramId programId);
 
   /**
    * Get information about running programs.

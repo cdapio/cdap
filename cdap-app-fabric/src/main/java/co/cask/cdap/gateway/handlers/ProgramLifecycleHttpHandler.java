@@ -1156,7 +1156,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns the number of instances currently running for different runnables for different programs
    */
   private int getInstanceCount(ProgramId programId, String runnableId) {
-    ProgramLiveInfo info = runtimeService.getLiveInfo(programId.toId());
+    ProgramLiveInfo info = runtimeService.getLiveInfo(programId);
     int count = 0;
     if (info instanceof NotRunningProgramLiveInfo) {
       return count;
