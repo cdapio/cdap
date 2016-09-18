@@ -24,6 +24,7 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.io.Files;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -60,8 +61,8 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     appJar.delete();
 
     try {
-      applicationLifecycleService.deployAppAndArtifact(Id.Namespace.DEFAULT, "appName", artifactId, appJarFile, null,
-        new ProgramTerminator() {
+      applicationLifecycleService.deployAppAndArtifact(NamespaceId.DEFAULT, "appName", artifactId, appJarFile, null,
+                                                       new ProgramTerminator() {
           @Override
           public void stop(Id.Program programId) throws Exception {
             // no-op

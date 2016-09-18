@@ -191,7 +191,7 @@ public class AppFabricTestHelper {
                                    new File(deployedJar.toURI()));
 
     AppDeploymentInfo info = new AppDeploymentInfo(artifactDescriptor, namespace.toEntityId(),
-                                                   appClass.getName(), null, null);
+                                                   appClass.getName(), null, null, null);
     return getLocalManager().deploy(info).get();
   }
 
