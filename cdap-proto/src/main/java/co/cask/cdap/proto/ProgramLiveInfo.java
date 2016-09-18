@@ -16,6 +16,8 @@
 
 package co.cask.cdap.proto;
 
+import co.cask.cdap.proto.id.ProgramId;
+
 /**
  * Represents information about running programs. This class can be extended to add information for specific runtime
  * environments.
@@ -27,11 +29,11 @@ public abstract class ProgramLiveInfo {
   private final String name;
   private final String runtime;
 
-  public ProgramLiveInfo(Id.Program programId, String runtime) {
-    this.app = programId.getApplicationId();
+  public ProgramLiveInfo(ProgramId programId, String runtime) {
+    this.app = programId.getApplication();
     this.type = programId.getType().getPrettyName();
-    this.id = programId.getId();
-    this.name = programId.getId();
+    this.id = programId.getProgram();
+    this.name = programId.getProgram();
     this.runtime = runtime;
   }
 

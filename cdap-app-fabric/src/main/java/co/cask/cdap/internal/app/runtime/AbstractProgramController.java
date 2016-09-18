@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -51,7 +52,7 @@ public abstract class AbstractProgramController implements ProgramController {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramController.class);
 
   private final AtomicReference<State> state;
-  private final Id.Program programId;
+  private final ProgramId programId;
   private final RunId runId;
   private final String componentName;
   private final Map<ListenerCaller, Cancellable> listeners;
@@ -61,11 +62,11 @@ public abstract class AbstractProgramController implements ProgramController {
 
   private Throwable failureCause;
 
-  protected AbstractProgramController(final Id.Program programId, RunId runId) {
+  protected AbstractProgramController(final ProgramId programId, RunId runId) {
     this(programId, runId, null);
   }
 
-  protected AbstractProgramController(Id.Program programId, RunId runId, @Nullable String componentName) {
+  protected AbstractProgramController(ProgramId programId, RunId runId, @Nullable String componentName) {
     this.state = new AtomicReference<>(State.STARTING);
     this.programId = programId;
     this.runId = runId;
@@ -87,7 +88,7 @@ public abstract class AbstractProgramController implements ProgramController {
   }
 
   @Override
-  public Id.Program getProgramId() {
+  public ProgramId getProgramId() {
     return programId;
   }
 

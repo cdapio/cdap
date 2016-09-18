@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
@@ -184,8 +183,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
 
         // Setup dataset framework context, if required
         if (programDatasetFramework instanceof ProgramContextAware) {
-          ProgramRunId programRunId = program.getId().toEntityId()
-            .run(ProgramRunners.getRunId(contextConfig.getProgramOptions()));
+          ProgramRunId programRunId = program.getId().run(ProgramRunners.getRunId(contextConfig.getProgramOptions()));
           ((ProgramContextAware) programDatasetFramework).initContext(programRunId.toId());
         }
 

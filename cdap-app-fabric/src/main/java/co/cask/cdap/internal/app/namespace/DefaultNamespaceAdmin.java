@@ -439,7 +439,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
                        new com.google.common.base.Predicate<ProgramRuntimeService.RuntimeInfo>() {
                          @Override
                          public boolean apply(ProgramRuntimeService.RuntimeInfo info) {
-                           return info.getProgramId().getNamespaceId().equals(namespaceId.getNamespace());
+                           return info.getProgramId().getNamespaceId().equals(namespaceId);
                          }
                        });
     return !Iterables.isEmpty(runtimeInfos);

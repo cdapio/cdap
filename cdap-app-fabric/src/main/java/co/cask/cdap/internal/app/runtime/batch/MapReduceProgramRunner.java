@@ -159,7 +159,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
     // Setup dataset framework context, if required
     if (programDatasetFramework instanceof ProgramContextAware) {
-      Id.Program programId = program.getId();
+      Id.Program programId = program.getId().toId();
       ((ProgramContextAware) programDatasetFramework).initContext(new Id.Run(programId, runId.getId()));
     }
 
@@ -199,7 +199,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                                           txSystemClient, authorizationEnforcer,
                                                                           authenticationContext);
       mapReduceRuntimeService.addListener(
-        createRuntimeServiceListener(program.getId().toEntityId(), runId, closeables, arguments,
+        createRuntimeServiceListener(program.getId(), runId, closeables, arguments,
                                      options.getUserArguments()),
         Threads.SAME_THREAD_EXECUTOR);
 

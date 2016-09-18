@@ -170,12 +170,22 @@ public class ServiceHttpServer extends AbstractIdleService {
                                       program.getApplicationId(),
                                       program.getName());
 
+    String versionId = program.getId().getVersion();
+    String versionedPathPrefix = String.format("%s/namespaces/%s/apps/%s/versions/%s/services/%s/methods",
+                                               Constants.Gateway.API_VERSION_3,
+                                               program.getNamespaceId(),
+                                               program.getApplicationId(),
+                                               versionId,
+                                               program.getName());
+
     // Create HttpHandlers which delegate to the HttpServiceHandlers
     HttpHandlerFactory factory = new HttpHandlerFactory(pathPrefix, metricsContext);
+    HttpHandlerFactory versionedFactory = new HttpHandlerFactory(versionedPathPrefix, metricsContext);
     List<HttpHandler> nettyHttpHandlers = Lists.newArrayList();
     // get the runtime args from the twill context
     for (HandlerDelegatorContext context : delegatorContexts) {
       nettyHttpHandlers.add(factory.createHttpHandler(context.getHandlerType(), context));
+      nettyHttpHandlers.add(versionedFactory.createHttpHandler(context.getHandlerType(), context));
     }
 
     NettyHttpService.Builder builder = NettyHttpService.builder()
@@ -226,12 +236,12 @@ public class ServiceHttpServer extends AbstractIdleService {
     // during startup/shutdown and in each thread created are published.
     LoggingContextAccessor.setLoggingContext(new UserServiceLoggingContext(program.getNamespaceId(),
                                                                            program.getApplicationId(),
-                                                                           program.getId().getId(),
-                                                                           program.getId().getId(),
+                                                                           program.getId().getProgram(),
+                                                                           program.getId().getProgram(),
                                                                            context.getRunId().getId(),
                                                                            String.valueOf(context.getInstanceId())));
     LOG.debug("Starting HTTP server for Service {}", program.getId());
-    ProgramId programId = program.getId().toEntityId();
+    ProgramId programId = program.getId();
     service.startAndWait();
 
     // announce the twill runnable

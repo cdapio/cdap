@@ -133,15 +133,6 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
     return null;
   }
 
-  protected void getLiveInfo(HttpResponder responder, Id.Program programId,
-                             ProgramRuntimeService runtimeService) {
-    try {
-      responder.sendJson(HttpResponseStatus.OK, runtimeService.getLiveInfo(programId));
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    }
-  }
-
   /**
    * Respond with a 404 if a NoSuchElementException is thrown.
    */
