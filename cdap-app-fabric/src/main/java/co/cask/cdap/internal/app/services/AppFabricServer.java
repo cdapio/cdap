@@ -32,6 +32,7 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginService;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.security.authorization.PrivilegesFetcherProxyService;
 import co.cask.http.HandlerHook;
 import co.cask.http.HttpHandler;
@@ -77,6 +78,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final SystemArtifactLoader systemArtifactLoader;
   private final PluginService pluginService;
   private final PrivilegesFetcherProxyService privilegesFetcherProxyService;
+  private final RouteStore routeStore;
 
   private NettyHttpService httpService;
   private Set<HttpHandler> handlers;
@@ -101,7 +103,8 @@ public class AppFabricServer extends AbstractIdleService {
                          DefaultNamespaceEnsurer defaultNamespaceEnsurer,
                          SystemArtifactLoader systemArtifactLoader,
                          PluginService pluginService,
-                         PrivilegesFetcherProxyService privilegesFetcherProxyService) {
+                         PrivilegesFetcherProxyService privilegesFetcherProxyService,
+                         RouteStore routeStore) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.schedulerService = schedulerService;
@@ -119,6 +122,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.systemArtifactLoader = systemArtifactLoader;
     this.pluginService = pluginService;
     this.privilegesFetcherProxyService = privilegesFetcherProxyService;
+    this.routeStore = routeStore;
   }
 
   /**
@@ -216,6 +220,7 @@ public class AppFabricServer extends AbstractIdleService {
 
   @Override
   protected void shutDown() throws Exception {
+    routeStore.close();
     defaultNamespaceEnsurer.stopAndWait();
     httpService.stopAndWait();
     programRuntimeService.stopAndWait();
