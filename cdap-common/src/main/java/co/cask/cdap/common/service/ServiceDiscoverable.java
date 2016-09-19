@@ -30,9 +30,17 @@ public final class ServiceDiscoverable {
     return getName(programId.getNamespace(), programId.getApplication(), programId.getProgram());
   }
 
-  public static String getName(String namespaceId, String applicationId, String serviceId) {
-    return String.format("%s.%s.%s.%s", ProgramType.SERVICE.name().toLowerCase(), namespaceId,
-                         applicationId, serviceId);
+  public static String getName(String namespaceId, String appId, String serviceId) {
+    return String.format("%s.%s.%s.%s", ProgramType.SERVICE.name().toLowerCase(), namespaceId, appId, serviceId);
+  }
+
+  public static String getVersionedName(ProgramId programId) {
+    return getVersionedName(programId.getNamespace(), programId.getApplication(), programId.getVersion(),
+                            programId.getProgram());
+  }
+
+  public static String getVersionedName(String namespaceId, String appId, String versionId, String serviceId) {
+    return String.format("serviceversion.%s.%s.%s.%s", namespaceId, appId, versionId, serviceId);
   }
 
   public static ProgramId getId(String name) {
