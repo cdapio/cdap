@@ -68,6 +68,17 @@ features:
       pipelines: Pipelines
       plugins: Plugins
       useCases: Use Cases
+    action-types:
+      create_stream:
+        icon: icon-streams
+        name: Create Stream
+      create_app:
+        icon: icon-app
+        name: Create App
+      create_artifact:
+        name: Create Artifact
+      load_datapack:
+        name: Load Data
 
   MarketEntityModal:
     version: "Version: "
@@ -94,4 +105,26 @@ features:
       register: Register for Updates
     intro-message: Your platform for building exciting analytical data applications
     title: Welcome to Cask Data Application Platform
+  Wizard:
+    StreamCreate:
+      Step1:
+        shorttitle: General Information
+        title: General
+        description: Provide information about Stream you want to create.
+      Step2:
+        shorttitle: Setup Format and Schema
+        title: Set Format and Schema
+        description: Setting format and schema allows you to perform schema-on-read.
+      Step3:
+        shorttitle: Trigger Setup
+        title: Setup Trigger
+        description: Setting up Trigger configures system to notify systems observing to start processing.
+        thresholdlabel: The stream will notify any observers upon reaching this threshold to start processing of the data in this Stream
+      Step4:
+        shorttitle: Upload Data
+        title: Upload Data
+        description: Upload data to the stream you just created.
+      label: Create Stream
+    Done: Done
+    Skip: Skip
 ...

@@ -57,6 +57,7 @@ export default class ResourceCenter extends Component {
           this.state.createStreamWizard ?
             <StreamCreateWizard
               isOpen={this.state.createStreamWizard}
+              onClose={this.toggleWizard.bind(this, 'createStreamWizard')}
             />
           :
             null

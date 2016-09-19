@@ -20,7 +20,7 @@ require('./MarketPlaceEntity.less');
 export default function MarketPlaceEntity({size, className, style, name, subtitle, icon, onClick}) {
   return (
     <div
-      className={classnames("cask-entity-card", className, size)}
+      className={classnames("cask-marketplace-entity-card", className, size)}
       style={style}
     >
       <div
@@ -29,7 +29,7 @@ export default function MarketPlaceEntity({size, className, style, name, subtitl
       >
         <img src={icon} />
       </div>
-      <div className="metadata-container">
+      <div className="metadata-container" onClick={onClick}>
         <div className="metadata-name">{name}</div>
         <div className="metadata-subtitle">{subtitle}</div>
       </div>
