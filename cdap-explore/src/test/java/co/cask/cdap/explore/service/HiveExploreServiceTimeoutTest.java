@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -111,7 +111,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
   public void testTimeoutRunning() throws Exception {
     Set<Long> beforeTxns = transactionManager.getCurrentState().getInProgress().keySet();
 
-    QueryHandle handle = exploreService.execute(NAMESPACE_ID.toId(), "select key, value from " + MY_TABLE_NAME);
+    QueryHandle handle = exploreService.execute(NAMESPACE_ID, "select key, value from " + MY_TABLE_NAME);
 
     Set<Long> queryTxns = Sets.difference(transactionManager.getCurrentState().getInProgress().keySet(), beforeTxns);
     Assert.assertFalse(queryTxns.isEmpty());
@@ -138,7 +138,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
   public void testTimeoutFetchAllResults() throws Exception {
     Set<Long> beforeTxns = transactionManager.getCurrentState().getInProgress().keySet();
 
-    QueryHandle handle = exploreService.execute(NAMESPACE_ID.toId(), "select key, value from " + MY_TABLE_NAME);
+    QueryHandle handle = exploreService.execute(NAMESPACE_ID, "select key, value from " + MY_TABLE_NAME);
 
     Set<Long> queryTxns = Sets.difference(transactionManager.getCurrentState().getInProgress().keySet(), beforeTxns);
     Assert.assertFalse(queryTxns.isEmpty());
@@ -150,6 +150,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
     List<ColumnDesc> schema = exploreService.getResultSchema(handle);
 
     // Fetch all results
+    //noinspection StatementWithEmptyBody
     while (!exploreService.nextResults(handle, 100).isEmpty()) {
       // nothing to do
     }
@@ -183,7 +184,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
   public void testTimeoutNoResults() throws Exception {
     Set<Long> beforeTxns = transactionManager.getCurrentState().getInProgress().keySet();
 
-    QueryHandle handle = exploreService.execute(NAMESPACE_ID.toId(), "drop table if exists not_existing_table_name");
+    QueryHandle handle = exploreService.execute(NAMESPACE_ID, "drop table if exists not_existing_table_name");
 
     Set<Long> queryTxns = Sets.difference(transactionManager.getCurrentState().getInProgress().keySet(), beforeTxns);
     Assert.assertFalse(queryTxns.isEmpty());
@@ -222,7 +223,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testCloseQuery() throws Exception {
-    QueryHandle handle = exploreService.execute(NAMESPACE_ID.toId(), "drop table if exists not_existing_table_name");
+    QueryHandle handle = exploreService.execute(NAMESPACE_ID, "drop table if exists not_existing_table_name");
     exploreService.close(handle);
     try {
       exploreService.getStatus(handle);

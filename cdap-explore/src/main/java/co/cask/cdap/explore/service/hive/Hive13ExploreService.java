@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.HandleNotFoundException;
-import co.cask.cdap.explore.utils.ExploreTableNaming;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
@@ -61,13 +60,11 @@ public class Hive13ExploreService extends BaseHiveExploreService {
                               @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir,
                               StreamAdmin streamAdmin, NamespaceQueryAdmin namespaceQueryAdmin,
                               SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
-                              ExploreTableNaming tableNaming,
                               AuthorizationEnforcementService authorizationEnforcementService,
                               AuthorizationEnforcer authorizationEnforcer,
                               AuthenticationContext authenticationContext) {
     super(txClient, datasetFramework, cConf, hConf, previewsDir, streamAdmin, namespaceQueryAdmin,
-          datasetInstantiatorFactory, tableNaming, authorizationEnforcementService, authorizationEnforcer,
-          authenticationContext);
+          datasetInstantiatorFactory, authorizationEnforcementService, authorizationEnforcer, authenticationContext);
     // This config sets the time Hive CLI getOperationStatus method will wait for the status of
     // a running query.
     System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_LONG_POLLING_TIMEOUT.toString(), "50");

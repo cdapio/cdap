@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,7 @@ import co.cask.cdap.format.RecordFormats;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.serde.ObjectDeserializer;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.spi.stream.AbstractStreamEventRecordFormat;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
@@ -91,7 +91,7 @@ public class StreamSerDe implements SerDe {
       return;
     }
 
-    Id.Stream streamId = Id.Stream.from(streamNamespace, streamName);
+    StreamId streamId = new StreamId(streamNamespace, streamName);
     try (ContextManager.Context context = ContextManager.getContext(conf)) {
       Schema schema = null;
       // apparently the conf can be null in some versions of Hive?
@@ -165,8 +165,8 @@ public class StreamSerDe implements SerDe {
    * For backward compatibility, if the format specification is not set in the SerDe properties, it will be
    * fetched from the {@link StreamConfig}.
    */
-  private FormatSpecification getFormatSpec(Properties properties,
-                                            Id.Stream streamId, ContextManager.Context context) throws IOException {
+  private FormatSpecification getFormatSpec(Properties properties, StreamId streamId,
+                                            ContextManager.Context context) throws IOException {
     String formatSpec = properties.getProperty(Constants.Explore.FORMAT_SPEC);
     if (formatSpec == null) {
       StreamConfig config = context.getStreamConfig(streamId);

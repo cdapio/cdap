@@ -19,8 +19,8 @@ package co.cask.cdap.explore.executor;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryInfo;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
@@ -65,7 +65,7 @@ public class NamespacedQueryExecutorHttpHandler extends AbstractQueryExecutorHtt
       additionalSessionConf.remove("query");
       LOG.trace("Received query: {}", query);
       responder.sendJson(HttpResponseStatus.OK,
-                         exploreService.execute(Id.Namespace.from(namespaceId), query, additionalSessionConf));
+                         exploreService.execute(new NamespaceId(namespaceId), query, additionalSessionConf));
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -86,7 +86,7 @@ public class NamespacedQueryExecutorHttpHandler extends AbstractQueryExecutorHtt
     throws ExploreException, SQLException {
     boolean isForward = "next".equals(cursor);
 
-    List<QueryInfo> queries = exploreService.getQueries(Id.Namespace.from(namespaceId));
+    List<QueryInfo> queries = exploreService.getQueries(new NamespaceId(namespaceId));
     // return the queries by after filtering (> offset) and limiting number of queries
     responder.sendJson(HttpResponseStatus.OK, filterQueries(queries, offset, isForward, limit));
   }
@@ -95,7 +95,7 @@ public class NamespacedQueryExecutorHttpHandler extends AbstractQueryExecutorHtt
   @Path("data/explore/queries/count")
   public void getActiveQueryCount(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId) throws ExploreException {
-    int count = exploreService.getActiveQueryCount(Id.Namespace.from(namespaceId));
+    int count = exploreService.getActiveQueryCount(new NamespaceId(namespaceId));
     responder.sendJson(HttpResponseStatus.OK, ImmutableMap.of("count", count));
   }
 }

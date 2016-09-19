@@ -142,7 +142,7 @@ public class ExploreTableManager {
 
     LOG.debug("Running create statement for stream {} with table {}: {}", streamName, tableName, createStatement);
 
-    return exploreService.execute(streamId.getParent().toId(), createStatement);
+    return exploreService.execute(streamId.getParent(), createStatement);
   }
 
   /**
@@ -157,7 +157,7 @@ public class ExploreTableManager {
   public QueryHandle disableStream(String tableName, StreamId streamId) throws ExploreException, SQLException {
     LOG.debug("Disabling explore for stream {} with table {}", streamId, tableName);
     String deleteStatement = generateDeleteTableStatement(tableName);
-    return exploreService.execute(streamId.getParent().toId(), deleteStatement);
+    return exploreService.execute(streamId.getParent(), deleteStatement);
   }
 
   /**
@@ -194,7 +194,7 @@ public class ExploreTableManager {
     }
 
     if (createStatement != null) {
-      return exploreService.execute(datasetId.getParent().toId(), createStatement);
+      return exploreService.execute(datasetId.getParent(), createStatement);
     } else {
       // if the dataset is not explorable, this is a no op.
       return QueryHandle.NO_OP;
@@ -250,10 +250,9 @@ public class ExploreTableManager {
       return QueryHandle.NO_OP;
     }
     if (alterStatements.size() == 1) {
-      return exploreService.execute(datasetId.getParent().toId(), alterStatements.get(0));
+      return exploreService.execute(datasetId.getParent(), alterStatements.get(0));
     }
-    return exploreService.execute(datasetId.getParent().toId(),
-                                  alterStatements.toArray(new String[alterStatements.size()]));
+    return exploreService.execute(datasetId.getParent(), alterStatements.toArray(new String[alterStatements.size()]));
   }
 
   /**
@@ -296,7 +295,7 @@ public class ExploreTableManager {
 
     if (deleteStatement != null) {
       LOG.debug("Running delete statement for dataset {} - {}", datasetId, deleteStatement);
-      return exploreService.execute(datasetId.getParent().toId(), deleteStatement);
+      return exploreService.execute(datasetId.getParent(), deleteStatement);
     } else {
       return QueryHandle.NO_OP;
     }
@@ -320,7 +319,7 @@ public class ExploreTableManager {
 
     LOG.debug("Add partition for key {} dataset {} - {}", partitionKey, datasetId, addPartitionStatement);
 
-    return exploreService.execute(datasetId.getParent().toId(), addPartitionStatement);
+    return exploreService.execute(datasetId.getParent(), addPartitionStatement);
   }
 
   /**
@@ -341,7 +340,7 @@ public class ExploreTableManager {
 
     LOG.debug("Drop partition for key {} dataset {} - {}", partitionKey, datasetId, dropPartitionStatement);
 
-    return exploreService.execute(datasetId.getParent().toId(), dropPartitionStatement, IMMEDIATE_TIMEOUT_CONF);
+    return exploreService.execute(datasetId.getParent(), dropPartitionStatement, IMMEDIATE_TIMEOUT_CONF);
   }
 
   /**
@@ -573,7 +572,7 @@ public class ExploreTableManager {
     if (dataset instanceof FileSet || dataset instanceof PartitionedFileSet) {
       Map<String, String> properties = spec.getProperties();
       if (FileSetProperties.isExploreEnabled(properties)) {
-        return generateFileSetAlterStatements(datasetId, dataset, tableName, properties, oldSpec.getProperties());
+        return generateFileSetAlterStatements(datasetId, tableName, properties, oldSpec.getProperties());
       } else {
         // old spec was explorable but new spec is not -> disable explore
         return Collections.singletonList(generateDeleteStatement(dataset, tableName));
@@ -600,13 +599,12 @@ public class ExploreTableManager {
    * Generates a sequence of SQL statements that alter the table for a file set dataset after its spec was updated.
    * @param datasetId the dataset id
    * @param tableName the name of the Hive table to alter
-   * @param dataset the instantiated dataset
    * @param properties the properties from the new dataset specification
    * @param oldProperties the properties from the old dataset specification (before the update)
    * @return a list of statements to execute, or null if the table needs no altering
    */
   @Nullable
-  private List<String> generateFileSetAlterStatements(DatasetId datasetId, Dataset dataset, String tableName,
+  private List<String> generateFileSetAlterStatements(DatasetId datasetId, String tableName,
                                                       Map<String, String> properties,
                                                       Map<String, String> oldProperties)
     throws IllegalArgumentException {

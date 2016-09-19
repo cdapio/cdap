@@ -87,7 +87,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doDisableExploreDataset(datasetInstance);
+        return doDisableExploreDataset(datasetInstance.toEntityId());
       }
     });
 
@@ -102,7 +102,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doUpdateExploreDataset(datasetInstance, oldSpec, newSpec);
+        return doUpdateExploreDataset(datasetInstance.toEntityId(), oldSpec, newSpec);
       }
     });
 
@@ -115,7 +115,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doEnableExploreDataset(datasetInstance, null);
+        return doEnableExploreDataset(datasetInstance.toEntityId(), null);
       }
     });
 
@@ -129,7 +129,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doEnableExploreDataset(datasetInstance, spec);
+        return doEnableExploreDataset(datasetInstance.toEntityId(), spec);
       }
     });
 
@@ -143,7 +143,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doEnableExploreStream(stream, tableName, format);
+        return doEnableExploreStream(stream.toEntityId(), tableName, format);
       }
     });
 
@@ -156,7 +156,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doDisableExploreStream(stream, tableName);
+        return doDisableExploreStream(stream.toEntityId(), tableName);
       }
     });
 
@@ -170,7 +170,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doAddPartition(datasetInstance, key, path);
+        return doAddPartition(datasetInstance.toEntityId(), key, path);
       }
     });
 
@@ -183,7 +183,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doDropPartition(datasetInstance, key);
+        return doDropPartition(datasetInstance.toEntityId(), key);
       }
     });
 
@@ -196,7 +196,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     return getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return execute(namespace, statement);
+        return execute(namespace.toEntityId(), statement);
       }
     });
   }
@@ -305,7 +305,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     return getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return deleteNamespace(namespace);
+        return deleteNamespace(namespace.toEntityId());
       }
     });
   }

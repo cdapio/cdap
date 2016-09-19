@@ -59,7 +59,6 @@ import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
@@ -277,7 +276,7 @@ public class BaseHiveExploreServiceTest {
   protected static void deleteNamespace(NamespaceId namespaceId) throws Exception {
     namespacedLocationFactory.get(namespaceId.toId()).delete(true);
     if (!NamespaceId.DEFAULT.equals(namespaceId)) {
-      exploreService.deleteNamespace(namespaceId.toId());
+      exploreService.deleteNamespace(namespaceId);
     }
     namespaceAdmin.delete(namespaceId.toId());
   }
@@ -361,9 +360,9 @@ public class BaseHiveExploreServiceTest {
     streamMetaStore.addStream(streamId);
   }
 
-  protected static void dropStream(Id.Stream streamId) throws Exception {
-    streamAdmin.drop(streamId.toEntityId());
-    streamMetaStore.removeStream(streamId.toEntityId());
+  protected static void dropStream(StreamId streamId) throws Exception {
+    streamAdmin.drop(streamId);
+    streamMetaStore.removeStream(streamId);
   }
 
   protected static void setStreamProperties(String namespace, String streamName,
@@ -379,11 +378,11 @@ public class BaseHiveExploreServiceTest {
     urlConn.disconnect();
   }
 
-  protected static void sendStreamEvent(Id.Stream streamId, byte[] body) throws IOException {
+  protected static void sendStreamEvent(StreamId streamId, byte[] body) throws IOException {
     sendStreamEvent(streamId, Collections.<String, String>emptyMap(), body);
   }
 
-  protected static void sendStreamEvent(Id.Stream streamId, Map<String, String> headers, byte[] body)
+  protected static void sendStreamEvent(StreamId streamId, Map<String, String> headers, byte[] body)
     throws IOException {
     HttpURLConnection urlConn = openStreamConnection(streamId);
     urlConn.setRequestMethod(HttpMethod.POST);
@@ -391,18 +390,18 @@ public class BaseHiveExploreServiceTest {
     for (Map.Entry<String, String> header : headers.entrySet()) {
       // headers must be prefixed by the stream name, otherwise they are filtered out by the StreamHandler.
       // the handler also strips the stream name from the key before writing it to the stream.
-      urlConn.addRequestProperty(streamId.getId() + "." + header.getKey(), header.getValue());
+      urlConn.addRequestProperty(streamId.getEntityName() + "." + header.getKey(), header.getValue());
     }
     urlConn.getOutputStream().write(body);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
   }
 
-  private static HttpURLConnection openStreamConnection(Id.Stream streamId) throws IOException {
+  private static HttpURLConnection openStreamConnection(StreamId streamId) throws IOException {
     int port = streamHttpService.getBindAddress().getPort();
     URL url = new URL(String.format("http://127.0.0.1:%d%s/namespaces/%s/streams/%s",
                                     port, Constants.Gateway.API_VERSION_3,
-                                    streamId.getNamespaceId(), streamId.getId()));
+                                    streamId.getNamespace(), streamId.getEntityName()));
     return (HttpURLConnection) url.openConnection();
   }
 

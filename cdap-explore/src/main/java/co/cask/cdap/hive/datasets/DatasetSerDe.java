@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,7 +31,7 @@ import co.cask.cdap.hive.serde.ObjectDeserializer;
 import co.cask.cdap.hive.serde.ObjectSerializer;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.io.SchemaGenerator;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -91,7 +91,7 @@ public class DatasetSerDe implements SerDe {
     // Hive may call initialize a bunch of times... so remember the schema so we don't instantiate the dataset
     // a bunch of times.
     if (schema == null) {
-      Id.DatasetInstance datasetId = Id.DatasetInstance.from(namespace, datasetName);
+      DatasetId datasetId = new DatasetId(namespace, datasetName);
       getDatasetSchema(conf, datasetId);
     }
 
@@ -101,7 +101,7 @@ public class DatasetSerDe implements SerDe {
     this.objectInspector = deserializer.getInspector();
   }
 
-  private void getDatasetSchema(Configuration conf, Id.DatasetInstance datasetId) throws SerDeException {
+  private void getDatasetSchema(Configuration conf, DatasetId datasetId) throws SerDeException {
 
     try (ContextManager.Context hiveContext = ContextManager.getContext(conf)) {
       // apparently the conf can be null in some versions of Hive?
@@ -129,7 +129,7 @@ public class DatasetSerDe implements SerDe {
       // conf is null if this is a query that writes to a dataset
       ClassLoader parentClassLoader = conf == null ? null : conf.getClassLoader();
       try (SystemDatasetInstantiator datasetInstantiator = hiveContext.createDatasetInstantiator(parentClassLoader)) {
-        Dataset dataset = datasetInstantiator.getDataset(datasetId.toEntityId());
+        Dataset dataset = datasetInstantiator.getDataset(datasetId);
         if (dataset == null) {
           throw new SerDeException("Could not find dataset " + datasetId);
         }

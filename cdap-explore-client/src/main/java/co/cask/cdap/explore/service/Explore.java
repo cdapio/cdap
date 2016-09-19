@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package co.cask.cdap.explore.service;
 
 import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
@@ -25,6 +24,7 @@ import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.proto.TableNameInfo;
+import co.cask.cdap.proto.id.NamespaceId;
 
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
@@ -47,7 +47,7 @@ public interface Explore {
    * @throws ExploreException on any error executing statement.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  QueryHandle execute(Id.Namespace namespace, String statement) throws ExploreException, SQLException;
+  QueryHandle execute(NamespaceId namespace, String statement) throws ExploreException, SQLException;
 
   /**
    * Execute a Hive SQL statement asynchronously. The returned {@link QueryHandle} can be used to get the
@@ -60,13 +60,13 @@ public interface Explore {
    * @throws ExploreException on any error executing statement.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  QueryHandle execute(Id.Namespace namespace, String statement,
+  QueryHandle execute(NamespaceId namespace, String statement,
                       @Nullable Map<String, String> additionalSessionConf) throws ExploreException, SQLException;
 
   /**
    * Fetch the status of a running Hive operation.
    *
-   * @param handle handle returned by {@link #execute(Id.Namespace, String)}.
+   * @param handle handle returned by {@link #execute(NamespaceId, String)}.
    * @return status of the operation.
    * @throws ExploreException on any error fetching status.
    * @throws HandleNotFoundException when handle is not found.
@@ -78,7 +78,7 @@ public interface Explore {
    * Fetch the schema of the result of a Hive operation. This can be called only after the state of the operation is
    *               {@link QueryStatus.OpStatus#FINISHED}.
    *
-   * @param handle handle returned by {@link #execute(Id.Namespace, String)}.
+   * @param handle handle returned by {@link #execute(NamespaceId, String)}.
    * @return list of {@link ColumnDesc} representing the schema of the results. Empty list if there are no results.
    * @throws ExploreException on any error fetching schema.
    * @throws HandleNotFoundException when handle is not found.
@@ -91,7 +91,7 @@ public interface Explore {
    * {@link QueryStatus.OpStatus#FINISHED}. Can be called multiple times, until it returns an empty list
    * indicating the end of results.
    *
-   * @param handle handle returned by {@link #execute(Id.Namespace, String)}.
+   * @param handle handle returned by {@link #execute(NamespaceId, String)}.
    * @param size max rows to fetch in the call.
    * @return list of {@link QueryResult}s.
    * @throws ExploreException on any error fetching results.
@@ -105,7 +105,7 @@ public interface Explore {
    * Fetch a preview of the results of a Hive operation. This can be called only after the state of the operation is
    * {@link QueryStatus.OpStatus#FINISHED}. Two subsequent calls to this methods will return the same list of results.
    *
-   * @param handle handle returned by {@link #execute(Id.Namespace, String)}.
+   * @param handle handle returned by {@link #execute(NamespaceId, String)}.
    * @return preview list of {@link QueryResult}s.
    * @throws ExploreException on any error fetching a preview of the results.
    * @throws HandleNotFoundException when handle is not found.
@@ -117,7 +117,7 @@ public interface Explore {
   /**
    * Release resources associated with a Hive operation. After this call, handle of the operation becomes invalid.
    *
-   * @param handle handle returned by {@link #execute(Id.Namespace, String)}.
+   * @param handle handle returned by {@link #execute(NamespaceId, String)}.
    * @throws ExploreException on any error closing operation.
    * @throws HandleNotFoundException when handle is not found.
    */
@@ -130,7 +130,7 @@ public interface Explore {
    * @throws ExploreException
    * @param namespace namespace to get queries in.
    */
-  List<QueryInfo> getQueries(Id.Namespace namespace) throws ExploreException, SQLException;
+  List<QueryInfo> getQueries(NamespaceId namespace) throws ExploreException, SQLException;
 
   /**
    * Get the number of active queries being executed in Hive, specifically
@@ -140,7 +140,7 @@ public interface Explore {
    * @return the number of live queries being executed.
    * @throws ExploreException
    */
-  int getActiveQueryCount(Id.Namespace namespace) throws ExploreException;
+  int getActiveQueryCount(NamespaceId namespace) throws ExploreException;
 
   ////// Metadata methods
 
@@ -308,5 +308,5 @@ public interface Explore {
    * @throws ExploreException on any errors deleting the namespace.
    * @throws SQLException if there are errors in the SQL statement.
    */
-  QueryHandle deleteNamespace(Id.Namespace namespace) throws ExploreException, SQLException;
+  QueryHandle deleteNamespace(NamespaceId namespace) throws ExploreException, SQLException;
 }
