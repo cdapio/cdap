@@ -17,6 +17,7 @@
 import React, {PropTypes, Component} from 'react';
 import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import {MyMarketApi} from '../../api/market';
+import T from 'i18n-react';
 
 require('./MarketEntityModal.less');
 
@@ -83,7 +84,7 @@ export default class MarketEntityModal extends Component {
             { this.props.entity.label }
           </span>
           <span className="pull-right">
-            Version:
+            <span>{T.translate('features.MarketEntityModal.version')}</span>
             { this.props.entity.version }
           </span>
         </ModalHeader>
