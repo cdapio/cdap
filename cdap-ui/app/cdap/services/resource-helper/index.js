@@ -15,6 +15,7 @@
  */
 
 export const apiCreator = createApi;
+export const apiCreatorAbsPath = createApiFromExactPath;
 import cookie from 'react-cookie';
 
 function createApi (dataSrc, method, type, path, options = {}) {
@@ -30,6 +31,24 @@ function createApi (dataSrc, method, type, path, options = {}) {
     if(cookie.load('CDAP_Auth_Token')) {
       reqObj.headers = reqObj.headers || {};
       reqObj.headers.Authorization = `Bearer ${cookie.load('CDAP_Auth_Token')}`;
+    }
+
+    if (type === 'REQUEST') {
+      return dataSrc.request(reqObj);
+    } else if (type === 'POLL') {
+      return dataSrc.poll(reqObj);
+    }
+  };
+}
+
+/* The following function might be able to be merged to createApi */
+function createApiFromExactPath (dataSrc, method, type, path, options = {}) {
+  return (params = {}, body) => {
+    let url = buildUrl(path, params);
+
+    let reqObj = Object.assign({ url, method }, options);
+    if (body) {
+      reqObj = Object.assign({}, reqObj, { body });
     }
 
     if (type === 'REQUEST') {

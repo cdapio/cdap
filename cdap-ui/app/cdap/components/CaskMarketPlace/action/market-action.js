@@ -14,18 +14,25 @@
  * the License.
  */
 
-.plus-button-modal {
-  .cask-wizard {
-    .tab-content {
-      overflow-y: auto;
+import MarketStore from '../store/market-store.js';
 
-      .tab-pane { width: 100%; }
-      .all-tab-content {
-        .body-section {
-          text-align: center;
-          padding-top: 10px;
-        }
-      }
-    }
-  }
+function setList(list) {
+  MarketStore.dispatch({
+    type: 'SET_ENTITIES',
+    payload: list
+  });
 }
+
+function setFilter(filter) {
+  MarketStore.dispatch({
+    type: 'SET_FILTER',
+    payload: filter
+  });
+}
+
+const MarketAction = {
+  setList,
+  setFilter
+};
+
+export default MarketAction;

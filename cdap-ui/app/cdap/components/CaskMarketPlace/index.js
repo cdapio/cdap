@@ -13,13 +13,36 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import React from 'react';
+
+import React, {Component} from 'react';
 
 import TabConfig from './TabConfig';
 import ConfigurableTab from '../ConfigurableTab';
+import {MyCaskMarketApi} from '../../api/caskmarket';
+import MarketAction from './action/market-action.js';
+import find from 'lodash/find';
 
-export default function CaskMarketPlace() {
-  return (
-    <ConfigurableTab tabConfig={TabConfig} />
-  );
+export default class CaskMarketPlace extends Component {
+  componentWillMount () {
+    MyCaskMarketApi.list()
+      .subscribe((res) => {
+        MarketAction.setList(res);
+      }, (err) => {
+        console.log('Error', err);
+      });
+  }
+
+  handleTabClick(id) {
+    let searchFilter = find(TabConfig.tabs, { id }).filter;
+    MarketAction.setFilter(searchFilter);
+  }
+
+  render() {
+    return (
+      <ConfigurableTab
+        tabConfig={TabConfig}
+        onTabClick={this.handleTabClick.bind(this)}
+      />
+    );
+  }
 }

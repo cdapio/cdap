@@ -14,18 +14,13 @@
  * the License.
  */
 
-.plus-button-modal {
-  .cask-wizard {
-    .tab-content {
-      overflow-y: auto;
+import Datasource from '../../services/datasource';
+import {apiCreatorAbsPath} from '../../services/resource-helper';
 
-      .tab-pane { width: 100%; }
-      .all-tab-content {
-        .body-section {
-          text-align: center;
-          padding-top: 10px;
-        }
-      }
-    }
-  }
-}
+let dataSrc = new Datasource();
+const basepath = 'http://marketplace.cask.co.s3.amazonaws.com';
+
+export const MyCaskMarketApi = {
+ list: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `${basepath}/packages.json`),
+ get: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `${basepath}/:packageName/:version/spec.json`)
+};
