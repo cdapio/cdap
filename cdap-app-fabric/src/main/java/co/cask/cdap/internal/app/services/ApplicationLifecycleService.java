@@ -85,6 +85,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import org.apache.hadoop.mapreduce.v2.app.webapp.App;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -427,46 +428,26 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception
    */
   public void removeApplication(final ApplicationId appId) throws Exception {
-    Collection<ApplicationSpecification> appSpecs = store.getAllAppVersions(appId);
-    if (appSpecs.size() == 1) {
-
-    }
-    //Check if all are stopped.
-    Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
-      Iterables.filter(runtimeService.listAll(ProgramType.values()),
-                       new com.google.common.base.Predicate<ProgramRuntimeService.RuntimeInfo>() {
-                         @Override
-                         public boolean apply(ProgramRuntimeService.RuntimeInfo runtimeInfo) {
-                           return runtimeInfo.getProgramId().getParent().equals(appId);
-                         }
-                       });
-
-    Set<String> runningPrograms = new HashSet<>();
-    for (ProgramRuntimeService.RuntimeInfo runtimeInfo : runtimeInfos) {
-      runningPrograms.add(runtimeInfo.getProgramId().getProgram());
-    }
-
-    if (!runningPrograms.isEmpty()) {
-      String appAllRunningPrograms = Joiner.on(',')
-        .join(runningPrograms);
-      throw new CannotBeDeletedException(appId.toId(),
-                                         "The following programs are still running: " + appAllRunningPrograms);
-    }
-
+    findRunningProgram(appId);
     ApplicationSpecification spec = store.getApplication(appId);
     if (spec == null) {
       throw new NotFoundException(appId);
     }
-    deleteApp(appId, spec);
+    // if the application has only one version, do full deletion, else only delete the specified version
+    if (store.getAllAppVersions(appId).size() == 1) {
+      deleteApp(appId, spec);
+      return;
+    }
+    deleteAppVersion(appId, spec);
   }
 
   /**
-   * TODO: Delete a version of an application specified by appId.
+   * Find if the given application has running programs
    *
-   * @param appId the {@link ApplicationId} of the application to be removed
-   * @throws Exception
+   * @param appId the id of the application to find running programs for
+   * @throws CannotBeDeletedException : the application cannot be deleted because of running programs
    */
-  public void removeAppVersion(final ApplicationId appId) throws Exception {
+  private void findRunningProgram(final ApplicationId appId) throws CannotBeDeletedException {
     //Check if all are stopped.
     Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
       Iterables.filter(runtimeService.listAll(ProgramType.values()),
@@ -488,51 +469,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       throw new CannotBeDeletedException(appId.toId(),
                                          "The following programs are still running: " + appAllRunningPrograms);
     }
-
-    ApplicationSpecification spec = store.getApplication(appId);
-    if (spec == null) {
-      throw new NotFoundException(appId);
-    }
-    deleteApp(appId, spec);
   }
-
-
-  /**
-   * TODO: Delete a version of an application specified by appId.
-   *
-   * @param appId the {@link ApplicationId} of the application to be removed
-   * @throws Exception
-   */
-  public void removeLastAppVersion(final ApplicationId appId) throws Exception {
-    //Check if all are stopped.
-    Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
-      Iterables.filter(runtimeService.listAll(ProgramType.values()),
-                       new com.google.common.base.Predicate<ProgramRuntimeService.RuntimeInfo>() {
-                         @Override
-                         public boolean apply(ProgramRuntimeService.RuntimeInfo runtimeInfo) {
-                           return runtimeInfo.getProgramId().getParent().equals(appId);
-                         }
-                       });
-
-    Set<String> runningPrograms = new HashSet<>();
-    for (ProgramRuntimeService.RuntimeInfo runtimeInfo : runtimeInfos) {
-      runningPrograms.add(runtimeInfo.getProgramId().getProgram());
-    }
-
-    if (!runningPrograms.isEmpty()) {
-      String appAllRunningPrograms = Joiner.on(',')
-        .join(runningPrograms);
-      throw new CannotBeDeletedException(appId.toId(),
-                                         "The following programs are still running: " + appAllRunningPrograms);
-    }
-
-    ApplicationSpecification spec = store.getApplication(appId);
-    if (spec == null) {
-      throw new NotFoundException(appId);
-    }
-    deleteApp(appId, spec);
-  }
-
 
   /**
    * Get detail about the plugin in the specified application
@@ -708,6 +645,19 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     } catch (Exception e) {
       LOG.warn("Failed to unregister usage of app: {}", appId, e);
     }
+  }
+
+  /**
+   * Delete the specified application version without performing checks that its programs are stopped.
+   *
+   * @param appId the id of the application to delete
+   * @param spec the spec of the application to delete
+   * @throws Exception
+   */
+  private void deleteAppVersion(final ApplicationId appId, ApplicationSpecification spec) throws Exception {
+    // enforce ADMIN privileges on the app
+    authorizationEnforcer.enforce(appId, authenticationContext.getPrincipal(), Action.ADMIN);
+    store.removeApplication(appId);
   }
 
   // Delete route configs for all services, if they are present, in that Application

@@ -297,8 +297,30 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("type") String type,
                             @PathParam("id") String id,
                             @PathParam("action") String action) throws Exception {
+    performActionHelper(request, responder, namespaceId, appId, ApplicationId.DEFAULT_VERSION, type, id, action);
+  }
+
+  @POST
+  @Path("/apps/{app-id}/versions/{version-id}/{type}/{id}/{action}")
+  public void performVersionAction(HttpRequest request, HttpResponder responder,
+                                   @PathParam("namespace-id") String namespaceId,
+                                   @PathParam("app-id") String appId,
+                                   @PathParam("version-id") String versionId,
+                                   @PathParam("type") String type,
+                                   @PathParam("id") String id,
+                                   @PathParam("action") String action) throws Exception {
+    performActionHelper(request, responder, namespaceId, appId, versionId, type, id, action);
+  }
+
+  private void performActionHelper(HttpRequest request, HttpResponder responder, String namespaceId, String appId,
+                                   String versionId, String type, String id, String action) throws Exception {
+    ApplicationId applicationId = new ApplicationId(namespaceId, appId, versionId);
     if ("schedules".equals(type)) {
-      suspendResumeSchedule(responder, namespaceId, appId, id, action);
+      if (!versionId.equals(ApplicationId.DEFAULT_VERSION) || store.getAllAppVersions(applicationId).size() != 1) {
+        throw new NotImplementedException("schedules action is not implemented for applications with" +
+                                            " multiple versions");
+      }
+      performScheduleAction(responder, namespaceId, appId, versionId, id, action);
       return;
     }
 
@@ -309,7 +331,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new BadRequestException(String.format("Unknown program type '%s'", type), e);
     }
 
-    ProgramId programId = Ids.namespace(namespaceId).app(appId).program(programType, id);
+    ProgramId programId = applicationId.program(programType, id);
     Map<String, String> args = decodeArguments(request);
     // we have already validated that the action is valid
     switch (action.toLowerCase()) {
@@ -332,8 +354,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
-  private void suspendResumeSchedule(HttpResponder responder, String namespaceId, String appId, String scheduleName,
-                                     String action) throws SchedulerException {
+  private void performScheduleAction(HttpResponder responder, String namespaceId, String appId, String versionId,
+                                     String scheduleName, String action) throws SchedulerException {
     try {
       if (!action.equals("suspend") && !action.equals("resume")) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Schedule can only be suspended or resumed.");
