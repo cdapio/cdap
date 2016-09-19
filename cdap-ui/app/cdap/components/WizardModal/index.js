@@ -33,10 +33,12 @@ export default function WizardModal({children, title, isOpen, toggle, className}
         <span className="pull-left">
           {title}
         </span>
-        <div className="pull-right">
+        <div
+          className="close-section pull-right"
+          onClick={toggle}
+        >
           <span
             className="fa fa-times"
-            onClick={toggle}
           >
           </span>
         </div>

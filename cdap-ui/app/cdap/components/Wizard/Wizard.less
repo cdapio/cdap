@@ -46,5 +46,35 @@
     position: fixed;
     left: 0;
     right: 0;
+
+    &.success {
+      width: 100%;
+      position: relative;
+      top: -100%;
+      right: 0;
+      height: 100%;
+      background: black;
+      opacity: 0.5;
+      color: white;
+
+      .result-container {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-40%, -60%);
+        width: 60%;
+        height: 40%;
+
+        ul {
+          list-style: none;
+
+          > li {
+            margin: 10px;
+            font-size: 18px;
+            color: white;
+          }
+        }
+      }
+    }
   }
 }

@@ -116,7 +116,8 @@ const cdapWebpackConfig = {
       'i18n-react',
       'fuse.js',
       'react-redux',
-      'react-router'
+      'react-router',
+      'react-dropzone'
     ]
   },
   module: {

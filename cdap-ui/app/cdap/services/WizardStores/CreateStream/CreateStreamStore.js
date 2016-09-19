@@ -107,6 +107,8 @@ const general = (state = defaultGeneralState, action = defaultAction) => {
       return onErrorHandler('general', Object.assign({}, state), action);
     case CreateStreamActions.onSuccess:
       return onSuccessHandler('general', Object.assign({}, state), action);
+    case CreateStreamActions.onReset:
+      return defaultGeneralState;
     default:
       return state;
   }
@@ -127,6 +129,8 @@ const threshold = (state = defaultThresholdState, action = defaultAction) => {
       return onErrorHandler('threshold', Object.assign({}, state), action);
     case CreateStreamActions.onSuccess:
       return onSuccessHandler('threshold', Object.assign({}, state), action);
+    case CreateStreamActions.onReset:
+      return defaultThresholdState;
     default:
       return state;
   }
@@ -152,6 +156,8 @@ const schema = (state = defaultSchemaState, action = defaultAction) => {
       return onErrorHandler('schema', Object.assign({}, state), action);
     case CreateStreamActions.onSuccess:
       return onSuccessHandler('schema', Object.assign({}, state), action);
+    case CreateStreamActions.onReset:
+      return defaultSchemaState;
     default:
       return state;
   }

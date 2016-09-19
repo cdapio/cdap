@@ -17,12 +17,14 @@ import React, {Component, PropTypes} from 'react';
 import Rx from 'rx';
 import findIndex from 'lodash/findIndex';
 import first from 'lodash/head';
+import T from 'i18n-react';
 
 require('./Wizard.less');
 import shortid from 'shortid';
 import WizardStepHeader from './WizardStepHeader';
 import WizardStepContent from './WizardStepContent';
 import CardActionFeedback from 'components/CardActionFeedback';
+import classnames from 'classnames';
 
 const currentStepIndex = (arr, id) => {
   return findIndex(arr, (step) => id === step.id);
@@ -42,7 +44,7 @@ export default class Wizard extends Component{
     super(props);
     this.state = {
       activeStep: this.props.wizardConfig.steps[0].id,
-      success: '',
+      success: false,
       error: ''
     };
   }
@@ -75,20 +77,11 @@ export default class Wizard extends Component{
     if (onSubmitReturn instanceof Rx.Observable) {
       onSubmitReturn
         .subscribe(
-          success => {
-            if (success) {
-              this.setState({
-                success: success,
-                error: false
-              });
-            }
-            let steps = this.props.wizardConfig.steps;
-            let currentIndex = currentStepIndex(steps, this.state.activeStep);
-            if(currentIndex < (steps.length - 1)) {
-              this.setState({
-                activeStep: steps[currentIndex].onSubmitGoTo
-              });
-            }
+          () => {
+            this.setState({
+              success: true,
+              error: false
+            });
           },
           err => {
             if (err) {
@@ -104,7 +97,7 @@ export default class Wizard extends Component{
   }
   render() {
 
-    const getNavigationButtons = (matchedStep) => {
+    const getNavigationButtons = function getNavigationButtons(matchedStep) {
       let matchedIndex = currentStepIndex(this.props.wizardConfig.steps, matchedStep.id);
       let navButtons;
       let nextButton = (
@@ -152,11 +145,46 @@ export default class Wizard extends Component{
         );
       }
       return navButtons;
-    };
-    const isStepComplete = (stepId) => {
+    }.bind(this);
+    const isStepComplete = function isStepComplete(stepId) {
       let state = this.props.store.getState()[stepId];
       return state && state.__complete;
-    };
+    }.bind(this);
+    const onSubmitSuccessMessage = function onSubmitSuccessMessage() {
+      let doneLabel = T.translate('features.Wizard.Done');
+      let skipLabel = T.translate('features.Wizard.Skip');
+      return (
+        <div className="result-container">
+          <ul>
+            {
+              steps
+                .map((step, index) => {
+                  return {
+                    index,
+                    label: step.shorttitle,
+                    complete: this.props.store.getState()[step.id] && this.props.store.getState()[step.id].__complete
+                  };
+                })
+                .map((value) => {
+                  return (
+                    <li key={shortid.generate()}>
+                      Step - {value.index} : {value.label} - {value.complete ? doneLabel : skipLabel}
+                    </li>
+                  );
+                })
+            }
+            <div className="clearfix">
+              <div
+                className="btn btn-primary pull-right"
+                onClick={this.props.onClose.bind(null, true)}
+              >
+                Close
+              </div>
+            </div>
+          </ul>
+        </div>
+      );
+    }.bind(this);
     let stepHeaders = this.props
       .wizardConfig
       .steps
@@ -189,13 +217,9 @@ export default class Wizard extends Component{
         );
       });
     let wizardFooter;
+    let steps = this.props.wizardConfig.steps;
     if(this.state.success){
-      wizardFooter = (
-        <CardActionFeedback
-          type='SUCCESS'
-          message={this.state.success}
-        />
-      );
+      wizardFooter = onSubmitSuccessMessage();
     }
     if (this.state.error) {
       wizardFooter = (
@@ -216,7 +240,7 @@ export default class Wizard extends Component{
             {stepContent}
           </div>
         </div>
-        <div className="wizard-footer">
+        <div className={classnames("wizard-footer", {success: this.state.success})}>
           {wizardFooter}
         </div>
       </div>
@@ -247,5 +271,6 @@ Wizard.propTypes = {
     subscribe: PropTypes.func,
     replaceReducer: PropTypes.func
   }),
-  onSubmit: PropTypes.func
+  onSubmit: PropTypes.func,
+  onClose: PropTypes.func
 };

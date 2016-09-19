@@ -22,7 +22,7 @@
   &.modal-dialog {
     height: 65vh;
     width: 60vw;
-    margin-top: 140px;
+    margin-top: 170px;
 
     .modal-content {
       border-radius: 0;
@@ -42,7 +42,7 @@
         }
       }
       .modal-header {
-        padding: 10px 20px;
+        padding: 0;
         background: @wizard-header-color;
         color: white;
         border-bottom: 0;
@@ -51,6 +51,12 @@
           font-weight: normal;
           span {
             line-height: 30px;
+            padding: 10px 20px;
+          }
+          .close-section {
+
+            border-left: 1px solid;
+            cursor: pointer;
           }
         }
         .btn-resource-center {

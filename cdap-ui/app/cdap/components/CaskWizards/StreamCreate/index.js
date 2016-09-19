@@ -17,8 +17,10 @@ import React, { Component, PropTypes } from 'react';
 import WizardModal from 'components/WizardModal';
 import Wizard from 'components/Wizard';
 import CreateStreamStore from 'services/WizardStores/CreateStream/CreateStreamStore';
+import CreateStreamActions from 'services/WizardStores/CreateStream/CreateStreamActions';
 import { PublishStream } from 'services/WizardStores/CreateStream/ActionCreator';
 import CreateStreamWizardConfig from 'services/WizardConfigs/CreateStreamWizardConfig';
+import T from 'i18n-react';
 
 export default class StreamCreateWizard extends Component {
   constructor(props) {
@@ -27,9 +29,22 @@ export default class StreamCreateWizard extends Component {
       showWizard: this.props.isOpen
     };
   }
-  toggleWizard() {
+  toggleWizard(returnResult) {
+    if (this.state.showWizard) {
+      this.props.onClose(returnResult);
+    }
     this.setState({
       showWizard: !this.state.showWizard
+    });
+  }
+  componentWillReceiveProps({isOpen}) {
+    this.setState({
+      showWizard: isOpen
+    });
+  }
+  componentWillUnmount() {
+    CreateStreamStore.dispatch({
+      type: CreateStreamActions.onReset
     });
   }
   createStream() {
@@ -46,19 +61,21 @@ export default class StreamCreateWizard extends Component {
       );
   }
   render() {
+    let wizardModalTitle = (this.props.context ? this.props.context + " | " : '') + T.translate('features.Wizard.StreamCreate.headerlabel') ;
     return (
       <div>
         {
           this.state.showWizard ?
             <WizardModal
-              title="Create Stream"
+              title={wizardModalTitle}
               isOpen={this.state.showWizard}
-              toggle={this.toggleWizard.bind(this)}
+              toggle={this.toggleWizard.bind(this, false)}
               className="create-stream-wizard"
             >
               <Wizard
                 wizardConfig={CreateStreamWizardConfig}
                 onSubmit={this.createStream.bind(this)}
+                onClose={this.toggleWizard.bind(this)}
                 store={CreateStreamStore}/>
             </WizardModal>
           :
@@ -69,5 +86,7 @@ export default class StreamCreateWizard extends Component {
   }
 }
 StreamCreateWizard.propTypes = {
-  isOpen: PropTypes.bool
+  isOpen: PropTypes.bool,
+  context: PropTypes.string,
+  onClose: PropTypes.func
 };

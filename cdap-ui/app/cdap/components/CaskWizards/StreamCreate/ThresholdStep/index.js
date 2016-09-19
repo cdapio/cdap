@@ -16,15 +16,16 @@
 import React, {PropTypes} from 'react';
 import {connect, Provider} from 'react-redux';
 import {Input, FormGroup, Form} from 'reactstrap';
+import T from 'i18n-react';
 
 require('./ThresholdStep.less');
 import CreateStreamActions  from 'services/WizardStores/CreateStream/CreateStreamActions';
 import CreateStreamStore from 'services/WizardStores/CreateStream/CreateStreamStore';
 const mapStateToStreamThresholdProps = (state) => {
   return {
-    value: state.threshold.value,
+    value: parseInt(state.threshold.value, 10),
     type: 'text',
-    defaultValue: state.threshold.value,
+    defaultValue: parseInt(state.threshold.value, 10),
     placeholder: 'Threshold'
   };
 };
@@ -43,6 +44,7 @@ let ThresholdTextBox = ({value, onChange}) => {
     <FormGroup className="threshold-step">
       <Input
         value={value}
+        type="number"
         onChange={onChange}
       />
     <h3>Megabytes (MB)</h3>
@@ -63,7 +65,7 @@ export default function ThresholdStep() {
       <Form className="form-horizontal">
         <ThresholdTextBox />
         <p>
-          The stream will notify any observers upon reaching this threshold to start processing of the data in this Stream
+          {T.translate('features.Wizard.StreamCreate.Step3.thresholdlabel')}
         </p>
       </Form>
     </Provider>
