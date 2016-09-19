@@ -83,7 +83,7 @@ export default class MarketEntityModal extends Component {
           <span className="pull-left">
             { this.props.entity.label }
           </span>
-          <span className="pull-right">
+          <span className="version pull-right">
             <span>{T.translate('features.MarketEntityModal.version')}</span>
             { this.props.entity.version }
           </span>

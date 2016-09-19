@@ -18,7 +18,7 @@ import Datasource from '../../services/datasource';
 import {apiCreatorAbsPath} from '../../services/resource-helper';
 
 let dataSrc = new Datasource();
-const basepath = 'http://marketplace.cask.co.s3.amazonaws.com';
+const basepath = 'http://marketplace.cask.co.s3.amazonaws.com/v1';
 
 export const MyMarketApi = {
   list: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `${basepath}/packages.json`),
