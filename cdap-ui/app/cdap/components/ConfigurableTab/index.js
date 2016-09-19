@@ -69,16 +69,19 @@ export default class ConfigurableTab extends Component{
           </TabHeaders>
           <TabContent activeTab={this.state.tabId}>
             {
-              this.state.tabs.filter((tab) => tab.id === this.state.tabId).map((tab, index) => {
-                return (
-                  <TabPane
-                    tabId={tab.id}
-                    key={index}
-                  >
-                    {tab.content}
-                  </TabPane>
-                );
-              })
+              this.state.tabs
+                .filter((tab) => tab.id === this.state.tabId)
+                .map((tab, index) => {
+                  return (
+                    <TabPane
+                      tabId={tab.id}
+                      key={index}
+                    >
+                      {tab.content}
+                    </TabPane>
+                  );
+                }
+              )
             }
           </TabContent>
         </Tabs>

@@ -27,11 +27,14 @@ export default class AllTabContents extends Component {
     super(props);
     this.state = {
       searchStr: '',
-      entities: []
+      entities: [],
+      loading: MarketStore.getState().loading
     };
 
     this.unsub = MarketStore.subscribe(() => {
       this.filterEntities();
+      const loading = MarketStore.getState().loading;
+      this.setState({loading});
     });
   }
 
@@ -74,6 +77,11 @@ export default class AllTabContents extends Component {
   }
 
   render() {
+    const loadingElem = (
+      <h4>
+        <span className="fa fa-refresh fa-spin"></span>
+      </h4>
+    );
 
     return (
       <div className="all-tab-content">
@@ -84,6 +92,7 @@ export default class AllTabContents extends Component {
         />
         <div className="body-section">
           {
+            this.state.loading ? loadingElem :
             this.state.entities.length === 0 ?
             ( <h3>Empty</h3> ) :
             this.state.entities

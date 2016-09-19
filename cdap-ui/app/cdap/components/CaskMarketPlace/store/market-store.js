@@ -18,13 +18,14 @@ import {createStore} from 'redux';
 
 const initialState = {
   list: [],
-  filter: '*'
+  filter: '*',
+  loading: true
 };
 
 const market = (state=initialState, action) => {
   switch (action.type) {
     case 'SET_ENTITIES':
-      return Object.assign({}, state, { list: action.payload });
+      return Object.assign({}, state, { list: action.payload, loading: false });
     case 'SET_FILTER':
       return Object.assign({}, state, { filter: action.payload });
     case 'RESET':
