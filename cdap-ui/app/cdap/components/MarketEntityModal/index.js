@@ -16,11 +16,11 @@
 
 import React, {PropTypes, Component} from 'react';
 import { Modal, ModalHeader, ModalBody } from 'reactstrap';
-import {MyCaskMarketApi} from '../../api/caskmarket';
+import {MyMarketApi} from '../../api/market';
 
-require('./CaskMarketEntityModal.less');
+require('./MarketEntityModal.less');
 
-export default class CaskMarketEntityModal extends Component {
+export default class MarketEntityModal extends Component {
   constructor(props) {
     super(props);
 
@@ -30,7 +30,7 @@ export default class CaskMarketEntityModal extends Component {
   }
 
   componentWillMount() {
-    MyCaskMarketApi.get({
+    MyMarketApi.get({
       packageName: this.props.entity.name,
       version: this.props.entity.version
     }).subscribe((res) => {
@@ -90,7 +90,7 @@ export default class CaskMarketEntityModal extends Component {
         <ModalBody>
           <div className="entity-information">
             <div className="entity-modal-image">
-              <img src={MyCaskMarketApi.getIcon(this.props.entity)} />
+              <img src={MyMarketApi.getIcon(this.props.entity)} />
             </div>
             <div className="entity-description">
               {this.state.entityDetail.description}
@@ -108,7 +108,7 @@ export default class CaskMarketEntityModal extends Component {
   }
 }
 
-CaskMarketEntityModal.propTypes = {
+MarketEntityModal.propTypes = {
   isOpen: PropTypes.bool,
   onCloseHandler: PropTypes.func,
   entity: PropTypes.object

@@ -20,7 +20,7 @@ import {apiCreatorAbsPath} from '../../services/resource-helper';
 let dataSrc = new Datasource();
 const basepath = 'http://marketplace.cask.co.s3.amazonaws.com';
 
-export const MyCaskMarketApi = {
+export const MyMarketApi = {
   list: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `${basepath}/packages.json`),
   get: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `${basepath}/packages/:packageName/:version/spec.json`),
   getIcon: (entity) => {

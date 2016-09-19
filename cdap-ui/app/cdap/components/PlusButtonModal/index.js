@@ -17,7 +17,7 @@
 import React, {PropTypes, Component} from 'react';
 import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 
-import CaskMarketPlace from '../CaskMarketPlace';
+import Market from '../Market';
 import ResourceCenter from '../ResourceCenter';
 
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
@@ -75,7 +75,7 @@ export default class PlusButtonModal extends Component {
             transitionLeaveTimeout={300}
           >
             {
-              this.state.viewMode === 'marketplace' ? <CaskMarketPlace key="1"/> : <ResourceCenter key="2"/>
+              this.state.viewMode === 'marketplace' ? <Market key="1"/> : <ResourceCenter key="2"/>
             }
           </ReactCSSTransitionGroup>
         </ModalBody>

@@ -20,8 +20,8 @@ import MarketPlaceEntity from '../MarketPlaceEntity';
 import T from 'i18n-react';
 import MarketStore from './store/market-store.js';
 import Fuse from 'fuse.js';
-import CaskMarketEntityModal from '../CaskMarketEntityModal';
-import {MyCaskMarketApi} from '../../api/caskmarket';
+import MarketEntityModal from '../MarketEntityModal';
+import {MyMarketApi} from '../../api/market';
 require('./AllTabContents.less');
 
 export default class AllTabContents extends Component {
@@ -77,7 +77,7 @@ export default class AllTabContents extends Component {
   }
 
   generateIconPath(entity) {
-    return MyCaskMarketApi.getIcon(entity);
+    return MyMarketApi.getIcon(entity);
   }
 
   handleEntityClick(e) {
@@ -127,7 +127,7 @@ export default class AllTabContents extends Component {
 
     if (this.state.entityModalIsOpen) {
       marketEntityModal = (
-        <CaskMarketEntityModal
+        <MarketEntityModal
           isOpen={this.state.entityModalIsOpen}
           onCloseHandler={this.handleEntityModalClose.bind(this)}
           entity={this.state.activeEntity}
