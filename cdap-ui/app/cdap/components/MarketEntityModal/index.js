@@ -18,6 +18,9 @@ import React, {PropTypes, Component} from 'react';
 import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import {MyMarketApi} from '../../api/market';
 import T from 'i18n-react';
+import AbstractWizard from 'components/AbstractWizard';
+import classnames from 'classnames';
+import shortid from 'shortid';
 
 require('./MarketEntityModal.less');
 
@@ -26,7 +29,12 @@ export default class MarketEntityModal extends Component {
     super(props);
 
     this.state = {
-      entityDetail: {}
+      entityDetail: {},
+      wizard: {
+        actionIndex: null,
+        actionType: null
+      },
+      completedActions: []
     };
   }
 
@@ -40,30 +48,61 @@ export default class MarketEntityModal extends Component {
       console.log('Error', err);
     });
   }
+  closeWizard(returnResult) {
+    if (returnResult) {
+      this.setState({
+        completedActions: this.state.completedActions.concat([this.state.wizard.actionIndex]),
+        wizard: {
+          actionIndex: null,
+          actionType: null
+        }
+      });
+      return;
+    }
+    this.setState({
+      wizard: {
+        actionIndex: null,
+        actionType: null
+      }
+    });
+  }
+  openWizard(actionIndex, actionType) {
+    this.setState({
+      wizard: {
+        actionIndex,
+        actionType
+      }
+    });
+  }
 
   render() {
     let actions;
 
     if (this.state.entityDetail.actions) {
       actions = (
-        <div className="market-entity-actions text-center">
+        <div className="market-entity-actions">
           {
             this.state.entityDetail.actions.map((action, index) => {
+              let isCompletedAction = this.state.completedActions.indexOf(index) !== -1 ;
+              let actionName = T.translate('features.Market.action-types.' + action.type + '.name');
+              let actionIcon = T.translate('features.Market.action-types.' + action.type + '.icon');
               return (
-                <div
-                  className="action"
-                  key={index}
-                >
-                  <div className="action-image">
+                <div className="action-container text-center" key={shortid.generate()}>
+                  <div className={classnames("fa fa-check-circle text-success", {show: isCompletedAction})}></div>
+                  <div
+                    className="action"
+                    key={index}
+                  >
+                    <div>Step {index + 1} </div>
+                    <div className={classnames("fa", actionIcon)}></div>
+                    <div className="action-description"></div>
+                    <button
+                      className={classnames("btn btn-default", {'btn-completed': isCompletedAction})}
+                      onClick={this.openWizard.bind(this, index, action.type)}
+                    >
+                      { actionName }
+                    </button>
                   </div>
-
-                  <div className="action-description text-center">
-                    <span>{index + 1}. </span>
-                    {action.type}
-                  </div>
-                  <button className="btn btn-text">
-                    Add
-                  </button>
                 </div>
               );
             })
@@ -84,8 +123,15 @@ export default class MarketEntityModal extends Component {
             { this.props.entity.label }
           </span>
           <span className="version pull-right">
-            <span>{T.translate('features.MarketEntityModal.version')}</span>
-            { this.props.entity.version }
+            <span className="version-text">
+              {T.translate('features.MarketEntityModal.version')}
+            </span>
+            <span className="version-number">{ this.props.entity.version }</span>
+            <span
+              className="fa fa-times"
+              onClick={this.props.onCloseHandler.bind(this)}
+            >
+            </span>
           </span>
         </ModalHeader>
         <ModalBody>
@@ -93,15 +139,19 @@ export default class MarketEntityModal extends Component {
             <div className="entity-modal-image">
               <img src={MyMarketApi.getIcon(this.props.entity)} />
             </div>
-            <div className="entity-description">
-              {this.state.entityDetail.description}
+            <div className="entity-content">
+              <div className="entity-description">
+                {this.state.entityDetail.description}
+              </div>
+              {actions}
             </div>
           </div>
-
-          <hr />
-
-          {actions}
-
+          <AbstractWizard
+            isOpen={this.state.wizard.actionIndex !== null && this.state.wizard.actionType !== null}
+            onClose={this.closeWizard.bind(this)}
+            wizardType={this.state.wizard.actionType}
+            context={this.props.entity.label}
+          />
         </ModalBody>
       </Modal>
     );

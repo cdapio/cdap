@@ -16,49 +16,103 @@
 
 .market-entity-modal.modal-dialog {
   width: 60vw;
-  margin-top: 95px;
+  margin-top: 180px;
+  .modal-content {
+    border-radius: 0;
+    .modal-header {
+      background-color: gray;
+      color: white;
+      padding: 0;
 
-  .modal-header {
-    background-color: #ff6600;
-    color: white;
-  }
-
-  .modal-body {
-    max-height: 55vh;
-    overflow-y: auto;
-  }
-
-  .entity-information {
-    padding: 25px;
-
-    .entity-modal-image,
-    .entity-description {
-      display: inline-block;
-    }
-
-    .entity-modal-image {
-      width: 200px;
-      height: 200px;
-
-      img {
-        width: 200px;
-        height: 200px;
+      // This is because reactstrap doesn't allow us to change the h4 tag
+      h4 {
+        font-size: 14px;
+        font-weight: 400;
+        > span:first-child {
+          padding: 10px 20px;
+        }
+        span.version {
+          span.version-text {
+            padding: 10px 0;
+          }
+          span.version-number {
+            padding: 10px 20px 10px 0;
+          }
+          span.fa.fa-times {
+            cursor: pointer;
+            padding: 14px 20px;
+            border-left: 1px solid;
+          }
+        }
       }
     }
 
-    .entity-description { margin-left: 25px; }
-  }
+    .modal-body {
+      max-height: 55vh;
+      overflow-y: auto;
+      .entity-information {
+        padding: 25px;
+        display: flex;
 
-  .action {
-    display: inline-block;
-    width: 250px;
-    padding: 10px;
+        .entity-modal-image {
+          width: 125px;
+          height: 125px;
 
-    .action-image {
-      width: 125px;
-      height: 125px;
-      background-color: grey;
-      margin: 0 auto;
+          img {
+            width: 125px;
+            height: 125px;
+          }
+        }
+        .entity-content {
+          display: flex;
+          flex-direction: column;
+          .entity-description {
+            margin-left: 10px;
+          }
+          .market-entity-actions {
+            margin-top: 10px;
+
+            .action-container {
+              display: inline-flex;
+              flex-direction: column;
+
+              .action {
+                display: inline-block;
+                width: 150px;
+                margin: 10px;
+                border: 1px solid #ebebeb;
+                padding: 10px 0;
+                font-weight: 500;
+
+                .btn.btn-default {
+                  &.btn-completed {
+                    background-color: #eee;
+                  }
+                }
+                .action-image {
+                  width: 100px;
+                  height: 100px;
+                  background-color: grey;
+                }
+                .fa {
+                  &[class*="icon-"] {
+                    font-size: 60px;
+                    margin: 5px 0;
+                  }
+                }
+              }
+              .fa.fa-check-circle {
+                margin-left: 5px;
+                font-size: 20px;
+                visibility: hidden;
+                &.show {
+                  visibility: visible;
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
