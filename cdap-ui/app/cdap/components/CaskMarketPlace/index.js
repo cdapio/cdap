@@ -20,7 +20,7 @@ import TabConfig from './TabConfig';
 import ConfigurableTab from '../ConfigurableTab';
 import {MyCaskMarketApi} from '../../api/caskmarket';
 import MarketAction from './action/market-action.js';
-import _ from 'lodash';
+import find from 'lodash/find';
 
 export default class CaskMarketPlace extends Component {
   componentWillMount () {
@@ -33,7 +33,7 @@ export default class CaskMarketPlace extends Component {
   }
 
   handleTabClick(id) {
-    let searchFilter = _.find(TabConfig.tabs, { id }).filter;
+    let searchFilter = find(TabConfig.tabs, { id }).filter;
     MarketAction.setFilter(searchFilter);
   }
 
