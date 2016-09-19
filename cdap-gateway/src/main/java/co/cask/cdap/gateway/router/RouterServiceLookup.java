@@ -18,7 +18,10 @@ package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.service.ServiceDiscoverable;
 import co.cask.cdap.common.utils.Networks;
+import co.cask.cdap.gateway.discovery.DistributionEndpointStrategy;
+import co.cask.cdap.route.store.RouteStore;
 import com.google.common.base.Objects;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -26,6 +29,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.ServiceDiscovered;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.slf4j.Logger;
@@ -51,9 +55,11 @@ public class RouterServiceLookup {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final LoadingCache<CacheKey, EndpointStrategy> discoverableCache;
   private final RouterPathLookup routerPathLookup;
+  private final RouteStore routeStore;
 
   @Inject
-  public RouterServiceLookup(DiscoveryServiceClient discoveryServiceClient, RouterPathLookup routerPathLookup) {
+  public RouterServiceLookup(DiscoveryServiceClient discoveryServiceClient, RouterPathLookup routerPathLookup,
+                             RouteStore routeStore) {
     this.discoveryServiceClient = discoveryServiceClient;
     this.routerPathLookup = routerPathLookup;
     this.discoverableCache = CacheBuilder.newBuilder()
@@ -64,6 +70,7 @@ public class RouterServiceLookup {
           return loadCache(key);
         }
       });
+    this.routeStore = routeStore;
   }
 
   /**
@@ -177,8 +184,12 @@ public class RouterServiceLookup {
 
   private EndpointStrategy discover(String discoverName) throws ExecutionException {
     LOG.debug("Looking up service name {}", discoverName);
+    // If its a user service, then use DistributionEndpoint Strategy
+    ServiceDiscovered serviceDiscovered = discoveryServiceClient.discover(discoverName);
 
-    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(discoverName));
+    EndpointStrategy endpointStrategy = ServiceDiscoverable.isServiceDiscoverable(discoverName) ?
+      new DistributionEndpointStrategy(serviceDiscovered, routeStore, ServiceDiscoverable.getId(discoverName)) :
+      new RandomEndpointStrategy(serviceDiscovered);
     if (endpointStrategy.pick(300L, TimeUnit.MILLISECONDS) == null) {
       LOG.debug("Discoverable endpoint {} not found", discoverName);
     }

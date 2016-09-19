@@ -17,6 +17,7 @@
 package co.cask.cdap.common.service;
 
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
 
 /**
@@ -32,6 +33,20 @@ public final class ServiceDiscoverable {
   public static String getName(String namespaceId, String applicationId, String serviceId) {
     return String.format("%s.%s.%s.%s", ProgramType.SERVICE.name().toLowerCase(), namespaceId,
                          applicationId, serviceId);
+  }
+
+  public static ProgramId getId(String name) {
+    int firstIndex = name.indexOf('.');
+    int secondIndex = name.indexOf('.', firstIndex + 1);
+    int thirdIndex = name.indexOf('.', secondIndex + 1);
+    String namespaceId = name.substring(firstIndex + 1, secondIndex);
+    String appId = name.substring(secondIndex + 1, thirdIndex);
+    String serviceName = name.substring(thirdIndex + 1);
+    return new ApplicationId(namespaceId, appId).service(serviceName);
+  }
+
+  public static boolean isServiceDiscoverable(String discoverableName) {
+    return discoverableName.startsWith(String.format("%s.", ProgramType.SERVICE.name().toLowerCase()));
   }
 
   private ServiceDiscoverable() {
