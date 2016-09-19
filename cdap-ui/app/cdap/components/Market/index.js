@@ -18,13 +18,13 @@ import React, {Component} from 'react';
 
 import TabConfig from './TabConfig';
 import ConfigurableTab from '../ConfigurableTab';
-import {MyCaskMarketApi} from '../../api/caskmarket';
+import {MyMarketApi} from '../../api/market';
 import MarketAction from './action/market-action.js';
 import find from 'lodash/find';
 
-export default class CaskMarketPlace extends Component {
+export default class Market extends Component {
   componentWillMount () {
-    MyCaskMarketApi.list()
+    MyMarketApi.list()
       .subscribe((res) => {
         MarketAction.setList(res);
       }, (err) => {

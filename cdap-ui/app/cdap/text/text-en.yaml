@@ -69,6 +69,9 @@ features:
       plugins: Plugins
       useCases: Use Cases
 
+  MarketEntityModal:
+    version: "Version: "
+
   Navbar:
     CDAP:
       dashboard: Dashboard

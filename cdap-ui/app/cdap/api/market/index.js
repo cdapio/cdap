@@ -18,9 +18,12 @@ import Datasource from '../../services/datasource';
 import {apiCreatorAbsPath} from '../../services/resource-helper';
 
 let dataSrc = new Datasource();
-const basepath = 'http://marketplace.cask.co.s3.amazonaws.com';
+const basepath = `${window.CDAP_UI_CONFIG.market.path}/${window.CDAP_UI_CONFIG.market.version}`;
 
-export const MyCaskMarketApi = {
- list: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `${basepath}/packages.json`),
- get: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `${basepath}/:packageName/:version/spec.json`)
+export const MyMarketApi = {
+  list: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `${basepath}/packages.json`),
+  get: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `${basepath}/packages/:packageName/:version/spec.json`),
+  getIcon: (entity) => {
+    return `${basepath}/packages/${entity.name}/${entity.version}/icon.jpg`;
+  }
 };
