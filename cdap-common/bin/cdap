@@ -23,10 +23,12 @@
 
 __script=${BASH_SOURCE[0]} __script_bin=$(dirname ${__script})
 __comp_home=${__script%/*/*}
+# Determine if we're in the SDK or distributed
 if [[ ${__comp_home%/*} == /opt/cdap ]]; then
   __app_home=${__comp_home}
   __cdap_home=/opt/cdap
 else
+  # We're in the SDK, __app_home and __cdap_home are identical
   __app_home=$(dirname ${__script_bin})
   __cdap_home=${__app_home}
 fi

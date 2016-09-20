@@ -167,7 +167,7 @@ cdap_stop_pidfile() {
   local readonly __ret __pidfile=${1} __label=${2:-Process}
   if [[ -f ${__pidfile} ]]; then
     local readonly __pid=$(<${__pidfile})
-    echo -n "Stopping ${__label} ..."
+    echo -n "$(date) Stopping ${__label} ..."
     if kill -0 ${__pid} >/dev/null 2>&1; then
       kill ${__pid} >/dev/null 2>&1
       while kill -0 ${__pid} >/dev/null 2>&1; do
@@ -294,10 +294,8 @@ cdap_set_java () {
     [[ -x ${__java} ]] || die "JAVA_HOME is set to an invalid location: ${JAVA_HOME}"
   else
     __java=${JAVA:-java}
-    if [[ $(which java 2>/dev/null) ]]; then
-      : # continue
-    else
-      die "JAVA_HOME is not set and 'java' was not found in your PATH. Please set JAVA_HOME to the location of your Java installation"
+    if [[ ! $(which java 2>/dev/null) ]]; then
+      die "JAVA_HOME is not set and 'java' was not found in your PATH. Please set JAVA_HOME to the location of your Java install"
     fi
   fi
   __java_version=$("${__java}" -version 2>&1 | grep version | awk '{print $3}' | awk -F '.' '{print $2}')
@@ -312,7 +310,7 @@ cdap_set_java () {
 
 #
 # cdap_set_classpath <home-dir> <conf-dir> [verbose: true/false]
-# Assembles CLASSPATH from home-dir, hbase classpath, and conf-dir and optionally echos if verbose is set true
+# Assembles CLASSPATH from home-dir, hbase classpath, and conf-dir and optionally echoes if verbose is set true
 # NOTE: this function is also sourced and invoked by the CSD control script, found here:
 #   https://github.com/caskdata/cm_csd/blob/develop/src/scripts/cdap-control.sh
 #   Any changes to this function must be compatible with the CSD's invocation
@@ -331,7 +329,7 @@ cdap_set_classpath() {
     __hbase_cp=$(hbase classpath)
   else
     # assume Hadoop/HBase libs are included via EXTRA_CLASSPATH
-    echo "[WARN] Could not find Hadoop and HBase libraries, using EXTRA_CLASSPATH"
+    logecho "[WARN] Could not find Hadoop and HBase libraries, using EXTRA_CLASSPATH"
     __cp=${__homelib}:${__conf}/:${__home}/conf/:${EXTRA_CLASSPATH}
   fi
   # Add HBase's CLASSPATH, if found and not provided
@@ -344,6 +342,9 @@ cdap_set_classpath() {
     CLASSPATH=${__cp}
   fi
   export CLASSPATH
+  if [[ ${__verbose} ]]; then
+    echo ${CLASSPATH}
+  fi
   return 0
 }
 
@@ -403,10 +404,10 @@ cdap_set_hive_classpath() {
         HIVE_ERR_MSG=$(< ${ERR_FILE})
         rm ${ERR_FILE}
         if [ ${__ret} -ne 0 ]; then
-          echo "ERROR - While determining Hive classpath, failed to get Hive settings using: hive -e 'set -v'"
-          echo "If you do not want run CDAP with Hive functionality, set the 'explore.enabled' property in cdap-site.xml to 'false'"
-          echo "Otherwise, check that the Hive client is installed, and that Hive and HDFS are running."
-          echo "stderr:"
+          echo "[ERROR] While determining Hive classpath, failed to get Hive settings using: hive -e 'set -v'"
+          echo "  If you do not want CDAP with Hive functionality, set the 'explore.enabled' property in cdap-site.xml to 'false'"
+          echo "  Otherwise, check that the Hive client is installed, and that Hive and HDFS are running."
+          echo "  stderr:"
           echo "${HIVE_ERR_MSG}"
           return 1
         fi
@@ -454,8 +455,8 @@ cdap_set_spark() {
       SPARK_ERR_MSG=$(< ${ERR_FILE})
       rm ${ERR_FILE}
       if [[ ${__ret} -ne 0 ]]; then
-        echo "ERROR - While determining Spark home, failed to get Spark settings using: spark-shell --master local"
-        echo "stderr:"
+        echo "[ERROR] While determining Spark home, failed to get Spark settings using: spark-shell --master local"
+        echo "  stderr:"
         echo "${SPARK_ERR_MSG}"
         return 1
       fi
@@ -588,7 +589,7 @@ cdap_start_java() {
   "${JAVA}" -version 2>>${__logfile}
   ulimit -a >>${__logfile}
   __defines+=" ${OPTS}"
-  echo "Running: ${JAVA} ${__defines} -cp ${CLASSPATH} ${MAIN_CLASS} ${MAIN_CLASS_ARGS} ${@}" >>${__logfile}
+  echo "$(date) Running: ${JAVA} ${__defines} -cp ${CLASSPATH} ${MAIN_CLASS} ${MAIN_CLASS_ARGS} ${@}" >>${__logfile}
   # Start our JVM
   nohup nice -n ${NICENESS} "${JAVA}" ${__defines} -cp ${CLASSPATH} ${MAIN_CLASS} ${MAIN_CLASS_ARGS} ${@} </dev/null >>${__logfile} 2>&1 &
   echo $! >${__pidfile}
@@ -614,7 +615,7 @@ cdap_run_class() {
   cdap_set_classpath "${CDAP_HOME}"/master "${CDAP_CONF}"
   # Setup Java
   cdap_set_java || return 1
-  cdap_set_spark || logecho "WARN: Could not determine SPARK_HOME! Spark support unavailable!"
+  cdap_set_spark || logecho "[WARN] Could not determine SPARK_HOME! Spark support unavailable!"
   cdap_set_hive_classpath || return 1
   # Add proper HBase compatibility to CLASSPATH
   cdap_set_hbase || exit 1
@@ -641,7 +642,7 @@ cdap_check_and_set_classpath_for_dev_environment() {
 
   # for developers only, add flow and flow related stuff to class path.
   if [[ ${IN_DEV_ENVIRONMENT} == true ]]; then
-    echo "Constructing classpath for development environment ..."
+    logecho "Constructing classpath for development environment ..."
     [[ -f "${__home}"/build/generated-classpath ]] && CLASSPATH+=":$(<${__home}/build/generated-classpath)"
     [[ -d "${__home}"/build/classes ]] && CLASSPATH+=":${__home}/build/classes/main:${__home}/conf/*"
     [[ -d "${__home}"/../data-fabric/build/classes ]] && CLASSPATH+=":${__home}/../data-fabric/build/classes/main"
@@ -651,8 +652,6 @@ cdap_check_and_set_classpath_for_dev_environment() {
   fi
   return 0
 }
-
-# FOO
 
 ###
 #
@@ -860,8 +859,7 @@ cdap_ui() {
     elif [[ $(which node 2>/dev/null) ]]; then
       MAIN_CMD=node
     else
-      echo "Unable to locate Node.js binary (node), is it installed and in the PATH?"
-      exit 1
+      die "Unable to locate Node.js binary (node), is it installed and in the PATH?"
     fi
   fi
   local readonly MAIN_CMD=${MAIN_CMD}
