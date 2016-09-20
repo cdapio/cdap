@@ -270,23 +270,23 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
           programDescriptor.getProgramId(), controller, queueAdmin, streamAdmin,
           getFlowletQueues(programDescriptor.getProgramId().getParent(), flowSpec), txExecutorFactory
         );
-        programController = new FlowTwillProgramController(programId.toId(), controller, instanceUpdater, runId);
+        programController = new FlowTwillProgramController(programId, controller, instanceUpdater, runId);
         break;
       }
       case MAPREDUCE:
-        programController = new MapReduceTwillProgramController(programId.toId(), controller, runId);
+        programController = new MapReduceTwillProgramController(programId, controller, runId);
         break;
       case WORKFLOW:
-        programController = new WorkflowTwillProgramController(programId.toId(), controller, runId);
+        programController = new WorkflowTwillProgramController(programId, controller, runId);
         break;
       case WEBAPP:
-        programController = new WebappTwillProgramController(programId.toId(), controller, runId);
+        programController = new WebappTwillProgramController(programId, controller, runId);
         break;
       case SERVICE:
-        programController = new ServiceTwillProgramController(programId.toId(), controller, runId);
+        programController = new ServiceTwillProgramController(programId, controller, runId);
         break;
       case WORKER:
-        programController = new WorkerTwillProgramController(programId.toId(), controller, runId);
+        programController = new WorkerTwillProgramController(programId, controller, runId);
         break;
     }
     return programController == null ? null : programController.startListen();

@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ProgramId;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.slf4j.Logger;
@@ -32,7 +33,7 @@ final class ServiceTwillProgramController extends AbstractTwillProgramController
 
   private static final Logger LOG = LoggerFactory.getLogger(ServiceTwillProgramController.class);
 
-  ServiceTwillProgramController(Id.Program programId, TwillController controller, RunId runId) {
+  ServiceTwillProgramController(ProgramId programId, TwillController controller, RunId runId) {
     super(programId, controller, runId);
   }
 

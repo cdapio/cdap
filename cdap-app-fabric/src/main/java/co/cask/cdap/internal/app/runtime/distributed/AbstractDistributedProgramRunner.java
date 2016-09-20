@@ -285,7 +285,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
                   "--" + RunnableOptions.CDAP_CONF_FILE, CDAP_CONF_FILE_NAME,
                   "--" + RunnableOptions.APP_SPEC_FILE, APP_SPEC_FILE_NAME,
                   "--" + RunnableOptions.PROGRAM_OPTIONS, programOptions,
-                  "--" + RunnableOptions.PROGRAM_ID, GSON.toJson(program.getId().toEntityId())
+                  "--" + RunnableOptions.PROGRAM_ID, GSON.toJson(program.getId())
                 );
 
               // Hack for CDAP-7021. Interacts with the patched YarnTwillPreparer class to cache

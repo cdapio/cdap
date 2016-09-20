@@ -187,7 +187,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       }
 
       programOpts = createProgramOptions(cmdLine, context, context.getSpecification().getConfigs());
-      resourceReporter = new ProgramRunnableResourceReporter(program.getId().toEntityId(),
+      resourceReporter = new ProgramRunnableResourceReporter(program.getId(),
                                                              metricsCollectionService, context);
 
       authEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);

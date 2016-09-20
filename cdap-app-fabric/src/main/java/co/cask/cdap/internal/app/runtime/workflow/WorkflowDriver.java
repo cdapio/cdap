@@ -168,7 +168,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                          discoveryServiceClient, nodeStates, pluginInstantiator,
                                                          secureStore, secureStoreManager);
 
-    this.workflowRunId = program.getId().toEntityId().run(basicWorkflowContext.getRunId());
+    this.workflowRunId = program.getId().run(basicWorkflowContext.getRunId());
     this.loggingContext = new WorkflowLoggingContext(program.getNamespaceId(), program.getApplicationId(),
                                                      program.getName(), workflowRunId.getRun());
     this.datasetFramework = new NameMappedDatasetFramework(datasetFramework,

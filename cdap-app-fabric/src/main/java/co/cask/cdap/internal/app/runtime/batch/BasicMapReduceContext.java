@@ -109,7 +109,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
           pluginInstantiator);
 
     this.workflowProgramInfo = workflowProgramInfo;
-    this.loggingContext = createLoggingContext(program.getId(), getRunId(), workflowProgramInfo);
+    this.loggingContext = createLoggingContext(program.getId().toId(), getRunId(), workflowProgramInfo);
     this.spec = spec;
     this.mapperResources = SystemArguments.getResources(
       RuntimeArguments.extractScope("task", "mapper", getRuntimeArguments()), spec.getMapperResources());
@@ -182,7 +182,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
 
   @Override
   public void setInput(StreamBatchReadable stream) {
-    setInput(new StreamInputFormatProvider(getProgram().getId().getNamespace(), stream, streamAdmin));
+    setInput(new StreamInputFormatProvider(new NamespaceId(getProgram().getNamespaceId()).toId(), stream, streamAdmin));
   }
 
   @Override
@@ -246,7 +246,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
       StreamBatchReadable streamBatchReadable = streamInput.getStreamBatchReadable();
       String namespace = streamInput.getNamespace();
       if (namespace == null) {
-        namespace = getProgram().getId().getNamespace().getId();
+        namespace = getProgram().getNamespaceId();
       }
       addInput(input.getAlias(),
                new StreamInputFormatProvider(new NamespaceId(namespace).toId(), streamBatchReadable, streamAdmin),
@@ -389,7 +389,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
     if (datasetName.startsWith(Constants.Stream.URL_PREFIX)) {
       StreamBatchReadable streamBatchReadable = new StreamBatchReadable(URI.create(datasetName));
       Input input = Input.of(streamBatchReadable.getStreamName(),
-                             new StreamInputFormatProvider(getProgram().getId().getNamespace(),
+                             new StreamInputFormatProvider(new NamespaceId(getProgram().getNamespaceId()).toId(),
                                                            streamBatchReadable, streamAdmin));
       return (Input.InputFormatProviderInput) input.alias(originalAlias);
     }
