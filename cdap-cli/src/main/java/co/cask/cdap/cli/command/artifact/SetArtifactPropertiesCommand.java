@@ -25,7 +25,8 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.client.ArtifactClient;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.common.cli.Arguments;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -59,8 +60,8 @@ public class SetArtifactPropertiesCommand extends AbstractAuthCommand {
     String scopeStr = arguments.get(ArgumentName.SCOPE.toString());
     ArtifactScope scope = ArtifactScope.valueOf(scopeStr.toUpperCase());
 
-    Id.Namespace namespace = scope == ArtifactScope.SYSTEM ? Id.Namespace.SYSTEM : cliConfig.getCurrentNamespace();
-    Id.Artifact artifactId = Id.Artifact.from(namespace, artifactName, artifactVersion);
+    NamespaceId namespace = scope == ArtifactScope.SYSTEM ? NamespaceId.SYSTEM : cliConfig.getCurrentNamespace();
+    ArtifactId artifactId = namespace.artifact(artifactName, artifactVersion);
 
     String propertiesFilePath = arguments.get(ArgumentName.LOCAL_FILE_PATH.toString());
     File propertiesFile = resolver.resolvePathToFile(propertiesFilePath);
@@ -73,7 +74,7 @@ public class SetArtifactPropertiesCommand extends AbstractAuthCommand {
                                      "and that it contains a 'properties' key whose value is a JSON object of the " +
                                      "artifact properties.", e);
       }
-      artifactClient.writeProperties(artifactId, properties.properties);
+      artifactClient.writeProperties(artifactId.toId(), properties.properties);
     }
   }
 

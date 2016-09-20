@@ -24,8 +24,8 @@ import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.ArtifactClient;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.PluginSummary;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -51,15 +51,15 @@ public class ListArtifactPluginsCommand extends AbstractAuthCommand {
 
     String artifactName = arguments.get(ArgumentName.ARTIFACT_NAME.toString());
     String artifactVersion = arguments.get(ArgumentName.ARTIFACT_VERSION.toString());
-    Id.Artifact artifactId = Id.Artifact.from(cliConfig.getCurrentNamespace(), artifactName, artifactVersion);
+    ArtifactId artifactId = cliConfig.getCurrentNamespace().artifact(artifactName, artifactVersion);
     String pluginType = arguments.get(ArgumentName.PLUGIN_TYPE.toString());
 
     final List<PluginSummary> pluginSummaries;
     String scopeStr = arguments.getOptional(ArgumentName.SCOPE.toString());
     if (scopeStr == null) {
-      pluginSummaries = artifactClient.getPluginSummaries(artifactId, pluginType);
+      pluginSummaries = artifactClient.getPluginSummaries(artifactId.toId(), pluginType);
     } else {
-      pluginSummaries = artifactClient.getPluginSummaries(artifactId, pluginType,
+      pluginSummaries = artifactClient.getPluginSummaries(artifactId.toId(), pluginType,
         ArtifactScope.valueOf(scopeStr.toUpperCase()));
     }
     Table table = Table.builder()

@@ -24,8 +24,9 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.StreamViewClient;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ViewSpecification;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
 import com.google.inject.Inject;
@@ -51,8 +52,8 @@ public class CreateOrUpdateStreamViewCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    Id.Stream streamId = Id.Stream.from(cliConfig.getCurrentNamespace(), arguments.get(ArgumentName.STREAM.toString()));
-    Id.Stream.View viewId = Id.Stream.View.from(streamId, arguments.get(ArgumentName.VIEW.toString()));
+    StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
+    StreamViewId viewId = streamId.view(arguments.get(ArgumentName.VIEW.toString()));
     String formatName = arguments.get(ArgumentName.FORMAT.toString());
     Schema schema = getSchema(arguments);
 
@@ -63,11 +64,11 @@ public class CreateOrUpdateStreamViewCommand extends AbstractAuthCommand {
     FormatSpecification formatSpecification = new FormatSpecification(formatName, schema, settings);
     ViewSpecification viewSpecification = new ViewSpecification(formatSpecification);
 
-    boolean created = client.createOrUpdate(viewId, viewSpecification);
+    boolean created = client.createOrUpdate(viewId.toId(), viewSpecification);
     if (created) {
-      output.printf("Successfully created stream-view '%s'\n", viewId.getId());
+      output.printf("Successfully created stream-view '%s'\n", viewId.getEntityName());
     } else {
-      output.printf("Successfully updated stream-view '%s'\n", viewId.getId());
+      output.printf("Successfully updated stream-view '%s'\n", viewId.getEntityName());
     }
   }
 

@@ -25,7 +25,7 @@ import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.common.utils.TimeMathParser;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.common.cli.Arguments;
 
 import java.io.PrintStream;
@@ -59,9 +59,9 @@ public class GetProgramLogsCommand extends AbstractAuthCommand {
         throw new CommandInputError(this);
       }
       String programName = programIdParts[1];
-      Id.Program programId = Id.Program.from(cliConfig.getCurrentNamespace(), appId,
-                                             elementType.getProgramType(), programName);
-      logs = programClient.getProgramLogs(programId, start, stop);
+      ProgramId programId = cliConfig.getCurrentNamespace().app(appId).program(elementType.getProgramType(),
+                                                                               programName);
+      logs = programClient.getProgramLogs(programId.toId(), start, stop);
     } else {
       throw new IllegalArgumentException("Cannot get logs for " + elementType.getNamePlural());
     }

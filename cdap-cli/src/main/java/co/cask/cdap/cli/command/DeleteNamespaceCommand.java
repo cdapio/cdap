@@ -23,7 +23,7 @@ import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.client.NamespaceClient;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
 import com.google.inject.Inject;
@@ -48,30 +48,30 @@ public class DeleteNamespaceCommand extends AbstractCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream out) throws Exception {
-    Id.Namespace namespaceId = Id.Namespace.from(arguments.get(ArgumentName.NAMESPACE_NAME.toString()));
+    NamespaceId namespaceId = new NamespaceId(arguments.get(ArgumentName.NAMESPACE_NAME.toString()));
 
     ConsoleReader consoleReader = new ConsoleReader();
-    if (Id.Namespace.DEFAULT.equals(namespaceId)) {
+    if (NamespaceId.DEFAULT.equals(namespaceId)) {
       out.println("WARNING: Deleting contents of a namespace is an unrecoverable operation");
       String prompt = String.format("Are you sure you want to delete contents of namespace '%s' [y/N]? ",
-                                    namespaceId.getId());
+                                    namespaceId.getNamespace());
       String userConfirm = consoleReader.readLine(prompt);
       if ("y".equalsIgnoreCase(userConfirm)) {
-        namespaceClient.delete(namespaceId);
-        out.printf("Contents of namespace '%s' were deleted successfully", namespaceId.getId());
+        namespaceClient.delete(namespaceId.toId());
+        out.printf("Contents of namespace '%s' were deleted successfully", namespaceId.getNamespace());
         out.println();
       }
     } else {
       out.println("WARNING: Deleting a namespace is an unrecoverable operation");
       String prompt = String.format("Are you sure you want to delete namespace '%s' [y/N]? ",
-                                    namespaceId.getId());
+                                    namespaceId.getNamespace());
       String userConfirm = consoleReader.readLine(prompt);
       if ("y".equalsIgnoreCase(userConfirm)) {
-        namespaceClient.delete(namespaceId);
+        namespaceClient.delete(namespaceId.toId());
         out.println(String.format(SUCCESS_MSG, namespaceId));
         if (cliConfig.getCurrentNamespace().equals(namespaceId)) {
-          cliConfig.setNamespace(Id.Namespace.DEFAULT);
-          out.printf("Now using namespace '%s'", Id.Namespace.DEFAULT.getId());
+          cliConfig.setNamespace(NamespaceId.DEFAULT);
+          out.printf("Now using namespace '%s'", NamespaceId.DEFAULT.getNamespace());
           out.println();
         }
       }

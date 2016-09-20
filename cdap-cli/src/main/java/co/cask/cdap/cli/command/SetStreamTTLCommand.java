@@ -23,7 +23,7 @@ import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.StreamClient;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
 
@@ -44,11 +44,10 @@ public class SetStreamTTLCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    Id.Stream streamId = Id.Stream.from(cliConfig.getCurrentNamespace(),
-                                        arguments.get(ArgumentName.STREAM.toString()));
+    StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
     long ttlInSeconds = arguments.getLong(ArgumentName.TTL_IN_SECONDS.toString());
-    streamClient.setTTL(streamId, ttlInSeconds);
-    output.printf("Successfully set TTL of stream '%s' to %d\n", streamId.getId(), ttlInSeconds);
+    streamClient.setTTL(streamId.toId(), ttlInSeconds);
+    output.printf("Successfully set TTL of stream '%s' to %d\n", streamId.getEntityName(), ttlInSeconds);
   }
 
   @Override

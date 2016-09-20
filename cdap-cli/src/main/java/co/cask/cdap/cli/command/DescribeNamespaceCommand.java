@@ -25,8 +25,8 @@ import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.NamespaceClient;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
 import com.google.common.collect.Lists;
@@ -50,8 +50,8 @@ public class DescribeNamespaceCommand extends AbstractCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    Id.Namespace namespace = Id.Namespace.from(arguments.get(ArgumentName.NAMESPACE_NAME.getName()));
-    NamespaceMeta namespaceMeta = namespaceClient.get(namespace);
+    NamespaceId namespace = new NamespaceId(arguments.get(ArgumentName.NAMESPACE_NAME.getName()));
+    NamespaceMeta namespaceMeta = namespaceClient.get(namespace.toId());
     Table table = Table.builder()
       .setHeader("name", "description", "config")
       .setRows(Lists.newArrayList(namespaceMeta), new RowMaker<NamespaceMeta>() {

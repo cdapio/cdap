@@ -26,7 +26,7 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.client.exception.DisconnectedException;
 import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.security.authentication.client.AuthenticationClient;
 import co.cask.cdap.security.authentication.client.Credential;
@@ -128,7 +128,7 @@ public class CLIConfig implements TableRendererConfig {
     return tableRenderer;
   }
 
-  public Id.Namespace getCurrentNamespace() {
+  public NamespaceId getCurrentNamespace() {
     if (connectionConfig == null || connectionConfig.getNamespace() == null) {
       throw new DisconnectedException(connectionConfig);
     }
@@ -308,7 +308,7 @@ public class CLIConfig implements TableRendererConfig {
     }
   }
 
-  public void setNamespace(Id.Namespace namespace) {
+  public void setNamespace(NamespaceId namespace) {
     setConnectionConfig(new CLIConnectionConfig(connectionConfig, namespace));
   }
 

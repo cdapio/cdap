@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,21 +30,18 @@ import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.conf.StringUtils;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ServiceId;
 import co.cask.common.cli.Arguments;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Multimap;
+import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
 import java.net.URL;
-import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -79,15 +76,16 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
 
     String appId = appAndServiceId[0];
     String serviceId = appAndServiceId[1];
-    Id.Service service = Id.Service.from(
-      Id.Application.from(cliConfig.getCurrentNamespace(), appId), serviceId);
+    ServiceId service = cliConfig.getCurrentNamespace().app(appId).service(serviceId);
 
     String method = arguments.get(ArgumentName.HTTP_METHOD.toString());
     String path = arguments.get(ArgumentName.ENDPOINT.toString());
     path = path.startsWith("/") ? path.substring(1) : path;
-    String headers = arguments.get(ArgumentName.HEADERS.toString(), "");
-    String bodyString = arguments.get(ArgumentName.HTTP_BODY.toString(), "");
-    String bodyFile = arguments.get(ArgumentName.LOCAL_FILE_PATH.toString(), "");
+    String headers = arguments.getOptional(ArgumentName.HEADERS.toString(), "");
+    String bodyString = arguments.getOptional(ArgumentName.HTTP_BODY.toString(), "");
+    String bodyFile = arguments.getOptional(ArgumentName.LOCAL_FILE_PATH.toString(), "");
+    Preconditions.checkNotNull(bodyString);
+    Preconditions.checkNotNull(bodyFile);
     if (!bodyString.isEmpty() && !bodyFile.isEmpty()) {
       String message = String.format("Please provide either [body <%s>] or [body:file <%s>], " +
                                        "but not both", ArgumentName.HTTP_BODY.toString(),
@@ -96,7 +94,7 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
     }
 
     Map<String, String> headerMap = GSON.fromJson(headers, new TypeToken<Map<String, String>>() { }.getType());
-    URL url = new URL(serviceClient.getServiceURL(service), path);
+    URL url = new URL(serviceClient.getServiceURL(service.toId()), path);
 
     HttpMethod httpMethod = HttpMethod.valueOf(method);
     HttpRequest.Builder builder = HttpRequest.builder(httpMethod, url).addHeaders(headerMap);
@@ -134,20 +132,6 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
                          "To provide the body as a file, use 'body:file <%s>'.",
                          Fragment.of(Article.A, ElementType.SERVICE.getName()),
                          ArgumentName.HEADERS, ArgumentName.HTTP_BODY, ArgumentName.LOCAL_FILE_PATH);
-  }
-
-  /**
-   * Format multiple header values as a comma separated list of the values.
-   * This is a valid formatting: http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html
-   */
-  private String formatHeaders(HttpResponse response) {
-    Multimap<String, String> headers = response.getHeaders();
-    ImmutableMap.Builder<String, String> builder = new ImmutableMap.Builder<>();
-    for (String key : headers.keySet()) {
-      Collection<String> value = headers.get(key);
-      builder.put(key, StringUtils.arrayToString(value.toArray(new String[value.size()])));
-    }
-    return formatHeader(builder.build());
   }
 
   @Override

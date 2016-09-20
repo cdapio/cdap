@@ -34,6 +34,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.QueryId;
 import co.cask.cdap.proto.id.ScheduleId;
+import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.id.SystemServiceId;
@@ -422,6 +423,11 @@ public abstract class Id implements EntityIdCompatible {
 
     public static Service from(Namespace namespace, String application, String id) {
       return new Service(Id.Application.from(namespace, application), id);
+    }
+
+    @Override
+    public ServiceId toEntityId() {
+      return new ServiceId(super.getNamespaceId(), super.getApplicationId(), super.getId());
     }
   }
 

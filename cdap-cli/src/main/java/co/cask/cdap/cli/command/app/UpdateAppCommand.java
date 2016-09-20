@@ -25,9 +25,9 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.client.ApplicationClient;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.common.cli.Arguments;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -58,7 +58,7 @@ public class UpdateAppCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String appName = arguments.get(ArgumentName.APP.toString());
-    Id.Application appId = Id.Application.from(cliConfig.getCurrentNamespace(), appName);
+    ApplicationId appId = cliConfig.getCurrentNamespace().app(appName);
 
     String artifactName = arguments.get(ArgumentName.ARTIFACT_NAME.toString());
     String artifactVersion = arguments.get(ArgumentName.ARTIFACT_VERSION.toString());
@@ -76,7 +76,7 @@ public class UpdateAppCommand extends AbstractAuthCommand {
     }
 
     AppRequest<JsonObject> appRequest = new AppRequest<>(artifact, config);
-    applicationClient.update(appId, appRequest);
+    applicationClient.update(appId.toId(), appRequest);
     output.println("Successfully updated application");
   }
 

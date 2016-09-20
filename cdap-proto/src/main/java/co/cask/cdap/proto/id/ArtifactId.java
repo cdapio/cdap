@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.proto.id;
 
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
 
@@ -42,6 +43,37 @@ public class ArtifactId extends NamespacedEntityId implements ParentedId<Namespa
     ensureValidId("artifact", artifact);
     this.artifact = artifact;
     this.version = version;
+  }
+
+  /**
+   * Parses a string expected to be of the form {name}-{version}.jar into an {@link ArtifactId},
+   * where name is a valid id and version is of the form expected by {@link ArtifactVersion}.
+   *
+   * @param namespace the namespace to use
+   * @param fileName the string to parse
+   * @throws IllegalArgumentException if the string is not in the expected format
+   */
+  public ArtifactId(String namespace, String fileName) {
+    super(namespace, EntityType.ARTIFACT);
+    if (!fileName.endsWith(".jar")) {
+      throw new IllegalArgumentException(String.format("Artifact name '%s' does not end in .jar", fileName));
+    }
+
+    // strip '.jar' from the filename
+    fileName = fileName.substring(0, fileName.length() - ".jar".length());
+
+    // true means try and match version as the end of the string
+    ArtifactVersion artifactVersion = new ArtifactVersion(fileName, true);
+    String rawVersion = artifactVersion.getVersion();
+    // this happens if it could not parse the version
+    if (rawVersion == null) {
+      throw new IllegalArgumentException(
+        String.format("Artifact name '%s' is not of the form {name}-{version}.jar", fileName));
+    }
+
+    // filename should be {name}-{version}.  Strip -{version} from it to get artifact name
+    this.artifact = fileName.substring(0, fileName.length() - rawVersion.length() - 1);
+    this.version = rawVersion;
   }
 
   public String getNamespace() {

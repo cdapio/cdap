@@ -26,7 +26,7 @@ import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.proto.DatasetMeta;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -52,9 +52,8 @@ public class DescribeDatasetInstanceCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    Id.DatasetInstance instance = Id.DatasetInstance.from(cliConfig.getCurrentNamespace(),
-                                                          arguments.get(ArgumentName.DATASET.toString()));
-    DatasetMeta meta = datasetClient.get(instance);
+    DatasetId instance = cliConfig.getCurrentNamespace().dataset(arguments.get(ArgumentName.DATASET.toString()));
+    DatasetMeta meta = datasetClient.get(instance.toId());
 
     Table table = Table.builder()
       .setHeader("hive table", "spec", "type")

@@ -26,7 +26,6 @@ import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.WorkflowClient;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -61,9 +60,8 @@ public class GetWorkflowStateCommand extends AbstractCommand {
       throw new CommandInputError(this);
     }
 
-    ProgramRunId programRunId = new ProgramRunId(cliConfig.getCurrentNamespace().getId(), programIdParts[0],
-                                                 ProgramType.WORKFLOW, programIdParts[1],
-                                                 arguments.get(ArgumentName.RUN_ID.toString()));
+    ProgramRunId programRunId = cliConfig.getCurrentNamespace().app(programIdParts[0]).workflow(programIdParts[1])
+      .run(arguments.get(ArgumentName.RUN_ID.toString()));
 
     Table table = getWorkflowNodeStates(programRunId);
     cliConfig.getTableRenderer().render(cliConfig, printStream, table);

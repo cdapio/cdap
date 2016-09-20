@@ -25,7 +25,7 @@ import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.ProgramClient;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 
@@ -49,7 +49,7 @@ public class GetWorkflowCurrentRunCommand extends AbstractCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
-    Id.Application appId = Id.Application.from(cliConfig.getCurrentNamespace(), programIdParts[0]);
+    ApplicationId appId = cliConfig.getCurrentNamespace().app(programIdParts[0]);
 
     List<WorkflowActionNode> nodes;
     if (elementType.getProgramType() != null) {
@@ -59,7 +59,7 @@ public class GetWorkflowCurrentRunCommand extends AbstractCommand {
       String workflowId = programIdParts[1];
       String runId = arguments.get(ArgumentName.RUN_ID.toString());
 
-      nodes = programClient.getWorkflowCurrent(appId, workflowId, runId);
+      nodes = programClient.getWorkflowCurrent(appId.toId(), workflowId, runId);
     } else {
       throw new IllegalArgumentException("Unrecognized program element type for current runs: " + elementType);
     }

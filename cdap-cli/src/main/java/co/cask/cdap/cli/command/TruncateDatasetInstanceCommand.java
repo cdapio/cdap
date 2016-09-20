@@ -23,7 +23,7 @@ import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.DatasetClient;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
 
@@ -44,10 +44,9 @@ public class TruncateDatasetInstanceCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    Id.DatasetInstance instance = Id.DatasetInstance.from(cliConfig.getCurrentNamespace(),
-                                                          arguments.get(ArgumentName.DATASET.toString()));
-    datasetClient.truncate(instance);
-    output.printf("Successfully truncated dataset '%s'\n", instance.getId());
+    DatasetId instance = cliConfig.getCurrentNamespace().dataset(arguments.get(ArgumentName.DATASET.toString()));
+    datasetClient.truncate(instance.toId());
+    output.printf("Successfully truncated dataset '%s'\n", instance.getEntityName());
   }
 
   @Override

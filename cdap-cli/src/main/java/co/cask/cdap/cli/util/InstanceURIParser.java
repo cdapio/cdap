@@ -20,7 +20,7 @@ import co.cask.cdap.cli.CLIConnectionConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.inject.Inject;
 
 import java.net.URI;
@@ -45,9 +45,9 @@ public class InstanceURIParser {
     }
 
     URI uri = URI.create(uriString);
-    Id.Namespace namespace =
+    NamespaceId namespace =
       (uri.getPath() == null || uri.getPath().isEmpty() || "/".equals(uri.getPath())) ?
-      Id.Namespace.DEFAULT : Id.Namespace.from(uri.getPath().substring(1));
+      NamespaceId.DEFAULT : new NamespaceId(uri.getPath().substring(1));
     String hostname = uri.getHost();
     boolean sslEnabled = "https".equals(uri.getScheme());
     int port = uri.getPort();

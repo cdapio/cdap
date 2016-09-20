@@ -24,11 +24,12 @@ import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.cli.completers.PrefixCompleter;
-import com.google.common.collect.Lists;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -60,8 +61,8 @@ public class HttpEndpointPrefixCompleter extends PrefixCompleter {
     Map<String, String> arguments = ArgumentParser.getArguments(buffer, PATTERN);
     ProgramIdArgument programIdArgument = ArgumentParser.parseProgramId(arguments.get(PROGRAM_ID));
     if (programIdArgument != null) {
-      Id.Service service = Id.Service.from(cliConfig.getCurrentNamespace(),
-                                           programIdArgument.getAppId(), programIdArgument.getProgramId());
+      ServiceId service = cliConfig.getCurrentNamespace().app(programIdArgument.getAppId()).service(
+        programIdArgument.getProgramId());
       completer.setEndpoints(getEndpoints(service, arguments.get(METHOD)));
     } else {
       completer.setEndpoints(Collections.<String>emptyList());
@@ -69,10 +70,10 @@ public class HttpEndpointPrefixCompleter extends PrefixCompleter {
     return super.complete(buffer, cursor, candidates);
   }
 
-  public Collection<String> getEndpoints(Id.Service serviceId, String method) {
-    Collection<String> httpEndpoints = Lists.newArrayList();
+  public Collection<String> getEndpoints(ServiceId serviceId, String method) {
+    Collection<String> httpEndpoints = new ArrayList<>();
     try {
-      for (ServiceHttpEndpoint endpoint : serviceClient.getEndpoints(serviceId)) {
+      for (ServiceHttpEndpoint endpoint : serviceClient.getEndpoints(serviceId.toId())) {
         if (endpoint.getMethod().equals(method)) {
           httpEndpoints.add(endpoint.getPath());
         }

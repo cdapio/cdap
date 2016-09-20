@@ -21,7 +21,7 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.LineageClient;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
@@ -50,13 +50,12 @@ public class GetDatasetLineageCommand extends AbstractCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     long currentTime = System.currentTimeMillis();
-    Id.DatasetInstance dataset = Id.DatasetInstance.from(
-      cliConfig.getCurrentNamespace(), arguments.get(ArgumentName.DATASET.toString()));
+    DatasetId dataset = cliConfig.getCurrentNamespace().dataset(arguments.get(ArgumentName.DATASET.toString()));
     long start = getTimestamp(arguments.getOptional("start", "min"), currentTime);
     long end = getTimestamp(arguments.getOptional("end", "max"), currentTime);
     Integer levels = arguments.getIntOptional("levels", null);
 
-    LineageRecord lineage = client.getLineage(dataset, start, end, levels);
+    LineageRecord lineage = client.getLineage(dataset.toId(), start, end, levels);
     Table table = Table.builder()
       .setHeader("start", "end", "relations", "programs", "data")
       .setRows(

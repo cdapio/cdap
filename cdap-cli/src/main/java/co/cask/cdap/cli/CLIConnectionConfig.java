@@ -17,7 +17,7 @@
 package co.cask.cdap.cli;
 
 import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 
 import java.net.URI;
 import javax.annotation.Nullable;
@@ -27,28 +27,28 @@ import javax.annotation.Nullable;
  */
 public class CLIConnectionConfig extends ConnectionConfig {
 
-  private final Id.Namespace namespace;
+  private final NamespaceId namespace;
   private final String username;
 
-  public CLIConnectionConfig(ConnectionConfig connectionConfig, Id.Namespace namespace, @Nullable String username) {
+  public CLIConnectionConfig(ConnectionConfig connectionConfig, NamespaceId namespace, @Nullable String username) {
     super(connectionConfig);
     this.namespace = namespace;
     this.username = username;
   }
 
-  public CLIConnectionConfig(CLIConnectionConfig connectionConfig, Id.Namespace namespace) {
+  public CLIConnectionConfig(CLIConnectionConfig connectionConfig, NamespaceId namespace) {
     super(connectionConfig);
     this.username = connectionConfig.getUsername();
     this.namespace = namespace;
   }
 
-  public CLIConnectionConfig(Id.Namespace namespace, String hostname, int port, boolean sslEnabled) {
+  public CLIConnectionConfig(NamespaceId namespace, String hostname, int port, boolean sslEnabled) {
     super(hostname, port, sslEnabled);
     this.namespace = namespace;
     this.username = null;
   }
 
-  public Id.Namespace getNamespace() {
+  public NamespaceId getNamespace() {
     return namespace;
   }
 
@@ -60,6 +60,6 @@ public class CLIConnectionConfig extends ConnectionConfig {
   public URI getURI() {
     return URI.create(String.format("%s://%s%s:%d/%s", super.isSSLEnabled() ? "https" : "http",
                                     username == null ? "" : username + "@",
-                                    super.getHostname(), super.getPort(), namespace.getId()));
+                                    super.getHostname(), super.getPort(), namespace.getNamespace()));
   }
 }

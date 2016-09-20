@@ -21,7 +21,8 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.StreamViewClient;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
 
@@ -42,10 +43,10 @@ public class DeleteStreamViewCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    Id.Stream streamId = Id.Stream.from(cliConfig.getCurrentNamespace(), arguments.get(ArgumentName.STREAM.toString()));
-    Id.Stream.View view = Id.Stream.View.from(streamId, arguments.get(ArgumentName.VIEW.toString()));
-    client.delete(view);
-    output.printf("Successfully deleted stream-view '%s'\n", view.getId());
+    StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
+    StreamViewId view = streamId.view(arguments.get(ArgumentName.VIEW.toString()));
+    client.delete(view.toId());
+    output.printf("Successfully deleted stream-view '%s'\n", view.getEntityName());
   }
 
   @Override

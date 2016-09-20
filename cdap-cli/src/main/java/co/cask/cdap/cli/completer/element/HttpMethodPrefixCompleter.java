@@ -23,7 +23,7 @@ import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.cli.completers.PrefixCompleter;
 import com.google.common.collect.Lists;
@@ -59,8 +59,8 @@ public class HttpMethodPrefixCompleter extends PrefixCompleter {
     Map<String, String> arguments = ArgumentParser.getArguments(buffer, PATTERN);
     ProgramIdArgument programIdArgument = ArgumentParser.parseProgramId(arguments.get(PROGRAM_ID));
     if (programIdArgument != null) {
-      Id.Service service = Id.Service.from(cliConfig.getCurrentNamespace(),
-                                           programIdArgument.getAppId(), programIdArgument.getProgramId());
+      ServiceId service = cliConfig.getCurrentNamespace().app(programIdArgument.getAppId()).service(
+        programIdArgument.getProgramId());
       completer.setEndpoints(getMethods(service));
     } else {
       completer.setEndpoints(Collections.<String>emptyList());
@@ -68,10 +68,10 @@ public class HttpMethodPrefixCompleter extends PrefixCompleter {
     return super.complete(buffer, cursor, candidates);
   }
 
-  public Collection<String> getMethods(Id.Service serviceId) {
+  public Collection<String> getMethods(ServiceId serviceId) {
     Collection<String> httpMethods = Lists.newArrayList();
     try {
-      for (ServiceHttpEndpoint endpoint : serviceClient.getEndpoints(serviceId)) {
+      for (ServiceHttpEndpoint endpoint : serviceClient.getEndpoints(serviceId.toId())) {
         String method = endpoint.getMethod();
         if (!httpMethods.contains(method)) {
           httpMethods.add(method);

@@ -24,7 +24,6 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.client.DatasetModuleClient;
-import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -57,7 +56,7 @@ public class DeployDatasetModuleCommand extends AbstractAuthCommand {
     String moduleName = arguments.get(ArgumentName.NEW_DATASET_MODULE.toString());
     String moduleJarClassname = arguments.get(ArgumentName.DATASET_MODULE_JAR_CLASSNAME.toString());
 
-    datasetModuleClient.add(Id.DatasetModule.from(cliConfig.getCurrentNamespace(), moduleName),
+    datasetModuleClient.add(cliConfig.getCurrentNamespace().datasetModule(moduleName).toId(),
                             moduleJarClassname, moduleJarFile);
     output.printf("Successfully deployed dataset module '%s'\n", moduleName);
   }

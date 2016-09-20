@@ -16,26 +16,26 @@
 package co.cask.cdap.cli;
 
 import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 
 /**
  * Connection information to a CDAP instance, with namespace.
  */
 public class NamespacedConnectionConfig extends ConnectionConfig {
 
-  private final Id.Namespace namespace;
+  private final NamespaceId namespace;
 
-  public NamespacedConnectionConfig(Id.Namespace namespace, String hostname, int port, boolean sslEnabled) {
+  public NamespacedConnectionConfig(NamespaceId namespace, String hostname, int port, boolean sslEnabled) {
     super(hostname, port, sslEnabled);
     this.namespace = namespace;
   }
 
-  public NamespacedConnectionConfig(Id.Namespace namespace, ConnectionConfig connectionConfig) {
+  public NamespacedConnectionConfig(NamespaceId namespace, ConnectionConfig connectionConfig) {
     super(connectionConfig.getHostname(), connectionConfig.getPort(), connectionConfig.isSSLEnabled());
     this.namespace = namespace;
   }
 
-  public Id.Namespace getNamespace() {
+  public NamespaceId getNamespace() {
     return namespace;
   }
 }

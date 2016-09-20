@@ -27,7 +27,7 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ServiceClient;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ServiceId;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
 
@@ -54,8 +54,8 @@ public class CheckServiceAvailabilityCommand extends AbstractAuthCommand impleme
 
     String appId = appAndServiceId[0];
     String serviceName = appAndServiceId[1];
-    Id.Service serviceId = Id.Service.from(cliConfig.getCurrentNamespace(), appId, serviceName);
-    output.println(serviceClient.getAvailability(serviceId));
+    ServiceId serviceId = cliConfig.getCurrentNamespace().app(appId).service(serviceName);
+    output.println(serviceClient.getAvailability(serviceId.toId()));
   }
 
   @Override
