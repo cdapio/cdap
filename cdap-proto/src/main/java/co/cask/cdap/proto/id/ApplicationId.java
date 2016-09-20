@@ -38,6 +38,13 @@ public class ApplicationId extends NamespacedEntityId implements ParentedId<Name
 
   public ApplicationId(String namespace, String application, String version) {
     super(namespace, EntityType.APPLICATION);
+    if (application == null) {
+      throw new NullPointerException("Application ID cannot be null.");
+    }
+    if (version == null) {
+      throw new NullPointerException("Version cannot be null.");
+    }
+    ensureValidId("application", application);
     this.application = application;
     this.version = version;
   }

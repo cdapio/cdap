@@ -26,6 +26,10 @@ public abstract class NamespacedEntityId extends EntityId {
 
   protected NamespacedEntityId(String namespace, EntityType entity) {
     super(entity);
+    if (namespace == null) {
+      throw new NullPointerException("Namespace can not be null.");
+    }
+    ensureValidNamespace(namespace);
     this.namespace = namespace;
   }
 

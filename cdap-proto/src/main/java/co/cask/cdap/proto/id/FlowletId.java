@@ -40,6 +40,12 @@ public class FlowletId extends NamespacedEntityId implements ParentedId<ProgramI
 
   public FlowletId(ApplicationId appId, String flow, String flowlet) {
     super(appId.getNamespace(), EntityType.FLOWLET);
+    if (flow == null) {
+      throw new NullPointerException("Flow cannot be null");
+    }
+    if (flowlet == null) {
+      throw new NullPointerException("Flowlet cannot be null");
+    }
     this.application = appId.getApplication();
     this.version = appId.getVersion();
     this.flow = flow;

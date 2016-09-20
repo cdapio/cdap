@@ -33,6 +33,14 @@ public class StreamViewId extends NamespacedEntityId implements ParentedId<Strea
 
   public StreamViewId(String namespace, String stream, String view) {
     super(namespace, EntityType.STREAM_VIEW);
+    if (stream == null) {
+      throw new NullPointerException("Stream ID cannot be null.");
+    }
+    if (view == null) {
+      throw new NullPointerException("View ID cannot be null.");
+    }
+    ensureValidId("stream", stream);
+    ensureValidId("view", view);
     this.stream = stream;
     this.view = view;
   }

@@ -34,6 +34,18 @@ public class ScheduleId extends NamespacedEntityId implements ParentedId<Applica
 
   public ScheduleId(String namespace, String application, String version, String schedule) {
     super(namespace, EntityType.SCHEDULE);
+    if (application == null) {
+      throw new NullPointerException("Application name cannot be null.");
+    }
+    if (application.isEmpty()) {
+      throw new IllegalArgumentException("Application name cannot be empty.");
+    }
+    if (version == null) {
+      throw new NullPointerException("Version cannot be null.");
+    }
+    if (schedule == null) {
+      throw new NullPointerException("Schedule id cannot be null.");
+    }
     this.application = application;
     this.version = version;
     this.schedule = schedule;

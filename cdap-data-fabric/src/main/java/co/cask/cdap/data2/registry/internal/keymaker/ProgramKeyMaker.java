@@ -27,6 +27,10 @@ import co.cask.cdap.proto.id.ProgramId;
  */
 public class ProgramKeyMaker implements KeyMaker<ProgramId> {
 
+  /**
+   * Creates a {@link ProgramId} with no program name. This allows matching
+   * for all datasets associated with an Application as opposed to a single program.
+   */
   public static ProgramId getProgramId(ApplicationId applicationId) {
     // Use empty programId to denote applicationId
     return applicationId.flow("");

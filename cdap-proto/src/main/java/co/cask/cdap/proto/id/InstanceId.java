@@ -32,6 +32,9 @@ public class InstanceId extends EntityId {
 
   public InstanceId(String instance) {
     super(EntityType.INSTANCE);
+    if (instance == null) {
+      throw new NullPointerException("Instance ID cannot be null");
+    }
     this.instance = instance;
   }
 

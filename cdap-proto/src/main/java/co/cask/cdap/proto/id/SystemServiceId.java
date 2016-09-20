@@ -32,6 +32,9 @@ public class SystemServiceId extends EntityId {
 
   public SystemServiceId(String service) {
     super(EntityType.SYSTEM_SERVICE);
+    if (service == null) {
+      throw new NullPointerException("Service name cannot be null.");
+    }
     this.service = service;
   }
 

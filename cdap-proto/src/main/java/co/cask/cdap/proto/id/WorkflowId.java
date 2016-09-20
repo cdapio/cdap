@@ -17,11 +17,8 @@
 
 package co.cask.cdap.proto.id;
 
-import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-
-import java.util.Iterator;
 
 /**
  * Uniquely identifies a workflow.

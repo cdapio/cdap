@@ -32,6 +32,10 @@ public class DatasetTypeId extends NamespacedEntityId implements ParentedId<Name
 
   public DatasetTypeId(String namespace, String type) {
     super(namespace, EntityType.DATASET_TYPE);
+    if (type == null) {
+      throw new NullPointerException("Type cannot be null.");
+    }
+    ensureValidDatasetId("dataset type", type);
     this.type = type;
   }
 

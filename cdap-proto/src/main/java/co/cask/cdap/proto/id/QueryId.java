@@ -32,6 +32,9 @@ public class QueryId extends EntityId {
 
   public QueryId(String handle) {
     super(EntityType.QUERY);
+    if (handle == null) {
+      throw new NullPointerException("Query Handle cannot be null.");
+    }
     this.handle = handle;
   }
 

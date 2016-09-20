@@ -35,6 +35,18 @@ public class FlowletQueueId extends NamespacedEntityId implements ParentedId<Flo
 
   public FlowletQueueId(String namespace, String application, String flow, String flowlet, String queue) {
     super(namespace, EntityType.FLOWLET_QUEUE);
+    if (application == null) {
+      throw new NullPointerException("Application cannot be null");
+    }
+    if (flow == null) {
+      throw new NullPointerException("Flow cannot be null");
+    }
+    if (flowlet == null) {
+      throw new NullPointerException("Flowlet cannot be null");
+    }
+    if (queue == null) {
+      throw new NullPointerException("Queue cannot be null");
+    }
     this.application = application;
     this.flow = flow;
     this.flowlet = flowlet;

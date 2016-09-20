@@ -34,16 +34,13 @@ public class DatasetId extends NamespacedEntityId implements ParentedId<Namespac
 
   public DatasetId(String namespace, String dataset) {
     super(namespace, EntityType.DATASET);
-
+    if (dataset == null) {
+      throw new NullPointerException("Dataset ID cannot be null.");
+    }
+    ensureValidDatasetId("dataset", dataset);
     // Preconstruct the parent since it will get used many times for authorization for each dataset op.
     this.namespaceId = new NamespaceId(namespace);
     this.dataset = dataset;
-
-    if (!isValidDatasetId(dataset)) {
-      throw new IllegalArgumentException(
-        String.format("Invalid characters found in dataset instance Id %s. Allowed characters are letters, numbers, " +
-                        "and _, -, ., or $.", dataset));
-    }
   }
 
   public String getDataset() {
