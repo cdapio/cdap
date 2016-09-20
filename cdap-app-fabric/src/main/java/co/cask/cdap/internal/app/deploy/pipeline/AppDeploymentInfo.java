@@ -36,15 +36,18 @@ public class AppDeploymentInfo {
   private final NamespaceId namespaceId;
   private final String appClassName;
   private final String appName;
+  private final String appVersion;
   private final String configString;
 
   public AppDeploymentInfo(ArtifactDescriptor artifactDescriptor, NamespaceId namespaceId,
-                           String appClassName, @Nullable String appName, @Nullable String configString) {
+                           String appClassName, @Nullable String appName, @Nullable String appVersion,
+                           @Nullable String configString) {
     this.artifactId = Artifacts.toArtifactId(namespaceId, artifactDescriptor.getArtifactId());
     this.artifactLocation = artifactDescriptor.getLocation();
     this.namespaceId = namespaceId;
     this.appClassName = appClassName;
     this.appName = appName;
+    this.appVersion = appVersion;
     this.configString = configString;
   }
 
@@ -82,6 +85,14 @@ public class AppDeploymentInfo {
   @Nullable
   public String getApplicationName() {
     return appName;
+  }
+
+  /**
+   * Returns the version of the application or {@code null} if is it not provided.
+   */
+  @Nullable
+  public String getApplicationVersion() {
+    return appVersion;
   }
 
   /**

@@ -67,6 +67,12 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     if ((uriParts.length >= 2) && uriParts[1].equals("feeds")) {
       // TODO find a better way to handle that - this looks hackish
       return null;
+    } else if ((uriParts.length >= 9) && "versions".equals(uriParts[5]) && "services".equals(uriParts[7])
+      && "methods".equals(uriParts[9])) {
+      // User defined services (version specific) handle methods on them:
+      //Path: "/v3/namespaces/{namespace-id}/apps/{app-id}/versions/{version-id}/services/{service-id}/methods/
+      //       <user-defined-method-path>"
+      return ServiceDiscoverable.getVersionedName(uriParts[2], uriParts[4], uriParts[6], uriParts[8]);
     } else if ((uriParts.length >= 9) && "services".equals(uriParts[5]) && "methods".equals(uriParts[7])) {
       //User defined services handle methods on them:
       //Path: "/v3/namespaces/{namespace-id}/apps/{app-id}/services/{service-id}/methods/<user-defined-method-path>"

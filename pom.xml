@@ -61,6 +61,10 @@
       <id>sonatype</id>
       <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
     </repository>
+    <repository>
+      <id>snapshot</id>
+      <url>https://repository.apache.org/content/repositories/snapshots/</url>
+    </repository>
   </repositories>
 
 
@@ -124,7 +128,7 @@
     <mockito.version>1.9.5</mockito.version>
     <mysql.version>5.1.21</mysql.version>
     <netty.version>3.6.6.Final</netty.version>
-    <netty.http.version>0.15.0</netty.http.version>
+    <netty.http.version>0.16.0-SNAPSHOT</netty.http.version>
     <rs-api.version>2.0</rs-api.version>
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
@@ -135,7 +139,7 @@
     <slf4j.version>1.7.5</slf4j.version>
     <tephra.version>0.8.0-incubating</tephra.version>
     <thrift.version>0.9.3</thrift.version>
-    <twill.version>0.7.0-incubating</twill.version>
+    <twill.version>0.8.0-SNAPSHOT</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
     <spark.version>1.6.1</spark.version>

@@ -248,7 +248,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   private Scheduler getSchedulerForSchedule(Id.Program program, String scheduleName) throws NotFoundException {
     ApplicationSpecification appSpec = store.getApplication(program.getApplication().toEntityId());
     if (appSpec == null) {
-      throw new ApplicationNotFoundException(program.getApplication());
+      throw new ApplicationNotFoundException(program.getApplication().toEntityId());
     }
 
     Map<String, ScheduleSpecification> schedules = appSpec.getSchedules();

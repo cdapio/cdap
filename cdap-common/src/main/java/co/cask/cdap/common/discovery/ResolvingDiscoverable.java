@@ -25,14 +25,12 @@ import java.net.InetSocketAddress;
 /**
  * Discoverable that resolves 0.0.0.0 to a routable interface.
  */
-public class ResolvingDiscoverable implements Discoverable {
+public class ResolvingDiscoverable extends Discoverable {
 
   private static final Logger LOG = LoggerFactory.getLogger(ResolvingDiscoverable.class);
 
-  private final Discoverable discoverable;
-
   private ResolvingDiscoverable(Discoverable discoverable) {
-    this.discoverable = discoverable;
+    super(discoverable.getName(), discoverable.getSocketAddress());
   }
 
   public static ResolvingDiscoverable of(Discoverable discoverable) {
@@ -40,13 +38,8 @@ public class ResolvingDiscoverable implements Discoverable {
   }
 
   @Override
-  public String getName() {
-    return discoverable.getName();
-  }
-
-  @Override
   public InetSocketAddress getSocketAddress() {
-    return resolve(discoverable.getSocketAddress());
+    return resolve(super.getSocketAddress());
   }
 
   private InetSocketAddress resolve(InetSocketAddress bindAddress) {
@@ -59,10 +52,5 @@ public class ResolvingDiscoverable implements Discoverable {
       LOG.warn("Unable to resolve bindAddress", e);
     }
     return bindAddress;
-  }
-
-  @Override
-  public String toString() {
-    return "ResolvingDiscoverable(" + discoverable + ")";
   }
 }

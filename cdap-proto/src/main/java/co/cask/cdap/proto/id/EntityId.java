@@ -69,6 +69,8 @@ public abstract class EntityId implements IdCompatible {
   private static final Pattern datasetIdPattern = Pattern.compile("[$\\.a-zA-Z0-9_-]+");
   // Only allow alphanumeric and _ character for namespace
   private static final Pattern namespacePattern = Pattern.compile("[a-zA-Z0-9_]+");
+  // Allow '.' for versionId
+  private static final Pattern versionIdPattern = Pattern.compile("[\\.a-zA-Z0-9_-]+");
 
   public static void ensureValidId(String propertyName, String name) {
     if (!isValidId(name)) {
@@ -101,6 +103,10 @@ public abstract class EntityId implements IdCompatible {
 
   public static boolean isValidNamespace(String namespace) {
     return namespacePattern.matcher(namespace).matches();
+  }
+
+  public static boolean isValidVersionId(String datasetId) {
+    return versionIdPattern.matcher(datasetId).matches();
   }
 
   private final EntityType entity;

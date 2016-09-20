@@ -27,7 +27,6 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
 import java.util.Set;
 
 /**
@@ -73,16 +72,7 @@ public class MockHttpService extends AbstractIdleService {
   public void registerServer() {
     // Register services of test server
     log.info("Registering service {}", serviceName);
-    cancelDiscovery = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
-      @Override
-      public String getName() {
-        return serviceName;
-      }
-
-      @Override
-      public InetSocketAddress getSocketAddress() {
-        return httpService.getBindAddress();
-      }
-    }));
+    cancelDiscovery = discoveryService.register(
+      ResolvingDiscoverable.of(new Discoverable(serviceName, httpService.getBindAddress())));
   }
 }

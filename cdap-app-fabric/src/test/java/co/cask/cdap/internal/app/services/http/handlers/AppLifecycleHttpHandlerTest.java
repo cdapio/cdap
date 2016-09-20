@@ -32,6 +32,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.id.ApplicationId;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
@@ -124,6 +125,63 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     Assert.assertEquals(200,
       doDelete(getVersionedAPIPath("apps/" + appId.getId(), appId.getNamespaceId())).getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void testDeployVersionedAndNonVersionedApp() throws Exception {
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "configapp", "1.0.0");
+    addAppArtifact(artifactId, ConfigTestApp.class);
+
+    ApplicationId appId = new ApplicationId(Id.Namespace.DEFAULT.getId(), "cfgAppWithVersion", "1.0.0");
+    ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("abc", "def");
+    AppRequest<ConfigTestApp.ConfigClass> request = new AppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config);
+    Assert.assertEquals(200, deploy(appId, request).getStatusLine().getStatusCode());
+    // Cannot update the app created by versioned API with versionId not ending with "-SNAPSHOT"
+    Assert.assertEquals(409, deploy(appId, request).getStatusLine().getStatusCode());
+    Assert.assertEquals(404, getVersionedAppResponse(Id.Namespace.DEFAULT.getId(), appId.getApplication(),
+                                            "non_existing_version").getStatusLine().getStatusCode());
+    Assert.assertEquals(404, getNonVersionedAppResponse(Id.Namespace.DEFAULT.getId(),
+                                                        appId.getApplication()).getStatusLine().getStatusCode());
+
+    // Deploy app with default versionId by non-versioned API
+    Id.Application appIdDefault = Id.Application.from(Id.Namespace.DEFAULT, appId.getApplication());
+    ConfigTestApp.ConfigClass configDefault = new ConfigTestApp.ConfigClass("uvw", "xyz");
+    AppRequest<ConfigTestApp.ConfigClass> requestDefault = new AppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), configDefault);
+    Assert.assertEquals(200, deploy(appIdDefault, requestDefault).getStatusLine().getStatusCode());
+
+    // Deploy app with versionId "version_2" by versioned API
+    ApplicationId appIdV2 = new ApplicationId(appId.getNamespace(), appId.getApplication(), "2.0.0");
+    ConfigTestApp.ConfigClass configV2 = new ConfigTestApp.ConfigClass("ghi", "jkl");
+    AppRequest<ConfigTestApp.ConfigClass> requestV2 = new AppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), configV2);
+    Assert.assertEquals(200, deploy(appIdV2, requestV2).getStatusLine().getStatusCode());
+
+    JsonObject appDetails = getAppDetails(appId.getNamespace(), appId.getApplication(), appId.getVersion());
+    Assert.assertEquals(GSON.toJson(config), appDetails.get("configuration").getAsString());
+
+    // Get app info for the app with default versionId by versioned API
+    JsonObject appDetailsDefault = getAppDetails(appId.getNamespace(), appId.getApplication(),
+                                                 ApplicationId.DEFAULT_VERSION);
+    Assert.assertEquals(GSON.toJson(configDefault), appDetailsDefault.get("configuration").getAsString());
+
+    // Get app info for the app with versionId "version_2" by versioned API
+    JsonObject appDetailsV2 = getAppDetails(appId.getNamespace(), appId.getApplication(), appIdV2.getVersion());
+    Assert.assertEquals(GSON.toJson(configV2), appDetailsV2.get("configuration").getAsString());
+
+    // Update app with default versionId by versioned API
+    ConfigTestApp.ConfigClass configDefault2 = new ConfigTestApp.ConfigClass("mno", "pqr");
+    AppRequest<ConfigTestApp.ConfigClass> requestDefault2 = new AppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), configDefault2);
+    Assert.assertEquals(200, deploy(appIdDefault.toEntityId(), requestDefault2).getStatusLine().getStatusCode());
+
+    JsonObject appDetailsDefault2 = getAppDetails(appId.getNamespace(), appId.getApplication());
+    Assert.assertEquals(GSON.toJson(configDefault2), appDetailsDefault2.get("configuration").getAsString());
+
+    // Get updated app info for the app with default versionId by non-versioned API
+    JsonObject appDetailsDefault2withVersion = getAppDetails(appId.getNamespace(), appId.getApplication());
+    Assert.assertEquals(GSON.toJson(configDefault2), appDetailsDefault2withVersion.get("configuration").getAsString());
   }
 
   /**

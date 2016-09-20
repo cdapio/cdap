@@ -191,5 +191,10 @@ public final class Hadoop21YarnAppClient extends AbstractIdleService implements 
         throw Throwables.propagate(e);
       }
     }
+
+    @Override
+    public void close() throws Exception {
+      yarnClient.close();
+    }
   }
 }
