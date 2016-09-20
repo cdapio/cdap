@@ -610,7 +610,8 @@ public abstract class AppFabricTestBase {
   /**
    * Tries to start the given program with the given runtime arguments and expect the call completed with the status.
    */
-  protected void startProgramVersioned(ProgramId program, Map<String, String> args, int expectedStatusCode) throws Exception {
+  protected void startProgramVersioned(ProgramId program, Map<String, String> args, int expectedStatusCode)
+    throws Exception {
     String path = String.format("apps/%s/versions/%s/%s/%s/start",
                                 program.getApplication(),
                                 program.getVersion(),

@@ -252,7 +252,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getVersionStatus(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("app-id") String appId,
-                               @PathParam("app-id") String versionId,
+                               @PathParam("version-id") String versionId,
                                @PathParam("type") String type,
                                @PathParam("id") String id) throws Exception {
     ApplicationId applicationId = new ApplicationId(namespaceId, appId, versionId);

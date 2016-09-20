@@ -399,8 +399,8 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
       String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion()),
       Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(409, response.getStatusLine().getStatusCode());
-    Assert.assertEquals("'" + program.getApplication() +
-                          "' could not be deleted. Reason: The following programs are still running: "
+    Assert.assertEquals("'" + program.getParent() + "' could not be deleted. Reason: The following programs are" +
+                          " still running: "
                           + program.getProgram(), readResponse(response));
 
     stopProgramVersioned(program, null, 200, null);

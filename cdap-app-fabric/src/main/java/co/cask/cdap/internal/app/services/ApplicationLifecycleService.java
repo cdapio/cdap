@@ -85,7 +85,6 @@ import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.apache.hadoop.mapreduce.v2.app.webapp.App;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
