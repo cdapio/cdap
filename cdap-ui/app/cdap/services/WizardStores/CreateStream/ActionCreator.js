@@ -14,7 +14,7 @@
  * the License.
  */
 import CreateStreamStore from 'services/WizardStores/CreateStream/CreateStreamStore';
-import {MyStreamsApi} from 'api/stream';
+import {MyStreamApi} from 'api/stream';
 
 const PublishStream = () => {
   let state = CreateStreamStore.getState();
@@ -41,7 +41,7 @@ const PublishStream = () => {
     putParams.description = state.general.description;
   }
 
-  return MyStreamsApi
+  return MyStreamApi
     .create(urlParams, putParams);
 };
 

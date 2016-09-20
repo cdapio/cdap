@@ -14,14 +14,15 @@
  * the License.
  */
 
-import Datasource from '../../services/datasource';
-import {apiCreator} from '../../services/resource-helper';
+import Datasource from 'services/datasource';
+import {apiCreator} from 'services/resource-helper';
 
 let dataSrc = new Datasource();
 const basepath = '/namespaces/:namespace/streams';
 
-export const MyStreamsApi = {
-  list: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}`),
+export const MyStreamApi = {
+  list: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
   get: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:streamId`),
-  create: apiCreator(dataSrc, 'PUT', 'REQUEST', `${basepath}/:streamId`)
+  create: apiCreator(dataSrc, 'PUT', 'REQUEST', `${basepath}/:streamId`),
+  getPrograms: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:streamId/programs`)
 };
