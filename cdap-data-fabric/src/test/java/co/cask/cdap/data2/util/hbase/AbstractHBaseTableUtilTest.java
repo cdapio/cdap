@@ -340,7 +340,7 @@ public abstract class AbstractHBaseTableUtilTest {
     ).get(60, TimeUnit.SECONDS);
 
     Assert.assertEquals(4, hAdmin.listTables().length);
-    tableUtil.deleteAllInNamespace(hAdmin, Id.Namespace.DEFAULT.getId());
+    tableUtil.deleteAllInNamespace(hAdmin, NamespaceId.DEFAULT.getEntityName());
     Assert.assertEquals(1, hAdmin.listTables().length);
 
     drop(tableIdInOtherNamespace);

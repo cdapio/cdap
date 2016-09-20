@@ -76,10 +76,6 @@ public class ArtifactId extends NamespacedEntityId implements ParentedId<Namespa
     this.version = rawVersion;
   }
 
-  public String getNamespace() {
-    return namespace;
-  }
-
   public String getArtifact() {
     return artifact;
   }

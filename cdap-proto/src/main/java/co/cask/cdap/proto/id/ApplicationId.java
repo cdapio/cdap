@@ -72,8 +72,8 @@ public class ApplicationId extends NamespacedEntityId implements ParentedId<Name
     return new ProgramId(this, type, program);
   }
 
-  public ProgramId flow(String program) {
-    return new ProgramId(this, ProgramType.FLOW, program);
+  public FlowId flow(String program) {
+    return new FlowId(this, program);
   }
 
   public WorkflowId workflow(String program) {

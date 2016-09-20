@@ -47,7 +47,6 @@ import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.BasicThrowable;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
@@ -150,8 +149,8 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
     // Setup dataset framework context, if required
     if (programDatasetFramework instanceof ProgramContextAware) {
-      Id.Program programId = program.getId();
-      ((ProgramContextAware) programDatasetFramework).initContext(new Id.Run(programId, runId.getId()));
+      ProgramId programId = program.getId().toEntityId();
+      ((ProgramContextAware) programDatasetFramework).initContext(programId.run(runId));
     }
 
     MapReduce mapReduce;

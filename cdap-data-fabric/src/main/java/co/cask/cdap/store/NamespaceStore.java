@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,8 @@
 
 package co.cask.cdap.store;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 
 import java.util.List;
 import javax.annotation.Nullable;
@@ -48,22 +48,22 @@ public interface NamespaceStore {
   /**
    * Retrieves a namespace from the namespace metadata store.
    *
-   * @param id {@link Id.Namespace} of the requested namespace
+   * @param id {@link NamespaceId} of the requested namespace
    * @return {@link NamespaceMeta} of the requested namespace
    */
   @Nullable
-  NamespaceMeta get(Id.Namespace id);
+  NamespaceMeta get(NamespaceId id);
 
   /**
    * Deletes a namespace from the namespace metadata store.
    *
-   * @param id {@link Id.Namespace} of the namespace to delete
+   * @param id {@link NamespaceId} of the namespace to delete
    * @return {@link NamespaceMeta} of the namespace if it was found and deleted, null if the specified namespace did not
    * exist
    * These semantics of return type are borrowed from {@link java.util.concurrent.ConcurrentHashMap#remove}
    */
   @Nullable
-  NamespaceMeta delete(Id.Namespace id);
+  NamespaceMeta delete(NamespaceId id);
 
   /**
    * Lists all registered namespaces.

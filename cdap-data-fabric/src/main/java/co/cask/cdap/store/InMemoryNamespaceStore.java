@@ -14,11 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2;
+package co.cask.cdap.store;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.store.NamespaceStore;
+import co.cask.cdap.proto.id.NamespaceId;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,31 +30,30 @@ import javax.annotation.Nullable;
  */
 public class InMemoryNamespaceStore implements NamespaceStore {
 
-  private final Map<Id.Namespace, NamespaceMeta> namespaces = new HashMap<>();
+  private final Map<NamespaceId, NamespaceMeta> namespaces = new HashMap<>();
 
   @Nullable
   @Override
   public NamespaceMeta create(NamespaceMeta metadata) {
-    return namespaces.put(Id.Namespace.from(metadata.getName()), metadata);
+    return namespaces.put(metadata.getNamespaceId(), metadata);
   }
 
   @Override
   public void update(NamespaceMeta metadata) {
-    Id.Namespace namespaceId = Id.Namespace.from(metadata.getName());
-    if (namespaces.containsKey(namespaceId)) {
-      namespaces.put(namespaceId, metadata);
+    if (namespaces.containsKey(metadata.getNamespaceId())) {
+      namespaces.put(metadata.getNamespaceId(), metadata);
     }
   }
 
   @Nullable
   @Override
-  public NamespaceMeta get(Id.Namespace id) {
+  public NamespaceMeta get(NamespaceId id) {
     return namespaces.get(id);
   }
 
   @Nullable
   @Override
-  public NamespaceMeta delete(Id.Namespace id) {
+  public NamespaceMeta delete(NamespaceId id) {
     return namespaces.remove(id);
   }
 

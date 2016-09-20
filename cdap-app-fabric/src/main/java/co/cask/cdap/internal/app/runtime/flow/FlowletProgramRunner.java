@@ -78,9 +78,11 @@ import co.cask.cdap.internal.io.ReflectionDatumReader;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.FlowletMethod;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.FlowletId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.io.ByteBufferInputStream;
 import com.google.common.base.Function;
@@ -202,9 +204,9 @@ public final class FlowletProgramRunner implements ProgramRunner {
       Preconditions.checkArgument(Flowlet.class.isAssignableFrom(clz), "%s is not a Flowlet.", clz);
 
       // Setup dataset framework context, if required
-      Id.Program programId = program.getId();
-      Id.Flow.Flowlet flowletId = Id.Flow.Flowlet.from(programId.getApplication(), programId.getId(), flowletName);
-      Id.Run run = new Id.Run(programId, runId.getId());
+      ProgramId programId = program.getId().toEntityId();
+      FlowletId flowletId = programId.flowlet(flowletName);
+      ProgramRunId run = programId.run(runId);
       if (dsFramework instanceof ProgramContextAware) {
         ((ProgramContextAware) dsFramework).initContext(run, flowletId);
       }
@@ -578,8 +580,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
                   }
                 });
 
-                queueReaders.add(queueReaderFactory.createStreamReader(queueName.toStreamId().toEntityId(),
-                                                                       consumerSupplier, batchSize, decoder));
+                queueReaders.add(queueReaderFactory.createStreamReader(queueName.toStreamId(), consumerSupplier,
+                                                                       batchSize, decoder));
 
               } else {
                 int numGroups = getNumGroups(Iterables.concat(queueSpecs.row(entry.getKey()).values()), queueName);
@@ -687,7 +689,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     for (ConsumerSupplier<?> consumerSupplier : consumerSuppliers) {
       QueueName queueName = consumerSupplier.getQueueName();
       if (queueName.isStream()) {
-        streams.add(queueName.toStreamId().toEntityId());
+        streams.add(queueName.toStreamId());
       }
     }
 

@@ -185,7 +185,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
         if (programDatasetFramework instanceof ProgramContextAware) {
           ProgramRunId programRunId = program.getId().toEntityId()
             .run(ProgramRunners.getRunId(contextConfig.getProgramOptions()));
-          ((ProgramContextAware) programDatasetFramework).initContext(programRunId.toId());
+          ((ProgramContextAware) programDatasetFramework).initContext(programRunId);
         }
 
         MapReduceSpecification spec = program.getApplicationSpecification().getMapReduce().get(program.getName());

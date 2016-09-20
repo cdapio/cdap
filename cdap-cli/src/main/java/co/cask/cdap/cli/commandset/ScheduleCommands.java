@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,9 +31,8 @@ import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.ScheduleClient;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
-import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
+import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
@@ -103,7 +102,7 @@ public class ScheduleCommands extends CommandSet<Command> implements Categorized
 
     @Override
     public String getDescription() {
-      return String.format("Gets the status of a schedule");
+      return "Gets the status of a schedule";
     }
   }
 
@@ -207,10 +206,9 @@ public class ScheduleCommands extends CommandSet<Command> implements Categorized
 
       final String appId = programIdParts[0];
       String workflowName = programIdParts[1];
-      ProgramId workflowId = cliConfig.getCurrentNamespace().app(appId).workflow(workflowName);
+      WorkflowId workflowId = cliConfig.getCurrentNamespace().app(appId).workflow(workflowName);
 
-      List<ScheduleSpecification> list = scheduleClient.list(Id.Workflow.from(workflowId.getParent().toId(),
-                                                                             workflowId.getEntityName()));
+      List<ScheduleSpecification> list = scheduleClient.list(workflowId.toId());
       Table table = Table.builder()
         .setHeader("application", "program", "program type", "name", "type", "description", "properties",
                    "runtime args")

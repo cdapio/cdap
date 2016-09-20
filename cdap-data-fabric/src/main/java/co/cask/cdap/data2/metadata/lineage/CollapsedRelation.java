@@ -16,18 +16,14 @@
 
 package co.cask.cdap.data2.metadata.lineage;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
-import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableSet;
 import org.apache.twill.api.RunId;
 
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -77,19 +73,6 @@ public class CollapsedRelation {
 
   public Set<NamespacedEntityId> getComponents() {
     return components;
-  }
-
-  /**
-   * Temporary fix while phasing out usages of the {@link Id} class.
-   */
-  public Set<Id.NamespacedId> getIdComponents() {
-    Set<NamespacedEntityId> components = getComponents();
-    return new HashSet<>(Collections2.transform(components, new Function<NamespacedEntityId, Id.NamespacedId>() {
-      @Override
-      public Id.NamespacedId apply(NamespacedEntityId namespacedEntityId) {
-        return (Id.NamespacedId) namespacedEntityId.toId();
-      }
-    }));
   }
 
   @Override

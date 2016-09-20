@@ -19,7 +19,6 @@ package co.cask.cdap.data.tools;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
@@ -51,7 +50,7 @@ final class DeletedDatasetMetadataRemover {
   }
 
   void remove() throws DatasetManagementException {
-    List<Id.DatasetInstance> removedDatasets = new ArrayList<>();
+    List<DatasetId> removedDatasets = new ArrayList<>();
     for (NamespaceMeta namespaceMeta : nsStore.list()) {
       Set<MetadataSearchResultRecord> searchResults =
         metadataStore.searchMetadataOnType(namespaceMeta.getName(), "*",
@@ -60,12 +59,12 @@ final class DeletedDatasetMetadataRemover {
         NamespacedEntityId entityId = searchResult.getEntityId();
         Preconditions.checkState(entityId instanceof DatasetId,
                                  "Since search was filtered for %s, expected result to be a %s, but got a %s",
-                                 MetadataSearchTargetType.DATASET, Id.DatasetInstance.class.getSimpleName(),
+                                 MetadataSearchTargetType.DATASET, DatasetId.class.getSimpleName(),
                                  entityId.getClass().getName());
         DatasetId datasetInstance = (DatasetId) entityId;
         if (!dsFramework.hasInstance(datasetInstance)) {
           metadataStore.removeMetadata(datasetInstance);
-          removedDatasets.add(datasetInstance.toId());
+          removedDatasets.add(datasetInstance);
         }
       }
     }

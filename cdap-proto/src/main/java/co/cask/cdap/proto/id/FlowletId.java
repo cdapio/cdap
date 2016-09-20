@@ -52,11 +52,6 @@ public class FlowletId extends NamespacedEntityId implements ParentedId<ProgramI
     this.flowlet = flowlet;
   }
 
-  @Override
-  public String getNamespace() {
-    return namespace;
-  }
-
   public String getApplication() {
     return application;
   }

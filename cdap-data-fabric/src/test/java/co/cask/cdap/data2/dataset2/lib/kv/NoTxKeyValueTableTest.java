@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,7 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -42,7 +42,7 @@ public abstract class NoTxKeyValueTableTest {
 
   private static final Map<String, String> NO_ARGS = DatasetDefinition.NO_ARGUMENTS;
 
-  protected static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("myspace");
+  protected static final NamespaceId NAMESPACE_ID = new NamespaceId("myspace");
 
   protected abstract DatasetDefinition<? extends NoTxKeyValueTable, ? extends DatasetAdmin> getDefinition()
     throws IOException;
@@ -53,7 +53,7 @@ public abstract class NoTxKeyValueTableTest {
     DatasetSpecification spec = def.configure("table", DatasetProperties.EMPTY);
 
     ClassLoader cl = NoTxKeyValueTable.class.getClassLoader();
-    DatasetContext datasetContext = DatasetContext.from(NAMESPACE_ID.getId());
+    DatasetContext datasetContext = DatasetContext.from(NAMESPACE_ID.getEntityName());
     // create & exists
     DatasetAdmin admin = def.getAdmin(datasetContext, spec, cl);
     Assert.assertFalse(admin.exists());

@@ -16,7 +16,7 @@
 
 package co.cask.cdap.proto.metadata.lineage;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 
 import java.util.Objects;
 
@@ -24,9 +24,9 @@ import java.util.Objects;
  * Class to serialize program in {@link LineageRecord}.
  */
 public class ProgramRecord {
-  private final Id.NamespacedId entityId;
+  private final NamespacedEntityId entityId;
 
-  public ProgramRecord(Id.NamespacedId entityId) {
+  public ProgramRecord(NamespacedEntityId entityId) {
     this.entityId = entityId;
   }
 

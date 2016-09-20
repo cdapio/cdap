@@ -71,7 +71,7 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
         }
         String workerName = programIdParts[1];
         ProgramId workerId = appId.worker(workerName);
-        programClient.setWorkerInstances((Id.Worker) workerId.toId(), numInstances);
+        programClient.setWorkerInstances(Id.Worker.from(workerId.getParent().toId(), workerName), numInstances);
         output.printf("Successfully set worker '%s' of app '%s' to %d instances\n",
                       workerName, appId.getEntityName(), numInstances);
         break;

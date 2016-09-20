@@ -177,7 +177,7 @@ public final class SparkRuntimeContextProvider {
       if (programDatasetFramework instanceof ProgramContextAware) {
         ProgramRunId programRunId = program.getId().toEntityId()
           .run(ProgramRunners.getRunId(contextConfig.getProgramOptions()));
-        ((ProgramContextAware) programDatasetFramework).initContext(programRunId.toId());
+        ((ProgramContextAware) programDatasetFramework).initContext(programRunId);
       }
 
       PluginInstantiator pluginInstantiator = createPluginInstantiator(cConf, contextConfig, program.getClassLoader());

@@ -16,24 +16,25 @@
 
 package co.cask.cdap.data2.metadata.writer;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramRunId;
 
 /**
  * Interface implemented by classes that need program context information.
  */
 public interface ProgramContextAware {
   /**
-   * Initalize with program run information.
+   * Initialize with program run information.
 
    * @param run program run
    */
-  void initContext(Id.Run run);
+  void initContext(ProgramRunId run);
 
   /**
-   * Intialize with program run and program component (i.e, flowet Id, etc.) information.
+   * Initalize with program run and program component (i.e, flowlet Id, etc.) information.
 
    * @param run program run
    * @param componentId program component
    */
-  void initContext(Id.Run run, Id.NamespacedId componentId);
+  void initContext(ProgramRunId run, NamespacedEntityId componentId);
 }

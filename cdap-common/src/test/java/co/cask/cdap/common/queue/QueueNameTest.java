@@ -16,7 +16,7 @@
 
 package co.cask.cdap.common.queue;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.FlowId;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -28,7 +28,7 @@ public class QueueNameTest {
   @Test
   public void testQueueNameForFlowlet() {
     // create a queue name
-    Id.Flow flowId = Id.Flow.from("namespace", "app", "flow");
+    FlowId flowId = new FlowId("namespace", "app", "flow");
     QueueName queueName = QueueName.fromFlowlet(flowId, "flowlet", "out");
 
     // verify all parts are correct

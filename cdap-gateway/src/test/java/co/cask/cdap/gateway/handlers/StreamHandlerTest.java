@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,7 +29,6 @@ import co.cask.cdap.format.TextRecordFormat;
 import co.cask.cdap.gateway.GatewayFastTestsSuite;
 import co.cask.cdap.gateway.GatewayTestBase;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.StreamDetail;
@@ -76,7 +75,7 @@ public class StreamHandlerTest extends GatewayTestBase {
 
 
   protected URL createURL(String path) throws URISyntaxException, MalformedURLException {
-    return createURL(Id.Namespace.DEFAULT.getId(), path);
+    return createURL(NamespaceId.DEFAULT.getEntityName(), path);
   }
 
   protected URL createStreamInfoURL(String streamName) throws URISyntaxException, MalformedURLException {
@@ -214,12 +213,12 @@ public class StreamHandlerTest extends GatewayTestBase {
     Assert.assertTrue(specs.isEmpty());
     StreamId s1 = NamespaceId.DEFAULT.stream("stream1");
     StreamId s2 = NamespaceId.DEFAULT.stream("stream2");
-    createStream(s1.toId());
+    createStream(s1);
     specs = listStreams(NamespaceId.DEFAULT);
     Assert.assertEquals(1, specs.size());
     StreamDetail specification = specs.get(0);
     Assert.assertEquals(s1.getStream(), specification.getName());
-    createStream(s2.toId());
+    createStream(s2);
     specs = listStreams(NamespaceId.DEFAULT);
     Assert.assertEquals(2, specs.size());
     try {
@@ -349,8 +348,8 @@ public class StreamHandlerTest extends GatewayTestBase {
 
   @Test
   public void testStreamCreateInNonexistentNamespace() throws Exception {
-    Id.Namespace originallyNonExistentNamespace = Id.Namespace.from("originallyNonExistentNamespace");
-    Id.Stream streamId = Id.Stream.from(originallyNonExistentNamespace, "streamName");
+    NamespaceId originallyNonExistentNamespace = new NamespaceId("originallyNonExistentNamespace");
+    StreamId streamId = originallyNonExistentNamespace.stream("streamName");
     HttpResponse response = createStream(streamId, 404);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getResponseCode());
 
@@ -363,8 +362,8 @@ public class StreamHandlerTest extends GatewayTestBase {
   public void testNamespacedStreamEvents() throws Exception {
     // Create two streams with the same name, in different namespaces.
     String streamName = "testNamespacedEvents";
-    Id.Stream streamId1 = Id.Stream.from(TEST_NAMESPACE1, streamName);
-    Id.Stream streamId2 = Id.Stream.from(TEST_NAMESPACE2, streamName);
+    StreamId streamId1 = new StreamId(TEST_NAMESPACE1, streamName);
+    StreamId streamId2 = new StreamId(TEST_NAMESPACE2, streamName);
 
     createStream(streamId1);
     createStream(streamId2);
@@ -372,7 +371,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     List<String> eventsSentToStream1 = Lists.newArrayList();
     // Enqueue 10 entries to the stream in the first namespace
     for (int i = 0; i < 10; ++i) {
-      String body = streamId1.getNamespaceId() + i;
+      String body = streamId1.getNamespace() + i;
       sendEvent(streamId1, body);
       eventsSentToStream1.add(body);
     }
@@ -380,7 +379,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     List<String> eventsSentToStream2 = Lists.newArrayList();
     // Enqueue only 5 entries to the stream in the second namespace, decrementing the value each time
     for (int i = 0; i > -5; --i) {
-      String body = streamId1.getNamespaceId() + i;
+      String body = streamId1.getNamespace() + i;
       sendEvent(streamId2, body);
       eventsSentToStream2.add(body);
     }
@@ -398,8 +397,8 @@ public class StreamHandlerTest extends GatewayTestBase {
   public void testNamespacedMetrics() throws Exception {
     // Create two streams with the same name, in different namespaces.
     String streamName = "testNamespacedStreamMetrics";
-    Id.Stream streamId1 = Id.Stream.from(TEST_NAMESPACE1, streamName);
-    Id.Stream streamId2 = Id.Stream.from(TEST_NAMESPACE2, streamName);
+    StreamId streamId1 = new StreamId(TEST_NAMESPACE1, streamName);
+    StreamId streamId2 = new StreamId(TEST_NAMESPACE2, streamName);
 
     createStream(streamId1);
     createStream(streamId2);
@@ -420,8 +419,8 @@ public class StreamHandlerTest extends GatewayTestBase {
   }
 
 
-  private HttpResponse createStream(Id.Stream streamId, int... allowedErrorCodes) throws Exception {
-    URL url = createURL(streamId.getNamespaceId(), "streams/" + streamId.getId());
+  private HttpResponse createStream(StreamId streamId, int... allowedErrorCodes) throws Exception {
+    URL url = createURL(streamId.getNamespace(), "streams/" + streamId.getEntityName());
     HttpRequest request = HttpRequest.put(url).build();
     HttpResponse response = HttpRequests.execute(request);
     int responseCode = response.getResponseCode();
@@ -442,15 +441,15 @@ public class StreamHandlerTest extends GatewayTestBase {
     return GSON.fromJson(response.getResponseBodyAsString(), new TypeToken<List<StreamDetail>>() { }.getType());
   }
 
-  private void sendEvent(Id.Stream streamId, String body) throws Exception {
-    URL url = createURL(streamId.getNamespaceId(), "streams/" + streamId.getId());
+  private void sendEvent(StreamId streamId, String body) throws Exception {
+    URL url = createURL(streamId.getNamespace(), "streams/" + streamId.getEntityName());
     HttpRequest request = HttpRequest.post(url).withBody(body).build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());
   }
 
-  private List<String> fetchEvents(Id.Stream streamId) throws Exception {
-    URL url = createURL(streamId.getNamespaceId(), "streams/" + streamId.getId() + "/events");
+  private List<String> fetchEvents(StreamId streamId) throws Exception {
+    URL url = createURL(streamId.getNamespace(), "streams/" + streamId.getEntityName() + "/events");
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());
@@ -463,7 +462,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     return events;
   }
 
-  private void checkEventsProcessed(final Id.Stream streamId, long expectedCount, int retries) throws Exception {
+  private void checkEventsProcessed(final StreamId streamId, long expectedCount, int retries) throws Exception {
     Tasks.waitFor(expectedCount, new Callable<Long>() {
       @Override
       public Long call() throws Exception {
@@ -473,10 +472,10 @@ public class StreamHandlerTest extends GatewayTestBase {
   }
 
 
-  private long getNumProcessed(Id.Stream streamId) throws Exception {
+  private long getNumProcessed(StreamId streamId) throws Exception {
     String path =
       String.format("/v3/metrics/query?metric=system.collect.events&tag=namespace:%s&tag=stream:%s&aggregate=true",
-                    streamId.getNamespaceId(), streamId.getId());
+                    streamId.getNamespace(), streamId.getEntityName());
     HttpRequest request = HttpRequest.post(getEndPoint(path).toURL()).build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());

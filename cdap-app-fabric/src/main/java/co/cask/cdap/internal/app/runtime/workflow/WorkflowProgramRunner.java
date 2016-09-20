@@ -35,8 +35,8 @@ import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -102,8 +102,8 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
 
     // Setup dataset framework context, if required
     if (datasetFramework instanceof ProgramContextAware) {
-      Id.Program programId = program.getId();
-      ((ProgramContextAware) datasetFramework).initContext(new Id.Run(programId, runId.getId()));
+      ProgramId programId = program.getId().toEntityId();
+      ((ProgramContextAware) datasetFramework).initContext(programId.run(runId));
     }
 
 

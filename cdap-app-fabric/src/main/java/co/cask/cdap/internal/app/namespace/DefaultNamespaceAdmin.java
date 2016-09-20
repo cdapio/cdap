@@ -324,7 +324,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     }
     authorizationEnforcer.enforce(namespaceId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
 
-    NamespaceMeta existingMeta = nsStore.get(namespaceId);
+    NamespaceMeta existingMeta = nsStore.get(namespaceId.toEntityId());
     // Already ensured that namespace exists, so namespace meta should not be null
     Preconditions.checkNotNull(existingMeta);
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder(existingMeta);
@@ -424,7 +424,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   }
 
   private NamespaceMeta fetchNamespaceMeta(NamespaceId namespaceId) throws Exception {
-    NamespaceMeta ns = nsStore.get(namespaceId.toId());
+    NamespaceMeta ns = nsStore.get(namespaceId);
     if (ns == null) {
       throw new NamespaceNotFoundException(namespaceId.toId());
     }
@@ -457,7 +457,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @param namespaceId of namespace whose meta needs to be deleted
    */
   private void deleteNamespaceMeta(NamespaceId namespaceId) {
-    nsStore.delete(namespaceId.toId());
+    nsStore.delete(namespaceId);
     namespaceMetaCache.invalidate(namespaceId);
   }
 }

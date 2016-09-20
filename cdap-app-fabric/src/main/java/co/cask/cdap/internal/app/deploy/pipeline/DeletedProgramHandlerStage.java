@@ -30,7 +30,6 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.pipeline.AbstractStage;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -124,7 +123,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
             for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
               streamConsumerFactory.dropAll(namespaceId.stream(entry.getKey()), namespace, entry.getValue());
             }
-            queueAdmin.dropAllForFlow(Id.Flow.from(programId.getApplication(), programId.getEntityName()));
+            queueAdmin.dropAllForFlow(programId.getParent().flow(programId.getEntityName()));
             return null;
           }
         });

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.transaction.queue.leveldb;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.transaction.queue.AbstractQueueAdmin;
@@ -24,7 +23,8 @@ import co.cask.cdap.data2.transaction.queue.NoopQueueConfigurer;
 import co.cask.cdap.data2.transaction.queue.QueueConfigurer;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.FlowId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
@@ -45,22 +45,13 @@ public class LevelDBQueueAdmin extends AbstractQueueAdmin {
   private final LevelDBTableService service;
 
   @Inject
-  public LevelDBQueueAdmin(CConfiguration conf, LevelDBTableService service) {
+  LevelDBQueueAdmin(LevelDBTableService service) {
     this(service, QUEUE);
   }
 
   protected LevelDBQueueAdmin(LevelDBTableService service, QueueConstants.QueueType type) {
     super(type);
     this.service = service;
-  }
-
-  /**
-   * This determines whether dropping a queue is supported (by dropping the queue's table).
-   */
-  public boolean doDropTable(@SuppressWarnings("unused") QueueName queueName) {
-    // no-op because this would drop all tables for the flow
-    // todo: introduce a method dropAllFor(flow) or similar
-    return false;
   }
 
   /**
@@ -107,7 +98,7 @@ public class LevelDBQueueAdmin extends AbstractQueueAdmin {
   }
 
   @Override
-  public void clearAllForFlow(Id.Flow flowId) throws Exception {
+  public void clearAllForFlow(FlowId flowId) throws Exception {
     String tableName = getTableNameForFlow(flowId);
     service.dropTable(tableName);
     service.ensureTableExists(tableName);
@@ -119,14 +110,14 @@ public class LevelDBQueueAdmin extends AbstractQueueAdmin {
   }
 
   @Override
-  public void dropAllForFlow(Id.Flow flowId) throws Exception {
+  public void dropAllForFlow(FlowId flowId) throws Exception {
     String tableName = getTableNameForFlow(flowId);
     service.dropTable(tableName);
   }
 
   @Override
-  public void dropAllInNamespace(Id.Namespace namespaceId) throws Exception {
-    dropAllTablesWithPrefix(String.format("%s.%s.", namespaceId.getId(), unqualifiedTableNamePrefix));
+  public void dropAllInNamespace(NamespaceId namespaceId) throws Exception {
+    dropAllTablesWithPrefix(String.format("%s.%s.", namespaceId.getEntityName(), unqualifiedTableNamePrefix));
   }
 
   @Override
@@ -143,31 +134,17 @@ public class LevelDBQueueAdmin extends AbstractQueueAdmin {
   }
 
   public String getActualTableName(QueueName queueName) {
-    return getTableNameForFlow(Id.Flow.from(queueName.getFirstComponent(),
-                                            queueName.getSecondComponent(),
-                                            queueName.getThirdComponent()));
+    return getTableNameForFlow(new FlowId(queueName.getFirstComponent(),
+                                          queueName.getSecondComponent(),
+                                          queueName.getThirdComponent()));
   }
 
-  public TableId getDataTableId(Id.Flow flowId) {
+  public TableId getDataTableId(FlowId flowId) {
     // tableName = system.queue.<app>.<flow>
-    return TableId.from(flowId.getNamespaceId(), getDataTableName(flowId));
+    return TableId.from(flowId.getNamespace(), getDataTableName(flowId));
   }
 
-  /**
-   * This determines the actual TableId from the table name prefix and the name of the queue.
-   * @param queueName The name of the queue.
-   * @return the full name of the table that holds this queue.
-   */
-  public TableId getDataTableId(QueueName queueName) {
-    if (!queueName.isQueue()) {
-      throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a queue.");
-    }
-    return getDataTableId(Id.Flow.from(queueName.getFirstComponent(),
-                                       queueName.getSecondComponent(),
-                                       queueName.getThirdComponent()));
-  }
-
-  protected String getTableNameForFlow(Id.Flow flowId) {
+  protected String getTableNameForFlow(FlowId flowId) {
     TableId tableId = getDataTableId(flowId);
     return String.format("%s.%s", tableId.getNamespace(), tableId.getTableName());
   }

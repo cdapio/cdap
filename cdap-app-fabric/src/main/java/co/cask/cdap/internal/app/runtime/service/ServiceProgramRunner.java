@@ -37,6 +37,7 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.services.ServiceHttpServer;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Service;
@@ -103,8 +104,8 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
     // Setup dataset framework context, if required
     if (datasetFramework instanceof ProgramContextAware) {
-      Id.Program programId = program.getId();
-      ((ProgramContextAware) datasetFramework).initContext(new Id.Run(programId, runId.getId()));
+      ProgramId programId = program.getId().toEntityId();
+      ((ProgramContextAware) datasetFramework).initContext(programId.run(runId));
     }
 
     final PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());

@@ -45,6 +45,7 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.FlowletMethod;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -106,7 +107,7 @@ public final class FlowUtils {
     // to support backwards compatibility for queues and streams.
     String namespace = programId.getNamespace();
     String backwardsCompatibleNamespace =
-      Id.Namespace.DEFAULT.getId().equals(namespace) ? Constants.DEVELOPER_ACCOUNT : namespace;
+      NamespaceId.DEFAULT.getEntityName().equals(namespace) ? Constants.DEVELOPER_ACCOUNT : namespace;
     return Hashing.md5().newHasher()
       .putString(backwardsCompatibleNamespace)
       .putString(programId.getApplication())
@@ -181,7 +182,7 @@ public final class FlowUtils {
           for (ConsumerGroupConfig config : entry.getValue()) {
             configs.put(config.getGroupId(), config.getGroupSize());
           }
-          streamAdmin.configureGroups(entry.getKey().toStreamId().toEntityId(), configs);
+          streamAdmin.configureGroups(entry.getKey().toStreamId(), configs);
         } else {
           groupConfigurers.add(new ConsumerGroupConfigurer(queueAdmin.getQueueConfigurer(entry.getKey()),
                                                            entry.getValue()));
@@ -226,7 +227,7 @@ public final class FlowUtils {
     final List<QueueConfigurer> queueConfigurers = Lists.newArrayList();
     for (QueueName queueName : consumerQueues) {
       if (queueName.isStream()) {
-        streamAdmin.configureInstances(queueName.toStreamId().toEntityId(), groupId, instances);
+        streamAdmin.configureInstances(queueName.toStreamId(), groupId, instances);
       } else {
         queueConfigurers.add(queueAdmin.getQueueConfigurer(queueName));
       }
@@ -272,7 +273,7 @@ public final class FlowUtils {
           // Inspect the flowlet consumer
           FlowletDefinition flowletDefinition = entry.getValue();
           Class<?> flowletClass = program.getClassLoader().loadClass(flowletDefinition.getFlowletSpec().getClassName());
-          long groupId = generateConsumerGroupId(program.getId(), flowletId);
+          long groupId = generateConsumerGroupId(program.getId().toEntityId(), flowletId);
 
           addConsumerGroup(queueSpec, flowletClass, groupId,
                            flowletDefinition.getInstances(), schemaGenerator, groupConfigs);

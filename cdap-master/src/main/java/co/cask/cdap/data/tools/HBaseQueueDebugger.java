@@ -72,15 +72,16 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterators;
@@ -521,9 +522,10 @@ public class HBaseQueueDebugger extends AbstractIdleService {
     final QueueName queueName = args.length >= 1 ? QueueName.from(URI.create(args[0])) : null;
     Long consumerGroupId = null;
     if (args.length >= 2) {
+      Preconditions.checkNotNull(queueName);
       String consumerFlowlet = args[1];
-      Id.Program flowId = Id.Program.from(queueName.getFirstComponent(), queueName.getSecondComponent(),
-                                          ProgramType.FLOW, queueName.getThirdComponent());
+      FlowId flowId = new FlowId(queueName.getFirstComponent(), queueName.getSecondComponent(),
+                                 queueName.getThirdComponent());
       consumerGroupId = FlowUtils.generateConsumerGroupId(flowId, consumerFlowlet);
     }
 

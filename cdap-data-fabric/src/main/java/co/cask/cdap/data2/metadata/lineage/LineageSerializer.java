@@ -82,7 +82,7 @@ public final class LineageSerializer {
                                                          convertRuns(relation.getRuns()),
                                                          convertComponents(relation.getComponents()));
       relationBuilder.add(relationRecord);
-      programBuilder.put(programKey, new ProgramRecord(relation.getProgram().toId()));
+      programBuilder.put(programKey, new ProgramRecord(relation.getProgram()));
       dataBuilder.put(dataKey, new DataRecord(relation.getData()));
     }
     return new LineageRecord(start, end, relationBuilder, programBuilder, dataBuilder);
@@ -101,7 +101,7 @@ public final class LineageSerializer {
   }
 
   private static String makeProgramKey(ProgramId program) {
-    return Joiner.on('.').join(program.getType().getCategoryName().toLowerCase(), program.getNamespaceId(),
+    return Joiner.on('.').join(program.getType().getCategoryName().toLowerCase(), program.getNamespace(),
                                program.getApplication(), program.getEntityName());
   }
 
