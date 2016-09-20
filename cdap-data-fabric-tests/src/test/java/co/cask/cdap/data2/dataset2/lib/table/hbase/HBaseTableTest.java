@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -94,21 +94,17 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     hBaseTableUtil = new HBaseTableUtilFactory(cConf, new SimpleNamespaceQueryAdmin()).get();
     // TODO: CDAP-1634 - Explore a way to not have every HBase test class do this.
     hBaseTableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(),
-                                              hBaseTableUtil.getHBaseNamespace(NAMESPACE1.toEntityId()));
+                                              hBaseTableUtil.getHBaseNamespace(NAMESPACE1));
     hBaseTableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(),
-                                              hBaseTableUtil.getHBaseNamespace(NAMESPACE2.toEntityId()));
+                                              hBaseTableUtil.getHBaseNamespace(NAMESPACE2));
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
-    hBaseTableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(),
-                                        hBaseTableUtil.getHBaseNamespace(NAMESPACE1.toEntityId()));
-    hBaseTableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(),
-                                        hBaseTableUtil.getHBaseNamespace(NAMESPACE2.toEntityId()));
-    hBaseTableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(),
-                                           hBaseTableUtil.getHBaseNamespace(NAMESPACE1.toEntityId()));
-    hBaseTableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(),
-                                           hBaseTableUtil.getHBaseNamespace(NAMESPACE2.toEntityId()));
+    hBaseTableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), hBaseTableUtil.getHBaseNamespace(NAMESPACE1));
+    hBaseTableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), hBaseTableUtil.getHBaseNamespace(NAMESPACE2));
+    hBaseTableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), hBaseTableUtil.getHBaseNamespace(NAMESPACE1));
+    hBaseTableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), hBaseTableUtil.getHBaseNamespace(NAMESPACE2));
   }
 
   @Override
@@ -213,7 +209,7 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     getTableAdmin(CONTEXT1, presplittedTable, props).create();
 
     try (HBaseAdmin hBaseAdmin = TEST_HBASE.getHBaseAdmin()) {
-      TableId hTableId = hBaseTableUtil.createHTableId(NAMESPACE1.toEntityId(), presplittedTable);
+      TableId hTableId = hBaseTableUtil.createHTableId(NAMESPACE1, presplittedTable);
       List<HRegionInfo> regions = hBaseTableUtil.getTableRegions(hBaseAdmin, hTableId);
       // note: first region starts at very first row key, so we have one extra to the splits count
       Assert.assertEquals(4, regions.size());
@@ -228,8 +224,8 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     // setup a table with increments disabled and with it enabled
     String disableTableName = "incr-disable";
     String enabledTableName = "incr-enable";
-    TableId disabledTableId = hBaseTableUtil.createHTableId(NAMESPACE1.toEntityId(), disableTableName);
-    TableId enabledTableId = hBaseTableUtil.createHTableId(NAMESPACE1.toEntityId(), enabledTableName);
+    TableId disabledTableId = hBaseTableUtil.createHTableId(NAMESPACE1, disableTableName);
+    TableId enabledTableId = hBaseTableUtil.createHTableId(NAMESPACE1, enabledTableName);
     HBaseTableAdmin disabledAdmin = getTableAdmin(CONTEXT1, disableTableName, DatasetProperties.EMPTY);
     disabledAdmin.create();
     HBaseAdmin admin = TEST_HBASE.getHBaseAdmin();

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,8 +19,8 @@ package co.cask.cdap.store;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 
 import java.util.List;
 import javax.annotation.Nullable;
@@ -41,12 +41,12 @@ final class NamespaceMDS extends MetadataStoreDataset {
   }
 
   @Nullable
-  NamespaceMeta get(Id.Namespace id) {
-    return getFirst(getNamespaceKey(id.getId()), NamespaceMeta.class);
+  NamespaceMeta get(NamespaceId id) {
+    return getFirst(getNamespaceKey(id.getEntityName()), NamespaceMeta.class);
   }
 
-  void delete(Id.Namespace id) {
-    deleteAll(getNamespaceKey(id.getId()));
+  void delete(NamespaceId id) {
+    deleteAll(getNamespaceKey(id.getEntityName()));
   }
 
   List<NamespaceMeta> list() {

@@ -16,7 +16,8 @@
 package co.cask.cdap.data2.dataset2;
 
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramRunId;
 
 /**
  * Implementation of the {@link ForwardingDatasetFramework} which is also {@link ProgramContextAware}.
@@ -29,14 +30,14 @@ public class ForwardingProgramContextAwareDatasetFramework extends ForwardingDat
   }
 
   @Override
-  public void initContext(Id.Run run) {
+  public void initContext(ProgramRunId run) {
     if (delegate instanceof ProgramContextAware) {
       ((ProgramContextAware) delegate).initContext(run);
     }
   }
 
   @Override
-  public void initContext(Id.Run run, Id.NamespacedId componentId) {
+  public void initContext(ProgramRunId run, NamespacedEntityId componentId) {
     if (delegate instanceof ProgramContextAware) {
       ((ProgramContextAware) delegate).initContext(run, componentId);
     }

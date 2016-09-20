@@ -55,10 +55,6 @@ public class ScheduleId extends NamespacedEntityId implements ParentedId<Applica
     this(namespace, application, "-SNAPSHOT", schedule);
   }
 
-  public String getNamespace() {
-    return namespace;
-  }
-
   public String getApplication() {
     return application;
   }

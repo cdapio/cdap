@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -418,8 +418,8 @@ public abstract class BufferingTableTest<T extends BufferingTable> extends Table
       String tx1Change = new String(((ArrayList<byte []>) tx1Changes).get(0));
       String tx2Change = new String(((ArrayList<byte []>) tx2Changes).get(0));
       Assert.assertNotEquals(tx1ChangePrefix, tx2ChangePrefix);
-      Assert.assertTrue(tx1ChangePrefix.contains(NAMESPACE1.getId()));
-      Assert.assertTrue(tx2ChangePrefix.contains(NAMESPACE2.getId()));
+      Assert.assertTrue(tx1ChangePrefix.contains(NAMESPACE1.getEntityName()));
+      Assert.assertTrue(tx2ChangePrefix.contains(NAMESPACE2.getEntityName()));
       Assert.assertTrue(tx1Change.startsWith(tx1ChangePrefix));
       Assert.assertTrue(tx2Change.startsWith(tx2ChangePrefix));
     } finally {

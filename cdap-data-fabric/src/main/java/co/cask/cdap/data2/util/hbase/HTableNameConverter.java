@@ -17,7 +17,6 @@
 package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -103,7 +102,7 @@ public abstract class HTableNameConverter {
     Preconditions.checkArgument(qualifier != null, "Table qualifier should not be null.");
 
     // Handle backward compatibility to not add the prefix for default namespace
-    if (Id.Namespace.DEFAULT.getId().equals(namespace)) {
+    if (NamespaceId.DEFAULT.getEntityName().equals(namespace)) {
       // in Default namespace, qualifier is something like 'cdap.foo.table'
       @SuppressWarnings("ConstantConditions")
       String[] parts = qualifier.split("\\.", 2);

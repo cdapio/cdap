@@ -591,7 +591,7 @@ public abstract class AbstractDatasetFrameworkTest {
     LineageWriterDatasetFramework lineageFramework =
       new LineageWriterDatasetFramework(framework, new NoOpLineageWriter(), new NoOpUsageRegistry(),
                                         new AuthenticationTestContext(), new NoOpAuthorizer());
-    lineageFramework.initContext(runId.toId());
+    lineageFramework.initContext(runId);
     lineageFramework.setAuditPublisher(inMemoryAuditPublisher);
     lineageFramework.getDataset(MY_TABLE, null, getClass().getClassLoader());
     expectedMessages.add(new AuditMessage(0, MY_TABLE, "", AuditType.ACCESS,

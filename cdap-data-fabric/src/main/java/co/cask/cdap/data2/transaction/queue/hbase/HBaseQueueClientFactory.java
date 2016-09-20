@@ -32,7 +32,8 @@ import co.cask.cdap.data2.transaction.queue.QueueConstants.QueueType;
 import co.cask.cdap.data2.transaction.queue.QueueMetrics;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -86,12 +87,12 @@ public class HBaseQueueClientFactory implements QueueClientFactory, ProgramConte
   }
 
   @Override
-  public void initContext(Id.Run run) {
+  public void initContext(ProgramRunId run) {
     queueAdmin.initContext(run);
   }
 
   @Override
-  public void initContext(Id.Run run, Id.NamespacedId componentId) {
+  public void initContext(ProgramRunId run, NamespacedEntityId componentId) {
     queueAdmin.initContext(run, componentId);
   }
 

@@ -100,7 +100,7 @@ final class ConsumerSupplier<T> implements Supplier<T>, Closeable {
         consumerConfig = queueConsumer.getConfig();
         consumer = queueConsumer;
       } else {
-        StreamId queueStream = queueName.toStreamId().toEntityId();
+        StreamId queueStream = queueName.toStreamId();
         for (EntityId owner : owners) {
           try {
             runtimeUsageRegistry.register(owner, queueStream);
@@ -108,8 +108,7 @@ final class ConsumerSupplier<T> implements Supplier<T>, Closeable {
             LOG.warn("Failed to register usage of {} -> {}", owner, queueStream, e);
           }
         }
-        StreamConsumer streamConsumer = dataFabricFacade.createStreamConsumer(queueName.toStreamId().toEntityId(),
-                                                                              config);
+        StreamConsumer streamConsumer = dataFabricFacade.createStreamConsumer(queueName.toStreamId(), config);
         consumerConfig = streamConsumer.getConsumerConfig();
         consumer = streamConsumer;
       }

@@ -29,7 +29,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.TxCallable;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -76,7 +75,7 @@ public class DefaultNamespaceStore implements NamespaceStore {
         @Override
         public NamespaceMeta call(DatasetContext context) throws Exception {
           NamespaceMDS mds = getNamespaceMDS(context);
-          NamespaceMeta existing = mds.get(metadata.getNamespaceId().toId());
+          NamespaceMeta existing = mds.get(metadata.getNamespaceId());
           if (existing != null) {
             return existing;
           }
@@ -97,7 +96,7 @@ public class DefaultNamespaceStore implements NamespaceStore {
         @Override
         public void run(DatasetContext context) throws Exception {
           NamespaceMDS mds = getNamespaceMDS(context);
-          NamespaceMeta existing = mds.get(metadata.getNamespaceId().toId());
+          NamespaceMeta existing = mds.get(metadata.getNamespaceId());
           if (existing != null) {
             mds.create(metadata);
           }
@@ -110,7 +109,7 @@ public class DefaultNamespaceStore implements NamespaceStore {
 
   @Override
   @Nullable
-  public NamespaceMeta get(final Id.Namespace id) {
+  public NamespaceMeta get(final NamespaceId id) {
     Preconditions.checkArgument(id != null, "Namespace id cannot be null.");
     try {
       return Transactions.execute(transactional, new TxCallable<NamespaceMeta>() {
@@ -126,7 +125,7 @@ public class DefaultNamespaceStore implements NamespaceStore {
 
   @Override
   @Nullable
-  public NamespaceMeta delete(final Id.Namespace id) {
+  public NamespaceMeta delete(final NamespaceId id) {
     Preconditions.checkArgument(id != null, "Namespace id cannot be null.");
     try {
       return Transactions.execute(transactional, new TxCallable<NamespaceMeta>() {

@@ -20,8 +20,10 @@ import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.id.WorkflowId;
@@ -42,6 +44,8 @@ final class KeyHelper {
     .put(ApplicationId.class, MetadataSearchTargetType.APP.getSerializedForm())
     .put(ProgramId.class, MetadataSearchTargetType.PROGRAM.getSerializedForm())
     .put(WorkflowId.class, MetadataSearchTargetType.PROGRAM.getSerializedForm())
+    .put(FlowId.class, MetadataSearchTargetType.PROGRAM.getSerializedForm())
+    .put(ServiceId.class, MetadataSearchTargetType.PROGRAM.getSerializedForm())
     .put(DatasetId.class, MetadataSearchTargetType.DATASET.getSerializedForm())
     .put(StreamId.class, MetadataSearchTargetType.STREAM.getSerializedForm())
     .put(StreamViewId.class, MetadataSearchTargetType.VIEW.getSerializedForm())

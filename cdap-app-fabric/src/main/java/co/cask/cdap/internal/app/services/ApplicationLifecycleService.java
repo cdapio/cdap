@@ -67,7 +67,6 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
@@ -566,7 +565,7 @@ ApplicationLifecycleService extends AbstractIdleService {
 
     // Delete all streams and queues state of each flow
     // TODO: This should be unified with the DeletedProgramHandlerStage
-    for (FlowSpecification flowSpecification : spec.getFlows().values()) {
+    for (final FlowSpecification flowSpecification : spec.getFlows().values()) {
       Id.Program flowProgramId = Id.Program.from(idApplication, ProgramType.FLOW, flowSpecification.getName());
 
       // Collects stream name to all group ids consuming that stream
@@ -580,7 +579,6 @@ ApplicationLifecycleService extends AbstractIdleService {
       // Remove all process states and group states for each stream
       final String namespace = String.format("%s.%s", flowProgramId.getApplicationId(), flowProgramId.getId());
 
-      final Id.Flow flowId = Id.Flow.from(idApplication, flowSpecification.getName());
       impersonator.doAs(appId.getParent(), new Callable<Void>() {
 
         @Override
@@ -588,7 +586,7 @@ ApplicationLifecycleService extends AbstractIdleService {
           for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
             streamConsumerFactory.dropAll(appId.getParent().stream(entry.getKey()), namespace, entry.getValue());
           }
-          queueAdmin.dropAllForFlow(flowId);
+          queueAdmin.dropAllForFlow(appId.flow(flowSpecification.getName()));
           return null;
         }
       });

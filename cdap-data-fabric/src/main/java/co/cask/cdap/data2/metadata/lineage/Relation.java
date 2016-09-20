@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,18 +16,14 @@
 
 package co.cask.cdap.data2.metadata.lineage;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
-import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableSet;
 import org.apache.twill.api.RunId;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -85,19 +81,6 @@ public class Relation {
 
   public Set<NamespacedEntityId> getComponents() {
     return components;
-  }
-
-  /**
-   * Temporary fix while phasing out {@link Id} class.
-   */
-  public Set<Id.NamespacedId> getIdComponents() {
-    Set<NamespacedEntityId> components = getComponents();
-    return new HashSet<>(Collections2.transform(components, new Function<NamespacedEntityId, Id.NamespacedId>() {
-      @Override
-      public Id.NamespacedId apply(NamespacedEntityId namespaceEntityId) {
-        return (Id.NamespacedId) namespaceEntityId.toId();
-      }
-    }));
   }
 
   @Override

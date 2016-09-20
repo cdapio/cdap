@@ -28,7 +28,7 @@ import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -64,7 +64,8 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.stateStoreFactory = stateStoreFactory;
-    this.tablePrefix = String.format("%s.%s", Id.Namespace.SYSTEM.getId(), QueueConstants.QueueType.STREAM.toString());
+    this.tablePrefix = String.format("%s.%s", NamespaceId.SYSTEM.getEntityName(),
+                                     QueueConstants.QueueType.STREAM.toString());
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -51,15 +51,15 @@ public class HBaseKVTableTest extends NoTxKeyValueTableTest {
   @BeforeClass
   public static void beforeClass() throws Exception {
     hBaseTableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(),
-                                              hBaseTableUtil.getHBaseNamespace(NAMESPACE_ID.toEntityId()));
+                                              hBaseTableUtil.getHBaseNamespace(NAMESPACE_ID));
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
     hBaseTableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(),
-                                        hBaseTableUtil.getHBaseNamespace(NAMESPACE_ID.toEntityId()));
+                                        hBaseTableUtil.getHBaseNamespace(NAMESPACE_ID));
     hBaseTableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(),
-                                           hBaseTableUtil.getHBaseNamespace(NAMESPACE_ID.toEntityId()));
+                                           hBaseTableUtil.getHBaseNamespace(NAMESPACE_ID));
   }
 
   @Override

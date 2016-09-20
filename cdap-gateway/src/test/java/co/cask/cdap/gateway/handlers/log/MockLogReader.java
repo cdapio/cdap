@@ -35,12 +35,10 @@ import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.LogOffset;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.logging.read.ReadRange;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.test.SlowTests;
@@ -85,19 +83,19 @@ public class MockLogReader implements LogReader {
 
   public void generateLogs() throws InterruptedException {
     // Add logs for app testApp2, flow testFlow1
-    generateLogs(new FlowletLoggingContext(Id.Namespace.DEFAULT.getId(),
+    generateLogs(new FlowletLoggingContext(NamespaceId.DEFAULT.getEntityName(),
                                            "testApp2", "testFlow1", "testFlowlet1", "", ""),
                  NamespaceId.DEFAULT.app("testApp2").flow("testFlow1"),
                  ProgramRunStatus.RUNNING);
 
     // Add logs for app testApp3, mapreduce testMapReduce1
-    generateLogs(new MapReduceLoggingContext(Id.Namespace.DEFAULT.getId(),
+    generateLogs(new MapReduceLoggingContext(NamespaceId.DEFAULT.getEntityName(),
                                              "testApp3", "testMapReduce1", ""),
                  NamespaceId.DEFAULT.app("testApp3").mr("testMapReduce1"),
                  ProgramRunStatus.SUSPENDED);
 
     // Add logs for app testApp1, service testService1
-    generateLogs(new UserServiceLoggingContext(Id.Namespace.DEFAULT.getId(),
+    generateLogs(new UserServiceLoggingContext(NamespaceId.DEFAULT.getEntityName(),
                                                "testApp4", "testService1", "test1", "", ""),
                  NamespaceId.DEFAULT.app("testApp4").service("testService1"),
                  ProgramRunStatus.RUNNING);
@@ -126,7 +124,7 @@ public class MockLogReader implements LogReader {
                  TEST_NAMESPACE_ID.app("testTemplate1").workflow("testWorkflow1"),
                  ProgramRunStatus.COMPLETED);
     // Add logs for testWorkflow1 in default namespace
-    generateLogs(new WorkflowLoggingContext(Id.Namespace.DEFAULT.getId(),
+    generateLogs(new WorkflowLoggingContext(NamespaceId.DEFAULT.getEntityName(),
                                             "testTemplate1", "testWorkflow1", "testRun2"),
                  NamespaceId.DEFAULT.app("testTemplate1").workflow("testWorkflow1"),
                  ProgramRunStatus.COMPLETED);

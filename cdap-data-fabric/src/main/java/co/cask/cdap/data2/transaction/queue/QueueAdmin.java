@@ -17,7 +17,8 @@
 package co.cask.cdap.data2.transaction.queue;
 
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.FlowId;
+import co.cask.cdap.proto.id.NamespaceId;
 
 import java.util.Properties;
 import javax.annotation.Nullable;
@@ -31,19 +32,19 @@ public interface QueueAdmin {
    * Deletes all queues in a namespace
    * @param namespaceId the namespace to delete flows in
    */
-  void dropAllInNamespace(Id.Namespace namespaceId) throws Exception;
+  void dropAllInNamespace(NamespaceId namespaceId) throws Exception;
 
   /**
    * Deletes all queues for a flow, for example if the flow is deleted.
    * todo: make this independent of the concept of a flow
    */
-  void dropAllForFlow(Id.Flow flowId) throws Exception;
+  void dropAllForFlow(FlowId flowId) throws Exception;
 
   /**
    * Clears all queues for a flow, for example if the flow is upgraded and old.
    * todo: make this independent of the concept of a flow
    */
-  void clearAllForFlow(Id.Flow flowId) throws Exception;
+  void clearAllForFlow(FlowId flowId) throws Exception;
 
   /**
    * Returns a {@link QueueConfigurer} for configuring the queue.

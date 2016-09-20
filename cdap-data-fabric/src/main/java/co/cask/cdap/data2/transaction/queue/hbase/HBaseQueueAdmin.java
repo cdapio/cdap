@@ -38,9 +38,11 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
@@ -94,12 +96,12 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
   private HBaseAdmin admin;
 
   @Inject
-  public HBaseQueueAdmin(Configuration hConf,
-                         CConfiguration cConf,
-                         LocationFactory locationFactory,
-                         HBaseTableUtil tableUtil,
-                         DatasetFramework datasetFramework,
-                         TransactionExecutorFactory txExecutorFactory) {
+  HBaseQueueAdmin(Configuration hConf,
+                  CConfiguration cConf,
+                  LocationFactory locationFactory,
+                  HBaseTableUtil tableUtil,
+                  DatasetFramework datasetFramework,
+                  TransactionExecutorFactory txExecutorFactory) {
     this(hConf, cConf, locationFactory, tableUtil, datasetFramework, txExecutorFactory,
          QueueConstants.QueueType.SHARDED_QUEUE);
   }
@@ -122,14 +124,14 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
   }
 
   @Override
-  public void initContext(Id.Run run) {
+  public void initContext(ProgramRunId run) {
     if (datasetFramework instanceof ProgramContextAware) {
       ((ProgramContextAware) datasetFramework).initContext(run);
     }
   }
 
   @Override
-  public void initContext(Id.Run run, Id.NamespacedId componentId) {
+  public void initContext(ProgramRunId run, NamespacedEntityId componentId) {
     if (datasetFramework instanceof ProgramContextAware) {
       ((ProgramContextAware) datasetFramework).initContext(run, componentId);
     }
@@ -194,7 +196,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
   }
 
   @Override
-  public void clearAllForFlow(Id.Flow flowId) throws Exception {
+  public void clearAllForFlow(FlowId flowId) throws Exception {
     // all queues for a flow are in one table
     truncate(getDataTableId(flowId));
     // we also have to delete the config for these queues
@@ -210,7 +212,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
   }
 
   @Override
-  public void dropAllForFlow(Id.Flow flowId) throws Exception {
+  public void dropAllForFlow(FlowId flowId) throws Exception {
     // all queues for a flow are in one table
     drop(getDataTableId(flowId));
     // we also have to delete the config for these queues
@@ -320,13 +322,12 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
     }
   }
 
-  private void deleteFlowConfigs(Id.Flow flowId) throws Exception {
+  private void deleteFlowConfigs(FlowId flowId) throws Exception {
     // It's a bit hacky here since we know how the HBaseConsumerStateStore works.
     // Maybe we need another Dataset set that works across all queues.
-    final QueueName prefixName = QueueName.from(URI.create(
-      QueueName.prefixForFlow(flowId)));
+    final QueueName prefixName = QueueName.from(URI.create(QueueName.prefixForFlow(flowId)));
 
-    DatasetId stateStoreId = getStateStoreId(flowId.getNamespaceId());
+    DatasetId stateStoreId = getStateStoreId(flowId.getNamespace());
     Map<String, String> args = ImmutableMap.of(HBaseQueueDatasetModule.PROPERTY_QUEUE_NAME, prefixName.toString());
     HBaseConsumerStateStore stateStore = datasetFramework.getDataset(stateStoreId, args, null);
     if (stateStore == null) {
@@ -365,14 +366,14 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
   }
 
   @Override
-  public void dropAllInNamespace(Id.Namespace namespaceId) throws Exception {
+  public void dropAllInNamespace(NamespaceId namespaceId) throws Exception {
     Set<QueueConstants.QueueType> queueTypes = EnumSet.of(QueueConstants.QueueType.QUEUE,
                                                           QueueConstants.QueueType.SHARDED_QUEUE);
     for (QueueConstants.QueueType queueType : queueTypes) {
       // Note: The trailing "." is crucial, since otherwise nsId could match nsId1, nsIdx etc
       // It's important to keep config table enabled while disabling and dropping  queue tables.
       final String queueTableNamePrefix = String.format("%s.%s.", NamespaceId.SYSTEM.getNamespace(), queueType);
-      final String hbaseNamespace = tableUtil.getHBaseNamespace(namespaceId.toEntityId());
+      final String hbaseNamespace = tableUtil.getHBaseNamespace(namespaceId);
       final TableId configTableId = TableId.from(hbaseNamespace, getConfigTableName());
       tableUtil.deleteAllInNamespace(getHBaseAdmin(), hbaseNamespace, new Predicate<TableId>() {
         @Override
@@ -384,13 +385,13 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
     }
 
     // Delete the state store in the namespace
-    DatasetId id = getStateStoreId(namespaceId.getId());
+    DatasetId id = getStateStoreId(namespaceId.getEntityName());
     if (datasetFramework.hasInstance(id)) {
       datasetFramework.deleteInstance(id);
     }
   }
 
-  public TableId getDataTableId(Id.Flow flowId) throws IOException {
+  public TableId getDataTableId(FlowId flowId) throws IOException {
     return getDataTableId(flowId, type);
   }
 
@@ -402,16 +403,16 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
     if (!queueName.isQueue()) {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a queue.");
     }
-    return getDataTableId(Id.Flow.from(queueName.getFirstComponent(),
-                                       queueName.getSecondComponent(),
-                                       queueName.getThirdComponent()),
+    return getDataTableId(new FlowId(queueName.getFirstComponent(),
+                                     queueName.getSecondComponent(),
+                                     queueName.getThirdComponent()),
                           queueType);
   }
 
-  public TableId getDataTableId(Id.Flow flowId, QueueConstants.QueueType queueType) throws IOException {
+  public TableId getDataTableId(FlowId flowId, QueueConstants.QueueType queueType) throws IOException {
     String tableName = String.format("%s.%s.%s.%s", NamespaceId.SYSTEM.getNamespace(), queueType,
-                                     flowId.getApplicationId(), flowId.getId());
-    return tableUtil.createHTableId(new NamespaceId(flowId.getNamespace().getId()), tableName);
+                                     flowId.getApplication(), flowId.getEntityName());
+    return tableUtil.createHTableId(new NamespaceId(flowId.getNamespace()), tableName);
   }
 
   private void upgrade(TableId tableId, Properties properties) throws Exception {
@@ -426,7 +427,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
    * or tables for things other than queues).
    */
   private boolean isDataTable(TableId tableId) {
-    // checks if table is constructed by getDataTableId
+    // checks if table is constructed by getDataTableName
     String tableName = tableId.getTableName();
     if (tableName.split("\\.").length <= 3) {
       return false;

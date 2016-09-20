@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,8 @@ import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.FlowId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -79,8 +80,8 @@ public abstract class QueueTest {
   protected static TransactionExecutorFactory executorFactory;
 
   // deliberately used namespace names 'namespace' and 'namespace1' to test correct prefix matching
-  protected static final Id.Namespace NAMESPACE_ID = Id.Namespace.from("namespace");
-  protected static final Id.Namespace NAMESPACE_ID1 = Id.Namespace.from("namespace1");
+  protected static final NamespaceId NAMESPACE_ID = new NamespaceId("namespace");
+  protected static final NamespaceId NAMESPACE_ID1 = new NamespaceId("namespace1");
 
   @AfterClass
   public static void shutdownTx() {
@@ -92,7 +93,8 @@ public abstract class QueueTest {
   @Test
   public void testDropAllQueues() throws Exception {
     // create a queue and a stream and enqueue one entry each
-    QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), "myApp", "myFlow", "myFlowlet", "tDAQ");
+    QueueName queueName = QueueName.fromFlowlet(NamespaceId.DEFAULT.getEntityName(), "myApp", "myFlow", "myFlowlet",
+                                                "tDAQ");
     ConsumerConfig consumerConfig = new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null);
     configureGroups(queueName, ImmutableList.of(consumerConfig));
 
@@ -105,7 +107,7 @@ public abstract class QueueTest {
           }
         });
       // drop all queues
-      queueAdmin.dropAllInNamespace(Id.Namespace.DEFAULT);
+      queueAdmin.dropAllInNamespace(NamespaceId.DEFAULT);
       // verify that queue is gone and stream is still there
       configureGroups(queueName, ImmutableList.of(consumerConfig));
       try (final QueueConsumer qConsumer = queueClientFactory.createConsumer(queueName, consumerConfig, 1)) {
@@ -124,7 +126,8 @@ public abstract class QueueTest {
   // Simple enqueue and dequeue with one consumer, no batch
   @Test(timeout = TIMEOUT_MS)
   public void testSingleFifo() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), "app", "flow", "flowlet", "singlefifo");
+    QueueName queueName = QueueName.fromFlowlet(NamespaceId.DEFAULT.getEntityName(), "app", "flow", "flowlet",
+                                                "singlefifo");
     enqueueDequeue(queueName, ROUNDS, ROUNDS, 1, 1, DequeueStrategy.FIFO, 1);
   }
 
@@ -132,21 +135,24 @@ public abstract class QueueTest {
   @Category(SlowTests.class)
   @Test(timeout = TIMEOUT_MS)
   public void testMultiFifo() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), "app", "flow", "flowlet", "multififo");
+    QueueName queueName = QueueName.fromFlowlet(NamespaceId.DEFAULT.getEntityName(), "app", "flow", "flowlet",
+                                                "multififo");
     enqueueDequeue(queueName, ROUNDS, ROUNDS, 1, 3, DequeueStrategy.FIFO, 1);
   }
 
   // Simple enqueue and dequeue with one consumer, no batch
   @Test(timeout = TIMEOUT_MS)
   public void testSingleHash() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), "app", "flow", "flowlet", "singlehash");
+    QueueName queueName = QueueName.fromFlowlet(NamespaceId.DEFAULT.getEntityName(), "app", "flow", "flowlet",
+                                                "singlehash");
     enqueueDequeue(queueName, 2 * ROUNDS, ROUNDS, 1, 1, DequeueStrategy.HASH, 1);
   }
 
   @Category(SlowTests.class)
   @Test(timeout = TIMEOUT_MS)
   public void testMultiHash() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), "app", "flow", "flowlet", "multihash");
+    QueueName queueName = QueueName.fromFlowlet(NamespaceId.DEFAULT.getEntityName(), "app", "flow", "flowlet",
+                                                "multihash");
     enqueueDequeue(queueName, 2 * ROUNDS, ROUNDS, 1, 3, DequeueStrategy.HASH, 1);
   }
 
@@ -154,13 +160,15 @@ public abstract class QueueTest {
   @Category(SlowTests.class)
   @Test(timeout = TIMEOUT_MS)
   public void testBatchHash() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), "app", "flow", "flowlet", "batchhash");
+    QueueName queueName = QueueName.fromFlowlet(NamespaceId.DEFAULT.getEntityName(), "app", "flow", "flowlet",
+                                                "batchhash");
     enqueueDequeue(queueName, 2 * ROUNDS, ROUNDS, 10, 1, DequeueStrategy.HASH, 10);
   }
 
   @Test(timeout = TIMEOUT_MS)
   public void testQueueAbortRetrySkip() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), "app", "flow", "flowlet", "queuefailure");
+    QueueName queueName = QueueName.fromFlowlet(NamespaceId.DEFAULT.getEntityName(), "app", "flow", "flowlet",
+                                                "queuefailure");
     configureGroups(queueName, ImmutableList.of(
       new ConsumerGroupConfig(0L, 1, DequeueStrategy.FIFO, null),
       new ConsumerGroupConfig(1L, 1, DequeueStrategy.HASH, "key")
@@ -232,7 +240,7 @@ public abstract class QueueTest {
 
   @Test(timeout = TIMEOUT_MS)
   public void testRollback() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), "app",
+    QueueName queueName = QueueName.fromFlowlet(NamespaceId.DEFAULT.getEntityName(), "app",
                                                 "flow", "flowlet", "queuerollback");
     ConsumerConfig consumerConfig = new ConsumerConfig(0, 0, 1, DequeueStrategy.FIFO, null);
     configureGroups(queueName, ImmutableList.of(consumerConfig));
@@ -339,11 +347,13 @@ public abstract class QueueTest {
   @Test
   public void testDropAllForNamespace() throws Exception {
     // create 4 queues
-    QueueName myQueue1 = QueueName.fromFlowlet(NAMESPACE_ID.getId(), "myapp1", "myflow1", "myflowlet1", "myout1");
-    QueueName myQueue2 = QueueName.fromFlowlet(NAMESPACE_ID.getId(), "myapp2", "myflow2", "myflowlet2", "myout2");
-    QueueName yourQueue1 = QueueName.fromFlowlet(NAMESPACE_ID1.getId(),
+    QueueName myQueue1 = QueueName.fromFlowlet(NAMESPACE_ID.getEntityName(), "myapp1", "myflow1", "myflowlet1",
+                                               "myout1");
+    QueueName myQueue2 = QueueName.fromFlowlet(NAMESPACE_ID.getEntityName(), "myapp2", "myflow2", "myflowlet2",
+                                               "myout2");
+    QueueName yourQueue1 = QueueName.fromFlowlet(NAMESPACE_ID1.getEntityName(),
                                                  "yourapp1", "yourflow1", "yourflowlet1", "yourout1");
-    QueueName yourQueue2 = QueueName.fromFlowlet(NAMESPACE_ID1.getId(),
+    QueueName yourQueue2 = QueueName.fromFlowlet(NAMESPACE_ID1.getEntityName(),
                                                  "yourapp2", "yourflow2", "yourflowlet2", "yourout2");
 
     queueAdmin.create(myQueue1);
@@ -393,20 +403,21 @@ public abstract class QueueTest {
 
   @Test
   public void testClearAllForFlowWithNoQueues() throws Exception {
-    queueAdmin.dropAllInNamespace(Id.Namespace.DEFAULT);
-    queueAdmin.clearAllForFlow(Id.Flow.from(Id.Namespace.DEFAULT.getId(), "app", "flow"));
+    queueAdmin.dropAllInNamespace(NamespaceId.DEFAULT);
+    queueAdmin.clearAllForFlow(NamespaceId.DEFAULT.app("app").flow("flow"));
   }
 
   @Test
   public void testDropAllForFlowWithNoQueues() throws Exception {
-    queueAdmin.dropAllInNamespace(Id.Namespace.DEFAULT);
-    queueAdmin.dropAllForFlow(Id.Flow.from(Id.Namespace.DEFAULT.getId(), "app", "flow"));
+    queueAdmin.dropAllInNamespace(NamespaceId.DEFAULT);
+    queueAdmin.dropAllForFlow(NamespaceId.DEFAULT.app("app").flow("flow"));
   }
 
   @Test
   public void testReset() throws Exception {
     // NOTE: using different name of the queue from other unit-tests because this test leaves entries
-    QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), "app", "flow", "flowlet", "queueReset");
+    QueueName queueName = QueueName.fromFlowlet(NamespaceId.DEFAULT.getEntityName(), "app", "flow", "flowlet",
+                                                "queueReset");
     configureGroups(queueName, ImmutableList.of(
       new ConsumerGroupConfig(0L, 1, DequeueStrategy.FIFO, null),
       new ConsumerGroupConfig(1L, 1, DequeueStrategy.FIFO, null)
@@ -436,7 +447,7 @@ public abstract class QueueTest {
       }
 
       // Reset queues
-      queueAdmin.dropAllInNamespace(Id.Namespace.DEFAULT);
+      queueAdmin.dropAllInNamespace(NamespaceId.DEFAULT);
 
       // we gonna need another one to check again to avoid caching side-affects
       configureGroups(queueName, ImmutableList.of(new ConsumerGroupConfig(1L, 1, DequeueStrategy.FIFO, null)));
@@ -467,7 +478,7 @@ public abstract class QueueTest {
   public void testConcurrentEnqueue() throws Exception {
     // This test is for testing multiple producers that writes with a delay after a transaction started.
     // This is for verifying consumer advances the startKey correctly.
-    final QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), "app", "flow", "flowlet",
+    final QueueName queueName = QueueName.fromFlowlet(NamespaceId.DEFAULT.getEntityName(), "app", "flow", "flowlet",
                                                       "concurrent");
     configureGroups(queueName, ImmutableList.of(new ConsumerGroupConfig(0, 1, DequeueStrategy.FIFO, null)));
 
@@ -533,7 +544,7 @@ public abstract class QueueTest {
 
   @Test
   public void testMultiStageConsumer() throws Exception {
-    final QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), "app", "flow", "flowlet",
+    final QueueName queueName = QueueName.fromFlowlet(NamespaceId.DEFAULT.getEntityName(), "app", "flow", "flowlet",
                                                       "multistage");
     ConsumerGroupConfig groupConfig = new ConsumerGroupConfig(0L, 2, DequeueStrategy.HASH, "key");
     configureGroups(queueName, ImmutableList.of(groupConfig));
@@ -593,7 +604,7 @@ public abstract class QueueTest {
 
   private void testOneEnqueueDequeue(DequeueStrategy strategy) throws Exception {
     // since this is used by more than one test method, ensure uniqueness of the queue name by adding strategy
-    QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), "app", "flow", "flowlet",
+    QueueName queueName = QueueName.fromFlowlet(NamespaceId.DEFAULT.getEntityName(), "app", "flow", "flowlet",
                                                 "queue1" + strategy.toString());
     configureGroups(queueName, ImmutableList.of(
       new ConsumerGroupConfig(0L, 1, strategy, null),
@@ -638,9 +649,9 @@ public abstract class QueueTest {
     // using a different app name for each case as this test leaves some entries
     String app = doDrop ? "tDAFF" : "tCAFF";
 
-    QueueName queueName1 = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), app, "flow1", "flowlet1", "out1");
-    QueueName queueName2 = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), app, "flow1", "flowlet2", "out2");
-    QueueName queueName3 = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), app, "flow2", "flowlet1", "out");
+    QueueName queueName1 = QueueName.fromFlowlet(NamespaceId.DEFAULT.getEntityName(), app, "flow1", "flowlet1", "out1");
+    QueueName queueName2 = QueueName.fromFlowlet(NamespaceId.DEFAULT.getEntityName(), app, "flow1", "flowlet2", "out2");
+    QueueName queueName3 = QueueName.fromFlowlet(NamespaceId.DEFAULT.getEntityName(), app, "flow2", "flowlet1", "out");
 
     List<ConsumerGroupConfig> groupConfigs = ImmutableList.of(
       new ConsumerGroupConfig(0L, 1, DequeueStrategy.FIFO, null),
@@ -687,7 +698,7 @@ public abstract class QueueTest {
     verifyConsumerConfigExists(queueName1, queueName2);
 
     // clear/drop all queues for flow1
-    Id.Flow flow1Id = Id.Flow.from(Id.Namespace.DEFAULT.getId(), app, "flow1");
+    FlowId flow1Id = NamespaceId.DEFAULT.app(app).flow("flow1");
     if (doDrop) {
       queueAdmin.dropAllForFlow(flow1Id);
     } else {

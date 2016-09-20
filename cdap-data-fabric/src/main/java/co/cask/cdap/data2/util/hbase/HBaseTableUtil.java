@@ -187,7 +187,7 @@ public abstract class HBaseTableUtil {
   private String toCDAPManagedHBaseNamespace(NamespaceId namespace) {
     // Handle backward compatibility to not add the prefix for default namespace
     // TODO: CDAP-1601 - Conditional should be removed when we have a way to upgrade user datasets
-    return Id.Namespace.DEFAULT.getId().equals(namespace.getNamespace()) ?
+    return NamespaceId.DEFAULT.getEntityName().equals(namespace.getNamespace()) ?
       namespace.getNamespace() : tablePrefix + "_" + namespace.getNamespace();
   }
 
