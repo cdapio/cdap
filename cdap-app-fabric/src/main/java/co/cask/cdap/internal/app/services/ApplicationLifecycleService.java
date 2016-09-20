@@ -502,30 +502,19 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Delete the metrics for an application, or if null is provided as the application ID, for all apps.
+   * Delete the metrics for an application.
    *
    * @param applicationId the application to delete metrics for.
-   * If null, metrics for all applications in the namespace are deleted.
    */
-  private void deleteMetrics(String namespaceId, String applicationId) throws Exception {
-    Collection<ApplicationSpecification> applications = Lists.newArrayList();
-    NamespaceId namespace = new NamespaceId(namespaceId);
-    if (applicationId == null) {
-      applications = this.store.getAllApplications(namespace);
-    } else {
-      ApplicationSpecification spec = this.store.getApplication(namespace.app(applicationId));
-      applications.add(spec);
-    }
-
+  private void deleteMetrics(ApplicationId applicationId) throws Exception {
+    ApplicationSpecification spec = this.store.getApplication(applicationId);
     long endTs = System.currentTimeMillis() / 1000;
     Map<String, String> tags = Maps.newHashMap();
-    tags.put(Constants.Metrics.Tag.NAMESPACE, namespaceId);
-    for (ApplicationSpecification application : applications) {
-      // add or replace application name in the tagMap
-      tags.put(Constants.Metrics.Tag.APP, application.getName());
-      MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, tags);
-      metricStore.delete(deleteQuery);
-    }
+    tags.put(Constants.Metrics.Tag.NAMESPACE, applicationId.getNamespace());
+    // add or replace application name in the tagMap
+    tags.put(Constants.Metrics.Tag.APP, spec.getName());
+    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, tags);
+    metricStore.delete(deleteQuery);
   }
 
   /**
@@ -595,7 +584,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       scheduler.deleteSchedules(workflowProgramId, SchedulableProgramType.WORKFLOW);
     }
 
-    deleteMetrics(appId.getNamespace(), appId.getApplication());
+    deleteMetrics(appId);
 
     //Delete all preferences of the application and of all its programs
     deletePreferences(appId);

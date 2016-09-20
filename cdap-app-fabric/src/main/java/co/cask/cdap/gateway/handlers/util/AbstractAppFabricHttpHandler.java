@@ -136,7 +136,7 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
   protected void getLiveInfo(HttpResponder responder, Id.Program programId,
                              ProgramRuntimeService runtimeService) {
     try {
-      responder.sendJson(HttpResponseStatus.OK, runtimeService.getLiveInfo(programId));
+      responder.sendJson(HttpResponseStatus.OK, runtimeService.getLiveInfo(programId.toEntityId()));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     }

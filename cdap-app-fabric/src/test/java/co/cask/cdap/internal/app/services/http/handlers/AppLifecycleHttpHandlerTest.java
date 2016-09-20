@@ -33,6 +33,8 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ProgramId;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
@@ -182,6 +184,9 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     // Get updated app info for the app with default versionId by non-versioned API
     JsonObject appDetailsDefault2withVersion = getAppDetails(appId.getNamespace(), appId.getApplication());
     Assert.assertEquals(GSON.toJson(configDefault2), appDetailsDefault2withVersion.get("configuration").getAsString());
+    deleteAppVersion(appId, 200);
+    deleteApp(appIdDefault, 200);
+    deleteAppVersion(appIdV2, 200);
   }
 
   /**
@@ -321,6 +326,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                          TEST_NAMESPACE1));
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
+    // Start a fow for the App
     deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Id.Program program = Id.Program.from(TEST_NAMESPACE1, "WordCountApp", ProgramType.FLOW, "WordCountFlow");
     startProgram(program);
@@ -367,8 +373,63 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
                                          TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    List<ArtifactSummary> summaries = readResponse(response, new TypeToken<List<ArtifactSummary>>() { }.getType());
+    List<ArtifactSummary> summaries = readResponse(response, new TypeToken<List<ArtifactSummary>>() {
+    }.getType());
     Assert.assertFalse(summaries.isEmpty());
+  }
+
+  /**
+   * Tests deleting an application.
+   */
+  @Test
+  public void testDeleteVersionedApp() throws Exception {
+    // Delete an non-existing app with version
+    HttpResponse response = doDelete(getVersionedAPIPath("apps/XYZ/versions/" + ApplicationId.DEFAULT_VERSION,
+                                                         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    // Start a fow for the App
+    deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    ApplicationId appId = new ApplicationId(TEST_NAMESPACE1, "WordCountApp");
+    ProgramId program = appId.program(ProgramType.FLOW, "WordCountFlow");
+    startProgramVersioned(program, ImmutableMap.<String, String>of(), 200);
+    waitStateVersioned(program, "RUNNING");
+    // Try to delete an App while its flow is running
+    response = doDelete(getVersionedAPIPath(
+      String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion()),
+      Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(409, response.getStatusLine().getStatusCode());
+    Assert.assertEquals("'" + program.getApplication() +
+                          "' could not be deleted. Reason: The following programs are still running: "
+                          + program.getProgram(), readResponse(response));
+
+    stopProgramVersioned(program, null, 200, null);
+    waitStateVersioned(program, "STOPPED");
+
+    //Delete the App after stopping the flow
+    response = doDelete(getVersionedAPIPath(
+      String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion()),
+      Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = doDelete(getVersionedAPIPath(
+      String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion()),
+      Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    // Delete the app in the wrong namespace
+    response = doDelete(getVersionedAPIPath(
+      String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion()),
+      Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    // TODO: deleting the app should not delete the artifact
+    /* response = doGet(getVersionedAPIPath("artifacts/WordCountApp", Constants.Gateway.API_VERSION_3_TOKEN,
+                                         TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    List<ArtifactSummary> summaries = readResponse(response, new TypeToken<List<ArtifactSummary>>() {
+    }.getType());
+    Assert.assertFalse(summaries.isEmpty()); */
   }
 
   private static class ExtraConfig extends Config {

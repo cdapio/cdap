@@ -30,6 +30,7 @@ import co.cask.cdap.proto.InMemoryProgramLiveInfo;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -66,7 +67,7 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
   }
 
   @Override
-  public ProgramLiveInfo getLiveInfo(Id.Program programId) {
+  public ProgramLiveInfo getLiveInfo(ProgramId programId) {
     return isRunning(programId) ? new InMemoryProgramLiveInfo(programId)
       : new NotRunningProgramLiveInfo(programId);
   }

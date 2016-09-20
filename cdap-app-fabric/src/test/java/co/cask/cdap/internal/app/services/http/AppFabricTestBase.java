@@ -52,6 +52,7 @@ import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -543,6 +544,12 @@ public abstract class AppFabricTestBase {
     Assert.assertEquals(expectedResponseCode, response.getStatusLine().getStatusCode());
   }
 
+  protected void deleteAppVersion(ApplicationId app, int expectedResponseCode) throws Exception {
+    HttpResponse response = doDelete(getVersionedAPIPath(
+      String.format("/apps/%s/versions/%s", app.getApplication(), app.getVersion()), app.getNamespace()));
+    Assert.assertEquals(expectedResponseCode, response.getStatusLine().getStatusCode());
+  }
+
   protected void deleteApp(final Id.Application app, int expectedResponseCode,
                            long timeout, TimeUnit timeoutUnit) throws Exception {
     Tasks.waitFor(expectedResponseCode, new Callable<Integer>() {
@@ -603,6 +610,19 @@ public abstract class AppFabricTestBase {
   /**
    * Tries to start the given program with the given runtime arguments and expect the call completed with the status.
    */
+  protected void startProgramVersioned(ProgramId program, Map<String, String> args, int expectedStatusCode) throws Exception {
+    String path = String.format("apps/%s/versions/%s/%s/%s/start",
+                                program.getApplication(),
+                                program.getVersion(),
+                                program.getType().getCategoryName(),
+                                program.getProgram());
+    HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespace()), GSON.toJson(args));
+    Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
+  }
+
+  /**
+   * Tries to start the given program with the given runtime arguments and expect the call completed with the status.
+   */
   protected void debugProgram(Id.Program program, int expectedStatusCode) throws Exception {
     String path = String.format("apps/%s/%s/%s/debug",
                                 program.getApplicationId(),
@@ -648,6 +668,23 @@ public abstract class AppFabricTestBase {
     }
   }
 
+  protected void stopProgramVersioned(ProgramId program, String runId, int expectedStatusCode, String expectedMessage)
+    throws Exception {
+    String path;
+    if (runId == null) {
+      path = String.format("apps/%s/versions/%s/%s/%s/stop", program.getApplication(), program.getVersion(),
+                           program.getType().getCategoryName(), program.getProgram());
+    } else {
+      path = String.format("apps/%s/%s/%s/runs/%s/stop", program.getApplication(),
+                           program.getType().getCategoryName(), program.getProgram(), runId);
+    }
+    HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespace()));
+    Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
+    if (expectedMessage != null) {
+      Assert.assertEquals(expectedMessage, EntityUtils.toString(response.getEntity()));
+    }
+  }
+
   /**
    * Waits for the given program to transit to the given state.
    */
@@ -659,6 +696,27 @@ public abstract class AppFabricTestBase {
                                     programId.getApplicationId(),
                                     programId.getType().getCategoryName(), programId.getId());
         HttpResponse response = doGet(getVersionedAPIPath(path, programId.getNamespaceId()));
+        JsonObject status = GSON.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
+        if (status == null || !status.has("status")) {
+          return null;
+        }
+        return status.get("status").getAsString();
+      }
+    }, 60, TimeUnit.SECONDS);
+  }
+
+  /**
+   * Waits for the given program to transit to the given state.
+   */
+  protected void waitStateVersioned(final ProgramId programId, String state) throws Exception {
+    Tasks.waitFor(state, new Callable<String>() {
+      @Override
+      public String call() throws Exception {
+        String path = String.format("apps/%s/versions/%s/%s/%s/status",
+                                    programId.getApplication(),
+                                    programId.getVersion(),
+                                    programId.getType().getCategoryName(), programId.getProgram());
+        HttpResponse response = doGet(getVersionedAPIPath(path, programId.getNamespace()));
         JsonObject status = GSON.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
         if (status == null || !status.has("status")) {
           return null;

@@ -317,6 +317,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     if (programId != null) {
       builder.add(programId.getNamespace());
       builder.add(programId.getApplication());
+      builder.add(programId.getVersion());
       builder.add(programId.getType().name());
       builder.add(programId.getProgram());
     }

@@ -279,7 +279,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("app-id") final String appId,
                         @PathParam("version-id") final String versionId) throws Exception {
     ApplicationId id = validateApplicationVersionId(namespaceId, appId, versionId);
-    applicationLifecycleService.removeAppVersion(id);
+    applicationLifecycleService.removeApplication(id);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 

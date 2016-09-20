@@ -244,6 +244,40 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, status);
   }
 
+  /**
+   * Returns status of a type specified by the type{flows,workflows,mapreduce,spark,services,schedules}.
+   */
+  @GET
+  @Path("/apps/{app-id}/versions/{version-id}/{type}/{id}/status")
+  public void getVersionStatus(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId,
+                               @PathParam("app-id") String appId,
+                               @PathParam("app-id") String versionId,
+                               @PathParam("type") String type,
+                               @PathParam("id") String id) throws Exception {
+    ApplicationId applicationId = new ApplicationId(namespaceId, appId, versionId);
+    if (type.equals("schedules")) {
+      if (!versionId.equals(ApplicationId.DEFAULT_VERSION) || store.getAllAppVersions(applicationId).size() != 1) {
+        throw new NotImplementedException("schedules status is not implemented for applications with" +
+                                            " multiple versions");
+      }
+      getScheduleStatus(responder, appId, namespaceId, id);
+      return;
+    }
+
+    ProgramType programType;
+    try {
+      programType = ProgramType.valueOfCategoryName(type);
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(e);
+    }
+    ProgramId program = applicationId.program(programType, id);
+    ProgramStatus programStatus = lifecycleService.getProgramStatus(program);
+
+    Map<String, String> status = ImmutableMap.of("status", programStatus.name());
+    responder.sendJson(HttpResponseStatus.OK, status);
+  }
+
   private void getScheduleStatus(HttpResponder responder, String appId, String namespaceId, String scheduleName)
     throws NotFoundException, SchedulerException {
     ApplicationId applicationId = new ApplicationId(namespaceId, appId);
