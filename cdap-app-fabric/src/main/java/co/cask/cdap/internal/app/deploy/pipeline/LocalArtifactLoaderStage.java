@@ -84,6 +84,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     ArtifactId artifactId = deploymentInfo.getArtifactId();
     Location artifactLocation = deploymentInfo.getArtifactLocation();
     String appClassName = deploymentInfo.getAppClassName();
+    String appVersion = deploymentInfo.getApplicationVersion();
     String configString = deploymentInfo.getConfigString();
 
     NamespacedImpersonator classLoaderImpersonator =
@@ -104,7 +105,12 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
       throw new IllegalArgumentException("Failed to configure application: " + deploymentInfo);
     }
     ApplicationSpecification specification = adapter.fromJson(response.get());
-    ApplicationId applicationId = deploymentInfo.getNamespaceId().app(specification.getName());
+    ApplicationId applicationId;
+    if (appVersion == null) {
+      applicationId = deploymentInfo.getNamespaceId().app(specification.getName());
+    } else {
+      applicationId = deploymentInfo.getNamespaceId().app(specification.getName(), appVersion);
+    }
     emit(new ApplicationDeployable(deploymentInfo.getArtifactId(), deploymentInfo.getArtifactLocation(),
                                    applicationId, specification, store.getApplication(applicationId),
                                    ApplicationDeployScope.USER));

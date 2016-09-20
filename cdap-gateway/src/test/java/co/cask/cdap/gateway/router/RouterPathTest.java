@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.service.ServiceDiscoverable;
 import com.google.common.collect.ImmutableList;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
 import org.jboss.netty.handler.codec.http.HttpMethod;
@@ -39,6 +40,21 @@ public class RouterPathTest {
   @BeforeClass
   public static void init() throws Exception {
     pathLookup = new RouterPathLookup();
+  }
+
+  @Test
+  public void testUserServicePath() {
+    String path = "/v3/namespaces/n1/apps/a1/services/s1/methods/m1";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    String result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
+    Assert.assertEquals(ServiceDiscoverable.getName("n1", "a1", "s1"), result);
+    Assert.assertTrue(ServiceDiscoverable.isServiceDiscoverable(result));
+
+    path = "/v3/namespaces/n1/apps/a1/versions/v1/services/s1/methods/m1";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
+    Assert.assertEquals(ServiceDiscoverable.getVersionedName("n1", "a1", "v1", "s1"), result);
+    Assert.assertFalse(ServiceDiscoverable.isServiceDiscoverable(result));
   }
 
   @Test

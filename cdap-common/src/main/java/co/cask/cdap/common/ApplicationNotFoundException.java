@@ -16,21 +16,21 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
 
 /**
  * Thrown when an application is not found.
  */
 public class ApplicationNotFoundException extends NotFoundException {
 
-  private final Id.Application id;
+  private final ApplicationId id;
 
-  public ApplicationNotFoundException(Id.Application id) {
+  public ApplicationNotFoundException(ApplicationId id) {
     super(id);
     this.id = id;
   }
 
-  public Id.Application getId() {
+  public ApplicationId getId() {
     return id;
   }
 }

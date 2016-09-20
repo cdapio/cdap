@@ -121,7 +121,7 @@ public class TrackerAppCreationService extends AbstractExecutionThreadService {
     String trackerAppConfig = cConf.get(TRACKER_CONFIG);
     LOG.info("Creating and starting Tracker App with config : {}", trackerAppConfig);
     applicationLifecycleService.deployApp(
-      new NamespaceId(TRACKER_APPID.getNamespace()).toId(), TRACKER_APPID.getApplication(),
+      TRACKER_APPID.getParent(), TRACKER_APPID.getApplication(), TRACKER_APPID.getVersion(),
       NamespaceId.SYSTEM.artifact(artifactSummary.getName(), artifactSummary.getVersion()).toId(),
       trackerAppConfig, new TrackerProgramTerminator(programLifecycleService));
     try {

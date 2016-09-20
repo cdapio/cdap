@@ -321,7 +321,6 @@ public final class YarnTwillRunnerService implements TwillRunnerService {
   }
 
   private void startUp() throws Exception {
-    yarnAppClient.startAndWait();
     zkClientService.startAndWait();
 
     // Create the root node, so that the namespace root would get created if it is missing
@@ -345,7 +344,6 @@ public final class YarnTwillRunnerService implements TwillRunnerService {
     }
     watchCancellable.cancel();
     zkClientService.stopAndWait();
-    yarnAppClient.stopAndWait();
   }
 
   private Cancellable watchLiveApps() {

@@ -82,17 +82,8 @@ public class MetadataService extends AbstractIdleService {
       public void running() {
         final InetSocketAddress socketAddress = httpService.getBindAddress();
         LOG.info("Metadata service running at {}", socketAddress);
-        cancellable = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
-          @Override
-          public String getName() {
-            return Constants.Service.METADATA_SERVICE;
-          }
-
-          @Override
-          public InetSocketAddress getSocketAddress() {
-            return socketAddress;
-          }
-        }));
+        cancellable = discoveryService.register(
+          ResolvingDiscoverable.of(new Discoverable(Constants.Service.METADATA_SERVICE, socketAddress)));
       }
 
       @Override

@@ -25,7 +25,6 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -64,7 +63,7 @@ public class DefaultConfigStore implements ConfigStore {
   private final Transactional transactional;
 
   @Inject
-  public DefaultConfigStore(CConfiguration cConf, DatasetFramework datasetFramework, TransactionSystemClient txClient) {
+  public DefaultConfigStore(DatasetFramework datasetFramework, TransactionSystemClient txClient) {
     this.datasetFramework = datasetFramework;
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(

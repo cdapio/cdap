@@ -19,10 +19,10 @@ package co.cask.cdap.gateway.router;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
-import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.utils.Networks;
+import co.cask.cdap.internal.guice.AppFabricTestModule;
+import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.http.AbstractHttpHandler;
@@ -61,23 +61,23 @@ public class RoutingToDataSetsTest {
 
   @BeforeClass
   public static void before() throws Exception {
-    Injector injector = Guice.createInjector(new ConfigModule(), new IOModule(),
-                                             new SecurityModules().getInMemoryModules(),
-                                             new DiscoveryRuntimeModule().getInMemoryModules());
+    CConfiguration cConf = CConfiguration.create();
+    Injector injector = Guice.createInjector(new SecurityModules().getInMemoryModules(),
+                                             new DiscoveryRuntimeModule().getInMemoryModules(),
+                                             new AppFabricTestModule(cConf));
 
     // Starting router
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     AccessTokenTransformer accessTokenTransformer = injector.getInstance(AccessTokenTransformer.class);
-    CConfiguration cConf = CConfiguration.create();
+    RouteStore routeStore = injector.getInstance(RouteStore.class);
+
     SConfiguration sConf = SConfiguration.create();
     cConf.set(Constants.Router.ADDRESS, "localhost");
     port = Networks.getRandomPort();
 
     cConf.setInt(Constants.Router.ROUTER_PORT, port);
     nettyRouter = new NettyRouter(cConf, sConf, InetAddresses.forString("127.0.0.1"),
-
-                                  new RouterServiceLookup(discoveryServiceClient,
-                                                          new RouterPathLookup()),
+                                  new RouterServiceLookup(discoveryServiceClient, new RouterPathLookup(), routeStore),
                                   new SuccessTokenValidator(), accessTokenTransformer, discoveryServiceClient);
     nettyRouter.startAndWait();
 

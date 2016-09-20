@@ -149,12 +149,12 @@ public class DefaultStore implements Store {
     ApplicationMeta appMeta = txExecute(transactional, new TxCallable<ApplicationMeta>() {
       @Override
       public ApplicationMeta call(DatasetContext context) throws Exception {
-        return getAppMetadataStore(context).getApplication(id.getNamespace(), id.getApplication());
+        return getAppMetadataStore(context).getApplication(id.getNamespace(), id.getApplication(), id.getVersion());
       }
     });
 
     if (appMeta == null) {
-      throw new ApplicationNotFoundException(id.getParent().toId());
+      throw new ApplicationNotFoundException(id.getParent());
     }
 
     if (!programExists(id, appMeta.getSpec())) {
@@ -420,7 +420,7 @@ public class DefaultStore implements Store {
     txExecute(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
-        getAppMetadataStore(context).writeApplication(id.getNamespace(), id.getApplication(), spec);
+        getAppMetadataStore(context).writeApplication(id.getNamespace(), id.getApplication(), id.getVersion(), spec);
       }
     });
   }
@@ -433,7 +433,7 @@ public class DefaultStore implements Store {
     ApplicationMeta existing = txExecute(transactional, new TxCallable<ApplicationMeta>() {
       @Override
       public ApplicationMeta call(DatasetContext context) throws Exception {
-        return getAppMetadataStore(context).getApplication(id.getNamespace(), id.getApplication());
+        return getAppMetadataStore(context).getApplication(id.getNamespace(), id.getApplication(), id.getVersion());
       }
     });
 
@@ -510,7 +510,7 @@ public class DefaultStore implements Store {
         AppMetadataStore metaStore = getAppMetadataStore(context);
         ApplicationSpecification appSpec = getAppSpecOrFail(metaStore, id);
         ApplicationSpecification newAppSpec = updateFlowletInstancesInAppSpec(appSpec, id, flowletId, count);
-        metaStore.updateAppSpec(id.getNamespace(), id.getApplication(), newAppSpec);
+        metaStore.updateAppSpec(id.getNamespace(), id.getApplication(), id.getVersion(), newAppSpec);
         return appSpec.getFlows().get(id.getProgram());
       }
     });
@@ -550,7 +550,7 @@ public class DefaultStore implements Store {
                                                                        workerSpec.getResources(),
                                                                        instances);
         ApplicationSpecification newAppSpec = replaceWorkerInAppSpec(appSpec, id, newSpecification);
-        metaStore.updateAppSpec(id.getNamespace(), id.getApplication(), newAppSpec);
+        metaStore.updateAppSpec(id.getNamespace(), id.getApplication(), id.getVersion(), newAppSpec);
 
       }
     });
@@ -575,7 +575,7 @@ public class DefaultStore implements Store {
                                                serviceSpec.getResources(), instances);
 
         ApplicationSpecification newAppSpec = replaceServiceSpec(appSpec, id.getProgram(), serviceSpec);
-        metaStore.updateAppSpec(id.getNamespace(), id.getApplication(), newAppSpec);
+        metaStore.updateAppSpec(id.getNamespace(), id.getApplication(), id.getVersion(), newAppSpec);
       }
     });
 
@@ -615,7 +615,7 @@ public class DefaultStore implements Store {
       @Override
       public void run(DatasetContext context) throws Exception {
         AppMetadataStore metaStore = getAppMetadataStore(context);
-        metaStore.deleteApplication(id.getNamespace(), id.getApplication());
+        metaStore.deleteApplication(id.getNamespace(), id.getApplication(), id.getVersion());
         metaStore.deleteProgramHistory(id.getNamespace(), id.getApplication());
       }
     });
@@ -711,7 +711,7 @@ public class DefaultStore implements Store {
           scheduleName + "' already exists.");
         schedules.put(scheduleSpecification.getSchedule().getName(), scheduleSpecification);
         ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
-        metaStore.updateAppSpec(program.getNamespace(), program.getApplication(), newAppSpec);
+        metaStore.updateAppSpec(program.getNamespace(), program.getApplication(), program.getVersion(), newAppSpec);
       }
     });
   }
@@ -733,7 +733,7 @@ public class DefaultStore implements Store {
         }
 
         ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
-        metaStore.updateAppSpec(program.getNamespace(), program.getApplication(), newAppSpec);
+        metaStore.updateAppSpec(program.getNamespace(), program.getApplication(), program.getVersion(), newAppSpec);
       }
     });
   }
@@ -830,7 +830,7 @@ public class DefaultStore implements Store {
   }
 
   private ApplicationSpecification getApplicationSpec(AppMetadataStore mds, ApplicationId id) {
-    ApplicationMeta meta = mds.getApplication(id.getNamespace(), id.getApplication());
+    ApplicationMeta meta = mds.getApplication(id.getNamespace(), id.getApplication(), id.getVersion());
     return meta == null ? null : meta.getSpec();
   }
 

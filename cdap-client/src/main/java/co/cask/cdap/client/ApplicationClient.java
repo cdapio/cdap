@@ -173,7 +173,7 @@ public class ApplicationClient {
       config.getAccessToken(),
       HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ApplicationNotFoundException(appId);
+      throw new ApplicationNotFoundException(appId.toEntityId());
     }
     return ObjectResponse.fromJsonBody(response, ApplicationDetail.class).getResponseObject();
   }
@@ -197,7 +197,7 @@ public class ApplicationClient {
                                                config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ApplicationNotFoundException(appId.toId());
+      throw new ApplicationNotFoundException(appId);
     }
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<PluginInstanceDetail>>() { }).getResponseObject();
   }
@@ -216,7 +216,7 @@ public class ApplicationClient {
                                                config.resolveNamespacedURLV3(app.getNamespace(), "apps/" + app.getId()),
                                                config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ApplicationNotFoundException(app);
+      throw new ApplicationNotFoundException(app.toEntityId());
     }
   }
 
@@ -503,7 +503,7 @@ public class ApplicationClient {
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ApplicationNotFoundException(app);
+      throw new ApplicationNotFoundException(app.toEntityId());
     }
 
     return ObjectResponse.fromJsonBody(response, ApplicationDetail.class).getResponseObject().getPrograms();

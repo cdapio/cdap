@@ -45,7 +45,6 @@ import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
@@ -128,10 +127,10 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                  @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
                                  @PathParam("workflow-name") String workflowName,
                                  @PathParam("run-id") String runId) throws Exception {
-    Id.Program id = Id.Program.from(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
+    ProgramId id = new ProgramId(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id.toId()).get(RunIds.fromString(runId));
     if (runtimeInfo == null) {
-      throw new NotFoundException(new Id.Run(id, runId));
+      throw new NotFoundException(id.run(runId));
     }
     ProgramController controller = runtimeInfo.getController();
     if (controller.getState() == ProgramController.State.SUSPENDED) {
@@ -148,10 +147,10 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                 @PathParam("workflow-name") String workflowName,
                                 @PathParam("run-id") String runId) throws Exception {
 
-    Id.Program id = Id.Program.from(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
+    ProgramId id = new ProgramId(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id.toId()).get(RunIds.fromString(runId));
     if (runtimeInfo == null) {
-      throw new NotFoundException(new Id.Run(id, runId));
+      throw new NotFoundException(id.run(runId));
     }
     ProgramController controller = runtimeInfo.getController();
     if (controller.getState() == ProgramController.State.ALIVE) {
@@ -228,7 +227,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       WorkflowId workflowId = new WorkflowId(appId, workflowName);
       ApplicationSpecification appSpec = store.getApplication(appId);
       if (appSpec == null) {
-        throw new ApplicationNotFoundException(appId.toId());
+        throw new ApplicationNotFoundException(appId);
       }
       if (appSpec.getWorkflows().get(workflowName) == null) {
         throw new ProgramNotFoundException(workflowId.toId());
@@ -352,7 +351,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     ApplicationId appId = Ids.namespace(namespaceId).app(applicationId);
     ApplicationSpecification appSpec = store.getApplication(appId);
     if (appSpec == null) {
-      throw new ApplicationNotFoundException(appId.toId());
+      throw new ApplicationNotFoundException(appId);
     }
 
     ProgramId workflowProgramId = appId.workflow(workflowId);
@@ -444,7 +443,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     ApplicationId appId = new ApplicationId(namespaceId, applicationId);
     ApplicationSpecification appSpec = store.getApplication(appId);
     if (appSpec == null) {
-      throw new ApplicationNotFoundException(appId.toId());
+      throw new ApplicationNotFoundException(appId);
     }
 
     WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(workflowId);

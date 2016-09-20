@@ -54,6 +54,7 @@ import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.gateway.handlers.NotificationFeedHttpHandler;
 import co.cask.cdap.gateway.handlers.PreferencesHttpHandler;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
+import co.cask.cdap.gateway.handlers.RouteConfigHttpHandler;
 import co.cask.cdap.gateway.handlers.SecureStoreHandler;
 import co.cask.cdap.gateway.handlers.TransactionHttpHandler;
 import co.cask.cdap.gateway.handlers.UsageHandler;
@@ -97,6 +98,9 @@ import co.cask.cdap.logging.run.LogSaverStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsServiceManager;
 import co.cask.cdap.pipeline.PipelineFactory;
+import co.cask.cdap.route.store.LocalRouteStore;
+import co.cask.cdap.route.store.RouteStore;
+import co.cask.cdap.route.store.ZKRouteStore;
 import co.cask.cdap.security.DefaultUGIProvider;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.http.HttpHandler;
@@ -153,7 +157,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
                                bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
                                bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
-
+                               bind(RouteStore.class).to(LocalRouteStore.class).in(Scopes.SINGLETON);
                                addInMemoryBindings(binder());
 
                                Multibinder<String> servicesNamesBinder =
@@ -189,7 +193,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
                                bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
                                bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
-
+                               bind(RouteStore.class).to(LocalRouteStore.class).in(Scopes.SINGLETON);
                                addInMemoryBindings(binder());
 
                                Multibinder<String> servicesNamesBinder =
@@ -246,7 +250,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(StorageProviderNamespaceAdmin.class)
                                  .to(DistributedStorageProviderNamespaceAdmin.class);
                                bind(UGIProvider.class).to(DefaultUGIProvider.class);
-
+                               bind(RouteStore.class).to(ZKRouteStore.class).in(Scopes.SINGLETON);
                                MapBinder<String, MasterServiceManager> mapBinder = MapBinder.newMapBinder(
                                  binder(), String.class, MasterServiceManager.class);
                                mapBinder.addBinding(Constants.Service.LOGSAVER)
@@ -350,6 +354,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(AuthorizationHandler.class);
       handlerBinder.addBinding().to(SecureStoreHandler.class);
       handlerBinder.addBinding().to(RemotePrivilegesHandler.class);
+      handlerBinder.addBinding().to(RouteConfigHttpHandler.class);
 
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);
