@@ -18,10 +18,8 @@ import Datasource from 'services/datasource';
 import {apiCreator} from 'services/resource-helper';
 
 let dataSrc = new Datasource();
-let basepath = '/configuration/user';
-const MyUserStoreApi = {
-  get: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
-  set: apiCreator(dataSrc, 'PUT', 'REQUEST', basepath)
-};
+const basepath = '/metrics/query';
 
-export default MyUserStoreApi;
+export const MyMetricApi = {
+  query: apiCreator(dataSrc, 'POST', 'REQUEST', basepath )
+};

@@ -18,10 +18,10 @@ import Datasource from 'services/datasource';
 import {apiCreator} from 'services/resource-helper';
 
 let dataSrc = new Datasource();
-let basepath = '/configuration/user';
-const MyUserStoreApi = {
-  get: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
-  set: apiCreator(dataSrc, 'PUT', 'REQUEST', basepath)
-};
+const basepath = '/namespaces/:namespace/artifacts';
+const baseArtifactPath = basepath + '/:artifactId/versions/:version';
 
-export default MyUserStoreApi;
+export const MyArtifactApi = {
+  get: apiCreator(dataSrc, 'GET', 'REQUEST', baseArtifactPath ),
+  listExtensions: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseArtifactPath}/extensions` )
+};

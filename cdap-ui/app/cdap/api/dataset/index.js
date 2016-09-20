@@ -18,10 +18,10 @@ import Datasource from 'services/datasource';
 import {apiCreator} from 'services/resource-helper';
 
 let dataSrc = new Datasource();
-let basepath = '/configuration/user';
-const MyUserStoreApi = {
-  get: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
-  set: apiCreator(dataSrc, 'PUT', 'REQUEST', basepath)
-};
+const basepath = '/namespaces/:namespace/data/datasets';
 
-export default MyUserStoreApi;
+export const MyDatasetApi = {
+  list: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
+  get: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:datasetId`),
+  getPrograms: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:datasetId/programs`)
+};

@@ -18,10 +18,11 @@ import Datasource from 'services/datasource';
 import {apiCreator} from 'services/resource-helper';
 
 let dataSrc = new Datasource();
-let basepath = '/configuration/user';
-const MyUserStoreApi = {
-  get: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
-  set: apiCreator(dataSrc, 'PUT', 'REQUEST', basepath)
-};
+let basepath = '/namespaces/:namespace/apps';
 
-export default MyUserStoreApi;
+export const MyAppApi = {
+  list: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
+  get: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:appId`),
+  getDeployedApp: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
+  batchStatus: apiCreator(dataSrc, 'POST', 'REQUEST', '/namespaces/:namespace/status')
+};
