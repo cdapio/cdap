@@ -14,14 +14,17 @@
  * the License.
  */
 
-import Datasource from 'services/datasource';
-import {apiCreator} from 'services/resource-helper';
+.entity-card-header {
+  margin-left: 10px;
 
-let dataSrc = new Datasource();
-let basepath = '/configuration/user';
-const MyUserStoreApi = {
-  get: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
-  set: apiCreator(dataSrc, 'PUT', 'REQUEST', basepath)
-};
+  h4 {
+    line-height: 15px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    font-size: 13px;
 
-export default MyUserStoreApi;
+    span { vertical-align: middle; }
+  }
+
+  .entity-type { margin-left: 5px; }
+}

@@ -42,7 +42,7 @@ export default class HeaderActions extends Component {
     this.namespaceMap = '';
     this.toggleNamespaceDropdown = this.toggleNamespaceDropdown.bind(this);
     this.loadNamespacesFromStore = this.loadNamespacesFromStore.bind(this);
-    this.selectNamespace = this.selectNamespace.bind(this);
+    // this.selectNamespace = this.selectNamespace.bind(this);
   }
 
   componentWillMount(){
@@ -111,7 +111,7 @@ export default class HeaderActions extends Component {
 
       return (
           <Link to={`/ns/${item.name}`} key={shortid.generate()}>
-            <div>
+            <div onClick={this.selectNamespace.bind(this, item.name)}>
               {check}
               {item.name}
             </div>
@@ -172,7 +172,7 @@ export default class HeaderActions extends Component {
             <span className="fa fa-search"></span>
           </div>
           <div className="navbar-item">
-            <span className="fa fa-bolt"></span>
+            <span className="fa fa-bell"></span>
           </div>
           <PlusButton className="navbar-item" />
           <div
