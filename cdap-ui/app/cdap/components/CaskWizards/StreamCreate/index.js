@@ -21,6 +21,7 @@ import CreateStreamActions from 'services/WizardStores/CreateStream/CreateStream
 import { PublishStream } from 'services/WizardStores/CreateStream/ActionCreator';
 import CreateStreamWizardConfig from 'services/WizardConfigs/CreateStreamWizardConfig';
 import T from 'i18n-react';
+require('./StreamCreate.less');
 
 export default class StreamCreateWizard extends Component {
   constructor(props) {
