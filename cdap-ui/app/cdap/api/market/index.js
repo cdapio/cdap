@@ -25,5 +25,6 @@ export const MyMarketApi = {
   get: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `${basepath}/packages/:packageName/:version/spec.json`),
   getIcon: (entity) => {
     return `${basepath}/packages/${entity.name}/${entity.version}/icon.jpg`;
-  }
+  },
+  getSampleData: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `${basepath}/packages/:entityName/:entityVersion/:filename`)
 };

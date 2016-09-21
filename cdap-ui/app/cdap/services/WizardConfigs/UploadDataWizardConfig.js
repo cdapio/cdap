@@ -16,6 +16,7 @@
 
 import React from 'react';
 import T from 'i18n-react';
+import ViewDataStep from 'components/CaskWizards/UploadData/ViewDataStep';
 
 const UploadDataWizardConfig = {
   steps: [
@@ -24,7 +25,7 @@ const UploadDataWizardConfig = {
       shorttitle: T.translate('features.Wizard.UploadData.Step1.shorttitle'),
       title: T.translate('features.Wizard.UploadData.Step1.title'),
       description: T.translate('features.Wizard.UploadData.Step1.description'),
-      content: (<h1> View Data step </h1>),
+      content: (<ViewDataStep />),
     },
     {
       id: 'schema',
