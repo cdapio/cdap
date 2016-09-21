@@ -112,6 +112,7 @@ public class UpgradeTool {
   private final ExistingEntitySystemMetadataWriter existingEntitySystemMetadataWriter;
   private final DatasetServiceManager datasetServiceManager;
   private final NamespaceStore nsStore;
+  private final DefaultStore store;
 
   /**
    * Set of Action available in this tool.
@@ -154,6 +155,8 @@ public class UpgradeTool {
     this.dsSpecUpgrader = injector.getInstance(DatasetSpecificationUpgrader.class);
     this.queueAdmin = injector.getInstance(QueueAdmin.class);
     this.nsStore = injector.getInstance(NamespaceStore.class);
+    this.store = injector.getInstance(DefaultStore.class);
+
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -372,6 +375,9 @@ public class UpgradeTool {
 
   private void performUpgrade() throws Exception {
     performCoprocessorUpgrade();
+
+    LOG.info("Upgrading AppMetadatastore...");
+    store.upgradeAppVersion();
 
     LOG.info("Upgrading Dataset Specification...");
     dsSpecUpgrader.upgrade();

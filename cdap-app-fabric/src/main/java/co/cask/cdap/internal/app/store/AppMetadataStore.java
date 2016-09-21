@@ -58,8 +58,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
+import java.nio.BufferUnderflowException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -626,6 +628,46 @@ public class AppMetadataStore extends MetadataStoreDataset {
       startKey = new MDSKey(Bytes.stopKeyForPrefix(scanFunction.getLastKey().getKey()));
     }
     return batches;
+  }
+
+  public void upgradeVersionKeys() {
+    MDSKey startKey = new MDSKey.Builder().add(TYPE_APP_META).build();
+    Map<MDSKey, ApplicationMeta> appMetas = listKV(startKey, ApplicationMeta.class);
+    Map<MDSKey, ApplicationMeta> newAppMetas = new HashMap<>();
+    for (Map.Entry<MDSKey, ApplicationMeta> oldKey : appMetas.entrySet()) {
+      MDSKey newKey = appendDefaultVersion(oldKey.getKey());
+      newAppMetas.put(newKey, oldKey.getValue());
+    }
+
+    //Delete old rows
+    deleteAll(startKey);
+
+    // Write new rows
+    for (Map.Entry<MDSKey, ApplicationMeta> newMeta : newAppMetas.entrySet()) {
+      write(newMeta.getKey(), newMeta.getValue());
+    }
+  }
+
+  // Append version only if it doesn't have version at the end
+  private static MDSKey appendDefaultVersion(MDSKey oldKey) {
+    MDSKey.Splitter splitter = oldKey.split();
+    int keyParts = 0;
+    try {
+      // max parts = 4 => appMeta.ns.app.version
+      for (int i = 0; i < 4; i++) {
+        splitter.skipString();
+        keyParts++;
+      }
+    } catch (BufferUnderflowException ex) {
+      // expected when the version is not part of the key
+    }
+
+    if (keyParts == 4) {
+      // Key already is versioned, then return old key
+      return oldKey;
+    }
+    // Otherwise, append the key with default version.
+    return new MDSKey.Builder(oldKey).add(ApplicationId.DEFAULT_VERSION).build();
   }
 
   private static class ScanFunction implements Function<MetadataStoreDataset.KeyValue<RunRecordMeta>, Boolean> {
