@@ -1904,6 +1904,10 @@
                   </goals>
                   <configuration>
                     <outputDirectory>${stage.opt.dir}</outputDirectory>
+                    <useDefaultDelimiters>false</useDefaultDelimiters>
+                    <delimiters>
+                      <delimiter>@@</delimiter>
+                    </delimiters>
                     <resources>
                       <resource>
                         <directory>${project.parent.basedir}/cdap-distributions</directory>
@@ -1921,6 +1925,7 @@
                       <resource>
                         <directory>${project.parent.basedir}/cdap-common/bin</directory>
                         <targetPath>bin</targetPath>
+                        <filtering>true</filtering>
                       </resource>
                       <resource>
                         <directory>bin</directory>
