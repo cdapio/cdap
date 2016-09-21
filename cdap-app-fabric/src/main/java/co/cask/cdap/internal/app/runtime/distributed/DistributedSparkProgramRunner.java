@@ -40,7 +40,6 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.util.Map;
 
 /**
@@ -76,14 +75,14 @@ public class DistributedSparkProgramRunner extends AbstractDistributedProgramRun
     SparkSpecification spec = appSpec.getSpark().get(program.getName());
     Preconditions.checkNotNull(spec, "Missing SparkSpecification for %s", program.getId());
 
-    // Localize the spark-assembly jar
-    File sparkAssemblyJar = SparkUtils.locateSparkAssemblyJar();
-    localizeResources.put(sparkAssemblyJar.getName(), new LocalizeResource(sparkAssemblyJar));
+    // Localize the spark-assembly and its dependency jars
+    Map<String, LocalizeResource> sparkLocalizeResources = SparkUtils.getSparkLocalizeResources();
+    localizeResources.putAll(sparkLocalizeResources);
 
     LOG.info("Launching Spark program: {}", program.getId());
     TwillController controller = launcher.launch(
       new SparkTwillApplication(program, spec, localizeResources, eventHandler),
-      sparkAssemblyJar.getName());
+      sparkLocalizeResources.keySet());
 
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     return new SparkTwillProgramController(program.getId(), controller, runId).startListen();

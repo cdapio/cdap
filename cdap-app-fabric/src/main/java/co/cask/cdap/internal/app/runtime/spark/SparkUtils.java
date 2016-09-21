@@ -16,8 +16,10 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
+import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +35,9 @@ import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * A utility class to help determine Spark supports and locating Spark jar.
@@ -45,8 +50,43 @@ public final class SparkUtils {
   private static final String SPARK_ASSEMBLY_JAR = "SPARK_ASSEMBLY_JAR";
   // Environment variable name for locating spark home directory
   private static final String SPARK_HOME = "SPARK_HOME";
+  // Environment variable name for locating hadoop and other spark dependencies for hadoop less spark
+  private static final String SPARK_DIST_CLASSPATH = "SPARK_DIST_CLASSPATH";
 
   private static File sparkAssemblyJar;
+
+  /**
+   * @return a {@link LinkedHashMap} containing spark assembly jar followed by hadoop
+   * dependencies (if hadoop less build)
+   */
+  public static LinkedHashMap<String, LocalizeResource> getSparkLocalizeResources() {
+    LinkedHashMap<String, LocalizeResource> localizeResources = new LinkedHashMap<>();
+    for (File sparkDependencyJar : SparkUtils.locateSparkDependencyJars()) {
+      localizeResources.put(sparkDependencyJar.getName(), new LocalizeResource(sparkDependencyJar));
+    }
+    return localizeResources;
+  }
+
+  /**
+   * Locate the spark assembly and its hadoop dependency jars (if hadoop less build) from the local filesystem.
+   *
+   * @return a {@link LinkedHashSet} containing jar location of spark assembly followed by hadoop dependencies
+   * (if hadoop less build)
+   */
+  private static LinkedHashSet<File> locateSparkDependencyJars() {
+    LinkedHashSet<File> sparkDependencyJars = Sets.newLinkedHashSet();
+    sparkDependencyJars.add(locateSparkAssemblyJar());
+    // SPARK_DIST_CLASSPATH is set for hadoop-less spark builds and should contain all hadoop dependencies jars
+    // For example CDH deployed through Cloudera Manager has hadoop-less spark
+    String sparkDistClassPath = System.getenv(SPARK_DIST_CLASSPATH);
+    if (sparkDistClassPath != null) {
+      for (String path : sparkDistClassPath.split(File.pathSeparator)) {
+        File file = new File(path).getAbsoluteFile();
+        sparkDependencyJars.add(file);
+      }
+    }
+    return sparkDependencyJars;
+  }
 
   /**
    * Locates the spark-assembly jar from the local file system.
@@ -54,7 +94,7 @@ public final class SparkUtils {
    * @return the spark-assembly jar location
    * @throws IllegalStateException if cannot locate the spark assembly jar
    */
-  public static synchronized File locateSparkAssemblyJar() {
+  private static synchronized File locateSparkAssemblyJar() {
     if (sparkAssemblyJar != null) {
       return sparkAssemblyJar;
     }
@@ -125,7 +165,8 @@ public final class SparkUtils {
    * Creates a new {@link URLClassLoader} that can load Spark classes. If Spark classes are already loadable
    * from the given parent ClassLoader, a new URLClassLoader will be created in a way such that it
    * always delegates to the parent for class loading.
-   * Otherwise, it will try to find the Spark Assembly JAR to create a new URLClassLoader from it.
+   * Otherwise, it will try to find the Spark Assembly JAR with hadoop dependency jars (if hadoop-less spark build)
+   * to create a new URLClassLoader from it.
    *
    * @param parentClassLoader the parent ClassLoader for the new URLClassLoader created
    */
@@ -140,7 +181,13 @@ public final class SparkUtils {
     } catch (ClassNotFoundException e) {
       // Try to locate Spark Assembly jar, which is for the distributed mode case
       try {
-        urls = new URL[] { SparkUtils.locateSparkAssemblyJar().toURI().toURL() };
+        Set<File> sparkDependencyJars = locateSparkDependencyJars();
+        urls = new URL[sparkDependencyJars.size()];
+        int index = 0;
+        for (File sparkDependencyJar : sparkDependencyJars) {
+          urls[index] = sparkDependencyJar.toURI().toURL();
+          index++;
+        }
       } catch (IllegalStateException ex) {
         // Don't propagate as it's possible that a cluster doesn't have Spark configured
         // If someone deploy an artifact with Spark program inside, there will be NoClassDefFound exception and
@@ -154,7 +201,6 @@ public final class SparkUtils {
     }
     return new URLClassLoader(urls, parentClassLoader);
   }
-
 
   private SparkUtils() {
   }

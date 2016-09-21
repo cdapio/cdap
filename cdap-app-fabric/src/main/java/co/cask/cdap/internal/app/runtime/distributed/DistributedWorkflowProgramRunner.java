@@ -88,21 +88,19 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
     WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(program.getName());
     Preconditions.checkNotNull(workflowSpec, "Missing WorkflowSpecification for %s", program.getName());
 
-    // It the workflow has Spark, localize the spark-assembly jar
     List<String> extraClassPaths = new ArrayList<>();
 
     // See if the Workflow has Spark in it
     Resources resources = findSparkDriverResources(program.getApplicationSpecification().getSpark(), workflowSpec);
     if (resources != null) {
-      // Has Spark
-      File sparkAssemblyJar = SparkUtils.locateSparkAssemblyJar();
-      localizeResources.put(sparkAssemblyJar.getName(), new LocalizeResource(sparkAssemblyJar));
-      extraClassPaths.add(sparkAssemblyJar.getName());
+      Map<String, LocalizeResource> sparkLocalizeResources = SparkUtils.getSparkLocalizeResources();
+      extraClassPaths.addAll(sparkLocalizeResources.keySet());
+      localizeResources.putAll(sparkLocalizeResources);
     } else {
       // No Spark
       resources = new Resources();
     }
-    
+
     // Add classpaths for MR framework
     extraClassPaths.addAll(MapReduceContainerHelper.localizeFramework(hConf, localizeResources));
 
