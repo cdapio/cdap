@@ -821,6 +821,15 @@ public class DefaultStore implements Store {
     truncate(dsFramework.getAdmin(WORKFLOW_STATS_INSTANCE_ID.toId(), null));
   }
 
+  public void upgradeAppVersion() throws Exception {
+    txExecute(transactional, new TxRunnable() {
+      @Override
+      public void run(DatasetContext context) throws Exception {
+        getAppMetadataStore(context).upgradeVersionKeys();
+      }
+    });
+  }
+
   private void truncate(DatasetAdmin admin) throws Exception {
     if (admin != null) {
       admin.truncate();
