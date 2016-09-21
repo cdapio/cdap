@@ -22,6 +22,8 @@ import InformationalWizard from 'components/CaskWizards/Informational';
 import CreateStreamStore from 'services/WizardStores/CreateStream/CreateStreamStore';
 import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
 import PublishPipelineStore from 'services/WizardStores/PublishPipeline/PublishPipelineStore';
+import AddNamespaceWizard from 'components/CaskWizards/AddNamespace';
+import AddNamespaceStore from 'services/WizardStores/AddNamespace/AddNamespaceStore';
 
 const WizardTypesMap = {
   'create_stream': {
@@ -43,6 +45,10 @@ const WizardTypesMap = {
   'informational': {
     tag: InformationalWizard,
     store: {}
+  },
+  'add_namespace': {
+    tag: AddNamespaceWizard,
+    store: AddNamespaceStore
   }
 };
 

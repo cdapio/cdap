@@ -72,7 +72,34 @@ features:
         nameAsc: A - Z
         nameDesc: Z - A
   Management:
+    Top:
+      version-label: Version
+      time-label: Uptime
+      services: Services
+      updated: Last updated
+      updated-label:
+        plural: seconds ago
+        singular: second ago
+    Panels:
+      nodes: Nodes
+      virtual-cores: Virtual Cores
+      memory: Memory
+      application: Application
+    Configure:
+      title: Configure
+      buttons:
+        add-ns: Add Namespace
+        view-config: View Configurations
+        manage-ns: Manage Namespaces
+        delete-ns: Delete Namespace
+        manage-roles: Manage Roles
+        reset-instance: Reset Instance
+        tag-management: Tag Management
+        instance-preference: Instance Preference
+        delete-datasets: Delete All Datasets
+        view-invalid: View Invalid Transactions
     Component-Overview:
+      label: Component Overview
       cards:
         cdh: CDH
         yarn: YARN
@@ -123,6 +150,7 @@ features:
       support: Support
     Sidebar:
       extension: "Extensions:"
+
   Resource-Center:
     Stream:
       label: Stream
@@ -149,6 +177,7 @@ features:
       label: Plugins
       description: Plugin is a easy way to extend the functionality of a Application.
       actionbtn0: Upload
+
   SplashScreen:
     buttons:
       getStarted: Read the Docs
@@ -214,4 +243,42 @@ features:
       message: Choose the pipeline type you would like to create
       batchLinkLabel: Batch Pipeline
       realtimeLinkLabel: Realtime Pipeline
+
+    Add-Namespace:
+       Step1:
+         ssd-label: "General Information"
+         sld-desc:  "Specifies the name and the description of Namespace"
+         name-label: "Name"
+         name-placeholder: "Name of the namespace you would like to have"
+         description-label: "Description"
+         description-placeholder: "Description"
+         scheduler-queue-label: "Scheduler Queue"
+         scheduler-queue-placeholder: "Specify the YARN queue name to be associated with this namespace"
+       Step2:
+         ssd-label: "Namespace Mapping"
+         sld-label: "Specifies mapping of namespace resources to the underlying existing storage resources"
+         hdfs-root-directory-label: "HDFS Root Directory"
+         hdfs-root-directory-placeholder: "Specify the root directory of HDFS to be used as this namespace root"
+         hive-db-name-label: "Hive Database Name"
+         hive-db-name-placeholder: "Specify the Hive database name to be used for this namespace"
+         hbase-nm-name-label: "HBase Namespace Name"
+         hbase-nm-name-placeholder: "Specify the name of the existing namespace in HBase to be used for this namespace"
+       Step3:
+         ssd-label: "Security"
+         sld-label: "Specifies credentials for securely impersonating programs running as specified user"
+         principal-label: "Principal"
+         principal-placeholder: "Specifies the user to be impersonated for all jobs running in this namespace"
+         keytab-uri-label: "Keytab URI"
+         keytab-uri-placeholder: "Specifies the location to keytab file associated with the principal"
+       Step4:
+         ssd-label: "Preferences"
+         sld-label: "Specify preferences to applied at the namespace level"
+         name-label: "Name"
+         name-placeholder: "Preference name"
+         value-label: "Value"
+         value-placeholder: "Preference value"
+       Status:
+         creation-error-desc: "Failed to create namespace '%s'"
+         creation-success-desc: "Successfully created namespace '%s'"
+
 ...

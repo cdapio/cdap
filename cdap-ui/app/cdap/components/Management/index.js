@@ -22,6 +22,9 @@ import ServiceStatusPanel from '../ServiceStatusPanel';
 import AdminDetailPanel from '../AdminDetailPanel';
 import AdminConfigurePane from '../AdminConfigurePane';
 import AdminOverviewPane from '../AdminOverviewPane';
+import AbstractWizard from 'components/AbstractWizard';
+
+import T from 'i18n-react';
 var shortid = require('shortid');
 var classNames = require('classnames');
 
@@ -50,7 +53,7 @@ var dummyData = {
     },
     {
       name: 'Tephra Transaction',
-      status: 'Red'
+      status: 'Green'
     },
     {
       name: 'Dataset Executor',
@@ -62,7 +65,7 @@ var dummyData = {
     },
     {
       name: 'Streams',
-      status: 'Yellow'
+      status: 'Green'
     }
   ]
 };
@@ -74,14 +77,22 @@ class Management extends Component {
     this.state = {
       application: 'CDAP',
       lastUpdated: 15,
-      loading: true
+      loading: false,
+      wizard : {
+        actionIndex : null,
+        actionType : null
+      }
     };
     this.interval = undefined;
     this.clickLeft = this.clickLeft.bind(this);
     this.clickRight = this.clickRight.bind(this);
     this.setToContext = this.setToContext.bind(this);
-
+    this.openNamespaceWizard = this.openNamespaceWizard.bind(this, 0, 'add_namespace');
     this.applications = ['CDAP', 'YARN', 'HBASE'];
+  }
+
+  componentDidMount(){
+    this.openNamespaceWizard();
   }
 
   clickLeft() {
@@ -111,18 +122,24 @@ class Management extends Component {
     }
   }
 
-  // FIXME: This for giving it a strcture. Eventually will be removed.
-  // Simulates the page loading
-  simulateLoading() {
-    setTimeout( () => {
+  closeWizard() {
       this.setState({
-        loading: false
+        wizard: {
+          actionIndex: null,
+          actionType: null
+        }
       });
-    }, 1500);
   }
-  componentDidMount() {
-    this.simulateLoading();
+
+  openNamespaceWizard(index, type) {
+    this.setState({
+      wizard: {
+        actionIndex: index,
+        actionType: type
+      }
+    });
   }
+
   render () {
 
     var navItems = this.applications.map( (item) => {
@@ -144,12 +161,12 @@ class Management extends Component {
             <InfoCard
               isLoading={this.state.loading}
               primaryText={dummyData.version}
-              secondaryText="Version"
+              secondaryText={T.translate('features.Management.Top.version-label')}
             />
             <InfoCard
               isLoading={this.state.loading}
               primaryText={dummyData.uptime.duration}
-              secondaryText="Uptime"
+              secondaryText={T.translate('features.Management.Top.time-label')}
               superscriptText={dummyData.uptime.unit}
             />
             <ServiceLabel/>
@@ -174,9 +191,16 @@ class Management extends Component {
           </div>
         </div>
         <div className="admin-bottom-panel">
-          <AdminConfigurePane />
+          <AdminConfigurePane openNamespaceWizard={this.openNamespaceWizard}/>
           <AdminOverviewPane isLoading={this.state.loading} />
         </div>
+        <AbstractWizard
+          isOpen={this.state.wizard.actionIndex !== null && this.state.wizard.actionType !== null}
+          onClose={this.closeWizard.bind(this)}
+          wizardType={this.state.wizard.actionType}
+          context={'Configure'}
+        />
+        <div className={classNames("mgmt-modal-overlay" , {"hide" : this.state.wizard.actionType === null})}></div>
       </div>
     );
   }

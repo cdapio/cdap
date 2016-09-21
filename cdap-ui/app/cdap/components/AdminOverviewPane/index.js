@@ -47,7 +47,7 @@ function AdminOverviewPane() {
 
   return (
     <div className="overview-pane">
-      <span>Component Overview</span>
+      <span>{T.translate('features.Management.Component-Overview.label')}</span>
       <div className="overview-pane-container">
        {cards}
       </div>
