@@ -22,6 +22,7 @@ import ServiceStatusPanel from '../ServiceStatusPanel';
 import AdminDetailPanel from '../AdminDetailPanel';
 import AdminConfigurePane from '../AdminConfigurePane';
 import AdminOverviewPane from '../AdminOverviewPane';
+import T from 'i18n-react';
 var shortid = require('shortid');
 var classNames = require('classnames');
 
@@ -144,12 +145,12 @@ class Management extends Component {
             <InfoCard
               isLoading={this.state.loading}
               primaryText={dummyData.version}
-              secondaryText="Version"
+              secondaryText={T.translate('features.Management.Top.version-label')}
             />
             <InfoCard
               isLoading={this.state.loading}
               primaryText={dummyData.uptime.duration}
-              secondaryText="Uptime"
+              secondaryText={T.translate('features.Management.Top.time-label')}
               superscriptText={dummyData.uptime.unit}
             />
             <ServiceLabel/>

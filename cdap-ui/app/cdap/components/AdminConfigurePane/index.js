@@ -19,13 +19,15 @@ require('./AdminConfigurePane.less');
 import ConfigureButton from '../ConfigureButton/index.js';
 var shortid = require('shortid');
 
+var configButtons = ['View Configurations', 'Add Namespace', 'Delete Namespace', 'Manage Namespaces', 'Instance Preference', 'Add Roles', 'Manage Roles', 'Reset Instance', 'Delete All Datasets', 'Reset Instance', 'Delete All Datasets', 'View Invalid Transactions', 'Tag Management'];
+
 export default function AdminConfigurePane(){
   var buttons = [];
-  for(var i = 0 ; i < 20; i++){
+  for(var i = 0 ; i < configButtons.length; i++){
     buttons.push(
       <ConfigureButton
         key={shortid.generate()}
-        label="View Configurations"
+        label={configButtons[i]}
       />
     );
   }

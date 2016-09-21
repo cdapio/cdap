@@ -72,6 +72,35 @@ features:
         nameAsc: A - Z
         nameDesc: Z - A
 
+  Management:
+    Top:
+      version-label: Version
+      time-label: Uptime
+      services: Services
+      updated: Last updated
+      updated-label:
+        plural: seconds ago
+        singular: second ago
+    Panels:
+      nodes: Nodes
+      virtual-cores: Virtual Cores
+      memory: Memory
+      application: Application
+    Configure:
+      title: Configure
+      buttons:
+        view-config: View Configurations
+        manage-ns: Manage Namespaces
+        add-ns: Add Namespace
+        delete-ns: Delete Namespace
+        manage-roles: Manage Roles
+        reset-instance: Reset Instance
+        tag-management: Tag Management
+        instance-preference: Instance Preference
+        delete-datasets: Delete All Datasets
+        view-invalid: View Invalid Transactions
+    Component-Overview: Component Overview
+
   Market:
     search-placeholder: Search
     tabs:
@@ -113,7 +142,6 @@ features:
       support: Support
     Sidebar:
       extension: "Extensions:"
-
 
   SplashScreen:
     buttons:
@@ -162,4 +190,41 @@ features:
         description: Specify the name of the pipeline
       pipelinenameplaceholder: Pipeline name
       headerlabel: Publish Pipeline
+  Configure:
+    Add-Namespace:
+       Step1:
+         ssd-label: "General Information"
+         sld-desc:  "Specifies the name and the description of Namespace"
+         name-label: "Name"
+         name-placeholder: "Name of the namespace you would like to have"
+         description-label: "Description"
+         description-placeholder: "Description"
+         scheduler-queue-label: "Scheduler Queue"
+         scheduler-queue-placeholder: "Specify the YARN queue name to be associated with this namespace"
+       Step2:
+         ssd-label: "Namespace Mapping"
+         sld-label: "Specifies mapping of namespace resources to the underlying existing storage resources"
+         hdfs-root-directory-label: "HDFS Root Directory"
+         hdfs-root-directory-placeholder: "Specify the root directory of HDFS to be used as this namespace root"
+         hive-db-name-label: "Hive Database Name"
+         hive-db-name-placeholder: "Specify the Hive database name to be used for this namespace"
+         hbase-nm-name-label: "HBase Namespace Name"
+         hbase-nm-name-placeholder: "Specify the name of the existing namespace in HBase to be used for this namespace"
+       Step3:
+         ssd-label: "Security"
+         sld-label: "Specifies credentials for securely impersonating programs running as specified user"
+         principal-label: "Principal"
+         principal-placeholder: "Specifies the user to be impersonated for all jobs running in this namespace"
+         keytab-uri-label: "Keytab URI"
+         keytab-uri-placeholder: "Specifies the location to keytab file associated with the principal"
+       Step4:
+         ssd-label: "Preferences"
+         sld-label: "Specify preferences to applied at the namespace level"
+         name-label: "Name"
+         name-placeholder: "Preference name"
+         value-label: "Value"
+         value-placeholder: "Preference value"
+       Status:
+         creation-error-desc: "Failed to create namespace '%s'"
+         creation-success-desc: "Successfully created namespace '%s'"
 ...
