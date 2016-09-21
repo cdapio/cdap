@@ -21,6 +21,7 @@ import T from 'i18n-react';
 import AbstractWizard from 'components/AbstractWizard';
 import classnames from 'classnames';
 import shortid from 'shortid';
+import moment from 'moment';
 
 require('./MarketEntityModal.less');
 
@@ -80,7 +81,6 @@ export default class MarketEntityModal extends Component {
 
   render() {
     let actions;
-
     if (this.state.entityDetail.actions) {
       actions = (
         <div className="market-entity-actions">
@@ -146,9 +146,36 @@ export default class MarketEntityModal extends Component {
               <div className="entity-description">
                 {this.state.entityDetail.description}
               </div>
-              {actions}
+              <div className="entity-metadata">
+                <div>Author</div>
+                <span>
+                  <strong>
+                    {this.state.entityDetail.author}
+                  </strong>
+                </span>
+                <div>Company</div>
+                <span>
+                  <strong>
+                    {this.state.entityDetail.org}
+                  </strong>
+                </span>
+                <div>Created</div>
+                <span>
+                  <strong>
+                    {(moment(this.state.entityDetail.created * 1000)).format('MM-DD-YYYY HH:mm A')}
+                  </strong>
+                </span>
+                <div>CDAP Version</div>
+                <span>
+                  <strong>
+                    {this.state.entityDetail.cdapVersion}
+                  </strong>
+                </span>
+              </div>
             </div>
           </div>
+          <hr />
+          {actions}
           <AbstractWizard
             isOpen={this.state.wizard.actionIndex !== null && this.state.wizard.actionType !== null}
             onClose={this.closeWizard.bind(this)}
