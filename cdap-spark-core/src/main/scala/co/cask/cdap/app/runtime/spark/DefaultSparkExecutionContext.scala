@@ -95,11 +95,11 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
 
       sparkTransaction.fold({
         LOG.debug("Spark program={}, runId={}, jobId={} starts without transaction",
-                  runtimeContext.getProgram.getId.toEntityId, getRunId, jobId)
+                  runtimeContext.getProgram.getId, getRunId, jobId)
         sparkTxService.jobStarted(jobId, stageIds)
       })(info => {
         LOG.debug("Spark program={}, runId={}, jobId={} starts with auto-commit={} on transaction {}",
-                  runtimeContext.getProgram.getId.toEntityId, getRunId, jobId,
+                  runtimeContext.getProgram.getId, getRunId, jobId,
                   info.commitOnJobEnded().toString, info.getTransaction)
         sparkTxService.jobStarted(jobId, stageIds, info)
         info.onJobStarted()
@@ -127,7 +127,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
 
   override def getRunId: RunId = runtimeContext.getRunId
 
-  override def getNamespace: String = runtimeContext.getProgram.getId.getNamespaceId
+  override def getNamespace: String = runtimeContext.getProgram.getNamespaceId
 
   override def getAdmin: Admin = runtimeContext.getAdmin
 
@@ -314,10 +314,10 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
 
     // Register for stream usage for the Spark program
     val oldProgramId = runtimeContext.getProgram.getId
-    val owners = List(oldProgramId)
+    val owners = List(oldProgramId.toId)
     try {
       runtimeContext.getStreamAdmin.register(owners, oldStreamId)
-      runtimeContext.getStreamAdmin.addAccess(new Id.Run(oldProgramId, getRunId.getId), oldStreamId, AccessType.READ)
+      runtimeContext.getStreamAdmin.addAccess(new Id.Run(oldProgramId.toId, getRunId.getId), oldStreamId, AccessType.READ)
     }
     catch {
       case e: Exception =>

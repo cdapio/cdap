@@ -93,7 +93,7 @@ final class MapReduceContextConfig {
   public void set(BasicMapReduceContext context, CConfiguration conf, Transaction tx, URI programJarURI,
                   Map<String, String> localizedUserResources) {
     setProgramOptions(context.getProgramOptions());
-    setProgramId(context.getProgram().getId().toEntityId());
+    setProgramId(context.getProgram().getId());
     setApplicationSpecification(context.getApplicationSpecification());
     setWorkflowProgramInfo(context.getWorkflowInfo());
     setPlugins(context.getApplicationSpecification().getPlugins());

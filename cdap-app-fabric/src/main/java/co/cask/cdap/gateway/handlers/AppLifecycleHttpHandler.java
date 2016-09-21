@@ -39,7 +39,6 @@ import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.runtime.artifact.WriteConflictException;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
-import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
@@ -72,10 +71,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -225,6 +224,22 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     ApplicationId applicationId = validateApplicationId(namespaceId, appId);
     responder.sendJson(HttpResponseStatus.OK, applicationLifecycleService.getAppDetail(applicationId));
+  }
+
+  /**
+   * Returns the list of versions of the application.
+   */
+  @GET
+  @Path("/apps/{app-id}/versions")
+  public void listAppVersions(HttpRequest request, HttpResponder responder,
+                              @PathParam("namespace-id") final String namespaceId,
+                              @PathParam("app-id") final String appId) throws Exception {
+    ApplicationId applicationId = validateApplicationId(namespaceId, appId);
+    Collection<String> versions = applicationLifecycleService.getAppVerions(namespaceId, appId);
+    if (versions.isEmpty()) {
+      throw new ApplicationNotFoundException(applicationId);
+    }
+    responder.sendJson(HttpResponseStatus.OK, versions);
   }
 
   /**

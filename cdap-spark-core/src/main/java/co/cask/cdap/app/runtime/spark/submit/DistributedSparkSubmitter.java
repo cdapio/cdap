@@ -47,7 +47,7 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
                                    @Nullable String schedulerQueueName) {
     this.hConf = hConf;
     this.schedulerQueueName = schedulerQueueName;
-    ProgramRunId programRunId = runtimeContext.getProgram().getId().toEntityId().run(runtimeContext.getRunId().getId());
+    ProgramRunId programRunId = runtimeContext.getProgram().getId().run(runtimeContext.getRunId().getId());
     WorkflowProgramInfo workflowInfo = runtimeContext.getWorkflowInfo();
     BasicWorkflowToken workflowToken = workflowInfo == null ? null : workflowInfo.getWorkflowToken();
     this.sparkExecutionService = new SparkExecutionService(locationFactory, hostname, programRunId, workflowToken);

@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.twill.api.RunId;
@@ -41,7 +41,7 @@ final class FlowTwillProgramController extends AbstractTwillProgramController {
   private final Lock lock;
   private final DistributedFlowletInstanceUpdater instanceUpdater;
 
-  FlowTwillProgramController(Id.Program programId, TwillController controller,
+  FlowTwillProgramController(ProgramId programId, TwillController controller,
                              DistributedFlowletInstanceUpdater instanceUpdater, RunId runId) {
     super(programId, controller, runId);
     this.lock = new ReentrantLock();

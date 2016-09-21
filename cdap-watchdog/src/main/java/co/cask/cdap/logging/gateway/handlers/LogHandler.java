@@ -31,6 +31,7 @@ import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.logging.read.ReadRange;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
@@ -98,7 +99,7 @@ public class LogHandler extends AbstractHttpHandler {
                            @QueryParam("format") @DefaultValue("text") String format,
                            @QueryParam("suppress") List<String> suppress) {
     ProgramType type = ProgramType.valueOfCategoryName(programType);
-    RunRecordMeta runRecord = programStore.getRun(Id.Program.from(namespaceId, appId, type, programId), runId);
+    RunRecordMeta runRecord = programStore.getRun(new ProgramId(namespaceId, appId, type, programId), runId);
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId, type,
                                                                                     runId, runRecord.getSystemArgs());
 
@@ -164,7 +165,7 @@ public class LogHandler extends AbstractHttpHandler {
                         @QueryParam("format") @DefaultValue("text") String format,
                         @QueryParam("suppress") List<String> suppress) {
     ProgramType type = ProgramType.valueOfCategoryName(programType);
-    RunRecordMeta runRecord = programStore.getRun(Id.Program.from(namespaceId, appId, type, programId), runId);
+    RunRecordMeta runRecord = programStore.getRun(new ProgramId(namespaceId, appId, type, programId), runId);
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId, type,
                                                                                     runId, runRecord.getSystemArgs());
 
@@ -260,7 +261,7 @@ public class LogHandler extends AbstractHttpHandler {
                         @QueryParam("format") @DefaultValue("text") String format,
                         @QueryParam("suppress") List<String> suppress) {
     ProgramType type = ProgramType.valueOfCategoryName(programType);
-    RunRecordMeta runRecord = programStore.getRun(Id.Program.from(namespaceId, appId, type, programId), runId);
+    RunRecordMeta runRecord = programStore.getRun(new ProgramId(namespaceId, appId, type, programId), runId);
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(namespaceId, appId, programId, type,
                                                                                     runId, runRecord.getSystemArgs());
 

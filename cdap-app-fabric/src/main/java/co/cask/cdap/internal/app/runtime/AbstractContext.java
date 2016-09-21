@@ -48,6 +48,7 @@ import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.Maps;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
@@ -101,7 +102,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             @Nullable MetricsCollectionService metricsService, Map<String, String> metricsTags,
                             SecureStore secureStore, SecureStoreManager secureStoreManager,
                             @Nullable PluginInstantiator pluginInstantiator) {
-    super(program.getId().toEntityId());
+    super(program.getId());
 
     this.program = program;
     this.programOptions = programOptions;
@@ -122,19 +123,19 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     SystemDatasetInstantiator instantiator =
       new SystemDatasetInstantiator(dsFramework, program.getClassLoader(), owners);
     this.datasetCache = multiThreaded
-      ? new MultiThreadDatasetCache(instantiator, txClient, program.getId().getNamespace().toEntityId(),
+      ? new MultiThreadDatasetCache(instantiator, txClient, new NamespaceId(program.getId().getNamespace()),
                                     runtimeArguments, programMetrics, staticDatasets)
-      : new SingleThreadDatasetCache(instantiator, txClient, program.getId().getNamespace().toEntityId(),
+      : new SingleThreadDatasetCache(instantiator, txClient, new NamespaceId(program.getId().getNamespace()),
                                      runtimeArguments, programMetrics, staticDatasets);
     this.pluginInstantiator = pluginInstantiator;
     this.pluginContext = new DefaultPluginContext(pluginInstantiator, program.getId(),
                                                   program.getApplicationSpecification().getPlugins());
-    this.admin = new DefaultAdmin(dsFramework, program.getId().getNamespace().toEntityId(), secureStoreManager);
+    this.admin = new DefaultAdmin(dsFramework, new NamespaceId(program.getId().getNamespace()), secureStoreManager);
     this.secureStore = secureStore;
   }
 
-  private Iterable<? extends Id> createOwners(Id.Program programId) {
-    return Collections.singletonList(programId);
+  private Iterable<? extends Id> createOwners(ProgramId programId) {
+    return Collections.singletonList(programId.toId());
   }
 
   /**

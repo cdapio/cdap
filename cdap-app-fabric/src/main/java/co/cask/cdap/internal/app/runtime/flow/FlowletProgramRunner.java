@@ -210,7 +210,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       Preconditions.checkArgument(Flowlet.class.isAssignableFrom(clz), "%s is not a Flowlet.", clz);
 
       // Setup dataset framework context, if required
-      Id.Program programId = program.getId();
+      Id.Program programId = program.getId().toId();
       Id.Flow.Flowlet flowletId = Id.Flow.Flowlet.from(programId.getApplication(), programId.getId(), flowletName);
       Id.Run run = new Id.Run(programId, runId.getId());
       if (dsFramework instanceof ProgramContextAware) {

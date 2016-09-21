@@ -155,7 +155,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
 
       // Setup dataset framework context, if required
       if (programDatasetFramework instanceof ProgramContextAware) {
-        Id.Program programId = program.getId();
+        Id.Program programId = program.getId().toId();
         ((ProgramContextAware) programDatasetFramework).initContext(new Id.Run(programId, runId.getId()));
       }
 
@@ -189,7 +189,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                                                             runtimeContext, submitter, host);
 
       sparkRuntimeService.addListener(
-        createRuntimeServiceListener(program.getId().toEntityId(), runId, arguments, options.getUserArguments(),
+        createRuntimeServiceListener(program.getId(), runId, arguments, options.getUserArguments(),
                                      closeables, runtimeStore),
         Threads.SAME_THREAD_EXECUTOR);
       ProgramController controller = new SparkProgramController(sparkRuntimeService, runtimeContext);

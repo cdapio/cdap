@@ -92,7 +92,7 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
     Assert.assertEquals(ProgramRunStatus.RUNNING, rr.getStatus());
 
     // Lets set the runtime info to off
-    RuntimeInfo runtimeInfo = runtimeService.lookup(wordcountFlow1, RunIds.fromString(rr.getPid()));
+    RuntimeInfo runtimeInfo = runtimeService.lookup(wordcountFlow1.toEntityId(), RunIds.fromString(rr.getPid()));
     ProgramController programController = runtimeInfo.getController();
     programController.stop();
 

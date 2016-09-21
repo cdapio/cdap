@@ -93,7 +93,7 @@ public class SparkRuntimeContextConfig {
   public SparkRuntimeContextConfig set(SparkRuntimeContext context, Set<String> localizeResourceNames,
                                        @Nullable File pluginArchive) {
     setApplicationSpecification(context.getApplicationSpecification());
-    setProgramId(context.getProgram().getId().toEntityId());
+    setProgramId(context.getProgram().getId());
     setProgramOptions(context.getProgramOptions());
     setWorkflowProgramInfo(context.getWorkflowInfo());
     setLocalizedResourceNames(localizeResourceNames);

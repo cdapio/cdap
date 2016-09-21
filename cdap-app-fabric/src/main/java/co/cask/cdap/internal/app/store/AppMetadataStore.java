@@ -37,6 +37,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.annotations.VisibleForTesting;
@@ -120,6 +121,24 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   public List<ApplicationMeta> getAllApplications(String namespaceId) {
     return list(new MDSKey.Builder().add(TYPE_APP_META, namespaceId).build(), ApplicationMeta.class);
+  }
+
+  public List<ApplicationMeta> getAllAppVersions(String namespaceId, String appId) {
+    return list(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build(), ApplicationMeta.class);
+  }
+
+  public List<ApplicationId> getAllAppVersionsAppIds(String namespaceId, String appId) {
+    List<ApplicationId> appIds = new ArrayList<>();
+    for (MDSKey key : listKV(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build(),
+                             ApplicationMeta.class).keySet()) {
+      MDSKey.Splitter splitter = key.split();
+      splitter.getBytes(); // skip recordType
+      splitter.getBytes(); // skip namespaceId
+      splitter.getBytes(); // skip appId
+      String versionId = splitter.getString();
+      appIds.add(new NamespaceId(namespaceId).app(appId, versionId));
+    }
+    return appIds;
   }
 
   public void writeApplication(String namespaceId, String appId, String versionId, ApplicationSpecification spec) {
@@ -218,14 +237,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       workflowrunId = systemArgs.get(ProgramOptionConstants.WORKFLOW_RUN_ID);
     }
 
-    MDSKey key = new MDSKey.Builder()
-      .add(TYPE_RUN_RECORD_STARTED)
-      .add(programId.getNamespace())
-      .add(programId.getApplication())
-      .add(programId.getType().name())
-      .add(programId.getProgram())
-      .add(pid)
-      .build();
+    MDSKey key = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, programId).add(pid).build();
 
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     builder.put("runtimeArgs", GSON.toJson(runtimeArgs, MAP_STRING_STRING_TYPE));
@@ -315,6 +327,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     if (programId != null) {
       builder.add(programId.getNamespace());
       builder.add(programId.getApplication());
+      builder.add(programId.getVersion());
       builder.add(programId.getType().name());
       builder.add(programId.getProgram());
     }
