@@ -51,10 +51,10 @@ test -f "${CDAP_CONF}"/cdap-env.sh && source "${CDAP_CONF}"/cdap-env.sh
 case ${1} in
   auth-server|kafka-server|master|router|ui) CDAP_SERVICE=${1}; shift; cdap_service ${CDAP_SERVICE} ${@}; __ret=${?} ;;
   classpath) cdap_service master classpath; __ret=${?} ;;
-  cli|shell) shift; cdap_cli ${@}; __ret=${?} ;;
+  cli) shift; cdap_cli ${@}; __ret=${?} ;;
   config-tool) shift; cdap_config_tool ${@}; __ret=${?} ;;
   run) shift; cdap_run_class ${@}; __ret=${?} ;;
-  sdk|standalone) shift; cdap_sdk ${@}; __ret=${?} ;;
+  sdk) shift; cdap_sdk ${@}; __ret=${?} ;;
   tx-debugger) shift; cdap_tx_debugger ${@}; __ret=${?} ;;
   -h|--help|usage|'')
     echo
@@ -69,7 +69,6 @@ case ${1} in
     echo "    ui"
     echo
     echo "    cli               - Starts an interactive CDAP CLI session"
-    echo "    shell"
     echo
     echo "    classpath         - Returns the Java CLASSPATH of the CDAP Master service"
     echo "    config-tool       - Returns JSON encoded CDAP configuration key/value pairs"
@@ -77,7 +76,6 @@ case ${1} in
     echo "    tx-debugger       - Runs CDAP transaction debugger"
     echo
     echo "    sdk               - Sends the arguments to the SDK service"
-    echo "    standalone"
     echo
     echo " Get more help for each command by executing:"
     echo " ${0} <command> --help"
