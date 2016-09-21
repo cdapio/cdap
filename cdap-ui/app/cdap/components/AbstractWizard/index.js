@@ -31,7 +31,7 @@ const WizardTypesMap = {
   }
 };
 
-export default function AbstractWizard({isOpen, onClose, wizardType, context}) {
+export default function AbstractWizard({isOpen, onClose, wizardType, input}) {
   if (!isOpen) {
     return null;
   }
@@ -44,7 +44,7 @@ export default function AbstractWizard({isOpen, onClose, wizardType, context}) {
       isOpen,
       onClose,
       store,
-      context
+      input
     })
   );
 }
@@ -52,5 +52,5 @@ AbstractWizard.propTypes = {
   isOpen: PropTypes.bool,
   wizardType: PropTypes.string,
   onClose: PropTypes.func,
-  context: PropTypes.string
+  input: PropTypes.any
 };

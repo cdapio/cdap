@@ -32,7 +32,8 @@ export default class MarketEntityModal extends Component {
       entityDetail: {},
       wizard: {
         actionIndex: null,
-        actionType: null
+        actionType: null,
+        action: null
       },
       completedActions: []
     };
@@ -54,7 +55,8 @@ export default class MarketEntityModal extends Component {
         completedActions: this.state.completedActions.concat([this.state.wizard.actionIndex]),
         wizard: {
           actionIndex: null,
-          actionType: null
+          actionType: null,
+          action: null
         }
       });
       return;
@@ -66,11 +68,12 @@ export default class MarketEntityModal extends Component {
       }
     });
   }
-  openWizard(actionIndex, actionType) {
+  openWizard(actionIndex, actionType, action) {
     this.setState({
       wizard: {
         actionIndex,
-        actionType
+        actionType,
+        action
       }
     });
   }
@@ -98,7 +101,7 @@ export default class MarketEntityModal extends Component {
                     <div className="action-description"></div>
                     <button
                       className={classnames("btn btn-default", {'btn-completed': isCompletedAction})}
-                      onClick={this.openWizard.bind(this, index, action.type)}
+                      onClick={this.openWizard.bind(this, index, action.type, action)}
                     >
                       { actionName }
                     </button>
@@ -150,7 +153,7 @@ export default class MarketEntityModal extends Component {
             isOpen={this.state.wizard.actionIndex !== null && this.state.wizard.actionType !== null}
             onClose={this.closeWizard.bind(this)}
             wizardType={this.state.wizard.actionType}
-            context={this.props.entity.label}
+            input={{action: this.state.wizard.action, package: this.props.entity}}
           />
         </ModalBody>
       </Modal>

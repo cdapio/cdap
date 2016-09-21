@@ -18,6 +18,8 @@ import WizardModal from 'components/WizardModal';
 import Wizard from 'components/Wizard';
 import UploadDataWizardConfig from 'services/WizardConfigs/UploadDataWizardConfig';
 import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
+import UploadDataActions from 'services/WizardStores/UploadData/UploadDataActions';
+import head from 'lodash/head';
 
 require('./UploadData.less');
 
@@ -27,6 +29,29 @@ export default class UploadDataWizard extends Component {
     this.state = {
       showWizard: this.props.isOpen
     };
+    this.prepareInputForSteps();
+  }
+  prepareInputForSteps() {
+    let action = this.props.input.action;
+    let filename = head(action.arguments.filter(arg => arg.name === 'files'));
+
+    if (filename && filename.value.length) {
+      filename = filename.value[0];
+    }
+    UploadDataStore.dispatch({
+      type: UploadDataActions.setFilename,
+      payload: { filename }
+    });
+    UploadDataStore.dispatch({
+      type: UploadDataActions.setPackageInfo,
+      payload: {
+        name: this.props.input.package.name,
+        version: this.props.input.package.version
+      }
+    });
+  }
+  onSubmit() {
+    console.log('submitted');
   }
   toggleWizard(returnResult) {
     if (this.state.showWizard) {
@@ -36,10 +61,15 @@ export default class UploadDataWizard extends Component {
       showWizard: !this.state.showWizard
     });
   }
+  componentWillUnmount() {
+    UploadDataStore.dispatch({
+      type: UploadDataActions.onReset
+    });
+  }
   render() {
     return (
       <WizardModal
-        title={this.props.context ? this.props.context + " | Upload Data" : "Upload Data"}
+        title={this.props.input.label ? this.props.input.label + " | Upload Data" : "Upload Data"}
         isOpen={this.state.showWizard}
         toggle={this.toggleWizard.bind(this, false)}
         className="upload-data-wizard"
@@ -47,6 +77,7 @@ export default class UploadDataWizard extends Component {
         <Wizard
           wizardConfig={UploadDataWizardConfig}
           store={UploadDataStore}
+          onSubmit={this.onSubmit.bind(this)}
           onClose={this.toggleWizard.bind(this)}/>
       </WizardModal>
     );
@@ -54,6 +85,6 @@ export default class UploadDataWizard extends Component {
 }
 UploadDataWizard.propTypes = {
   isOpen: PropTypes.bool,
-  context: PropTypes.string,
+  input: PropTypes.any,
   onClose: PropTypes.func
 };
