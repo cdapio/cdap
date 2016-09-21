@@ -78,8 +78,10 @@ features:
       create_artifact:
         name: Create Artifact
       load_datapack:
+        icon: fa-upload
         name: Load Data
-
+      create_artifact:
+        name: Create Artifact
   MarketEntityModal:
     version: "Version: "
 
