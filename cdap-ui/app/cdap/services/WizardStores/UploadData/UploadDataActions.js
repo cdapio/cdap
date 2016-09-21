@@ -14,7 +14,11 @@
  * the License.
  */
 const UploadDataAction = {
-  loadDefaultData: 'LOAD-DEFAULT-DATA',
+  setFilename: 'SET-FILENAME',
+  setPackageInfo: 'SET-PACKAGE-INFO',
+  getDefaultData: 'GET-DEFAULT-DATA',
+  setDefaultData: 'SET-DEFAULT-DATA',
+  setDefaultDataLoading: 'SET-DEFAULT-DATA-LOADING',
   setDestinationType: 'SET-DESTINATION-TYPE',
   setDetinationName: 'SET-DESTINATION-NAME',
   onReset: 'RESET-STORE'

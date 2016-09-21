@@ -22,6 +22,10 @@ const defaultAction = {
 };
 const defaultViewData = {
   data: '',
+  loading: false,
+  filename: '',
+  packagename: '',
+  packageversion: '',
   __complete: true,
   __error: false
 };
@@ -38,9 +42,23 @@ const defaultInitialState = {
 };
 const viewdata = (state = defaultViewData, action = defaultAction) => {
   switch(action.type) {
-    case UploadDataAction.loadDefaultData:
+    case UploadDataAction.setDefaultData:
       return Object.assign({}, state, {
-        data: action.payload.data
+        data: action.payload.data,
+        loading: false
+      });
+    case UploadDataAction.setFilename:
+      return Object.assign({}, state, {
+        filename: action.payload.filename
+      });
+    case UploadDataAction.setPackageInfo:
+      return Object.assign({}, state, {
+        packagename: action.payload.name,
+        packageversion: action.payload.version
+      });
+    case UploadDataAction.setDefaultDataLoading:
+      return Object.assign({}, state, {
+        loading: true
       });
     case UploadDataAction.onReset:
       return defaultViewData;
