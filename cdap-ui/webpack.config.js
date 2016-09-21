@@ -117,7 +117,7 @@ const cdapWebpackConfig = {
       'fuse.js',
       'react-redux',
       'react-router',
-      'react-redux'
+      'moment'
     ]
   },
   module: {
