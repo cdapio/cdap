@@ -21,12 +21,9 @@ import co.cask.cdap.app.runtime.spark.SparkRuntimeContextProvider;
 import co.cask.cdap.common.app.MainClassLoader;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.logging.StandardOutErrorRedirector;
-import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,7 +55,7 @@ public final class SparkContainerLauncher {
       throw new IllegalStateException("Failed to find resource for main class " + mainClassName);
     }
 
-    if (!urls.remove(getClassPathURL(mainClassName, resource))) {
+    if (!urls.remove(ClassLoaders.getClassPathURL(mainClassName, resource))) {
       throw new IllegalStateException("Failed to remove main class resource " + resource);
     }
 
@@ -80,32 +77,11 @@ public final class SparkContainerLauncher {
         .getDeclaredMethod("redirectToLogger", String.class)
         .invoke(null, mainClassName);
 
-      LOG.info("Launching " + mainClassName + ".main(" + Arrays.toString(args) + ")");
+      LOG.info("Launch main class {}.main({})", mainClassName, Arrays.toString(args));
       classLoader.loadClass(mainClassName).getMethod("main", String[].class).invoke(null, new Object[]{args});
+      LOG.info("Main method returned {}", mainClassName);
     } catch (Exception e) {
       throw new RuntimeException("Failed to call " + mainClassName + ".main(String[])", e);
     }
-  }
-
-  private static URL getClassPathURL(String className, URL classUrl) {
-    try {
-      if ("file".equals(classUrl.getProtocol())) {
-        String path = classUrl.getFile();
-        // Compute the directory container the class.
-        int endIdx = path.length() - className.length() - ".class".length();
-        if (endIdx > 1) {
-          // If it is not the root directory, return the end index to remove the trailing '/'.
-          endIdx--;
-        }
-        return new URL("file", "", -1, path.substring(0, endIdx));
-      }
-      if ("jar".equals(classUrl.getProtocol())) {
-        String path = classUrl.getFile();
-        return URI.create(path.substring(0, path.indexOf("!/"))).toURL();
-      }
-    } catch (MalformedURLException e) {
-      throw Throwables.propagate(e);
-    }
-    throw new IllegalStateException("Unsupported class URL: " + classUrl);
   }
 }
