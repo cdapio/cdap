@@ -13,7 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-.cask-configurable-tab {
-  height: 100%;
-}
+const SchemaStoreActions = {
+  setFieldName: 'SET-FIELD-NAME',
+  setFieldType: 'SET-FIELD-TYPE',
+  setFieldIsNullable: 'SET-FIELD-ISNULLABLE',
+  removeField: 'REMOVE-FIELD'
+};
+export default SchemaStoreActions;

@@ -13,26 +13,55 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import React from 'react';
+import React, {Component} from 'react';
+import ReactDOM from 'react-dom';
 import ResourceCenterEntity from '../ResourceCenterEntity';
+import StreamCreateWizard from 'components/CaskWizards/StreamCreate';
+
 require('./ResourceCenter.less');
 
-export default function ResourceCenter() {
-  return (
-    <div className="cask-resource-center">
-      {
-        Array
-          .apply(null, {length: 8})
-          .map((e, index) => (
-            <ResourceCenterEntity
-              title="Stream"
-              description="Lorem Ipsum has been the industry's standard dummy text ever since the 1500s"
-              actionLabel="Create"
-              key={index}
-              onClick={() => {console.log('Create Stream clicked');}}
+export default class ResourceCenter extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      createStreamWizard: false
+    };
+  }
+  toggleWizard(wizardName) {
+    this.setState({
+      [wizardName]: !this.state[wizardName]
+    });
+  }
+  closeWizard(wizardContainer) {
+    ReactDOM.unmountComponentAtNode(wizardContainer);
+  }
+  render(){
+    return (
+      <div>
+        <div className="cask-resource-center">
+          {
+            Array
+              .apply(null, {length: 8})
+              .map((e, index) => (
+                <ResourceCenterEntity
+                  title="Stream"
+                  description="Lorem Ipsum has been the industry's standard dummy text ever since the 1500s"
+                  actionLabel="Create"
+                  key={index}
+                  onClick={this.toggleWizard.bind(this, 'createStreamWizard')}
+                />
+              ))
+          }
+        </div>
+        {
+          this.state.createStreamWizard ?
+            <StreamCreateWizard
+              isOpen={this.state.createStreamWizard}
             />
-        ))
-      }
-    </div>
-  );
+          :
+            null
+        }
+      </div>
+    );
+  }
 }

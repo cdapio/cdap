@@ -51,7 +51,7 @@ export default class ConfigurableTab extends Component{
   }
   render() {
     return (
-      <div className="cask-wizard">
+      <div className="cask-configurable-tab">
         <Tabs layout={this.state.layout}>
           <TabHeaders>
             {this.state.tabs.map((tab, index) => {
