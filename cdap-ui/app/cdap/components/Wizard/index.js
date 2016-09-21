@@ -124,23 +124,25 @@ export default class Wizard extends Component{
           Finish
         </button>
       );
-      if (matchedIndex === 0) {
-        navButtons = ( {nextButton} );
+      if (matchedIndex === 0 ) {
+        navButtons = ( nextButton );
       }
       if (matchedIndex === this.props.wizardConfig.steps.length - 1) {
-        navButtons = ( {prevButton} );
+        navButtons = ( prevButton );
       }
-      navButtons = (
-        <span>
-          {prevButton}
-          {nextButton}
-        </span>
-      );
+      if (matchedIndex !== 0 && matchedIndex !== this.props.wizardConfig.steps.length - 1) {
+        navButtons = (
+          <span>
+            {prevButton}
+            {nextButton}
+          </span>
+        );
+      }
       if (canFinish(matchedStep.id, this.props.wizardConfig)) {
         return (
           <div>
-            {finishButton}
             {navButtons}
+            {finishButton}
           </div>
         );
       }
@@ -264,13 +266,13 @@ Wizard.childContextTypes = {
   activeStep: PropTypes.string
 };
 Wizard.propTypes = {
-  wizardConfig: wizardConfigType,
+  wizardConfig: wizardConfigType.isRequired,
   store: PropTypes.shape({
     getState: PropTypes.func,
     dispatch: PropTypes.func,
     subscribe: PropTypes.func,
     replaceReducer: PropTypes.func
-  }),
-  onSubmit: PropTypes.func,
-  onClose: PropTypes.func
+  }).isRequired,
+  onSubmit: PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired
 };
