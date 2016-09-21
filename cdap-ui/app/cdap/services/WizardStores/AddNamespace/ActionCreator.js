@@ -13,16 +13,22 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+import AddNamespaceStore from 'services/WizardStores/AddNamespace/AddNamespaceStore';
+import {MyNamespaceApi} from 'api/namespace';
 
-import Datasource from '../../services/datasource';
-import {apiCreator} from '../../services/resource-helper';
+const PublishNamespace = () => {
+  let state = AddNamespaceStore.getState();
+  let urlParams = {
+    namespace: state.general.name
+  };
+  let putParams = {};
 
-let dataSrc = new Datasource();
-let basepath = '/namespaces';
+  if (state.general.description) {
+    putParams.description = state.general.description;
+  }
 
-export const MyNamespaceApi = {
-  list: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
-  get: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:namespace`),
-  pollList: apiCreator(dataSrc, 'GET', 'POLL', basepath),
-  create: apiCreator(dataSrc, 'PUT', 'REQUEST', `${basepath}/:namespace`)
+  return MyNamespaceApi
+    .create(urlParams, putParams);
 };
+
+export {PublishNamespace};
