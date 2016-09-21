@@ -18,7 +18,7 @@ import Datasource from '../../services/datasource';
 import {apiCreator} from '../../services/resource-helper';
 
 let dataSrc = new Datasource();
-let basepath = '/namespaces/:namespace/streams';
+const basepath = '/namespaces/:namespace/streams';
 
 export const MyStreamsApi = {
   list: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}`),

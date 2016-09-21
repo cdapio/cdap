@@ -20,7 +20,7 @@ import MarketPlaceEntity from '../MarketPlaceEntity';
 import T from 'i18n-react';
 import MarketStore from './store/market-store.js';
 import Fuse from 'fuse.js';
-import MarketEntityModal from '../MarketEntityModal';
+import MarketEntityModal from 'components/MarketEntityModal';
 import {MyMarketApi} from '../../api/market';
 require('./AllTabContents.less');
 

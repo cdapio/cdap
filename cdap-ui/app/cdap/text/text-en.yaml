@@ -78,10 +78,10 @@ features:
       create_artifact:
         name: Create Artifact
       load_datapack:
+        icon: fa-upload
         name: Load Data
-
   MarketEntityModal:
-    version: "Version: "
+    version: "Version:"
 
   Navbar:
     CDAP:
@@ -106,6 +106,8 @@ features:
     intro-message: Your platform for building exciting analytical data applications
     title: Welcome to Cask Data Application Platform
   Wizard:
+    Done: Done
+    Skip: Skip
     StreamCreate:
       Step1:
         shorttitle: General Information
@@ -125,6 +127,13 @@ features:
         title: Upload Data
         description: Upload data to the stream you just created.
       label: Create Stream
-    Done: Done
-    Skip: Skip
+    UploadData:
+      Step1:
+        shorttitle: View Data
+        title: View Data
+        description: Shows the data for your reference that would be uploaded to a destination
+      Step2:
+        shorttitle: Select Destination
+        title: Select Destination
+        description: Select the destination where the data needs to be uploaded
 ...

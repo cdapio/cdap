@@ -12,10 +12,16 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
+const UploadDataAction = {
+  setFilename: 'SET-FILENAME',
+  setPackageInfo: 'SET-PACKAGE-INFO',
+  getDefaultData: 'GET-DEFAULT-DATA',
+  setDefaultData: 'SET-DEFAULT-DATA',
+  setDefaultDataLoading: 'SET-DEFAULT-DATA-LOADING',
+  setDestinationType: 'SET-DESTINATION-TYPE',
+  setDestinationName: 'SET-DESTINATION-NAME',
+  onReset: 'RESET-STORE'
+};
 
-.cask-resource-center {
-  height: 100%;
-  overflow-y: auto;
-  padding: 10px;
-}
+export default UploadDataAction;
