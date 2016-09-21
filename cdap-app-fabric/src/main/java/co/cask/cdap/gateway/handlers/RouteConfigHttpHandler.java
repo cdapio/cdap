@@ -16,7 +16,6 @@
 
 package co.cask.cdap.gateway.handlers;
 
-import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
@@ -63,12 +62,6 @@ public class RouteConfigHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("app-id") String appId,
                              @PathParam("service-id") String serviceId) throws Exception {
     ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
-    ServiceSpecification spec = (ServiceSpecification) lifecycleService.getProgramSpecification(programId);
-    if (spec == null) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      return;
-    }
-
     RouteConfig routeConfig = routeStore.fetch(programId);
     if (routeConfig == null) {
       responder.sendJson(HttpResponseStatus.OK, Collections.emptyMap());
@@ -84,11 +77,6 @@ public class RouteConfigHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("app-id") String appId,
                                @PathParam("service-id") String serviceId) throws Exception {
     ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
-    ServiceSpecification spec = (ServiceSpecification) lifecycleService.getProgramSpecification(programId);
-    if (spec == null) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      return;
-    }
     Map<String, Integer> routes = parseBody(request, ROUTE_CONFIG_TYPE);
     routeStore.store(programId, new RouteConfig(routes));
     responder.sendStatus(HttpResponseStatus.OK);
@@ -101,11 +89,6 @@ public class RouteConfigHttpHandler extends AbstractAppFabricHttpHandler {
                                 @PathParam("app-id") String appId,
                                 @PathParam("service-id") String serviceId) throws Exception {
     ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
-    ServiceSpecification spec = (ServiceSpecification) lifecycleService.getProgramSpecification(programId);
-    if (spec == null) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      return;
-    }
     routeStore.delete(programId);
     responder.sendStatus(HttpResponseStatus.OK);
   }
