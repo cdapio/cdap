@@ -108,7 +108,7 @@ Standalone CDAP SDK directory, using the Command Line Interface:
   
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh load stream logStream examples/LogAnalysis/resources/apache.accesslog "text/plain"
+  $ cdap cli load stream logStream examples/LogAnalysis/resources/apache.accesslog "text/plain"
   Successfully loaded file to stream 'logStream'
 
 .. Starting the Workflow
@@ -125,7 +125,7 @@ Querying the Results
   
   .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh call service |example|.\ |example-service1| POST "hitcount" body '{"url":"/index.html"}'
+    $ cdap cli call service |example|.\ |example-service1| POST "hitcount" body '{"url":"/index.html"}'
 
   You can also use the ``curl`` command and an HTTP request:
   
@@ -141,7 +141,7 @@ Querying the Results
 
   .. tabbed-parsed-literal::
   
-    $ cdap-cli.sh call service |example|.\ |example-service3| GET "rescount/200"
+    $ cdap cli call service |example|.\ |example-service3| GET "rescount/200"
 
     $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/|example|/services/|example-service3|/methods/rescount/200"
 
@@ -151,7 +151,7 @@ Querying the Results
 
   .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh call service |example|.\ |example-service2| GET "reqcount"
+    $ cdap cli call service |example|.\ |example-service2| GET "reqcount"
 
     $ curl -w"\n" "http://localhost:11015/v3/namespaces/default/apps/|example|/services/|example-service2|/methods/reqcount"
 
@@ -164,7 +164,7 @@ Querying the Results
 
   .. tabbed-parsed-literal::
 
-      $ cdap-cli.sh call service |example|.\ |example-service2| POST "reqfile" body '{"time":"7/29/15 7:47 PM"}'
+      $ cdap cli call service |example|.\ |example-service2| POST "reqfile" body '{"time":"7/29/15 7:47 PM"}'
 
       $ curl -w"\n" -X POST -d '{"time":"7/29/15 7:47 PM"}' \
       "http://localhost:11015/v3/namespaces/default/apps/|example|/services/|example-service2|/methods/reqfile"

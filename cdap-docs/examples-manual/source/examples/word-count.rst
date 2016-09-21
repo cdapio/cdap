@@ -131,7 +131,7 @@ To query the ``RetrieveCounts`` service, either:
 
   .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh call service WordCount.RetrieveCounts GET /count/CDAP
+    $ cdap cli call service WordCount.RetrieveCounts GET /count/CDAP
 
 - Send a query via an HTTP request using the ``curl`` command:
 

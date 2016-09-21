@@ -37,7 +37,7 @@ To prune the invalid list manually, follow these steps:
 - Find the minimum prune time across all queues by running the tool ``SimpleHBaseQueueDebugger``. 
   This should print lines such as::
 
-    $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.SimpleHBaseQueueDebugger
+    $ /opt/cdap/master/bin/cdap run co.cask.cdap.data.tools.SimpleHBaseQueueDebugger
     Results for queue queue:///ns1/WordCount/WordCounter/counter/queue: min tx timestamp: 1440198510309
     Results for queue queue:///ns1/WordCount/WordCounter/splitter/wordArrayOut: min tx timestamp: 1440198510280
     Results for queue queue:///ns2/WordCount/WordCounter/counter/queue: min tx timestamp: n/a
@@ -89,7 +89,7 @@ The easiest way to start the tool with the same classpath as CDAP Master is to u
   
 or::
 
-  $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.HBaseQueueDebugger
+  $ /opt/cdap/master/bin/cdap run co.cask.cdap.data.tools.HBaseQueueDebugger
   
 Running the ``help`` option will give a summary of commands and required parameters.
 

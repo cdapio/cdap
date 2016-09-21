@@ -93,7 +93,7 @@ Standalone CDAP SDK directory, using the Command Line Interface:
   
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh load stream backlinkURLStream examples/SparkPageRank/resources/urlpairs.txt
+  $ cdap cli load stream backlinkURLStream examples/SparkPageRank/resources/urlpairs.txt
   
   Successfully loaded file to stream 'backlinkURLStream'
 
@@ -114,7 +114,7 @@ use ``3`` as the value.
 
   .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh start workflow |example|.\ |example-workflow| "spark.SparkPageRankProgram.args='3'"
+    $ cdap cli start workflow |example|.\ |example-workflow| "spark.SparkPageRankProgram.args='3'"
     
     Successfully started workflow '|example-workflow|' of application '|example|' 
     with provided runtime arguments 'spark.SparkPageRankProgram.args=3'
@@ -135,7 +135,7 @@ you can use the Command Line Interface:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh call service SparkPageRank.SparkPageRankService POST "rank" body "{'url':'http://example.com/page1'}"
+  $ cdap cli call service SparkPageRank.SparkPageRankService POST "rank" body "{'url':'http://example.com/page1'}"
   
   10
 
@@ -155,7 +155,7 @@ Using the Command Line Interface:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh call service SparkPageRank.SparkPageRankService GET 'total/10'
+  $ cdap cli call service SparkPageRank.SparkPageRankService GET 'total/10'
   
   48
 

@@ -14,6 +14,6 @@
 
   .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh stop service |example|.\ |example-service|
+    $ cdap cli stop service |example|.\ |example-service|
     
     Successfully stopped service '|example-service|' of application '|example|'

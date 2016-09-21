@@ -219,7 +219,7 @@ To delete the ``profiles`` dataset, either use the CDAP Command Line Interface:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh delete dataset instance profiles
+  $ cdap cli delete dataset instance profiles
 
 or by making a ``curl`` call:
 

@@ -15,7 +15,7 @@ Starting the Workflow
 
   .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh start workflow |example|.\ |example-workflow|
+    $ cdap cli start workflow |example|.\ |example-workflow|
     
     Successfully started workflow '|example-workflow|' of application '|example|' with stored runtime arguments '{}'
 

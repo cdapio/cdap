@@ -160,7 +160,7 @@ and has no settings.
 
 For example::
 
-  $ cdap-cli.sh call set stream format mystream avro "col1 string, col2 map<string,int> not null, col3 record<x:double, y:float>"
+  $ cdap cli call set stream format mystream avro "col1 string, col2 map<string,int> not null, col3 record<x:double, y:float>"
 
 .. _stream-exploration-stream-format-clf:
 
@@ -212,7 +212,7 @@ schema is an array of strings. Neither maps nor records are supported as data ty
 
 For example::
 
-  $ cdap-cli.sh set stream format mystream csv "col1 string, col2 int not null, col3 array<string>"
+  $ cdap cli set stream format mystream csv "col1 string, col2 int not null, col3 array<string>"
 
 
 .. _stream-exploration-stream-format-grok:
@@ -224,7 +224,7 @@ filters <http://logstash.net/docs/latest/filters/grok>`__. The grok filters are 
 a setting with the key ``"pattern"``. For example, to create a :ref:`stream-view <stream-views>` ``mygrok``
 on an existing stream ``mystream`` using the CDAP CLI::
 
-  $ cdap-cli.sh create stream-view mystream mygrok format grok \
+  $ cdap cli create stream-view mystream mygrok format grok \
       schema "facility string, priority string, message string" \
       settings "pattern=(?<facility>\b(?:[0-9]+)\b).(?<priority>\b(?:[0-9]+)\b) (?<message>.*)"
 
@@ -253,7 +253,7 @@ that allows you to specify the charset of the text. It defaults to ``utf-8``.
 
 For example::
 
-  $ cdap-cli.sh set stream format mystream text "data string not null" "charset=ISO-8859-1"
+  $ cdap cli set stream format mystream text "data string not null" "charset=ISO-8859-1"
 
 
 End-to-End Example
@@ -267,7 +267,7 @@ and schema to the stream, then query the stream.
 Suppose we want to create a stream for stock trades. We first create the stream
 and send some data to it as comma-delimited text::
 
-  $ cdap-cli.sh
+  $ cdap cli
   cdap > create stream trades
   cdap > send stream trades "AAPL,50,112.98"
   cdap > send stream trades "AAPL,100,112.87"

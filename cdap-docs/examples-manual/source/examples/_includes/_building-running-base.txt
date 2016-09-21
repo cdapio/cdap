@@ -29,11 +29,11 @@ Building and Starting
 
   .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh load artifact examples/|example-dir|/target/|example-artifact|-|release|.jar
+    $ cdap cli load artifact examples/|example-dir|/target/|example-artifact|-|release|.jar
     
     Successfully added artifact with name '|example-artifact|'
 
-    $ cdap-cli.sh create app |example| |example-artifact| |release| user
+    $ cdap cli create app |example| |example-artifact| |release| user
     
     Successfully created application
   

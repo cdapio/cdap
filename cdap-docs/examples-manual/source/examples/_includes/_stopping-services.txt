@@ -16,6 +16,6 @@
 
   .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh stop service |example|.\ |example-service1|
-    $ cdap-cli.sh stop service |example|.\ |example-service2|
-    $ cdap-cli.sh stop service |example|.\ |example-service3|
+    $ cdap cli stop service |example|.\ |example-service1|
+    $ cdap cli stop service |example|.\ |example-service2|
+    $ cdap cli stop service |example|.\ |example-service3|

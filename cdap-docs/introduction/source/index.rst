@@ -118,7 +118,7 @@ Installation
      * -  
        - .. tabbed-parsed-literal::
 
-            $ ./bin/cdap-cli.sh
+            $ ./bin/cdap cli
             
             Successfully connected to CDAP instance at \http://localhost:11015/default
             |cdap >| 

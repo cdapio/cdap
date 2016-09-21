@@ -15,6 +15,6 @@ Starting the Service
 
   .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh start service |example|.\ |example-service|
+    $ cdap cli start service |example|.\ |example-service|
     
     Successfully started service '|example-service|' of application '|example|' with stored runtime arguments '{}'

@@ -136,7 +136,7 @@ using the CDAP Commmand Line Interface:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh load stream log examples/resources/accesslog.txt
+  $ cdap cli load stream log examples/resources/accesslog.txt
   
   Successfully loaded file to stream 'log'
 

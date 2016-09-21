@@ -25,7 +25,7 @@ as the schedule is in a *suspended* state when the application is deployed.
 
   .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh resume schedule |example|.\ |example-schedule|
+    $ cdap cli resume schedule |example|.\ |example-schedule|
     
     Successfully resumed schedule '|example-schedule|' in app '|example|'
       

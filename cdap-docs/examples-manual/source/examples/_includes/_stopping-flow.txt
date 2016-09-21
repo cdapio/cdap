@@ -14,6 +14,6 @@
 
   .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh stop flow |example|.\ |example-flow|
+    $ cdap cli stop flow |example|.\ |example-flow|
     
     Successfully stopped flow '|example-flow|' of application '|example|'

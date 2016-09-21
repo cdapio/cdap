@@ -71,7 +71,7 @@ New Features
 - :cask-issue:`CDAP-2963` - All HBase Tables created through CDAP will now have a key
   ``cdap.version`` in the ``HTableDescriptor``.
 
-- :cask-issue:`CDAP-3368` - Add location for ``cdap-cli.sh`` to PATH in distributed CDAP
+- :cask-issue:`CDAP-3368` - Add location for ``cdap cli`` to PATH in distributed CDAP
   packages.
 
 - :cask-issue:`CDAP-3890` - Improved performance of the Dataset Service.
@@ -3966,8 +3966,8 @@ New Features
 - **Command Line Interface (CLI)**
 
   - CLI can now directly connect to a CDAP instance of your choice at startup by using
-    ``cdap-cli.sh --uri <uri>``.
-  - Support for runtime arguments, which can be listed by running ``"cdap-cli.sh --help"``.
+    ``cdap cli --uri <uri>``.
+  - Support for runtime arguments, which can be listed by running ``"cdap cli --help"``.
   - Table rendering can be configured using ``"cli render as <alt|csv>"``. 
     The option ``"alt"`` is the default, with ``"csv"`` available for copy & pasting.
   - Stream statistics can be computed using ``"get stream-stats <stream-id>"``.
@@ -4459,7 +4459,7 @@ Other Changes
 -------------
 
 - The scripts ``send-query.sh``, ``access-token.sh`` and ``access-token.bat`` has been replaced by the 
-  :ref:`CDAP Command Line Interface, <cli>` ``cdap-cli.sh``.
+  :ref:`CDAP Command Line Interface, <cli>` ``cdap cli``.
 - The CDAP Command Line Interface now uses and saves access tokens when connecting to a secure CDAP instance.
 - The CDAP Java Stream Client now allows empty String events to be sent.
 - The CDAP Python Authentication Client's ``configure()`` method now takes a dictionary rather than a filepath.

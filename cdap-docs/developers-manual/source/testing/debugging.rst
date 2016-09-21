@@ -67,7 +67,7 @@ or, using the CDAP CLI:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh get flow live WordCount.WordCounter
+  $ cdap cli get flow live WordCount.WordCounter
 
 The response is formatted in JSON and—pretty-printed— would look similar to this::
 

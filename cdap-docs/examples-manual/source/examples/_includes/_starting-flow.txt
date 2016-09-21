@@ -15,6 +15,6 @@ Starting the Flow
 
   .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh start flow |example|.\ |example-flow|
+    $ cdap cli start flow |example|.\ |example-flow|
     
     Successfully started flow '|example-flow|' of application '|example|' with stored runtime arguments '{}'

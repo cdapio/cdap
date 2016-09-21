@@ -239,7 +239,7 @@ Things to check as possible solutions:
    
 #. Run this command to see if all the CDAP classpaths are included::
 
-    $ /opt/cdap/master/bin/svc-master classpath | tr ':' '\n'
+    $ /opt/cdap/master/bin/cdap classpath | tr ':' '\n'
    
    Expect to see (where *<version>* is the appropriate ``hbase-compat`` version)::
 

@@ -13,6 +13,6 @@
 
   .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh stop spark |example|.\ |example-spark|
+    $ cdap cli stop spark |example|.\ |example-spark|
     
     Successfully stopped Spark '|example-spark|' of application '|example|'
