@@ -78,7 +78,7 @@ Installation
       
             $ unzip cdap-sdk-|release|.zip
             $ cd cdap-sdk-|release|
-            $ ./bin/cdap.sh start
+            $ ./bin/cdap sdk start
           
             Starting Standalone CDAP ................
             Standalone CDAP started successfully.

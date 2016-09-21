@@ -1588,7 +1588,7 @@ Bug Fixes
   Fixed an issue where tags search were failing for certain tags.
 
 - `CDAP-4141 <https://issues.cask.co/browse/CDAP-4141>`__ -
-  Fixed node.js version checking for the ``cdap.sh`` script in the CDAP SDK.
+  Fixed node.js version checking for the ``cdap sdk`` script in the CDAP SDK.
 
 - `CDAP-4373 <https://issues.cask.co/browse/CDAP-4373>`__ -
   Fixed a problem that prevented MapReduce jobs from being run when the Resource Manager
@@ -4451,7 +4451,7 @@ CDAP Bug Fixes
   - Failed to execute SQL queries.
   
 - Removed dependencies on SNAPSHOT artifacts for *netty-http* and *auth-clients*. 
-- Corrected an error in the message printed by the startup script ``cdap.sh``.
+- Corrected an error in the message printed by the startup script ``cdap sdk``.
 - Resolved a problem with the reading of the properties file by the CDAP Flume Client of CDAP Ingest library
   without first checking if authentication was enabled.
 
