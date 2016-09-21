@@ -21,6 +21,7 @@ import CreateStreamActions from 'services/WizardStores/CreateStream/CreateStream
 import { PublishStream } from 'services/WizardStores/CreateStream/ActionCreator';
 import CreateStreamWizardConfig from 'services/WizardConfigs/CreateStreamWizardConfig';
 import T from 'i18n-react';
+require('./StreamCreate.less');
 
 export default class StreamCreateWizard extends Component {
   constructor(props) {
@@ -61,11 +62,12 @@ export default class StreamCreateWizard extends Component {
       );
   }
   render() {
-    let wizardModalTitle = (this.props.context ? this.props.context + " | " : '') + T.translate('features.Wizard.StreamCreate.headerlabel') ;
+    let wizardModalTitle = (this.props.input.label ? this.props.input.label + " | " : '') + T.translate('features.Wizard.StreamCreate.headerlabel') ;
     return (
       <div>
         {
           this.state.showWizard ?
+            // eww..
             <WizardModal
               title={wizardModalTitle}
               isOpen={this.state.showWizard}
@@ -87,6 +89,6 @@ export default class StreamCreateWizard extends Component {
 }
 StreamCreateWizard.propTypes = {
   isOpen: PropTypes.bool,
-  context: PropTypes.string,
+  input: PropTypes.any,
   onClose: PropTypes.func
 };

@@ -18,7 +18,6 @@ import React from 'react';
 import GeneralInfoStep from 'components/CaskWizards/StreamCreate/GeneralInfoStep';
 import SchemaStep from 'components/CaskWizards/StreamCreate/SchemaStep';
 import ThresholdStep from 'components/CaskWizards/StreamCreate/ThresholdStep';
-import UploadStep from 'components/CaskWizards/StreamCreate/UploadStep';
 import T from 'i18n-react';
 
 const CreateStreamWizardConfig = {
@@ -47,13 +46,6 @@ const CreateStreamWizardConfig = {
       description: T.translate('features.Wizard.StreamCreate.Step3.description'),
       content: (<ThresholdStep />),
       onSubmitGoTo: 'uploaddata'
-    },
-    {
-      id: 'uploaddata',
-      shorttitle: T.translate('features.Wizard.StreamCreate.Step4.shorttitle'),
-      title: T.translate('features.Wizard.StreamCreate.Step4.title'),
-      description: T.translate('features.Wizard.StreamCreate.Step4.description'),
-      content: (<UploadStep />)
     }
   ]
 };
