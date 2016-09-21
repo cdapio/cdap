@@ -75,25 +75,25 @@ For example, the same schema set through the example code above can also be set 
 .. tabbed-parsed-literal::
 
   $ curl -w"\n" -X PUT "http://example.com:10000/v3/namespaces/<namespace-id>/data/datasets/profiles/properties" \
-    -d '{ "typeName": "table", \
-          "properties": { \
-            "schema": "{ \
-              \"type\":\"record\", \
-              \"name\":\"purchase\", \
-              \"fields\":[ \
-                {\"name\":\"id\",\"type\":\"string\"}, \
-                {\"name\":\"name\",\"type\":\"string\"}, \
-                {\"name\":\"email\",\"type\":\"string\"}, \
-                {\"name\":\"login\",\"type\":[\"long\", \"null\"]}, \
-                {\"name\":\"active\",\"type\":[\"long\", \"null\"]} \
-              ] \
-            }", \
-            "schema.row.field": "id" \
-          } \
+    -d '{ "schema": "{ \
+            \"type\":\"record\", \
+            \"name\":\"purchase\", \
+            \"fields\":[ \
+              {\"name\":\"id\",\"type\":\"string\"}, \
+              {\"name\":\"name\",\"type\":\"string\"}, \
+              {\"name\":\"email\",\"type\":\"string\"}, \
+              {\"name\":\"login\",\"type\":[\"long\", \"null\"]}, \
+              {\"name\":\"active\",\"type\":[\"long\", \"null\"]} \
+            ] \
+          }", \
+          "schema.row.field": "id" \
         }'
   
 CDAP schemas are adopted from the `Avro Schema Declaration <http://avro.apache.org/docs/1.7.3/spec.html#schemas>`__.
-Note that since dataset properties must be strings, the schema JSON has to be escaped properly.
+Note that since dataset properties must be strings, the schema JSON has to be escaped
+properly. Note also that the properties given in this request replace all existing
+properties; that is, if you had set other properties for this table, such as time-to-live
+(``dataset.table.ttl``), you must also include those properties in the update request.
 
 Formulating Queries
 -------------------

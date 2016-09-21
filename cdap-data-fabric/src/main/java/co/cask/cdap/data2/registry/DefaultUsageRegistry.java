@@ -24,9 +24,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionExecutorFactory;
@@ -47,28 +44,10 @@ public class DefaultUsageRegistry implements UsageRegistry {
   private final TransactionExecutorFactory executorFactory;
   private final DatasetFramework datasetFramework;
 
-  // this cache will avoid duplicate registration by the same owner if a program repeatedly gets the same dataset.
-  // for streams, that does not seem necessary, because programs register stream usage once at startup.
-  protected final LoadingCache<DatasetUsageKey, Boolean> usageCache;
-
   @Inject
-  public DefaultUsageRegistry(TransactionExecutorFactory executorFactory, DatasetFramework datasetFramework) {
-
+  DefaultUsageRegistry(TransactionExecutorFactory executorFactory, DatasetFramework datasetFramework) {
     this.executorFactory = executorFactory;
     this.datasetFramework = datasetFramework;
-
-    // using a max size of 1024: memory footprint is small, and still it is large enough to
-    // avoid repeated registration of the same program when it starts many containers concurrently.
-    // assuming that it is untypical that more than 1024 programs start at the sam time.
-    this.usageCache = CacheBuilder.newBuilder().maximumSize(1024).build(
-      new CacheLoader<DatasetUsageKey, Boolean>() {
-        @Override
-        public Boolean load(DatasetUsageKey key) throws Exception {
-          doRegister(key.getOwner(), key.getDataset());
-          return true;
-        }
-      }
-    );
   }
 
   protected <T> T execute(TransactionExecutor.Function<UsageDataset, T> func) {
@@ -154,16 +133,6 @@ public class DefaultUsageRegistry implements UsageRegistry {
    */
   @Override
   public void register(final Id.Program programId, final Id.DatasetInstance datasetInstanceId) {
-    usageCache.getUnchecked(new DatasetUsageKey(datasetInstanceId, programId));
-  }
-
-  /**
-   * Internal method to register usage of a dataset by a program, called from the cache loader.
-   *
-   * @param programId program
-   * @param datasetInstanceId  dataset
-   */
-  private void doRegister(final Id.Program programId, final Id.DatasetInstance datasetInstanceId) {
     execute(new TransactionExecutor.Procedure<UsageDataset>() {
       @Override
       public void apply(UsageDataset usageDataset) throws Exception {
@@ -201,15 +170,6 @@ public class DefaultUsageRegistry implements UsageRegistry {
         usageDataset.unregister(applicationId);
       }
     });
-
-    // we must invalidate the cache for all programs of this application. Because if, for example, an
-    // application is deleted, its usage is removed from the registry. If it is redeployed later, we
-    // must register its usage again. That would not happen if the cache still holds these entries.
-    for (DatasetUsageKey key : usageCache.asMap().keySet()) {
-      if (applicationId.equals(key.getOwner().getApplication())) {
-        usageCache.invalidate(key);
-      }
-    }
   }
 
   @Override
