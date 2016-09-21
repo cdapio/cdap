@@ -27,6 +27,7 @@ import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -90,6 +91,7 @@ public class AuthorizationCacheInvalidationTest extends AuthorizationTestBase {
   }
 
   @Test
+  @Ignore
   public void testRoleBasedPrivileges() throws Exception {
     Principal alice = new Principal("alice", Principal.PrincipalType.USER);
     Principal bob = new Principal("bob", Principal.PrincipalType.USER);
