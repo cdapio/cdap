@@ -38,7 +38,7 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers, CDAP_UI_CONFIG) {
     namespace: '@namespace'
   },
   {
-    search: myHelpers.getConfig('GET', 'REQUEST', searchPath, true),
+    search: myHelpers.getConfig('GET', 'REQUEST', searchPath, false),
     properties: myHelpers.getConfig('GET', 'REQUEST', basePath + '/metadata', true),
     viewsProperties: myHelpers.getConfig('GET', 'REQUEST', basePath + '/views/:viewId/metadata', true),
     getLineage: myHelpers.getConfig('GET', 'REQUEST', basePath + '/lineage?collapse=access&collapse=run&collapse=component'),
