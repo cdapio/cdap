@@ -80,7 +80,6 @@ import org.apache.tephra.TransactionExecutorFactory;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -240,7 +239,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     ProgramId wordcountFlow2 = wordCountApp2.program(ProgramType.FLOW, "WordCountFlow");
 
     // Start wordCountApp1
-    Assert.assertEquals(200, deployVersion(wordCountApp1, wordCountRequest).getStatusLine().getStatusCode());
+    Assert.assertEquals(200, deploy(wordCountApp1, wordCountRequest).getStatusLine().getStatusCode());
 
     // flow is stopped initially
     Assert.assertEquals(STOPPED, getProgramVersionStatus(wordcountFlow1));
@@ -258,7 +257,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                           ImmutableMap.<String, String>of(), 404);
 
     // Start the second version of the app
-    Assert.assertEquals(200, deployVersion(wordCountApp2, wordCountRequest).getStatusLine().getStatusCode());
+    Assert.assertEquals(200, deploy(wordCountApp2, wordCountRequest).getStatusLine().getStatusCode());
 
     // same flow cannot be run concurrently in multiple versions of the same app
     startProgramVersioned(wordcountFlow2, ImmutableMap.<String, String>of(), 409);
@@ -297,13 +296,13 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     ProgramId sleepWorkflow2 = sleepWorkflowApp2.program(ProgramType.WORKFLOW, "SleepWorkflow");
 
     // Start wordCountApp1
-    Assert.assertEquals(200, deployVersion(sleepWorkflowApp1, sleepWorkflowRequest).getStatusLine().getStatusCode());
+    Assert.assertEquals(200, deploy(sleepWorkflowApp1, sleepWorkflowRequest).getStatusLine().getStatusCode());
     // workflow is stopped initially
     Assert.assertEquals(STOPPED, getProgramVersionStatus(sleepWorkflow1));
     // start workflow in a wrong version
     startProgramVersioned(sleepWorkflow2, ImmutableMap.<String, String>of(), 404);
     // Start wordCountApp2
-    Assert.assertEquals(200, deployVersion(sleepWorkflowApp2, sleepWorkflowRequest).getStatusLine().getStatusCode());
+    Assert.assertEquals(200, deploy(sleepWorkflowApp2, sleepWorkflowRequest).getStatusLine().getStatusCode());
 
     // start multiple workflow simultaneously
     startProgramVersioned(sleepWorkflow1, ImmutableMap.<String, String>of(), 200);

@@ -411,7 +411,7 @@ public abstract class AppFabricTestBase {
     return executeDeploy(request, appRequest);
   }
 
-  protected HttpResponse deployVersion(ApplicationId appId, AppRequest<? extends Config> appRequest) throws Exception {
+  protected HttpResponse deploy(ApplicationId appId, AppRequest<? extends Config> appRequest) throws Exception {
     String deployPath = getVersionedAPIPath(String.format("apps/%s/versions/%s/create", appId.getApplication(),
                                                           appId.getVersion()),
                                             appId.getNamespace());

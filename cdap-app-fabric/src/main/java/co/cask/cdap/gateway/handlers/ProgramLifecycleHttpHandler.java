@@ -220,24 +220,24 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns status of a type specified by the type{flows,workflows,mapreduce,spark,services,schedules}.
    */
   @GET
-  @Path("/apps/{app-id}/{type}/{id}/status")
+  @Path("/apps/{app-id}/{program-type}/{program-id}/status")
   public void getStatus(HttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") String namespaceId,
                         @PathParam("app-id") String appId,
-                        @PathParam("type") String type,
-                        @PathParam("id") String id) throws Exception {
+                        @PathParam("program-type") String programTypeString,
+                        @PathParam("program-id") String programId) throws Exception {
     ApplicationId applicationId = Ids.namespace(namespaceId).app(appId);
-    if (type.equals("schedules")) {
-      getScheduleStatus(responder, applicationId, id);
+    if (programTypeString.equals("schedules")) {
+      getScheduleStatus(responder, applicationId, programId);
       return;
     }
     ProgramType programType;
     try {
-      programType = ProgramType.valueOfCategoryName(type);
+      programType = ProgramType.valueOfCategoryName(programTypeString);
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(e);
     }
-    ProgramId program = Ids.namespace(namespaceId).app(appId).program(programType, id);
+    ProgramId program = Ids.namespace(namespaceId).app(appId).program(programType, programId);
     ProgramStatus programStatus = lifecycleService.getProgramStatus(program);
 
     Map<String, String> status = ImmutableMap.of("status", programStatus.name());
@@ -249,7 +249,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @GET
   @Path("/apps/{app-id}/versions/{version-id}/{program-type}/{program-id}/status")
-  public void getVersionStatus(HttpRequest request, HttpResponder responder,
+  public void getStatus(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("app-id") String appId,
                                @PathParam("version-id") String versionId,
@@ -300,78 +300,78 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Stops the particular run of the Workflow or MapReduce program.
    */
   @POST
-  @Path("/apps/{app-id}/{type}/{id}/runs/{run-id}/stop")
+  @Path("/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}/stop")
   public void performRunLevelStop(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("app-id") String appId,
-                                  @PathParam("type") String type,
-                                  @PathParam("id") String id,
+                                  @PathParam("program-type") String programTypeString,
+                                  @PathParam("program-id") String programId,
                                   @PathParam("run-id") String runId) throws Exception {
     ProgramType programType;
     try {
-      programType = ProgramType.valueOfCategoryName(type);
+      programType = ProgramType.valueOfCategoryName(programTypeString);
      } catch (IllegalArgumentException e) {
       throw new BadRequestException(e);
     }
-    ProgramId program = Ids.namespace(namespaceId).app(appId).program(programType, id);
+    ProgramId program = Ids.namespace(namespaceId).app(appId).program(programType, programId);
     lifecycleService.stop(program, runId);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @POST
-  @Path("/apps/{app-id}/{type}/{id}/{action}")
+  @Path("/apps/{app-id}/{program-type}/{program-id}/{action}")
   public void performAction(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("app-id") String appId,
-                            @PathParam("type") String type,
-                            @PathParam("id") String id,
+                            @PathParam("program-type") String programType,
+                            @PathParam("program-id") String programId,
                             @PathParam("action") String action) throws Exception {
-    doPerformAction(request, responder, namespaceId, appId, ApplicationId.DEFAULT_VERSION, type, id, action);
+    doPerformAction(request, responder, namespaceId, appId, ApplicationId.DEFAULT_VERSION, programType, programId, action);
   }
 
   @POST
-  @Path("/apps/{app-id}/versions/{version-id}/{program-type}/{program-id}/{action}")
-  public void performVersionAction(HttpRequest request, HttpResponder responder,
-                                   @PathParam("namespace-id") String namespaceId,
-                                   @PathParam("app-id") String appId,
-                                   @PathParam("version-id") String versionId,
-                                   @PathParam("program-type") String programType,
-                                   @PathParam("program-id") String programId,
-                                   @PathParam("action") String action) throws Exception {
-    doPerformAction(request, responder, namespaceId, appId, versionId, programType, programId, action);
+  @Path("/apps/{app-id}/versions/{app-version}/{program-type}/{program-id}/{action}")
+  public void performAction(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("app-id") String appId,
+                            @PathParam("app-version") String appVersion,
+                            @PathParam("program-type") String programType,
+                            @PathParam("program-id") String programId,
+                            @PathParam("action") String action) throws Exception {
+    doPerformAction(request, responder, namespaceId, appId, appVersion, programType, programId, action);
   }
 
   private void doPerformAction(HttpRequest request, HttpResponder responder, String namespaceId, String appId,
-                               String versionId, String type, String id, String action) throws Exception {
-    ApplicationId applicationId = new ApplicationId(namespaceId, appId, versionId);
-    if ("schedules".equals(type)) {
-      performScheduleAction(responder, applicationId, id, action);
+                               String appVersion, String programTypeString, String programId, String action) throws Exception {
+    ApplicationId applicationId = new ApplicationId(namespaceId, appId, appVersion);
+    if ("schedules".equals(programTypeString)) {
+      performScheduleAction(responder, applicationId, programId, action);
       return;
     }
 
     ProgramType programType;
     try {
-      programType = ProgramType.valueOfCategoryName(type);
+      programType = ProgramType.valueOfCategoryName(programTypeString);
     } catch (IllegalArgumentException e) {
-      throw new BadRequestException(String.format("Unknown program type '%s'", type), e);
+      throw new BadRequestException(String.format("Unknown program type '%s'", programTypeString), e);
     }
 
-    ProgramId programId = applicationId.program(programType, id);
+    ProgramId program = applicationId.program(programType, programId);
     Map<String, String> args = decodeArguments(request);
     // we have already validated that the action is valid
     switch (action.toLowerCase()) {
       case "start":
-        lifecycleService.start(programId, args, false);
+        lifecycleService.start(program, args, false);
         break;
       case "debug":
         if (!isDebugAllowed(programType)) {
           throw new NotImplementedException(String.format("debug action is not implemented for program type %s",
                                                           programType));
         }
-        lifecycleService.start(programId, args, true);
+        lifecycleService.start(program, args, true);
         break;
       case "stop":
-        lifecycleService.stop(programId);
+        lifecycleService.stop(program);
         break;
       default:
         throw new NotFoundException(String.format("%s action was not found", action));

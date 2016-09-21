@@ -132,7 +132,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testDeployVersionedAndNonVersionedApp() throws Exception {
+  public void testdeployedAndNonVersionedApp() throws Exception {
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "configapp", "1.0.0");
     addAppArtifact(artifactId, ConfigTestApp.class);
 
@@ -140,9 +140,9 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("abc", "def");
     AppRequest<ConfigTestApp.ConfigClass> request = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), config);
-    Assert.assertEquals(200, deployVersion(appId, request).getStatusLine().getStatusCode());
+    Assert.assertEquals(200, deploy(appId, request).getStatusLine().getStatusCode());
     // Cannot update the app created by versioned API with versionId not ending with "-SNAPSHOT"
-    Assert.assertEquals(409, deployVersion(appId, request).getStatusLine().getStatusCode());
+    Assert.assertEquals(409, deploy(appId, request).getStatusLine().getStatusCode());
     Assert.assertEquals(404, getVersionedAppResponse(Id.Namespace.DEFAULT.getId(), appId.getApplication(),
                                             "non_existing_version").getStatusLine().getStatusCode());
     Assert.assertEquals(404, getNonVersionedAppResponse(Id.Namespace.DEFAULT.getId(),
@@ -160,7 +160,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     ConfigTestApp.ConfigClass configV2 = new ConfigTestApp.ConfigClass("ghi", "jkl");
     AppRequest<ConfigTestApp.ConfigClass> requestV2 = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), configV2);
-    Assert.assertEquals(200, deployVersion(appIdV2, requestV2).getStatusLine().getStatusCode());
+    Assert.assertEquals(200, deploy(appIdV2, requestV2).getStatusLine().getStatusCode());
 
     Set<String> versions = ImmutableSet.of("-SNAPSHOT", "2.0.0", "1.0.0");
     Assert.assertEquals(versions, getAppVersions(appId.getNamespace(), appId.getApplication()));
@@ -181,7 +181,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     ConfigTestApp.ConfigClass configDefault2 = new ConfigTestApp.ConfigClass("mno", "pqr");
     AppRequest<ConfigTestApp.ConfigClass> requestDefault2 = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), configDefault2);
-    Assert.assertEquals(200, deployVersion(appIdDefault.toEntityId(), requestDefault2).getStatusLine().getStatusCode());
+    Assert.assertEquals(200, deploy(appIdDefault.toEntityId(), requestDefault2).getStatusLine().getStatusCode());
 
     JsonObject appDetailsDefault2 = getAppDetails(appId.getNamespace(), appId.getApplication());
     Assert.assertEquals(GSON.toJson(configDefault2), appDetailsDefault2.get("configuration").getAsString());
