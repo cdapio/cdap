@@ -336,13 +336,6 @@
                       <filtering>true</filtering>
                     </resource>
                     <resource>
-                      <directory>${project.parent.basedir}/cdap-data-fabric/bin</directory>
-                      <targetPath>bin</targetPath>
-                      <includes>
-                        <include>tx-debugger*</include>
-                      </includes>
-                    </resource>
-                    <resource>
                       <directory>${project.parent.basedir}/cdap-explore/bin</directory>
                       <targetPath>bin</targetPath>
                       <includes>
@@ -527,16 +520,6 @@
                       <includes>
                         <include>cli-${project.version}.jar</include>
                       </includes>
-                    </resource>
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-cli/bin</directory>
-                      <targetPath>bin</targetPath>
-                      <includes>
-                        <include>cdap</include>
-                        <include>functions.sh</include>
-                        <include>cdap-cli.bat</include>
-                      </includes>
-                      <filtering>true</filtering>
                     </resource>
                   </resources>
                 </configuration>
