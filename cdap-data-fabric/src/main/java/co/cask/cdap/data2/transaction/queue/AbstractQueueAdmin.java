@@ -16,8 +16,8 @@
 
 package co.cask.cdap.data2.transaction.queue;
 
-import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.FlowId;
+import co.cask.cdap.proto.id.NamespaceId;
 
 /**
  * Common implementation of table-based QueueAdmin
@@ -29,7 +29,7 @@ public abstract class AbstractQueueAdmin implements QueueAdmin {
   public AbstractQueueAdmin(QueueConstants.QueueType type) {
     // todo: we have to do that because queues do not follow dataset semantic fully (yet)
     // system scoped
-    this.unqualifiedTableNamePrefix = Id.Namespace.SYSTEM.getId() + "." + type.toString();
+    this.unqualifiedTableNamePrefix = NamespaceId.SYSTEM.getEntityName() + "." + type.toString();
     this.type = type;
   }
 
@@ -53,23 +53,8 @@ public abstract class AbstractQueueAdmin implements QueueAdmin {
     return parts[parts.length - 1];
   }
 
-  /**
-   * This determines the tableName from the table name prefix and the name of the queue.
-   * @param queueName The name of the queue.
-   * @return the full name of the table that holds this queue.
-   */
-  public String getDataTableName(QueueName queueName) {
-    if (queueName.isQueue()) {
-      return getDataTableName(Id.Flow.from(queueName.getFirstComponent(),
-                                           queueName.getSecondComponent(),
-                                           queueName.getThirdComponent()));
-    } else {
-      throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a queue.");
-    }
-  }
-
-  public String getDataTableName(Id.Flow flowId) {
+  public String getDataTableName(FlowId flowId) {
     // tableName = system.queue.<app>.<flow>
-    return unqualifiedTableNamePrefix + "." + flowId.getApplicationId() + "." + flowId.getId();
+    return unqualifiedTableNamePrefix + "." + flowId.getApplication() + "." + flowId.getEntityName();
   }
 }

@@ -116,17 +116,7 @@ public class WebappProgramRunner implements ProgramRunner {
         final String sname = ProgramType.WEBAPP.name().toLowerCase() + "/" + hname;
 
         LOG.info("Webapp {} running on address {} registering as {}", program.getApplicationId(), address, sname);
-        cancellables.add(discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
-          @Override
-          public String getName() {
-            return sname;
-          }
-
-          @Override
-          public InetSocketAddress getSocketAddress() {
-            return address;
-          }
-        })));
+        cancellables.add(discoveryService.register(ResolvingDiscoverable.of(new Discoverable(sname, address))));
       }
 
       return new WebappProgramController(program.getId(), runId, httpService, new Cancellable() {

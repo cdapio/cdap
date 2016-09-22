@@ -19,9 +19,9 @@ package co.cask.cdap.gateway.router;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
-import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.IOModule;
+import co.cask.cdap.internal.guice.AppFabricTestModule;
+import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.guice.SecurityModules;
 import com.google.common.collect.Maps;
@@ -56,11 +56,12 @@ class RouterResource extends ExternalResource {
   @Override
   protected void before() throws Throwable {
     CConfiguration cConf = CConfiguration.create();
-    Injector injector = Guice.createInjector(new ConfigModule(cConf), new IOModule(),
-                                             new SecurityModules().getInMemoryModules(),
-                                             new DiscoveryRuntimeModule().getInMemoryModules());
+    Injector injector = Guice.createInjector(new SecurityModules().getInMemoryModules(),
+                                             new DiscoveryRuntimeModule().getInMemoryModules(),
+                                             new AppFabricTestModule(cConf));
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     AccessTokenTransformer accessTokenTransformer = new MockAccessTokenTransfomer();
+    RouteStore routeStore = injector.getInstance(RouteStore.class);
     SConfiguration sConf = injector.getInstance(SConfiguration.class);
     cConf.set(Constants.Router.ADDRESS, hostname);
     cConf.setInt(Constants.Router.ROUTER_PORT, 0);
@@ -71,7 +72,7 @@ class RouterResource extends ExternalResource {
     router =
       new NettyRouter(cConf, sConf, InetAddresses.forString(hostname),
                       new RouterServiceLookup((DiscoveryServiceClient) discoveryService,
-                                              new RouterPathLookup()),
+                                              new RouterPathLookup(), routeStore),
                       new MockTokenValidator("failme"), accessTokenTransformer, discoveryServiceClient);
     router.startAndWait();
 

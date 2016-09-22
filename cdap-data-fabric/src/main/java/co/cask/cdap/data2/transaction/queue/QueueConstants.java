@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.data2.transaction.queue;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 
 /**
  * Constants for queue implementation in HBase.
@@ -33,7 +33,6 @@ public final class QueueConstants {
 
   // This is a hardcoded value for the row key distributor bucket size before CDAP-1946
   public static final int DEFAULT_ROW_KEY_BUCKETS = 16;
-  public static final String QUEUE_CONFIG_TABLE_NAME = QueueType.QUEUE.toString() + ".config";
 
   public static final String DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR = "/queue";
 
@@ -45,7 +44,7 @@ public final class QueueConstants {
 
   // Key for HBase table meta that records the value of number of queue table buckets
   public static final String DISTRIBUTOR_BUCKETS = "cdap.distributor.buckets";
-  public static final String STATE_STORE_NAME = Id.Namespace.SYSTEM.getId() + "." + QueueType.QUEUE;
+  public static final String STATE_STORE_NAME = NamespaceId.SYSTEM.getEntityName() + "." + QueueType.QUEUE;
 
   /**
    * whether a queue is a queue or a stream.

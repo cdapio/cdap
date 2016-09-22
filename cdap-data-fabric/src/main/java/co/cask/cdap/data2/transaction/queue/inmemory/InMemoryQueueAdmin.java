@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,8 @@ import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.queue.NoopQueueConfigurer;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.queue.QueueConfigurer;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.FlowId;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -60,7 +61,7 @@ public class InMemoryQueueAdmin implements QueueAdmin {
   }
 
   @Override
-  public void clearAllForFlow(Id.Flow flowId) throws Exception {
+  public void clearAllForFlow(FlowId flowId) throws Exception {
     queueService.truncateAllWithPrefix(QueueName.prefixForFlow(flowId));
   }
 
@@ -75,12 +76,12 @@ public class InMemoryQueueAdmin implements QueueAdmin {
   }
 
   @Override
-  public void dropAllInNamespace(Id.Namespace namespaceId) throws Exception {
-    queueService.resetQueuesWithPrefix(QueueName.prefixForNamespacedQueue(namespaceId.getId()));
+  public void dropAllInNamespace(NamespaceId namespaceId) throws Exception {
+    queueService.resetQueuesWithPrefix(QueueName.prefixForNamespacedQueue(namespaceId.getEntityName()));
   }
 
   @Override
-  public void dropAllForFlow(Id.Flow flowId) throws Exception {
+  public void dropAllForFlow(FlowId flowId) throws Exception {
     queueService.resetQueuesWithPrefix(QueueName.prefixForFlow(flowId));
   }
 

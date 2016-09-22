@@ -36,8 +36,8 @@ import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.store.DefaultStore;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
@@ -118,6 +118,6 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
 
   @Override
   protected void deleteNamespace(String namespaceId) throws NotFoundException {
-    store.delete(new Id.Namespace(namespaceId));
+    store.delete(new NamespaceId(namespaceId));
   }
 }

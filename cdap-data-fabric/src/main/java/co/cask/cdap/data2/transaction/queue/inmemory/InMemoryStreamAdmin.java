@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -126,19 +126,19 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
 
   @Override
   public boolean exists(StreamId streamId) throws Exception {
-    return exists(QueueName.fromStream(streamId.toId()));
+    return exists(QueueName.fromStream(streamId));
   }
 
   @Override
   public StreamConfig create(StreamId streamId) throws Exception {
-    create(QueueName.fromStream(streamId.toId()));
+    create(QueueName.fromStream(streamId));
     publishAudit(streamId, AuditType.CREATE);
     return null;
   }
 
   @Override
   public StreamConfig create(StreamId streamId, @Nullable Properties props) throws Exception {
-    create(QueueName.fromStream(streamId.toId()), props);
+    create(QueueName.fromStream(streamId), props);
     String description = (props != null) ? props.getProperty(Constants.Stream.DESCRIPTION) : null;
     streamMetaStore.addStream(streamId, description);
     publishAudit(streamId, AuditType.CREATE);
@@ -148,7 +148,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   @Override
   public void truncate(StreamId streamId) throws Exception {
     Preconditions.checkArgument(exists(streamId), "Stream '%s' does not exist.", streamId);
-    truncate(QueueName.fromStream(streamId.toId()));
+    truncate(QueueName.fromStream(streamId));
     publishAudit(streamId, AuditType.TRUNCATE);
   }
 
@@ -157,7 +157,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
     Preconditions.checkArgument(exists(streamId), "Stream '%s' does not exist.", streamId);
     // Remove metadata for the stream
     metadataStore.removeMetadata(streamId);
-    drop(QueueName.fromStream(streamId.toId()));
+    drop(QueueName.fromStream(streamId));
     streamMetaStore.removeStream(streamId);
     publishAudit(streamId, AuditType.DELETE);
   }

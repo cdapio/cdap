@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.data.runtime;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
@@ -61,7 +62,7 @@ public final class InMemoryStreamFileWriterFactory implements StreamFileWriterFa
 
   @Override
   public FileWriter<StreamEvent> create(StreamConfig config, int generation) throws IOException {
-    final QueueProducer producer = queueClientFactory.createProducer(QueueName.fromStream(config.getStreamId().toId()));
+    final QueueProducer producer = queueClientFactory.createProducer(QueueName.fromStream(config.getStreamId()));
     final List<TransactionAware> txAwares = Lists.newArrayList();
     if (producer instanceof TransactionAware) {
       txAwares.add((TransactionAware) producer);

@@ -19,7 +19,6 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.metadata.indexer.Indexer;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
@@ -442,7 +441,7 @@ public class MetadataDatasetTest {
     results = dataset.search("ns3", "av*", ImmutableSet.of(MetadataSearchTargetType.ALL));
     Assert.assertEquals(Sets.newHashSet(systemArtifactEntry), Sets.newHashSet(results));
     // search the system namespace for all entities. Should return only the system artifact
-    results = dataset.search(Id.Namespace.SYSTEM.getId(), "av*", ImmutableSet.of(MetadataSearchTargetType.ALL));
+    results = dataset.search(NamespaceId.SYSTEM.getEntityName(), "av*", ImmutableSet.of(MetadataSearchTargetType.ALL));
     Assert.assertEquals(Sets.newHashSet(systemArtifactEntry), Sets.newHashSet(results));
     // clean up
     dataset.removeProperties(flow1);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,7 @@ package co.cask.cdap.data2.transaction.metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.apache.tephra.metrics.TxMetricsCollector;
@@ -33,7 +33,7 @@ public class TransactionManagerMetricsCollector extends TxMetricsCollector {
   @Inject
   public TransactionManagerMetricsCollector(MetricsCollectionService service) {
     this.metricsContext = service.getContext(
-      ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.SYSTEM.getId(),
+      ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getEntityName(),
                       Constants.Metrics.Tag.COMPONENT, "transactions"));
   }
 

@@ -36,6 +36,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.TableAssert;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -91,11 +92,11 @@ public abstract class TableTest<T extends Table> {
 
   static final byte[] MT = new byte[0];
 
-  protected static final Id.Namespace NAMESPACE1 = Id.Namespace.from("ns1");
-  protected static final Id.Namespace NAMESPACE2 = Id.Namespace.from("ns2");
+  protected static final NamespaceId NAMESPACE1 = new NamespaceId("ns1");
+  protected static final NamespaceId NAMESPACE2 = new NamespaceId("ns2");
   protected static final String MY_TABLE = "myTable";
-  protected static final DatasetContext CONTEXT1 = DatasetContext.from(NAMESPACE1.getId());
-  protected static final DatasetContext CONTEXT2 = DatasetContext.from("ns2");
+  protected static final DatasetContext CONTEXT1 = DatasetContext.from(NAMESPACE1.getEntityName());
+  protected static final DatasetContext CONTEXT2 = DatasetContext.from(NAMESPACE2.getEntityName());
 
   protected TransactionSystemClient txClient;
 

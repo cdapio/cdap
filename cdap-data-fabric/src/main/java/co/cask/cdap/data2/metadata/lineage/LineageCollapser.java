@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.metadata.lineage;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -62,8 +61,8 @@ public final class LineageCollapser {
     LOG.trace("Collapsed relations: {}", multimap.asMap());
 
     for (Map.Entry<CollapseKey, Collection<Relation>> collapsedEntry : multimap.asMap().entrySet()) {
-      NamespacedEntityId data = (NamespacedEntityId) collapsedEntry.getKey().data.toEntityId();
-      ProgramId program = collapsedEntry.getKey().program.toEntityId();
+      NamespacedEntityId data = collapsedEntry.getKey().data;
+      ProgramId program = collapsedEntry.getKey().program;
 
       Set<AccessType> accessTypes = new HashSet<>();
       Set<RunId> runs = new HashSet<>();
@@ -80,8 +79,7 @@ public final class LineageCollapser {
   }
 
   private static CollapseKey getCollapseKey(Relation relation, Set<CollapseType> collapseTypes) {
-    CollapseKeyBuilder builder = new CollapseKeyBuilder((Id.NamespacedId) relation.getData().toId(),
-                                                        relation.getProgram().toId());
+    CollapseKeyBuilder builder = new CollapseKeyBuilder(relation.getData(), relation.getProgram());
     if (!collapseTypes.contains(CollapseType.ACCESS)) {
       builder.setAccess(relation.getAccess());
     }
@@ -89,19 +87,19 @@ public final class LineageCollapser {
       builder.setRun(relation.getRun());
     }
     if (!collapseTypes.contains(CollapseType.COMPONENT)) {
-      builder.setComponents(relation.getIdComponents());
+      builder.setComponents(relation.getComponents());
     }
     return builder.build();
   }
 
   private static final class CollapseKeyBuilder {
-    private final Id.NamespacedId data;
-    private final Id.Program program;
+    private final NamespacedEntityId data;
+    private final ProgramId program;
     private AccessType access;
     private RunId run;
-    private Set<Id.NamespacedId> components;
+    private Set<NamespacedEntityId> components;
 
-    CollapseKeyBuilder(Id.NamespacedId data, Id.Program program) {
+    CollapseKeyBuilder(NamespacedEntityId data, ProgramId program) {
       this.data = data;
       this.program = program;
     }
@@ -114,7 +112,7 @@ public final class LineageCollapser {
       this.run = run;
     }
 
-    public void setComponents(Set<Id.NamespacedId> components) {
+    public void setComponents(Set<NamespacedEntityId> components) {
       this.components = components;
     }
 
@@ -135,14 +133,14 @@ public final class LineageCollapser {
   }
 
   private static final class CollapseKey {
-    private final Id.NamespacedId data;
-    private final Id.Program program;
+    private final NamespacedEntityId data;
+    private final ProgramId program;
     private final AccessType access;
     private final RunId run;
-    private final Set<? extends Id.NamespacedId> components;
+    private final Set<? extends NamespacedEntityId> components;
 
-    CollapseKey(Id.NamespacedId data, Id.Program program, AccessType access, RunId run,
-                Set<? extends Id.NamespacedId> components) {
+    CollapseKey(NamespacedEntityId data, ProgramId program, AccessType access, RunId run,
+                Set<? extends NamespacedEntityId> components) {
       this.data = data;
       this.program = program;
       this.access = access;

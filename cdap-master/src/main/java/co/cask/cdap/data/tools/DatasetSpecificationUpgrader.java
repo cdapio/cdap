@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,7 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.ScanBuilder;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -75,7 +75,7 @@ public class DatasetSpecificationUpgrader {
    * @throws Exception
    */
   public void upgrade() throws Exception {
-    TableId datasetSpecId = TableId.from(Id.Namespace.SYSTEM.getId(), DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
+    TableId datasetSpecId = TableId.from(NamespaceId.SYSTEM.getEntityName(), DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
     HBaseAdmin hBaseAdmin = new HBaseAdmin(conf);
     if (!tableUtil.tableExists(hBaseAdmin, datasetSpecId)) {
       LOG.error("Dataset instance table does not exist: {}. Should not happen", datasetSpecId);

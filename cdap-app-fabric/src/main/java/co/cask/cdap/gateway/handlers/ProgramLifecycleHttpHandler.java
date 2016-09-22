@@ -65,6 +65,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -950,13 +951,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("app-id") String appId,
                                @PathParam("flow-id") String flowId) throws Exception {
-    ProgramId programId = Ids.namespace(namespaceId).app(appId).flow(flowId);
+    FlowId flow = new NamespaceId(namespaceId).app(appId).flow(flowId);
     try {
-      ProgramStatus status = lifecycleService.getProgramStatus(programId);
+      ProgramStatus status = lifecycleService.getProgramStatus(flow);
       if (ProgramStatus.RUNNING == status) {
         responder.sendString(HttpResponseStatus.FORBIDDEN, "Flow is running, please stop it first.");
       } else {
-        queueAdmin.dropAllForFlow(Id.Flow.from(programId.getApplication(), programId.getProgram()));
+        queueAdmin.dropAllForFlow(flow);
         FlowUtils.deleteFlowPendingMetrics(metricStore, namespaceId, appId, flowId);
         responder.sendStatus(HttpResponseStatus.OK);
       }
@@ -1079,7 +1080,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           return;
         }
       }
-      queueAdmin.dropAllInNamespace(namespace.toId());
+      queueAdmin.dropAllInNamespace(namespace);
       // delete process metrics that are used to calculate the queue size (system.queue.pending metric)
       FlowUtils.deleteFlowPendingMetrics(metricStore, namespaceId, null, null);
       responder.sendStatus(HttpResponseStatus.OK);

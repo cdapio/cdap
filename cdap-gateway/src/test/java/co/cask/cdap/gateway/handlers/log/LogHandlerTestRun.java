@@ -22,11 +22,9 @@ import co.cask.cdap.logging.gateway.handlers.FormattedTextLogEvent;
 import co.cask.cdap.logging.gateway.handlers.LogData;
 import co.cask.cdap.logging.gateway.handlers.LogHandler;
 import co.cask.cdap.logging.read.LogOffset;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Joiner;
@@ -99,21 +97,21 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
 
   @Test
   public void testMapReduceNext() throws Exception {
-    testNext("testApp3", "mapreduce", "testMapReduce1", true, Id.Namespace.DEFAULT.getId());
+    testNext("testApp3", "mapreduce", "testMapReduce1", true, NamespaceId.DEFAULT.getEntityName());
     try {
       testNext("testApp3", "mapreduce", "testMapReduce1", true, MockLogReader.TEST_NAMESPACE);
       Assert.fail();
     } catch (AssertionError e) {
       // this must fail
     }
-    testNextNoMax("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
-    testNextFilter("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
-    testNextNoFrom("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
-    testNextRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "text",
+    testNextNoMax("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName());
+    testNextFilter("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName());
+    testNextNoFrom("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName());
+    testNextRunId("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName(), "text",
                   ImmutableList.<String>of());
-    testNextRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "json",
+    testNextRunId("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName(), "json",
                   ImmutableList.<String>of());
-    testNextRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "json",
+    testNextRunId("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName(), "json",
                   ImmutableList.of("logLevel", "lineNumber"));
   }
 
@@ -146,15 +144,15 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
 
   @Test
   public void testMapReducePrev() throws Exception {
-    testPrev("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
-    testPrevNoMax("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
-    testPrevFilter("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
-    testPrevNoFrom("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
-    testPrevRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "text",
+    testPrev("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName());
+    testPrevNoMax("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName());
+    testPrevFilter("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName());
+    testPrevNoFrom("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName());
+    testPrevRunId("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName(), "text",
                   ImmutableList.<String>of());
-    testPrevRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "json",
+    testPrevRunId("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName(), "json",
                   ImmutableList.<String>of());
-    testPrevRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "json",
+    testPrevRunId("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName(), "json",
                   ImmutableList.of("logLevel", "lineNumber"));
     try {
       testPrevNoMax("testApp3", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE);
@@ -176,7 +174,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     testLogsRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "json",
                   ImmutableList.of("logLevel", "lineNumber"));
     try {
-      testLogs("testApp1", "flows", "testFlow1", Id.Namespace.DEFAULT.getId());
+      testLogs("testApp1", "flows", "testFlow1", NamespaceId.DEFAULT.getEntityName());
     } catch (AssertionError e) {
       // should fail
       return;
@@ -198,13 +196,13 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
 
   @Test
   public void testMapReduceLogs() throws Exception {
-    testLogs("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
-    testLogsFilter("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId());
-    testLogsRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "text",
+    testLogs("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName());
+    testLogsFilter("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName());
+    testLogsRunId("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName(), "text",
                   ImmutableList.<String>of());
-    testLogsRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "json",
+    testLogsRunId("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName(), "json",
                   ImmutableList.<String>of());
-    testLogsRunId("testApp3", "mapreduce", "testMapReduce1", Id.Namespace.DEFAULT.getId(), "json",
+    testLogsRunId("testApp3", "mapreduce", "testMapReduce1", NamespaceId.DEFAULT.getEntityName(), "json",
                   ImmutableList.of("logLevel", "lineNumber"));
     try {
       testLogsFilter("testApp3", "mapreduce", "testMapReduce1", MockLogReader.TEST_NAMESPACE);

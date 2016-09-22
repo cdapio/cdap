@@ -20,15 +20,14 @@ package co.cask.cdap.gateway.router;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
-import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.internal.guava.reflect.TypeToken;
+import co.cask.cdap.internal.guice.AppFabricTestModule;
+import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.GrantAccessToken;
 import com.google.common.collect.Maps;
-import com.google.common.io.CharStreams;
 import com.google.common.net.InetAddresses;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
@@ -47,7 +46,6 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -135,9 +133,9 @@ public class AuthServerAnnounceTest {
     @Override
     protected void startUp() {
       SConfiguration sConfiguration = SConfiguration.create();
-      Injector injector = Guice.createInjector(new ConfigModule(cConf), new IOModule(),
-                                               new SecurityModules().getInMemoryModules(),
-                                               new DiscoveryRuntimeModule().getInMemoryModules());
+      Injector injector = Guice.createInjector(new SecurityModules().getInMemoryModules(),
+                                               new DiscoveryRuntimeModule().getInMemoryModules(),
+                                               new AppFabricTestModule(cConf));
       DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
       AccessTokenTransformer accessTokenTransformer = injector.getInstance(AccessTokenTransformer.class);
       cConf.set(Constants.Router.ADDRESS, hostname);
@@ -150,7 +148,7 @@ public class AuthServerAnnounceTest {
       router =
         new NettyRouter(cConf, sConfiguration, InetAddresses.forString(hostname),
                         new RouterServiceLookup((DiscoveryServiceClient) discoveryService,
-                                                new RouterPathLookup()),
+                                                new RouterPathLookup(), injector.getInstance(RouteStore.class)),
                         new MissingTokenValidator(), accessTokenTransformer, discoveryServiceClient);
       router.startAndWait();
 

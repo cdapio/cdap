@@ -28,7 +28,6 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.data2.util.hbase.HTableNameConverterFactory;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -143,7 +142,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
     String tableName = desc.getNameAsString();
     // If table is in system namespace: (starts with <tablePrefix>_system
     // or if it is not created by CDAP it is not user table
-    if (tableName.startsWith(String.format("%s_%s", this.datasetTablePrefix, Id.Namespace.SYSTEM.getId())) ||
+    if (tableName.startsWith(String.format("%s_%s", this.datasetTablePrefix, NamespaceId.SYSTEM.getEntityName())) ||
        (!isTableCreatedByCDAP(desc))) {
       return false;
     }

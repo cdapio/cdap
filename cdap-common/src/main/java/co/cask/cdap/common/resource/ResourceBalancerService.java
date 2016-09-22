@@ -211,18 +211,6 @@ public abstract class ResourceBalancerService extends AbstractIdleService {
     } catch (UnknownHostException e) {
       address = new InetSocketAddress(port);
     }
-    final InetSocketAddress finalAddress = address;
-
-    return new Discoverable() {
-      @Override
-      public String getName() {
-        return serviceName;
-      }
-
-      @Override
-      public InetSocketAddress getSocketAddress() {
-        return finalAddress;
-      }
-    };
+    return new Discoverable(serviceName, address);
   }
 }

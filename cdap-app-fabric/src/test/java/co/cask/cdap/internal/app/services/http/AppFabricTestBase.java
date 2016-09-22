@@ -51,6 +51,7 @@ import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.id.ApplicationId;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -404,9 +405,22 @@ public abstract class AppFabricTestBase {
 
   protected HttpResponse deploy(Id.Application appId,
                                 AppRequest<? extends Config> appRequest) throws Exception {
-    HttpEntityEnclosingRequestBase request;
     String deployPath = getVersionedAPIPath("apps/" + appId.getId(), appId.getNamespaceId());
-    request = getPut(deployPath);
+    HttpEntityEnclosingRequestBase request = getPut(deployPath);
+    return executeDeploy(request, appRequest);
+  }
+
+  protected HttpResponse deploy(ApplicationId appId,
+                                AppRequest<? extends Config> appRequest) throws Exception {
+    String deployPath = getVersionedAPIPath(String.format("apps/%s/versions/%s/create", appId.getApplication(),
+                                                          appId.getVersion()),
+                                            appId.getNamespace());
+    HttpEntityEnclosingRequestBase request = getPost(deployPath);
+    return executeDeploy(request, appRequest);
+  }
+
+  private HttpResponse executeDeploy(HttpEntityEnclosingRequestBase request,
+                                     AppRequest<? extends Config> appRequest) throws Exception {
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setHeader(HttpHeaders.Names.CONTENT_TYPE, MediaType.APPLICATION_JSON);
     request.setEntity(new StringEntity(GSON.toJson(appRequest)));
@@ -417,13 +431,13 @@ public abstract class AppFabricTestBase {
    * Deploys an application with (optionally) a defined app name and app version
    */
   protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
-                                @Nullable String appVersion, @Nullable Config appConfig) throws Exception {
+                                @Nullable String artifactVersion, @Nullable Config appConfig) throws Exception {
     namespace = namespace == null ? Id.Namespace.DEFAULT.getId() : namespace;
     apiVersion = apiVersion == null ? Constants.Gateway.API_VERSION_3_TOKEN : apiVersion;
-    appVersion = appVersion == null ? String.format("1.0.%d", System.currentTimeMillis()) : appVersion;
+    artifactVersion = artifactVersion == null ? String.format("1.0.%d", System.currentTimeMillis()) : artifactVersion;
 
     Manifest manifest = new Manifest();
-    manifest.getMainAttributes().put(ManifestFields.BUNDLE_VERSION, appVersion);
+    manifest.getMainAttributes().put(ManifestFields.BUNDLE_VERSION, artifactVersion);
 
     File artifactJar = buildAppArtifact(application, application.getSimpleName(), manifest);
     File expandDir = tmpFolder.newFolder();
@@ -439,7 +453,7 @@ public abstract class AppFabricTestBase {
     String versionedApiPath = getVersionedAPIPath("apps/", apiVersion, namespace);
     request = getPost(versionedApiPath);
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
-    request.setHeader("X-Archive-Name", String.format("%s-%s.jar", application.getSimpleName(), appVersion));
+    request.setHeader("X-Archive-Name", String.format("%s-%s.jar", application.getSimpleName(), artifactVersion));
     if (appConfig != null) {
       request.setHeader("X-App-Config", GSON.toJson(appConfig));
     }
@@ -468,8 +482,26 @@ public abstract class AppFabricTestBase {
   }
 
   protected JsonObject getAppDetails(String namespace, String appName) throws Exception {
-    HttpResponse response = doGet(getVersionedAPIPath(String.format("apps/%s", appName),
+    HttpResponse response = getNonVersionedAppResponse(namespace, appName);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals("application/json", response.getFirstHeader(HttpHeaders.Names.CONTENT_TYPE).getValue());
+    Type typeToken = new TypeToken<JsonObject>() { }.getType();
+    return readResponse(response, typeToken);
+  }
+
+  protected HttpResponse getNonVersionedAppResponse(String namespace, String appName)
+    throws Exception {
+    return doGet(getVersionedAPIPath(String.format("apps/%s", appName),
                                                       Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+  }
+
+  protected HttpResponse getVersionedAppResponse(String namespace, String appName, String appVersion) throws Exception {
+    return doGet(getVersionedAPIPath(String.format("apps/%s/versions/%s", appName, appVersion),
+                                                      Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+  }
+
+  protected JsonObject getAppDetails(String namespace, String appName, String appVersion) throws Exception {
+    HttpResponse response = getVersionedAppResponse(namespace, appName, appVersion);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertEquals("application/json", response.getFirstHeader(HttpHeaders.Names.CONTENT_TYPE).getValue());
     Type typeToken = new TypeToken<JsonObject>() { }.getType();

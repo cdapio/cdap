@@ -152,7 +152,7 @@ public class StorageProviderNamespaceAdminTest {
 
     // delete the namespace
     storageProviderNamespaceAdmin.delete(customSpace);
-    namespaceStore.delete(customSpace.toId());
+    namespaceStore.delete(customSpace);
     // the data inside the custom location should have been deleted
     Assert.assertFalse("Data inside the custom location still exists.", (dir1.exists() || dir2.exists() ||
       file1.exists()));

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,7 @@ package co.cask.cdap.common.metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.http.AbstractHandlerHook;
 import co.cask.http.HandlerInfo;
 import co.cask.http.HttpResponder;
@@ -112,7 +112,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
   private Map<String, String> createContext(HandlerInfo handlerInfo) {
     // todo: really inefficient to call this on the intense data flow path
     return ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, Id.Namespace.SYSTEM.getId(),
+      Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getEntityName(),
       Constants.Metrics.Tag.COMPONENT, serviceName,
       Constants.Metrics.Tag.HANDLER, getSimpleName(handlerInfo.getHandlerName()),
       Constants.Metrics.Tag.METHOD, handlerInfo.getMethodName());

@@ -19,9 +19,9 @@ package co.cask.cdap.gateway.router;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
-import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.IOModule;
+import co.cask.cdap.internal.guice.AppFabricTestModule;
+import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.common.http.HttpRequests;
@@ -151,11 +151,12 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
       URL certUrl = getClass().getClassLoader().getResource("cert.jks");
       Assert.assertNotNull(certUrl);
 
-      Injector injector = Guice.createInjector(new ConfigModule(cConf), new IOModule(),
-                                               new SecurityModules().getInMemoryModules(),
-                                               new DiscoveryRuntimeModule().getInMemoryModules());
+      Injector injector = Guice.createInjector(new SecurityModules().getInMemoryModules(),
+                                               new DiscoveryRuntimeModule().getInMemoryModules(),
+                                               new AppFabricTestModule(cConf));
       DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
       AccessTokenTransformer accessTokenTransformer = injector.getInstance(AccessTokenTransformer.class);
+      RouteStore routeStore = injector.getInstance(RouteStore.class);
       cConf.set(Constants.Router.ADDRESS, hostname);
       cConf.setInt(Constants.Router.ROUTER_PORT, 0);
       cConf.setBoolean(Constants.Router.WEBAPP_ENABLED, true);
@@ -167,7 +168,7 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
       router =
         new NettyRouter(cConf, sConf, InetAddresses.forString(hostname),
                         new RouterServiceLookup((DiscoveryServiceClient) discoveryService,
-                                                new RouterPathLookup()),
+                                                new RouterPathLookup(), routeStore),
                         new SuccessTokenValidator(), accessTokenTransformer, discoveryServiceClient);
       router.startAndWait();
 

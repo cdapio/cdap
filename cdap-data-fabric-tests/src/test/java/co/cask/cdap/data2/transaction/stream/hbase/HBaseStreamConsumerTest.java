@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.data2.transaction.stream.hbase;
 
 import co.cask.cdap.common.conf.Constants;
@@ -44,7 +45,6 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -153,15 +153,17 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
 
   @AfterClass
   public static void finish() throws Exception {
-    deleteNamespace(OTHER_NAMESPACE.toId());
-    deleteNamespace(TEST_NAMESPACE.toId());
-    deleteNamespace(Id.Namespace.SYSTEM);
+    deleteNamespace(OTHER_NAMESPACE);
+    deleteNamespace(TEST_NAMESPACE);
+    deleteNamespace(NamespaceId.SYSTEM);
     txManager.stopAndWait();
+    zkClientService.stopAndWait();
+    zkServer.stopAndWait();
   }
 
-  private static void deleteNamespace(Id.Namespace namespace) throws IOException {
-    tableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), tableUtil.getHBaseNamespace(namespace.toEntityId()));
-    tableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), tableUtil.getHBaseNamespace(namespace.toEntityId()));
+  private static void deleteNamespace(NamespaceId namespace) throws IOException {
+    tableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), tableUtil.getHBaseNamespace(namespace));
+    tableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), tableUtil.getHBaseNamespace(namespace));
   }
 
   @Override

@@ -299,6 +299,10 @@
                 </goals>
                 <configuration combine.self="override">
                   <outputDirectory>${stage.opt.dir}</outputDirectory>
+                  <useDefaultDelimiters>false</useDefaultDelimiters>
+                  <delimiters>
+                    <delimiter>@@</delimiter>
+                  </delimiters>
                   <resources>
                     <resource>
                       <directory>${project.basedir}/src/main/resources</directory>
@@ -327,11 +331,9 @@
                       <targetPath>bin</targetPath>
                     </resource>
                     <resource>
-                      <directory>${project.parent.basedir}/cdap-gateway/bin</directory>
+                      <directory>${project.parent.basedir}/cdap-common/bin</directory>
                       <targetPath>bin</targetPath>
-                      <excludes>
-                        <exclude>flume-client</exclude>
-                      </excludes>
+                      <filtering>true</filtering>
                     </resource>
                     <resource>
                       <directory>${project.parent.basedir}/cdap-data-fabric/bin</directory>
@@ -530,7 +532,8 @@
                       <directory>${project.parent.basedir}/cdap-cli/bin</directory>
                       <targetPath>bin</targetPath>
                       <includes>
-                        <include>cdap-cli.sh</include>
+                        <include>cdap</include>
+                        <include>functions.sh</include>
                         <include>cdap-cli.bat</include>
                       </includes>
                       <filtering>true</filtering>
@@ -617,7 +620,8 @@
                 <phase>prepare-package</phase>
                 <configuration>
                   <target>
-                    <chmod file="${stage.opt.dir}/bin/cdap-cli.sh" perm="755"/>
+                    <chmod file="${stage.opt.dir}/bin/cdap" perm="755"/>
+                    <chmod file="${stage.opt.dir}/bin/functions.sh" perm="644"/>
                     <chmod file="${stage.opt.dir}/bin/cdap-cli.bat" perm="755"/>
                   </target>
                 </configuration>

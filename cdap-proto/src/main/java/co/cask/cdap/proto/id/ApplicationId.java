@@ -31,9 +31,10 @@ public class ApplicationId extends NamespacedEntityId implements ParentedId<Name
   private final String application;
   private final String version;
   private transient Integer hashCode;
+  public static final String DEFAULT_VERSION = "-SNAPSHOT";
 
   public ApplicationId(String namespace, String application) {
-    this(namespace, application, "-SNAPSHOT");
+    this(namespace, application, DEFAULT_VERSION);
   }
 
   public ApplicationId(String namespace, String application, String version) {
@@ -71,8 +72,8 @@ public class ApplicationId extends NamespacedEntityId implements ParentedId<Name
     return new ProgramId(this, type, program);
   }
 
-  public ProgramId flow(String program) {
-    return new ProgramId(this, ProgramType.FLOW, program);
+  public FlowId flow(String program) {
+    return new FlowId(this, program);
   }
 
   public WorkflowId workflow(String program) {

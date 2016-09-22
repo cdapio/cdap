@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.data2.transaction.queue.hbase;
 
 import co.cask.cdap.api.common.Bytes;
@@ -55,7 +56,6 @@ import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.data2.util.hbase.HTableNameConverterFactory;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -170,8 +170,8 @@ public abstract class HBaseQueueTest extends QueueTest {
     hbaseAdmin = TEST_HBASE.getHBaseAdmin();
     tableUtil = injector.getInstance(HBaseTableUtil.class);
     tableUtil.createNamespaceIfNotExists(hbaseAdmin, tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
-    tableUtil.createNamespaceIfNotExists(hbaseAdmin, tableUtil.getHBaseNamespace(NAMESPACE_ID.toEntityId()));
-    tableUtil.createNamespaceIfNotExists(hbaseAdmin, tableUtil.getHBaseNamespace(NAMESPACE_ID1.toEntityId()));
+    tableUtil.createNamespaceIfNotExists(hbaseAdmin, tableUtil.getHBaseNamespace(NAMESPACE_ID));
+    tableUtil.createNamespaceIfNotExists(hbaseAdmin, tableUtil.getHBaseNamespace(NAMESPACE_ID1));
 
     ConfigurationTable configTable = new ConfigurationTable(hConf);
     configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
@@ -200,11 +200,11 @@ public abstract class HBaseQueueTest extends QueueTest {
   // TODO: CDAP-1177 Should move to QueueTest after making getApplicationName() etc instance methods in a base class
   @Test
   public void testQueueTableNameFormat() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), "application1", "flow1", "flowlet1",
-                                                "output1");
+    QueueName queueName = QueueName.fromFlowlet(NamespaceId.DEFAULT.getEntityName(), "application1", "flow1",
+                                                "flowlet1", "output1");
     HBaseQueueAdmin hbaseQueueAdmin = (HBaseQueueAdmin) queueAdmin;
     TableId tableId = hbaseQueueAdmin.getDataTableId(queueName);
-    Assert.assertEquals(Id.Namespace.DEFAULT.getId(), tableId.getNamespace());
+    Assert.assertEquals(NamespaceId.DEFAULT.getEntityName(), tableId.getNamespace());
     Assert.assertEquals("system." + hbaseQueueAdmin.getType() + ".application1.flow1", tableId.getTableName());
     String tableName = tableUtil.buildHTableDescriptor(tableId).build().getNameAsString();
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
@@ -221,8 +221,8 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @Test
   public void testHTablePreSplitted() throws Exception {
-    testHTablePreSplitted((HBaseQueueAdmin) queueAdmin, QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), "app",
-                                                                              "flow", "flowlet", "out"));
+    testHTablePreSplitted((HBaseQueueAdmin) queueAdmin, QueueName.fromFlowlet(NamespaceId.DEFAULT.getEntityName(),
+                                                                              "app", "flow", "flowlet", "out"));
   }
 
   void testHTablePreSplitted(HBaseQueueAdmin admin, QueueName queueName) throws Exception {
@@ -239,7 +239,7 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @Test
   public void configTest() throws Exception {
-    final QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(),
+    final QueueName queueName = QueueName.fromFlowlet(NamespaceId.DEFAULT.getEntityName(),
                                                       "app", "flow", "flowlet", "configure");
     queueAdmin.create(queueName);
 
@@ -298,7 +298,7 @@ public abstract class HBaseQueueTest extends QueueTest {
             List<QueueBarrier> queueBarriers = stateStore.getAllBarriers(groupId);
             boolean allConsumed = stateStore.isAllConsumed(groupId, queueBarriers.get(0).getStartRow());
             // For group 2, instance 0 is not consumed up to the boundary yet
-            Assert.assertTrue(groupId == 2L ? !allConsumed : allConsumed);
+            Assert.assertTrue((groupId == 2L) != allConsumed);
 
             if (groupId == 2L) {
               // Mark group 2, instance 0 as completed the barrier.
@@ -409,14 +409,14 @@ public abstract class HBaseQueueTest extends QueueTest {
         }
       });
     } finally {
-      queueAdmin.dropAllInNamespace(Id.Namespace.DEFAULT);
+      queueAdmin.dropAllInNamespace(NamespaceId.DEFAULT);
     }
   }
 
   // This test upgrade from old queue (salted base) to new queue (sharded base)
   @Test (timeout = 30000L)
   public void testQueueUpgrade() throws Exception {
-    final QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), "app",
+    final QueueName queueName = QueueName.fromFlowlet(NamespaceId.DEFAULT.getEntityName(), "app",
                                                       "flow", "flowlet", "upgrade");
     HBaseQueueAdmin hbaseQueueAdmin = (HBaseQueueAdmin) queueAdmin;
     HBaseQueueClientFactory hBaseQueueClientFactory = (HBaseQueueClientFactory) queueClientFactory;
@@ -501,7 +501,7 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @Test (timeout = 30000L)
   public void testReconfigure() throws Exception {
-    final QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(),
+    final QueueName queueName = QueueName.fromFlowlet(NamespaceId.DEFAULT.getEntityName(),
                                                       "app", "flow", "flowlet", "changeinstances");
     ConsumerGroupConfig groupConfig = new ConsumerGroupConfig(0L, 2, DequeueStrategy.HASH, "key");
     configureGroups(queueName, ImmutableList.of(groupConfig));
@@ -682,11 +682,11 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @AfterClass
   public static void finish() throws Exception {
-    tableUtil.deleteAllInNamespace(hbaseAdmin, tableUtil.getHBaseNamespace(NAMESPACE_ID.toEntityId()));
-    tableUtil.deleteNamespaceIfExists(hbaseAdmin, tableUtil.getHBaseNamespace(NAMESPACE_ID.toEntityId()));
+    tableUtil.deleteAllInNamespace(hbaseAdmin, tableUtil.getHBaseNamespace(NAMESPACE_ID));
+    tableUtil.deleteNamespaceIfExists(hbaseAdmin, tableUtil.getHBaseNamespace(NAMESPACE_ID));
 
-    tableUtil.deleteAllInNamespace(hbaseAdmin, tableUtil.getHBaseNamespace(NAMESPACE_ID1.toEntityId()));
-    tableUtil.deleteNamespaceIfExists(hbaseAdmin, tableUtil.getHBaseNamespace(NAMESPACE_ID1.toEntityId()));
+    tableUtil.deleteAllInNamespace(hbaseAdmin, tableUtil.getHBaseNamespace(NAMESPACE_ID1));
+    tableUtil.deleteNamespaceIfExists(hbaseAdmin, tableUtil.getHBaseNamespace(NAMESPACE_ID1));
 
     hbaseAdmin.close();
     txService.stop();

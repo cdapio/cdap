@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.data2.transaction.stream.inmemory;
 
 import co.cask.cdap.common.queue.QueueName;
@@ -23,7 +24,7 @@ import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryQueueService;
 import co.cask.cdap.data2.transaction.stream.QueueToStreamConsumer;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
@@ -50,7 +51,7 @@ public final class InMemoryStreamConsumerFactory implements StreamConsumerFactor
   public StreamConsumer create(StreamId streamId, String namespace,
                                ConsumerConfig consumerConfig) throws IOException {
 
-    QueueName queueName = QueueName.fromStream(streamId.toId());
+    QueueName queueName = QueueName.fromStream(streamId);
     QueueConsumer consumer = queueClientFactory.createConsumer(queueName, consumerConfig, -1);
     return new QueueToStreamConsumer(streamId, consumerConfig, consumer);
   }
@@ -69,6 +70,6 @@ public final class InMemoryStreamConsumerFactory implements StreamConsumerFactor
     Preconditions.checkArgument(namespaceParts.hasNext(), invalidNamespaceError);
     String flowId = namespaceParts.next();
 
-    queueService.truncateAllWithPrefix(QueueName.prefixForFlow(Id.Flow.from(streamId.getNamespace(), appId, flowId)));
+    queueService.truncateAllWithPrefix(QueueName.prefixForFlow(new FlowId(streamId.getNamespace(), appId, flowId)));
   }
 }

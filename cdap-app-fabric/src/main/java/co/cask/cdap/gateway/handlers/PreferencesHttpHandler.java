@@ -20,9 +20,9 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.store.NamespaceStore;
 import co.cask.http.HttpResponder;
@@ -89,7 +89,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   public void getNamespacePrefs(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespace, @QueryParam("resolved") String resolved)
     throws Exception {
-    if (nsStore.get(Id.Namespace.from(namespace)) == null) {
+    if (nsStore.get(new NamespaceId(namespace)) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not present", namespace));
     } else {
       if (resolved != null && resolved.equals("true")) {
@@ -104,7 +104,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   @PUT
   public void setNamespacePrefs(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespace) throws Exception {
-    if (nsStore.get(Id.Namespace.from(namespace)) == null) {
+    if (nsStore.get(new NamespaceId(namespace)) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not present", namespace));
       return;
     }
@@ -122,7 +122,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   @DELETE
   public void deleteNamespacePrefs(HttpRequest request, HttpResponder responder,
                                    @PathParam("namespace-id") String namespace) throws Exception {
-    if (nsStore.get(Id.Namespace.from(namespace)) == null) {
+    if (nsStore.get(new NamespaceId(namespace)) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not present", namespace));
     } else {
       preferencesStore.deleteProperties(namespace);

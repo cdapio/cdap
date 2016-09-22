@@ -44,7 +44,7 @@ public class ProgramExistenceVerifier implements EntityExistenceVerifier<Program
     ApplicationId appId = programId.getParent();
     ApplicationSpecification appSpec = store.getApplication(appId);
     if (appSpec == null) {
-      throw new ApplicationNotFoundException(appId.toId());
+      throw new ApplicationNotFoundException(appId);
     }
     ProgramType programType = programId.getType();
 

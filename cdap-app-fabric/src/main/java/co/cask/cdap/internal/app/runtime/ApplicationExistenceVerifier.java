@@ -36,7 +36,7 @@ public class ApplicationExistenceVerifier implements EntityExistenceVerifier<App
   @Override
   public void ensureExists(ApplicationId appId) throws ApplicationNotFoundException {
     if (store.getApplication(appId) == null) {
-      throw new ApplicationNotFoundException(appId.toId());
+      throw new ApplicationNotFoundException(appId);
     }
   }
 }

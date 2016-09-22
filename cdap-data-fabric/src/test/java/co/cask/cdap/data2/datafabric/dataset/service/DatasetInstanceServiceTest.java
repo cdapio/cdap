@@ -19,7 +19,6 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -43,7 +42,7 @@ public class DatasetInstanceServiceTest extends DatasetServiceTestBase {
   public void testInstanceMetaCache() throws Exception {
 
     // deploy a dataset
-    instanceService.create(Id.Namespace.DEFAULT.getId(), "testds",
+    instanceService.create(NamespaceId.DEFAULT.getEntityName(), "testds",
                            new DatasetInstanceConfiguration("table", new HashMap<String, String>()));
 
     // get the dataset meta for two different owners, assert it is the same

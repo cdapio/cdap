@@ -54,7 +54,6 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
@@ -78,7 +77,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.inject.Injector;
-import org.apache.hadoop.mapreduce.v2.app.webapp.App;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.Before;
@@ -162,7 +160,7 @@ public class DefaultStoreTest {
     store.setStart(programId2, run2.getId(), runIdToSecs(run2));
     store.setSuspend(programId2, run2.getId());
     store.removeAll(namespaceId);
-    nsStore.delete(namespaceId.toId());
+    nsStore.delete(namespaceId);
     Assert.assertTrue(store.getRuns(programId2, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).isEmpty());
   }
 

@@ -68,7 +68,7 @@ public class GetProgramInstancesCommand extends AbstractAuthCommand {
         }
         String workerId = programIdParts[1];
         ProgramId worker = appId.worker(workerId);
-        instances = programClient.getWorkerInstances((Id.Worker) worker.toId());
+        instances = programClient.getWorkerInstances(Id.Worker.from(worker.getParent().toId(), workerId));
         break;
       case SERVICE:
         if (programIdParts.length < 2) {

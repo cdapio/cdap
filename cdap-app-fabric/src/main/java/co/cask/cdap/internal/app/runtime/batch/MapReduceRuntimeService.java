@@ -107,6 +107,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -263,7 +264,13 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         programJar = copyProgramJar(tempLocation);
         job.addCacheFile(programJar.toURI());
 
+        // Generate and localize the launcher jar to control the classloader of MapReduce containers processes
+        Location launcherJar = createLauncherJar(tempLocation);
+        job.addCacheFile(launcherJar.toURI());
+
+        // Launcher.jar should be the first one in the classpath
         List<String> classpath = new ArrayList<>();
+        classpath.add(launcherJar.getName());
 
         // Localize logback.xml
         Location logbackLocation = createLogbackJar(tempLocation);
@@ -287,25 +294,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         Collections.sort(jarFiles);
         classpath.addAll(jarFiles);
         classpath.add("job.jar/classes");
-        String applicationClasspath
-          = Joiner.on(",").join(MapReduceContainerHelper.getMapReduceClassPath(mapredConf, classpath));
 
-        // Generate and localize the launcher jar to control the classloader of MapReduce containers processes
-        Location launcherJar = createLauncherJar(applicationClasspath, tempLocation);
-        job.addCacheFile(launcherJar.toURI());
+        // Add the mapreduce application classpath at last
+        MapReduceContainerHelper.addMapReduceClassPath(mapredConf, classpath);
 
-        // The only thing in the container classpath is the launcher.jar
-        // The MapReduceContainerLauncher inside the launcher.jar will creates a MapReduceClassLoader and launch
-        // the actual MapReduce AM/Task from that
-        // We explicitly localize the mr-framwork, but not use it with the classpath
-        URI frameworkURI = MapReduceContainerHelper.getFrameworkURI(mapredConf);
-        if (frameworkURI != null) {
-          job.addCacheArchive(frameworkURI);
-        }
-
-        mapredConf.unset(MRJobConfig.MAPREDUCE_APPLICATION_FRAMEWORK_PATH);
-        mapredConf.set(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH, launcherJar.getName());
-        mapredConf.set(YarnConfiguration.YARN_APPLICATION_CLASSPATH, launcherJar.getName());
+        mapredConf.set(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH, Joiner.on(",").join(classpath));
+        mapredConf.set(YarnConfiguration.YARN_APPLICATION_CLASSPATH, Joiner.on(",").join(classpath));
       }
 
       MapReduceContextConfig contextConfig = new MapReduceContextConfig(mapredConf);
@@ -1061,15 +1055,20 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   /**
-   * Creates a launcher jar.
+   * Creates a launcher jar that contains the MR AM main class and the MR task main class. It is for ClassLoader
+   * construction before delegating the actual execution to the actual MR main classes.
    *
    * @see MapReduceContainerLauncher
    * @see ContainerLauncherGenerator
    */
-  private Location createLauncherJar(String applicationClassPath, Location targetDir) throws IOException {
+  private Location createLauncherJar(Location targetDir) throws IOException {
     Location launcherJar = targetDir.append("launcher.jar");
-    ContainerLauncherGenerator.generateLauncherJar(applicationClassPath, MapReduceClassLoader.class.getName(),
-                                                   Locations.newOutputSupplier(launcherJar));
+
+    ContainerLauncherGenerator.generateLauncherJar(
+      Arrays.asList(
+        "org.apache.hadoop.mapreduce.v2.app.MRAppMaster",
+        "org.apache.hadoop.mapred.YarnChild"
+      ), MapReduceContainerLauncher.class, Locations.newOutputSupplier(launcherJar));
     return launcherJar;
   }
 

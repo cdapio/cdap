@@ -16,7 +16,8 @@
 
 package co.cask.cdap.common.queue;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.FlowId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
@@ -24,6 +25,7 @@ import com.google.common.collect.Iterables;
 
 import java.net.URI;
 import java.util.Iterator;
+import java.util.Objects;
 
 /**
  * An abstraction over URI of a queue.
@@ -71,12 +73,8 @@ public final class QueueName {
     return new QueueName(URI.create(new String(bytes, Charsets.US_ASCII)));
   }
 
-  public static QueueName fromFlowlet(Id.Flow flow, String flowlet, String output) {
-    return fromFlowlet(flow.getNamespaceId(), flow.getApplicationId(), flow.getId(), flowlet, output);
-  }
-
-  public static QueueName fromFlowlet(Id.Namespace namespace, String app, String flow, String flowlet, String output) {
-    return fromFlowlet(namespace.getId(), app, flow, flowlet, output);
+  public static QueueName fromFlowlet(FlowId flow, String flowlet, String output) {
+    return fromFlowlet(flow.getNamespace(), flow.getApplication(), flow.getEntityName(), flowlet, output);
   }
 
   public static QueueName fromFlowlet(String namespace, String app, String flow, String flowlet, String output) {
@@ -84,10 +82,10 @@ public final class QueueName {
     return new QueueName(uri);
   }
 
-  public static String prefixForFlow(Id.Flow flowId) {
+  public static String prefixForFlow(FlowId flowId) {
     // queue:///namespace/app/flow/
     // Note that the trailing / is crucial, otherwise this could match queues of flow1, flowx, etc.
-    return String.format("queue:///%s/%s/%s/", flowId.getNamespaceId(), flowId.getApplicationId(), flowId.getId());
+    return String.format("queue:///%s/%s/%s/", flowId.getNamespace(), flowId.getApplication(), flowId.getEntityName());
   }
 
   // Note that like above the trailing '/' in the prefix for namespace is crucial,
@@ -115,12 +113,12 @@ public final class QueueName {
     return new QueueName(uri);
   }
 
-  public static QueueName fromStream(Id.Stream streamId) {
-    return fromStream(streamId.getNamespaceId(), streamId.getId());
+  public static QueueName fromStream(StreamId streamId) {
+    return fromStream(streamId.getNamespace(), streamId.getEntityName());
   }
 
-  public Id.Stream toStreamId() {
-    return Id.Stream.from(getFirstComponent(), getSecondComponent());
+  public StreamId toStreamId() {
+    return new StreamId(getFirstComponent(), getSecondComponent());
   }
 
   /**
@@ -188,13 +186,6 @@ public final class QueueName {
   }
 
   /**
-   * @return the number of components in the queue name
-   */
-  public int getNumComponents() {
-    return components.length;
-  }
-
-  /**
    * Gets the bytes representation of the queue uri. Note that mutating the returned array will mutate the underlying
    * byte array as well. If mutation is needed, one has to copy to a separate array.
    *
@@ -220,20 +211,6 @@ public final class QueueName {
   }
 
   /**
-   * @return whether the given string represents a queue.
-   */
-  public static boolean isQueue(String name) {
-    return name.startsWith("queue");
-  }
-
-  /**
-   * @return whether the given string represents a queue.
-   */
-  public static boolean isStream(String name) {
-    return name.startsWith("stream");
-  }
-
-  /**
    * Compares this {@link QueueName} with another {@link QueueName}.
    *
    * @param o Other instance of {@link QueueName}
@@ -244,11 +221,12 @@ public final class QueueName {
     if (this == o) {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
+    if (!(o instanceof QueueName)) {
       return false;
     }
 
-    return uri.equals(((QueueName) o).uri);
+    QueueName that = (QueueName) o;
+    return Objects.equals(uri, that.uri);
   }
 
   /**

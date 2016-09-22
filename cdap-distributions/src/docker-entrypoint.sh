@@ -22,12 +22,12 @@ export PATH=${PATH}:/opt/cdap/sdk/bin
 
 # Add cdap.sh start as command if needed
 if [ "${1:0:1}" = '-' ]; then
-  set -- cdap.sh start --foreground "$@"
+  set -- cdap sdk start --foreground "$@"
 fi
 
 # Drop root privileges if we are running cdap.sh
 # allow the container to be started with `--user`
-if [ "${1}" = 'cdap.sh' -a "$(id -u)" = '0' ]; then
+if [ "${1}" = 'cdap' -a "$(id -u)" = '0' ]; then
   # Change the ownership of /opt/cdap/sdk to cdap
   chown -R cdap:cdap /opt/cdap/sdk
   set -- gosu cdap "$@"

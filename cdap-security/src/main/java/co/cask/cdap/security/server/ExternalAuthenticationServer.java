@@ -55,7 +55,7 @@ import javax.annotation.Nullable;
  * Jetty service for External Authentication.
  */
 public class ExternalAuthenticationServer extends AbstractIdleService {
-
+  private static final Logger LOG = LoggerFactory.getLogger(ExternalAuthenticationServer.class);
   public static final String NAMED_EXTERNAL_AUTH = "external.auth";
 
   private final int port;
@@ -65,13 +65,14 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
   private final CConfiguration configuration;
   private final SConfiguration sConfiguration;
   private final AuditLogHandler auditLogHandler;
-  private Cancellable serviceCancellable;
   private final GrantAccessToken grantAccessToken;
   private final AbstractAuthenticationHandler authenticationHandler;
-  private static final Logger LOG = LoggerFactory.getLogger(ExternalAuthenticationServer.class);
+
+  private Cancellable serviceCancellable;
   private Server server;
   private InetAddress bindAddress;
-
+  @Nullable
+  private String announceAddress;
 
   /**
    * Constants for a valid JSON response.
@@ -96,6 +97,7 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
                                       DiscoveryService discoveryService,
                                       @Named("security.handlers") Map<String, Object> handlers,
                                       @Named(NAMED_EXTERNAL_AUTH) AuditLogHandler auditLogHandler) {
+    this.announceAddress = configuration.get(Constants.Security.AUTH_SERVER_ANNOUNCE_ADDRESS);
     this.port = configuration.getBoolean(Constants.Security.SSL_ENABLED) ?
       configuration.getInt(Constants.Security.AuthenticationServer.SSL_PORT) :
       configuration.getInt(Constants.Security.AUTH_SERVER_BIND_PORT);
@@ -207,17 +209,11 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
 
     // assumes we only have one connector
     final Connector connector = server.getConnectors()[0];
-    serviceCancellable = discoveryService.register(ResolvingDiscoverable.of(new Discoverable() {
-      @Override
-      public String getName() {
-        return Constants.Service.EXTERNAL_AUTHENTICATION;
-      }
-
-      @Override
-      public InetSocketAddress getSocketAddress() throws RuntimeException {
-        return new InetSocketAddress(connector.getHost(), connector.getLocalPort());
-      }
-    }));
+    InetSocketAddress inetSocketAddress = (announceAddress != null) ?
+      new InetSocketAddress(announceAddress, connector.getLocalPort()) :
+      new InetSocketAddress(connector.getHost(), connector.getLocalPort());
+    serviceCancellable = discoveryService.register(
+      ResolvingDiscoverable.of(new Discoverable(Constants.Service.EXTERNAL_AUTHENTICATION, inetSocketAddress)));
   }
 
   /**

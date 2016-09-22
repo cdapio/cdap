@@ -17,8 +17,8 @@
 package co.cask.cdap.store.guice;
 
 import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.data2.dataset2.InMemoryNamespaceStore;
 import co.cask.cdap.store.DefaultNamespaceStore;
+import co.cask.cdap.store.InMemoryNamespaceStore;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;

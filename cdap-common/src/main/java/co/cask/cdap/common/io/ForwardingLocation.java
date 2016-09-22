@@ -57,8 +57,23 @@ public abstract class ForwardingLocation implements Location {
   }
 
   @Override
+  public boolean createNew(String permission) throws IOException {
+    return delegate.createNew(permission);
+  }
+
+  @Override
   public InputStream getInputStream() throws IOException {
     return delegate.getInputStream();
+  }
+
+  @Override
+  public String getPermissions() throws IOException {
+    return delegate.getPermissions();
+  }
+
+  @Override
+  public void setPermissions(String permission) throws IOException {
+    delegate.setPermissions(permission);
   }
 
   @Override
