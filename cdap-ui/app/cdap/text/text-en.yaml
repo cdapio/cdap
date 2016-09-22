@@ -149,4 +149,10 @@ features:
         shorttitle: Select Destination
         title: Select Destination
         description: Select the destination where the data needs to be uploaded
+    PublishPipeline:
+      Step1:
+        shorttitle: Configure pipeline
+        title: Configure pipeline
+        description: Specify the name of the pipeline
+      pipelinenameplaceholder: Pipeline name
 ...
