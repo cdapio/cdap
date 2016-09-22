@@ -331,11 +331,6 @@
                       <targetPath>bin</targetPath>
                     </resource>
                     <resource>
-                      <directory>${project.parent.basedir}/cdap-cli/bin</directory>
-                      <targetPath>bin</targetPath>
-                      <filtering>true</filtering>
-                    </resource>
-                    <resource>
                       <directory>${project.parent.basedir}/cdap-common/bin</directory>
                       <targetPath>bin</targetPath>
                       <filtering>true</filtering>
@@ -540,6 +535,7 @@
                         <include>cdap</include>
                         <include>functions.sh</include>
                         <include>cdap-cli.bat</include>
+                        <include>cdap-cli.sh</include>
                       </includes>
                       <filtering>true</filtering>
                     </resource>
