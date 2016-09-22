@@ -17,10 +17,13 @@
 import {MyMarketApi} from 'api/market';
 import UploadDataAction from 'services/WizardStores/UploadData/UploadDataActions';
 import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
+import 'whatwg-fetch';
+import Rx from 'rx';
 
 const fetchDefaultData = ({filename, packagename: entityName, packageversion: entityVersion}) => {
   UploadDataStore.dispatch({
-    type: UploadDataAction.setDefaultDataLoading
+    type: UploadDataAction.setDefaultDataLoading,
+    payload: {}
   });
   MyMarketApi
     .getSampleData({ entityName, entityVersion, filename })
@@ -31,9 +34,38 @@ const fetchDefaultData = ({filename, packagename: entityName, packageversion: en
       });
     });
 };
-
+// FIXME: Extract it out???
+const uploadData = ({url, fileContents, headers}) => {
+  let subject = new Rx.Subject();
+  let xhr = new window.XMLHttpRequest();
+  let path;
+  xhr.upload.addEventListener('progress', function (e) {
+    if (e.type === 'progress') {
+      console.info('App Upload in progress');
+    }
+  });
+  path = url;
+  xhr.open('POST', path, true);
+  xhr.setRequestHeader('Content-type', headers.filetype);
+  xhr.setRequestHeader('X-Archive-Name', headers.filename);
+  if (headers.Authorization) {
+    xhr.setRequestHeader('Authorization', 'Bearer ' + headers.token);
+  }
+  xhr.send(fileContents);
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState === 4) {
+      if (xhr.status > 399){
+        subject.onNext(xhr.response);
+      } else {
+        subject.onNext(true);
+      }
+    }
+  };
+  return subject;
+};
 const UploadDataActionCreator = {
-  fetchDefaultData
+  fetchDefaultData,
+  uploadData
 };
 
 export default UploadDataActionCreator;

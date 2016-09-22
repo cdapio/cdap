@@ -16,9 +16,11 @@
 import React, { Component, PropTypes } from 'react';
 import WizardModal from 'components/WizardModal';
 import Wizard from 'components/Wizard';
-import UploadDataWizardConfig from 'services/WizardConfigs/UploadDataWizardConfig';
 import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
+import UploadDataWizardConfig from 'services/WizardConfigs/UploadDataWizardConfig';
 import UploadDataActions from 'services/WizardStores/UploadData/UploadDataActions';
+import UploadDataActionCreator from 'services/WizardStores/UploadData/ActionCreator';
+
 import head from 'lodash/head';
 
 require('./UploadData.less');
@@ -51,7 +53,19 @@ export default class UploadDataWizard extends Component {
     });
   }
   onSubmit() {
-    console.log('submitted');
+    let state = UploadDataStore.getState();
+    let streamId = state.selectdestination.name;
+    let filename = state.viewdata.filename;
+    let filetype = 'text/' + filename.split('.').pop();
+    let fileContents = state.viewdata.data;
+    return UploadDataActionCreator.uploadData({
+      url: '/namespaces/default/streams/' + streamId + '/batch',
+      fileContents,
+      headers: {
+        filetype,
+        filename
+      }
+    });
   }
   toggleWizard(returnResult) {
     if (this.state.showWizard) {

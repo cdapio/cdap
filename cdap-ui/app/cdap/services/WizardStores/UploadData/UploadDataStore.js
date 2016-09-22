@@ -15,6 +15,8 @@
  */
 import {combineReducers, createStore} from 'redux';
 import UploadDataAction from 'services/WizardStores/UploadData/UploadDataActions';
+import UploadDataWizardConfig from 'services/WizardConfigs/UploadDataWizardConfig';
+import head from 'lodash/head';
 
 const defaultAction = {
   type: '',
@@ -41,6 +43,21 @@ const defaultInitialState = {
   viewdata: defaultViewData,
   selectdestination: defaultSelectDestination
 };
+
+const isNil = (value) => value === null || typeof value === 'undefined' || value === '';
+const isComplete = (state, requiredFields) => {
+  let emptyFieldsInState = Object.keys(state)
+    .filter(fieldName => {
+      return isNil(state[fieldName]) && requiredFields.indexOf(fieldName) !== -1;
+    });
+  return !emptyFieldsInState.length ? true : false;
+};
+const selectDestinationStepRequiredFields = head(
+  UploadDataWizardConfig
+    .steps
+    .filter(step => step.id === 'selectdestination')
+  ).requiredFields;
+
 const viewdata = (state = defaultViewData, action = defaultAction) => {
   switch(action.type) {
     case UploadDataAction.setDefaultData:
@@ -68,18 +85,27 @@ const viewdata = (state = defaultViewData, action = defaultAction) => {
   }
 };
 const selectdestination = (state = defaultSelectDestination, action = defaultAction) => {
+  let stateCopy;
   switch(action.type) {
     case UploadDataAction.setDestinationType:
-      return Object.assign({}, state, {
+      stateCopy = Object.assign({}, state, {
         type: action.payload.type
       });
+      break;
     case UploadDataAction.setDestinationName:
-      return Object.assign({}, state, {
+      stateCopy = Object.assign({}, state, {
         name: action.payload.name
       });
+      break;
+    case UploadDataAction.onReset:
+      return defaultSelectDestination;
     default:
       return state;
   }
+  return Object.assign({}, stateCopy, {
+    __complete: isComplete(stateCopy, selectDestinationStepRequiredFields),
+    __error: action.payload.error || false
+  });
 };
 const createStoreWrapper = () => {
   return createStore(
