@@ -216,7 +216,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     write(key, nodeStateDetail);
 
     // Get the run record of the Workflow which started this program
-    key = getWorkflowRunRecordKey(workflowRunId.getParent().toId(), workflowRunId.getRun());
+    key = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, workflowRunId.getParent()).add(workflowRunId.getRun()).build();
 
     RunRecordMeta record = get(key, RunRecordMeta.class);
     if (record != null) {
