@@ -92,7 +92,7 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
     // Delete all applications
     applicationLifecycleService.removeAll(namespaceId.toId());
     // Delete all the schedules
-    scheduler.deleteAllSchedules(namespaceId.toId());
+    scheduler.deleteAllSchedules(namespaceId);
     // Delete datasets and modules
     dsFramework.deleteAllInstances(namespaceId.toId());
     dsFramework.deleteAllModules(namespaceId.toId());

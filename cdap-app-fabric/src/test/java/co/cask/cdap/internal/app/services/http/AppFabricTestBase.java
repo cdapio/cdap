@@ -136,6 +136,8 @@ public abstract class AppFabricTestBase {
     .setDescription(TEST_NAMESPACE2)
     .build();
 
+  protected static final String VERSION1 = "1.0.0";
+  protected static final String VERSION2 = "2.0.0";
 
   private static final String hostname = "127.0.0.1";
 
@@ -411,7 +413,7 @@ public abstract class AppFabricTestBase {
     return executeDeploy(request, appRequest);
   }
 
-  protected HttpResponse deployVersion(ApplicationId appId, AppRequest<? extends Config> appRequest) throws Exception {
+  protected HttpResponse deploy(ApplicationId appId, AppRequest<? extends Config> appRequest) throws Exception {
     String deployPath = getVersionedAPIPath(String.format("apps/%s/versions/%s/create", appId.getApplication(),
                                                           appId.getVersion()),
                                             appId.getNamespace());
@@ -482,20 +484,20 @@ public abstract class AppFabricTestBase {
   }
 
   protected JsonObject getAppDetails(String namespace, String appName) throws Exception {
-    HttpResponse response = getNonVersionedAppResponse(namespace, appName);
+    HttpResponse response = getAppResponse(namespace, appName);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertEquals("application/json", response.getFirstHeader(HttpHeaders.Names.CONTENT_TYPE).getValue());
     Type typeToken = new TypeToken<JsonObject>() { }.getType();
     return readResponse(response, typeToken);
   }
 
-  protected HttpResponse getNonVersionedAppResponse(String namespace, String appName)
+  protected HttpResponse getAppResponse(String namespace, String appName)
     throws Exception {
     return doGet(getVersionedAPIPath(String.format("apps/%s", appName),
                                                       Constants.Gateway.API_VERSION_3_TOKEN, namespace));
   }
 
-  protected HttpResponse getVersionedAppResponse(String namespace, String appName, String appVersion) throws Exception {
+  protected HttpResponse getAppResponse(String namespace, String appName, String appVersion) throws Exception {
     return doGet(getVersionedAPIPath(String.format("apps/%s/versions/%s", appName, appVersion),
                                                       Constants.Gateway.API_VERSION_3_TOKEN, namespace));
   }
@@ -510,7 +512,7 @@ public abstract class AppFabricTestBase {
   }
 
   protected JsonObject getAppDetails(String namespace, String appName, String appVersion) throws Exception {
-    HttpResponse response = getVersionedAppResponse(namespace, appName, appVersion);
+    HttpResponse response = getAppResponse(namespace, appName, appVersion);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertEquals("application/json", response.getFirstHeader(HttpHeaders.Names.CONTENT_TYPE).getValue());
     Type typeToken = new TypeToken<JsonObject>() { }.getType();
@@ -552,7 +554,7 @@ public abstract class AppFabricTestBase {
     Assert.assertEquals(expectedResponseCode, response.getStatusLine().getStatusCode());
   }
 
-  protected void deleteAppVersion(ApplicationId app, int expectedResponseCode) throws Exception {
+  protected void deleteApp(ApplicationId app, int expectedResponseCode) throws Exception {
     HttpResponse response = doDelete(getVersionedAPIPath(
       String.format("/apps/%s/versions/%s", app.getApplication(), app.getVersion()), app.getNamespace()));
     Assert.assertEquals(expectedResponseCode, response.getStatusLine().getStatusCode());
@@ -618,14 +620,15 @@ public abstract class AppFabricTestBase {
   /**
    * Tries to start the given program with the given runtime arguments and expect the call completed with the status.
    */
-  protected void startProgramVersioned(ProgramId program, Map<String, String> args, int expectedStatusCode)
+  protected void startProgram(ProgramId program, int expectedStatusCode)
     throws Exception {
     String path = String.format("apps/%s/versions/%s/%s/%s/start",
                                 program.getApplication(),
                                 program.getVersion(),
                                 program.getType().getCategoryName(),
                                 program.getProgram());
-    HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespace()), GSON.toJson(args));
+    HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespace()),
+                                   GSON.toJson(ImmutableMap.<String, String>of()));
     Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
   }
 
@@ -677,7 +680,7 @@ public abstract class AppFabricTestBase {
     }
   }
 
-  protected void stopProgramVersioned(ProgramId program, String runId, int expectedStatusCode, String expectedMessage)
+  protected void stopProgram(ProgramId program, String runId, int expectedStatusCode, String expectedMessage)
     throws Exception {
     String path;
     if (runId == null) {
@@ -717,7 +720,7 @@ public abstract class AppFabricTestBase {
   /**
    * Waits for the given program to transit to the given state.
    */
-  protected void waitStateVersioned(final ProgramId programId, String state) throws Exception {
+  protected void waitState(final ProgramId programId, String state) throws Exception {
     Tasks.waitFor(state, new Callable<String>() {
       @Override
       public String call() throws Exception {
@@ -773,7 +776,7 @@ public abstract class AppFabricTestBase {
   /**
    * Waits for the given program to transit to the given state.
    */
-  protected String getProgramVersionStatus(final ProgramId programId) throws Exception {
+  protected String getProgramStatus(final ProgramId programId) throws Exception {
 
         String path = String.format("apps/%s/versions/%s/%s/%s/status",
                                     programId.getApplication(),

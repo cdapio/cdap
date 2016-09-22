@@ -235,9 +235,9 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       }
       List<ScheduledRuntime> runtimes;
       if (previousRuntimeRequested) {
-        runtimes = scheduler.previousScheduledRuntime(workflowId.toId(), SchedulableProgramType.WORKFLOW);
+        runtimes = scheduler.previousScheduledRuntime(workflowId, SchedulableProgramType.WORKFLOW);
       } else {
-        runtimes = scheduler.nextScheduledRuntime(workflowId.toId(), SchedulableProgramType.WORKFLOW);
+        runtimes = scheduler.nextScheduledRuntime(workflowId, SchedulableProgramType.WORKFLOW);
       }
       responder.sendJson(HttpResponseStatus.OK, runtimes);
     } catch (SecurityException e) {
