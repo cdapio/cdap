@@ -14,14 +14,11 @@
  * the License.
  */
 
-import Datasource from '../../services/datasource';
-import {apiCreator} from '../../services/resource-helper';
-
-let dataSrc = new Datasource();
-let basepath = '/namespaces';
-
-export const MyNamespaceApi = {
-  list: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
-  get: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:namespace`),
-  pollList: apiCreator(dataSrc, 'GET', 'POLL', basepath)
-};
+ export default function namespaces(state = null, action) {
+   switch (action.type) {
+     case 'UPDATE_NAMESPACES':
+       return action.payload.namespaces;
+     default:
+       return state;
+   }
+ }

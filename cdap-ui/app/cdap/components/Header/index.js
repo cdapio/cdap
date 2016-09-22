@@ -22,6 +22,7 @@ import HeaderNavbarList from '../HeaderNavbarList';
 import HeaderActions from '../HeaderActions';
 import HeaderSidebar from '../HeaderSidebar';
 import T from 'i18n-react';
+import Store from '../../services/store/store.js';
 
 export default class Header extends Component {
   constructor(props) {
@@ -41,6 +42,7 @@ export default class Header extends Component {
     this.setState({showSidebar: !this.state.showSidebar});
   }
   render() {
+
     return (
       <div className="cask-header">
         <div className="navbar navbar-fixed-top">
@@ -51,7 +53,7 @@ export default class Header extends Component {
               onClickHandler={this.toggleSidebar.bind(this)}
             />
             <HeaderNavbarList
-              list={this.state.navbarItemList}
+              pathname={this.props.pathname} list={this.state.navbarItemList} store={Store}
             />
             <HeaderActions />
           </nav>
@@ -71,5 +73,6 @@ Header.propTypes = {
   navbarItemList: PropTypes.arrayOf(PropTypes.shape({
     linkTo: PropTypes.string,
     title: PropTypes.string
-  }))
+  })),
+  pathname: PropTypes.string
 };
