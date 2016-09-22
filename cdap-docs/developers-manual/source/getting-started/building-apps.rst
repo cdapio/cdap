@@ -43,7 +43,7 @@ Accessing CLI, curl, and the SDK bin
 
 - For brevity in the commands given below, we will simply use ``cdap cli`` for the CDAP
   Command Line Interface. Substitute the actual path of ``./<CDAP-SDK-HOME>/bin/cdap cli``,
-  or ``<CDAP-SDK-HOME>\bin\cdap-cli.bat`` on Windows, as appropriate. 
+  or ``<CDAP-SDK-HOME>\bin\cdap.bat cli`` on Windows, as appropriate. 
 
 - A Windows-version of the application ``curl`` is included in the CDAP SDK as
   ``libexec\bin\curl.exe``; use it as a substitute for ``curl`` in examples.
@@ -115,7 +115,7 @@ Once CDAP is started, you can deploy an application using an example JAR by any 
       $ cdap cli create app <app name> |example| |release| user
       Successfully created application
 
-  The CLI can be accessed under Windows using the ``bin\cdap-cli.bat`` script.
+  The CLI can be accessed under Windows using the ``bin\cdap.bat cli`` script.
   
 - Use an application such as ``curl`` (a Windows-version is included in the CDAP SDK in
   ``libexec\bin\curl.exe``):

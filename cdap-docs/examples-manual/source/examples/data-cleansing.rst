@@ -92,7 +92,7 @@ Begin by uploading a file containing some newline-separated JSON records into th
 
   .. Windows
 
-  > cdap-cli.bat call service DataCleansing.DataCleansingService POST v1/records/raw body:file examples\DataCleansing\resources\person.json
+  > cdap.bat cli call service DataCleansing.DataCleansingService POST v1/records/raw body:file examples\DataCleansing\resources\person.json
   
   < 200 OK
   < Content-Length: 0

@@ -82,7 +82,7 @@ Examples:
     
     .. Windows
     
-    > cdap-cli.bat start flow HelloWorld.WhoFlow
+    > cdap.bat cli start flow HelloWorld.WhoFlow
     Successfully started flow 'WhoFlow' of application 'HelloWorld' with stored runtime arguments '{}'
 
     > <CDAP-SDK-HOME>\libexec\bin\curl.exe -d c:\|release| -X POST 'http://repository.cask.co/centos/6/x86_64/cdap/|short-version|/cask.repo'

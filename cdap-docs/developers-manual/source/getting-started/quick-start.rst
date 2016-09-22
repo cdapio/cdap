@@ -43,12 +43,12 @@ In the examples and commands that follow, for brevity we will use these conventi
   
 - The `CDAP Command Line Interface (CLI) <http://docs.cask.co/cdap/current/en/reference-manual/cli-api.html>`__
   is included in the SDK in the ``bin`` directory, either at ``bin/cdap cli`` or |---|
-  on Windows |---| ``bin\cdap-cli.bat``. The CLI allows you to quickly access CDAP
+  on Windows |---| ``bin\cdap.bat cli``. The CLI allows you to quickly access CDAP
   facilities from a command line environment.
   
 - For brevity in the commands given below, we will simply use ``cdap cli`` for the CDAP
   Command Line Interface. Substitute the actual path of ``./<CDAP-SDK-HOME>/bin/cdap cli``,
-  or ``<CDAP-SDK-HOME>\bin\cdap-cli.bat`` on Windows, as appropriate. 
+  or ``<CDAP-SDK-HOME>\bin\cdap.bat cli`` on Windows, as appropriate. 
 
 - A Windows-version of the application ``curl`` is included in the CDAP SDK as
   ``libexec\bin\curl.exe``; use it as a substitute for ``curl`` in examples.
@@ -216,7 +216,7 @@ Command Line Interface:
   
   .. Windows
 
-  > cdap-cli.bat send stream logEventStream ^
+  > cdap.bat cli send stream logEventStream ^
   \"255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] 'GET /cdap.html HTTP/1.0' 401 2969 ' ' 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)'\" 
 
 Or, you can use ``curl`` and an HTTP request:
@@ -586,7 +586,7 @@ pages?
     
   .. Windows
   
-  > cdap-cli.bat execute \"SELECT views.uri, ratio, ip, count FROM (SELECT uri, totalvisits/bounces AS ratio FROM dataset_bouncecountstore ORDER BY ratio DESC LIMIT 3) bounce, (SELECT key AS ip, uri, count FROM dataset_pageviewstore LATERAL VIEW explode(value) t AS uri,count) views WHERE views.uri = bounce.uri AND views.count >= 3\"
+  > cdap.bat cli execute \"SELECT views.uri, ratio, ip, count FROM (SELECT uri, totalvisits/bounces AS ratio FROM dataset_bouncecountstore ORDER BY ratio DESC LIMIT 3) bounce, (SELECT key AS ip, uri, count FROM dataset_pageviewstore LATERAL VIEW explode(value) t AS uri,count) views WHERE views.uri = bounce.uri AND views.count >= 3\"
     
 Results::
 

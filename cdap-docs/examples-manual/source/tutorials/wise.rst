@@ -49,12 +49,12 @@ In the examples and commands that follow, for brevity we will use these conventi
   
 - The `CDAP Command Line Interface (CLI) <http://docs.cask.co/cdap/current/en/reference-manual/cli-api.html>`__
   is included in the SDK in the ``bin`` directory, either at ``bin/cdap cli`` or |---|
-  on Windows |---| ``bin\cdap-cli.bat``. The CLI allows you to quickly access CDAP
+  on Windows |---| ``bin\cdap.bat cli``. The CLI allows you to quickly access CDAP
   facilities from a command line environment.
   
 - For brevity in the commands given below, we will simply use ``cdap cli`` for the CDAP
   Command Line Interface. Substitute the actual path of ``./<CDAP-SDK-HOME>/bin/cdap cli``,
-  or ``<CDAP-SDK-HOME>\bin\cdap-cli.bat`` on Windows, as appropriate. 
+  or ``<CDAP-SDK-HOME>\bin\cdap.bat cli`` on Windows, as appropriate. 
 
 - A Windows-version of the application ``curl`` is included in the CDAP SDK as
   ``libexec\bin\curl.exe``; use it as a substitute for ``curl`` in examples.

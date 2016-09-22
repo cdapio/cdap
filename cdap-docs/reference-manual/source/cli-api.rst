@@ -41,7 +41,7 @@ To run the CLI in interactive mode, run the ``cdap cli`` executable with no argu
 
   .. Windows
 
-  > .\bin\cdap-cli.bat
+  > .\bin\cdap.bat cli
   
   .. Distributed CDAP
 
@@ -131,7 +131,7 @@ The CLI can be started with command-line options:
 
   .. Windows
 
-  usage: cdap-cli.bat [--autoconnect <true|false>] [--debug] [--help]
+  usage: cdap.bat cli [--autoconnect <true|false>] [--debug] [--help]
                       [--verify-ssl <true|false>] [--uri <uri>][--script
                       <script-file>]
    -a,--autoconnect <arg>   If "true", try provided connection (from uri)
