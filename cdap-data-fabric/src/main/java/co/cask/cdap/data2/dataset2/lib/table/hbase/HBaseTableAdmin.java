@@ -206,8 +206,8 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
     ImmutableList.Builder<Class<? extends Coprocessor>> coprocessors = ImmutableList.builder();
     if (transactional) {
       // tx janitor
-      if (conf.getBoolean(TxConstants.DataJanitor.CFG_TX_JANITOR_ENABLE,
-                          TxConstants.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
+      if (conf.getBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE,
+                          Constants.Transaction.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
         coprocessors.add(dataJanitorClass);
       }
     }

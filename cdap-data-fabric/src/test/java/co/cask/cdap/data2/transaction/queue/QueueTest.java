@@ -83,6 +83,11 @@ public abstract class QueueTest {
   protected static final NamespaceId NAMESPACE_ID = new NamespaceId("namespace");
   protected static final NamespaceId NAMESPACE_ID1 = new NamespaceId("namespace1");
 
+  // TODO (CDAP-7358): remove this method once TEPHRA-182 is fixed.
+  protected TransactionManager getTransactionManager() {
+    return transactionManager;
+  }
+
   @AfterClass
   public static void shutdownTx() {
     if (transactionManager != null) {

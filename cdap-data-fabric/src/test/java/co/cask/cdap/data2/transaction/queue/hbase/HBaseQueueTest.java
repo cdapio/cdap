@@ -190,12 +190,17 @@ public abstract class HBaseQueueTest extends QueueTest {
 
     // The TransactionManager should be started by the txService.
     // We just want a reference to that so that we can ask for tx snapshot
-    transactionManager = injector.getInstance(TransactionManager.class);
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     queueAdmin = injector.getInstance(QueueAdmin.class);
     executorFactory = injector.getInstance(TransactionExecutorFactory.class);
   }
+
+  // TODO (CDAP-7358): remove this class once TEPHRA-182 is fixed.
+  protected TransactionManager getTransactionManager() {
+    return txService.getTransactionManager();
+  }
+
 
   // TODO: CDAP-1177 Should move to QueueTest after making getApplicationName() etc instance methods in a base class
   @Test
@@ -654,7 +659,7 @@ public abstract class HBaseQueueTest extends QueueTest {
           @Override
           public TransactionVisibilityState get() {
             try {
-              return transactionManager.getSnapshot();
+              return getTransactionManager().getSnapshot();
             } catch (IOException e) {
               throw Throwables.propagate(e);
             }
@@ -672,6 +677,7 @@ public abstract class HBaseQueueTest extends QueueTest {
    * Asks the tx manager to take a snapshot.
    */
   private void takeTxSnapshot() throws Exception {
+    TransactionManager transactionManager = getTransactionManager();
     Method doSnapshot = transactionManager.getClass().getDeclaredMethod("doSnapshot", boolean.class);
     doSnapshot.setAccessible(true);
     doSnapshot.invoke(transactionManager, false);
