@@ -230,7 +230,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
         throw new ApplicationNotFoundException(appId);
       }
       if (appSpec.getWorkflows().get(workflowName) == null) {
-        throw new ProgramNotFoundException(workflowId.toId());
+        throw new ProgramNotFoundException(workflowId);
       }
       List<ScheduledRuntime> runtimes;
       if (previousRuntimeRequested) {
@@ -377,7 +377,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(workflowProgramId.getProgram());
 
     if (workflowSpec == null) {
-      throw new ProgramNotFoundException(workflowProgramId.toId());
+      throw new ProgramNotFoundException(workflowProgramId);
     }
 
     ProgramRunId workflowRunId = workflowProgramId.run(runId);
@@ -468,7 +468,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(workflowId);
     ProgramId programId = new ProgramId(namespaceId, applicationId, ProgramType.WORKFLOW, workflowId);
     if (workflowSpec == null) {
-      throw new ProgramNotFoundException(programId.toId());
+      throw new ProgramNotFoundException(programId);
     }
 
     if (store.getRun(programId, runId) == null) {

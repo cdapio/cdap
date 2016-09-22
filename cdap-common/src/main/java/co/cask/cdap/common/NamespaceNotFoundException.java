@@ -16,21 +16,21 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 
 /**
  * Thrown when a namespace is not found in CDAP.
  */
 public class NamespaceNotFoundException extends NotFoundException {
 
-  private final Id.Namespace namespace;
+  private final NamespaceId namespace;
 
-  public NamespaceNotFoundException(Id.Namespace id) {
+  public NamespaceNotFoundException(NamespaceId id) {
     super(id);
     this.namespace = id;
   }
 
-  public Id.Namespace getId() {
+  public NamespaceId getId() {
     return namespace;
   }
 }

@@ -189,7 +189,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   @Override
   public boolean viewExists(StreamViewId viewId) throws Exception {
     if (!exists(viewId.getParent())) {
-      throw new StreamNotFoundException(viewId.getParent().toId());
+      throw new StreamNotFoundException(viewId.getParent());
     }
     return viewAdmin.exists(viewId);
   }

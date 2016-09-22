@@ -16,7 +16,6 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.DatasetModuleId;
 
 /**
@@ -24,19 +23,19 @@ import co.cask.cdap.proto.id.DatasetModuleId;
  */
 public class DatasetModuleCannotBeDeletedException extends CannotBeDeletedException {
 
-  private final Id.DatasetModule id;
+  private final DatasetModuleId id;
 
-  public DatasetModuleCannotBeDeletedException(Id.DatasetModule id) {
+  public DatasetModuleCannotBeDeletedException(DatasetModuleId id) {
     super(id);
     this.id = id;
   }
 
   public DatasetModuleCannotBeDeletedException(DatasetModuleId datasetModuleId, String reason) {
-    super(datasetModuleId.toId(), reason);
-    this.id = datasetModuleId.toId();
+    super(datasetModuleId, reason);
+    this.id = datasetModuleId;
   }
 
-  public Id.DatasetModule getId() {
+  public DatasetModuleId getId() {
     return id;
   }
 }

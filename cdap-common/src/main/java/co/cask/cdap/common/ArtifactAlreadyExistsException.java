@@ -16,14 +16,14 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ArtifactId;
 
 /**
  * Thrown when an artifact already exists.
  */
 public class ArtifactAlreadyExistsException extends ConflictException {
 
-  public ArtifactAlreadyExistsException(Id.Artifact artifactId) {
+  public ArtifactAlreadyExistsException(ArtifactId artifactId) {
     super(String.format("Artifact %s already exists.", artifactId));
   }
 

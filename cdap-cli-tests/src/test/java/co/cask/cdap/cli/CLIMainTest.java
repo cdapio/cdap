@@ -319,7 +319,7 @@ public class CLIMainTest extends CLITestBase {
     // also can not create dataset instances if the type it depends on exists only in a different namespace.
     DatasetTypeId datasetType1 = barspace.datasetType(datasetType.getName());
     testCommandOutputContains(cli, "create dataset instance " + datasetType.getName() + " " + datasetName,
-                              new DatasetTypeNotFoundException(datasetType1.toId()).getMessage());
+                              new DatasetTypeNotFoundException(datasetType1).getMessage());
 
     testCommandOutputContains(cli, "use namespace default", "Now using namespace 'default'");
     try {

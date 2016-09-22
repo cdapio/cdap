@@ -158,7 +158,7 @@ public class DefaultStore implements Store {
     }
 
     if (!programExists(id, appMeta.getSpec())) {
-      throw new ProgramNotFoundException(id.toId());
+      throw new ProgramNotFoundException(id);
     }
 
     return new ProgramDescriptor(id, appMeta.getSpec());

@@ -16,21 +16,21 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 
 /**
  * Thrown when the user tries to create a dataset, but a dataset already exists by that name.
  */
 public class DatasetAlreadyExistsException extends AlreadyExistsException {
 
-  private final Id.DatasetInstance id;
+  private final DatasetId id;
 
-  public DatasetAlreadyExistsException(Id.DatasetInstance id) {
+  public DatasetAlreadyExistsException(DatasetId id) {
     super(id);
     this.id = id;
   }
 
-  public Id.DatasetInstance getId() {
+  public DatasetId getId() {
     return id;
   }
 }

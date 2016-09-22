@@ -57,7 +57,7 @@ public class InMemoryNamespaceClient extends AbstractNamespaceClient {
       }
     });
     if (Iterables.size(filtered) == 0) {
-      throw new NamespaceNotFoundException(namespaceId);
+      throw new NamespaceNotFoundException(namespaceId.toEntityId());
     }
     return filtered.iterator().next();
   }

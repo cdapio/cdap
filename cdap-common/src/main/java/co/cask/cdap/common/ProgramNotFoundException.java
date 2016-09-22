@@ -16,7 +16,6 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ProgramId;
 
 /**
@@ -29,10 +28,6 @@ public class ProgramNotFoundException extends NotFoundException {
   public ProgramNotFoundException(ProgramId programId) {
     super(programId);
     this.id = programId;
-  }
-
-  public ProgramNotFoundException(Id.Program id) {
-    this(id.toEntityId());
   }
 
   public ProgramId getId() {

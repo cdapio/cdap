@@ -435,7 +435,7 @@ ApplicationLifecycleService extends AbstractIdleService {
     if (!runningPrograms.isEmpty()) {
       String appAllRunningPrograms = Joiner.on(',')
         .join(runningPrograms);
-      throw new CannotBeDeletedException(namespaceId,
+      throw new CannotBeDeletedException(namespaceId.toEntityId(),
                                          "The following programs are still running: " + appAllRunningPrograms);
     }
     //All Apps are STOPPED, delete them
@@ -496,7 +496,7 @@ ApplicationLifecycleService extends AbstractIdleService {
     if (!runningPrograms.isEmpty()) {
       String appAllRunningPrograms = Joiner.on(',')
         .join(runningPrograms);
-      throw new CannotBeDeletedException(appId.toId(),
+      throw new CannotBeDeletedException(appId,
                                          "The following programs are still running: " + appAllRunningPrograms);
     }
   }

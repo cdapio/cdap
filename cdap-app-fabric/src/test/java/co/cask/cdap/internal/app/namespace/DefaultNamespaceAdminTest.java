@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -56,7 +56,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
       namespaceAdmin.create(TEST_NAMESPACE_META1);
       Assert.fail("Should not create duplicate namespace.");
     } catch (NamespaceAlreadyExistsException e) {
-      Assert.assertEquals(Id.Namespace.from(TEST_NAMESPACE_META1.getName()), e.getId());
+      Assert.assertEquals(TEST_NAMESPACE_META1.getNamespaceId(), e.getId());
     }
 
     // "random" namespace should not exist
@@ -64,7 +64,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
       namespaceAdmin.get(Id.Namespace.from("random"));
       Assert.fail("Namespace 'random' should not exist.");
     } catch (NamespaceNotFoundException e) {
-      Assert.assertEquals(Id.Namespace.from("random"), e.getObject());
+      Assert.assertEquals(new NamespaceId("random"), e.getId());
     }
 
     try {
@@ -265,7 +265,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
       namespaceAdmin.get(namespaceId);
       Assert.fail(String.format("Namespace '%s' should not be found since it was just deleted", namespaceId.getId()));
     } catch (NamespaceNotFoundException e) {
-      Assert.assertEquals(Id.Namespace.from(namespaceId.getId()), e.getId());
+      Assert.assertEquals(namespaceId.toEntityId(), e.getId());
     }
   }
 }

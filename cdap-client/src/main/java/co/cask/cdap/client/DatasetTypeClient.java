@@ -90,7 +90,7 @@ public class DatasetTypeClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new DatasetTypeNotFoundException(type);
+      throw new DatasetTypeNotFoundException(type.toEntityId());
     }
 
     return ObjectResponse.fromJsonBody(response, DatasetTypeMeta.class).getResponseObject();

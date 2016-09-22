@@ -77,7 +77,7 @@ public class ScheduleClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
-      throw new NotFoundException(workflow);
+      throw new NotFoundException(workflow.toEntityId());
     }
 
     ObjectResponse<List<ScheduleSpecification>> objectResponse = ObjectResponse.fromJsonBody(
@@ -102,7 +102,7 @@ public class ScheduleClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
-      throw new NotFoundException(workflow);
+      throw new NotFoundException(workflow.toEntityId());
     }
 
     ObjectResponse<List<ScheduledRuntime>> objectResponse = ObjectResponse.fromJsonBody(
@@ -117,7 +117,7 @@ public class ScheduleClient {
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
-      throw new NotFoundException(schedule);
+      throw new NotFoundException(schedule.toEntityId());
     }
   }
 
@@ -140,7 +140,7 @@ public class ScheduleClient {
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
-      throw new NotFoundException(schedule);
+      throw new NotFoundException(schedule.toEntityId());
     }
   }
 
@@ -163,7 +163,7 @@ public class ScheduleClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
-      throw new NotFoundException(schedule);
+      throw new NotFoundException(schedule.toEntityId());
     }
 
     Map<String, String> responseObject

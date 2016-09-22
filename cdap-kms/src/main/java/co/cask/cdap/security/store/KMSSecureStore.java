@@ -237,7 +237,7 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager, Delegati
   private void checkNamespaceExists(String namespace) throws Exception {
     NamespaceId namespaceId = new NamespaceId(namespace);
     if (!namespaceQueryAdmin.exists(namespaceId.toId())) {
-      throw new NamespaceNotFoundException(namespaceId.toId());
+      throw new NamespaceNotFoundException(namespaceId);
     }
   }
 

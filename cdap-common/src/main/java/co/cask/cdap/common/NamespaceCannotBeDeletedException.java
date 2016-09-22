@@ -17,30 +17,26 @@
 package co.cask.cdap.common;
 
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 
 /**
  * Thrown when a namespace cannot be deleted.
  */
 public class NamespaceCannotBeDeletedException extends CannotBeDeletedException {
 
-  private final Id.Namespace namespace;
+  private final NamespaceId namespace;
 
-  public NamespaceCannotBeDeletedException(Id.Namespace id) {
-    super(id);
-    this.namespace = id;
-  }
-
-  public NamespaceCannotBeDeletedException(Id.Namespace id, String reason) {
+  public NamespaceCannotBeDeletedException(NamespaceId id, String reason) {
     super(id, reason);
     this.namespace = id;
   }
 
-  public NamespaceCannotBeDeletedException(Id.Namespace id, Throwable cause) {
+  public NamespaceCannotBeDeletedException(NamespaceId id, Throwable cause) {
     super(id, cause);
     this.namespace = id;
   }
 
-  public Id.Namespace getNamespace() {
+  public NamespaceId getNamespace() {
     return namespace;
   }
 }

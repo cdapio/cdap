@@ -16,30 +16,24 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.EntityId;
 
 /**
  * Thrown when an element cannot be created.
  */
 public class CannotBeCreatedException extends Exception {
 
-  private final Id objectId;
+  private final EntityId entityId;
   private final String reason;
 
-  public CannotBeCreatedException(Id objectId, String reason) {
-    super(String.format("'%s' cannot be created. Reason: %s", objectId, reason));
-    this.objectId = objectId;
-    this.reason = reason;
-  }
-
-  public CannotBeCreatedException(Id objectId, Throwable cause) {
-    super(String.format("'%s' cannot be created. Reason: %s", objectId, cause.getMessage()), cause);
-    this.objectId = objectId;
+  public CannotBeCreatedException(EntityId entityId, Throwable cause) {
+    super(String.format("'%s' cannot be created. Reason: %s", entityId, cause.getMessage()), cause);
+    this.entityId = entityId;
     this.reason = cause.getMessage();
   }
 
-  public Id getObjectId() {
-    return objectId;
+  public EntityId getEntityId() {
+    return entityId;
   }
 
   public String getReason() {

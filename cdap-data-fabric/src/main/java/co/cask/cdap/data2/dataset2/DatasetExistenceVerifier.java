@@ -38,7 +38,7 @@ public class DatasetExistenceVerifier implements EntityExistenceVerifier<Dataset
   public void ensureExists(DatasetId datasetId) throws DatasetNotFoundException {
     try {
       if (!dsFramework.hasInstance(datasetId)) {
-        throw new DatasetNotFoundException(datasetId.toId());
+        throw new DatasetNotFoundException(datasetId);
       }
     } catch (DatasetManagementException e) {
       throw Throwables.propagate(e);

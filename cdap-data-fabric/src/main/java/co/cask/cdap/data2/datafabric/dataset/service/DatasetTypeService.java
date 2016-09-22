@@ -197,7 +197,7 @@ public class DatasetTypeService extends AbstractIdleService {
     ensureNamespaceExists(datasetModuleId.getParent());
     DatasetModuleMeta moduleMeta = typeManager.getModule(datasetModuleId);
     if (moduleMeta == null) {
-      throw new DatasetModuleNotFoundException(datasetModuleId.toId());
+      throw new DatasetModuleNotFoundException(datasetModuleId);
     }
     Principal principal = authenticationContext.getPrincipal();
     final Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
@@ -260,7 +260,7 @@ public class DatasetTypeService extends AbstractIdleService {
 
     DatasetModuleMeta moduleMeta = typeManager.getModule(datasetModuleId);
     if (moduleMeta == null) {
-      throw new DatasetModuleNotFoundException(datasetModuleId.toId());
+      throw new DatasetModuleNotFoundException(datasetModuleId);
     }
 
     Principal principal = authenticationContext.getPrincipal();
@@ -333,7 +333,7 @@ public class DatasetTypeService extends AbstractIdleService {
     ensureNamespaceExists(datasetTypeId.getParent());
     DatasetTypeMeta typeMeta = typeManager.getTypeInfo(datasetTypeId);
     if (typeMeta == null) {
-      throw new DatasetTypeNotFoundException(datasetTypeId.toId());
+      throw new DatasetTypeNotFoundException(datasetTypeId);
     }
 
     // All principals can access system dataset types
@@ -488,7 +488,7 @@ public class DatasetTypeService extends AbstractIdleService {
   }
 
   private Map<String, DatasetModule> getExtensionModules(CConfiguration cConf) {
-    Map<String, DatasetModule> modules = new LinkedHashMap<String, DatasetModule>();
+    Map<String, DatasetModule> modules = new LinkedHashMap<>();
     String moduleStr = cConf.get(Constants.Dataset.Extensions.MODULES);
     if (moduleStr != null) {
       for (String moduleName : Splitter.on(',').omitEmptyStrings().split(moduleStr)) {
@@ -568,7 +568,7 @@ public class DatasetTypeService extends AbstractIdleService {
   private void ensureNamespaceExists(NamespaceId namespaceId) throws Exception {
     if (!NamespaceId.SYSTEM.equals(namespaceId)) {
       if (!namespaceQueryAdmin.exists(namespaceId.toId())) {
-        throw new NamespaceNotFoundException(namespaceId.toId());
+        throw new NamespaceNotFoundException(namespaceId);
       }
     }
   }

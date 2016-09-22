@@ -25,7 +25,6 @@ import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -81,15 +80,6 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
       Throwables.propagateIfInstanceOf(t, SchedulerException.class);
       throw new SchedulerException(t);
     }
-  }
-
-  private boolean isStarted(Scheduler scheduler) {
-    if (scheduler instanceof TimeScheduler) {
-      return ((TimeScheduler) scheduler).isStarted();
-    } else if (scheduler instanceof StreamSizeScheduler) {
-      return ((StreamSizeScheduler) scheduler).isStarted();
-    }
-    throw new IllegalArgumentException("Unrecognized type of scheduler for " + scheduler.getClass().toString());
   }
 
   /**
@@ -256,7 +246,7 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
     Map<String, ScheduleSpecification> schedules = appSpec.getSchedules();
     if (schedules == null || !schedules.containsKey(scheduleName)) {
-      throw new ScheduleNotFoundException(Id.Schedule.from(program.getParent().toId(), scheduleName));
+      throw new ScheduleNotFoundException(program.getParent().schedule(scheduleName));
     }
 
     ScheduleSpecification scheduleSpec = schedules.get(scheduleName);

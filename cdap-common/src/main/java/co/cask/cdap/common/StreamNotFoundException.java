@@ -16,21 +16,21 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 
 /**
  * Thrown when a stream is not found
  */
 public class StreamNotFoundException extends NotFoundException {
 
-  private final Id.Stream id;
+  private final StreamId id;
 
-  public StreamNotFoundException(Id.Stream id) {
+  public StreamNotFoundException(StreamId id) {
     super(id);
     this.id = id;
   }
 
-  public Id.Stream getId() {
+  public StreamId getId() {
     return id;
   }
 }

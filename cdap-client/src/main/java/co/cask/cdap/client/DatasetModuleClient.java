@@ -105,7 +105,7 @@ public class DatasetModuleClient {
     if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(String.format("Module jar file does not exist: %s", moduleJarFile));
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
-      throw new DatasetModuleAlreadyExistsException(module);
+      throw new DatasetModuleAlreadyExistsException(module.toEntityId());
     }
   }
 
@@ -128,9 +128,9 @@ public class DatasetModuleClient {
                                                HttpURLConnection.HTTP_CONFLICT,
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
-      throw new DatasetModuleCannotBeDeletedException(module);
+      throw new DatasetModuleCannotBeDeletedException(module.toEntityId());
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new DatasetModuleNotFoundException(module);
+      throw new DatasetModuleNotFoundException(module.toEntityId());
     }
   }
 
@@ -236,7 +236,7 @@ public class DatasetModuleClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new DatasetModuleNotFoundException(module);
+      throw new DatasetModuleNotFoundException(module.toEntityId());
     }
 
     return ObjectResponse.fromJsonBody(response, DatasetModuleMeta.class).getResponseObject();

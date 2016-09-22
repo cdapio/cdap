@@ -99,7 +99,7 @@ public class StreamClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new StreamNotFoundException(stream);
+      throw new StreamNotFoundException(stream.toEntityId());
     }
     return GSON.fromJson(response.getResponseBodyAsString(Charsets.UTF_8), StreamProperties.class);
   }
@@ -128,7 +128,7 @@ public class StreamClient {
       throw new BadRequestException("Bad request: " + response.getResponseBodyAsString());
     }
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new StreamNotFoundException(stream);
+      throw new StreamNotFoundException(stream.toEntityId());
     }
   }
 
@@ -184,7 +184,7 @@ public class StreamClient {
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new StreamNotFoundException(stream);
+      throw new StreamNotFoundException(stream.toEntityId());
     }
   }
 
@@ -250,7 +250,7 @@ public class StreamClient {
 
     HttpResponse response = restClient.upload(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new StreamNotFoundException(stream);
+      throw new StreamNotFoundException(stream.toEntityId());
     }
   }
 
@@ -268,7 +268,7 @@ public class StreamClient {
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new StreamNotFoundException(stream);
+      throw new StreamNotFoundException(stream.toEntityId());
     }
   }
 
@@ -285,7 +285,7 @@ public class StreamClient {
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new StreamNotFoundException(stream);
+      throw new StreamNotFoundException(stream.toEntityId());
     }
   }
 
@@ -306,7 +306,7 @@ public class StreamClient {
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new StreamNotFoundException(stream);
+      throw new StreamNotFoundException(stream.toEntityId());
     }
   }
 
@@ -428,7 +428,7 @@ public class StreamClient {
         throw new UnauthenticatedException("Unauthorized status code received from the server.");
       }
       if (urlConn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-        throw new StreamNotFoundException(streamId);
+        throw new StreamNotFoundException(streamId.toEntityId());
       }
       if (urlConn.getResponseCode() == HttpURLConnection.HTTP_NO_CONTENT) {
         return;
@@ -460,7 +460,7 @@ public class StreamClient {
     HttpRequest request = HttpRequest.post(url).withBody(event).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new StreamNotFoundException(stream);
+      throw new StreamNotFoundException(stream.toEntityId());
     }
   }
 
