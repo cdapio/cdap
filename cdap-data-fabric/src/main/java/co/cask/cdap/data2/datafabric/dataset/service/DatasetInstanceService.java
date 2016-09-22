@@ -430,9 +430,14 @@ public class DatasetInstanceService {
     try {
       return typeService.getType(datasetTypeId);
     } catch (DatasetTypeNotFoundException e) {
-      // Type not found in the instance's namespace. Now try finding it in the system namespace
-      DatasetTypeId systemDatasetTypeId = ConversionHelpers.toDatasetTypeId(NamespaceId.SYSTEM, typeName);
-      return typeService.getType(systemDatasetTypeId);
+      try {
+        // Type not found in the instance's namespace. Now try finding it in the system namespace
+        DatasetTypeId systemDatasetTypeId = ConversionHelpers.toDatasetTypeId(NamespaceId.SYSTEM, typeName);
+        return typeService.getType(systemDatasetTypeId);
+      } catch (DatasetTypeNotFoundException exnWithSystemNS) {
+        // if it's not found in system namespace, throw the original exception with the correct namespace
+        throw e;
+      }
     }
   }
 
@@ -472,12 +477,8 @@ public class DatasetInstanceService {
     try {
       exploreFacade.disableExploreDataset(datasetInstance.toId());
     } catch (Exception e) {
-      String msg = String.format("Cannot disable exploration of dataset instance %s: %s",
-                                 datasetInstance, e.getMessage());
-      LOG.error(msg, e);
+      LOG.error("Cannot disable explore for dataset instance {}", datasetInstance, e);
       // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
-      //responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
-      //return;
     }
   }
 
@@ -488,12 +489,9 @@ public class DatasetInstanceService {
     try {
       exploreFacade.enableExploreDataset(datasetInstance.toId(), spec);
     } catch (Exception e) {
-      String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
-                                 datasetInstance, creationProperties.getProperties(), e.getMessage());
-      LOG.error(msg, e);
+      LOG.error("Cannot enable explore for dataset instance {} of type {} with properties {}",
+                datasetInstance, creationProperties.getTypeName(), creationProperties.getProperties(), e);
       // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
-      //responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
-      //return;
     }
   }
 
@@ -504,12 +502,9 @@ public class DatasetInstanceService {
     try {
       exploreFacade.updateExploreDataset(datasetInstance.toId(), oldSpec, newSpec);
     } catch (Exception e) {
-      String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
-                                 datasetInstance, creationProperties.getProperties(), e.getMessage());
-      LOG.error(msg, e);
+      LOG.error("Cannot update explore for dataset instance {} with old properties {} and new properties {}",
+                datasetInstance, oldSpec.getOriginalProperties(), creationProperties.getProperties(), e);
       // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
-      //responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, msg);
-      //return;
     }
   }
 

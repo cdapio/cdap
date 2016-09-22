@@ -18,7 +18,10 @@ package co.cask.cdap.common.lang;
 
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
+import com.google.common.base.Throwables;
 
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
@@ -118,5 +121,30 @@ public final class ClassLoaders {
         return classLoader.getResource(className.replace('.', '/') + ".class");
       }
     };
+  }
+
+  /**
+   * Returns the URL to the base classpath for the given class resource URL of the given class name.
+   */
+  public static URL getClassPathURL(String className, URL classUrl) {
+    try {
+      if ("file".equals(classUrl.getProtocol())) {
+        String path = classUrl.getFile();
+        // Compute the directory container the class.
+        int endIdx = path.length() - className.length() - ".class".length();
+        if (endIdx > 1) {
+          // If it is not the root directory, return the end index to remove the trailing '/'.
+          endIdx--;
+        }
+        return new URL("file", "", -1, path.substring(0, endIdx));
+      }
+      if ("jar".equals(classUrl.getProtocol())) {
+        String path = classUrl.getFile();
+        return URI.create(path.substring(0, path.indexOf("!/"))).toURL();
+      }
+    } catch (MalformedURLException e) {
+      throw Throwables.propagate(e);
+    }
+    throw new IllegalStateException("Unsupported class URL: " + classUrl);
   }
 }

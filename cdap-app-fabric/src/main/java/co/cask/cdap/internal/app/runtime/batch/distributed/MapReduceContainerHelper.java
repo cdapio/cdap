@@ -50,13 +50,13 @@ public final class MapReduceContainerHelper {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceContainerHelper.class);
 
   /**
-   * Returns a list of path to be used for the MapReduce framework classpath.
+   * Adds the classpath to be used in MapReduce job execution based on the given {@link Configuration}.
    *
    * @param hConf the configuration for the job.
    * @param result a list for appending MR framework classpath
    * @return the same {@code result} list from the argument
    */
-  public static List<String> getMapReduceClassPath(Configuration hConf, List<String> result) {
+  public static List<String> addMapReduceClassPath(Configuration hConf, List<String> result) {
     String framework = hConf.get(MRJobConfig.MAPREDUCE_APPLICATION_FRAMEWORK_PATH);
 
     // For classpath config get from the hConf, we splits it with both "," and ":" because one can set
@@ -85,7 +85,7 @@ public final class MapReduceContainerHelper {
    * @return the framework URI or {@code null} if not present or if the URI in the config is invalid.
    */
   @Nullable
-  public static URI getFrameworkURI(Configuration hConf) {
+  private static URI getFrameworkURI(Configuration hConf) {
     String framework = hConf.get(MRJobConfig.MAPREDUCE_APPLICATION_FRAMEWORK_PATH);
     if (framework == null) {
       return null;
@@ -138,7 +138,7 @@ public final class MapReduceContainerHelper {
         URI uri = new URI(frameworkURI.getScheme(), frameworkURI.getAuthority(), frameworkURI.getPath(), null, null);
         localizeResources.put(frameworkURI.getFragment(), new LocalizeResource(uri, true));
       }
-      return ImmutableList.copyOf(getMapReduceClassPath(hConf, new ArrayList<String>()));
+      return ImmutableList.copyOf(addMapReduceClassPath(hConf, new ArrayList<String>()));
     } catch (URISyntaxException e) {
       // Shouldn't happen since the frameworkURI is already parsed.
       throw Throwables.propagate(e);
