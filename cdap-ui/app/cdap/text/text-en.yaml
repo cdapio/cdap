@@ -80,10 +80,8 @@ features:
       load_datapack:
         icon: fa-upload
         name: Load Data
-      create_artifact:
-        name: Create Artifact
   MarketEntityModal:
-    version: "Version: "
+    version: "Version:"
 
   Navbar:
     CDAP:
