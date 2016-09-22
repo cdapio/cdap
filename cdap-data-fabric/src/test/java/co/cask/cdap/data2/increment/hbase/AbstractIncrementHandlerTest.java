@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -259,8 +259,7 @@ public abstract class AbstractIncrementHandlerTest {
       Delete delete = tableUtil.buildDelete(row1)
         .deleteColumns(FAMILY, col)
         .build();
-      // use batch to work around a bug in delete coprocessor hooks on HBase 0.94
-      table.batch(Lists.newArrayList(delete));
+      table.delete(delete);
 
       Get get = tableUtil.buildGet(row1).build();
       Result result = table.get(get);
@@ -295,8 +294,7 @@ public abstract class AbstractIncrementHandlerTest {
 
       // perform a row delete
       delete = tableUtil.buildDelete(row1).build();
-      // use batch to work around a bug in delete coprocessor hooks on HBase 0.94
-      table.batch(Lists.newArrayList(delete));
+      table.delete(delete);
 
       get = tableUtil.buildGet(row1).build();
       result = table.get(get);
