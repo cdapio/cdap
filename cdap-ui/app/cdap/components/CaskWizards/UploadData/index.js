@@ -83,7 +83,7 @@ export default class UploadDataWizard extends Component {
   render() {
     return (
       <WizardModal
-        title={this.props.input.label ? this.props.input.label + " | Upload Data" : "Upload Data"}
+        title={this.props.input.package.label ? this.props.input.package.label + " | Upload Data" : "Upload Data"}
         isOpen={this.state.showWizard}
         toggle={this.toggleWizard.bind(this, false)}
         className="upload-data-wizard"
