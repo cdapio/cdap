@@ -120,7 +120,8 @@ cdap_home() {
     echo ${CDAP_HOME}
     return 0
   fi
-  local readonly __script=${BASH_SOURCE[0]} __script_bin=$(cd $(dirname ${__script}); pwd -P)
+  local readonly __script=${BASH_SOURCE[0]}
+  local readonly __script_bin=$(cd $(dirname ${__script}); pwd -P)
   local readonly __comp_home=${__script%/*/*}
   if [[ ${__comp_home%/*} == /opt/cdap ]]; then
     __app_home=${__comp_home}
