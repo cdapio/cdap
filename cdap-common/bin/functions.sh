@@ -758,7 +758,7 @@ cdap_sdk_start() {
     return ${__ret}
   else
     nohup nice -1 "${JAVA}" ${JVM_OPTS[@]} ${ROUTER_OPTS} -classpath "${CLASSPATH}" co.cask.cdap.StandaloneMain \
-      2>&1 < /dev/null >> "${LOG_DIR}"/cdap.log &
+      </dev/null >>"${LOG_DIR}"/cdap.log 2>&1 &
     __ret=${?}
     __pid=${!}
     echo ${__pid} > ${__pidfile}
