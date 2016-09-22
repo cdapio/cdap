@@ -28,7 +28,6 @@ const mapStateToDestinationTypeProps = (state) => {
   };
 };
 const mapStateToDestinationNameProps = (state) => {
-  console.log('state', state.selectdestination);
   return {
     value: state.selectdestination.name,
     placeholder: 'Dataset/Stream Name'
