@@ -26,6 +26,8 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -42,11 +44,11 @@ public class LoggingEventTest {
 
   @Test
   public void testSerialize() throws Exception {
-    ch.qos.logback.classic.spi.LoggingEvent iLoggingEvent = new ch.qos.logback.classic.spi.LoggingEvent();
-    iLoggingEvent.setLevel(Level.ERROR);
+    Logger logger = LoggerFactory.getLogger(LoggingEventTest.class);
+    ch.qos.logback.classic.spi.LoggingEvent iLoggingEvent = new ch.qos.logback.classic.spi.LoggingEvent(
+      getClass().getName(), (ch.qos.logback.classic.Logger) logger, Level.ERROR, "Log message1", null,
+      new Object[] {"arg1", "arg2", "100"});
     iLoggingEvent.setLoggerName("loggerName1");
-    iLoggingEvent.setMessage("Log message1");
-    iLoggingEvent.setArgumentArray(new Object[] {"arg1", "arg2", "100"});
     iLoggingEvent.setThreadName("threadName1");
     iLoggingEvent.setTimeStamp(1234567890L);
     iLoggingEvent.setLoggerContextRemoteView(new LoggerContextVO("loggerContextRemoteView",
@@ -65,8 +67,9 @@ public class LoggingEventTest {
 
   @Test
   public void testEmptySerialize() throws Exception {
-    ch.qos.logback.classic.spi.LoggingEvent iLoggingEvent = new ch.qos.logback.classic.spi.LoggingEvent();
-    iLoggingEvent.setLevel(Level.ERROR);
+    Logger logger = LoggerFactory.getLogger(LoggingEventTest.class);
+    ch.qos.logback.classic.spi.LoggingEvent iLoggingEvent = new ch.qos.logback.classic.spi.LoggingEvent(
+      getClass().getName(), (ch.qos.logback.classic.Logger) logger, Level.ERROR, null, null, null);
 
     Schema schema = new Schema.Parser().parse(getClass().getResourceAsStream("/logging/schema/LoggingEvent.avsc"));
     GenericRecord datum = LoggingEvent.encode(schema, iLoggingEvent, LoggingContextAccessor.getLoggingContext());

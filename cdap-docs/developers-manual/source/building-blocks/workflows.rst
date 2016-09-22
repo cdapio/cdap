@@ -298,7 +298,7 @@ To put a value into a token, first obtain access to the token from the workflow 
 and then set a value for a specific key. 
 
 In the case of a MapReduce program, the program's Mapper and Reducer classes need to
-implement ``ProgramLifecycle<MapReduceContext>``. After doing so, they can access the
+implement ``ProgramLifecycle<MapReduceTaskContext>``. After doing so, they can access the
 workflow token in either the ``initialize`` or ``destroy`` methods. To access it in the
 ``map`` or ``reduce`` methods, you would need to cache a reference to the workflow token
 object as a class member in the ``initialize()`` method. This is because the context
