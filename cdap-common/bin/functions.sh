@@ -748,6 +748,9 @@ cdap_sdk_start() {
   CLASSPATH=$(find "${CDAP_HOME}/lib" -type f | sort | tr '\n' ':')
   CLASSPATH="${CLASSPATH}:${CDAP_HOME}/conf/"
 
+  # SDK requires us to be in CDAP_HOME
+  cd $(cdap_home)
+
   # Start SDK processes
   echo -n "$(date) Starting CDAP Standalone (SDK) ..."
   if ${__foreground}; then
