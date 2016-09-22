@@ -749,7 +749,7 @@ cdap_sdk_start() {
   CLASSPATH="${CLASSPATH}:${CDAP_HOME}/conf/"
 
   # SDK requires us to be in CDAP_HOME
-  cd $(cdap_home)
+  cd ${CDAP_HOME}
 
   # Start SDK processes
   echo -n "$(date) Starting CDAP Standalone (SDK) ..."
