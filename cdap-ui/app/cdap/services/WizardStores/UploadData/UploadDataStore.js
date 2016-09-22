@@ -32,6 +32,7 @@ const defaultViewData = {
 const defaultSelectDestination = {
   type: '',
   name: '',
+  types: ['', 'streams'],
   __complete: false,
   __error: false
 };

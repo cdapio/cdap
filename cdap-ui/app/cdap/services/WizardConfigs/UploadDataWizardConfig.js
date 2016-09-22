@@ -17,6 +17,7 @@
 import React from 'react';
 import T from 'i18n-react';
 import ViewDataStep from 'components/CaskWizards/UploadData/ViewDataStep';
+import SelectDestination from 'components/CaskWizards/UploadData/SelectDestination';
 
 const UploadDataWizardConfig = {
   steps: [
@@ -32,7 +33,7 @@ const UploadDataWizardConfig = {
       shorttitle: T.translate('features.Wizard.UploadData.Step2.shorttitle'),
       title: T.translate('features.Wizard.UploadData.Step2.title'),
       description: T.translate('features.Wizard.UploadData.Step2.description'),
-      content: (<h1> Select Destination step </h1>)
+      content: (<SelectDestination />)
     }
   ]
 };
