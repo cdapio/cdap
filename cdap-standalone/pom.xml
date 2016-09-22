@@ -535,6 +535,7 @@
                         <include>cdap</include>
                         <include>functions.sh</include>
                         <include>cdap-cli.bat</include>
+                        <include>cdap-cli.sh</include>
                       </includes>
                       <filtering>true</filtering>
                     </resource>
