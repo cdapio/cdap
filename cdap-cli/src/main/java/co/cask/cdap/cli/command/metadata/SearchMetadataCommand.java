@@ -22,6 +22,7 @@ import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.MetadataClient;
+import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.common.cli.Arguments;
@@ -61,8 +62,9 @@ public class SearchMetadataCommand extends AbstractCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String searchQuery = arguments.get(ArgumentName.SEARCH_QUERY.toString());
     String type = arguments.getOptional(ArgumentName.TARGET_TYPE.toString());
-    Set<MetadataSearchResultRecord> searchResults =
+    MetadataSearchResponse metadataSearchResponse =
       metadataClient.searchMetadata(cliConfig.getCurrentNamespace().toId(), searchQuery, parseTargetType(type));
+    Set<MetadataSearchResultRecord> searchResults = metadataSearchResponse.getResults();
     Table table = Table.builder()
       .setHeader("Entity")
       .setRows(Lists.newArrayList(searchResults), new RowMaker<MetadataSearchResultRecord>() {
