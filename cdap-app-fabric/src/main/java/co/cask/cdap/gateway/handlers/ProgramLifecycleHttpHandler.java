@@ -226,11 +226,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("app-id") String appId,
                         @PathParam("type") String type,
                         @PathParam("id") String id) throws Exception {
+    ApplicationId applicationId = Ids.namespace(namespaceId).app(appId);
     if (type.equals("schedules")) {
-      getScheduleStatus(responder, appId, namespaceId, id);
+      getScheduleStatus(responder, applicationId, id);
       return;
     }
-
     ProgramType programType;
     try {
       programType = ProgramType.valueOfCategoryName(type);
@@ -257,12 +257,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("program-id") String programId) throws Exception {
     ApplicationId applicationId = new ApplicationId(namespaceId, appId, versionId);
     if (programTypeString.equals("schedules")) {
-      if (store.getAllAppVersions(applicationId).size() != 1 || !versionId.equals(ApplicationId.DEFAULT_VERSION)) {
-        // TODO: (CDAP-7328) need scheduler for each version of application
-        throw new NotImplementedException("Schedules status is not implemented for applications with " +
-                                            "multiple versions");
-      }
-      getScheduleStatus(responder, appId, namespaceId, programId);
+      getScheduleStatus(responder, applicationId, programId);
       return;
     }
 
@@ -279,9 +274,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, status);
   }
 
-  private void getScheduleStatus(HttpResponder responder, String appId, String namespaceId, String scheduleName)
+  private void getScheduleStatus(HttpResponder responder, ApplicationId applicationId, String scheduleName)
     throws NotFoundException, SchedulerException {
-    ApplicationId applicationId = new ApplicationId(namespaceId, appId);
     ApplicationSpecification appSpec = store.getApplication(applicationId);
     if (appSpec == null) {
       throw new NotFoundException(applicationId);
@@ -295,7 +289,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     String programName = scheduleSpec.getProgram().getProgramName();
     ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
-    Id.Program programId = Id.Program.from(namespaceId, appId, programType, programName);
+    ProgramId programId = applicationId.program(programType, programName);
     JsonObject json = new JsonObject();
     json.addProperty("status", scheduler.scheduleState(programId, programId.getType().getSchedulableType(),
                                                        scheduleName).toString());
@@ -336,27 +330,22 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   @POST
-  @Path("/apps/{app-id}/versions/{version-id}/{type}/{id}/{action}")
+  @Path("/apps/{app-id}/versions/{version-id}/{program-type}/{program-id}/{action}")
   public void performVersionAction(HttpRequest request, HttpResponder responder,
                                    @PathParam("namespace-id") String namespaceId,
                                    @PathParam("app-id") String appId,
                                    @PathParam("version-id") String versionId,
-                                   @PathParam("type") String type,
-                                   @PathParam("id") String id,
+                                   @PathParam("program-type") String programType,
+                                   @PathParam("program-id") String programId,
                                    @PathParam("action") String action) throws Exception {
-    doPerformAction(request, responder, namespaceId, appId, versionId, type, id, action);
+    doPerformAction(request, responder, namespaceId, appId, versionId, programType, programId, action);
   }
 
   private void doPerformAction(HttpRequest request, HttpResponder responder, String namespaceId, String appId,
                                String versionId, String type, String id, String action) throws Exception {
     ApplicationId applicationId = new ApplicationId(namespaceId, appId, versionId);
     if ("schedules".equals(type)) {
-      if (!versionId.equals(ApplicationId.DEFAULT_VERSION) || store.getAllAppVersions(applicationId).size() != 1) {
-        // TODO: (CDAP-7328) need scheduler for each version of application
-        throw new NotImplementedException("Schedules action is not implemented for applications with " +
-                                            "multiple versions");
-      }
-      performScheduleAction(responder, namespaceId, appId, versionId, id, action);
+      performScheduleAction(responder, applicationId, id, action);
       return;
     }
 
@@ -390,7 +379,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
-  private void performScheduleAction(HttpResponder responder, String namespaceId, String appId, String versionId,
+  private void performScheduleAction(HttpResponder responder, ApplicationId appId,
                                      String scheduleName, String action) throws SchedulerException {
     try {
       if (!action.equals("suspend") && !action.equals("resume")) {
@@ -398,9 +387,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      ApplicationSpecification appSpec = store.getApplication(new ApplicationId(namespaceId, appId));
+      ApplicationSpecification appSpec = store.getApplication(appId);
       if (appSpec == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "App: " + appId + " not found");
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "App: " + appId.getApplication() + " not found");
         return;
       }
 
@@ -412,7 +401,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
       String programName = scheduleSpec.getProgram().getProgramName();
       ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
-      Id.Program programId = Id.Program.from(namespaceId, appId, programType, programName);
+      ProgramId programId = appId.program(programType, programName);
       Scheduler.ScheduleState state = scheduler.scheduleState(programId, scheduleSpec.getProgram().getProgramType(),
                                                               scheduleName);
       switch (state) {

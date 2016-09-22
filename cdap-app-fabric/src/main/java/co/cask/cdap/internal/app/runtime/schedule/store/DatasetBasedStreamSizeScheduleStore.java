@@ -27,6 +27,8 @@ import co.cask.cdap.internal.app.runtime.schedule.StreamSizeScheduleState;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -95,7 +97,7 @@ public class DatasetBasedStreamSizeScheduleStore {
    * @param baseRunTs base timestamp
    * @param running true if the schedule is running, false if it is suspended
    */
-  public void persist(Id.Program programId, SchedulableProgramType programType, StreamSizeSchedule schedule,
+  public void persist(ProgramId programId, SchedulableProgramType programType, StreamSizeSchedule schedule,
                       Map<String, String> properties, long baseRunSize, long baseRunTs, long lastRunSize,
                       long lastRunTs, boolean running)
     throws TransactionFailureException, InterruptedException {
@@ -121,7 +123,7 @@ public class DatasetBasedStreamSizeScheduleStore {
    * @param programType program type the schedule is running for
    * @param scheduleName name of the schedule
    */
-  public void suspend(Id.Program programId, SchedulableProgramType programType, String scheduleName)
+  public void suspend(ProgramId programId, SchedulableProgramType programType, String scheduleName)
     throws TransactionFailureException, InterruptedException {
     updateTable(programId, programType, scheduleName,
                 new byte[][]{ ACTIVE_COL },
@@ -136,7 +138,7 @@ public class DatasetBasedStreamSizeScheduleStore {
    * @param programType program type the schedule is running for
    * @param scheduleName name of the schedule
    */
-  public void resume(Id.Program programId, SchedulableProgramType programType, String scheduleName)
+  public void resume(ProgramId programId, SchedulableProgramType programType, String scheduleName)
     throws TransactionFailureException, InterruptedException {
     updateTable(programId, programType, scheduleName,
                 new byte[][]{ ACTIVE_COL },
@@ -153,7 +155,7 @@ public class DatasetBasedStreamSizeScheduleStore {
    * @param newBaseRunSize new base size
    * @param newBaseRunTs new base timestamp
    */
-  public void updateBaseRun(Id.Program programId, SchedulableProgramType programType, String scheduleName,
+  public void updateBaseRun(ProgramId programId, SchedulableProgramType programType, String scheduleName,
                             long newBaseRunSize, long newBaseRunTs)
     throws TransactionFailureException, InterruptedException {
       updateTable(programId, programType, scheduleName,
@@ -173,7 +175,7 @@ public class DatasetBasedStreamSizeScheduleStore {
    * @param txMethod method to execute in the same transaction that will change the lastRun information,
    *                 before it is done
    */
-  public void updateLastRun(Id.Program programId, SchedulableProgramType programType,
+  public void updateLastRun(ProgramId programId, SchedulableProgramType programType,
                             String scheduleName, long newLastRunSize, long newLastRunTs,
                             TransactionMethod txMethod)
     throws TransactionFailureException, InterruptedException {
@@ -191,7 +193,7 @@ public class DatasetBasedStreamSizeScheduleStore {
    * @param scheduleName name of the schedule
    * @param newSchedule new {@link StreamSizeSchedule} object
    */
-  public void updateSchedule(Id.Program programId, SchedulableProgramType programType,
+  public void updateSchedule(ProgramId programId, SchedulableProgramType programType,
                              String scheduleName, StreamSizeSchedule newSchedule)
     throws TransactionFailureException, InterruptedException {
     updateTable(programId, programType, scheduleName,
@@ -207,7 +209,7 @@ public class DatasetBasedStreamSizeScheduleStore {
    * @param programType program type the schedule is running for
    * @param scheduleName name of the schedule
    */
-  public synchronized void delete(final Id.Program programId, final SchedulableProgramType programType,
+  public synchronized void delete(final ProgramId programId, final SchedulableProgramType programType,
                                   final String scheduleName) throws InterruptedException, TransactionFailureException {
     factory.createExecutor(ImmutableList.of((TransactionAware) table))
       .execute(new TransactionExecutor.Subroutine() {
@@ -249,11 +251,12 @@ public class DatasetBasedStreamSizeScheduleStore {
 
             String rowKey = Bytes.toString(next.getRow());
             String[] splits = rowKey.split(":");
-            if (splits.length != 6) {
+            if (splits.length != 7) {
               continue;
             }
-            Id.Program program = Id.Program.from(splits[1], splits[2], ProgramType.valueOf(splits[3]), splits[4]);
-            SchedulableProgramType programType = SchedulableProgramType.valueOf(splits[3]);
+            ProgramId program = new ApplicationId(splits[1], splits[2],
+                                                  splits[3]).program(ProgramType.valueOf(splits[4]), splits[5]);
+            SchedulableProgramType programType = SchedulableProgramType.valueOf(splits[4]);
 
             StreamSizeSchedule schedule = GSON.fromJson(Bytes.toString(scheduleBytes), StreamSizeSchedule.class);
             long baseSize = Bytes.toLong(baseSizeBytes);
@@ -276,7 +279,7 @@ public class DatasetBasedStreamSizeScheduleStore {
     return scheduleStates;
   }
 
-  private synchronized void updateTable(final Id.Program programId, final SchedulableProgramType programType,
+  private synchronized void updateTable(final ProgramId programId, final SchedulableProgramType programType,
                                         final String scheduleName, final byte[][] columns, final byte[][] values,
                                         @Nullable final TransactionMethod txMethod)
     throws InterruptedException, TransactionFailureException {

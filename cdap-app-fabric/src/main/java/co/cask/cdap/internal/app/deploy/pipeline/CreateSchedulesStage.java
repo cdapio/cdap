@@ -60,7 +60,7 @@ public class CreateSchedulesStage extends AbstractStage<ApplicationWithPrograms>
       // delete schedules that existed in the old app spec, but don't anymore
       ScheduleSpecification scheduleSpec = entry.getValue();
       ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
-      scheduler.deleteSchedule(appId.program(programType, scheduleSpec.getProgram().getProgramName()).toId(),
+      scheduler.deleteSchedule(appId.program(programType, scheduleSpec.getProgram().getProgramName()),
                                scheduleSpec.getProgram().getProgramType(),
                                scheduleSpec.getSchedule().getName());
     }
@@ -77,7 +77,7 @@ public class CreateSchedulesStage extends AbstractStage<ApplicationWithPrograms>
       }
 
       ProgramType programType = ProgramType.valueOfSchedulableType(newScheduleSpec.getProgram().getProgramType());
-      scheduler.updateSchedule(appId.program(programType, newScheduleSpec.getProgram().getProgramName()).toId(),
+      scheduler.updateSchedule(appId.program(programType, newScheduleSpec.getProgram().getProgramName()),
                                newScheduleSpec.getProgram().getProgramType(),
                                newScheduleSpec.getSchedule());
     }
@@ -85,7 +85,7 @@ public class CreateSchedulesStage extends AbstractStage<ApplicationWithPrograms>
     for (Map.Entry<String, ScheduleSpecification> entry : mapDiff.entriesOnlyOnRight().entrySet()) {
       ScheduleSpecification scheduleSpec = entry.getValue();
       ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
-      scheduler.schedule(appId.program(programType, scheduleSpec.getProgram().getProgramName()).toId(),
+      scheduler.schedule(appId.program(programType, scheduleSpec.getProgram().getProgramName()),
                          scheduleSpec.getProgram().getProgramType(),
                          scheduleSpec.getSchedule());
     }
