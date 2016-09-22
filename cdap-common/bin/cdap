@@ -21,19 +21,23 @@
 # to the CDAP CLI to be interpreted. 
 #
 
-__script=${BASH_SOURCE[0]} __script_bin=$(dirname ${__script})
-__comp_home=${__script%/*/*}
+__script=${BASH_SOURCE[0]}
+
+__target=$(readlink ${__script}) # TODO: readlink isn't portable, if we support more than Linux/macOS
+if [[ $? -ne 0 ]]; then
+  __target=${__script} # no symlink
+fi
+__app_home=$(cd $(dirname ${__target})/.. >&-; pwd -P)
+
+__comp_home=${__target%/*/*}
 # Determine if we're in the SDK or distributed
 if [[ ${__comp_home%/*} == /opt/cdap ]]; then
   __app_home=${__comp_home}
   __cdap_home=/opt/cdap
 else
   # We're in the SDK, __app_home and __cdap_home are identical
-  __app_home=$(dirname ${__script_bin})
   __cdap_home=${__app_home}
 fi
-
-export CDAP_HOME=${__cdap_home}
 
 # Source our functions script, which will be located with us
 source "${__app_home}"/bin/functions.sh
@@ -43,6 +47,8 @@ __fn_home=$(cdap_home)
 if [[ ${__cdap_home} != ${__fn_home} ]]; then
   die "CDAP_HOME doesn't match output of cdap_home function! Aborting!"
 fi
+
+export CDAP_HOME=${__cdap_home}
 
 # Load user-modifiable configuration
 test -f "${CDAP_CONF}"/cdap-env.sh && source "${CDAP_CONF}"/cdap-env.sh

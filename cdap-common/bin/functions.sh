@@ -120,7 +120,8 @@ cdap_home() {
     echo ${CDAP_HOME}
     return 0
   fi
-  local readonly __script=${BASH_SOURCE[0]} __script_bin=$(dirname ${__script})
+  local readonly __script=${BASH_SOURCE[0]}
+  local readonly __script_bin=$(cd $(dirname ${__script}); pwd -P)
   local readonly __comp_home=${__script%/*/*}
   if [[ ${__comp_home%/*} == /opt/cdap ]]; then
     __app_home=${__comp_home}
@@ -748,6 +749,9 @@ cdap_sdk_start() {
   CLASSPATH=$(find "${CDAP_HOME}/lib" -type f | sort | tr '\n' ':')
   CLASSPATH="${CLASSPATH}:${CDAP_HOME}/conf/"
 
+  # SDK requires us to be in CDAP_HOME
+  cd ${CDAP_HOME}
+
   # Start SDK processes
   echo -n "$(date) Starting CDAP Standalone (SDK) ..."
   if ${__foreground}; then
@@ -758,7 +762,7 @@ cdap_sdk_start() {
     return ${__ret}
   else
     nohup nice -1 "${JAVA}" ${JVM_OPTS[@]} ${ROUTER_OPTS} -classpath "${CLASSPATH}" co.cask.cdap.StandaloneMain \
-      2>&1 < /dev/null >> "${LOG_DIR}"/cdap.log &
+      </dev/null >>"${LOG_DIR}"/cdap.log 2>&1 &
     __ret=${?}
     __pid=${!}
     echo ${__pid} > ${__pidfile}
