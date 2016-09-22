@@ -2,7 +2,7 @@
     "artifact": {
         "name": "cdap-data-pipeline",
         "scope": "SYSTEM",
-        "version": "3.5.1"
+        "version": "3.5.2-SNAPSHOT"
     },
     "description": "Training model using Naive-Bayes Classifier",
     "name": "NaiveBayesTrainer",
