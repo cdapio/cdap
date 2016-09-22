@@ -21,6 +21,7 @@ import PublishPipelineWizardConfig from 'services/WizardConfigs/PublishPipelineW
 import PublishPipelineAction from 'services/WizardStores/PublishPipeline/PublishPipelineActions.js';
 import PublishPipelineActionCreator from 'services/WizardStores/PublishPipeline/ActionCreator.js';
 import head from 'lodash/head';
+import {MyPipelineApi} from 'api/pipeline';
 
 export default class PublishPipelineWizard extends Component {
   constructor(props) {
@@ -58,7 +59,17 @@ export default class PublishPipelineWizard extends Component {
     });
   }
   publishPipeline() {
-    console.log('Publish pipelein');
+    let action = this.props.input.action;
+    let artifact = head(action.arguments.filter(arg => arg.name === 'artifact')).value;
+    let {name, pipelineConfig} = PublishPipelineWizardStore.getState().pipelinemetadata;
+    return MyPipelineApi
+      .publish({
+        namespace: 'default',
+        appId: name
+      }, {
+        artifact,
+        config: pipelineConfig
+      });
   }
   render() {
     return (
