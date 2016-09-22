@@ -18,39 +18,42 @@ import React from 'react';
 import GeneralInfoStep from 'components/CaskWizards/StreamCreate/GeneralInfoStep';
 import SchemaStep from 'components/CaskWizards/StreamCreate/SchemaStep';
 import ThresholdStep from 'components/CaskWizards/StreamCreate/ThresholdStep';
+import UploadStep from 'components/CaskWizards/StreamCreate/UploadStep';
+import T from 'i18n-react';
+
 const CreateStreamWizardConfig = {
   steps: [
     {
       id: 'general',
-      shorttitle: 'General Information',
-      title: 'General',
-      description: 'Provide information about Stream you want to create.',
+      shorttitle: T.translate('features.Wizard.StreamCreate.Step1.shorttitle'),
+      title: T.translate('features.Wizard.StreamCreate.Step1.title'),
+      description: T.translate('features.Wizard.StreamCreate.Step1.description'),
       content: (<GeneralInfoStep />),
       requiredFields: ['name'],
       onSubmitGoTo: 'uploaddata'
     },
     {
       id: 'schema',
-      shorttitle: 'Setup Format and Schema',
-      title: 'Set Format and Schema',
-      description: 'Setting format and schema allows you to perform schema-on-read.',
+      shorttitle: T.translate('features.Wizard.StreamCreate.Step2.shorttitle'),
+      title: T.translate('features.Wizard.StreamCreate.Step2.title'),
+      description: T.translate('features.Wizard.StreamCreate.Step2.description'),
       content: (<SchemaStep />),
       onSubmitGoTo: 'uploaddata'
     },
     {
       id: 'threshold',
-      shorttitle: 'Trigger Setup',
-      title: 'Setup Trigger',
-      description: 'Setting up Trigger configures system to notify systems observing to start processing.',
+      shorttitle: T.translate('features.Wizard.StreamCreate.Step3.shorttitle'),
+      title: T.translate('features.Wizard.StreamCreate.Step3.title'),
+      description: T.translate('features.Wizard.StreamCreate.Step3.description'),
       content: (<ThresholdStep />),
       onSubmitGoTo: 'uploaddata'
     },
     {
       id: 'uploaddata',
-      shorttitle: 'Upload Data',
-      title: 'Upload Data',
-      description: 'Upload data to the stream you just created.',
-      content: <h1> Upload Step </h1>
+      shorttitle: T.translate('features.Wizard.StreamCreate.Step4.shorttitle'),
+      title: T.translate('features.Wizard.StreamCreate.Step4.title'),
+      description: T.translate('features.Wizard.StreamCreate.Step4.description'),
+      content: (<UploadStep />)
     }
   ]
 };
