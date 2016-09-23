@@ -17,8 +17,10 @@
 import React, {PropTypes} from 'react';
 import StreamCreateWizard from 'components/CaskWizards/StreamCreate';
 import UploadDataWizard from 'components/CaskWizards/UploadData';
+import PublishPipelineWizard from 'components/CaskWizards/PublishPipeline';
 import CreateStreamStore from 'services/WizardStores/CreateStream/CreateStreamStore';
 import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
+import PublishPipelineStore from 'services/WizardStores/PublishPipeline/PublishPipelineStore';
 
 const WizardTypesMap = {
   'create_stream': {
@@ -28,6 +30,10 @@ const WizardTypesMap = {
   'load_datapack': {
     tag: UploadDataWizard,
     store: UploadDataStore
+  },
+  'create_app': {
+    tag: PublishPipelineWizard,
+    store: PublishPipelineStore
   }
 };
 

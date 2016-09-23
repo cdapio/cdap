@@ -16,19 +16,30 @@
 import React, { Component, PropTypes } from 'react';
 import WizardModal from 'components/WizardModal';
 import Wizard from 'components/Wizard';
-import CreateStreamStore from 'services/WizardStores/CreateStream/CreateStreamStore';
-import CreateStreamActions from 'services/WizardStores/CreateStream/CreateStreamActions';
-import { PublishStream } from 'services/WizardStores/CreateStream/ActionCreator';
-import CreateStreamWizardConfig from 'services/WizardConfigs/CreateStreamWizardConfig';
+import PublishPipelineWizardStore from 'services/WizardStores/PublishPipeline/PublishPipelineStore';
+import PublishPipelineWizardConfig from 'services/WizardConfigs/PublishPipelineWizardConfig';
+import PublishPipelineAction from 'services/WizardStores/PublishPipeline/PublishPipelineActions.js';
+import PublishPipelineActionCreator from 'services/WizardStores/PublishPipeline/ActionCreator.js';
+import head from 'lodash/head';
+import {MyPipelineApi} from 'api/pipeline';
 import T from 'i18n-react';
-require('./StreamCreate.less');
 
-export default class StreamCreateWizard extends Component {
+export default class PublishPipelineWizard extends Component {
   constructor(props) {
     super(props);
     this.state = {
       showWizard: this.props.isOpen
     };
+  }
+  componentWillMount() {
+    let action = this.props.input.action;
+    let filename = head(action.arguments.filter(arg => arg.name === 'config')).value;
+    PublishPipelineActionCreator
+      .fetchPipelineConfig({
+        entityName: this.props.input.package.name,
+        entityVersion: this.props.input.package.version,
+        filename
+      });
   }
   toggleWizard(returnResult) {
     if (this.state.showWizard) {
@@ -44,25 +55,25 @@ export default class StreamCreateWizard extends Component {
     });
   }
   componentWillUnmount() {
-    CreateStreamStore.dispatch({
-      type: CreateStreamActions.onReset
+    PublishPipelineWizardStore.dispatch({
+      type: PublishPipelineAction.onReset
     });
   }
-  createStream() {
-    let state = CreateStreamStore.getState();
-    // FIXME: How to handle empty error messages???
-    return PublishStream()
-      .flatMap(
-        res => {
-          if (res) {
-            return Promise.resolve(res);
-          }
-          return Promise.resolve(state.general.name);
-        }
-      );
+  publishPipeline() {
+    let action = this.props.input.action;
+    let artifact = head(action.arguments.filter(arg => arg.name === 'artifact')).value;
+    let {name, pipelineConfig} = PublishPipelineWizardStore.getState().pipelinemetadata;
+    return MyPipelineApi
+      .publish({
+        namespace: 'default',
+        appId: name
+      }, {
+        artifact,
+        config: pipelineConfig
+      });
   }
   render() {
-    let wizardModalTitle = (this.props.input.package.label ? this.props.input.package.label + " | " : '') + T.translate('features.Wizard.StreamCreate.headerlabel') ;
+    let wizardModalTitle = (this.props.input.package.label ? this.props.input.package.label + " | " : '') + T.translate('features.Wizard.PublishPipeline.headerlabel') ;
     return (
       <div>
         {
@@ -75,10 +86,10 @@ export default class StreamCreateWizard extends Component {
               className="create-stream-wizard"
             >
               <Wizard
-                wizardConfig={CreateStreamWizardConfig}
-                onSubmit={this.createStream.bind(this)}
+                wizardConfig={PublishPipelineWizardConfig}
+                onSubmit={this.publishPipeline.bind(this)}
                 onClose={this.toggleWizard.bind(this)}
-                store={CreateStreamStore}/>
+                store={PublishPipelineWizardStore}/>
             </WizardModal>
           :
             null
@@ -87,7 +98,7 @@ export default class StreamCreateWizard extends Component {
     );
   }
 }
-StreamCreateWizard.propTypes = {
+PublishPipelineWizard.propTypes = {
   isOpen: PropTypes.bool,
   input: PropTypes.any,
   onClose: PropTypes.func
