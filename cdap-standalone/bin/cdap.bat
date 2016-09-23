@@ -1,39 +1,46 @@
+:: ##############################################################################
+:: ##
+:: ## Copyright (c) 2014-2016 Cask Data, Inc.
+:: ##
+:: ## Licensed under the Apache License, Version 2.0 (the "License"); you may not
+:: ## use this file except in compliance with the License. You may obtain a copy
+:: ## of the License at
+:: ##
+:: ## http://www.apache.org/licenses/LICENSE-2.0
+:: ##
+:: ## Unless required by applicable law or agreed to in writing, software
+:: ## distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+:: ## WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+:: ## License for the specific language governing permissions and limitations
+:: ## under the License.
+:: ##
+:: ##############################################################################
+
 @echo OFF
+SET APP=%0
+SET "ORIG_DIR=%cd%"
 
-REM #################################################################################
-REM ##
-REM ## Copyright (c) 2014-2016 Cask Data, Inc.
-REM ##
-REM ## Licensed under the Apache License, Version 2.0 (the "License"); you may not
-REM ## use this file except in compliance with the License. You may obtain a copy of
-REM ## the License at
-REM ##
-REM ## http://www.apache.org/licenses/LICENSE-2.0
-REM ##
-REM ## Unless required by applicable law or agreed to in writing, software
-REM ## distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-REM ## WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-REM ## License for the specific language governing permissions and limitations under
-REM ## the License.
-REM ##
-REM #################################################################################
-
-SET ORIG_DIR=%cd%
-SET CDAP_HOME=%~dp0
-SET CDAP_HOME=%CDAP_HOME:~0,-5%
+REM Double-quotes surround string to include a space character but are not included in string
+REM As CDAP_HOME can include a space, any use of it needs to be surrounded in double-quotes
+SET "CDAP_HOME=%~dp0"
+SET "CDAP_HOME=%CDAP_HOME:~0,-5%"
 SET CDAP_VERSION=@@project.version@@
-SET JAVACMD=%JAVA_HOME%\bin\java.exe
+
+REM Double-quotes surround string to include a space character but are not included in string
+REM As JAVACMD can include a space, any use of it needs to be surrounded in double-quotes
+SET "JAVACMD=%JAVA_HOME%\bin\java.exe"
+
 SET DEFAULT_DEBUG_PORT=5005
-SET DEFAULT_JVM_OPTS=-Xmx3096m -XX:MaxPermSize=256m
-SET HADOOP_HOME_OPTS=-Dhadoop.home.dir=%CDAP_HOME%\libexec
+SET "DEFAULT_JVM_OPTS=-Xmx3096m -XX:MaxPermSize=256m"
+REM These double-quotes are included in string
+SET HADOOP_HOME_OPTS=-Dhadoop.home.dir="%CDAP_HOME%\libexec"
 SET SECURITY_OPTS=-Dhadoop.security.group.mapping=org.apache.hadoop.security.JniBasedUnixGroupsMappingWithFallback
 
 REM %CDAP_HOME%
-SET ORIG_PATH=%PATH%
-SET PATH=%PATH%;%CDAP_HOME%\libexec\bin;%CDAP_HOME%\lib\native
-SET APP=%0
+SET "ORIG_PATH=%PATH%"
+SET "PATH=%PATH%;%CDAP_HOME%\libexec\bin;%CDAP_HOME%\lib\native"
 
-cd %CDAP_HOME%
+cd "%CDAP_HOME%"
 
 REM Process command line
 IF "%1" == "cli" GOTO CLI
@@ -59,7 +66,7 @@ GOTO SDK_USAGE
 :CHECK_WINDOWS
 REM Check for 64-bit version of OS. Currently not supporting 32-bit Windows.
 IF NOT EXIST "%PROGRAMFILES(X86)%" (
-  echo 32-bit Windows operating system is currently not supported
+  echo 32-bit Windows operating system is currently not supported.
   GOTO FINALLY
 )
 GOTO :EOF
@@ -69,24 +76,26 @@ REM Check for correct setting for JAVA_HOME path
 if [%JAVA_HOME%] == [] (
   echo ERROR: JAVA_HOME is set to an invalid directory: %JAVA_HOME%
   echo Please set the JAVA_HOME variable in your environment to match the location of your Java installation.
-  GOTO FINALLY
+  EXIT /B 1
 )
 
 REM Check for Java version
 setlocal ENABLEDELAYEDEXPANSION
 set /a counter=0
-for /f "tokens=* delims= " %%f in ('%JAVACMD% -version 2^>^&1') do @(
+for /f "tokens=* delims= " %%f in ('"%JAVACMD%" -version 2^>^&1') do @(
   if "!counter!"=="0" set line=%%f
   set /a counter+=1
 )
-set line=%line:java version "1.=!!%
+set line=%line:*version "1.=!!%
 set line=%line:~0,1%
 set java_minimum=7
 set java_maximum=8
 if NOT "%line%" == "%java_minimum%" (
   if NOT "%line%" == "%java_maximum%" (
-    echo ERROR: Java version not supported. Please install Java %java_minimum% or %java_maximum%: other versions of Java are not supported.
-    GOTO FINALLY
+    echo ERROR: Java version ^(%line%^) is not supported.
+    echo Please install Java %java_minimum% or %java_maximum%: other versions of Java are not supported.
+    endlocal
+    EXIT /B 1
   )
 )
 endlocal
@@ -96,8 +105,8 @@ GOTO :EOF
 REM Check if Node.js is installed
 set nodejs_minimum=v0.10.36
 for %%x in (node.exe) do if [%%~$PATH:x]==[] (
-  echo Standalone CDAP requires Node.js but it's either not installed or not in the path. 1>&2
-  echo We recommend any version of Node.js starting with %nodejs_minimum%. Exiting. 1>&2
+  echo Standalone CDAP requires Node.js but it is either not installed or not in the path.
+  echo We recommend any version of Node.js starting with %nodejs_minimum%.
   GOTO FINALLY
 )
 
@@ -125,16 +134,20 @@ attrib -h %~dsp0MyProg.pid >NUL
 if exist %~dsp0MyProg.pid (
   for /F %%i in (%~dsp0MyProg.pid) do (
     setlocal ENABLEDELAYEDEXPANSION
-    for /F "TOKENS=2" %%b in ('TASKLIST /FI "PID eq %%i"') DO (
-      set lastPid=%%b
-    )
-    if "!lastPid!" == "%%i" (
-      echo CDAP is running as process %%i.
-      endlocal
-      EXIT /B 1
-    ) else (
-      REM If process is not running but PID file exists, delete PID file.
+    IF "%%i" == "No" (
       del %~dsp0MyProg.pid
+    ) else (
+      for /F "TOKENS=2" %%b in ('TASKLIST /FI "PID eq %%i"') DO (
+        set lastPid=%%b
+      )
+      if "!lastPid!" == "%%i" (
+        echo CDAP is running as process %%i.
+        endlocal
+        EXIT /B 1
+      ) else (
+        REM If process is not running but PID file exists, delete PID file.
+        del %~dsp0MyProg.pid
+      )
     )
     endlocal
   )
@@ -143,11 +156,11 @@ attrib +h %~dsp0MyProg.pid >NUL
 GOTO :EOF
 
 :CREATE_LOG_DIR
-mkdir %CDAP_HOME%\logs > NUL 2>&1
+mkdir "%CDAP_HOME%\logs" > NUL 2>&1
 GOTO :EOF
 
 :SET_ACCESS_TOKEN
-set auth_file=%HOMEPATH%\.cdap.accesstoken
+set "auth_file=%HOMEPATH%\.cdap.accesstoken"
 REM Check if token-file is provided. If not, use the default file.
 set tokenFileProvided=false
 for %%a in (%*) do (
@@ -162,7 +175,10 @@ if "%tokenFileProvided%" == "false" if exist %auth_file% (
 GOTO :EOF
 
 :TX_DEBUGGER
-SET CLASSPATH=%CDAP_HOME%\lib\*;%CDAP_HOME%\conf\
+REM As CLASSPATH can include a space, any use of it needs to be surrounded in double-quotes
+REM Double-quotes surround string to include a space character but are not included in string
+REM Note the trailing semi-colon so that the last directory entry is interpreted correctly
+SET "CLASSPATH=%CDAP_HOME%\lib\*;%CDAP_HOME%\conf\;"
 CALL :CHECK_WINDOWS
 CALL :CHECK_JAVA
 CALL :CREATE_LOG_DIR
@@ -173,11 +189,12 @@ set class=co.cask.cdap.data2.transaction.TransactionManagerDebuggerMain
 REM Skip first parameter
 for /f "usebackq tokens=1*" %%i in (`echo %*`) DO @ set params=%%j
 
-%JAVACMD% %DEFAULT_JVM_OPTS% %HADOOP_HOME_OPTS% %TOKEN_FILE_OPTS% -classpath %CLASSPATH% %class% %params%
+"%JAVACMD%" %DEFAULT_JVM_OPTS% %HADOOP_HOME_OPTS% %TOKEN_FILE_OPTS% -classpath "%CLASSPATH%" %class% %params%
 GOTO FINALLY
 
 :CLI
-SET CLASSPATH=%CDAP_HOME%\libexec\co.cask.cdap.cdap-cli-%CDAP_VERSION%.jar;%CDAP_HOME%\lib\co.cask.cdap.cdap-cli-%CDAP_VERSION%.jar;%CDAP_HOME%\conf
+REM See TX_DEBUGGER for notes on setting CLASSPATH
+SET "CLASSPATH=%CDAP_HOME%\libexec\co.cask.cdap.cdap-cli-%CDAP_VERSION%.jar;%CDAP_HOME%\lib\co.cask.cdap.cdap-cli-%CDAP_VERSION%.jar;%CDAP_HOME%\conf\;"
 CALL :CHECK_WINDOWS
 CALL :CHECK_JAVA
 
@@ -187,7 +204,7 @@ REM Skip first parameter if first parameter is "cli"
 set params=%*
 IF "%1" == "cli" for /f "usebackq tokens=1*" %%i in (`echo %*`) DO @ set params=%%j
 
-%JAVACMD% -classpath %CLASSPATH% %class% %params%
+"%JAVACMD%" -classpath "%CLASSPATH%" %class% %params%
 GOTO FINALLY
 
 :USAGE
@@ -198,6 +215,7 @@ echo   Commands:
 echo:
 echo     cli - Starts a CDAP CLI session
 echo     sdk - Sends the arguments to the SDK service
+echo     tx-debugger - Sends the arguments to the CDAP transaction debugger
 echo:
 echo   Get help for a command by executing:
 echo:
@@ -212,6 +230,7 @@ echo:
 echo Additional options with start or restart:
 echo:
 echo   --enable-debug [ ^<port^> ] to connect to a debug port for Standalone CDAP (default port is %DEFAULT_DEBUG_PORT%)
+echo:
 GOTO FINALLY
 
 :SDK_RESET
@@ -222,7 +241,7 @@ IF %ERRORLEVEL% == 0 (
   IF ERRORLEVEL 2 GOTO :FINALLY
   REM Delete logs and data directories
   echo Resetting Standalone CDAP...
-  rmdir /S /Q %CDAP_HOME%\logs %CDAP_HOME%\data > NUL 2>&1
+  rmdir /S /Q "%CDAP_HOME%\logs" "%CDAP_HOME%\data" > NUL 2>&1
   echo CDAP reset successfully.
 ) else (
   echo Stop it first using the 'cdap sdk stop' command.
@@ -230,14 +249,16 @@ IF %ERRORLEVEL% == 0 (
 GOTO FINALLY
 
 :SDK_START
-SET CLASSPATH=%CDAP_HOME%\lib\*;%CDAP_HOME%\conf\
 CALL :CHECK_PID
 IF %ERRORLEVEL% NEQ 0 (
   echo Stop it first using either the 'cdap sdk stop' or 'cdap sdk restart' commands.
   GOTO FINALLY
 )
+REM See TX_DEBUGGER for notes on setting CLASSPATH
+SET "CLASSPATH=%CDAP_HOME%\lib\*;%CDAP_HOME%\conf\;"
 CALL :CHECK_WINDOWS
 CALL :CHECK_JAVA
+IF %ERRORLEVEL% NEQ 0 GOTO FINALLY
 CALL :CHECK_NODE
 CALL :CREATE_LOG_DIR
 
@@ -273,11 +294,12 @@ IF "%3" == "--enable-debug" (
       GOTO FINALLY
     )
   )
-  set DEBUG_OPTIONS="-agentlib:jdwp=transport=dt_socket,address=localhost:!port!,server=y,suspend=n"
+  set "DEBUG_OPTIONS=-agentlib:jdwp=transport=dt_socket,address=localhost:!port!,server=y,suspend=n"
 )
 set class=co.cask.cdap.StandaloneMain
-
-start /B %JAVACMD% %DEFAULT_JVM_OPTS% %HADOOP_HOME_OPTS% !DEBUG_OPTIONS! %SECURITY_OPTS% -classpath %CLASSPATH% %class% >> %CDAP_HOME%\logs\cdap-process.log 2>&1 < NUL
+REM Note use of an empty title "" in the start command; without it, Windows will
+REM mis-interpret the JAVACMD incorrectly if it has spaces in it
+start "" /B "%JAVACMD%" %DEFAULT_JVM_OPTS% %HADOOP_HOME_OPTS% !DEBUG_OPTIONS! %SECURITY_OPTS% -classpath "%CLASSPATH%" %class% >> "%CDAP_HOME%\logs\cdap-process.log" 2>&1 < NUL
 echo Starting Standalone CDAP...
 
 for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq java.exe"') DO SET MyPID=%%b
@@ -286,21 +308,25 @@ SET lastPid=%MyPID%
 attrib +h %~dsp0MyProg.pid >NUL
 
 :SearchLogs
-findstr /R /C:".*Failed to start server.*" %CDAP_HOME%\logs\cdap-process.log >NUL 2>&1
+<nul (SET /p _tmp=.)
+findstr /R /C:".*Failed to start server.*" "%CDAP_HOME%\logs\cdap-process.log" >NUL 2>&1
 if %errorlevel% == 0 GOTO ServerError
 
-findstr /R /C:"..* started successfully.*" %CDAP_HOME%\logs\cdap-process.log >NUL 2>&1
+findstr /R /C:"..* started successfully.*" "%CDAP_HOME%\logs\cdap-process.log" >NUL 2>&1
 if not %errorlevel% == 0 GOTO SearchLogs
 if %errorlevel% == 0 GOTO ServerSuccess
 :EndSearchLogs
 
 :ServerError
-echo Failed to start: please check logs for more information.
 ENDLOCAL
-GOTO SDK_STOP
+echo Failed to start: please check logs for more information.
+echo See %CDAP_HOME%\logs\cdap-process.log.
+CALL :_SDK_STOP 0
+GOTO FINALLY
 
 :ServerSuccess
-echo Standalone CDAP started succesfully.
+echo:
+echo Standalone CDAP started.
 
 IF NOT "!DEBUG_OPTIONS!" == "" (
   echo Remote debugger agent started on port !port!.
@@ -308,11 +334,13 @@ IF NOT "!DEBUG_OPTIONS!" == "" (
 ENDLOCAL
 
 REM Sleep for 5 seconds to wait for Node.js startup
+echo Waiting for Node.js to start...
 PING 127.0.0.1 -n 6 > NUL 2>&1
 
 for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq node.exe"') DO SET MyNodePID=%%b
 echo %MyNodePID% > %~dsp0MyProgNode.pid
 attrib +h %~dsp0MyProgNode.pid >NUL
+echo Standalone CDAP started succesfully.
 GOTO FINALLY
 
 :SDK_STOP
@@ -325,10 +353,14 @@ SET show_error_messages=%1%
 SET error_code=0
 echo Stopping Standalone CDAP...
 attrib -h %~dsp0MyProg.pid >NUL
-if exist %~dsp0MyProg.pid (
+IF exist %~dsp0MyProg.pid (
   for /F %%i in (%~dsp0MyProg.pid) do (
-    taskkill /F /PID %%i >NUL 2>&1
-    del %~dsp0MyProg.pid 1>NUL 2>&1
+    IF "%%i" == "No" (
+      IF %show_error_messages% EQU 1 echo No valid PID in PID file.    
+    ) else (
+      taskkill /F /PID %%i >NUL 2>&1
+      del %~dsp0MyProg.pid 1>NUL 2>&1
+    )
   )
 ) else (
   IF %show_error_messages% EQU 1 echo No PID file found.
@@ -339,10 +371,14 @@ REM Sleep for 5 seconds
 PING 127.0.0.1 -n 6 > NUL 2>&1
 
 attrib -h %~dsp0MyProgNode.pid >NUL
-if exist %~dsp0MyProgNode.pid (
+IF exist %~dsp0MyProgNode.pid (
   for /F %%i in (%~dsp0MyProgNode.pid) do (
-    taskkill /F /PID %%i >NUL 2>&1
-    del %~dsp0MyProgNode.pid 1>NUL 2>&1
+    IF "%%i" == "No" (
+      IF %show_error_messages% EQU 1 echo No valid PID in Node PID file.
+    ) else (
+      taskkill /F /PID %%i >NUL 2>&1
+      del %~dsp0MyProgNode.pid 1>NUL 2>&1
+    )
   )
 ) else (
   IF %show_error_messages% EQU 1 echo No Node PID file found.
@@ -389,17 +425,17 @@ GOTO SDK_START
 :LOG_ROTATE
 setlocal ENABLEDELAYEDEXPANSION
 set extension=%1.log
-for /F "TOKENS=*" %%b in ('dir  /a-d %CDAP_HOME%\logs 2^>NUL ^| find /c "%extension%" 2^>NUL') DO (
+for /F "TOKENS=*" %%b in ('dir  /a-d "%CDAP_HOME%\logs" 2^>NUL ^| find /c "%extension%" 2^>NUL') DO (
   set /a num=%%b
   FOR /L %%i IN (!num!,-1,1) DO (
     set /a prev_num=%%i+1
-    rename %CDAP_HOME%\logs\%extension%.%%i %extension%.!prev_num! >NUL 2>NUL
+    rename "%CDAP_HOME%\logs\%extension%.%%i" %extension%.!prev_num! >NUL 2>NUL
   )
-  rename %CDAP_HOME%\logs\%extension% %extension%.1 >NUL 2>NUL
+  rename "%CDAP_HOME%\logs\%extension%" %extension%.1 >NUL 2>NUL
 )
 endlocal
 GOTO :EOF
 
 :FINALLY
 cd %ORIG_DIR%
-SET PATH=%ORIG_PATH%
+SET "PATH=%ORIG_PATH%"
