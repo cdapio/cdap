@@ -32,10 +32,8 @@ export default function WizardStepContent(props) {
           <h4>{title}</h4>
           <p>{description}</p>
         </div>
-        <div className="pull-right">
-          {currentStep}
-            /
-          {stepsCount}
+        <div className="pull-right progress-counter">
+          {currentStep} / {stepsCount}
         </div>
       </div>
       <div className="step-content">

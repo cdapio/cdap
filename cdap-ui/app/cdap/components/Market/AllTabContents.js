@@ -15,9 +15,9 @@
  */
 
 import React, {Component} from 'react';
-import SearchTextBox from '../SearchTextBox';
+// import SearchTextBox from '../SearchTextBox';
 import MarketPlaceEntity from '../MarketPlaceEntity';
-import T from 'i18n-react';
+// import T from 'i18n-react';
 import MarketStore from './store/market-store.js';
 import Fuse from 'fuse.js';
 import MarketEntityModal from 'components/MarketEntityModal';
@@ -137,11 +137,13 @@ export default class AllTabContents extends Component {
 
     return (
       <div className="all-tab-content">
-        <SearchTextBox
-          placeholder={T.translate('features.Market.search-placeholder')}
-          value={this.state.searchStr}
-          onChange={this.onSearch.bind(this)}
-        />
+        {/*
+          <SearchTextBox
+            placeholder={T.translate('features.Market.search-placeholder')}
+            value={this.state.searchStr}
+            onChange={this.onSearch.bind(this)}
+          />
+        */}
         <div className="body-section">
           {this.handleBodyRender()}
 

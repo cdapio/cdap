@@ -44,6 +44,17 @@ export default class PlusButtonModal extends Component {
     });
     this.props.onCloseHandler();
   }
+
+  getIconForView(view, opposite) {
+    const resourceCenterIconPath = '/cdap_assets/img/CDAP_ResourceCenter_inverse.png';
+    const marketIconPath = '/cdap_assets/img/CaskMarket_inverse.png';
+
+    if (opposite) {
+      return view === 'resourcecenter' ? marketIconPath : resourceCenterIconPath;
+    } else {
+      return view === 'resourcecenter' ? resourceCenterIconPath : marketIconPath;
+    }
+  }
   render() {
     const market = T.translate('commons.market');
     const resourceCenter = T.translate('commons.resource-center');
@@ -57,6 +68,10 @@ export default class PlusButtonModal extends Component {
       >
         <ModalHeader>
           <span className="pull-left">
+            <img
+              src={this.getIconForView(this.state.viewMode)}
+              className="modal-header-icon"
+            />
             { this.state.viewMode === 'resourcecenter' ? resourceCenter : market }
           </span>
           <div className="pull-right">
@@ -64,7 +79,13 @@ export default class PlusButtonModal extends Component {
               className="btn btn-sm btn-resource-center"
               onClick={this.toggleView.bind(this)}
             >
-              { this.state.viewMode === 'resourcecenter' ? market : resourceCenter }
+              <img
+                src={this.getIconForView(this.state.viewMode, true)}
+                className="button-icon"
+              />
+              <span>
+                { this.state.viewMode === 'resourcecenter' ? market : resourceCenter }
+              </span>
             </button>
           </div>
         </ModalHeader>
