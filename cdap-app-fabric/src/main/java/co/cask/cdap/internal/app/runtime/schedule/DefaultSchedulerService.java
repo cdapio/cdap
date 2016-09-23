@@ -22,7 +22,9 @@ import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -87,7 +89,7 @@ public class DefaultSchedulerService {
       }
 
       try {
-        taskRunner.run(Ids.namespace(namespaceId).app(applicationId, appVersion).program(programType, programId),
+        taskRunner.run(new ApplicationId(namespaceId, applicationId, appVersion).program(programType, programId),
                        builder.build(), userOverrides).get();
       } catch (TaskExecutionException e) {
         throw new JobExecutionException(e.getMessage(), e.getCause(), e.isRefireImmediately());

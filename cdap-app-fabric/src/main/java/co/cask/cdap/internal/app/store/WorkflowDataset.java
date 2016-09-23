@@ -390,6 +390,6 @@ public class WorkflowDataset extends AbstractDataset {
 
   private static MDSKey.Builder getRowKeyBuilder(WorkflowId id, long time) {
     return new MDSKey.Builder().add(id.getNamespace())
-      .add(id.getApplication()).add(id.getProgram()).add(time);
+      .add(id.getApplication()).add(id.getVersion()).add(id.getProgram()).add(time);
   }
 }

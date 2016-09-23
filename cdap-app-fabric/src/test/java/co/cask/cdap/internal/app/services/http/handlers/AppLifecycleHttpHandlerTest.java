@@ -189,9 +189,9 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     // Get updated app info for the app with default versionId by non-versioned API
     JsonObject appDetailsDefault2withVersion = getAppDetails(appId.getNamespace(), appId.getApplication());
     Assert.assertEquals(GSON.toJson(configDefault2), appDetailsDefault2withVersion.get("configuration").getAsString());
-    deleteAppVersion(appId, 200);
+    deleteApp(appId, 200);
     deleteApp(appIdDefault, 200);
-    deleteAppVersion(appIdV2, 200);
+    deleteApp(appIdV2, 200);
   }
 
   /**
@@ -397,8 +397,8 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     ApplicationId appId = new ApplicationId(TEST_NAMESPACE1, "WordCountApp");
     ProgramId program = appId.program(ProgramType.FLOW, "WordCountFlow");
-    startProgramVersioned(program, ImmutableMap.<String, String>of(), 200);
-    waitStateVersioned(program, "RUNNING");
+    startProgram(program, 200);
+    waitState(program, "RUNNING");
     // Try to delete an App while its flow is running
     response = doDelete(getVersionedAPIPath(
       String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion()),
@@ -408,8 +408,8 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
                           " still running: "
                           + program.getProgram(), readResponse(response));
 
-    stopProgramVersioned(program, null, 200, null);
-    waitStateVersioned(program, "STOPPED");
+    stopProgram(program, null, 200, null);
+    waitState(program, "STOPPED");
 
     //Delete the App after stopping the flow
     response = doDelete(getVersionedAPIPath(

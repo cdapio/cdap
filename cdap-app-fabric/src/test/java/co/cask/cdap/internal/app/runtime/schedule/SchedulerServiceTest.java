@@ -144,8 +144,8 @@ public class SchedulerServiceTest {
     store.addApplication(appId, createNewSpecification(applicationSpecification, program,
                                                        programType, TIME_SCHEDULE_1));
 
-    ProgramId programInOtherNamespace = Ids.namespace("otherNamespace").app(appId.getApplication())
-      .program(program.getType(), program.getProgram());
+    ProgramId programInOtherNamespace = new ProgramId("otherNamespace", appId.getApplication(), program.getType(),
+                                                      program.getProgram());
 
     List<String> scheduleIds = schedulerService.getScheduleIds(program, programType);
     Assert.assertEquals(1, scheduleIds.size());

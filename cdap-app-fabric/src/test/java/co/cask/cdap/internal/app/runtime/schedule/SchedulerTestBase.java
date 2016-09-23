@@ -66,7 +66,7 @@ public abstract class SchedulerTestBase {
   protected static Injector injector;
 
   private static final ApplicationId APP_ID = NamespaceId.DEFAULT.app("AppWithStreamSizeSchedule");
-  private static final ProgramId PROGRAM_ID = APP_ID.program(ProgramType.WORKFLOW, "SampleWorkflow");
+  private static final ProgramId PROGRAM_ID = APP_ID.workflow("SampleWorkflow");
   private static final String SCHEDULE_NAME_1 = "SampleSchedule1";
   private static final String SCHEDULE_NAME_2 = "SampleSchedule2";
   private static final SchedulableProgramType PROGRAM_TYPE = SchedulableProgramType.WORKFLOW;

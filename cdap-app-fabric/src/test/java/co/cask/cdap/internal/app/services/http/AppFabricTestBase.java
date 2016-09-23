@@ -552,7 +552,7 @@ public abstract class AppFabricTestBase {
     Assert.assertEquals(expectedResponseCode, response.getStatusLine().getStatusCode());
   }
 
-  protected void deleteAppVersion(ApplicationId app, int expectedResponseCode) throws Exception {
+  protected void deleteApp(ApplicationId app, int expectedResponseCode) throws Exception {
     HttpResponse response = doDelete(getVersionedAPIPath(
       String.format("/apps/%s/versions/%s", app.getApplication(), app.getVersion()), app.getNamespace()));
     Assert.assertEquals(expectedResponseCode, response.getStatusLine().getStatusCode());
@@ -618,14 +618,15 @@ public abstract class AppFabricTestBase {
   /**
    * Tries to start the given program with the given runtime arguments and expect the call completed with the status.
    */
-  protected void startProgramVersioned(ProgramId program, Map<String, String> args, int expectedStatusCode)
+  protected void startProgram(ProgramId program, int expectedStatusCode)
     throws Exception {
     String path = String.format("apps/%s/versions/%s/%s/%s/start",
                                 program.getApplication(),
                                 program.getVersion(),
                                 program.getType().getCategoryName(),
                                 program.getProgram());
-    HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespace()), GSON.toJson(args));
+    HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespace()),
+                                   GSON.toJson(ImmutableMap.<String, String>of()));
     Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
   }
 
@@ -677,7 +678,7 @@ public abstract class AppFabricTestBase {
     }
   }
 
-  protected void stopProgramVersioned(ProgramId program, String runId, int expectedStatusCode, String expectedMessage)
+  protected void stopProgram(ProgramId program, String runId, int expectedStatusCode, String expectedMessage)
     throws Exception {
     String path;
     if (runId == null) {
@@ -717,7 +718,7 @@ public abstract class AppFabricTestBase {
   /**
    * Waits for the given program to transit to the given state.
    */
-  protected void waitStateVersioned(final ProgramId programId, String state) throws Exception {
+  protected void waitState(final ProgramId programId, String state) throws Exception {
     Tasks.waitFor(state, new Callable<String>() {
       @Override
       public String call() throws Exception {
@@ -773,7 +774,7 @@ public abstract class AppFabricTestBase {
   /**
    * Waits for the given program to transit to the given state.
    */
-  protected String getProgramVersionStatus(final ProgramId programId) throws Exception {
+  protected String getProgramStatus(final ProgramId programId) throws Exception {
 
         String path = String.format("apps/%s/versions/%s/%s/%s/status",
                                     programId.getApplication(),
