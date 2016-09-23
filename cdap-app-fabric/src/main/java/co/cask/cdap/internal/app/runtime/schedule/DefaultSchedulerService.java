@@ -69,10 +69,10 @@ public class DefaultSchedulerService {
 
       String namespaceId = parts[0];
       String applicationId = parts[1];
-      String appVersion = parts[3];
-      ProgramType programType = ProgramType.valueOf(parts[4]);
-      String programId = parts[5];
-      String scheduleName = parts[6];
+      String appVersion = parts[2];
+      ProgramType programType = ProgramType.valueOf(parts[3]);
+      String programId = parts[4];
+      String scheduleName = parts[5];
 
       LOG.debug("Schedule execute {}", key);
       ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
