@@ -16,16 +16,22 @@
 
 import React, {PropTypes} from 'react';
 import StreamCreateWizard from 'components/CaskWizards/StreamCreate';
+import UploadDataWizard from 'components/CaskWizards/UploadData';
 import CreateStreamStore from 'services/WizardStores/CreateStream/CreateStreamStore';
+import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
 
 const WizardTypesMap = {
   'create_stream': {
     tag: StreamCreateWizard,
     store: CreateStreamStore
+  },
+  'load_datapack': {
+    tag: UploadDataWizard,
+    store: UploadDataStore
   }
 };
 
-export default function AbstractWizard({isOpen, onClose, wizardType, context}) {
+export default function AbstractWizard({isOpen, onClose, wizardType, input}) {
   if (!isOpen) {
     return null;
   }
@@ -38,7 +44,7 @@ export default function AbstractWizard({isOpen, onClose, wizardType, context}) {
       isOpen,
       onClose,
       store,
-      context
+      input
     })
   );
 }
@@ -46,5 +52,5 @@ AbstractWizard.propTypes = {
   isOpen: PropTypes.bool,
   wizardType: PropTypes.string,
   onClose: PropTypes.func,
-  context: PropTypes.string
+  input: PropTypes.any
 };

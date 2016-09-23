@@ -16,7 +16,10 @@
 
 .market-entity-modal.modal-dialog {
   width: 60vw;
+  max-width: 1000px;
   margin-top: 180px;
+  max-height: 360px;
+
   .modal-content {
     border-radius: 0;
     .modal-header {
@@ -50,9 +53,13 @@
     .modal-body {
       max-height: 55vh;
       overflow-y: auto;
+      hr {
+        margin-top: 10px;
+        margin-bottom: 10px;
+      }
       .entity-information {
-        padding: 25px;
-        display: flex;
+        padding: 0;
+        display: inline-flex;
 
         .entity-modal-image {
           width: 125px;
@@ -65,51 +72,55 @@
         }
         .entity-content {
           display: flex;
-          flex-direction: column;
+          flex-direction: row;
           .entity-description {
             margin-left: 10px;
+            width: 70%;
           }
-          .market-entity-actions {
-            margin-top: 10px;
+          .entity-metadata {
+            >div {
+              color: gray;
+            }
+          }
+        }
+      }
+      .market-entity-actions {
 
-            .action-container {
-              display: inline-flex;
-              flex-direction: column;
-
-              .action {
-                display: inline-block;
-                width: 150px;
-                margin: 10px;
-                border: 1px solid #ebebeb;
-                padding: 10px 0;
-                font-weight: 500;
-
-                .btn.btn-default {
-                  &.btn-completed {
-                    background-color: #eee;
-                  }
-                }
-                .action-image {
-                  width: 100px;
-                  height: 100px;
-                  background-color: grey;
-                }
-                .fa {
-                  &[class*="icon-"] {
-                    font-size: 60px;
-                    margin: 5px 0;
-                  }
-                }
-              }
-              .fa.fa-check-circle {
-                margin-left: 5px;
-                font-size: 20px;
-                visibility: hidden;
-                &.show {
-                  visibility: visible;
-                }
+        .action-container {
+          display: inline-flex;
+          flex-direction: column;
+          .action {
+            display: inline-block;
+            width: 150px;
+            margin: 10px;
+            border: 1px solid #ebebeb;
+            padding: 10px 0;
+            font-weight: 500;
+            .btn.btn-default {
+              &.btn-completed {
+                background-color: #eee;
               }
             }
+            .action-image {
+              width: 100px;
+              height: 100px;
+              background-color: grey;
+            }
+            .fa {
+              &[class*="icon-"],
+              &.fa-upload {
+                font-size: 60px;
+                margin: 5px 0;
+              }
+            }
+          }
+        }
+        .fa.fa-check-circle {
+          margin-left: 5px;
+          font-size: 20px;
+          visibility: hidden;
+          &.show {
+            visibility: visible;
           }
         }
       }

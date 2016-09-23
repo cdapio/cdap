@@ -60,7 +60,6 @@ const SimpleSchemaWrapper = connect(
 )(SimpleSchema);
 
 export default function SchemaStep() {
-  console.log('asdasd', CreateStreamStore);
   return (
     <Provider store={CreateStreamStore}>
       <Form
