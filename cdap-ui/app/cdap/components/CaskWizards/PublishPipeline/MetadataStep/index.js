@@ -48,14 +48,14 @@ const PipelineName = connect(
 export default function MetadataStep() {
   return (
     <Provider store={PublishPipelineStore}>
-      <Form className="pipeline-publish-metadata-step">
+      <Form className="form-horizontal pipeline-publish-metadata-step">
         <FormGroup>
           <Col xs="3">
             <Label>
               {T.translate('features.Wizard.PublishPipeline.pipelinenameplaceholder')}
             </Label>
           </Col>
-          <Col xs="9">
+          <Col xs="7">
             <PipelineName />
           </Col>
         </FormGroup>

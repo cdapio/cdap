@@ -20,6 +20,7 @@ import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
 import UploadDataWizardConfig from 'services/WizardConfigs/UploadDataWizardConfig';
 import UploadDataActions from 'services/WizardStores/UploadData/UploadDataActions';
 import UploadDataActionCreator from 'services/WizardStores/UploadData/ActionCreator';
+import T from 'i18n-react';
 
 import head from 'lodash/head';
 
@@ -81,9 +82,10 @@ export default class UploadDataWizard extends Component {
     });
   }
   render() {
+    let wizardModalTitle = (this.props.input.package.label ? this.props.input.package.label + " | " : '') + T.translate('features.Wizard.UploadData.headerlabel') ;
     return (
       <WizardModal
-        title={this.props.input.package.label ? this.props.input.package.label + " | Upload Data" : "Upload Data"}
+        title={wizardModalTitle}
         isOpen={this.state.showWizard}
         toggle={this.toggleWizard.bind(this, false)}
         className="upload-data-wizard"
