@@ -231,7 +231,7 @@ public class TransactionManagerDebuggerMain {
       pw = new PrintWriter(System.out);
     }
     
-    String toolName = TOOL_NAME + (OSDetector.isWindows() ? ".bat" : ".sh");
+    String toolName = "cdap" + (OSDetector.isWindows() ? ".bat " : " ") + TOOL_NAME;
     pw.println("Usage:" +
         "\n\t " + toolName + " view [ <option> ... ]" +
         "\n\t " + toolName + " invalidate --host <name> --transaction <id>");
