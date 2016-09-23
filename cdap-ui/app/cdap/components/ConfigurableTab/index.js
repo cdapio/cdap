@@ -62,6 +62,7 @@ export default class ConfigurableTab extends Component{
                   onClick={() => this.setTab(tab.id)}
                   activeTab={this.isActiveTab(tab.id)}
                 >
+                  <span className={`${tab.icon} tab-header-icon`}></span>
                   <span>{tab.name}</span>
                 </TabHead>
               );

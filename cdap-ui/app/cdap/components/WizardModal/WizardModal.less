@@ -33,6 +33,12 @@
       overflow: hidden;
       background: transparent;
 
+      .modal-header {
+        h4.modal-title > span {
+          padding-left: 10px;
+        }
+      }
+
       .modal-body {
         padding: 0;
         height: ~"calc(100% - 51px)"; // 100% - 51px for modal header
@@ -53,10 +59,10 @@
           font-weight: normal;
           span {
             line-height: 30px;
-            padding: 10px 20px;
+            padding: 5px 10px;
           }
           .close-section {
-
+            span { padding: 5px 20px; }
             border-left: 1px solid;
             cursor: pointer;
           }
