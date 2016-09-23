@@ -19,6 +19,7 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.route.store.RouteConfig;
@@ -78,7 +79,14 @@ public class RouteConfigHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("service-id") String serviceId) throws Exception {
     ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
     Map<String, Integer> routes = parseBody(request, ROUTE_CONFIG_TYPE);
-    routeStore.store(programId, new RouteConfig(routes));
+    RouteConfig routeConfig;
+    try {
+      routeConfig = new RouteConfig(routes);
+    } catch (IllegalArgumentException e) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      return;
+    }
+    routeStore.store(programId, routeConfig);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -88,7 +96,7 @@ public class RouteConfigHttpHandler extends AbstractAppFabricHttpHandler {
                                 @PathParam("namespace-id") String namespaceId,
                                 @PathParam("app-id") String appId,
                                 @PathParam("service-id") String serviceId) throws Exception {
-    ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
+    ProgramId programId = new ProgramId(namespaceId, appId, ProgramType.SERVICE, serviceId);
     routeStore.delete(programId);
     responder.sendStatus(HttpResponseStatus.OK);
   }
