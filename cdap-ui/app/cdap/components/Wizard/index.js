@@ -105,7 +105,8 @@ export default class Wizard extends Component{
           className="btn btn-default"
           onClick={this.goToNextStep.bind(this, matchedStep.id)}
         >
-          Next
+          <span>Next</span>
+          <span className="fa fa-chevron-right"></span>
         </button>
       );
       let prevButton = (
@@ -113,7 +114,8 @@ export default class Wizard extends Component{
           className="btn btn-default"
           onClick={this.goToPreviousStep.bind(this, matchedStep.id)}
         >
-          Previous
+          <span className="fa fa-chevron-left"></span>
+          <span>Previous</span>
         </button>
       );
       let finishButton = (
@@ -126,10 +128,20 @@ export default class Wizard extends Component{
       );
       // This is ugly. We need to find a better way.
       if (matchedIndex === 0 && this.props.wizardConfig.steps.length > 1) {
-        navButtons = ( nextButton );
+        navButtons = (
+          <span>
+            {canFinish(matchedStep.id, this.props.wizardConfig) ? finishButton : null}
+            {nextButton}
+          </span>
+        );
       }
       if (matchedIndex === this.props.wizardConfig.steps.length - 1 && this.props.wizardConfig.steps.length > 1) {
-        navButtons = ( prevButton );
+        navButtons = (
+          <span>
+            {prevButton}
+            {canFinish(matchedStep.id, this.props.wizardConfig) ? finishButton : null}
+          </span>
+        );
       }
       if (matchedIndex !== 0 &&
           matchedIndex !== this.props.wizardConfig.steps.length - 1 &&
@@ -137,18 +149,19 @@ export default class Wizard extends Component{
         navButtons = (
           <span>
             {prevButton}
+            {canFinish(matchedStep.id, this.props.wizardConfig) ? finishButton : null}
             {nextButton}
           </span>
         );
       }
-      if (canFinish(matchedStep.id, this.props.wizardConfig)) {
-        return (
-          <div>
-            {navButtons}
-            {finishButton}
-          </div>
-        );
-      }
+      // if (canFinish(matchedStep.id, this.props.wizardConfig)) {
+      //   return (
+      //     <div>
+      //       {navButtons}
+      //       {finishButton}
+      //     </div>
+      //   );
+      // }
       return navButtons;
     }.bind(this);
     const isStepComplete = function isStepComplete(stepId) {
@@ -195,7 +208,7 @@ export default class Wizard extends Component{
       .steps
       .map( (step, index) => (
         <WizardStepHeader
-          label={`${index + 1} - ${step.shorttitle}`}
+          label={`${index + 1} ${step.shorttitle}`}
           className={ isStepComplete(step.id) ? 'completed' : null}
           id={step.id}
           key={shortid.generate()}

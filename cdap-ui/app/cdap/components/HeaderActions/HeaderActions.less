@@ -15,6 +15,7 @@
 */
 
 @import "../../styles/variables.less";
+@plus-button-color: #52b746;
 
 .cask-header {
 
@@ -22,18 +23,20 @@
     color: #ff6600;
   }
 
-   .navbar {
-     .header-actions {
-       .navbar-cog:hover,
-       .menu-open {
-         color: @cdap-orange;
-       }
+  .navbar {
+    .header-actions {
 
-       .navbar-cog {
-         position: relative;;
-       }
-
-       .navbar-cog-arrow {
+      .plus-button {
+        color: @plus-button-color;
+      }
+      .navbar-cog:hover,
+      .menu-open {
+        color: @cdap-orange;
+      }
+      .navbar-cog {
+        position: relative;;
+      }
+      .navbar-cog-arrow {
          position: absolute;
          right: 18px;
          top: 35px;
@@ -42,13 +45,11 @@
          border-left: 10px solid transparent;
          border-right: 10px solid transparent;
          border-bottom: 10px solid #ffffff;
-       }
-
-       .hidden {
-         visibility: hidden;
-       }
-
-       .dropdown-menu {
+      }
+      .hidden {
+        visibility: hidden;
+      }
+      .dropdown-menu {
          width: 160px;
          outline: none;
          color: #333333;
@@ -100,9 +101,9 @@
              padding-left: 5px;
            }
          }
-       }
-     }
-   }
+      }
+    }
+  }
  }
 
 .cask-header .navbar ul {

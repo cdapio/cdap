@@ -61,7 +61,7 @@ commons:
   schemaLabel: Schema
 features:
   Home:
-    emptyMessage: No entity from the selected filter
+    emptyMessage: MODIFY THIS!!!!!!!!!!
     Cards:
       type: "Type: "
     Header:
@@ -79,6 +79,7 @@ features:
       applications: Applications
       artifacts: Artifacts
       dashboards: Dashboards
+      datapacks: Datapacks
       datasets: Datasets
       examples: Examples
       pipelines: Pipelines

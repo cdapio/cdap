@@ -174,8 +174,9 @@ export default class MarketEntityModal extends Component {
               </div>
             </div>
           </div>
-          <hr />
+
           {actions}
+
           <AbstractWizard
             isOpen={this.state.wizard.actionIndex !== null && this.state.wizard.actionType !== null}
             onClose={this.closeWizard.bind(this)}
