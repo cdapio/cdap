@@ -247,7 +247,7 @@ public class NettyRouter extends AbstractIdleService {
           ChannelPipeline pipeline = Channels.pipeline();
           if (isSSLEnabled()) {
             // Add SSLHandler is SSL is enabled
-            pipeline.addLast("ssl", sslHandlerFactory.create());
+            pipeline.addLast("ssl", sslHandlerFactory.create(true));
           }
           pipeline.addLast("tracker", connectionTracker);
           pipeline.addLast("http-response-encoder", new HttpResponseEncoder());
@@ -317,6 +317,10 @@ public class NettyRouter extends AbstractIdleService {
       @Override
       public ChannelPipeline getPipeline() throws Exception {
         ChannelPipeline pipeline = Channels.pipeline();
+        if (isSSLEnabled()) {
+          // Add SSLHandler is SSL is enabled
+          pipeline.addLast("ssl", sslHandlerFactory.create(false));
+        }
         pipeline.addLast("tracker", connectionTracker);
         pipeline.addLast("request-encoder", new HttpRequestEncoder());
         // outbound handler gets dynamically added here (after 'request-encoder')
