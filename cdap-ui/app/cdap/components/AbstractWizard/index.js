@@ -34,6 +34,10 @@ const WizardTypesMap = {
   'create_app': {
     tag: PublishPipelineWizard,
     store: PublishPipelineStore
+  },
+  'create_pipeline': {
+    tag: PublishPipelineWizard,
+    store: PublishPipelineStore
   }
 };
 

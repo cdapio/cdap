@@ -91,6 +91,9 @@ features:
       create_app:
         icon: icon-app
         name: Create App
+      create_pipeline:
+        icon: icon-app
+        name: Create App
       create_artifact:
         name: Create Artifact
       load_datapack:
