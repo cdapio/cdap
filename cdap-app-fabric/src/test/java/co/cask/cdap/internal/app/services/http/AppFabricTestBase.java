@@ -136,6 +136,8 @@ public abstract class AppFabricTestBase {
     .setDescription(TEST_NAMESPACE2)
     .build();
 
+  protected static final String VERSION1 = "1.0.0";
+  protected static final String VERSION2 = "2.0.0";
 
   private static final String hostname = "127.0.0.1";
 
@@ -482,20 +484,20 @@ public abstract class AppFabricTestBase {
   }
 
   protected JsonObject getAppDetails(String namespace, String appName) throws Exception {
-    HttpResponse response = getNonVersionedAppResponse(namespace, appName);
+    HttpResponse response = getAppResponse(namespace, appName);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertEquals("application/json", response.getFirstHeader(HttpHeaders.Names.CONTENT_TYPE).getValue());
     Type typeToken = new TypeToken<JsonObject>() { }.getType();
     return readResponse(response, typeToken);
   }
 
-  protected HttpResponse getNonVersionedAppResponse(String namespace, String appName)
+  protected HttpResponse getAppResponse(String namespace, String appName)
     throws Exception {
     return doGet(getVersionedAPIPath(String.format("apps/%s", appName),
                                                       Constants.Gateway.API_VERSION_3_TOKEN, namespace));
   }
 
-  protected HttpResponse getVersionedAppResponse(String namespace, String appName, String appVersion) throws Exception {
+  protected HttpResponse getAppResponse(String namespace, String appName, String appVersion) throws Exception {
     return doGet(getVersionedAPIPath(String.format("apps/%s/versions/%s", appName, appVersion),
                                                       Constants.Gateway.API_VERSION_3_TOKEN, namespace));
   }
@@ -510,7 +512,7 @@ public abstract class AppFabricTestBase {
   }
 
   protected JsonObject getAppDetails(String namespace, String appName, String appVersion) throws Exception {
-    HttpResponse response = getVersionedAppResponse(namespace, appName, appVersion);
+    HttpResponse response = getAppResponse(namespace, appName, appVersion);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertEquals("application/json", response.getFirstHeader(HttpHeaders.Names.CONTENT_TYPE).getValue());
     Type typeToken = new TypeToken<JsonObject>() { }.getType();

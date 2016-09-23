@@ -152,7 +152,7 @@ public class TrackerAppCreationService extends AbstractExecutionThreadService {
     }
 
     @Override
-    public void stop(Id.Program programId) throws Exception {
+    public void stop(ProgramId programId) throws Exception {
       switch (programId.getType()) {
         case FLOW:
           programLifecycleService.stop(AUDIT_FLOWID);

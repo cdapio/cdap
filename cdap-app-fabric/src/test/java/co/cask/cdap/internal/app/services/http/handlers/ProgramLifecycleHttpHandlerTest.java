@@ -228,18 +228,18 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testVersionedProgramStartStopStatus() throws Exception {
-    Id.Artifact wordCountArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcountapp", "1.0.0");
+    Id.Artifact wordCountArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcountapp", VERSION1);
     addAppArtifact(wordCountArtifactId, WordCountApp.class);
     AppRequest<? extends Config> wordCountRequest = new AppRequest<>(
       new ArtifactSummary(wordCountArtifactId.getName(), wordCountArtifactId.getVersion().getVersion()));
 
-    ApplicationId wordCountApp1 = NamespaceId.DEFAULT.app("WordCountApp", "1.0.0");
+    ApplicationId wordCountApp1 = NamespaceId.DEFAULT.app("WordCountApp", VERSION1);
     ProgramId wordcountFlow1 = wordCountApp1.program(ProgramType.FLOW, "WordCountFlow");
     
     Id.Application wordCountAppDefault = wordCountApp1.toId();
     Id.Program wordcountFlowDefault = wordcountFlow1.toId();
 
-    ApplicationId wordCountApp2 = NamespaceId.DEFAULT.app("WordCountApp", "2.0.0");
+    ApplicationId wordCountApp2 = NamespaceId.DEFAULT.app("WordCountApp", VERSION2);
     ProgramId wordcountFlow2 = wordCountApp2.program(ProgramType.FLOW, "WordCountFlow");
 
     // Start wordCountApp1
@@ -304,15 +304,15 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     stopProgram(wordFrequencyService2, null, 200, null);
     stopProgram(wordFrequencyServiceDefault, null, 200, null);
 
-    Id.Artifact sleepWorkflowArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "sleepworkflowapp", "1.0.0");
+    Id.Artifact sleepWorkflowArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "sleepworkflowapp", VERSION1);
     addAppArtifact(sleepWorkflowArtifactId, SleepingWorkflowApp.class);
     AppRequest<? extends Config> sleepWorkflowRequest = new AppRequest<>(
       new ArtifactSummary(sleepWorkflowArtifactId.getName(), sleepWorkflowArtifactId.getVersion().getVersion()));
 
-    ApplicationId sleepWorkflowApp1 = new ApplicationId(Id.Namespace.DEFAULT.getId(), "SleepingWorkflowApp", "1.0.0");
+    ApplicationId sleepWorkflowApp1 = new ApplicationId(Id.Namespace.DEFAULT.getId(), "SleepingWorkflowApp", VERSION1);
     ProgramId sleepWorkflow1 = sleepWorkflowApp1.program(ProgramType.WORKFLOW, "SleepWorkflow");
 
-    ApplicationId sleepWorkflowApp2 = new ApplicationId(Id.Namespace.DEFAULT.getId(), "SleepingWorkflowApp", "2.0.0");
+    ApplicationId sleepWorkflowApp2 = new ApplicationId(Id.Namespace.DEFAULT.getId(), "SleepingWorkflowApp", VERSION2);
     ProgramId sleepWorkflow2 = sleepWorkflowApp2.program(ProgramType.WORKFLOW, "SleepWorkflow");
 
     // Start wordCountApp1
