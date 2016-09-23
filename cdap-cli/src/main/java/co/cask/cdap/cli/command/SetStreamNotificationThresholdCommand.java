@@ -27,6 +27,7 @@ import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 
@@ -35,10 +36,10 @@ import java.io.PrintStream;
  */
 public class SetStreamNotificationThresholdCommand extends AbstractAuthCommand {
 
-  private final StreamClient streamClient;
+  private final Provider<StreamClient> streamClient;
 
   @Inject
-  public SetStreamNotificationThresholdCommand(StreamClient streamClient, CLIConfig cliConfig) {
+  SetStreamNotificationThresholdCommand(Provider<StreamClient> streamClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.streamClient = streamClient;
   }
@@ -47,7 +48,7 @@ public class SetStreamNotificationThresholdCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
     int notificationThresholdMB = arguments.getInt(ArgumentName.NOTIFICATION_THRESHOLD_MB.toString());
-    streamClient.setStreamProperties(streamId.toId(), new StreamProperties(null, null, notificationThresholdMB));
+    streamClient.get().setStreamProperties(streamId.toId(), new StreamProperties(null, null, notificationThresholdMB));
     output.printf("Successfully set notification threshold of stream '%s' to %dMB\n",
                   streamId.getEntityName(), notificationThresholdMB);
   }

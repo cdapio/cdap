@@ -28,6 +28,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.Collections;
@@ -39,10 +40,10 @@ import java.util.List;
 public class GetStreamLineageCommand extends AbstractCommand {
 
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-  private final LineageClient client;
+  private final Provider<LineageClient> client;
 
   @Inject
-  public GetStreamLineageCommand(CLIConfig cliConfig, LineageClient client) {
+  GetStreamLineageCommand(CLIConfig cliConfig, Provider<LineageClient> client) {
     super(cliConfig);
     this.client = client;
   }
@@ -55,7 +56,7 @@ public class GetStreamLineageCommand extends AbstractCommand {
     long end = getTimestamp(arguments.getOptional("end", "max"), currentTime);
     Integer levels = arguments.getIntOptional("levels", null);
 
-    LineageRecord lineage = client.getLineage(stream.toId(), start, end, levels);
+    LineageRecord lineage = client.get().getLineage(stream.toId(), start, end, levels);
     Table table = Table.builder()
       .setHeader("start", "end", "relations", "programs", "data")
       .setRows(

@@ -25,6 +25,7 @@ import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.common.cli.Arguments;
 import com.google.gson.Gson;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.Map;
@@ -36,10 +37,10 @@ public class GetProgramRuntimeArgsCommand extends AbstractAuthCommand {
 
   private static final Gson GSON = new Gson();
 
-  private final ProgramClient programClient;
+  private final Provider<ProgramClient> programClient;
   private final ElementType elementType;
 
-  public GetProgramRuntimeArgsCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
+  GetProgramRuntimeArgsCommand(ElementType elementType, Provider<ProgramClient> programClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.elementType = elementType;
     this.programClient = programClient;
@@ -51,7 +52,7 @@ public class GetProgramRuntimeArgsCommand extends AbstractAuthCommand {
     String appId = programIdParts[0];
     String programName = programIdParts[1];
     ProgramId programId = cliConfig.getCurrentNamespace().app(appId).program(elementType.getProgramType(), programName);
-    Map<String, String> runtimeArgs = programClient.getRuntimeArgs(programId.toId());
+    Map<String, String> runtimeArgs = programClient.get().getRuntimeArgs(programId.toId());
     output.printf(GSON.toJson(runtimeArgs));
   }
 

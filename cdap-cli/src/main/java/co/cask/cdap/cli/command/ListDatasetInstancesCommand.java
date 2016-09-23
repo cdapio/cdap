@@ -26,6 +26,7 @@ import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -35,17 +36,17 @@ import java.util.List;
  */
 public class ListDatasetInstancesCommand extends AbstractAuthCommand {
 
-  private final DatasetClient datasetClient;
+  private final Provider<DatasetClient> datasetClient;
 
   @Inject
-  public ListDatasetInstancesCommand(DatasetClient datasetClient, CLIConfig cliConfig) {
+  ListDatasetInstancesCommand(Provider<DatasetClient> datasetClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.datasetClient = datasetClient;
   }
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    List<DatasetSpecificationSummary> datasetMetas = datasetClient.list(cliConfig.getCurrentNamespace().toId());
+    List<DatasetSpecificationSummary> datasetMetas = datasetClient.get().list(cliConfig.getCurrentNamespace().toId());
 
     Table table = Table.builder()
       .setHeader("name", "type", "description")

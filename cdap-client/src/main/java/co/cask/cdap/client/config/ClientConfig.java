@@ -36,25 +36,20 @@ import javax.annotation.concurrent.ThreadSafe;
 public class ClientConfig {
 
   private static final boolean DEFAULT_VERIFY_SSL_CERTIFICATE = true;
-
   private static final int DEFAULT_UPLOAD_READ_TIMEOUT = 0;
   private static final int DEFAULT_UPLOAD_CONNECT_TIMEOUT = 0;
   private static final int DEFAULT_SERVICE_UNAVAILABLE_RETRY_LIMIT = 50;
-
   private static final int DEFAULT_READ_TIMEOUT = 15000;
   private static final int DEFAULT_CONNECT_TIMEOUT = 15000;
-
   private static final String DEFAULT_VERSION = Constants.Gateway.API_VERSION_3_TOKEN;
 
   @Nullable
   private final ConnectionConfig connectionConfig;
   private final boolean verifySSLCert;
-
   private final int defaultReadTimeout;
   private final int defaultConnectTimeout;
   private final int uploadReadTimeout;
   private final int uploadConnectTimeout;
-
   private final int unavailableRetryLimit;
   private final String apiVersion;
   private final Supplier<AccessToken> accessToken;

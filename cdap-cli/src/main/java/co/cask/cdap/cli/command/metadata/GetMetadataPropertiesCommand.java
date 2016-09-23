@@ -28,6 +28,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -39,10 +40,10 @@ import javax.annotation.Nullable;
  */
 public class GetMetadataPropertiesCommand extends AbstractCommand {
 
-  private final MetadataClient client;
+  private final Provider<MetadataClient> client;
 
   @Inject
-  public GetMetadataPropertiesCommand(CLIConfig cliConfig, MetadataClient client) {
+  GetMetadataPropertiesCommand(CLIConfig cliConfig, Provider<MetadataClient> client) {
     super(cliConfig);
     this.client = client;
   }
@@ -51,16 +52,15 @@ public class GetMetadataPropertiesCommand extends AbstractCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
     String scope = arguments.getOptional(ArgumentName.METADATA_SCOPE.toString());
-    Map<String, String> properties = scope == null ? client.getProperties(entity.toId()) :
-      client.getProperties(entity.toId(), MetadataScope.valueOf(scope.toUpperCase()));
+    Map<String, String> properties = scope == null ? client.get().getProperties(entity.toId()) :
+      client.get().getProperties(entity.toId(), MetadataScope.valueOf(scope.toUpperCase()));
 
     Table table = Table.builder()
       .setHeader("key", "value")
       .setRows(
         Iterables.transform(properties.entrySet(), new Function<Map.Entry<String, String>, List<String>>() {
-          @Nullable
           @Override
-          public List<String> apply(@Nullable Map.Entry<String, String> entry) {
+          public List<String> apply(Map.Entry<String, String> entry) {
             return Lists.newArrayList(entry.getKey(), entry.getValue());
           }
         })

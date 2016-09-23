@@ -30,6 +30,7 @@ import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.proto.id.ServiceId;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 
@@ -37,10 +38,10 @@ import java.io.PrintStream;
  * Check whether a {@link Service} has reached active status.
  */
 public class CheckServiceAvailabilityCommand extends AbstractAuthCommand implements Categorized {
-  private final ServiceClient serviceClient;
+  private final Provider<ServiceClient> serviceClient;
 
   @Inject
-  public CheckServiceAvailabilityCommand(ServiceClient serviceClient, CLIConfig cliConfig) {
+  CheckServiceAvailabilityCommand(Provider<ServiceClient> serviceClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.serviceClient = serviceClient;
   }
@@ -55,7 +56,7 @@ public class CheckServiceAvailabilityCommand extends AbstractAuthCommand impleme
     String appId = appAndServiceId[0];
     String serviceName = appAndServiceId[1];
     ServiceId serviceId = cliConfig.getCurrentNamespace().app(appId).service(serviceName);
-    output.println(serviceClient.getAvailability(serviceId.toId()));
+    output.println(serviceClient.get().getAvailability(serviceId.toId()));
   }
 
   @Override

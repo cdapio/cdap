@@ -23,7 +23,9 @@ import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -32,12 +34,12 @@ import java.util.List;
 public class GetProgramInstancesCommandSet extends CommandSet<Command> {
 
   @Inject
-  public GetProgramInstancesCommandSet(ProgramClient programClient, CLIConfig cliConfig) {
+  GetProgramInstancesCommandSet(Provider<ProgramClient> programClient, CLIConfig cliConfig) {
     super(generateCommands(programClient, cliConfig));
   }
 
-  private static List<Command> generateCommands(ProgramClient programClient, CLIConfig cliConfig) {
-    List<Command> commands = Lists.newArrayList();
+  private static List<Command> generateCommands(Provider<ProgramClient> programClient, CLIConfig cliConfig) {
+    List<Command> commands = new ArrayList<>();
     for (ElementType elementType : ElementType.values()) {
       if (elementType.canScale()) {
         commands.add(new GetProgramInstancesCommand(elementType, programClient, cliConfig));

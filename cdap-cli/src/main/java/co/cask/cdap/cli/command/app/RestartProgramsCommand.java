@@ -25,6 +25,7 @@ import co.cask.cdap.proto.BatchProgramStart;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -34,10 +35,11 @@ import java.util.List;
  * Restarts one or more programs in an application.
  */
 public class RestartProgramsCommand extends BaseBatchCommand<BatchProgram> {
-  private final ProgramClient programClient;
+  private final Provider<ProgramClient> programClient;
 
   @Inject
-  public RestartProgramsCommand(ApplicationClient appClient, ProgramClient programClient, CLIConfig cliConfig) {
+  RestartProgramsCommand(Provider<ApplicationClient> appClient,  Provider<ProgramClient> programClient,
+                         CLIConfig cliConfig) {
     super(appClient, cliConfig);
     this.programClient = programClient;
   }
@@ -52,14 +54,14 @@ public class RestartProgramsCommand extends BaseBatchCommand<BatchProgram> {
     NamespaceId namespace = args.appId.getParent();
 
     printStream.print("Stopping programs...\n");
-    programClient.stop(namespace.toId(), args.programs);
+    programClient.get().stop(namespace.toId(), args.programs);
 
     printStream.print("Starting programs...\n");
     List<BatchProgramStart> startList = new ArrayList<>(args.programs.size());
     for (BatchProgram program : args.programs) {
       startList.add(new BatchProgramStart(program));
     }
-    programClient.start(namespace.toId(), startList);
+    programClient.get().start(namespace.toId(), startList);
   }
 
   @Override

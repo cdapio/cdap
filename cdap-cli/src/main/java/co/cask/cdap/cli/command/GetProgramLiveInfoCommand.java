@@ -31,6 +31,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -40,10 +41,10 @@ import java.util.List;
  */
 public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
 
-  private final ProgramClient programClient;
+  private final Provider<ProgramClient> programClient;
   private final ElementType elementType;
 
-  protected GetProgramLiveInfoCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
+  GetProgramLiveInfoCommand(ElementType elementType, Provider<ProgramClient> programClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.elementType = elementType;
     this.programClient = programClient;
@@ -58,7 +59,7 @@ public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
     String appId = programIdParts[0];
     String programName = programIdParts[1];
     ProgramId program = cliConfig.getCurrentNamespace().app(appId).program(elementType.getProgramType(), programName);
-    DistributedProgramLiveInfo liveInfo = programClient.getLiveInfo(program.toId());
+    DistributedProgramLiveInfo liveInfo = programClient.get().getLiveInfo(program.toId());
 
     if (liveInfo == null) {
       output.println("No live info found");

@@ -33,6 +33,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.File;
 import java.io.FileReader;
@@ -45,11 +46,11 @@ import java.lang.reflect.Type;
 public class UpdateAppCommand extends AbstractAuthCommand {
   private static final Type CONFIG_TYPE = new TypeToken<AppRequest<JsonObject>>() { }.getType();
   private static final Gson GSON = new Gson();
-  private final ApplicationClient applicationClient;
+  private final Provider<ApplicationClient> applicationClient;
   private final FilePathResolver resolver;
 
   @Inject
-  public UpdateAppCommand(ApplicationClient applicationClient, FilePathResolver resolver, CLIConfig cliConfig) {
+  UpdateAppCommand(Provider<ApplicationClient> applicationClient, FilePathResolver resolver, CLIConfig cliConfig) {
     super(cliConfig);
     this.applicationClient = applicationClient;
     this.resolver = resolver;
@@ -76,7 +77,7 @@ public class UpdateAppCommand extends AbstractAuthCommand {
     }
 
     AppRequest<JsonObject> appRequest = new AppRequest<>(artifact, config);
-    applicationClient.update(appId.toId(), appRequest);
+    applicationClient.get().update(appId.toId(), appRequest);
     output.println("Successfully updated application");
   }
 

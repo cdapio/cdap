@@ -25,6 +25,7 @@ import co.cask.cdap.client.WorkflowClient;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.common.cli.Arguments;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 
@@ -33,9 +34,9 @@ import java.io.PrintStream;
  */
 public class DeleteWorkflowLocalDatasetsCommand extends AbstractCommand {
   private final ElementType elementType;
-  private final WorkflowClient workflowClient;
+  private final Provider<WorkflowClient> workflowClient;
 
-  public DeleteWorkflowLocalDatasetsCommand(WorkflowClient workflowClient, CLIConfig cliConfig) {
+  DeleteWorkflowLocalDatasetsCommand(Provider<WorkflowClient> workflowClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.elementType = ElementType.WORKFLOW;
     this.workflowClient = workflowClient;
@@ -53,7 +54,7 @@ public class DeleteWorkflowLocalDatasetsCommand extends AbstractCommand {
                                                  ProgramType.WORKFLOW, programIdParts[1],
                                                  arguments.get(ArgumentName.RUN_ID.toString()));
 
-    workflowClient.deleteWorkflowLocalDatasets(programRunId);
+    workflowClient.get().deleteWorkflowLocalDatasets(programRunId);
     printStream.printf("Successfully deleted local datasets associated with the workflow run.");
   }
 

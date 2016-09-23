@@ -36,6 +36,7 @@ import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
+import com.google.inject.Provider;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -50,9 +51,9 @@ public class GetWorkflowTokenCommand extends AbstractCommand {
   private static final Gson GSON = new Gson();
 
   private final ElementType elementType;
-  private final WorkflowClient workflowClient;
+  private final Provider<WorkflowClient> workflowClient;
 
-  public GetWorkflowTokenCommand(WorkflowClient workflowClient, CLIConfig cliConfig) {
+  GetWorkflowTokenCommand(Provider<WorkflowClient> workflowClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.elementType = ElementType.WORKFLOW;
     this.workflowClient = workflowClient;
@@ -102,7 +103,7 @@ public class GetWorkflowTokenCommand extends AbstractCommand {
 
   private Table getWorkflowToken(ProgramRunId runId, WorkflowToken.Scope workflowTokenScope, String key)
     throws UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
-    WorkflowTokenDetail workflowToken = workflowClient.getWorkflowToken(runId.toId(), workflowTokenScope, key);
+    WorkflowTokenDetail workflowToken = workflowClient.get().getWorkflowToken(runId.toId(), workflowTokenScope, key);
     List<Map.Entry<String, List<WorkflowTokenDetail.NodeValueDetail>>> tokenKeys = new ArrayList<>();
     tokenKeys.addAll(workflowToken.getTokenData().entrySet());
     return Table.builder()
@@ -120,8 +121,8 @@ public class GetWorkflowTokenCommand extends AbstractCommand {
   private Table getWorkflowToken(ProgramRunId runId, WorkflowToken.Scope workflowTokenScope,
                                  String key, String nodeName)
     throws UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
-    WorkflowTokenNodeDetail workflowToken = workflowClient.getWorkflowTokenAtNode(runId.toId(), nodeName,
-                                                                                  workflowTokenScope, key);
+    WorkflowTokenNodeDetail workflowToken = workflowClient.get().getWorkflowTokenAtNode(runId.toId(), nodeName,
+                                                                                        workflowTokenScope, key);
     List<Map.Entry<String, String>> tokenKeys = new ArrayList<>();
     tokenKeys.addAll(workflowToken.getTokenDataAtNode().entrySet());
     return Table.builder()

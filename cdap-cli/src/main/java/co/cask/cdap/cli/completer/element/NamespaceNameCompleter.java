@@ -22,6 +22,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,13 +34,13 @@ import java.util.List;
 public class NamespaceNameCompleter extends StringsCompleter {
 
   @Inject
-  public NamespaceNameCompleter(final NamespaceClient namespaceClient) {
+  NamespaceNameCompleter(final Provider<NamespaceClient> namespaceClient) {
     super(new Supplier<Collection<String>>() {
       @Override
       public Collection<String> get() {
         List<String> namespaceIds = new ArrayList<>();
         try {
-          for (NamespaceMeta namespaceMeta : namespaceClient.list()) {
+          for (NamespaceMeta namespaceMeta : namespaceClient.get().list()) {
             namespaceIds.add(namespaceMeta.getName());
           }
         } catch (Exception e) {

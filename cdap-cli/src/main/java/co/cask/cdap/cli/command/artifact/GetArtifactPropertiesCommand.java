@@ -30,6 +30,7 @@ import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -40,10 +41,10 @@ import java.util.Map;
  * Gets properties for an artifact.
  */
 public class GetArtifactPropertiesCommand extends AbstractAuthCommand {
-  private final ArtifactClient artifactClient;
+  private final Provider<ArtifactClient> artifactClient;
 
   @Inject
-  public GetArtifactPropertiesCommand(ArtifactClient artifactClient, CLIConfig cliConfig) {
+  GetArtifactPropertiesCommand(Provider<ArtifactClient> artifactClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.artifactClient = artifactClient;
   }
@@ -58,10 +59,10 @@ public class GetArtifactPropertiesCommand extends AbstractAuthCommand {
 
     ArtifactInfo info;
     if (scopeStr == null) {
-      info = artifactClient.getArtifactInfo(artifactId.toId());
+      info = artifactClient.get().getArtifactInfo(artifactId.toId());
     } else {
       ArtifactScope scope = ArtifactScope.valueOf(scopeStr.toUpperCase());
-      info = artifactClient.getArtifactInfo(artifactId.toId(), scope);
+      info = artifactClient.get().getArtifactInfo(artifactId.toId(), scope);
     }
 
     List<Map.Entry<String, String>> rows = new ArrayList<>(info.getProperties().size());

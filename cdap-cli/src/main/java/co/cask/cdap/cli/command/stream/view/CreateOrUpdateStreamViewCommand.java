@@ -30,6 +30,7 @@ import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -42,10 +43,10 @@ import javax.annotation.Nullable;
  */
 public class CreateOrUpdateStreamViewCommand extends AbstractAuthCommand {
 
-  private final StreamViewClient client;
+  private final Provider<StreamViewClient> client;
 
   @Inject
-  public CreateOrUpdateStreamViewCommand(StreamViewClient client, CLIConfig cliConfig) {
+  CreateOrUpdateStreamViewCommand(Provider<StreamViewClient> client, CLIConfig cliConfig) {
     super(cliConfig);
     this.client = client;
   }
@@ -64,7 +65,7 @@ public class CreateOrUpdateStreamViewCommand extends AbstractAuthCommand {
     FormatSpecification formatSpecification = new FormatSpecification(formatName, schema, settings);
     ViewSpecification viewSpecification = new ViewSpecification(formatSpecification);
 
-    boolean created = client.createOrUpdate(viewId.toId(), viewSpecification);
+    boolean created = client.get().createOrUpdate(viewId.toId(), viewSpecification);
     if (created) {
       output.printf("Successfully created stream-view '%s'\n", viewId.getEntityName());
     } else {

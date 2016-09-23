@@ -27,6 +27,7 @@ import co.cask.cdap.proto.security.Privilege;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -36,10 +37,10 @@ import java.util.List;
  */
 public class ListPrivilegesCommand extends AbstractAuthCommand {
 
-  private final AuthorizationClient client;
+  private final Provider<AuthorizationClient> client;
 
   @Inject
-  ListPrivilegesCommand(AuthorizationClient client, CLIConfig cliConfig) {
+  ListPrivilegesCommand(Provider<AuthorizationClient> client, CLIConfig cliConfig) {
     super(cliConfig);
     this.client = client;
   }
@@ -48,10 +49,11 @@ public class ListPrivilegesCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String principalType = arguments.get(ArgumentName.PRINCIPAL_TYPE.toString());
     String principalName = arguments.get(ArgumentName.PRINCIPAL_NAME.toString());
+    Principal.PrincipalType type = Principal.PrincipalType.valueOf(principalType.toUpperCase());
     Table table = Table.builder()
       .setHeader("Entity", "Action")
-      .setRows(Lists.newArrayList(client.listPrivileges(new Principal(principalName, Principal.PrincipalType.valueOf
-        (principalType.toUpperCase())))), new RowMaker<Privilege>() {
+      .setRows(Lists.newArrayList(client.get().listPrivileges(new Principal(principalName, type))
+      ), new RowMaker<Privilege>() {
         @Override
         public List<?> makeRow(Privilege privilege) {
           return Lists.newArrayList(privilege.getEntity().toString(), privilege.getAction().name());

@@ -26,6 +26,7 @@ import co.cask.cdap.proto.StreamDetail;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -35,10 +36,10 @@ import java.util.List;
  */
 public class ListStreamsCommand extends AbstractAuthCommand {
 
-  private final StreamClient streamClient;
+  private final Provider<StreamClient> streamClient;
 
   @Inject
-  public ListStreamsCommand(StreamClient streamClient, CLIConfig cliConfig) {
+  ListStreamsCommand(Provider<StreamClient> streamClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.streamClient = streamClient;
   }
@@ -47,7 +48,7 @@ public class ListStreamsCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     Table table = Table.builder()
       .setHeader("name")
-      .setRows(streamClient.list(cliConfig.getCurrentNamespace().toId()), new RowMaker<StreamDetail>() {
+      .setRows(streamClient.get().list(cliConfig.getCurrentNamespace().toId()), new RowMaker<StreamDetail>() {
         @Override
         public List<?> makeRow(StreamDetail object) {
           return Lists.newArrayList(object.getName());

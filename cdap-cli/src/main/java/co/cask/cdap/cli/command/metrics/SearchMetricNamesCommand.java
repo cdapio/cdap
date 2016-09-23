@@ -22,6 +22,7 @@ import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.MetricsClient;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -32,18 +33,18 @@ import java.util.Map;
  */
 public class SearchMetricNamesCommand extends AbstractAuthCommand {
 
-  private final MetricsClient client;
+  private final Provider<MetricsClient> client;
 
   @Inject
-  public SearchMetricNamesCommand(MetricsClient client, CLIConfig cliConfig) {
+  SearchMetricNamesCommand(Provider<MetricsClient> client, CLIConfig cliConfig) {
     super(cliConfig);
     this.client = client;
   }
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    Map<String, String> tags = ArgumentParser.parseMap(arguments.get("tags", ""));
-    List<String> results = client.searchMetrics(tags);
+    Map<String, String> tags = ArgumentParser.parseMap(arguments.getOptional("tags", ""));
+    List<String> results = client.get().searchMetrics(tags);
     for (String result : results) {
       output.println(result);
     }

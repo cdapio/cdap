@@ -24,6 +24,7 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.PreferencesClient;
 import co.cask.common.cli.Arguments;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.Map;
@@ -35,7 +36,7 @@ public class SetPreferencesCommand extends AbstractSetPreferencesCommand {
   protected static final String SUCCESS = "Set preferences successfully for the '%s'";
   private final ElementType type;
 
-  protected SetPreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig) {
+  SetPreferencesCommand(ElementType type, Provider<PreferencesClient> client, CLIConfig cliConfig) {
     super(type, client, cliConfig);
     this.type = type;
   }

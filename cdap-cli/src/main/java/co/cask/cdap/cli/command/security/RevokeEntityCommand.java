@@ -20,6 +20,7 @@ import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.client.AuthorizationClient;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 /**
  * Revokes all permissions for all principal on an entity
@@ -27,7 +28,7 @@ import com.google.inject.Inject;
 public class RevokeEntityCommand extends RevokeActionCommand {
 
   @Inject
-  RevokeEntityCommand(AuthorizationClient client, CLIConfig cliConfig) {
+  RevokeEntityCommand(Provider<AuthorizationClient> client, CLIConfig cliConfig) {
     super(client, cliConfig);
   }
 

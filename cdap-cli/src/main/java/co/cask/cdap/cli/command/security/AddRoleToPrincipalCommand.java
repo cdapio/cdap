@@ -24,6 +24,7 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Role;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 
@@ -32,10 +33,10 @@ import java.io.PrintStream;
  */
 public class AddRoleToPrincipalCommand extends AbstractAuthCommand {
 
-  private final AuthorizationClient client;
+  private final Provider<AuthorizationClient> client;
 
   @Inject
-  AddRoleToPrincipalCommand(AuthorizationClient client, CLIConfig cliConfig) {
+  AddRoleToPrincipalCommand(Provider<AuthorizationClient> client, CLIConfig cliConfig) {
     super(cliConfig);
     this.client = client;
   }
@@ -45,8 +46,8 @@ public class AddRoleToPrincipalCommand extends AbstractAuthCommand {
     String roleName = arguments.get("role-name");
     String principalType = arguments.get("principal-type");
     String principalName = arguments.get("principal-name");
-    client.addRoleToPrincipal(new Role(roleName), new Principal(principalName, Principal.PrincipalType.valueOf
-      (principalType.toUpperCase())));
+    Principal principal = new Principal(principalName, Principal.PrincipalType.valueOf(principalType.toUpperCase()));
+    client.get().addRoleToPrincipal(new Role(roleName), principal);
     output.printf("Successfully added role '%s' to '%s' '%s'\n", roleName, principalType, principalName);
   }
 

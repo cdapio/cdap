@@ -23,9 +23,10 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.client.PreferencesClient;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
-import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -34,12 +35,12 @@ import java.util.List;
 public class PreferencesCommandSet extends CommandSet<Command> implements Categorized {
 
   @Inject
-  public PreferencesCommandSet(PreferencesClient client, CLIConfig cliConfig) {
+  PreferencesCommandSet(Provider<PreferencesClient> client, CLIConfig cliConfig) {
     super(generateCommands(client, cliConfig));
   }
 
-  private static List<Command> generateCommands(PreferencesClient client, CLIConfig cliConfig) {
-    List<Command> commands = Lists.newArrayList();
+  private static List<Command> generateCommands(Provider<PreferencesClient> client, CLIConfig cliConfig) {
+    List<Command> commands = new ArrayList<>();
     for (ElementType elementType : ElementType.values()) {
       if (elementType.hasPreferences()) {
         commands.add(new GetPreferencesCommand(elementType, client, cliConfig));

@@ -25,6 +25,7 @@ import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.common.cli.Arguments;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 
@@ -33,10 +34,10 @@ import java.io.PrintStream;
  */
 public class GetProgramStatusCommand extends AbstractAuthCommand {
 
-  private final ProgramClient programClient;
+  private final Provider<ProgramClient> programClient;
   private final ElementType elementType;
 
-  protected GetProgramStatusCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
+  GetProgramStatusCommand(ElementType elementType, Provider<ProgramClient> programClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.elementType = elementType;
     this.programClient = programClient;
@@ -52,7 +53,7 @@ public class GetProgramStatusCommand extends AbstractAuthCommand {
     String appId = programIdParts[0];
     String programName = programIdParts[1];
     ProgramId programId = cliConfig.getCurrentNamespace().app(appId).program(elementType.getProgramType(), programName);
-    String status = programClient.getStatus(programId.toId());
+    String status = programClient.get().getStatus(programId.toId());
     output.println(status);
   }
 

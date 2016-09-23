@@ -29,6 +29,7 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.HashSet;
@@ -39,10 +40,11 @@ import java.util.Set;
  * Gets status of one or more programs in an application.
  */
 public class StatusProgramsCommand extends BaseBatchCommand<BatchProgram> {
-  private final ProgramClient programClient;
+  private final Provider<ProgramClient> programClient;
 
   @Inject
-  public StatusProgramsCommand(ApplicationClient appClient, ProgramClient programClient, CLIConfig cliConfig) {
+  StatusProgramsCommand(Provider<ApplicationClient> appClient, Provider<ProgramClient> programClient,
+                        CLIConfig cliConfig) {
     super(appClient, cliConfig);
     this.programClient = programClient;
   }
@@ -54,7 +56,7 @@ public class StatusProgramsCommand extends BaseBatchCommand<BatchProgram> {
 
   @Override
   protected void runBatchCommand(PrintStream printStream, Args<BatchProgram> args) throws Exception {
-    List<BatchProgramStatus> results = programClient.getStatus(args.appId.getParent().toId(), args.programs);
+    List<BatchProgramStatus> results = programClient.get().getStatus(args.appId.getParent().toId(), args.programs);
 
     Table table = Table.builder()
       .setHeader("name", "type", "status", "error")

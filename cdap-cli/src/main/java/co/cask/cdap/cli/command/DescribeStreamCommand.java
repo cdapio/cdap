@@ -32,6 +32,7 @@ import co.cask.common.cli.Arguments;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -41,10 +42,10 @@ import java.util.List;
  */
 public class DescribeStreamCommand extends AbstractAuthCommand {
 
-  private final StreamClient streamClient;
+  private final Provider<StreamClient> streamClient;
 
   @Inject
-  public DescribeStreamCommand(StreamClient streamClient, CLIConfig cliConfig) {
+  DescribeStreamCommand(Provider<StreamClient> streamClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.streamClient = streamClient;
   }
@@ -52,7 +53,7 @@ public class DescribeStreamCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
-    StreamProperties config = streamClient.getConfig(streamId.toId());
+    StreamProperties config = streamClient.get().getConfig(streamId.toId());
 
     Table table = Table.builder()
       .setHeader("ttl", "format", "schema", "notification.threshold.mb", "description")

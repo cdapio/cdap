@@ -30,8 +30,10 @@ import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -39,10 +41,10 @@ import java.util.List;
  */
 public class GetStreamEventsCommand extends AbstractCommand {
 
-  private final StreamClient streamClient;
+  private final Provider<StreamClient> streamClient;
 
   @Inject
-  public GetStreamEventsCommand(StreamClient streamClient, CLIConfig cliConfig) {
+  GetStreamEventsCommand(Provider<StreamClient> streamClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.streamClient = streamClient;
   }
@@ -52,13 +54,13 @@ public class GetStreamEventsCommand extends AbstractCommand {
     long currentTime = System.currentTimeMillis();
 
     StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
-    long startTime = getTimestamp(arguments.get(ArgumentName.START_TIME.toString(), "min"), currentTime);
-    long endTime = getTimestamp(arguments.get(ArgumentName.END_TIME.toString(), "max"), currentTime);
+    long startTime = getTimestamp(arguments.getOptional(ArgumentName.START_TIME.toString(), "min"), currentTime);
+    long endTime = getTimestamp(arguments.getOptional(ArgumentName.END_TIME.toString(), "max"), currentTime);
     int limit = arguments.getInt(ArgumentName.LIMIT.toString(), Integer.MAX_VALUE);
 
     // Get a list of stream events and prints it.
-    List<StreamEvent> events = streamClient.getEvents(streamId.toId(), startTime, endTime,
-                                                      limit, Lists.<StreamEvent>newArrayList());
+    List<StreamEvent> events = streamClient.get().getEvents(streamId.toId(), startTime, endTime,
+                                                            limit, new ArrayList<StreamEvent>());
     Table table = Table.builder()
       .setHeader("timestamp", "headers", "body size", "body")
       .setRows(events, new RowMaker<StreamEvent>() {

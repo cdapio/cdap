@@ -32,6 +32,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.Collections;
@@ -45,10 +46,10 @@ public class DescribeStreamViewCommand extends AbstractAuthCommand {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
-  private final StreamViewClient client;
+  private final Provider<StreamViewClient> client;
 
   @Inject
-  public DescribeStreamViewCommand(StreamViewClient client, CLIConfig cliConfig) {
+  DescribeStreamViewCommand(Provider<StreamViewClient> client, CLIConfig cliConfig) {
     super(cliConfig);
     this.client = client;
   }
@@ -56,7 +57,7 @@ public class DescribeStreamViewCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
-    ViewDetail detail = client.get(streamId.view(arguments.get(ArgumentName.VIEW.toString())).toId());
+    ViewDetail detail = client.get().get(streamId.view(arguments.get(ArgumentName.VIEW.toString())).toId());
 
     Table table = Table.builder()
       .setHeader("id", "format", "table", "schema", "settings")

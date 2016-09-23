@@ -26,6 +26,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.inject.Provider;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,12 +40,12 @@ import javax.inject.Inject;
 public class StreamIdCompleter extends StringsCompleter {
 
   @Inject
-  public StreamIdCompleter(final StreamClient streamClient, final CLIConfig cliConfig) {
+  public StreamIdCompleter(final Provider<StreamClient> streamClient, final CLIConfig cliConfig) {
     super(new Supplier<Collection<String>>() {
       @Override
       public Collection<String> get() {
         try {
-          List<StreamDetail> list = streamClient.list(cliConfig.getCurrentNamespace().toId());
+          List<StreamDetail> list = streamClient.get().list(cliConfig.getCurrentNamespace().toId());
           return Lists.newArrayList(
             Iterables.transform(list, new Function<StreamDetail, String>() {
               @Override

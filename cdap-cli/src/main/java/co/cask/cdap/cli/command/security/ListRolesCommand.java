@@ -28,6 +28,7 @@ import co.cask.common.cli.Arguments;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -38,10 +39,10 @@ import java.util.Set;
  */
 public class ListRolesCommand extends AbstractAuthCommand {
 
-  private final AuthorizationClient client;
+  private final Provider<AuthorizationClient> client;
 
   @Inject
-  ListRolesCommand(AuthorizationClient client, CLIConfig cliConfig) {
+  ListRolesCommand(Provider<AuthorizationClient> client, CLIConfig cliConfig) {
     super(cliConfig);
     this.client = client;
   }
@@ -53,10 +54,10 @@ public class ListRolesCommand extends AbstractAuthCommand {
 
     Set<Role> roles;
     if (!(Strings.isNullOrEmpty(principalType) && Strings.isNullOrEmpty(principalName))) {
-      roles = client.listRoles(new Principal(principalName,
-                                             Principal.PrincipalType.valueOf(principalType.toUpperCase())));
+      roles = client.get().listRoles(
+        new Principal(principalName, Principal.PrincipalType.valueOf(principalType.toUpperCase())));
     } else {
-      roles = client.listAllRoles();
+      roles = client.get().listAllRoles();
     }
 
     Table table = Table.builder()

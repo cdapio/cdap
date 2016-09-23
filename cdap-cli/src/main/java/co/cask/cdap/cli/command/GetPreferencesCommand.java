@@ -21,6 +21,7 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.client.PreferencesClient;
+import com.google.inject.Provider;
 
 /**
  * Gets preferences for instance, namespace, application, program.
@@ -28,7 +29,7 @@ import co.cask.cdap.client.PreferencesClient;
 public class GetPreferencesCommand extends AbstractGetPreferencesCommand {
   private final ElementType type;
 
-  protected GetPreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig) {
+  GetPreferencesCommand(ElementType type, Provider<PreferencesClient> client, CLIConfig cliConfig) {
     super(type, client, cliConfig, false);
     this.type = type;
   }

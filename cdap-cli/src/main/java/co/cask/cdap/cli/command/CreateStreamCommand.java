@@ -32,6 +32,7 @@ import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -46,10 +47,10 @@ public class CreateStreamCommand extends AbstractAuthCommand {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
-  private final StreamClient streamClient;
+  private final Provider<StreamClient> streamClient;
 
   @Inject
-  public CreateStreamCommand(StreamClient streamClient, CLIConfig cliConfig) {
+  CreateStreamCommand(Provider<StreamClient> streamClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.streamClient = streamClient;
   }
@@ -70,7 +71,7 @@ public class CreateStreamCommand extends AbstractAuthCommand {
       }
     }
 
-    streamClient.create(cliConfig.getCurrentNamespace().stream(streamId).toId(), streamProperties);
+    streamClient.get().create(cliConfig.getCurrentNamespace().stream(streamId).toId(), streamProperties);
     output.printf("Successfully created stream with ID '%s'\n", streamId);
   }
 

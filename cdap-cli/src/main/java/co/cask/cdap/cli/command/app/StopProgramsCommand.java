@@ -27,6 +27,7 @@ import co.cask.cdap.proto.BatchProgramResult;
 import co.cask.cdap.proto.ProgramRecord;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -35,10 +36,11 @@ import java.util.List;
  * Stops one or more programs in an application.
  */
 public class StopProgramsCommand extends BaseBatchCommand<BatchProgram> {
-  private final ProgramClient programClient;
+  private final Provider<ProgramClient> programClient;
 
   @Inject
-  public StopProgramsCommand(ApplicationClient appClient, ProgramClient programClient, CLIConfig cliConfig) {
+  StopProgramsCommand(Provider<ApplicationClient> appClient, Provider<ProgramClient> programClient,
+                      CLIConfig cliConfig) {
     super(appClient, cliConfig);
     this.programClient = programClient;
   }
@@ -50,7 +52,7 @@ public class StopProgramsCommand extends BaseBatchCommand<BatchProgram> {
 
   @Override
   protected void runBatchCommand(PrintStream printStream, Args<BatchProgram> args) throws Exception {
-    List<BatchProgramResult> results = programClient.stop(args.appId.getParent().toId(), args.programs);
+    List<BatchProgramResult> results = programClient.get().stop(args.appId.getParent().toId(), args.programs);
 
     Table table = Table.builder()
       .setHeader("name", "type", "error")

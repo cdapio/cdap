@@ -24,6 +24,7 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Role;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 
@@ -32,10 +33,10 @@ import java.io.PrintStream;
  */
 public class RemoveRoleFromPrincipalCommand extends AbstractAuthCommand {
 
-  private final AuthorizationClient client;
+  private final Provider<AuthorizationClient> client;
 
   @Inject
-  RemoveRoleFromPrincipalCommand(AuthorizationClient client, CLIConfig cliConfig) {
+  RemoveRoleFromPrincipalCommand(Provider<AuthorizationClient> client, CLIConfig cliConfig) {
     super(cliConfig);
     this.client = client;
   }
@@ -45,8 +46,8 @@ public class RemoveRoleFromPrincipalCommand extends AbstractAuthCommand {
     String roleName = arguments.get("role-name");
     String principalType = arguments.get("principal-type");
     String principalName = arguments.get("principal-name");
-    client.removeRoleFromPrincipal(new Role(roleName), new Principal(principalName, Principal.PrincipalType.valueOf
-      (principalType.toUpperCase())));
+    client.get().removeRoleFromPrincipal(
+      new Role(roleName), new Principal(principalName, Principal.PrincipalType.valueOf(principalType.toUpperCase())));
     output.printf("Successfully removed role '%s' from %s '%s'\n", roleName, principalType, principalName);
   }
 

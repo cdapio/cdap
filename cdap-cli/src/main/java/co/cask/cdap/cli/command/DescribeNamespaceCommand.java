@@ -31,6 +31,7 @@ import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -40,10 +41,10 @@ import java.util.List;
  */
 public class DescribeNamespaceCommand extends AbstractCommand {
 
-  private final NamespaceClient namespaceClient;
+  private final Provider<NamespaceClient> namespaceClient;
 
   @Inject
-  public DescribeNamespaceCommand(CLIConfig cliConfig, NamespaceClient namespaceClient) {
+  DescribeNamespaceCommand(CLIConfig cliConfig, Provider<NamespaceClient> namespaceClient) {
     super(cliConfig);
     this.namespaceClient = namespaceClient;
   }
@@ -51,7 +52,7 @@ public class DescribeNamespaceCommand extends AbstractCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     NamespaceId namespace = new NamespaceId(arguments.get(ArgumentName.NAMESPACE_NAME.getName()));
-    NamespaceMeta namespaceMeta = namespaceClient.get(namespace.toId());
+    NamespaceMeta namespaceMeta = namespaceClient.get().get(namespace.toId());
     Table table = Table.builder()
       .setHeader("name", "description", "config")
       .setRows(Lists.newArrayList(namespaceMeta), new RowMaker<NamespaceMeta>() {

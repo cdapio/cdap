@@ -22,13 +22,14 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.client.ProgramClient;
+import com.google.inject.Provider;
 
 /**
  * Starts a program in debug mode.
  */
 public class StartDebugProgramCommand extends StartProgramCommand {
 
-  public StartDebugProgramCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
+  StartDebugProgramCommand(ElementType elementType, Provider<ProgramClient> programClient, CLIConfig cliConfig) {
     super(elementType, programClient, cliConfig);
     this.isDebug = true;
   }

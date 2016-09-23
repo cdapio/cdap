@@ -30,6 +30,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.common.cli.Arguments;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.File;
 import java.io.FileReader;
@@ -42,11 +43,12 @@ import java.util.Map;
  */
 public class SetArtifactPropertiesCommand extends AbstractAuthCommand {
   private static final Gson GSON = new Gson();
-  private final ArtifactClient artifactClient;
+  private final Provider<ArtifactClient> artifactClient;
   private final FilePathResolver resolver;
 
   @Inject
-  public SetArtifactPropertiesCommand(ArtifactClient artifactClient, CLIConfig cliConfig, FilePathResolver resolver) {
+  SetArtifactPropertiesCommand(Provider<ArtifactClient> artifactClient, CLIConfig cliConfig,
+                               FilePathResolver resolver) {
     super(cliConfig);
     this.artifactClient = artifactClient;
     this.resolver = resolver;
@@ -74,7 +76,7 @@ public class SetArtifactPropertiesCommand extends AbstractAuthCommand {
                                      "and that it contains a 'properties' key whose value is a JSON object of the " +
                                      "artifact properties.", e);
       }
-      artifactClient.writeProperties(artifactId.toId(), properties.properties);
+      artifactClient.get().writeProperties(artifactId.toId(), properties.properties);
     }
   }
 

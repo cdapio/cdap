@@ -27,6 +27,7 @@ import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.Set;
@@ -36,10 +37,10 @@ import java.util.Set;
  */
 public class GrantActionCommand extends AbstractAuthCommand {
 
-  private final AuthorizationClient client;
+  private final Provider<AuthorizationClient> client;
 
   @Inject
-  GrantActionCommand(AuthorizationClient client, CLIConfig cliConfig) {
+  GrantActionCommand(Provider<AuthorizationClient> client, CLIConfig cliConfig) {
     super(cliConfig);
     this.client = client;
   }
@@ -55,7 +56,7 @@ public class GrantActionCommand extends AbstractAuthCommand {
     // actions is not an optional argument so should never be null
     Preconditions.checkNotNull(actions, "Actions can never be null in the grant command.");
 
-    client.grant(entity, principal, actions);
+    client.get().grant(entity, principal, actions);
     output.printf("Successfully granted action(s) '%s' on entity '%s' to %s '%s'\n",
                   Joiner.on(",").join(actions), entity.toString(), principal.getType(), principal.getName());
   }

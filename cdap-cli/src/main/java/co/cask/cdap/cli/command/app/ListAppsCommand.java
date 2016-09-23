@@ -28,6 +28,7 @@ import co.cask.common.cli.Arguments;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.HashSet;
@@ -39,10 +40,10 @@ import java.util.Set;
  */
 public class ListAppsCommand extends AbstractAuthCommand {
 
-  private final ApplicationClient appClient;
+  private final Provider<ApplicationClient> appClient;
 
   @Inject
-  public ListAppsCommand(ApplicationClient appClient, CLIConfig cliConfig) {
+  public ListAppsCommand(Provider<ApplicationClient> appClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.appClient = appClient;
   }
@@ -59,7 +60,7 @@ public class ListAppsCommand extends AbstractAuthCommand {
     }
     Table table = Table.builder()
       .setHeader("id", "description", "artifactName", "artifactVersion", "artifactScope")
-      .setRows(appClient.list(cliConfig.getCurrentNamespace().toId(), artifactNames, artifactVersion),
+      .setRows(appClient.get().list(cliConfig.getCurrentNamespace().toId(), artifactNames, artifactVersion),
         new RowMaker<ApplicationRecord>() {
           @Override
           public List<?> makeRow(ApplicationRecord object) {

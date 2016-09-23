@@ -23,6 +23,7 @@ import co.cask.cdap.client.AuthorizationClient;
 import co.cask.cdap.proto.security.Role;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 
@@ -31,10 +32,10 @@ import java.io.PrintStream;
  */
 public class CreateRoleCommand extends AbstractAuthCommand {
 
-  private final AuthorizationClient client;
+  private final Provider<AuthorizationClient> client;
 
   @Inject
-  CreateRoleCommand(AuthorizationClient client, CLIConfig cliConfig) {
+  CreateRoleCommand(Provider<AuthorizationClient> client, CLIConfig cliConfig) {
     super(cliConfig);
     this.client = client;
   }
@@ -42,7 +43,7 @@ public class CreateRoleCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String roleName = arguments.get("role-name");
-    client.createRole(new Role(roleName));
+    client.get().createRole(new Role(roleName));
     output.printf("Successfully created role '%s'\n", roleName);
   }
 

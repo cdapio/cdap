@@ -27,6 +27,7 @@ import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -36,10 +37,10 @@ import java.util.List;
  */
 public class ListStreamViewsCommand extends AbstractAuthCommand {
 
-  private final StreamViewClient client;
+  private final Provider<StreamViewClient> client;
 
   @Inject
-  public ListStreamViewsCommand(StreamViewClient client, CLIConfig cliConfig) {
+  ListStreamViewsCommand(Provider<StreamViewClient> client, CLIConfig cliConfig) {
     super(cliConfig);
     this.client = client;
   }
@@ -47,7 +48,7 @@ public class ListStreamViewsCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
-    List<String> views = client.list(streamId.toId());
+    List<String> views = client.get().list(streamId.toId());
 
     Table table = Table.builder()
       .setHeader("id")

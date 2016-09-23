@@ -27,6 +27,7 @@ import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -36,10 +37,10 @@ import java.util.List;
  */
 public class ListNamespacesCommand extends AbstractCommand {
 
-  private final NamespaceClient namespaceClient;
+  private final Provider<NamespaceClient> namespaceClient;
 
   @Inject
-  public ListNamespacesCommand(CLIConfig cliConfig, NamespaceClient namespaceClient) {
+  ListNamespacesCommand(CLIConfig cliConfig, Provider<NamespaceClient> namespaceClient) {
     super(cliConfig);
     this.namespaceClient = namespaceClient;
   }
@@ -48,7 +49,7 @@ public class ListNamespacesCommand extends AbstractCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     Table table = Table.builder()
       .setHeader("name", "description", "config")
-      .setRows(namespaceClient.list(), new RowMaker<NamespaceMeta>() {
+      .setRows(namespaceClient.get().list(), new RowMaker<NamespaceMeta>() {
         @Override
         public List<?> makeRow(NamespaceMeta object) {
           return Lists.newArrayList(object.getName(), object.getDescription(),

@@ -23,6 +23,7 @@ import co.cask.cdap.client.WorkflowClient;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,11 +34,13 @@ import java.util.List;
 public class WorkflowCommandSet extends CommandSet<Command> {
 
   @Inject
-  public WorkflowCommandSet(ProgramClient programClient, WorkflowClient workflowClient, CLIConfig cliConfig) {
+  WorkflowCommandSet(Provider<ProgramClient> programClient, Provider<WorkflowClient> workflowClient,
+                     CLIConfig cliConfig) {
     super(generateCommands(programClient, workflowClient, cliConfig));
   }
 
-  private static Iterable<Command> generateCommands(ProgramClient programClient, WorkflowClient workflowClient,
+  private static Iterable<Command> generateCommands(Provider<ProgramClient> programClient,
+                                                    Provider<WorkflowClient> workflowClient,
                                                     CLIConfig cliConfig) {
     List<Command> commands = new ArrayList<>();
     commands.add(new GetWorkflowCurrentRunCommand(ElementType.WORKFLOW, programClient, cliConfig));

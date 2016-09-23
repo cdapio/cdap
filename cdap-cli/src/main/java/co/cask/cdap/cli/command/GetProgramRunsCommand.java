@@ -30,6 +30,7 @@ import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -39,10 +40,10 @@ import java.util.List;
  */
 public class GetProgramRunsCommand extends AbstractCommand {
 
-  private final ProgramClient programClient;
+  private final Provider<ProgramClient> programClient;
   private final ElementType elementType;
 
-  protected GetProgramRunsCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
+  GetProgramRunsCommand(ElementType elementType, Provider<ProgramClient> programClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.elementType = elementType;
     this.programClient = programClient;
@@ -54,8 +55,8 @@ public class GetProgramRunsCommand extends AbstractCommand {
     String appId = programIdParts[0];
     long currentTime = System.currentTimeMillis();
 
-    long startTime = getTimestamp(arguments.get(ArgumentName.START_TIME.toString(), "min"), currentTime);
-    long endTime = getTimestamp(arguments.get(ArgumentName.END_TIME.toString(), "max"), currentTime);
+    long startTime = getTimestamp(arguments.getOptional(ArgumentName.START_TIME.toString(), "min"), currentTime);
+    long endTime = getTimestamp(arguments.getOptional(ArgumentName.END_TIME.toString(), "max"), currentTime);
     int limit = arguments.getInt(ArgumentName.LIMIT.toString(), Integer.MAX_VALUE);
 
     List<RunRecord> records;
@@ -67,10 +68,10 @@ public class GetProgramRunsCommand extends AbstractCommand {
       ProgramId programId = cliConfig.getCurrentNamespace().app(appId).program(elementType.getProgramType(),
                                                                                programName);
       if (arguments.hasArgument(ArgumentName.RUN_STATUS.toString())) {
-        records = programClient.getProgramRuns(programId.toId(), arguments.get(ArgumentName.RUN_STATUS.toString()),
-                                               startTime, endTime, limit);
+        records = programClient.get().getProgramRuns(
+          programId.toId(), arguments.get(ArgumentName.RUN_STATUS.toString()), startTime, endTime, limit);
       } else {
-        records = programClient.getAllProgramRuns(programId.toId(), startTime, endTime, limit);
+        records = programClient.get().getAllProgramRuns(programId.toId(), startTime, endTime, limit);
       }
 
     } else {
@@ -82,8 +83,9 @@ public class GetProgramRunsCommand extends AbstractCommand {
       .setRows(records, new RowMaker<RunRecord>() {
         @Override
         public List<?> makeRow(RunRecord object) {
-          return Lists.newArrayList(object.getPid(), object.getStatus(), object.getStartTs(),
-                                    object.getStatus().name().equals("RUNNING") ? "" : object.getStopTs());
+          return Lists.newArrayList(object.getPid(), object.getStatus().name(), String.valueOf(object.getStartTs()),
+                                    object.getStatus().name().equals("RUNNING") ? "" :
+                                      String.valueOf(object.getStopTs()));
         }
       }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);

@@ -26,6 +26,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.inject.Provider;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,13 +40,12 @@ import javax.inject.Inject;
 public class DatasetNameCompleter extends StringsCompleter {
 
   @Inject
-  public DatasetNameCompleter(final DatasetClient datasetClient,
-                              final CLIConfig cliConfig) {
+  DatasetNameCompleter(final Provider<DatasetClient> datasetClient, final CLIConfig cliConfig) {
     super(new Supplier<Collection<String>>() {
       @Override
       public Collection<String> get() {
         try {
-          List<DatasetSpecificationSummary> list = datasetClient.list(cliConfig.getCurrentNamespace().toId());
+          List<DatasetSpecificationSummary> list = datasetClient.get().list(cliConfig.getCurrentNamespace().toId());
           return Lists.newArrayList(
             Iterables.transform(list, new Function<DatasetSpecificationSummary, String>() {
               @Override

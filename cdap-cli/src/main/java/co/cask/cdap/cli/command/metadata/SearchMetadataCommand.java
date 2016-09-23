@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -49,10 +50,10 @@ public class SearchMetadataCommand extends AbstractCommand {
       }
     };
 
-  private final MetadataClient metadataClient;
+  private final Provider<MetadataClient> metadataClient;
 
   @Inject
-  public SearchMetadataCommand(CLIConfig cliConfig, MetadataClient metadataClient) {
+  SearchMetadataCommand(CLIConfig cliConfig, Provider<MetadataClient> metadataClient) {
     super(cliConfig);
     this.metadataClient = metadataClient;
   }
@@ -62,7 +63,7 @@ public class SearchMetadataCommand extends AbstractCommand {
     String searchQuery = arguments.get(ArgumentName.SEARCH_QUERY.toString());
     String type = arguments.getOptional(ArgumentName.TARGET_TYPE.toString());
     Set<MetadataSearchResultRecord> searchResults =
-      metadataClient.searchMetadata(cliConfig.getCurrentNamespace().toId(), searchQuery, parseTargetType(type));
+      metadataClient.get().searchMetadata(cliConfig.getCurrentNamespace().toId(), searchQuery, parseTargetType(type));
     Table table = Table.builder()
       .setHeader("Entity")
       .setRows(Lists.newArrayList(searchResults), new RowMaker<MetadataSearchResultRecord>() {

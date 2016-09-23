@@ -26,6 +26,7 @@ import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 
@@ -34,10 +35,10 @@ import java.io.PrintStream;
  */
 public class DeleteAppCommand extends AbstractAuthCommand {
 
-  private final ApplicationClient appClient;
+  private final Provider<ApplicationClient> appClient;
 
   @Inject
-  public DeleteAppCommand(ApplicationClient appClient, CLIConfig cliConfig) {
+  DeleteAppCommand(Provider<ApplicationClient> appClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.appClient = appClient;
   }
@@ -46,7 +47,7 @@ public class DeleteAppCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     ApplicationId appId = cliConfig.getCurrentNamespace().app(arguments.get(ArgumentName.APP.toString()));
 
-    appClient.delete(appId.toId());
+    appClient.get().delete(appId.toId());
     output.printf("Successfully deleted application '%s'\n", appId.getEntityName());
   }
 

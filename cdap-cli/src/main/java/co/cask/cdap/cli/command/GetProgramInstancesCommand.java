@@ -28,6 +28,7 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.common.cli.Arguments;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 
@@ -36,10 +37,10 @@ import java.io.PrintStream;
  */
 public class GetProgramInstancesCommand extends AbstractAuthCommand {
 
-  private final ProgramClient programClient;
+  private final Provider<ProgramClient> programClient;
   private final ElementType elementType;
 
-  protected GetProgramInstancesCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
+  GetProgramInstancesCommand(ElementType elementType, Provider<ProgramClient> programClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.elementType = elementType;
     this.programClient = programClient;
@@ -60,7 +61,7 @@ public class GetProgramInstancesCommand extends AbstractAuthCommand {
         String flowId = programIdParts[1];
         String flowletName = programIdParts[2];
         FlowletId flowlet = appId.flow(flowId).flowlet(flowletName);
-        instances = programClient.getFlowletInstances(flowlet.toId());
+        instances = programClient.get().getFlowletInstances(flowlet.toId());
         break;
       case WORKER:
         if (programIdParts.length < 2)  {
@@ -68,14 +69,14 @@ public class GetProgramInstancesCommand extends AbstractAuthCommand {
         }
         String workerId = programIdParts[1];
         ProgramId worker = appId.worker(workerId);
-        instances = programClient.getWorkerInstances(Id.Worker.from(worker.getParent().toId(), workerId));
+        instances = programClient.get().getWorkerInstances(Id.Worker.from(worker.getParent().toId(), workerId));
         break;
       case SERVICE:
         if (programIdParts.length < 2) {
           throw new CommandInputError(this);
         }
         String serviceName = programIdParts[1];
-        instances = programClient.getServiceInstances(appId.service(serviceName).toId());
+        instances = programClient.get().getServiceInstances(appId.service(serviceName).toId());
         break;
       default:
         // TODO: remove this

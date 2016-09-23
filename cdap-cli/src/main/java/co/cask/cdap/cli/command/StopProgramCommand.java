@@ -25,6 +25,7 @@ import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.common.cli.Arguments;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 
@@ -33,10 +34,10 @@ import java.io.PrintStream;
  */
 public class StopProgramCommand extends AbstractAuthCommand {
 
-  private final ProgramClient programClient;
+  private final Provider<ProgramClient> programClient;
   private final ElementType elementType;
 
-  public StopProgramCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
+  StopProgramCommand(ElementType elementType, Provider<ProgramClient> programClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.elementType = elementType;
     this.programClient = programClient;
@@ -53,7 +54,7 @@ public class StopProgramCommand extends AbstractAuthCommand {
     String programName = programIdParts[1];
     ProgramId programId = cliConfig.getCurrentNamespace().app(appId).program(elementType.getProgramType(), programName);
 
-    programClient.stop(programId.toId());
+    programClient.get().stop(programId.toId());
     output.printf("Successfully stopped %s '%s' of application '%s'\n", elementType.getName(), programName, appId);
   }
 

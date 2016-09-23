@@ -37,6 +37,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.sql.SQLException;
@@ -52,10 +53,10 @@ import java.util.concurrent.TimeoutException;
 public class ExecuteQueryCommand extends AbstractAuthCommand implements Categorized {
 
   private static final long DEFAULT_TIMEOUT_MIN = Long.MAX_VALUE;
-  private final QueryClient queryClient;
+  private final Provider<QueryClient> queryClient;
 
   @Inject
-  public ExecuteQueryCommand(QueryClient queryClient, CLIConfig cliConfig) {
+  ExecuteQueryCommand(Provider<QueryClient> queryClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.queryClient = queryClient;
   }
@@ -65,8 +66,8 @@ public class ExecuteQueryCommand extends AbstractAuthCommand implements Categori
     String query = arguments.get(ArgumentName.QUERY.toString());
     long timeOutMins = arguments.getLong(ArgumentName.TIMEOUT.toString(), DEFAULT_TIMEOUT_MIN);
 
-    ListenableFuture<ExploreExecutionResult> future = queryClient.execute(cliConfig.getCurrentNamespace().toId(),
-                                                                          query);
+    ListenableFuture<ExploreExecutionResult> future = queryClient.get().execute(cliConfig.getCurrentNamespace().toId(),
+                                                                                query);
     try {
       ExploreExecutionResult executionResult = future.get(timeOutMins, TimeUnit.MINUTES);
       if (!executionResult.canContainResults()) {

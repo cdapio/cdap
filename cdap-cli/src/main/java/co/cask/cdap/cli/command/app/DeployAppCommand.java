@@ -27,6 +27,7 @@ import co.cask.cdap.client.ApplicationClient;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.File;
 import java.io.PrintStream;
@@ -36,11 +37,11 @@ import java.io.PrintStream;
  */
 public class DeployAppCommand extends AbstractAuthCommand {
 
-  private final ApplicationClient applicationClient;
+  private final Provider<ApplicationClient> applicationClient;
   private final FilePathResolver resolver;
 
   @Inject
-  public DeployAppCommand(ApplicationClient applicationClient, FilePathResolver resolver, CLIConfig cliConfig) {
+  DeployAppCommand(Provider<ApplicationClient> applicationClient, FilePathResolver resolver, CLIConfig cliConfig) {
     super(cliConfig);
     this.applicationClient = applicationClient;
     this.resolver = resolver;
@@ -51,8 +52,8 @@ public class DeployAppCommand extends AbstractAuthCommand {
     File file = resolver.resolvePathToFile(arguments.get(ArgumentName.APP_JAR_FILE.toString()));
     Preconditions.checkArgument(file.exists(), "File " + file.getAbsolutePath() + " does not exist");
     Preconditions.checkArgument(file.canRead(), "File " + file.getAbsolutePath() + " is not readable");
-    String appConfig = arguments.get(ArgumentName.APP_CONFIG.toString(), "");
-    applicationClient.deploy(cliConfig.getCurrentNamespace().toId(), file, appConfig);
+    String appConfig = arguments.getOptional(ArgumentName.APP_CONFIG.toString(), "");
+    applicationClient.get().deploy(cliConfig.getCurrentNamespace().toId(), file, appConfig);
     output.println("Successfully deployed application");
   }
 

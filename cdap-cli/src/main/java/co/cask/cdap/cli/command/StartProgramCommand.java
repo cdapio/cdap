@@ -28,6 +28,7 @@ import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.common.cli.Arguments;
 import com.google.gson.Gson;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.Map;
@@ -39,11 +40,11 @@ public class StartProgramCommand extends AbstractAuthCommand {
   private static final Gson GSON = new Gson();
 
   protected final ElementType elementType;
-  private final ProgramClient programClient;
+  private final Provider<ProgramClient> programClient;
 
   protected boolean isDebug = false;
 
-  public StartProgramCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
+  StartProgramCommand(ElementType elementType, Provider<ProgramClient> programClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.elementType = elementType;
     this.programClient = programClient;
@@ -60,17 +61,17 @@ public class StartProgramCommand extends AbstractAuthCommand {
     String programName = programIdParts[1];
     ProgramId programId = cliConfig.getCurrentNamespace().app(appId).program(elementType.getProgramType(), programName);
 
-    String runtimeArgsString = arguments.get(ArgumentName.RUNTIME_ARGS.toString(), "");
+    String runtimeArgsString = arguments.getOptional(ArgumentName.RUNTIME_ARGS.toString(), "");
     if (runtimeArgsString == null || runtimeArgsString.isEmpty()) {
       // run with stored runtime args
-      programClient.start(programId.toId(), isDebug);
-      runtimeArgsString = GSON.toJson(programClient.getRuntimeArgs(programId.toId()));
+      programClient.get().start(programId.toId(), isDebug);
+      runtimeArgsString = GSON.toJson(programClient.get().getRuntimeArgs(programId.toId()));
       output.printf("Successfully started %s '%s' of application '%s' with stored runtime arguments '%s'\n",
                     elementType.getName(), programName, appId, runtimeArgsString);
     } else {
       // run with user-provided runtime args
       Map<String, String> runtimeArgs = ArgumentParser.parseMap(runtimeArgsString);
-      programClient.start(programId.toId(), isDebug, runtimeArgs);
+      programClient.get().start(programId.toId(), isDebug, runtimeArgs);
       output.printf("Successfully started %s '%s' of application '%s' with provided runtime arguments '%s'\n",
                     elementType.getName(), programName, appId, runtimeArgsString);
     }
