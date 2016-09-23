@@ -14,22 +14,33 @@
  * the License.
  */
 
-import React from 'react';
+import React, {PropTypes} from 'react';
 require('./AdminConfigurePane.less');
 import ConfigureButton from '../ConfigureButton/index.js';
 var shortid = require('shortid');
 
 var configButtons = ['View Configurations', 'Add Namespace', 'Delete Namespace', 'Manage Namespaces', 'Instance Preference', 'Add Roles', 'Manage Roles', 'Reset Instance', 'Delete All Datasets', 'Reset Instance', 'Delete All Datasets', 'View Invalid Transactions', 'Tag Management'];
 
-export default function AdminConfigurePane(){
+export default function AdminConfigurePane({ openWizard }){
   var buttons = [];
   for(var i = 0 ; i < configButtons.length; i++){
-    buttons.push(
-      <ConfigureButton
-        key={shortid.generate()}
-        label={configButtons[i]}
-      />
-    );
+
+    if(i === 1){
+      buttons.push(
+        <ConfigureButton
+          key={shortid.generate()}
+          label={configButtons[i]}
+          onClick={openWizard}
+        />
+      );
+    } else {
+      buttons.push(
+        <ConfigureButton
+          key={shortid.generate()}
+          label={configButtons[i]}
+        />
+      );
+    }
   }
 
   return (
@@ -41,3 +52,7 @@ export default function AdminConfigurePane(){
     </div>
   );
 }
+
+AdminConfigurePane.propTypes = {
+  openWizard : PropTypes.func
+};

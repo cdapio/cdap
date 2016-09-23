@@ -21,6 +21,8 @@ import PublishPipelineWizard from 'components/CaskWizards/PublishPipeline';
 import CreateStreamStore from 'services/WizardStores/CreateStream/CreateStreamStore';
 import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
 import PublishPipelineStore from 'services/WizardStores/PublishPipeline/PublishPipelineStore';
+import AddNamespaceWizard from 'components/CaskWizards/AddNamespace';
+import AddNamespaceStore from 'services/WizardStores/AddNamespace/AddNamespaceStore';
 
 const WizardTypesMap = {
   'create_stream': {
@@ -34,6 +36,10 @@ const WizardTypesMap = {
   'create_app': {
     tag: PublishPipelineWizard,
     store: PublishPipelineStore
+  },
+  'add_namespace': {
+    tag: AddNamespaceWizard,
+    store: AddNamespaceStore
   }
 };
 

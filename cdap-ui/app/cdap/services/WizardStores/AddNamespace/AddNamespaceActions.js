@@ -14,15 +14,20 @@
  * the License.
  */
 
-import Datasource from '../../services/datasource';
-import {apiCreator} from '../../services/resource-helper';
-
-let dataSrc = new Datasource();
-let basepath = '/namespaces';
-
-export const MyNamespaceApi = {
-  list: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
-  get: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:namespace`),
-  pollList: apiCreator(dataSrc, 'GET', 'POLL', basepath),
-  create: apiCreator(dataSrc, 'PUT', 'REQUEST', `${basepath}/:namespace`)
+const AddNamespaceActions = {
+  setName: 'SET-NAMESPACE-NAME',
+  setDescription: 'SET-NAMESPACE-DESCRIPTION',
+  setSchedulerQueue: 'SET-NAMESPACE-SCHEDULER-QUEUE',
+  setHDFSDirectory: 'SET-HDFS-DIRECTORY',
+  setHiveDatabaseName: 'SET-HIVE-DATABASE-NAME',
+  setHBaseNamespace: 'SET-HBASE-NS-NAME',
+  setPrincipal: 'SET-PRINCIPAL',
+  setKeytab: 'SET-KEYTAB',
+  setPreferencesKey: 'SET-KEY',
+  setPreferencesVal: 'SET-VALUE',
+  onError: 'FORM-SUBMIT-FAILURE',
+  onSuccess: 'FORM-SUBMIT-SUCCESS',
+  onReset: 'FORM-RESET'
 };
+
+export default AddNamespaceActions;

@@ -22,6 +22,8 @@ import ServiceStatusPanel from '../ServiceStatusPanel';
 import AdminDetailPanel from '../AdminDetailPanel';
 import AdminConfigurePane from '../AdminConfigurePane';
 import AdminOverviewPane from '../AdminOverviewPane';
+import AbstractWizard from 'components/AbstractWizard';
+
 import T from 'i18n-react';
 var shortid = require('shortid');
 var classNames = require('classnames');
@@ -75,13 +77,17 @@ class Management extends Component {
     this.state = {
       application: 'CDAP',
       lastUpdated: 15,
-      loading: true
+      loading: false,
+      wizard : {
+        actionIndex : 0,
+        actionType : 'add_namespace'
+      }
     };
     this.interval = undefined;
     this.clickLeft = this.clickLeft.bind(this);
     this.clickRight = this.clickRight.bind(this);
     this.setToContext = this.setToContext.bind(this);
-
+    this.openWizard = this.openWizard.bind(this, 0, 'add_namespace');
     this.applications = ['CDAP', 'YARN', 'HBASE'];
   }
 
@@ -112,17 +118,39 @@ class Management extends Component {
     }
   }
 
+  closeWizard() {
+      this.setState({
+        wizard: {
+          actionIndex: null,
+          actionType: null
+        }
+      });
+  }
+
+  openWizard(index, type) {
+    console.log('open wizard has been called!');
+    this.setState({
+      wizard: {
+        actionIndex: index,
+        actionType: type
+      }
+    });
+  }
+
+
   // FIXME: This for giving it a strcture. Eventually will be removed.
   // Simulates the page loading
-  simulateLoading() {
-    setTimeout( () => {
-      this.setState({
-        loading: false
-      });
-    }, 1500);
-  }
+
+  // simulateLoading() {
+  //   setTimeout( () => {
+  //     this.setState({
+  //       loading: false
+  //     });
+  //   }, 1500);
+  // }
+
   componentDidMount() {
-    this.simulateLoading();
+    // this.simulateLoading();
   }
   render () {
 
@@ -175,9 +203,15 @@ class Management extends Component {
           </div>
         </div>
         <div className="admin-bottom-panel">
-          <AdminConfigurePane />
+          <AdminConfigurePane openWizard={this.openWizard}/>
           <AdminOverviewPane isLoading={this.state.loading} />
         </div>
+        <AbstractWizard
+          isOpen={this.state.wizard.actionIndex !== null && this.state.wizard.actionType !== null}
+          onClose={this.closeWizard.bind(this)}
+          wizardType={this.state.wizard.actionType}
+          context={'Configure'}
+        />
       </div>
     );
   }
