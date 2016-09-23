@@ -26,6 +26,7 @@ import org.apache.twill.discovery.ServiceDiscovered;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import javax.annotation.Nullable;
@@ -33,28 +34,42 @@ import javax.annotation.Nullable;
 /**
  * Picks an endpoint based on a distribution configuration from a list of available endpoints.
  */
-public class DistributionEndpointStrategy extends AbstractEndpointStrategy {
+public class UserServiceEndpointStrategy extends AbstractEndpointStrategy {
   private final RouteStore routeStore;
   private final ProgramId serviceId;
+  private final String version;
   private final Random random;
 
-  public DistributionEndpointStrategy(ServiceDiscovered serviceDiscovered, RouteStore routeStore, ProgramId serviceId) {
+  public UserServiceEndpointStrategy(ServiceDiscovered serviceDiscovered, RouteStore routeStore, ProgramId serviceId,
+                                     @Nullable String version) {
     super(serviceDiscovered);
     this.routeStore = routeStore;
     this.serviceId = serviceId;
+    this.version = version;
     this.random = ThreadLocalRandom.current();
+  }
+
+  public UserServiceEndpointStrategy(ServiceDiscovered serviceDiscovered, RouteStore routeStore, ProgramId serviceId) {
+    this(serviceDiscovered, routeStore, serviceId, null);
   }
 
   @Nullable
   @Override
   public Discoverable pick() {
-    RouteConfig routeConfig = routeStore.fetch(serviceId);
+    // If payload filter is not null, then don't fetch any routeConfig.
+    RouteConfig routeConfig = version == null ? routeStore.fetch(serviceId) : null;
     Iterator<Discoverable> iterator = serviceDiscovered.iterator();
     Discoverable result = null;
     double resultProbability = 0;
     while (iterator.hasNext()) {
       Discoverable candidate = iterator.next();
       String version = Bytes.toString(candidate.getPayload());
+      // If payload filter is active, then if payload filter doesn't match => continue searching for a
+      // matching discoverable
+      if (this.version != null && !Objects.equals(version, this.version)) {
+        continue;
+      }
+
       double weight = 0;
       if (!Strings.isNullOrEmpty(version) && routeConfig != null) {
         Map<String, Integer> weights = routeConfig.getRoutes();
@@ -62,6 +77,9 @@ public class DistributionEndpointStrategy extends AbstractEndpointStrategy {
         if (weightage != null) {
           weight = weightage;
         }
+      } else {
+        // If route is not present, then allow some randomness by setting non-zero weight
+        weight = 1;
       }
       double randomPick = random.nextDouble() * weight;
       // if pick probability is greater, retain the candidate
