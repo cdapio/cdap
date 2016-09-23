@@ -47,7 +47,7 @@ let ThresholdTextBox = ({value, onChange}) => {
         type="number"
         onChange={onChange}
       />
-    <h3>Megabytes (MB)</h3>
+    <h3>{T.translate('features.Wizard.StreamCreate.Step3.mblabel')}</h3>
     </FormGroup>
   );
 };

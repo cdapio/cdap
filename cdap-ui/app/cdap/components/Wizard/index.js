@@ -124,13 +124,16 @@ export default class Wizard extends Component{
           Finish
         </button>
       );
-      if (matchedIndex === 0 ) {
+      // This is ugly. We need to find a better way.
+      if (matchedIndex === 0 && this.props.wizardConfig.steps.length > 1) {
         navButtons = ( nextButton );
       }
-      if (matchedIndex === this.props.wizardConfig.steps.length - 1) {
+      if (matchedIndex === this.props.wizardConfig.steps.length - 1 && this.props.wizardConfig.steps.length > 1) {
         navButtons = ( prevButton );
       }
-      if (matchedIndex !== 0 && matchedIndex !== this.props.wizardConfig.steps.length - 1) {
+      if (matchedIndex !== 0 &&
+          matchedIndex !== this.props.wizardConfig.steps.length - 1 &&
+          this.props.wizardConfig.steps.length > 1) {
         navButtons = (
           <span>
             {prevButton}

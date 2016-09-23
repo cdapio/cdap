@@ -20,6 +20,7 @@ import UploadDataActions from 'services/WizardStores/UploadData/UploadDataAction
 import SelectWithOptions from 'components/SelectWithOptions';
 import {Input, Form, FormGroup, Col, Label} from 'reactstrap';
 require('./SelectDestination.less');
+import T from 'i18n-react';
 
 const mapStateToDestinationTypeProps = (state) => {
   return {
@@ -30,7 +31,7 @@ const mapStateToDestinationTypeProps = (state) => {
 const mapStateToDestinationNameProps = (state) => {
   return {
     value: state.selectdestination.name,
-    placeholder: 'Dataset/Stream Name'
+    placeholder: T.translate('features.Wizard.UploadData.Step2.dataentitynameplaceholder')
   };
 };
 const mapDispatchToDestinationTypeProps = (dispatch) => {
@@ -75,7 +76,7 @@ export default function SelectDestination() {
       >
       <FormGroup>
         <Col xs="3">
-          <Label>Destination Type</Label>
+          <Label>{T.translate('features.Wizard.UploadData.Step2.destinationtype')}</Label>
         </Col>
         <Col xs="7">
           <DestinationType />
@@ -83,7 +84,7 @@ export default function SelectDestination() {
       </FormGroup>
       <FormGroup>
         <Col xs="3">
-          <Label>Destination Name</Label>
+          <Label>{T.translate('features.Wizard.UploadData.Step2.destinationname')}</Label>
         </Col>
         <Col xs="7">
           <DestinationName />

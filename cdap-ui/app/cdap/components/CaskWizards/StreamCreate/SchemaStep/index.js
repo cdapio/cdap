@@ -16,6 +16,7 @@
 import React from 'react';
 import {connect, Provider} from 'react-redux';
 import {Col, FormGroup, Label, Form} from 'reactstrap';
+import T from 'i18n-react';
 
 import SelectWithOptions from 'components/SelectWithOptions';
 import SimpleSchema from 'components/SimpleSchema';
@@ -71,7 +72,7 @@ export default function SchemaStep() {
       >
         <FormGroup>
           <Col xs="2">
-            <Label>Format</Label>
+            <Label>{T.translate('commons.formatLabel')}</Label>
           </Col>
           <Col xs="4">
             <SchemaType className="input-sm"/>
@@ -79,7 +80,7 @@ export default function SchemaStep() {
         </FormGroup>
         <FormGroup>
           <Col xs="12">
-            <Label>Schema</Label>
+            <Label>{T.translate('commons.schemaLabel')}</Label>
           </Col>
           <Col xs="12">
             <SimpleSchemaWrapper />
