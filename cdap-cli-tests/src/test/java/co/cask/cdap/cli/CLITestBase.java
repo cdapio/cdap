@@ -41,8 +41,8 @@ public class CLITestBase {
 
   protected static CLIConfig createCLIConfig(URI standaloneUri) throws Exception {
     ConnectionConfig connectionConfig = InstanceURIParser.DEFAULT.parse(standaloneUri.toString());
-    ClientConfig clientConfig =
-      new ClientConfig.Builder().setConnectionConfig(connectionConfig).setAllTimeouts(60000).build();
+    ClientConfig clientConfig = new ClientConfig.Builder().setConnectionConfig(connectionConfig).build();
+    clientConfig.setAllTimeouts(60000);
     return new CLIConfig(clientConfig, System.out, new CsvTableRenderer());
   }
 
