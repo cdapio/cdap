@@ -255,10 +255,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     waitState(wordcountFlow1, RUNNING);
     // same flow cannot be run concurrently in the same app version
     startProgram(wordcountFlow1, 409);
-    // same flow cannot be run concurrently in any versions of the same app
-    startProgram(wordcountFlow2, 409);
-    // same flow cannot be run concurrently in any versions of the same app
-    startProgram(wordcountFlowDefault, 409);
+
     // start flow in a wrong namespace
     startProgram(new NamespaceId(TEST_NAMESPACE1)
                             .app(wordcountFlow1.getApplication(), wordcountFlow1.getVersion())
@@ -342,6 +339,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // cleanup
     deleteApp(wordCountApp1, 200);
     deleteApp(wordCountApp2, 200);
+    deleteApp(wordCountAppDefault, 200);
     deleteApp(sleepWorkflowApp1, 200);
     deleteApp(sleepWorkflowApp2, 200);
   }
