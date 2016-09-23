@@ -57,7 +57,7 @@ export default class StreamCreateWizard extends Component {
           if (res) {
             return Promise.resolve(res);
           }
-          return Promise.resolve('Successfully created Stream - ' + state.general.name);
+          return Promise.resolve(state.general.name);
         }
       );
   }

@@ -22,6 +22,7 @@ import PublishPipelineAction from 'services/WizardStores/PublishPipeline/Publish
 import PublishPipelineActionCreator from 'services/WizardStores/PublishPipeline/ActionCreator.js';
 import head from 'lodash/head';
 import {MyPipelineApi} from 'api/pipeline';
+import T from 'i18n-react';
 
 export default class PublishPipelineWizard extends Component {
   constructor(props) {
@@ -72,13 +73,14 @@ export default class PublishPipelineWizard extends Component {
       });
   }
   render() {
+    let wizardModalTitle = (this.props.input.package.label ? this.props.input.package.label + " | " : '') + T.translate('features.Wizard.PublishPipeline.headerlabel') ;
     return (
       <div>
         {
           this.state.showWizard ?
             // eww..
             <WizardModal
-              title={this.props.input.package.label ? (this.props.input.package.label || '') + " | Create Stream" : "Create Stream"}
+              title={wizardModalTitle}
               isOpen={this.state.showWizard}
               toggle={this.toggleWizard.bind(this, false)}
               className="create-stream-wizard"

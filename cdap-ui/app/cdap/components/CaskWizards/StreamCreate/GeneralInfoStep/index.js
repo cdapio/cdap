@@ -19,6 +19,7 @@ import CreateStreamStore from 'services/WizardStores/CreateStream/CreateStreamSt
 import { Label, Form, FormGroup, Col } from 'reactstrap';
 import TimeToLive from 'components/TimeToLive';
 import InputWithValidations from 'components/InputWithValidations';
+import T from 'i18n-react';
 
 import { connect, Provider } from 'react-redux';
 require('./GeneralInfoStep.less');
@@ -97,7 +98,7 @@ export default function GeneralInfoStep() {
       >
         <FormGroup>
           <Col xs="3">
-            <Label>Name</Label>
+            <Label>{T.translate('commons.nameLabel')}</Label>
           </Col>
           <Col xs="7">
             <InputStreamName />
@@ -106,7 +107,7 @@ export default function GeneralInfoStep() {
         </FormGroup>
         <FormGroup>
           <Col xs="3">
-            <Label>Description</Label>
+            <Label>{T.translate('commons.descriptionLabel')}</Label>
           </Col>
           <Col xs="7">
             <InputStreamDescription />
@@ -114,7 +115,7 @@ export default function GeneralInfoStep() {
         </FormGroup>
         <FormGroup>
           <Col sm="3">
-            <Label>Event Life Time </Label>
+            <Label>{T.translate('features.Wizard.StreamCreate.Step1.ttllabel')} </Label>
           </Col>
           <Col sm="7">
             <InputStreamTTL />
