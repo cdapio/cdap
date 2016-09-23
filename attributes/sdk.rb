@@ -83,10 +83,10 @@ default['cdap']['sdk']['user'] = 'cdap'
 default['cdap']['sdk']['manage_user'] = true
 default['cdap']['sdk']['init_name'] = 'SDK'
 default['cdap']['sdk']['init_krb5'] = false
-default['cdap']['sdk']['init_cmd'] = "#{node['cdap']['sdk']['install_path']}/sdk/bin/cdap.sh"
-#   if node['cdap']['version'].to_f < 4.0
-#     "#{node['cdap']['sdk']['install_path']}/sdk/bin/cdap.sh"
-#   else
-#     "#{node['cdap']['sdk']['install_path']}/sdk/bin/cdap sdk"
-#   end
+default['cdap']['sdk']['init_cmd'] =
+  if node['cdap']['version'].to_f < 4.0
+    "#{node['cdap']['sdk']['install_path']}/sdk/bin/cdap.sh"
+  else
+    "#{node['cdap']['sdk']['install_path']}/sdk/bin/cdap sdk"
+  end
 default['cdap']['sdk']['init_actions'] = [:enable, :start]
