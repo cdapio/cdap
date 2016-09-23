@@ -19,17 +19,9 @@ require('./AdminNodeMetadataPane.less');
 import StatContainer from '../StatContainer/index.js';
 var classNames = require('classnames');
 
-var loading = true;
-
-function simulateLoading() {
-  setTimeout( () => {
-    loading = false;
-  }, 1500);
-}
+var loading = false;
 
 function AdminNodeMetadataPane(){
-
-  simulateLoading();
 
   var stats = [];
 

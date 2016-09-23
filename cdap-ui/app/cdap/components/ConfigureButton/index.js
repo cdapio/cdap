@@ -19,12 +19,16 @@ require('./ConfigureButton.less');
 
 
 const propTypes  = {
-  label: PropTypes.string
+  label: PropTypes.string,
+  onClick: PropTypes.func
 };
 
-function ConfigureButton({label}){
+function ConfigureButton({label, onClick}){
   return (
-    <div className="configure-button">
+    <div
+      className="configure-button"
+      onClick={onClick}
+    >
       <i className="fa fa-arrows-alt" />
       <div className="configure-button-text">
         {label}

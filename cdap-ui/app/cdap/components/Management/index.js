@@ -79,15 +79,15 @@ class Management extends Component {
       lastUpdated: 15,
       loading: false,
       wizard : {
-        actionIndex : 0,
-        actionType : 'add_namespace'
+        actionIndex : null,
+        actionType : null
       }
     };
     this.interval = undefined;
     this.clickLeft = this.clickLeft.bind(this);
     this.clickRight = this.clickRight.bind(this);
     this.setToContext = this.setToContext.bind(this);
-    this.openWizard = this.openWizard.bind(this, 0, 'add_namespace');
+    this.openNamespaceWizard = this.openNamespaceWizard.bind(this, 0, 'add_namespace');
     this.applications = ['CDAP', 'YARN', 'HBASE'];
   }
 
@@ -127,8 +127,7 @@ class Management extends Component {
       });
   }
 
-  openWizard(index, type) {
-    console.log('open wizard has been called!');
+  openNamespaceWizard(index, type) {
     this.setState({
       wizard: {
         actionIndex: index,
@@ -137,21 +136,6 @@ class Management extends Component {
     });
   }
 
-
-  // FIXME: This for giving it a strcture. Eventually will be removed.
-  // Simulates the page loading
-
-  // simulateLoading() {
-  //   setTimeout( () => {
-  //     this.setState({
-  //       loading: false
-  //     });
-  //   }, 1500);
-  // }
-
-  componentDidMount() {
-    // this.simulateLoading();
-  }
   render () {
 
     var navItems = this.applications.map( (item) => {
@@ -203,7 +187,7 @@ class Management extends Component {
           </div>
         </div>
         <div className="admin-bottom-panel">
-          <AdminConfigurePane openWizard={this.openWizard}/>
+          <AdminConfigurePane openNamespaceWizard={this.openNamespaceWizard}/>
           <AdminOverviewPane isLoading={this.state.loading} />
         </div>
         <AbstractWizard

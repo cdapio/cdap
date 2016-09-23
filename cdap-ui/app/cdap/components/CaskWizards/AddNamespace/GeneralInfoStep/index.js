@@ -19,11 +19,7 @@ import AddNamespaceActions  from 'services/WizardStores/AddNamespace/AddNamespac
 import AddNamespaceStore from 'services/WizardStores/AddNamespace/AddNamespaceStore';
 import {Provider, connect} from 'react-redux';
 import InputWithValidations from 'components/InputWithValidations';
-require('./GeneralInfoStep.less');
-
-// import TimeToLive from 'components/TimeToLive';
-// import InputWithValidations from 'components/InputWithValidations';
-// import { connect, Provider } from 'react-redux';
+import T from 'i18n-react';
 
 //Namespace Name
 const mapStateToNamespaceNameProps = (state) => {
@@ -31,7 +27,7 @@ const mapStateToNamespaceNameProps = (state) => {
   return {
     value: state.general.name,
     type: 'text',
-    placeholder: 'Namespace Name'
+    placeholder: T.translate('features.Wizard.Add-Namespace.Step1.name-placeholder')
   };
 };
 
@@ -51,7 +47,7 @@ const mapStateToNamespaceDescriptionProps = (state) => {
   return {
     value: state.general.description,
     type: 'text',
-    placeholder: 'Namespace description'
+    placeholder: T.translate('features.Wizard.Add-Namespace.Step1.description-placeholder')
   };
 };
 
@@ -88,15 +84,16 @@ export default function GeneralInfoStep() {
       >
           <FormGroup>
             <Col xs="3">
-              <Label>Name:<span className="required-asterisk">*</span></Label>
+              <Label>{T.translate('features.Wizard.Add-Namespace.Step1.name-label')}:</Label>
             </Col>
             <Col xs="7">
               <InputNamespaceName />
             </Col>
+            <span className="fa fa-asterisk text-danger pull-left" />
           </FormGroup>
           <FormGroup>
             <Col xs="3">
-              <Label>Description:</Label>
+              <Label>{T.translate('features.Wizard.Add-Namespace.Step1.description-label')}:</Label>
             </Col>
             <Col xs="7">
               <InputNamespaceDescription />

@@ -18,7 +18,7 @@ import WizardModal from 'components/WizardModal';
 import Wizard from 'components/Wizard';
 import AddNamespaceStore from 'services/WizardStores/AddNamespace/AddNamespaceStore';
 import AddNamespaceWizardConfig from 'services/WizardConfigs/AddNamespaceWizardConfig';
-import {MyNamespaceApi} from '../../../api/namespace';
+import { PublishNamespace } from 'services/WizardStores/AddNamespace/ActionCreator';
 
 export default class AddNamespaceWizard extends Component {
   constructor(props) {
@@ -41,17 +41,18 @@ export default class AddNamespaceWizard extends Component {
     });
   }
 
-  onSubmit(){
-    //PUT /v3/namespaces/<namespace-id>
-    let ns = AddNamespaceStore.getState().general.name;
-    let description = AddNamespaceStore.getState().general.description;
+  createNamespace(){
+    let state = AddNamespaceStore.getState();
 
-    MyNamespaceApi.create({
-      namespace: ns,
-      description: description
-    });
-
-    this.toggleWizard();
+    return PublishNamespace()
+      .flatMap(
+        res => {
+          if (res) {
+            return Promise.resolve(res);
+          }
+          return Promise.resolve(state.general.name);
+        }
+      );
   }
 
   render() {
@@ -67,7 +68,7 @@ export default class AddNamespaceWizard extends Component {
             >
               <Wizard
                 wizardConfig={AddNamespaceWizardConfig}
-                onSubmit={this.onSubmit.bind(this)}
+                onSubmit={this.createNamespace.bind(this)}
                 onClose={this.toggleWizard.bind(this)}
                 store={AddNamespaceStore}
               />

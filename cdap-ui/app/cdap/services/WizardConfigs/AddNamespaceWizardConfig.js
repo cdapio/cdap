@@ -16,9 +16,9 @@
 
 import React from 'react';
 import GeneralInfoStep from 'components/CaskWizards/AddNamespace/GeneralInfoStep';
-// import MappingStep from 'components/CaskWizards/AddNamespace/MappingStep';
-// import SecurityStep from 'components/CaskWizards/AddNamespace/SecurityStep';
-// import PreferencesStep from 'components/CaskWizards/AddNamespace/PreferencesStep';
+import MappingStep from 'components/CaskWizards/AddNamespace/MappingStep';
+import SecurityStep from 'components/CaskWizards/AddNamespace/SecurityStep';
+import PreferencesStep from 'components/CaskWizards/AddNamespace/PreferencesStep';
 import T from 'i18n-react';
 
 const AddNamespaceWizardConfig = {
@@ -30,31 +30,29 @@ const AddNamespaceWizardConfig = {
       description: T.translate('features.Wizard.Add-Namespace.Step1.sld-desc'),
       content: (<GeneralInfoStep />),
       requiredFields: ['name']
+    },
+    {
+      id: 'mapping',
+      shorttitle: T.translate('features.Wizard.Add-Namespace.Step2.ssd-label'),
+      title: T.translate('features.Wizard.Add-Namespace.Step2.ssd-label'),
+      description: T.translate('features.Wizard.Add-Namespace.Step2.sld-label'),
+      content: (<MappingStep />)
+    },
+    {
+      id: 'security',
+      shorttitle: T.translate('features.Wizard.Add-Namespace.Step3.ssd-label'),
+      title: T.translate('features.Wizard.Add-Namespace.Step3.ssd-label'),
+      description: T.translate('features.Wizard.Add-Namespace.Step3.sld-label'),
+      content: (<SecurityStep />)
+    },
+    {
+      id: 'preferences',
+      shorttitle: T.translate('features.Wizard.Add-Namespace.Step4.ssd-label'),
+      title: T.translate('features.Wizard.Add-Namespace.Step4.ssd-label'),
+      description: T.translate('features.Wizard.Add-Namespace.Step4.sld-label'),
+      content: (<PreferencesStep />)
     }
   ]
 };
-
-// To be included later in 'steps'
-// {
-//   id: 'mapping',
-//   shorttitle: T.translate('features.Wizard.Add-Namespace.Step2.ssd-label'),
-//   title: T.translate('features.Wizard.Add-Namespace.Step2.ssd-label'),
-//   description: T.translate('features.Wizard.Add-Namespace.Step2.sld-label'),
-//   content: (<MappingStep />)
-// },
-// {
-//   id: 'security',
-//   shorttitle: T.translate('features.Wizard.Add-Namespace.Step3.ssd-label'),
-//   title: T.translate('features.Wizard.Add-Namespace.Step3.ssd-label'),
-//   description: T.translate('features.Wizard.Add-Namespace.Step3.sld-label'),
-//   content: (<SecurityStep />)
-// },
-// {
-//   id: 'preferences',
-//   shorttitle: T.translate('features.Wizard.Add-Namespace.Step4.ssd-label'),
-//   title: T.translate('features.Wizard.Add-Namespace.Step4.ssd-label'),
-//   description: T.translate('features.Wizard.Add-Namespace.Step4.sld-label'),
-//   content: (<PreferencesStep />)
-// }
 
 export default AddNamespaceWizardConfig;

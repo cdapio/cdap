@@ -190,7 +190,6 @@ features:
         description: Specify the name of the pipeline
       pipelinenameplaceholder: Pipeline name
       headerlabel: Publish Pipeline
-  Configure:
     Add-Namespace:
        Step1:
          ssd-label: "General Information"
