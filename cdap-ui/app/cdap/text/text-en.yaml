@@ -12,7 +12,16 @@ commons:
     artifact:
       plural: Artifacts
       singular: Artifact
+    cdap-data-pipeline:
+      plural: Data Pipelines
+      singular: Data Pipeline
+    cdap-data-streams:
+      plural: Data Streams
+      singular: Data Stream
     dataset:
+      plural: Datasets
+      singular: Dataset
+    datasetinstance:
       plural: Datasets
       singular: Dataset
     flow:
@@ -49,12 +58,16 @@ commons:
 
 features:
   Home:
+    emptyMessage: No entity from the selected filter
     Cards:
       type: "Type: "
     Header:
       filters: Filters
       search-placeholder: Search cards
       sort: Sort
+      sortOptions:
+        nameAsc: A - Z
+        nameDesc: Z - A
 
   Market:
     search-placeholder: Search

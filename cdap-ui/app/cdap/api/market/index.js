@@ -14,8 +14,8 @@
  * the License.
  */
 
-import Datasource from '../../services/datasource';
-import {apiCreatorAbsPath} from '../../services/resource-helper';
+import Datasource from 'services/datasource';
+import {apiCreatorAbsPath} from 'services/resource-helper';
 
 let dataSrc = new Datasource();
 const basepath = `${window.CDAP_UI_CONFIG.market.path}/${window.CDAP_UI_CONFIG.market.version}`;
