@@ -23,6 +23,7 @@ import co.cask.cdap.cli.completer.element.HttpMethodPrefixCompleter;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.common.cli.supplier.CompleterSupplier;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import jline.console.completer.Completer;
 
 /**
@@ -33,11 +34,11 @@ public class EndpointSupplier implements CompleterSupplier {
   private static final String METHOD_PREFIX = "call service <>";
   private static final String ENDPOINT_PREFIX = "call service <> <>";
 
-  private final ServiceClient serviceClient;
+  private final Provider<ServiceClient> serviceClient;
   private final CLIConfig cliConfig;
 
   @Inject
-  private EndpointSupplier(final ServiceClient serviceClient, CLIConfig cliConfig) {
+  private EndpointSupplier(final Provider<ServiceClient> serviceClient, CLIConfig cliConfig) {
     this.serviceClient = serviceClient;
     this.cliConfig = cliConfig;
   }

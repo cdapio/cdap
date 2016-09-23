@@ -28,6 +28,7 @@ import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.common.cli.Arguments;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.Map;
@@ -38,10 +39,10 @@ import java.util.Map;
 public class CreateDatasetInstanceCommand extends AbstractAuthCommand {
 
   private static final Gson GSON = new Gson();
-  private final DatasetClient datasetClient;
+  private final Provider<DatasetClient> datasetClient;
 
   @Inject
-  public CreateDatasetInstanceCommand(DatasetClient datasetClient, CLIConfig cliConfig) {
+  CreateDatasetInstanceCommand(Provider<DatasetClient> datasetClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.datasetClient = datasetClient;
   }
@@ -50,13 +51,13 @@ public class CreateDatasetInstanceCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String datasetType = arguments.get(ArgumentName.DATASET_TYPE.toString());
     String datasetName = arguments.get(ArgumentName.NEW_DATASET.toString());
-    String datasetPropertiesString = arguments.get(ArgumentName.DATASET_PROPERTIES.toString(), "");
-    String datasetDescription = arguments.get(ArgumentName.DATASET_DESCRIPTON.toString(), null);
+    String datasetPropertiesString = arguments.getOptional(ArgumentName.DATASET_PROPERTIES.toString(), "");
+    String datasetDescription = arguments.getOptional(ArgumentName.DATASET_DESCRIPTON.toString(), null);
     Map<String, String> datasetProperties = ArgumentParser.parseMap(datasetPropertiesString);
     DatasetInstanceConfiguration datasetConfig =
       new DatasetInstanceConfiguration(datasetType, datasetProperties, datasetDescription);
 
-    datasetClient.create(cliConfig.getCurrentNamespace().dataset(datasetName).toId(), datasetConfig);
+    datasetClient.get().create(cliConfig.getCurrentNamespace().dataset(datasetName).toId(), datasetConfig);
     output.printf("Successfully created dataset named '%s' with type '%s' and properties '%s'",
                   datasetName, datasetType, GSON.toJson(datasetProperties));
     output.println();

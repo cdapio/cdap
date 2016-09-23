@@ -30,6 +30,7 @@ import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.File;
 import java.io.PrintStream;
@@ -43,10 +44,10 @@ public class SetStreamPropertiesCommand extends AbstractAuthCommand {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
-  private final StreamClient streamClient;
+  private final Provider<StreamClient> streamClient;
 
   @Inject
-  public SetStreamPropertiesCommand(StreamClient streamClient, CLIConfig cliConfig) {
+  SetStreamPropertiesCommand(Provider<StreamClient> streamClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.streamClient = streamClient;
   }
@@ -67,7 +68,7 @@ public class SetStreamPropertiesCommand extends AbstractAuthCommand {
       throw new IllegalArgumentException("Stream properties are malformed.", e);
     }
 
-    streamClient.setStreamProperties(streamId.toId(), streamProperties);
+    streamClient.get().setStreamProperties(streamId.toId(), streamProperties);
     output.printf("Successfully set properties of stream '%s'\n", streamId.getEntityName());
   }
 

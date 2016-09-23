@@ -25,8 +25,8 @@ import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ArtifactClient;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.common.cli.Arguments;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 
@@ -35,11 +35,10 @@ import java.io.PrintStream;
  */
 public class DeleteArtifactCommand extends AbstractAuthCommand {
 
-  private static final Gson GSON = new Gson();
-  private final ArtifactClient artifactClient;
+  private final Provider<ArtifactClient> artifactClient;
 
   @Inject
-  public DeleteArtifactCommand(ArtifactClient artifactClient, CLIConfig cliConfig) {
+  DeleteArtifactCommand(Provider<ArtifactClient> artifactClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.artifactClient = artifactClient;
   }
@@ -51,7 +50,7 @@ public class DeleteArtifactCommand extends AbstractAuthCommand {
     String artifactVersion = arguments.get(ArgumentName.ARTIFACT_VERSION.toString());
     ArtifactId artifactId = cliConfig.getCurrentNamespace().artifact(artifactName, artifactVersion);
 
-    artifactClient.delete(artifactId.toId());
+    artifactClient.get().delete(artifactId.toId());
 
     output.printf("Successfully deleted artifact\n");
   }

@@ -26,6 +26,7 @@ import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -35,17 +36,17 @@ import java.util.List;
  */
 public class ListDatasetModulesCommand extends AbstractAuthCommand {
 
-  private final DatasetModuleClient client;
+  private final Provider<DatasetModuleClient> client;
 
   @Inject
-  public ListDatasetModulesCommand(DatasetModuleClient client, CLIConfig cliConfig) {
+  ListDatasetModulesCommand(Provider<DatasetModuleClient> client, CLIConfig cliConfig) {
     super(cliConfig);
     this.client = client;
   }
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    List<DatasetModuleMeta> modules = client.list(cliConfig.getCurrentNamespace().toId());
+    List<DatasetModuleMeta> modules = client.get().list(cliConfig.getCurrentNamespace().toId());
     Table table = Table.builder()
       .setHeader("name", "className")
       .setRows(modules, new RowMaker<DatasetModuleMeta>() {

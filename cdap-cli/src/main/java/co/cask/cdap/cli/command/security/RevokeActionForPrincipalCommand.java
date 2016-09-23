@@ -20,6 +20,7 @@ import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.client.AuthorizationClient;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 /**
  * Revokes a principal's permission to perform certain actions on an entity.
@@ -27,7 +28,7 @@ import com.google.inject.Inject;
 public class RevokeActionForPrincipalCommand extends RevokeActionCommand {
 
   @Inject
-  RevokeActionForPrincipalCommand(AuthorizationClient client, CLIConfig cliConfig) {
+  RevokeActionForPrincipalCommand(Provider<AuthorizationClient> client, CLIConfig cliConfig) {
     super(client, cliConfig);
   }
 

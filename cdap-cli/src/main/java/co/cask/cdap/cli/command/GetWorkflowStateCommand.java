@@ -31,6 +31,7 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
+import com.google.inject.Provider;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -43,14 +44,13 @@ import java.util.Map;
  */
 public class GetWorkflowStateCommand extends AbstractCommand {
   private final ElementType elementType;
-  private final WorkflowClient workflowClient;
+  private final Provider<WorkflowClient> workflowClient;
 
-  public GetWorkflowStateCommand(WorkflowClient workflowClient, CLIConfig cliConfig) {
+  GetWorkflowStateCommand(Provider<WorkflowClient> workflowClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.elementType = ElementType.WORKFLOW;
     this.workflowClient = workflowClient;
   }
-
 
   @Override
   public void perform(Arguments arguments, PrintStream printStream) throws Exception {
@@ -79,7 +79,7 @@ public class GetWorkflowStateCommand extends AbstractCommand {
 
   private Table getWorkflowNodeStates(ProgramRunId programRunId)
     throws UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
-    Map<String, WorkflowNodeStateDetail> workflowNodeStates = workflowClient.getWorkflowNodeStates(programRunId);
+    Map<String, WorkflowNodeStateDetail> workflowNodeStates = workflowClient.get().getWorkflowNodeStates(programRunId);
     List<Map.Entry<String, WorkflowNodeStateDetail>> nodeStates = new ArrayList<>();
     nodeStates.addAll(workflowNodeStates.entrySet());
     return Table.builder()

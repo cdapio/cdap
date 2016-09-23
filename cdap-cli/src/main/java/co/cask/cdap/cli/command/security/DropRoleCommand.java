@@ -23,6 +23,7 @@ import co.cask.cdap.client.AuthorizationClient;
 import co.cask.cdap.proto.security.Role;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 
@@ -31,10 +32,10 @@ import java.io.PrintStream;
  */
 public class DropRoleCommand extends AbstractAuthCommand {
 
-  private final AuthorizationClient client;
+  private final Provider<AuthorizationClient> client;
 
   @Inject
-  DropRoleCommand(AuthorizationClient client, CLIConfig cliConfig) {
+  DropRoleCommand(Provider<AuthorizationClient> client, CLIConfig cliConfig) {
     super(cliConfig);
     this.client = client;
   }
@@ -42,7 +43,7 @@ public class DropRoleCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String roleName = arguments.get("role-name");
-    client.dropRole(new Role(roleName));
+    client.get().dropRole(new Role(roleName));
     output.printf("Successfully dropped role '%s'\n", roleName);
   }
 

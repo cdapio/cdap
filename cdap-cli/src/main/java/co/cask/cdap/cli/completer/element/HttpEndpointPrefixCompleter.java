@@ -23,10 +23,10 @@ import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.cli.completers.PrefixCompleter;
+import com.google.inject.Provider;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,11 +44,11 @@ public class HttpEndpointPrefixCompleter extends PrefixCompleter {
   private static final String METHOD = "method";
   private static final String PATTERN = String.format("call service <%s> <%s>", PROGRAM_ID, METHOD);
 
-  private final ServiceClient serviceClient;
+  private final Provider<ServiceClient> serviceClient;
   private final EndpointCompleter completer;
   private final CLIConfig cliConfig;
 
-  public HttpEndpointPrefixCompleter(final ServiceClient serviceClient, CLIConfig cliConfig,
+  public HttpEndpointPrefixCompleter(Provider<ServiceClient> serviceClient, CLIConfig cliConfig,
                                      String prefix, EndpointCompleter completer) {
     super(prefix, completer);
     this.cliConfig = cliConfig;
@@ -73,7 +73,7 @@ public class HttpEndpointPrefixCompleter extends PrefixCompleter {
   public Collection<String> getEndpoints(ServiceId serviceId, String method) {
     Collection<String> httpEndpoints = new ArrayList<>();
     try {
-      for (ServiceHttpEndpoint endpoint : serviceClient.getEndpoints(serviceId.toId())) {
+      for (ServiceHttpEndpoint endpoint : serviceClient.get().getEndpoints(serviceId.toId())) {
         if (endpoint.getMethod().equals(method)) {
           httpEndpoints.add(endpoint.getPath());
         }

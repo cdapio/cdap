@@ -31,7 +31,7 @@ public class VersionCommand implements Command {
   private final CLIConfig cliConfig;
 
   @Inject
-  public VersionCommand(CLIConfig cliConfig) {
+  VersionCommand(CLIConfig cliConfig) {
     this.cliConfig = cliConfig;
   }
 

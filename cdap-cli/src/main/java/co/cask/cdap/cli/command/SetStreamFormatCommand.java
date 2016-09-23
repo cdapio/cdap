@@ -34,6 +34,7 @@ import com.google.common.base.Joiner;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -46,10 +47,10 @@ import java.util.Map;
 public class SetStreamFormatCommand extends AbstractAuthCommand {
 
   private static final Gson GSON = new Gson();
-  private final StreamClient streamClient;
+  private final Provider<StreamClient> streamClient;
 
   @Inject
-  public SetStreamFormatCommand(StreamClient streamClient, CLIConfig cliConfig) {
+  SetStreamFormatCommand(Provider<StreamClient> streamClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.streamClient = streamClient;
   }
@@ -57,7 +58,7 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
-    StreamProperties currentProperties = streamClient.getConfig(streamId.toId());
+    StreamProperties currentProperties = streamClient.get().getConfig(streamId.toId());
 
     String formatName = arguments.get(ArgumentName.FORMAT.toString());
     Schema schema = getSchema(arguments);
@@ -70,7 +71,7 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
                                                              formatSpecification,
                                                              currentProperties.getNotificationThresholdMB(),
                                                              currentProperties.getDescription());
-    streamClient.setStreamProperties(streamId.toId(), streamProperties);
+    streamClient.get().setStreamProperties(streamId.toId(), streamProperties);
     output.printf("Successfully set format of stream '%s'\n", streamId.getEntityName());
   }
 

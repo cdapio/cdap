@@ -27,6 +27,7 @@ import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.cli.completers.PrefixCompleter;
 import com.google.common.collect.Lists;
+import com.google.inject.Provider;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -42,11 +43,11 @@ public class HttpMethodPrefixCompleter extends PrefixCompleter {
   private static final String PROGRAM_ID = "programId";
   private static final String PATTERN = String.format("call service <%s>", PROGRAM_ID);
 
-  private final ServiceClient serviceClient;
+  private final Provider<ServiceClient> serviceClient;
   private final EndpointCompleter completer;
   private final CLIConfig cliConfig;
 
-  public HttpMethodPrefixCompleter(final ServiceClient serviceClient, final CLIConfig cliConfig,
+  public HttpMethodPrefixCompleter(Provider<ServiceClient> serviceClient, CLIConfig cliConfig,
                                    String prefix, EndpointCompleter completer) {
     super(prefix, completer);
     this.cliConfig = cliConfig;
@@ -71,7 +72,7 @@ public class HttpMethodPrefixCompleter extends PrefixCompleter {
   public Collection<String> getMethods(ServiceId serviceId) {
     Collection<String> httpMethods = Lists.newArrayList();
     try {
-      for (ServiceHttpEndpoint endpoint : serviceClient.getEndpoints(serviceId.toId())) {
+      for (ServiceHttpEndpoint endpoint : serviceClient.get().getEndpoints(serviceId.toId())) {
         String method = endpoint.getMethod();
         if (!httpMethods.contains(method)) {
           httpMethods.add(method);

@@ -28,6 +28,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -38,10 +39,10 @@ import java.util.Map;
  */
 public class GetMetricCommand extends AbstractAuthCommand {
 
-  private final MetricsClient client;
+  private final Provider<MetricsClient> client;
 
   @Inject
-  public GetMetricCommand(MetricsClient client, CLIConfig cliConfig) {
+  GetMetricCommand(Provider<MetricsClient> client, CLIConfig cliConfig) {
     super(cliConfig);
     this.client = client;
   }
@@ -49,11 +50,11 @@ public class GetMetricCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String metric = arguments.get("metric-name");
-    Map<String, String> tags = ArgumentParser.parseMap(arguments.get("tags", ""));
-    String start = arguments.get("start", "");
-    String end = arguments.get("end", "");
+    Map<String, String> tags = ArgumentParser.parseMap(arguments.getOptional("tags", ""));
+    String start = arguments.getOptional("start", "");
+    String end = arguments.getOptional("end", "");
 
-    MetricQueryResult result = client.query(
+    MetricQueryResult result = client.get().query(
       tags, ImmutableList.of(metric), ImmutableList.<String>of(),
       start.isEmpty() ? null : start,
       end.isEmpty() ? null : end);

@@ -32,6 +32,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -42,10 +43,10 @@ import java.util.List;
 public class DescribeDatasetInstanceCommand extends AbstractAuthCommand {
 
   private static final Gson GSON = new Gson();
-  private final DatasetClient datasetClient;
+  private final Provider<DatasetClient> datasetClient;
 
   @Inject
-  public DescribeDatasetInstanceCommand(DatasetClient datasetClient, CLIConfig cliConfig) {
+  DescribeDatasetInstanceCommand(Provider<DatasetClient> datasetClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.datasetClient = datasetClient;
   }
@@ -53,7 +54,7 @@ public class DescribeDatasetInstanceCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     DatasetId instance = cliConfig.getCurrentNamespace().dataset(arguments.get(ArgumentName.DATASET.toString()));
-    DatasetMeta meta = datasetClient.get(instance.toId());
+    DatasetMeta meta = datasetClient.get().get(instance.toId());
 
     Table table = Table.builder()
       .setHeader("hive table", "spec", "type")

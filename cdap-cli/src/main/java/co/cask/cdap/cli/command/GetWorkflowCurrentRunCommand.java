@@ -28,6 +28,7 @@ import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -37,10 +38,10 @@ import java.util.List;
  */
 public class GetWorkflowCurrentRunCommand extends AbstractCommand {
 
-  private final ProgramClient programClient;
+  private final Provider<ProgramClient> programClient;
   private final ElementType elementType;
 
-  protected GetWorkflowCurrentRunCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
+  GetWorkflowCurrentRunCommand(ElementType elementType, Provider<ProgramClient> programClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.elementType = elementType;
     this.programClient = programClient;
@@ -59,7 +60,7 @@ public class GetWorkflowCurrentRunCommand extends AbstractCommand {
       String workflowId = programIdParts[1];
       String runId = arguments.get(ArgumentName.RUN_ID.toString());
 
-      nodes = programClient.getWorkflowCurrent(appId.toId(), workflowId, runId);
+      nodes = programClient.get().getWorkflowCurrent(appId.toId(), workflowId, runId);
     } else {
       throw new IllegalArgumentException("Unrecognized program element type for current runs: " + elementType);
     }

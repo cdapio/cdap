@@ -52,7 +52,7 @@ public class RenderAsCommand implements Command {
   private final CLIConfig cliConfig;
 
   @Inject
-  public RenderAsCommand(CLIConfig cliConfig) {
+  RenderAsCommand(CLIConfig cliConfig) {
     this.cliConfig = cliConfig;
   }
 

@@ -31,6 +31,7 @@ import co.cask.common.cli.Arguments;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -41,10 +42,10 @@ import java.util.List;
 public class DescribeArtifactCommand extends AbstractAuthCommand {
 
   private static final Gson GSON = new Gson();
-  private final ArtifactClient artifactClient;
+  private final Provider<ArtifactClient> artifactClient;
 
   @Inject
-  public DescribeArtifactCommand(ArtifactClient artifactClient, CLIConfig cliConfig) {
+  DescribeArtifactCommand(Provider<ArtifactClient> artifactClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.artifactClient = artifactClient;
   }
@@ -59,10 +60,10 @@ public class DescribeArtifactCommand extends AbstractAuthCommand {
 
     ArtifactInfo info;
     if (scopeStr == null) {
-      info = artifactClient.getArtifactInfo(artifactId.toId());
+      info = artifactClient.get().getArtifactInfo(artifactId.toId());
     } else {
       ArtifactScope scope = ArtifactScope.valueOf(scopeStr.toUpperCase());
-      info = artifactClient.getArtifactInfo(artifactId.toId(), scope);
+      info = artifactClient.get().getArtifactInfo(artifactId.toId(), scope);
     }
 
     Table table = Table.builder()

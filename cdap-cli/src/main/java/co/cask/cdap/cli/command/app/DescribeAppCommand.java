@@ -30,6 +30,7 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -39,10 +40,10 @@ import java.util.List;
  */
 public class DescribeAppCommand extends AbstractAuthCommand {
 
-  private final ApplicationClient applicationClient;
+  private final Provider<ApplicationClient> applicationClient;
 
   @Inject
-  public DescribeAppCommand(ApplicationClient applicationClient, CLIConfig cliConfig) {
+  DescribeAppCommand(Provider<ApplicationClient> applicationClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.applicationClient = applicationClient;
   }
@@ -50,7 +51,7 @@ public class DescribeAppCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     ApplicationId appId = cliConfig.getCurrentNamespace().app(arguments.get(ArgumentName.APP.toString()));
-    List<ProgramRecord> programsList = applicationClient.listPrograms(appId.toId());
+    List<ProgramRecord> programsList = applicationClient.get().listPrograms(appId.toId());
 
     Table table = Table.builder()
       .setHeader("type", "id", "description")

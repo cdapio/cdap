@@ -33,6 +33,7 @@ import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
+import com.google.inject.Provider;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -48,9 +49,9 @@ import java.util.Set;
  * @param <T> the type of input object for the batch request
  */
 public abstract class BaseBatchCommand<T extends BatchProgram> extends AbstractAuthCommand {
-  private final ApplicationClient appClient;
+  private final Provider<ApplicationClient> appClient;
 
-  protected BaseBatchCommand(ApplicationClient appClient, CLIConfig cliConfig) {
+  protected BaseBatchCommand(Provider<ApplicationClient> appClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.appClient = appClient;
   }
@@ -87,7 +88,7 @@ public abstract class BaseBatchCommand<T extends BatchProgram> extends AbstractA
     }
 
     List<T> programs = new ArrayList<>();
-    Map<ProgramType, List<ProgramRecord>> appPrograms = appClient.listProgramsByType(appId.toId());
+    Map<ProgramType, List<ProgramRecord>> appPrograms = appClient.get().listProgramsByType(appId.toId());
     for (ProgramType programType : programTypes) {
       List<ProgramRecord> programRecords = appPrograms.get(programType);
       if (programRecords != null) {

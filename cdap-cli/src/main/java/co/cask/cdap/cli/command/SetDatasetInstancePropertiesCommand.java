@@ -28,6 +28,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.common.cli.Arguments;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.Map;
@@ -38,10 +39,10 @@ import java.util.Map;
 public class SetDatasetInstancePropertiesCommand extends AbstractCommand {
 
   private static final Gson GSON = new Gson();
-  private final DatasetClient datasetClient;
+  private final Provider<DatasetClient> datasetClient;
 
   @Inject
-  public SetDatasetInstancePropertiesCommand(DatasetClient datasetClient, CLIConfig cliConfig) {
+  SetDatasetInstancePropertiesCommand(Provider<DatasetClient> datasetClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.datasetClient = datasetClient;
   }
@@ -52,7 +53,7 @@ public class SetDatasetInstancePropertiesCommand extends AbstractCommand {
     Map<String, String> properties = ArgumentParser.parseMap(
       arguments.get(ArgumentName.DATASET_PROPERTIES.toString()));
 
-    datasetClient.updateExisting(instance.toId(), properties);
+    datasetClient.get().updateExisting(instance.toId(), properties);
     output.printf("Successfully updated properties for dataset instance '%s' to %s",
                   instance.getEntityName(), GSON.toJson(properties));
   }

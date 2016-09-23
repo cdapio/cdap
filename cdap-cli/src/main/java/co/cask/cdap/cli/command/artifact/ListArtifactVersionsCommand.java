@@ -28,6 +28,7 @@ import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -37,10 +38,10 @@ import java.util.List;
  */
 public class ListArtifactVersionsCommand extends AbstractAuthCommand {
 
-  private final ArtifactClient artifactClient;
+  private final Provider<ArtifactClient> artifactClient;
 
   @Inject
-  public ListArtifactVersionsCommand(ArtifactClient artifactClient, CLIConfig cliConfig) {
+  ListArtifactVersionsCommand(Provider<ArtifactClient> artifactClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.artifactClient = artifactClient;
   }
@@ -51,10 +52,11 @@ public class ListArtifactVersionsCommand extends AbstractAuthCommand {
     String artifactName = arguments.get(ArgumentName.ARTIFACT_NAME.toString());
     List<ArtifactSummary> artifactSummaries;
     if (scopeStr == null) {
-      artifactSummaries = artifactClient.listVersions(cliConfig.getCurrentNamespace().toId(), artifactName);
+      artifactSummaries = artifactClient.get().listVersions(cliConfig.getCurrentNamespace().toId(), artifactName);
     } else {
       ArtifactScope scope = ArtifactScope.valueOf(scopeStr.toUpperCase());
-      artifactSummaries = artifactClient.listVersions(cliConfig.getCurrentNamespace().toId(), artifactName, scope);
+      artifactSummaries = artifactClient.get().listVersions(cliConfig.getCurrentNamespace().toId(), artifactName,
+                                                            scope);
     }
 
     Table table = Table.builder()

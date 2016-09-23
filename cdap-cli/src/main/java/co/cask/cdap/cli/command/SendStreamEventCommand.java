@@ -30,16 +30,17 @@ import co.cask.common.cli.Arguments;
 
 import java.io.PrintStream;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 /**
  * Sends an event to a stream.
  */
 public class SendStreamEventCommand extends AbstractAuthCommand implements Categorized {
 
-  private final StreamClient streamClient;
+  private final Provider<StreamClient> streamClient;
 
   @Inject
-  public SendStreamEventCommand(StreamClient streamClient, CLIConfig cliConfig) {
+  SendStreamEventCommand(Provider<StreamClient> streamClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.streamClient = streamClient;
   }
@@ -48,7 +49,7 @@ public class SendStreamEventCommand extends AbstractAuthCommand implements Categ
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
     String streamEvent = arguments.get(ArgumentName.STREAM_EVENT.toString());
-    streamClient.sendEvent(streamId.toId(), streamEvent);
+    streamClient.get().sendEvent(streamId.toId(), streamEvent);
     output.printf("Successfully sent stream event to stream '%s'\n", streamId.getEntityName());
   }
 

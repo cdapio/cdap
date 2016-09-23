@@ -28,6 +28,7 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -39,10 +40,10 @@ import javax.inject.Inject;
  */
 public class ListAllProgramsCommand extends AbstractAuthCommand implements Categorized {
 
-  private final ApplicationClient appClient;
+  private final Provider<ApplicationClient> appClient;
 
   @Inject
-  public ListAllProgramsCommand(ApplicationClient appClient, CLIConfig cliConfig) {
+  ListAllProgramsCommand(Provider<ApplicationClient> appClient,  CLIConfig cliConfig) {
     super(cliConfig);
     this.appClient = appClient;
   }
@@ -50,7 +51,7 @@ public class ListAllProgramsCommand extends AbstractAuthCommand implements Categ
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     Map<ProgramType, List<ProgramRecord>> allPrograms =
-      appClient.listAllPrograms(cliConfig.getCurrentNamespace().toId());
+      appClient.get().listAllPrograms(cliConfig.getCurrentNamespace().toId());
     List<ProgramRecord> allProgramsList = Lists.newArrayList();
     for (List<ProgramRecord> subList : allPrograms.values()) {
       allProgramsList.addAll(subList);

@@ -41,6 +41,7 @@ import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.Collections;
@@ -59,11 +60,11 @@ public class GetStreamStatsCommand extends AbstractCommand {
   private static final int DEFAULT_LIMIT = 100;
   private static final int MAX_LIMIT = 100000;
 
-  private final StreamClient streamClient;
+  private final Provider<StreamClient> streamClient;
   private final QueryClient queryClient;
 
   @Inject
-  public GetStreamStatsCommand(StreamClient streamClient, QueryClient queryClient, CLIConfig cliConfig) {
+  GetStreamStatsCommand(Provider<StreamClient> streamClient, QueryClient queryClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.streamClient = streamClient;
     this.queryClient = queryClient;
@@ -76,11 +77,11 @@ public class GetStreamStatsCommand extends AbstractCommand {
     StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
     // limit limit to [1, MAX_LIMIT]
     int limit = Math.max(1, Math.min(MAX_LIMIT, arguments.getInt(ArgumentName.LIMIT.toString(), DEFAULT_LIMIT)));
-    long startTime = getTimestamp(arguments.get(ArgumentName.START_TIME.toString(), "min"), currentTime);
-    long endTime = getTimestamp(arguments.get(ArgumentName.END_TIME.toString(), "max"), currentTime);
+    long startTime = getTimestamp(arguments.getOptional(ArgumentName.START_TIME.toString(), "min"), currentTime);
+    long endTime = getTimestamp(arguments.getOptional(ArgumentName.END_TIME.toString(), "max"), currentTime);
 
     // hack to validate streamId
-    StreamProperties config = streamClient.getConfig(streamId.toId());
+    StreamProperties config = streamClient.get().getConfig(streamId.toId());
     if (config.getFormat().getName().equals("text")) {
       output.printf("No schema found for stream '%s'", streamId.getEntityName());
       output.println();

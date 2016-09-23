@@ -33,6 +33,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.File;
 import java.io.PrintStream;
@@ -56,11 +57,11 @@ public class LoadStreamCommand extends AbstractAuthCommand implements Categorize
     CONTENT_TYPE_MAP = contentTypes;
   }
 
-  private final StreamClient streamClient;
+  private final Provider<StreamClient> streamClient;
   private final FilePathResolver resolver;
 
   @Inject
-  public LoadStreamCommand(StreamClient streamClient, CLIConfig cliConfig, FilePathResolver resolver) {
+  LoadStreamCommand(Provider<StreamClient> streamClient, CLIConfig cliConfig, FilePathResolver resolver) {
     super(cliConfig);
     this.streamClient = streamClient;
     this.resolver = resolver;
@@ -70,7 +71,7 @@ public class LoadStreamCommand extends AbstractAuthCommand implements Categorize
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
     File file = resolver.resolvePathToFile(arguments.get(ArgumentName.LOCAL_FILE_PATH.toString()));
-    String contentType = arguments.get(ArgumentName.CONTENT_TYPE.toString(), "");
+    String contentType = arguments.getOptional(ArgumentName.CONTENT_TYPE.toString(), "");
 
     if (!file.isFile()) {
       throw new IllegalArgumentException("Not a file: " + file);
@@ -82,7 +83,7 @@ public class LoadStreamCommand extends AbstractAuthCommand implements Categorize
       throw new IllegalArgumentException("Unsupported file format.");
     }
 
-    streamClient.sendFile(streamId.toId(), contentType, file);
+    streamClient.get().sendFile(streamId.toId(), contentType, file);
     output.printf("Successfully loaded file to stream '%s'\n", streamId.getEntityName());
   }
 

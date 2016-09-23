@@ -22,6 +22,7 @@ import co.cask.cdap.client.ArtifactClient;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
+import com.google.inject.Provider;
 
 import java.util.Collection;
 import java.util.List;
@@ -33,12 +34,12 @@ import javax.inject.Inject;
 public class ArtifactNameCompleter extends StringsCompleter {
 
   @Inject
-  public ArtifactNameCompleter(final ArtifactClient artifactClient, final CLIConfig cliConfig) {
+  ArtifactNameCompleter(final Provider<ArtifactClient> artifactClient, final CLIConfig cliConfig) {
     super(new Supplier<Collection<String>>() {
       @Override
       public Collection<String> get() {
         try {
-          List<ArtifactSummary> artifactSummaries = artifactClient.list(cliConfig.getCurrentNamespace().toId());
+          List<ArtifactSummary> artifactSummaries = artifactClient.get().list(cliConfig.getCurrentNamespace().toId());
           List<String> names = Lists.newArrayList();
           for (ArtifactSummary summary : artifactSummaries) {
             names.add(summary.getName());

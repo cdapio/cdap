@@ -23,6 +23,7 @@ import co.cask.cdap.client.MetadataClient;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 
@@ -31,10 +32,10 @@ import java.io.PrintStream;
  */
 public class RemoveMetadataPropertyCommand extends AbstractCommand {
 
-  private final MetadataClient client;
+  private final Provider<MetadataClient> client;
 
   @Inject
-  public RemoveMetadataPropertyCommand(CLIConfig cliConfig, MetadataClient client) {
+  RemoveMetadataPropertyCommand(CLIConfig cliConfig, Provider<MetadataClient> client) {
     super(cliConfig);
     this.client = client;
   }
@@ -43,7 +44,7 @@ public class RemoveMetadataPropertyCommand extends AbstractCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
     String property = arguments.get("property");
-    client.removeProperty(entity.toId(), property);
+    client.get().removeProperty(entity.toId(), property);
     output.println("Successfully removed metadata property");
   }
 

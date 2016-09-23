@@ -27,6 +27,7 @@ import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.common.cli.Arguments;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 
@@ -35,10 +36,10 @@ import java.io.PrintStream;
  */
 public class GetProgramLogsCommand extends AbstractAuthCommand {
 
-  private final ProgramClient programClient;
+  private final Provider<ProgramClient> programClient;
   private final ElementType elementType;
 
-  protected GetProgramLogsCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
+  GetProgramLogsCommand(ElementType elementType, Provider<ProgramClient> programClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.elementType = elementType;
     this.programClient = programClient;
@@ -48,9 +49,9 @@ public class GetProgramLogsCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
     String appId = programIdParts[0];
-    String startString = arguments.get(ArgumentName.START_TIME.toString(), "0");
+    String startString = arguments.getOptional(ArgumentName.START_TIME.toString(), "0");
     long start = TimeMathParser.parseTimeInSeconds(startString);
-    String stopString = arguments.get(ArgumentName.END_TIME.toString(), Long.toString(Integer.MAX_VALUE));
+    String stopString = arguments.getOptional(ArgumentName.END_TIME.toString(), Long.toString(Integer.MAX_VALUE));
     long stop = TimeMathParser.parseTimeInSeconds(stopString);
 
     String logs;
@@ -61,7 +62,7 @@ public class GetProgramLogsCommand extends AbstractAuthCommand {
       String programName = programIdParts[1];
       ProgramId programId = cliConfig.getCurrentNamespace().app(appId).program(elementType.getProgramType(),
                                                                                programName);
-      logs = programClient.getProgramLogs(programId.toId(), start, stop);
+      logs = programClient.get().getProgramLogs(programId.toId(), start, stop);
     } else {
       throw new IllegalArgumentException("Cannot get logs for " + elementType.getNamePlural());
     }

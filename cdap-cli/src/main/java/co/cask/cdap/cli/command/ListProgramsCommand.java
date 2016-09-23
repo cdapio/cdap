@@ -26,6 +26,7 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -35,10 +36,10 @@ import java.util.List;
  */
 public class ListProgramsCommand extends AbstractAuthCommand {
 
-  private final ApplicationClient appClient;
+  private final Provider<ApplicationClient> appClient;
   private final ProgramType programType;
 
-  public ListProgramsCommand(ProgramType programType, ApplicationClient appClient, CLIConfig cliConfig) {
+  ListProgramsCommand(ProgramType programType, Provider<ApplicationClient> appClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.programType = programType;
     this.appClient = appClient;
@@ -46,7 +47,7 @@ public class ListProgramsCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    List<ProgramRecord> programs = appClient.listAllPrograms(cliConfig.getCurrentNamespace().toId(), programType);
+    List<ProgramRecord> programs = appClient.get().listAllPrograms(cliConfig.getCurrentNamespace().toId(), programType);
 
     Table table = Table.builder()
       .setHeader("app", "id", "description")

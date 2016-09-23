@@ -26,6 +26,7 @@ import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 
@@ -34,10 +35,10 @@ import java.io.PrintStream;
  */
 public class DeleteStreamCommand extends AbstractAuthCommand {
 
-  private final StreamClient streamClient;
+  private final Provider<StreamClient> streamClient;
 
   @Inject
-  public DeleteStreamCommand(StreamClient streamClient, CLIConfig cliConfig) {
+  DeleteStreamCommand(Provider<StreamClient> streamClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.streamClient = streamClient;
   }
@@ -45,7 +46,7 @@ public class DeleteStreamCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
-    streamClient.delete(streamId.toId());
+    streamClient.get().delete(streamId.toId());
     output.printf("Successfully deleted stream '%s'\n", streamId.getEntityName());
   }
 

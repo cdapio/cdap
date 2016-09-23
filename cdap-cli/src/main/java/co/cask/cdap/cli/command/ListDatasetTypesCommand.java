@@ -28,6 +28,7 @@ import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -37,17 +38,17 @@ import java.util.List;
  */
 public class ListDatasetTypesCommand extends AbstractAuthCommand {
 
-  private final DatasetTypeClient datasetTypeClient;
+  private final Provider<DatasetTypeClient> datasetTypeClient;
 
   @Inject
-  public ListDatasetTypesCommand(DatasetTypeClient datasetTypeClient, CLIConfig cliConfig) {
+  ListDatasetTypesCommand(Provider<DatasetTypeClient> datasetTypeClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.datasetTypeClient = datasetTypeClient;
   }
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    List<DatasetTypeMeta> datasetTypeMetas = datasetTypeClient.list(cliConfig.getCurrentNamespace().toId());
+    List<DatasetTypeMeta> datasetTypeMetas = datasetTypeClient.get().list(cliConfig.getCurrentNamespace().toId());
 
     Table table = Table.builder()
       .setHeader("name", "modules")

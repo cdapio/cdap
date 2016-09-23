@@ -25,6 +25,7 @@ import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
+import com.google.inject.Provider;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -34,11 +35,11 @@ import java.util.Map;
  * Abstract Class for getting preferences for instance, namespace, application, program.
  */
 public abstract class AbstractGetPreferencesCommand extends AbstractCommand {
-  private final PreferencesClient client;
+  private final Provider<PreferencesClient> client;
   private final ElementType type;
   private final boolean resolved;
 
-  protected AbstractGetPreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig,
+  protected AbstractGetPreferencesCommand(ElementType type, Provider<PreferencesClient> client, CLIConfig cliConfig,
                                           boolean resolved) {
     super(cliConfig);
     this.type = type;
@@ -66,18 +67,19 @@ public abstract class AbstractGetPreferencesCommand extends AbstractCommand {
     switch(type) {
       case INSTANCE:
         checkInputLength(programIdParts, 0);
-        return client.getInstancePreferences();
+        return client.get().getInstancePreferences();
       case NAMESPACE:
         checkInputLength(programIdParts, 0);
-        return client.getNamespacePreferences(cliConfig.getCurrentNamespace().toId(), resolved);
+        return client.get().getNamespacePreferences(cliConfig.getCurrentNamespace().toId(), resolved);
       case APP:
-        return client.getApplicationPreferences(parseAppId(programIdParts).toId(), resolved);
+        return client.get().getApplicationPreferences(parseAppId(programIdParts).toId(), resolved);
       case FLOW:
       case MAPREDUCE:
       case WORKFLOW:
       case SERVICE:
       case SPARK:
-        return client.getProgramPreferences(parseProgramId(programIdParts, type.getProgramType()).toId(), resolved);
+        return client.get().getProgramPreferences(parseProgramId(programIdParts, type.getProgramType()).toId(),
+                                                  resolved);
       default:
         throw new IllegalArgumentException("Unrecognized element type for preferences: "  + type.getShortName());
     }

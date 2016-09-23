@@ -30,6 +30,7 @@ import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -40,10 +41,10 @@ import java.util.List;
 public class DescribeArtifactPluginCommand extends AbstractAuthCommand {
   private static final Gson GSON = new Gson();
 
-  private final ArtifactClient artifactClient;
+  private final Provider<ArtifactClient> artifactClient;
 
   @Inject
-  public DescribeArtifactPluginCommand(ArtifactClient artifactClient, CLIConfig cliConfig) {
+  DescribeArtifactPluginCommand(Provider<ArtifactClient> artifactClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.artifactClient = artifactClient;
   }
@@ -60,9 +61,9 @@ public class DescribeArtifactPluginCommand extends AbstractAuthCommand {
     List<PluginInfo> pluginInfos;
     String scopeStr = arguments.getOptional(ArgumentName.SCOPE.toString());
     if (scopeStr == null) {
-      pluginInfos = artifactClient.getPluginInfo(artifactId.toId(), pluginType, pluginName);
+      pluginInfos = artifactClient.get().getPluginInfo(artifactId.toId(), pluginType, pluginName);
     } else {
-      pluginInfos = artifactClient.getPluginInfo(artifactId.toId(), pluginType, pluginName,
+      pluginInfos = artifactClient.get().getPluginInfo(artifactId.toId(), pluginType, pluginName,
         ArtifactScope.valueOf(scopeStr.toUpperCase()));
     }
     Table table = Table.builder()

@@ -27,6 +27,7 @@ import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.Set;
@@ -36,10 +37,10 @@ import java.util.Set;
  */
 public abstract class RevokeActionCommand extends AbstractAuthCommand {
 
-  private final AuthorizationClient client;
+  private final Provider<AuthorizationClient> client;
 
   @Inject
-  RevokeActionCommand(AuthorizationClient client, CLIConfig cliConfig) {
+  RevokeActionCommand(Provider<AuthorizationClient> client, CLIConfig cliConfig) {
     super(cliConfig);
     this.client = client;
   }
@@ -55,7 +56,7 @@ public abstract class RevokeActionCommand extends AbstractAuthCommand {
     String actionsString = arguments.getOptional("actions", null);
     Set<Action> actions = actionsString == null ? null : ACTIONS_STRING_TO_SET.apply(actionsString);
 
-    client.revoke(entity, principal, actions);
+    client.get().revoke(entity, principal, actions);
     if (principal == null && actions == null) {
       // Revoked all actions for all principals on the entity
       output.printf("Successfully revoked all actions on entity '%s' for all principals", entity.toString());

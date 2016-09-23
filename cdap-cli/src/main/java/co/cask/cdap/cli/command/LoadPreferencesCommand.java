@@ -24,10 +24,10 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.client.PreferencesClient;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.common.cli.Arguments;
-import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import com.google.inject.Provider;
 
 import java.io.File;
 import java.io.FileReader;
@@ -45,7 +45,7 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
 
   private final ElementType type;
 
-  protected LoadPreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig) {
+  LoadPreferencesCommand(ElementType type, Provider<PreferencesClient> client, CLIConfig cliConfig) {
     super(type, client, cliConfig);
     this.type = type;
   }
@@ -59,14 +59,14 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
   @Override
   public void perform(Arguments arguments, PrintStream printStream) throws Exception {
     String[] programIdParts = new String[0];
-    String contentType = arguments.get(ArgumentName.CONTENT_TYPE.toString(), "");
+    String contentType = arguments.getOptional(ArgumentName.CONTENT_TYPE.toString(), "");
     File file = new File(arguments.get(ArgumentName.LOCAL_FILE_PATH.toString()));
 
     if (!file.isFile()) {
       throw new IllegalArgumentException("Not a file: " + file);
     }
 
-    Map<String, String> args = Maps.newHashMap();
+    Map<String, String> args;
     try (FileReader reader = new FileReader(file)) {
       if (contentType.equals("json")) {
         args = GSON.fromJson(reader, MAP_STRING_STRING_TYPE);

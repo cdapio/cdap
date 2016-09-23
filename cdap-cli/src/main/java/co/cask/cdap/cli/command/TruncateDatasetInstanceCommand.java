@@ -26,6 +26,7 @@ import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 
@@ -34,10 +35,10 @@ import java.io.PrintStream;
  */
 public class TruncateDatasetInstanceCommand extends AbstractAuthCommand {
 
-  private final DatasetClient datasetClient;
+  private final Provider<DatasetClient> datasetClient;
 
   @Inject
-  public TruncateDatasetInstanceCommand(DatasetClient datasetClient, CLIConfig cliConfig) {
+  TruncateDatasetInstanceCommand(Provider<DatasetClient> datasetClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.datasetClient = datasetClient;
   }
@@ -45,7 +46,7 @@ public class TruncateDatasetInstanceCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     DatasetId instance = cliConfig.getCurrentNamespace().dataset(arguments.get(ArgumentName.DATASET.toString()));
-    datasetClient.truncate(instance.toId());
+    datasetClient.get().truncate(instance.toId());
     output.printf("Successfully truncated dataset '%s'\n", instance.getEntityName());
   }
 

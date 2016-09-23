@@ -27,6 +27,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import jline.console.ConsoleReader;
 
 import java.io.PrintStream;
@@ -36,11 +37,11 @@ import java.io.PrintStream;
  */
 public class DeleteNamespaceCommand extends AbstractCommand {
   private static final String SUCCESS_MSG = "Namespace '%s' deleted successfully.";
-  private final NamespaceClient namespaceClient;
+  private final Provider<NamespaceClient> namespaceClient;
   private final CLIConfig cliConfig;
 
   @Inject
-  public DeleteNamespaceCommand(CLIConfig cliConfig, NamespaceClient namespaceClient) {
+  public DeleteNamespaceCommand(CLIConfig cliConfig, Provider<NamespaceClient> namespaceClient) {
     super(cliConfig);
     this.cliConfig = cliConfig;
     this.namespaceClient = namespaceClient;
@@ -57,7 +58,7 @@ public class DeleteNamespaceCommand extends AbstractCommand {
                                     namespaceId.getNamespace());
       String userConfirm = consoleReader.readLine(prompt);
       if ("y".equalsIgnoreCase(userConfirm)) {
-        namespaceClient.delete(namespaceId.toId());
+        namespaceClient.get().delete(namespaceId.toId());
         out.printf("Contents of namespace '%s' were deleted successfully", namespaceId.getNamespace());
         out.println();
       }
@@ -67,7 +68,7 @@ public class DeleteNamespaceCommand extends AbstractCommand {
                                     namespaceId.getNamespace());
       String userConfirm = consoleReader.readLine(prompt);
       if ("y".equalsIgnoreCase(userConfirm)) {
-        namespaceClient.delete(namespaceId.toId());
+        namespaceClient.get().delete(namespaceId.toId());
         out.println(String.format(SUCCESS_MSG, namespaceId));
         if (cliConfig.getCurrentNamespace().equals(namespaceId)) {
           cliConfig.setNamespace(NamespaceId.DEFAULT);

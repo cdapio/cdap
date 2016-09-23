@@ -21,6 +21,7 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.client.PreferencesClient;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.Map;
@@ -30,10 +31,10 @@ import java.util.Map;
  */
 public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
 
-  private final PreferencesClient client;
+  private final Provider<PreferencesClient> client;
   private final ElementType type;
 
-  protected AbstractSetPreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig) {
+  protected AbstractSetPreferencesCommand(ElementType type, Provider<PreferencesClient> client, CLIConfig cliConfig) {
     super(cliConfig);
     this.type = type;
     this.client = client;
@@ -46,18 +47,18 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
     switch (type) {
       case INSTANCE:
         checkInputLength(programIdParts, 0);
-        client.setInstancePreferences(args);
+        client.get().setInstancePreferences(args);
         printSuccessMessage(printStream, type);
         break;
 
       case NAMESPACE:
         checkInputLength(programIdParts, 0);
-        client.setNamespacePreferences(cliConfig.getCurrentNamespace().toId(), args);
+        client.get().setNamespacePreferences(cliConfig.getCurrentNamespace().toId(), args);
         printSuccessMessage(printStream, type);
         break;
 
       case APP:
-        client.setApplicationPreferences(parseAppId(programIdParts).toId(), args);
+        client.get().setApplicationPreferences(parseAppId(programIdParts).toId(), args);
         printSuccessMessage(printStream, type);
         break;
 
@@ -66,7 +67,7 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
       case WORKFLOW:
       case SERVICE:
       case SPARK:
-        client.setProgramPreferences(parseProgramId(programIdParts, type.getProgramType()).toId(), args);
+        client.get().setProgramPreferences(parseProgramId(programIdParts, type.getProgramType()).toId(), args);
         printSuccessMessage(printStream, type);
         break;
 

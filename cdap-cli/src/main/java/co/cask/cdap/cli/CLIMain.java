@@ -45,7 +45,9 @@ import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
+import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.Provider;
 import jline.console.completer.Completer;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -112,12 +114,26 @@ public class CLIMain {
   private final LaunchOptions options;
   private final FilePathResolver filePathResolver;
 
+  private static final class ClientConfigProvider implements Provider<ClientConfig> {
+
+    private final CLIConfig cliConfig;
+
+    @Inject
+    private ClientConfigProvider(CLIConfig cliConfig) {
+      this.cliConfig = cliConfig;
+    }
+
+    @Override
+    public ClientConfig get() {
+      return cliConfig.getClientConfig();
+    }
+  }
+
   public CLIMain(final LaunchOptions options,
                  final CLIConfig cliConfig) throws URISyntaxException, IOException {
     this.options = options;
     this.cliConfig = cliConfig;
-
-    injector = Guice.createInjector(
+    this.injector = Guice.createInjector(
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -125,7 +141,7 @@ public class CLIMain {
           bind(CConfiguration.class).toInstance(CConfiguration.create());
           bind(PrintStream.class).toInstance(cliConfig.getOutput());
           bind(CLIConfig.class).toInstance(cliConfig);
-          bind(ClientConfig.class).toInstance(cliConfig.getClientConfig());
+          bind(ClientConfig.class).toProvider(ClientConfigProvider.class);
         }
       }
     );
@@ -270,7 +286,7 @@ public class CLIMain {
           .setConnectionConfig(null)
           .setDefaultReadTimeout(60 * 1000)
           .build();
-        final CLIConfig cliConfig = new CLIConfig(clientConfig, output, new AltStyleTableRenderer());
+        CLIConfig cliConfig = new CLIConfig(clientConfig, output, new AltStyleTableRenderer());
         CLIMain cliMain = new CLIMain(launchOptions, cliConfig);
         CLI cli = cliMain.getCLI();
 

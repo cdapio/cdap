@@ -28,6 +28,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.common.cli.Arguments;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.File;
 import java.io.PrintStream;
@@ -37,12 +38,12 @@ import java.util.Map;
  * Loads an artifact into CDAP.
  */
 public class LoadArtifactCommand extends AbstractAuthCommand {
-  private final ArtifactClient artifactClient;
+  private final Provider<ArtifactClient> artifactClient;
   private final FilePathResolver resolver;
   private final ArtifactConfigReader configReader;
 
   @Inject
-  public LoadArtifactCommand(ArtifactClient artifactClient, CLIConfig cliConfig, FilePathResolver resolver) {
+  LoadArtifactCommand(Provider<ArtifactClient> artifactClient, CLIConfig cliConfig, FilePathResolver resolver) {
     super(cliConfig);
     this.artifactClient = artifactClient;
     this.resolver = resolver;
@@ -70,18 +71,18 @@ public class LoadArtifactCommand extends AbstractAuthCommand {
     String configPath = arguments.getOptional(ArgumentName.ARTIFACT_CONFIG_FILE.toString());
     NamespaceId namespace = artifactId.getParent();
     if (configPath == null) {
-      artifactClient.add(namespace.toId(), artifactId.getEntityName(),
-                         Files.newInputStreamSupplier(artifactFile), artifactId.getVersion());
+      artifactClient.get().add(namespace.toId(), artifactId.getEntityName(),
+                               Files.newInputStreamSupplier(artifactFile), artifactId.getVersion());
     } else {
       File configFile = resolver.resolvePathToFile(configPath);
       ArtifactConfig artifactConfig = configReader.read(namespace.toId(), configFile);
-      artifactClient.add(namespace.toId(), artifactId.getEntityName(),
-                         Files.newInputStreamSupplier(artifactFile), artifactId.getVersion(),
-                         artifactConfig.getParents(), artifactConfig.getPlugins());
+      artifactClient.get().add(namespace.toId(), artifactId.getEntityName(),
+                               Files.newInputStreamSupplier(artifactFile), artifactId.getVersion(),
+                               artifactConfig.getParents(), artifactConfig.getPlugins());
 
       Map<String, String> properties = artifactConfig.getProperties();
       if (properties != null && !properties.isEmpty()) {
-        artifactClient.writeProperties(artifactId.toId(), properties);
+        artifactClient.get().writeProperties(artifactId.toId(), properties);
       }
     }
 

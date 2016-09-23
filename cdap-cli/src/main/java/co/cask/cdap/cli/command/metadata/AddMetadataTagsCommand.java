@@ -24,6 +24,7 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.Set;
@@ -33,10 +34,10 @@ import java.util.Set;
  */
 public class AddMetadataTagsCommand extends AbstractCommand {
 
-  private final MetadataClient client;
+  private final Provider<MetadataClient> client;
 
   @Inject
-  public AddMetadataTagsCommand(CLIConfig cliConfig, MetadataClient client) {
+  AddMetadataTagsCommand(CLIConfig cliConfig, Provider<MetadataClient> client) {
     super(cliConfig);
     this.client = client;
   }
@@ -45,7 +46,7 @@ public class AddMetadataTagsCommand extends AbstractCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
     Set<String> tags = ImmutableSet.copyOf(parseList(arguments.get("tags")));
-    client.addTags(entity.toId(), tags);
+    client.get().addTags(entity.toId(), tags);
     output.println("Successfully added metadata tags");
   }
 

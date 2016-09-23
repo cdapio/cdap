@@ -21,9 +21,10 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
-import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -32,12 +33,12 @@ import java.util.List;
 public class ListProgramsCommandSet extends CommandSet<Command> {
 
   @Inject
-  public ListProgramsCommandSet(ApplicationClient applicationClient, CLIConfig cliConfig) {
+  ListProgramsCommandSet(Provider<ApplicationClient> applicationClient, CLIConfig cliConfig) {
     super(generateCommands(applicationClient, cliConfig));
   }
 
-  private static List<Command> generateCommands(ApplicationClient applicationClient, CLIConfig cliConfig) {
-    List<Command> commands = Lists.newArrayList();
+  private static List<Command> generateCommands(Provider<ApplicationClient> applicationClient, CLIConfig cliConfig) {
+    List<Command> commands = new ArrayList<>();
     for (ElementType elementType : ElementType.values()) {
       if (elementType.getProgramType() != null && elementType.getProgramType().isListable()) {
         commands.add(new ListProgramsCommand(elementType.getProgramType(), applicationClient, cliConfig));

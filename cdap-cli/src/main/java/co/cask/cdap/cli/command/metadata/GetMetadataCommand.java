@@ -30,6 +30,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -41,10 +42,10 @@ import javax.annotation.Nullable;
  */
 public class GetMetadataCommand extends AbstractCommand {
 
-  private final MetadataClient client;
+  private final Provider<MetadataClient> client;
 
   @Inject
-  public GetMetadataCommand(CLIConfig cliConfig, MetadataClient client) {
+  GetMetadataCommand(CLIConfig cliConfig, Provider<MetadataClient> client) {
     super(cliConfig);
     this.client = client;
   }
@@ -53,14 +54,13 @@ public class GetMetadataCommand extends AbstractCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
     String scope = arguments.getOptional(ArgumentName.METADATA_SCOPE.toString());
-    Set<MetadataRecord> metadata = scope == null ? client.getMetadata(entity.toId()) :
-      client.getMetadata(entity.toId(), MetadataScope.valueOf(scope.toUpperCase()));
+    Set<MetadataRecord> metadata = scope == null ? client.get().getMetadata(entity.toId()) :
+      client.get().getMetadata(entity.toId(), MetadataScope.valueOf(scope.toUpperCase()));
 
     Table table = Table.builder()
       .setHeader("entity", "tags", "properties", "scope")
       .setRows(
         Iterables.transform(metadata, new Function<MetadataRecord, List<String>>() {
-          @Nullable
           @Override
           public List<String> apply(MetadataRecord record) {
             return Lists.newArrayList(

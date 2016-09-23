@@ -27,6 +27,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.common.cli.Arguments;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.Map;
@@ -37,10 +38,10 @@ import java.util.Map;
 public class GetDatasetInstancePropertiesCommand extends AbstractCommand {
 
   private static final Gson GSON = new Gson();
-  private final DatasetClient datasetClient;
+  private final Provider<DatasetClient> datasetClient;
 
   @Inject
-  public GetDatasetInstancePropertiesCommand(DatasetClient datasetClient, CLIConfig cliConfig) {
+  GetDatasetInstancePropertiesCommand(Provider<DatasetClient> datasetClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.datasetClient = datasetClient;
   }
@@ -50,7 +51,7 @@ public class GetDatasetInstancePropertiesCommand extends AbstractCommand {
     DatasetId instance = cliConfig.getCurrentNamespace().dataset(
       arguments.get(ArgumentName.DATASET.toString()));
 
-    Map<String, String> properties = datasetClient.getProperties(instance.toId());
+    Map<String, String> properties = datasetClient.get().getProperties(instance.toId());
     output.printf(GSON.toJson(properties));
   }
 

@@ -26,6 +26,7 @@ import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 
@@ -34,10 +35,10 @@ import java.io.PrintStream;
  */
 public class SetStreamDescriptionCommand extends AbstractAuthCommand {
 
-  private final StreamClient streamClient;
+  private final Provider<StreamClient> streamClient;
 
   @Inject
-  public SetStreamDescriptionCommand(StreamClient streamClient, CLIConfig cliConfig) {
+  SetStreamDescriptionCommand(Provider<StreamClient> streamClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.streamClient = streamClient;
   }
@@ -46,7 +47,7 @@ public class SetStreamDescriptionCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
     String description = arguments.get(ArgumentName.STREAM_DESCRIPTION.toString());
-    streamClient.setDescription(streamId.toId(), description);
+    streamClient.get().setDescription(streamId.toId(), description);
     output.printf("Successfully set stream description of stream '%s' to '%s'\n", streamId.getEntityName(),
                   description);
   }

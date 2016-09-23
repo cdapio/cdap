@@ -34,6 +34,7 @@ import co.cask.cdap.proto.id.ServiceId;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -43,10 +44,10 @@ import java.util.List;
  */
 public class GetServiceEndpointsCommand extends AbstractAuthCommand implements Categorized {
 
-  private final ServiceClient serviceClient;
+  private final Provider<ServiceClient> serviceClient;
 
   @Inject
-  public GetServiceEndpointsCommand(ServiceClient serviceClient, CLIConfig cliConfig) {
+  GetServiceEndpointsCommand(Provider<ServiceClient> serviceClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.serviceClient = serviceClient;
   }
@@ -61,7 +62,7 @@ public class GetServiceEndpointsCommand extends AbstractAuthCommand implements C
     String appId = appAndServiceId[0];
     String serviceName = appAndServiceId[1];
     ServiceId serviceId = cliConfig.getCurrentNamespace().app(appId).service(serviceName);
-    List<ServiceHttpEndpoint> endpoints = serviceClient.getEndpoints(serviceId.toId());
+    List<ServiceHttpEndpoint> endpoints = serviceClient.get().getEndpoints(serviceId.toId());
 
     Table table = Table.builder()
       .setHeader("method", "path")

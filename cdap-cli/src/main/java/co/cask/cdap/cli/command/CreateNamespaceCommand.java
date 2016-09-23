@@ -25,6 +25,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 
@@ -34,10 +35,10 @@ import java.io.PrintStream;
 public class CreateNamespaceCommand extends AbstractCommand {
   private static final String SUCCESS_MSG = "Namespace '%s' created successfully.";
 
-  private final NamespaceClient namespaceClient;
+  private final Provider<NamespaceClient> namespaceClient;
 
   @Inject
-  public CreateNamespaceCommand(CLIConfig cliConfig, NamespaceClient namespaceClient) {
+  CreateNamespaceCommand(CLIConfig cliConfig, Provider<NamespaceClient> namespaceClient) {
     super(cliConfig);
     this.namespaceClient = namespaceClient;
   }
@@ -58,7 +59,7 @@ public class CreateNamespaceCommand extends AbstractCommand {
     builder.setName(name).setDescription(description).setPrincipal(principal).setKeytabURI(keytabPath)
       .setRootDirectory(rootDir).setHBaseNamespace(hbaseNamespace).setHiveDatabase(hiveDatabase)
       .setSchedulerQueueName(schedulerQueueName);
-    namespaceClient.create(builder.build());
+    namespaceClient.get().create(builder.build());
     output.println(String.format(SUCCESS_MSG, name));
   }
 

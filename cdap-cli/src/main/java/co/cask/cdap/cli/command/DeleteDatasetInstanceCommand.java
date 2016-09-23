@@ -26,6 +26,7 @@ import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 
@@ -34,10 +35,10 @@ import java.io.PrintStream;
  */
 public class DeleteDatasetInstanceCommand extends AbstractAuthCommand {
 
-  private final DatasetClient datasetClient;
+  private final Provider<DatasetClient> datasetClient;
 
   @Inject
-  public DeleteDatasetInstanceCommand(DatasetClient datasetClient, CLIConfig cliConfig) {
+  DeleteDatasetInstanceCommand(Provider<DatasetClient> datasetClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.datasetClient = datasetClient;
   }
@@ -46,7 +47,7 @@ public class DeleteDatasetInstanceCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     DatasetId dataset = cliConfig.getCurrentNamespace().dataset(arguments.get(ArgumentName.DATASET.toString()));
 
-    datasetClient.delete(dataset.toId());
+    datasetClient.get().delete(dataset.toId());
     output.printf("Successfully deleted dataset instance '%s'\n", dataset.getEntityName());
   }
 

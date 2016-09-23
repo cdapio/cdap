@@ -23,6 +23,7 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.client.PreferencesClient;
 import co.cask.common.cli.Arguments;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 
@@ -32,11 +33,11 @@ import java.io.PrintStream;
 public class DeletePreferencesCommand extends AbstractCommand {
   private static final String SUCCESS = "Deleted preferences successfully for the '%s'";
 
-  private final PreferencesClient client;
+  private final Provider<PreferencesClient> client;
   private final ElementType type;
   private final CLIConfig cliConfig;
 
-  protected DeletePreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig) {
+  DeletePreferencesCommand(ElementType type, Provider<PreferencesClient> client, CLIConfig cliConfig) {
     super(cliConfig);
     this.type = type;
     this.client = client;
@@ -54,18 +55,18 @@ public class DeletePreferencesCommand extends AbstractCommand {
     switch (type) {
       case INSTANCE:
         checkInputLength(programIdParts, 0);
-        client.deleteInstancePreferences();
+        client.get().deleteInstancePreferences();
         printStream.printf(SUCCESS + "\n", type.getName());
         break;
 
       case NAMESPACE:
         checkInputLength(programIdParts, 0);
-        client.deleteNamespacePreferences(cliConfig.getCurrentNamespace().toId());
+        client.get().deleteNamespacePreferences(cliConfig.getCurrentNamespace().toId());
         printStream.printf(SUCCESS + "\n", type.getName());
         break;
 
       case APP:
-        client.deleteApplicationPreferences(parseAppId(programIdParts).toId());
+        client.get().deleteApplicationPreferences(parseAppId(programIdParts).toId());
         printStream.printf(SUCCESS + "\n", type.getName());
         break;
 
@@ -75,7 +76,7 @@ public class DeletePreferencesCommand extends AbstractCommand {
       case SERVICE:
       case SPARK:
         checkInputLength(programIdParts, 2);
-        client.deleteProgramPreferences(parseProgramId(programIdParts, type.getProgramType()).toId());
+        client.get().deleteProgramPreferences(parseProgramId(programIdParts, type.getProgramType()).toId());
         printStream.printf(SUCCESS + "\n", type.getName());
         break;
 

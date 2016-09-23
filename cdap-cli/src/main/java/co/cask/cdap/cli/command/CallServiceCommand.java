@@ -39,6 +39,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.net.URL;
@@ -50,16 +51,15 @@ import java.util.Map;
 public class CallServiceCommand extends AbstractCommand implements Categorized {
   private static final Gson GSON = new Gson();
 
-
   private final ClientConfig clientConfig;
   private final RESTClient restClient;
-  private final ServiceClient serviceClient;
+  private final Provider<ServiceClient> serviceClient;
   private final FilePathResolver filePathResolver;
 
   @Inject
-  public CallServiceCommand(ClientConfig clientConfig, RESTClient restClient,
-                            ServiceClient serviceClient, CLIConfig cliConfig,
-                            FilePathResolver filePathResolver) {
+  CallServiceCommand(ClientConfig clientConfig, RESTClient restClient,
+                     Provider<ServiceClient> serviceClient, CLIConfig cliConfig,
+                     FilePathResolver filePathResolver) {
     super(cliConfig);
     this.clientConfig = clientConfig;
     this.restClient = restClient;
@@ -94,7 +94,7 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
     }
 
     Map<String, String> headerMap = GSON.fromJson(headers, new TypeToken<Map<String, String>>() { }.getType());
-    URL url = new URL(serviceClient.getServiceURL(service.toId()), path);
+    URL url = new URL(serviceClient.get().getServiceURL(service.toId()), path);
 
     HttpMethod httpMethod = HttpMethod.valueOf(method);
     HttpRequest.Builder builder = HttpRequest.builder(httpMethod, url).addHeaders(headerMap);

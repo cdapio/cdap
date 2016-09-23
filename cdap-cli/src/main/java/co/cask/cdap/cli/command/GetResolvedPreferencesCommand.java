@@ -21,6 +21,7 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.client.PreferencesClient;
+import com.google.inject.Provider;
 
 /**
  * Get Resolved Preferences for instance, namespace, application, program
@@ -28,7 +29,7 @@ import co.cask.cdap.client.PreferencesClient;
 public class GetResolvedPreferencesCommand extends AbstractGetPreferencesCommand {
   private final ElementType type;
 
-  protected GetResolvedPreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig) {
+  GetResolvedPreferencesCommand(ElementType type, Provider<PreferencesClient> client, CLIConfig cliConfig) {
     super(type, client, cliConfig, true);
     this.type = type;
   }

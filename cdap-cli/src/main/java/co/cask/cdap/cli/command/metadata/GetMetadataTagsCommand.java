@@ -28,6 +28,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -39,10 +40,10 @@ import javax.annotation.Nullable;
  */
 public class GetMetadataTagsCommand extends AbstractCommand {
 
-  private final MetadataClient client;
+  private final Provider<MetadataClient> client;
 
   @Inject
-  public GetMetadataTagsCommand(CLIConfig cliConfig, MetadataClient client) {
+  GetMetadataTagsCommand(CLIConfig cliConfig, Provider<MetadataClient> client) {
     super(cliConfig);
     this.client = client;
   }
@@ -51,8 +52,8 @@ public class GetMetadataTagsCommand extends AbstractCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
     String scope = arguments.getOptional(ArgumentName.METADATA_SCOPE.toString());
-    Set<String> tags = scope == null ? client.getTags(entity.toId()) :
-      client.getTags(entity.toId(), MetadataScope.valueOf(scope.toUpperCase()));
+    Set<String> tags = scope == null ? client.get().getTags(entity.toId()) :
+      client.get().getTags(entity.toId(), MetadataScope.valueOf(scope.toUpperCase()));
 
     Table table = Table.builder()
       .setHeader("tags")

@@ -27,6 +27,7 @@ import co.cask.cdap.proto.BatchProgramStart;
 import co.cask.cdap.proto.ProgramRecord;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -35,10 +36,11 @@ import java.util.List;
  * Starts one or more programs in an application.
  */
 public class StartProgramsCommand extends BaseBatchCommand<BatchProgramStart> {
-  private final ProgramClient programClient;
+  private final Provider<ProgramClient> programClient;
 
   @Inject
-  public StartProgramsCommand(ApplicationClient appClient, ProgramClient programClient, CLIConfig cliConfig) {
+  StartProgramsCommand(Provider<ApplicationClient> appClient,  Provider<ProgramClient> programClient,
+                       CLIConfig cliConfig) {
     super(appClient, cliConfig);
     this.programClient = programClient;
   }
@@ -50,7 +52,7 @@ public class StartProgramsCommand extends BaseBatchCommand<BatchProgramStart> {
 
   @Override
   protected void runBatchCommand(PrintStream printStream, Args<BatchProgramStart> args) throws Exception {
-    List<BatchProgramResult> results = programClient.start(args.appId.getParent().toId(), args.programs);
+    List<BatchProgramResult> results = programClient.get().start(args.appId.getParent().toId(), args.programs);
 
     Table table = Table.builder()
       .setHeader("name", "type", "error")

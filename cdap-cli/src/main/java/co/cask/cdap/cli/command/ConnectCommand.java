@@ -37,8 +37,7 @@ public class ConnectCommand implements Command {
   private final boolean debug;
 
   @Inject
-  public ConnectCommand(CLIConfig cliConfig, InstanceURIParser instanceURIParser,
-                        LaunchOptions launchOptions) {
+  ConnectCommand(CLIConfig cliConfig, InstanceURIParser instanceURIParser, LaunchOptions launchOptions) {
     this.cliConfig = cliConfig;
     this.instanceURIParser = instanceURIParser;
     this.debug = launchOptions.isDebug();

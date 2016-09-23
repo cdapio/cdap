@@ -27,6 +27,7 @@ import co.cask.cdap.client.DatasetModuleClient;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.File;
 import java.io.PrintStream;
@@ -36,11 +37,11 @@ import java.io.PrintStream;
  */
 public class DeployDatasetModuleCommand extends AbstractAuthCommand {
 
-  private final DatasetModuleClient datasetModuleClient;
+  private final Provider<DatasetModuleClient> datasetModuleClient;
   private final FilePathResolver resolver;
 
   @Inject
-  public DeployDatasetModuleCommand(DatasetModuleClient datasetModuleClient, FilePathResolver resolver,
+  DeployDatasetModuleCommand(Provider<DatasetModuleClient> datasetModuleClient, FilePathResolver resolver,
                                     CLIConfig cliConfig) {
     super(cliConfig);
     this.datasetModuleClient = datasetModuleClient;
@@ -56,8 +57,8 @@ public class DeployDatasetModuleCommand extends AbstractAuthCommand {
     String moduleName = arguments.get(ArgumentName.NEW_DATASET_MODULE.toString());
     String moduleJarClassname = arguments.get(ArgumentName.DATASET_MODULE_JAR_CLASSNAME.toString());
 
-    datasetModuleClient.add(cliConfig.getCurrentNamespace().datasetModule(moduleName).toId(),
-                            moduleJarClassname, moduleJarFile);
+    datasetModuleClient.get().add(cliConfig.getCurrentNamespace().datasetModule(moduleName).toId(),
+                                  moduleJarClassname, moduleJarFile);
     output.printf("Successfully deployed dataset module '%s'\n", moduleName);
   }
 

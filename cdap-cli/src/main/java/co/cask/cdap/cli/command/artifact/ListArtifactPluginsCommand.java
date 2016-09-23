@@ -29,6 +29,7 @@ import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -38,10 +39,10 @@ import java.util.List;
  */
 public class ListArtifactPluginsCommand extends AbstractAuthCommand {
 
-  private final ArtifactClient artifactClient;
+  private final Provider<ArtifactClient> artifactClient;
 
   @Inject
-  public ListArtifactPluginsCommand(ArtifactClient artifactClient, CLIConfig cliConfig) {
+  ListArtifactPluginsCommand(Provider<ArtifactClient> artifactClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.artifactClient = artifactClient;
   }
@@ -57,10 +58,10 @@ public class ListArtifactPluginsCommand extends AbstractAuthCommand {
     final List<PluginSummary> pluginSummaries;
     String scopeStr = arguments.getOptional(ArgumentName.SCOPE.toString());
     if (scopeStr == null) {
-      pluginSummaries = artifactClient.getPluginSummaries(artifactId.toId(), pluginType);
+      pluginSummaries = artifactClient.get().getPluginSummaries(artifactId.toId(), pluginType);
     } else {
-      pluginSummaries = artifactClient.getPluginSummaries(artifactId.toId(), pluginType,
-        ArtifactScope.valueOf(scopeStr.toUpperCase()));
+      pluginSummaries = artifactClient.get().getPluginSummaries(artifactId.toId(), pluginType,
+                                                                ArtifactScope.valueOf(scopeStr.toUpperCase()));
     }
     Table table = Table.builder()
       .setHeader("type", "name", "classname", "description", "artifact")
