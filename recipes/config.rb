@@ -2,7 +2,7 @@
 # Cookbook Name:: cdap
 # Recipe:: config
 #
-# Copyright © 2013-2014 Cask Data, Inc.
+# Copyright © 2013-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,44 +27,27 @@ directory cdap_conf_dir do
   recursive true
 end
 
-# Setup cdap-site.xml
-if node['cdap'].key?('cdap_site')
-  my_vars = { :options => node['cdap']['cdap_site'] }
-
-  template "#{cdap_conf_dir}/cdap-site.xml" do
+# Setup cdap-site.xml cdap-security.xml
+%w(cdap_site cdap_security).each do |sitefile|
+  next unless node['cdap'].key?(sitefile)
+  template "#{cdap_conf_dir}/#{sitefile.tr('_', '-')}.xml" do
     source 'generic-site.xml.erb'
-    mode 0o644
+    mode sitefile == 'cdap_security' ? '0600' : '0644'
     owner 'cdap'
     group 'cdap'
-    variables my_vars
+    variables :options => node['cdap'][sitefile]
     action :create
   end
-end # End cdap-site.xml
-
-# Setup cdap-security.xml
-if node['cdap'].key?('cdap_security')
-  my_vars = { :options => node['cdap']['cdap_security'] }
-
-  template "#{cdap_conf_dir}/cdap-security.xml" do
-    source 'generic-site.xml.erb'
-    mode 0o600
-    owner 'cdap'
-    group 'cdap'
-    variables my_vars
-    action :create
-  end
-end # End cdap-security.xml
+end # End cdap-site.xml cdap-security.xml
 
 # Setup cdap-env.sh
-if node['cdap'].key?('cdap_env') && node['cdap']['version'].to_f >= 2.7
-  my_vars = { :options => node['cdap']['cdap_env'] }
-
+if node['cdap'].key?('cdap_env') && node['cdap']['version'].to_f >= 2.7 # ~FC023
   template "#{cdap_conf_dir}/cdap-env.sh" do
     source 'generic-env.sh.erb'
-    mode 0o644
+    mode '0644'
     owner 'cdap'
     group 'cdap'
-    variables my_vars
+    variables :options => node['cdap']['cdap_env']
     action :create
   end
 end # End cdap-env.sh
