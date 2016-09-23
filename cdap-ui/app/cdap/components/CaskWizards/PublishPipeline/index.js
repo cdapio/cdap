@@ -21,7 +21,10 @@ import PublishPipelineWizardConfig from 'services/WizardConfigs/PublishPipelineW
 import PublishPipelineAction from 'services/WizardStores/PublishPipeline/PublishPipelineActions.js';
 import PublishPipelineActionCreator from 'services/WizardStores/PublishPipeline/ActionCreator.js';
 import head from 'lodash/head';
-import {MyPipelineApi} from 'api/pipeline';
+import shortid from 'shortid';
+import MyUserStoreApi from 'api/userstore';
+import {default as NamespaceStore} from 'services/store/store';
+
 import T from 'i18n-react';
 
 export default class PublishPipelineWizard extends Component {
@@ -63,13 +66,21 @@ export default class PublishPipelineWizard extends Component {
     let action = this.props.input.action;
     let artifact = head(action.arguments.filter(arg => arg.name === 'artifact')).value;
     let {name, pipelineConfig} = PublishPipelineWizardStore.getState().pipelinemetadata;
-    return MyPipelineApi
-      .publish({
-        namespace: 'default',
-        appId: name
-      }, {
-        artifact,
-        config: pipelineConfig
+    let draftConfig = {
+      artifact,
+      config: pipelineConfig,
+      name: name
+    };
+    return MyUserStoreApi
+      .get()
+      .flatMap((res) => {
+        let currentNamespace = NamespaceStore.getState().selectedNamespace;
+        let draftId = shortid.generate();
+        res = res || {};
+        res.hydratorDrafts = res.hydratorDrafts || {};
+        res.hydratorDrafts[currentNamespace] = res.hydratorDrafts[currentNamespace] || {};
+        res.hydratorDrafts[currentNamespace][draftId] = draftConfig;
+        return MyUserStoreApi.set({}, res);
       });
   }
   render() {
