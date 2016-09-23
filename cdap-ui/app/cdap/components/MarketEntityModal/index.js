@@ -79,6 +79,18 @@ export default class MarketEntityModal extends Component {
     });
   }
 
+  getVersion() {
+    const versionElem = (
+      <span>
+        <strong>
+          {this.state.entityDetail.cdapVersion}
+        </strong>
+      </span>
+    );
+
+    return this.state.entityDetail.cdapVersion ? versionElem : null;
+  }
+
   render() {
     let actions;
     if (this.state.entityDetail.actions) {
@@ -165,12 +177,8 @@ export default class MarketEntityModal extends Component {
                     {(moment(this.state.entityDetail.created * 1000)).format('MM-DD-YYYY HH:mm A')}
                   </strong>
                 </span>
-                <div>CDAP Version</div>
-                <span>
-                  <strong>
-                    {this.state.entityDetail.cdapVersion}
-                  </strong>
-                </span>
+                {this.state.entityDetail.cdapVersion ? <div>CDAP Version</div> : null}
+                {this.getVersion()}
               </div>
             </div>
           </div>
