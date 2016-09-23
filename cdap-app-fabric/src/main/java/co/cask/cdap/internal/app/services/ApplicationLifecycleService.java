@@ -197,14 +197,27 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                          com.google.common.base.Predicate<ApplicationRecord> predicate)
     throws Exception {
     List<ApplicationRecord> appRecords = new ArrayList<>();
+    Set<String> appNames = new HashSet<>();
     for (ApplicationSpecification appSpec : store.getAllApplications(namespace)) {
-      // possible if this particular app was deploy prior to v3.2 and upgrade failed for some reason.
-      ArtifactId artifactId = appSpec.getArtifactId();
-      ArtifactSummary artifactSummary = artifactId == null ?
-        new ArtifactSummary(appSpec.getName(), null) : ArtifactSummary.from(artifactId);
-      ApplicationRecord record = new ApplicationRecord(artifactSummary, appSpec.getName(), appSpec.getDescription());
-      if (predicate.apply(record)) {
-        appRecords.add(record);
+      appNames.add(appSpec.getName());
+    }
+
+    for (String appName : appNames) {
+      Collection<ApplicationId> appIds = store.getAllAppVersionsAppIds(namespace.app(appName));
+      for (ApplicationId appId : appIds) {
+        ApplicationSpecification appSpec = store.getApplication(appId);
+        if (appSpec == null) {
+          continue;
+        }
+
+        // possible if this particular app was deploy prior to v3.2 and upgrade failed for some reason.
+        ArtifactId artifactId = appSpec.getArtifactId();
+        ArtifactSummary artifactSummary = artifactId == null ?
+          new ArtifactSummary(appSpec.getName(), null) : ArtifactSummary.from(artifactId);
+        ApplicationRecord record = new ApplicationRecord(artifactSummary, appId, appSpec.getDescription());
+        if (predicate.apply(record)) {
+          appRecords.add(record);
+        }
       }
     }
 

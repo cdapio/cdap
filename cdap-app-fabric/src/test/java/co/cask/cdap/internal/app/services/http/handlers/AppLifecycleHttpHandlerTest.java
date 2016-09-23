@@ -45,6 +45,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -164,6 +165,13 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     Set<String> versions = ImmutableSet.of("-SNAPSHOT", "2.0.0", "1.0.0");
     Assert.assertEquals(versions, getAppVersions(appId.getNamespace(), appId.getApplication()));
+
+    List<JsonObject> appList = getAppList(appId.getNamespace());
+    Set<String> receivedVersions = new HashSet<>();
+    for (JsonObject appRecord : appList) {
+      receivedVersions.add(appRecord.getAsJsonPrimitive("version").getAsString());
+    }
+    Assert.assertEquals(versions, receivedVersions);
 
     JsonObject appDetails = getAppDetails(appId.getNamespace(), appId.getApplication(), appId.getVersion());
     Assert.assertEquals(GSON.toJson(config), appDetails.get("configuration").getAsString());

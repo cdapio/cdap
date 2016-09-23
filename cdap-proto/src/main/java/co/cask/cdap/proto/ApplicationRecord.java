@@ -17,6 +17,7 @@
 package co.cask.cdap.proto;
 
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.id.ApplicationId;
 
 import java.util.Objects;
 
@@ -31,6 +32,17 @@ public class ApplicationRecord {
   private final String description;
   private final ArtifactSummary artifact;
 
+
+  public ApplicationRecord(ArtifactSummary artifact, ApplicationId appId, String description) {
+    this.type = "App";
+    this.artifact = artifact;
+    this.name = appId.getApplication();
+    this.description = description;
+    this.version = appId.getVersion();
+    this.id = appId.getApplication();
+  }
+
+  @Deprecated
   public ApplicationRecord(ArtifactSummary artifact, String name, String description) {
     this.type = "App";
     this.artifact = artifact;
