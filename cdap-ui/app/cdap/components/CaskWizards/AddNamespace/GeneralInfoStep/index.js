@@ -23,7 +23,6 @@ import T from 'i18n-react';
 
 //Namespace Name
 const mapStateToNamespaceNameProps = (state) => {
-  console.log('State:', state.general);
   return {
     value: state.general.name,
     type: 'text',
