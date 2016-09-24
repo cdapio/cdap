@@ -26,6 +26,7 @@ const defaultMetadata = {
   name: '',
   pipelineConfig: null,
   __complete: false,
+  __skipped: false,
   __error: false
 };
 const defaultInitialState = {

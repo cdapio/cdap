@@ -29,6 +29,7 @@ const defaultViewData = {
   packagename: '',
   packageversion: '',
   __complete: true,
+  __skipped: false,
   __error: false
 };
 const defaultSelectDestination = {
@@ -36,6 +37,7 @@ const defaultSelectDestination = {
   name: '',
   types: ['', 'streams'],
   __complete: false,
+  __skipped: true,
   __error: false
 };
 
@@ -104,6 +106,7 @@ const selectdestination = (state = defaultSelectDestination, action = defaultAct
   }
   return Object.assign({}, stateCopy, {
     __complete: isComplete(stateCopy, selectDestinationStepRequiredFields),
+    __skipped: false,
     __error: action.payload.error || false
   });
 };
