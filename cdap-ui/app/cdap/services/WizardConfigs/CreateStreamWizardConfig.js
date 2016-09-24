@@ -18,36 +18,49 @@ import React from 'react';
 import GeneralInfoStep from 'components/CaskWizards/StreamCreate/GeneralInfoStep';
 import SchemaStep from 'components/CaskWizards/StreamCreate/SchemaStep';
 import ThresholdStep from 'components/CaskWizards/StreamCreate/ThresholdStep';
+import UploadData from 'components/CaskWizards/StreamCreate/UploadData';
+
 import T from 'i18n-react';
 
+const UploadStep = {
+  id: 'upload',
+  shorttitle: T.translate('features.Wizard.StreamCreate.Step4.shorttitle'),
+  title: T.translate('features.Wizard.StreamCreate.Step4.title'),
+  description: T.translate('features.Wizard.StreamCreate.Step4.description'),
+  content: (<UploadData />)
+};
+let commonSteps = [
+  {
+    id: 'general',
+    shorttitle: T.translate('features.Wizard.StreamCreate.Step1.shorttitle'),
+    title: T.translate('features.Wizard.StreamCreate.Step1.title'),
+    description: T.translate('features.Wizard.StreamCreate.Step1.description'),
+    content: (<GeneralInfoStep />),
+    requiredFields: ['name']
+  },
+  {
+    id: 'schema',
+    shorttitle: T.translate('features.Wizard.StreamCreate.Step2.shorttitle'),
+    title: T.translate('features.Wizard.StreamCreate.Step2.title'),
+    description: T.translate('features.Wizard.StreamCreate.Step2.description'),
+    content: (<SchemaStep />)
+  },
+  {
+    id: 'threshold',
+    shorttitle: T.translate('features.Wizard.StreamCreate.Step3.shorttitle'),
+    title: T.translate('features.Wizard.StreamCreate.Step3.title'),
+    description: T.translate('features.Wizard.StreamCreate.Step3.description'),
+    content: (<ThresholdStep />)
+  }
+];
+
 const CreateStreamWizardConfig = {
-  steps: [
-    {
-      id: 'general',
-      shorttitle: T.translate('features.Wizard.StreamCreate.Step1.shorttitle'),
-      title: T.translate('features.Wizard.StreamCreate.Step1.title'),
-      description: T.translate('features.Wizard.StreamCreate.Step1.description'),
-      content: (<GeneralInfoStep />),
-      requiredFields: ['name'],
-      onSubmitGoTo: 'uploaddata'
-    },
-    {
-      id: 'schema',
-      shorttitle: T.translate('features.Wizard.StreamCreate.Step2.shorttitle'),
-      title: T.translate('features.Wizard.StreamCreate.Step2.title'),
-      description: T.translate('features.Wizard.StreamCreate.Step2.description'),
-      content: (<SchemaStep />),
-      onSubmitGoTo: 'uploaddata'
-    },
-    {
-      id: 'threshold',
-      shorttitle: T.translate('features.Wizard.StreamCreate.Step3.shorttitle'),
-      title: T.translate('features.Wizard.StreamCreate.Step3.title'),
-      description: T.translate('features.Wizard.StreamCreate.Step3.description'),
-      content: (<ThresholdStep />),
-      onSubmitGoTo: 'uploaddata'
-    }
-  ]
+  steps: commonSteps
+};
+
+const CreateStreamUploadWizardConfig = {
+  steps: [...commonSteps, UploadStep]
 };
 
 export default CreateStreamWizardConfig;
+export {CreateStreamUploadWizardConfig};
