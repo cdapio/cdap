@@ -17,16 +17,18 @@ import {combineReducers, createStore} from 'redux';
 import CreateStreamActions from 'services/WizardStores/CreateStream/CreateStreamActions';
 import CreateStreamWizardConfig from 'services/WizardConfigs/CreateStreamWizardConfig';
 import head from 'lodash/head';
+import cloneDeep from 'lodash/cloneDeep';
 // Defaults
 const defaultState = {
   __complete: false,
+  __skipped: true,
   __error: false
 };
 const defaultGeneralState = Object.assign({
   name: '',
   description: '',
   ttl: ''
-}, defaultState);
+}, defaultState, {__skipped: false});
 const defaultRow = {
   "name": "body",
   "type": "string",
@@ -40,7 +42,7 @@ const defaultSchema = {
 const defaultSchemaFormats = ['', 'text', 'csv', 'syslog'];
 const defaultSchemaState = Object.assign({
   format: defaultSchemaFormats[1],
-  value: defaultSchema
+  value: cloneDeep(defaultSchema)
 }, defaultState, { __complete: true });
 const defaultThresholdState = Object.assign({
   value: 1024
@@ -51,7 +53,7 @@ const defaultAction = {
 };
 const defaultInitialState = {
   general: defaultGeneralState,
-  schema: defaultSchemaState,
+  schema: cloneDeep(defaultSchemaState),
   threshold: defaultThresholdState
 };
 
@@ -135,7 +137,7 @@ const threshold = (state = defaultThresholdState, action = defaultAction) => {
       return state;
   }
   return Object.assign({}, stateCopy, {
-    __complete: isComplete(stateCopy),
+    __skipped: false,
     __error: action.payload.error || false
   });
 };
@@ -157,12 +159,12 @@ const schema = (state = defaultSchemaState, action = defaultAction) => {
     case CreateStreamActions.onSuccess:
       return onSuccessHandler('schema', Object.assign({}, state), action);
     case CreateStreamActions.onReset:
-      return defaultSchemaState;
+      return cloneDeep(defaultSchemaState);
     default:
       return state;
   }
   return Object.assign({}, stateCopy, {
-    __complete: isComplete(stateCopy),
+    __skipped: false,
     __error: action.payload.error || false
   });
 };
