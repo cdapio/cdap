@@ -15,10 +15,15 @@
  */
 
 @import '../../styles/variables.less';
+
+@card-background-color: @cdap-orange;
+@card-font-color: #ffffff;
+
 .cask-card {
-  background: #fff;
-  border-radius: 4px;
+  background: @cdap-orange;
+  border-radius: 28px;
   padding-top: 15px;
+  color: @card-font-color;
 
   &.card-SM { width: 33%; }
   &.card-MD { width: 66%; }
@@ -31,13 +36,17 @@
       margin-top: 0;
     }
     .fa.fa-times {
+      color: @card-font-color;
       position: absolute;
-      top: 20px;
-      right: 20px;
+      top: 10px;
+      right: 10px;
       cursor: pointer;
+    }
+    .fa.fa-times:hover {
+      color: #00008B;
     }
   }
   .card-body {
-    padding: 15px;
+    padding: 0 15px 15px 15px;
   }
 }
