@@ -47,7 +47,7 @@ export default class ResourceCenter extends Component {
         title: T.translate('features.Resource-Center.Stream-View.label'),
         description: T.translate('features.Resource-Center.Stream-View.description'),
         actionLabel: T.translate('features.Resource-Center.Stream-View.actionbtn0'),
-        iconClassName: 'fa icon-streams',
+        iconClassName: 'fa icon-streamview',
       }, {
         title: T.translate('features.Resource-Center.HydratorPipeline.label'),
         description: T.translate('features.Resource-Center.HydratorPipeline.description'),
@@ -95,6 +95,7 @@ export default class ResourceCenter extends Component {
               isOpen={this.state.createStreamWizard}
               store={CreateStreamStore}
               onClose={this.toggleWizard.bind(this, 'createStreamWizard')}
+              withUploadStep
             />
           :
             null
