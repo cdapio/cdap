@@ -86,26 +86,43 @@
         }
       }
       .market-entity-actions {
+         text-align: center;
 
         .action-container {
           display: inline-flex;
           flex-direction: column;
+
+          .step {
+            font-size: 16px;
+          }
           .action {
             display: inline-block;
-            width: 150px;
+            width: 120px;
             margin: 10px;
-            border: 1px solid #ebebeb;
             padding: 10px 0;
             font-weight: 500;
+            cursor: pointer;
+
             .btn.btn-default {
               &.btn-completed {
                 background-color: #eee;
               }
             }
+
             .action-image {
               width: 100px;
               height: 100px;
               background-color: grey;
+            }
+
+            .action-icon {
+              background-color: #dddddd;
+            }
+            .action-description {
+              height: 40px;
+              background-color: #eeeeee;
+              font-size: 11px;
+              padding: 2px 4px;
             }
             .fa {
               &[class*="icon-"],
@@ -113,6 +130,10 @@
                 font-size: 60px;
                 margin: 5px 0;
               }
+            }
+            .btn {
+              font-weight: 500;
+              color: #666666;
             }
           }
         }
@@ -122,6 +143,7 @@
           visibility: hidden;
           &.show {
             visibility: visible;
+            display: inline-block;
           }
         }
       }
