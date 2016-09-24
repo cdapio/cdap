@@ -154,14 +154,14 @@ export default class Wizard extends Component{
           </span>
         );
       }
-      // if (canFinish(matchedStep.id, this.props.wizardConfig)) {
-      //   return (
-      //     <div>
-      //       {navButtons}
-      //       {finishButton}
-      //     </div>
-      //   );
-      // }
+      if (this.props.wizardConfig.steps.length === 1) {
+        navButtons = (
+          <span>
+            {finishButton}
+          </span>
+        );
+      }
+
       return navButtons;
     }.bind(this);
     const isStepComplete = function isStepComplete(stepId) {
@@ -186,20 +186,20 @@ export default class Wizard extends Component{
                 .map((value) => {
                   return (
                     <li key={shortid.generate()}>
-                      Step - {value.index} : {value.label} - {value.complete ? doneLabel : skipLabel}
+                      Step {value.index + 1} : {value.label} - {value.complete ? doneLabel : skipLabel}
                     </li>
                   );
                 })
             }
-            <div className="clearfix">
-              <div
-                className="btn btn-primary pull-right"
-                onClick={this.props.onClose.bind(null, true)}
-              >
-                Close
-              </div>
-            </div>
           </ul>
+          <div className="clearfix text-center done-button">
+            <div
+              className="btn btn-primary"
+              onClick={this.props.onClose.bind(null, true)}
+            >
+              Done
+            </div>
+          </div>
         </div>
       );
     }.bind(this);

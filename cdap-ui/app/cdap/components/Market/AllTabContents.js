@@ -94,21 +94,25 @@ export default class AllTabContents extends Component {
   handleBodyRender() {
     const loadingElem = (
       <h4>
-        <span className="fa fa-refresh fa-spin"></span>
+        <span className="fa fa-spinner fa-spin"></span>
       </h4>
     );
     const empty = <h3>Empty</h3>;
     const entities = (
       this.state.entities
         .map((e, index) => (
-          <MarketPlaceEntity
-            name={e.label}
-            subtitle={e.version}
+          <div
+            className="entity-item-container"
             key={index}
-            icon={this.generateIconPath(e)}
-            size="medium"
-            onClick={this.handleEntityClick.bind(this, e)}
-          />
+          >
+            <MarketPlaceEntity
+              name={e.label}
+              subtitle={e.version}
+              icon={this.generateIconPath(e)}
+              size="medium"
+              onClick={this.handleEntityClick.bind(this, e)}
+            />
+          </div>
         )
       )
     );
@@ -144,7 +148,7 @@ export default class AllTabContents extends Component {
             onChange={this.onSearch.bind(this)}
           />
         */}
-        <div className="body-section">
+        <div className="body-section text-center">
           {this.handleBodyRender()}
 
           {marketEntityModal}

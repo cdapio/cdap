@@ -79,6 +79,31 @@ export default class MarketEntityModal extends Component {
     });
   }
 
+  getVersion() {
+    const versionElem = (
+      <span>
+        <strong>
+          {this.state.entityDetail.cdapVersion}
+        </strong>
+      </span>
+    );
+
+    return this.state.entityDetail.cdapVersion ? versionElem : null;
+  }
+
+  getIcon(actionType) {
+    const iconMap = {
+      create_stream: 'icon-streams',
+      create_app: 'icon-app',
+      create_pipeline: 'icon-pipelines',
+      create_artifact: 'icon-artifacts',
+      load_datapack: 'fa-upload',
+
+    };
+
+    return iconMap[actionType];
+  }
+
   render() {
     let actions;
     if (this.state.entityDetail.actions) {
@@ -88,20 +113,33 @@ export default class MarketEntityModal extends Component {
             this.state.entityDetail.actions.map((action, index) => {
               let isCompletedAction = this.state.completedActions.indexOf(index) !== -1 ;
               let actionName = T.translate('features.Market.action-types.' + action.type + '.name');
-              let actionIcon = T.translate('features.Market.action-types.' + action.type + '.icon');
+              let actionIcon = this.getIcon(action.type);
               return (
-                <div className="action-container text-center" key={shortid.generate()}>
-                  <div className={classnames("fa fa-check-circle text-success", {show: isCompletedAction})}></div>
+                <div
+                  className="action-container text-center"
+                  key={shortid.generate()}
+                  onClick={this.openWizard.bind(this, index, action.type, action)}
+                >
                   <div
                     className="action"
                     key={index}
                   >
-                    <div>Step {index + 1} </div>
-                    <div className={classnames("fa", actionIcon)}></div>
-                    <div className="action-description"></div>
+                    <div className="step text-left">
+                      <span>Step {index + 1}</span>
+                      {
+                        isCompletedAction ?
+                          <span className="fa fa-check-circle text-success"></span> :
+                          null
+                      }
+                    </div>
+                    <div className="action-icon">
+                      <div className={classnames("fa", actionIcon)}></div>
+                    </div>
+                    <div className="action-description">
+                      {action.label}
+                    </div>
                     <button
-                      className={classnames("btn btn-default", {'btn-completed': isCompletedAction})}
-                      onClick={this.openWizard.bind(this, index, action.type, action)}
+                      className={classnames("btn btn-link", {'btn-completed': isCompletedAction})}
                     >
                       { actionName }
                     </button>
@@ -165,12 +203,8 @@ export default class MarketEntityModal extends Component {
                     {(moment(this.state.entityDetail.created * 1000)).format('MM-DD-YYYY HH:mm A')}
                   </strong>
                 </span>
-                <div>CDAP Version</div>
-                <span>
-                  <strong>
-                    {this.state.entityDetail.cdapVersion}
-                  </strong>
-                </span>
+                {this.state.entityDetail.cdapVersion ? <div>CDAP Version</div> : null}
+                {this.getVersion()}
               </div>
             </div>
           </div>
