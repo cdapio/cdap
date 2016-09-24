@@ -144,7 +144,7 @@ export default class AllTabContents extends Component {
             onChange={this.onSearch.bind(this)}
           />
         */}
-        <div className="body-section">
+        <div className="body-section text-center">
           {this.handleBodyRender()}
 
           {marketEntityModal}
