@@ -23,6 +23,10 @@ require('./SelectDestination.less');
 import T from 'i18n-react';
 
 const mapStateToDestinationTypeProps = (state) => {
+  console.log('Value: ', {
+    options: state.selectdestination.types,
+    value: state.selectdestination.type
+  });
   return {
     options: state.selectdestination.types,
     value: state.selectdestination.type

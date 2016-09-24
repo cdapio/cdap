@@ -17,21 +17,19 @@
 import React, {PropTypes} from 'react';
 require('./AdminOverviewPane.less');
 import OverviewPaneCard from '../OverviewPaneCard/index.js';
-var classNames = require('classnames');
 var shortid = require('shortid');
 
 const propTypes = {
   isLoading: PropTypes.bool
 };
 
-function AdminOverviewPane({isLoading}) {
+function AdminOverviewPane() {
 
   var cards = [];
   for(var i = 0; i < 8; i++){
     cards.push(
       <OverviewPaneCard
         key={shortid.generate()}
-        isLoading={isLoading}
         name="HBASE"
         version={5.6}
       />
@@ -42,9 +40,6 @@ function AdminOverviewPane({isLoading}) {
     <div className="overview-pane">
       <span>Component Overview</span>
       <div className="overview-pane-container">
-        <div className={classNames("spinner-container", { "hidden" : !isLoading})}>
-          <div className={classNames("fa", "fa-spinner", "fa-spin", "spinner", "fa-3x", { "hidden" : !isLoading})}></div>
-        </div>
        {cards}
       </div>
     </div>
