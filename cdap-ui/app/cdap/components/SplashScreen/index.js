@@ -14,7 +14,7 @@
  * the License.
  */
 
-import React, { Component } from 'react';
+import React, { Component, PropTypes } from 'react';
 import 'whatwg-fetch';
 require('./SplashScreen.less');
 
@@ -22,7 +22,7 @@ import Card from '../Card';
 import MyUserStoreApi from '../../api/userstore';
 import T from 'i18n-react';
 
-export default class SplashScreen extends Component {
+ class SplashScreen extends Component {
   constructor(props) {
     super(props);
     this.props = props;
@@ -71,19 +71,26 @@ export default class SplashScreen extends Component {
           >
             <div className="text-center">
               <span className="fa fa-5x icon-fist"></span>
+              <div className="version-label">
+                {T.translate('features.SplashScreen.version-label')}
+              </div>
               <h4>
                 {T.translate('features.SplashScreen.intro-message')}
               </h4>
               <br />
               <div className={this.state.showRegistration ? 'group' : 'group no-registration'}>
-                <div className="btn btn-default">
-                  {T.translate('features.SplashScreen.buttons.getStarted')}
+                <a href="http://docs.cask.co/">
+                  <div className="btn btn-default">
+                    {T.translate('features.SplashScreen.buttons.getStarted')}
+                  </div>
+                </a>
+                <div className="btn-buffer">
                 </div>
-                <div className={this.state.showRegistration ? 'btn btn-default' : 'hide'}>
+                <div
+                  className={this.state.showRegistration ? 'btn btn-default' : 'hide'}
+                  onClick={this.props.openVideo}
+                >
                   {T.translate('features.SplashScreen.buttons.introduction')}
-                </div>
-                <div className={this.state.showRegistration ? 'btn btn-default' : 'hide'}>
-                  {T.translate('features.SplashScreen.buttons.register')}
                 </div>
               </div>
             </div>
@@ -93,3 +100,10 @@ export default class SplashScreen extends Component {
     );
   }
 }
+
+const propTypes = {
+  openVideo: PropTypes.func
+};
+
+SplashScreen.propTypes = propTypes;
+export default SplashScreen;
