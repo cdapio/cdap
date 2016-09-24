@@ -32,7 +32,7 @@ let DataTextArea = ({value, isLoading}) => {
     <div className="view-data-step">
       {
         isLoading ?
-          <div className="loading text-center"><i className="fa fa-spin fa-refresh" /></div>
+          <div className="loading text-center"><i className="fa fa-spinner fa-spin" /></div>
           :
           <pre>
             {value}

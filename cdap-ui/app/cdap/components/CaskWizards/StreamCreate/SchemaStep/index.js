@@ -72,7 +72,7 @@ export default function SchemaStep() {
       >
         <FormGroup>
           <Col xs="2">
-            <Label>{T.translate('commons.formatLabel')}</Label>
+            <Label className="control-label">{T.translate('commons.formatLabel')}</Label>
           </Col>
           <Col xs="4">
             <SchemaType className="input-sm"/>
@@ -80,7 +80,7 @@ export default function SchemaStep() {
         </FormGroup>
         <FormGroup>
           <Col xs="12">
-            <Label>{T.translate('commons.schemaLabel')}</Label>
+            <Label className="control-label">{T.translate('commons.schemaLabel')}</Label>
           </Col>
           <Col xs="12">
             <SimpleSchemaWrapper />
