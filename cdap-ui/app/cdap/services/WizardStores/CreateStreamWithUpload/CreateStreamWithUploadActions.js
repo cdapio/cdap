@@ -14,7 +14,7 @@
  * the License.
  */
 
-const CreateStreamActions = {
+const CreateStreamWithUploadAction = {
   setNamespace: 'SET-STREAM-NAMESPACE',
   setType: 'SET-STREAM-TYPE',
   setName: 'SET-STREAM-NAME',
@@ -27,9 +27,9 @@ const CreateStreamActions = {
 
   setFilename: 'SET-FILENAME',
   setDefaultData: 'SET-DEFAULT-DATA',
-  
+
   onError: 'FORM-SUBMIT-FAILURE',
   onSuccess: 'FORM-SUBMIT-SUCCESS',
   onReset: 'FORM-RESET'
 };
-export default CreateStreamActions;
+export default CreateStreamWithUploadAction;

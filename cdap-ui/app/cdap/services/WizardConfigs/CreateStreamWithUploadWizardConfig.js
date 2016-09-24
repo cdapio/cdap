@@ -49,8 +49,7 @@ let commonSteps = [
     shorttitle: T.translate('features.Wizard.StreamCreate.Step4.shorttitle'),
     title: T.translate('features.Wizard.StreamCreate.Step4.title'),
     description: T.translate('features.Wizard.StreamCreate.Step4.description'),
-    content: (<UploadData />),
-    requiredFields: ['filename', 'data']
+    content: (<UploadData />)
   }
 ];
 

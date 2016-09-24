@@ -15,19 +15,21 @@
  */
 import {combineReducers, createStore} from 'redux';
 import CreateStreamWithUploadAction from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadActions';
-import UploadDataAction from 'services/WizardStores/UploadData/UploadDataActions';
 import CreateStreamUploadWizardConfig from 'services/WizardConfigs/CreateStreamWithUploadWizardConfig';
 import head from 'lodash/head';
+import cloneDeep from 'lodash/cloneDeep';
+
 // Defaults
 const defaultState = {
   __complete: false,
+  __skipped: true,
   __error: false
 };
 const defaultGeneralState = Object.assign({
   name: '',
   description: '',
   ttl: ''
-}, defaultState);
+}, defaultState, {__skipped: false});
 const defaultRow = {
   "name": "body",
   "type": "string",
@@ -41,28 +43,26 @@ const defaultSchema = {
 const defaultSchemaFormats = ['', 'text', 'csv', 'syslog'];
 const defaultSchemaState = Object.assign({
   format: defaultSchemaFormats[1],
-  value: defaultSchema
-}, defaultState, { __complete: true });
+  value: cloneDeep(defaultSchema)
+}, defaultState, {__complete: true, __skipped: true});
 const defaultThresholdState = Object.assign({
   value: 1024
-}, defaultState, { __complete: true });
+}, defaultState, {__complete: true, __skipped: true});
+const defaultViewData = Object.assign({
+  data: '',
+  loading: false,
+  filename: '',
+}, defaultState, {__skipped: true, __complete: true});
+
 const defaultAction = {
   type: '',
   payload: {}
 };
 const defaultInitialState = {
   general: defaultGeneralState,
-  schema: defaultSchemaState,
-  threshold: defaultThresholdState
-};
-const defaultViewData = {
-  data: '',
-  loading: false,
-  filename: '',
-  packagename: '',
-  packageversion: '',
-  __complete: true,
-  __error: false
+  schema: cloneDeep(defaultSchemaState),
+  threshold: defaultThresholdState,
+  upload: defaultViewData
 };
 // Utilities. FIXME: Move to a common place?
 const isNil = (value) => value === null || typeof value === 'undefined' || value === '';
@@ -77,11 +77,6 @@ const generalStepRequiredFields = head(
   CreateStreamUploadWizardConfig
     .steps
     .filter(step => step.id === 'general')
-  ).requiredFields;
-const uploadStepRequiredFields = head(
-  CreateStreamUploadWizardConfig
-    .steps
-    .filter(step => step.id === 'upload')
   ).requiredFields;
 const onErrorHandler = (reducerId, stateCopy, action) => {
   stateCopy = Object.assign({}, stateCopy);
@@ -149,7 +144,7 @@ const threshold = (state = defaultThresholdState, action = defaultAction) => {
       return state;
   }
   return Object.assign({}, stateCopy, {
-    __complete: isComplete(stateCopy),
+    __skipped: false,
     __error: action.payload.error || false
   });
 };
@@ -171,36 +166,37 @@ const schema = (state = defaultSchemaState, action = defaultAction) => {
     case CreateStreamWithUploadAction.onSuccess:
       return onSuccessHandler('schema', Object.assign({}, state), action);
     case CreateStreamWithUploadAction.onReset:
-      return defaultSchemaState;
+      return cloneDeep(defaultSchemaState);
     default:
       return state;
   }
   return Object.assign({}, stateCopy, {
-    __complete: isComplete(stateCopy),
+    __skipped: false,
     __error: action.payload.error || false
   });
 };
 const upload = (state = defaultViewData, action = defaultAction) => {
   let stateCopy;
   switch(action.type) {
-    case UploadDataAction.setDefaultData:
+    case CreateStreamWithUploadAction.setDefaultData:
       stateCopy = Object.assign({}, state, {
         data: action.payload.data,
         loading: false
       });
       break;
-    case UploadDataAction.setFilename:
+    case CreateStreamWithUploadAction.setFilename:
       stateCopy = Object.assign({}, state, {
         filename: action.payload.filename
       });
       break;
-    case UploadDataAction.onReset:
+    case CreateStreamWithUploadAction.onReset:
       return defaultViewData;
     default:
       return state;
   }
   return Object.assign({}, stateCopy, {
-    __complete: isComplete(stateCopy, uploadStepRequiredFields)
+    __skipped: false,
+    __error: action.payload.error || false
   });
 };
 // Store
