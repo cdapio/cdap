@@ -37,13 +37,9 @@ function HeaderNavbarList({namespace}){
       </li>
 
       <li>
-        <Link
-          to={`/ns/${namespace}/dashboard`}
-          activeClassName="active"
-          activeOnlyWhenExact
-        >
+        <a>
           Dashboard
-        </Link>
+        </a>
       </li>
 
       <li>
