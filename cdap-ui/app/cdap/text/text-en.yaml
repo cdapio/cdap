@@ -162,6 +162,10 @@ features:
         description: Setting up Trigger configures system to notify systems observing to start processing.
         thresholdlabel: The stream will notify any observers upon reaching this threshold to start processing of the data in this Stream
         mblabel: Megabytes (MB)
+      Step4:
+        shorttitle: Upload Data
+        title: Upload Data
+        description: Upload Data to the Stream you created
       headerlabel: Create Stream
     UploadData:
       Step1:
