@@ -126,12 +126,11 @@ export default class MarketEntityModal extends Component {
                   >
                     <div className="step text-left">
                       <span>Step {index + 1}</span>
-                      <span
-                        className={classnames("fa fa-check-circle text-success",
-                          {show: isCompletedAction})
-                        }
-                      >
-                      </span>
+                      {
+                        isCompletedAction ?
+                          <span className="fa fa-check-circle text-success"></span> :
+                          null
+                      }
                     </div>
                     <div className="action-icon">
                       <div className={classnames("fa", actionIcon)}></div>

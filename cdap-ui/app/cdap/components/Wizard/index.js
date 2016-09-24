@@ -154,6 +154,13 @@ export default class Wizard extends Component{
           </span>
         );
       }
+      if (this.props.wizardConfig.steps.length === 1) {
+        navButtons = (
+          <span>
+            {finishButton}
+          </span>
+        );
+      }
 
       return navButtons;
     }.bind(this);
