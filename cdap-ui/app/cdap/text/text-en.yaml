@@ -71,7 +71,6 @@ features:
       sortOptions:
         nameAsc: A - Z
         nameDesc: Z - A
-
   Market:
     search-placeholder: Search
     tabs:
@@ -98,7 +97,6 @@ features:
         name: Load
   MarketEntityModal:
     version: "Version:"
-
   Navbar:
     CDAP:
       dashboard: Dashboard
@@ -112,8 +110,32 @@ features:
       support: Support
     Sidebar:
       extension: "Extensions:"
-
-
+  Resource-Center:
+    Stream:
+      label: Stream
+      description: Streams are ways for ingesting data on to HDFS. To ingest in real-time or batch use Stream.
+      actionbtn0: Create
+    Application:
+      label: Application
+      description: Create a custom application by uploading the Application JAR or create new instance of application using existing JAR.
+      actionbtn0: Upload
+      actionbtn-1: Create
+    Stream-View:
+      label: Stream View
+      description: Create a view over an existing Stream.
+      actionbtn0: Create
+    HydratorPipeline:
+      label: Hydrator Pipeline
+      description: Create a new Hydrator Pipeline for Batch and Real-time
+      actionbtn0: Create
+    Artifact:
+      label: Artifact
+      description: Upload an artifact
+      actionbtn0: Upload
+    Plugins:
+      label: Plugins
+      description: Upload and configure a plugin
+      actionbtn0: Upload
   SplashScreen:
     buttons:
       getStarted: Get Started
@@ -123,7 +145,7 @@ features:
     title: Welcome to Cask Data Application Platform
   Wizard:
     Done: Done
-    Skip: Skip
+    Skip: Skipped
     StreamCreate:
       Step1:
         shorttitle: General Information
@@ -140,6 +162,10 @@ features:
         description: Setting up Trigger configures system to notify systems observing to start processing.
         thresholdlabel: The stream will notify any observers upon reaching this threshold to start processing of the data in this Stream
         mblabel: Megabytes (MB)
+      Step4:
+        shorttitle: Upload Data
+        title: Upload Data
+        description: Upload Data to the Stream you created
       headerlabel: Create Stream
     UploadData:
       Step1:

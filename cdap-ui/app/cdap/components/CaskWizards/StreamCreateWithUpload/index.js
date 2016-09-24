@@ -16,17 +16,16 @@
 import React, { Component, PropTypes } from 'react';
 import WizardModal from 'components/WizardModal';
 import Wizard from 'components/Wizard';
-import CreateStreamStore from 'services/WizardStores/CreateStream/CreateStreamStore';
-import CreateStreamActions from 'services/WizardStores/CreateStream/CreateStreamActions';
-import { PublishStream } from 'services/WizardStores/CreateStream/ActionCreator';
+import CreateStreamWithUploadStore from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadStore';
+import CreateStreamWithUploadAction from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadActions';
+import { CreateStream } from 'services/WizardStores/CreateStreamWithUpload/ActionCreator';
 import UploadDataActionCreator from 'services/WizardStores/UploadData/ActionCreator';
-import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
 
-import CreateStreamWizardConfig, {CreateStreamUploadWizardConfig} from 'services/WizardConfigs/CreateStreamWizardConfig';
+import CreateStreamUploadWizardConfig from 'services/WizardConfigs/CreateStreamWithUploadWizardConfig';
 import T from 'i18n-react';
 require('./StreamCreate.less');
 
-export default class StreamCreateWizard extends Component {
+export default class StreamCreateWithUploadWizard extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -47,22 +46,21 @@ export default class StreamCreateWizard extends Component {
     });
   }
   componentWillUnmount() {
-    CreateStreamStore.dispatch({
-      type: CreateStreamActions.onReset
+    CreateStreamWithUploadStore.dispatch({
+      type: CreateStreamWithUploadAction.onReset
     });
   }
   createStream() {
-    let state = CreateStreamStore.getState();
+    let state = CreateStreamWithUploadStore.getState();
     // FIXME: How to handle empty error messages???
-    return PublishStream()
+    return CreateStream()
       .flatMap(
         () => {
           if (this.props.withUploadStep) {
             // FIXME: I think we can chain this to the next step. TL;DR - will do.
             let url = '/namespaces/default/streams/' + state.general.name + '/batch';
-            let uplodatastate = UploadDataStore.getState();
-            let fileContents = uplodatastate.viewdata.data;
-            let filename = uplodatastate.viewdata.filename;
+            let fileContents = state.upload.data;
+            let filename = state.upload.filename;
             let filetype = 'text/' + filename.split('.').pop();
             return UploadDataActionCreator
               .uploadData({
@@ -94,14 +92,10 @@ export default class StreamCreateWizard extends Component {
               className="create-stream-wizard"
             >
               <Wizard
-                wizardConfig={
-                  this.props.withUploadStep ?
-                    CreateStreamUploadWizardConfig
-                    : CreateStreamWizardConfig
-                  }
+                wizardConfig={CreateStreamUploadWizardConfig}
                 onSubmit={this.createStream.bind(this)}
                 onClose={this.toggleWizard.bind(this)}
-                store={CreateStreamStore}/>
+                store={CreateStreamWithUploadStore}/>
             </WizardModal>
           :
             null
@@ -110,7 +104,7 @@ export default class StreamCreateWizard extends Component {
     );
   }
 }
-StreamCreateWizard.propTypes = {
+StreamCreateWithUploadWizard.propTypes = {
   isOpen: PropTypes.bool,
   input: PropTypes.any,
   onClose: PropTypes.func,

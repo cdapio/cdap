@@ -14,10 +14,11 @@
  * the License.
  */
 import {combineReducers, createStore} from 'redux';
-import CreateStreamActions from 'services/WizardStores/CreateStream/CreateStreamActions';
-import CreateStreamWizardConfig from 'services/WizardConfigs/CreateStreamWizardConfig';
+import CreateStreamWithUploadAction from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadActions';
+import CreateStreamUploadWizardConfig from 'services/WizardConfigs/CreateStreamWithUploadWizardConfig';
 import head from 'lodash/head';
 import cloneDeep from 'lodash/cloneDeep';
+
 // Defaults
 const defaultState = {
   __complete: false,
@@ -43,10 +44,16 @@ const defaultSchemaFormats = ['', 'text', 'csv', 'syslog'];
 const defaultSchemaState = Object.assign({
   format: defaultSchemaFormats[1],
   value: cloneDeep(defaultSchema)
-}, defaultState, { __complete: true });
+}, defaultState, {__complete: true, __skipped: true});
 const defaultThresholdState = Object.assign({
   value: 1024
-}, defaultState, { __complete: true });
+}, defaultState, {__complete: true, __skipped: true});
+const defaultViewData = Object.assign({
+  data: '',
+  loading: false,
+  filename: '',
+}, defaultState, {__skipped: true, __complete: true});
+
 const defaultAction = {
   type: '',
   payload: {}
@@ -54,9 +61,9 @@ const defaultAction = {
 const defaultInitialState = {
   general: defaultGeneralState,
   schema: cloneDeep(defaultSchemaState),
-  threshold: defaultThresholdState
+  threshold: defaultThresholdState,
+  upload: defaultViewData
 };
-
 // Utilities. FIXME: Move to a common place?
 const isNil = (value) => value === null || typeof value === 'undefined' || value === '';
 const isComplete = (state, requiredFields) => {
@@ -67,7 +74,7 @@ const isComplete = (state, requiredFields) => {
   return !emptyFieldsInState.length ? true : false;
 };
 const generalStepRequiredFields = head(
-  CreateStreamWizardConfig
+  CreateStreamUploadWizardConfig
     .steps
     .filter(step => step.id === 'general')
   ).requiredFields;
@@ -90,26 +97,26 @@ const onSuccessHandler = (reducerId, stateCopy, action) => {
 const general = (state = defaultGeneralState, action = defaultAction) => {
   let stateCopy;
   switch(action.type) {
-    case CreateStreamActions.setName:
+    case CreateStreamWithUploadAction.setName:
       stateCopy = Object.assign({}, state, {
         name: action.payload.name
       });
       break;
-    case CreateStreamActions.setDescription:
+    case CreateStreamWithUploadAction.setDescription:
       stateCopy = Object.assign({}, state, {
         description: action.payload.description
       });
       break;
-    case CreateStreamActions.setTTL:
+    case CreateStreamWithUploadAction.setTTL:
       stateCopy = Object.assign({}, state, {
         ttl: action.payload.ttl
       });
       break;
-    case CreateStreamActions.onError:
+    case CreateStreamWithUploadAction.onError:
       return onErrorHandler('general', Object.assign({}, state), action);
-    case CreateStreamActions.onSuccess:
+    case CreateStreamWithUploadAction.onSuccess:
       return onSuccessHandler('general', Object.assign({}, state), action);
-    case CreateStreamActions.onReset:
+    case CreateStreamWithUploadAction.onReset:
       return defaultGeneralState;
     default:
       return state;
@@ -122,16 +129,16 @@ const general = (state = defaultGeneralState, action = defaultAction) => {
 const threshold = (state = defaultThresholdState, action = defaultAction) => {
   let stateCopy;
   switch(action.type) {
-    case CreateStreamActions.setThreshold:
+    case CreateStreamWithUploadAction.setThreshold:
       stateCopy = Object.assign({}, state, {
         value: action.payload.threshold
       });
       break;
-    case CreateStreamActions.onError:
+    case CreateStreamWithUploadAction.onError:
       return onErrorHandler('threshold', Object.assign({}, state), action);
-    case CreateStreamActions.onSuccess:
+    case CreateStreamWithUploadAction.onSuccess:
       return onSuccessHandler('threshold', Object.assign({}, state), action);
-    case CreateStreamActions.onReset:
+    case CreateStreamWithUploadAction.onReset:
       return defaultThresholdState;
     default:
       return state;
@@ -144,21 +151,21 @@ const threshold = (state = defaultThresholdState, action = defaultAction) => {
 const schema = (state = defaultSchemaState, action = defaultAction) => {
   let stateCopy;
   switch(action.type) {
-    case CreateStreamActions.setSchemaFormat:
+    case CreateStreamWithUploadAction.setSchemaFormat:
       stateCopy = Object.assign({}, state, {
         format: action.payload.format
       });
       break;
-    case CreateStreamActions.setSchema:
+    case CreateStreamWithUploadAction.setSchema:
       stateCopy = Object.assign({}, state, {
         value: action.payload.schema,
       });
       break;
-    case CreateStreamActions.onError:
+    case CreateStreamWithUploadAction.onError:
       return onErrorHandler('schema', Object.assign({}, state), action);
-    case CreateStreamActions.onSuccess:
+    case CreateStreamWithUploadAction.onSuccess:
       return onSuccessHandler('schema', Object.assign({}, state), action);
-    case CreateStreamActions.onReset:
+    case CreateStreamWithUploadAction.onReset:
       return cloneDeep(defaultSchemaState);
     default:
       return state;
@@ -168,19 +175,43 @@ const schema = (state = defaultSchemaState, action = defaultAction) => {
     __error: action.payload.error || false
   });
 };
-
+const upload = (state = defaultViewData, action = defaultAction) => {
+  let stateCopy;
+  switch(action.type) {
+    case CreateStreamWithUploadAction.setDefaultData:
+      stateCopy = Object.assign({}, state, {
+        data: action.payload.data,
+        loading: false
+      });
+      break;
+    case CreateStreamWithUploadAction.setFilename:
+      stateCopy = Object.assign({}, state, {
+        filename: action.payload.filename
+      });
+      break;
+    case CreateStreamWithUploadAction.onReset:
+      return defaultViewData;
+    default:
+      return state;
+  }
+  return Object.assign({}, stateCopy, {
+    __skipped: false,
+    __error: action.payload.error || false
+  });
+};
 // Store
 const createStoreWrapper = () => {
   return createStore(
     combineReducers({
       general,
       schema,
-      threshold
+      threshold,
+      upload
     }),
     defaultInitialState
   );
 };
 
-const CreateStreamStore = createStoreWrapper();
-export default CreateStreamStore;
+const CreateStreamWithUploadStore = createStoreWrapper();
+export default CreateStreamWithUploadStore;
 export {createStoreWrapper, defaultSchemaFormats};

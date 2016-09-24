@@ -18,32 +18,38 @@ import classnames from 'classnames';
 
 require('./ResourceCenterEntity.less');
 
-export default function ResourceCenterEntity({className, img, title, description, actionLabel, onClick}) {
+export default function ResourceCenterEntity({className, iconClassName, title, description, actionLabel, onClick, disabled}) {
   return (
     <div className={classnames('resourcecenter-entity-card', className)}>
-      {
-        img ?
-          <img className="entity-image" src={img} /> :
-          <div className="entity-image"></div>
-      }
-      <div className="content-container">
-        <h4>{title}</h4>
-        <p>{description}</p>
-        <div
-          className="action-label"
+      <div className="image-button-container">
+        {
+          iconClassName ?
+            <div className={classnames("entity-image", iconClassName)}/> :
+            <div className="entity-image empty"></div>
+        }
+        <button
+          className={classnames("btn btn-primary btn-sm")}
           onClick={onClick}
+          disabled={disabled}
         >
           {actionLabel}
+        </button>
+      </div>
+      <div className="content-container">
+        <div className="content-text">
+          <h4>{title}</h4>
+          <p>{description}</p>
         </div>
       </div>
     </div>
   );
 }
 ResourceCenterEntity.propTypes = {
-  img: PropTypes.string,
+  iconClassName: PropTypes.string,
   title: PropTypes.string,
   description: PropTypes.string,
   actionLabel: PropTypes.string,
   onClick: PropTypes.func.isRequired,
-  className: PropTypes.string
+  className: PropTypes.string,
+  disabled: PropTypes.bool
 };

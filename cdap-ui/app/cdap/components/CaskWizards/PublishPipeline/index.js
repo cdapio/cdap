@@ -84,7 +84,9 @@ export default class PublishPipelineWizard extends Component {
       });
   }
   render() {
-    let wizardModalTitle = (this.props.input.package.label ? this.props.input.package.label + " | " : '') + T.translate('features.Wizard.PublishPipeline.headerlabel') ;
+    let input = this.props.input || {};
+    let pkg = input.package || {};
+    let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + T.translate('features.Wizard.PublishPipeline.headerlabel') ;
     return (
       <div>
         {

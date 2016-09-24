@@ -13,26 +13,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-@import '../../../styles/variables.less';
 
-.cask-wizard-step-header {
-  height: 53px;
-  border: 0;
-  border-bottom: 2px solid #dbdbdb;
-  font-size: 12px;
-  color: #666;
-  display: flex;
-  align-items: center;
-  padding-left: 10px;
-  cursor: pointer;
-  font-weight: 500;
+const CreateStreamWithUploadAction = {
+  setNamespace: 'SET-STREAM-NAMESPACE',
+  setType: 'SET-STREAM-TYPE',
+  setName: 'SET-STREAM-NAME',
+  setDescription: 'SET-STREAM-DESCRIPTION',
+  setTTL: 'SET-STREAM-TTL',
+  setThreshold: 'SET-STREAM-THRESHOLD',
+  setSchemaFormat: 'SET-STREAM-SCHEMA-FORMAT',
+  setSchema: 'SET-STREAM-SCHEMA',
+  createStream: 'CREATE-STREAM',
 
-  &.active {
-    background: #ff6600;
-    color: #fff;
-  }
-  &.completed {
-    color: #666;
-    background: #cfcfcf;
-  }
-}
+  setFilename: 'SET-FILENAME',
+  setDefaultData: 'SET-DEFAULT-DATA',
+
+  onError: 'FORM-SUBMIT-FAILURE',
+  onSuccess: 'FORM-SUBMIT-SUCCESS',
+  onReset: 'FORM-RESET'
+};
+export default CreateStreamWithUploadAction;

@@ -16,7 +16,9 @@
 import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
 import ResourceCenterEntity from '../ResourceCenterEntity';
-import StreamCreateWizard from 'components/CaskWizards/StreamCreate';
+import StreamCreateWithUploadWizard from 'components/CaskWizards/StreamCreateWithUpload';
+import CreateStreamWithUploadStore from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadStore';
+import T from 'i18n-react';
 
 require('./ResourceCenter.less');
 
@@ -24,7 +26,39 @@ export default class ResourceCenter extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      createStreamWizard: false
+      createStreamWizard: false,
+      entities: [{
+        title: T.translate('features.Resource-Center.Stream.label'),
+        description: T.translate('features.Resource-Center.Stream.description'),
+        actionLabel: T.translate('features.Resource-Center.Stream.actionbtn0'),
+        iconClassName: 'fa icon-streams',
+        wizardId: 'createStreamWizard'
+      }, {
+        title: T.translate('features.Resource-Center.Artifact.label'),
+        description: T.translate('features.Resource-Center.Artifact.description'),
+        actionLabel: T.translate('features.Resource-Center.Artifact.actionbtn0'),
+        iconClassName: 'fa icon-artifacts'
+      }, {
+        title: T.translate('features.Resource-Center.Application.label'),
+        description: T.translate('features.Resource-Center.Application.description'),
+        actionLabel: T.translate('features.Resource-Center.Application.actionbtn0'),
+        iconClassName: 'fa icon-app',
+      }, {
+        title: T.translate('features.Resource-Center.Stream-View.label'),
+        description: T.translate('features.Resource-Center.Stream-View.description'),
+        actionLabel: T.translate('features.Resource-Center.Stream-View.actionbtn0'),
+        iconClassName: 'fa icon-streamview',
+      }, {
+        title: T.translate('features.Resource-Center.HydratorPipeline.label'),
+        description: T.translate('features.Resource-Center.HydratorPipeline.description'),
+        actionLabel: T.translate('features.Resource-Center.HydratorPipeline.actionbtn0'),
+        iconClassName: 'fa icon-hydrator',
+      }, {
+        title: T.translate('features.Resource-Center.Plugins.label'),
+        description: T.translate('features.Resource-Center.Plugins.description'),
+        actionLabel: T.translate('features.Resource-Center.Plugins.actionbtn0'),
+        iconClassName: 'fa fa-plug',
+      }]
     };
   }
   toggleWizard(wizardName) {
@@ -40,14 +74,16 @@ export default class ResourceCenter extends Component {
       <div>
         <div className="cask-resource-center">
           {
-            Array
-              .apply(null, {length: 8})
-              .map((e, index) => (
+            this.state
+              .entities
+              .map((entity, index) => (
                 <ResourceCenterEntity
-                  title="Stream"
-                  description="Lorem Ipsum has been the industry's standard dummy text ever since the 1500s"
-                  actionLabel="Create"
+                  title={entity.title}
+                  description={entity.description}
+                  actionLabel={entity.actionLabel}
+                  iconClassName={entity.iconClassName}
                   key={index}
+                  disabled={!entity.wizardId}
                   onClick={this.toggleWizard.bind(this, 'createStreamWizard')}
                 />
               ))
@@ -55,9 +91,11 @@ export default class ResourceCenter extends Component {
         </div>
         {
           this.state.createStreamWizard ?
-            <StreamCreateWizard
+            <StreamCreateWithUploadWizard
               isOpen={this.state.createStreamWizard}
+              store={CreateStreamWithUploadStore}
               onClose={this.toggleWizard.bind(this, 'createStreamWizard')}
+              withUploadStep
             />
           :
             null

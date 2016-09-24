@@ -15,9 +15,10 @@
  */
 
 import React from 'react';
-import GeneralInfoStep from 'components/CaskWizards/StreamCreate/GeneralInfoStep';
-import SchemaStep from 'components/CaskWizards/StreamCreate/SchemaStep';
-import ThresholdStep from 'components/CaskWizards/StreamCreate/ThresholdStep';
+import GeneralInfoStep from 'components/CaskWizards/StreamCreateWithUpload/GeneralInfoStep';
+import SchemaStep from 'components/CaskWizards/StreamCreateWithUpload/SchemaStep';
+import ThresholdStep from 'components/CaskWizards/StreamCreateWithUpload/ThresholdStep';
+import UploadData from 'components/CaskWizards/StreamCreateWithUpload/UploadData';
 
 import T from 'i18n-react';
 let commonSteps = [
@@ -42,12 +43,19 @@ let commonSteps = [
     title: T.translate('features.Wizard.StreamCreate.Step3.title'),
     description: T.translate('features.Wizard.StreamCreate.Step3.description'),
     content: (<ThresholdStep />)
+  },
+  {
+    id: 'upload',
+    shorttitle: T.translate('features.Wizard.StreamCreate.Step4.shorttitle'),
+    title: T.translate('features.Wizard.StreamCreate.Step4.title'),
+    description: T.translate('features.Wizard.StreamCreate.Step4.description'),
+    content: (<UploadData />)
   }
 ];
 
-const CreateStreamWizardConfig = {
+
+const CreateStreamUploadWizardConfig = {
   steps: commonSteps
 };
 
-
-export default CreateStreamWizardConfig;
+export default CreateStreamUploadWizardConfig;

@@ -12,27 +12,23 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
-@import '../../../styles/variables.less';
-
-.cask-wizard-step-header {
-  height: 53px;
-  border: 0;
-  border-bottom: 2px solid #dbdbdb;
-  font-size: 12px;
-  color: #666;
-  display: flex;
-  align-items: center;
-  padding-left: 10px;
-  cursor: pointer;
-  font-weight: 500;
-
-  &.active {
-    background: #ff6600;
-    color: #fff;
+*/
+.threshold-step {
+  &.form-group {
+    text-align: center;
+    padding-top: 30px;
   }
-  &.completed {
-    color: #666;
-    background: #cfcfcf;
+  input {
+    height: 150px;
+    font-size: 60px;
+    width: 250px;
+    margin: 0 auto;
+    text-align: center;
   }
+  h3,
+  p {
+    margin: 0;
+    font-weight: 500;
+  }
+  h3 { margin-top: 10px; }
 }
