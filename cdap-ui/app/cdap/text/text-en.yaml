@@ -96,7 +96,7 @@ features:
       load_datapack:
         name: Load
   MarketEntityModal:
-    version: "Version:"
+    version: "Version :"
   Navbar:
     CDAP:
       dashboard: Dashboard
@@ -152,6 +152,7 @@ features:
         title: General
         description: Provide information about Stream you want to create.
         ttllabel: Event Life Time
+        ttl-placeholder: Specify time to live events in seconds
       Step2:
         shorttitle: Setup Format and Schema
         title: Set Format and Schema
