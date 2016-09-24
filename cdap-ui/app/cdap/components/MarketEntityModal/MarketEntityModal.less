@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+@import '../../styles/variables.less';
 
 .market-entity-modal.modal-dialog {
   width: 60vw;
@@ -63,12 +64,12 @@
         width: 100%;
 
         .entity-modal-image {
-          width: 125px;
-          height: 125px;
+          width: 100px;
+          height: 100px;
 
           img {
-            width: 125px;
-            height: 125px;
+            width: inherit;
+            height: inherit;
           }
         }
         .entity-content {
@@ -90,7 +91,7 @@
         }
       }
       .market-entity-actions {
-         text-align: center;
+        margin-left: 10px;
 
         .action-container {
           display: inline-flex;
@@ -98,6 +99,12 @@
 
           .step {
             font-size: 16px;
+            margin-bottom: 5px;
+            .badge {
+              &.completed {
+                background-color: @state-success-text;
+              }
+            }
           }
           .action {
             display: inline-block;
@@ -106,12 +113,6 @@
             padding: 10px 0;
             font-weight: 500;
             cursor: pointer;
-
-            .btn.btn-default {
-              &.btn-completed {
-                background-color: #eee;
-              }
-            }
 
             .action-image {
               width: 100px;
@@ -131,7 +132,7 @@
             .fa {
               &[class*="icon-"],
               &.fa-upload {
-                font-size: 60px;
+                font-size: 50px;
                 margin: 5px 0;
               }
             }
@@ -140,10 +141,6 @@
               color: #666666;
             }
           }
-        }
-        .fa.fa-check-circle {
-          margin-left: 5px;
-          font-size: 20px;
         }
       }
     }

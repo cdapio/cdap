@@ -64,7 +64,7 @@ function AdminMemoryMetadataPane(){
         Memory
       </div>
       <div className={classNames("spinner-container", {"hidden" : !loading})}>
-        <div className={classNames("fa", "fa-spinner", "fa-spin", "spinner", "fa-3x", {"hidden" : !loading})}></div>
+        <div className={classNames("fa", "fa-spinner", "fa-spin", "spinner", "fa-2x", {"hidden" : !loading})}></div>
       </div>
       <div className="pane-body">
         {containers}

@@ -16,17 +16,15 @@
 
 import React, {PropTypes} from 'react';
 require('./OverviewPaneCard.less');
-var classNames = require('classnames');
 
 const propTypes = {
   name: PropTypes.string,
-  version: PropTypes.number,
-  isLoading: PropTypes.bool
+  version: PropTypes.number
 };
 
-function OverviewPaneCard({name, version, isLoading}) {
+function OverviewPaneCard({name, version}) {
   return (
-    <div className={classNames("overview-pane-card", {"hidden" : isLoading})}>
+    <div className="overview-pane-card">
       <div className="overview-pane-card-header">
         <span className="overview-pane-card-name">
           {name}

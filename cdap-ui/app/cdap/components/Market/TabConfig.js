@@ -46,7 +46,7 @@ const TabConfig = {
     },
     {
       id: 4,
-      filter: 'hydrator-pipeline',
+      filter: 'pipeline',
       icon: 'icon-pipelines',
       name: T.translate('features.Market.tabs.pipelines'),
       content: <AllTabContents />
