@@ -108,6 +108,13 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
     }
   }
 
+  // TODO (CDAP-6837): this is not consistent with execute(runnable). Streamline this in the course of CDAP-6837
+
+  @Override
+  public void execute(int timeout, TxRunnable runnable) throws TransactionFailureException {
+    transactional.execute(timeout, runnable);
+  }
+
   @Override
   public int getInstanceCount() {
     return instanceCount;

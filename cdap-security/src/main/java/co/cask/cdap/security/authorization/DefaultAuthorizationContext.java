@@ -136,6 +136,11 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
   }
 
   @Override
+  public void execute(int timeout, TxRunnable runnable) throws TransactionFailureException {
+    delegateTxnl.execute(timeout, runnable);
+  }
+
+  @Override
   public Properties getExtensionProperties() {
     return extensionProperties;
   }

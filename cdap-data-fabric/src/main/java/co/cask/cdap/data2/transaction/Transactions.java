@@ -85,7 +85,7 @@ public final class Transactions {
   }
 
 
-  public static Supplier<TransactionContext>
+  private static Supplier<TransactionContext>
   constantContextSupplier(final TransactionSystemClient txClient,
                           final Iterable<? extends TransactionAware> txAwares) {
     return new Supplier<TransactionContext>() {
@@ -187,6 +187,17 @@ public final class Transactions {
       public void execute(TxRunnable runnable) throws TransactionFailureException {
         TransactionContext txContext = datasetCache.newTransactionContext();
         txContext.start();
+        finishExecute(txContext, runnable);
+      }
+
+      public void execute(int timeout, TxRunnable runnable) throws TransactionFailureException {
+        TransactionContext txContext = datasetCache.newTransactionContext();
+        txContext.start(timeout);
+        finishExecute(txContext, runnable);
+      }
+
+      private void finishExecute(TransactionContext txContext, TxRunnable runnable)
+        throws TransactionFailureException {
         try {
           runnable.run(datasetCache);
         } catch (Exception e) {
@@ -233,12 +244,26 @@ public final class Transactions {
   public static Transactional createTransactionalWithRetry(final Transactional transactional,
                                                            final RetryStrategy retryStrategy) {
     return new Transactional() {
+
       @Override
       public void execute(TxRunnable runnable) throws TransactionFailureException {
+        executeInternal(null, runnable);
+      }
+
+      @Override
+      public void execute(int timeoutInSeconds, TxRunnable runnable) throws TransactionFailureException {
+        executeInternal(timeoutInSeconds, runnable);
+      }
+
+      private void executeInternal(Integer timeout, TxRunnable runnable) throws TransactionFailureException {
         int retries = 0;
         while (true) {
           try {
-            transactional.execute(runnable);
+            if (null == timeout) {
+              transactional.execute(runnable);
+            } else {
+              transactional.execute(timeout, runnable);
+            }
             break;
           } catch (TransactionFailureException e) {
             long delay = retryStrategy.nextRetry(e, ++retries);

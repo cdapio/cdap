@@ -1183,13 +1183,57 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
+  @Category(SlowTests.class)
+  @Test
+  public void testAppWithTxTimeout() throws Exception {
+    ApplicationManager appManager = deployApplication(testSpace, AppWithTimedTransactions.class);
+    try {
+      ServiceManager serviceManager = appManager.getServiceManager(AppWithTimedTransactions.SERVICE).start();
+      WorkerManager workerManager = appManager.getWorkerManager(AppWithTimedTransactions.WORKER).start();
+      WorkflowManager workflowManager = appManager.getWorkflowManager(AppWithTimedTransactions.WORKFLOW).start();
+
+      serviceManager.waitForStatus(true);
+      callServicePut(serviceManager.getServiceURL(), "test", "hello");
+
+      workerManager.waitForFinish(10L, TimeUnit.SECONDS);
+      workflowManager.waitForFinish(10L, TimeUnit.SECONDS);
+
+      DataSetManager<CapturingDataset> dataset = getDataset(testSpace, AppWithTimedTransactions.CAPTURE);
+      validateCellValue(dataset.get().getTable(),
+                        AppWithTimedTransactions.WORKER, AppWithTimedTransactions.INITIALIZE,
+                        String.valueOf(AppWithTimedTransactions.TIMEOUT_WORKER_INITIALIZE));
+      validateCellValue(dataset.get().getTable(),
+                        AppWithTimedTransactions.WORKER, AppWithTimedTransactions.DESTROY,
+                        String.valueOf(AppWithTimedTransactions.TIMEOUT_WORKER_DESTROY));
+      validateCellValue(dataset.get().getTable(),
+                        AppWithTimedTransactions.WORKER, AppWithTimedTransactions.RUNTIME,
+                        String.valueOf(AppWithTimedTransactions.TIMEOUT_WORKER_RUNTIME));
+      validateCellValue(dataset.get().getTable(),
+                        AppWithTimedTransactions.CONSUMER, AppWithTimedTransactions.RUNTIME,
+                        String.valueOf(AppWithTimedTransactions.TIMEOUT_CONSUMER_RUNTIME));
+      validateCellValue(dataset.get().getTable(),
+                        AppWithTimedTransactions.PRODUCER, AppWithTimedTransactions.RUNTIME,
+                        String.valueOf(AppWithTimedTransactions.TIMEOUT_PRODUCER_RUNTIME));
+      validateCellValue(dataset.get().getTable(),
+                        AppWithTimedTransactions.ACTION, AppWithTimedTransactions.RUNTIME,
+                        String.valueOf(AppWithTimedTransactions.TIMEOUT_ACTION_RUNTIME));
+
+    } finally {
+      appManager.stopAll();
+    }
+  }
+
+  private void validateCellValue(Table table, String row, String column, String expected) {
+    Assert.assertEquals(expected, table.get(new Get(row, column)).getString(column));
+  }
+
   @Test
   public void testWorkerStop() throws Exception {
     // Test to make sure the worker program's status goes to stopped after the run method finishes
     ApplicationManager manager = deployApplication(NoOpWorkerApp.class);
     WorkerManager workerManager = manager.getWorkerManager("NoOpWorker");
     workerManager.start();
-    workerManager.waitForStatus(false, 5, 1);
+    workerManager.waitForStatus(false, 30, 1);
   }
 
   @Category(SlowTests.class)
@@ -1657,10 +1701,10 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     try (OutputStreamWriter out = new OutputStreamWriter(connection.getOutputStream())) {
       out.write(body);
     }
+    Assert.assertEquals(200, connection.getResponseCode());
     try (
       BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charsets.UTF_8))
     ) {
-      Assert.assertEquals(200, connection.getResponseCode());
       return reader.readLine();
     }
   }

@@ -133,6 +133,11 @@ final class SparkTransactional implements Transactional {
     execute(wrap(runnable), TransactionType.EXPLICIT);
   }
 
+  @Override
+  public void execute(int timeout, TxRunnable runnable) throws TransactionFailureException {
+    throw new TransactionFailureException("Transaction with explicit timeout is not supported in Spark");
+  }
+
   @Nullable
   TransactionInfo getTransactionInfo(String key) {
     return transactionInfos.get(key);

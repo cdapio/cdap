@@ -155,6 +155,10 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
     transactional.execute(runnable)
   }
 
+  override def execute(timeout: Int, runnable: TxRunnable): Unit = {
+    transactional.execute(timeout, runnable)
+  }
+
   override def fromDataset[K: ClassTag, V: ClassTag](sc: SparkContext,
                                                      datasetName: String,
                                                      arguments: Map[String, String],

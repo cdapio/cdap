@@ -54,6 +54,8 @@ class SerializableSparkExecutionContext(val delegate: SparkExecutionContext) ext
 
   override def execute(runnable: TxRunnable) = delegate.execute(runnable)
 
+  override def execute(timeout: Int, runnable: TxRunnable) = delegate.execute(timeout, runnable)
+
   override def saveAsDataset[K: ClassTag, V: ClassTag](rdd: RDD[(K, V)], namespace: String,
                                                        datasetName: String, arguments: Map[String, String]) =
     delegate.saveAsDataset(rdd, namespace, datasetName, arguments)

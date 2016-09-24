@@ -90,6 +90,11 @@ public class BasicCustomActionContext extends AbstractContext implements CustomA
   }
 
   @Override
+  public void execute(int timeout, TxRunnable runnable) throws TransactionFailureException {
+    transactional.execute(timeout, runnable);
+  }
+
+  @Override
   public WorkflowToken getWorkflowToken() {
     return workflowProgramInfo.getWorkflowToken();
   }

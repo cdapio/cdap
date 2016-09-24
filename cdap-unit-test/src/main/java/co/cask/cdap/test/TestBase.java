@@ -125,6 +125,8 @@ import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
 import org.apache.tephra.TransactionManager;
+import org.apache.tephra.TransactionSystemClient;
+import org.apache.tephra.inmemory.InMemoryTxSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -417,6 +419,9 @@ public class TestBase {
           bind(StreamAdmin.class).to(FileStreamAdmin.class).in(Singleton.class);
           bind(StreamConsumerFactory.class).to(LevelDBStreamFileConsumerFactory.class).in(Singleton.class);
           bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
+          // we inject a TxSystemClient that creates transaction objects with additional fields for validation
+          bind(InMemoryTxSystemClient.class).in(Scopes.SINGLETON);
+          bind(TransactionSystemClient.class).to(RevealingTxSystemClient.class).in(Scopes.SINGLETON);
         }
       });
   }

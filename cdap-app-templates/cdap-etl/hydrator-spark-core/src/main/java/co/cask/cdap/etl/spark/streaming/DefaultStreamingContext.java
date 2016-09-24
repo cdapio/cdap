@@ -45,4 +45,9 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
   public void execute(TxRunnable runnable) throws TransactionFailureException {
     sec.execute(runnable);
   }
+
+  @Override
+  public void execute(int timeout, TxRunnable runnable) throws TransactionFailureException {
+    sec.execute(timeout, runnable);
+  }
 }
