@@ -18,21 +18,28 @@
 #
 
 # Manage Authentication realmfile
-realmfile = node['cdap']['cdap_site']['security.authentication.basic.realmfile']
-realmdir = ::File.dirname(realmfile)
+if node['cdap']['cdap_site']['security.authentication.basic.realmfile']
+  realmfile = node['cdap']['cdap_site']['security.authentication.basic.realmfile']
+  realmdir = ::File.dirname(realmfile)
 
-# Ensure parent directory exists
-directory realmdir do
-  action :create
-  recursive true
-end
+  # Ensure parent directory exists
+  unless Dir.exists? realmfile
+    directory realmdir do
+      mode '0700'
+      owner 'cdap'
+      group 'cdap'
+      action :create
+      recursive true
+    end
+  end
 
-# Create the realmfile
-template realmfile do
-  source 'generic-kv-colon.erb'
-  mode 0o644
-  owner 'cdap'
-  group 'cdap'
-  variables options: node['cdap']['security']['realmfile']
-  action :create
+  # Create the realmfile
+  template realmfile do
+    source 'generic-kv-colon.erb'
+    mode '0600'
+    owner 'cdap'
+    group 'cdap'
+    variables options: node['cdap']['security']['realmfile']
+    action :create
+  end
 end
