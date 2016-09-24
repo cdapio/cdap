@@ -17,6 +17,7 @@
 package co.cask.cdap.datastreams;
 
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
 import co.cask.cdap.etl.api.Transform;
@@ -28,6 +29,7 @@ import co.cask.cdap.etl.api.streaming.StreamingContext;
 import co.cask.cdap.etl.api.streaming.StreamingSource;
 import co.cask.cdap.etl.api.streaming.Windower;
 import co.cask.cdap.etl.common.Constants;
+import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.SparkCollection;
@@ -67,7 +69,9 @@ public class SparkStreamingPipelineDriver extends SparkPipelineDriver implements
   @Override
   protected SparkCollection<Object> getSource(final String stageName,
                                               PluginFunctionContext pluginFunctionContext) throws Exception {
-    StreamingSource<Object> source = sec.getPluginContext().newPluginInstance(stageName);
+    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(sec.getRuntimeArguments(), sec.getLogicalStartTime(),
+                                                              sec.getSecureStore(), stageName);
+    StreamingSource<Object> source = sec.getPluginContext().newPluginInstance(stageName, macroEvaluator);
     StreamingContext context = new DefaultStreamingContext(stageName, sec, streamingContext);
     return new DStreamCollection<>(sec, sparkContext, source.getStream(context)
       .transform(new Function<JavaRDD<Object>, JavaRDD<Object>>() {
