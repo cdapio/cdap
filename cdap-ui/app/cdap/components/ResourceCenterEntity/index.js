@@ -27,12 +27,13 @@ export default function ResourceCenterEntity({className, iconClassName, title, d
             <div className={classnames("entity-image", iconClassName)}/> :
             <div className="entity-image empty"></div>
         }
-        <div
-          className={classnames("btn btn-primary btn-sm", {'disabled': disabled ? 'disabled' : ''})}
+        <button
+          className={classnames("btn btn-primary btn-sm")}
           onClick={onClick}
+          disabled={disabled}
         >
           {actionLabel}
-        </div>
+        </button>
       </div>
       <div className="content-container">
         <div className="content-text">
