@@ -62,7 +62,9 @@ export default class StreamCreateWizard extends Component {
       );
   }
   render() {
-    let wizardModalTitle = (this.props.input.package.label ? this.props.input.package.label + " | " : '') + T.translate('features.Wizard.StreamCreate.headerlabel') ;
+    let input = this.props.input || {};
+    let pkg = input.package || {};
+    let wizardModalTitle = (pkg.label ? pkg.label + " | " : '') + T.translate('features.Wizard.StreamCreate.headerlabel') ;
     return (
       <div>
         {

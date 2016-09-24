@@ -17,6 +17,7 @@ import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
 import ResourceCenterEntity from '../ResourceCenterEntity';
 import StreamCreateWizard from 'components/CaskWizards/StreamCreate';
+import CreateStreamStore from 'services/WizardStores/CreateStream/CreateStreamStore';
 import T from 'i18n-react';
 
 require('./ResourceCenter.less');
@@ -36,6 +37,7 @@ export default class ResourceCenter extends Component {
         title: T.translate('features.Resource-Center.Artifact.label'),
         description: T.translate('features.Resource-Center.Artifact.description'),
         actionLabel: T.translate('features.Resource-Center.Artifact.actionbtn0'),
+        iconClassName: 'fa icon-artifacts'
       }, {
         title: T.translate('features.Resource-Center.Application.label'),
         description: T.translate('features.Resource-Center.Application.description'),
@@ -60,7 +62,6 @@ export default class ResourceCenter extends Component {
     };
   }
   toggleWizard(wizardName) {
-    console.info('Trying to launch: ', wizardName);
     this.setState({
       [wizardName]: !this.state[wizardName]
     });
@@ -92,6 +93,7 @@ export default class ResourceCenter extends Component {
           this.state.createStreamWizard ?
             <StreamCreateWizard
               isOpen={this.state.createStreamWizard}
+              store={CreateStreamStore}
               onClose={this.toggleWizard.bind(this, 'createStreamWizard')}
             />
           :
