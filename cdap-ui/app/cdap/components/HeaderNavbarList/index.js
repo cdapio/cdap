@@ -36,10 +36,8 @@ function HeaderNavbarList({namespace}){
         </Link>
       </li>
 
-      <li>
-        <a>
-          Dashboard
-        </a>
+      <li className="disabled">
+        Dashboard
       </li>
 
       <li>

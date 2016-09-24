@@ -28,7 +28,7 @@
 .home-header {
   background-color: @home-header-background-color;
   height: @home-header-height;
-  border-bottom: 2px solid @home-header-border-color;
+  border-bottom: 1px solid @home-header-border-color;
   position: fixed;
   top: 50px;
   left: 0;
@@ -38,7 +38,7 @@
   .sort,
   .filter {
     float: left;
-    border-right: 2px solid @home-header-border-color;
+    border-right: 1px solid @home-header-border-color;
     height: @home-header-height;
     line-height: @home-header-height;
 
@@ -53,7 +53,7 @@
         top: @home-header-height;
         left: -17px; // aligning with border
         border-radius: 0;
-        border: 2px solid @home-header-border-color;
+        border: 1px solid @home-header-border-color;
         border-top: 0;
         z-index: 1002;
       }
@@ -81,9 +81,8 @@
     }
 
     .form-control {
-      border: 0;
+      border-right: 0;
       border-radius: 0;
-      background-color: transparent;
 
       &:focus { box-shadow: none; }
     }

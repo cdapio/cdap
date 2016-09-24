@@ -42,7 +42,6 @@ export default function SelectWithOptions({className, value, onChange, options})
   );
 }
 SelectWithOptions.defaultProps = {
-  options: [],
   value: ''
 };
 SelectWithOptions.propTypes = {
@@ -53,7 +52,7 @@ SelectWithOptions.propTypes = {
     PropTypes.oneOfType([
       PropTypes.string,
       PropTypes.shape({
-        id: PropTypes.oneOf([PropTypes.number, PropTypes.string]),
+        id: PropTypes.string,
         value: PropTypes.string
       })
     ])

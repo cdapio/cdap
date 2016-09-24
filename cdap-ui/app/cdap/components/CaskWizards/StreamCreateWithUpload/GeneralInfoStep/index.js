@@ -98,7 +98,7 @@ export default function GeneralInfoStep() {
       >
         <FormGroup>
           <Col xs="3">
-            <Label>{T.translate('commons.nameLabel')}</Label>
+            <Label className="control-label">{T.translate('commons.nameLabel')}</Label>
           </Col>
           <Col xs="7">
             <InputStreamName />
@@ -107,7 +107,7 @@ export default function GeneralInfoStep() {
         </FormGroup>
         <FormGroup>
           <Col xs="3">
-            <Label>{T.translate('commons.descriptionLabel')}</Label>
+            <Label className="control-label">{T.translate('commons.descriptionLabel')}</Label>
           </Col>
           <Col xs="7">
             <InputStreamDescription />
@@ -115,7 +115,7 @@ export default function GeneralInfoStep() {
         </FormGroup>
         <FormGroup>
           <Col sm="3">
-            <Label>{T.translate('features.Wizard.StreamCreate.Step1.ttllabel')} </Label>
+            <Label className="control-label">{T.translate('features.Wizard.StreamCreate.Step1.ttllabel')} </Label>
           </Col>
           <Col sm="7">
             <InputStreamTTL />

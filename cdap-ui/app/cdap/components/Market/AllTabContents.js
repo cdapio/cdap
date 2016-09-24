@@ -94,7 +94,7 @@ export default class AllTabContents extends Component {
   handleBodyRender() {
     const loadingElem = (
       <h4>
-        <span className="fa fa-spinner fa-spin"></span>
+        <span className="fa fa-spinner fa-spin fa-2x"></span>
       </h4>
     );
     const empty = <h3>Empty</h3>;
@@ -103,6 +103,7 @@ export default class AllTabContents extends Component {
         .map((e, index) => (
           <div
             className="entity-item-container"
+            onClick={this.handleEntityClick.bind(this, e)}
             key={index}
           >
             <MarketPlaceEntity
