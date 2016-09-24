@@ -87,19 +87,15 @@ features:
       useCases: Use Cases
     action-types:
       create_stream:
-        icon: icon-streams
-        name: Create Stream
+        name: Create
       create_app:
-        icon: icon-app
-        name: Create App
+        name: Create
       create_pipeline:
-        icon: icon-app
-        name: Create App
+        name: Create
       create_artifact:
-        name: Create Artifact
+        name: Create
       load_datapack:
-        icon: fa-upload
-        name: Load Data
+        name: Load
   MarketEntityModal:
     version: "Version:"
 
