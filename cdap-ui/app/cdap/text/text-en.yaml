@@ -145,7 +145,7 @@ features:
     title: Welcome to Cask Data Application Platform
   Wizard:
     Done: Done
-    Skip: Skip
+    Skip: Skipped
     StreamCreate:
       Step1:
         shorttitle: General Information
