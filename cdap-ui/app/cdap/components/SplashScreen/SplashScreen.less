@@ -16,6 +16,9 @@
 
 @import '../../styles/variables.less';
 
+@splash-font-color: #ffffff;
+@button-background-color: @cdap-orange;
+
 @keyframes topTransition {
   from { top: 0%; }
   to { top: 50%; }
@@ -34,22 +37,35 @@
   display: block;
   position: absolute;
   left: 50%;
-  top: 50%;
+  top: 65%;
   transform: translate(-50%, -65%);
   animation: topTransition ease-in-out 1s;
-  width: 60%;
+  width: 32%;
   height: 50%;
   z-index: 1031;
+  min-width: 500px;
+  max-width: 720px;
 
   .icon-fist {
-    color: @cdap-orange;
+    color: @splash-font-color;
+    font-size: 9em;
+    position: relative;
+    top: 5px;
+  }
+
+  .version-label {
+    font-size: 11px;
+    color: @splash-font-color;
+  }
+
+  .btn-buffer {
+    width: 10px;
   }
 
   h4 {
-    color: darkgray;
+    color: @splash-font-color;
   }
   label {
-    color: lightgray;
     margin-top: 5px;
     &.align-left {
       text-align: left;
@@ -62,13 +78,22 @@
   }
   .group {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
+    margin-top: -10px;
 
     &.no-registration {
       justify-content: center;
     }
     .btn-default {
-      width: 30%;
+      background-color: @cdap-orange;
+      color: @splash-font-color;
+      border-color: @splash-font-color;
+      width: 150px;
+    }
+    .btn-default:hover {
+      background-color: @splash-font-color;
+      color: @cdap-orange;
+      border-color: @splash-font-color;
     }
   }
 }

@@ -40,6 +40,7 @@ import Router from 'react-router/BrowserRouter';
 import Match from 'react-router/Match';
 import Miss from 'react-router/Miss';
 import Store from './services/store/store';
+import CaskVideoModal from './components/CaskVideoModal';
 
 class CDAP extends Component {
   constructor(props) {
@@ -50,10 +51,25 @@ class CDAP extends Component {
     this.namespaceList = Store.getState().namespaceList;
     this.pathname = props.pathname;
     this.render = this.render.bind(this);
+    this.closeCaskVideo = this.closeCaskVideo.bind(this);
+    this.openCaskVideo = this.openCaskVideo.bind(this);
     Store.subscribe(this.render);
     this.state = {
-      selectedNamespace : Store.getState().selectedNamespace
+      selectedNamespace : Store.getState().selectedNamespace,
+      videoOpen : false
     };
+  }
+
+  openCaskVideo(){
+    this.setState({
+      videoOpen : true
+    });
+  }
+
+  closeCaskVideo(){
+    this.setState({
+      videoOpen : false
+    });
   }
 
   componentWillMount(){
@@ -131,7 +147,6 @@ class CDAP extends Component {
     return false;
   }
 
-
   render() {
     if( window.CDAP_CONFIG.securityEnabled &&
         !cookie.load('CDAP_Auth_Token')
@@ -142,7 +157,6 @@ class CDAP extends Component {
         redirectUrl: location.href,
         clientId: 'cdap'
       });
-
       return null;
     }
 
@@ -157,10 +171,11 @@ class CDAP extends Component {
       <Router basename="/cask-cdap">
         <div className="cdap-container">
           <CdapHeader pathname={location.pathname} />
-          <SplashScreen />
+          <SplashScreen openVideo={this.openCaskVideo}/>
           <div className="container-fluid">
             {this.props.children}
           </div>
+          <CaskVideoModal isOpen={this.state.videoOpen} onCloseHandler={this.closeCaskVideo}/>
           <Footer version={this.version} />
           <Match exactly pattern="/" render={() => (<Redirect to={`/ns/${this.state.selectedNamespace}`} />)} />
           <Match exactly pattern="/notfound" component={Missed} />
