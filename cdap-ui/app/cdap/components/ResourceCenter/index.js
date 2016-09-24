@@ -16,8 +16,8 @@
 import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
 import ResourceCenterEntity from '../ResourceCenterEntity';
-import StreamCreateWizard from 'components/CaskWizards/StreamCreate';
-import CreateStreamStore from 'services/WizardStores/CreateStream/CreateStreamStore';
+import StreamCreateWithUploadWizard from 'components/CaskWizards/StreamCreateWithUpload';
+import CreateStreamWithUploadStore from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadStore';
 import T from 'i18n-react';
 
 require('./ResourceCenter.less');
@@ -91,9 +91,9 @@ export default class ResourceCenter extends Component {
         </div>
         {
           this.state.createStreamWizard ?
-            <StreamCreateWizard
+            <StreamCreateWithUploadWizard
               isOpen={this.state.createStreamWizard}
-              store={CreateStreamStore}
+              store={CreateStreamWithUploadStore}
               onClose={this.toggleWizard.bind(this, 'createStreamWizard')}
               withUploadStep
             />

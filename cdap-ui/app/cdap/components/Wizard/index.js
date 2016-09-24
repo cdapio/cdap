@@ -180,13 +180,13 @@ export default class Wizard extends Component{
                   return {
                     index,
                     label: step.shorttitle,
-                    complete: this.props.store.getState()[step.id] && this.props.store.getState()[step.id].__complete
+                    skipped: this.props.store.getState()[step.id] && this.props.store.getState()[step.id].__skipped
                   };
                 })
                 .map((value) => {
                   return (
                     <li key={shortid.generate()}>
-                      Step {value.index + 1} : {value.label} - {value.complete ? doneLabel : skipLabel}
+                      Step - {value.index + 1} : {value.label} - {value.skipped ? skipLabel : doneLabel}
                     </li>
                   );
                 })
