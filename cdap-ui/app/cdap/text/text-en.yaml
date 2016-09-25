@@ -71,6 +71,16 @@ features:
       sortOptions:
         nameAsc: A - Z
         nameDesc: Z - A
+  Management:
+    Component-Overview:
+      cards:
+        cdh: CDH
+        yarn: YARN
+        hdfs: HDFS
+        zookeeper: Zookeeper
+        kafka: Kafka
+        spark: Spark
+        
   Market:
     search-placeholder: Search
     tabs:
