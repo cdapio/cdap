@@ -17,6 +17,7 @@ import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
 import ResourceCenterEntity from '../ResourceCenterEntity';
 import StreamCreateWithUploadWizard from 'components/CaskWizards/StreamCreateWithUpload';
+import HydratorPipeline from 'components/CaskWizards/HydratorPipeline';
 import CreateStreamWithUploadStore from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadStore';
 import T from 'i18n-react';
 
@@ -27,6 +28,7 @@ export default class ResourceCenter extends Component {
     super(props);
     this.state = {
       createStreamWizard: false,
+      hydratorPipeline: false,
       entities: [{
         title: T.translate('features.Resource-Center.Stream.label'),
         description: T.translate('features.Resource-Center.Stream.description'),
@@ -37,27 +39,33 @@ export default class ResourceCenter extends Component {
         title: T.translate('features.Resource-Center.Artifact.label'),
         description: T.translate('features.Resource-Center.Artifact.description'),
         actionLabel: T.translate('features.Resource-Center.Artifact.actionbtn0'),
-        iconClassName: 'fa icon-artifacts'
+        iconClassName: 'fa icon-artifacts',
+        disabled: true
       }, {
         title: T.translate('features.Resource-Center.Application.label'),
         description: T.translate('features.Resource-Center.Application.description'),
         actionLabel: T.translate('features.Resource-Center.Application.actionbtn0'),
         iconClassName: 'fa icon-app',
+        disabled: true
       }, {
         title: T.translate('features.Resource-Center.Stream-View.label'),
         description: T.translate('features.Resource-Center.Stream-View.description'),
         actionLabel: T.translate('features.Resource-Center.Stream-View.actionbtn0'),
         iconClassName: 'fa icon-streamview',
+        disabled: true
       }, {
         title: T.translate('features.Resource-Center.HydratorPipeline.label'),
         description: T.translate('features.Resource-Center.HydratorPipeline.description'),
         actionLabel: T.translate('features.Resource-Center.HydratorPipeline.actionbtn0'),
         iconClassName: 'fa icon-hydrator',
+        wizardId: 'hydratorPipeline',
+        disabled: false
       }, {
         title: T.translate('features.Resource-Center.Plugins.label'),
         description: T.translate('features.Resource-Center.Plugins.description'),
         actionLabel: T.translate('features.Resource-Center.Plugins.actionbtn0'),
         iconClassName: 'fa fa-plug',
+        disabled: true
       }]
     };
   }
@@ -68,6 +76,24 @@ export default class ResourceCenter extends Component {
   }
   closeWizard(wizardContainer) {
     ReactDOM.unmountComponentAtNode(wizardContainer);
+  }
+  getWizardToBeDisplayed() {
+    if (this.state.createStreamWizard) {
+      return (<StreamCreateWithUploadWizard
+        isOpen={this.state.createStreamWizard}
+        store={CreateStreamWithUploadStore}
+        onClose={this.toggleWizard.bind(this, 'createStreamWizard')}
+        withUploadStep
+      />);
+    }
+    if (this.state.hydratorPipeline) {
+      return (
+        <HydratorPipeline
+          isOpen={this.state.hydratorPipeline}
+          onClose={this.toggleWizard.bind(this, 'hydratorPipeline')}
+        />
+      );
+    }
   }
   render(){
     return (
@@ -83,23 +109,13 @@ export default class ResourceCenter extends Component {
                   actionLabel={entity.actionLabel}
                   iconClassName={entity.iconClassName}
                   key={index}
-                  disabled={!entity.wizardId}
-                  onClick={this.toggleWizard.bind(this, 'createStreamWizard')}
+                  disabled={entity.disabled}
+                  onClick={this.toggleWizard.bind(this, entity.wizardId)}
                 />
               ))
           }
         </div>
-        {
-          this.state.createStreamWizard ?
-            <StreamCreateWithUploadWizard
-              isOpen={this.state.createStreamWizard}
-              store={CreateStreamWithUploadStore}
-              onClose={this.toggleWizard.bind(this, 'createStreamWizard')}
-              withUploadStep
-            />
-          :
-            null
-        }
+        { this.getWizardToBeDisplayed() }
       </div>
     );
   }

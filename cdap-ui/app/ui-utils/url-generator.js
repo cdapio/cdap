@@ -144,3 +144,17 @@ window.getTrackerUrl = function(navigationObj = {}) {
   url = buildCustomUrl(url, stateParams);
   return url;
 };
+window.getHydratorUrl = function(navigationObj = {}) {
+  let {stateName, stateParams} = navigationObj;
+  let uiApp = 'cask-hydrator';
+  let baseUrl = `${location.protocol}//${location.host}/${uiApp}/ns/:namespace`;
+  let stateToUrlMap = {
+    'hydrator': '',
+    'hydrator.create': '/studio',
+    'hydrator.detail': '/view/:pipelineId',
+    'hydrator.list': '?page'
+  };
+  let url = baseUrl + stateToUrlMap[stateName || 'hydrator'];
+  url = buildCustomUrl(url, stateParams);
+  return url;
+};
