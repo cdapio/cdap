@@ -36,7 +36,7 @@
           <span>{{dataset.streamId}}</span>
       </a>
       <a ng-if="dataset.entityType === 'streams'"
-          ui-sref="tracker.detail.entity.metadata({entityType: 'streams', entityId: dataset.streamId})">
+          href="{{dataset.url}}">
           <span class="fa icon-tracker"></span>
           <span>{{dataset.streamId}}</span>
       </a>
