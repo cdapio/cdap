@@ -188,4 +188,9 @@ features:
         description: Specify the name of the pipeline
       pipelinenameplaceholder: Pipeline name
       headerlabel: Publish Pipeline
+    HydratorPipeline:
+      title: Hydrator Pipeline
+      message: Please choose appropriate pipeline types to be created
+      batchLinkLabel: Hydrator Batch Pipeline
+      realtimeLinkLabel: Hydrator Realtime Pipeline
 ...
