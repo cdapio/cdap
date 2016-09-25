@@ -48,39 +48,6 @@
   min-width: 500px;
   max-width: 720px;
 
-  .cask-card {
-    background: @cdap-orange;
-    border-radius: 28px;
-    padding-top: 15px;
-    color: @card-font-color;
-    box-shadow: 0 0 15px #000000;
-
-    &.card-SM { width: 33%; }
-    &.card-MD { width: 66%; }
-    &.card-LG { width: 100%; }
-
-    .card-header {
-      display: flex;
-      justify-content: center;
-      h3 {
-        margin-top: 0;
-      }
-      .fa.fa-times {
-        color: @card-font-color;
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        cursor: pointer;
-      }
-      .fa.fa-times:hover {
-        color: #00008B;
-      }
-    }
-    .card-body {
-      padding: 0 15px 15px 15px;
-    }
-  }
-
   .icon-fist {
     color: @splash-font-color;
     font-size: 9em;
@@ -131,4 +98,40 @@
       border-color: @splash-font-color;
     }
   }
+}
+
+.splash-screen .cask-card {
+  background: @cdap-orange;
+  border-radius: 28px;
+  padding-top: 15px;
+  color: @card-font-color;
+  box-shadow: 0 0 15px #000000;
+
+  &.card-SM { width: 33%; }
+  &.card-MD { width: 66%; }
+  &.card-LG { width: 100%; }
+}
+
+.splash-screen .fa.fa-times {
+  color: @card-font-color;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  cursor: pointer;
+}
+
+.splash-screen .fa.fa-times:hover {
+  color: #00008B;
+}
+
+.splash-screen .card-header {
+  display: flex;
+  justify-content: center;
+  h3 {
+    margin-top: 0;
+  }
+}
+
+.splash-screen .card-body {
+  padding: 0 15px 15px 15px;
 }
