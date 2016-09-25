@@ -33,6 +33,23 @@ export default class PublishPipelineWizard extends Component {
     this.state = {
       showWizard: this.props.isOpen
     };
+
+    this.setDefaultConfig();
+  }
+
+  setDefaultConfig() {
+    const args = this.props.input.action.arguments;
+
+    args.forEach((arg) => {
+      switch(arg.name) {
+        case 'name':
+          PublishPipelineWizardStore.dispatch({
+            type: PublishPipelineAction.setPipelineName,
+            payload: {name: arg.value}
+          });
+          break;
+      }
+    });
   }
   componentWillMount() {
     let action = this.props.input.action;
