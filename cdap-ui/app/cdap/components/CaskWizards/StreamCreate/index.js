@@ -32,7 +32,30 @@ export default class StreamCreateWizard extends Component {
     this.state = {
       showWizard: this.props.isOpen
     };
+
+    this.setDefaultConfig();
   }
+  setDefaultConfig() {
+    const args = this.props.input.action.arguments;
+
+    args.forEach((arg) => {
+      switch(arg.name) {
+        case 'name':
+          CreateStreamStore.dispatch({
+            type: CreateStreamActions.setName,
+            payload: {name: arg.value}
+          });
+          break;
+        case 'description':
+          CreateStreamStore.dispatch({
+            type: CreateStreamActions.setDescription,
+            payload: {description: arg.value}
+          });
+          break;
+      }
+    });
+  }
+
   toggleWizard(returnResult) {
     if (this.state.showWizard) {
       this.props.onClose(returnResult);

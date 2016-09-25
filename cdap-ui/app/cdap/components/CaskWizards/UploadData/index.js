@@ -32,7 +32,22 @@ export default class UploadDataWizard extends Component {
     this.state = {
       showWizard: this.props.isOpen
     };
+    this.setDefaultConfig();
     this.prepareInputForSteps();
+  }
+  setDefaultConfig() {
+    const args = this.props.input.action.arguments;
+
+    args.forEach((arg) => {
+      switch(arg.name) {
+        case 'name':
+          UploadDataStore.dispatch({
+            type: UploadDataActions.setDestinationName,
+            payload: {name: arg.value}
+          });
+          break;
+      }
+    });
   }
   prepareInputForSteps() {
     let action = this.props.input.action;

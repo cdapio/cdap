@@ -97,6 +97,7 @@ export default class MarketEntityModal extends Component {
       create_app: 'icon-app',
       create_pipeline: 'icon-pipelines',
       create_artifact: 'icon-artifacts',
+      informational: 'fa-info',
       load_datapack: 'fa-upload',
 
     };

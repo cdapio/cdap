@@ -91,6 +91,7 @@ const general = (state = defaultGeneralState, action = defaultAction) => {
   let stateCopy;
   switch(action.type) {
     case CreateStreamActions.setName:
+      console.log('set');
       stateCopy = Object.assign({}, state, {
         name: action.payload.name
       });
