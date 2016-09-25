@@ -23,14 +23,24 @@ const propTypes = {
   isLoading: PropTypes.bool
 };
 
+var overviewCards = [
+  'CDH',
+  'YARN',
+  'HDFS',
+  'Zookeeper',
+  'Kafka',
+  'Spark'
+];
+
+
 function AdminOverviewPane() {
 
   var cards = [];
-  for(var i = 0; i < 8; i++){
+  for(var i = 0; i < overviewCards.length; i++){
     cards.push(
       <OverviewPaneCard
         key={shortid.generate()}
-        name="HBASE"
+        name={overviewCards[i]}
         version={5.6}
       />
     );

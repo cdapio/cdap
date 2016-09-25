@@ -29,7 +29,7 @@ import T from 'i18n-react';
     this.state = {
       error: '',
       showRegistration: window.CDAP_CONFIG.cdap.standaloneWebsiteSDKDownload,
-      showSplashScreen: false
+      showSplashScreen: true
     };
   }
   componentDidMount() {
@@ -65,6 +65,7 @@ import T from 'i18n-react';
         <div className="splash-screen-backdrop"></div>
         <div className="splash-screen">
           <Card
+            className="splash-screen-card"
             closeable
             title={T.translate('features.SplashScreen.title')}
             onClose={this.onClose.bind(this)}
@@ -79,7 +80,7 @@ import T from 'i18n-react';
               </h4>
               <br />
               <div className={this.state.showRegistration ? 'group' : 'group no-registration'}>
-                <a href="http://docs.cask.co/">
+                <a href="http://docs.cask.co/cdap">
                   <div className="btn btn-default">
                     {T.translate('features.SplashScreen.buttons.getStarted')}
                   </div>
