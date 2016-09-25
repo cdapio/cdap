@@ -21,7 +21,7 @@ export default class PlusButton extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      showMarketPlace: true
+      showMarketPlace: false
     };
   }
   onClickHandler() {
