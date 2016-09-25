@@ -19,6 +19,10 @@ import React, {Component} from 'react';
 
 export default class CaskVideo extends Component {
 
+  constructor(props){
+    super(props);
+  }
+
   render(){
     const opts = {
       height: '390',
