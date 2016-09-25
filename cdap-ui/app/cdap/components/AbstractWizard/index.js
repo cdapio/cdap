@@ -18,6 +18,7 @@ import React, {PropTypes} from 'react';
 import StreamCreateWizard from 'components/CaskWizards/StreamCreate';
 import UploadDataWizard from 'components/CaskWizards/UploadData';
 import PublishPipelineWizard from 'components/CaskWizards/PublishPipeline';
+import InformationalWizard from 'components/CaskWizards/Informational';
 import CreateStreamStore from 'services/WizardStores/CreateStream/CreateStreamStore';
 import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
 import PublishPipelineStore from 'services/WizardStores/PublishPipeline/PublishPipelineStore';
@@ -38,6 +39,10 @@ const WizardTypesMap = {
   'create_pipeline': {
     tag: PublishPipelineWizard,
     store: PublishPipelineStore
+  },
+  'informational': {
+    tag: InformationalWizard,
+    store: {}
   }
 };
 

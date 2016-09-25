@@ -93,6 +93,8 @@ features:
         name: Create
       create_artifact:
         name: Create
+      informational:
+        name: Download
       load_datapack:
         name: Load
   MarketEntityModal:
@@ -145,6 +147,12 @@ features:
     title: Welcome to Cask Data Application Platform
   Wizard:
     Done: Done
+    Informational:
+      Step1:
+        description: Steps to follow
+        shorttitle: Information
+        title: Info
+      headerlabel: Information
     Skip: Skipped
     FailedMessage: Failed to {step}
     StreamCreate:
