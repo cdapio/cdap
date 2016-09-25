@@ -85,7 +85,7 @@ const TabConfig = {
     // },
     {
       id: 9,
-      filter: 'artifact',
+      filter: '3rd-party-artifact',
       icon: 'icon-artifacts',
       name: T.translate('features.Market.tabs.artifacts'),
       content: <AllTabContents />

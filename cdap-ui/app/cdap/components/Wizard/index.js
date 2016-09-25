@@ -45,6 +45,7 @@ export default class Wizard extends Component{
     this.state = {
       activeStep: this.props.wizardConfig.steps[0].id,
       success: false,
+      loading: false,
       error: ''
     };
   }
@@ -74,20 +75,23 @@ export default class Wizard extends Component{
   }
   submitForm() {
     let onSubmitReturn = this.props.onSubmit(this.props.store);
+    this.setState({loading: true});
     if (onSubmitReturn instanceof Rx.Observable) {
       onSubmitReturn
         .subscribe(
           () => {
             this.setState({
               success: true,
-              error: false
+              error: false,
+              loading: false
             });
           },
           err => {
             if (err) {
               this.setState({
                 error: err,
-                success: false
+                success: false,
+                loading: false
               });
             }
           }
@@ -240,13 +244,26 @@ export default class Wizard extends Component{
       wizardFooter = onSubmitSuccessMessage();
     }
     if (this.state.error) {
+      let step = T.translate(`features.Wizard.${this.props.wizardType}.headerlabel`);
+
       wizardFooter = (
         <CardActionFeedback
           type='DANGER'
-          message={this.state.error}
+          message={T.translate('features.Wizard.FailedMessage', {step})}
+          extendedMessage={this.state.error}
         />
       );
     }
+
+    if (this.state.loading) {
+      wizardFooter = (
+        <CardActionFeedback
+          type='LOADING'
+          message="Loading"
+        />
+      );
+    }
+
     stepContent = first(stepContent);
     return (
       <div className="cask-wizard">
@@ -283,6 +300,7 @@ Wizard.childContextTypes = {
 };
 Wizard.propTypes = {
   wizardConfig: wizardConfigType.isRequired,
+  wizardType: PropTypes.string,
   store: PropTypes.shape({
     getState: PropTypes.func,
     dispatch: PropTypes.func,

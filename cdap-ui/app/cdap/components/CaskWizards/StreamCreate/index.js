@@ -99,6 +99,7 @@ export default class StreamCreateWizard extends Component {
                     CreateStreamUploadWizardConfig
                     : CreateStreamWizardConfig
                   }
+                wizardType="StreamCreate"
                 onSubmit={this.createStream.bind(this)}
                 onClose={this.toggleWizard.bind(this)}
                 store={CreateStreamStore}/>
