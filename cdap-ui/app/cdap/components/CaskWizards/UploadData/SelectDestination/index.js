@@ -23,10 +23,6 @@ require('./SelectDestination.less');
 import T from 'i18n-react';
 
 const mapStateToDestinationTypeProps = (state) => {
-  console.log('Value: ', {
-    options: state.selectdestination.types,
-    value: state.selectdestination.type
-  });
   return {
     options: state.selectdestination.types,
     value: state.selectdestination.type
@@ -80,7 +76,7 @@ export default function SelectDestination() {
       >
       <FormGroup>
         <Col xs="3">
-          <Label>{T.translate('features.Wizard.UploadData.Step2.destinationtype')}</Label>
+          <Label className="control-label">{T.translate('features.Wizard.UploadData.Step2.destinationtype')}</Label>
         </Col>
         <Col xs="7">
           <DestinationType />
@@ -88,7 +84,7 @@ export default function SelectDestination() {
       </FormGroup>
       <FormGroup>
         <Col xs="3">
-          <Label>{T.translate('features.Wizard.UploadData.Step2.destinationname')}</Label>
+          <Label className="control-label">{T.translate('features.Wizard.UploadData.Step2.destinationname')}</Label>
         </Col>
         <Col xs="7">
           <DestinationName />

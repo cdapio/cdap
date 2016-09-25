@@ -100,6 +100,7 @@ export default class PublishPipelineWizard extends Component {
             >
               <Wizard
                 wizardConfig={PublishPipelineWizardConfig}
+                wizardType="PublishPipeline"
                 onSubmit={this.publishPipeline.bind(this)}
                 onClose={this.toggleWizard.bind(this)}
                 store={PublishPipelineWizardStore}/>
