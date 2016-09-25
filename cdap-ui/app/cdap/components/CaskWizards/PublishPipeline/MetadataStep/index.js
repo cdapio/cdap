@@ -51,7 +51,7 @@ export default function MetadataStep() {
       <Form className="form-horizontal pipeline-publish-metadata-step">
         <FormGroup>
           <Col xs="3">
-            <Label>
+            <Label className="control-label">
               {T.translate('features.Wizard.PublishPipeline.pipelinenameplaceholder')}
             </Label>
           </Col>

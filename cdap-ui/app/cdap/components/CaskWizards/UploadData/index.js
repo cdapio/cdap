@@ -95,6 +95,7 @@ export default class UploadDataWizard extends Component {
       >
         <Wizard
           wizardConfig={UploadDataWizardConfig}
+          wizardType="UploadData"
           store={UploadDataStore}
           onSubmit={this.onSubmit.bind(this)}
           onClose={this.toggleWizard.bind(this)}/>

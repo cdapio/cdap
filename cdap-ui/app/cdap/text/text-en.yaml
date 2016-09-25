@@ -146,6 +146,7 @@ features:
   Wizard:
     Done: Done
     Skip: Skipped
+    FailedMessage: Failed to {step}
     StreamCreate:
       Step1:
         shorttitle: General Information
