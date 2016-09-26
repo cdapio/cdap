@@ -87,13 +87,15 @@ export default class HydratorPipeline extends Component {
                   href={this.state.batchPipelineUrl}
                   className="btn btn-default"
                 >
-                  {T.translate('features.Wizard.HydratorPipeline.batchLinkLabel')}
+                  <i className="fa icon-ETLBatch"/>
+                  <span>{T.translate('features.Wizard.HydratorPipeline.batchLinkLabel')}</span>
                 </a>
                 <a
                   href={this.state.realtimePipelineUrl}
                   className="btn btn-default"
                 >
-                  {T.translate('features.Wizard.HydratorPipeline.realtimeLinkLabel')}
+                  <i className="fa icon-sparkstreaming"/>
+                  <span>{T.translate('features.Wizard.HydratorPipeline.realtimeLinkLabel')}</span>
                 </a>
               </div>
             </div>
