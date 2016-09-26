@@ -213,7 +213,10 @@ class Home extends Component {
                   key={entity.uniqueId}
                   onClick={this.handleEntityClick.bind(this, entity.uniqueId)}
                 >
-                  <EntityCard entity={entity} />
+                  <EntityCard
+                    entity={entity}
+                    onUpdate={this.search.bind(this)}
+                  />
                 </div>
               );
             })

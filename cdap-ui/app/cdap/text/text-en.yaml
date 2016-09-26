@@ -71,6 +71,9 @@ features:
       sortOptions:
         nameAsc: A - Z
         nameDesc: Z - A
+    FastActions:
+      deleteConfirmation: Are you sure you want to delete {entityId}?
+      truncateConfirmation: Are you sure you want to truncate {entityId}?
   Management:
     Top:
       version-label: Version
