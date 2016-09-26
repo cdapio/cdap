@@ -51,7 +51,8 @@ end
 # node['cdap']['cdap_site']['security.authentication.basic.realmfile'] must define the realmfile location
 default['cdap']['security']['manage_realmfile'] = false
 # realmfile username/passwords
-default['cdap']['security']['realmfile']['cdap'] = 'cdap'
+# default['cdap']['security']['realmfile']['username'] = 'password'
+default['cdap']['security']['realmfile'] = {}
 
 # SSL common name
 default['cdap']['security']['ssl_common_name'] = node['fqdn']
