@@ -36,8 +36,6 @@ export default class ApplicationMetrics extends Component {
       appId: this.props.entity.id
     };
 
-    console.log('test', this.props.entity.id);
-
     MyAppApi.get(params)
       .subscribe( (res) => {
         this.setState({numPrograms: res.programs.length});
@@ -52,8 +50,6 @@ export default class ApplicationMetrics extends Component {
 
         MyAppApi.batchStatus({namespace: 'default'}, statusRequestArray)
           .subscribe((stats) => {
-            console.log('stats', stats);
-
             this.setState({
               running: stats.filter((stat) => stat.status === 'RUNNING').length,
               failed: stats.filter((stat) => stat.status === 'FAILED').length,
