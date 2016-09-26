@@ -71,6 +71,16 @@ features:
       sortOptions:
         nameAsc: A - Z
         nameDesc: Z - A
+  Management:
+    Component-Overview:
+      cards:
+        cdh: CDH
+        yarn: YARN
+        hdfs: HDFS
+        zookeeper: Zookeeper
+        kafka: Kafka
+        spark: Spark
+
   Market:
     search-placeholder: Search
     tabs:
@@ -140,11 +150,12 @@ features:
       actionbtn0: Upload
   SplashScreen:
     buttons:
-      getStarted: Get Started
-      introduction: Introduction to CDAP
+      getStarted: Read the Docs
+      introduction: Intro to CDAP
       register: Register for Updates
-    intro-message: Your platform for building exciting analytical data applications
+    intro-message: Unified Integration Platform for Big Data
     title: Welcome to Cask Data Application Platform
+    version-label: Version 4.0.0 Preview
   Wizard:
     Done: Done
     Informational:

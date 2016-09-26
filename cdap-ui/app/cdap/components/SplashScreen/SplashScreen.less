@@ -16,6 +16,11 @@
 
 @import '../../styles/variables.less';
 
+@splash-font-color: #ffffff;
+@card-font-color: #ffffff;
+@button-background-color: @cdap-orange;
+@card-background-color: @cdap-orange;
+
 @keyframes topTransition {
   from { top: 0%; }
   to { top: 50%; }
@@ -34,22 +39,35 @@
   display: block;
   position: absolute;
   left: 50%;
-  top: 50%;
+  top: 420px;
   transform: translate(-50%, -65%);
   animation: topTransition ease-in-out 1s;
-  width: 60%;
-  height: 50%;
+  width: 32%;
+  height: 300px;
   z-index: 1031;
+  min-width: 500px;
+  max-width: 540px;
 
   .icon-fist {
-    color: @cdap-orange;
+    color: @splash-font-color;
+    font-size: 9em;
+    position: relative;
+    top: 5px;
+  }
+
+  .version-label {
+    font-size: 11px;
+    color: @splash-font-color;
+  }
+
+  .btn-buffer {
+    width: 10px;
   }
 
   h4 {
-    color: darkgray;
+    color: @splash-font-color;
   }
   label {
-    color: lightgray;
     margin-top: 5px;
     &.align-left {
       text-align: left;
@@ -62,13 +80,63 @@
   }
   .group {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
+    margin-top: -10px;
 
     &.no-registration {
       justify-content: center;
     }
     .btn-default {
-      width: 30%;
+      background-color: @cdap-orange;
+      color: @splash-font-color;
+      border-color: @splash-font-color;
+      width: 132px;
+    }
+    .btn-default:hover {
+      background-color: @splash-font-color;
+      color: @cdap-orange;
+      border-color: @splash-font-color;
     }
   }
+}
+
+.splash-screen .btn-icon {
+  position: relative;
+  right: 5px;
+}
+
+.splash-screen .cask-card {
+  background: @cdap-orange;
+  border-radius: 28px;
+  padding-top: 15px;
+  color: @card-font-color;
+  box-shadow: 0 0 15px #000000;
+
+  &.card-SM { width: 33%; }
+  &.card-MD { width: 66%; }
+  &.card-LG { width: 100%; }
+
+  .card-header {
+    span.fa.fa-times {
+      color: @card-font-color;
+      top: 8px;
+      right: 20px;
+    }
+  }
+}
+
+.splash-screen .fa.fa-times:hover {
+  color: #00008B;
+}
+
+.splash-screen .card-header {
+  display: flex;
+  justify-content: center;
+  h3 {
+    margin-top: 0;
+  }
+}
+
+.splash-screen .card-body {
+  padding: 0 15px 15px 15px;
 }

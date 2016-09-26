@@ -18,19 +18,28 @@ import React, {PropTypes} from 'react';
 require('./AdminOverviewPane.less');
 import OverviewPaneCard from '../OverviewPaneCard/index.js';
 var shortid = require('shortid');
+import T from 'i18n-react';
 
 const propTypes = {
   isLoading: PropTypes.bool
 };
 
-function AdminOverviewPane() {
+var overviewCards = [
+  T.translate('features.Management.Component-Overview.cards.cdh'),
+  T.translate('features.Management.Component-Overview.cards.yarn'),
+  T.translate('features.Management.Component-Overview.cards.hdfs'),
+  T.translate('features.Management.Component-Overview.cards.zookeeper'),
+  T.translate('features.Management.Component-Overview.cards.kafka'),
+  T.translate('features.Management.Component-Overview.cards.spark')
+];
 
+function AdminOverviewPane() {
   var cards = [];
-  for(var i = 0; i < 8; i++){
+  for(var i = 0; i < overviewCards.length; i++){
     cards.push(
       <OverviewPaneCard
         key={shortid.generate()}
-        name="HBASE"
+        name={overviewCards[i]}
         version={5.6}
       />
     );

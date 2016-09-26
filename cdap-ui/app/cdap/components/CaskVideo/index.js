@@ -13,32 +13,31 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
- 
-@import '../../styles/variables.less';
 
-.cask-card {
-  background: #fff;
-  border-radius: 4px;
-  padding-top: 15px;
+import Youtube from 'react-youtube';
+import React, {Component} from 'react';
 
-  &.card-SM { width: 33%; }
-  &.card-MD { width: 66%; }
-  &.card-LG { width: 100%; }
+export default class CaskVideo extends Component {
 
-  .card-header {
-    display: flex;
-    justify-content: center;
-    h3 {
-      margin-top: 0;
-    }
-    .fa.fa-times {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      cursor: pointer;
-    }
+  constructor(props){
+    super(props);
   }
-  .card-body {
-    padding: 15px;
+
+  render(){
+    const opts = {
+      height: '390',
+      width: '640',
+      playerVars: {
+        autoplay: 1
+      }
+    };
+
+    return (
+      <Youtube
+        videoId="MGKt2zheu1w"
+        opts={opts}
+      />
+    );
   }
+
 }
