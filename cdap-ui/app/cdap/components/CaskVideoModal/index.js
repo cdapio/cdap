@@ -39,7 +39,6 @@ export default class CaskVideoModal extends Component {
         isOpen={this.props.isOpen}
         toggle={this.closeHandler.bind(this)}
         className="cask-video-modal"
-        size="lg"
       >
         <ModalHeader>
           <span className="pull-left">
