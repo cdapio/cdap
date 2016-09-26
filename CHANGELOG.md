@@ -1,6 +1,13 @@
 cdap CHANGELOG
 ===============
 
+v2.24.2 (Sep 26, 2016)
+----------------------
+- Bump default cdap version to 3.5.1 ( Issue #169 )
+- Use empty hash for realm file ( Issue #168 )
+- Separate realm file into its own recipe ( Issue #167 )
+- Setup codeclimate and DRY up code ( Issue #166 )
+
 v2.24.1 (Sep 23, 2016)
 ----------------------
 - Support CDAP 4.0 bash script ( Issue: #163 )
