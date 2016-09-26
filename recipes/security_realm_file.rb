@@ -29,7 +29,7 @@ if node['cdap']['cdap_site']['security.authentication.basic.realmfile']
     group 'cdap'
     action :create
     recursive true
-    not_if Dir.exists? realmfile
+    not_if { ::Dir.exist? realmdir }
   end
 
   # Create the realmfile
