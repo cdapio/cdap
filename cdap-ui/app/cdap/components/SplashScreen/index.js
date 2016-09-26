@@ -34,12 +34,12 @@ import T from 'i18n-react';
   }
   componentDidMount() {
     MyUserStoreApi
-      .get()
-      .subscribe(res => {
-        this.setState({
-          showSplashScreen: (typeof res.property['standalone-welcome-message'] === 'undefined' ? true : res.property['standalone-welcome-message'])
-        });
-      });
+      .get();
+      // .subscribe(res => {
+      //   this.setState({
+      //     showSplashScreen: (typeof res.property['standalone-welcome-message'] === 'undefined' ? true : res.property['standalone-welcome-message'])
+      //   });
+      // });
   }
   resetWelcomeMessage() {
     MyUserStoreApi
@@ -82,7 +82,7 @@ import T from 'i18n-react';
               <div className={this.state.showRegistration ? 'group' : 'group no-registration'}>
                 <a href="http://docs.cask.co/cdap">
                   <div className="btn btn-default">
-                    {T.translate('features.SplashScreen.buttons.getStarted')}
+                    <span className="fa fa-book btn-icon"></span>{T.translate('features.SplashScreen.buttons.getStarted')}
                   </div>
                 </a>
                 <div className="btn-buffer">
@@ -91,7 +91,7 @@ import T from 'i18n-react';
                   className={this.state.showRegistration ? 'btn btn-default' : 'hide'}
                   onClick={this.props.openVideo}
                 >
-                  {T.translate('features.SplashScreen.buttons.introduction')}
+                  <span className="fa fa-youtube-play btn-icon"></span>{T.translate('features.SplashScreen.buttons.introduction')}
                 </div>
               </div>
             </div>

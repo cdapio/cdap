@@ -39,7 +39,7 @@
   display: block;
   position: absolute;
   left: 50%;
-  top: 65%;
+  top: 50%;
   transform: translate(-50%, -65%);
   animation: topTransition ease-in-out 1s;
   width: 32%;
@@ -90,7 +90,7 @@
       background-color: @cdap-orange;
       color: @splash-font-color;
       border-color: @splash-font-color;
-      width: 150px;
+      width: 132px;
     }
     .btn-default:hover {
       background-color: @splash-font-color;
@@ -98,6 +98,11 @@
       border-color: @splash-font-color;
     }
   }
+}
+
+.splash-screen .btn-icon {
+  position: relative;
+  right: 5px;
 }
 
 .splash-screen .cask-card {
@@ -110,14 +115,14 @@
   &.card-SM { width: 33%; }
   &.card-MD { width: 66%; }
   &.card-LG { width: 100%; }
-}
 
-.splash-screen .fa.fa-times {
-  color: @card-font-color;
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  cursor: pointer;
+  .card-header {
+    span.fa.fa-times {
+      color: @card-font-color;
+      top: 8px;
+      right: 20px;
+    }
+  }
 }
 
 .splash-screen .fa.fa-times:hover {

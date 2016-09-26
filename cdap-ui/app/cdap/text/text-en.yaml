@@ -80,7 +80,7 @@ features:
         zookeeper: Zookeeper
         kafka: Kafka
         spark: Spark
-        
+
   Market:
     search-placeholder: Search
     tabs:
@@ -149,7 +149,7 @@ features:
   SplashScreen:
     buttons:
       getStarted: Read the Docs
-      introduction: Introduction to CDAP
+      introduction: Intro to CDAP
       register: Register for Updates
     intro-message: Unified Integration Platform for Big Data
     title: Welcome to Cask Data Application Platform
