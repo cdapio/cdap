@@ -17,7 +17,7 @@
 import React, {Component} from 'react';
 // import SearchTextBox from '../SearchTextBox';
 import MarketPlaceEntity from '../MarketPlaceEntity';
-// import T from 'i18n-react';
+import T from 'i18n-react';
 import MarketStore from './store/market-store.js';
 import Fuse from 'fuse.js';
 import MarketEntityModal from 'components/MarketEntityModal';
@@ -31,14 +31,15 @@ export default class AllTabContents extends Component {
       searchStr: '',
       entities: [],
       loading: MarketStore.getState().loading,
+      isError: MarketStore.getState().isError,
       activeEntity: null,
       entityModalIsOpen: false
     };
 
     this.unsub = MarketStore.subscribe(() => {
       this.filterEntities();
-      const loading = MarketStore.getState().loading;
-      this.setState({loading});
+      const {loading, isError} = MarketStore.getState();
+      this.setState({loading, isError});
     });
   }
 
@@ -92,6 +93,8 @@ export default class AllTabContents extends Component {
   }
 
   handleBodyRender() {
+    if (this.state.isError) { return null; }
+
     const loadingElem = (
       <h4>
         <span className="fa fa-spinner fa-spin fa-2x"></span>
@@ -140,6 +143,15 @@ export default class AllTabContents extends Component {
       );
     }
 
+    let error;
+    if (this.state.isError) {
+      error = (
+        <h3 className="error-message">
+          {T.translate('features.Market.connectErrorMessage')}
+        </h3>
+      );
+    }
+
     return (
       <div className="all-tab-content">
         {/*
@@ -150,6 +162,7 @@ export default class AllTabContents extends Component {
           />
         */}
         <div className="body-section text-center">
+          {error}
           {this.handleBodyRender()}
 
           {marketEntityModal}

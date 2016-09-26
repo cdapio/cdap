@@ -70,13 +70,13 @@ const TabConfig = {
       name: T.translate('features.Market.tabs.datapacks'),
       content: <AllTabContents />
     },
-    {
-      id: 7,
-      filter: 'hydrator-plugin',
-      icon: 'fa fa-plug',
-      name: T.translate('features.Market.tabs.plugins'),
-      content: <AllTabContents />
-    },
+    // {
+    //   id: 7,
+    //   filter: 'hydrator-plugin',
+    //   icon: 'fa fa-plug',
+    //   name: T.translate('features.Market.tabs.plugins'),
+    //   content: <AllTabContents />
+    // },
     // {
     //   id: 8,
     //   filter: 'dashboard',
