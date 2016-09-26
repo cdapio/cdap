@@ -43,6 +43,7 @@ Use the `cdap::sdk` recipe.
 * `repo` - Sets up package manager repositories for cdap packages
 * `sdk` - Installs the CDAP SDK and sets up a `cdap-sdk` service
 * `security` - Installs the `cdap-security` package and `cdap-auth-server` service
+* `security_realm_file` - Creates the realm file 
 * `ui` - Installs the `cdap-ui` package and service, replaces `web_app`
 * `upgrade` - Executes the CDAP Upgrade Tool, run on Master node
 * `web_app` - Installs the `cdap-web-app` package and service

@@ -2,7 +2,7 @@
 # Cookbook Name:: cdap
 # Recipe:: security
 #
-# Copyright © 2013-2015 Cask Data, Inc.
+# Copyright © 2013-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -78,24 +78,7 @@ if node['cdap']['security']['manage_realmfile'].to_s == 'true' &&
    node.key?('cdap') && node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('security.authentication.handlerClassName') &&
    node['cdap']['cdap_site']['security.authentication.handlerClassName'] == 'co.cask.cdap.security.server.BasicAuthenticationHandler' &&
    node['cdap']['cdap_site'].key?('security.authentication.basic.realmfile')
-  realmfile = node['cdap']['cdap_site']['security.authentication.basic.realmfile']
-  realmdir = ::File.dirname(realmfile)
-
-  # Ensure parent directory exists
-  directory realmdir do
-    action :create
-    recursive true
-  end
-
-  # Create the realmfile
-  template realmfile do
-    source 'generic-kv-colon.erb'
-    mode 0o644
-    owner 'cdap'
-    group 'cdap'
-    variables options: node['cdap']['security']['realmfile']
-    action :create
-  end
+  include_recipe 'cdap::security_realm_file'
 end
 
 service 'cdap-auth-server' do
