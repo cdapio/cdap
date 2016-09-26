@@ -94,10 +94,11 @@ export default class PublishPipelineWizard extends Component {
         let currentNamespace = NamespaceStore.getState().selectedNamespace;
         let draftId = shortid.generate();
         res = res || {};
-        res.hydratorDrafts = res.hydratorDrafts || {};
-        res.hydratorDrafts[currentNamespace] = res.hydratorDrafts[currentNamespace] || {};
-        res.hydratorDrafts[currentNamespace][draftId] = draftConfig;
-        return MyUserStoreApi.set({}, res);
+        res.property = res.property || {};
+        res.property.hydratorDrafts = res.property.hydratorDrafts || {};
+        res.property.hydratorDrafts[currentNamespace] = res.property.hydratorDrafts[currentNamespace] || {};
+        res.property.hydratorDrafts[currentNamespace][draftId] = draftConfig;
+        return MyUserStoreApi.set({}, res.property);
       });
   }
   render() {
