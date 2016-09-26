@@ -29,17 +29,17 @@ import T from 'i18n-react';
     this.state = {
       error: '',
       showRegistration: window.CDAP_CONFIG.cdap.standaloneWebsiteSDKDownload,
-      showSplashScreen: true
+      showSplashScreen: false
     };
   }
   componentDidMount() {
     MyUserStoreApi
-      .get();
-      // .subscribe(res => {
-      //   this.setState({
-      //     showSplashScreen: (typeof res.property['standalone-welcome-message'] === 'undefined' ? true : res.property['standalone-welcome-message'])
-      //   });
-      // });
+      .get()
+      .subscribe(res => {
+        this.setState({
+          showSplashScreen: (typeof res.property['standalone-welcome-message'] === 'undefined' ? true : res.property['standalone-welcome-message'])
+        });
+      });
   }
   resetWelcomeMessage() {
     MyUserStoreApi
