@@ -15,7 +15,7 @@
  */
 import React, {PropTypes} from 'react';
 import {connect, Provider} from 'react-redux';
-import {Input, FormGroup, Form} from 'reactstrap';
+import {Input, FormGroup, Form, Col} from 'reactstrap';
 import T from 'i18n-react';
 
 require('./ThresholdStep.less');
@@ -41,7 +41,7 @@ const mapDispatchToStreamThresholdProps = (dispatch) => {
 };
 let ThresholdTextBox = ({value, onChange}) => {
   return (
-    <FormGroup className="threshold-step">
+    <FormGroup className="text-center">
       <Input
         value={value}
         type="number"
@@ -62,8 +62,10 @@ ThresholdTextBox = connect(
 export default function ThresholdStep() {
   return (
     <Provider store={CreateStreamStore}>
-      <Form className="form-horizontal">
-        <ThresholdTextBox />
+      <Form className="form-horizontal threshold-step">
+        <Col xs="12">
+          <ThresholdTextBox />
+        </Col>
         <p>
           {T.translate('features.Wizard.StreamCreate.Step3.thresholdlabel')}
         </p>

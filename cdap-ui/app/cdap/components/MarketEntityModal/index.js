@@ -96,6 +96,7 @@ export default class MarketEntityModal extends Component {
       create_stream: 'icon-streams',
       create_app: 'icon-app',
       create_pipeline: 'icon-pipelines',
+      create_pipeline_draft: 'icon-pipelines',
       create_artifact: 'icon-artifacts',
       informational: 'fa-info',
       load_datapack: 'fa-upload',
@@ -155,7 +156,7 @@ export default class MarketEntityModal extends Component {
         className="market-entity-modal"
         size="md"
       >
-        <ModalHeader>
+        <ModalHeader toggle={this.props.onCloseHandler.bind(this)}>
           <span className="pull-left">
             { this.props.entity.label }
           </span>

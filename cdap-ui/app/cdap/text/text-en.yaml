@@ -130,6 +130,8 @@ features:
         name: Create
       create_app:
         name: Create
+      create_pipeline_draft:
+        name: Create
       create_pipeline:
         name: Create
       create_artifact:

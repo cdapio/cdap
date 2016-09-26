@@ -17,6 +17,8 @@ import React, {Component, PropTypes} from 'react';
 import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 require('./HydratorPipeline.less');
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
+import {default as NamespaceStore} from 'services/store/store';
+
 import T from 'i18n-react';
 
 export default class HydratorPipeline extends Component {
@@ -27,14 +29,14 @@ export default class HydratorPipeline extends Component {
       batchPipelineUrl: window.getHydratorUrl({
         stateName: 'hydrator.create',
         stateParams: {
-          namespace: 'default',
+          namespace: NamespaceStore.getState().selectedNamespace,
           artifactType: 'cdap-data-pipeline'
         }
       }),
       realtimePipelineUrl: window.getHydratorUrl({
         stateName: 'hydrator.create',
         stateParams: {
-          namespace: 'default',
+          namespace:  NamespaceStore.getState().selectedNamespace,
           artifactType: 'cdap-data-streams'
         }
       })

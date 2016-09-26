@@ -24,6 +24,7 @@ import head from 'lodash/head';
 import shortid from 'shortid';
 import MyUserStoreApi from 'api/userstore';
 import {default as NamespaceStore} from 'services/store/store';
+import {MyPipelineApi} from 'api/pipeline';
 
 import T from 'i18n-react';
 
@@ -86,20 +87,35 @@ export default class PublishPipelineWizard extends Component {
     let draftConfig = {
       artifact,
       config: pipelineConfig,
-      name: name
+      name: name,
+      __ui__: {}
     };
-    return MyUserStoreApi
-      .get()
-      .flatMap((res) => {
-        let currentNamespace = NamespaceStore.getState().selectedNamespace;
-        let draftId = shortid.generate();
-        res = res || {};
-        res.property = res.property || {};
-        res.property.hydratorDrafts = res.property.hydratorDrafts || {};
-        res.property.hydratorDrafts[currentNamespace] = res.property.hydratorDrafts[currentNamespace] || {};
-        res.property.hydratorDrafts[currentNamespace][draftId] = draftConfig;
-        return MyUserStoreApi.set({}, res.property);
-      });
+    let currentNamespace = NamespaceStore.getState().selectedNamespace;
+    if(this.props.input.action.type === 'create_pipeline_draft') {
+      return MyUserStoreApi
+        .get()
+        .flatMap((res) => {
+          let draftId = shortid.generate();
+          draftConfig.__ui__.draftId = draftId;
+          res = res || {};
+          res.property = res.property || {};
+          res.property.hydratorDrafts = res.property.hydratorDrafts || {};
+          res.property.hydratorDrafts[currentNamespace] = res.property.hydratorDrafts[currentNamespace] || {};
+          res.property.hydratorDrafts[currentNamespace][draftId] = draftConfig;
+          return MyUserStoreApi.set({}, res.property);
+        });
+    }
+    if (this.props.input.action.type === 'create_pipeline') {
+      return MyPipelineApi
+        .publish({
+          namespace: currentNamespace,
+          appId: name
+          }, {
+            artifact,
+            config: pipelineConfig
+          }
+        );
+    }
   }
   render() {
     let input = this.props.input || {};
