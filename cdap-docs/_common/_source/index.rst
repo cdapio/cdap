@@ -179,7 +179,7 @@ CDAP extensions provide additional capabilities, such as *Cask Hydrator* and *Ca
 .. _ref-man-clia-black: reference-manual/cli-api.html
 
 .. |ref-man-hra-black| replace:: `HTTP RESTful API:`
-.. _ref-man-hra-black: reference-manual/cli-api.html
+.. _ref-man-hra-black: reference-manual/http-restful-api/index.html
 
 .. |ref-man-jca-black| replace:: `Java Client API:`
 .. _ref-man-jca-black: reference-manual/java-client-api.html
