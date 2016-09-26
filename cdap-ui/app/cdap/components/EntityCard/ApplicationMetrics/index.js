@@ -56,11 +56,13 @@ export default class ApplicationMetrics extends Component {
               loading: false
             });
           });
+      }, (err) => {
+        console.log('ERROR', err);
       });
   }
 
   render () {
-    const loading = <span className="fa fa-spin fa-refresh"></span>;
+    const loading = <span className="fa fa-spin fa-spinner"></span>;
 
     return (
       <div className="metrics-container">

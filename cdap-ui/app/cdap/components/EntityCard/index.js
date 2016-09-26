@@ -22,6 +22,7 @@ import ArtifactMetrics from './ArtifactMetrics';
 import DatasetMetrics from './DatasetMetrics';
 import StreamMetrics from './StreamMetrics';
 import classnames from 'classnames';
+import FastActions from 'components/EntityCard/FastActions';
 
 require('./EntityCard.less');
 
@@ -70,11 +71,10 @@ export default class EntityCard extends Component {
         {this.renderEntityStatus()}
 
         <div className="fast-actions-container">
-          <h4 className="text-center">
-            <span className="fa fa-frown-o"></span>
-            <span className="fa fa-heartbeat"></span>
-            <span className="fa fa-smile-o"></span>
-          </h4>
+          <FastActions
+            entity={this.props.entity}
+            onUpdate={this.props.onUpdate}
+          />
         </div>
       </Card>
     );
@@ -82,5 +82,6 @@ export default class EntityCard extends Component {
 }
 
 EntityCard.propTypes = {
-  entity: PropTypes.object
+  entity: PropTypes.object,
+  onUpdate: PropTypes.func
 };

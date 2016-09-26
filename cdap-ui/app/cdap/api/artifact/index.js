@@ -23,5 +23,6 @@ const baseArtifactPath = basepath + '/:artifactId/versions/:version';
 
 export const MyArtifactApi = {
   get: apiCreator(dataSrc, 'GET', 'REQUEST', baseArtifactPath ),
-  listExtensions: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseArtifactPath}/extensions` )
+  listExtensions: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseArtifactPath}/extensions` ),
+  delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', baseArtifactPath)
 };
