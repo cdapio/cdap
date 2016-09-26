@@ -18,7 +18,7 @@
 #
 
 # Manage Authentication realmfile
-if node['cdap']['cdap_site']['security.authentication.basic.realmfile']
+if node['cdap']['cdap_site'].key?(['security.authentication.basic.realmfile']) && !node['cdap']['security']['realmfile'].empty?
   realmfile = node['cdap']['cdap_site']['security.authentication.basic.realmfile']
   realmdir = ::File.dirname(realmfile)
 
