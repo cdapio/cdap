@@ -18,7 +18,7 @@ class MyLinkButtonCtrl {
   constructor($stateParams) {
     this.entities.forEach(entity => {
 
-      if (entity.type === 'streams') {
+      if (entity.entityType === 'streams') {
         entity.url = window.getTrackerUrl({
           stateName: 'tracker.detail.entity.metadata',
           stateParams: {
