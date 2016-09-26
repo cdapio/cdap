@@ -881,7 +881,7 @@ cdap_cli() {
   local readonly __class="co.cask.cdap.cli.CLIMain"
   cdap_set_java || die "Unable to locate JAVA or JAVA_HOME"
   __path=${CDAP_HOME}
-  if [[ -d ${__path}/cli/libexec ]]; then
+  if [[ -d ${__path}/cli/lib ]]; then
     __libexec=${__path}/cli/libexec
     __lib=${__path}/cli/lib
   else
