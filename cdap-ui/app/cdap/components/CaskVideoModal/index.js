@@ -44,9 +44,6 @@ export default class CaskVideoModal extends Component {
         <ModalHeader>
           <span className="pull-left">
           </span>
-          <div className="pull-right">
-            <span onClick={this.closeHandler.bind(this)} className="close-button fa fa-times"></span>
-          </div>
         </ModalHeader>
         <ModalBody>
           <ReactCSSTransitionGroup
