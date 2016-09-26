@@ -118,7 +118,8 @@ const cdapWebpackConfig = {
       'react-dropzone',
       'react-redux',
       'react-router',
-      'moment'
+      'moment',
+      'react-file-download'
     ]
   },
   module: {

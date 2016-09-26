@@ -30,9 +30,16 @@ function setFilter(filter) {
   });
 }
 
+function setError() {
+  MarketStore.dispatch({
+    type: 'SET_ERROR'
+  });
+}
+
 const MarketAction = {
   setList,
-  setFilter
+  setFilter,
+  setError
 };
 
 export default MarketAction;
