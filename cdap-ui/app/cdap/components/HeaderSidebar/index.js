@@ -17,17 +17,21 @@
 import React, {PropTypes} from 'react';
 import AbsLinkTo from '../AbsLinkTo';
 import T from 'i18n-react';
+import {default as NamespaceStore} from 'services/store/store';
 
 export default function HeaderSidebar ({onClickHandlerNoOp}) {
   const getContext = (extension) => {
+    let defaultNamespace = NamespaceStore.getState().selectedNamespace;
     switch(extension) {
       case 'hydrator':
         return {
-          uiApp: 'cask-hydrator'
+          uiApp: 'cask-hydrator',
+          namespaceId: defaultNamespace
         };
       case 'tracker':
         return {
-          uiApp: 'cask-tracker'
+          uiApp: 'cask-tracker',
+          namespaceId: defaultNamespace
         };
       default:
         return {};
