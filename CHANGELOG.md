@@ -1,7 +1,7 @@
 cdap CHANGELOG
 ===============
 
-v2.24.2 (Sep 26, 2016)
+v2.25.0 (Sep 26, 2016)
 ----------------------
 - Setup codeclimate and DRY up code ( Issue: #166 )
 - Separate realm file into its own recipe ( Issues: #167 #168)
