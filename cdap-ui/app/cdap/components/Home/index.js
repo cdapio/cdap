@@ -173,7 +173,7 @@ class Home extends Component {
 
     const loading = (
       <h3 className="text-center">
-        <span className="fa fa-refresh fa-spin"></span>
+        <span className="fa fa-spinner fa-spin fa-2x loading-spinner"></span>
       </h3>
     );
 
