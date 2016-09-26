@@ -19,24 +19,31 @@ import StreamCreateWizard from 'components/CaskWizards/StreamCreate';
 import UploadDataWizard from 'components/CaskWizards/UploadData';
 import PublishPipelineWizard from 'components/CaskWizards/PublishPipeline';
 import InformationalWizard from 'components/CaskWizards/Informational';
+import ArtifactUploadWizard from 'components/CaskWizards/ArtifactUpload';
 import CreateStreamStore from 'services/WizardStores/CreateStream/CreateStreamStore';
 import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
 import PublishPipelineStore from 'services/WizardStores/PublishPipeline/PublishPipelineStore';
 import AddNamespaceWizard from 'components/CaskWizards/AddNamespace';
 import AddNamespaceStore from 'services/WizardStores/AddNamespace/AddNamespaceStore';
+import InformationalStore from 'services/WizardStores/Informational/InformationalStore';
+import ArtifactUploadStore from 'services/WizardStores/ArtifactUpload/ArtifactUploadStore';
 
 const WizardTypesMap = {
-  'create_stream': {
-    tag: StreamCreateWizard,
-    store: CreateStreamStore
+  'create_app': {
+    tag: PublishPipelineWizard,
+    store: PublishPipelineStore
+  },
+  'create_artifact': {
+    tag: ArtifactUploadWizard,
+    store: ArtifactUploadStore
+  },
+  'informational': {
+    tag: InformationalWizard,
+    store: InformationalStore
   },
   'load_datapack': {
     tag: UploadDataWizard,
     store: UploadDataStore
-  },
-  'create_app': {
-    tag: PublishPipelineWizard,
-    store: PublishPipelineStore
   },
   'create_pipeline': {
     tag: PublishPipelineWizard,
@@ -46,13 +53,13 @@ const WizardTypesMap = {
     tag: PublishPipelineWizard,
     store: PublishPipelineStore
   },
-  'informational': {
-    tag: InformationalWizard,
-    store: {}
-  },
   'add_namespace': {
     tag: AddNamespaceWizard,
     store: AddNamespaceStore
+  },
+  'create_stream': {
+    tag: StreamCreateWizard,
+    store: CreateStreamStore
   }
 };
 
