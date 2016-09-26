@@ -1,6 +1,12 @@
 cdap CHANGELOG
 ===============
 
+v2.25.0 (Sep 26, 2016)
+----------------------
+- Setup codeclimate and DRY up code ( Issue: #166 )
+- Separate realm file into its own recipe ( Issues: #167 #168)
+- Support CDAP SDK 3.5.1 ( Issue: #169 )
+
 v2.24.1 (Sep 23, 2016)
 ----------------------
 - Support CDAP 4.0 bash script ( Issue: #163 )
