@@ -198,7 +198,7 @@
 <!-- SIDEBAR MENU -->
 <div class="display-container" ng-if="Navbar.showSidebar" ng-click="Navbar.toggleSidebar()">
   <div class="sidebar" ng-click="$event.stopPropagation()">
-    <a href="/"
+    <a href="{{Navbar.getAbsUIUrl({uiApp: 'cask-cdap', namespaceId: $stateParams.namespace || Navbar.$cookies.get('CDAP_Namespace') || 'default'})}}"
        class="brand sidebar-item top">
       <div class="brand-icon text-center cdap">
         <span class="icon-fist"></span>
