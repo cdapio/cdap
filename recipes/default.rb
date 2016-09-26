@@ -30,7 +30,7 @@ file '/etc/profile.d/cdap_home.sh' do
     export CDAP_HOME=/opt/cdap
     export PATH=$PATH:$CDAP_HOME/bin
   EOS
-  mode 0o755
+  mode '0755'
 end
 
 package 'cdap' do

@@ -34,29 +34,9 @@ package 'cdap-ui' do
   version node['cdap']['version']
 end
 
-if node['cdap'].key?('ui')
-  my_vars = { :options => node['cdap']['ui'] }
-
-  directory '/etc/default' do
-    owner 'root'
-    group 'root'
-    mode '0755'
-    action :create
-  end
-
-  template '/etc/default/cdap-ui' do
-    source 'generic-env.sh.erb'
-    mode '0755'
-    owner 'root'
-    group 'root'
-    action :create
-    variables my_vars
-  end # End /etc/default/cdap-ui
-end
-
 template '/etc/init.d/cdap-ui' do
   source 'cdap-service.erb'
-  mode 0o755
+  mode '0755'
   owner 'root'
   group 'root'
   action :create

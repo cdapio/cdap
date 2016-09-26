@@ -2,7 +2,7 @@
 # Cookbook Name:: cdap
 # Attribute:: services
 #
-# Copyright © 2015 Cask Data, Inc.
+# Copyright © 2015-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,13 +40,6 @@ name = 'master'
 default['cdap'][name]['user'] = 'cdap'
 default['cdap'][name]['init_name'] = name.split.map(&:capitalize).join(' ')
 default['cdap'][name]['init_krb5'] = true
-default['cdap'][name]['init_cmd'] =
-  if node['cdap']['version'].to_f < 4.0
-    "/opt/cdap/#{name}/bin/svc-#{name}"
-  else
-    "/opt/cdap/#{name}/bin/cdap #{name}"
-  end
-default['cdap'][name]['init_actions'] = [:nothing]
 
 name = 'router'
 default['cdap'][name]['user'] = 'cdap'
@@ -76,13 +69,16 @@ name = 'ui'
 default['cdap'][name]['user'] = 'cdap'
 default['cdap'][name]['init_name'] = name.upcase
 default['cdap'][name]['init_krb5'] = false
-default['cdap'][name]['init_cmd'] =
-  if node['cdap']['version'].to_f < 4.0
-    "/opt/cdap/#{name}/bin/svc-#{name}"
-  else
-    "/opt/cdap/#{name}/bin/cdap #{name}"
-  end
-default['cdap'][name]['init_actions'] = [:nothing]
+
+%w(master ui).each do |svc|
+  default['cdap'][svc]['init_cmd'] =
+    if node['cdap']['version'].to_f < 4.0
+      "/opt/cdap/#{svc}/bin/svc-#{svc}"
+    else
+      "/opt/cdap/#{svc}/bin/cdap #{svc}"
+    end
+  default['cdap'][svc]['init_actions'] = [:nothing]
+end
 
 name = 'web_app'
 default['cdap'][name]['user'] = 'cdap'

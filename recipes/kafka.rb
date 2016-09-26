@@ -41,7 +41,7 @@ node.default['cdap']['cdap_site']['kafka.server.log.dirs'] = kafka_log_dirs
 
 kafka_log_dirs.split(',').each do |kafka_log_dir|
   directory kafka_log_dir do
-    mode 0o755
+    mode '0755'
     owner 'cdap'
     group 'cdap'
     action :create
@@ -51,7 +51,7 @@ end
 
 template '/etc/init.d/cdap-kafka-server' do
   source 'cdap-service.erb'
-  mode 0o755
+  mode '0755'
   owner 'root'
   group 'root'
   action :create

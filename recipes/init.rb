@@ -21,9 +21,16 @@
 # Retries allow for orchestration scenarios where HDFS is starting up
 ns_path = node['cdap']['cdap_site']['hdfs.namespace']
 hdfs_user = node['cdap']['cdap_site']['hdfs.user']
+# Workaround for CDAP-3817, by pre-creating the transaction service snapshot directory
+tx_snapshot_dir =
+  if node['cdap']['cdap_site'].key?('data.tx.snapshot.dir')
+    node['cdap']['cdap_site']['data.tx.snapshot.dir']
+  else
+    "#{ns_path}/tx.snapshot"
+  end
 user_path = "/user/#{hdfs_user}"
 
-%W(#{ns_path} #{user_path}).each do |path|
+%W(#{ns_path} #{tx_snapshot_dir} #{user_path}).each do |path|
   execute "initaction-create-hdfs-path#{path.tr('/', '-')}" do
     command "hadoop fs -mkdir -p #{path} && hadoop fs -chown #{hdfs_user} #{path}"
     not_if "hadoop fs -test -d #{path}", :user => hdfs_user
@@ -32,23 +39,6 @@ user_path = "/user/#{hdfs_user}"
     retries 3
     retry_delay 10
   end
-end
-
-# Workaround for CDAP-3817, by pre-creating the transaction service snapshot directory
-tx_snapshot_dir =
-  if node['cdap']['cdap_site'].key?('data.tx.snapshot.dir')
-    node['cdap']['cdap_site']['data.tx.snapshot.dir']
-  else
-    "#{ns_path}/tx.snapshot"
-  end
-
-execute 'initaction-create-hdfs-tx-snapshot-dir' do
-  command "hadoop fs -mkdir -p #{tx_snapshot_dir} && hadoop fs -chown #{hdfs_user} #{tx_snapshot_dir}"
-  not_if  "hadoop fs -test -d #{tx_snapshot_dir}", :user => hdfs_user
-  timeout 300
-  user node['cdap']['fs_superuser']
-  retries 3
-  retry_delay 10
 end
 
 %w(cdap yarn mapr).each do |u|

@@ -2,7 +2,7 @@
 # Cookbook Name:: cdap
 # Recipe:: web_app
 #
-# Copyright © 2013-2015 Cask Data, Inc.
+# Copyright © 2013-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,29 +35,9 @@ else
     version node['cdap']['version']
   end
 
-  if node['cdap'].key?('web_app')
-    my_vars = { :options => node['cdap']['web_app'] }
-
-    directory '/etc/default' do
-      owner 'root'
-      group 'root'
-      mode '0755'
-      action :create
-    end
-
-    template '/etc/default/cdap-web-app' do
-      source 'generic-env.sh.erb'
-      mode '0755'
-      owner 'root'
-      group 'root'
-      action :create
-      variables my_vars
-    end # End /etc/default/cdap-web-app
-  end
-
   template '/etc/init.d/cdap-web-app' do
     source 'cdap-service.erb'
-    mode 0o755
+    mode '0755'
     owner 'root'
     group 'root'
     action :create

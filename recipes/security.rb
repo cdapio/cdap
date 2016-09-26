@@ -27,7 +27,7 @@ end
 
 template '/etc/init.d/cdap-auth-server' do
   source 'cdap-service.erb'
-  mode 0o755
+  mode '0755'
   owner 'root'
   group 'root'
   action :create

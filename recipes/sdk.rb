@@ -48,7 +48,7 @@ end
 
 template '/etc/init.d/cdap-sdk' do
   source 'cdap-service.erb'
-  mode 0o755
+  mode '0755'
   owner 'root'
   group 'root'
   action :create
@@ -58,7 +58,7 @@ end
 # COOK-98
 template '/etc/profile.d/cdap-sdk.sh' do
   source 'generic-env.sh.erb'
-  mode 0o644
+  mode '0644'
   owner 'root'
   group 'root'
   action :create

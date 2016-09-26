@@ -2,7 +2,7 @@
 # Cookbook Name:: cdap
 # Recipe:: prerequisites
 #
-# Copyright © 2013-2014 Cask Data, Inc.
+# Copyright © 2013-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ log 'java-home' do
   message "JAVA_HOME = #{node['java']['java_home']}"
 end
 ENV['JAVA_HOME'] = node['java']['java_home']
-%w(hadoop hbase hive).each do |envfile|
+%w(hadoop hbase hive zookeeper).each do |envfile|
   node.default[envfile]["#{envfile}_env"]['java_home'] = node['java']['java_home']
 end
 
