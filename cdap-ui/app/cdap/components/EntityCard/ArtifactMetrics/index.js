@@ -57,7 +57,7 @@ export default class ArtifactMetrics extends Component {
   }
 
   render () {
-    const loading = <span className="fa fa-spin fa-refresh"></span>;
+    const loading = <span className="fa fa-spin fa-spinner"></span>;
 
     return (
       <div className="metrics-container">
