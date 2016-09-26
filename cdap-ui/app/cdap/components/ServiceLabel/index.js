@@ -16,13 +16,14 @@
 
 import React from 'react';
 require('./ServiceLabel.less');
+import T from 'i18n-react';
 
 export default function ServiceLabel() {
   return (
     <div className="service-label">
       <div className="service-label-text-container">
         <div className="service-label-text">
-          Services
+          {T.translate('features.Management.Top.services')}
         </div>
       </div>
     </div>

@@ -107,13 +107,15 @@ class Home extends Component {
       //FIXME: Must redirect if passed invalid namespace
     }
   }
-
   componentDidMount() {
     this.search();
 
-    Store.subscribe(() => {
+    this.sub = Store.subscribe(() => {
       this.search();
     });
+  }
+  componentWillUnmount() {
+    this.sub();
   }
 
   search(query = '', filter = this.state.filter, sortObj = this.state.sortObj) {

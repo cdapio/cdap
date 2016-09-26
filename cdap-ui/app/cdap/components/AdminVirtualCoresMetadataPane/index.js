@@ -19,17 +19,17 @@ require('./AdminVirtualCoresMetadataPane.less');
 import StatContainer from '../StatContainer/index.js';
 var classNames = require('classnames');
 
-var loading = true;
+var loading = false;
 
-function simulateLoading() {
-  setTimeout( () => {
-    loading = false;
-  }, 1500);
-}
+// function simulateLoading() {
+//   setTimeout( () => {
+//     loading = false;
+//   }, 1500);
+// }
 
 function AdminVirtualCoresMetadataPane(){
 
-  simulateLoading();
+  // simulateLoading();
 
   var stats = [];
 
