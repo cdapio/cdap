@@ -14,11 +14,21 @@
  * the License.
  */
 
+.datapack-container {
+  height: ~"calc(100% - 32px)";
+  height: ~"-webkit-calc(100% - 32px)";
+  height: ~"-moz-calc(100% - 32px)";
+}
+
 .view-data-step {
   height: ~"calc(100% - 32px)";
   height: ~"-webkit-calc(100% - 32px)";
   height: ~"-moz-calc(100% - 32px)";
-  padding: 10px;
+  padding: 5px;
+  .download-section {
+    margin-top: -15px;
+    .btn { font-size: 16px; }
+  }
 
   .loading {
     font-size: 35px;

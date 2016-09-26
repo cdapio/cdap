@@ -119,6 +119,11 @@ class Home extends Component {
   search(query = '', filter = this.state.filter, sortObj = this.state.sortObj) {
     this.setState({loading: true});
 
+    if (filter.length === 0) {
+      this.setState({filter, sortObj, entities: [], selectedEntity: null, loading: false});
+      return;
+    }
+
     let params = {
       namespace: Store.getState().selectedNamespace,
       query: `${query}*`,
@@ -133,7 +138,8 @@ class Home extends Component {
           .map((entity) => {
             entity.uniqueId = shortid.generate();
             return entity;
-          });
+          })
+          .filter((entity) => entity.id.charAt(0) !== '_');
       })
       .subscribe((res) => {
         this.setState({filter, sortObj, entities: res, selectedEntity: null, loading: false});
