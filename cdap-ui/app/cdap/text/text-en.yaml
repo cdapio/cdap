@@ -192,6 +192,23 @@ features:
     title: Welcome to Cask Data Application Platform
     version-label: Version 4.0.0 Preview
   Wizard:
+    ArtifactUpload:
+      Step1:
+        description: Upload your artifact JAR
+        shorttitle: Upload Artifact
+        title: Upload JAR
+        uploadHelperText: Upload the third party artifact that was downloaded from the previous step
+        filePathLabel: Choose file
+      Step2:
+        description: Configure the settings for your artifact
+        shorttitle: Artifact Configuration
+        title: Configure Artifact
+        parentArtifactLabel: Parent Artifact
+        nameLabel: Name
+        typeLabel: Type
+        classnameLabel: Class Name
+        descriptionLabel: Description
+      headerlabel: Upload Artifact
     Done: Done
     Informational:
       Step1:
