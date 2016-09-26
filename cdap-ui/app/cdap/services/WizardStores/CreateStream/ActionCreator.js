@@ -15,11 +15,12 @@
  */
 import CreateStreamStore from 'services/WizardStores/CreateStream/CreateStreamStore';
 import {MyStreamApi} from 'api/stream';
+import {default as NamespaceStore} from 'services/store/store';
 
 const PublishStream = () => {
   let state = CreateStreamStore.getState();
   let urlParams = {
-    namespace: 'default',
+    namespace: NamespaceStore.getState().selectedNamespace,
     streamId: state.general.name
   };
   let putParams = {};

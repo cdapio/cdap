@@ -21,6 +21,7 @@ import CreateStreamActions from 'services/WizardStores/CreateStream/CreateStream
 import { PublishStream } from 'services/WizardStores/CreateStream/ActionCreator';
 import UploadDataActionCreator from 'services/WizardStores/UploadData/ActionCreator';
 import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
+import {default as NamespaceStore} from 'services/store/store';
 
 import CreateStreamWizardConfig, {CreateStreamUploadWizardConfig} from 'services/WizardConfigs/CreateStreamWizardConfig';
 import T from 'i18n-react';
@@ -76,13 +77,14 @@ export default class StreamCreateWizard extends Component {
   }
   createStream() {
     let state = CreateStreamStore.getState();
+    let currentNamespace = NamespaceStore.getState().selectedNamespace;
     // FIXME: How to handle empty error messages???
     return PublishStream()
       .flatMap(
         () => {
           if (this.props.withUploadStep) {
             // FIXME: I think we can chain this to the next step. TL;DR - will do.
-            let url = '/namespaces/default/streams/' + state.general.name + '/batch';
+            let url = `/namespaces/${currentNamespace}/streams/${state.general.name}/batch`;
             let uplodatastate = UploadDataStore.getState();
             let fileContents = uplodatastate.viewdata.data;
             let filename = uplodatastate.viewdata.filename;

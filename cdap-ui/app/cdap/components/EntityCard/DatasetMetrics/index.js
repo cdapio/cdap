@@ -17,6 +17,7 @@
 import React, {Component, PropTypes} from 'react';
 import {MyMetricApi} from '../../../api/metric';
 import {MyDatasetApi} from '../../../api/dataset';
+import {default as NamespaceStore} from 'services/store/store';
 
 export default class DatasetMetrics extends Component {
   constructor(props) {
@@ -32,7 +33,7 @@ export default class DatasetMetrics extends Component {
 
   componentWillMount() {
     const datasetParams = {
-      namespace: 'default',
+      namespace: NamespaceStore.getState().selectedNamespace,
       datasetId: this.props.entity.id
     };
     const metricsParams = {

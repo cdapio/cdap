@@ -17,6 +17,7 @@
 import React, {Component, PropTypes} from 'react';
 import {MyAppApi} from '../../../api/app';
 import {MyArtifactApi} from '../../../api/artifact';
+import {default as NamespaceStore} from 'services/store/store';
 
 export default class ArtifactMetrics extends Component {
   constructor(props) {
@@ -32,14 +33,14 @@ export default class ArtifactMetrics extends Component {
 
   componentWillMount() {
     const extensionParams = {
-      namespace: 'default',
+      namespace: NamespaceStore.getState().selectedNamespace,
       artifactId: this.props.entity.id,
       version: this.props.entity.version,
       scope: this.props.entity.scope
     };
 
     const appsParams = {
-      namespace: 'default',
+      namespace: NamespaceStore.getState().selectedNamespace,
       artifactName: this.props.entity.id,
       artifactVersion: this.props.entity.version,
     };
