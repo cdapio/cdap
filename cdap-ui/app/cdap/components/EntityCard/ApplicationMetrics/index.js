@@ -16,6 +16,7 @@
 
 import React, {Component, PropTypes} from 'react';
 import {MyAppApi} from '../../../api/app';
+import {default as NamespaceStore} from 'services/store/store';
 
 export default class ApplicationMetrics extends Component {
   constructor(props) {
@@ -32,7 +33,7 @@ export default class ApplicationMetrics extends Component {
   // Need a major refactor
   componentWillMount() {
     const params = {
-      namespace: 'default',
+      namespace: NamespaceStore.getState().selectedNamespace,
       appId: this.props.entity.id
     };
 
@@ -48,7 +49,9 @@ export default class ApplicationMetrics extends Component {
           };
         });
 
-        MyAppApi.batchStatus({namespace: 'default'}, statusRequestArray)
+        MyAppApi.batchStatus({
+          namespace: NamespaceStore.getState().selectedNamespace
+        }, statusRequestArray)
           .subscribe((stats) => {
             this.setState({
               running: stats.filter((stat) => stat.status === 'RUNNING').length,

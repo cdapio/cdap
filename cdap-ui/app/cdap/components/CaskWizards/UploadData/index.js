@@ -20,6 +20,7 @@ import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
 import UploadDataWizardConfig from 'services/WizardConfigs/UploadDataWizardConfig';
 import UploadDataActions from 'services/WizardStores/UploadData/UploadDataActions';
 import UploadDataActionCreator from 'services/WizardStores/UploadData/ActionCreator';
+import {default as NamespaceStore} from 'services/store/store';
 import T from 'i18n-react';
 
 import head from 'lodash/head';
@@ -74,8 +75,9 @@ export default class UploadDataWizard extends Component {
     let filename = state.viewdata.filename;
     let filetype = 'text/' + filename.split('.').pop();
     let fileContents = state.viewdata.data;
+    let currentNamespace = NamespaceStore.getState().selectedNamespace;
     return UploadDataActionCreator.uploadData({
-      url: '/namespaces/default/streams/' + streamId + '/batch',
+      url: `/namespaces/${currentNamespace}/streams/${streamId}/batch`,
       fileContents,
       headers: {
         filetype,
