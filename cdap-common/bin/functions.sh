@@ -908,7 +908,7 @@ cdap_cli() {
 #
 cdap_config_tool() {
   local readonly __path __libexec __lib __script="$(basename ${0}):cdap_config_tool"
-  local readonly __authfile="${HOME}"/.cdap.accesstoken
+  local readonly __authfile="${HOME}"/.cdap.accesstoken.${HOSTNAME}
   local readonly __ret __class=co.cask.cdap.ui.ConfigurationJsonTool
   cdap_set_java || die "Unable to locate JAVA or JAVA_HOME"
   __path=${CDAP_HOME}
@@ -1007,7 +1007,7 @@ cdap_sdk() {
 # cdap_tx_debugger
 cdap_tx_debugger() {
   local readonly __path __libexec __lib __script="$(basename ${0}):cdap_tx_debugger"
-  local readonly __authfile="${HOME}"/.cdap.accesstoken
+  local readonly __authfile="${HOME}"/.cdap.accesstoken.${HOSTNAME}
   local readonly __ret __class=co.cask.cdap.data2.transaction.TransactionManagerDebuggerMain
   cdap_set_java || die "Unable to locate JAVA or JAVA_HOME"
   __path=${CDAP_HOME}
