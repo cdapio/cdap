@@ -72,6 +72,7 @@ class Home extends Component {
     this.state = {
       filter: defaultFilter,
       sortObj: this.sortOptions[0],
+      query: '',
       entities: [],
       selectedEntity: null,
       loading: true
@@ -116,11 +117,11 @@ class Home extends Component {
     });
   }
 
-  search(query = '', filter = this.state.filter, sortObj = this.state.sortObj) {
+  search(query = this.state.query, filter = this.state.filter, sortObj = this.state.sortObj) {
     this.setState({loading: true});
 
     if (filter.length === 0) {
-      this.setState({filter, sortObj, entities: [], selectedEntity: null, loading: false});
+      this.setState({query, filter, sortObj, entities: [], selectedEntity: null, loading: false});
       return;
     }
 
@@ -128,7 +129,7 @@ class Home extends Component {
       namespace: Store.getState().selectedNamespace,
       query: `${query}*`,
       target: filter,
-      sortObj: sortObj.sort
+      sort: sortObj.sort
     };
 
     MySearchApi.search(params)
@@ -142,7 +143,7 @@ class Home extends Component {
           .filter((entity) => entity.id.charAt(0) !== '_');
       })
       .subscribe((res) => {
-        this.setState({filter, sortObj, entities: res, selectedEntity: null, loading: false});
+        this.setState({query, filter, sortObj, entities: res, selectedEntity: null, loading: false});
       });
   }
 
