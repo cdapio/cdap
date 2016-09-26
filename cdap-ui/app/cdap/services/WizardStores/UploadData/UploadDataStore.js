@@ -32,7 +32,7 @@ const defaultViewData = {
   __skipped: false,
   __error: false
 };
-const defaultDestinationTypes = [{id: 'streams', value: 'Streams'}];
+const defaultDestinationTypes = [{id: 'streams', value: 'Stream'}];
 const defaultSelectDestination = {
   type: defaultDestinationTypes[0].value,
   name: '',
