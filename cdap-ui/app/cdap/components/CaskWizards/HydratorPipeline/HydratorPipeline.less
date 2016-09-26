@@ -17,12 +17,13 @@
 .wizard-modal.create-stream-wizard {
   &.hydrator-pipeline-modal {
     &.modal-dialog {
-      margin-top: 250px;
+      margin-top: 300px;
       height: auto;
-      width: 60vw;
+      width: 400px;
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
       .modal-content {
         height: auto;
+        padding: 0;
 
         .modal-body {
           height: auto;
@@ -35,6 +36,10 @@
             }
             .action-buttons {
               > a.btn.btn-default {
+                > i {
+                  margin-right: 5px;
+                  vertical-align: middle;
+                }
                 &:last-child {
                   border-right: 0;
                 }
@@ -43,9 +48,9 @@
                 border-left: 0;
                 padding: 10px;
                 &:hover {
-                  background-color: #464a57;
+                  background-color: #5a84e4;
                   color: #fff;
-                  border-color: #464a57;
+                  border-color: #5a84e4;
                 }
               }
             }
