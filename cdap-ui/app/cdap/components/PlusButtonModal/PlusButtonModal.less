@@ -18,6 +18,7 @@
 
 .plus-button-modal {
   overflow-x: hidden;
+
   &.modal-dialog {
     height: 75vh;
     width: 70vw;
@@ -39,19 +40,29 @@
         background: #fff;
       }
       .modal-header {
+        height: 52px;
         padding: 10px 8px;
         background: @cdap-orange;
         color: white;
         border-bottom: 0;
 
         .modal-header-icon {
+          font-size: 26px;
           height: 30px;
           vertical-align: top;
         }
 
         .button-icon {
+          font-size: 17px;
+          margin-right: 5px;
           height: 25px;
-          margin-top: -3px;
+          position: relative;
+          top: 1px;
+        }
+
+        .plus-button-modal-toggle-text {
+          position: relative;
+          bottom: 2px;
         }
 
         h4 {
@@ -71,6 +82,14 @@
         }
       }
     }
+  }
+}
+
+.plus-button-modal {
+  .plus-modal-header-text {
+      position: relative;
+      left: 3px;
+      bottom: 5px;
   }
 }
 
