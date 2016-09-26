@@ -166,7 +166,7 @@ class Home extends Component {
 
   render() {
     const empty = (
-      <h3 className="text-center">
+      <h3 className="text-center empty-message">
         {T.translate('features.Home.emptyMessage')}
       </h3>
     );
