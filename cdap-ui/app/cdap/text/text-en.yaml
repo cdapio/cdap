@@ -61,12 +61,12 @@ commons:
   schemaLabel: Schema
 features:
   Home:
-    emptyMessage: MODIFY THIS!!!!!!!!!!
+    emptyMessage: No entities found in the system.
     Cards:
       type: "Type: "
     Header:
       filters: Filters
-      search-placeholder: Search cards
+      search-placeholder: Search entities ...
       sort: Sort
       sortOptions:
         nameAsc: A - Z
@@ -125,28 +125,28 @@ features:
   Resource-Center:
     Stream:
       label: Stream
-      description: Streams are ways for ingesting data on to HDFS. To ingest in real-time or batch use Stream.
+      description: Stream is used to ingest data into HDFS in real-time or batch.
       actionbtn0: Create
     Application:
       label: Application
-      description: Create a custom application by uploading the Application JAR or create new instance of application using existing JAR.
+      description: Upload a custom Application artifact or create an instance of Application from existing Artifact.
       actionbtn0: Upload
       actionbtn-1: Create
     Stream-View:
       label: Stream View
-      description: Create a view over an existing Stream.
+      description: Stream View is non-materialized view over a Stream with schema on read capability. Create a view over existing Stream.
       actionbtn0: Create
     HydratorPipeline:
       label: Hydrator Pipeline
-      description: Create a new Hydrator Pipeline for Batch and Real-time
+      description: Hydrator pipeline allows you to ingest, egress and process data to, from and within Hadoop.
       actionbtn0: Create
     Artifact:
       label: Artifact
-      description: Upload an artifact
+      description: Artifact is a JAR file that contains either a native Application or collection of Plugins.
       actionbtn0: Upload
     Plugins:
       label: Plugins
-      description: Upload and configure a plugin
+      description: Plugin is a easy way to extend the functionality of a Application.
       actionbtn0: Upload
   SplashScreen:
     buttons:
@@ -160,10 +160,10 @@ features:
     Done: Done
     Informational:
       Step1:
-        description: Steps to follow
-        shorttitle: Information
-        title: Info
-      headerlabel: Information
+        description: Please follow the steps specified below to configure Hydrator plugin to read from your database
+        shorttitle: Third Party Artifact Information
+        title: Information
+      headerlabel: Third Party Artifact
     Skip: Skipped
     FailedMessage: Failed to {step}
     StreamCreate:
@@ -209,8 +209,8 @@ features:
       pipelinenameplaceholder: Pipeline name
       headerlabel: Publish Pipeline
     HydratorPipeline:
-      title: Hydrator Pipeline
-      message: Please choose appropriate pipeline types to be created
-      batchLinkLabel: Hydrator Batch Pipeline
-      realtimeLinkLabel: Hydrator Realtime Pipeline
+      title: Create Data Pipeline
+      message: Choose the pipeline type you would like to create
+      batchLinkLabel: Batch Pipeline
+      realtimeLinkLabel: Realtime Pipeline
 ...
