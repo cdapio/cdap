@@ -180,7 +180,7 @@ class CDAP extends Component {
           <CaskVideoModal isOpen={this.state.videoOpen} onCloseHandler={this.closeCaskVideo}/>
           <Footer version={this.version} />
           <Match exactly pattern="/" render={() => (<Redirect to={`/ns/${this.state.selectedNamespace}`} />)} />
-          <Match exactly pattern="/notfound" component={nsDNE} />
+          <Match exactly pattern="/notfound" component={nsDoesNotExist} />
           <Match exactly pattern="/management" component={Management} />
           <Match exactly pattern="/ns/:namespace" component={Home} />
           <Match exactly pattern="/ns/:namespace/dashboard" component={Dashboard} />
@@ -208,7 +208,7 @@ function Missed({ location }) {
   );
 }
 
-function nsDNE() {
+function nsDoesNotExist() {
   return (
     <div>
       <h2>404 - Page Not Found</h2>
@@ -216,7 +216,6 @@ function nsDNE() {
     </div>
   );
 }
-
 
 const propTypes = {
   location : PropTypes.object

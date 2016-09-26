@@ -72,7 +72,7 @@ class Home extends Component {
     };
 
     this.doesNsExist = this.doesNsExist.bind(this);
-    this.redirect = false;
+    this.namespaceNotFound = false;
   }
 
   findNamespace(){
@@ -99,8 +99,8 @@ class Home extends Component {
         }
       });
     } else {
-      //FIXME: Must redirect if passed invalid namespace
-      this.redirect = true;
+      //Redirects if passed invalid namespace
+      this.namespaceNotFound = true;
     }
   }
   componentDidMount() {
@@ -184,7 +184,7 @@ class Home extends Component {
     return (
       <div>
       {
-        this.redirect && <Redirect to="/notfound" />
+        this.namespaceNotFound && <Redirect to="/notfound" />
       }
         <HomeHeader
           filterOptions={this.filterOptions}
