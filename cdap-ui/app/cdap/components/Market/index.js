@@ -28,6 +28,7 @@ export default class Market extends Component {
       .subscribe((res) => {
         MarketAction.setList(res);
       }, (err) => {
+        MarketAction.setError();
         console.log('Error', err);
       });
   }

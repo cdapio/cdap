@@ -83,6 +83,7 @@ features:
 
   Market:
     search-placeholder: Search
+    connectErrorMessage: Cannot connect to Market
     tabs:
       all: All
       applications: Applications
