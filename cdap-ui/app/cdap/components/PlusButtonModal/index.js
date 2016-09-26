@@ -21,7 +21,7 @@ import Market from '../Market';
 import ResourceCenter from '../ResourceCenter';
 
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
-
+import classNames from 'classnames';
 import T from 'i18n-react';
 
 require('./PlusButtonModal.less');
@@ -46,13 +46,13 @@ export default class PlusButtonModal extends Component {
   }
 
   getIconForView(view, opposite) {
-    const resourceCenterIconPath = '/cdap_assets/img/CDAP_ResourceCenter_inverse.png';
-    const marketIconPath = '/cdap_assets/img/CaskMarket_inverse.png';
+    const resourceCenterClass = 'icon-resourcecenter';
+    const marketIconClass = 'icon-CaskMarket';
 
     if (opposite) {
-      return view === 'resourcecenter' ? marketIconPath : resourceCenterIconPath;
+      return view === 'resourcecenter' ? marketIconClass : resourceCenterClass;
     } else {
-      return view === 'resourcecenter' ? resourceCenterIconPath : marketIconPath;
+      return view === 'resourcecenter' ? resourceCenterClass : marketIconClass;
     }
   }
   render() {
@@ -68,22 +68,22 @@ export default class PlusButtonModal extends Component {
       >
         <ModalHeader>
           <span className="pull-left">
-            <img
-              src={this.getIconForView(this.state.viewMode)}
-              className="modal-header-icon"
+            <span
+              className={classNames("modal-header-icon", this.getIconForView(this.state.viewMode))}
             />
+            <span className="plus-modal-header-text">
             { this.state.viewMode === 'resourcecenter' ? resourceCenter : market }
+            </span>
           </span>
           <div className="pull-right">
             <button
               className="btn btn-sm btn-resource-center"
               onClick={this.toggleView.bind(this)}
             >
-              <img
-                src={this.getIconForView(this.state.viewMode, true)}
-                className="button-icon"
+              <span
+                className={classNames("button-icon", this.getIconForView(this.state.viewMode, true))}
               />
-              <span>
+              <span className="plus-button-modal-toggle-text">
                 { this.state.viewMode === 'resourcecenter' ? market : resourceCenter }
               </span>
             </button>
