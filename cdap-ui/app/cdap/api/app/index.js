@@ -24,5 +24,6 @@ export const MyAppApi = {
   list: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
   get: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:appId`),
   getDeployedApp: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
-  batchStatus: apiCreator(dataSrc, 'POST', 'REQUEST', '/namespaces/:namespace/status')
+  batchStatus: apiCreator(dataSrc, 'POST', 'REQUEST', '/namespaces/:namespace/status'),
+  delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${basepath}/:appId`)
 };

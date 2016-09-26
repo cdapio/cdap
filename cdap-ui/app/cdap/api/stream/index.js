@@ -24,5 +24,7 @@ export const MyStreamApi = {
   list: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
   get: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:streamId`),
   create: apiCreator(dataSrc, 'PUT', 'REQUEST', `${basepath}/:streamId`),
-  getPrograms: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:streamId/programs`)
+  getPrograms: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:streamId/programs`),
+  delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${basepath}/:streamId`),
+  truncate: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/:streamId/truncate`),
 };
