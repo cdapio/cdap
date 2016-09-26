@@ -22,7 +22,7 @@ import HeaderNavbarList from '../HeaderNavbarList';
 import HeaderActions from '../HeaderActions';
 import HeaderSidebar from '../HeaderSidebar';
 import T from 'i18n-react';
-import Store from '../../services/store/store.js';
+import NamespaceStore from '../../services/NamespaceStore/NamespaceStore.js';
 
 export default class Header extends Component {
   constructor(props) {
@@ -53,7 +53,7 @@ export default class Header extends Component {
               onClickHandler={this.toggleSidebar.bind(this)}
             />
             <HeaderNavbarList
-              pathname={this.props.pathname} list={this.state.navbarItemList} store={Store}
+              pathname={this.props.pathname} list={this.state.navbarItemList} store={NamespaceStore}
             />
             <HeaderActions />
           </nav>

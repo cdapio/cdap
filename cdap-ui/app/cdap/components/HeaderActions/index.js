@@ -22,7 +22,7 @@ import PlusButton from '../PlusButton';
 import T from 'i18n-react';
 require('./HeaderActions.less');
 var classNames = require('classnames');
-import Store from '../../services/store/store.js';
+import NamespaceStore from '../../services/NamespaceStore/NamespaceStore.js';
 const shortid = require('shortid');
 
 export default class HeaderActions extends Component {
@@ -31,10 +31,10 @@ export default class HeaderActions extends Component {
     super(props);
     this.state = {
       settingsOpen : false,
-      name : Store.getState().userName,
+      name : NamespaceStore.getState().userName,
       namespaceList : [],
       namespaceOpen : false,
-      currentNamespace: Store.getState().selectedNamespace
+      currentNamespace: NamespaceStore.getState().selectedNamespace
     };
     this.logout = this.logout.bind(this);
     this.toggleSettingsDropdown = this.toggleSettingsDropdown.bind(this);
@@ -42,23 +42,22 @@ export default class HeaderActions extends Component {
     this.namespaceMap = '';
     this.toggleNamespaceDropdown = this.toggleNamespaceDropdown.bind(this);
     this.loadNamespacesFromStore = this.loadNamespacesFromStore.bind(this);
-    // this.selectNamespace = this.selectNamespace.bind(this);
   }
 
   componentWillMount(){
 
     //Load the namespaces into the dropdown from the store
-    this.namespaceList = Store.getState().namespaces;
+    this.namespaceList = NamespaceStore.getState().namespaces;
     if(this.namespaceList){
-      this.loadNamespacesFromStore(this.namespaceList, Store.getState().selectedNamespace);
+      this.loadNamespacesFromStore(this.namespaceList, NamespaceStore.getState().selectedNamespace);
     }
 
     //Load updated data into the namespace dropdown
-    Store.subscribe(() => {
+    NamespaceStore.subscribe(() => {
 
-      this.namespaceList = Store.getState().namespaces;
-      let namespaceToUpdate = Store.getState().selectedNamespace;
-      let username = Store.getState().userName;
+      this.namespaceList = NamespaceStore.getState().namespaces;
+      let namespaceToUpdate = NamespaceStore.getState().selectedNamespace;
+      let username = NamespaceStore.getState().userName;
 
       if(this.namespaceList){
         this.loadNamespacesFromStore(this.namespaceList, namespaceToUpdate);
@@ -125,7 +124,7 @@ export default class HeaderActions extends Component {
       namespaceOpen: false
     });
 
-    Store.dispatch({
+    NamespaceStore.dispatch({
       type: 'SELECT_NAMESPACE',
       payload: {
         selectedNamespace : name

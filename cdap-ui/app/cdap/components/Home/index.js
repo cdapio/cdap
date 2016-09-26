@@ -17,10 +17,11 @@
 import React, {Component, PropTypes} from 'react';
 import {MySearchApi} from '../../api/search';
 import {parseMetadata} from '../../services/metadata-parser';
+import Redirect from 'react-router/Redirect';
 import HomeHeader from './HomeHeader';
 import EntityCard from '../EntityCard';
 import T from 'i18n-react';
-import Store from '../../services/store/store.js';
+import NamespaceStore from '../../services/NamespaceStore/NamespaceStore.js';
 
 const shortid = require('shortid');
 const classNames = require('classnames');
@@ -40,10 +41,6 @@ class Home extends Component {
         displayName: T.translate('commons.entity.artifact.plural'),
         id: 'artifact'
       },
-      // {
-      //   displayName: T.translate('commons.entity.program.plural'),
-      //   id: 'program'
-      // },
       {
         displayName: T.translate('commons.entity.dataset.plural'),
         id: 'dataset'
@@ -52,10 +49,6 @@ class Home extends Component {
         displayName: T.translate('commons.entity.stream.plural'),
         id: 'stream'
       }
-      // {
-      //   displayName: T.translate('commons.entity.view.plural'),
-      //   id: 'view'
-      // },
     ];
 
     this.sortOptions = [
@@ -79,10 +72,11 @@ class Home extends Component {
     };
 
     this.doesNsExist = this.doesNsExist.bind(this);
+    this.redirect = false;
   }
 
   findNamespace(){
-    let namespaces = Store.getState().namespaces;
+    let namespaces = NamespaceStore.getState().namespaces;
     let name = this.props.params.namespace;
 
     let result = _.find(namespaces, { 'name' : name });
@@ -90,7 +84,7 @@ class Home extends Component {
   }
 
   doesNsExist(ns){
-    let namespaces = Store.getState().namespaces.map(function(item){
+    let namespaces = NamespaceStore.getState().namespaces.map(function(item){
       return item.name;
     });
     return namespaces.indexOf(ns) !== -1;
@@ -98,7 +92,7 @@ class Home extends Component {
 
   componentWillMount(){
     if(this.findNamespace()){
-      Store.dispatch({
+      NamespaceStore.dispatch({
         type : 'SELECT_NAMESPACE',
         payload : {
           selectedNamespace : this.props.params.namespace
@@ -106,12 +100,13 @@ class Home extends Component {
       });
     } else {
       //FIXME: Must redirect if passed invalid namespace
+      this.redirect = true;
     }
   }
   componentDidMount() {
     this.search();
 
-    this.sub = Store.subscribe(() => {
+    this.sub = NamespaceStore.subscribe(() => {
       this.search();
     });
   }
@@ -128,7 +123,7 @@ class Home extends Component {
     }
 
     let params = {
-      namespace: Store.getState().selectedNamespace,
+      namespace: NamespaceStore.getState().selectedNamespace,
       query: `${query}*`,
       target: filter,
       sort: sortObj.sort
@@ -188,6 +183,9 @@ class Home extends Component {
 
     return (
       <div>
+      {
+        this.redirect && <Redirect to="/notfound" />
+      }
         <HomeHeader
           filterOptions={this.filterOptions}
           onFilterClick={this.handleFilterClick.bind(this)}

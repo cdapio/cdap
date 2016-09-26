@@ -39,7 +39,7 @@ import Redirect from 'react-router/Redirect';
 import Router from 'react-router/BrowserRouter';
 import Match from 'react-router/Match';
 import Miss from 'react-router/Miss';
-import Store from './services/store/store';
+import NamespaceStore from './services/NamespaceStore/NamespaceStore';
 import CaskVideoModal from './components/CaskVideoModal';
 
 class CDAP extends Component {
@@ -47,15 +47,15 @@ class CDAP extends Component {
     super(props);
     this.props = props;
     this.version = '4.0.0';
-    this.namespace = Store.getState().selectedNamespace;
-    this.namespaceList = Store.getState().namespaceList;
+    this.namespace = NamespaceStore.getState().selectedNamespace;
+    this.namespaceList = NamespaceStore.getState().namespaceList;
     this.pathname = props.pathname;
     this.render = this.render.bind(this);
     this.closeCaskVideo = this.closeCaskVideo.bind(this);
     this.openCaskVideo = this.openCaskVideo.bind(this);
-    Store.subscribe(this.render);
+    NamespaceStore.subscribe(this.render);
     this.state = {
-      selectedNamespace : Store.getState().selectedNamespace,
+      selectedNamespace : NamespaceStore.getState().selectedNamespace,
       videoOpen : false
     };
   }
@@ -81,7 +81,7 @@ class CDAP extends Component {
         selectedNamespace : cookie.load('CDAP_Auth_User')
       });
 
-      Store.dispatch({
+      NamespaceStore.dispatch({
           type: 'SELECT_NAMESPACE',
           payload: {
             selectedNamespace : this.state.selectedNamespace
@@ -104,7 +104,7 @@ class CDAP extends Component {
             selectedNamespace = res[0].name;
           }
 
-          Store.dispatch({
+          NamespaceStore.dispatch({
             type: 'UPDATE_NAMESPACES',
             payload: {
               namespaces : res
@@ -112,7 +112,7 @@ class CDAP extends Component {
           });
 
           if(!defaultNsSet){
-            Store.dispatch({
+            NamespaceStore.dispatch({
               type: 'SELECT_NAMESPACE',
               payload: {
                 selectedNamespace : selectedNamespace
@@ -133,7 +133,7 @@ class CDAP extends Component {
   }
 
   findNamespace(name){
-    var namespaces = Store.getState().namespaces;
+    var namespaces = NamespaceStore.getState().namespaces;
 
     if(!namespaces){
       return;
@@ -160,12 +160,14 @@ class CDAP extends Component {
       return null;
     }
 
-    this.namespace = Store.getState().selectedNamespace;
-    this.namespaceList = Store.getState().namespaces;
+    this.namespace = NamespaceStore.getState().selectedNamespace;
+    this.namespaceList = NamespaceStore.getState().namespaces;
 
     if(!this.namespace || !this.namespaceList){
       return null;
     }
+
+
 
     return (
       <Router basename="/cask-cdap">
@@ -178,7 +180,7 @@ class CDAP extends Component {
           <CaskVideoModal isOpen={this.state.videoOpen} onCloseHandler={this.closeCaskVideo}/>
           <Footer version={this.version} />
           <Match exactly pattern="/" render={() => (<Redirect to={`/ns/${this.state.selectedNamespace}`} />)} />
-          <Match exactly pattern="/notfound" component={Missed} />
+          <Match exactly pattern="/notfound" component={nsDNE} />
           <Match exactly pattern="/management" component={Management} />
           <Match exactly pattern="/ns/:namespace" component={Home} />
           <Match exactly pattern="/ns/:namespace/dashboard" component={Dashboard} />
@@ -205,6 +207,16 @@ function Missed({ location }) {
     </div>
   );
 }
+
+function nsDNE() {
+  return (
+    <div>
+      <h2>404 - Page Not Found</h2>
+      <p>Namespace Does Not Exist</p>
+    </div>
+  );
+}
+
 
 const propTypes = {
   location : PropTypes.object
