@@ -23,14 +23,13 @@ if node['cdap']['cdap_site']['security.authentication.basic.realmfile']
   realmdir = ::File.dirname(realmfile)
 
   # Ensure parent directory exists
-  unless Dir.exists? realmfile
-    directory realmdir do
-      mode '0700'
-      owner 'cdap'
-      group 'cdap'
-      action :create
-      recursive true
-    end
+  directory realmdir do
+    mode '0700'
+    owner 'cdap'
+    group 'cdap'
+    action :create
+    recursive true
+    not_if Dir.exists? realmfile
   end
 
   # Create the realmfile
