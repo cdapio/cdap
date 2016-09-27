@@ -120,7 +120,10 @@ public class ZKRouteStore implements RouteStore {
   private RouteConfig getConfig(ProgramId serviceId, Future<RouteConfig> future) {
     try {
       return future.get(ZK_TIMEOUT_SECS, TimeUnit.SECONDS);
-    } catch (InterruptedException | ExecutionException | TimeoutException e) {
+    } catch (TimeoutException e) {
+      // Return null if we are not able to fetch the config info within the timout limit
+      return null;
+    } catch (InterruptedException | ExecutionException e) {
       if (e.getCause() instanceof KeeperException.NoNodeException) {
         return null;
       }
