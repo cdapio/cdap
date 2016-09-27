@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableMap;
@@ -36,11 +37,16 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for {@link ZKRouteStore}.
  */
 public class ZKRouteStoreTest {
+
+  private static final Map<String, Integer> TEST_ROUTE_CONFIG = ImmutableMap.<String, Integer>builder()
+    .put("v1", 30).put("v2", 70).build();
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
@@ -72,12 +78,30 @@ public class ZKRouteStoreTest {
   public void testStore() throws Exception {
     ApplicationId appId = new ApplicationId("n1", "a1");
     ProgramId s1 = appId.service("s1");
-    Map<String, Integer> routeMap = ImmutableMap.<String, Integer>builder().put("v1", 30).put("v2", 70).build();
     try (RouteStore routeStore = new ZKRouteStore(zkClientService)) {
-      routeStore.store(s1, new RouteConfig(routeMap));
-      Assert.assertEquals(routeMap, routeStore.fetch(s1).getRoutes());
+      routeStore.store(s1, new RouteConfig(TEST_ROUTE_CONFIG));
+      Assert.assertEquals(TEST_ROUTE_CONFIG, routeStore.fetch(s1).getRoutes());
       routeStore.delete(s1);
-      Assert.assertNull(routeStore.fetch(s1));
+      Assert.assertNotNull(routeStore.fetch(s1));
+      Assert.assertTrue(routeStore.fetch(s1).getRoutes().isEmpty());
+    }
+  }
+
+  @Test
+  public void testAbsenceOfConfig() throws Exception {
+    ApplicationId appId = new ApplicationId("n1", "a1");
+    final ProgramId programId = appId.service("s1");
+    try (final RouteStore routeStore = new ZKRouteStore(zkClientService)) {
+      Assert.assertNotNull(routeStore.fetch(programId));
+      Assert.assertTrue(routeStore.fetch(programId).getRoutes().isEmpty());
+      routeStore.store(programId, new RouteConfig(TEST_ROUTE_CONFIG));
+      Tasks.waitFor(false, new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          return routeStore.fetch(programId).getRoutes().isEmpty();
+        }
+      }, 5, TimeUnit.SECONDS);
+      Assert.assertEquals(TEST_ROUTE_CONFIG, routeStore.fetch(programId).getRoutes());
     }
   }
 }
