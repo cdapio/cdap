@@ -325,10 +325,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     startProgramVersioned(sleepWorkflow2, ImmutableMap.<String, String>of(), 200);
     startProgramVersioned(sleepWorkflow1, ImmutableMap.<String, String>of(), 200);
     startProgramVersioned(sleepWorkflow2, ImmutableMap.<String, String>of(), 200);
-    // start multiple workflow simultaneously
+    // stop multiple workflow simultaneously
+    // This will stop all concurrent runs of the Workflow version 1.0.0
     stopProgramVersioned(sleepWorkflow1, null, 200, null);
-    stopProgramVersioned(sleepWorkflow2, null, 200, null);
-    stopProgramVersioned(sleepWorkflow1, null, 200, null);
+    // This will stop all concurrent runs of the Workflow version 2.0.0
     stopProgramVersioned(sleepWorkflow2, null, 200, null);
     Assert.assertEquals(STOPPED, getProgramVersionStatus(sleepWorkflow1));
     Assert.assertEquals(STOPPED, getProgramVersionStatus(sleepWorkflow2));
