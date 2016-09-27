@@ -44,12 +44,10 @@ public class LogDataOffsetCallback extends AbstractJSONCallback {
     String className = "";
     String simpleClassName = "";
     int lineNumber = 0;
-    if (stackTraceElements.length > 0) {
+    if (stackTraceElements != null && stackTraceElements.length > 0) {
       StackTraceElement first = stackTraceElements[0];
       className = first.getClassName();
-      if (className.lastIndexOf('.') >= 0) {
-        simpleClassName = className.substring(className.lastIndexOf('.') + 1);
-      }
+      simpleClassName = (className.indexOf('.') >= 0) ? className.substring(className.lastIndexOf('.') + 1) : className;
       lineNumber = first.getLineNumber();
     }
     LogData logData = new LogData(event.getTimeStamp(), event.getLevel().toString(), event.getThreadName(),

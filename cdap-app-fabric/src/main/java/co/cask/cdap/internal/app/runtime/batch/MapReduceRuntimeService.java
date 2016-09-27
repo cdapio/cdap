@@ -461,7 +461,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    * Creates a local temporary directory for this MapReduce run.
    */
   private File createTempDirectory() {
-    Id.Program programId = context.getProgram().getId();
+    Id.Program programId = context.getProgram().getId().toId();
     File tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                             cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     File runtimeServiceDir = new File(tempDir, "runner");
@@ -477,7 +477,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    * Creates a temporary directory through the {@link LocationFactory} provided to this class.
    */
   private Location createTempLocationDirectory() throws IOException {
-    Id.Program programId = context.getProgram().getId();
+    Id.Program programId = context.getProgram().getId().toId();
 
     String tempLocationName = String.format("%s/%s.%s.%s.%s.%s", cConf.get(Constants.AppFabric.TEMP_DIR),
                                             programId.getType().name().toLowerCase(),
@@ -697,8 +697,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
     StreamId streamId = streamProvider.getStreamId().toEntityId();
     try {
-      streamAdmin.register(ImmutableList.of(context.getProgram().getId().toEntityId()), streamId);
-      streamAdmin.addAccess(context.getProgram().getId().toEntityId().run(context.getRunId().getId()),
+      streamAdmin.register(ImmutableList.of(context.getProgram().getId()), streamId);
+      streamAdmin.addAccess(context.getProgram().getId().run(context.getRunId().getId()),
                             streamId, AccessType.READ);
     } catch (Exception e) {
       LOG.warn("Failed to register usage {} -> {}", context.getProgram().getId(), streamId, e);
@@ -789,7 +789,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   private String getJobName(BasicMapReduceContext context) {
-    Id.Program programId = context.getProgram().getId();
+    Id.Program programId = context.getProgram().getId().toId();
     // MRJobClient expects the following format (for RunId to be the first component)
     return String.format("%s.%s.%s.%s.%s",
                          context.getRunId().getId(), ProgramType.MAPREDUCE.name().toLowerCase(),

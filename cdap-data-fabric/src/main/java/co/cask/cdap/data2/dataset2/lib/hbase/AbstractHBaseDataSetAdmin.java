@@ -17,10 +17,13 @@ package co.cask.cdap.data2.dataset2.lib.hbase;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -169,15 +172,28 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
       tableUtil.disableTable(getAdmin(), tableId);
       enableTable = true;
     } catch (TableNotEnabledException e) {
-      LOG.debug("Table '{}' was not enabled before update and will not be enabled after update.", tableId);
+      // TODO (CDAP-7324) This is a workaround and should be removed once we have pure hbase coprocessor upgrade
+      // (CDAP-7095)
+      // If the table is in cdap_system namespace enable it regardless so that they can be used later. See CDAP-7324
+      if (isSystemTable()) {
+        enableTable = true;
+      } else {
+        LOG.debug("Table '{}' was not enabled before update and will not be enabled after update.", tableId);
+      }
     }
 
     tableUtil.modifyTable(getAdmin(), newDescriptor.build());
     if (enableTable) {
+      LOG.debug("Enabling table '{}'...", tableId);
       tableUtil.enableTable(getAdmin(), tableId);
     }
 
     LOG.info("Table '{}' update completed.", tableId);
+  }
+
+  private boolean isSystemTable() {
+    return tableId.getNamespace().equalsIgnoreCase(String.format("%s_%s", cConf.get(Constants.Dataset.TABLE_PREFIX),
+                                                                 NamespaceId.SYSTEM.getNamespace()));
   }
 
   protected void addCoprocessor(HTableDescriptorBuilder tableDescriptor, Class<? extends Coprocessor> coprocessor,

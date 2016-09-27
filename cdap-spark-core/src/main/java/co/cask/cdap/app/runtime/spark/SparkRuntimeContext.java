@@ -85,7 +85,7 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
     this.txClient = txClient;
     this.streamAdmin = streamAdmin;
     this.workflowProgramInfo = workflowProgramInfo;
-    this.loggingContext = createLoggingContext(program.getId().toEntityId(), getRunId(), workflowProgramInfo);
+    this.loggingContext = createLoggingContext(program.getId(), getRunId(), workflowProgramInfo);
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
   }

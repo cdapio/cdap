@@ -135,19 +135,18 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
     return txContext;
   }
 
-  private LoggingContext createLoggingContext(Id.Program programId, RunId runId,
+  private LoggingContext createLoggingContext(ProgramId programId, RunId runId,
                                               @Nullable WorkflowProgramInfo workflowProgramInfo) {
     if (workflowProgramInfo == null) {
-      return new MapReduceLoggingContext(programId.getNamespaceId(), programId.getApplicationId(),
-                                         programId.getId(), runId.getId());
+      return new MapReduceLoggingContext(programId.getNamespace(), programId.getApplication(),
+                                         programId.getProgram(), runId.getId());
     }
 
-    ProgramId workflowProramId = Ids.namespace(programId.getNamespaceId()).app(programId.getApplicationId())
-      .workflow(workflowProgramInfo.getName());
+    ProgramId workflowProramId = programId.getParent().workflow(workflowProgramInfo.getName());
 
     return new WorkflowProgramLoggingContext(workflowProramId.getNamespace(), workflowProramId.getApplication(),
                                              workflowProramId.getProgram(), workflowProgramInfo.getRunId().getId(),
-                                             ProgramType.MAPREDUCE, programId.getId(), runId.getId());
+                                             ProgramType.MAPREDUCE, programId.getProgram(), runId.getId());
   }
 
   @Override
@@ -182,7 +181,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
 
   @Override
   public void setInput(StreamBatchReadable stream) {
-    setInput(new StreamInputFormatProvider(getProgram().getId().getNamespace(), stream, streamAdmin));
+    setInput(new StreamInputFormatProvider(Id.Namespace.from(getProgram().getNamespaceId()), stream, streamAdmin));
   }
 
   @Override
@@ -246,7 +245,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
       StreamBatchReadable streamBatchReadable = streamInput.getStreamBatchReadable();
       String namespace = streamInput.getNamespace();
       if (namespace == null) {
-        namespace = getProgram().getId().getNamespace().getId();
+        namespace = getProgram().getNamespaceId();
       }
       addInput(input.getAlias(),
                new StreamInputFormatProvider(new NamespaceId(namespace).toId(), streamBatchReadable, streamAdmin),
@@ -389,7 +388,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
     if (datasetName.startsWith(Constants.Stream.URL_PREFIX)) {
       StreamBatchReadable streamBatchReadable = new StreamBatchReadable(URI.create(datasetName));
       Input input = Input.of(streamBatchReadable.getStreamName(),
-                             new StreamInputFormatProvider(getProgram().getId().getNamespace(),
+                             new StreamInputFormatProvider(Id.Namespace.from(getProgram().getNamespaceId()),
                                                            streamBatchReadable, streamAdmin));
       return (Input.InputFormatProviderInput) input.alias(originalAlias);
     }
