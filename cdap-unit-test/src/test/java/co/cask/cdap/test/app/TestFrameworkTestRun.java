@@ -50,6 +50,9 @@ import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
@@ -401,6 +404,37 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     );
     ApplicationManager appManager = deployApplication(appId, createRequest);
     testAppConfig(appId.getId(), appManager, createRequest.getConfig());
+  }
+
+  @Test
+  public void testAppVersionsCreation() throws Exception {
+    ArtifactId artifactId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "cfg-app", "1.0.0-SNAPSHOT");
+    addAppArtifact(artifactId, ConfigTestApp.class);
+
+    ApplicationId appId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), "AppV1", "version1");
+    AppRequest<ConfigTestApp.ConfigClass> createRequest = new AppRequest<>(
+      new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()),
+      new ConfigTestApp.ConfigClass("tS1", "tD1", "tV1"));
+    ApplicationManager appManager = deployApplication(appId, createRequest);
+    ServiceManager serviceManager = appManager.getServiceManager(ConfigTestApp.SERVICE_NAME);
+    serviceManager.start();
+
+    URL serviceURL = serviceManager.getServiceURL();
+    Gson gson = new Gson();
+    Assert.assertEquals("tV1", gson.fromJson(callServiceGet(serviceURL, "ping"), String.class));
+    serviceManager.stop();
+
+    appId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), "AppV1", "version2");
+    createRequest = new AppRequest<>(
+      new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()),
+      new ConfigTestApp.ConfigClass("tS2", "tD2", "tV2"));
+    appManager = deployApplication(appId, createRequest);
+    serviceManager = appManager.getServiceManager(ConfigTestApp.SERVICE_NAME);
+    serviceManager.start();
+
+    serviceURL = serviceManager.getServiceURL();
+    Assert.assertEquals("tV2", gson.fromJson(callServiceGet(serviceURL, "ping"), String.class));
+    serviceManager.stop();
   }
 
   private void testAppConfig(String appName, ApplicationManager appManager,

@@ -79,6 +79,16 @@ public interface TestManager {
   ApplicationManager deployApplication(Id.Application appId, AppRequest appRequest) throws Exception;
 
   /**
+   * Creates an {@link Application} with a version using an existing artifact.
+   *
+   * @param appId the id of the application to create
+   * @param appRequest the app create or update request that includes the artifact to create the app from and any config
+   *                   to pass to the application.
+   * @return An {@link ApplicationManager} to manage the deployed application.
+   */
+  ApplicationManager deployApplication(ApplicationId appId, AppRequest appRequest) throws Exception;
+
+  /**
    * Gets an Application Manager for an {@link Application}.
    *
    * @param appId the id of deployed application

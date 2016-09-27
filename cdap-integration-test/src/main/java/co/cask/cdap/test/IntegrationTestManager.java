@@ -201,6 +201,12 @@ public class IntegrationTestManager implements TestManager {
   }
 
   @Override
+  public ApplicationManager deployApplication(ApplicationId appId, AppRequest appRequest) throws Exception {
+    applicationClient.deploy(appId, appRequest);
+    return new RemoteApplicationManager(appId, clientConfig, restClient);
+  }
+
+  @Override
   public ApplicationManager getApplicationManager(ApplicationId applicationId) {
     return new RemoteApplicationManager(applicationId.toId(), clientConfig, restClient);
   }

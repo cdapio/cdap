@@ -43,7 +43,7 @@ public class DefaultFlowManager extends AbstractProgramManager<FlowManager> impl
   public void setFlowletInstances(String flowletName, int instances) {
     Preconditions.checkArgument(instances > 0, "Instance counter should be > 0.");
     try {
-      appFabricClient.setFlowletInstances(programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
+      appFabricClient.setFlowletInstances(programId.getNamespace(), programId.getApplication(), programId.getProgram(),
                                           flowletName, instances);
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -53,8 +53,8 @@ public class DefaultFlowManager extends AbstractProgramManager<FlowManager> impl
   @Override
   public int getFlowletInstances(String flowletName) {
     try {
-      return appFabricClient.getFlowletInstances(programId.getNamespaceId(), programId.getApplicationId(),
-                                                 programId.getId(), flowletName).getInstances();
+      return appFabricClient.getFlowletInstances(programId.getNamespace(), programId.getApplication(),
+                                                 programId.getProgram(), flowletName).getInstances();
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -62,7 +62,7 @@ public class DefaultFlowManager extends AbstractProgramManager<FlowManager> impl
 
   @Override
   public RuntimeMetrics getFlowletMetrics(String flowletId) {
-    return metricsManager.getFlowletMetrics(programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
-                                          flowletId);
+    return metricsManager.getFlowletMetrics(programId.getNamespace(), programId.getApplication(),
+                                            programId.getProgram(), flowletId);
   }
 }

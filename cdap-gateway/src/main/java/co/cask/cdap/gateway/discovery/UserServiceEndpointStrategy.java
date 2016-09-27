@@ -56,7 +56,7 @@ public class UserServiceEndpointStrategy extends AbstractEndpointStrategy {
   @Nullable
   @Override
   public Discoverable pick() {
-    // If payload filter is not null, then don't fetch any routeConfig.
+    // If version is not null, then don't fetch any routeConfig.
     RouteConfig routeConfig = version == null ? routeStore.fetch(serviceId) : null;
     Iterator<Discoverable> iterator = serviceDiscovered.iterator();
     Discoverable result = null;
@@ -64,8 +64,7 @@ public class UserServiceEndpointStrategy extends AbstractEndpointStrategy {
     while (iterator.hasNext()) {
       Discoverable candidate = iterator.next();
       String version = Bytes.toString(candidate.getPayload());
-      // If payload filter is active, then if payload filter doesn't match => continue searching for a
-      // matching discoverable
+      // If version is not null and if version doesn't match => continue searching for a matching discoverable
       if (this.version != null && !Objects.equals(version, this.version)) {
         continue;
       }

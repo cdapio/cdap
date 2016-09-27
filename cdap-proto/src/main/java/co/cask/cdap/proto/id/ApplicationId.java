@@ -90,6 +90,10 @@ public class ApplicationId extends EntityId implements NamespacedId, ParentedId<
     return new ProgramId(this, ProgramType.SERVICE, program);
   }
 
+  public ScheduleId schedule(String schedule) {
+    return new ScheduleId(this, schedule);
+  }
+
   @Override
   public Id.Application toId() {
     return Id.Application.from(namespace, application);

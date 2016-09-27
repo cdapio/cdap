@@ -34,15 +34,19 @@ public class ScheduleId extends EntityId implements NamespacedId, ParentedId<App
   private transient Integer hashCode;
 
   public ScheduleId(String namespace, String application, String version, String schedule) {
-    super(EntityType.SCHEDULE);
-    this.namespace = namespace;
-    this.application = application;
-    this.version = version;
-    this.schedule = schedule;
+    this(new ApplicationId(namespace, application, version), schedule);
   }
 
   public ScheduleId(String namespace, String application, String schedule) {
-    this(namespace, application, "-SNAPSHOT", schedule);
+    this(new ApplicationId(namespace, application), schedule);
+  }
+
+  ScheduleId(ApplicationId appId, String schedule) {
+    super(EntityType.SCHEDULE);
+    this.namespace = appId.getNamespace();
+    this.application = appId.getApplication();
+    this.version = appId.getVersion();
+    this.schedule = schedule;
   }
 
   public String getNamespace() {

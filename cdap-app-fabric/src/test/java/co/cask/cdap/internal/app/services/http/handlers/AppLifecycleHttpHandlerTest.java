@@ -148,7 +148,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(404, getAppResponse(Id.Namespace.DEFAULT.getId(), appId.getApplication(),
                                             "non_existing_version").getStatusLine().getStatusCode());
     Assert.assertEquals(404, getAppResponse(Id.Namespace.DEFAULT.getId(),
-                                                        appId.getApplication()).getStatusLine().getStatusCode());
+                                            appId.getApplication()).getStatusLine().getStatusCode());
 
     // Deploy app with default versionId by non-versioned API
     Id.Application appIdDefault = Id.Application.from(Id.Namespace.DEFAULT, appId.getApplication());
