@@ -57,7 +57,7 @@ public class ZKRouteStore implements RouteStore {
   private static final Logger LOG = LoggerFactory.getLogger(ZKRouteStore.class);
   private static final Gson GSON = new Gson();
   private static final Type MAP_STRING_INTEGER_TYPE = new TypeToken<Map<String, Integer>>() { }.getType();
-  private static final int ZK_TIMEOUT_SECS = 5;
+  private static final int ZK_TIMEOUT_SECS = 15;
 
   private final ZKClient zkClient;
   private final ConcurrentMap<ProgramId, SettableFuture<RouteConfig>> routeConfigMap;
