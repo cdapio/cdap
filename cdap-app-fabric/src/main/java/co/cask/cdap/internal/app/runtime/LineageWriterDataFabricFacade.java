@@ -69,7 +69,7 @@ public final class LineageWriterDataFabricFacade implements DataFabricFacade, Pr
     this.streamConsumerFactory = streamConsumerFactory;
     this.txExecutorFactory = txExecutorFactory;
     this.datasetCache = datasetCache;
-    this.programId = program.getId();
+    this.programId = program.getId().toId();
     this.programContext = new ProgramContext();
     this.lineageWriter = lineageWriter;
   }

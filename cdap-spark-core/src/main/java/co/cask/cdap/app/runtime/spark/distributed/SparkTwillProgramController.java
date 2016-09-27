@@ -33,7 +33,7 @@ final class SparkTwillProgramController extends AbstractTwillProgramController {
   private static final Logger LOG = LoggerFactory.getLogger(SparkTwillProgramController.class);
 
   SparkTwillProgramController(ProgramId programId, TwillController controller, RunId runId) {
-    super(programId.toId(), controller, runId);
+    super(programId, controller, runId);
   }
 
   @Override

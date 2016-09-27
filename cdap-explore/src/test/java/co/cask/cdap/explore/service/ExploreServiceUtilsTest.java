@@ -16,7 +16,6 @@
 
 package co.cask.cdap.explore.service;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import com.google.common.base.Joiner;
 import com.google.common.io.ByteStreams;
 import org.apache.hadoop.conf.Configuration;
@@ -25,6 +24,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hive.service.auth.HiveAuthFactory;
+import org.apache.tez.dag.api.TezConfiguration;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -38,7 +38,8 @@ import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URL;
-import java.security.CodeSource;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -49,18 +50,6 @@ public class ExploreServiceUtilsTest {
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
-
-  @Test
-  public void testCdapCommonJarName() throws Exception {
-    // This test case will succeed as long as the CConfiguration class is part of cdap-common.jar.
-    // ExploreServiceUtils.getCdapCommonJarName() method uses CConfiguration class to figure
-    // out the name of the cdap-common.jar. So in case if CConfiguration is moved out of cdap-common.jar
-    // we will need to fix ExploreServiceUtils.getCdapCommonJarName() method as well.
-    CodeSource codeSource = CConfiguration.class.getProtectionDomain().getCodeSource();
-    String cdapCommonLocation = codeSource.getLocation().getFile();
-    Assert.assertNotNull(cdapCommonLocation);
-    Assert.assertTrue(cdapCommonLocation.contains("cdap-common"));
-  }
 
   @Test
   public void testHiveVersion() throws Exception {
@@ -82,7 +71,11 @@ public class ExploreServiceUtilsTest {
       conf.writeXml(os);
     }
 
-    File newConfFile = ExploreServiceUtils.updateConfFileForExplore(confFile, tempDir);
+    Set<File> cdapJars = new LinkedHashSet<>();
+    cdapJars.add(new File(tmpFolder.newFolder(), "cdap-common-3.5.1-SNAPSHOT.jar"));
+    cdapJars.add(new File(tmpFolder.newFolder(), "cdap-app-fabric-3.5.1-SNAPSHOT.jar"));
+
+    File newConfFile = ExploreServiceUtils.updateConfFileForExplore(confFile, tempDir, cdapJars);
 
     conf = new Configuration(false);
     conf.addResource(newConfFile.toURI().toURL());
@@ -100,12 +93,11 @@ public class ExploreServiceUtilsTest {
       conf.writeXml(os);
     }
 
-    String yarnApplicationClassPath = "$PWD/classes,$PWD/*," +
-      conf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
-               Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
+    String yarnApplicationClassPath = "$PWD/cdap-common-3.5.1-SNAPSHOT.jar,$PWD/cdap-app-fabric-3.5.1-SNAPSHOT.jar," +
+      "$PWD/*," + conf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
+                           Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
 
-
-    newConfFile = ExploreServiceUtils.updateConfFileForExplore(confFile, tempDir);
+    newConfFile = ExploreServiceUtils.updateConfFileForExplore(confFile, tempDir, cdapJars);
 
     conf = new Configuration(false);
     conf.addResource(newConfFile.toURI().toURL());
@@ -120,21 +112,41 @@ public class ExploreServiceUtilsTest {
       conf.writeXml(os);
     }
 
-    String mapredApplicationClassPath = "$PWD/classes,$PWD/*," +
-      conf.get(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH,
-               MRJobConfig.DEFAULT_MAPREDUCE_APPLICATION_CLASSPATH);
+    String mapredApplicationClassPath = "$PWD/cdap-common-3.5.1-SNAPSHOT.jar,$PWD/cdap-app-fabric-3.5.1-SNAPSHOT.jar,"
+      + "$PWD/*," + conf.get(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH,
+                             MRJobConfig.DEFAULT_MAPREDUCE_APPLICATION_CLASSPATH);
 
 
-    newConfFile = ExploreServiceUtils.updateConfFileForExplore(confFile, tempDir);
+    newConfFile = ExploreServiceUtils.updateConfFileForExplore(confFile, tempDir, cdapJars);
 
     conf = new Configuration(false);
     conf.addResource(newConfFile.toURI().toURL());
 
     Assert.assertEquals(mapredApplicationClassPath, conf.get(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH));
 
+    // check tez-site changes
+    confFile = tmpFolder.newFile("tez-site.xml");
+    conf = new TezConfiguration();
+    conf.set(TezConfiguration.TEZ_CLUSTER_ADDITIONAL_CLASSPATH_PREFIX, "somepath:anotherpath");
+
+    try (FileOutputStream os = new FileOutputStream(confFile)) {
+      conf.writeXml(os);
+    }
+
+    String tezClassPath = "$PWD/cdap-common-3.5.1-SNAPSHOT.jar:$PWD/cdap-app-fabric-3.5.1-SNAPSHOT.jar:"
+      + conf.get(TezConfiguration.TEZ_CLUSTER_ADDITIONAL_CLASSPATH_PREFIX);
+
+
+    newConfFile = ExploreServiceUtils.updateConfFileForExplore(confFile, tempDir, cdapJars);
+
+    conf = new Configuration(false);
+    conf.addResource(newConfFile.toURI().toURL());
+
+    Assert.assertEquals(tezClassPath, conf.get(TezConfiguration.TEZ_CLUSTER_ADDITIONAL_CLASSPATH_PREFIX));
+
     // Ensure conf files that are not hive-site.xml/mapred-site.xml/yarn-site.xml are unchanged
     confFile = tmpFolder.newFile("core-site.xml");
-    Assert.assertEquals(confFile, ExploreServiceUtils.updateConfFileForExplore(confFile, tempDir));
+    Assert.assertEquals(confFile, ExploreServiceUtils.updateConfFileForExplore(confFile, tempDir, cdapJars));
   }
 
   @Test

@@ -16,6 +16,8 @@
 
 package co.cask.cdap.proto;
 
+import co.cask.cdap.proto.id.ProgramId;
+
 import java.util.List;
 
 /**
@@ -24,11 +26,11 @@ import java.util.List;
 public class InMemoryProgramLiveInfo extends ProgramLiveInfo {
   private final List<String> services;
 
-  public InMemoryProgramLiveInfo(Id.Program programId) {
+  public InMemoryProgramLiveInfo(ProgramId programId) {
     this(programId, null);
   }
 
-  public InMemoryProgramLiveInfo(Id.Program programId, List<String> services) {
+  public InMemoryProgramLiveInfo(ProgramId programId, List<String> services) {
     super(programId, "in-memory");
     this.services = services;
   }

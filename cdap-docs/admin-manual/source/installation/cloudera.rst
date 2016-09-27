@@ -339,6 +339,7 @@ Add Service Wizard: Customize Role Assignments
 
    **Add Service Wizard, Page 2:** Completed role assignments.
    
+.. _cloudera-installation-add-service-wizard-configuration:
 
 Add Service Wizard: Reviewing Configuration
 -------------------------------------------

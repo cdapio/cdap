@@ -72,6 +72,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -224,6 +225,22 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     ApplicationId applicationId = validateApplicationId(namespaceId, appId);
     responder.sendJson(HttpResponseStatus.OK, applicationLifecycleService.getAppDetail(applicationId));
+  }
+
+  /**
+   * Returns the list of versions of the application.
+   */
+  @GET
+  @Path("/apps/{app-id}/versions")
+  public void listAppVersions(HttpRequest request, HttpResponder responder,
+                              @PathParam("namespace-id") final String namespaceId,
+                              @PathParam("app-id") final String appId) throws Exception {
+    ApplicationId applicationId = validateApplicationId(namespaceId, appId);
+    Collection<String> versions = applicationLifecycleService.getAppVerions(namespaceId, appId);
+    if (versions.isEmpty()) {
+      throw new ApplicationNotFoundException(applicationId);
+    }
+    responder.sendJson(HttpResponseStatus.OK, versions);
   }
 
   /**

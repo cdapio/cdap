@@ -433,7 +433,7 @@ public final class StreamUtils {
   /**
    * Gets a TableId for stream consumer state stores within a given namespace.
    * @param namespace the namespace for which the table is for.
-   * @return constructed TableId
+   * @return constructed TableId. Note that the namespace in the returned TableId is the CDAP namespace (CDAP-7344).
    */
   public static TableId getStateStoreTableId(NamespaceId namespace) {
     String tableName = String.format("%s.%s.state.store",

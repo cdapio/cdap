@@ -102,13 +102,13 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             @Nullable MetricsCollectionService metricsService, Map<String, String> metricsTags,
                             SecureStore secureStore, SecureStoreManager secureStoreManager,
                             @Nullable PluginInstantiator pluginInstantiator) {
-    super(program.getId().toEntityId());
+    super(program.getId());
 
     this.program = program;
     this.programOptions = programOptions;
     this.runId = ProgramRunners.getRunId(programOptions);
     this.discoveryServiceClient = discoveryServiceClient;
-    this.owners = createOwners(program.getId().toEntityId());
+    this.owners = createOwners(program.getId());
     this.programMetrics = createProgramMetrics(program, runId, metricsService, metricsTags);
     this.userMetrics = new ProgramUserMetrics(programMetrics);
 
@@ -123,14 +123,14 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     SystemDatasetInstantiator instantiator =
       new SystemDatasetInstantiator(dsFramework, program.getClassLoader(), owners);
     this.datasetCache = multiThreaded
-      ? new MultiThreadDatasetCache(instantiator, txClient, program.getId().getNamespace().toEntityId(),
+      ? new MultiThreadDatasetCache(instantiator, txClient, new NamespaceId(program.getId().getNamespace()),
                                     runtimeArguments, programMetrics, staticDatasets)
-      : new SingleThreadDatasetCache(instantiator, txClient, program.getId().getNamespace().toEntityId(),
+      : new SingleThreadDatasetCache(instantiator, txClient, new NamespaceId(program.getId().getNamespace()),
                                      runtimeArguments, programMetrics, staticDatasets);
     this.pluginInstantiator = pluginInstantiator;
     this.pluginContext = new DefaultPluginContext(pluginInstantiator, program.getId(),
                                                   program.getApplicationSpecification().getPlugins());
-    this.admin = new DefaultAdmin(dsFramework, program.getId().getNamespace().toEntityId(), secureStoreManager);
+    this.admin = new DefaultAdmin(dsFramework, new NamespaceId(program.getId().getNamespace()), secureStoreManager);
     this.secureStore = secureStore;
   }
 

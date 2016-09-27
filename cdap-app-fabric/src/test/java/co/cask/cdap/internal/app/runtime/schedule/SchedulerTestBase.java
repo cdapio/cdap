@@ -202,7 +202,7 @@ public abstract class SchedulerTestBase {
                        new Predicate<ProgramRuntimeService.RuntimeInfo>() {
       @Override
       public boolean apply(ProgramRuntimeService.RuntimeInfo runtimeInfo) {
-        return runtimeInfo.getProgramId().toEntityId().equals(program);
+        return runtimeInfo.getProgramId().equals(program);
       }
     });
     return !Iterables.isEmpty(runtimeInfos);

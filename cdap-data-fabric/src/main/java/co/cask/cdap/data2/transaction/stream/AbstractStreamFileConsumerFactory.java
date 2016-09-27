@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.common.conf.CConfiguration;
@@ -141,6 +142,7 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
 
   }
 
+  // Usages of this method must perform a mapping of the TableId's namespace. See CDAP-7344.
   private TableId getTableId(StreamId streamId, String namespace) {
     return TableId.from(streamId.getNamespace(),
                         String.format("%s.%s.%s", tablePrefix, streamId.getEntityName(), namespace));

@@ -79,9 +79,8 @@ public abstract class HTableNameConverter {
    *
    * @param prefix Prefix string
    * @return System configuration table prefix (full table name minus the table qualifier).
-   * Example input: "cdap_ns.table.name"  -->  output: "cdap_system."   (hbase 94)
-   * Example input: "cdap.table.name"     -->  output: "cdap_system."   (hbase 94. input table is in default namespace)
-   * Example input: "cdap_ns:table.name"  -->  output: "cdap_system:"   (hbase 96, 98)
+   * Example input: "cdap.table.name"     -->  output: "cdap_system."   (input table is in default namespace)
+   * Example input: "cdap_ns:table.name"  -->  output: "cdap_system:"   (input table is in a custom namespace)
    */
   public String getSysConfigTablePrefix(String prefix) {
     return prefix + "_" + NamespaceId.SYSTEM.getNamespace() + ":";

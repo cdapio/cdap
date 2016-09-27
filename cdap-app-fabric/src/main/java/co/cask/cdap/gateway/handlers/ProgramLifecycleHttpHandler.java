@@ -245,6 +245,41 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, status);
   }
 
+  /**
+   * Returns status of a type specified by the type{flows,workflows,mapreduce,spark,services,schedules}.
+   */
+  @GET
+  @Path("/apps/{app-id}/versions/{version-id}/{program-type}/{program-id}/status")
+  public void getVersionStatus(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId,
+                               @PathParam("app-id") String appId,
+                               @PathParam("version-id") String versionId,
+                               @PathParam("program-type") String programTypeString,
+                               @PathParam("program-id") String programId) throws Exception {
+    ApplicationId applicationId = new ApplicationId(namespaceId, appId, versionId);
+    if (programTypeString.equals("schedules")) {
+      if (store.getAllAppVersions(applicationId).size() != 1 || !versionId.equals(ApplicationId.DEFAULT_VERSION)) {
+        // TODO: (CDAP-7328) need scheduler for each version of application
+        throw new NotImplementedException("Schedules status is not implemented for applications with " +
+                                            "multiple versions");
+      }
+      getScheduleStatus(responder, appId, namespaceId, programId);
+      return;
+    }
+
+    ProgramType programType;
+    try {
+      programType = ProgramType.valueOfCategoryName(programTypeString);
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(e);
+    }
+    ProgramId program = applicationId.program(programType, programId);
+    ProgramStatus programStatus = lifecycleService.getProgramStatus(program);
+
+    Map<String, String> status = ImmutableMap.of("status", programStatus.name());
+    responder.sendJson(HttpResponseStatus.OK, status);
+  }
+
   private void getScheduleStatus(HttpResponder responder, String appId, String namespaceId, String scheduleName)
     throws NotFoundException, SchedulerException {
     ApplicationId applicationId = new ApplicationId(namespaceId, appId);
@@ -298,8 +333,31 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("type") String type,
                             @PathParam("id") String id,
                             @PathParam("action") String action) throws Exception {
+    doPerformAction(request, responder, namespaceId, appId, ApplicationId.DEFAULT_VERSION, type, id, action);
+  }
+
+  @POST
+  @Path("/apps/{app-id}/versions/{version-id}/{type}/{id}/{action}")
+  public void performVersionAction(HttpRequest request, HttpResponder responder,
+                                   @PathParam("namespace-id") String namespaceId,
+                                   @PathParam("app-id") String appId,
+                                   @PathParam("version-id") String versionId,
+                                   @PathParam("type") String type,
+                                   @PathParam("id") String id,
+                                   @PathParam("action") String action) throws Exception {
+    doPerformAction(request, responder, namespaceId, appId, versionId, type, id, action);
+  }
+
+  private void doPerformAction(HttpRequest request, HttpResponder responder, String namespaceId, String appId,
+                               String versionId, String type, String id, String action) throws Exception {
+    ApplicationId applicationId = new ApplicationId(namespaceId, appId, versionId);
     if ("schedules".equals(type)) {
-      suspendResumeSchedule(responder, namespaceId, appId, id, action);
+      if (!versionId.equals(ApplicationId.DEFAULT_VERSION) || store.getAllAppVersions(applicationId).size() != 1) {
+        // TODO: (CDAP-7328) need scheduler for each version of application
+        throw new NotImplementedException("Schedules action is not implemented for applications with " +
+                                            "multiple versions");
+      }
+      performScheduleAction(responder, namespaceId, appId, versionId, id, action);
       return;
     }
 
@@ -310,7 +368,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new BadRequestException(String.format("Unknown program type '%s'", type), e);
     }
 
-    ProgramId programId = Ids.namespace(namespaceId).app(appId).program(programType, id);
+    ProgramId programId = applicationId.program(programType, id);
     Map<String, String> args = decodeArguments(request);
     // we have already validated that the action is valid
     switch (action.toLowerCase()) {
@@ -333,8 +391,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
-  private void suspendResumeSchedule(HttpResponder responder, String namespaceId, String appId, String scheduleName,
-                                     String action) throws SchedulerException {
+  private void performScheduleAction(HttpResponder responder, String namespaceId, String appId, String versionId,
+                                     String scheduleName, String action) throws SchedulerException {
     try {
       if (!action.equals("suspend") && !action.equals("resume")) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Schedule can only be suspended or resumed.");
@@ -937,9 +995,19 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                            String.format("Live-info not supported for program type '%s'", programCategory));
       return;
     }
-    Id.Program program =
-      Id.Program.from(namespaceId, appId, ProgramType.valueOfCategoryName(programCategory), programId);
+    ProgramId program =
+      new ProgramId(namespaceId, appId, ProgramType.valueOfCategoryName(programCategory), programId);
     getLiveInfo(responder, program, runtimeService);
+  }
+
+
+  private void getLiveInfo(HttpResponder responder, ProgramId programId,
+                             ProgramRuntimeService runtimeService) {
+    try {
+      responder.sendJson(HttpResponseStatus.OK, runtimeService.getLiveInfo(programId));
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    }
   }
 
   /**
@@ -1161,7 +1229,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns the number of instances currently running for different runnables for different programs
    */
   private int getInstanceCount(ProgramId programId, String runnableId) {
-    ProgramLiveInfo info = runtimeService.getLiveInfo(programId.toId());
+    ProgramLiveInfo info = runtimeService.getLiveInfo(programId);
     int count = 0;
     if (info instanceof NotRunningProgramLiveInfo) {
       return count;

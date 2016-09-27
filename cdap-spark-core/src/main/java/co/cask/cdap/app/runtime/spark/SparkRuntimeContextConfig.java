@@ -89,7 +89,7 @@ public class SparkRuntimeContextConfig {
    */
   public SparkRuntimeContextConfig set(SparkRuntimeContext context, @Nullable File pluginArchive) {
     setApplicationSpecification(context.getApplicationSpecification());
-    setProgramId(context.getProgram().getId().toEntityId());
+    setProgramId(context.getProgram().getId());
     setProgramOptions(context.getProgramOptions());
     setWorkflowProgramInfo(context.getWorkflowInfo());
     setPluginArchive(pluginArchive);
