@@ -620,7 +620,7 @@ cdap_run_class() {
   cdap_set_hive_classpath || return 1
   # Add proper HBase compatibility to CLASSPATH
   cdap_set_hbase || exit 1
-  cdap_check_or_create_master_local_dir || die "Could not create local directory"
+  cdap_create_local_dir || die "Could not create local directory"
   if [[ -n ${__args} ]] && [[ ${__args} != '' ]]; then
     echo "$(date) Running class ${__class} with arguments: ${__args}"
   else
