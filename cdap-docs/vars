@@ -50,14 +50,13 @@ GIT_BRANCH_CDAP_APPS="develop"
 GIT_VERSION_CDAP_APPS="0.8.0"
 
 # Used by examples manual
-GIT_BRANCH_CDAP_GUIDES="release/cdap-3.5-compatible"
+GIT_BRANCH_CDAP_GUIDES="develop"
 
 # Used by integrations-manual
 GIT_BRANCH_CDAP_PACKS="develop"
 
 # Used for building Hydrator documentation
 GIT_BRANCH_CASK_HYDRATOR="develop"
-# GIT_BRANCH_CASK_HYDRATOR="release/1.5"
 
 # Used for Tracker documentation
 GIT_BRANCH_CASK_TRACKER="develop"
