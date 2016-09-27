@@ -213,8 +213,8 @@ echo Usage: %APP% ^<command^> [arguments]
 echo:
 echo   Commands:
 echo:
-echo     cli - Starts a CDAP CLI session
-echo     sdk - Sends the arguments to the SDK service
+echo     cli         - Starts a CDAP CLI session
+echo     sdk         - Sends the arguments to the SDK service
 echo     tx-debugger - Sends the arguments to the CDAP transaction debugger
 echo:
 echo   Get help for a command by executing:
