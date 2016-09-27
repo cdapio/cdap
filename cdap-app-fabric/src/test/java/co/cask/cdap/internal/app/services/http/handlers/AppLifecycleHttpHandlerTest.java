@@ -330,7 +330,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     deleteArtifact(ns2ArtifactId, 200);
 
-    //verify testnamespace2 has 2 app
+    //verify testnamespace2 has 0 app
     apps = getAppList(TEST_NAMESPACE2);
     Assert.assertEquals(0, apps.size());
   }

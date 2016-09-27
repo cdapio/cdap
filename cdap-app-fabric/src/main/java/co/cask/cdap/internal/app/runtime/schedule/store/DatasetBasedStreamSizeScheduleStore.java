@@ -254,8 +254,8 @@ public class DatasetBasedStreamSizeScheduleStore {
             if (splits.length != 7) {
               continue;
             }
-            ProgramId program = new ApplicationId(splits[1], splits[2],
-                                                  splits[3]).program(ProgramType.valueOf(splits[4]), splits[5]);
+            ProgramId program = new ApplicationId(splits[1], splits[2], splits[3])
+              .program(ProgramType.valueOf(splits[4]), splits[5]);
             SchedulableProgramType programType = SchedulableProgramType.valueOf(splits[4]);
 
             StreamSizeSchedule schedule = GSON.fromJson(Bytes.toString(scheduleBytes), StreamSizeSchedule.class);

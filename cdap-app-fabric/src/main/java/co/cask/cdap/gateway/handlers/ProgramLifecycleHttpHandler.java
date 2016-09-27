@@ -460,7 +460,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     long start = (startTs == null || startTs.isEmpty()) ? 0 : Long.parseLong(startTs);
     long end = (endTs == null || endTs.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(endTs);
 
-    ProgramId program = (new NamespaceId(namespaceId)).app(appId).program(programType, programId);
+    ProgramId program = new ProgramId(namespaceId, appId, programType, programId);
     ProgramSpecification specification = lifecycleService.getProgramSpecification(program);
     if (specification == null) {
       throw new NotFoundException(program);
@@ -723,7 +723,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     List<BatchProgramResult> output = new ArrayList<>(programs.size());
     for (BatchProgramStart program : programs) {
       ProgramId programId = new ProgramId(namespaceId, program.getAppId(), program.getProgramType(),
-                      program.getProgramId());
+                                          program.getProgramId());
       try {
         lifecycleService.start(programId, program.getRuntimeargs(), false);
         output.add(new BatchProgramResult(program, HttpResponseStatus.OK.getCode(), null));

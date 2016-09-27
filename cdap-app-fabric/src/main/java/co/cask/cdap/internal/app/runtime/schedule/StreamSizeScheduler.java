@@ -312,8 +312,7 @@ public class StreamSizeScheduler implements Scheduler {
     String scheduleId = AbstractSchedulerService.scheduleIdFor(program, programType, scheduleName);
     StreamSubscriber subscriber = scheduleSubscribers.get(scheduleId);
     if (subscriber == null) {
-      throw new ScheduleNotFoundException(new ScheduleId(program.getNamespace(), program.getApplication(),
-                                                         program.getVersion(), scheduleName).toId());
+      throw new ScheduleNotFoundException(Id.Schedule.from(program.getParent().toId(), scheduleName));
     }
     subscriber.suspendScheduleTask(program, programType, scheduleName);
   }

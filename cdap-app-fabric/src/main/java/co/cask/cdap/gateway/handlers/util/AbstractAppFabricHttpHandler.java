@@ -124,8 +124,7 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
   protected ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId programId,
                                                               ProgramRuntimeService runtimeService) {
     Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(programId.getType()).values();
-    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
-                               programId.toId());
+    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND), programId);
 
     for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
       if (programId.equals(info.getProgramId())) {

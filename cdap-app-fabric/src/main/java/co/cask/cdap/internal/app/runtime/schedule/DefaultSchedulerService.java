@@ -65,7 +65,7 @@ public class DefaultSchedulerService {
       Trigger trigger = context.getTrigger();
       String key = trigger.getKey().getName();
       String[] parts = key.split(":");
-      Preconditions.checkArgument(parts.length == 6);
+      Preconditions.checkArgument(parts.length == 6, "Trigger's key name {} has {} parts instead of 6", key, parts.length);
 
       String namespaceId = parts[0];
       String applicationId = parts[1];
@@ -89,7 +89,7 @@ public class DefaultSchedulerService {
       }
 
       try {
-        taskRunner.run(new ApplicationId(namespaceId, applicationId, appVersion).program(programType, programId),
+        taskRunner.run(new ProgramId(new ApplicationId(namespaceId, applicationId, appVersion), programType, programId),
                        builder.build(), userOverrides).get();
       } catch (TaskExecutionException e) {
         throw new JobExecutionException(e.getMessage(), e.getCause(), e.isRefireImmediately());
