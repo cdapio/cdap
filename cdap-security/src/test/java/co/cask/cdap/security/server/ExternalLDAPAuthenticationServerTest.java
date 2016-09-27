@@ -19,17 +19,22 @@ package co.cask.cdap.security.server;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
+import com.google.common.collect.Maps;
 import com.unboundid.ldap.listener.InMemoryListenerConfig;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import java.net.InetAddress;
+import java.util.Map;
 
 /**
  * Tests for {@link ExternalAuthenticationServer}.
  */
-public class ExternalAuthenticationServerTest extends ExternalAuthenticationServerTestBase {
+public class ExternalLDAPAuthenticationServerTest extends ExternalLDAPAuthenticationServerTestBase {
+
+  static ExternalLDAPAuthenticationServerTest testServer;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -43,7 +48,14 @@ public class ExternalAuthenticationServerTest extends ExternalAuthenticationServ
 
     ldapListenerConfig = InMemoryListenerConfig.createLDAPConfig("LDAP", InetAddress.getByName("127.0.0.1"),
                                                                  ldapPort, null);
-    setup();
+    testServer = new ExternalLDAPAuthenticationServerTest();
+    testServer.setup();
+  }
+
+
+  @AfterClass
+  public static void afterClass() throws Exception {
+      testServer.tearDown();
   }
 
   @Override
@@ -54,5 +66,17 @@ public class ExternalAuthenticationServerTest extends ExternalAuthenticationServ
   @Override
   protected HttpClient getHTTPClient() throws Exception {
     return new DefaultHttpClient();
+  }
+
+  @Override
+  protected Map<String, String> getAuthRequestHeader() throws Exception {
+    Map headers = Maps.newHashMap();
+    headers.put("Authorization", "Basic YWRtaW46cmVhbHRpbWU=");
+    return headers;
+  }
+
+  @Override
+  protected String getAuthenticatedUserName() throws Exception {
+   return "admin";
   }
 }

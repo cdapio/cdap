@@ -800,6 +800,13 @@ public final class Constants {
 
       /** Default SSL keystore type */
       public static final String DEFAULT_SSL_KEYSTORE_TYPE = "JKS";
+
+      /** SSL truststore location */
+      public static final String SSL_TRUSTSTORE_PATH = "security.auth.server.ssl.truststore.path";
+      /** SSL truststore type */
+      public static final String SSL_TRUSTSTORE_TYPE = "security.auth.server.ssl.truststore.type";
+      /** SSL truststore password */
+      public static final String SSL_TRUSTSTORE_PASSWORD = "security.auth.server.ssl.truststore.password";
     }
 
     /** Path to the Kerberos keytab file used by CDAP master */

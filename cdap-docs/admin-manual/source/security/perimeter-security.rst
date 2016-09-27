@@ -148,6 +148,17 @@ Property                                          Default Value        Descripti
 ``security.auth.server.ssl.keystore.type``        ``JKS``              Keystore file type
 ================================================= ==================== ======================================================
 
+To configure client certificate based authentication via 2-way SSL, add these properties to ``cdap-site.xml``:
+
+================================================= ==================== ======================================================
+Property                                          Default Value        Description
+================================================= ==================== ======================================================
+``security.auth.server.ssl.truststore.path``        *None*             Truststore file location, either absolute
+                                                                       or relative; the file should be owned and
+                                                                       readable only by the CDAP user
+``security.auth.server.ssl.truststore.password``    *None*             Keystore password
+``security.auth.server.ssl.truststore.type``        ``JKS``            Keystore file type
+================================================= ==================== ======================================================
 
 Configuring SSL for the Router
 ..............................
