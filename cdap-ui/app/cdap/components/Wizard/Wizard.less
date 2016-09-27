@@ -54,6 +54,16 @@
     left: 0;
     right: 0;
 
+    .card-action-feedback {
+      &.DANGER,
+      &.SUCCESS,
+      &.LOADING {
+        border: 1px solid black;
+      }
+      &.LOADING {
+        border-top-color: gray;
+      }
+    }
     .done-button { margin-top: 25px;}
     &.success {
       width: 100%;
