@@ -1,5 +1,8 @@
 cdap CHANGELOG
 ===============
+v2.25.0 (Sep 26, 2016)
+----------------------
+- Fix Chef supermarket package
 
 v2.25.0 (Sep 26, 2016)
 ----------------------
