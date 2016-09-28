@@ -56,129 +56,121 @@ public class AvroFileReader {
   }
 
   public void readLog(Location file, Filter logFilter, long fromTimeMs, long toTimeMs,
-                      int maxEvents, Callback callback, NamespaceId namespaceId, Impersonator impersonator) {
+                      int maxEvents, Callback callback, NamespaceId namespaceId, Impersonator impersonator)
+    throws IOException {
+    DataFileReader<GenericRecord> dataFileReader = createReader(file, namespaceId, impersonator);
     try {
-      DataFileReader<GenericRecord> dataFileReader = createReader(file, namespaceId, impersonator);
-      try {
-        ILoggingEvent loggingEvent;
-        GenericRecord datum;
-        if (dataFileReader.hasNext()) {
-          datum = dataFileReader.next();
-          loggingEvent = LoggingEvent.decode(datum);
-          long prevPrevSyncPos = 0;
-          long prevSyncPos = 0;
-          // Seek to time fromTimeMs
-          while (loggingEvent.getTimeStamp() < fromTimeMs && dataFileReader.hasNext()) {
-            // Seek to the next sync point
-            long curPos = dataFileReader.tell();
-            prevPrevSyncPos = prevSyncPos;
-            prevSyncPos = dataFileReader.previousSync();
-            LOG.trace("Syncing to pos {}", curPos);
-            dataFileReader.sync(curPos);
-            if (dataFileReader.hasNext()) {
-              loggingEvent = LoggingEvent.decode(dataFileReader.next(datum));
-            }
-          }
-
-          // We're now likely past the record with fromTimeMs, rewind to the previous sync point
-          dataFileReader.sync(prevPrevSyncPos);
-          LOG.trace("Final sync pos {}", prevPrevSyncPos);
-
-          // Start reading events from file
-          int count = 0;
-          long prevTimestamp = -1;
-          while (dataFileReader.hasNext()) {
+      ILoggingEvent loggingEvent;
+      GenericRecord datum;
+      if (dataFileReader.hasNext()) {
+        datum = dataFileReader.next();
+        loggingEvent = LoggingEvent.decode(datum);
+        long prevPrevSyncPos = 0;
+        long prevSyncPos = 0;
+        // Seek to time fromTimeMs
+        while (loggingEvent.getTimeStamp() < fromTimeMs && dataFileReader.hasNext()) {
+          // Seek to the next sync point
+          long curPos = dataFileReader.tell();
+          prevPrevSyncPos = prevSyncPos;
+          prevSyncPos = dataFileReader.previousSync();
+          LOG.trace("Syncing to pos {}", curPos);
+          dataFileReader.sync(curPos);
+          if (dataFileReader.hasNext()) {
             loggingEvent = LoggingEvent.decode(dataFileReader.next(datum));
-            if (loggingEvent.getTimeStamp() >= fromTimeMs && logFilter.match(loggingEvent)) {
-              ++count;
-              if ((count > maxEvents || loggingEvent.getTimeStamp() >= toTimeMs)
-                && loggingEvent.getTimeStamp() != prevTimestamp) {
-                break;
-              }
-              callback.handle(new LogEvent(loggingEvent,
-                                           new LogOffset(LogOffset.INVALID_KAFKA_OFFSET, loggingEvent.getTimeStamp())));
-            }
-            prevTimestamp = loggingEvent.getTimeStamp();
           }
         }
-      } finally {
-        try {
-          dataFileReader.close();
-        } catch (IOException e) {
-          LOG.error("Got exception while closing log file {}", file, e);
+
+        // We're now likely past the record with fromTimeMs, rewind to the previous sync point
+        dataFileReader.sync(prevPrevSyncPos);
+        LOG.trace("Final sync pos {}", prevPrevSyncPos);
+
+        // Start reading events from file
+        int count = 0;
+        long prevTimestamp = -1;
+        while (dataFileReader.hasNext()) {
+          loggingEvent = LoggingEvent.decode(dataFileReader.next(datum));
+          if (loggingEvent.getTimeStamp() >= fromTimeMs && logFilter.match(loggingEvent)) {
+            ++count;
+            if ((count > maxEvents || loggingEvent.getTimeStamp() >= toTimeMs)
+              && loggingEvent.getTimeStamp() != prevTimestamp) {
+              break;
+            }
+            callback.handle(new LogEvent(loggingEvent,
+                                         new LogOffset(LogOffset.INVALID_KAFKA_OFFSET, loggingEvent.getTimeStamp())));
+          }
+          prevTimestamp = loggingEvent.getTimeStamp();
         }
       }
-    } catch (Exception e) {
-      LOG.error("Got exception while reading log file {}", file, e);
-      throw Throwables.propagate(e);
+    } finally {
+      try {
+        dataFileReader.close();
+      } catch (IOException e) {
+        LOG.error("Got exception while closing log file {}", file, e);
+      }
     }
   }
 
+  @SuppressWarnings("WeakerAccess")
   public Collection<LogEvent> readLogPrev(Location file, Filter logFilter, long fromTimeMs, final int maxEvents,
-                                          NamespaceId namespaceId, Impersonator impersonator) {
+                                          NamespaceId namespaceId, Impersonator impersonator) throws IOException {
+    DataFileReader<GenericRecord> dataFileReader = createReader(file, namespaceId, impersonator);
+
     try {
-      DataFileReader<GenericRecord> dataFileReader = createReader(file, namespaceId, impersonator);
+      if (!dataFileReader.hasNext()) {
+        return ImmutableList.of();
+      }
 
-      try {
-        if (!dataFileReader.hasNext()) {
-          return ImmutableList.of();
-        }
+      List<List<LogEvent>> logSegments = Lists.newArrayList();
+      List<LogEvent> logSegment;
+      int count = 0;
 
-        List<List<LogEvent>> logSegments = Lists.newArrayList();
-        List<LogEvent> logSegment;
-        int count = 0;
+      // Calculate skipLen based on fileLength
+      long length = file.length();
+      LOG.trace("Got file length {}", length);
+      long skipLen = length / 10;
+      if (skipLen > DEFAULT_SKIP_LEN || skipLen <= 0) {
+        skipLen = DEFAULT_SKIP_LEN;
+      }
 
-        // Calculate skipLen based on fileLength
-        long length = file.length();
-        LOG.trace("Got file length {}", length);
-        long skipLen = length / 10;
-        if (skipLen > DEFAULT_SKIP_LEN || skipLen <= 0) {
-          skipLen = DEFAULT_SKIP_LEN;
-        }
+      // For open file, endPosition sync marker is unknown so start from file length and read till the actual eof
+      dataFileReader.sync(length);
+      long finalSync = dataFileReader.previousSync();
+      logSegment = readToEndSyncPosition(dataFileReader, logFilter, fromTimeMs, -1);
 
-        // For open file, endPosition sync marker is unknown so start from file length and read till the actual eof
-        dataFileReader.sync(length);
-        long finalSync = dataFileReader.previousSync();
-        logSegment = readToEndSyncPosition(dataFileReader, logFilter, fromTimeMs, -1);
+      if (!logSegment.isEmpty()) {
+        logSegments.add(logSegment);
+        count = count + logSegment.size();
+      }
+
+      LOG.trace("Read logevents {} from position {}", count, finalSync);
+
+      long startPosition = finalSync;
+      long endPosition = startPosition;
+      long currentSync;
+
+      while (startPosition > 0 && count < maxEvents) {
+        // Skip to sync position less than current sync position
+        startPosition = skipToPosition(dataFileReader, startPosition, endPosition, skipLen);
+        currentSync = dataFileReader.previousSync();
+        logSegment = readToEndSyncPosition(dataFileReader, logFilter, fromTimeMs, endPosition);
 
         if (!logSegment.isEmpty()) {
           logSegments.add(logSegment);
           count = count + logSegment.size();
         }
+        LOG.trace("Read logevents {} from position {} to endPosition {}", count, currentSync, endPosition);
 
-        LOG.trace("Read logevents {} from position {}", count, finalSync);
-
-        long startPosition = finalSync;
-        long endPosition = startPosition;
-        long currentSync;
-
-        while (startPosition > 0 && count < maxEvents) {
-          // Skip to sync position less than current sync position
-          startPosition = skipToPosition(dataFileReader, startPosition, endPosition, skipLen);
-          currentSync = dataFileReader.previousSync();
-          logSegment = readToEndSyncPosition(dataFileReader, logFilter, fromTimeMs, endPosition);
-
-          if (!logSegment.isEmpty()) {
-            logSegments.add(logSegment);
-            count = count + logSegment.size();
-          }
-          LOG.trace("Read logevents {} from position {} to endPosition {}", count, currentSync, endPosition);
-
-          endPosition = currentSync;
-        }
-
-        int skip = count >= maxEvents ? count - maxEvents : 0;
-        return Lists.newArrayList(Iterables.skip(Iterables.concat(Lists.reverse(logSegments)), skip));
-      } finally {
-        try {
-          dataFileReader.close();
-        } catch (IOException e) {
-          LOG.error("Got exception while closing log file {}", file, e);
-        }
+        endPosition = currentSync;
       }
-    } catch (Exception e) {
-      LOG.error("Got exception while reading log file {}", file, e);
-      throw Throwables.propagate(e);
+
+      int skip = count >= maxEvents ? count - maxEvents : 0;
+      return Lists.newArrayList(Iterables.skip(Iterables.concat(Lists.reverse(logSegments)), skip));
+    } finally {
+      try {
+        dataFileReader.close();
+      } catch (IOException e) {
+        LOG.error("Got exception while closing log file {}", file, e);
+      }
     }
   }
 
