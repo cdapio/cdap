@@ -64,6 +64,13 @@ function makeApp (authAddress, cdapConfig) {
   app.use(bodyParser.urlencoded({ extended: false }));
   app.use(cookieParser());
 
+  app.use(function (err, req, res, next) {
+    log.error(err);
+    res.status(500).send(err);
+    next(err);
+  });
+
+
   // serve the config file
   app.get('/config.js', function (req, res) {
 
@@ -109,7 +116,7 @@ function makeApp (authAddress, cdapConfig) {
   app.post('/downloadQuery', function(req, res) {
     var url = req.body.backendUrl;
 
-    log.info('Download Start: ', req.body.queryHandle);
+    log.info('Download Query Start: ', req.body.queryHandle);
 
     request({
       method: 'POST',
@@ -127,6 +134,40 @@ function makeApp (authAddress, cdapConfig) {
       log.error('Error downloading query: ', e);
     });
 
+  });
+
+  app.post('/downloadLogs', function(req, res) {
+    var url = req.body.backendUrl;
+
+    log.info('Download Logs Start: ', url);
+
+    var customHeaders;
+    var requestObject = {
+      method: 'GET',
+      url: url,
+      rejectUnauthorized: false,
+      requestCert: true,
+      agent: false,
+    };
+
+    if (req.headers['authorization']) {
+      customHeaders = {
+        authorization: req.headers['authorization']
+      }
+    }
+
+    if (customHeaders) {
+      requestObject.headers = customHeaders;
+    }
+
+    request(requestObject)
+      .on('error', function (e) {
+        log.error('Error request logs: ', e);
+      })
+      .pipe(res)
+      .on('error', function (e) {
+        log.error('Error downloading logs: ', e);
+      });
   });
 
   /*
@@ -273,6 +314,9 @@ function makeApp (authAddress, cdapConfig) {
         } else {
           res.status(response.statusCode).send('OK');
         }
+      }).on('error', function (err) {
+        res.status(500).send(err);
+        log.error(err);
       });
     }
   ]);

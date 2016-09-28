@@ -14,7 +14,7 @@
  * the License.
  */
 
-function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout, $uibModal, $q, moment) {
+function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout, $uibModal, $q, moment, $http, Blob, FileSaver, myAlertOnValium) {
   'ngInject';
 
   var dataSrc = new MyCDAPDataSource($scope);
@@ -483,63 +483,38 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     });
   };
 
-  var exportTimeout = null;
-
-  const downloadLogs = () => {
-    if (this.statusType !== 0 && rawLogs && rawLogs.startTime === this.startTimeMs) {
-      return $q.resolve(rawLogs.log);
-    }
-    return myLogsApi.getLogsStartAsRaw({
-      namespace : this.namespaceId,
-      appId : this.appId,
-      programType : this.programType,
-      programId : this.programId,
-      runId : this.runId,
-      start : Math.floor(this.startTimeMs/1000)
-    })
-      .$promise
-      .then(
-        (res) => {
-          if (!this.isApplicationRunning) {
-            rawLogs = {
-              log: res,
-              startTime: this.startTimeMs
-            };
-          }
-          return res;
-        },
-        (err) => {
-          this.isDownloading = false;
-          console.log('ERROR: ', err);
-        }
-      );
-  };
-
   this.export = () => {
     this.isDownloading = true;
-    downloadLogs()
-    .then((log) => {
-      var blob = new Blob([log], {type: 'text/plain'});
-      this.url = URL.createObjectURL(blob);
-      let filename = '';
-      if ('undefined' !== typeof this.getDownloadFilename()) {
-        filename = this.getDownloadFilename() + '-' + formatDate(new Date(this.startTimeMs), true);
-      } else {
-        filename = this.namespaceId + '-' + this.appId + '-' + this.programType + '-' + this.programId + '-' + formatDate(new Date(this.startTimeMs), true);
-      }
-      this.exportFileName = filename;
-      $scope.$on('$destroy', () => {
-        URL.revokeObjectURL(this.url);
-        $timeout.cancel(exportTimeout);
-      });
 
-      $timeout.cancel(exportTimeout);
+    let startTime = Math.floor(this.startTimeMs/1000);
+    let url = `/namespaces/${this.namespaceId}/apps/${this.appId}/${this.programType}/${this.programId}/runs/${this.runId}/logs?start=${startTime}`;
 
-      exportTimeout = $timeout(() => {
-        document.getElementById('logs-export-link').click();
+    $http.post('/downloadLogs', {
+      'backendUrl': myCdapUrl.constructUrl({_cdapPath: url})
+    }, {responseType: 'text'})
+      .success((res) => {
+        var blob = new Blob([res], { type: 'text/plain' });
+
+        let filename = '';
+        if ('undefined' !== typeof this.getDownloadFilename()) {
+          filename = this.getDownloadFilename() + '-' + formatDate(new Date(this.startTimeMs), true);
+        } else {
+          filename = this.namespaceId + '-' + this.appId + '-' + this.programType + '-' + this.programId + '-' + formatDate(new Date(this.startTimeMs), true);
+        }
+
+        FileSaver.saveAs(blob, filename);
+
+        this.isDownloading = false;
+      })
+      .error((error, status) => {
+        myAlertOnValium.show({
+          type: 'danger',
+          content: `${status} ${error}`
+        });
+
         this.isDownloading = false;
       });
-    });
+
   };
 
   const startTimeRequest = () => {

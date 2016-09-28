@@ -327,7 +327,10 @@ function onSocketData (message) {
       case 'request':
         r.startTs = Date.now();
         log.debug ('[REQUEST]: (method: ' + r.method + ', id: ' + r.id + ', url: ' + r.url + ')');
-        request(r, emitResponse.bind(this, r));
+        request(r, emitResponse.bind(this, r))
+          .on('error', function (err) {
+            log.error(err);
+          });
         break;
       case 'poll-stop':
         log.debug ('[POLL-STOP]: (id: ' + r.id + ', url: ' + r.url + ')');
