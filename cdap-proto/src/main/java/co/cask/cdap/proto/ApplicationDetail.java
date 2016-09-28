@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.id.ApplicationId;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +33,8 @@ import java.util.Map;
  */
 public class ApplicationDetail {
   private final String name;
-  private final String version;
+  private final String appVersion;
+  private final String artifactVersion;
   private final String description;
   private final String configuration;
   private final List<StreamDetail> streams;
@@ -49,8 +51,22 @@ public class ApplicationDetail {
                            List<ProgramRecord> programs,
                            List<PluginDetail> plugins,
                            ArtifactSummary artifact) {
+    this(name, ApplicationId.DEFAULT_VERSION, description, configuration, streams, datasets, programs,
+         plugins, artifact);
+  }
+
+  public ApplicationDetail(String name,
+                           String appVersion,
+                           String description,
+                           String configuration,
+                           List<StreamDetail> streams,
+                           List<DatasetDetail> datasets,
+                           List<ProgramRecord> programs,
+                           List<PluginDetail> plugins,
+                           ArtifactSummary artifact) {
     this.name = name;
-    this.version = artifact.getVersion();
+    this.appVersion = appVersion;
+    this.artifactVersion = artifact.getVersion();
     this.description = description;
     this.configuration = configuration;
     this.streams = streams;
@@ -63,15 +79,18 @@ public class ApplicationDetail {
   public String getName() {
     return name;
   }
+  public String getAppVersion() {
+    return appVersion;
+  }
 
   /**
    * @deprecated use {@link #getArtifact()} instead
    *
-   * @return the version of the artifact used to create the application
+   * @return the artifactVersion of the artifact used to create the application
    */
   @Deprecated
-  public String getVersion() {
-    return version;
+  public String getArtifactVersion() {
+    return artifactVersion;
   }
 
   public String getDescription() {
@@ -146,7 +165,7 @@ public class ApplicationDetail {
     // in the meantime, we don't want this api call to null pointer exception.
     ArtifactSummary summary = spec.getArtifactId() == null ?
       new ArtifactSummary(spec.getName(), null) : ArtifactSummary.from(spec.getArtifactId());
-    return new ApplicationDetail(spec.getName(), spec.getDescription(), spec.getConfiguration(),
+    return new ApplicationDetail(spec.getName(), spec.getAppVersion(), spec.getDescription(), spec.getConfiguration(),
                                  streams, datasets, programs, plugins, summary);
   }
 }

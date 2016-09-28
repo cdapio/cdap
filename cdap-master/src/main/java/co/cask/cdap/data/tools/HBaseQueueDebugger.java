@@ -164,7 +164,7 @@ public class HBaseQueueDebugger extends AbstractIdleService {
     for (NamespaceMeta namespaceMeta : namespaceMetas) {
       Collection<ApplicationSpecification> apps = store.getAllApplications(namespaceMeta.getNamespaceId());
       for (ApplicationSpecification app : apps) {
-        ApplicationId appId = new ApplicationId(namespaceMeta.getName(), app.getName());
+        ApplicationId appId = new ApplicationId(namespaceMeta.getName(), app.getName(), app.getAppVersion());
 
         for (FlowSpecification flow : app.getFlows().values()) {
           ProgramId flowId = appId.program(ProgramType.FLOW, flow.getName());
