@@ -45,6 +45,7 @@ import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
@@ -466,7 +467,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private ProgramTerminator createProgramTerminator() {
     return new ProgramTerminator() {
       @Override
-      public void stop(Id.Program programId) throws Exception {
+      public void stop(ProgramId programId) throws Exception {
         switch (programId.getType()) {
           case FLOW:
             stopProgramIfRunning(programId);
@@ -488,7 +489,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     };
   }
 
-  private void stopProgramIfRunning(Id.Program programId) throws InterruptedException, ExecutionException {
+  private void stopProgramIfRunning(ProgramId programId) throws InterruptedException, ExecutionException {
     ProgramRuntimeService.RuntimeInfo programRunInfo = findRuntimeInfo(programId, runtimeService);
     if (programRunInfo != null) {
       ProgramController controller = programRunInfo.getController();

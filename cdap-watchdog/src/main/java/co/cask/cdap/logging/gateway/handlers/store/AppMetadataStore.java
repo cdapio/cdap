@@ -112,16 +112,4 @@ public class AppMetadataStore extends MetadataStoreDataset {
     long invertedTsKey = getInvertedTsKeyPart(time);
     return invertedTsKey < Long.MAX_VALUE ? invertedTsKey + 1 : invertedTsKey;
   }
-
-  private MDSKey.Builder getProgramKeyBuilder(String recordType, @Nullable ProgramId programId) {
-    MDSKey.Builder builder = new MDSKey.Builder().add(recordType);
-    if (programId != null) {
-      builder.add(programId.getNamespace());
-      builder.add(programId.getApplication());
-      builder.add(programId.getVersion());
-      builder.add(programId.getType().name());
-      builder.add(programId.getProgram());
-    }
-    return builder;
-  }
 }

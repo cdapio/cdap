@@ -608,7 +608,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     //Delete the schedules
     for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
-      Id.Program workflowProgramId = Id.Program.from(idApplication, ProgramType.WORKFLOW, workflowSpec.getName());
+      ProgramId workflowProgramId = appId.program(ProgramType.WORKFLOW, workflowSpec.getName());
       scheduler.deleteSchedules(workflowProgramId, SchedulableProgramType.WORKFLOW);
     }
 

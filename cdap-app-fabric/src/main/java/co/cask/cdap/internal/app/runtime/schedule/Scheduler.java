@@ -19,8 +19,9 @@ package co.cask.cdap.internal.app.runtime.schedule;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ScheduledRuntime;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 
 import java.util.List;
 import java.util.Map;
@@ -38,7 +39,7 @@ public interface Scheduler {
    * @param schedule Schedule with which the program runs.
    * @throws SchedulerException on unforeseen error.
    */
-  void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
+  void schedule(ProgramId program, SchedulableProgramType programType, Schedule schedule)
     throws SchedulerException;
 
   /**
@@ -50,7 +51,7 @@ public interface Scheduler {
    * @param properties system properties to be passed to the schedule
    * @throws SchedulerException on unforeseen error.
    */
-  void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
+  void schedule(ProgramId program, SchedulableProgramType programType, Schedule schedule,
                 Map<String, String> properties) throws SchedulerException;
 
   /**
@@ -61,7 +62,7 @@ public interface Scheduler {
    * @param schedules Schedules with which the program runs.
    * @throws SchedulerException on unforeseen error.
    */
-  void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules)
+  void schedule(ProgramId program, SchedulableProgramType programType, Iterable<Schedule> schedules)
     throws SchedulerException;
 
   /**
@@ -73,7 +74,7 @@ public interface Scheduler {
    * @param properties system properties to be passed to the schedule.
    * @throws SchedulerException on unforeseen error.
    */
-  void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules,
+  void schedule(ProgramId program, SchedulableProgramType programType, Iterable<Schedule> schedules,
                 Map<String, String> properties)
     throws SchedulerException;
 
@@ -89,7 +90,7 @@ public interface Scheduler {
    *         or if the program is not found
    * @throws SchedulerException on unforeseen error.
    */
-  List<ScheduledRuntime> previousScheduledRuntime(Id.Program program, SchedulableProgramType programType)
+  List<ScheduledRuntime> previousScheduledRuntime(ProgramId program, SchedulableProgramType programType)
     throws SchedulerException;
 
   /**
@@ -104,7 +105,7 @@ public interface Scheduler {
    *         or if the program is not found
    * @throws SchedulerException on unforeseen error.
    */
-  List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType)
+  List<ScheduledRuntime> nextScheduledRuntime(ProgramId program, SchedulableProgramType programType)
     throws SchedulerException;
 
   /**
@@ -115,7 +116,7 @@ public interface Scheduler {
    * @return List of scheduleIds, empty List if there are no matching schedules.
    * @throws SchedulerException on unforeseen error.
    */
-  List<String> getScheduleIds(Id.Program program, SchedulableProgramType programType)
+  List<String> getScheduleIds(ProgramId program, SchedulableProgramType programType)
     throws SchedulerException;
 
   /**
@@ -129,7 +130,7 @@ public interface Scheduler {
    *                           belongs to does not exist.
    * @throws SchedulerException on unforeseen error.
    */
-  void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
+  void suspendSchedule(ProgramId program, SchedulableProgramType programType, String scheduleName)
     throws NotFoundException, SchedulerException;
 
   /**
@@ -145,7 +146,7 @@ public interface Scheduler {
    *                           belongs to does not exist.
    * @throws SchedulerException on unforeseen error.
    */
-  void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
+  void resumeSchedule(ProgramId program, SchedulableProgramType programType, String scheduleName)
     throws NotFoundException, SchedulerException;
 
   /**
@@ -158,7 +159,7 @@ public interface Scheduler {
    *                           belongs to does not exist.
    * @throws SchedulerException on unforeseen error.
    */
-  void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
+  void updateSchedule(ProgramId program, SchedulableProgramType programType, Schedule schedule)
     throws NotFoundException, SchedulerException;
 
   /**
@@ -172,7 +173,7 @@ public interface Scheduler {
    *                           belongs to does not exist.
    * @throws SchedulerException on unforeseen error.
    */
-  void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
+  void updateSchedule(ProgramId program, SchedulableProgramType programType, Schedule schedule,
                              Map<String, String> properties) throws NotFoundException, SchedulerException;
 
   /**
@@ -184,7 +185,7 @@ public interface Scheduler {
    *                           belongs to does not exist.
    * @throws SchedulerException on unforeseen error.
    */
-  void deleteSchedule(Id.Program programId, SchedulableProgramType programType, String scheduleName)
+  void deleteSchedule(ProgramId programId, SchedulableProgramType programType, String scheduleName)
     throws NotFoundException, SchedulerException;
 
   /**
@@ -195,7 +196,7 @@ public interface Scheduler {
    * @param programType type of program that needs to be run.
    * @throws SchedulerException on unforeseen error.
    */
-  void deleteSchedules(Id.Program programId, SchedulableProgramType programType)
+  void deleteSchedules(ProgramId programId, SchedulableProgramType programType)
     throws SchedulerException;
 
   /**
@@ -204,7 +205,7 @@ public interface Scheduler {
    * @param namespaceId Id of the namespace
    * @throws SchedulerException on unforeseen error
    */
-  void deleteAllSchedules(Id.Namespace namespaceId) throws SchedulerException;
+  void deleteAllSchedules(NamespaceId namespaceId) throws SchedulerException;
 
   /**
    * Get state of a particular schedule.
@@ -215,7 +216,7 @@ public interface Scheduler {
    * @return State of the schedule.
    * @throws SchedulerException on unforeseen error.
    */
-  ScheduleState scheduleState(Id.Program program, SchedulableProgramType programType, String scheduleName)
+  ScheduleState scheduleState(ProgramId program, SchedulableProgramType programType, String scheduleName)
     throws SchedulerException;
 
   /**
