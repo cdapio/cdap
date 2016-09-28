@@ -88,7 +88,7 @@ Installation
             
             > jar xf cdap-sdk-|release|.zip
             > cd cdap-sdk-|release|
-            > bin\cdap.bat sdk start
+            > .\bin\cdap sdk start
           
             Starting Standalone CDAP ................
             Standalone CDAP started successfully.
