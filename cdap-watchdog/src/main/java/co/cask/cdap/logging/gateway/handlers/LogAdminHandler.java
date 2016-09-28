@@ -31,6 +31,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.tephra.TransactionExecutorFactory;
 import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +60,7 @@ public class LogAdminHandler extends AbstractHttpHandler {
                          TransactionExecutorFactory txExecutorFactory,
                          RootLocationFactory rootLocationFactory,
                          NamespacedLocationFactory namespacedLocationFactory, CConfiguration cConf,
-                         Impersonator impersonator ) {
+                         Impersonator impersonator) {
     this.authorizationEnforcer = authorizationEnforcer;
     this.rootLocationFactory = rootLocationFactory;
     this.namespacedLocationFactory = namespacedLocationFactory;
@@ -71,12 +72,13 @@ public class LogAdminHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/namespaces/{namespace-id}")
+  @Path("/namespaces/{namespace-id}/logs/inconsistencies")
   public void get(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
     getInconsistencies(namespaceId);
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   private void getInconsistencies(String namespaceId) {
-
+    LOG.info("Got inconsistencies in logs");
   }
 }
