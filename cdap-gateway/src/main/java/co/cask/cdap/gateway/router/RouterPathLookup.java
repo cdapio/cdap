@@ -80,6 +80,9 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     } else if (matches(uriParts, "v3", "system", "services", null, "logs")) {
       //Log Handler Path /v3/system/services/<service-id>/logs
       return Constants.Service.METRICS;
+    } else if (matches(uriParts, "v3", "namespaces", null, "logs", "lscc")) {
+      //Log Admin Handler Path /v3/namespaces/<namespace-id>/logs/lscc
+      return Constants.Service.METRICS;
     } else if (matches(uriParts, "v3", "namespaces", null, "apps", null, "metadata") ||
       matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "metadata") ||
       matches(uriParts, "v3", "namespaces", null, "artifacts", null, "versions", null, "metadata") ||

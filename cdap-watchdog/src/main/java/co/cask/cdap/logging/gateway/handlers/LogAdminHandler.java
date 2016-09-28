@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.gateway.handlers;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.RootLocationFactory;
@@ -36,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
@@ -44,6 +46,7 @@ import javax.ws.rs.PathParam;
  */
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3)
+@Beta
 public class LogAdminHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(LogAdminHandler.class);
 
@@ -72,13 +75,20 @@ public class LogAdminHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/namespaces/{namespace-id}/logs/inconsistencies")
-  public void get(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
+  @Path("namespaces/{namespace-id}/logs/inspect")
+  public void inspect(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
     getInconsistencies(namespaceId);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
   private void getInconsistencies(String namespaceId) {
-    LOG.info("Got inconsistencies in logs");
+    LOG.info("Got in logs inspect");
+  }
+
+  @POST
+  @Path("namespaces/{namespace-id}/logs/repair")
+  public void repair(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespace) {
+    LOG.info("Got in logs repair");
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 }
