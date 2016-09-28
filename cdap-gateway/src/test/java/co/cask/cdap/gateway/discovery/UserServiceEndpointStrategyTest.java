@@ -42,13 +42,13 @@ import java.util.concurrent.Executor;
 import javax.annotation.Nullable;
 
 /**
- * Tests for {@link DistributionEndpointStrategy}
+ * Tests for {@link UserServiceEndpointStrategy}
  */
-public class DistributionEndpointStrategyTest {
-  private static final Logger LOG = LoggerFactory.getLogger(DistributionEndpointStrategyTest.class);
+public class UserServiceEndpointStrategyTest {
+  private static final Logger LOG = LoggerFactory.getLogger(UserServiceEndpointStrategyTest.class);
 
   @Test
-  public void testOneVersion() throws Exception {
+  public void testStrategy() throws Exception {
     ProgramId serviceId = new ApplicationId("n1", "a1").service("s1");
     String discoverableName = ServiceDiscoverable.getName(serviceId);
     List<Discoverable> candidates = new ArrayList<>();
@@ -59,7 +59,7 @@ public class DistributionEndpointStrategyTest {
     Map<String, Integer> routeToVersion = ImmutableMap.of("2", 100);
     Map<ProgramId, RouteConfig> routeMap = ImmutableMap.of(serviceId, new RouteConfig(routeToVersion));
     RouteStore configStore = new InMemoryRouteStore(routeMap);
-    DistributionEndpointStrategy strategy = new DistributionEndpointStrategy(serviceDiscovered, configStore, serviceId);
+    UserServiceEndpointStrategy strategy = new UserServiceEndpointStrategy(serviceDiscovered, configStore, serviceId);
 
     for (int i = 0; i < 1000; i++) {
       Discoverable picked = strategy.pick();
@@ -98,6 +98,13 @@ public class DistributionEndpointStrategyTest {
                                     requestRatio, requestsToOne, requestsToTwo), requestRatio >= 0.7);
     Assert.assertTrue(String.format("RequestRatio was %f and 1 got %f and 4 got %f",
                                     requestRatio, requestsToOne, requestsToTwo), requestRatio <= 1.3);
+
+    // Set the payload filter
+    strategy = new UserServiceEndpointStrategy(serviceDiscovered, configStore, serviceId, "1");
+    for (int i = 0; i < 1000; i++) {
+      Discoverable picked = strategy.pick();
+      Assert.assertEquals("1", Bytes.toString(picked.getPayload()));
+    }
   }
 
   private static class SimpleServiceDiscovered implements ServiceDiscovered {

@@ -26,6 +26,7 @@ import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.proto.id.ProgramId;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -93,7 +94,7 @@ public final class MapReduceContextConfig {
   public void set(BasicMapReduceContext context, CConfiguration conf, Transaction tx, URI programJarURI,
                   Map<String, String> localizedUserResources) {
     setProgramOptions(context.getProgramOptions());
-    setProgramId(context.getProgram().getId().toEntityId());
+    setProgramId(context.getProgram().getId());
     setApplicationSpecification(context.getApplicationSpecification());
     setWorkflowProgramInfo(context.getWorkflowInfo());
     setPlugins(context.getApplicationSpecification().getPlugins());
@@ -110,7 +111,8 @@ public final class MapReduceContextConfig {
   /**
    * Serialize the {@link ApplicationSpecification} to the configuration.
    */
-  private void setApplicationSpecification(ApplicationSpecification spec) {
+  @VisibleForTesting
+  void setApplicationSpecification(ApplicationSpecification spec) {
     hConf.set(HCONF_ATTR_APP_SPEC, GSON.toJson(spec, ApplicationSpecification.class));
   }
 
@@ -125,7 +127,7 @@ public final class MapReduceContextConfig {
    * @return the {@link ApplicationSpecification} stored in the configuration.
    */
   public ApplicationSpecification getApplicationSpecification() {
-    return GSON.fromJson(hConf.get(HCONF_ATTR_APP_SPEC), ApplicationSpecification.class);
+    return GSON.fromJson(hConf.getRaw(HCONF_ATTR_APP_SPEC), ApplicationSpecification.class);
   }
 
   private void setWorkflowProgramInfo(@Nullable WorkflowProgramInfo info) {

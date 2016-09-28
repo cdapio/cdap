@@ -20,11 +20,11 @@
 
 # CDAP config
 # The git branch to clone
-CDAP_BRANCH='release/3.5'
+CDAP_BRANCH='release/3.6'
 # Optional tag to checkout - All released versions of this script should set this
-CDAP_TAG='v3.5.0'
+CDAP_TAG=''
 # The CDAP package version passed to Chef
-CDAP_VERSION='3.5.0-1'
+CDAP_VERSION='3.6.0-1'
 # The version of Chef to install
 CHEF_VERSION='12.10.24'
 # cdap-site.xml configuration parameters
@@ -94,6 +94,9 @@ chef-solo -o 'recipe[ulimit::default],recipe[cdap::fullstack],recipe[cdap::init]
 
 # Temporary Hack to workaround CDAP-4089
 rm -f /opt/cdap/kafka/lib/log4j.log4j-1.2.14.jar
+
+# Temporary Hack to workaround CDAP-7288
+rm -f /opt/cdap/master/lib/org.apache.tez.tez-api-0.8.4.jar
 
 # Start CDAP Services
 for i in /etc/init.d/cdap-*

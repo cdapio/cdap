@@ -89,7 +89,7 @@ public class SparkRuntimeContextConfig {
    */
   public SparkRuntimeContextConfig set(SparkRuntimeContext context, @Nullable File pluginArchive) {
     setApplicationSpecification(context.getApplicationSpecification());
-    setProgramId(context.getProgram().getId().toEntityId());
+    setProgramId(context.getProgram().getId());
     setProgramOptions(context.getProgramOptions());
     setWorkflowProgramInfo(context.getWorkflowInfo());
     setPluginArchive(pluginArchive);
@@ -101,7 +101,7 @@ public class SparkRuntimeContextConfig {
    * @return the {@link ApplicationSpecification} stored in the configuration.
    */
   public ApplicationSpecification getApplicationSpecification() {
-    return GSON.fromJson(hConf.get(HCONF_ATTR_APP_SPEC), ApplicationSpecification.class);
+    return GSON.fromJson(hConf.getRaw(HCONF_ATTR_APP_SPEC), ApplicationSpecification.class);
   }
 
   /**

@@ -273,7 +273,7 @@ public final class FlowUtils {
           // Inspect the flowlet consumer
           FlowletDefinition flowletDefinition = entry.getValue();
           Class<?> flowletClass = program.getClassLoader().loadClass(flowletDefinition.getFlowletSpec().getClassName());
-          long groupId = generateConsumerGroupId(program.getId().toEntityId(), flowletId);
+          long groupId = generateConsumerGroupId(program.getId(), flowletId);
 
           addConsumerGroup(queueSpec, flowletClass, groupId,
                            flowletDefinition.getInstances(), schemaGenerator, groupConfigs);

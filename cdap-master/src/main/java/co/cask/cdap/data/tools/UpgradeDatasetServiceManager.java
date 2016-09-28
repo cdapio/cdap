@@ -53,9 +53,9 @@ import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.AbstractModule;
@@ -63,6 +63,7 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
+import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.zookeeper.ZKClientService;
 
@@ -73,9 +74,12 @@ import java.util.concurrent.TimeUnit;
  * Provides a {@link DatasetService} which uses {@link RemoteDatasetFramework}.
  * This is used to independently start a remote dataset service during upgrade. This is needed to perform upgrade steps
  * which needs access to user datasets.
- * Note: This should not be used outside upgrade tool.
+ * Note: This should not be used outside upgrade tool. This class also creates its own injector from scratch which is
+ * needed because it talks to the remote dataset framework which is not same as what is used  in upgrade tool
+ * {@link UpgradeTool#createInjector()}. This is bad as it creates a lot of confusion while doing changes in guice
+ * injection which affects UpgradeTool and should reuse common binding from upgrade tool. (CDAP-6506)
  */
-public class DatasetServiceManager extends AbstractIdleService {
+class UpgradeDatasetServiceManager extends AbstractIdleService {
 
   private final DatasetService datasetService;
   private final ZKClientService zkClientService;
@@ -84,8 +88,9 @@ public class DatasetServiceManager extends AbstractIdleService {
   private final RemoteSystemOperationsService remoteSystemOperationsService;
 
   @Inject
-  DatasetServiceManager(CConfiguration cConf, Configuration hConf) {
-    Injector injector = createInjector(cConf, hConf);
+  UpgradeDatasetServiceManager(CConfiguration cConf, Configuration hConf,
+                               AuthorizationEnforcementService authorizationEnforcementService) {
+    Injector injector = createInjector(cConf, hConf, authorizationEnforcementService);
     this.datasetService = injector.getInstance(DatasetService.class);
     this.zkClientService = injector.getInstance(ZKClientService.class);
     this.datasetFramework = injector.getInstance(DatasetFramework.class);
@@ -132,8 +137,8 @@ public class DatasetServiceManager extends AbstractIdleService {
     }
   }
 
-  @VisibleForTesting
-  Injector createInjector(CConfiguration cConf, Configuration hConf) {
+  private Injector createInjector(CConfiguration cConf, Configuration hConf,
+                                  final AuthorizationEnforcementService authorizationEnforcementService) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
@@ -148,7 +153,14 @@ public class DatasetServiceManager extends AbstractIdleService {
       new RemoteSystemOperationsServiceModule(),
       new SecureStoreModules().getDistributedModules(),
       new AuthorizationModule(),
-      new AuthorizationEnforcementModule().getMasterModule(),
+      // we override the AuthorizationEnforcementService from the one which has been started in the upgrade tool to
+      // reuse it. (CDAP-6506)
+      Modules.override(new AuthorizationEnforcementModule().getMasterModule()).with(new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(AuthorizationEnforcementService.class).toInstance(authorizationEnforcementService);
+        }
+      }),
       new AuthenticationContextModules().getMasterModule(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),

@@ -620,7 +620,7 @@ cdap_run_class() {
   cdap_set_hive_classpath || return 1
   # Add proper HBase compatibility to CLASSPATH
   cdap_set_hbase || exit 1
-  cdap_check_or_create_master_local_dir || die "Could not create local directory"
+  cdap_create_local_dir || die "Could not create local directory"
   if [[ -n ${__args} ]] && [[ ${__args} != '' ]]; then
     echo "$(date) Running class ${__class} with arguments: ${__args}"
   else
@@ -695,8 +695,8 @@ cdap_sdk_stop() { cdap_stop_pidfile ${__pidfile} "CDAP Standalone (SDK)"; };
 #
 cdap_sdk_check_before_start() {
   cdap_check_pidfile ${__pidfile} || return ${?}
-  cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM} || return ${?}
-  local __node_pid=$(ps | grep ${CDAP_UI_PATH} | grep -v grep | awk '{ print $1 }')
+  cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM:-v0.10.36} || return ${?}
+  local __node_pid=$(ps | grep ${CDAP_UI_PATH:-ui/server.js} | grep -v grep | awk '{ print $1 }')
   if [[ -z ${__node_pid} ]]; then
     : # continue
   else
@@ -722,7 +722,7 @@ cdap_sdk_start() {
     CDAP_SDK_DEFAULT_JVM_OPTS="-Xmx2048m"
   fi
 
-  eval split_jvm_opts ${CDAP_SDK_DEFAULT_JVM_OPTS} ${CDAP_OPTS} ${JAVA_OPTS}
+  eval split_jvm_opts ${CDAP_SDK_DEFAULT_JVM_OPTS} ${CDAP_SDK_OPTS} ${JAVA_OPTS}
   cdap_sdk_check_before_start || return 1
 
   cdap_create_local_dir || die "Failed to create LOCAL_DIR: ${LOCAL_DIR}"
@@ -868,7 +868,7 @@ cdap_ui() {
   fi
   local readonly MAIN_CMD=${MAIN_CMD}
   export NODE_ENV="production"
-  local readonly MAIN_CMD_ARGS="${CDAP_HOME}"/${CDAP_UI_PATH}
+  local readonly MAIN_CMD_ARGS="${CDAP_HOME}"/${CDAP_UI_PATH:-ui/server.js}
   cdap_start_bin || die "Failed to start CDAP ${CDAP_SERVICE} service"
 }
 
@@ -880,8 +880,8 @@ cdap_cli() {
   local readonly __path __libexec __lib __script="$(basename ${0}):cdap_cli"
   local readonly __class="co.cask.cdap.cli.CLIMain"
   cdap_set_java || die "Unable to locate JAVA or JAVA_HOME"
-  __path=$(cdap_home)
-  if [[ -d ${__path}/cli/libexec ]]; then
+  __path=${CDAP_HOME}
+  if [[ -d ${__path}/cli/lib ]]; then
     __libexec=${__path}/cli/libexec
     __lib=${__path}/cli/lib
   else
@@ -908,10 +908,10 @@ cdap_cli() {
 #
 cdap_config_tool() {
   local readonly __path __libexec __lib __script="$(basename ${0}):cdap_config_tool"
-  local readonly __authfile="${HOME}"/.cdap.accesstoken
+  local readonly __authfile="${HOME}"/.cdap.accesstoken.${HOSTNAME}
   local readonly __ret __class=co.cask.cdap.ui.ConfigurationJsonTool
   cdap_set_java || die "Unable to locate JAVA or JAVA_HOME"
-  __path=$(cdap_home)
+  __path=${CDAP_HOME}
   if [[ -d ${__path}/ui/lib ]]; then
     __libexec=${__path}/ui/libexec
     __lib=${__path}/ui/lib
@@ -989,7 +989,7 @@ cdap_sdk() {
             __port=${__arg}
           fi
         fi
-        CDAP_OPTS+=" -agentlib:jdwp=transport=dt_socket,address=localhost:${__port},server=y,suspend=n"
+        CDAP_SDK_OPTS+=" -agentlib:jdwp=transport=dt_socket,address=localhost:${__port},server=y,suspend=n"
       fi
       # Execute __command
       ${__command} ${__foreground} ${__debug} ${__port} ${__arg}
@@ -1007,10 +1007,10 @@ cdap_sdk() {
 # cdap_tx_debugger
 cdap_tx_debugger() {
   local readonly __path __libexec __lib __script="$(basename ${0}):cdap_tx_debugger"
-  local readonly __authfile="${HOME}"/.cdap.accesstoken
+  local readonly __authfile="${HOME}"/.cdap.accesstoken.${HOSTNAME}
   local readonly __ret __class=co.cask.cdap.data2.transaction.TransactionManagerDebuggerMain
   cdap_set_java || die "Unable to locate JAVA or JAVA_HOME"
-  __path=$(cdap_home)
+  __path=${CDAP_HOME}
   if [[ -d ${__path}/master/libexec ]]; then
     __libexec=${__path}/master/libexec
     __lib=${__path}/master/lib
@@ -1046,10 +1046,6 @@ cdap_tx_debugger() {
 
 #
 # User-definable variables
-CDAP_NODE_VERSION_MINIMUM=${CDAP_NODE_VERSION_MINIMUM:-v0.10.36}
-
-# Specifies CDAP UI Path
-CDAP_UI_PATH=${CDAP_UI_PATH:-ui/server.js}
 
 # Default CDAP_CONF to /etc/cdap/conf (package default)
 export CDAP_CONF=${CDAP_CONF:-/etc/cdap/conf}
@@ -1082,6 +1078,6 @@ export PID_DIR=${CDAP_PID_DIR:-/var/cdap/run}
 export TEMP_DIR=${CDAP_TEMP_DIR:-/tmp}
 
 # Default SDK options
-CDAP_OPTS="${OPTS} -Djava.security.krb5.realm= -Djava.security.krb5.kdc= -Djava.awt.headless=true"
+CDAP_SDK_OPTS="${OPTS} -Djava.security.krb5.realm= -Djava.security.krb5.kdc= -Djava.awt.headless=true"
 
 export NICENESS=${NICENESS:-0}

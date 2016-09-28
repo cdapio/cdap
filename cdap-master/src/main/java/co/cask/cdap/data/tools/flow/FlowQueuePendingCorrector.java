@@ -240,7 +240,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
                   String flowletQueue, FlowSpecification flow) throws Exception {
     System.out.println("Running queue.pending correction on flow '" + flowId + "' producerFlowlet '" + producerFlowlet
                          + "' consumerFlowlet '" + consumerFlowlet + "' flowletQueue '" + flowletQueue + "'");
-    Map<RunId, ProgramRuntimeService.RuntimeInfo> runtimeInfos = programRuntimeService.list(flowId.toId());
+    Map<RunId, ProgramRuntimeService.RuntimeInfo> runtimeInfos = programRuntimeService.list(flowId);
     Preconditions.checkState(runtimeInfos.isEmpty(), "Cannot run tool when flow " + flowId + " is still running");
 
     SimpleQueueSpecificationGenerator queueSpecGenerator =

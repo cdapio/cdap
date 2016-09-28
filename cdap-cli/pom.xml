@@ -168,6 +168,15 @@
                   </delimiters>
                   <resources>
                     <resource>
+                      <directory>${project.parent.basedir}/cdap-cli/bin</directory>
+                      <targetPath>bin</targetPath>
+                      <includes>
+                        <include>cdap-cli.bat</include>
+                        <include>cdap-cli.sh</include>
+                      </includes>
+                      <filtering>true</filtering>
+                    </resource>
+                    <resource>
                       <directory>${project.parent.basedir}/cdap-common/bin</directory>
                       <targetPath>bin</targetPath>
                       <includes>

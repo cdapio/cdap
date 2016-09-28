@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.util.concurrent.Futures;
 import org.apache.hadoop.yarn.api.records.FinalApplicationStatus;
 import org.apache.twill.api.RunId;
@@ -34,11 +35,11 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTwillProgramController.class);
 
-  protected final Id.Program programId;
+  protected final ProgramId programId;
   private final TwillController twillController;
   private volatile boolean stopRequested;
 
-  protected AbstractTwillProgramController(Id.Program programId, TwillController twillController, RunId runId) {
+  protected AbstractTwillProgramController(ProgramId programId, TwillController twillController, RunId runId) {
     super(programId, runId);
     this.programId = programId;
     this.twillController = twillController;

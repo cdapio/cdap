@@ -59,6 +59,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.inmemory.InMemoryTxSystemClient;
+import org.apache.tephra.inmemory.TxInMemory;
 import org.apache.tephra.persist.NoOpTransactionStateStorage;
 import org.apache.tephra.persist.TransactionStateStorage;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
@@ -136,7 +137,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
     streamAdmin = injector.getInstance(StreamAdmin.class);
     consumerFactory = injector.getInstance(StreamConsumerFactory.class);
     txClient = injector.getInstance(TransactionSystemClient.class);
-    txManager = injector.getInstance(TransactionManager.class);
+    txManager = TxInMemory.getTransactionManager(txClient);
     queueClientFactory = injector.getInstance(QueueClientFactory.class);
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
 

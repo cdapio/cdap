@@ -59,5 +59,10 @@ public class RouteConfigHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, getResponse.getStatusLine().getStatusCode());
     Assert.assertEquals("{}", getResult);
     Assert.assertEquals(404, doDelete(routeAPI).getStatusLine().getStatusCode());
+
+    // Invalid Routes should return 400
+    routes = ImmutableMap.<String, Integer>builder().put("v1", 50).build();
+    response = doPut(routeAPI, GSON.toJson(routes));
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
   }
 }

@@ -91,7 +91,8 @@ public class UsageRegistryTest extends UsageDatasetTest {
     registry.register(flow11, datasetInstance1);
     registry.registerAll(ImmutableList.of(flow21, flow22), datasetInstance2);
 
-    // validate that this does not re-register previous usages (through code in wrapped usage dataset)
+    // validate that this does re-register previous usages (DefaultUsageRegistry no longer avoids re-registration)
+    count += 3;
     Assert.assertEquals(count, WrappedUsageDataset.registerCount);
 
     // validate usage

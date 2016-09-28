@@ -315,7 +315,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   }
 
   @Override
-  public RuntimeInfo lookup(Id.Program programId, RunId runId) {
+  public RuntimeInfo lookup(ProgramId programId, RunId runId) {
     Lock lock = runtimeInfosLock.readLock();
     lock.lock();
     try {
@@ -337,7 +337,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   }
 
   @Override
-  public Map<RunId, RuntimeInfo> list(final Id.Program program) {
+  public Map<RunId, RuntimeInfo> list(final ProgramId program) {
     return Maps.filterValues(list(program.getType()), new Predicate<RuntimeInfo>() {
       @Override
       public boolean apply(RuntimeInfo info) {
@@ -434,7 +434,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     lock.lock();
     try {
       LOG.debug("Removing RuntimeInfo: {} {} {}",
-                info.getType(), info.getProgramId().getId(), info.getController().getRunId());
+                info.getType(), info.getProgramId().getProgram(), info.getController().getRunId());
       RuntimeInfo removed = runtimeInfos.remove(info.getType(), info.getController().getRunId());
       LOG.debug("RuntimeInfo removed: {}", removed);
     } finally {
@@ -443,7 +443,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     }
   }
 
-  protected boolean isRunning(Id.Program programId) {
+  protected boolean isRunning(ProgramId programId) {
     for (Map.Entry<RunId, RuntimeInfo> entry : list(programId.getType()).entrySet()) {
       if (entry.getValue().getProgramId().equals(programId)) {
         return true;

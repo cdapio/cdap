@@ -183,8 +183,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
 
         // Setup dataset framework context, if required
         if (programDatasetFramework instanceof ProgramContextAware) {
-          ProgramRunId programRunId = program.getId().toEntityId()
-            .run(ProgramRunners.getRunId(contextConfig.getProgramOptions()));
+          ProgramRunId programRunId = program.getId().run(ProgramRunners.getRunId(contextConfig.getProgramOptions()));
           ((ProgramContextAware) programDatasetFramework).initContext(programRunId);
         }
 

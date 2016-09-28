@@ -128,7 +128,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                  @PathParam("workflow-name") String workflowName,
                                  @PathParam("run-id") String runId) throws Exception {
     ProgramId id = new ProgramId(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id.toId()).get(RunIds.fromString(runId));
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
     if (runtimeInfo == null) {
       throw new NotFoundException(id.run(runId));
     }
@@ -148,7 +148,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                 @PathParam("run-id") String runId) throws Exception {
 
     ProgramId id = new ProgramId(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id.toId()).get(RunIds.fromString(runId));
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
     if (runtimeInfo == null) {
       throw new NotFoundException(id.run(runId));
     }
