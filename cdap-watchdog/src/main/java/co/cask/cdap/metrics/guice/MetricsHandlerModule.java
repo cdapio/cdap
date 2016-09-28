@@ -18,6 +18,7 @@ package co.cask.cdap.metrics.guice;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
+import co.cask.cdap.logging.gateway.handlers.LogAdminHandler;
 import co.cask.cdap.logging.gateway.handlers.LogHandler;
 import co.cask.cdap.metrics.query.MetricsHandler;
 import co.cask.cdap.metrics.query.MetricsQueryService;
@@ -40,6 +41,7 @@ public class MetricsHandlerModule extends PrivateModule {
                                                                       Names.named(Constants.Service.METRICS));
     handlerBinder.addBinding().to(MetricsHandler.class);
     handlerBinder.addBinding().to(LogHandler.class);
+    handlerBinder.addBinding().to(LogAdminHandler.class);
     CommonHandlers.add(handlerBinder);
   }
 }
