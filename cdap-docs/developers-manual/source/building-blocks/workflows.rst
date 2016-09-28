@@ -34,11 +34,11 @@ Workflows can be controlled by the :ref:`CDAP CLI <cli>` and the :ref:`Lifecycle
 RESTful API <http-restful-api-lifecycle>`. The :ref:`status of a workflow
 <http-restful-api-lifecycle-status>` can be retrieved, workflows
 :ref:`started <http-restful-api-lifecycle-start>` or
-:ref:`stopped <http-restful-api-lifecycle-stop>`, and
-individual runs of a workflow :ref:`suspended or resumed 
-<http-restful-api-lifecycle-workflow-runs-suspend-resume>`. 
+:ref:`stopped <http-restful-api-lifecycle-stop>`, and individual runs of a workflow
+:ref:`suspended <http-restful-api-lifecycle-workflow-runs-suspend-resume>` or
+:ref:`resumed <http-restful-api-lifecycle-workflow-runs-suspend-resume>`. 
 
-A workflow can have one or more than one :ref:`schedules` that call upon it.
+A workflow can have one or more :ref:`schedules` that call upon it.
 These schedules are in a *suspended* state when the application is first deployed.
 Each schedule needs to be *resumed*, changing its status to *scheduled*, in order for the
 workflow to become executed following the schedule.
@@ -47,7 +47,7 @@ Executing MapReduce or Spark Programs
 -------------------------------------
 To execute MapReduce or Spark programs in a workflow, you will need to add them in your
 application along with the workflow. You can optionally add a :ref:`schedule <schedules>` 
-to the workflow using the `java api 
+to the workflow using the ``AbstractApplication`` `Java API 
 <../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#scheduleWorkflow(co.cask.cdap.api.schedule.Schedule,%20java.lang.String)>`__::
 
   public void configure() {
@@ -64,8 +64,9 @@ to the workflow using the `java api
   }
 
 You'll then extend the ``AbstractWorkflow`` class and implement the ``configure()``
-method. Inside ``configure``, you can add multiple MapReduce, Spark programs or custom
-actions to the workflow. The programs will be executed in the order they are specified in
+method. Inside ``configure``, you can add multiple :ref:`MapReduce <mapreduce>`,
+:ref:`Spark programs <spark>`, or :ref:`custom actions <workflow-custom-actions>` 
+to the workflow. The programs will be executed in the order they are specified in
 the ``configure`` method::
 
   public static class MyWorkflow extends AbstractWorkflow {
@@ -99,7 +100,7 @@ the ``configure`` method::
 
 In this example, the ``MyWorkflow`` will be executed every 5 hours. During each execution
 of the workflow, the ``MyMapReduce``, ``MySpark``, and ``AnotherMapReduce`` programs and
-the ``MyAction`` custom action will be executed in order.
+the ``MyAction`` :ref:`custom action <workflow-custom-actions>` will be executed in order.
 
 In addition to ``configure()`` method, extending from ``AbstractWorkflow`` allows you to
 implement these methods:
@@ -142,8 +143,15 @@ implement its ``run()`` method::
     }
   }
 
-The custom action then can be added to the workflow using the ``addAction()`` method as
-shown above.
+The custom action then can be added to a workflow using the ``addAction()`` method, as
+shown in the previous example::
+
+  . . .
+  addAction(new MyAction());
+  . . .
+  
+This is appropriate for long-running custom actions, as you now have control over the use
+of transactions in any database access.
 
 .. _workflow-unique-names:
 
