@@ -28,9 +28,6 @@ import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ScheduledRuntime;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
@@ -149,25 +146,25 @@ final class TimeScheduler implements Scheduler {
   }
 
   @Override
-  public void schedule(ProgramId program, SchedulableProgramType programType, Schedule schedule)
+  public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
     throws SchedulerException {
     schedule(program, programType, schedule, ImmutableMap.<String, String>of());
   }
 
   @Override
-  public void schedule(ProgramId program, SchedulableProgramType programType, Schedule schedule,
+  public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
                        Map<String, String> properties) throws SchedulerException {
     schedule(program, programType, ImmutableList.of(schedule), properties);
   }
 
   @Override
-  public void schedule(ProgramId programId, SchedulableProgramType programType, Iterable<Schedule> schedules)
+  public void schedule(Id.Program programId, SchedulableProgramType programType, Iterable<Schedule> schedules)
     throws SchedulerException {
     schedule(programId, programType, schedules, ImmutableMap.<String, String>of());
   }
 
   @Override
-  public synchronized void schedule(ProgramId program, SchedulableProgramType programType,
+  public synchronized void schedule(Id.Program program, SchedulableProgramType programType,
                                     Iterable<Schedule> schedules,
                                     Map<String, String> properties) throws SchedulerException {
     checkInitialized();
@@ -212,7 +209,7 @@ final class TimeScheduler implements Scheduler {
     }
   }
 
-  private void validateSchedules(ProgramId program, SchedulableProgramType programType,
+  private void validateSchedules(Id.Program program, SchedulableProgramType programType,
                                  Iterable<Schedule> schedules) throws org.quartz.SchedulerException {
     Preconditions.checkNotNull(schedules);
     for (Schedule schedule : schedules) {
@@ -230,18 +227,18 @@ final class TimeScheduler implements Scheduler {
   }
 
   @Override
-  public List<ScheduledRuntime> previousScheduledRuntime(ProgramId program, SchedulableProgramType programType)
+  public List<ScheduledRuntime> previousScheduledRuntime(Id.Program program, SchedulableProgramType programType)
     throws SchedulerException {
     return getScheduledRuntime(program, programType, true);
   }
 
   @Override
-  public List<ScheduledRuntime> nextScheduledRuntime(ProgramId program, SchedulableProgramType programType)
+  public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType)
     throws SchedulerException {
     return getScheduledRuntime(program, programType, false);
   }
 
-  private List<ScheduledRuntime> getScheduledRuntime(ProgramId program, SchedulableProgramType programType,
+  private List<ScheduledRuntime> getScheduledRuntime(Id.Program program, SchedulableProgramType programType,
                                                      boolean previousRuntimeRequested) throws SchedulerException {
     checkInitialized();
     List<ScheduledRuntime> scheduledRuntimes = new ArrayList<>();
@@ -272,7 +269,7 @@ final class TimeScheduler implements Scheduler {
   }
 
   @Override
-  public List<String> getScheduleIds(ProgramId program, SchedulableProgramType programType)
+  public List<String> getScheduleIds(Id.Program program, SchedulableProgramType programType)
     throws SchedulerException {
     checkInitialized();
 
@@ -289,7 +286,7 @@ final class TimeScheduler implements Scheduler {
 
 
   @Override
-  public synchronized void suspendSchedule(ProgramId program, SchedulableProgramType programType, String scheduleName)
+  public synchronized void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
     throws NotFoundException, SchedulerException {
     checkInitialized();
     try {
@@ -300,7 +297,7 @@ final class TimeScheduler implements Scheduler {
   }
 
   @Override
-  public synchronized void resumeSchedule(ProgramId program, SchedulableProgramType programType, String scheduleName)
+  public synchronized void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
     throws NotFoundException, SchedulerException {
 
     checkInitialized();
@@ -323,13 +320,13 @@ final class TimeScheduler implements Scheduler {
   }
 
   @Override
-  public void updateSchedule(ProgramId program, SchedulableProgramType programType, Schedule schedule)
+  public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule)
     throws NotFoundException, SchedulerException {
     updateSchedule(program, programType, schedule, ImmutableMap.<String, String>of());
   }
 
   @Override
-  public synchronized void updateSchedule(ProgramId program, SchedulableProgramType programType, Schedule schedule,
+  public synchronized void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
                              Map<String, String> properties) throws NotFoundException, SchedulerException {
     checkInitialized();
     try {
@@ -349,7 +346,7 @@ final class TimeScheduler implements Scheduler {
   }
 
   @Override
-  public synchronized void deleteSchedule(ProgramId program, SchedulableProgramType programType, String scheduleName)
+  public synchronized void deleteSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName)
     throws NotFoundException, SchedulerException {
     checkInitialized();
     try {
@@ -366,7 +363,7 @@ final class TimeScheduler implements Scheduler {
   }
 
   @Override
-  public void deleteSchedules(ProgramId program, SchedulableProgramType programType)
+  public void deleteSchedules(Id.Program program, SchedulableProgramType programType)
     throws SchedulerException {
     checkInitialized();
     try {
@@ -377,25 +374,24 @@ final class TimeScheduler implements Scheduler {
   }
 
   @Override
-  public void deleteAllSchedules(NamespaceId namespaceId) throws SchedulerException {
-    for (ApplicationSpecification appSpec : store.getAllApplications(namespaceId)) {
+  public void deleteAllSchedules(Id.Namespace namespaceId) throws SchedulerException {
+    for (ApplicationSpecification appSpec : store.getAllApplications(namespaceId.toEntityId())) {
       deleteAllSchedules(namespaceId, appSpec);
     }
   }
 
-  private void deleteAllSchedules(NamespaceId namespaceId, ApplicationSpecification appSpec)
+  private void deleteAllSchedules(Id.Namespace namespaceId, ApplicationSpecification appSpec)
     throws SchedulerException {
     for (ScheduleSpecification scheduleSpec : appSpec.getSchedules().values()) {
-      // TODO: (CDAP-7346) Add Application Version in ApplicationSpecification
-      ApplicationId appId = namespaceId.app(appSpec.getName());
+      Id.Application appId = Id.Application.from(namespaceId.getId(), appSpec.getName());
       ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
-      ProgramId programId = appId.program(programType, scheduleSpec.getProgram().getProgramName());
+      Id.Program programId = Id.Program.from(appId, programType, scheduleSpec.getProgram().getProgramName());
       deleteSchedules(programId, scheduleSpec.getProgram().getProgramType());
     }
   }
 
   @Override
-  public synchronized ScheduleState scheduleState(ProgramId program, SchedulableProgramType programType,
+  public synchronized ScheduleState scheduleState(Id.Program program, SchedulableProgramType programType,
                                                   String scheduleName)
     throws SchedulerException {
     checkInitialized();
@@ -421,7 +417,7 @@ final class TimeScheduler implements Scheduler {
     Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
   }
 
-  private static JobKey jobKeyFor(ProgramId program, SchedulableProgramType programType) {
+  private static JobKey jobKeyFor(Id.Program program, SchedulableProgramType programType) {
     return new JobKey(AbstractSchedulerService.programIdFor(program, programType));
   }
 
@@ -473,7 +469,7 @@ final class TimeScheduler implements Scheduler {
    * {@link Key#DEFAULT_GROUP}
    * @throws org.quartz.SchedulerException
    */
-  private synchronized TriggerKey getGroupedTriggerKey(ProgramId program, SchedulableProgramType programType,
+  private synchronized TriggerKey getGroupedTriggerKey(Id.Program program, SchedulableProgramType programType,
                                                        String scheduleName)
     throws org.quartz.SchedulerException {
 
@@ -489,11 +485,11 @@ final class TimeScheduler implements Scheduler {
   /**
    * Gets a {@link Trigger} associated with this program name, type and schedule name
    */
-  private synchronized Trigger getTrigger(ProgramId program, SchedulableProgramType programType, String scheduleName)
-    throws org.quartz.SchedulerException, ScheduleNotFoundException {
+  private synchronized Trigger getTrigger(Id.Program program, SchedulableProgramType programType,
+                             String scheduleName) throws org.quartz.SchedulerException, ScheduleNotFoundException {
     Trigger trigger = scheduler.getTrigger(getGroupedTriggerKey(program, programType, scheduleName));
     if (trigger == null) {
-      throw new ScheduleNotFoundException(Id.Schedule.from(program.getParent().toId(), scheduleName));
+      throw new ScheduleNotFoundException(Id.Schedule.from(program.getApplication(), scheduleName));
     }
     return  trigger;
   }

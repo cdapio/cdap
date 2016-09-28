@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app.runtime.schedule;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 
@@ -29,7 +28,7 @@ import java.util.Map;
  * POJO containing a {@link StreamSizeSchedule} and its state.
  */
 public class StreamSizeScheduleState {
-  private final ProgramId programId;
+  private final Id.Program programId;
   private final SchedulableProgramType programType;
   private final StreamSizeSchedule streamSizeSchedule;
   private final Map<String, String> properties;
@@ -40,7 +39,7 @@ public class StreamSizeScheduleState {
   private final boolean running;
 
   @VisibleForTesting
-  public StreamSizeScheduleState(ProgramId programId, SchedulableProgramType programType,
+  public StreamSizeScheduleState(Id.Program programId, SchedulableProgramType programType,
                                  StreamSizeSchedule streamSizeSchedule, Map<String, String> properties,
                                  long baseRunSize, long baseRunTs, long lastRunSize, long lastRunTs, boolean running) {
     this.programId = programId;
@@ -54,7 +53,7 @@ public class StreamSizeScheduleState {
     this.running = running;
   }
 
-  public ProgramId getProgramId() {
+  public Id.Program getProgramId() {
     return programId;
   }
 

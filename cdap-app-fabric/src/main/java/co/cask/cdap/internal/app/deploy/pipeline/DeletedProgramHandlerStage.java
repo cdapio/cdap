@@ -35,7 +35,6 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
@@ -94,10 +93,10 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
     for (ProgramSpecification spec : deletedSpecs) {
       //call the deleted spec
       ProgramType type = ProgramTypes.fromSpecification(spec);
-      final ProgramId programId = appSpec.getApplicationId().program(type, spec.getName());
+      final Id.Program programId = appSpec.getApplicationId().program(type, spec.getName()).toId();
       programTerminator.stop(programId);
       // revoke privileges
-      privilegesManager.revoke(programId);
+      privilegesManager.revoke(programId.toEntityId());
 
       // TODO: Unify with AppFabricHttpHandler.removeApplication
       // drop all queues and stream states of a deleted flow
@@ -113,7 +112,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
           }
         }
         // Remove all process states and group states for each stream
-        final String namespace = String.format("%s.%s", programId.getApplication(), programId.getProgram());
+        final String namespace = String.format("%s.%s", programId.getApplicationId(), programId.getId());
 
         final NamespaceId namespaceId = appSpec.getApplicationId().getParent();
         impersonator.doAs(namespaceId, new Callable<Void>() {
@@ -123,15 +122,15 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
             for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
               streamConsumerFactory.dropAll(namespaceId.stream(entry.getKey()).toId(), namespace, entry.getValue());
             }
-            queueAdmin.dropAllForFlow(Id.Flow.from(programId.getApplication(), programId.getProgram()));
+            queueAdmin.dropAllForFlow(Id.Flow.from(programId.getApplication(), programId.getId()));
             return null;
           }
         });
-        deletedFlows.add(programId.getProgram());
+        deletedFlows.add(programId.getId());
       }
 
       // Remove metadata for the deleted program
-      metadataStore.removeMetadata(programId.toId());
+      metadataStore.removeMetadata(programId);
     }
     if (!deletedFlows.isEmpty()) {
       deleteMetrics(appSpec.getApplicationId(), deletedFlows);

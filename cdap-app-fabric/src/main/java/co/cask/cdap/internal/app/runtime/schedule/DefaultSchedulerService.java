@@ -22,9 +22,6 @@ import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.Ids;
-import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -65,15 +62,13 @@ public class DefaultSchedulerService {
       Trigger trigger = context.getTrigger();
       String key = trigger.getKey().getName();
       String[] parts = key.split(":");
-      Preconditions.checkArgument(parts.length == 6, "Trigger's key name {} has {} parts instead of 6",
-                                  key, parts.length);
+      Preconditions.checkArgument(parts.length == 5);
 
       String namespaceId = parts[0];
       String applicationId = parts[1];
-      String appVersion = parts[2];
-      ProgramType programType = ProgramType.valueOf(parts[3]);
-      String programId = parts[4];
-      String scheduleName = parts[5];
+      ProgramType programType = ProgramType.valueOf(parts[2]);
+      String programId = parts[3];
+      String scheduleName = parts[4];
 
       LOG.debug("Schedule execute {}", key);
       ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
@@ -90,7 +85,7 @@ public class DefaultSchedulerService {
       }
 
       try {
-        taskRunner.run(new ApplicationId(namespaceId, applicationId, appVersion).program(programType, programId),
+        taskRunner.run(Id.Program.from(namespaceId, applicationId, programType, programId),
                        builder.build(), userOverrides).get();
       } catch (TaskExecutionException e) {
         throw new JobExecutionException(e.getMessage(), e.getCause(), e.isRefireImmediately());

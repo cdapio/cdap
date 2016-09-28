@@ -58,6 +58,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Tests for {@link WorkflowStatsSLAHttpHandler}
  */
+@Ignore
 public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
 
   private static final ApplicationId WORKFLOW_APP = NamespaceId.DEFAULT.app("WorkflowApp");

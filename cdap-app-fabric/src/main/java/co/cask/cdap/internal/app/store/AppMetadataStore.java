@@ -216,7 +216,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     write(key, nodeStateDetail);
 
     // Get the run record of the Workflow which started this program
-    key = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, workflowRunId.getParent()).add(workflowRunId.getRun()).build();
+    key = getWorkflowRunRecordKey(workflowRunId.getParent().toId(), workflowRunId.getRun());
 
     RunRecordMeta record = get(key, RunRecordMeta.class);
     if (record != null) {
@@ -320,6 +320,18 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   public List<RunRecordMeta> getRuns(ProgramRunStatus status, Predicate<RunRecordMeta> filter) {
     return getRuns(null, status, Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE, filter);
+  }
+
+  private MDSKey.Builder getProgramKeyBuilder(String recordType, @Nullable ProgramId programId) {
+    MDSKey.Builder builder = new MDSKey.Builder().add(recordType);
+    if (programId != null) {
+      builder.add(programId.getNamespace());
+      builder.add(programId.getApplication());
+      builder.add(programId.getVersion());
+      builder.add(programId.getType().name());
+      builder.add(programId.getProgram());
+    }
+    return builder;
   }
 
   public List<RunRecordMeta> getRuns(@Nullable ProgramId programId, ProgramRunStatus status,
@@ -560,6 +572,17 @@ public class AppMetadataStore extends MetadataStoreDataset {
     }
 
     return workflowToken;
+  }
+
+  private MDSKey getWorkflowRunRecordKey(Id.Program workflowId, String workflowRunId) {
+    return new MDSKey.Builder()
+      .add(TYPE_RUN_RECORD_STARTED)
+      .add(workflowId.getNamespaceId())
+      .add(workflowId.getApplicationId())
+      .add(workflowId.getType().name())
+      .add(workflowId.getId())
+      .add(workflowRunId)
+      .build();
   }
 
   /**

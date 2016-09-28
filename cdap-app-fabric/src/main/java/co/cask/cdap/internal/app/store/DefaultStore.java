@@ -301,7 +301,7 @@ public class DefaultStore implements Store {
       return;
     }
 
-    workflowDataset.write(workflowId, runRecord, programRunsList);
+    workflowDataset.write(workflowId.toId(), runRecord, programRunsList);
   }
 
   @Override

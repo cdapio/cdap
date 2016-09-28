@@ -57,7 +57,6 @@ import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import com.google.common.base.Supplier;
@@ -142,7 +141,7 @@ public class AppFabricTestHelper {
 
     return factory.create(new ProgramTerminator() {
       @Override
-      public void stop(ProgramId programId) throws Exception {
+      public void stop(Id.Program programId) throws Exception {
         //No-op
       }
     });

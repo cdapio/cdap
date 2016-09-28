@@ -25,7 +25,6 @@ import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
@@ -121,7 +120,7 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  protected ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId programId,
+  protected ProgramRuntimeService.RuntimeInfo findRuntimeInfo(Id.Program programId,
                                                               ProgramRuntimeService runtimeService) {
     Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(programId.getType()).values();
     Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND), programId);

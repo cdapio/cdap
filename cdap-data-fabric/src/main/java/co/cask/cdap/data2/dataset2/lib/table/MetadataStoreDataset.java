@@ -23,7 +23,6 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
@@ -263,17 +262,5 @@ public class MetadataStoreDataset extends AbstractDataset {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
-  }
-
-  protected MDSKey.Builder getProgramKeyBuilder(String recordType, @Nullable ProgramId programId) {
-    MDSKey.Builder builder = new MDSKey.Builder().add(recordType);
-    if (programId != null) {
-      builder.add(programId.getNamespace());
-      builder.add(programId.getApplication());
-      builder.add(programId.getVersion());
-      builder.add(programId.getType().name());
-      builder.add(programId.getProgram());
-    }
-    return builder;
   }
 }

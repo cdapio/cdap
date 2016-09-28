@@ -80,6 +80,7 @@ import org.apache.tephra.TransactionExecutorFactory;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -127,7 +128,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   private static final String EMPTY_ARRAY_JSON = "[]";
   private static final String STOPPED = "STOPPED";
-  private static final String RUNNING = "RUNNING";
 
   @Category(XSlowTests.class)
   @Test
@@ -228,120 +228,100 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testVersionedProgramStartStopStatus() throws Exception {
-    Id.Artifact wordCountArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcountapp", VERSION1);
+    Id.Artifact wordCountArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcountapp", "1.0.0");
     addAppArtifact(wordCountArtifactId, WordCountApp.class);
     AppRequest<? extends Config> wordCountRequest = new AppRequest<>(
       new ArtifactSummary(wordCountArtifactId.getName(), wordCountArtifactId.getVersion().getVersion()));
 
-    ApplicationId wordCountApp1 = NamespaceId.DEFAULT.app("WordCountApp", VERSION1);
+    ApplicationId wordCountApp1 = new ApplicationId(Id.Namespace.DEFAULT.getId(), "WordCountApp", "1.0.0");
     ProgramId wordcountFlow1 = wordCountApp1.program(ProgramType.FLOW, "WordCountFlow");
-    
-    Id.Application wordCountAppDefault = wordCountApp1.toId();
-    Id.Program wordcountFlowDefault = wordcountFlow1.toId();
 
-    ApplicationId wordCountApp2 = NamespaceId.DEFAULT.app("WordCountApp", VERSION2);
+    ApplicationId wordCountApp2 = new ApplicationId(Id.Namespace.DEFAULT.getId(), "WordCountApp", "2.0.0");
     ProgramId wordcountFlow2 = wordCountApp2.program(ProgramType.FLOW, "WordCountFlow");
 
     // Start wordCountApp1
-    Assert.assertEquals(200, deploy(wordCountApp1, wordCountRequest).getStatusLine().getStatusCode());
-
-    // Start wordCountApp1 with default version
-    Assert.assertEquals(200, deploy(wordCountAppDefault, wordCountRequest).getStatusLine().getStatusCode());
+    Assert.assertEquals(200, deployVersion(wordCountApp1, wordCountRequest).getStatusLine().getStatusCode());
 
     // flow is stopped initially
-    Assert.assertEquals(STOPPED, getProgramStatus(wordcountFlow1));
+    Assert.assertEquals(STOPPED, getProgramVersionStatus(wordcountFlow1));
     // start flow
-    startProgram(wordcountFlow1, 200);
-    waitState(wordcountFlow1, RUNNING);
+    startProgramVersioned(wordcountFlow1, ImmutableMap.<String, String>of(), 200);
+    waitStateVersioned(wordcountFlow1, "RUNNING");
     // same flow cannot be run concurrently in the same app version
-    startProgram(wordcountFlow1, 409);
-
+    startProgramVersioned(wordcountFlow1, ImmutableMap.<String, String>of(), 409);
+    // same flow cannot be run concurrently in any versions of the same app
+    startProgramVersioned(wordcountFlow2, ImmutableMap.<String, String>of(), 409);
     // start flow in a wrong namespace
-    startProgram(new NamespaceId(TEST_NAMESPACE1)
+    startProgramVersioned(new NamespaceId(TEST_NAMESPACE1)
                             .app(wordcountFlow1.getApplication(), wordcountFlow1.getVersion())
-                            .program(wordcountFlow1.getType(), wordcountFlow1.getProgram()), 404);
+                            .program(wordcountFlow1.getType(), wordcountFlow1.getProgram()),
+                          ImmutableMap.<String, String>of(), 404);
 
     // Start the second version of the app
-    Assert.assertEquals(200, deploy(wordCountApp2, wordCountRequest).getStatusLine().getStatusCode());
+    Assert.assertEquals(200, deployVersion(wordCountApp2, wordCountRequest).getStatusLine().getStatusCode());
 
     // same flow cannot be run concurrently in multiple versions of the same app
-    startProgram(wordcountFlow2, 409);
-    startProgram(wordcountFlowDefault, 409);
+    startProgramVersioned(wordcountFlow2, ImmutableMap.<String, String>of(), 409);
 
-    stopProgram(wordcountFlow1, null, 200, null);
-    waitState(wordcountFlow1, "STOPPED");
+    stopProgramVersioned(wordcountFlow1, null, 200, null);
+    waitStateVersioned(wordcountFlow1, "STOPPED");
 
     // wordcountFlow2 can be run after wordcountFlow1 is stopped
-    startProgram(wordcountFlow2, 200);
-    stopProgram(wordcountFlow2, null, 200, null);
+    startProgramVersioned(wordcountFlow2, ImmutableMap.<String, String>of(), 200);
+    stopProgramVersioned(wordcountFlow2, null, 200, null);
 
     ProgramId wordFrequencyService1 = wordCountApp1.program(ProgramType.SERVICE, "WordFrequencyService");
-    ProgramId wordFrequencyService2 = wordCountApp2.program(ProgramType.SERVICE, "WordFrequencyService");
-    Id.Program wordFrequencyServiceDefault = wordFrequencyService1.toId();
     // service is stopped initially
-    Assert.assertEquals(STOPPED, getProgramStatus(wordFrequencyService1));
+    Assert.assertEquals(STOPPED, getProgramVersionStatus(wordFrequencyService1));
     // start service
-    startProgram(wordFrequencyService1, 200);
-    waitState(wordFrequencyService1, RUNNING);
-    // wordFrequencyService2 is stopped initially
-    Assert.assertEquals(STOPPED, getProgramStatus(wordFrequencyService2));
-    // start service in version2
-    startProgram(wordFrequencyService2, 200);
-    waitState(wordFrequencyService2, RUNNING);
-    // wordFrequencyServiceDefault is stopped initially
-    Assert.assertEquals(STOPPED, getProgramStatus(wordFrequencyServiceDefault));
-    // start service in default version
-    startProgram(wordFrequencyServiceDefault, 200);
-    waitState(wordFrequencyServiceDefault, RUNNING);
+    startProgramVersioned(wordFrequencyService1, ImmutableMap.<String, String>of(), 200);
+    waitStateVersioned(wordFrequencyService1, "RUNNING");
     // same service cannot be run concurrently in the same app version
-    startProgram(wordFrequencyService1, 409);
-    stopProgram(wordFrequencyService1, null, 200, null);
-    Assert.assertEquals(STOPPED, getProgramStatus(wordFrequencyService1));
-    // wordFrequencyService1 can be run after wordFrequencyService1 is stopped
-    startProgram(wordFrequencyService1, 200);
+    startProgramVersioned(wordFrequencyService1, ImmutableMap.<String, String>of(), 409);
+    stopProgramVersioned(wordFrequencyService1, null, 200, null);
+    Assert.assertEquals(STOPPED, getProgramVersionStatus(wordFrequencyService1));
+    // wordcountFlow2 can be run after wordcountFlow1 is stopped
+    startProgramVersioned(wordFrequencyService1, ImmutableMap.<String, String>of(), 200);
 
-    stopProgram(wordFrequencyService1, null, 200, null);
-    stopProgram(wordFrequencyService2, null, 200, null);
-    stopProgram(wordFrequencyServiceDefault, null, 200, null);
+    stopProgramVersioned(wordFrequencyService1, null, 200, null);
 
-    Id.Artifact sleepWorkflowArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "sleepworkflowapp", VERSION1);
+    Id.Artifact sleepWorkflowArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "sleepworkflowapp", "1.0.0");
     addAppArtifact(sleepWorkflowArtifactId, SleepingWorkflowApp.class);
     AppRequest<? extends Config> sleepWorkflowRequest = new AppRequest<>(
       new ArtifactSummary(sleepWorkflowArtifactId.getName(), sleepWorkflowArtifactId.getVersion().getVersion()));
 
-    ApplicationId sleepWorkflowApp1 = new ApplicationId(Id.Namespace.DEFAULT.getId(), "SleepingWorkflowApp", VERSION1);
+    ApplicationId sleepWorkflowApp1 = new ApplicationId(Id.Namespace.DEFAULT.getId(), "SleepingWorkflowApp", "1.0.0");
     ProgramId sleepWorkflow1 = sleepWorkflowApp1.program(ProgramType.WORKFLOW, "SleepWorkflow");
 
-    ApplicationId sleepWorkflowApp2 = new ApplicationId(Id.Namespace.DEFAULT.getId(), "SleepingWorkflowApp", VERSION2);
+    ApplicationId sleepWorkflowApp2 = new ApplicationId(Id.Namespace.DEFAULT.getId(), "SleepingWorkflowApp", "2.0.0");
     ProgramId sleepWorkflow2 = sleepWorkflowApp2.program(ProgramType.WORKFLOW, "SleepWorkflow");
 
     // Start wordCountApp1
-    Assert.assertEquals(200, deploy(sleepWorkflowApp1, sleepWorkflowRequest).getStatusLine().getStatusCode());
+    Assert.assertEquals(200, deployVersion(sleepWorkflowApp1, sleepWorkflowRequest).getStatusLine().getStatusCode());
     // workflow is stopped initially
-    Assert.assertEquals(STOPPED, getProgramStatus(sleepWorkflow1));
+    Assert.assertEquals(STOPPED, getProgramVersionStatus(sleepWorkflow1));
     // start workflow in a wrong version
-    startProgram(sleepWorkflow2, 404);
+    startProgramVersioned(sleepWorkflow2, ImmutableMap.<String, String>of(), 404);
     // Start wordCountApp2
-    Assert.assertEquals(200, deploy(sleepWorkflowApp2, sleepWorkflowRequest).getStatusLine().getStatusCode());
+    Assert.assertEquals(200, deployVersion(sleepWorkflowApp2, sleepWorkflowRequest).getStatusLine().getStatusCode());
 
     // start multiple workflow simultaneously
-    startProgram(sleepWorkflow1, 200);
-    startProgram(sleepWorkflow2, 200);
-    startProgram(sleepWorkflow1, 200);
-    startProgram(sleepWorkflow2, 200);
+    startProgramVersioned(sleepWorkflow1, ImmutableMap.<String, String>of(), 200);
+    startProgramVersioned(sleepWorkflow2, ImmutableMap.<String, String>of(), 200);
+    startProgramVersioned(sleepWorkflow1, ImmutableMap.<String, String>of(), 200);
+    startProgramVersioned(sleepWorkflow2, ImmutableMap.<String, String>of(), 200);
     // start multiple workflow simultaneously
-    stopProgram(sleepWorkflow1, null, 200, null);
-    stopProgram(sleepWorkflow2, null, 200, null);
-    stopProgram(sleepWorkflow1, null, 200, null);
-    stopProgram(sleepWorkflow2, null, 200, null);
-    Assert.assertEquals(STOPPED, getProgramStatus(sleepWorkflow1));
-    Assert.assertEquals(STOPPED, getProgramStatus(sleepWorkflow2));
+    stopProgramVersioned(sleepWorkflow1, null, 200, null);
+    stopProgramVersioned(sleepWorkflow2, null, 200, null);
+    stopProgramVersioned(sleepWorkflow1, null, 200, null);
+    stopProgramVersioned(sleepWorkflow2, null, 200, null);
+    Assert.assertEquals(STOPPED, getProgramVersionStatus(sleepWorkflow1));
+    Assert.assertEquals(STOPPED, getProgramVersionStatus(sleepWorkflow2));
     // cleanup
-    deleteApp(wordCountApp1, 200);
-    deleteApp(wordCountApp2, 200);
-    deleteApp(wordCountAppDefault, 200);
-    deleteApp(sleepWorkflowApp1, 200);
-    deleteApp(sleepWorkflowApp2, 200);
+    deleteAppVersion(wordCountApp1, 200);
+    deleteAppVersion(wordCountApp2, 200);
+    deleteAppVersion(sleepWorkflowApp1, 200);
+    deleteAppVersion(sleepWorkflowApp2, 200);
   }
 
   @Category(XSlowTests.class)
@@ -385,7 +365,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // start program twice
     startProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME));
-    waitState(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), RUNNING);
+    waitState(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), "RUNNING");
 
     startProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME),
                  409); // conflict
