@@ -77,8 +77,8 @@ case ${1} in
     echo "    ui"
     echo
     echo "    classpath    - Returns the Java CLASSPATH of the CDAP Master service"
-    echo "    config-tool  - Returns JSON encoded CDAP configuration key/value pairs"
-    echo "    run          - Runs a given class with arguments using CDAP CLASSPATH and environment"
+    echo "    config-tool  - Returns JSON-encoded CDAP configuration key/value pairs"
+    echo "    run          - Runs a given class with arguments using the CDAP Master CLASSPATH and environment"
     echo "    tx-debugger  - Runs CDAP transaction debugger"
     echo
     else
