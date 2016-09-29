@@ -502,7 +502,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
           filename = this.namespaceId + '-' + this.appId + '-' + this.programType + '-' + this.programId + '-' + formatDate(new Date(this.startTimeMs), true);
         }
 
-        FileSaver.saveAs(blob, filename);
+        FileSaver.saveAs(blob, `${filename}.log`);
 
         this.isDownloading = false;
       })
