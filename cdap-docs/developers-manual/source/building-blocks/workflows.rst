@@ -46,9 +46,15 @@ workflow to become executed following the schedule.
 Executing MapReduce or Spark Programs
 -------------------------------------
 To execute MapReduce or Spark programs in a workflow, you will need to add them in your
-application along with the workflow. You can optionally add a :ref:`schedule <schedules>` 
-to the workflow using the ``AbstractApplication`` `Java API 
-<../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#scheduleWorkflow(co.cask.cdap.api.schedule.Schedule,%20java.lang.String)>`__::
+application along with the workflow. You can (optionally) add a :ref:`schedule
+<schedules>` to a workflow using the `addSchedule 
+<../../reference-manual/javadocs/co/cask/cdap/api/app/ApplicationConfigurer.html#addSchedule(co.cask.cdap.api.schedule.Schedule,%20co.cask.cdap.api.schedule.SchedulableProgramType,%20java.lang.String,%20java.util.Map)>`__
+Java API.
+
+To add a schedule to an application extended from ``AbstractApplication``, use the method
+`scheduleWorkflow 
+<../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#scheduleWorkflow(co.cask.cdap.api.schedule.Schedule,%20java.lang.String)>`__
+instead::
 
   public void configure() {
     ...
@@ -120,9 +126,13 @@ through the ``WorkflowContext``. An error occurring in this method does not affe
 
 Workflow Custom Action
 ----------------------
-In addition to MapReduce and Spark programs, workflow can also execute custom actions.
-Custom actions are implemented in Java and can perform tasks such as sending an email. To
-define a custom action, you will need to extend the ``AbstractCustomAction`` and
+In addition to MapReduce and Spark programs, a workflow can also execute *custom actions*.
+Custom actions are implemented in Java and can perform tasks such as sending an email.
+Since within a custom action you have control over transactions (they can be started only
+if there is dataset accesses), long-running tasks which do not require transactions can be
+executed in a custom action.
+
+To define a custom action, you will need to extend the ``AbstractCustomAction`` and
 implement its ``run()`` method::
 
   public static class MyAction extends AbstractCustomAction {
@@ -149,9 +159,6 @@ shown in the previous example::
   . . .
   addAction(new MyAction());
   . . .
-  
-This is appropriate for long-running custom actions, as you now have control over the use
-of transactions in any database access.
 
 .. _workflow-unique-names:
 
