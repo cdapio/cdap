@@ -14,7 +14,7 @@
  * the License.
  */
 
-function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout, $uibModal, $q, moment) {
+function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout, $q, moment) {
   'ngInject';
 
   var dataSrc = new MyCDAPDataSource($scope);
@@ -26,13 +26,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
 
   vm.viewLimit = 100;
-  vm.$uibModal = $uibModal;
   vm.errorRetrievingLogs = false;
-
-  var rawLogs = {
-    log: '',
-    startTime: ''
-  };
 
   vm.setProgramMetadata = (status) => {
     vm.programStatus = status;
@@ -99,78 +93,6 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     vm.totalCount = 0;
     vm.warningCount = 0;
     vm.errorCount = 0;
-  };
-
-  vm.openRaw = () => {
-    function RawLogsModalCtrl($scope, MyCDAPDataSource, rAppId, rProgramType, rProgramId, rRunId, rStartTimeMs, rIsApplicationRunning) {
-      vm.applicationName = rProgramId;
-      vm.startTime = formatDate(new Date(rStartTimeMs));
-      vm.rawIsLoaded = false;
-      vm.noRawData = false;
-      vm.windowMode = 'regular';
-
-      vm.toggleMaximizedView = (isExpanded) => {
-        vm.windowMode = (isExpanded) ? 'expand' : 'regular';
-      };
-      let loadFromCache = !rIsApplicationRunning &&
-       rawLogs &&
-       rawLogs.startTime === rStartTimeMs &&
-       rawLogs.log &&
-       rawLogs.log.length > 0;
-      if (loadFromCache) {
-        vm.rawDataResponse = rawLogs.log;
-        vm.rawIsLoaded = true;
-        return;
-      }
-      var modalDataSrc = new MyCDAPDataSource($scope);
-
-      let requestStartTime = Math.floor(rStartTimeMs/1000);
-      modalDataSrc.request({
-        _cdapNsPath: `/apps/${rAppId}/${rProgramType}/${rProgramId}/runs/${rRunId}/logs?start=${requestStartTime}`
-      }).then((res) => {
-        if(typeof res === 'undefined' || res.length === 0){
-          vm.noRawData = true;
-        } else {
-          vm.rawDataResponse = res;
-          if (!rIsApplicationRunning) {
-            rawLogs = rawLogs || {};
-            rawLogs.log = res;
-            rawLogs.startTime = rStartTimeMs;
-          }
-          vm.rawIsLoaded = true;
-        }
-      });
-    }
-
-    vm.$uibModal.open({
-      size: 'lg',
-      windowTemplateUrl: 'log-viewer/raw-template.html',
-      templateUrl: 'log-viewer/raw.html',
-      windowClass: 'node-config-modal raw-modal cdap-modal',
-      animation: false,
-      controller: ['$scope', 'MyCDAPDataSource', 'rAppId', 'rProgramType', 'rProgramId', 'rRunId', 'rStartTimeMs', 'rIsApplicationRunning', RawLogsModalCtrl],
-      controllerAs: 'RawLogsModalCtrl',
-      resolve: {
-        rAppId: () => {
-          return vm.appId;
-        },
-        rProgramType: () => {
-          return vm.programType;
-        },
-        rProgramId: () => {
-         return vm.programId;
-        },
-        rRunId: () => {
-          return vm.runId;
-        },
-        rStartTimeMs: () => {
-          return vm.startTimeMs;
-        },
-        rIsApplicationRunning: () => {
-          return vm.statusCode === 0;
-        }
-      }
-    });
   };
 
   vm.setDefault();
