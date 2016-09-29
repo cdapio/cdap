@@ -14,7 +14,7 @@
  * the License.
  */
 
-function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout, $uibModal, $q, moment, $http, Blob, FileSaver, myAlertOnValium, JSZip) {
+function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout, $uibModal, $q, moment) {
   'ngInject';
 
   var dataSrc = new MyCDAPDataSource($scope);
@@ -486,47 +486,12 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     });
   }
 
-  vm.export = () => {
-    vm.isDownloading = true;
-
+  vm.getDownloadUrl = () => {
     let startTime = Math.floor(vm.startTimeMs/1000);
     let url = `/namespaces/${vm.namespaceId}/apps/${vm.appId}/${vm.programType}/${vm.programId}/runs/${vm.runId}/logs?start=${startTime}`;
-
-    $http.post('/downloadLogs', {
-      'backendUrl': myCdapUrl.constructUrl({_cdapPath: url})
-    }, {responseType: 'text'})
-      .success((res) => {
-        let zip = new JSZip();
-
-        let filename = '';
-        if ('undefined' !== typeof vm.getDownloadFilename()) {
-          filename = vm.getDownloadFilename() + '-' + formatDate(new Date(vm.startTimeMs), true);
-        } else {
-          filename = vm.namespaceId + '-' + vm.appId + '-' + vm.programType + '-' + vm.programId + '-' + formatDate(new Date(vm.startTimeMs), true);
-        }
-
-        zip.file(`${filename}.log`, res);
-
-        zip.generateAsync({
-          type: 'blob',
-          compression: 'DEFLATE',
-          compressionOptions: {level: 6}
-        })
-          .then((content) => {
-            FileSaver.saveAs(content, `${filename}.zip`);
-          });
-
-        vm.isDownloading = false;
-      })
-      .error((error, status) => {
-        myAlertOnValium.show({
-          type: 'danger',
-          content: `${status} ${error}`
-        });
-
-        vm.isDownloading = false;
-      });
-
+    url = encodeURIComponent(myCdapUrl.constructUrl({_cdapPath: url}));
+    url = `/downloadLogs?backendUrl=${url}`;
+    return url;
   };
 
   function startTimeRequest () {

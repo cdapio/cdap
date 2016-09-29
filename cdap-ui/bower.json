@@ -46,7 +46,6 @@
     "ngInfiniteScroll": "1.2.1",
     "d3-timeline": "0.0.5",
     "angular-inview": "1.5.7",
-    "jszip": "Stuk/jszip#3.1.2"
   },
   "resolutions": {
     "angular": "1.4.3",

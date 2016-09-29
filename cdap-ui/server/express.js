@@ -136,11 +136,9 @@ function makeApp (authAddress, cdapConfig) {
 
   });
 
-  app.post('/downloadLogs', function(req, res) {
-    var url = req.body.backendUrl;
-
+  app.get('/downloadLogs', function(req, res) {
+    var url = decodeURIComponent(req.query.backendUrl);
     log.info('Download Logs Start: ', url);
-
     var customHeaders;
     var requestObject = {
       method: 'GET',
@@ -150,9 +148,9 @@ function makeApp (authAddress, cdapConfig) {
       agent: false,
     };
 
-    if (req.headers['authorization']) {
+    if (req.cookies['CDAP_Auth_Token']) {
       customHeaders = {
-        authorization: req.headers['authorization']
+        authorization: 'Bearer ' + req.cookies['CDAP_Auth_Token']
       };
     }
 
@@ -160,14 +158,25 @@ function makeApp (authAddress, cdapConfig) {
       requestObject.headers = customHeaders;
     }
 
-    request(requestObject)
-      .on('error', function (e) {
-        log.error('Error request logs: ', e);
-      })
-      .pipe(res)
-      .on('error', function (e) {
-        log.error('Error downloading logs: ', e);
-      });
+    try {
+      request(requestObject)
+        .on('error', function (e) {
+          log.error('Error request logs: ', e);
+        })
+        .on('response',
+          function (response) {
+            if (response.statusCode !== 200) {
+              res.send('Not Authorized to view logs.');
+            }
+          }
+        )
+        .pipe(res)
+        .on('error', function (e) {
+          log.error('Error downloading logs: ', e);
+        });
+    } catch(e) {
+      log.error('Downloading logs failed, ', e);
+    }
   });
 
   /*
@@ -315,7 +324,11 @@ function makeApp (authAddress, cdapConfig) {
           res.status(response.statusCode).send('OK');
         }
       }).on('error', function (err) {
-        res.status(500).send(err);
+        try {
+          res.status(500).send(err);
+        } catch(e) {
+          log.error('Failed sending exception to client', e);
+        }
         log.error(err);
       });
     }
