@@ -33,7 +33,6 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.NamespaceLoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
-import co.cask.cdap.common.security.DefaultImpersonator;
 import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -177,11 +176,11 @@ public class LogSaverPluginTest extends KafkaTestBase {
 
       testLogRead(loggingContext, logBaseDir);
 
-      LogCallback logCallback = new LogCallback();
       FileLogReader fileLogReader = injector.getInstance(FileLogReader.class);
-      fileLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"),
-                           0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback);
-      Assert.assertEquals(60, logCallback.getEvents().size());
+      List<LogEvent> events = Lists.newArrayList(
+        fileLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"),
+                             0, Long.MAX_VALUE, Filter.EMPTY_FILTER));
+      Assert.assertEquals(60, events.size());
 
       stopLogSaver();
 
@@ -210,14 +209,15 @@ public class LogSaverPluginTest extends KafkaTestBase {
       waitTillLogSaverDone(fileMetaDataManager, loggingContext, "Test log message 59 arg1 arg2");
       stopLogSaver();
 
-      LogCallback callbackAfterReset = new LogCallback();
 
       //Verify that more records are processed by LogWriter plugin
       fileLogReader = injector.getInstance(FileLogReader.class);
-      fileLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"),
-                           0, Long.MAX_VALUE, Filter.EMPTY_FILTER, callbackAfterReset);
+      events =
+        Lists.newArrayList(fileLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "",
+                                                                          null, "INSTANCE"),
+                                                0, Long.MAX_VALUE, Filter.EMPTY_FILTER));
       // Since we started from offset 10, we should have only saved 50 messages this time
-      Assert.assertEquals(50, callbackAfterReset.getEvents().size());
+      Assert.assertEquals(50, events.size());
       // Checkpoint should read 60 for both processor
       verifyCheckpoint();
       // Metrics should be 60 for first run + 50 for second run
@@ -298,9 +298,8 @@ public class LogSaverPluginTest extends KafkaTestBase {
     LOG.info("Verifying logging context {}", loggingContext.getLogPathFragment(logBaseDir));
     FileLogReader distributedLogReader = injector.getInstance(FileLogReader.class);
 
-    LogCallback logCallback1 = new LogCallback();
-    distributedLogReader.getLog(loggingContext, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback1);
-    List<LogEvent> allEvents = logCallback1.getEvents();
+    List<LogEvent> allEvents =
+      Lists.newArrayList(distributedLogReader.getLog(loggingContext, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER));
 
     for (int i = 0; i < 60; ++i) {
       Assert.assertEquals("Assert failed: ", String.format("Test log message %d arg1 arg2", i),
@@ -328,79 +327,69 @@ public class LogSaverPluginTest extends KafkaTestBase {
       }
     }
 
-    LogCallback logCallback2 = new LogCallback();
-    distributedLogReader.getLog(loggingContext, allEvents.get(10).getLoggingEvent().getTimeStamp(),
-                                allEvents.get(20).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER, logCallback2);
-    List<LogEvent> events = logCallback2.getEvents();
+    List<LogEvent> events = Lists.newArrayList(
+      distributedLogReader.getLog(loggingContext, allEvents.get(10).getLoggingEvent().getTimeStamp(),
+                                  allEvents.get(20).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER));
     Assert.assertEquals(10, events.size());
     Assert.assertEquals("Test log message 10 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals("Test log message 19 arg1 arg2", events.get(9).getLoggingEvent().getFormattedMessage());
 
-    LogCallback logCallback3 = new LogCallback();
-    distributedLogReader.getLog(loggingContext, allEvents.get(5).getLoggingEvent().getTimeStamp(),
-                                allEvents.get(55).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER, logCallback3);
-    events = logCallback3.getEvents();
+    events = Lists.newArrayList(
+      distributedLogReader.getLog(loggingContext, allEvents.get(5).getLoggingEvent().getTimeStamp(),
+                                  allEvents.get(55).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER));
     Assert.assertEquals(50, events.size());
     Assert.assertEquals("Test log message 5 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals("Test log message 54 arg1 arg2", events.get(49).getLoggingEvent().getFormattedMessage());
 
-    LogCallback logCallback4 = new LogCallback();
-    distributedLogReader.getLog(loggingContext, allEvents.get(30).getLoggingEvent().getTimeStamp(),
-                                allEvents.get(53).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER, logCallback4);
-    events = logCallback4.getEvents();
+    events = Lists.newArrayList(
+      distributedLogReader.getLog(loggingContext, allEvents.get(30).getLoggingEvent().getTimeStamp(),
+                                  allEvents.get(53).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER));
     Assert.assertEquals(23, events.size());
     Assert.assertEquals("Test log message 30 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals("Test log message 52 arg1 arg2", events.get(22).getLoggingEvent().getFormattedMessage());
 
-    LogCallback logCallback5 = new LogCallback();
-    distributedLogReader.getLog(loggingContext, allEvents.get(35).getLoggingEvent().getTimeStamp(),
-                                allEvents.get(38).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER, logCallback5);
-    events = logCallback5.getEvents();
+    events = Lists.newArrayList(
+      distributedLogReader.getLog(loggingContext, allEvents.get(35).getLoggingEvent().getTimeStamp(),
+                                  allEvents.get(38).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER));
     Assert.assertEquals(3, events.size());
     Assert.assertEquals("Test log message 35 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals("Test log message 37 arg1 arg2", events.get(2).getLoggingEvent().getFormattedMessage());
 
-    LogCallback logCallback6 = new LogCallback();
-    distributedLogReader.getLog(loggingContext, allEvents.get(53).getLoggingEvent().getTimeStamp(),
-                                allEvents.get(59).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER, logCallback6);
-    events = logCallback6.getEvents();
+    events = Lists.newArrayList(
+      distributedLogReader.getLog(loggingContext, allEvents.get(53).getLoggingEvent().getTimeStamp(),
+                                  allEvents.get(59).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER));
     Assert.assertEquals(6, events.size());
     Assert.assertEquals("Test log message 53 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals("Test log message 58 arg1 arg2", events.get(5).getLoggingEvent().getFormattedMessage());
 
-    LogCallback logCallback7 = new LogCallback();
-    distributedLogReader.getLog(loggingContext, allEvents.get(59).getLoggingEvent().getTimeStamp(),
-                                allEvents.get(59).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER, logCallback7);
-    events = logCallback7.getEvents();
+    events = Lists.newArrayList(
+      distributedLogReader.getLog(loggingContext, allEvents.get(59).getLoggingEvent().getTimeStamp(),
+                                  allEvents.get(59).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER));
     Assert.assertEquals(0, events.size());
 
-    LogCallback logCallback8 = new LogCallback();
-    distributedLogReader.getLog(loggingContext, allEvents.get(0).getLoggingEvent().getTimeStamp(),
-                                allEvents.get(0).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER, logCallback8);
-    events = logCallback8.getEvents();
+    events = Lists.newArrayList(
+      distributedLogReader.getLog(loggingContext, allEvents.get(0).getLoggingEvent().getTimeStamp(),
+                                  allEvents.get(0).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER));
     Assert.assertEquals(0, events.size());
 
-    LogCallback logCallback9 = new LogCallback();
-    distributedLogReader.getLog(loggingContext, allEvents.get(20).getLoggingEvent().getTimeStamp(),
-                                allEvents.get(20).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER, logCallback9);
-    events = logCallback9.getEvents();
+    events = Lists.newArrayList(
+      distributedLogReader.getLog(loggingContext, allEvents.get(20).getLoggingEvent().getTimeStamp(),
+                                  allEvents.get(20).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER));
     Assert.assertEquals(0, events.size());
 
-    LogCallback logCallback10 = new LogCallback();
-    distributedLogReader.getLog(loggingContext, allEvents.get(32).getLoggingEvent().getTimeStamp() - 999999,
-                                allEvents.get(45).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER, logCallback10);
-    events = logCallback10.getEvents();
+    events = Lists.newArrayList(
+      distributedLogReader.getLog(loggingContext, allEvents.get(32).getLoggingEvent().getTimeStamp() - 999999,
+                                  allEvents.get(45).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER));
     Assert.assertTrue(events.size() > 13);
     Assert.assertEquals("Test log message 32 arg1 arg2",
                         events.get(events.size() - 13).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals("Test log message 44 arg1 arg2",
                         events.get(events.size() - 1).getLoggingEvent().getFormattedMessage());
 
-    LogCallback logCallback11 = new LogCallback();
-    distributedLogReader.getLog(loggingContext, allEvents.get(18).getLoggingEvent().getTimeStamp(),
-                                allEvents.get(34).getLoggingEvent().getTimeStamp() + 999999,
-                                Filter.EMPTY_FILTER, logCallback11);
-    events = logCallback11.getEvents();
+    events = Lists.newArrayList(
+      distributedLogReader.getLog(loggingContext, allEvents.get(18).getLoggingEvent().getTimeStamp(),
+                                  allEvents.get(34).getLoggingEvent().getTimeStamp() + 999999,
+                                  Filter.EMPTY_FILTER));
     Assert.assertTrue(events.size() > 16);
     Assert.assertEquals("Test log message 18 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals("Test log message 33 arg1 arg2",
