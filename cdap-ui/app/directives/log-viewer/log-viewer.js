@@ -219,7 +219,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
   vm.inViewScrollUpdate = (index, isInview, event) => {
 
-    if(isInview) {
+    if(isInview && vm.displayData && vm.displayData.length > 0) {
 
       //tbody extends beyond the viewport when scrolling down the table
       let topOfTable = event.inViewTarget.parentElement.getBoundingClientRect().top;
