@@ -153,7 +153,7 @@ function makeApp (authAddress, cdapConfig) {
     if (req.headers['authorization']) {
       customHeaders = {
         authorization: req.headers['authorization']
-      }
+      };
     }
 
     if (customHeaders) {
