@@ -659,13 +659,38 @@ cdap_check_and_set_classpath_for_dev_environment() {
 # returns "distributed" or "sdk" based on current CDAP_HOME
 #
 cdap_context() {
-  local readonly __context
-  if [[ -e ${CDAP_HOME}/lib/co.cask.cdap.cdap-standalone-@@project.version@@.jar ]]; then
+  local readonly __context __version=$(cdap_version)
+  if [[ -e ${CDAP_HOME}/lib/co.cask.cdap.cdap-standalone-${__version}.jar ]]; then
     __context=sdk
   else
     __context=distributed
   fi
   echo ${__context}
+}
+
+#
+# cdap_version [component]
+# returns the version of CDAP or <component> in CDAP_HOME, replacing snapshot timestamps with -SNAPSHOT
+#
+cdap_version() {
+  local readonly __component=${1}
+  local readonly __cdap_major __cdap_minor __cdap_patch __cdap_snapshot
+  local __version 
+  if [[ -z ${__component} ]]; then
+    __version=$(<${CDAP_HOME}/VERSION)
+  else
+    __version=$(<${CDAP_HOME}/${__component}/VERSION)
+  fi
+  __cdap_major=$(echo ${__version} | cut -d. -f1)
+  __cdap_minor=$(echo ${__version} | cut -d. -f2)
+  __cdap_patch=$(echo ${__version} | cut -d. -f3)
+  __cdap_snapshot=$(echo ${__version} | cut -d. -f4)
+  if [[ -z ${__cdap_snapshot} ]]; then
+    __version=${__cdap_major}.${__cdap_minor}.${__cdap_patch}
+  else
+    __version=${__cdap_major}.${__cdap_minor}.${__cdap_patch}-SNAPSHOT
+  fi
+  echo ${__version}
 }
 
 ###
@@ -891,19 +916,21 @@ cdap_ui() {
 # Runs CDAP CLI with the given options, or starts an interactive shell
 #
 cdap_cli() {
-  local readonly __path __libexec __lib __script="$(basename ${0}):cdap_cli"
+  local readonly __path __libexec __lib __version __script="$(basename ${0}):cdap_cli"
   local readonly __class="co.cask.cdap.cli.CLIMain"
   cdap_set_java || die "Unable to locate JAVA or JAVA_HOME"
   __path=${CDAP_HOME}
   if [[ -d ${__path}/cli/lib ]]; then
     __libexec=${__path}/cli/libexec
     __lib=${__path}/cli/lib
+    __version=$(cdap_version cli)
   else
     __libexec=${__path}/libexec
     __lib=${__path}/lib
+    __version=$(cdap_version)
   fi
-  CLI_CP=${__libexec}/co.cask.cdap.cdap-cli-@@project.version@@.jar
-  CLI_CP+=:${__lib}/co.cask.cdap.cdap-cli-@@project.version@@.jar
+  CLI_CP=${__libexec}/co.cask.cdap.cdap-cli-${__version}.jar
+  CLI_CP+=:${__lib}/co.cask.cdap.cdap-cli-${__version}.jar
   if [[ ${CLASSPATH} == '' ]]; then
     CLASSPATH=${CLI_CP}
   else
