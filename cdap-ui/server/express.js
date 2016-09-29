@@ -172,16 +172,18 @@ function makeApp (authAddress, cdapConfig) {
             }
 
             var type = req.query.type;
+            var responseHeaders = {
+              'Cache-Control': 'no-cache, no-store'
+            };
+
             if (type === 'download') {
               var filename = req.query.filename;
-
-              res.set({
-                'Content-Disposition': 'attachment; filename='+filename,
-                'Cache-Control': 'no-cache, no-store'
-              });
+              responseHeaders['Content-Disposition'] = 'attachment; filename='+filename;
             } else {
-              res.set('Content-Type', 'text/plain');
+              responseHeaders['Content-Type'] = 'text/plain';
             }
+
+            res.set(responseHeaders);
           }
         )
         .pipe(res)
