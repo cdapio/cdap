@@ -68,20 +68,24 @@ case ${1} in
     echo
     echo "  Commands:"
     echo
-    echo "    auth-server       - Sends the arguments to the appropriate service"
+    if [[ $(cdap_context) == 'distributed' ]]; then
+    # No indent to make lining up easier
+    echo "    auth-server  - Sends the arguments (start/stop/etc.) to the appropriate CDAP service on this host"
     echo "    kafka-server"
     echo "    master"
     echo "    router"
     echo "    ui"
     echo
-    echo "    cli               - Starts an interactive CDAP CLI session"
+    echo "    classpath    - Returns the Java CLASSPATH of the CDAP Master service"
+    echo "    config-tool  - Returns JSON-encoded CDAP configuration key/value pairs"
+    echo "    run          - Runs a given class with arguments using the CDAP Master CLASSPATH and environment"
+    echo "    tx-debugger  - Runs CDAP transaction debugger"
     echo
-    echo "    classpath         - Returns the Java CLASSPATH of the CDAP Master service"
-    echo "    config-tool       - Returns JSON encoded CDAP configuration key/value pairs"
-    echo "    run               - Runs a given class with arguments using CDAP CLASSPATH and environment"
-    echo "    tx-debugger       - Runs CDAP transaction debugger"
+    else
+    echo "    sdk          - Sends the arguments (start/stop/etc.) to the Standalone CDAP service on this host"
     echo
-    echo "    sdk               - Sends the arguments to the SDK service"
+    fi
+    echo "    cli          - Starts an interactive CDAP CLI session"
     echo
     echo " Get more help for each command by executing:"
     echo " ${0} <command> --help"
