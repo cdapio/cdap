@@ -38,4 +38,7 @@ angular.module(`${PKG.name}.commons`)
   })
   .factory('moment', function($window) {
     return $window.moment;
+  })
+  .factory('JSZip', function ($window) {
+    return $window.JSZip;
   });

@@ -183,6 +183,8 @@ gulp.task('js:lib', function() {
       './bower_components/d3-tip/index.js',
       './bower_components/esprima/esprima.js',
 
+      './bower_components/jszip/dist/jszip.min.js',
+
       './app/lib/avsc-bundle.js'
     ].concat([
       './bower_components/cask-angular-*/*/module.js'

@@ -14,7 +14,7 @@
  * the License.
  */
 
-function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout, $uibModal, $q, moment, $http, Blob, FileSaver, myAlertOnValium) {
+function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_ACTIONS, MyCDAPDataSource, $sce, myCdapUrl, $timeout, $uibModal, $q, moment, $http, Blob, FileSaver, myAlertOnValium, JSZip) {
   'ngInject';
 
   var dataSrc = new MyCDAPDataSource($scope);
@@ -496,7 +496,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       'backendUrl': myCdapUrl.constructUrl({_cdapPath: url})
     }, {responseType: 'text'})
       .success((res) => {
-        var blob = new Blob([res], { type: 'text/plain' });
+        let zip = new JSZip();
 
         let filename = '';
         if ('undefined' !== typeof vm.getDownloadFilename()) {
@@ -505,7 +505,16 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
           filename = vm.namespaceId + '-' + vm.appId + '-' + vm.programType + '-' + vm.programId + '-' + formatDate(new Date(vm.startTimeMs), true);
         }
 
-        FileSaver.saveAs(blob, `${filename}.log`);
+        zip.file(`${filename}.log`, res);
+
+        zip.generateAsync({
+          type: 'blob',
+          compression: 'DEFLATE',
+          compressionOptions: {level: 6}
+        })
+          .then((content) => {
+            FileSaver.saveAs(content, `${filename}.zip`);
+          });
 
         vm.isDownloading = false;
       })
