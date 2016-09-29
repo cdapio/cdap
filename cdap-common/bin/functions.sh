@@ -659,7 +659,7 @@ cdap_check_and_set_classpath_for_dev_environment() {
 # returns "distributed" or "sdk" based on current CDAP_HOME
 #
 cdap_context() {
-  local readonly __context __version=$(cdap_version}
+  local readonly __context __version=$(cdap_version)
   if [[ -e ${CDAP_HOME}/lib/co.cask.cdap.cdap-standalone-${__version}.jar ]]; then
     __context=sdk
   else
