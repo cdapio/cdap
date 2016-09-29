@@ -24,6 +24,7 @@ import AdminConfigurePane from '../AdminConfigurePane';
 import AdminOverviewPane from '../AdminOverviewPane';
 import AbstractWizard from 'components/AbstractWizard';
 import Redirect from 'react-router/Redirect';
+import Helmet from 'react-helmet';
 
 import T from 'i18n-react';
 var shortid = require('shortid');
@@ -164,6 +165,9 @@ class Management extends Component {
         {
           this.state.redirectTo && <Redirect to={redirectUrl} />
         }
+        <Helmet
+          title="Administrator"
+        />
         <div className="top-panel">
           <div className="admin-row top-row">
             <InfoCard

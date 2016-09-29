@@ -15,6 +15,8 @@
  */
 
 import React, {Component} from 'react';
+import Helmet from 'react-helmet';
+
 export default class Dashboard extends Component {
   constructor(props) {
     super(props);
@@ -23,6 +25,9 @@ export default class Dashboard extends Component {
   render() {
     return (
       <div>
+        <Helmet
+          title="Dashboard"
+        />
         <h1> Dashboard Screen </h1>
       </div>
     );

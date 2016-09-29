@@ -30,6 +30,8 @@ const defaultFilter = ['app', 'dataset', 'stream'];
 class Home extends Component {
   constructor(props) {
     super(props);
+    this.urlFilters = [];
+    this.urlSort = '';
     this.filterOptions = [
       {
         displayName: T.translate('commons.entity.application.plural'),
@@ -77,20 +79,65 @@ class Home extends Component {
       loading: true
     };
 
+    this.isDefaultSort = this.isDefaultSort.bind(this);
+    this.isDefaultFilter = this.isDefaultFilter.bind(this);
+    this.makeSortFilterParams = this.makeSortFilterParams.bind(this);
+    this.processQueryString = this.processQueryString.bind(this);
+  }
+
+  componentWillReceiveProps(nextProps) {
+    this.search(this.state.query, this.state.filter, this.state.sortObj, nextProps.params.namespace);
+  }
+
+  processQueryString(queryString) {
+    let sortIndex = queryString.indexOf('sort=desc');
+    let filterIndex = queryString.indexOf('filter=');
+    let filtersArr = [];
+    let sortOpt;
+
+    sortOpt = sortIndex !== -1 ? this.sortOptions[1] : this.sortOptions[0];
+
+    if(filterIndex !== -1){
+      //Parse url substring ; start after 'filter='
+      let filterString = location.search.substring(filterIndex + 7);
+      filtersArr = filterString.split(',');
+
+      //Process the array and remove any filters that are invalid
+      for(let i = filtersArr.length-1; i >= 0; i--){
+        let val = filtersArr[i];
+        if(!(val === 'app' || val === 'artifact' || val === 'dataset' || val === 'stream')){
+          filtersArr.splice(i,1);
+        }
+      }
+    }
+    return {
+      'filter' : filtersArr,
+      'sort' : sortOpt
+    };
   }
 
   componentDidMount() {
-    this.search();
     Store.dispatch({
       type: 'SELECT_NAMESPACE',
       payload: {
         selectedNamespace: this.props.params.namespace
       }
     });
-  }
 
-  componentWillReceiveProps(nextProps) {
-    this.search(this.state.query, this.state.filter, this.state.sortObj, nextProps.params.namespace);
+    //Parse URL and apply filters / sort
+    let filterSortObj = this.processQueryString(location.search);
+    let urlFilters;
+    let urlSort;
+
+    if(typeof filterSortObj.filter !== 'undefined' && filterSortObj.filter.length === 0){
+      urlFilters = this.state.filter;
+    } else {
+      urlFilters = filterSortObj.filter;
+    }
+
+    urlSort = filterSortObj.sort;
+
+    this.search(this.state.query, urlFilters, urlSort);
   }
 
   search(
@@ -99,6 +146,7 @@ class Home extends Component {
     sortObj = this.state.sortObj,
     namespace = this.props.params.namespace
   ) {
+
     this.setState({loading: true});
 
     if (filter.length === 0) {
@@ -152,7 +200,48 @@ class Home extends Component {
     this.setState({selectedEntity: uniqueId});
   }
 
+  isDefaultFilter(){
+    return (this.state.filter.length === defaultFilter.length) && this.state.filter.every((element, index) => {
+      return element === defaultFilter[index];
+    });
+  }
+
+  isDefaultSort(){
+    return this.state.sortObj.sort === this.sortOptions[0].sort;
+  }
+
+  makeSortFilterParams(){
+    let sortAndFilterParams = '';
+    let filterString = '';
+    let isDefaultSorted = this.isDefaultSort();
+    let isDefaultFiltered = this.isDefaultFilter();
+
+    if(isDefaultSorted && isDefaultFiltered){
+      return;
+    }
+
+    // //Add Query Params to URL on re-render
+    sortAndFilterParams = !isDefaultSorted ? '?sort=desc' : '';
+
+    if(!isDefaultFiltered){
+      //If the cards are sorted and filtered, seperate query params
+      sortAndFilterParams = !isDefaultSorted ? sortAndFilterParams.concat('&') : '?';
+      filterString = this.state.filter.join(',');
+      sortAndFilterParams = sortAndFilterParams + 'filter=' + filterString;
+    }
+
+    let obj = {
+      title: 'CDAP',
+      url: location.pathname + sortAndFilterParams
+    };
+
+    history.pushState(obj, obj.Title, obj.url);
+  }
+
   render() {
+
+    this.makeSortFilterParams();
+
     const empty = (
       <h3 className="text-center empty-message">
         {T.translate('features.Home.emptyMessage')}
@@ -176,6 +265,7 @@ class Home extends Component {
           onSortClick={this.handleSortClick.bind(this)}
           onSearch={this.handleSearch.bind(this)}
         />
+
         <div className="entity-list">
           {
             this.state.loading ? loading :
@@ -209,7 +299,9 @@ class Home extends Component {
 Home.propTypes = {
   params: PropTypes.shape({
     namespace : PropTypes.string
-  })
+  }),
+  location: PropTypes.object,
+  history: PropTypes.object
 };
 
 export default Home;
