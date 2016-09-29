@@ -29,7 +29,7 @@ if [[ $? -ne 0 ]]; then
 fi
 __app_home=$(cd $(dirname ${__target})/.. >&-; pwd -P)
 
-__comp_home=${__target%/*/*}
+__comp_home=$(cd ${__target%/*/*} >&-; pwd -P)
 # Determine if we're in the SDK or distributed
 if [[ ${__comp_home%/*} == /opt/cdap ]]; then
   __app_home=${__comp_home}
