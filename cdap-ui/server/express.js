@@ -165,8 +165,22 @@ function makeApp (authAddress, cdapConfig) {
         })
         .on('response',
           function (response) {
+            // This happens when use tries to access the link directly when
+            // no autorization token present
             if (response.statusCode !== 200) {
               res.send('Not Authorized to view logs.');
+            }
+
+            var type = req.query.type;
+            if (type === 'download') {
+              var filename = req.query.filename;
+
+              res.set({
+                'Content-Disposition': 'attachment; filename='+filename,
+                'Cache-Control': 'no-cache, no-store'
+              });
+            } else {
+              res.set('Content-Type', 'text/plain');
             }
           }
         )

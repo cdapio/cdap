@@ -2,7 +2,7 @@
  * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use vm file except in compliance with the License. You may obtain a copy of
+ * use this file except in compliance with the License. You may obtain a copy of
  * the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -486,11 +486,27 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
     });
   }
 
-  vm.getDownloadUrl = () => {
+  vm.getDownloadUrl = (type = 'download') => {
+
+    // Generate backend path
     let startTime = Math.floor(vm.startTimeMs/1000);
-    let url = `/namespaces/${vm.namespaceId}/apps/${vm.appId}/${vm.programType}/${vm.programId}/runs/${vm.runId}/logs?start=${startTime}`;
-    url = encodeURIComponent(myCdapUrl.constructUrl({_cdapPath: url}));
-    url = `/downloadLogs?backendUrl=${url}`;
+    let path = `/namespaces/${vm.namespaceId}/apps/${vm.appId}/${vm.programType}/${vm.programId}/runs/${vm.runId}/logs?start=${startTime}`;
+    path = encodeURIComponent(myCdapUrl.constructUrl({_cdapPath: path}));
+
+    let url = `/downloadLogs?backendUrl=${path}&type=${type}`;
+
+    if (type === 'download') {
+      // Generate filename
+      let filename = '';
+      if ('undefined' !== typeof this.getDownloadFilename()) {
+        filename = this.getDownloadFilename() + '-' + formatDate(new Date(this.startTimeMs), true);
+      } else {
+         filename = this.namespaceId + '-' + this.appId + '-' + this.programType + '-' + this.programId + '-' + formatDate(new Date(this.startTimeMs), true);
+      }
+
+      url = `${url}&filename=${filename}.log`;
+    }
+
     return url;
   };
 
