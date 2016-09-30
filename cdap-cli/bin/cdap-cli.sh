@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright © 2014 Cask Data, Inc.
+# Copyright © 2014-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -16,72 +16,19 @@
 # the License.
 #
 
-# Attempt to set APP_HOME
-# Resolve links: $0 may be a link
-PRG="$0"
+# This script is a wrapper for "cdap cli" and will be removed in 4.1
+echo
+echo "[WARN] ${0} is deprecated and will be removed in CDAP 4.1. Please use 'cdap cli' for CDAP command line."
+echo
+echo "  cdap cli ${@}"
+echo
+echo
 
-# Need this for relative symlinks.
-while [ -h "$PRG" ] ; do
-    ls=`ls -ld "$PRG"`
-    link=`expr "$ls" : '.*-> \(.*\)$'`
-    if expr "$link" : '/.*' > /dev/null; then
-        PRG="$link"
-    else
-        PRG=`dirname "$PRG"`"/$link"
-    fi
-done
+__script=${BASH_SOURCE[0]}
 
-# Determine the Java command to use to start the JVM.
-if [ -n "$JAVA_HOME" ] ; then
-    if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
-        # IBM's JDK on AIX uses strange locations for the executables
-        JAVACMD="$JAVA_HOME/jre/sh/java"
-    else
-        JAVACMD="$JAVA_HOME/bin/java"
-    fi
-    if [ ! -x "$JAVACMD" ] ; then
-        echo "ERROR: JAVA_HOME is set to an invalid directory: $JAVA_HOME
-Please set the JAVA_HOME variable in your environment to match the
-location of your Java installation."
-        exit 1
-    fi
-else
-    JAVACMD="java"
-    which java >/dev/null 2>&1 || die "ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
-Please set the JAVA_HOME variable in your environment to match the
-location of your Java installation."
+__target=$(readlink ${__script}) # TODO: readlink isn't portable, if we support more than Linux/macOS
+if [[ $? -ne 0 ]]; then
+  __target=${__script} # no symlink
 fi
-
-# java version check
-JAVA_VERSION=`$JAVACMD -version 2>&1 | grep "java version" | awk '{print $3}' | awk -F '.' '{print $2}'`
-if [ $JAVA_VERSION -ne 7 ] && [ $JAVA_VERSION -ne 8 ]; then
-  echo "ERROR: Java version not supported. Please install Java 7 or 8 - other versions of Java are not supported."
-  exit -1
-fi
-
-bin=`dirname "${PRG}"`
-bin=`cd "$bin"; pwd`
-lib="$bin"/../lib
-libexec="$bin"/../libexec
-conf="$bin"/../conf
-CDAP_CONF=${CDAP_CONF:-/etc/cdap/conf}
-script=`basename $0`
-
-CLI_CP=${libexec}/co.cask.cdap.cdap-cli-@@project.version@@.jar:${lib}/co.cask.cdap.cdap-cli-@@project.version@@.jar
-
-if [ "$CLASSPATH" = "" ]; then
-  CLASSPATH=$CLI_CP
-else
-  CLASSPATH=$CLASSPATH:$CLI_CP
-fi
-
-# Load the configuration too.
-if [ -d "$CDAP_CONF" ]; then
-  CLASSPATH=$CLASSPATH:"$CDAP_CONF"
-elif [ -d "$conf" ]; then
-  CLASSPATH=$CLASSPATH:"$conf"/
-fi
-
-CDAP_HOME="$bin"/..
-export CDAP_HOME
-$JAVACMD $JAVA_OPTS -cp ${CLASSPATH} -Dscript=$script co.cask.cdap.cli.CLIMain "$@"
+__app_home=$(cd $(dirname ${__target})/.. >&-; pwd -P)
+${__app_home}/bin/cdap cli ${@}
