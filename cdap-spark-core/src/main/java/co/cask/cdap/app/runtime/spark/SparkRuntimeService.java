@@ -80,12 +80,12 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,6 +94,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import javax.annotation.Nullable;
 
@@ -171,6 +172,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
       String metricsConfPath;
       String logbackJarName = null;
+      File sparkJar = null;
 
       // Always copy (or link if local) user requested resources to local node. This is needed because the
       // driver is running in the same container as the launcher (i.e. this process).
@@ -200,7 +202,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         localizeResources.add(new LocalizeResource(expandedProgramJar, true));
 
         localizeResources.add(new LocalizeResource(createLauncherJar(tempDir)));
-        localizeResources.add(new LocalizeResource(buildDependencyJar(tempDir), true));
+        sparkJar = buildDependencyJar(tempDir);
+        localizeResources.add(new LocalizeResource(sparkJar, true));
         localizeResources.add(new LocalizeResource(saveCConf(cConf, tempDir)));
 
         if (pluginArchive != null) {
@@ -229,7 +232,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         localizeResources.add(new LocalizeResource(saveHConf(hConf, tempDir)));
       }
 
-      final Map<String, String> configs = createSubmitConfigs(tempDir, metricsConfPath, logbackJarName,
+      final Map<String, String> configs = createSubmitConfigs(sparkJar, tempDir, metricsConfPath, logbackJarName,
                                                               contextConfig.isLocal());
       submitSpark = new Callable<ListenableFuture<RunId>>() {
         @Override
@@ -428,25 +431,12 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     return jarFile;
   }
 
-  @Nullable
-  private static String getCdapCommonJarName() {
-    try {
-      CodeSource codeSource = CConfiguration.class.getProtectionDomain().getCodeSource();
-      if (codeSource != null) {
-        return Paths.get(codeSource.getLocation().toURI().getPath()).getFileName().toString();
-      }
-    } catch (SecurityException | URISyntaxException e) {
-      LOG.warn("Failed to get jar name for cdap-common.", e);
-    }
-    return null;
-  }
-
   /**
    * Creates the configurations for the spark submitter.
    */
-  private Map<String, String> createSubmitConfigs(File localDir,
+  private Map<String, String> createSubmitConfigs(File sparkJar, File localDir,
                                                   String metricsConfPath, @Nullable String logbackJarName,
-                                                  boolean localMode) {
+                                                  boolean localMode) throws Exception {
     Map<String, String> configs = new HashMap<>();
 
     // Make Spark UI runs on random port. By default, Spark UI runs on port 4040 and it will do a sequential search
@@ -474,18 +464,23 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     // classpath so adding them is not required. In non-local mode where spark driver and executors runs in a different
     // jvm we are adding these to their classpath.
     if (!localMode) {
-      // Find the name of the cdap-common.jar and add it to the classpath in the beginning.
-      // So that classpath looks like $PWD/cdap-spark.jar/cdap-common.jar:$PWD/cdap-spark-jar/*.
-      // This allows FileContextLocationFactory from cdap-common.jar to get picked up instead
-      // of FileContextLocationFactory from Apache Twill.
-      String cdapCommonJar = getCdapCommonJarName();
-      Path cdapCommonJarPath = cdapCommonJar == null ? null : Paths.get("$PWD", CDAP_SPARK_JAR, "lib", cdapCommonJar);
-      if (cdapCommonJarPath == null) {
-        LOG.warn("Failed to locate cdap-common.jar. It will not be added to the spark extra classpath in the" +
-                   " beginning.");
+      // Get all the jars in jobJar and sort them lexically before adding to the classpath
+      // This allows CDAP classes to be picked up first before the Twill/Tephra classes
+      List<String> jarFiles = new ArrayList<>();
+      try (JarFile jobJarFile = new JarFile(sparkJar)) {
+        Enumeration<JarEntry> entries = jobJarFile.entries();
+        while (entries.hasMoreElements()) {
+          JarEntry entry = entries.nextElement();
+          if (entry.getName().startsWith("lib/") && entry.getName().endsWith(".jar")) {
+            jarFiles.add(Paths.get("$PWD", CDAP_SPARK_JAR, entry.getName()).toString());
+          }
+        }
       }
+
+      Collections.sort(jarFiles);
       Joiner joiner = Joiner.on(File.pathSeparator).skipNulls();
-      String extraClassPath = joiner.join(Paths.get("$PWD", CDAP_LAUNCHER_JAR), cdapCommonJarPath,
+      String classpath = joiner.join(jarFiles);
+      String extraClassPath = joiner.join(Paths.get("$PWD", CDAP_LAUNCHER_JAR), classpath,
                                           Paths.get("$PWD", CDAP_SPARK_JAR, "lib", "*"));
       if (logbackJarName != null) {
         extraClassPath = logbackJarName + File.pathSeparator + extraClassPath;
