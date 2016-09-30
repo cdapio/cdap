@@ -35,8 +35,8 @@ Bug Fixes
 - :cask-issue:`CDAP-7321` - Fixed a problem with upgrading CDAP using the CDAP Upgrade
   Tool.
 
-- :cask-issue:`CDAP-7324` - Fixed a problem with the upgrade tool not enabling tables
-  after upgrading co-processors.
+- :cask-issue:`CDAP-7324` - Fixed a problem with the upgrade tool while upgrading HBase
+  coprocessors.
 
 - :cask-issue:`CDAP-7353` - Fixed a problem with using "Download All" logs in the
   browser log viewer by having it fetch and stream the response to the client.
