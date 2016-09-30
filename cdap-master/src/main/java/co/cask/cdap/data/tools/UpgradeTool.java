@@ -59,6 +59,8 @@ import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
+import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedStreamSizeScheduleStore;
+import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
@@ -115,6 +117,8 @@ public class UpgradeTool {
   private final UpgradeDatasetServiceManager upgradeDatasetServiceManager;
   private final NamespaceStore nsStore;
   private final AuthorizationEnforcementService authorizationService;
+  private final DatasetBasedStreamSizeScheduleStore datasetBasedStreamSizeScheduleStore;
+  private final DatasetBasedTimeScheduleStore datasetBasedTimeScheduleStore;
   private final DefaultStore store;
 
   /**
@@ -159,6 +163,8 @@ public class UpgradeTool {
     this.queueAdmin = injector.getInstance(QueueAdmin.class);
     this.nsStore = injector.getInstance(NamespaceStore.class);
     this.authorizationService = injector.getInstance(AuthorizationEnforcementService.class);
+    this.datasetBasedStreamSizeScheduleStore = injector.getInstance(DatasetBasedStreamSizeScheduleStore.class);
+    this.datasetBasedTimeScheduleStore = injector.getInstance(DatasetBasedTimeScheduleStore.class);
     this.store = injector.getInstance(DefaultStore.class);
 
 
@@ -393,6 +399,13 @@ public class UpgradeTool {
     streamStateStoreUpgrader.upgrade();
 
     upgradeDatasetServiceManager.startUp();
+
+    LOG.info("Upgrading stream size schedule store...");
+    datasetBasedStreamSizeScheduleStore.upgrade();
+
+    LOG.info("Upgrading time schedule store...");
+    datasetBasedTimeScheduleStore.upgrade();
+
     LOG.info("Writing system metadata to existing entities...");
     try {
       existingEntitySystemMetadataWriter.write(upgradeDatasetServiceManager.getDSFramework());
