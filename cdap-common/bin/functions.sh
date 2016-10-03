@@ -343,7 +343,7 @@ cdap_set_classpath() {
     CLASSPATH=${__cp}
   fi
   export CLASSPATH
-  if [[ ${__verbose} ]]; then
+  if [[ ${__verbose} == 'true' ]]; then
     echo ${CLASSPATH}
   fi
   return 0
@@ -540,7 +540,7 @@ cdap_start_bin() {
   nohup nice -n ${NICENESS} ${MAIN_CMD} ${MAIN_CMD_ARGS} ${__args} </dev/null >>${__logfile} 2>&1 &
   __pid=${!}
   __ret=${?}
-  echo $${__pid} >${__pidfile}
+  echo ${__pid} >${__pidfile}
   if ! kill -0 ${__pid} >/dev/null 2>&1; then
     die "${MAIN_CMD} failed to start, please check logs at ${LOG_DIR} for more information"
   fi
