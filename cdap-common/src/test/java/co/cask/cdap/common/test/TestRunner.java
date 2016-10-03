@@ -35,15 +35,20 @@ public class TestRunner extends BlockJUnit4ClassRunner {
   static final ClassLoader TEST_CLASSLOADER;
 
   static {
+    // we will use this classloader only for junit itself. However, since junit uses org.hamcrest classes
+    // in its API, we also have to load those with this class loader. Hence accept resources and packages
+    // from org.junit and org.hamcrest.
     ClassLoader classLoader = MainClassLoader.createFromContext(new FilterClassLoader.Filter() {
       @Override
       public boolean acceptResource(String resource) {
-        return resource.startsWith("org/junit/");
+        return resource.startsWith("org/junit/")
+          || resource.startsWith("org/hamcrest/");
       }
 
       @Override
       public boolean acceptPackage(String packageName) {
-        return packageName.equals("org.junit") || packageName.startsWith("org.junit.");
+        return packageName.equals("org.junit") || packageName.startsWith("org.junit.")
+          || packageName.equals("org.hamcrest") || packageName.startsWith("org.hamcrest.");
       }
     });
     if (classLoader == null) {
