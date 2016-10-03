@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.io.Processor;
 import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -44,9 +45,11 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
+import javax.annotation.Nullable;
 
 /**
  * Handles reading/writing of file metadata.
@@ -152,6 +155,83 @@ public final class FileMetaDataManager {
   }
 
   /**
+   * Scans meta data and gathers all the files older than tillTime
+   *
+   * @param startTableKey row key for the scan and column from where scan will be started
+   * @param limit batch size for number of columns to be read
+   * @param processor processor to process files
+   * @return next row key + start column for next iteration, returns null if end of table
+   */
+  @Nullable
+  public TableKey scanFiles(final TableKey startTableKey, final int limit,
+                            final Processor<URI, Set<URI>> processor) {
+    return execute(new TransactionExecutor.Function<Table, TableKey>() {
+      @Override
+      public TableKey apply(Table table) throws Exception {
+        byte[] startKey = getRowKey(startTableKey.getRowKey());
+        byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
+        byte[] startColumn = startTableKey.getStartColumn();
+
+        try (Scanner scanner = table.scan(startKey, stopKey)) {
+          Row row;
+          int colCount = 0;
+
+          while ((row = scanner.next()) != null) {
+            // Get the next logging context
+            byte[] rowKey = row.getRow();
+            byte[] stopCol = null;
+
+            // Go through files for a logging context
+            for (final Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
+              byte[] colName = entry.getKey();
+              byte[] colValue = entry.getValue();
+
+              // while processing a row key, if start column is present, then it should be considered only for the
+              // first time. Skip any column less/equal to start column
+              if (startColumn != null && Bytes.compareTo(startColumn, colName) >= 0) {
+                continue;
+              }
+
+              // Stop if we exceeded the limit
+              if (colCount >= limit) {
+                //  return current row key if we exceeded the limit
+                return new TableKey(getLogPartition(rowKey), stopCol);
+              }
+
+              stopCol = colName;
+              colCount++;
+              processor.process(new URI(Bytes.toString(colValue)));
+            }
+            startColumn = null;
+          }
+        }
+        return null;
+      }
+    });
+  }
+
+  /**
+   * Class which holds table key (row key + column) for log meta
+   */
+  public static final class TableKey {
+    private final String rowKey;
+    private final byte[] startColumn;
+
+    public TableKey(String rowKey, @Nullable byte[] startColumn) {
+      this.rowKey = rowKey;
+      this.startColumn = startColumn;
+    }
+
+    public String getRowKey() {
+      return rowKey;
+    }
+
+    public byte[] getStartColumn() {
+      return startColumn;
+    }
+  }
+
+  /**
    * Deletes meta data until a given time, while keeping the latest meta data even if less than tillTime.
    * @param tillTime time till the meta data will be deleted.
    * @param callback callback called before deleting a meta data column.
@@ -170,8 +250,9 @@ public final class FileMetaDataManager {
             String namespacedLogDir = impersonator.doAs(namespaceId, new Callable<String>() {
               @Override
               public String call() throws Exception {
-                return LoggingContextHelper.getNamespacedBaseDir(namespacedLocationFactory, logBaseDir,
-                                                                 namespaceId);
+                return LoggingContextHelper.getNamespacedBaseDirLocation(namespacedLocationFactory,
+                                                                         logBaseDir, namespaceId,
+                                                                         impersonator).toString();
               }
             });
 
