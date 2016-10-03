@@ -71,7 +71,7 @@ class RouterResource extends ExternalResource {
     }
     router =
       new NettyRouter(cConf, sConf, InetAddresses.forString(hostname),
-                      new RouterServiceLookup((DiscoveryServiceClient) discoveryService,
+                      new RouterServiceLookup(cConf, (DiscoveryServiceClient) discoveryService,
                                               new RouterPathLookup(), routeStore),
                       new MockTokenValidator("failme"), accessTokenTransformer, discoveryServiceClient);
     router.startAndWait();

@@ -19,10 +19,8 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -84,6 +82,7 @@ public class RouteConfigHttpHandler extends AbstractAppFabricHttpHandler {
     if (routes == null || routes.isEmpty()) {
       throw new BadRequestException("Route config contains invalid format or empty content.");
     }
+
     List<ProgramId> nonExistingServices = new ArrayList<>();
     for (String version : routes.keySet()) {
       ProgramId routeProgram = namespace.app(appId, version).service(serviceId);
@@ -96,16 +95,12 @@ public class RouteConfigHttpHandler extends AbstractAppFabricHttpHandler {
                              + nonExistingServices);
     }
 
-    int percentageSum = 0;
-    for (Integer percent : routes.values()) {
-      percentageSum += percent;
-    }
-
-    if (percentageSum != 100) {
+    RouteConfig routeConfig = new RouteConfig(routes);
+    if (!routeConfig.isValid()) {
       throw new BadRequestException("Route Percentage needs to add upto 100.");
     }
 
-    routeStore.store(programId, new RouteConfig(routes));
+    routeStore.store(programId, routeConfig);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 

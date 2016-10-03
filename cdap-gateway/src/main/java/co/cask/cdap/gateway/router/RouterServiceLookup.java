@@ -16,10 +16,13 @@
 
 package co.cask.cdap.gateway.router;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.service.ServiceDiscoverable;
 import co.cask.cdap.common.utils.Networks;
+import co.cask.cdap.gateway.discovery.RouteFallbackStrategy;
 import co.cask.cdap.gateway.discovery.UserServiceEndpointStrategy;
 import co.cask.cdap.route.store.RouteStore;
 import com.google.common.base.Objects;
@@ -57,10 +60,11 @@ public class RouterServiceLookup {
   private final LoadingCache<CacheKey, EndpointStrategy> discoverableCache;
   private final RouterPathLookup routerPathLookup;
   private final RouteStore routeStore;
+  private final RouteFallbackStrategy fallbackStrategy;
 
   @Inject
-  public RouterServiceLookup(DiscoveryServiceClient discoveryServiceClient, RouterPathLookup routerPathLookup,
-                             RouteStore routeStore) {
+  public RouterServiceLookup(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
+                             RouterPathLookup routerPathLookup, RouteStore routeStore) {
     this.discoveryServiceClient = discoveryServiceClient;
     this.routerPathLookup = routerPathLookup;
     this.discoverableCache = CacheBuilder.newBuilder()
@@ -72,6 +76,8 @@ public class RouterServiceLookup {
         }
       });
     this.routeStore = routeStore;
+    this.fallbackStrategy = RouteFallbackStrategy.valueOfRouteFallbackStrategy(
+      cConf.get(Constants.Router.ROUTER_USERSERVICE_FALLBACK_STRAGEY));
   }
 
   /**
@@ -193,7 +199,7 @@ public class RouterServiceLookup {
 
     EndpointStrategy endpointStrategy = ServiceDiscoverable.isServiceDiscoverable(serviceName) ?
       new UserServiceEndpointStrategy(serviceDiscovered, routeStore, ServiceDiscoverable.getId(serviceName),
-                                       routeDestination.getVersion()) :
+                                      fallbackStrategy, routeDestination.getVersion()) :
       new RandomEndpointStrategy(serviceDiscovered);
     if (endpointStrategy.pick(300L, TimeUnit.MILLISECONDS) == null) {
       LOG.debug("Discoverable endpoint {} not found", routeDestination);

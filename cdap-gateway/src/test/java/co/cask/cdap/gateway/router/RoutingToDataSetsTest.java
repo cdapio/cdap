@@ -77,7 +77,8 @@ public class RoutingToDataSetsTest {
 
     cConf.setInt(Constants.Router.ROUTER_PORT, port);
     nettyRouter = new NettyRouter(cConf, sConf, InetAddresses.forString("127.0.0.1"),
-                                  new RouterServiceLookup(discoveryServiceClient, new RouterPathLookup(), routeStore),
+                                  new RouterServiceLookup(cConf, discoveryServiceClient, new RouterPathLookup(),
+                                                          routeStore),
                                   new SuccessTokenValidator(), accessTokenTransformer, discoveryServiceClient);
     nettyRouter.startAndWait();
 
