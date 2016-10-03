@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
@@ -32,7 +33,6 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.lang.reflect.Type;
-import java.util.Collections;
 import java.util.Map;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -64,10 +64,6 @@ public class RouteConfigHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("service-id") String serviceId) throws Exception {
     ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
     RouteConfig routeConfig = routeStore.fetch(programId);
-    if (routeConfig == null) {
-      responder.sendJson(HttpResponseStatus.OK, Collections.emptyMap());
-      return;
-    }
     responder.sendJson(HttpResponseStatus.OK, routeConfig.getRoutes());
   }
 
@@ -79,14 +75,18 @@ public class RouteConfigHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("service-id") String serviceId) throws Exception {
     ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
     Map<String, Integer> routes = parseBody(request, ROUTE_CONFIG_TYPE);
-    RouteConfig routeConfig;
-    try {
-      routeConfig = new RouteConfig(routes);
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-      return;
+    int percentageSum = 0;
+    if (routes != null) {
+      for (Integer percent : routes.values()) {
+        percentageSum += percent;
+      }
     }
-    routeStore.store(programId, routeConfig);
+
+    if (percentageSum != 100) {
+      throw new BadRequestException("Route Percentage needs to add upto 100.");
+    }
+
+    routeStore.store(programId, new RouteConfig(routes));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 

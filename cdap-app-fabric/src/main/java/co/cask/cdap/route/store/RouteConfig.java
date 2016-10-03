@@ -28,12 +28,7 @@ public class RouteConfig {
   private final Map<String, Integer> routes;
 
   public RouteConfig(Map<String, Integer> routes) {
-    int percentageSum = 0;
     Preconditions.checkNotNull(routes);
-    for (Integer percent : routes.values()) {
-      percentageSum += percent;
-    }
-    Preconditions.checkArgument(percentageSum == 100, "Route Percentage needs to add upto 100.");
     this.routes = ImmutableMap.copyOf(routes);
   }
 
