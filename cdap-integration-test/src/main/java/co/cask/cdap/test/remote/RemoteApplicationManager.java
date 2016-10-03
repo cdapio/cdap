@@ -28,6 +28,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.test.AbstractApplicationManager;
 import co.cask.cdap.test.DefaultMapReduceManager;
@@ -62,46 +63,50 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
     this.restClient = restClient;
   }
 
+  public RemoteApplicationManager(ApplicationId application, ClientConfig clientConfig, RESTClient restClient) {
+    this(application.toId(), clientConfig, restClient);
+  }
+
   @Override
   public FlowManager getFlowManager(String flowName) {
-    Id.Flow flowId = Id.Flow.from(application, flowName);
+    Id.Flow flowId = Id.Flow.from(application.toId(), flowName);
     return new RemoteFlowManager(flowId, clientConfig, restClient, this);
   }
 
   @Override
   public MapReduceManager getMapReduceManager(String programName) {
-    Id.Program programId = Id.Program.from(application, ProgramType.MAPREDUCE, programName);
+    Id.Program programId = Id.Program.from(application.toId(), ProgramType.MAPREDUCE, programName);
     return new DefaultMapReduceManager(programId, this);
   }
 
   @Override
   public SparkManager getSparkManager(String jobName) {
-    Id.Program programId = Id.Program.from(application, ProgramType.SPARK, jobName);
+    Id.Program programId = Id.Program.from(application.toId(), ProgramType.SPARK, jobName);
     return new DefaultSparkManager(programId, this);
   }
 
   @Override
   public WorkflowManager getWorkflowManager(String workflowName) {
-    Id.Workflow programId = Id.Workflow.from(application, workflowName);
+    Id.Workflow programId = Id.Workflow.from(application.toId(), workflowName);
     return new RemoteWorkflowManager(programId, clientConfig, restClient, this);
   }
 
   @Override
   public ServiceManager getServiceManager(String serviceName) {
-    Id.Service programId = Id.Service.from(application, serviceName);
+    Id.Service programId = Id.Service.from(application.toId(), serviceName);
     return new RemoteServiceManager(programId, clientConfig, restClient, this);
   }
 
   @Override
   public WorkerManager getWorkerManager(String workerName) {
-    Id.Worker programId = Id.Worker.from(application, workerName);
+    Id.Worker programId = Id.Worker.from(application.toId(), workerName);
     return new RemoteWorkerManager(programId, clientConfig, restClient, this);
   }
 
   @Override
   public List<PluginInstanceDetail> getPlugins() {
     try {
-      return applicationClient.getPlugins(application.toEntityId());
+      return applicationClient.getPlugins(application);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -110,11 +115,11 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   @Override
   public void stopAll() {
     try {
-      for (ProgramRecord programRecord : applicationClient.listPrograms(application)) {
+      for (ProgramRecord programRecord : applicationClient.listPrograms(application.toId())) {
         // have to do a check, since appFabricServer.stop will throw error when you stop something that is not running.
-        Id.Program id = Id.Program.from(application, programRecord.getType(), programRecord.getName());
+        Id.Program id = Id.Program.from(application.toId(), programRecord.getType(), programRecord.getName());
         if (isRunning(id)) {
-          programClient.stop(Id.Program.from(application, id.getType(), id.getId()));
+          programClient.stop(Id.Program.from(application.toId(), id.getType(), id.getId()));
         }
       }
     } catch (Exception e) {
@@ -132,7 +137,27 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   }
 
   @Override
+  public void stopProgram(ProgramId programId) {
+    try {
+      programClient.stop(programId);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
   public void startProgram(Id.Program programId, Map<String, String> arguments) {
+    try {
+      String status = programClient.getStatus(programId);
+      Preconditions.checkState("STOPPED".equals(status), "Program %s is already running", programId);
+      programClient.start(programId, false, arguments);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public void startProgram(ProgramId programId, Map<String, String> arguments) {
     try {
       String status = programClient.getStatus(programId);
       Preconditions.checkState("STOPPED".equals(status), "Program %s is already running", programId);
@@ -154,6 +179,16 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   }
 
   @Override
+  public boolean isRunning(ProgramId programId) {
+    try {
+      String status = programClient.getStatus(programId);
+      return "STARTING".equals(status) || "RUNNING".equals(status);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
   public List<RunRecord> getHistory(Id.Program programId, ProgramRunStatus status) {
     try {
       return programClient.getProgramRuns(programId, status.name(), 0, Long.MAX_VALUE, Integer.MAX_VALUE);
@@ -164,17 +199,17 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
 
   @Override
   public void update(AppRequest appRequest) throws Exception {
-    applicationClient.update(application, appRequest);
+    applicationClient.update(application.toId(), appRequest);
   }
 
   @Override
   public void delete() throws Exception {
-    applicationClient.delete(application);
+    applicationClient.delete(application.toId());
   }
 
   @Override
   public ApplicationDetail getInfo() throws Exception {
-    return applicationClient.get(application);
+    return applicationClient.get(application.toId());
   }
 
   @Override

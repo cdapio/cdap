@@ -42,6 +42,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.codec.CustomActionSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -132,6 +133,35 @@ public class ProgramClient {
   }
 
   /**
+   * Starts a program using specified runtime arguments.
+   *
+   * @param program the program to start
+   * @param debug true to start in debug mode
+   * @param runtimeArgs runtime arguments to pass to the program
+   * @throws IOException
+   * @throws ProgramNotFoundException
+   * @throws UnauthenticatedException
+   * @throws UnauthorizedException
+   */
+  public void start(ProgramId program, boolean debug, @Nullable Map<String, String> runtimeArgs) throws IOException,
+    ProgramNotFoundException, UnauthenticatedException, UnauthorizedException {
+    String action = debug ? "debug" :  "start";
+    String path = String.format("apps/%s/versions/%s/%s/%s/%s", program.getApplication(), program.getVersion(),
+                                program.getType().getCategoryName(), program.getProgram(), action);
+    URL url = config.resolveNamespacedURLV3(program.getNamespaceId().toId(), path);
+    HttpRequest.Builder request = HttpRequest.post(url);
+    if (runtimeArgs != null) {
+      request.withBody(GSON.toJson(runtimeArgs));
+    }
+
+    HttpResponse response = restClient.execute(request.build(), config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new ProgramNotFoundException(program);
+    }
+  }
+
+  /**
    * Starts a program using the stored runtime arguments.
    *
    * @param program the program to start
@@ -196,6 +226,26 @@ public class ProgramClient {
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ProgramNotFoundException(program);
+    }
+  }
+
+  /**
+   * Stops a program.
+   *
+   * @param programId the program to stop
+   * @throws IOException if a network error occurred
+   * @throws ProgramNotFoundException if the program with specified name could not be found
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public void stop(ProgramId programId) throws IOException, ProgramNotFoundException, UnauthenticatedException,
+    UnauthorizedException {
+    String path = String.format("apps/%s/versions/%s/%s/%s/stop", programId.getApplication(), programId.getVersion(),
+                                programId.getType().getCategoryName(), programId.getProgram());
+    URL url = config.resolveNamespacedURLV3(programId.getNamespaceId().toId(), path);
+    HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new ProgramNotFoundException(programId);
     }
   }
 
@@ -274,6 +324,30 @@ public class ProgramClient {
 
     Map<String, String> responseObject
       = ObjectResponse.<Map<String, String>>fromJsonBody(response, MAP_STRING_STRING_TYPE, GSON).getResponseObject();
+    return responseObject.get("status");
+  }
+
+  /**
+   * Gets the status of a program
+   * @param programId the program
+   * @return the status of the program (e.g. STOPPED, STARTING, RUNNING)
+   * @throws IOException if a network error occurred
+   * @throws ProgramNotFoundException if the program with the specified name could not be found
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public String getStatus(ProgramId programId) throws IOException, ProgramNotFoundException, UnauthenticatedException,
+    UnauthorizedException {
+    String path = String.format("apps/%s/versions/%s/%s/%s/status", programId.getApplication(), programId.getVersion(),
+                                programId.getType().getCategoryName(), programId.getProgram());
+    URL url = config.resolveNamespacedURLV3(programId.getNamespaceId().toId(), path);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
+      throw new ProgramNotFoundException(programId);
+    }
+
+    Map<String, String> responseObject = ObjectResponse.<Map<String, String>>fromJsonBody(
+      response, MAP_STRING_STRING_TYPE, GSON).getResponseObject();
     return responseObject.get("status");
   }
 
