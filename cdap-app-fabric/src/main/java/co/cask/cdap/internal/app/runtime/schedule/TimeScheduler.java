@@ -330,7 +330,7 @@ final class TimeScheduler implements Scheduler {
 
   @Override
   public synchronized void updateSchedule(ProgramId program, SchedulableProgramType programType, Schedule schedule,
-                             Map<String, String> properties) throws NotFoundException, SchedulerException {
+                                          Map<String, String> properties) throws NotFoundException, SchedulerException {
     checkInitialized();
     try {
       Trigger trigger = getTrigger(program, programType, schedule.getName());
@@ -386,8 +386,7 @@ final class TimeScheduler implements Scheduler {
   private void deleteAllSchedules(NamespaceId namespaceId, ApplicationSpecification appSpec)
     throws SchedulerException {
     for (ScheduleSpecification scheduleSpec : appSpec.getSchedules().values()) {
-      // TODO: (CDAP-7346) Add Application Version in ApplicationSpecification
-      ApplicationId appId = namespaceId.app(appSpec.getName());
+      ApplicationId appId = namespaceId.app(appSpec.getName(), appSpec.getAppVersion());
       ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
       ProgramId programId = appId.program(programType, scheduleSpec.getProgram().getProgramName());
       deleteSchedules(programId, scheduleSpec.getProgram().getProgramType());

@@ -821,6 +821,17 @@ public abstract class AppFabricTestBase {
     return GSON.fromJson(json, new TypeToken<List<ScheduleSpecification>>() { }.getType());
   }
 
+  protected List<ScheduleSpecification> getSchedules(String namespace, String appName, String appVersion,
+                                                     String workflowName)
+    throws Exception {
+    String schedulesUrl = String.format("apps/%s/versions/%s/workflows/%s/schedules", appName, appVersion,
+                                        workflowName);
+    String versionedUrl = getVersionedAPIPath(schedulesUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    HttpResponse response = doGet(versionedUrl);
+    String json = EntityUtils.toString(response.getEntity());
+    return GSON.fromJson(json, new TypeToken<List<ScheduleSpecification>>() { }.getType());
+  }
+
   protected void verifyNoRunWithStatus(final Id.Program program, final String status) throws Exception {
     Tasks.waitFor(0, new Callable<Integer>() {
       @Override

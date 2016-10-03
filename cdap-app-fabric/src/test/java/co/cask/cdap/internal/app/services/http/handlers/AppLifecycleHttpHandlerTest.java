@@ -176,11 +176,13 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     JsonObject appDetails = getAppDetails(appId.getNamespace(), appId.getApplication(), appId.getVersion());
     Assert.assertEquals(GSON.toJson(config), appDetails.get("configuration").getAsString());
+    Assert.assertEquals(appId.getVersion(), appDetails.get("appVersion").getAsString());
 
     // Get app info for the app with default versionId by versioned API
     JsonObject appDetailsDefault = getAppDetails(appId.getNamespace(), appId.getApplication(),
                                                  ApplicationId.DEFAULT_VERSION);
     Assert.assertEquals(GSON.toJson(configDefault), appDetailsDefault.get("configuration").getAsString());
+    Assert.assertEquals(ApplicationId.DEFAULT_VERSION, appDetailsDefault.get("appVersion").getAsString());
 
     // Get app info for the app with versionId "version_2" by versioned API
     JsonObject appDetailsV2 = getAppDetails(appId.getNamespace(), appId.getApplication(), appIdV2.getVersion());
@@ -192,12 +194,14 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), configDefault2);
     Assert.assertEquals(200, deploy(appIdDefault.toEntityId(), requestDefault2).getStatusLine().getStatusCode());
 
-    JsonObject appDetailsDefault2 = getAppDetails(appId.getNamespace(), appId.getApplication());
+    JsonObject appDetailsDefault2 = getAppDetails(appIdDefault.getNamespaceId(), appIdDefault.getId());
     Assert.assertEquals(GSON.toJson(configDefault2), appDetailsDefault2.get("configuration").getAsString());
 
-    // Get updated app info for the app with default versionId by non-versioned API
-    JsonObject appDetailsDefault2withVersion = getAppDetails(appId.getNamespace(), appId.getApplication());
-    Assert.assertEquals(GSON.toJson(configDefault2), appDetailsDefault2withVersion.get("configuration").getAsString());
+    // Get updated app info for the app with default versionId by versioned API
+    JsonObject appDetailsDefault2WithVersion = getAppDetails(appIdDefault.getNamespaceId(), appIdDefault.getId(),
+                                                             ApplicationId.DEFAULT_VERSION);
+    Assert.assertEquals(GSON.toJson(configDefault2), appDetailsDefault2WithVersion.get("configuration").getAsString());
+    Assert.assertEquals(ApplicationId.DEFAULT_VERSION, appDetailsDefault.get("appVersion").getAsString());
     deleteApp(appId, 200);
     deleteApp(appIdDefault, 200);
     deleteApp(appIdV2, 200);

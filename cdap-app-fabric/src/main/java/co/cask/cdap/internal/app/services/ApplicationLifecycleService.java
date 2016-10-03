@@ -673,6 +673,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private void deleteAppVersion(final ApplicationId appId, ApplicationSpecification spec) throws Exception {
     // enforce ADMIN privileges on the app
     authorizationEnforcer.enforce(appId, authenticationContext.getPrincipal(), Action.ADMIN);
+    //Delete the schedules
+    for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
+      ProgramId workflowProgramId = appId.program(ProgramType.WORKFLOW, workflowSpec.getName());
+      scheduler.deleteSchedules(workflowProgramId, SchedulableProgramType.WORKFLOW);
+    }
     store.removeApplication(appId);
   }
 

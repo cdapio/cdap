@@ -29,6 +29,7 @@ import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.codec.AbstractSpecificationCodec;
+import co.cask.cdap.proto.id.ApplicationId;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -49,6 +50,7 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     JsonObject jsonObj = new JsonObject();
 
     jsonObj.add("name", new JsonPrimitive(src.getName()));
+    jsonObj.add("appVersion", new JsonPrimitive(src.getAppVersion()));
     if (src.getConfiguration() != null) {
       jsonObj.add("configuration", new JsonPrimitive(src.getConfiguration()));
     }
@@ -75,6 +77,10 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     JsonObject jsonObj = json.getAsJsonObject();
 
     String name = jsonObj.get("name").getAsString();
+    String appVersion = ApplicationId.DEFAULT_VERSION;
+    if (jsonObj.has("appVersion")) {
+      appVersion = jsonObj.get("appVersion").getAsString();
+    }
 
     String description = jsonObj.get("description").getAsString();
     String configuration = null;
@@ -109,7 +115,7 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
                                                               WorkerSpecification.class);
     Map<String, Plugin> plugins = deserializeMap(jsonObj.get("plugins"), context, Plugin.class);
 
-    return new DefaultApplicationSpecification(name, description, configuration, artifactId, streams,
+    return new DefaultApplicationSpecification(name, appVersion, description, configuration, artifactId, streams,
                                                datasetModules, datasetInstances,
                                                flows, mapReduces, sparks,
                                                workflows, services, schedules, workers, plugins);

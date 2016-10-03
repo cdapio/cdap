@@ -50,6 +50,7 @@ import co.cask.cdap.internal.app.worker.DefaultWorkerConfigurer;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowConfigurer;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
@@ -201,12 +202,20 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
    */
   public ApplicationSpecification createSpecification(@Nullable String applicationName) {
     // can be null only for apps before 3.2 that were not upgraded
+    return createSpecification(applicationName, null);
+  }
+
+  public ApplicationSpecification createSpecification(@Nullable String applicationName,
+                                                      @Nullable String applicationVersion) {
+    // applicationName can be null only for apps before 3.2 that were not upgraded
     ArtifactScope scope = artifactId.getNamespace().equals(Id.Namespace.SYSTEM)
-                            ? ArtifactScope.SYSTEM : ArtifactScope.USER;
+      ? ArtifactScope.SYSTEM : ArtifactScope.USER;
     ArtifactId artifactId = new ArtifactId(this.artifactId.getName(), this.artifactId.getVersion(), scope);
 
     String appName = applicationName == null ? name : applicationName;
-    return new DefaultApplicationSpecification(appName, description, configuration, artifactId, getStreams(),
+    String appVersion = applicationVersion == null ? ApplicationId.DEFAULT_VERSION : applicationVersion;
+    return new DefaultApplicationSpecification(appName, appVersion, description,
+                                               configuration, artifactId, getStreams(),
                                                getDatasetModules(), getDatasetSpecs(),
                                                flows, mapReduces, sparks, workflows, services,
                                                schedules, workers, getPlugins());

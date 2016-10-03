@@ -407,8 +407,7 @@ public class StreamSizeScheduler implements Scheduler {
   private void deleteAllSchedules(NamespaceId namespaceId, ApplicationSpecification appSpec)
     throws SchedulerException {
     for (ScheduleSpecification scheduleSpec : appSpec.getSchedules().values()) {
-      // TODO: (CDAP-7346) add version in ApplicationSpecification
-      ApplicationId appId = namespaceId.app(appSpec.getName());
+      ApplicationId appId = namespaceId.app(appSpec.getName(), appSpec.getAppVersion());
       ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
       ProgramId programId = appId.program(programType, scheduleSpec.getProgram().getProgramName());
       deleteSchedules(programId, scheduleSpec.getProgram().getProgramType());

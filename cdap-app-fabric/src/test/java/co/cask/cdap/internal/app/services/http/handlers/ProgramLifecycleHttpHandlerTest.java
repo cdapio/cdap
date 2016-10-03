@@ -906,17 +906,27 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testMultipleWorkflowSchedules() throws Exception {
     // Deploy the app
-    HttpResponse response = deploy(AppWithMultipleScheduledWorkflows.class, Constants.Gateway.API_VERSION_3_TOKEN,
-                                   TEST_NAMESPACE2);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    NamespaceId testNamespace2 = new NamespaceId(TEST_NAMESPACE2);
+    Id.Namespace idTestNamespace2 = testNamespace2.toId();
+    Id.Artifact artifactId = Id.Artifact.from(idTestNamespace2, "appwithmultiplescheduledworkflows", VERSION1);
+    addAppArtifact(artifactId, AppWithMultipleScheduledWorkflows.class);
+    AppRequest<? extends Config> appRequest = new AppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
+    Id.Application appDefault = new Id.Application(idTestNamespace2, APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME);
+    ApplicationId app1 = testNamespace2.app(APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME, VERSION1);
+    ApplicationId app2 = testNamespace2.app(APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME, VERSION2);
+    Assert.assertEquals(200, deploy(appDefault, appRequest).getStatusLine().getStatusCode());
+    Assert.assertEquals(200, deploy(app1, appRequest).getStatusLine().getStatusCode());
+    Assert.assertEquals(200, deploy(app2, appRequest).getStatusLine().getStatusCode());
 
+    // Schedule spec from non-versioned API
     List<ScheduleSpecification> someSchedules = getSchedules(TEST_NAMESPACE2, APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME,
                                                              APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW);
     Assert.assertEquals(2, someSchedules.size());
     Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW, someSchedules.get(0).getProgram().getProgramName());
     Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW, someSchedules.get(1).getProgram().getProgramName());
 
-
+    // Schedule spec from non-versioned API
     List<ScheduleSpecification> anotherSchedules = getSchedules(TEST_NAMESPACE2, APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME,
                                                                 APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW);
     Assert.assertEquals(3, anotherSchedules.size());
@@ -926,6 +936,30 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                         anotherSchedules.get(1).getProgram().getProgramName());
     Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW,
                         anotherSchedules.get(2).getProgram().getProgramName());
+
+    deleteApp(appDefault, 200);
+
+    // Schedule spec of app1 from versioned API
+    List<ScheduleSpecification> someSchedules1 = getSchedules(TEST_NAMESPACE2, APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME,
+                                                              VERSION1, APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW);
+    Assert.assertEquals(2, someSchedules1.size());
+    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW, someSchedules1.get(0).getProgram().getProgramName());
+    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW, someSchedules1.get(1).getProgram().getProgramName());
+
+    deleteApp(app1, 200);
+
+    // Schedule spec of app2 from versioned API
+    List<ScheduleSpecification> anotherSchedules2 = getSchedules(TEST_NAMESPACE2, APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME,
+                                                                VERSION2, APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW);
+    Assert.assertEquals(3, anotherSchedules2.size());
+    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW,
+                        anotherSchedules2.get(0).getProgram().getProgramName());
+    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW,
+                        anotherSchedules2.get(1).getProgram().getProgramName());
+    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW,
+                        anotherSchedules2.get(2).getProgram().getProgramName());
+
+    deleteApp(app2, 200);
   }
 
   @Test
