@@ -26,6 +26,8 @@ import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpResponse;
@@ -119,6 +121,18 @@ public class ScheduleClient {
     }
   }
 
+  public void suspend(ScheduleId scheduleId) throws IOException, UnauthenticatedException, NotFoundException,
+    UnauthorizedException {
+    String path = String.format("apps/%s/versions/%s/schedules/%s/suspend", scheduleId.getApplication(),
+                                scheduleId.getVersion(), scheduleId.getSchedule());
+    URL url = config.resolveNamespacedURLV3(NamespaceId.fromString(scheduleId.getNamespace()).toId(), path);
+    HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
+      throw new NotFoundException(scheduleId);
+    }
+  }
+
   public void resume(Id.Schedule schedule)
     throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
     String path = String.format("apps/%s/schedules/%s/resume", schedule.getApplication().getId(), schedule.getId());
@@ -130,6 +144,18 @@ public class ScheduleClient {
     }
   }
 
+  public void resume(ScheduleId scheduleId) throws IOException, UnauthenticatedException, NotFoundException,
+    UnauthorizedException {
+    String path = String.format("apps/%s/versions/%s/schedules/%s/resume", scheduleId.getApplication(),
+                                scheduleId.getVersion(), scheduleId.getSchedule());
+    URL url = config.resolveNamespacedURLV3(NamespaceId.fromString(scheduleId.getNamespace()).toId(), path);
+    HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
+      throw new NotFoundException(scheduleId);
+    }
+  }
+
   public String getStatus(Id.Schedule schedule)
     throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
     String path = String.format("apps/%s/schedules/%s/status", schedule.getApplication().getId(), schedule.getId());
@@ -138,6 +164,22 @@ public class ScheduleClient {
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
       throw new NotFoundException(schedule);
+    }
+
+    Map<String, String> responseObject
+      = ObjectResponse.<Map<String, String>>fromJsonBody(response, MAP_STRING_STRING_TYPE, GSON).getResponseObject();
+    return responseObject.get("status");
+  }
+
+  public String getStatus(ScheduleId scheduleId) throws IOException, UnauthenticatedException, NotFoundException,
+    UnauthorizedException {
+    String path = String.format("apps/%s/versions/%s/schedules/%s/status", scheduleId.getApplication(),
+                                scheduleId.getVersion(), scheduleId.getSchedule());
+    URL url = config.resolveNamespacedURLV3(NamespaceId.fromString(scheduleId.getNamespace()).toId(), path);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
+      throw new NotFoundException(scheduleId);
     }
 
     Map<String, String> responseObject

@@ -39,7 +39,7 @@ public class DefaultWorkerManager extends AbstractProgramManager<WorkerManager> 
   public void setInstances(int instances) {
     Preconditions.checkArgument(instances > 0, "Instance count should be > 0.");
     try {
-      appFabricClient.setWorkerInstances(programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
+      appFabricClient.setWorkerInstances(programId.getNamespace(), programId.getApplication(), programId.getProgram(),
                                          instances);
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -48,7 +48,7 @@ public class DefaultWorkerManager extends AbstractProgramManager<WorkerManager> 
 
   @Override
   public int getInstances() {
-    return appFabricClient.getWorkerInstances(programId.getNamespaceId(), programId.getApplicationId(),
-                                              programId.getId()).getInstances();
+    return appFabricClient.getWorkerInstances(programId.getNamespace(), programId.getApplication(),
+                                              programId.getProgram()).getInstances();
   }
 }

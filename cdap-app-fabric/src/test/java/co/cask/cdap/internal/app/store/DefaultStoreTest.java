@@ -113,7 +113,7 @@ public class DefaultStoreTest {
   @Before
   public void before() throws Exception {
     // Delete any schedules that may have been registered with Quartz during app deployment
-    scheduler.deleteAllSchedules(Id.Namespace.DEFAULT);
+    scheduler.deleteAllSchedules(NamespaceId.DEFAULT);
     store.clear();
     NamespacedLocationFactory namespacedLocationFactory =
       AppFabricTestHelper.getInjector().getInstance(NamespacedLocationFactory.class);

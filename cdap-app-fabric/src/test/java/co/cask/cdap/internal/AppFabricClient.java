@@ -143,7 +143,6 @@ public class AppFabricClient {
 
   public void startProgram(String namespaceId, String appId,
                            String flowId, ProgramType type, Map<String, String> args) throws Exception {
-
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/%s/%s/start",
                                getNamespacePath(namespaceId), appId, type.getCategoryName(), flowId);
@@ -157,22 +156,62 @@ public class AppFabricClient {
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Start " + type + " failed");
   }
 
-  public void stopProgram(String namespaceId, String appId, String flowId, ProgramType type) throws Exception {
+  public void startProgram(String namespaceId, String appId, String appVersion, String programId,
+                           ProgramType type, Map<String, String> args) throws Exception {
+    MockResponder responder = new MockResponder();
+    String uri = String.format("%s/apps/%s/versions/%s/%s/%s/start", getNamespacePath(namespaceId), appId, appVersion,
+                               type.getCategoryName(), programId);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    String argString = GSON.toJson(args);
+    if (argString != null) {
+      request.setContent(ChannelBuffers.wrappedBuffer(argString.getBytes(Charsets.UTF_8)));
+    }
+    programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId, appVersion,
+                                              type.getCategoryName(), programId, "start");
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Start " + type + " failed");
+  }
+
+
+  public void stopProgram(String namespaceId, String appId, String programId, ProgramType type) throws Exception {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/%s/%s/stop",
-                               getNamespacePath(namespaceId), appId, type.getCategoryName(), flowId);
+                               getNamespacePath(namespaceId), appId, type.getCategoryName(), programId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
     programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId,
-                                              type.getCategoryName(), flowId, "stop");
+                                              type.getCategoryName(), programId, "stop");
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Stop " + type + " failed");
   }
 
-  public String getStatus(String namespaceId, String appId, String flowId, ProgramType type)
+  public void stopProgram(String namespaceId, String appId, String appVersion, String programId,
+                          ProgramType type) throws Exception {
+    MockResponder responder = new MockResponder();
+    String uri = String.format("%s/apps/%s/versions/%s/%s/%s/stop",
+                               getNamespacePath(namespaceId), appId, appVersion, type.getCategoryName(), programId);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    programLifecycleHttpHandler.performAction(request, responder, namespaceId, appId, appVersion,
+                                              type.getCategoryName(), programId, "stop");
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Stop " + type + " failed");
+  }
+
+  public String getStatus(String namespaceId, String appId, String programId, ProgramType type)
     throws Exception {
     MockResponder responder = new MockResponder();
-    String uri = String.format("%s/apps/%s/%s/%s/status", getNamespacePath(namespaceId), appId, type, flowId);
+    String uri = String.format("%s/apps/%s/%s/%s/status", getNamespacePath(namespaceId), appId, type, programId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
-    programLifecycleHttpHandler.getStatus(request, responder, namespaceId, appId, type.getCategoryName(), flowId);
+    programLifecycleHttpHandler.getStatus(request, responder, namespaceId, appId, type.getCategoryName(), programId);
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get status " + type + " failed");
+    Map<String, String> json = responder.decodeResponseContent(MAP_TYPE);
+    return json.get("status");
+  }
+
+  public String getStatus(String namespaceId, String appId, String appVersion, String programId,
+                          ProgramType type) throws Exception {
+    MockResponder responder = new MockResponder();
+    String uri = String.format("%s/apps/%s/versions/%s/%s/%s/status", getNamespacePath(namespaceId),
+                               appId, appVersion, type, programId);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    programLifecycleHttpHandler.getStatus(request, responder, namespaceId, appId, appVersion, type.getCategoryName(),
+                                          programId);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get status " + type + " failed");
     Map<String, String> json = responder.decodeResponseContent(MAP_TYPE);
     return json.get("status");
@@ -406,16 +445,26 @@ public class AppFabricClient {
   }
 
   public void deployApplication(Id.Application appId, AppRequest appRequest) throws Exception {
-
     DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT,
       String.format("%s/apps/%s", getNamespacePath(appId.getNamespaceId()), appId.getId()));
+    createApplication(appId.toEntityId(), request, appRequest);
+  }
+
+  public void deployApplication(ApplicationId appId, AppRequest appRequest) throws Exception {
+    DefaultHttpRequest requst = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,
+      String.format("%s/apps/%s/versions/%s/create", getNamespacePath(appId.getNamespace()),
+                    appId.getApplication(), appId.getVersion()));
+    createApplication(appId, requst, appRequest);
+  }
+
+  private void createApplication(ApplicationId appId, DefaultHttpRequest request, AppRequest appRequest)
+    throws Exception {
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setContent(ChannelBuffers.wrappedBuffer(Bytes.toBytes(GSON.toJson(appRequest.getConfig()))));
 
     MockResponder mockResponder = new MockResponder();
-
-    BodyConsumer bodyConsumer = appLifecycleHttpHandler.create(request, mockResponder,
-                                                               appId.getNamespaceId(), appId.getId());
+    BodyConsumer bodyConsumer = appLifecycleHttpHandler.createAppVersion(request, mockResponder, appId.getNamespace(),
+                                                                         appId.getApplication(), appId.getVersion());
     Preconditions.checkNotNull(bodyConsumer, "BodyConsumer from deploy call should not be null");
 
     byte[] contents = Bytes.toBytes(GSON.toJson(appRequest));
@@ -426,24 +475,14 @@ public class AppFabricClient {
   }
 
   public void updateApplication(ApplicationId appId, AppRequest appRequest) throws Exception {
-    DefaultHttpRequest request = new DefaultHttpRequest(
-        HttpVersion.HTTP_1_1, HttpMethod.PUT,
-        String.format("%s/apps/%s/update", getNamespacePath(appId.getNamespace()), appId.getApplication())
-    );
-    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
-    byte[] contents = Bytes.toBytes(GSON.toJson(appRequest));
-    Preconditions.checkNotNull(contents);
-    request.setContent(ChannelBuffers.wrappedBuffer(contents));
-    MockResponder mockResponder = new MockResponder();
-    appLifecycleHttpHandler.updateApp(request, mockResponder, appId.getNamespace(), appId.getApplication());
-    verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Updating app failed");
+    deployApplication(appId, appRequest);
   }
 
   public void deleteApplication(ApplicationId appId) throws Exception {
     DefaultHttpRequest request = new DefaultHttpRequest(
       HttpVersion.HTTP_1_1, HttpMethod.DELETE,
-      String.format("%s/apps/%s", getNamespacePath(appId.getNamespace()), appId.getApplication())
-    );
+      String.format("%s/apps/%s/versions/%s", getNamespacePath(appId.getNamespace()), appId.getApplication(),
+                    appId.getVersion()));
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     MockResponder mockResponder = new MockResponder();
     appLifecycleHttpHandler.deleteApp(request, mockResponder, appId.getNamespace(), appId.getApplication());

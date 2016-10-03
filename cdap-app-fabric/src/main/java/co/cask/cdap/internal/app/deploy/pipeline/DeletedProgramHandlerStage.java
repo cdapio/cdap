@@ -112,8 +112,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
           }
         }
         // Remove all process states and group states for each stream
-        final String namespace = String.format("%s.%s", programId.getParent().getEntityName(),
-                                               programId.getEntityName());
+        final String namespace = String.format("%s.%s", programId.getApplication(), programId.getProgram());
 
         final NamespaceId namespaceId = appSpec.getApplicationId().getParent();
         impersonator.doAs(namespaceId, new Callable<Void>() {

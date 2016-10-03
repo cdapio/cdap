@@ -20,8 +20,8 @@ import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.internal.AppFabricClient;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ServiceInstances;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.MetricsManager;
 import co.cask.cdap.test.ServiceManager;
@@ -54,13 +54,13 @@ public class DefaultServiceManager extends AbstractProgramManager<ServiceManager
 
   private final MetricsManager metricsManager;
 
-  public DefaultServiceManager(Id.Program programId,
+  public DefaultServiceManager(ProgramId programId,
                                AppFabricClient appFabricClient, DiscoveryServiceClient discoveryServiceClient,
                                DefaultApplicationManager applicationManager, MetricsManager metricsManager) {
     super(programId, applicationManager);
-    this.namespace = programId.getNamespaceId();
-    this.applicationId = programId.getApplicationId();
-    this.serviceName = programId.getId();
+    this.namespace = programId.getNamespace();
+    this.applicationId = programId.getApplication();
+    this.serviceName = programId.getProgram();
 
     this.discoveryServiceClient = discoveryServiceClient;
     this.appFabricClient = appFabricClient;

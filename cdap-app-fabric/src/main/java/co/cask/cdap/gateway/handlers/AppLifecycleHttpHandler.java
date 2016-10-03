@@ -473,7 +473,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
             stopProgramIfRunning(programId);
             break;
           case WORKFLOW:
-            scheduler.deleteSchedules(programId.toId(), SchedulableProgramType.WORKFLOW);
+            scheduler.deleteSchedules(programId, SchedulableProgramType.WORKFLOW);
             break;
           case MAPREDUCE:
             //no-op

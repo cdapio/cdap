@@ -234,9 +234,9 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
       }
       List<ScheduledRuntime> runtimes;
       if (previousRuntimeRequested) {
-        runtimes = scheduler.previousScheduledRuntime(workflowId.toId(), SchedulableProgramType.WORKFLOW);
+        runtimes = scheduler.previousScheduledRuntime(workflowId, SchedulableProgramType.WORKFLOW);
       } else {
-        runtimes = scheduler.nextScheduledRuntime(workflowId.toId(), SchedulableProgramType.WORKFLOW);
+        runtimes = scheduler.nextScheduledRuntime(workflowId, SchedulableProgramType.WORKFLOW);
       }
       responder.sendJson(HttpResponseStatus.OK, runtimes);
     } catch (SecurityException e) {
@@ -253,9 +253,14 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                    @PathParam("namespace-id") String namespaceId,
                                    @PathParam("app-id") String appId,
                                    @PathParam("workflow-id") String workflowId) {
-    ApplicationSpecification appSpec = store.getApplication(new ApplicationId(namespaceId, appId));
+    ApplicationId application = new ApplicationId(namespaceId, appId);
+    respondWorkflowSchedules(responder, application, workflowId);
+  }
+
+  private void respondWorkflowSchedules(HttpResponder responder, ApplicationId application, String workflowId) {
+    ApplicationSpecification appSpec = store.getApplication(application);
     if (appSpec == null) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "App:" + appId + " not found");
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "App:" + application + " not found");
       return;
     }
 
@@ -269,6 +274,20 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     }
     responder.sendJson(HttpResponseStatus.OK, specList,
                        new TypeToken<List<ScheduleSpecification>>() { }.getType(), GSON);
+  }
+
+  /**
+   * Get Workflow schedules
+   */
+  @GET
+  @Path("/apps/{app-id}/versions/{app-version}/workflows/{workflow-id}/schedules")
+  public void getWorkflowSchedules(HttpRequest request, HttpResponder responder,
+                                   @PathParam("namespace-id") String namespaceId,
+                                   @PathParam("app-id") String appId,
+                                   @PathParam("app-version") String appVersion,
+                                   @PathParam("workflow-id") String workflowId) {
+    ApplicationId application = new ApplicationId(namespaceId, appId, appVersion);
+    respondWorkflowSchedules(responder, application, workflowId);
   }
 
   @GET

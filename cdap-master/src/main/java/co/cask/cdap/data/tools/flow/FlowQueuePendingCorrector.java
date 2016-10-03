@@ -161,7 +161,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
     System.out.println("Running queue.pending correction on namespace " + namespaceId);
     Collection<ApplicationSpecification> apps = store.getAllApplications(namespaceId);
     for (ApplicationSpecification app : apps) {
-      ApplicationId appId = namespaceId.app(app.getName());
+      ApplicationId appId = namespaceId.app(app.getName(), app.getAppVersion());
       run(appId, app);
     }
   }

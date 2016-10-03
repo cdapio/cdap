@@ -346,10 +346,28 @@ public class ApplicationClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
-  public void deploy(Id.Application appId,
-                     AppRequest<?> createRequest) throws IOException, UnauthenticatedException {
+  public void deploy(Id.Application appId, AppRequest<?> createRequest) throws IOException, UnauthenticatedException {
     URL url = config.resolveNamespacedURLV3(appId.getNamespace(), "apps/" + appId.getId());
     HttpRequest request = HttpRequest.put(url)
+      .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+      .withBody(GSON.toJson(createRequest))
+      .build();
+    restClient.upload(request, config.getAccessToken());
+  }
+
+  /**
+   * Creates an application with a version using an existing artifact.
+   *
+   * @param appId the id of the application to add
+   * @param createRequest the request body, which contains the artifact to use and any application config
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public void deploy(ApplicationId appId, AppRequest<?> createRequest) throws IOException, UnauthenticatedException {
+    URL url = config.resolveNamespacedURLV3(Id.Namespace.from(appId.getNamespace()),
+                                            String.format("apps/%s/versions/%s/create",
+                                                          appId.getApplication(), appId.getVersion()));
+    HttpRequest request = HttpRequest.post(url)
       .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
       .withBody(GSON.toJson(createRequest))
       .build();
