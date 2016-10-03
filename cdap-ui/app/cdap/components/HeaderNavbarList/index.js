@@ -14,25 +14,41 @@
  * the License.
  */
 import React, {PropTypes} from 'react';
+import { connect } from 'react-redux';
 import {Link} from 'react-router';
 
-export default function HeaderNavbarList({list}) {
+const mapStateToProps = (state) => {
+  return {
+    namespace : state.selectedNamespace
+  };
+};
+
+function HeaderNavbarList({namespace}){
   return (
     <ul className="navbar-list">
-      {
-        list.map((navbaritem, index) => {
-          return (
-            <li key={index}>
-              <Link
-                to={navbaritem.linkTo}
-                activeClassName="active"
-              >
-                {navbaritem.title}
-              </Link>
-            </li>
-          );
-        })
-      }
+      <li>
+        <Link
+          to={`/ns/${namespace}`}
+          activeClassName="active"
+          activeOnlyWhenExact
+        >
+          Home
+        </Link>
+      </li>
+
+      <li className="disabled">
+        Dashboard
+      </li>
+
+      <li>
+        <Link
+          to="/management"
+          activeClassName="active"
+          activeOnlyWhenExact
+        >
+          Management
+        </Link>
+      </li>
     </ul>
   );
 }
@@ -41,5 +57,9 @@ HeaderNavbarList.propTypes = {
   list: PropTypes.arrayOf(PropTypes.shape({
     title: PropTypes.string,
     linkTo: PropTypes.string
-  }))
+  })),
+  namespace: PropTypes.string,
+  store: PropTypes.object
 };
+
+export default connect(mapStateToProps)(HeaderNavbarList);

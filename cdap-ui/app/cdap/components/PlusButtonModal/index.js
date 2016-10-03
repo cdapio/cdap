@@ -21,7 +21,7 @@ import Market from '../Market';
 import ResourceCenter from '../ResourceCenter';
 
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
-
+import classNames from 'classnames';
 import T from 'i18n-react';
 
 require('./PlusButtonModal.less');
@@ -44,6 +44,17 @@ export default class PlusButtonModal extends Component {
     });
     this.props.onCloseHandler();
   }
+
+  getIconForView(view, opposite) {
+    const resourceCenterClass = 'icon-resourcecenter';
+    const marketIconClass = 'icon-CaskMarket';
+
+    if (opposite) {
+      return view === 'resourcecenter' ? marketIconClass : resourceCenterClass;
+    } else {
+      return view === 'resourcecenter' ? resourceCenterClass : marketIconClass;
+    }
+  }
   render() {
     const market = T.translate('commons.market');
     const resourceCenter = T.translate('commons.resource-center');
@@ -57,14 +68,24 @@ export default class PlusButtonModal extends Component {
       >
         <ModalHeader>
           <span className="pull-left">
+            <span
+              className={classNames("modal-header-icon", this.getIconForView(this.state.viewMode))}
+            />
+            <span className="plus-modal-header-text">
             { this.state.viewMode === 'resourcecenter' ? resourceCenter : market }
+            </span>
           </span>
           <div className="pull-right">
             <button
               className="btn btn-sm btn-resource-center"
               onClick={this.toggleView.bind(this)}
             >
-              { this.state.viewMode === 'resourcecenter' ? market : resourceCenter }
+              <span
+                className={classNames("button-icon", this.getIconForView(this.state.viewMode, true))}
+              />
+              <span className="plus-button-modal-toggle-text">
+                { this.state.viewMode === 'resourcecenter' ? market : resourceCenter }
+              </span>
             </button>
           </div>
         </ModalHeader>

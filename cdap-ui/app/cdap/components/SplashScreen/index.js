@@ -14,7 +14,7 @@
  * the License.
  */
 
-import React, { Component } from 'react';
+import React, { Component, PropTypes } from 'react';
 import 'whatwg-fetch';
 require('./SplashScreen.less');
 
@@ -22,7 +22,7 @@ import Card from '../Card';
 import MyUserStoreApi from '../../api/userstore';
 import T from 'i18n-react';
 
-export default class SplashScreen extends Component {
+ class SplashScreen extends Component {
   constructor(props) {
     super(props);
     this.props = props;
@@ -65,25 +65,33 @@ export default class SplashScreen extends Component {
         <div className="splash-screen-backdrop"></div>
         <div className="splash-screen">
           <Card
+            className="splash-screen-card"
             closeable
             title={T.translate('features.SplashScreen.title')}
             onClose={this.onClose.bind(this)}
           >
             <div className="text-center">
               <span className="fa fa-5x icon-fist"></span>
+              <div className="version-label">
+                {T.translate('features.SplashScreen.version-label')}
+              </div>
               <h4>
                 {T.translate('features.SplashScreen.intro-message')}
               </h4>
               <br />
               <div className={this.state.showRegistration ? 'group' : 'group no-registration'}>
-                <div className="btn btn-default">
-                  {T.translate('features.SplashScreen.buttons.getStarted')}
+                <a href="http://docs.cask.co/cdap">
+                  <div className="btn btn-default">
+                    <span className="fa fa-book btn-icon"></span>{T.translate('features.SplashScreen.buttons.getStarted')}
+                  </div>
+                </a>
+                <div className="btn-buffer">
                 </div>
-                <div className={this.state.showRegistration ? 'btn btn-default' : 'hide'}>
-                  {T.translate('features.SplashScreen.buttons.introduction')}
-                </div>
-                <div className={this.state.showRegistration ? 'btn btn-default' : 'hide'}>
-                  {T.translate('features.SplashScreen.buttons.register')}
+                <div
+                  className={this.state.showRegistration ? 'btn btn-default' : 'hide'}
+                  onClick={this.props.openVideo}
+                >
+                  <span className="fa fa-youtube-play btn-icon"></span>{T.translate('features.SplashScreen.buttons.introduction')}
                 </div>
               </div>
             </div>
@@ -93,3 +101,10 @@ export default class SplashScreen extends Component {
     );
   }
 }
+
+const propTypes = {
+  openVideo: PropTypes.func
+};
+
+SplashScreen.propTypes = propTypes;
+export default SplashScreen;

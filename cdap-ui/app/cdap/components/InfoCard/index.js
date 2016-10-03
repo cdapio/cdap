@@ -34,7 +34,7 @@ function InfoCard({isLoading, primaryText, secondaryText, superscriptText}) {
       >
         {superscriptText}
       </div>
-      <i className={classNames("fa", "fa-spinner", "fa-spin", "fa-3x", {"hidden" : !isLoading})} />
+      <i className={classNames("fa", "fa-spinner", "fa-spin", "fa-2x", {"hidden" : !isLoading})} />
       <div className={classNames("info-card-text", {'hidden' : isLoading})}>
         <div className="info-card-main-text">
           {primaryText}

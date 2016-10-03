@@ -17,22 +17,29 @@
 import React, {PropTypes} from 'react';
 require('./AdminOverviewPane.less');
 import OverviewPaneCard from '../OverviewPaneCard/index.js';
-var classNames = require('classnames');
 var shortid = require('shortid');
+import T from 'i18n-react';
 
 const propTypes = {
   isLoading: PropTypes.bool
 };
 
-function AdminOverviewPane({isLoading}) {
+var overviewCards = [
+  T.translate('features.Management.Component-Overview.cards.cdh'),
+  T.translate('features.Management.Component-Overview.cards.yarn'),
+  T.translate('features.Management.Component-Overview.cards.hdfs'),
+  T.translate('features.Management.Component-Overview.cards.zookeeper'),
+  T.translate('features.Management.Component-Overview.cards.kafka'),
+  T.translate('features.Management.Component-Overview.cards.spark')
+];
 
+function AdminOverviewPane() {
   var cards = [];
-  for(var i = 0; i < 8; i++){
+  for(var i = 0; i < overviewCards.length; i++){
     cards.push(
       <OverviewPaneCard
         key={shortid.generate()}
-        isLoading={isLoading}
-        name="HBASE"
+        name={overviewCards[i]}
         version={5.6}
       />
     );
@@ -40,11 +47,8 @@ function AdminOverviewPane({isLoading}) {
 
   return (
     <div className="overview-pane">
-      <span>Component Overview</span>
+      <span>{T.translate('features.Management.Component-Overview.label')}</span>
       <div className="overview-pane-container">
-        <div className={classNames("spinner-container", { "hidden" : !isLoading})}>
-          <div className={classNames("fa", "fa-spinner", "fa-spin", "spinner", "fa-3x", { "hidden" : !isLoading})}></div>
-        </div>
        {cards}
       </div>
     </div>

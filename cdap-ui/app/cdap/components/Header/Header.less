@@ -60,7 +60,16 @@
       float: left;
       line-height: 50px;
 
-      li { display: inline-block; }
+      li {
+        display: inline-block;
+        &.disabled {
+          cursor: not-allowed;
+          padding-left: 0;
+          padding-right: 40px;
+          color: #cccccc;
+          font-size: 14px;
+        }
+      }
       a {
         padding-left: 0;
         padding-right: 40px;
@@ -123,7 +132,7 @@
     .namespace-dropdown {
       width: 160px;
       border-left: 1px solid #666666;
-      padding: 0 10px;
+      padding: 0;
       font-size: 14px;
       user-select: none;
 
@@ -218,6 +227,12 @@
 .product-navbar-mixins(@border-product-color, @active-link-color) {
   .brand-header .navbar-brand { border-color: @border-product-color; }
   .navbar-list {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
     a {
       &:hover,
       &.active {

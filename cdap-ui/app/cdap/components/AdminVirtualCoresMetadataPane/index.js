@@ -19,17 +19,17 @@ require('./AdminVirtualCoresMetadataPane.less');
 import StatContainer from '../StatContainer/index.js';
 var classNames = require('classnames');
 
-var loading = true;
+var loading = false;
 
-function simulateLoading() {
-  setTimeout( () => {
-    loading = false;
-  }, 1500);
-}
+// function simulateLoading() {
+//   setTimeout( () => {
+//     loading = false;
+//   }, 1500);
+// }
 
 function AdminVirtualCoresMetadataPane(){
 
-  simulateLoading();
+  // simulateLoading();
 
   var stats = [];
 
@@ -63,7 +63,7 @@ function AdminVirtualCoresMetadataPane(){
         Virtual Cores
       </div>
       <div className={classNames("spinner-container", {"hidden" : !loading})}>
-        <div className={classNames("fa", "fa-spinner", "fa-spin", "spinner", "fa-3x", {"hidden" : !loading})}></div>
+        <div className={classNames("fa", "fa-spinner", "fa-spin", "spinner", "fa-2x", {"hidden" : !loading})}></div>
       </div>
       <div className="pane-body">
         {containers}

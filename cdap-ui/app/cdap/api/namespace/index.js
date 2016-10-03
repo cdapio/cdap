@@ -22,5 +22,7 @@ let basepath = '/namespaces';
 
 export const MyNamespaceApi = {
   list: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
-  get: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:namespace`)
+  get: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:namespace`),
+  pollList: apiCreator(dataSrc, 'GET', 'POLL', basepath),
+  create: apiCreator(dataSrc, 'PUT', 'REQUEST', `${basepath}/:namespace`)
 };

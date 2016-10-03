@@ -46,7 +46,7 @@ class HydratorPlusPlusStudioCtrl {
       }
       HydratorPlusPlusConfigActions.initializeConfigStore(rConfig);
       let configJson = rConfig;
-      if (!rConfig.__ui__) {
+      if (!rConfig.__ui__ || (!rConfig.__ui__.nodes && !rConfig.__ui__.connections)) {
         configJson = HydratorPlusPlusHydratorService.getNodesAndConnectionsFromConfig(rConfig, true);
         configJson['__ui__'] = {
           nodes: configJson.nodes.map( (node) => {

@@ -14,19 +14,23 @@
  * the License.
  */
 
-import React, {Component} from 'react';
+import React, {Component, PropTypes} from 'react';
 import {MySearchApi} from '../../api/search';
 import {parseMetadata} from '../../services/metadata-parser';
-import Card from '../Card';
 import HomeHeader from './HomeHeader';
+import EntityCard from '../EntityCard';
 import T from 'i18n-react';
+import Store from '../../services/store/store.js';
 
+const shortid = require('shortid');
+const classNames = require('classnames');
 require('./Home.less');
 
-export default class Home extends Component {
+const defaultFilter = ['app', 'dataset', 'stream'];
+
+class Home extends Component {
   constructor(props) {
     super(props);
-
     this.filterOptions = [
       {
         displayName: T.translate('commons.entity.application.plural'),
@@ -36,10 +40,10 @@ export default class Home extends Component {
         displayName: T.translate('commons.entity.artifact.plural'),
         id: 'artifact'
       },
-      {
-        displayName: T.translate('commons.entity.program.plural'),
-        id: 'program'
-      },
+      // {
+      //   displayName: T.translate('commons.entity.program.plural'),
+      //   id: 'program'
+      // },
       {
         displayName: T.translate('commons.entity.dataset.plural'),
         id: 'dataset'
@@ -47,38 +51,102 @@ export default class Home extends Component {
       {
         displayName: T.translate('commons.entity.stream.plural'),
         id: 'stream'
+      }
+      // {
+      //   displayName: T.translate('commons.entity.view.plural'),
+      //   id: 'view'
+      // },
+    ];
+
+    this.sortOptions = [
+      {
+        displayName: T.translate('features.Home.Header.sortOptions.nameAsc'),
+        sort: 'name asc'
       },
       {
-        displayName: T.translate('commons.entity.view.plural'),
-        id: 'view'
-      },
+        displayName: T.translate('features.Home.Header.sortOptions.nameDesc'),
+        sort: 'name desc'
+      }
     ];
 
     this.state = {
-      filter: ['artifact', 'app', 'dataset', 'stream', 'view'],
-      sort: '',
-      entities: []
+      filter: defaultFilter,
+      sortObj: this.sortOptions[0],
+      query: '',
+      entities: [],
+      selectedEntity: null,
+      loading: true
     };
 
-    this.search();
+    this.doesNsExist = this.doesNsExist.bind(this);
   }
 
-  search(filter) {
+  findNamespace(){
+    let namespaces = Store.getState().namespaces;
+    let name = this.props.params.namespace;
+
+    let result = _.find(namespaces, { 'name' : name });
+    return result ? true : false;
+  }
+
+  doesNsExist(ns){
+    let namespaces = Store.getState().namespaces.map(function(item){
+      return item.name;
+    });
+    return namespaces.indexOf(ns) !== -1;
+  }
+
+  componentWillMount(){
+    if(this.findNamespace()){
+      Store.dispatch({
+        type : 'SELECT_NAMESPACE',
+        payload : {
+          selectedNamespace : this.props.params.namespace
+        }
+      });
+    } else {
+      //FIXME: Must redirect if passed invalid namespace
+    }
+  }
+  componentDidMount() {
+    this.search();
+
+    this.sub = Store.subscribe(() => {
+      this.search();
+    });
+  }
+  componentWillUnmount() {
+    this.sub();
+  }
+
+  search(query = this.state.query, filter = this.state.filter, sortObj = this.state.sortObj) {
+    this.setState({loading: true});
+
+    if (filter.length === 0) {
+      this.setState({query, filter, sortObj, entities: [], selectedEntity: null, loading: false});
+      return;
+    }
+
     let params = {
-      namespace: 'default',
-      query: '*',
-      target: filter || this.state.filter
+      namespace: Store.getState().selectedNamespace,
+      query: `${query}*`,
+      target: filter,
+      sort: sortObj.sort
     };
 
     MySearchApi.search(params)
       .map((res) => {
-        return res.map(parseMetadata);
+        return res.results
+          .map(parseMetadata)
+          .map((entity) => {
+            entity.uniqueId = shortid.generate();
+            return entity;
+          })
+          .filter((entity) => entity.id.charAt(0) !== '_');
       })
-      .subscribe(
-        (res) => {
-          this.setState({entities: res});
-        }
-      );
+      .subscribe((res) => {
+        this.setState({query, filter, sortObj, entities: res, selectedEntity: null, loading: false});
+      });
   }
 
   handleFilterClick(option) {
@@ -90,38 +158,79 @@ export default class Home extends Component {
       arr.push(option.id);
     }
 
-    this.search(arr);
-    this.setState({filter: arr});
+    this.search(this.state.query, arr, this.state.sortObj);
+  }
+
+  handleSortClick(option) {
+    this.search(this.state.query, this.state.filter, option);
+  }
+
+  handleSearch(query) {
+    this.search(query, this.state.filter, this.state.sortObj);
+  }
+
+  handleEntityClick(uniqueId) {
+    this.setState({selectedEntity: uniqueId});
   }
 
   render() {
+    const empty = (
+      <h3 className="text-center empty-message">
+        {T.translate('features.Home.emptyMessage')}
+      </h3>
+    );
+
+    const loading = (
+      <h3 className="text-center">
+        <span className="fa fa-spinner fa-spin fa-2x loading-spinner"></span>
+      </h3>
+    );
+
     return (
       <div>
         <HomeHeader
           filterOptions={this.filterOptions}
           onFilterClick={this.handleFilterClick.bind(this)}
           activeFilter={this.state.filter}
+          sortOptions={this.sortOptions}
+          activeSort={this.state.sortObj}
+          onSortClick={this.handleSortClick.bind(this)}
+          onSearch={this.handleSearch.bind(this)}
         />
         <div className="entity-list">
-          {this.state.entities.map(
-            (entity, index) => {
+          {
+            this.state.loading ? loading :
+            this.state.entities.length === 0 ? empty :
+            this.state.entities.map(
+            (entity) => {
               return (
-                <Card
-                  key={index}
-                  title={entity.id}
-                  cardClass='home-cards'
+                <div
+                  className={
+                    classNames('entity-card-container',
+                      { active: entity.uniqueId === this.state.selectedEntity }
+                    )
+                  }
+                  key={entity.uniqueId}
+                  onClick={this.handleEntityClick.bind(this, entity.uniqueId)}
                 >
-                  <h4>
-                    <span>{T.translate('features.Home.Cards.type')}</span>
-                    <span>{entity.type}</span>
-                  </h4>
-                </Card>
+                  <EntityCard
+                    entity={entity}
+                    onUpdate={this.search.bind(this)}
+                  />
+                </div>
               );
             })
           }
         </div>
-
       </div>
     );
   }
 }
+
+Home.propTypes = {
+  params: PropTypes.shape({
+    namespace : PropTypes.string
+  })
+};
+
+export default Home;

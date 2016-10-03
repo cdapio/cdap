@@ -59,3 +59,102 @@ window.getAbsUIUrl = function(navigationObj = {}) {
   }
   return baseUrl;
 };
+function buildCustomUrl(url, params = {}) {
+  let queryParams = {};
+  for (let key in params) {
+    if (!params.hasOwnProperty(key)) {
+      continue;
+    }
+    let val = params[key];
+
+    let regexp = new RegExp(':' + key + '(\\W|$)', 'g');
+    if (regexp.test(url)) {
+      url = url.replace(regexp, function(match, p1) {
+        return val + p1;
+      });
+    } else {
+      queryParams[key] = val;
+    }
+  }
+
+  url = addCustomQueryParams(url, queryParams);
+
+  return url;
+}
+function addCustomQueryParams(url, params = {}) {
+  if (!params) {
+    return url;
+  }
+  var parts = [];
+
+  function forEachSorted(obj, iterator, context) {
+    var keys = Object.keys(params).sort();
+    keys.forEach((key) => {
+      iterator.call(context, obj[key], key);
+    });
+    return keys;
+  }
+
+  function encodeUriQuery(val, pctEncodeSpaces) {
+    return encodeURIComponent(val).
+           replace(/%40/gi, '@').
+           replace(/%3A/gi, ':').
+           replace(/%24/g, '$').
+           replace(/%2C/gi, ',').
+           replace(/%3B/gi, ';').
+           replace(/%20/g, (pctEncodeSpaces ? '%20' : '+'));
+  }
+
+  forEachSorted(params, function(value, key) {
+    if (value === null || typeof value === 'undefined') {
+      return;
+    }
+    if (!Array.isArray(value)) {
+      value = [value];
+    }
+
+    value.forEach((v) => {
+      if (typeof v === 'object' && v !== null) {
+        if (value.toString() === '[object Date]') {
+          v = v.toISOString();
+        } else {
+          v = JSON.stringify(v);
+        }
+      }
+      parts.push(encodeUriQuery(key) + '=' + encodeUriQuery(v));
+    });
+  });
+  if (parts.length > 0) {
+    url += ((url.indexOf('?') === -1) ? '?' : '&') + parts.join('&');
+  }
+  return url;
+}
+
+window.getTrackerUrl = function(navigationObj = {}) {
+  let {stateName, stateParams} = navigationObj;
+  let uiApp = 'cask-tracker';
+  let baseUrl = `${location.protocol}//${location.host}/${uiApp}/ns/:namespace`;
+  let stateToUrlMap = {
+    'tracker': '',
+    'tracker.detail': '',
+    'tracker.detail.entity': '/entity/:entityType/:entityId',
+    'tracker.detail.entity.metadata': '/entity/:entityType/:entityId/metadata'
+  };
+  let url = baseUrl + stateToUrlMap[stateName || 'tracker'];
+  url = buildCustomUrl(url, stateParams);
+  return url;
+};
+window.getHydratorUrl = function(navigationObj = {}) {
+  let {stateName, stateParams} = navigationObj;
+  let uiApp = 'cask-hydrator';
+  let baseUrl = `${location.protocol}//${location.host}/${uiApp}/ns/:namespace`;
+  let stateToUrlMap = {
+    'hydrator': '',
+    'hydrator.create': '/studio',
+    'hydrator.detail': '/view/:pipelineId',
+    'hydrator.list': '?page'
+  };
+  let url = baseUrl + stateToUrlMap[stateName || 'hydrator'];
+  url = buildCustomUrl(url, stateParams);
+  return url;
+};

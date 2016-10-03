@@ -14,8 +14,8 @@
  * the License.
  */
 
-import Datasource from '../../services/datasource';
-import {apiCreator} from '../../services/resource-helper';
+import Datasource from 'services/datasource';
+import {apiCreator} from 'services/resource-helper';
 
 let dataSrc = new Datasource();
 let basepath = '/configuration/user';

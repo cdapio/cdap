@@ -36,21 +36,27 @@ export function parseMetadata(entity) {
 function createArtifactObj(entity) {
   return {
     id: entity.entityId.id.name,
-    type: entity.entityId.type
+    type: entity.entityId.type,
+    version: entity.entityId.id.version.version,
+    metadata: entity,
+    scope: entity.entityId.id.namespace.id.toLowerCase() === 'system' ? 'SYSTEM' : 'USER'
   };
 }
 
 function createApplicationObj(entity) {
   return {
     id: entity.entityId.id.applicationId,
-    type: entity.entityId.type
+    type: entity.entityId.type,
+    metadata: entity,
+    version: `1.0.0${entity.metadata.SYSTEM.properties.version}`
   };
 }
 
 function createDatasetObj(entity) {
   return {
     id: entity.entityId.id.instanceId,
-    type: entity.entityId.type
+    type: entity.entityId.type,
+    metadata: entity
   };
 }
 
@@ -59,18 +65,23 @@ function createProgramObj(entity) {
     id: entity.entityId.id.id,
     applicationId: entity.entityId.id.application.applicationId,
     type: entity.entityId.type,
-    programType: entity.entityId.id.type
+    programType: entity.entityId.id.type,
+    metadata: entity
   };
 }
 
 function createStreamObj(entity) {
   return {
     id: entity.entityId.id.streamName,
-    type: entity.entityId.type
+    type: entity.entityId.type,
+    metadata: entity
   };
 }
 
 function createViewObj(entity) {
-  return entity;
-  // Don't know!!
+  return {
+    id: entity.entityId.id.id,
+    type: entity.entityId.type,
+    metadata: entity
+  };
 }

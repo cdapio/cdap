@@ -13,17 +13,49 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+@import '../../styles/variables.less';
 
 .plus-button-modal {
-  .cask-wizard {
+  .cask-configurable-tab {
+    .tab-header-icon {
+      margin-right: 5px;
+    }
     .tab-content {
       overflow-y: auto;
 
       .tab-pane { width: 100%; }
       .all-tab-content {
+
         .body-section {
           text-align: center;
-          padding-top: 10px;
+          padding: 10px;
+          display: flex;
+          flex-wrap: wrap;
+
+          .error-message {
+            width: 100%;
+            margin-top: 30%;
+          }
+
+          h4{
+            position: absolute;
+            top: 45%;
+            left: 55%;
+          }
+
+          .entity-item-container {
+            flex-grow: 1;
+            margin: 5px;
+            box-shadow: 1px 2px 10px 0 rgba(0,0,0,0.3);
+            padding-top: 10px;
+            border-radius: 4px;
+            min-width: 180px;
+
+            &:hover {
+              box-shadow: 1px 2px 10px 0 @cdap-orange;
+            }
+
+          }
         }
       }
     }
