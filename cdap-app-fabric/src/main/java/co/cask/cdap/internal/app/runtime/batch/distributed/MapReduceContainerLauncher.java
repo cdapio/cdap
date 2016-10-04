@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -69,37 +69,34 @@ public class MapReduceContainerLauncher {
     try {
       final ClassLoader classLoader = (ClassLoader) mainClassLoader.loadClass(MapReduceClassLoader.class.getName())
                                                                    .newInstance();
-      Runtime.getRuntime().addShutdownHook(new Thread() {
-        @Override
-        public void run() {
-          if (classLoader instanceof AutoCloseable) {
-            try {
-              ((AutoCloseable) classLoader).close();
-            } catch (Exception e) {
-              System.err.println("Failed to close ClassLoader " + classLoader);
-              e.printStackTrace();
-            }
+      try {
+        Thread.currentThread().setContextClassLoader(classLoader);
+
+        // Setup logging and stdout/stderr redirect
+        // Invoke MapReduceClassLoader.getTaskContextProvider()
+        classLoader.getClass().getDeclaredMethod("getTaskContextProvider").invoke(classLoader);
+        // Invoke StandardOutErrorRedirector.redirectToLogger()
+        classLoader.loadClass("co.cask.cdap.common.logging.StandardOutErrorRedirector")
+          .getDeclaredMethod("redirectToLogger", String.class)
+          .invoke(null, mainClassName);
+
+        Class<?> mainClass = classLoader.loadClass(mainClassName);
+        Method mainMethod = mainClass.getMethod("main", String[].class);
+        mainMethod.setAccessible(true);
+
+        LOG.info("Launch main class {}.main({})", mainClassName, Arrays.toString(args));
+        mainMethod.invoke(null, new Object[]{args});
+        LOG.info("Main method returned {}", mainClassName);
+      } finally {
+        if (classLoader instanceof AutoCloseable) {
+          try {
+            ((AutoCloseable) classLoader).close();
+          } catch (Exception e) {
+            System.err.println("Failed to close ClassLoader " + classLoader);
+            e.printStackTrace();
           }
         }
-      });
-
-      Thread.currentThread().setContextClassLoader(classLoader);
-
-      // Setup logging and stdout/stderr redirect
-      // Invoke MapReduceClassLoader.getTaskContextProvider()
-      classLoader.getClass().getDeclaredMethod("getTaskContextProvider").invoke(classLoader);
-      // Invoke StandardOutErrorRedirector.redirectToLogger()
-      classLoader.loadClass("co.cask.cdap.common.logging.StandardOutErrorRedirector")
-        .getDeclaredMethod("redirectToLogger", String.class)
-        .invoke(null, mainClassName);
-
-      Class<?> mainClass = classLoader.loadClass(mainClassName);
-      Method mainMethod = mainClass.getMethod("main", String[].class);
-      mainMethod.setAccessible(true);
-
-      LOG.info("Launch main class {}.main({})", mainClassName, Arrays.toString(args));
-      mainMethod.invoke(null, new Object[]{args});
-      LOG.info("Main method returned {}", mainClassName);
+      }
     } catch (Exception e) {
       throw new RuntimeException("Failed to call " + mainClassName + ".main(String[])", e);
     }
