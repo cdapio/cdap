@@ -27,7 +27,7 @@ CDAP HTTP RESTful API v3
     Namespace <namespace>
     Preferences <preferences>
     Query <query>
-    RouteConfig <routeconfig>
+    Route Config <routeconfig>
     Security <security>
     Service <service>
     Stream <stream>
