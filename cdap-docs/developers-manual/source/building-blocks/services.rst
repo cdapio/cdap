@@ -212,6 +212,21 @@ If both the memory and the number of cores needs to be set, this can be done usi
 An example of setting ``Resources`` using runtime arguments is shown in :ref:`Purchase
 <examples-purchase>` example's ``PurchaseHistoryBuilder.java``.
 
+Service Routing
+===============
+
+When multiple versions of the same service is running, the users can control where the service requests are routed to.
+For example, say version 'v1' and version 'v2' of the application is running, user can choose to direct 50% of the requests
+to version 'v1' service and 50% to 'v2'. This is can be achieved by uploading a RouteConfig (which is basically a map of
+version name to the percentage of requests to be routed to that version). For a specific service, if a RouteConfig is
+not present or if it could not be retrieved, the fall back routing strategy is used and it can be configured in cdap-site.xml.
+The possible fallback strategies are - random, smallest, largest, drop. Random is the default fallback strategy. If random
+fallback strategy is chosen, the request can be routed to any version of the service. If smallest is chosen, the request
+is routed to the smallest version (based on string comparison of the version) and similarly for the largest, the request is
+routed to the largest version. If drop is chosen as the fallback strategy, then the request will not be routed to any version.
+The fallback strategy can be configured using the property - 'router.userservice.fallback.strategy' in cdap-site.xml.
+
+Information about how to store, fetch, delete routing configuration, refer to the RouteConfig HTTP RESTful API Documentation
 
 Services Examples
 =================
