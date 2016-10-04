@@ -57,10 +57,10 @@ For example, to upload a route configuration for the service *MyService*, with d
 
   $ curl -w"\n" -X PUT "http://example.com:10000/v3/namespaces/default/apps/MyApp/services/MyService/routeconfig" \
     -H 'Content-Type: application/json' -d \
-    "{
+    '{
       "v1" : 50,
       "v2" : 50
-    }"
+    }'
 
 .. rubric:: HTTP Responses
 
