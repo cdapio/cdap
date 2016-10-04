@@ -30,11 +30,25 @@ Create an Application
 ---------------------
 To create an application, submit an HTTP PUT request::
 
-  PUT /v3/namespaces/<namespace-id>/apps/<app-name>
+  PUT /v3/namespaces/<namespace-id>/apps/<app-id>
 
-To create an application with a non-default version, submit an HTTP POST request::
+To create an application with a non-default version, submit an HTTP POST request with the version specified::
 
-  POST /v3/namespaces/<namespace-id>/apps/<app-name>/versions/<version-id>/create
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/versions/<version-id>/create
+  
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``namespace-id``
+     - Namespace ID
+   * - ``app-id``
+     - Name of the application
+   * - ``version-id``
+     - Version of the application, typically following `semantic versioning
+       <http://semver.org>`__; versions ending with ``-SNAPSHOT`` can be overwritten
 
 The request body is a JSON object specifying the artifact to use to create the application,
 and an optional application configuration. For example:
@@ -62,7 +76,7 @@ Update an Application
 ---------------------
 To update an application, submit an HTTP POST request::
 
-  POST /v3/namespaces/<namespace-id>/apps/<app-name>/update
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/update
 
 The request body is a JSON object specifying the updated artifact version and the updated application
 config. For example, a request body of:
@@ -181,15 +195,15 @@ of the application; the artifact, streams, and datasets that it uses; and all of
      - The event successfully called the method, and the body contains the results
 
 
-Listing all versions of an Application
---------------------------------------
+Listing Versions of an Application
+----------------------------------
 
 To list all the versions of an application, submit an HTTP GET::
 
-  GET /v3/namespaces/<namespace-id>/apps/<application-name>
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>
 
 .. list-table::
-:widths: 20 80
+   :widths: 20 80
    :header-rows: 1
 
    * - Parameter
@@ -198,15 +212,20 @@ To list all the versions of an application, submit an HTTP GET::
      - Namespace ID
    * - ``app-id``
      - Name of the application being called
+   * - ``program-type``
+     - One of ``flows``, ``mapreduce``, ``services``, ``spark``, ``workers``, or ``workflows``
+   * - ``program-id``
+     - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, *worker*, or *workflow*
+       being listed
 
-The response will be a JSON array containing details about the program. The details returned depend on the
-program type.
+The response will be a JSON array containing details about the program. The details
+returned depend on the program type.
 
 For example::
 
   GET /v3/namespaces/default/apps/HelloWorld/flows/WhoFlow
 
-will return in a JSON array information of the versions of the application.
+will return in a JSON array information of the versions of the application::
 
   {
     "1.0.1", "2.0.3"
@@ -220,7 +239,7 @@ programs, schedules, custom services, and workflows |---| submit an HTTP DELETE:
 
   DELETE /v3/namespaces/<namespace-id>/apps/<application-name>
 
-To delete a specific version of an application, submit an HTTP DELETE::
+To delete a specific version of an application, submit an HTTP DELETE that includes the version::
 
   DELETE /v3/namespaces/<namespace-id>/apps/<application-name>/versions/<version-id>
 
@@ -234,6 +253,8 @@ To delete a specific version of an application, submit an HTTP DELETE::
      - Namespace ID
    * - ``application-name``
      - Name of the application to be deleted
+   * - ``version-id``
+     - Version of the application to be deleted
 
 **Note:** The ``application-name`` in this URL is the name of the application
 as configured by the application Specification,
@@ -344,7 +365,8 @@ custom services, workers, and workflows by submitting an HTTP POST request::
 
   POST /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/start
 
-You can start a program of a particular version of the application by submitting an HTTP POST request::
+You can start a program of a particular version of the application by submitting an HTTP
+POST request that includes the version::
 
   POST /v3/namespaces/<namespace-id>/apps/<app-id>/versions/<version-id>/<program-type>/<program-id>/start
 
@@ -364,7 +386,7 @@ CDAP will use these these runtime arguments only for this single invocation of t
    * - ``app-id``
      - Name of the application being called
    * - ``version-id``
-     - Name of version of the application being called
+     - Version of the application being called
    * - ``program-type``
      - One of ``flows``, ``mapreduce``, ``services``, ``spark``, ``workers``, or ``workflows``
    * - ``program-id``
@@ -405,7 +427,7 @@ with a JSON array in the request body consisting of multiple JSON objects with t
      - One of ``flow``, ``mapreduce``, ``service``, ``spark``, ``worker``, or ``workflow``
    * - ``"programId"``
      - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, *worker*, or *workflow*
-       being called
+       being started
    * - ``"runtimeargs"``
      - Optional JSON object containing a string to string mapping of runtime arguments to start the program with
 
@@ -424,7 +446,7 @@ Each JSON object will contain these parameters:
      - One of ``flow``, ``mapreduce``, ``service``, ``spark``, ``worker``, or ``workflow``
    * - ``"programId"``
      - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, *worker*, or *workflow*
-       being called
+       being started
    * - ``"statusCode"``
      - The status code from starting an individual JSON object
    * - ``"error"``
@@ -459,7 +481,8 @@ workflows of an application by submitting an HTTP POST request::
 
   POST /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/stop
 
-You can stop the programs of a particular application version by submitting an HTTP POST request::
+You can stop the programs of a particular application version by submitting an HTTP POST
+request that includes the version::
 
   POST /v3/namespaces/<namespace-id>/apps/<app-id>/versions/<version-id>/<program-type>/<program-id>/stop
 
@@ -479,7 +502,7 @@ You can stop the programs of a particular application version by submitting an H
      - One of ``flows``, ``mapreduce``, ``services``, ``spark``, ``workers``, or ``workflows``
    * - ``program-id``
      - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, *worker*, or *workflow*
-       being called
+       being stopped
 
 A program that is in the STOPPED state cannot be stopped. If there are multiple runs of the program
 in the RUNNING state, this call will stop one of the runs, but not all of the runs. 
@@ -546,7 +569,7 @@ with a JSON array in the request body consisting of multiple JSON objects with t
      - One of ``flow``, ``mapreduce``, ``service``, ``spark``, ``worker``, or ``workflow``
    * - ``"programId"``
      - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, *worker*, or *workflow*
-       being called
+       being stopped
 
 The response will be a JSON array containing a JSON object corresponding to each object in the input.
 Each JSON object will contain these parameters:
@@ -563,7 +586,7 @@ Each JSON object will contain these parameters:
      - One of ``flow``, ``mapreduce``, ``service``, ``spark``, ``worker``, or ``workflow``
    * - ``"programId"``
      - Name of the *flow*, *MapReduce*, *custom service*, *Spark*, *worker*, or *workflow*
-       being called
+       being stopped
    * - ``"statusCode"``
      - The status code from stopping an individual JSON object
    * - ``"error"``

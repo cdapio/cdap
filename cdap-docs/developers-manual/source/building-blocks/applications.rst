@@ -75,16 +75,23 @@ we'll look at these components, and their interactions.
 
 Application Version
 ===================
+Applications can be created with a version string. This can be useful when a newer version
+of the same application needs to be created, and you need to distinguish them and run them
+at the same time. Programs of a specific version of an application can be started and
+stopped using the calls of the version-aware :ref:`Lifecycle HTTP RESTful APIs
+<http-restful-api-lifecycle>`. 
 
-Applications can be created with a version string. This might be useful when a newer version of the same application
-needs to be created. Programs of a specific version of an Application be started or stopped using the version aware
-program lifecycle HTTP RESTful API. If a version is not provided while creating an application (i.e., applications
-created using the non-version aware API), a default version of "-SNAPSHOT" is used. If an application version that is
-trying to be created already exists,then it will be overriden only if the version string ends with "-SNAPSHOT".
-Otherwise, the versions are immutable.
+If a version is not provided while creating an application (i.e., the application is
+created using a non-version-aware API), a default version of "-SNAPSHOT" is used.
 
-Information about the version-aware RESTful API to create, list, delete application with versions can be found in
-the Lifecycle HTTP RESTful API documentation.
+If an application version is specified that matches one that already exists, it will be
+overwritten only if the version string ends with "-SNAPSHOT". Otherwise, versions are
+immutable, and the only way to change a version is to delete the application of that
+version and then redeploy it.
+
+Information about the version-aware RESTful APIs to create, list, and delete applications
+using versions can be found in the :ref:`Lifecycle HTTP RESTful API documentation
+<http-restful-api-lifecycle>`.
 
 Application Configuration
 =========================
