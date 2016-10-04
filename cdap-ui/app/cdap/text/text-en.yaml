@@ -61,6 +61,7 @@ commons:
   schemaLabel: Schema
 features:
   Home:
+    Title: CDAP
     emptyMessage: No entities found in the system.
     Cards:
       type: "Type: "
@@ -74,7 +75,10 @@ features:
     FastActions:
       deleteConfirmation: Are you sure you want to delete {entityId}?
       truncateConfirmation: Are you sure you want to truncate {entityId}?
+  Dashboard:
+    Title: Dashboard
   Management:
+    Title: Administrator
     Top:
       version-label: Version
       time-label: Uptime

@@ -30,8 +30,6 @@ const defaultFilter = ['app', 'dataset', 'stream'];
 class Home extends Component {
   constructor(props) {
     super(props);
-    this.urlFilters = [];
-    this.urlSort = '';
     this.filterOptions = [
       {
         displayName: T.translate('commons.entity.application.plural'),
@@ -92,9 +90,11 @@ class Home extends Component {
   processQueryString(queryString) {
     let sortQueryIndex = queryString.indexOf('sort=');
     let filterIndex = queryString.indexOf('filter=');
+    let searchTermIndex = queryString.indexOf('search=');
     let filtersArr = [];
     let sortOpt;
     let sortQuery;
+    let searchTerm;
 
     //Set default sort settings
     sortOpt = this.sortOptions[0];
@@ -117,9 +117,26 @@ class Home extends Component {
       }
     }
 
+    if(searchTermIndex !== -1){
+      searchTerm = queryString.substring(searchTermIndex  + 7);
+      let endSearchIndex = searchTerm.indexOf('&');
+
+      if(endSearchIndex !== -1){
+        searchTerm = searchTerm.substring(0, endSearchIndex);
+      }
+
+      searchTerm = searchTerm.split('+').join(' ');
+    }
+
     if(filterIndex !== -1){
       //Parse url substring ; start after 'filter='
       let filterString = location.search.substring(filterIndex + 7);
+      let endFilterIndex = filterString.indexOf('&');
+
+      if(endFilterIndex !== -1){
+        filterString = filterString.substring(0, endFilterIndex);
+      }
+
       filtersArr = filterString.split(',');
 
       //Process the array and remove any filters that are invalid
@@ -130,9 +147,11 @@ class Home extends Component {
         }
       }
     }
+
     return {
       'filter' : filtersArr,
-      'sort' : sortOpt
+      'sort' : sortOpt,
+      'search' : searchTerm
     };
   }
 
@@ -148,6 +167,7 @@ class Home extends Component {
     let filterSortObj = this.processQueryString(location.search);
     let urlFilters;
     let urlSort;
+    let urlSearch;
 
     if(typeof filterSortObj.filter !== 'undefined' && filterSortObj.filter.length === 0){
       urlFilters = this.state.filter;
@@ -155,9 +175,10 @@ class Home extends Component {
       urlFilters = filterSortObj.filter;
     }
 
+    urlSearch = filterSortObj.search;
     urlSort = filterSortObj.sort;
 
-    this.search(this.state.query, urlFilters, urlSort);
+    this.search(urlSearch, urlFilters, urlSort);
   }
 
   search(
@@ -167,12 +188,12 @@ class Home extends Component {
     namespace = this.props.params.namespace
   ) {
 
-    this.setState({loading: true});
-
     if (filter.length === 0) {
       this.setState({query, filter, sortObj, entities: [], selectedEntity: null, loading: false});
       return;
     }
+
+    this.setState({loading: true});
 
     let params = {
       namespace: namespace,
@@ -232,22 +253,39 @@ class Home extends Component {
 
   makeSortFilterParams(){
     let sortAndFilterParams = '';
-    let filterString = '';
+    let sortParams = '';
+    let filterParams = '';
+    let searchParams = '';
+    let queryParams = [];
     let isDefaultSorted = this.isDefaultSort();
     let isDefaultFiltered = this.isDefaultFilter();
+    let searchTerm = this.state.query;
 
-    if(isDefaultSorted && isDefaultFiltered){
+    //No query string to be included in URL
+    if(isDefaultSorted && isDefaultFiltered && searchTerm.length === 0){
       return;
     }
 
-    // //Add Query Params to URL on re-render
-    sortAndFilterParams = !isDefaultSorted ? '?sort=' + this.state.sortObj.sort.split(' ').join('+') : '';
+    if(!isDefaultSorted){
+      sortParams = 'sort=' + this.state.sortObj.sort.split(' ').join('+');
+    }
 
     if(!isDefaultFiltered){
-      //If the cards are sorted and filtered, seperate query params
-      sortAndFilterParams = !isDefaultSorted ? sortAndFilterParams.concat('&') : '?';
-      filterString = this.state.filter.join(',');
-      sortAndFilterParams = sortAndFilterParams + 'filter=' + filterString;
+      filterParams = 'filter=' + this.state.filter.join(',');
+    }
+
+    if(searchTerm.length > 0){
+      searchParams = 'search=' + searchTerm;
+    }
+
+    queryParams = [sortParams, filterParams, searchParams].filter((element) => {
+      return element.length > 0;
+    });
+
+    sortAndFilterParams = queryParams.join('&');
+
+    if(sortAndFilterParams.length > 0){
+      sortAndFilterParams = '?' + sortAndFilterParams;
     }
 
     let obj = {
@@ -255,7 +293,7 @@ class Home extends Component {
       url: location.pathname + sortAndFilterParams
     };
 
-    history.pushState(obj, obj.Title, obj.url);
+    history.pushState(obj, obj.title, obj.url);
   }
 
   render() {

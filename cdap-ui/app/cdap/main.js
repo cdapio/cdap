@@ -34,6 +34,7 @@ import Experimental from 'components/Experimental';
 import cookie from 'react-cookie';
 import {MyNamespaceApi} from 'api/namespace';
 import Router from 'react-router/BrowserRouter';
+import T from 'i18n-react';
 import Match from 'react-router/Match';
 import Miss from 'react-router/Miss';
 import Store from 'services/store/store';
@@ -97,7 +98,7 @@ class CDAP extends Component {
       <Router basename="/cask-cdap" history={history}>
         <div className="cdap-container">
           <Helmet
-            title="CDAP"
+            title={T.translate('features.Home.Title')}
           />
           <CdapHeader />
           <SplashScreen openVideo={this.openCaskVideo}/>

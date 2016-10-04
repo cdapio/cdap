@@ -166,7 +166,7 @@ class Management extends Component {
           this.state.redirectTo && <Redirect to={redirectUrl} />
         }
         <Helmet
-          title="Administrator"
+          title={T.translate('features.Management.Title')}
         />
         <div className="top-panel">
           <div className="admin-row top-row">
