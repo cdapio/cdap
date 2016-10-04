@@ -221,3 +221,10 @@ Glossary
    Storage Provider
       For :term:`datasets <dataset>` and :term:`streams <stream>`, a storage provider is the underlying
       system that CDAP uses for persistence. Examples include HDFS, HBase, and Hive.
+
+   Route Configuration
+      Also known as a *route config*, a map that allocates requests for a service between
+      different versions of the service.
+
+   Route Config
+      See :term:`route configuration`.
