@@ -345,9 +345,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     startProgram(sleepWorkflow1, 200);
     startProgram(sleepWorkflow2, 200);
     // stop multiple workflow simultaneously
+    // This will stop all concurrent runs of the Workflow version 1.0.0
     stopProgram(sleepWorkflow1, null, 200, null);
-    stopProgram(sleepWorkflow2, null, 200, null);
-    stopProgram(sleepWorkflow1, null, 200, null);
+    // This will stop all concurrent runs of the Workflow version 2.0.0
     stopProgram(sleepWorkflow2, null, 200, null);
     Assert.assertEquals(STOPPED, getProgramStatus(sleepWorkflow1));
     Assert.assertEquals(STOPPED, getProgramStatus(sleepWorkflow2));
