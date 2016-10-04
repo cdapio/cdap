@@ -25,9 +25,11 @@ import java.util.List;
 
 /**
  * Flattens the Tuple2 of list and optional object returned by a left outer join into a single list.
+ *
+ * @param <T> type of object to flatten
  */
-public class LeftJoinFlattenFunction implements
-  Function<Tuple2<List<JoinElement<Object>>, Optional<Object>>, List<JoinElement<Object>>> {
+public class LeftJoinFlattenFunction<T> implements
+  Function<Tuple2<List<JoinElement<T>>, Optional<T>>, List<JoinElement<T>>> {
   private final String inputStageName;
 
   public LeftJoinFlattenFunction(String inputStageName) {
@@ -35,8 +37,8 @@ public class LeftJoinFlattenFunction implements
   }
 
   @Override
-  public List<JoinElement<Object>> call(Tuple2<List<JoinElement<Object>>, Optional<Object>> in) throws Exception {
-    List<JoinElement<Object>> output = in._1();
+  public List<JoinElement<T>> call(Tuple2<List<JoinElement<T>>, Optional<T>> in) throws Exception {
+    List<JoinElement<T>> output = in._1();
     if (in._2().isPresent()) {
       output.add(new JoinElement<>(inputStageName, in._2().get()));
     }

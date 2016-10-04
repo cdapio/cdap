@@ -17,6 +17,7 @@
 package co.cask.cdap.test;
 
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
 
 /**
  * A default implementation of {@link MapReduceManager}.
@@ -25,5 +26,11 @@ public class DefaultMapReduceManager extends AbstractProgramManager<MapReduceMan
 
   public DefaultMapReduceManager(Id.Program programId, ApplicationManager applicationManager) {
     super(programId, applicationManager);
+  }
+
+  @Override
+  public boolean isRunning() {
+    // workaround until CDAP-7479 is fixed
+    return super.isRunning() || !getHistory(ProgramRunStatus.RUNNING).isEmpty();
   }
 }

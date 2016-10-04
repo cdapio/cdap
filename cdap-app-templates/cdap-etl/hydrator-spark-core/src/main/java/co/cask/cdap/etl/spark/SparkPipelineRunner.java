@@ -30,20 +30,13 @@ import co.cask.cdap.etl.api.streaming.Windower;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.planner.StageInfo;
-import co.cask.cdap.etl.spark.function.AggregatorAggregateFunction;
-import co.cask.cdap.etl.spark.function.AggregatorGroupByFunction;
 import co.cask.cdap.etl.spark.function.BatchSinkFunction;
 import co.cask.cdap.etl.spark.function.InitialJoinFunction;
 import co.cask.cdap.etl.spark.function.JoinFlattenFunction;
-import co.cask.cdap.etl.spark.function.JoinMergeFunction;
-import co.cask.cdap.etl.spark.function.JoinOnFunction;
 import co.cask.cdap.etl.spark.function.LeftJoinFlattenFunction;
 import co.cask.cdap.etl.spark.function.OuterJoinFlattenFunction;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
 import co.cask.cdap.etl.spark.function.TransformFunction;
-import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.api.java.function.PairFlatMapFunction;
-import scala.Tuple2;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,10 +48,18 @@ import java.util.Set;
 /**
  * Base Spark program to run a Hydrator pipeline.
  */
-public abstract class SparkPipelineDriver {
+public abstract class SparkPipelineRunner {
 
-  protected abstract SparkCollection<Object> getSource(String stageName,
-                                                       PluginFunctionContext pluginFunctionContext) throws Exception;
+  protected abstract SparkCollection<Object> getSource(StageInfo stageInfo) throws Exception;
+
+
+  protected abstract SparkPairCollection<Object, Object> addJoinKey(
+    StageInfo stageInfo, String inputStageName,
+    SparkCollection<Object> inputCollection) throws Exception;
+
+  protected abstract SparkCollection<Object> mergeJoinResults(
+    StageInfo stageInfo,
+    SparkPairCollection<Object, List<JoinElement<Object>>> joinedInputs) throws Exception;
 
   public void runPipeline(PipelinePhase pipelinePhase, String sourcePluginType,
                           JavaSparkExecutionContext sec,
@@ -96,49 +97,40 @@ public abstract class SparkPipelineDriver {
         }
       }
 
-      PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageName, sec, pipelinePhase);
+      PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageInfo, sec);
       if (stageData == null) {
 
         // this if-else is nested inside the stageRDD null check to avoid warnings about stageRDD possibly being
         // null in the other else-if conditions
         if (sourcePluginType.equals(pluginType)) {
-          stageData = getSource(stageName, pluginFunctionContext);
+          stageData = getSource(stageInfo);
         } else {
           throw new IllegalStateException(String.format("Stage '%s' has no input and is not a source.", stageName));
         }
 
       } else if (BatchSink.PLUGIN_TYPE.equals(pluginType)) {
 
-        stageData.store(stageName, new BatchSinkFunction(pluginFunctionContext));
+        stageData.store(stageInfo, new BatchSinkFunction(pluginFunctionContext));
 
       } else if (Transform.PLUGIN_TYPE.equals(pluginType)) {
 
-        stageData = stageData.flatMap(new TransformFunction(pluginFunctionContext));
+        stageData = stageData.flatMap(stageInfo, new TransformFunction<>(pluginFunctionContext));
 
       } else if (SparkCompute.PLUGIN_TYPE.equals(pluginType)) {
 
         SparkCompute<Object, Object> sparkCompute =
           sec.getPluginContext().newPluginInstance(stageName, macroEvaluator);
-        stageData = stageData.compute(stageName, sparkCompute);
+        stageData = stageData.compute(stageInfo, sparkCompute);
 
       } else if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
 
         SparkSink<Object> sparkSink = sec.getPluginContext().newPluginInstance(stageName, macroEvaluator);
-        stageData.store(stageName, sparkSink);
+        stageData.store(stageInfo, sparkSink);
 
       } else if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
 
-        PairFlatMapFunction<Object, Object, Object> groupByFunction =
-          new AggregatorGroupByFunction(pluginFunctionContext);
-        FlatMapFunction<Tuple2<Object, Iterable<Object>>, Object> aggregateFunction =
-          new AggregatorAggregateFunction(pluginFunctionContext);
-
         Integer partitions = stagePartitions.get(stageName);
-        SparkPairCollection<Object, Object> keyedCollection = stageData.flatMapToPair(groupByFunction);
-
-        SparkPairCollection<Object, Iterable<Object>> groupedCollection = partitions == null ?
-          keyedCollection.groupByKey() : keyedCollection.groupByKey(partitions);
-        stageData = groupedCollection.flatMap(aggregateFunction);
+        stageData = stageData.aggregate(stageInfo, partitions);
 
       } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -151,8 +143,7 @@ public abstract class SparkPipelineDriver {
         for (Map.Entry<String, SparkCollection<Object>> inputStreamEntry : inputDataCollections.entrySet()) {
           String inputStage = inputStreamEntry.getKey();
           SparkCollection<Object> inputStream = inputStreamEntry.getValue();
-          preJoinStreams.put(inputStage,
-                             inputStream.flatMapToPair(new JoinOnFunction(pluginFunctionContext, inputStage)));
+          preJoinStreams.put(inputStage, addJoinKey(stageInfo, inputStage, inputStream));
         }
 
         Set<String> remainingInputs = new HashSet<>();
@@ -166,9 +157,9 @@ public abstract class SparkPipelineDriver {
           SparkPairCollection<Object, Object> preJoinCollection = preJoinStreams.get(inputStageName);
 
           if (joinedInputs == null) {
-            joinedInputs = preJoinCollection.mapValues(new InitialJoinFunction(inputStageName));
+            joinedInputs = preJoinCollection.mapValues(new InitialJoinFunction<>(inputStageName));
           } else {
-            JoinFlattenFunction joinFlattenFunction = new JoinFlattenFunction(inputStageName);
+            JoinFlattenFunction<Object> joinFlattenFunction = new JoinFlattenFunction<>(inputStageName);
             joinedInputs = numPartitions == null ?
               joinedInputs.join(preJoinCollection).mapValues(joinFlattenFunction) :
               joinedInputs.join(preJoinCollection, numPartitions).mapValues(joinFlattenFunction);
@@ -182,20 +173,20 @@ public abstract class SparkPipelineDriver {
           SparkPairCollection<Object, Object> preJoinStream = preJoinStreams.get(inputStageName);
 
           if (joinedInputs == null) {
-            joinedInputs = preJoinStream.mapValues(new InitialJoinFunction(inputStageName));
+            joinedInputs = preJoinStream.mapValues(new InitialJoinFunction<>(inputStageName));
           } else {
             if (isFullOuter) {
-              OuterJoinFlattenFunction outerJoinFlattenFunction = new OuterJoinFlattenFunction(inputStageName);
+              OuterJoinFlattenFunction<Object> flattenFunction = new OuterJoinFlattenFunction<>(inputStageName);
 
               joinedInputs = numPartitions == null ?
-                joinedInputs.fullOuterJoin(preJoinStream).mapValues(outerJoinFlattenFunction) :
-                joinedInputs.fullOuterJoin(preJoinStream, numPartitions).mapValues(outerJoinFlattenFunction);
+                joinedInputs.fullOuterJoin(preJoinStream).mapValues(flattenFunction) :
+                joinedInputs.fullOuterJoin(preJoinStream, numPartitions).mapValues(flattenFunction);
             } else {
-              LeftJoinFlattenFunction joinFlattenFunction = new LeftJoinFlattenFunction(inputStageName);
+              LeftJoinFlattenFunction<Object> flattenFunction = new LeftJoinFlattenFunction<>(inputStageName);
 
               joinedInputs = numPartitions == null ?
-                joinedInputs.leftOuterJoin(preJoinStream).mapValues(joinFlattenFunction) :
-                joinedInputs.leftOuterJoin(preJoinStream, numPartitions).mapValues(joinFlattenFunction);
+                joinedInputs.leftOuterJoin(preJoinStream).mapValues(flattenFunction) :
+                joinedInputs.leftOuterJoin(preJoinStream, numPartitions).mapValues(flattenFunction);
             }
           }
         }
@@ -205,12 +196,12 @@ public abstract class SparkPipelineDriver {
           throw new IllegalStateException("There are no inputs into join stage " + stageName);
         }
 
-        stageData = joinedInputs.flatMap(new JoinMergeFunction(pluginFunctionContext)).cache();
+        stageData = mergeJoinResults(stageInfo, joinedInputs).cache();
 
       } else if (Windower.PLUGIN_TYPE.equals(pluginType)) {
 
         Windower windower = sec.getPluginContext().newPluginInstance(stageName, macroEvaluator);
-        stageData = stageData.window(stageName, windower);
+        stageData = stageData.window(stageInfo, windower);
 
       } else {
         throw new IllegalStateException(String.format("Stage %s is of unsupported plugin type %s.",

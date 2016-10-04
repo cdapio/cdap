@@ -17,6 +17,7 @@
 package co.cask.cdap.test;
 
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
 
 /**
  * A default implementation of {@link SparkManager}.
@@ -24,5 +25,11 @@ import co.cask.cdap.proto.Id;
 public class DefaultSparkManager extends AbstractProgramManager<SparkManager> implements SparkManager {
   public DefaultSparkManager(Id.Program programId, ApplicationManager applicationManager) {
     super(programId, applicationManager);
+  }
+
+  @Override
+  public boolean isRunning() {
+    // workaround until CDAP-7479 is fixed
+    return super.isRunning() || !getHistory(ProgramRunStatus.RUNNING).isEmpty();
   }
 }

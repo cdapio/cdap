@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.mock.batch.aggregator;
 
+import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
@@ -54,7 +55,9 @@ public class FieldCountAggregator extends BatchAggregator<Object, StructuredReco
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
-    stageConfigurer.setOutputSchema(config.getSchema());
+    if (!config.containsMacro("fieldType") && !config.containsMacro("fieldName")) {
+      stageConfigurer.setOutputSchema(config.getSchema());
+    }
   }
 
   @Override
@@ -100,8 +103,10 @@ public class FieldCountAggregator extends BatchAggregator<Object, StructuredReco
    * Conf for the aggregator.
    */
   public static class Config extends PluginConfig {
+    @Macro
     private final String fieldName;
 
+    @Macro
     private final String fieldType;
 
     public Config() {
@@ -135,8 +140,8 @@ public class FieldCountAggregator extends BatchAggregator<Object, StructuredReco
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    properties.put("fieldName", new PluginPropertyField("fieldName", "", "string", true, false));
-    properties.put("fieldType", new PluginPropertyField("fieldType", "", "string", true, false));
+    properties.put("fieldName", new PluginPropertyField("fieldName", "", "string", true, true));
+    properties.put("fieldType", new PluginPropertyField("fieldType", "", "string", true, true));
     return new PluginClass(BatchAggregator.PLUGIN_TYPE, "FieldCount", "", FieldCountAggregator.class.getName(),
                            "config", properties);
   }

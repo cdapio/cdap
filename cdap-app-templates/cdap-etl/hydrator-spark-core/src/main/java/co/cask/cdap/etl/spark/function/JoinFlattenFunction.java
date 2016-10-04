@@ -24,9 +24,10 @@ import java.util.List;
 
 /**
  * Flattens the Tuple2 of list and object returned by a join into a single list.
+ *
+ * @param <T> type of object to flatten
  */
-public class JoinFlattenFunction implements
-  Function<Tuple2<List<JoinElement<Object>>, Object>, List<JoinElement<Object>>> {
+public class JoinFlattenFunction<T> implements Function<Tuple2<List<JoinElement<T>>, T>, List<JoinElement<T>>> {
   private final String inputStageName;
 
   public JoinFlattenFunction(String inputStageName) {
@@ -34,8 +35,8 @@ public class JoinFlattenFunction implements
   }
 
   @Override
-  public List<JoinElement<Object>> call(Tuple2<List<JoinElement<Object>>, Object> in) throws Exception {
-    List<JoinElement<Object>> output = in._1();
+  public List<JoinElement<T>> call(Tuple2<List<JoinElement<T>>, T> in) throws Exception {
+    List<JoinElement<T>> output = in._1();
     output.add(new JoinElement<>(inputStageName, in._2()));
     return output;
   }

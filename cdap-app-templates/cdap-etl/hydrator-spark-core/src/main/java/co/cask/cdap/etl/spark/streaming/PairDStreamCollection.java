@@ -20,7 +20,6 @@ import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPairCollection;
 import com.google.common.base.Optional;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.streaming.api.java.JavaPairDStream;
@@ -34,13 +33,10 @@ import scala.Tuple2;
  */
 public class PairDStreamCollection<K, V> implements SparkPairCollection<K, V> {
   private final JavaSparkExecutionContext sec;
-  private final JavaSparkContext sparkContext;
   private final JavaPairDStream<K, V> pairStream;
 
-  public PairDStreamCollection(JavaSparkExecutionContext sec, JavaSparkContext sparkContext,
-                               JavaPairDStream<K, V> pairStream) {
+  public PairDStreamCollection(JavaSparkExecutionContext sec, JavaPairDStream<K, V> pairStream) {
     this.sec = sec;
-    this.sparkContext = sparkContext;
     this.pairStream = pairStream;
   }
 
@@ -52,22 +48,12 @@ public class PairDStreamCollection<K, V> implements SparkPairCollection<K, V> {
 
   @Override
   public <T> SparkCollection<T> flatMap(FlatMapFunction<Tuple2<K, V>, T> function) {
-    return new DStreamCollection<>(sec, sparkContext, pairStream.flatMap(function));
+    return new DStreamCollection<>(sec, pairStream.flatMap(function));
   }
 
   @Override
   public <T> SparkPairCollection<K, T> mapValues(Function<V, T> function) {
     return wrap(pairStream.mapValues(function));
-  }
-
-  @Override
-  public SparkPairCollection<K, Iterable<V>> groupByKey() {
-    return wrap(pairStream.groupByKey());
-  }
-
-  @Override
-  public SparkPairCollection<K, Iterable<V>> groupByKey(int numPartitions) {
-    return wrap(pairStream.groupByKey(numPartitions));
   }
 
   @SuppressWarnings("unchecked")
@@ -109,6 +95,6 @@ public class PairDStreamCollection<K, V> implements SparkPairCollection<K, V> {
   }
 
   private <T, U> PairDStreamCollection<T, U> wrap(JavaPairDStream<T, U> pairStream) {
-    return new PairDStreamCollection<>(sec, sparkContext, pairStream);
+    return new PairDStreamCollection<>(sec, pairStream);
   }
 }
