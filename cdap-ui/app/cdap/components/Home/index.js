@@ -90,12 +90,32 @@ class Home extends Component {
   }
 
   processQueryString(queryString) {
-    let sortIndex = queryString.indexOf('sort=desc');
+    let sortQueryIndex = queryString.indexOf('sort=');
     let filterIndex = queryString.indexOf('filter=');
     let filtersArr = [];
     let sortOpt;
+    let sortQuery;
 
-    sortOpt = sortIndex !== -1 ? this.sortOptions[1] : this.sortOptions[0];
+    //Set default sort settings
+    sortOpt = this.sortOptions[0];
+
+    //If a sort parameter is provided, parse and set sorting if valid
+    if(sortQueryIndex !== -1){
+      sortQuery = queryString.substring(sortQueryIndex + 5);
+      let endSortIndex = sortQuery.indexOf('&');
+
+      if(endSortIndex !== -1){
+        sortQuery = sortQuery.substring(0, endSortIndex);
+      }
+
+      let finalSortQuery = sortQuery.split('+').join(' ');
+
+      for(let index = 0; index < this.sortOptions.length; index++){
+        if(this.sortOptions[index].sort === finalSortQuery){
+          sortOpt = this.sortOptions[index];
+        }
+      }
+    }
 
     if(filterIndex !== -1){
       //Parse url substring ; start after 'filter='
@@ -221,7 +241,7 @@ class Home extends Component {
     }
 
     // //Add Query Params to URL on re-render
-    sortAndFilterParams = !isDefaultSorted ? '?sort=desc' : '';
+    sortAndFilterParams = !isDefaultSorted ? '?sort=' + this.state.sortObj.sort.split(' ').join('+') : '';
 
     if(!isDefaultFiltered){
       //If the cards are sorted and filtered, seperate query params
