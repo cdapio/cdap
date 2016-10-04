@@ -32,6 +32,7 @@ import co.cask.cdap.logging.context.GenericLoggingContext;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.proto.id.NamespaceId;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -155,13 +156,14 @@ public final class FileMetaDataManager {
   }
 
   /**
-   * Scans meta data and gathers all the files older than tillTime
+   * Scans meta data and collects file uris
    *
    * @param startTableKey row key for the scan and column from where scan will be started
-   * @param limit batch size for number of columns to be read
-   * @param processor processor to process files
+   * @param limit         batch size for number of columns to be read
+   * @param processor     processor to process files
    * @return next row key + start column for next iteration, returns null if end of table
    */
+  @VisibleForTesting
   @Nullable
   public TableKey scanFiles(final TableKey startTableKey, final int limit,
                             final Processor<URI, Set<URI>> processor) {
@@ -233,19 +235,34 @@ public final class FileMetaDataManager {
 
   /**
    * Deletes meta data until a given time, while keeping the latest meta data even if less than tillTime.
-   * @param tillTime time till the meta data will be deleted.
-   * @param callback callback called before deleting a meta data column.
-   * @return total number of columns deleted.
+   *
+   * @param startTableKey row key for the scan and column from where scan will be started
+   * @param limit         batch size for number of columns to be read
+   * @param tillTime      time till the meta data will be deleted.
+   * @param callback      callback called before deleting a meta data column.
+   * @return next row key + start column for next iteration, returns null if end of table
    */
-  public int cleanMetaData(final long tillTime, final DeleteCallback callback) throws Exception {
-    return execute(new TransactionExecutor.Function<Table, Integer>() {
+  @VisibleForTesting
+  @Nullable
+  public TableKey cleanMetaData(@Nullable final TableKey startTableKey, final int limit, final long tillTime,
+                                final DeleteCallback callback)
+    throws Exception {
+    return execute(new TransactionExecutor.Function<Table, TableKey>() {
       @Override
-      public Integer apply(Table table) throws Exception {
-        int deletedColumns = 0;
-        try (Scanner scanner = table.scan(ROW_KEY_PREFIX, ROW_KEY_PREFIX_END)) {
+      public TableKey apply(Table table) throws Exception {
+        byte[] startKey = startTableKey == null ? ROW_KEY_PREFIX : getRowKey(startTableKey.getRowKey());
+        byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
+        byte[] startColumn = startTableKey == null ? null : startTableKey.getStartColumn();
+
+        try (Scanner scanner = table.scan(startKey, stopKey)) {
           Row row;
+          int colCount = 0;
+
           while ((row = scanner.next()) != null) {
+            // Get the next logging context
             byte[] rowKey = row.getRow();
+            byte[] stopCol = null;
+
             final NamespaceId namespaceId = getNamespaceId(rowKey);
             String namespacedLogDir = impersonator.doAs(namespaceId, new Callable<String>() {
               @Override
@@ -256,37 +273,51 @@ public final class FileMetaDataManager {
               }
             });
 
+            // Go through files for a logging context
             for (final Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
-              try {
-                byte[] colName = entry.getKey();
-                URI file = new URI(Bytes.toString(entry.getValue()));
-                if (LOG.isDebugEnabled()) {
-                  LOG.debug("Got file {} with start time {}", file, Bytes.toLong(colName));
-                }
+              byte[] colName = entry.getKey();
+              byte[] colValue = entry.getValue();
 
-                Location fileLocation = impersonator.doAs(namespaceId, new Callable<Location>() {
-                  @Override
-                  public Location call() throws Exception {
-                    return rootLocationFactory.create(new URI(Bytes.toString(entry.getValue())));
-                  }
-                });
-                if (!fileLocation.exists()) {
-                  LOG.warn("Log file {} does not exist, but metadata is present", file);
-                  table.delete(rowKey, colName);
-                  deletedColumns++;
-                } else if (fileLocation.lastModified() < tillTime) {
-                  // Delete if file last modified time is less than tillTime
-                  callback.handle(namespaceId, fileLocation, namespacedLogDir);
-                  table.delete(rowKey, colName);
-                  deletedColumns++;
-                }
-              } catch (Exception e) {
-                LOG.error("Got exception deleting file {}", Bytes.toString(entry.getValue()), e);
+              URI file = new URI(Bytes.toString(colValue));
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Got file {} with start time {}", file, Bytes.toLong(colName));
               }
+
+              // while processing a row key, if start column is present, then it should be considered only for the
+              // first time. Skip any column less/equal to start column
+              if (startColumn != null && Bytes.compareTo(startColumn, colName) >= 0) {
+                continue;
+              }
+
+              // Stop if we exceeded the limit
+              if (colCount >= limit) {
+                //  return current row key if we exceeded the limit
+                return new TableKey(getLogPartition(rowKey), stopCol);
+              }
+
+              Location fileLocation = impersonator.doAs(namespaceId, new Callable<Location>() {
+                @Override
+                public Location call() throws Exception {
+                  return rootLocationFactory.create(new URI(Bytes.toString(entry.getValue())));
+                }
+              });
+
+              if (!fileLocation.exists()) {
+                LOG.warn("Log file {} does not exist, but metadata is present", file);
+                table.delete(rowKey, colName);
+              } else if (fileLocation.lastModified() < tillTime) {
+                // Delete if file last modified time is less than tillTime
+                callback.handle(namespaceId, fileLocation, namespacedLogDir);
+                table.delete(rowKey, colName);
+              }
+
+              stopCol = colName;
+              colCount++;
             }
+            startColumn = null;
           }
         }
-        return deletedColumns;
+        return null;
       }
     });
   }

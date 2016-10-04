@@ -85,27 +85,15 @@ public final class LogCleanup implements Runnable {
       long tillTime = System.currentTimeMillis() - retentionDurationMs;
       final SetMultimap<String, Location> parentDirs = HashMultimap.create();
       final Map<String, NamespaceId> namespacedLogBaseDirMap = new HashMap<>();
-      fileMetaDataManager.cleanMetaData(tillTime,
-                                        new FileMetaDataManager.DeleteCallback() {
-                                          @Override
-                                          public void handle(NamespaceId namespaceId, final Location location,
-                                                             final String namespacedLogBaseDir) {
-                                            try {
-                                              deleteLogFiles(parentDirs, namespaceId, namespacedLogBaseDir, location);
-                                              namespacedLogBaseDirMap.put(namespacedLogBaseDir, namespaceId);
-                                            } catch (Exception e) {
-                                              LOG.error("Got exception when deleting path {}", location, e);
-                                              throw Throwables.propagate(e);
-                                            }
-                                          }
-                                        });
 
-      // clean log files which does not have corresponding meta data
       try {
+        // clean log files with corresponding metadata
+        cleanFilesWithMeta(tillTime, namespacedLogBaseDirMap, parentDirs, MAX_META_FILES_SCANNED);
+        // clean log files which does not have corresponding meta data
         cleanFilesWithoutMeta(tillTime, namespacedLogBaseDirMap, parentDirs,
                               MAX_DISK_FILES_SCANNED, MAX_META_FILES_SCANNED);
       } catch (Exception e) {
-        LOG.error("Got exception while cleaning up disk files without meta data", e);
+        LOG.error("Got exception while cleaning up log files", e);
       }
 
       // Delete any empty parent dirs
@@ -129,10 +117,47 @@ public final class LogCleanup implements Runnable {
   }
 
   /**
-   * Clean log files which does not have corresponding meta data
-   * @param tillTime time till the meta data will be deleted.
+   * Clean log files modified after till time
+   *
+   * @param tillTime                file modified before till time will be cleaned up.
    * @param namespacedLogBaseDirMap namespace to directory map
-   * @param parentDirs parent directories for deleted files
+   * @param parentDirs              parent directories for deleted files
+   * @param maxMetaFilesScanned     Max meta files scanned
+   */
+  @VisibleForTesting
+  void cleanFilesWithMeta(final long tillTime, final Map<String, NamespaceId> namespacedLogBaseDirMap,
+                          final SetMultimap<String, Location> parentDirs, final int maxMetaFilesScanned)
+    throws Exception {
+    LOG.info("Starting deletion of log files older than {} with metadata", tillTime);
+    // Get all the log metadata in batches of maxMetaFilesScanned
+    FileMetaDataManager.TableKey nextTableKey = null;
+    do {
+      nextTableKey = fileMetaDataManager.cleanMetaData(nextTableKey, maxMetaFilesScanned,
+                                                       tillTime, new FileMetaDataManager.DeleteCallback() {
+          @Override
+          public void handle(NamespaceId namespaceId, final Location location,
+                             final String namespacedLogBaseDir) {
+            try {
+              deleteLogFiles(parentDirs, namespaceId, namespacedLogBaseDir, location);
+              namespacedLogBaseDirMap.put(namespacedLogBaseDir, namespaceId);
+            } catch (Exception e) {
+              LOG.error("Got exception when deleting path {}", location, e);
+              throw Throwables.propagate(e);
+            }
+          }
+        });
+    } while (nextTableKey != null);
+  }
+
+  /**
+   * Clean log files which does not have corresponding meta data
+   *
+   * @param tillTime                time till the meta data will be deleted.
+   * @param namespacedLogBaseDirMap namespace to directory map
+   * @param parentDirs              parent directories for deleted files
+   * @param maxDiskFilesScanned     Max disk files scanned
+   * @param maxMetaFilesScanned     Max meta files scanned
+   * @throws Exception
    */
   @VisibleForTesting
   void cleanFilesWithoutMeta(final long tillTime, final Map<String, NamespaceId> namespacedLogBaseDirMap,
@@ -169,8 +194,9 @@ public final class LogCleanup implements Runnable {
 
   /**
    * Remove all the disk files from diskFileLocations for which meta data is present
-   * @param namespaceId namespace for which metadata needs to be scanned
-   * @param diskFileLocations log files present on disk for given namespace
+   *
+   * @param namespaceId         namespace for which metadata needs to be scanned
+   * @param diskFileLocations   log files present on disk for given namespace
    * @param maxMetaFilesScanned max number files to be scanned in one iteration
    */
   @VisibleForTesting
@@ -204,12 +230,13 @@ public final class LogCleanup implements Runnable {
   }
 
   /**
+   * Collects disk locations modified before tillTime
    *
-   * @param namespaceId namespace for which metadata needs to be scanned
+   * @param namespaceId          namespace for which metadata needs to be scanned
    * @param namespacedLogBaseDir namespaced log base dir without the root dir prefixed
-   * @param tillTime time till disk locations are scanned.
-   * @param maxDiskFilesScanned Max disk files scanned. If reached this limit, other files will be processed in next
-   *                            cleanup run
+   * @param tillTime             time till disk locations are scanned.
+   * @param maxDiskFilesScanned  Max disk files scanned. If reached this limit, other files will be processed in next
+   *                             cleanup run
    * @return set of locations on disk
    */
   private Set<Location> getDiskLocations(NamespaceId namespaceId, final Location namespacedLogBaseDir,
@@ -231,8 +258,7 @@ public final class LogCleanup implements Runnable {
     return diskFilesProcessor.getResult();
   }
 
-  @VisibleForTesting
-  Processor<URI, Set<URI>> getMetaFilesProcessor() {
+  private Processor<URI, Set<URI>> getMetaFilesProcessor() {
     return new Processor<URI, Set<URI>>() {
       private Set<URI> locations = new HashSet<>();
 
