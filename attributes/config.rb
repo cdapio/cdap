@@ -39,11 +39,6 @@ default['cdap']['cdap_site']['log.retention.duration.days'] = '7'
 default['cdap']['cdap_site']['zookeeper.quorum'] = "#{node['fqdn']}:2181/#{node['cdap']['cdap_site']['root.namespace']}"
 default['cdap']['cdap_site']['router.bind.address'] = node['fqdn']
 default['cdap']['cdap_site']['router.server.address'] = node['fqdn']
-default['cdap']['cdap_site']['app.bind.address'] = node['fqdn']
-default['cdap']['cdap_site']['data.tx.bind.address'] = node['fqdn']
-default['cdap']['cdap_site']['metrics.query.bind.address'] = node['fqdn']
-default['cdap']['cdap_site']['dashboard.bind.port'] = '9999'
-default['cdap']['cdap_site']['log.saver.run.memory.megs'] = '512'
 # These are only used with CDAP < 2.6
 if node['cdap']['version'].to_f < 2.6
   default['cdap']['cdap_site']['gateway.server.address'] = node['fqdn']
