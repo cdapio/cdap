@@ -61,6 +61,10 @@
       <id>sonatype</id>
       <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
     </repository>
+   <repository>
+     <id>snapshot</id>
+     <url>https://repository.apache.org/content/repositories/snapshots/</url>
+   </repository>
   </repositories>
 
 
