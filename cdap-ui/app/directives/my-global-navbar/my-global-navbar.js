@@ -102,6 +102,9 @@ function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT,
 
 
 angular.module(PKG.name+'.commons')
+  .directive('plusButton', function(reactDirective) {
+    return reactDirective(window.PlusButton.default);
+  })
   .directive('myGlobalNavbar', () => {
     return {
       restrict: 'E',
