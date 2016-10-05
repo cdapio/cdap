@@ -26,6 +26,12 @@ Cask Data Application Platform Release Notes
 `Release 3.5.2 <http://docs.cask.co/cdap/3.5.2/index.html>`__
 =============================================================
 
+Improvements
+------------
+
+- :cask-issue:`CDAP-7385` - The Log HTTP Handler and Router have been fixed to allow the
+  streaming of larger logs files.
+
 Bug Fixes
 ---------
 
@@ -55,6 +61,13 @@ Bug Fixes
 
 - :cask-issue:`CDAP-7386` - Fixed an error in the "CDAP Introduction" tutorial's
   "Transforming Your Data" example of an application configuration.
+
+- :cask-issue:`CDAP-7391` - Fixes an issue that caused unit test failures when using
+  ``org.hamcrest`` classes.
+
+- :cask-issue:`CDAP-7392` - Fixed an issue where the Java process corresponding to the
+  MapReduce application master kept running even if the application was moved to the
+  FINISHED state.
 
 - :cask-issue:`HYDRATOR-791` - Fixed a problem with Hydrator pipelines using a DBSource
   not working in an HDP cluster.
