@@ -19,6 +19,7 @@ package co.cask.cdap.test;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.List;
@@ -31,12 +32,16 @@ import java.util.concurrent.TimeoutException;
  * @param <T> The type of ProgramManager
  */
 public abstract class AbstractProgramManager<T extends ProgramManager> implements ProgramManager<T> {
-  protected final Id.Program programId;
+  protected final ProgramId programId;
   private final ApplicationManager applicationManager;
 
-  public AbstractProgramManager(Id.Program programId, ApplicationManager applicationManager) {
+  public AbstractProgramManager(ProgramId programId, ApplicationManager applicationManager) {
     this.applicationManager = applicationManager;
     this.programId = programId;
+  }
+
+  public AbstractProgramManager(Id.Program programId, ApplicationManager applicationManager) {
+    this(programId.toEntityId(), applicationManager);
   }
 
   @Override
@@ -114,11 +119,11 @@ public abstract class AbstractProgramManager<T extends ProgramManager> implement
 
   @Override
   public List<RunRecord> getHistory(ProgramRunStatus status) {
-    return applicationManager.getHistory(programId, status);
+    return applicationManager.getHistory(programId.toId(), status);
   }
 
   @Override
   public void setRuntimeArgs(Map<String, String> args) throws Exception {
-    applicationManager.setRuntimeArgs(programId.toEntityId(), args);
+    applicationManager.setRuntimeArgs(programId, args);
   }
 }

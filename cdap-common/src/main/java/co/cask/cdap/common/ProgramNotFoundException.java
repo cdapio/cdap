@@ -17,20 +17,25 @@
 package co.cask.cdap.common;
 
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ProgramId;
 
 /**
  * Thrown when a program is not found
  */
 public class ProgramNotFoundException extends NotFoundException {
 
-  private final Id.Program id;
+  private final ProgramId id;
 
-  public ProgramNotFoundException(Id.Program id) {
-    super(id);
-    this.id = id;
+  public ProgramNotFoundException(ProgramId programId) {
+    super(programId);
+    this.id = programId;
   }
 
-  public Id.Program getId() {
+  public ProgramNotFoundException(Id.Program id) {
+    this(id.toEntityId());
+  }
+
+  public ProgramId getId() {
     return id;
   }
 }

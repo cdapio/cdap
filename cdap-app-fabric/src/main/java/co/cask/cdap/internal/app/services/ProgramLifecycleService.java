@@ -846,7 +846,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
         switch (programType) {
           case FLOW:
             for (String programName : appSpec.getFlows().keySet()) {
-              ProgramId programId = validateProgramForRunRecord(nm.getName(), appSpec.getName(), programType,
+              ProgramId programId = validateProgramForRunRecord(nm.getName(), appSpec.getName(),
+                                                                appSpec.getAppVersion(), programType,
                                                                 programName, runId);
               if (programId != null) {
                 targetProgramId = programId;
@@ -856,7 +857,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
             break;
           case MAPREDUCE:
             for (String programName : appSpec.getMapReduce().keySet()) {
-              ProgramId programId = validateProgramForRunRecord(nm.getName(), appSpec.getName(), programType,
+              ProgramId programId = validateProgramForRunRecord(nm.getName(), appSpec.getName(),
+                                                                appSpec.getAppVersion(), programType,
                                                                 programName, runId);
               if (programId != null) {
                 targetProgramId = programId;
@@ -866,7 +868,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
             break;
           case SPARK:
             for (String programName : appSpec.getSpark().keySet()) {
-              ProgramId programId = validateProgramForRunRecord(nm.getName(), appSpec.getName(), programType,
+              ProgramId programId = validateProgramForRunRecord(nm.getName(), appSpec.getName(),
+                                                                appSpec.getAppVersion(), programType,
                                                                 programName, runId);
               if (programId != null) {
                 targetProgramId = programId;
@@ -876,7 +879,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
             break;
           case SERVICE:
             for (String programName : appSpec.getServices().keySet()) {
-              ProgramId programId = validateProgramForRunRecord(nm.getName(), appSpec.getName(), programType,
+              ProgramId programId = validateProgramForRunRecord(nm.getName(), appSpec.getName(),
+                                                                appSpec.getAppVersion(), programType,
                                                                 programName, runId);
               if (programId != null) {
                 targetProgramId = programId;
@@ -886,7 +890,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
             break;
           case WORKER:
             for (String programName : appSpec.getWorkers().keySet()) {
-              ProgramId programId = validateProgramForRunRecord(nm.getName(), appSpec.getName(), programType,
+              ProgramId programId = validateProgramForRunRecord(nm.getName(), appSpec.getName(),
+                                                                appSpec.getAppVersion(), programType,
                                                                 programName, runId);
               if (programId != null) {
                 targetProgramId = programId;
@@ -896,7 +901,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
             break;
           case WORKFLOW:
             for (String programName : appSpec.getWorkflows().keySet()) {
-              ProgramId programId = validateProgramForRunRecord(nm.getName(), appSpec.getName(), programType,
+              ProgramId programId = validateProgramForRunRecord(nm.getName(), appSpec.getName(),
+                                                                appSpec.getAppVersion(), programType,
                                                                 programName, runId);
               if (programId != null) {
                 targetProgramId = programId;
@@ -942,9 +948,9 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @return instance of {@link ProgramId} if exist for the runId or null if does not
    */
   @Nullable
-  private ProgramId validateProgramForRunRecord(String namespaceName, String appName, ProgramType programType,
-                                                String programName, String runId) {
-    ProgramId programId = Ids.namespace(namespaceName).app(appName).program(programType, programName);
+  private ProgramId validateProgramForRunRecord(String namespaceName, String appName, String appVersion,
+                                                ProgramType programType, String programName, String runId) {
+    ProgramId programId = Ids.namespace(namespaceName).app(appName, appVersion).program(programType, programName);
     RunRecordMeta runRecord = store.getRun(programId, runId);
     if (runRecord == null) {
       return null;

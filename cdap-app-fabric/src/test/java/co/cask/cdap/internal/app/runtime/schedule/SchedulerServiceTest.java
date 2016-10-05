@@ -33,6 +33,8 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -61,7 +63,7 @@ public class SchedulerServiceTest {
   private static NamespaceAdmin namespaceAdmin;
   private static final Id.Namespace namespace = new Id.Namespace("notdefault");
   private static final ApplicationId appId = new ApplicationId(namespace.getId(), AppWithWorkflow.NAME);
-  private static final Id.Program program = appId.workflow(AppWithWorkflow.SampleWorkflow.NAME).toId();
+  private static final ProgramId program = appId.workflow(AppWithWorkflow.SampleWorkflow.NAME);
   private static final SchedulableProgramType programType = SchedulableProgramType.WORKFLOW;
   private static final Id.Stream STREAM_ID = Id.Stream.from(namespace, "stream");
   private static final Schedule TIME_SCHEDULE_0 = Schedules.builder("Schedule0")
@@ -142,9 +144,8 @@ public class SchedulerServiceTest {
     store.addApplication(appId, createNewSpecification(applicationSpecification, program,
                                                        programType, TIME_SCHEDULE_1));
 
-    Id.Program programInOtherNamespace =
-      Id.Program.from(new Id.Application(new Id.Namespace("otherNamespace"), appId.getApplication()),
-                      program.getType(), program.getId());
+    ProgramId programInOtherNamespace = new ProgramId("otherNamespace", appId.getApplication(), program.getType(),
+                                                      program.getProgram());
 
     List<String> scheduleIds = schedulerService.getScheduleIds(program, programType);
     Assert.assertEquals(1, scheduleIds.size());
@@ -339,13 +340,13 @@ public class SchedulerServiceTest {
                                                                       scheduleId.substring(i + 1)));
   }
 
-  private ApplicationSpecification createNewSpecification(ApplicationSpecification spec, Id.Program programId,
+  private ApplicationSpecification createNewSpecification(ApplicationSpecification spec, ProgramId programId,
                                                           SchedulableProgramType programType, Schedule schedule) {
     ImmutableMap.Builder<String, ScheduleSpecification> builder = ImmutableMap.builder();
     builder.putAll(spec.getSchedules());
-    builder.put(schedule.getName(), new ScheduleSpecification(schedule,
-                                                              new ScheduleProgramInfo(programType, programId.getId()),
-                                                              ImmutableMap.<String, String>of()));
+    builder.put(schedule.getName(),
+                new ScheduleSpecification(schedule, new ScheduleProgramInfo(programType, programId.getProgram()),
+                                          ImmutableMap.<String, String>of()));
     return new DefaultApplicationSpecification(
       spec.getName(),
       spec.getDescription(),

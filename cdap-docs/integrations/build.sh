@@ -26,7 +26,7 @@ function download_includes() {
   
   # Download Apache Sentry File
   local github_source="https://raw.githubusercontent.com/caskdata/cdap-security-extn/${GIT_BRANCH_CDAP_SECURITY_EXTN}/cdap-sentry/cdap-sentry-extension/"
-  download_file ${target_includes_dir} ${github_source} README.rst 26f504896ca0d5a995071be9ee5e5706 cdap-sentry-extension-readme.txt
+  download_file ${target_includes_dir} ${github_source} README.rst 86cb58d0e576e0604a66a94edfa4981a cdap-sentry-extension-readme.txt
 }
 
 run_command ${1}

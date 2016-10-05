@@ -123,7 +123,7 @@ public class UpgradeTool {
 
     LOG.info("Upgrading pipeline: {}", appId);
     String artifactName = appDetail.getArtifact().getName();
-    String artifactVersion = appDetail.getVersion();
+    String artifactVersion = appDetail.getArtifactVersion();
     if (BATCH_NAME.equals(artifactName)) {
       UpgradeContext upgradeContext = ClientUpgradeContext.getBatchContext(appId.getParent(), artifactClient);
       ETLBatchConfig upgradedConfig = convertBatchConfig(artifactVersion, appDetail.getConfiguration(), upgradeContext);

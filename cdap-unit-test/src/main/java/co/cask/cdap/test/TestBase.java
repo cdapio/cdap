@@ -85,6 +85,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -533,6 +534,20 @@ public class TestBase {
    * @return An {@link ApplicationManager} to manage the deployed application
    */
   protected static ApplicationManager deployApplication(Id.Application appId,
+                                                        AppRequest appRequest) throws Exception {
+    ApplicationManager appManager = getTestManager().deployApplication(appId, appRequest);
+    applicationManagers.add(appManager);
+    return appManager;
+  }
+
+  /**
+   * Deploys an {@link Application} with version. The application artifact must already exist.
+   *
+   * @param appId the id of the application to create
+   * @param appRequest the application create or update request
+   * @return An {@link ApplicationManager} to manage the deployed application
+   */
+  protected static ApplicationManager deployApplication(ApplicationId appId,
                                                         AppRequest appRequest) throws Exception {
     ApplicationManager appManager = getTestManager().deployApplication(appId, appRequest);
     applicationManagers.add(appManager);

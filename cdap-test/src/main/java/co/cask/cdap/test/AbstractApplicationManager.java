@@ -18,6 +18,8 @@ package co.cask.cdap.test;
 
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
@@ -26,9 +28,13 @@ import java.util.Map;
  * A base implementation of {@link ApplicationManager}.
  */
 public abstract class AbstractApplicationManager implements ApplicationManager {
-  protected final Id.Application application;
+  protected final ApplicationId application;
 
   public AbstractApplicationManager(Id.Application application) {
+    this.application = application.toEntityId();
+  }
+
+  public AbstractApplicationManager(ApplicationId application) {
     this.application = application;
   }
 
@@ -37,7 +43,12 @@ public abstract class AbstractApplicationManager implements ApplicationManager {
     startProgram(programId, ImmutableMap.<String, String>of());
   }
 
+  @Override
+  public void startProgram(ProgramId programId) {
+    startProgram(programId, ImmutableMap.<String, String>of());
+  }
+
   private void startProgram(String programName, Map<String, String> arguments, ProgramType programType) {
-    startProgram(Id.Program.from(application, programType, programName), arguments);
+    startProgram(Id.Program.from(application.toId(), programType, programName), arguments);
   }
 }

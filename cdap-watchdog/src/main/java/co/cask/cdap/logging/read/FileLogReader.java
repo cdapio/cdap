@@ -38,6 +38,7 @@ import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.NavigableMap;
@@ -92,11 +93,15 @@ public class FileLogReader implements LogReader {
       AvroFileReader logReader = new AvroFileReader(schema);
       NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
       for (Location file : filesInRange) {
-        LOG.trace("Reading file {}", file);
-        logReader.readLog(file, logFilter, fromTimeMs,
-                          Long.MAX_VALUE, maxEvents - callback.getCount(), callback, namespaceId, impersonator);
-        if (callback.getCount() >= maxEvents) {
-          break;
+        try {
+          LOG.trace("Reading file {}", file);
+          logReader.readLog(file, logFilter, fromTimeMs,
+                            Long.MAX_VALUE, maxEvents - callback.getCount(), callback, namespaceId, impersonator);
+          if (callback.getCount() >= maxEvents) {
+            break;
+          }
+        } catch (IOException e) {
+          LOG.warn("Got exception reading log file {}", file, e);
         }
       }
     } catch (Throwable e) {
@@ -127,14 +132,18 @@ public class FileLogReader implements LogReader {
       int count = 0;
       NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
       for (Location file : Lists.reverse(filesInRange)) {
-        LOG.trace("Reading file {}", file);
+        try {
+          LOG.trace("Reading file {}", file);
 
-        Collection<LogEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs, maxEvents - count,
-                                                            namespaceId, impersonator);
-        logSegments.add(events);
-        count += events.size();
-        if (count >= maxEvents) {
-          break;
+          Collection<LogEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs, maxEvents - count,
+                                                              namespaceId, impersonator);
+          logSegments.add(events);
+          count += events.size();
+          if (count >= maxEvents) {
+            break;
+          }
+        } catch (IOException e) {
+          LOG.warn("Got exception reading log file {}", file, e);
         }
       }
 
@@ -165,9 +174,13 @@ public class FileLogReader implements LogReader {
       AvroFileReader avroFileReader = new AvroFileReader(schema);
       NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
       for (Location file : filesInRange) {
-        LOG.trace("Reading file {}", file);
-        avroFileReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback,
-                               namespaceId, impersonator);
+        try {
+          LOG.trace("Reading file {}", file);
+          avroFileReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback,
+                                 namespaceId, impersonator);
+        } catch (IOException e) {
+          LOG.warn("Got exception reading log file {}", file, e);
+        }
       }
     } catch (Throwable e) {
       LOG.error("Got exception: ", e);

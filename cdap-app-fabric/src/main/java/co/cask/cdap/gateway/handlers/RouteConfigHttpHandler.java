@@ -16,11 +16,15 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.route.store.RouteConfig;
 import co.cask.cdap.route.store.RouteStore;
@@ -32,7 +36,8 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.lang.reflect.Type;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -64,10 +69,6 @@ public class RouteConfigHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("service-id") String serviceId) throws Exception {
     ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
     RouteConfig routeConfig = routeStore.fetch(programId);
-    if (routeConfig == null) {
-      responder.sendJson(HttpResponseStatus.OK, Collections.emptyMap());
-      return;
-    }
     responder.sendJson(HttpResponseStatus.OK, routeConfig.getRoutes());
   }
 
@@ -77,16 +78,34 @@ public class RouteConfigHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("app-id") String appId,
                                @PathParam("service-id") String serviceId) throws Exception {
-    ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
+    NamespaceId namespace = new NamespaceId(namespaceId);
+    ProgramId programId = namespace.app(appId).service(serviceId);
     Map<String, Integer> routes = parseBody(request, ROUTE_CONFIG_TYPE);
-    RouteConfig routeConfig;
-    try {
-      routeConfig = new RouteConfig(routes);
-    } catch (IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-      return;
+    if (routes == null || routes.isEmpty()) {
+      throw new BadRequestException("Route config contains invalid format or empty content.");
     }
-    routeStore.store(programId, routeConfig);
+    List<ProgramId> nonExistingServices = new ArrayList<>();
+    for (String version : routes.keySet()) {
+      ProgramId routeProgram = namespace.app(appId, version).service(serviceId);
+      if (lifecycleService.getProgramSpecification(routeProgram) == null) {
+        nonExistingServices.add(routeProgram);
+      }
+    }
+    if (nonExistingServices.size() > 0) {
+      throw new BadRequestException("The following versions of the application/service could not be found : "
+                             + nonExistingServices);
+    }
+
+    int percentageSum = 0;
+    for (Integer percent : routes.values()) {
+      percentageSum += percent;
+    }
+
+    if (percentageSum != 100) {
+      throw new BadRequestException("Route Percentage needs to add upto 100.");
+    }
+
+    routeStore.store(programId, new RouteConfig(routes));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 

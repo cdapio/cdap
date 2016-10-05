@@ -895,7 +895,7 @@ Transforming Your Data
                            {\\"name\\":\\"remote_host\\",\\"type\\":[\\"string\\",\\"null\\"]},
                            {\\"name\\":\\"remote_login\\",\\"type\\":[\\"string\\",\\"null\\"]},
                            {\\"name\\":\\"auth_user\\",\\"type\\":[\\"string\\",\\"null\\"]},
-                           {\\"name\\":\\"date\\",\\"type\\":[\\"string\\",\\"null\\"]},
+                           {\\"name\\":\\"request_time\\",\\"type\\":[\\"string\\",\\"null\\"]},
                            {\\"name\\":\\"request\\",\\"type\\":[\\"string\\",\\"null\\"]},
                            {\\"name\\":\\"status\\",\\"type\\":[\\"int\\",\\"null\\"]},
                            {\\"name\\":\\"content_length\\",\\"type\\":[\\"int\\",\\"null\\"]},

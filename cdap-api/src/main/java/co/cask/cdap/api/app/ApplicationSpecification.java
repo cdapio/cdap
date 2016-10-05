@@ -49,6 +49,11 @@ public interface ApplicationSpecification {
   String getName();
 
   /**
+   * @return Version of the Application.
+   */
+  String getAppVersion();
+
+  /**
    * @return Configuration string used during the creation of the Application.
    */
   @Nullable
