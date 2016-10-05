@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.read;
 
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 
@@ -46,13 +47,12 @@ public interface LogReader {
                        Callback callback);
 
   /**
-   * Returns log events of a Flow or Map between given times.
-   * @param loggingContext context to look up log events.
-   * @param fromTimeMs start time.
-   * @param toTimeMs end time.
-   * @param filter filter to select log events
-   * @param callback Callback to handle the log events.
-   */
-  void getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs, Filter filter,
-                   Callback callback);
+    * Returns log events for a given LoggingContext between given times.
+    * @param loggingContext context to look up log events.
+    * @param fromTimeMs start time.
+    * @param toTimeMs end time.
+    * @param filter filter to select log events
+    * @return CloseableIterator of log events
+    */
+  CloseableIterator<LogEvent> getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs, Filter filter);
 }
