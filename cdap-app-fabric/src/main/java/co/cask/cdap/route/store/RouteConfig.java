@@ -26,6 +26,7 @@ import java.util.Map;
  */
 public class RouteConfig {
   private final Map<String, Integer> routes;
+  private transient Boolean isValid;
 
   public RouteConfig(Map<String, Integer> routes) {
     Preconditions.checkNotNull(routes);
@@ -34,5 +35,16 @@ public class RouteConfig {
 
   public Map<String, Integer> getRoutes() {
     return routes;
+  }
+
+  public boolean isValid() {
+    if (isValid == null) {
+      int percentageSum = 0;
+      for (Integer percent : routes.values()) {
+        percentageSum += percent;
+      }
+      isValid = (percentageSum == 100);
+    }
+    return isValid;
   }
 }
