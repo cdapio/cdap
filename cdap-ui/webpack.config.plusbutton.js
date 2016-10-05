@@ -16,12 +16,18 @@
 var webpack = require('webpack');
 var plugins = [
   new webpack.optimize.DedupePlugin(),
-  new webpack.optimize.CommonsChunkPlugin("marketplace-lib", "marketplace-lib.js", Infinity),
+  new webpack.optimize.CommonsChunkPlugin("plusbutton-lib", "plusbutton-lib.js", Infinity),
   new webpack.optimize.UglifyJsPlugin({
     compress: {
       warnings: false,
       comments: false
     }
+  }),
+  new webpack.DefinePlugin({
+    'process.env':{
+      'NODE_ENV': JSON.stringify("production"),
+      '__DEVTOOLS__': false
+    },
   })
 ];
 var mode = process.env.NODE_ENV;
@@ -60,16 +66,15 @@ var loaders = [
 ];
 
 module.exports = {
-  context: __dirname + '/app/market',
+  context: __dirname + '/app/plusbutton',
   entry: {
-    'marketplace': ['./market.js'],
-    'marketplace-lib': [
+    'plusbutton': ['./plusbutton.js'],
+    'plusbutton-lib': [
       'classnames',
       'reactstrap',
       'i18n-react',
       'sockjs-client',
       'rx',
-      'react-addons-css-transition-group',
       'react-dropzone',
       'react-redux'
     ]
@@ -91,8 +96,8 @@ module.exports = {
   },
   output: {
     filename: './[name].js',
-    path: __dirname + '/market_dist',
-    library: 'Market',
+    path: __dirname + '/plusbutton_dist',
+    library: 'PlusButton',
     libraryTarget: 'umd'
   },
   externals: {
@@ -107,7 +112,22 @@ module.exports = {
       commonjs2: 'react-dom',
       commonjs: 'react-dom',
       amd: 'react-dom'
+    },
+    'react-addons-css-transition-group': {
+      commonjs: 'react-addons-css-transition-group',
+      commonjs2: 'react-addons-css-transition-group',
+      amd: 'react-addons-css-transition-group',
+      root: ['React','addons','CSSTransitionGroup']
+    },
+    'react-addons-transition-group': {
+      commonjs: 'react-addons-transition-group',
+      commonjs2: 'react-addons-transition-group',
+      amd: 'react-addons-transition-group',
+      root: ['React','addons','TransitionGroup']
     }
+  },
+  devServer: {
+    stats: 'errors-only'
   },
   resolve: {
     alias: {

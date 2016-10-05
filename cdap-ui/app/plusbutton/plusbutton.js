@@ -15,5 +15,6 @@
  */
 import T from 'i18n-react';
 T.setTexts(require('../cdap/text/text-en.yaml'));
-import Market from '../cdap/components/Market';
-export default Market; 
+// import PlusButton from '../cdap/components/PlusButton';
+var PlusButton = require('../cdap/components/PlusButton').default;
+export default PlusButton;
