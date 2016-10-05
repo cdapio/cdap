@@ -39,6 +39,7 @@ import co.cask.cdap.logging.save.CheckpointManagerFactory;
 import co.cask.cdap.logging.save.KafkaLogWriterPlugin;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.inject.Injector;
 import org.apache.tephra.TransactionManager;
 import org.junit.AfterClass;
@@ -274,15 +275,15 @@ public class TestDistributedLogReader extends KafkaTestBase {
   private static void generateCheckpointTime(LoggingContext loggingContext,
                                              int numExpectedEvents, String kafkaTopic) throws Exception {
     FileLogReader logReader = injector.getInstance(FileLogReader.class);
-    LoggingTester.LogCallback logCallback = new LoggingTester.LogCallback();
-    logReader.getLog(loggingContext, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback);
-    Assert.assertEquals(numExpectedEvents, logCallback.getEvents().size());
+    List<LogEvent> events =
+      Lists.newArrayList(logReader.getLog(loggingContext, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER));
+    Assert.assertEquals(numExpectedEvents, events.size());
 
     // Save checkpoint (time of last event)
     CheckpointManagerFactory checkpointManagerFactory = injector.getInstance(CheckpointManagerFactory.class);
     CheckpointManager checkpointManager =
       checkpointManagerFactory.create(kafkaTopic, KafkaLogWriterPlugin.CHECKPOINT_ROW_KEY_PREFIX);
-    long checkpointTime = logCallback.getEvents().get(numExpectedEvents - 1).getLoggingEvent().getTimeStamp();
+    long checkpointTime = events.get(numExpectedEvents - 1).getLoggingEvent().getTimeStamp();
     checkpointManager.saveCheckpoint(ImmutableMap.of(stringPartitioner.partition(loggingContext.getLogPartition(), -1),
                                                      new Checkpoint(numExpectedEvents, checkpointTime)));
   }
