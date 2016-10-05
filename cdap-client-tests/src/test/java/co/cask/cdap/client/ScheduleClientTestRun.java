@@ -25,6 +25,7 @@ import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ScheduledRuntime;
+import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.After;
 import org.junit.Assert;
@@ -48,6 +49,8 @@ public class ScheduleClientTestRun extends ClientTestBase {
   private final Id.Application app = Id.Application.from(namespace, FakeApp.NAME);
   private final Id.Workflow workflow = Id.Workflow.from(app, FakeWorkflow.NAME);
   private final Id.Schedule schedule = Id.Schedule.from(app, FakeApp.SCHEDULE_NAME);
+
+  private final ScheduleId scheduleId = schedule.toEntityId();
 
   private ScheduleClient scheduleClient;
   private ApplicationClient appClient;
@@ -93,9 +96,19 @@ public class ScheduleClientTestRun extends ClientTestBase {
 
     String status = scheduleClient.getStatus(schedule);
     Assert.assertEquals("SUSPENDED", status);
+    status = scheduleClient.getStatus(scheduleId);
+    Assert.assertEquals("SUSPENDED", status);
 
     scheduleClient.resume(schedule);
     status = scheduleClient.getStatus(schedule);
+    Assert.assertEquals("SCHEDULED", status);
+
+    scheduleClient.suspend(scheduleId);
+    status = scheduleClient.getStatus(scheduleId);
+    Assert.assertEquals("SUSPENDED", status);
+
+    scheduleClient.resume(scheduleId);
+    status = scheduleClient.getStatus(scheduleId);
     Assert.assertEquals("SCHEDULED", status);
 
     scheduleClient.suspend(schedule);

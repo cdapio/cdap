@@ -27,6 +27,7 @@ CDAP HTTP RESTful API v3
     Namespace <namespace>
     Preferences <preferences>
     Query <query>
+    Route Config <routeconfig>
     Security <security>
     Service <service>
     Stream <stream>
@@ -45,7 +46,8 @@ data isolation. This is an inital step towards introducing `multi-tenancy
 
 **Introduction**
 
-- :doc:`Introduction: <introduction>` conventions, converting from HTTP RESTful API v2, naming restrictions, status codes, and working with CDAP security
+- :doc:`Introduction: <introduction>` conventions, converting from HTTP RESTful API v2,
+  naming restrictions, status codes, and working with CDAP security
 
 **General APIs**
 
@@ -53,16 +55,21 @@ data isolation. This is an inital step towards introducing `multi-tenancy
 - :doc:`Metadata: <metadata>` setting, retrieving, and deleting user metadata annotations
 - :doc:`Preferences: <preferences>` setting, retrieving, and deleting preferences
 - :doc:`Configuration: <configuration>` retrieving the CDAP and HBase configurations
-- :doc:`Security: <security>` granting, revoking and listing privileges on CDAP entities, managing secure storage
+- :doc:`Security: <security>` granting, revoking and listing privileges on CDAP entities,
+  managing secure storage
 - :doc:`Transactions: <transactions>` interacting with the transaction service
 
 **Major CDAP Entities APIs**
 
-- :doc:`Artifact: <artifact>` deploying artifacts and retrieving details about plugins available to artifacts and classes contained within artifacts
-- :doc:`Lifecycle: <lifecycle>` deploying and managing applications, and managing the lifecycle of flows, MapReduce programs, Spark programs, workflows, and custom services
+- :doc:`Artifact: <artifact>` deploying artifacts and retrieving details about plugins
+  available to artifacts and classes contained within artifacts
+- :doc:`Lifecycle: <lifecycle>` deploying and managing applications, and managing the
+  lifecycle of flows, MapReduce programs, Spark programs, workflows, and custom services
 - :doc:`Stream: <stream>` sending data events to a stream or to inspect the contents of a stream
 - :doc:`Dataset: <dataset>` interacting with datasets, dataset modules, and dataset types
 - :doc:`Service: <service>` supports making requests to the methods of an application’s services
+- :doc:`Route Config: <query>` create, fetch, and delete route configurations (*route
+  configs*) which allocate requests between different versions of a service
 - :doc:`Workflow: <workflow>` retrieving values from workflow tokens and statistics on workflow runs
 
 **Querying and Viewing APIs**
@@ -79,14 +86,17 @@ data isolation. This is an inital step towards introducing `multi-tenancy
 
 .. rubric:: Alphabetical List of APIs
 
-- :doc:`Introduction: <introduction>` conventions, converting from HTTP RESTful API v2, naming restrictions, status codes, and working with CDAP security
+- :doc:`Introduction: <introduction>` conventions, converting from HTTP RESTful API v2,
+  naming restrictions, status codes, and working with CDAP security
 
 ..
 
-- :doc:`Artifact: <artifact>` deploying artifacts and retrieving details about plugins available to artifacts and classes contained within artifacts
+- :doc:`Artifact: <artifact>` deploying artifacts and retrieving details about plugins
+  available to artifacts and classes contained within artifacts
 - :doc:`Configuration: <configuration>` retrieving the CDAP and HBase configurations
 - :doc:`Dataset: <dataset>` interacting with datasets, dataset modules, and dataset types
-- :doc:`Lifecycle: <lifecycle>` deploying and managing applications, and managing the lifecycle of flows, MapReduce programs, Spark programs, workflows, and custom services
+- :doc:`Lifecycle: <lifecycle>` deploying and managing applications, and managing the
+  lifecycle of flows, MapReduce programs, Spark programs, workflows, and custom services
 - :doc:`Logging: <logging>` retrieving application logs
 - :doc:`Metadata: <metadata>` setting, retrieving, and deleting user metadata annotations
 - :doc:`Metrics: <metrics>` retrieving metrics for system and user applications (user-defined metrics)
@@ -94,6 +104,8 @@ data isolation. This is an inital step towards introducing `multi-tenancy
 - :doc:`Namespace: <namespace>` creating and managing namespaces
 - :doc:`Preferences: <preferences>` setting, retrieving, and deleting preferences
 - :doc:`Query: <query>` sending ad-hoc queries to CDAP datasets
+- :doc:`Route Config: <query>` create, fetch, and delete route configurations (*route
+  configs*) which allocate requests between different versions of a service
 - :doc:`Security: <security>` granting, revoking, and listing privileges, as well as adding, retrieving,
   and managing *Secure Keys*
 - :doc:`Service: <service>` supports making requests to the methods of an application’s services

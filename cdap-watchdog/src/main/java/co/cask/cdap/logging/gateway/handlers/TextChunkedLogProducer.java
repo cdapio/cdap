@@ -18,43 +18,42 @@ package co.cask.cdap.logging.gateway.handlers;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.PatternLayout;
+import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.logging.read.LogEvent;
-import co.cask.http.HttpResponder;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.lang.StringEscapeUtils;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.CharBuffer;
 
 /**
- * LogReader callback to encode log events, as text.
+ * LogReader BodyProducer to encode log events, as text.
  */
-class TextCallback extends AbstractChunkedCallback {
+class TextChunkedLogProducer extends AbstractChunkedLogProducer {
   private final PatternLayout patternLayout;
   private final boolean escape;
+  private final ChannelBuffer channelBuffer;
 
-  TextCallback(HttpResponder responder, String logPattern, boolean escape) {
-    super(responder);
+  TextChunkedLogProducer(CloseableIterator<LogEvent> logEventIter, String logPattern, boolean escape) {
+    super(logEventIter);
     this.escape = escape;
 
     ch.qos.logback.classic.Logger rootLogger =
       (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
     LoggerContext loggerContext = rootLogger.getLoggerContext();
 
-    this.patternLayout = new PatternLayout();
-    this.patternLayout.setContext(loggerContext);
-    this.patternLayout.setPattern(logPattern);
-  }
-
-  @Override
-  public void init() {
-    super.init();
+    patternLayout = new PatternLayout();
+    patternLayout.setContext(loggerContext);
+    patternLayout.setPattern(logPattern);
     patternLayout.start();
+
+    channelBuffer = ChannelBuffers.dynamicBuffer(BUFFER_BYTES);
   }
 
   @Override
@@ -63,22 +62,33 @@ class TextCallback extends AbstractChunkedCallback {
   }
 
   @Override
-  public void handleEvent(LogEvent event) {
-    String logLine = patternLayout.doLayout(event.getLoggingEvent());
-    logLine = escape ? StringEscapeUtils.escapeHtml(logLine) : logLine;
-
-    try {
-      // Encode logLine and send chunks
-      encodeSend(CharBuffer.wrap(logLine), false);
-    } catch (IOException e) {
-      // Just propagate the exception, the caller of this Callback should be handling it.
-      throw Throwables.propagate(e);
+  protected ChannelBuffer writeLogEvents(CloseableIterator<LogEvent> logEventIter) throws IOException {
+    channelBuffer.clear();
+    while (logEventIter.hasNext() && channelBuffer.readableBytes() < BUFFER_BYTES) {
+      LogEvent logEvent = logEventIter.next();
+      String logLine = patternLayout.doLayout(logEvent.getLoggingEvent());
+      logLine = escape ? StringEscapeUtils.escapeHtml(logLine) : logLine;
+      channelBuffer.writeBytes(Bytes.toBytes(logLine));
     }
+    return channelBuffer;
+  }
+
+  @Override
+  protected ChannelBuffer onWriteStart() throws IOException {
+    return ChannelBuffers.EMPTY_BUFFER;
+  }
+
+  @Override
+  protected ChannelBuffer onWriteFinish() throws IOException {
+    return ChannelBuffers.EMPTY_BUFFER;
   }
 
   @Override
   public void close() {
-    super.close();
-    patternLayout.stop();
+    try {
+      patternLayout.stop();
+    } finally {
+      super.close();
+    }
   }
 }

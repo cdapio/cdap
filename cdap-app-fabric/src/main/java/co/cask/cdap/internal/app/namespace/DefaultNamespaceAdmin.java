@@ -48,6 +48,7 @@ import co.cask.cdap.store.NamespaceStore;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -95,6 +96,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private final Impersonator impersonator;
   private final CConfiguration cConf;
   private final LoadingCache<NamespaceId, NamespaceMeta> namespaceMetaCache;
+  private final String masterShortUserName;
 
   @Inject
   DefaultNamespaceAdmin(NamespaceStore nsStore,
@@ -123,6 +125,16 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
         return fetchNamespaceMeta(namespaceId);
       }
     });
+    String masterPrincipal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
+    try {
+      if (cConf.getBoolean(Constants.Security.ENABLED) && SecurityUtil.isKerberosEnabled(cConf)) {
+        this.masterShortUserName = new KerberosName(masterPrincipal).getShortName();
+      } else {
+        this.masterShortUserName = null;
+      }
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   /**
@@ -390,6 +402,12 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       throw e;
     }
     Principal principal = authenticationContext.getPrincipal();
+    // if the principal is same as cdap master principal skip the authorization check and just return the namespace
+    // meta. See: CDAP-7387
+    if (masterShortUserName != null && masterShortUserName.equals(principal.getName())) {
+      return namespaceMeta;
+    }
+
     Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
     if (!filter.apply(namespaceId.toEntityId())) {
       throw new UnauthorizedException(principal, namespaceId.toEntityId());

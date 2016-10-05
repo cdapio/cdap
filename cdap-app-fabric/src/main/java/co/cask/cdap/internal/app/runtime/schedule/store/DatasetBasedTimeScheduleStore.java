@@ -20,6 +20,8 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.proto.id.ApplicationId;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -46,6 +48,8 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -334,6 +338,95 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
         super.pauseTrigger(trigger.trigger.getKey());
       }
     }
+  }
+
+  /**
+   * Method to add version in JobKey and VersionKey in SchedulerStore.
+   *
+   * @throws Exception
+   */
+  public void upgrade() throws Exception {
+    // Create table instance.
+    initializeScheduleTable();
+    factory.createExecutor(ImmutableList.of((TransactionAware) table))
+      .execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          upgradeJobs();
+          upgradeTriggers();
+        }
+      });
+  }
+
+  private void upgradeJobs() throws Exception {
+    Row result = table.get(JOB_KEY);
+
+    if (result.isEmpty()) {
+      return;
+    }
+
+    for (byte[] column : result.getColumns().values()) {
+      JobDetail jobDetail = (JobDetail) SerializationUtils.deserialize(column);
+      JobKey oldJobKey = jobDetail.getKey();
+      String oldJobKeyName = oldJobKey.getName();
+      String[] splits = oldJobKeyName.split(":");
+      // Old JobKey name has format = namespace:application:type:program
+      if (splits.length != 4) {
+        LOG.debug("Skip upgrading Job {}. Expected Job key format 'namespace:application:type:program'", oldJobKey);
+        continue;
+      }
+
+      // New JobKey name has format = namespace:application:version:type:program
+      String newJobName = getNameWithVersion(splits);
+
+      JobDetail newJobDetail = jobDetail.getJobBuilder().withIdentity(newJobName, oldJobKey.getGroup()).build();
+      persistJob(table, newJobDetail);
+      removeJob(table, oldJobKey);
+    }
+  }
+
+  private void upgradeTriggers() throws Exception {
+    Row result = table.get(TRIGGER_KEY);
+    if (result.isEmpty()) {
+      return;
+    }
+
+    for (byte[] column : result.getColumns().values()) {
+      TriggerStatusV2 triggerStatus = (TriggerStatusV2) SerializationUtils.deserialize(column);
+      TriggerKey oldTriggerKey = triggerStatus.trigger.getKey();
+      JobKey oldTriggerJobKey = triggerStatus.trigger.getJobKey();
+
+      String[] splits = oldTriggerKey.getName().split(":");
+      // Old TriggerKey name has format = namespace:application:type:program:schedule
+      if (splits.length != 5) {
+        LOG.debug("Skip upgrading Trigger {}. Expected trigger key " +
+                    "format 'namespace:application:type:program:schedule'", oldTriggerKey);
+        continue;
+      }
+      // New TriggerKey name has format = namespace:application:version:type:program:schedule
+      String newTriggerName = getNameWithVersion(splits);
+      triggerStatus.trigger.setKey(new TriggerKey(newTriggerName, oldTriggerKey.getGroup()));
+
+      String[] oldJobNameSplits = oldTriggerJobKey.getName().split(":");
+      // Old JobKey name has format = namespace:application:type:program
+      if (oldJobNameSplits.length != 4) {
+        LOG.debug("Skip upgrading Trigger {} with Job {}. Expected job key format " +
+                    "'namespace:application:type:program'", oldTriggerKey, oldTriggerJobKey);
+        continue;
+      }
+
+      // New JobKey name has format = namespace:version:application:type:program
+      String newJobName = getNameWithVersion(oldJobNameSplits);
+      triggerStatus.trigger.setJobKey(new JobKey(newJobName, oldTriggerJobKey.getGroup()));
+      persistTrigger(table, triggerStatus.trigger, triggerStatus.state);
+      removeTrigger(table, oldTriggerKey);
+    }
+  }
+
+  private String getNameWithVersion(String[] splits) {
+    List<String> splitsList = new ArrayList<>(Arrays.asList(splits));
+    splitsList.add(2, ApplicationId.DEFAULT_VERSION);
+    return Joiner.on(":").join(splitsList);
   }
 
   /**

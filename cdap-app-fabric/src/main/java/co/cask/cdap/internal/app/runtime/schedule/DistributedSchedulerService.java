@@ -50,6 +50,7 @@ public final class DistributedSchedulerService extends AbstractSchedulerService 
               startSchedulers();
               notifyStarted();
             } catch (SchedulerException e) {
+              LOG.warn("Scheduler Exception thrown ", e);
               notifyFailed(e);
             }
           }
