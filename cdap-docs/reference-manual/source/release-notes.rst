@@ -23,6 +23,92 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 3.6.0 <http://docs.cask.co/cdap/3.6.0/index.html>`__
+=============================================================
+
+Bug Fixes
+---------
+
+- :cask-issue:`CDAP-3822` - Fixed a problem with CDAP Kafka Pack 0.7 and the loading of
+  Scala classes.
+
+- :cask-issue:`CDAP-6474` - Fixed a problem with CDAP Kafka Pack 0.7 having a dependency
+  on Apache Twill 0.6.0.
+
+- :cask-issue:`CDAP-7250` - Fixed an issue where dataset usage was not being recorded
+  after an application was deleted.
+
+- :cask-issue:`CDAP-7295` - Fixed a problem with exceptions being thrown for non-existent
+  ZooKeeper nodes.
+
+- :cask-issue:`CDAP-7310` - Fixed a problem with run records not being recorded correctly.
+
+- :cask-issue:`CDAP-7314` - Fixed a problem with the documentation example links to the
+  CDAP ETL Guide.
+
+- :cask-issue:`CDAP-7321` - Fixed a problem with upgrading CDAP using the CDAP Upgrade
+  Tool.
+
+- :cask-issue:`CDAP-7324` - Fixed a problem with the upgrade tool while upgrading HBase
+  coprocessors.
+
+- :cask-issue:`CDAP-7327` - Fixed a problem with timeouts in router logs when resolving a
+  versioned service endpoint.
+
+- :cask-issue:`CDAP-7331` - Fixed a problem with deterministic routing to a specific
+  version of a service not working in Distributed CDAP mode.
+
+- :cask-issue:`CDAP-7332` - Fixed a problem with deploying different versions of the same
+  application from the same artifact when the application contained a schedule.
+
+- :cask-issue:`CDAP-7334` - Fixed a problem with the listing of applications not returning
+  the application version correctly.
+
+- :cask-issue:`CDAP-7335` - Fixed a problem with the route config endpoints returning
+  ``404`` after deploying an application.
+
+- :cask-issue:`CDAP-7336` - - Fixed a problem with the route config endpoints returning
+  ``500`` (internal server error) when it should have returned ``400`` (bad request).
+
+- :cask-issue:`CDAP-7337` - Fixed a problem with the route config endpoint allowing the
+  creation of a route config for applications whose versions that don't all exist.
+
+- :cask-issue:`CDAP-7338` - Fixed a problem with the storing of a route config for
+  programs that did not exist.
+
+- :cask-issue:`CDAP-7353` - Fixed a problem with using "Download All" logs in the
+  browser log viewer by having it fetch and stream the response to the client.
+
+- :cask-issue:`CDAP-7359` - Fixed a problem with NodeJS buffering a response before
+  sending it to a client.
+
+- :cask-issue:`CDAP-7361` - Fixed a problem with log file corruption if the log saver
+  container crashes due to being killed by YARN.
+
+- :cask-issue:`CDAP-7364` - Fixed a problem with the CDAP UI not handling "5xx" error
+  codes correctly.
+
+- :cask-issue:`CDAP-7370` - Fixed a problem with the Service Handler returning ``500`` on
+  the initial request.
+
+- :cask-issue:`CDAP-7374` - Fixed Hydrator Studio in the Windows version of Chrome to
+  allow users to open and edit a node configuration.
+
+- :cask-issue:`CDAP-7386` - Fixed an error in the "CDAP Introduction" tutorial's
+  "Transforming Your Data" example of an application configuration.
+
+- :cask-issue:`CDAP-7391` - Fixes an issue that caused unit test failures when using
+  ``org.hamcrest`` classes.
+
+- :cask-issue:`HYDRATOR-791` - Fixed a problem with Hydrator pipelines using a DBSource
+  not working in an HDP cluster.
+
+- :cask-issue:`HYDRATOR-948` - Fixed a problem with Spark data pipelines not supporting
+  argument values in excess of 64K characters.
+
+
+
+
 `Release 3.5.1 <http://docs.cask.co/cdap/3.5.1/index.html>`__
 =============================================================
 
