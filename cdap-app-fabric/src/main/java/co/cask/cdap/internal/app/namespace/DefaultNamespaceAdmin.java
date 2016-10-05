@@ -127,7 +127,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     });
     String masterPrincipal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
     try {
-      if (cConf.getBoolean(Constants.Security.ENABLED) && SecurityUtil.isKerberosEnabled(cConf)) {
+      if (SecurityUtil.isKerberosEnabled(cConf)) {
         this.masterShortUserName = new KerberosName(masterPrincipal).getShortName();
       } else {
         this.masterShortUserName = null;

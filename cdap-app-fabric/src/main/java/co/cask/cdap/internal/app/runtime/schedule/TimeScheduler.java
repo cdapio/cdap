@@ -22,6 +22,7 @@ import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
@@ -77,11 +78,12 @@ final class TimeScheduler implements Scheduler {
   private boolean schedulerStarted;
   private final Store store;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final CConfiguration cConf;
 
   @Inject
   TimeScheduler(Supplier<org.quartz.Scheduler> schedulerSupplier, Store store,
                 ProgramLifecycleService lifecycleService, PropertiesResolver propertiesResolver,
-                NamespaceQueryAdmin namespaceQueryAdmin) {
+                NamespaceQueryAdmin namespaceQueryAdmin, CConfiguration cConf) {
     this.schedulerSupplier = schedulerSupplier;
     this.store = store;
     this.lifecycleService = lifecycleService;
@@ -89,6 +91,7 @@ final class TimeScheduler implements Scheduler {
     this.propertiesResolver = propertiesResolver;
     this.schedulerStarted = false;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.cConf = cConf;
   }
 
   void init() throws SchedulerException {
@@ -455,7 +458,7 @@ final class TimeScheduler implements Scheduler {
 
         if (DefaultSchedulerService.ScheduledJob.class.isAssignableFrom(jobClass)) {
           return new DefaultSchedulerService.ScheduledJob(store, lifecycleService, propertiesResolver,
-                                                          taskExecutorService, namespaceQueryAdmin);
+                                                          taskExecutorService, namespaceQueryAdmin, cConf);
         } else {
           try {
             return jobClass.newInstance();

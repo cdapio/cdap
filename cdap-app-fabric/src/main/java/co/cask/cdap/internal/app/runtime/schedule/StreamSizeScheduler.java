@@ -93,6 +93,7 @@ public class StreamSizeScheduler implements Scheduler {
   private final DatasetBasedStreamSizeScheduleStore scheduleStore;
   private final ConcurrentMap<Id.Stream, StreamSubscriber> streamSubscribers;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final CConfiguration cConf;
 
   // Key is scheduleId
   private final ConcurrentSkipListMap<String, StreamSubscriber> scheduleSubscribers;
@@ -127,6 +128,7 @@ public class StreamSizeScheduler implements Scheduler {
     this.scheduleSubscribers = new ConcurrentSkipListMap<>();
     this.schedulerStarted = false;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.cConf = cConf;
   }
 
   public void init() throws SchedulerException {
@@ -1028,7 +1030,7 @@ public class StreamSizeScheduler implements Scheduler {
 
 
       final ScheduleTaskRunner taskRunner = new ScheduleTaskRunner(store, lifecycleService, propertiesResolver,
-                                                                   taskExecutorService, namespaceQueryAdmin);
+                                                                   taskExecutorService, namespaceQueryAdmin, cConf);
       try {
         scheduleStore.updateLastRun(programId, programType, streamSizeSchedule.getName(),
                                     pollingInfo.getSize(), pollingInfo.getTimestamp(),
