@@ -127,7 +127,7 @@
       "skip_install": true,
       "json": {
         "cdap": {
-          "comment": "DO NOT PUT SNAPHOT IN THE VERSION BELOW, THIS CONTROLS CDAP COOKBOOK CODE",
+          "comment": "DO NOT PUT SNAPSHOT IN THE VERSION BELOW, THIS CONTROLS CDAP COOKBOOK CODE",
           "version": "3.6.0-1",
           "sdk": {
             "comment": "COPY SDK ZIP TO files/cdap-sdk.zip BEFORE RUNNING ME",
