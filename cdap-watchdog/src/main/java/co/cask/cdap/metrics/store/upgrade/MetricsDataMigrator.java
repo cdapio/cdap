@@ -179,8 +179,7 @@ public class MetricsDataMigrator {
     String metricsEntityTable27 = defaultDatasetNamespace.namespace(Id.Namespace.SYSTEM, tableName27);
 
     Version version = null;
-    try {
-      HBaseAdmin  hAdmin = new HBaseAdmin(hConf);
+    try (HBaseAdmin  hAdmin = new HBaseAdmin(hConf)) {
       for (HTableDescriptor desc : hAdmin.listTables()) {
         if (desc.getNameAsString().equals(metricsEntityTable27)) {
           System.out.println("Matched HBase Table Name For Migration " + desc.getNameAsString());
@@ -245,9 +244,7 @@ public class MetricsDataMigrator {
   }
 
   private void deleteTables(Configuration hConf, Set<String> tablesToDelete) throws DataMigrationException {
-    HBaseAdmin hAdmin = null;
-    try {
-      hAdmin = new HBaseAdmin(hConf);
+    try (HBaseAdmin hAdmin = new HBaseAdmin(hConf)) {
       for (HTableDescriptor desc : hAdmin.listTables()) {
         if (tablesToDelete.contains(desc.getNameAsString())) {
           // disable the table
@@ -440,8 +437,7 @@ public class MetricsDataMigrator {
                                                Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX);
     destMetricsTablePrefix = getTableName(rootPrefix, Id.DatasetInstance.from(
       Id.Namespace.SYSTEM, destMetricsTablePrefix));
-    try {
-      HBaseAdmin hAdmin = new HBaseAdmin(hConf);
+    try (HBaseAdmin hAdmin = new HBaseAdmin(hConf)) {
       for (HTableDescriptor desc : hAdmin.listTables()) {
         if (desc.getNameAsString().equals(destEntityTableName) ||
           desc.getNameAsString().startsWith(destMetricsTablePrefix)) {
