@@ -46,6 +46,9 @@ var express = require('express'),
     CDAP_DIST_PATH=require('path').normalize(
       __dirname + '/../cdap_dist'
     ),
+    MARKET_DIST_PATH=require('path').normalize(
+      __dirname + '/../plusbutton_dist'
+    ),
     fs = require('fs');
 
 var log = log4js.getLogger('default');
@@ -279,6 +282,14 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   ]);
   app.use('/login_assets', [
     express.static(LOGIN_DIST_PATH + '/login_assets', {
+      index: false
+    }),
+    function(req, res) {
+      finalhandler(req, res)(false); // 404
+    }
+  ]);
+  app.use('/plusbutton_assets', [
+    express.static(MARKET_DIST_PATH, {
       index: false
     }),
     function(req, res) {
