@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
@@ -51,8 +52,9 @@ public class DefaultSchedulerService {
     private final ScheduleTaskRunner taskRunner;
 
     ScheduledJob(Store store, ProgramLifecycleService lifecycleService, PropertiesResolver propertiesResolver,
-                 ListeningExecutorService taskExecutor) {
-      this.taskRunner = new ScheduleTaskRunner(store, lifecycleService, propertiesResolver, taskExecutor);
+                 ListeningExecutorService taskExecutor, NamespaceQueryAdmin namespaceQueryAdmin) {
+      this.taskRunner = new ScheduleTaskRunner(store, lifecycleService, propertiesResolver, taskExecutor,
+                                               namespaceQueryAdmin);
     }
 
     @Override

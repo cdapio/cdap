@@ -23,6 +23,7 @@ import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
@@ -30,11 +31,16 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.apache.twill.common.Threads;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
@@ -47,19 +53,23 @@ import javax.annotation.Nullable;
  */
 public final class ScheduleTaskRunner {
 
+  private static final Logger LOG = LoggerFactory.getLogger(ScheduleTaskRunner.class);
   private final ProgramLifecycleService lifecycleService;
   private final Store store;
   private final ListeningExecutorService executorService;
   private final PropertiesResolver propertiesResolver;
   private final RunConstraintsChecker requirementsChecker;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   public ScheduleTaskRunner(Store store, ProgramLifecycleService lifecycleService,
-                            PropertiesResolver propertiesResolver, ListeningExecutorService taskExecutor) {
+                            PropertiesResolver propertiesResolver, ListeningExecutorService taskExecutor,
+                            NamespaceQueryAdmin namespaceQueryAdmin) {
     this.store = store;
     this.lifecycleService = lifecycleService;
     this.propertiesResolver = propertiesResolver;
     this.executorService = taskExecutor;
     this.requirementsChecker = new RunConstraintsChecker(store);
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   /**
@@ -110,10 +120,21 @@ public final class ScheduleTaskRunner {
                                       Map<String, String> userArgs) throws Exception {
     ProgramRuntimeService.RuntimeInfo runtimeInfo;
     try {
+      // if the program has a namespace user configured then set that user in the security request context.
+      // See: CDAP-7396
+      String nsPrincipal = namespaceQueryAdmin.get(id.getNamespace()).getConfig().getPrincipal();
+      if (nsPrincipal != null) {
+        SecurityRequestContext.setUserId(new KerberosName(nsPrincipal).getServiceName());
+      }
       runtimeInfo = lifecycleService.start(id.toEntityId(), sysArgs, userArgs, false);
     } catch (ProgramNotFoundException | ApplicationNotFoundException e) {
       throw new TaskExecutionException(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), id),
                                        e, false);
+    } catch (Throwable t) {
+      // Do not  remove this log line. The exception at higher level gets caught by the quartz scheduler and is not
+      // logged in cdap master logs making it hard to debug issues.
+      LOG.info("Error while start program {}. {}", id, t);
+      throw Throwables.propagate(t);
     }
 
     final ProgramController controller = runtimeInfo.getController();
