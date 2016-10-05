@@ -1,23 +1,29 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 :hide-toc: true
 
-============================================
+===============
 Advanced Topics
-============================================
+===============
 
 .. toctree::
    :maxdepth: 1
    
+    Application Logback <application-logback>
     Best Practices <best-practices>
     Class Loading <class-loading>
-    Application Logback <application-logback>
+    Configuring Program Resources <configuring-resources>
 
 
 This section of the documentation includes articles that cover advanced topics on CDAP that
 will be of interest to developers who want a deeper dive into CDAP:
+
+.. |application-logback| replace:: **Application Logback:**
+.. _application-logback: application-logback.html
+
+- |application-logback|_ Adding a custom logback to a CDAP application.
 
 .. |best-practices| replace:: **Best Practices:**
 .. _best-practices: best-practices.html
@@ -31,8 +37,7 @@ will be of interest to developers who want a deeper dive into CDAP:
 - |class-loading|_ Java Class Loading in CDAP.
 
 
-.. |application-logback| replace:: **Application Logback:**
-.. _application-logback: application-logback.html
+.. |configuring-resources| replace:: **Configuring Program Resources:**
+.. _configuring-resources: configuring-resources.html
 
-- |application-logback|_ Adding a custom logback to a CDAP application.
-
+- |configuring-resources|_ Setting the YARN resources used by the programs of a CDAP application.
