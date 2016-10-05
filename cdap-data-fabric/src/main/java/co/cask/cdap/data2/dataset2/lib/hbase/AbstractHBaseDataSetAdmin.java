@@ -160,7 +160,8 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
       }
 
       // Removes all old coprocessors
-      Set<String> coprocessorNames = ImmutableSet.copyOf(Iterables.transform(coprocessorJar.coprocessors, CLASS_TO_NAME));
+      Set<String> coprocessorNames = ImmutableSet.copyOf(Iterables.transform(coprocessorJar.coprocessors,
+                                                                             CLASS_TO_NAME));
       for (String remove : Sets.difference(coprocessorInfo.keySet(), coprocessorNames)) {
         newDescriptor.removeCoprocessor(remove);
       }
