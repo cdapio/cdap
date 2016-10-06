@@ -94,7 +94,7 @@ WISE source code:
   $ curl -w"\n" -X GET "https://codeload.github.com/caskdata/cdap-apps/zip/release/cdap-|short-version|-compatible" \
   --output examples/cdap-apps-release-cdap-|short-version|-compatible.zip  
 
-Unzip the directory and build the application (without running the self-test) by executing:
+Unzip the directory and change to the source directory:
 
 .. tabbed-parsed-literal::
 
@@ -116,7 +116,7 @@ To build WISE (skipping the tests), you use:
 
   $ mvn clean package -DskipTests
     
-(To build WISE and run the WISE Example Tests, you would use:)
+(To build WISE and run the WISE example tests, you would instead use:)
 
 .. tabbed-parsed-literal::
 
