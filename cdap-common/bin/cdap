@@ -62,7 +62,7 @@ case ${1} in
   upgrade) shift; cdap_upgrade_tool ${@}; __ret=${?} ;;
   run) shift; cdap_run_class ${@}; __ret=${?} ;;
   sdk) shift; cdap_sdk ${@}; __ret=${?} ;;
-  tx-debugger) shift; cdap_tx_debugger ${@}; __ret=${?} ;;
+  debug) shift; cdap_debug ${@}; __ret=${?} ;;
   *)
     echo
     echo "Usage: ${0} <command> [arguments]"
@@ -86,7 +86,7 @@ case ${1} in
     echo
     fi
     echo "    cli          - Starts an interactive CDAP CLI session"
-    echo "    tx-debugger  - Runs CDAP transaction debugger"
+    echo "    debug        - Runs CDAP debug functions"
     echo "    upgrade      - Runs the CDAP Upgrade Tool with arguments"
     echo
     echo " Get more help for each command by executing:"

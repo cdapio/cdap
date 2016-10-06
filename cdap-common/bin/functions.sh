@@ -1026,6 +1026,61 @@ cdap_upgrade_tool() {
   __ret=${?}
   return ${__ret}
 }
+
+# cdap_tx_debugger
+cdap_tx_debugger() {
+  local readonly __path __libexec __lib __script="$(basename ${0}):cdap_tx_debugger"
+  local readonly __authfile="${HOME}"/.cdap.accesstoken.${HOSTNAME}
+  local readonly __ret __class=co.cask.cdap.data2.transaction.TransactionManagerDebuggerMain
+  cdap_set_java || die "Unable to locate JAVA or JAVA_HOME"
+  __path=${CDAP_HOME}
+  if [[ -d ${__path}/master/libexec ]]; then
+    __libexec=${__path}/master/libexec
+    __lib=${__path}/master/lib
+  else
+    __libexec=${__path}/libexec
+    __lib=${__path}/lib
+  fi
+  if [[ ${CLASSPATH} == "" ]]; then
+    CLASSPATH=${__lib}/*
+  else
+    CLASSPATH=${CLASSPATH}:${__lib}/*
+  fi
+  if [[ -d ${CDAP_CONF} ]]; then
+    CLASSPATH=${CLASSPATH}:"${CDAP_CONF}"
+  elif [[ -d ${__path}/conf ]]; then
+    CLASSPATH=${CLASSPATH}:"${__path}"/conf/
+  fi
+  # add token file arg with default token file if one is not provided
+  local __has_arg=0 __var
+  for __var in ${@}; do
+    if [[ ${__var} == "--token-file" ]]; then
+      __has_arg=1
+    fi
+  done
+  if [[ ${__has_arg} -eq 0 ]] && [[ -f ${__auth_file} ]]; then
+    set -- ${@} "--token-file" "${__auth_file}"
+  fi
+
+  "${JAVA}" -cp ${CLASSPATH} -Dscript=${__script} ${__class} ${@}
+  __ret=${?}
+  return ${__ret}
+}
+
+#
+# cdap_debug <entity> [arguments]
+#
+cdap_debug() {
+  local readonly __entity=${1}
+  shift
+  local readonly __ret __args=${@}
+  case ${__entity} in
+    transactions) cdap_tx_debugger ${__args}; __ret=$? ;;
+    *) echo "Usage: ${0} debug transactions [arguments]"; __ret=1
+  esac
+  return ${__ret}
+}
+
 # Runs CDAP SDK with the given options
 cdap_sdk() {
   local readonly __action=${1}
@@ -1082,46 +1137,6 @@ cdap_sdk() {
     cleanup) cdap_sdk_cleanup; __ret=${?} ;;
     *) cdap_sdk_usage; __ret=1 ;; # Return non-zero; called incorrectly
   esac
-  return ${__ret}
-}
-
-# cdap_tx_debugger
-cdap_tx_debugger() {
-  local readonly __path __libexec __lib __script="$(basename ${0}):cdap_tx_debugger"
-  local readonly __authfile="${HOME}"/.cdap.accesstoken.${HOSTNAME}
-  local readonly __ret __class=co.cask.cdap.data2.transaction.TransactionManagerDebuggerMain
-  cdap_set_java || die "Unable to locate JAVA or JAVA_HOME"
-  __path=${CDAP_HOME}
-  if [[ -d ${__path}/master/libexec ]]; then
-    __libexec=${__path}/master/libexec
-    __lib=${__path}/master/lib
-  else
-    __libexec=${__path}/libexec
-    __lib=${__path}/lib
-  fi
-  if [[ ${CLASSPATH} == "" ]]; then
-    CLASSPATH=${__lib}/*
-  else
-    CLASSPATH=${CLASSPATH}:${__lib}/*
-  fi
-  if [[ -d ${CDAP_CONF} ]]; then
-    CLASSPATH=${CLASSPATH}:"${CDAP_CONF}"
-  elif [[ -d ${__path}/conf ]]; then
-    CLASSPATH=${CLASSPATH}:"${__path}"/conf/
-  fi
-  # add token file arg with default token file if one is not provided
-  local __has_arg=0 __var
-  for __var in ${@}; do
-    if [[ ${__var} == "--token-file" ]]; then
-      __has_arg=1
-    fi
-  done
-  if [[ ${__has_arg} -eq 0 ]] && [[ -f ${__auth_file} ]]; then
-    set -- ${@} "--token-file" "${__auth_file}"
-  fi
-
-  "${JAVA}" -cp ${CLASSPATH} -Dscript=${__script} ${__class} ${@}
-  __ret=${?}
   return ${__ret}
 }
 
