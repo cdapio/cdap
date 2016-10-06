@@ -25,6 +25,7 @@ import {default as NamespaceStore} from 'services/store/store';
 import CreateStreamUploadWizardConfig from 'services/WizardConfigs/CreateStreamWithUploadWizardConfig';
 import T from 'i18n-react';
 require('./StreamCreate.less');
+import cookie from 'react-cookie';
 
 export default class StreamCreateWithUploadWizard extends Component {
   constructor(props) {
@@ -64,13 +65,15 @@ export default class StreamCreateWithUploadWizard extends Component {
             let fileContents = state.upload.data;
             let filename = state.upload.filename;
             let filetype = 'text/' + filename.split('.').pop();
+            let authToken = cookie.load('CDAP_Auth_Token');
             return UploadDataActionCreator
               .uploadData({
                 url,
                 fileContents,
                 headers: {
                   filename,
-                  filetype
+                  filetype,
+                  authToken
                 }
               });
           }
