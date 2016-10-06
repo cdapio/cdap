@@ -147,7 +147,7 @@ public class AuthServerAnnounceTest {
 
       router =
         new NettyRouter(cConf, sConfiguration, InetAddresses.forString(hostname),
-                        new RouterServiceLookup((DiscoveryServiceClient) discoveryService,
+                        new RouterServiceLookup(cConf, (DiscoveryServiceClient) discoveryService,
                                                 new RouterPathLookup(), injector.getInstance(RouteStore.class)),
                         new MissingTokenValidator(), accessTokenTransformer, discoveryServiceClient);
       router.startAndWait();

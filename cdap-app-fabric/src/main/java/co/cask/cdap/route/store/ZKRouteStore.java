@@ -48,6 +48,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 
 /**
  * RouteStore where the routes are stored in a ZK persistent node. This is intended for use in distributed mode.
@@ -111,7 +112,7 @@ public class ZKRouteStore implements RouteStore {
       SettableFuture<RouteConfig> settableFuture = SettableFuture.create();
       future = routeConfigMap.putIfAbsent(serviceId, settableFuture);
       if (future == null) {
-        future = getAndWatchData(serviceId, settableFuture, new ZKRouteWatcher(serviceId));
+        future = getAndWatchData(serviceId, settableFuture, settableFuture, new ZKRouteWatcher(serviceId));
       }
     }
     return getConfig(serviceId, future);
@@ -132,6 +133,7 @@ public class ZKRouteStore implements RouteStore {
 
   private Future<RouteConfig> getAndWatchData(final ProgramId serviceId,
                                               final SettableFuture<RouteConfig> settableFuture,
+                                              final SettableFuture<RouteConfig> oldSettableFuture,
                                               final Watcher watcher) {
     OperationFuture<NodeData> future = zkClient.getData(getZKPath(serviceId), watcher);
     Futures.addCallback(future, new FutureCallback<NodeData>() {
@@ -140,6 +142,9 @@ public class ZKRouteStore implements RouteStore {
         try {
           RouteConfig route = ROUTE_CONFIG_CODEC.decode(result.getData());
           settableFuture.set(route);
+
+          // Replace the future in the routeConfigMap in order to reflect the route config changes
+          routeConfigMap.replace(serviceId, oldSettableFuture, settableFuture);
         } catch (Exception ex) {
           LOG.debug("Unable to deserialize the config for service {}. Got data {}", serviceId, result.getData());
           // Need to remove the future from the map since later calls will continue to use this future and will think
@@ -157,7 +162,7 @@ public class ZKRouteStore implements RouteStore {
         // zkClient#getData will be retried during the next fetch config request
         if (t instanceof KeeperException.NoNodeException) {
           settableFuture.set(new RouteConfig(Collections.<String, Integer>emptyMap()));
-          existsAndWatch(serviceId);
+          existsAndWatch(serviceId, settableFuture);
         } else {
           settableFuture.setException(t);
           routeConfigMap.remove(serviceId, settableFuture);
@@ -167,7 +172,7 @@ public class ZKRouteStore implements RouteStore {
     return settableFuture;
   }
 
-  private void existsAndWatch(final ProgramId serviceId) {
+  private void existsAndWatch(final ProgramId serviceId, final SettableFuture<RouteConfig> oldSettableFuture) {
     Futures.addCallback(zkClient.exists(getZKPath(serviceId), new Watcher() {
       @Override
       public void process(WatchedEvent event) {
@@ -177,20 +182,16 @@ public class ZKRouteStore implements RouteStore {
         }
 
         if (event.getType() == Event.EventType.NodeCreated) {
-          SettableFuture<RouteConfig> settableFuture = SettableFuture.create();
-          // Need to replace the old future, since we want to set the data on the new future
-          routeConfigMap.put(serviceId, settableFuture);
-          getAndWatchData(serviceId, settableFuture, new ZKRouteWatcher(serviceId));
+          getAndWatchData(serviceId, SettableFuture.<RouteConfig>create(),
+                          oldSettableFuture, new ZKRouteWatcher(serviceId));
         }
       }
     }), new FutureCallback<Stat>() {
       @Override
-      public void onSuccess(Stat result) {
+      public void onSuccess(@Nullable Stat result) {
         if (result != null) {
-          SettableFuture<RouteConfig> settableFuture = SettableFuture.create();
-          // Need to replace the old future, since we want to set the data on the new future
-          routeConfigMap.put(serviceId, settableFuture);
-          getAndWatchData(serviceId, settableFuture, new ZKRouteWatcher(serviceId));
+          getAndWatchData(serviceId, SettableFuture.<RouteConfig>create(),
+                          oldSettableFuture, new ZKRouteWatcher(serviceId));
         }
       }
 
@@ -218,18 +219,19 @@ public class ZKRouteStore implements RouteStore {
     @Override
     public void process(WatchedEvent event) {
       // If service name doesn't exist in the map, then don't re-watch it.
-      if (!routeConfigMap.containsKey(serviceId)) {
+      SettableFuture<RouteConfig> oldSettableFuture = routeConfigMap.get(serviceId);
+      if (oldSettableFuture == null) {
         return;
       }
 
       if (event.getType() == Event.EventType.NodeDeleted) {
         // Remove the mapping from cache
-        routeConfigMap.remove(serviceId);
+        routeConfigMap.remove(serviceId, oldSettableFuture);
         return;
       }
 
       // Create a new settable future, since we don't want to set the existing future again
-      getAndWatchData(serviceId, SettableFuture.<RouteConfig>create(), this);
+      getAndWatchData(serviceId, SettableFuture.<RouteConfig>create(), oldSettableFuture, this);
     }
   }
 }

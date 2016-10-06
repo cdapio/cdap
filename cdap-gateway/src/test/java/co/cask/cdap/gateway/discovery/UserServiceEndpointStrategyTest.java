@@ -30,14 +30,15 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.junit.Assert;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import javax.annotation.Nullable;
 
@@ -45,7 +46,98 @@ import javax.annotation.Nullable;
  * Tests for {@link UserServiceEndpointStrategy}
  */
 public class UserServiceEndpointStrategyTest {
-  private static final Logger LOG = LoggerFactory.getLogger(UserServiceEndpointStrategyTest.class);
+
+  @Test
+  public void testVersionStrategy() throws Exception {
+    ProgramId serviceId = new ApplicationId("n1", "a1").service("s1");
+    String discoverableName = ServiceDiscoverable.getName(serviceId);
+    List<Discoverable> candidates = new ArrayList<>();
+    for (int i = 0; i < 5; i++) {
+      candidates.add(new Discoverable(discoverableName, null, Bytes.toBytes(Integer.toString(i))));
+    }
+    SimpleServiceDiscovered serviceDiscovered = new SimpleServiceDiscovered(candidates);
+    RouteStore configStore = new InMemoryRouteStore(Collections.<ProgramId, RouteConfig>emptyMap());
+    versionStrategyCheck(serviceDiscovered, configStore, serviceId, false);
+    candidates.remove(2);
+    versionStrategyCheck(serviceDiscovered, configStore, serviceId, true);
+  }
+
+  private void versionStrategyCheck(ServiceDiscovered serviceDiscovered, RouteStore configStore, ProgramId serviceId,
+                                    boolean expectedNull) {
+    for (RouteFallbackStrategy fallbackStrategy : RouteFallbackStrategy.values()) {
+      UserServiceEndpointStrategy strategy = new UserServiceEndpointStrategy(
+        serviceDiscovered, configStore, serviceId,
+        RouteFallbackStrategy.valueOfRouteFallbackStrategy(fallbackStrategy.name()), "2");
+      for (int i = 0; i < 100; i++) {
+        Discoverable picked = strategy.pick();
+        if (!expectedNull) {
+          Assert.assertEquals("2", Bytes.toString(picked.getPayload()));
+        } else {
+          Assert.assertNull(picked);
+        }
+      }
+    }
+  }
+
+  @Test
+  public void testFallback() throws Exception {
+    ProgramId serviceId = new ApplicationId("n1", "a1").service("s1");
+    String discoverableName = ServiceDiscoverable.getName(serviceId);
+    List<Discoverable> candidates = new ArrayList<>();
+    for (int i = 0; i < 5; i++) {
+      candidates.add(new Discoverable(discoverableName, null, Bytes.toBytes(Integer.toString(i))));
+    }
+    SimpleServiceDiscovered serviceDiscovered = new SimpleServiceDiscovered(candidates);
+    Map<ProgramId, RouteConfig> routeConfigMap = new HashMap<>();
+    routeConfigMap.put(serviceId, new RouteConfig(Collections.<String, Integer>emptyMap()));
+    RouteStore configStore = new InMemoryRouteStore(routeConfigMap);
+    UserServiceEndpointStrategy strategy = new UserServiceEndpointStrategy(serviceDiscovered, configStore, serviceId,
+                                                                           RouteFallbackStrategy.SMALLEST, null);
+    for (int i = 0; i < 1000; i++) {
+      Discoverable picked = strategy.pick();
+      Assert.assertEquals("0", Bytes.toString(picked.getPayload()));
+    }
+
+    // Remove "0", so the smallest version should now be "1"
+    candidates.remove(0);
+    for (int i = 0; i < 1000; i++) {
+      Discoverable picked = strategy.pick();
+      Assert.assertEquals("1", Bytes.toString(picked.getPayload()));
+    }
+
+    // Test greatest strategy
+    strategy = new UserServiceEndpointStrategy(serviceDiscovered, configStore, serviceId,
+                                               RouteFallbackStrategy.LARGEST, null);
+    for (int i = 0; i < 1000; i++) {
+      Discoverable picked = strategy.pick();
+      Assert.assertEquals("4", Bytes.toString(picked.getPayload()));
+    }
+
+    // Remove "4", so the largest version should now be "3"
+    candidates.remove(candidates.size() - 1);
+    for (int i = 0; i < 1000; i++) {
+      Discoverable picked = strategy.pick();
+      Assert.assertEquals("3", Bytes.toString(picked.getPayload()));
+    }
+
+    // Test random strategy - remaining versions are 1, 2, 3
+    strategy = new UserServiceEndpointStrategy(serviceDiscovered, configStore, serviceId,
+                                               RouteFallbackStrategy.RANDOM, null);
+    Set<String> pickedVersions = new HashSet<>();
+    for (int i = 0; i < 1000; i++) {
+      Discoverable picked = strategy.pick();
+      pickedVersions.add(Bytes.toString(picked.getPayload()));
+    }
+    // There is a good probability that more than one version has been picked since its random
+    Assert.assertTrue(pickedVersions.size() > 1);
+
+    // Test drop strategy
+    strategy = new UserServiceEndpointStrategy(serviceDiscovered, configStore, serviceId,
+                                               RouteFallbackStrategy.DROP, null);
+    for (int i = 0; i < 1000; i++) {
+      Assert.assertNull(strategy.pick());
+    }
+  }
 
   @Test
   public void testStrategy() throws Exception {
@@ -100,7 +192,7 @@ public class UserServiceEndpointStrategyTest {
                                     requestRatio, requestsToOne, requestsToTwo), requestRatio <= 1.3);
 
     // Set the payload filter
-    strategy = new UserServiceEndpointStrategy(serviceDiscovered, configStore, serviceId, "1");
+    strategy = new UserServiceEndpointStrategy(serviceDiscovered, configStore, serviceId, null, "1");
     for (int i = 0; i < 1000; i++) {
       Discoverable picked = strategy.pick();
       Assert.assertEquals("1", Bytes.toString(picked.getPayload()));
