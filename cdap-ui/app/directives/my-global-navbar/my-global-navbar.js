@@ -53,6 +53,20 @@ function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT,
     vm.highlightTab = toState.data && toState.data.highlightTab;
     vm.activeProduct = findActiveProduct();
     vm.showSidebar = false;
+    if (window.PlusButton && window.PlusButton.Store) {
+      window.PlusButton.Store.dispatch({
+        type: 'SELECT_NAMESPACE',
+        payload: {
+          selectedNamespace : $state.params.namespace
+        }
+      });
+      window.PlusButton.Store.dispatch({
+        type: 'UPDATE_NAMESPACES',
+        payload: {
+          namespaces: vm.namespaces
+        }
+      });
+    }
   });
 
   // NAMESPACE
@@ -104,6 +118,7 @@ function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT,
 angular.module(PKG.name+'.commons')
   .directive('plusButton', function(reactDirective) {
     return reactDirective(window.PlusButton.default);
+
   })
   .directive('myGlobalNavbar', () => {
     return {
