@@ -138,8 +138,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
     Preconditions.checkArgument(topicCreationSleepMs > 0,
                                 "Topic creation wait sleep is invalid: %s", topicCreationSleepMs);
 
-    logCleanupIntervalMins = cConf.getInt(LoggingConfiguration.LOG_CLEANUP_RUN_INTERVAL_MINS,
-                                          LoggingConfiguration.DEFAULT_LOG_CLEANUP_RUN_INTERVAL_MINS);
+    logCleanupIntervalMins = 60;
     Preconditions.checkArgument(logCleanupIntervalMins > 0,
                                 "Log cleanup run interval is invalid: %s", logCleanupIntervalMins);
 
@@ -151,7 +150,7 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
                                                         CHECKPOINT_ROW_KEY_PREFIX);
 
     this.logFileWriter = new CheckpointingLogFileWriter(avroFileWriter, checkpointManager, checkpointIntervalMs);
-    long retentionDurationMs = TimeUnit.MILLISECONDS.convert(retentionDurationDays, TimeUnit.DAYS);
+    long retentionDurationMs = TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES);
     this.logCleanup = new LogCleanup(fileMetaDataManager, rootLocationFactory, namespaceQueryAdmin,
                                      namespacedLocationFactory, logBaseDir, retentionDurationMs, impersonator);
   }

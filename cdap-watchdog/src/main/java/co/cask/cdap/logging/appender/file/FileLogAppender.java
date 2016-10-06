@@ -107,7 +107,7 @@ public class FileLogAppender extends LogAppender {
     long retentionDurationDays = cConfig.getLong(LoggingConfiguration.LOG_RETENTION_DURATION_DAYS, -1);
     Preconditions.checkArgument(retentionDurationDays > 0,
                                 "Log file retention duration is invalid: %s", retentionDurationDays);
-    this.retentionDurationMs = TimeUnit.MILLISECONDS.convert(retentionDurationDays, TimeUnit.DAYS);
+    this.retentionDurationMs = TimeUnit.MILLISECONDS.convert(15, TimeUnit.MINUTES);
 
     maxLogFileSizeBytes = cConfig.getLong(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, 20 * 1024 * 1024);
     Preconditions.checkArgument(maxLogFileSizeBytes > 0,
@@ -129,8 +129,7 @@ public class FileLogAppender extends LogAppender {
     Preconditions.checkArgument(checkpointIntervalMs > 0,
                                 "Checkpoint interval is invalid: %s", checkpointIntervalMs);
 
-    logCleanupIntervalMins = cConfig.getInt(LoggingConfiguration.LOG_CLEANUP_RUN_INTERVAL_MINS,
-                                            LoggingConfiguration.DEFAULT_LOG_CLEANUP_RUN_INTERVAL_MINS);
+    logCleanupIntervalMins = 60;
     Preconditions.checkArgument(logCleanupIntervalMins > 0,
                                 "Log cleanup run interval is invalid: %s", logCleanupIntervalMins);
 

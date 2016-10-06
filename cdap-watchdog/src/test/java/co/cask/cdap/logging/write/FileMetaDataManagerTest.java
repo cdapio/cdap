@@ -204,16 +204,21 @@ public class FileMetaDataManagerTest {
 
     // Setup directories
     LoggingContext dummyContext = new FlowletLoggingContext("ns", "app", "flw", "flwt", "run", "instance");
+    LoggingContext dummyContext1 = new FlowletLoggingContext("ns", "app2", "flw1", "flwt", "run", "instance");
+    LoggingContext dummyContext2 = new FlowletLoggingContext("ns2", "app", "flw", "flwt", "run", "instance");
 
     Location namespacedLogsDir = namespacedLocationFactory.get(Id.Namespace.from("ns")).append(logBaseDir);
+    Location namespacedLogsDir2 = namespacedLocationFactory.get(Id.Namespace.from("ns2")).append(logBaseDir);
     Location contextDir = namespacedLogsDir.append("app").append("flw");
+    Location contextDir1 = namespacedLogsDir2.append("app2").append("flw1");
 
     List<Location> toDelete = Lists.newArrayList();
+    List<Location> toDelete1 = Lists.newArrayList();
     for (int i = 0; i < 5; ++i) {
       toDelete.add(contextDir.append("2012-12-1" + i + "/del-1"));
       toDelete.add(contextDir.append("2012-12-1" + i + "/del-2"));
-      toDelete.add(contextDir.append("2012-12-1" + i + "/del-3"));
-      toDelete.add(contextDir.append("2012-12-1" + i + "/del-4"));
+      toDelete1.add(contextDir1.append("2012-12-1" + i + "/del-3"));
+      toDelete1.add(contextDir1.append("2012-12-1" + i + "/del-4"));
       toDelete.add(contextDir.append("del-1"));
     }
 
@@ -224,10 +229,33 @@ public class FileMetaDataManagerTest {
       counter++;
     }
 
-    FileMetaDataManager.TableKey tableKey = new FileMetaDataManager.TableKey(dummyContext.getLogPartition(), null);
+    List<Location> toDelete2 = Lists.newArrayList();
+    for (int i = 0; i < 5; ++i) {
+      toDelete2.add(contextDir1.append("2012-12-1" + i + "/del-11"));
+      toDelete2.add(contextDir1.append("2012-12-1" + i + "/del-12"));
+      toDelete2.add(contextDir1.append("2012-12-1" + i + "/del-13"));
+      toDelete2.add(contextDir1.append("2012-12-1" + i + "/del-14"));
+      toDelete2.add(contextDir1.append("del-11"));
+    }
+
+    counter = 0;
+    for (Location location : toDelete1) {
+      long modTime = deletionBoundary - counter - 10000;
+      fileMetaDataManager.writeMetaData(dummyContext1, modTime, createFile(location, modTime));
+      counter++;
+    }
+
+    counter = 0;
+    for (Location location : toDelete2) {
+      long modTime = deletionBoundary - counter - 10000;
+      fileMetaDataManager.writeMetaData(dummyContext2, modTime, createFile(location, modTime));
+      counter++;
+    }
+
+    FileMetaDataManager.TableKey tableKey = null;
 
     do {
-      tableKey = fileMetaDataManager.cleanMetaData(tableKey, 5, deletionBoundary,
+      tableKey = fileMetaDataManager.cleanMetaData(tableKey, 2, deletionBoundary,
                                                    new FileMetaDataManager.DeleteCallback() {
                                                      @Override
                                                      public void handle(NamespaceId namespaceId,
@@ -247,6 +275,10 @@ public class FileMetaDataManagerTest {
     for (Location location : toDelete) {
       Assert.assertFalse("Location " + location + " is not deleted!", location.exists());
     }
+
+//    for (Location location : toDelete1) {
+//      Assert.assertFalse("ns1 location " + location + " is not deleted!", location.exists());
+//    }
   }
 
   private Location createFile(Location path, long modTime) throws Exception {

@@ -50,8 +50,8 @@ import java.util.concurrent.Callable;
  */
 public final class LogCleanup implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(LogCleanup.class);
-  private static final int MAX_DISK_FILES_SCANNED = 50000;
-  private static final int MAX_META_FILES_SCANNED = 100;
+  private static final int MAX_DISK_FILES_SCANNED = 10;
+  private static final int MAX_META_FILES_SCANNED = 2;
 
   private final FileMetaDataManager fileMetaDataManager;
   private final RootLocationFactory rootLocationFactory;

@@ -171,7 +171,7 @@ public final class FileMetaDataManager {
       @Override
       public TableKey apply(Table table) throws Exception {
         byte[] startKey = getRowKey(startTableKey.getRowKey());
-        byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
+        byte[] stopKey = Bytes.stopKeyForPrefix(getNamespace(getRowKey(startTableKey.getRowKey())).getBytes());
         byte[] startColumn = startTableKey.getStartColumn();
 
         try (Scanner scanner = table.scan(startKey, stopKey)) {
@@ -251,7 +251,9 @@ public final class FileMetaDataManager {
       @Override
       public TableKey apply(Table table) throws Exception {
         byte[] startKey = startTableKey == null ? ROW_KEY_PREFIX : getRowKey(startTableKey.getRowKey());
-        byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
+        LOG.info("start key: {}", getLogPartition(startKey));
+        byte[] stopKey = ROW_KEY_PREFIX_END;
+        LOG.info("stop key: {}", getLogPartition(stopKey));
         byte[] startColumn = startTableKey == null ? null : startTableKey.getStartColumn();
 
         try (Scanner scanner = table.scan(startKey, stopKey)) {
@@ -302,8 +304,10 @@ public final class FileMetaDataManager {
                 }
               });
 
+//              LOG.info("cleanMetaData file location {} and count {}", fileLocation.toURI().toString(), colCount);
+
               if (!fileLocation.exists()) {
-                LOG.warn("Log file {} does not exist, but metadata is present", file);
+                LOG.info("Log file {} does not exist, but metadata is present", file);
                 table.delete(rowKey, colName);
               } else if (fileLocation.lastModified() < tillTime) {
                 // Delete if file last modified time is less than tillTime
@@ -370,6 +374,16 @@ public final class FileMetaDataManager {
                                 "Expected log partition to be in the format <ns>:<entity>:<sub-entity>");
     // don't care about the app or the program, only need the namespace
     return LoggingContextHelper.getNamespaceId(new GenericLoggingContext(partitions[0], partitions[1], partitions[2]));
+  }
+
+  private String getNamespace(byte[] rowKey) {
+    String logPartition = getLogPartition(rowKey);
+    Preconditions.checkArgument(logPartition != null, "Log partition cannot be null");
+    String [] partitions = logPartition.split(":");
+    Preconditions.checkArgument(partitions.length == 3,
+                                "Expected log partition to be in the format <ns>:<entity>:<sub-entity>");
+    // don't care about the app or the program, only need the namespace
+    return partitions[0];
   }
 
   private byte[] getRowKey(LoggingContext loggingContext) {
