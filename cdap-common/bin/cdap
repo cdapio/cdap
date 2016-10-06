@@ -63,7 +63,7 @@ case ${1} in
   run) shift; cdap_run_class ${@}; __ret=${?} ;;
   sdk) shift; cdap_sdk ${@}; __ret=${?} ;;
   tx-debugger) shift; cdap_tx_debugger ${@}; __ret=${?} ;;
-  -h|--help|usage|'')
+  *)
     echo
     echo "Usage: ${0} <command> [arguments]"
     echo
@@ -93,7 +93,6 @@ case ${1} in
     echo " ${0} <command> --help"
     echo
     ;;
-  *) cdap_cli ${@}; __ret=${?} ;;
 esac
 
 exit ${__ret}
