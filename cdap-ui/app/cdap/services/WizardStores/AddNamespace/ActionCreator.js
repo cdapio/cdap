@@ -21,34 +21,37 @@ const PublishNamespace = () => {
   let urlParams = {
     namespace: state.general.name
   };
-  let putParams = {};
+
+  let putParams = {
+    config : {}
+  };
 
   if (state.general.description) {
     putParams["description"] = state.general.description;
   }
 
-  if(state.general.hbaseNamespace){
-    putParams["hbase.namespace"] = state.mapping.hbaseNamespace;
+  if(state.mapping.hbaseNamespace){
+    putParams["config"]["hbase.namespace"] = state.mapping.hbaseNamespace;
   }
 
-  if(state.general.hiveDatabaseName){
-    putParams["hive.database"] = state.mapping.hiveDatabaseName;
+  if(state.mapping.hiveDatabaseName){
+    putParams["config"]["hive.database"] = state.mapping.hiveDatabaseName;
   }
 
-  if(state.general.keytabURI){
-    putParams["keytabURI"] = state.security.keytabURI;
+  if(state.mapping.hdfsDirectory){
+    putParams["config"]["root.directory"] = state.mapping.hdfsDirectory;
   }
 
-  if(state.general.principal){
-    putParams["principal"] = state.security.principal;
+  if(state.security.keytabURI){
+    putParams["config"]["keytabURI"] = state.security.keytabURI;
   }
 
-  if(state.general.hdfsDirectory){
-    putParams["root.directory"] = state.general.hdfsDirectory;
+  if(state.security.principal){
+    putParams["config"]["principal"] = state.security.principal;
   }
 
-  if(state.general.schedulerQueueName){
-    putParams["scheduluer.queue.name"] = state.general.schedulerQueueName;
+  if(state.preferences.schedulerQueueName){
+    putParams["config"]["scheduluer.queue.name"] = state.preferences.schedulerQueueName;
   }
 
   return MyNamespaceApi
