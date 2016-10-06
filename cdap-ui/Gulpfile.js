@@ -236,8 +236,8 @@ gulp.task('js:lib', function() {
       './bower_components/angular-inview/angular-inview.js',
       './bower_components/d3-tip/index.js',
       './bower_components/esprima/esprima.js',
-      './node_modules/react/dist/react-with-addons.js',
-      './node_modules/react-dom/dist/react-dom.js',
+      './node_modules/react/dist/react-with-addons.min.js',
+      './node_modules/react-dom/dist/react-dom.min.js',
       './node_modules/ngreact/ngReact.min.js',
 
       './app/lib/avsc-bundle.js'
@@ -411,12 +411,12 @@ gulp.task('distribute', ['clean', 'build', 'rev:replace']);
 gulp.task('default', ['lint', 'build']);
 
 gulp.task('watch:webpack:plusbutton:build-dev', function(callback) {
-  var devCompiler = webpack(plusbuttonwebpack);
   // run webpack
   var firstTime = false;
-  devCompiler.run(function(err, stats) {
+  webpack(plusbuttonwebpack, function(err, stats) {
     if(err) throw new gutil.PluginError("webpack:build-dev", err);
     gutil.log("[webpack:build-dev]", stats.toString({
+      chunks: false,
       colors: true
     }));
     if (!firstTime) {
@@ -427,11 +427,10 @@ gulp.task('watch:webpack:plusbutton:build-dev', function(callback) {
 });
 
 gulp.task('webpack:plusbutton:build-dev', function(callback) {
-  var devCompiler = webpack(plusbuttonwebpack);
-  // run webpack
-  devCompiler.run(function(err, stats) {
+  webpack(plusbuttonwebpack, function(err, stats) {
     if(err) throw new gutil.PluginError("webpack:build-dev", err);
     gutil.log("[webpack:build-dev]", stats.toString({
+      chunks: false,
       colors: true
     }));
     callback();

@@ -17,30 +17,22 @@ var webpack = require('webpack');
 var plugins = [
   new webpack.optimize.DedupePlugin(),
   new webpack.optimize.CommonsChunkPlugin("plusbutton-lib", "plusbutton-lib.js", Infinity),
-  new webpack.optimize.UglifyJsPlugin({
-    compress: {
-      warnings: false,
-      comments: false
-    }
-  }),
+  // by default minify it.
   new webpack.DefinePlugin({
     'process.env':{
       'NODE_ENV': JSON.stringify("production"),
       '__DEVTOOLS__': false
     },
+  }),
+  new webpack.optimize.UglifyJsPlugin({
+    compress: {
+      warnings: false
+    },
+    output: {
+      comments: false
+    }
   })
 ];
-var mode = process.env.NODE_ENV;
-if (mode === 'production' || mode === 'build') {
-  plugins.push(
-    new webpack.DefinePlugin({
-      'process.env':{
-        'NODE_ENV': JSON.stringify("production"),
-        '__DEVTOOLS__': false
-      },
-    })
-  );
-}
 var loaders = [
   {
     test: /\.less$/,
@@ -135,5 +127,6 @@ module.exports = {
       services: __dirname + '/app/cdap/services',
       api: __dirname + '/app/cdap/api'
     }
-  }
+  },
+  plugins
 };
