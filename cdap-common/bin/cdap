@@ -79,6 +79,7 @@ case ${1} in
     echo
     echo "    classpath    - Returns the Java CLASSPATH of the CDAP Master service"
     echo "    run          - Runs a given class with arguments using the CDAP Master CLASSPATH and environment"
+    echo "    upgrade      - Runs the CDAP Upgrade with optional arguments"
     echo
     else
     echo "    sdk          - Sends the arguments (start/stop/etc.) to the Standalone CDAP service on this host"
@@ -86,7 +87,6 @@ case ${1} in
     fi
     echo "    cli          - Starts an interactive CDAP CLI session"
     echo "    debug        - Runs CDAP debug functions"
-    echo "    upgrade      - Runs the CDAP Upgrade with optional arguments"
     echo
     echo " Get more help for each command by executing:"
     echo " ${0} <command> --help"
