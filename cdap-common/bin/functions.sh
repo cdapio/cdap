@@ -1075,7 +1075,7 @@ cdap_debug() {
   shift
   local readonly __ret __args=${@}
   case ${__entity} in
-    transactions) cdap_tx_debugger ${__args}; __ret=$? ;;
+    transactions) cdap_tx_debugger ${__args}; __ret=${?} ;;
     *) echo "Usage: ${0} debug transactions [arguments]"; __ret=1
   esac
   return ${__ret}

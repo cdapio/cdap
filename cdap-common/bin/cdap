@@ -86,7 +86,7 @@ case ${1} in
     fi
     echo "    cli          - Starts an interactive CDAP CLI session"
     echo "    debug        - Runs CDAP debug functions"
-    echo "    upgrade      - Runs the CDAP Upgrade Tool with arguments"
+    echo "    upgrade      - Runs the CDAP Upgrade with optional arguments"
     echo
     echo " Get more help for each command by executing:"
     echo " ${0} <command> --help"
