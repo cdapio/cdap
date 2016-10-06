@@ -1014,12 +1014,11 @@ cdap_upgrade_tool() {
   fi
 
   # check arguments
-  if [[ ${#__args} -eq 0 ]]; then
-    set -- "upgrade" ${@}
-  fi
   if [[ ${1} == 'hbase' ]]; then
     shift
     set -- "upgrade_hbase" ${@}
+  else
+    set -- "upgrade" ${@}
   fi
 
   "${JAVA}" -cp ${CLASSPATH} -Dscript=${__script} ${__class} ${@}
