@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Advanced Tutorial, Web Analytics Application
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. cdap-apps-version is set in _common/common_conf.py
 
@@ -435,7 +435,7 @@ done in the ``initialize()`` method of the ``BounceCountsMapReduce`` class:
    :dedent: 2
 
 As mentioned earlier, the input of the MapReduce is the *logEventStream*. This
-connection is made above using the ``StreamBatchReadable.useStreamInput()`` method.
+connection is made above using the ``context.addInput(Input.ofStream())`` methods.
 
 This MapReduce program runs as part of a workflow that is scheduled every ten minutes.
 Every time it runs, it reads ten minutes' worth of events from the stream, ending at the

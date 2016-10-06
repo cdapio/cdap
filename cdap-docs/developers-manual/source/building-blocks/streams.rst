@@ -110,5 +110,5 @@ Streams are included in just about every CDAP :ref:`application <apps-and-packs>
   reads events from a stream. 
 
 - For an example of **reading from a stream with a MapReduce program,** see the 
-  :ref:`cdap-mapreduce-guide`, where the class ``TopClientsMapReduce`` uses the method
-  ``StreamBatchReadable`` to read events from a stream.
+  :ref:`cdap-mapreduce-guide`, where the class ``TopClientsMapReduce``
+  reads events from a stream using the method ``Input.ofStream()``. 
