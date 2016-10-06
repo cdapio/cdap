@@ -16,9 +16,9 @@
 # the License.
 #
 
-# This script is a wrapper for "cdap cli" and will be removed in 4.1
+# This script is a wrapper for "cdap cli" and will be removed in 5.0
 echo
-echo "[WARN] ${0} is deprecated and will be removed in CDAP 4.1. Please use 'cdap cli' for CDAP command line."
+echo "[WARN] ${0} is deprecated and will be removed in CDAP 5.0. Please use 'cdap cli' for CDAP command line."
 echo
 echo "  cdap cli ${@}"
 echo
