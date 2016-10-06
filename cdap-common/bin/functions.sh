@@ -261,7 +261,7 @@ cdap_get_conf() {
 #
 # cdap_kinit
 # Initializes Kerberos ticket using principal/keytab
-# 
+#
 cdap_kinit() {
   local readonly __principal=${CDAP_PRINCIPAL:-$(cdap_get_conf "cdap.master.kerberos.principal" "${CDAP_CONF}"/cdap-site.xml)}
   local readonly __keytab=${CDAP_KEYTAB:-$(cdap_get_conf "cdap.master.kerberos.keytab" "${CDAP_CONF}"/cdap-site.xml)}
@@ -555,7 +555,7 @@ cdap_start_java() {
   local readonly __name=$(echo ${CDAP_SERVICE/-/ } | awk '{for(i=1;i<=NF;i++){ $i=toupper(substr($i,1,1)) substr($i,2) }}1')
   cdap_check_pidfile ${__pidfile} || exit 0 # Error output is done in function
   cdap_create_pid_dir || die "Could not create PID dir: ${PID_DIR}"
-  # Check and set classpath if in development environment. 
+  # Check and set classpath if in development environment.
   cdap_check_and_set_classpath_for_dev_environment "${CDAP_HOME}"
   # Setup classpaths.
   cdap_set_classpath "${CDAP_HOME}"/${__comp_home} "${CDAP_CONF}"
@@ -610,7 +610,7 @@ cdap_run_class() {
   local readonly __ret
   local JAVA_HEAPMAX=${JAVA_HEAPMAX:--Xmx1024m}
   [[ -z ${__class} ]] && echo "[ERROR] No class name given!" && die "Usage: ${0} run <fully-qualified-class> [arguments]"
-  # Check and set classpath if in development environment. 
+  # Check and set classpath if in development environment.
   cdap_check_and_set_classpath_for_dev_environment "${CDAP_HOME}"
   # Setup classpaths.
   cdap_set_classpath "${CDAP_HOME}"/master "${CDAP_CONF}"
@@ -675,7 +675,7 @@ cdap_context() {
 cdap_version() {
   local readonly __component=${1}
   local readonly __cdap_major __cdap_minor __cdap_patch __cdap_snapshot
-  local __version 
+  local __version
   if [[ -z ${__component} ]]; then
     __version=$(<${CDAP_HOME}/VERSION)
   else

@@ -18,7 +18,7 @@
 # This script is the main script for performing all CDAP functions. With it,
 # you can start, stop, or get status on CDAP and its services, run queries,
 # execute CLI commands, and more. Anything not handled by this script is passed
-# to the CDAP CLI to be interpreted. 
+# to the CDAP CLI to be interpreted.
 #
 
 __script=${BASH_SOURCE[0]}
