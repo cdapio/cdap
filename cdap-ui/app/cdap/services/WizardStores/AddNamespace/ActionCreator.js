@@ -24,7 +24,31 @@ const PublishNamespace = () => {
   let putParams = {};
 
   if (state.general.description) {
-    putParams.description = state.general.description;
+    putParams["description"] = state.general.description;
+  }
+
+  if(state.general.hbaseNamespace){
+    putParams["hbase.namespace"] = state.mapping.hbaseNamespace;
+  }
+
+  if(state.general.hiveDatabaseName){
+    putParams["hive.database"] = state.mapping.hiveDatabaseName;
+  }
+
+  if(state.general.keytabURI){
+    putParams["keytabURI"] = state.security.keytabURI;
+  }
+
+  if(state.general.principal){
+    putParams["principal"] = state.security.principal;
+  }
+
+  if(state.general.hdfsDirectory){
+    putParams["root.directory"] = state.general.hdfsDirectory;
+  }
+
+  if(state.general.schedulerQueueName){
+    putParams["scheduluer.queue.name"] = state.general.schedulerQueueName;
   }
 
   return MyNamespaceApi

@@ -77,8 +77,6 @@ const generalStepRequiredFields = head(
     .filter(step => step.id === 'general')
   ).requiredFields;
 
-
-
 const onErrorHandler = (reducerId, stateCopy, action) => {
   stateCopy = Object.assign({}, stateCopy);
   if (action.payload.id === reducerId) {
@@ -155,8 +153,7 @@ const mapping = (state = null, action = defaultAction) => {
       return state;
   }
   return Object.assign({}, stateCopy, {
-    __complete: isComplete(stateCopy),
-    __error: action.payload.error || false
+    __complete: true
   });
 };
 
@@ -183,7 +180,7 @@ const security = (state = null, action = defaultAction) => {
       return state;
   }
   return Object.assign({}, stateCopy, {
-    __complete: isComplete(stateCopy),
+    __complete: true,
     __error: action.payload.error || false
   });
 };
@@ -211,7 +208,7 @@ const preferences = (state = null, action = defaultAction) => {
       return state;
   }
   return Object.assign({}, stateCopy, {
-    __complete: isComplete(stateCopy),
+    __complete: true,
     __error: action.payload.error || false
   });
 };

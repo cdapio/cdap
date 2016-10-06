@@ -33,7 +33,6 @@ export default class AddNamespaceWizard extends Component {
       showWizard: isOpen
     });
   }
-
   createNamespace(){
     let state = AddNamespaceStore.getState();
     return PublishNamespace()
