@@ -23,6 +23,99 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 3.6.0 <http://docs.cask.co/cdap/3.6.0/index.html>`__
+=============================================================
+
+Improvements
+------------
+
+- :cask-issue:`CDAP-5771` - Allow concurrent runs of different versions of a service. A
+  RouteConfig can be uploaded to configure the percentage of requests that need to be sent
+  to the different versions.
+
+- :cask-issue:`CDAP-7281` - Improved the PartitionedFileSet to validate the schema of a
+  partition key. Note that this will break code that uses incorrect partition keys, which
+  was previously silently ignored.
+
+- :cask-issue:`CDAP-7343` - All non-versioned endpoints are now directed to applications
+  with a default version. Added test cases with a mixed usage of the new versioned endpoints
+  and the corresponding non-versioned endpoints.
+
+- :cask-issue:`CDAP-7366` - Added an upgrade step that adds a default version ID to jobs
+  and triggers in the Schedule Store.
+
+- :cask-issue:`CDAP-7385` - The Log HTTP Handler and Router have been fixed to allow the
+  streaming of larger logs files.
+
+- :cask-issue:`CDAP-7264` - Added an HTTP RESTful API to create applications with a
+  version.
+
+- :cask-issue:`CDAP-7265` - Added an HTTP RESTful API to start or stop programs of a
+  specific application version.
+
+- :cask-issue:`CDAP-7266` - Added an upgrade step that adds a default application version
+  to existing applications.
+
+- :cask-issue:`CDAP-7268` - Added an HTTP RESTful API to store, fetch, and delete
+  RouteConfigs for user service endpoint routing control.
+
+- :cask-issue:`CDAP-7272` - User services now include their application version in the
+  payload when they announce themselves in Apache Twill.
+
+
+Bug Fixes
+---------
+
+- :cask-issue:`CDAP-3822` - Unit Test framework now has the capability to exclude scala,
+  so users can depend on their own version of the library.
+
+- :cask-issue:`CDAP-7250` - Fixed an issue where dataset usage was not being recorded
+  after an application was deleted.
+
+- :cask-issue:`CDAP-7314` - Fixed a problem with the documentation example links to the
+  CDAP ETL Guide.
+
+- :cask-issue:`CDAP-7321` - Fixed a problem with upgrading CDAP using the CDAP Upgrade
+  Tool.
+
+- :cask-issue:`CDAP-7324` - Fixed a problem with the upgrade tool while upgrading HBase
+  coprocessors.
+
+- :cask-issue:`CDAP-7334` - Fixed a problem with the listing of applications not returning
+  the application version correctly.
+
+- :cask-issue:`CDAP-7353` - Fixed a problem with using "Download All" logs in the
+  browser log viewer by having it fetch and stream the response to the client.
+
+- :cask-issue:`CDAP-7359` - Fixed a problem with NodeJS buffering a response before
+  sending it to a client.
+
+- :cask-issue:`CDAP-7361` - Fixed a problem with log file corruption if the log saver
+  container crashes due to being killed by YARN.
+
+- :cask-issue:`CDAP-7364` - Fixed a problem with the CDAP UI not handling "5xx" error
+  codes correctly.
+
+- :cask-issue:`CDAP-7374` - Fixed Hydrator Studio in the Windows version of Chrome to
+  allow users to open and edit a node configuration.
+
+- :cask-issue:`CDAP-7386` - Fixed an error in the "CDAP Introduction" tutorial's
+  "Transforming Your Data" example of an application configuration.
+
+- :cask-issue:`CDAP-7391` - Fixed an issue that caused unit test failures when using
+  ``org.hamcrest`` classes.
+  
+- :cask-issue:`CDAP-7392` - Fixed an issue where the Java process corresponding to the
+  MapReduce application master kept running even if the application was moved to the FINISHED
+  state.
+
+- :cask-issue:`HYDRATOR-791` - Fixed a problem with Hydrator pipelines using a DBSource
+  not working in an HDP cluster.
+
+- :cask-issue:`HYDRATOR-948` - Fixed a problem with Spark data pipelines not supporting
+  argument values in excess of 64K characters.
+
+
 `Release 3.5.1 <http://docs.cask.co/cdap/3.5.1/index.html>`__
 =============================================================
 

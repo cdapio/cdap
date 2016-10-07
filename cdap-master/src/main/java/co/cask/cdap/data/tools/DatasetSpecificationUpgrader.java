@@ -76,10 +76,11 @@ public class DatasetSpecificationUpgrader {
    */
   public void upgrade() throws Exception {
     TableId datasetSpecId = tableUtil.createHTableId(NamespaceId.SYSTEM, DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
-    HBaseAdmin hBaseAdmin = new HBaseAdmin(conf);
-    if (!tableUtil.tableExists(hBaseAdmin, datasetSpecId)) {
-      LOG.error("Dataset instance table does not exist: {}. Should not happen", datasetSpecId);
-      return;
+    try (HBaseAdmin hBaseAdmin = new HBaseAdmin(conf)) {
+      if (!tableUtil.tableExists(hBaseAdmin, datasetSpecId)) {
+        LOG.error("Dataset instance table does not exist: {}. Should not happen", datasetSpecId);
+        return;
+      }
     }
 
     HTable specTable = tableUtil.createHTable(conf, datasetSpecId);

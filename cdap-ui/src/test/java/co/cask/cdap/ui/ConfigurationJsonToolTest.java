@@ -16,19 +16,13 @@
 
 package co.cask.cdap.ui;
 
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.AppenderBase;
-import co.cask.cdap.common.conf.Configuration;
-import co.cask.cdap.common.conf.SConfiguration;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import org.junit.Assert;
 import org.junit.Test;
-import org.slf4j.ILoggerFactory;
-import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 
 /**
  *
@@ -36,38 +30,19 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ConfigurationJsonToolTest {
 
   @Test
-  public void testDeprecatedKeys() {
-    // Add a log appender to intercept logs from the Configuration object
-    ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
-    final AtomicBoolean logMessageReceived = new AtomicBoolean(false);
+  public void testLogSuppress() throws UnsupportedEncodingException {
+    PrintStream stdout = System.out;
 
-    if (loggerFactory instanceof LoggerContext) {
-      LoggerContext loggerContext = (LoggerContext) loggerFactory;
-
-      AppenderBase<ILoggingEvent> appender = new AppenderBase<ILoggingEvent>() {
-        @Override
-        protected void append(ILoggingEvent eventObject) {
-          logMessageReceived.set(true);
-        }
-      };
-      loggerContext.getLogger(Configuration.class).addAppender(appender);
-      appender.setContext(loggerContext);
-      appender.start();
+    // Run the config tool. It should only prints the config json to System.out
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    System.setOut(new PrintStream(os, true, "UTF-8"));
+    try {
+      ConfigurationJsonTool.main(new String[]{"--cdap"});
+    } finally {
+      System.setOut(stdout);
     }
 
-    // Dump the configuration as json
-    StringBuilder builder = new StringBuilder();
-    ConfigurationJsonTool.exportToJson(SConfiguration.create(), builder);
-    String address = new Gson().fromJson(builder.toString(), JsonObject.class)
-      .get("security.auth.server.bind.address").getAsString();
-    Assert.assertEquals("0.0.0.0", address);
-
-    // There shouldn't be any log message, even we access the deprecated key
-    Assert.assertFalse(logMessageReceived.get());
-
-    // If we access the deprecated key directly, there should still be deprecated key warning.
-    // That's because the log level shouldn't been reset.
-    SConfiguration.create().get("security.auth.server.bind.address");
-    Assert.assertTrue(logMessageReceived.get());
+    // The JSON parsing should succeed.
+    new Gson().fromJson(os.toString("UTF-8"), JsonObject.class);
   }
 }
