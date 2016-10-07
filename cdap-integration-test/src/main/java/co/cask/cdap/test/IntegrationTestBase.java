@@ -41,13 +41,16 @@ import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.StreamDetail;
+import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.security.authentication.client.AuthenticationClient;
 import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -64,9 +67,13 @@ import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -361,6 +368,15 @@ public abstract class IntegrationTestBase {
     return deployApplication(getConfiguredNamespace().toId(), applicationClz);
   }
 
+
+  protected ApplicationManager deployApplication(ApplicationId appId, AppRequest appRequest) throws Exception {
+    return getTestManager().deployApplication(appId, appRequest);
+  }
+
+  protected ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass) throws Exception {
+    return getTestManager().addAppArtifact(artifactId, appClass);
+  }
+
   protected ApplicationManager getApplicationManager(ApplicationId applicationId) throws Exception {
     return getTestManager().getApplicationManager(applicationId);
   }
@@ -376,7 +392,7 @@ public abstract class IntegrationTestBase {
 
     // delete all apps in the namespace
     for (ApplicationRecord app : getApplicationClient().list(namespace.toId())) {
-      getApplicationClient().delete(namespace.app(app.getName()).toId());
+      getApplicationClient().delete(namespace.app(app.getName(), app.getAppVersion()));
     }
     // delete all streams
     for (StreamDetail streamDetail : getStreamClient().list(namespace.toId())) {

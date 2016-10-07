@@ -27,6 +27,8 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpResponse;
@@ -37,6 +39,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 import javax.inject.Inject;
 
 /**
@@ -66,18 +69,34 @@ public class ServiceClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the app or service could not be found
+   * @deprecated since 4.0.0. Please use {@link #get(ProgramId)} instead
    */
+  @Deprecated
   public ServiceSpecification get(Id.Service service)
     throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
+    return get(service.toEntityId());
+  }
 
-    URL url = config.resolveNamespacedURLV3(service.getNamespace(),
-                                            String.format("apps/%s/services/%s",
-                                                          service.getApplicationId(), service.getId()));
+  /**
+   * Gets a {@link ServiceSpecification} for a {@link Service}.
+   *
+   * @param service ID of the service
+   * @return {@link ServiceSpecification} representing the service
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws NotFoundException if the app or service could not be found
+   */
+  public ServiceSpecification get(ProgramId service)
+    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
+
+    URL url = config.resolveNamespacedURLV3(service.getNamespaceId(),
+                                            String.format("apps/%s/versions/%s/services/%s", service.getApplication(),
+                                                          service.getVersion(), service.getProgram()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(service.toEntityId());
+      throw new NotFoundException(service);
     }
     return ObjectResponse.fromJsonBody(response, ServiceSpecification.class).getResponseObject();
   }
@@ -130,12 +149,29 @@ public class ServiceClient {
     return response.getResponseBodyAsString();
   }
 
+  /**
+   * Gets a {@link URL} to call methods for a {@link Service}.
+   *
+   * @param service ID of the service
+   * @return a URL to call methods of the service
+   * @throws NotFoundException @throws NotFoundException if the app or service could not be found
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Please use {@link #getServiceURL(ProgramId)}  instead
+   */
+  @Deprecated
   public URL getServiceURL(Id.Service service)
+    throws NotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+    return getServiceURL(service.toEntityId());
+  }
+
+  public URL getServiceURL(ProgramId service)
     throws NotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
     // Make sure the service actually exists
     get(service);
-    return config.resolveNamespacedURLV3(service.getNamespace(),
-                                         String.format("apps/%s/services/%s/methods/",
-                                                       service.getApplicationId(), service.getId()));
+    return config.resolveNamespacedURLV3(service.getNamespaceId(),
+                                         String.format("apps/%s/versions/%s/services/%s/methods/",
+                                                       service.getApplication(), service.getVersion(),
+                                                       service.getProgram()));
   }
 }

@@ -42,41 +42,11 @@ public class ApplicationRecord {
     this.id = appId.getApplication();
   }
 
-  @Deprecated
-  public ApplicationRecord(ArtifactSummary artifact, String name, String description) {
-    this.type = "App";
-    this.artifact = artifact;
-    this.name = name;
-    this.description = description;
-    this.version = artifact.getVersion();
-    this.id = name;
-  }
-
-  @Deprecated
-  public ApplicationRecord(String name, String version, String description) {
-    this("App", name, name, version, description);
-  }
-
-  @Deprecated
-  public ApplicationRecord(String type, String id, String name, String version, String description) {
-    this.type = type;
-    this.id = id;
-    this.name = name;
-    this.version = version;
-    this.description = description;
-    this.artifact = null;
-  }
-
   public ArtifactSummary getArtifact() {
     return artifact;
   }
 
-  /**
-   * @deprecated use {@link #getArtifact()} instead
-   * @return the version of the artifact used to create the application
-   */
-  @Deprecated
-  public String getVersion() {
+  public String getAppVersion() {
     return version;
   }
 

@@ -33,6 +33,7 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -164,16 +165,33 @@ public class ApplicationClient {
    * @throws ApplicationNotFoundException if the application with the given ID was not found
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Please use {@link #get(ApplicationId) ()} instead
    */
+  @Deprecated
   public ApplicationDetail get(Id.Application appId)
     throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+    return get(appId.toEntityId());
+  }
 
+  /**
+   * Get details about the specified application.
+   *
+   * @param appId the id of the application to get
+   * @return details about the specified application
+   * @throws ApplicationNotFoundException if the application with the given ID was not found
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public ApplicationDetail get(ApplicationId appId)
+    throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+
+    String path = String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion());
     HttpResponse response = restClient.execute(HttpMethod.GET,
-      config.resolveNamespacedURLV3(appId.getNamespace(), "apps/" + appId.getId()),
-      config.getAccessToken(),
-      HttpURLConnection.HTTP_NOT_FOUND);
+                                               config.resolveNamespacedURLV3(appId.getParent(), path),
+                                               config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ApplicationNotFoundException(appId.toEntityId());
+      throw new ApplicationNotFoundException(appId);
     }
     return ObjectResponse.fromJsonBody(response, ApplicationDetail.class).getResponseObject();
   }
@@ -192,7 +210,7 @@ public class ApplicationClient {
 
     HttpResponse response = restClient.execute(HttpMethod.GET,
                                                config.resolveNamespacedURLV3(
-                                                 appId.getParent().toId(),
+                                                 appId.getParent(),
                                                  "apps/" + appId.getApplication() + "/plugins"),
                                                config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -209,14 +227,30 @@ public class ApplicationClient {
    * @throws ApplicationNotFoundException if the application with the given ID was not found
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Please use {@link #delete(ApplicationId) ()} instead
    */
+  @Deprecated
   public void delete(Id.Application app)
     throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+    delete(app.toEntityId());
+  }
+
+  /**
+   * Deletes an application.
+   *
+   * @param app the application to delete
+   * @throws ApplicationNotFoundException if the application with the given ID was not found
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public void delete(ApplicationId app)
+    throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+    String path = String.format("apps/%s/versions/%s", app.getApplication(), app.getVersion());
     HttpResponse response = restClient.execute(HttpMethod.DELETE,
-                                               config.resolveNamespacedURLV3(app.getNamespace(), "apps/" + app.getId()),
+                                               config.resolveNamespacedURLV3(app.getParent(), path),
                                                config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ApplicationNotFoundException(app.toEntityId());
+      throw new ApplicationNotFoundException(app);
     }
   }
 
@@ -345,14 +379,11 @@ public class ApplicationClient {
    * @param createRequest the request body, which contains the artifact to use and any application config
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Please use {@link #deploy(ApplicationId, AppRequest)} instead
    */
+  @Deprecated
   public void deploy(Id.Application appId, AppRequest<?> createRequest) throws IOException, UnauthenticatedException {
-    URL url = config.resolveNamespacedURLV3(appId.getNamespace(), "apps/" + appId.getId());
-    HttpRequest request = HttpRequest.put(url)
-      .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-      .withBody(GSON.toJson(createRequest))
-      .build();
-    restClient.upload(request, config.getAccessToken());
+    deploy(appId.toEntityId(), createRequest);
   }
 
   /**
@@ -364,7 +395,7 @@ public class ApplicationClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void deploy(ApplicationId appId, AppRequest<?> createRequest) throws IOException, UnauthenticatedException {
-    URL url = config.resolveNamespacedURLV3(Id.Namespace.from(appId.getNamespace()),
+    URL url = config.resolveNamespacedURLV3(new NamespaceId(appId.getNamespace()),
                                             String.format("apps/%s/versions/%s/create",
                                                           appId.getApplication(), appId.getVersion()));
     HttpRequest request = HttpRequest.post(url)
@@ -511,17 +542,33 @@ public class ApplicationClient {
    * @throws ApplicationNotFoundException if the application with the given ID was not found
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Please use {@link #listPrograms(ApplicationId)} instead
    */
+  @Deprecated
   public List<ProgramRecord> listPrograms(Id.Application app)
     throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+    return listPrograms(app.toEntityId());
+  }
 
-    String path = String.format("apps/%s", app.getId());
-    URL url = config.resolveNamespacedURLV3(app.getNamespace(), path);
+  /**
+   * Lists programs belonging to an application.
+   *
+   * @param app the application
+   * @return List of all {@link ProgramRecord}s
+   * @throws ApplicationNotFoundException if the application with the given ID was not found
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public List<ProgramRecord> listPrograms(ApplicationId app)
+    throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+
+    String path = String.format("apps/%s/versions/%s", app.getApplication(), app.getVersion());
+    URL url = config.resolveNamespacedURLV3(app.getParent(), path);
     HttpRequest request = HttpRequest.get(url).build();
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ApplicationNotFoundException(app.toEntityId());
+      throw new ApplicationNotFoundException(app);
     }
 
     return ObjectResponse.fromJsonBody(response, ApplicationDetail.class).getResponseObject().getPrograms();
