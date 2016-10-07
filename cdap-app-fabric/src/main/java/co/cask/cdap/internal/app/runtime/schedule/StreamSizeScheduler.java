@@ -29,6 +29,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.stream.notification.StreamSizeNotification;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedStreamSizeScheduleStore;
@@ -91,6 +92,8 @@ public class StreamSizeScheduler implements Scheduler {
   private final PropertiesResolver propertiesResolver;
   private final DatasetBasedStreamSizeScheduleStore scheduleStore;
   private final ConcurrentMap<Id.Stream, StreamSubscriber> streamSubscribers;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final CConfiguration cConf;
 
   // Key is scheduleId
   private final ConcurrentSkipListMap<String, StreamSubscriber> scheduleSubscribers;
@@ -111,7 +114,8 @@ public class StreamSizeScheduler implements Scheduler {
   @Inject
   public StreamSizeScheduler(CConfiguration cConf, NotificationService notificationService, MetricStore metricStore,
                              Provider<Store> storeProvider, ProgramLifecycleService lifecycleService,
-                             PropertiesResolver propertiesResolver, DatasetBasedStreamSizeScheduleStore scheduleStore) {
+                             PropertiesResolver propertiesResolver, DatasetBasedStreamSizeScheduleStore scheduleStore,
+                             NamespaceQueryAdmin namespaceQueryAdmin) {
     this.pollingDelay = TimeUnit.SECONDS.toMillis(
       cConf.getLong(Constants.Notification.Stream.STREAM_SIZE_SCHEDULE_POLLING_DELAY));
     this.notificationService = notificationService;
@@ -123,6 +127,8 @@ public class StreamSizeScheduler implements Scheduler {
     this.streamSubscribers = Maps.newConcurrentMap();
     this.scheduleSubscribers = new ConcurrentSkipListMap<>();
     this.schedulerStarted = false;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.cConf = cConf;
   }
 
   public void init() throws SchedulerException {
@@ -1024,7 +1030,7 @@ public class StreamSizeScheduler implements Scheduler {
 
 
       final ScheduleTaskRunner taskRunner = new ScheduleTaskRunner(store, lifecycleService, propertiesResolver,
-                                                                   taskExecutorService);
+                                                                   taskExecutorService, namespaceQueryAdmin, cConf);
       try {
         scheduleStore.updateLastRun(programId, programType, streamSizeSchedule.getName(),
                                     pollingInfo.getSize(), pollingInfo.getTimestamp(),
