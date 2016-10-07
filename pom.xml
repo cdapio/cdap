@@ -2510,6 +2510,7 @@
         <module>cdap-spark-core</module>
         <module>cdap-security-spi</module>
         <module>cdap-security</module>
+        <module>cdap-tms</module>
         <module>cdap-gateway</module>
         <module>cdap-explore-client</module>
         <module>cdap-explore-jdbc</module>
