@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.transaction.queue.hbase;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Row;
@@ -38,6 +39,7 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -93,8 +95,6 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
   private final TransactionExecutorFactory txExecutorFactory;
   private final DatasetFramework datasetFramework;
 
-  private HBaseAdmin admin;
-
   @Inject
   HBaseQueueAdmin(Configuration hConf,
                   CConfiguration cConf,
@@ -141,13 +141,6 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
     return QueueConstants.STATE_STORE_NAME + "." + HBaseQueueDatasetModule.STATE_STORE_EMBEDDED_TABLE_NAME;
   }
 
-  protected final synchronized HBaseAdmin getHBaseAdmin() throws IOException {
-    if (admin == null) {
-      admin = new HBaseAdmin(hConf);
-    }
-    return admin;
-  }
-
   /**
    * This determines whether truncating a queue is supported (by truncating the queue's table).
    */
@@ -159,8 +152,10 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
 
   @Override
   public boolean exists(QueueName queueName) throws Exception {
-    return tableUtil.tableExists(getHBaseAdmin(), getDataTableId(queueName)) &&
-      datasetFramework.hasInstance(getStateStoreId(queueName.getFirstComponent()));
+    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      return tableUtil.tableExists(admin, getDataTableId(queueName)) &&
+        datasetFramework.hasInstance(getStateStoreId(queueName.getFirstComponent()));
+    }
   }
 
   @Override
@@ -177,7 +172,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
     createStateStoreDataset(queueName.getFirstComponent());
 
     TableId tableId = getDataTableId(queueName);
-    try (DatasetAdmin dsAdmin = new DatasetAdmin(tableId, hConf, cConf, tableUtil, properties)) {
+    try (QueueDatasetAdmin dsAdmin = new QueueDatasetAdmin(tableId, hConf, cConf, tableUtil, properties)) {
       dsAdmin.create();
     }
   }
@@ -222,40 +217,42 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
   @Override
   public void upgrade() throws Exception {
     // For each table managed by this admin, perform an upgrade
-    List<TableId> tableIds = tableUtil.listTables(getHBaseAdmin());
-    List<TableId> stateStoreTableIds = Lists.newArrayList();
-    Map<String, String> reverseHBaseNamespace = tableUtil.getHBaseToCDAPNamespaceMap();
+    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      List<TableId> tableIds = tableUtil.listTables(admin);
+      List<TableId> stateStoreTableIds = Lists.newArrayList();
+      Map<String, String> reverseHBaseNamespace = tableUtil.getHBaseToCDAPNamespaceMap();
 
-    for (TableId tableId : tableIds) {
-      // It's important to skip config table enabled.
-      if (isDataTable(tableId)) {
-        LOG.info("Upgrading queue table: {}", tableId);
-        Properties properties = new Properties();
-        HTableDescriptor desc = tableUtil.getHTableDescriptor(getHBaseAdmin(), tableId);
-        if (desc.getValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES) == null) {
-          // It's the old queue table. Set the property prefix bytes to SALT_BYTES
-          properties.setProperty(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES,
-                                 Integer.toString(SaltedHBaseQueueStrategy.SALT_BYTES));
+      for (TableId tableId : tableIds) {
+        // It's important to skip config table enabled.
+        if (isDataTable(tableId)) {
+          LOG.info("Upgrading queue table: {}", tableId);
+          Properties properties = new Properties();
+          HTableDescriptor desc = tableUtil.getHTableDescriptor(admin, tableId);
+          if (desc.getValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES) == null) {
+            // It's the old queue table. Set the property prefix bytes to SALT_BYTES
+            properties.setProperty(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES,
+                                   Integer.toString(SaltedHBaseQueueStrategy.SALT_BYTES));
+          }
+          upgrade(tableId, properties);
+          LOG.info("Upgraded queue table: {}", tableId);
+        } else if (isStateStoreTable(tableId)) {
+          stateStoreTableIds.add(tableId);
         }
-        upgrade(tableId, properties);
-        LOG.info("Upgraded queue table: {}", tableId);
-      } else if (isStateStoreTable(tableId)) {
-        stateStoreTableIds.add(tableId);
       }
-    }
 
-    // Upgrade of state store table
-    for (TableId tableId : stateStoreTableIds) {
-      LOG.info("Upgrading queue state store: {}", tableId);
-      String cdapNamespace = reverseHBaseNamespace.get(tableId.getNamespace());
-      DatasetId stateStoreId = createStateStoreDataset(cdapNamespace);
-      co.cask.cdap.api.dataset.DatasetAdmin admin = datasetFramework.getAdmin(stateStoreId, null);
-      if (admin == null) {
-        LOG.error("No dataset admin available for {}", stateStoreId);
-        continue;
+      // Upgrade of state store table
+      for (TableId tableId : stateStoreTableIds) {
+        LOG.info("Upgrading queue state store: {}", tableId);
+        String cdapNamespace = reverseHBaseNamespace.get(tableId.getNamespace());
+        DatasetId stateStoreId = createStateStoreDataset(cdapNamespace);
+        DatasetAdmin datasetAdmin = datasetFramework.getAdmin(stateStoreId, null);
+        if (datasetAdmin == null) {
+          LOG.error("No dataset admin available for {}", stateStoreId);
+          continue;
+        }
+        datasetAdmin.upgrade();
+        LOG.info("Upgraded queue state store: {}", tableId);
       }
-      admin.upgrade();
-      LOG.info("Upgraded queue state store: {}", tableId);
     }
   }
 
@@ -292,14 +289,18 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
   }
 
   private void truncate(TableId tableId) throws IOException {
-    if (tableUtil.tableExists(getHBaseAdmin(), tableId)) {
-      tableUtil.truncateTable(getHBaseAdmin(), tableId);
+    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      if (tableUtil.tableExists(admin, tableId)) {
+        tableUtil.truncateTable(admin, tableId);
+      }
     }
   }
 
   private void drop(TableId tableId) throws IOException {
-    if (tableUtil.tableExists(getHBaseAdmin(), tableId)) {
-      tableUtil.dropTable(getHBaseAdmin(), tableId);
+    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      if (tableUtil.tableExists(admin, tableId)) {
+        tableUtil.dropTable(admin, tableId);
+      }
     }
   }
 
@@ -311,7 +312,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
     if (!datasetFramework.hasInstance(id)) {
       return;
     }
-    try (final HBaseConsumerStateStore stateStore = getConsumerStateStore(queueName)) {
+    try (HBaseConsumerStateStore stateStore = getConsumerStateStore(queueName)) {
       Transactions.createTransactionExecutor(txExecutorFactory, stateStore)
         .execute(new TransactionExecutor.Subroutine() {
         @Override
@@ -369,19 +370,22 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
   public void dropAllInNamespace(NamespaceId namespaceId) throws Exception {
     Set<QueueConstants.QueueType> queueTypes = EnumSet.of(QueueConstants.QueueType.QUEUE,
                                                           QueueConstants.QueueType.SHARDED_QUEUE);
-    for (QueueConstants.QueueType queueType : queueTypes) {
-      // Note: The trailing "." is crucial, since otherwise nsId could match nsId1, nsIdx etc
-      // It's important to keep config table enabled while disabling and dropping  queue tables.
-      final String queueTableNamePrefix = String.format("%s.%s.", NamespaceId.SYSTEM.getNamespace(), queueType);
-      final String hbaseNamespace = tableUtil.getHBaseNamespace(namespaceId);
-      final TableId configTableId = TableId.from(hbaseNamespace, getConfigTableName());
-      tableUtil.deleteAllInNamespace(getHBaseAdmin(), hbaseNamespace, new Predicate<TableId>() {
-        @Override
-        public boolean apply(TableId tableId) {
-          // It's a bit hacky here since we know how the Dataset system names table
-          return (tableId.getTableName().startsWith(queueTableNamePrefix)) && !tableId.equals(configTableId);
-        }
-      });
+
+    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      for (QueueConstants.QueueType queueType : queueTypes) {
+        // Note: The trailing "." is crucial, since otherwise nsId could match nsId1, nsIdx etc
+        // It's important to keep config table enabled while disabling and dropping  queue tables.
+        final String queueTableNamePrefix = String.format("%s.%s.", NamespaceId.SYSTEM.getNamespace(), queueType);
+        final String hbaseNamespace = tableUtil.getHBaseNamespace(namespaceId);
+        final TableId configTableId = TableId.from(hbaseNamespace, getConfigTableName());
+        tableUtil.deleteAllInNamespace(admin, hbaseNamespace, new Predicate<TableId>() {
+          @Override
+          public boolean apply(TableId tableId) {
+            // It's a bit hacky here since we know how the Dataset System names tables
+            return (tableId.getTableName().startsWith(queueTableNamePrefix)) && !tableId.equals(configTableId);
+          }
+        });
+      }
     }
 
     // Delete the state store in the namespace
@@ -416,7 +420,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
   }
 
   private void upgrade(TableId tableId, Properties properties) throws Exception {
-    try (AbstractHBaseDataSetAdmin dsAdmin = new DatasetAdmin(tableId, hConf, cConf, tableUtil, properties)) {
+    try (AbstractHBaseDataSetAdmin dsAdmin = new QueueDatasetAdmin(tableId, hConf, cConf, tableUtil, properties)) {
       dsAdmin.upgrade();
     }
   }
@@ -449,11 +453,11 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
   }
 
   // only used for create & upgrade of data table
-  private final class DatasetAdmin extends AbstractHBaseDataSetAdmin {
+  private final class QueueDatasetAdmin extends AbstractHBaseDataSetAdmin {
     private final Properties properties;
 
-    private DatasetAdmin(TableId tableId, Configuration hConf, CConfiguration cConf,
-                         HBaseTableUtil tableUtil, Properties properties) {
+    private QueueDatasetAdmin(TableId tableId, Configuration hConf, CConfiguration cConf,
+                              HBaseTableUtil tableUtil, Properties properties) {
       super(tableId, hConf, cConf, tableUtil);
       this.properties = properties;
     }
@@ -524,7 +528,10 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
                                                                          : SaltedHBaseQueueStrategy.SALT_BYTES;
       htd.setValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES, Integer.toString(prefixBytes));
       LOG.info("Create queue table with prefix bytes {}", htd.getValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES));
-      tableUtil.createTableIfNotExists(getHBaseAdmin(), tableId, htd.build(), splitKeys);
+
+      try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+        tableUtil.createTableIfNotExists(admin, tableId, htd.build(), splitKeys);
+      }
     }
   }
 }

@@ -76,58 +76,60 @@ public abstract class AbstractQueueUpgrader extends AbstractUpgrader {
   @Override
   void upgrade() throws Exception {
     Iterable<TableId> tableIds = getTableIds();
-    for (TableId tableId : tableIds) {
-      LOG.info("Upgrading table {}", tableId);
+    try (HBaseAdmin admin = new HBaseAdmin(conf)) {
+      for (TableId tableId : tableIds) {
+        LOG.info("Upgrading table {}", tableId);
 
-      if (!tableUtil.tableExists(new HBaseAdmin(conf), tableId)) {
-        LOG.info("Table does not exist: {}. No upgrade necessary.", tableId);
-        continue;
-      }
-      HTable hTable = tableUtil.createHTable(conf, tableId);
-      ProjectInfo.Version tableVersion = HBaseTableUtil.getVersion(hTable.getTableDescriptor());
-      // Only upgrade if Upgrader's version is greater than table's version.
-      if (ProjectInfo.getVersion().compareTo(tableVersion) <= 0) {
-        LOG.info("Table {} has already been upgraded. Its version is: {}", tableId, tableVersion);
-        continue;
-      }
-
-      LOG.info("Starting upgrade for table {}", Bytes.toString(hTable.getTableName()));
-      try {
-        ScanBuilder scan = tableUtil.buildScan();
-        scan.setTimeRange(0, HConstants.LATEST_TIMESTAMP);
-        scan.addFamily(QueueEntryRow.COLUMN_FAMILY);
-        scan.setMaxVersions(1); // we only need to see one version of each row
-        List<Mutation> mutations = Lists.newArrayList();
-        Result result;
-        try (ResultScanner resultScanner = hTable.getScanner(scan.build())) {
-          while ((result = resultScanner.next()) != null) {
-            byte[] row = result.getRow();
-            String rowKeyString = Bytes.toString(row);
-            byte[] newKey = processRowKey(row);
-            NavigableMap<byte[], byte[]> columnsMap = result.getFamilyMap(QueueEntryRow.COLUMN_FAMILY);
-            if (newKey != null) {
-              Put put = new Put(newKey);
-              for (NavigableMap.Entry<byte[], byte[]> entry : columnsMap.entrySet()) {
-                LOG.debug("Adding entry {} -> {} for upgrade",
-                          Bytes.toString(entry.getKey()), Bytes.toString(entry.getValue()));
-                put.add(QueueEntryRow.COLUMN_FAMILY, entry.getKey(), entry.getValue());
-              }
-              mutations.add(put);
-              LOG.debug("Marking old key {} for deletion", rowKeyString);
-              mutations.add(tableUtil.buildDelete(row).build());
-            }
-            LOG.info("Finished processing row key {}", rowKeyString);
-          }
+        if (!tableUtil.tableExists(admin, tableId)) {
+          LOG.info("Table does not exist: {}. No upgrade necessary.", tableId);
+          continue;
+        }
+        HTable hTable = tableUtil.createHTable(conf, tableId);
+        ProjectInfo.Version tableVersion = HBaseTableUtil.getVersion(hTable.getTableDescriptor());
+        // Only upgrade if Upgrader's version is greater than table's version.
+        if (ProjectInfo.getVersion().compareTo(tableVersion) <= 0) {
+          LOG.info("Table {} has already been upgraded. Its version is: {}", tableId, tableVersion);
+          continue;
         }
 
-        hTable.batch(mutations);
+        LOG.info("Starting upgrade for table {}", Bytes.toString(hTable.getTableName()));
+        try {
+          ScanBuilder scan = tableUtil.buildScan();
+          scan.setTimeRange(0, HConstants.LATEST_TIMESTAMP);
+          scan.addFamily(QueueEntryRow.COLUMN_FAMILY);
+          scan.setMaxVersions(1); // we only need to see one version of each row
+          List<Mutation> mutations = Lists.newArrayList();
+          Result result;
+          try (ResultScanner resultScanner = hTable.getScanner(scan.build())) {
+            while ((result = resultScanner.next()) != null) {
+              byte[] row = result.getRow();
+              String rowKeyString = Bytes.toString(row);
+              byte[] newKey = processRowKey(row);
+              NavigableMap<byte[], byte[]> columnsMap = result.getFamilyMap(QueueEntryRow.COLUMN_FAMILY);
+              if (newKey != null) {
+                Put put = new Put(newKey);
+                for (NavigableMap.Entry<byte[], byte[]> entry : columnsMap.entrySet()) {
+                  LOG.debug("Adding entry {} -> {} for upgrade",
+                            Bytes.toString(entry.getKey()), Bytes.toString(entry.getValue()));
+                  put.add(QueueEntryRow.COLUMN_FAMILY, entry.getKey(), entry.getValue());
+                }
+                mutations.add(put);
+                LOG.debug("Marking old key {} for deletion", rowKeyString);
+                mutations.add(tableUtil.buildDelete(row).build());
+              }
+              LOG.info("Finished processing row key {}", rowKeyString);
+            }
+          }
 
-        LOG.info("Successfully completed upgrade for table {}", Bytes.toString(hTable.getTableName()));
-      } catch (Exception e) {
-        LOG.error("Error while upgrading table: {}", tableId, e);
-        throw Throwables.propagate(e);
-      } finally {
-        hTable.close();
+          hTable.batch(mutations);
+
+          LOG.info("Successfully completed upgrade for table {}", Bytes.toString(hTable.getTableName()));
+        } catch (Exception e) {
+          LOG.error("Error while upgrading table: {}", tableId, e);
+          throw Throwables.propagate(e);
+        } finally {
+          hTable.close();
+        }
       }
     }
   }
