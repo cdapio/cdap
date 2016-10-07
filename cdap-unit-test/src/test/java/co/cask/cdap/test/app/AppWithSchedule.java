@@ -36,6 +36,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class AppWithSchedule extends AbstractApplication {
 
+  public static final String SCHEDULE_NAME = "SampleSchedule";
+
   @Override
   public void configure() {
     try {
@@ -44,7 +46,8 @@ public class AppWithSchedule extends AbstractApplication {
       ObjectStores.createObjectStore(getConfigurer(), "input", String.class);
       ObjectStores.createObjectStore(getConfigurer(), "output", String.class);
       addWorkflow(new SampleWorkflow());
-      scheduleWorkflow(Schedules.builder("SampleSchedule").createTimeSchedule("0/1 * * * * ?"), "SampleWorkflow");
+      scheduleWorkflow(Schedules.builder(SCHEDULE_NAME).createTimeSchedule("0/1 * * * * ?"),
+                       SampleWorkflow.class.getSimpleName());
     } catch (UnsupportedTypeException e) {
       throw Throwables.propagate(e);
     }
@@ -57,7 +60,6 @@ public class AppWithSchedule extends AbstractApplication {
 
     @Override
     public void configure() {
-        setName("SampleWorkflow");
         setDescription("SampleWorkflow description");
         addAction(new DummyAction());
     }

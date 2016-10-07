@@ -21,7 +21,6 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.metrics.MetricStore;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -43,7 +42,6 @@ import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.BatchProgram;
@@ -226,7 +224,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("type") String type,
                         @PathParam("id") String id) throws Exception {
     if (type.equals("schedules")) {
-      getScheduleStatus(responder, appId, namespaceId, id);
+      getScheduleStatus(responder, namespaceId, appId, id);
       return;
     }
 
@@ -243,26 +241,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, status);
   }
 
-  private void getScheduleStatus(HttpResponder responder, String appId, String namespaceId, String scheduleName)
-    throws NotFoundException, SchedulerException {
-    Id.Application applicationId = Id.Application.from(namespaceId, appId);
-    ApplicationSpecification appSpec = store.getApplication(applicationId);
-    if (appSpec == null) {
-      throw new NotFoundException(applicationId);
-    }
-
-    ScheduleSpecification scheduleSpec = appSpec.getSchedules().get(scheduleName);
-    if (scheduleSpec == null) {
-      throw new NotFoundException(scheduleName, String.format("Schedule: %s for application: %s",
-                                                              scheduleName, applicationId.getId()));
-    }
-
-    String programName = scheduleSpec.getProgram().getProgramName();
-    ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
-    Id.Program programId = Id.Program.from(namespaceId, appId, programType, programName);
+  private void getScheduleStatus(HttpResponder responder, String namespaceId, String appId, String scheduleName)
+    throws Exception {
     JsonObject json = new JsonObject();
-    json.addProperty("status", scheduler.scheduleState(programId, programId.getType().getSchedulableType(),
-                                                       scheduleName).toString());
+    json.addProperty("status", lifecycleService.getScheduleStatus(appId, namespaceId, scheduleName).toString());
     responder.sendJson(HttpResponseStatus.OK, json);
   }
 
@@ -332,58 +314,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private void suspendResumeSchedule(HttpResponder responder, String namespaceId, String appId, String scheduleName,
-                                     String action) throws SchedulerException {
-    try {
-      if (!action.equals("suspend") && !action.equals("resume")) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Schedule can only be suspended or resumed.");
-        return;
-      }
-
-      ApplicationSpecification appSpec = store.getApplication(Id.Application.from(namespaceId, appId));
-      if (appSpec == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "App: " + appId + " not found");
-        return;
-      }
-
-      ScheduleSpecification scheduleSpec = appSpec.getSchedules().get(scheduleName);
-      if (scheduleSpec == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Schedule: " + scheduleName + " not found");
-        return;
-      }
-
-      String programName = scheduleSpec.getProgram().getProgramName();
-      ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
-      Id.Program programId = Id.Program.from(namespaceId, appId, programType, programName);
-      Scheduler.ScheduleState state = scheduler.scheduleState(programId, scheduleSpec.getProgram().getProgramType(),
-                                                              scheduleName);
-      switch (state) {
-        case NOT_FOUND:
-          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-          break;
-        case SCHEDULED:
-          if (action.equals("suspend")) {
-            scheduler.suspendSchedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleName);
-            responder.sendJson(HttpResponseStatus.OK, "OK");
-          } else {
-            // attempt to resume already resumed schedule
-            responder.sendJson(HttpResponseStatus.CONFLICT, "Already resumed");
-          }
-          break;
-        case SUSPENDED:
-          if (action.equals("suspend")) {
-            // attempt to suspend already suspended schedule
-            responder.sendJson(HttpResponseStatus.CONFLICT, "Schedule already suspended");
-          } else {
-            scheduler.resumeSchedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleName);
-            responder.sendJson(HttpResponseStatus.OK, "OK");
-          }
-          break;
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (NotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    }
+                                     String action) throws Exception {
+    lifecycleService.suspendResumeSchedule(namespaceId, appId, scheduleName, action);
+    responder.sendJson(HttpResponseStatus.OK, "OK");
   }
 
   /**

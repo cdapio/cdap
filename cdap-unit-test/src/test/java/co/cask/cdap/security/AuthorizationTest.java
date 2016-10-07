@@ -26,10 +26,12 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
@@ -56,6 +58,7 @@ import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ProgramManager;
+import co.cask.cdap.test.ScheduleManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.SparkManager;
@@ -63,6 +66,8 @@ import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.WorkerManager;
+import co.cask.cdap.test.WorkflowManager;
+import co.cask.cdap.test.app.AppWithSchedule;
 import co.cask.cdap.test.app.CrossNsDatasetAccessApp;
 import co.cask.cdap.test.app.DatasetCrossNSAccessWithMAPApp;
 import co.cask.cdap.test.app.DummyApp;
@@ -95,6 +100,7 @@ import org.junit.runners.model.Statement;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.EnumSet;
 import java.util.List;
@@ -1026,6 +1032,82 @@ public class AuthorizationTest extends TestBase {
     testCrossNSDatasetAccessWithAuthSpark(sparkManager);
 
     appManager.stopAll();
+  }
+
+  @Test
+  public void testScheduleAuth() throws Exception {
+    createAuthNamespace();
+    ApplicationManager appManager = deployApplication(AUTH_NAMESPACE.toId(), AppWithSchedule.class);
+    ProgramId workflowID = new ProgramId(AUTH_NAMESPACE.getNamespace(), AppWithSchedule.class.getSimpleName(),
+                                         ProgramType.WORKFLOW, AppWithSchedule.SampleWorkflow.class.getSimpleName());
+
+    final WorkflowManager workflowManager =
+      appManager.getWorkflowManager(AppWithSchedule.SampleWorkflow.class.getSimpleName());
+    ScheduleManager scheduleManager = workflowManager.getSchedule(AppWithSchedule.SCHEDULE_NAME);
+
+    // switch to BOB
+    SecurityRequestContext.setUserId(BOB.getName());
+    // try to resume schedule as BOB. It should fail since BOB does not have privileges on the programs
+    try {
+      scheduleManager.resume();
+      Assert.fail("Resuming schedule should have failed since BOB does not have EXECUTE on the program");
+    } catch (Exception e) {
+      Assert.assertTrue(e.getCause() instanceof UnauthorizedException);
+    }
+
+    // bob should also not be able see the status of the schedule
+    try {
+      scheduleManager.status(HttpURLConnection.HTTP_FORBIDDEN);
+      Assert.fail("Getting schedule status should have failed since BOB does not have READ on the program");
+    } catch (Exception e) {
+      Assert.assertTrue(e.getCause() instanceof UnauthorizedException);
+    }
+
+    // switch to Alice
+    SecurityRequestContext.setUserId(ALICE.getName());
+    // give BOB READ permission in the workflow
+    grantAndAssertSuccess(workflowID, BOB, EnumSet.of(Action.READ));
+
+    // switch to BOB
+    SecurityRequestContext.setUserId(BOB.getName());
+    // try to resume schedule as BOB. It should fail since BOB has READ and not EXECUTE on the workflow
+    try {
+      scheduleManager.resume();
+      Assert.fail("Resuming schedule should have failed since BOB does not have EXECUTE on the program");
+    } catch (Exception e) {
+      Assert.assertTrue(e.getCause() instanceof UnauthorizedException);
+    }
+
+    // but BOB should be able to get schedule status now
+    Assert.assertEquals(Scheduler.ScheduleState.SUSPENDED.name(), scheduleManager.status(HttpURLConnection.HTTP_OK));
+
+    // switch to Alice
+    SecurityRequestContext.setUserId(ALICE.getName());
+    // give BOB EXECUTE permission in the workflow
+    grantAndAssertSuccess(workflowID, BOB, EnumSet.of(Action.EXECUTE));
+
+    // switch to BOB
+    SecurityRequestContext.setUserId(BOB.getName());
+    // try to resume the schedule. This should pass and workflow should run
+    scheduleManager.resume();
+    Assert.assertEquals(Scheduler.ScheduleState.SCHEDULED.name(), scheduleManager.status(HttpURLConnection.HTTP_OK));
+
+    // wait for workflow to start
+    workflowManager.waitForStatus(true);
+
+    // suspend the schedule so that it does not start running again
+    scheduleManager.suspend();
+
+    // wait for scheduled runs of workflow to run to end
+    workflowManager.waitForStatus(false, 2 , 3);
+
+    // since the schedule in AppWithSchedule is to  run every second its possible that it will trigger more than one
+    // run before the schedule was suspended so check for greater than 0 rather than equal to 1
+    Assert.assertTrue(0 < workflowManager.getHistory().size());
+    // assert that all run completed
+    for (RunRecord runRecord : workflowManager.getHistory()) {
+      Assert.assertEquals(ProgramRunStatus.COMPLETED, runRecord.getStatus());
+    }
   }
 
   private void testCrossNSSystemDatasetAccessWithAuthSpark(SparkManager sparkManager) throws Exception {
