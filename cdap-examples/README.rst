@@ -18,11 +18,19 @@ Building
 Each example comes with a Maven pom.xml file. To build, install Maven, and from the
 /examples directory prompt, enter::
 
-  mvn clean package
+  $ mvn clean package
+  
+To build while skipping tests, use::
+
+  $ mvn clean package -DskipTests
 
 
 List of Example Apps
 ====================
+
+ClicksAndViews
+--------------
+- Demonstrates a reduce-side join across two streams using a MapReduce program.
 
 CountRandom
 -----------
@@ -30,9 +38,6 @@ CountRandom
 - For each number *i*, generates i%10000, i%1000, i%100, i%10.
 - Increments the counter for each number.
 - Demonstrates the ``@Tick`` feature of flows.
-
-.. CubeService
-.. -----------
 
 DataCleansing
 -------------
@@ -84,6 +89,12 @@ Purchase
     *PurcaseHistoryBuilder*) after entering the first customers' purchases or the *PurchaseQuery*
     will return a "not found" error.
 
+SpamClassifier
+--------------
+- Demonstrates a Spark Streaming application.
+- Classifies Kafka messages as either "spam" or "ham" (not "spam")
+- Based on a trained Spark MLlib NaiveBayes model.
+
 SparkKMeans
 -----------
 - An application that demonstrates streaming text analysis using a Spark program.
@@ -130,12 +141,13 @@ WordCount
   complex data.
 - It uses a configuration class to configure the application at deployment time.
 
+
 License and Trademarks
 ======================
 
 Cask is a trademark of Cask Data, Inc. All rights reserved.
 
-Copyright © 2014-2015 Cask Data, Inc.
+Copyright © 2014-2016 Cask Data, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at

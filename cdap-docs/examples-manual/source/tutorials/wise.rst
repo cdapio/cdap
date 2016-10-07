@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Advanced Tutorial, Web Analytics Application
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. cdap-apps-version is set in _common/common_conf.py
 
@@ -94,7 +94,7 @@ WISE source code:
   $ curl -w"\n" -X GET "https://codeload.github.com/caskdata/cdap-apps/zip/release/cdap-|short-version|-compatible" \
   --output examples/cdap-apps-release-cdap-|short-version|-compatible.zip  
 
-Unzip the directory and build the application (without running the self-test) by executing:
+Unzip the directory and change to the source directory:
 
 .. tabbed-parsed-literal::
 
@@ -116,7 +116,7 @@ To build WISE (skipping the tests), you use:
 
   $ mvn clean package -DskipTests
     
-(To build WISE and run the WISE Example Tests, you would use:)
+(To build WISE and run the WISE example tests, you would instead use:)
 
 .. tabbed-parsed-literal::
 
@@ -435,7 +435,7 @@ done in the ``initialize()`` method of the ``BounceCountsMapReduce`` class:
    :dedent: 2
 
 As mentioned earlier, the input of the MapReduce is the *logEventStream*. This
-connection is made above using the ``StreamBatchReadable.useStreamInput()`` method.
+connection is made above using the ``context.addInput(Input.ofStream())`` methods.
 
 This MapReduce program runs as part of a workflow that is scheduled every ten minutes.
 Every time it runs, it reads ten minutes' worth of events from the stream, ending at the

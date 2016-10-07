@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016016 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -159,7 +159,7 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
   }
 
   /**
-   * {@link PluginConfig} class for {@link co.cask.cdap.etl.batch.source.StreamBatchSource}
+   * {@link PluginConfig} class for {@link StreamBatchSource}
    */
   public static class StreamBatchConfig extends PluginConfig {
 
