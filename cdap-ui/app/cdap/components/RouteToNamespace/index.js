@@ -43,7 +43,7 @@ export default class RouteToNamespace extends Component {
   setNamespace() {
     let list = Store.getState().namespaces;
 
-    if (!list || list.length === 0) { return;  }
+    if (!list || list.length === 0) { return; }
 
     /**
      * 1. Check if cookie exist, if not, check default

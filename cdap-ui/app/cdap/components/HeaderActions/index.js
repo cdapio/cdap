@@ -21,7 +21,7 @@ import {Link} from 'react-router';
 import PlusButton from '../PlusButton';
 import T from 'i18n-react';
 import orderBy from 'lodash/orderBy';
-import Store from '../../services/store/store.js';
+import Store from 'services/store/store.js';
 require('./HeaderActions.less');
 var classNames = require('classnames');
 const shortid = require('shortid');
