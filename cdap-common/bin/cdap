@@ -31,7 +31,7 @@ __app_home=$(cd $(dirname ${__target})/.. >&-; pwd -P)
 
 __comp_home=$(cd ${__target%/*/*} >&-; pwd -P)
 # Determine if we're in the SDK or distributed
-if [[ ${__comp_home%/*} == /opt/cdap ]]; then
+if [[ ${__comp_home%/*} == /opt/cdap ]] && [[ ${__comp_home} != /opt/cdap/sdk* ]]; then
   __app_home=${__comp_home}
   __cdap_home=/opt/cdap
 else
