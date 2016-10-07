@@ -57,7 +57,6 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
   private final HBaseTableUtil tableUtil;
   private final CConfiguration cConf;
   private final Configuration hConf;
-  private HBaseAdmin admin;
 
   @Inject
   HBaseStreamFileConsumerFactory(StreamAdmin streamAdmin, StreamConsumerStateStoreFactory stateStoreFactory,
@@ -89,8 +88,10 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
     htd.addFamily(hcd);
     htd.setValue(QueueConstants.DISTRIBUTOR_BUCKETS, Integer.toString(splits));
 
-    tableUtil.createTableIfNotExists(getAdmin(), hBaseTableId, htd.build(), splitKeys,
-                                     QueueConstants.MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
+    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      tableUtil.createTableIfNotExists(admin, hBaseTableId, htd.build(), splitKeys,
+                                       QueueConstants.MAX_CREATE_TABLE_WAIT, TimeUnit.MILLISECONDS);
+    }
 
     HTable hTable = tableUtil.createHTable(hConf, hBaseTableId);
     hTable.setWriteBufferSize(Constants.Stream.HBASE_WRITE_BUFFER_SIZE);
@@ -103,18 +104,12 @@ public final class HBaseStreamFileConsumerFactory extends AbstractStreamFileCons
 
   @Override
   protected void dropTable(TableId tableId) throws IOException {
-    HBaseAdmin admin = getAdmin();
-    TableId hBaseTableId = tableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
-    if (tableUtil.tableExists(admin, hBaseTableId)) {
-      tableUtil.dropTable(admin, hBaseTableId);
+    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      TableId hBaseTableId = tableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
+      if (tableUtil.tableExists(admin, hBaseTableId)) {
+        tableUtil.dropTable(admin, hBaseTableId);
+      }
     }
-  }
-
-  private synchronized HBaseAdmin getAdmin() throws IOException {
-    if (admin == null) {
-      admin = new HBaseAdmin(hConf);
-    }
-    return admin;
   }
 
   /**
