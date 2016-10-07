@@ -101,21 +101,23 @@ export default class HeaderActions extends Component {
     let sortedNamespaces = orderBy(namespaceList, ['name'], ['asc']);
 
     this.namespaceMap = sortedNamespaces.map( (item) => {
-      let checkClass = classNames({ "fa fa-check selected-namespace-check": currentNamespace === item.name });
+      let checkClass = classNames({ "fa fa-star": currentNamespace === item.name });
       let check = <span className={checkClass}></span>;
 
       return (
-        <Link
-          to={`/ns/${item.name}`}
-          key={shortid.generate()}
-        >
-          <div onClick={this.selectNamespace.bind(this, item.name)}>
-            {check}
-            {item.name}
-          </div>
-        </Link>
+          <Link to={`/ns/${item.name}`} key={shortid.generate()}>
+            <div
+              className="clearfix"
+              onClick={this.selectNamespace.bind(this, item.name)}>
+              <span className="namespace-name pull-left">{item.name}</span>
+              <span className="pull-right">{check}</span>
+            </div>
+          </Link>
       );
     });
+    this.namespaceMap = [...this.namespaceMap, (
+      <div className="namespace-action text-center"> Manage Namespaces </div>
+    )];
   }
 
   selectNamespace(name){
