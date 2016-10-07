@@ -98,6 +98,7 @@
     "react": "15.3.1",
     "react-addons-css-transition-group": "15.3.1",
     "react-addons-transition-group": "15.3.1",
+    "react-addons-update": "15.3.1",
     "react-cookie": "0.4.8",
     "react-dom": "15.3.1",
     "react-dropzone": "3.6.0",

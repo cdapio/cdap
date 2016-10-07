@@ -14,94 +14,77 @@
  * the License.
  */
 import React from 'react';
-import T from 'i18n-react';
-import {Col, FormGroup, Label, Form} from 'reactstrap';
-import AddNamespaceStore from 'services/WizardStores/AddNamespace/AddNamespaceStore';
-import AddNamespaceActions  from 'services/WizardStores/AddNamespace/AddNamespaceActions';
-import InputWithValidations from 'components/InputWithValidations';
-import {Provider, connect} from 'react-redux';
+// import T from 'i18n-react';
+// import {Col, FormGroup, Label, Form} from 'reactstrap';
+// import AddNamespaceStore from 'services/WizardStores/AddNamespace/AddNamespaceStore';
+import NamespacePreferences from 'components/NamespacePreferences';
 
-//Preference Name
-const mapStateToPreferenceNameProps = (state) => {
-  return {
-    value: state.preferences.preferencesKey,
-    type: 'text',
-    placeholder: T.translate('features.Wizard.Add-Namespace.Step4.name-placeholder')
-  };
-};
+// import AddNamespaceActions  from 'services/WizardStores/AddNamespace/AddNamespaceActions';
+// import InputWithValidations from 'components/InputWithValidations';
 
-const mapDispatchToPreferenceNameProps = (dispatch) => {
-  return {
-    onChange: (e) => {
-      dispatch({
-        type: AddNamespaceActions.setPreferencesKey,
-        payload: { preferencesKey : e.target.value }
-      });
-    }
-  };
-};
-
-//Preference Value
-const mapStateToPreferenceValueProps = (state) => {
-  return {
-    value: state.preferences.preferencesVal,
-    type: 'text',
-    placeholder: T.translate('features.Wizard.Add-Namespace.Step4.value-placeholder')
-  };
-};
-
-const mapDispatchToPreferenceValueProps = (dispatch) => {
-  return {
-    onChange: (e) => {
-      dispatch({
-        type: AddNamespaceActions.setPreferencesVal,
-        payload: { preferencesVal : e.target.value }
-      });
-    }
-  };
-};
-
-const InputPreferencesName = connect(
-  mapStateToPreferenceNameProps,
-  mapDispatchToPreferenceNameProps
-)(InputWithValidations);
-
-const InputPreferencesValue = connect(
-  mapStateToPreferenceValueProps,
-  mapDispatchToPreferenceValueProps
-)(InputWithValidations);
+// import {Provider, connect} from 'react-redux';
+//
+// //Preference Name
+// const mapStateToPreferenceNameProps = (state) => {
+//   return {
+//     value: state.preferences.preferencesKey,
+//     type: 'text',
+//     placeholder: T.translate('features.Wizard.Add-Namespace.Step4.name-placeholder')
+//   };
+// };
+//
+// const mapDispatchToPreferenceNameProps = (dispatch) => {
+//   return {
+//     onChange: (e) => {
+//       dispatch({
+//         type: AddNamespaceActions.setPreferencesKey,
+//         payload: { preferencesKey : e.target.value }
+//       });
+//     }
+//   };
+// };
+//
+// //Preference Value
+// const mapStateToPreferenceValueProps = (state) => {
+//   return {
+//     value: state.preferences.preferencesVal,
+//     type: 'text',
+//     placeholder: T.translate('features.Wizard.Add-Namespace.Step4.value-placeholder')
+//   };
+// };
+//
+// const mapDispatchToPreferenceValueProps = (dispatch) => {
+//   return {
+//     onChange: (e) => {
+//       dispatch({
+//         type: AddNamespaceActions.setPreferencesVal,
+//         payload: { preferencesVal : e.target.value }
+//       });
+//     }
+//   };
+// };
+//
+// const InputPreferencesName = connect(
+//   mapStateToPreferenceNameProps,
+//   mapDispatchToPreferenceNameProps
+// )(InputWithValidations);
+//
+// const InputPreferencesValue = connect(
+//   mapStateToPreferenceValueProps,
+//   mapDispatchToPreferenceValueProps
+// )(InputWithValidations);
 
 export default function PreferencesStep() {
-  return(
-      <Provider store={AddNamespaceStore}>
-        <Form
-          className="form-horizontal"
-          onSubmit={(e) => {
-            e.preventDefault();
-            return false;
-          }}
-        >
-          <FormGroup>
-            <Col xs="3">
-              <Label className="control-label">
-                {T.translate('features.Wizard.Add-Namespace.Step4.name-label')}
-              </Label>
-            </Col>
-            <Col xs="7">
-              <InputPreferencesValue />
-            </Col>
-          </FormGroup>
-          <FormGroup>
-            <Col xs="3">
-              <Label className="control-label">
-                {T.translate('features.Wizard.Add-Namespace.Step4.value-label')}
-              </Label>
-            </Col>
-            <Col xs="7">
-              <InputPreferencesName />
-            </Col>
-          </FormGroup>
-        </Form>
-      </Provider>
+
+  return (
+    <div>
+      <NamespacePreferences />
+    </div>
   );
+
+  // return(
+  //     <Provider store={AddNamespaceStore}>
+  //
+  //     </Provider>
+  // );
 }
