@@ -6,7 +6,7 @@
     {
       "type": "virtualbox-iso",
       "guest_os_type": "Ubuntu_64",
-      "iso_url": "http://releases.ubuntu.com/12.04/ubuntu-12.04.5-server-amd64.iso",
+      "iso_url": "file:///Users/bamboo/Downloads/ubuntu-12.04.5-server-amd64.iso",
       "iso_checksum": "769474248a3897f4865817446f9a4a53",
       "iso_checksum_type": "md5",
       "ssh_username": "root",
@@ -87,11 +87,12 @@
             { "http://download.eclipse.org/releases/luna": "org.eclipse.egit.feature.group" },
             { "http://download.eclipse.org/technology/m2e/releases": "org.eclipse.m2e.feature.feature.group" }
           ],
-          "url": "http://ftp.osuosl.org/pub/eclipse/technology/epp/downloads/release/luna/SR2/eclipse-jee-luna-SR2-linux-gtk-x86_64.tar.gz"
+          "url": "file:///Users/bamboo/Downloads/eclipse-jee-luna-SR2-linux-gtk-x86_64.tar.gz"
         },
         "idea": {
           "setup_dir": "/opt",
-          "version": "2016.2.3"
+          "url": "file:///Users/bamboo/Downloads/ideaIC-2016.2.4.tar.gz",
+          "version": "2016.2.4"
         },
         "hadoop": {
           "distribution": "hdp",
