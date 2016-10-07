@@ -24,21 +24,12 @@ if node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('security.se
 end
 
 # SSL Settings
-if node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('ssl.enabled') &&
-   node['cdap']['cdap_site']['ssl.enabled'].to_s == 'true'
-
-  # auth
-  default['cdap']['cdap_security']['security.server.ssl.keystore.password'] = 'somedefaultpassword'
-  default['cdap']['cdap_security']['security.server.ssl.keystore.path'] = '/opt/cdap/security/conf/keystore.jks'
-
-  # router
-  default['cdap']['cdap_security']['router.ssl.keystore.password'] = 'somedefaultpassword'
-  default['cdap']['cdap_security']['router.ssl.keystore.path'] = '/opt/cdap/gateway/conf/keystore.jks'
-
-  # web ui
-  default['cdap']['cdap_security']['dashboard.ssl.key'] = "/etc/cdap/#{node['cdap']['conf_dir']}/webapp.key"
-  default['cdap']['cdap_security']['dashboard.ssl.cert'] = "/etc/cdap/#{node['cdap']['conf_dir']}/webapp.crt"
-end
+default['cdap']['cdap_security']['security.server.ssl.keystore.password'] = 'somedefaultpassword'
+default['cdap']['cdap_security']['security.server.ssl.keystore.path'] = "/etc/cdap/#{node['cdap']['conf_dir']}/security.jks"
+default['cdap']['cdap_security']['router.ssl.keystore.password'] = 'somedefaultpassword'
+default['cdap']['cdap_security']['router.ssl.keystore.path'] = "/etc/cdap/#{node['cdap']['conf_dir']}/router.jks"
+default['cdap']['cdap_security']['dashboard.ssl.key'] = "/etc/cdap/#{node['cdap']['conf_dir']}/dashboard.key"
+default['cdap']['cdap_security']['dashboard.ssl.cert'] = "/etc/cdap/#{node['cdap']['conf_dir']}/dashboard.crt"
 
 # Auth-Server Settings
 if node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('security.enabled') &&

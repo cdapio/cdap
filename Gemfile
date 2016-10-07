@@ -11,6 +11,7 @@ if RUBY_VERSION.to_f < 2.1
   gem 'fauxhai', '< 3.5'
   gem 'ffi-yajl', '< 2.3'
   gem 'dep_selector', '< 1.0.4'
+  gem 'net-http-persistent', '< 3.0'
 end
 
 if RUBY_VERSION.to_f < 2.0

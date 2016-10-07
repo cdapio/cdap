@@ -35,6 +35,8 @@ else
     version node['cdap']['version']
   end
 
+  include_recipe 'cdap::ssl_keystore_certificates'
+
   template '/etc/init.d/cdap-web-app' do
     source 'cdap-service.erb'
     mode '0755'
@@ -42,29 +44,6 @@ else
     group 'root'
     action :create
     variables node['cdap']['web_app']
-  end
-
-  ### Generate a certificate if SSL is enabled
-  execute 'generate-webapp-ssl-cert' do
-    ssl_enabled =
-      if node['cdap']['version'].to_f < 2.5 && node['cdap'].key?('cdap_site') &&
-         node['cdap']['cdap_site'].key?('security.server.ssl.enabled')
-        node['cdap']['cdap_site']['security.server.ssl.enabled']
-      elsif node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('ssl.enabled')
-        node['cdap']['cdap_site']['ssl.enabled']
-      else
-        false
-      end
-
-    if ssl_enabled.to_s == 'true'
-      common_name = node['cdap']['security']['ssl_common_name']
-      keypath = node['cdap']['cdap_security']['dashboard.ssl.key']
-      certpath = node['cdap']['cdap_security']['dashboard.ssl.cert']
-    end
-
-    command "openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout #{keypath} -out #{certpath} -subj '/C=US/ST=CA/L=Palo Alto/OU=cdap/O=cdap/CN=#{common_name}'"
-    not_if { ::File.exist?(certpath.to_s) && ::File.exist?(keypath.to_s) }
-    only_if { ssl_enabled.to_s == 'true' }
   end
 
   service 'cdap-web-app' do

@@ -22,25 +22,8 @@ describe 'cdap::security' do
       expect(chef_run).to install_package('cdap-security')
     end
 
-    it 'does not execute create-security-server-ssl-keystore' do
-      expect(chef_run).not_to run_execute('create-security-server-ssl-keystore')
-    end
-
     it "creates #{pkg} service, but does not run it" do
       expect(chef_run).not_to start_service(pkg)
-    end
-  end
-
-  context 'with ssl.enabled' do
-    let(:chef_run) do
-      ChefSpec::SoloRunner.new(platform: 'centos', version: 6.6) do |node|
-        node.automatic['domain'] = 'example.com'
-        node.override['cdap']['cdap_site']['ssl.enabled'] = true
-      end.converge(described_recipe)
-    end
-
-    it 'executes create-security-server-ssl-keystore' do
-      expect(chef_run).to run_execute('create-security-server-ssl-keystore')
     end
   end
 
