@@ -151,7 +151,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         continue;
       }
 
-      if (!id.toId().equals(programId)) {
+      if (!id.equals(programId)) {
         continue;
       }
 
