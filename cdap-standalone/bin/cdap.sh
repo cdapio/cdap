@@ -16,9 +16,9 @@
 # the License.
 #
 
-# This script is a wrapper for "cdap sdk" and will be removed in 4.1
+# This script is a wrapper for "cdap sdk" and will be removed in 5.0
 echo
-echo "[WARN] ${0} is deprecated and will be removed in CDAP 4.1. Please use 'cdap sdk' to manage Standalone CDAP."
+echo "[WARN] ${0} is deprecated and will be removed in CDAP 5.0. Please use 'cdap sdk' to manage Standalone CDAP."
 echo
 echo "  cdap sdk ${@}"
 echo

@@ -261,7 +261,7 @@ cdap_get_conf() {
 #
 # cdap_kinit
 # Initializes Kerberos ticket using principal/keytab
-# 
+#
 cdap_kinit() {
   local readonly __principal=${CDAP_PRINCIPAL:-$(cdap_get_conf "cdap.master.kerberos.principal" "${CDAP_CONF}"/cdap-site.xml)}
   local readonly __keytab=${CDAP_KEYTAB:-$(cdap_get_conf "cdap.master.kerberos.keytab" "${CDAP_CONF}"/cdap-site.xml)}
@@ -555,7 +555,7 @@ cdap_start_java() {
   local readonly __name=$(echo ${CDAP_SERVICE/-/ } | awk '{for(i=1;i<=NF;i++){ $i=toupper(substr($i,1,1)) substr($i,2) }}1')
   cdap_check_pidfile ${__pidfile} || exit 0 # Error output is done in function
   cdap_create_pid_dir || die "Could not create PID dir: ${PID_DIR}"
-  # Check and set classpath if in development environment. 
+  # Check and set classpath if in development environment.
   cdap_check_and_set_classpath_for_dev_environment "${CDAP_HOME}"
   # Setup classpaths.
   cdap_set_classpath "${CDAP_HOME}"/${__comp_home} "${CDAP_CONF}"
@@ -610,7 +610,7 @@ cdap_run_class() {
   local readonly __ret
   local JAVA_HEAPMAX=${JAVA_HEAPMAX:--Xmx1024m}
   [[ -z ${__class} ]] && echo "[ERROR] No class name given!" && die "Usage: ${0} run <fully-qualified-class> [arguments]"
-  # Check and set classpath if in development environment. 
+  # Check and set classpath if in development environment.
   cdap_check_and_set_classpath_for_dev_environment "${CDAP_HOME}"
   # Setup classpaths.
   cdap_set_classpath "${CDAP_HOME}"/master "${CDAP_CONF}"
@@ -675,7 +675,7 @@ cdap_context() {
 cdap_version() {
   local readonly __component=${1}
   local readonly __cdap_major __cdap_minor __cdap_patch __cdap_snapshot
-  local __version 
+  local __version
   if [[ -z ${__component} ]]; then
     __version=$(<${CDAP_HOME}/VERSION)
   else
@@ -986,6 +986,100 @@ cdap_config_tool() {
   return ${__ret}
 }
 
+#
+# cdap_upgrade_tool [arguments]
+#
+cdap_upgrade_tool() {
+  local readonly __args=${@}
+  local readonly __path __libexec __lib __script="$(basename ${0}):cdap_upgrade_tool"
+  local readonly __ret __class=co.cask.cdap.data.tools.UpgradeTool
+  cdap_set_java || die "Unable to locate JAVA or JAVA_HOME"
+  __path=${CDAP_HOME}
+  if [[ -d ${__path}/master/lib ]]; then
+    __libexec=${__path}/master/libexec
+    __lib=${__path}/master/lib
+  else
+    __libexec=${__path}/libexec
+    __lib=${__path}/lib
+  fi
+  if [[ ${CLASSPATH} == "" ]]; then
+    CLASSPATH=${__lib}/*
+  else
+    CLASSPATH=${CLASSPATH}:${__lib}/*
+  fi
+  if [[ -d ${CDAP_CONF} ]]; then
+    CLASSPATH=${CLASSPATH}:"${CDAP_CONF}"
+  elif [[ -d ${__path}/conf ]]; then
+    CLASSPATH=${CLASSPATH}:"${__path}"/conf/
+  fi
+
+  # check arguments
+  if [[ ${1} == 'hbase' ]]; then
+    shift
+    set -- "upgrade_hbase" ${@}
+  else
+    set -- "upgrade" ${@}
+  fi
+
+  "${JAVA}" -cp ${CLASSPATH} -Dscript=${__script} ${__class} ${@}
+  __ret=${?}
+  return ${__ret}
+}
+
+# cdap_tx_debugger
+cdap_tx_debugger() {
+  local readonly __path __libexec __lib __script="$(basename ${0}):cdap_tx_debugger"
+  local readonly __authfile="${HOME}"/.cdap.accesstoken.${HOSTNAME}
+  local readonly __ret __class=co.cask.cdap.data2.transaction.TransactionManagerDebuggerMain
+  cdap_set_java || die "Unable to locate JAVA or JAVA_HOME"
+  __path=${CDAP_HOME}
+  if [[ -d ${__path}/master/libexec ]]; then
+    __libexec=${__path}/master/libexec
+    __lib=${__path}/master/lib
+  else
+    __libexec=${__path}/libexec
+    __lib=${__path}/lib
+  fi
+  if [[ ${CLASSPATH} == "" ]]; then
+    CLASSPATH=${__lib}/*
+  else
+    CLASSPATH=${CLASSPATH}:${__lib}/*
+  fi
+  if [[ -d ${CDAP_CONF} ]]; then
+    CLASSPATH=${CLASSPATH}:"${CDAP_CONF}"
+  elif [[ -d ${__path}/conf ]]; then
+    CLASSPATH=${CLASSPATH}:"${__path}"/conf/
+  fi
+  # add token file arg with default token file if one is not provided
+  local __has_arg=0 __var
+  for __var in ${@}; do
+    if [[ ${__var} == "--token-file" ]]; then
+      __has_arg=1
+    fi
+  done
+  if [[ ${__has_arg} -eq 0 ]] && [[ -f ${__auth_file} ]]; then
+    set -- ${@} "--token-file" "${__auth_file}"
+  fi
+
+  "${JAVA}" -cp ${CLASSPATH} -Dscript=${__script} ${__class} ${@}
+  __ret=${?}
+  return ${__ret}
+}
+
+#
+# cdap_debug <entity> [arguments]
+#
+cdap_debug() {
+  local readonly __entity=${1}
+  shift
+  local readonly __ret __args=${@}
+  case ${__entity} in
+    transactions) cdap_tx_debugger ${__args}; __ret=${?} ;;
+    *) echo "Usage: ${0} debug transactions [arguments]"; __ret=1
+  esac
+  return ${__ret}
+}
+
 # Runs CDAP SDK with the given options
 cdap_sdk() {
   local readonly __action=${1}
@@ -1042,46 +1136,6 @@ cdap_sdk() {
     cleanup) cdap_sdk_cleanup; __ret=${?} ;;
     *) cdap_sdk_usage; __ret=1 ;; # Return non-zero; called incorrectly
   esac
-  return ${__ret}
-}
-
-# cdap_tx_debugger
-cdap_tx_debugger() {
-  local readonly __path __libexec __lib __script="$(basename ${0}):cdap_tx_debugger"
-  local readonly __authfile="${HOME}"/.cdap.accesstoken.${HOSTNAME}
-  local readonly __ret __class=co.cask.cdap.data2.transaction.TransactionManagerDebuggerMain
-  cdap_set_java || die "Unable to locate JAVA or JAVA_HOME"
-  __path=${CDAP_HOME}
-  if [[ -d ${__path}/master/libexec ]]; then
-    __libexec=${__path}/master/libexec
-    __lib=${__path}/master/lib
-  else
-    __libexec=${__path}/libexec
-    __lib=${__path}/lib
-  fi
-  if [[ ${CLASSPATH} == "" ]]; then
-    CLASSPATH=${__lib}/*
-  else
-    CLASSPATH=${CLASSPATH}:${__lib}/*
-  fi
-  if [[ -d ${CDAP_CONF} ]]; then
-    CLASSPATH=${CLASSPATH}:"${CDAP_CONF}"
-  elif [[ -d ${__path}/conf ]]; then
-    CLASSPATH=${CLASSPATH}:"${__path}"/conf/
-  fi
-  # add token file arg with default token file if one is not provided
-  local __has_arg=0 __var
-  for __var in ${@}; do
-    if [[ ${__var} == "--token-file" ]]; then
-      __has_arg=1
-    fi
-  done
-  if [[ ${__has_arg} -eq 0 ]] && [[ -f ${__auth_file} ]]; then
-    set -- ${@} "--token-file" "${__auth_file}"
-  fi
-
-  "${JAVA}" -cp ${CLASSPATH} -Dscript=${__script} ${__class} ${@}
-  __ret=${?}
   return ${__ret}
 }
 
