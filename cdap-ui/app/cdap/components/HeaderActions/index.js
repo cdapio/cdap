@@ -20,7 +20,6 @@ import cookie from 'react-cookie';
 import {Link} from 'react-router';
 import PlusButton from '../PlusButton';
 import T from 'i18n-react';
-import orderBy from 'lodash/orderBy';
 import Store from 'services/store/store.js';
 import SpotlightSearch from 'components/SpotlightSearch';
 require('./HeaderActions.less');
@@ -51,7 +50,7 @@ export default class HeaderActions extends Component {
     //Load the namespaces into the dropdown from the store
     this.namespaceList = Store.getState().namespaces;
     if(this.namespaceList){
-      this.loadNamespacesFromStore(this.namespaceList, Store.getState().selectedNamespace);
+      this.loadNamespacesFromStore(this.namespaceList);
     }
 
     //Load updated data into the namespace dropdown
@@ -98,26 +97,32 @@ export default class HeaderActions extends Component {
       return;
     }
 
-    let sortedNamespaces = orderBy(namespaceList, ['name'], ['asc']);
-
-    this.namespaceMap = sortedNamespaces.map( (item) => {
-      let checkClass = classNames({ "fa fa-star": currentNamespace === item.name });
-      let check = <span className={checkClass}></span>;
-
-      return (
+    this.namespaceMap = namespaceList
+      .filter(item => item.name !== currentNamespace)
+      .map( (item) => {
+        let defaultNamespace = localStorage.getItem('DefaultNamespace');
+        let checkClass = classNames({ "fa fa-star":  defaultNamespace === item.name });
+        let check = <span className={checkClass}></span>;
+        return (
           <Link to={`/ns/${item.name}`} key={shortid.generate()}>
             <div
-              className="clearfix"
+              className="clearfix namespace-container"
               onClick={this.selectNamespace.bind(this, item.name)}>
               <span className="namespace-name pull-left">{item.name}</span>
-              <span className="pull-right">{check}</span>
+              <span className="default-ns-section pull-right">
+                {check}
+                <span className="default-btn">
+                  <span
+                    className="btn btn-default btn-xs"
+                    onClick={() => localStorage.setItem('DefaultNamespace', item.name)}>
+                    Default
+                  </span>
+                </span>
+              </span>
             </div>
           </Link>
-      );
-    });
-    this.namespaceMap = [...this.namespaceMap, (
-      <div className="namespace-action text-center"> Manage Namespaces </div>
-    )];
+        );
+      });
   }
 
   selectNamespace(name){
@@ -222,7 +227,7 @@ export default class HeaderActions extends Component {
             <Dropdown
               isOpen={this.state.namespaceOpen}
               toggle={this.toggleNamespaceDropdown}
-              className="header-actions-dropdown"
+              className={classNames({'no-namespace': this.namespaceMap.length === 0})}
             >
               <div
                 className="current-namespace"
@@ -235,7 +240,23 @@ export default class HeaderActions extends Component {
                 </span>
               </div>
               <DropdownMenu>
-                {this.namespaceMap}
+                <div className="namespace-list">
+                  {this.namespaceMap}
+                </div>
+                {
+                  this.namespaceMap.length > 0 ?
+                    (<div className="namespace-action text-center">
+                      Manage Namespaces
+                    </div>)
+                  :
+                    (
+                      <div className="namespace-action text-center">
+                        Add Namespace
+                      </div>
+                    )
+
+
+                }
               </DropdownMenu>
             </Dropdown>
           </div>
