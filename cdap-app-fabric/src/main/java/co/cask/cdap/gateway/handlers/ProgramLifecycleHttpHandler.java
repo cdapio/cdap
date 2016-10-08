@@ -41,7 +41,6 @@ import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
-import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.BatchProgram;
@@ -149,17 +148,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   protected final ProgramRuntimeService runtimeService;
 
-  /**
-   * Scheduler provides ability to schedule/un-schedule the jobs.
-   */
-  protected final Scheduler scheduler;
-
   @Inject
   ProgramLifecycleHttpHandler(Store store, ProgramRuntimeService runtimeService,
                               DiscoveryServiceClient discoveryServiceClient,
                               ProgramLifecycleService lifecycleService,
                               QueueAdmin queueAdmin,
-                              Scheduler scheduler, PreferencesStore preferencesStore,
+                              PreferencesStore preferencesStore,
                               MRJobInfoFetcher mrJobInfoFetcher,
                               MetricStore metricStore) {
     this.store = store;
@@ -168,7 +162,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.lifecycleService = lifecycleService;
     this.metricStore = metricStore;
     this.queueAdmin = queueAdmin;
-    this.scheduler = scheduler;
     this.preferencesStore = preferencesStore;
     this.mrJobInfoFetcher = mrJobInfoFetcher;
   }
@@ -244,7 +237,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private void getScheduleStatus(HttpResponder responder, String namespaceId, String appId, String scheduleName)
     throws Exception {
     JsonObject json = new JsonObject();
-    json.addProperty("status", lifecycleService.getScheduleStatus(appId, namespaceId, scheduleName).toString());
+    json.addProperty("status", lifecycleService.getScheduleStatus(namespaceId, appId, scheduleName).toString());
     responder.sendJson(HttpResponseStatus.OK, json);
   }
 

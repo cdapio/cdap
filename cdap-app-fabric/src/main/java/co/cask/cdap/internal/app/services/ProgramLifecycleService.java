@@ -517,7 +517,16 @@ public class ProgramLifecycleService extends AbstractIdleService {
     }
   }
 
-  public Scheduler.ScheduleState getScheduleStatus(String appId, String namespaceId, String scheduleName)
+  /**
+   * Gets the state of the given schedule
+   *
+   * @param namespaceId {@link NamespaceId} to which the schedule belongs to
+   * @param appId {@link ApplicationId} to which schedule belongs to
+   * @param scheduleName name of the schedule
+   * @return {@link Scheduler.ScheduleState} of the given schedule
+   * @throws Exception if failed to get the state of the schedule
+   */
+  public Scheduler.ScheduleState getScheduleStatus(String namespaceId, String appId, String scheduleName)
     throws Exception {
     ApplicationId applicationId = new ApplicationId(namespaceId, appId);
     ApplicationSpecification appSpec = store.getApplication(applicationId.toId());
@@ -538,6 +547,15 @@ public class ProgramLifecycleService extends AbstractIdleService {
     return scheduler.scheduleState(programId.toId(), programId.getType().getSchedulableType(), scheduleName);
   }
 
+  /**
+   * Performs an action (suspend/resume) on the given schedule
+   *
+   * @param namespaceId {@link NamespaceId} to which the schedule belongs to
+   * @param appId {@link ApplicationId} to which schedule belongs to
+   * @param scheduleName name of the schedule
+   * @param action the action to perform
+   * @throws Exception if the given action is invalid or failed to perform a valid action on the schedule
+   */
   public void suspendResumeSchedule(String namespaceId, String appId, String scheduleName,
                                      String action) throws Exception {
     if (!action.equals("suspend") && !action.equals("resume")) {

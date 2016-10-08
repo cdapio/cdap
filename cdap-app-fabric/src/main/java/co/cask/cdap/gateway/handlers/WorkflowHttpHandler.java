@@ -107,6 +107,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
 
   private final WorkflowClient workflowClient;
   private final DatasetFramework datasetFramework;
+  private final Scheduler scheduler;
 
   @Inject
   WorkflowHttpHandler(Store store, WorkflowClient workflowClient, ProgramRuntimeService runtimeService,
@@ -114,10 +115,11 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                       MRJobInfoFetcher mrJobInfoFetcher, ProgramLifecycleService lifecycleService,
                       MetricStore metricStore, DatasetFramework datasetFramework,
                       DiscoveryServiceClient discoveryServiceClient) {
-    super(store, runtimeService, discoveryServiceClient, lifecycleService, queueAdmin, scheduler, preferencesStore,
+    super(store, runtimeService, discoveryServiceClient, lifecycleService, queueAdmin, preferencesStore,
           mrJobInfoFetcher, metricStore);
     this.workflowClient = workflowClient;
     this.datasetFramework = datasetFramework;
+    this.scheduler = scheduler;
   }
 
   @POST

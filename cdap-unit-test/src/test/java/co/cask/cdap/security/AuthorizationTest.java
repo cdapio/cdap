@@ -1108,6 +1108,9 @@ public class AuthorizationTest extends TestBase {
     for (RunRecord runRecord : workflowManager.getHistory()) {
       Assert.assertEquals(ProgramRunStatus.COMPLETED, runRecord.getStatus());
     }
+
+    // switch to Alice
+    SecurityRequestContext.setUserId(ALICE.getName());
   }
 
   private void testCrossNSSystemDatasetAccessWithAuthSpark(SparkManager sparkManager) throws Exception {
