@@ -35,6 +35,7 @@ import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.ConfigEntry;
@@ -101,9 +102,12 @@ public abstract class IntegrationTestBase {
 
     boolean deleteUponTeardown = false;
     if (!getNamespaceClient().exists(configuredNamespace.toId())) {
-      getNamespaceClient().create(new NamespaceMeta.Builder().setName(configuredNamespace.toId()).build());
-      // if we created the configured namespace, delete it upon teardown
-      deleteUponTeardown = true;
+      // Do not create a new namespace if its a default namespace.
+      if (!configuredNamespace.toId().equals(NamespaceId.DEFAULT.toId())) {
+        getNamespaceClient().create(new NamespaceMeta.Builder().setName(configuredNamespace.toId()).build());
+        // if we created the configured namespace, delete it upon teardown
+        deleteUponTeardown = true;
+      }
     }
     registeredNamespaces.put(configuredNamespace, deleteUponTeardown);
     assertIsClear(configuredNamespace);
@@ -157,9 +161,24 @@ public abstract class IntegrationTestBase {
         if (!getMonitorClient().allSystemServicesOk()) {
           return false;
         }
-        // Check that the dataset service is up with list(). If list() does not throw exception, which means the http
-        // request receives response status HTTP_OK and dataset service is up, return true.
-        getNamespaceClient().list();
+
+        // Wait for the default namespace to exist otherwise there can be a race condition where namespace is being
+        // created but the integration test has started
+        Tasks.waitFor(true, new Callable<Boolean>() {
+          @Override
+          public Boolean call() throws Exception {
+            // Check that the dataset service is up with list(). If list() does not throw exception, which means the
+            // http request receives response status HTTP_OK and dataset service is up, return true.
+            List<NamespaceMeta> list = getNamespaceClient().list();
+            for (NamespaceMeta namespaceMeta : list) {
+              if (namespaceMeta.getNamespaceId().equals(NamespaceId.DEFAULT)) {
+                return  true;
+              }
+            }
+            return false;
+          }
+        }, 60, TimeUnit.SECONDS, 2, TimeUnit.SECONDS, "Default namespace is not created");
+
         return true;
       }
     };
