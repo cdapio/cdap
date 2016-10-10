@@ -61,7 +61,7 @@ commons:
   schemaLabel: Schema
 features:
   Home:
-    Title: CDAP
+    Title: CDAP - Home
     emptyMessage: No entities found in the system.
     Cards:
       type: "Type: "

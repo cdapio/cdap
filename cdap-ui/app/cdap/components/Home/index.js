@@ -56,7 +56,6 @@ class Home extends Component {
       //   id: 'view'
       // },
     ];
-
     this.sortOptions = [
       {
         displayName: T.translate('features.Home.Header.sortOptions.nameAsc'),
@@ -67,7 +66,6 @@ class Home extends Component {
         sort: 'name desc'
       }
     ];
-
     this.state = {
       filter: defaultFilter,
       sortObj: this.sortOptions[0],
@@ -76,9 +74,6 @@ class Home extends Component {
       selectedEntity: null,
       loading: true
     };
-
-    this.isDefaultSort = this.isDefaultSort.bind(this);
-    this.isDefaultFilter = this.isDefaultFilter.bind(this);
     this.makeSortFilterParams = this.makeSortFilterParams.bind(this);
     this.processQueryString = this.processQueryString.bind(this);
   }
@@ -87,70 +82,25 @@ class Home extends Component {
     this.search(this.state.query, this.state.filter, this.state.sortObj, nextProps.params.namespace);
   }
 
-  processQueryString(queryString) {
-    let sortQueryIndex = queryString.indexOf('sort=');
-    let filterIndex = queryString.indexOf('filter=');
-    let searchTermIndex = queryString.indexOf('search=');
+  processQueryString() {
     let filtersArr = [];
+    let sortTerm = '';
+    let searchTerm = '';
     let sortOpt;
-    let sortQuery;
-    let searchTerm;
 
-    //Set default sort settings
-    sortOpt = this.sortOptions[0];
-
-    //If a sort parameter is provided, parse and set sorting if valid
-    if(sortQueryIndex !== -1){
-      sortQuery = queryString.substring(sortQueryIndex + 5);
-      let endSortIndex = sortQuery.indexOf('&');
-
-      if(endSortIndex !== -1){
-        sortQuery = sortQuery.substring(0, endSortIndex);
-      }
-
-      let finalSortQuery = sortQuery.split('+').join(' ');
-
-      for(let index = 0; index < this.sortOptions.length; index++){
-        if(this.sortOptions[index].sort === finalSortQuery){
-          sortOpt = this.sortOptions[index];
-        }
-      }
+    if(this.props.location.query){
+      filtersArr = this.props.location.query.filter ? this.props.location.query.filter.split(',') : [];
+      sortTerm = this.props.location.query.sort ? this.props.location.query.sort : '';
+      searchTerm = this.props.location.query.search ? this.props.location.query.search : '';
     }
 
-    if(searchTermIndex !== -1){
-      searchTerm = queryString.substring(searchTermIndex  + 7);
-      let endSearchIndex = searchTerm.indexOf('&');
-
-      if(endSearchIndex !== -1){
-        searchTerm = searchTerm.substring(0, endSearchIndex);
-      }
-
-      searchTerm = searchTerm.split('+').join(' ');
-    }
-
-    if(filterIndex !== -1){
-      //Parse url substring ; start after 'filter='
-      let filterString = location.search.substring(filterIndex + 7);
-      let endFilterIndex = filterString.indexOf('&');
-
-      if(endFilterIndex !== -1){
-        filterString = filterString.substring(0, endFilterIndex);
-      }
-
-      filtersArr = filterString.split(',');
-
-      //Process the array and remove any filters that are invalid
-      for(let i = filtersArr.length-1; i >= 0; i--){
-        let val = filtersArr[i];
-        if(!(val === 'app' || val === 'artifact' || val === 'dataset' || val === 'stream')){
-          filtersArr.splice(i,1);
-        }
-      }
-    }
+    sortOpt = this.sortOptions.filter((option) => {
+      return option.sort === sortTerm;
+    });
 
     return {
       'filter' : filtersArr,
-      'sort' : sortOpt,
+      'sort' : sortOpt[0],
       'search' : searchTerm
     };
   }
@@ -164,7 +114,7 @@ class Home extends Component {
     });
 
     //Parse URL and apply filters / sort
-    let filterSortObj = this.processQueryString(location.search);
+    let filterSortObj = this.processQueryString();
     let urlFilters;
     let urlSort;
     let urlSearch;
@@ -241,38 +191,18 @@ class Home extends Component {
     this.setState({selectedEntity: uniqueId});
   }
 
-  isDefaultFilter(){
-    return (this.state.filter.length === defaultFilter.length) && this.state.filter.every((element, index) => {
-      return element === defaultFilter[index];
-    });
-  }
-
-  isDefaultSort(){
-    return this.state.sortObj.sort === this.sortOptions[0].sort;
-  }
-
   makeSortFilterParams(){
     let sortAndFilterParams = '';
     let sortParams = '';
     let filterParams = '';
     let searchParams = '';
     let queryParams = [];
-    let isDefaultSorted = this.isDefaultSort();
-    let isDefaultFiltered = this.isDefaultFilter();
     let searchTerm = this.state.query;
 
-    //No query string to be included in URL
-    if(isDefaultSorted && isDefaultFiltered && searchTerm.length === 0){
-      return;
-    }
-
-    if(!isDefaultSorted){
+    if(this.state.sortObj.sort){
       sortParams = 'sort=' + this.state.sortObj.sort.split(' ').join('+');
     }
-
-    if(!isDefaultFiltered){
-      filterParams = 'filter=' + this.state.filter.join(',');
-    }
+    filterParams = 'filter=' + this.state.filter.join(',');
 
     if(searchTerm.length > 0){
       searchParams = 'search=' + searchTerm;
