@@ -312,6 +312,34 @@ class Home extends Component {
       </h3>
     );
 
+    let entitiesToBeRendered;
+    if(this.state.loading){
+      entitiesToBeRendered = loading;
+    } else if(this.state.entities.length === 0) {
+      entitiesToBeRendered = empty;
+    } else {
+      entitiesToBeRendered = this.state.entities.map(
+        (entity) => {
+          return (
+            <div
+              className={
+                classNames('entity-card-container',
+                  { active: entity.uniqueId === this.state.selectedEntity }
+                )
+              }
+              key={entity.uniqueId}
+              onClick={this.handleEntityClick.bind(this, entity.uniqueId)}
+            >
+              <EntityCard
+                entity={entity}
+                onUpdate={this.search.bind(this)}
+              />
+            </div>
+          );
+        }
+      );
+    }
+
     return (
       <div>
         <HomeHeader
@@ -325,29 +353,7 @@ class Home extends Component {
         />
 
         <div className="entity-list">
-          {
-            this.state.loading ? loading :
-            this.state.entities.length === 0 ? empty :
-            this.state.entities.map(
-            (entity) => {
-              return (
-                <div
-                  className={
-                    classNames('entity-card-container',
-                      { active: entity.uniqueId === this.state.selectedEntity }
-                    )
-                  }
-                  key={entity.uniqueId}
-                  onClick={this.handleEntityClick.bind(this, entity.uniqueId)}
-                >
-                  <EntityCard
-                    entity={entity}
-                    onUpdate={this.search.bind(this)}
-                  />
-                </div>
-              );
-            })
-          }
+          {entitiesToBeRendered}
         </div>
       </div>
     );
