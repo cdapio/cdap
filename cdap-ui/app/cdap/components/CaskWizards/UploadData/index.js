@@ -22,6 +22,7 @@ import UploadDataActions from 'services/WizardStores/UploadData/UploadDataAction
 import UploadDataActionCreator from 'services/WizardStores/UploadData/ActionCreator';
 import {default as NamespaceStore} from 'services/store/store';
 import T from 'i18n-react';
+import cookie from 'react-cookie';
 
 import head from 'lodash/head';
 
@@ -76,12 +77,15 @@ export default class UploadDataWizard extends Component {
     let filetype = 'text/' + filename.split('.').pop();
     let fileContents = state.viewdata.data;
     let currentNamespace = NamespaceStore.getState().selectedNamespace;
+    let authToken = cookie.load('CDAP_Auth_Token');
+
     return UploadDataActionCreator.uploadData({
       url: `/namespaces/${currentNamespace}/streams/${streamId}/batch`,
       fileContents,
       headers: {
         filetype,
-        filename
+        filename,
+        authToken
       }
     });
   }

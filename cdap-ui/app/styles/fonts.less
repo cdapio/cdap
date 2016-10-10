@@ -14,26 +14,13 @@
  * the License.
  */
 
-
-.font-face(@fontName, @fontFile, @fontWeight) {
-  @font-face {
-    font-family: @fontName;
-    src: url('../fonts/@{fontFile}.eot');
-    src: url('../fonts/@{fontFile}.eot') format('embedded-opentype'),
-         url('../fonts/@{fontFile}.woff') format('woff'),
-         url('../fonts/@{fontFile}.ttf') format('truetype'),
-         url('../fonts/@{fontFile}.svg#@{fontName}') format('svg');
-    font-weight: @fontWeight;
-  }
-}
-
 @font-face {
 	font-family: 'icomoon';
-	src:url('../fonts/icomoon.eot?-lfhtf3');
-	src:url('../fonts/icomoon.eot?-lfhtf3') format('embedded-opentype'),
-  		url('../fonts/icomoon.woff?-lfhtf3') format('woff'),
-  		url('../fonts/icomoon.ttf?-lfhtf3') format('truetype'),
-  		url('../fonts/icomoon.svg?-lfhtf3') format('svg');
+	src:url('/cdap_assets/fonts/icomoon.eot');
+	src:url('/cdap_assets/fonts/icomoon.eot') format('embedded-opentype'),
+  		url('/cdap_assets/fonts/icomoon.woff') format('woff'),
+  		url('/cdap_assets/fonts/icomoon.ttf') format('truetype'),
+  		url('/cdap_assets/fonts/icomoon.svg') format('svg');
 	font-weight: normal;
 	font-style: normal;
 }
@@ -55,6 +42,75 @@
   }
 }
 
+.icon-tagmanagement:before {
+  content: "\e99b";
+}
+.icon-viewinvalidtransactions:before {
+  content: "\e99c";
+}
+.icon-deletealldatasets:before {
+  content: "\e99d";
+}
+.icon-resetinstance:before {
+  content: "\e99e";
+}
+.icon-manageroles:before {
+  content: "\e99f";
+}
+.icon-addroles:before {
+  content: "\e9a0";
+}
+.icon-instancepreference:before {
+  content: "\e9a1";
+}
+.icon-managenamespaces:before {
+  content: "\e9a2";
+}
+.icon-deletenamespaces:before {
+  content: "\e9a3";
+}
+.icon-addnamespaces:before {
+  content: "\e9a4";
+}
+.icon-viewconfiguration:before {
+  content: "\e9a5";
+}
+.icon-CaskMarket:before {
+  content: "\e998";
+}
+.icon-CDAPExtensions:before {
+  content: "\e999";
+}
+.icon-resourcecenter:before {
+  content: "\e99a";
+}
+.icon-datapacks:before {
+  content: "\e993";
+}
+.icon-usecases:before {
+  content: "\e994";
+}
+.icon-pipelines:before {
+  content: "\e995";
+}
+.icon-artifacts:before {
+  content: "\e996";
+}
+.icon-all:before {
+  content: "\e997";
+}
+.icon-support:before {
+  content: "\e98f";
+}
+.icon-logout:before {
+  content: "\e990";
+}
+.icon-caskhome:before {
+  content: "\e991";
+}
+.icon-documentation:before {
+  content: "\e992";
+}
 .icon-Encryptor:before {
   content: "\e98e";
 }

@@ -111,22 +111,23 @@
       </li>
     </ul>
 
-    <div class="environment">
-      <span>{{ ::Navbar.environment }}</span>
-      <span class="icon-lock_close" ng-if="Navbar.securityEnabled"></span>
-      <span class="icon-lock_open" ng-if="!Navbar.securityEnabled"></span>
-    </div>
-
 
     <!-- RIGHT MENUS -->
     <div class="pull-right right-menu">
-
+      <div class="environment">
+        <span>{{ ::Navbar.environment }}</span>
+        <span class="icon-lock_close" ng-if="Navbar.securityEnabled"></span>
+        <span class="icon-lock_open" ng-if="!Navbar.securityEnabled"></span>
+      </div>
       <my-search></my-search>
 
       <div class="navbar-item">
         <my-error></my-error>
       </div>
 
+      <div class="navbar-item text-success">
+        <plus-button></plus-button>
+      </div>
       <div class="navbar-item" uib-dropdown>
         <div uib-dropdown-toggle>
           <span class="fa fa-cog"></span>
@@ -168,7 +169,6 @@
           </li>
         </ul>
       </div>
-
       <div class="navbar-item namespace-dropdown" uib-dropdown>
         <div uib-dropdown-toggle ng-disabled="$state.includes('admin.**') || Navbar.namespaces.length === 0">
           <div ng-if="Navbar.namespaces.length > 0" class="namespace-holder">

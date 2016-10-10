@@ -13,10 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-var cdapWebpackConfig = require('./webpack.config.cdap.js');
-var loginWebpackConfig = require('./webpack.config.login.js');
-module.exports = [
-  cdapWebpackConfig,
-  loginWebpackConfig
-];
+import T from 'i18n-react';
+T.setTexts(require('../cdap/text/text-en.yaml'));
+var PlusButton = require('../cdap/components/PlusButton').default;
+var Store = require('../cdap/services/store/store').default;
+export default PlusButton;
+export {Store};

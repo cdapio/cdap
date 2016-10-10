@@ -77,7 +77,8 @@ angular
       'angularjs-dropdown-multiselect',
       'hc.marked',
       'ngFileSaver',
-      'infinite-scroll'
+      'infinite-scroll',
+      'react'
     ]).name,
 
     'angular-loading-bar'

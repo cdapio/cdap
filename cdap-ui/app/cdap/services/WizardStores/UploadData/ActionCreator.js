@@ -48,8 +48,8 @@ const uploadData = ({url, fileContents, headers}) => {
   xhr.open('POST', path, true);
   xhr.setRequestHeader('Content-type', headers.filetype);
   xhr.setRequestHeader('X-Archive-Name', headers.filename);
-  if (headers.Authorization) {
-    xhr.setRequestHeader('Authorization', 'Bearer ' + headers.token);
+  if (headers.authToken) {
+    xhr.setRequestHeader('Authorization', 'Bearer ' + headers.authToken);
   }
   xhr.send(fileContents);
   xhr.onreadystatechange = function () {
