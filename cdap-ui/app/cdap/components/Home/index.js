@@ -19,9 +19,8 @@ import {MySearchApi} from '../../api/search';
 import {parseMetadata} from '../../services/metadata-parser';
 import HomeHeader from './HomeHeader';
 import EntityCard from '../EntityCard';
+import Store from 'services/store/store.js';
 import T from 'i18n-react';
-import Store from '../../services/store/store.js';
-
 const shortid = require('shortid');
 const classNames = require('classnames');
 require('./Home.less');
@@ -78,48 +77,28 @@ class Home extends Component {
       loading: true
     };
 
-    this.doesNsExist = this.doesNsExist.bind(this);
   }
 
-  findNamespace(){
-    let namespaces = Store.getState().namespaces;
-    let name = this.props.params.namespace;
-
-    let result = _.find(namespaces, { 'name' : name });
-    return result ? true : false;
-  }
-
-  doesNsExist(ns){
-    let namespaces = Store.getState().namespaces.map(function(item){
-      return item.name;
-    });
-    return namespaces.indexOf(ns) !== -1;
-  }
-
-  componentWillMount(){
-    if(this.findNamespace()){
-      Store.dispatch({
-        type : 'SELECT_NAMESPACE',
-        payload : {
-          selectedNamespace : this.props.params.namespace
-        }
-      });
-    } else {
-      //FIXME: Must redirect if passed invalid namespace
-    }
-  }
   componentDidMount() {
     this.search();
-
-    this.sub = Store.subscribe(() => {
-      this.search();
+    Store.dispatch({
+      type: 'SELECT_NAMESPACE',
+      payload: {
+        selectedNamespace: this.props.params.namespace
+      }
     });
   }
-  componentWillUnmount() {
-    this.sub();
+
+  componentWillReceiveProps(nextProps) {
+    this.search(this.state.query, this.state.filter, this.state.sortObj, nextProps.params.namespace);
   }
 
-  search(query = this.state.query, filter = this.state.filter, sortObj = this.state.sortObj) {
+  search(
+    query = this.state.query,
+    filter = this.state.filter,
+    sortObj = this.state.sortObj,
+    namespace = this.props.params.namespace
+  ) {
     this.setState({loading: true});
 
     if (filter.length === 0) {
@@ -128,7 +107,7 @@ class Home extends Component {
     }
 
     let params = {
-      namespace: Store.getState().selectedNamespace,
+      namespace: namespace,
       query: `${query}*`,
       target: filter,
       sort: sortObj.sort

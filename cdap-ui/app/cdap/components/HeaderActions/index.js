@@ -20,9 +20,10 @@ import cookie from 'react-cookie';
 import {Link} from 'react-router';
 import PlusButton from '../PlusButton';
 import T from 'i18n-react';
+import orderBy from 'lodash/orderBy';
+import Store from 'services/store/store.js';
 require('./HeaderActions.less');
 var classNames = require('classnames');
-import Store from '../../services/store/store.js';
 const shortid = require('shortid');
 
 export default class HeaderActions extends Component {
@@ -42,7 +43,6 @@ export default class HeaderActions extends Component {
     this.namespaceMap = '';
     this.toggleNamespaceDropdown = this.toggleNamespaceDropdown.bind(this);
     this.loadNamespacesFromStore = this.loadNamespacesFromStore.bind(this);
-    // this.selectNamespace = this.selectNamespace.bind(this);
   }
 
   componentWillMount(){
@@ -55,7 +55,6 @@ export default class HeaderActions extends Component {
 
     //Load updated data into the namespace dropdown
     Store.subscribe(() => {
-
       this.namespaceList = Store.getState().namespaces;
       let namespaceToUpdate = Store.getState().selectedNamespace;
       let username = Store.getState().userName;
@@ -94,33 +93,33 @@ export default class HeaderActions extends Component {
   }
 
   loadNamespacesFromStore (namespaceList, currentNamespace) {
-
     if(typeof namespaceList === 'undefined'){
       return;
     }
 
-    this.namespaceMap = namespaceList.map( (item) => {
+    let sortedNamespaces = orderBy(namespaceList, ['name'], ['asc']);
 
-      //If there is no current namespace, set it to default if possible
-      if(!this.state.currentNamespace && item.name === 'default'){
-        this.defaultNamespace = item.name;
-      }
-
+    this.namespaceMap = sortedNamespaces.map( (item) => {
       let checkClass = classNames({ "fa fa-check selected-namespace-check": currentNamespace === item.name });
       let check = <span className={checkClass}></span>;
 
       return (
-          <Link to={`/ns/${item.name}`} key={shortid.generate()}>
-            <div onClick={this.selectNamespace.bind(this, item.name)}>
-              {check}
-              {item.name}
-            </div>
-          </Link>
+        <Link
+          to={`/ns/${item.name}`}
+          key={shortid.generate()}
+        >
+          <div onClick={this.selectNamespace.bind(this, item.name)}>
+            {check}
+            {item.name}
+          </div>
+        </Link>
       );
     });
   }
 
   selectNamespace(name){
+    localStorage.setItem('NS', name);
+
     this.setState({
       namespaceOpen: false
     });

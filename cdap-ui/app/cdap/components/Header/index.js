@@ -53,7 +53,8 @@ export default class Header extends Component {
               onClickHandler={this.toggleSidebar.bind(this)}
             />
             <HeaderNavbarList
-              pathname={this.props.pathname} list={this.state.navbarItemList} store={Store}
+              list={this.state.navbarItemList}
+              store={Store}
             />
             <HeaderActions />
           </nav>
@@ -73,6 +74,5 @@ Header.propTypes = {
   navbarItemList: PropTypes.arrayOf(PropTypes.shape({
     linkTo: PropTypes.string,
     title: PropTypes.string
-  })),
-  pathname: PropTypes.string
+  }))
 };

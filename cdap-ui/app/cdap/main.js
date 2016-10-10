@@ -14,8 +14,6 @@
  * the License.
  */
 
-// require('./services/i18n');
-// import Test from './services/i18n';
 import React, {Component, PropTypes} from 'react';
 import ReactDOM from 'react-dom';
 
@@ -25,35 +23,30 @@ require('./styles/lib-styles.less');
 require('./styles/common.less');
 require('./styles/main.less');
 
-import Management from './components/Management';
-import Dashboard from './components/Dashboard';
-import Home from './components/Home';
-import CdapHeader from './components/CdapHeader';
-import Footer from './components/Footer';
-import SplashScreen from './components/SplashScreen';
-import ConnectionExample from './components/ConnectionExample';
-import Experimental from './components/Experimental';
+import Management from 'components/Management';
+import Dashboard from 'components/Dashboard';
+import Home from 'components/Home';
+import CdapHeader from 'components/CdapHeader';
+import Footer from 'components/Footer';
+import SplashScreen from 'components/SplashScreen';
+import ConnectionExample from 'components/ConnectionExample';
+import Experimental from 'components/Experimental';
 import cookie from 'react-cookie';
-import {MyNamespaceApi} from './api/namespace';
-import Redirect from 'react-router/Redirect';
+import {MyNamespaceApi} from 'api/namespace';
 import Router from 'react-router/BrowserRouter';
 import Match from 'react-router/Match';
 import Miss from 'react-router/Miss';
-import Store from './services/store/store';
-import CaskVideoModal from './components/CaskVideoModal';
+import Store from 'services/store/store';
+import CaskVideoModal from 'components/CaskVideoModal';
+import RouteToNamespace from 'components/RouteToNamespace';
+
 
 class CDAP extends Component {
   constructor(props) {
     super(props);
-    this.props = props;
     this.version = '4.0.0';
-    this.namespace = Store.getState().selectedNamespace;
-    this.namespaceList = Store.getState().namespaceList;
-    this.pathname = props.pathname;
-    this.render = this.render.bind(this);
     this.closeCaskVideo = this.closeCaskVideo.bind(this);
     this.openCaskVideo = this.openCaskVideo.bind(this);
-    Store.subscribe(this.render);
     this.state = {
       selectedNamespace : Store.getState().selectedNamespace,
       videoOpen : false
@@ -73,84 +66,24 @@ class CDAP extends Component {
   }
 
   componentWillMount(){
-    var selectedNamespace;
-    let defaultNsSet = false;
-
-    if(!this.state.selectedNamespace){
-      this.setState({
-        selectedNamespace : cookie.load('CDAP_Auth_User')
-      });
-
-      Store.dispatch({
-          type: 'SELECT_NAMESPACE',
-          payload: {
-            selectedNamespace : this.state.selectedNamespace
-          }
-      });
-    }
-
-    //Polls for namespace data
+    // Polls for namespace data
     MyNamespaceApi.pollList()
       .subscribe((res) => {
-
-        if(res.length > 0){
-          for(var i = 0; i < res; i++){
-            if(res[i].description === 'Default Namespace'){
-              selectedNamespace = res[i].name;
-            }
-          }
-
-          if(!selectedNamespace){
-            selectedNamespace = res[0].name;
-          }
-
+        if (res.length > 0){
           Store.dispatch({
             type: 'UPDATE_NAMESPACES',
             payload: {
               namespaces : res
             }
           });
-
-          if(!defaultNsSet){
-            Store.dispatch({
-              type: 'SELECT_NAMESPACE',
-              payload: {
-                selectedNamespace : selectedNamespace
-              }
-            });
-
-            this.setState({
-              selectedNamespace : selectedNamespace
-            });
-
-            defaultNsSet = true;
-          }
-
         } else {
           //To-Do: No namespaces returned ; throw error / redirect
         }
       });
   }
 
-  findNamespace(name){
-    var namespaces = Store.getState().namespaces;
-
-    if(!namespaces){
-      return;
-    }
-
-    for(var i = 0; i < namespaces.length; i++){
-      if(namespaces[i].name === name){
-        return false;
-      }
-    }
-    return false;
-  }
-
   render() {
-    if( window.CDAP_CONFIG.securityEnabled &&
-        !cookie.load('CDAP_Auth_Token')
-     ){
+    if ( window.CDAP_CONFIG.securityEnabled && !cookie.load('CDAP_Auth_Token')) {
       //authentication failed ; redirect to another page
       window.location.href = window.getAbsUIUrl({
         uiApp: 'login',
@@ -160,31 +93,25 @@ class CDAP extends Component {
       return null;
     }
 
-    this.namespace = Store.getState().selectedNamespace;
-    this.namespaceList = Store.getState().namespaces;
-
-    if(!this.namespace || !this.namespaceList){
-      return null;
-    }
-
     return (
       <Router basename="/cask-cdap">
         <div className="cdap-container">
-          <CdapHeader pathname={location.pathname} />
+          <CdapHeader />
           <SplashScreen openVideo={this.openCaskVideo}/>
-          <div className="container-fluid">
-            {this.props.children}
-          </div>
           <CaskVideoModal isOpen={this.state.videoOpen} onCloseHandler={this.closeCaskVideo}/>
+
+          <div className="container-fluid">
+            <Match exactly pattern="/" component={RouteToNamespace} />
+            <Match exactly pattern="/notfound" component={Missed} />
+            <Match exactly pattern="/management" component={Management} />
+            <Match exactly pattern="/ns/:namespace" component={Home} />
+            <Match exactly pattern="/ns/:namespace/dashboard" component={Dashboard} />
+            <Match pattern="/Experimental" component={Experimental} />
+            <Match pattern="/socket-example" component={ConnectionExample} />
+            <Miss component={Missed} />
+          </div>
+
           <Footer version={this.version} />
-          <Match exactly pattern="/" render={() => (<Redirect to={`/ns/${this.state.selectedNamespace}`} />)} />
-          <Match exactly pattern="/notfound" component={Missed} />
-          <Match exactly pattern="/management" component={Management} />
-          <Match exactly pattern="/ns/:namespace" component={Home} />
-          <Match exactly pattern="/ns/:namespace/dashboard" component={Dashboard} />
-          <Match pattern="/Experimental" component={Experimental} />
-          <Match pattern="/socket-example" component={ConnectionExample} />
-          <Miss component={Missed} />
         </div>
       </Router>
     );
@@ -193,7 +120,6 @@ class CDAP extends Component {
 
 CDAP.propTypes = {
   children: React.PropTypes.node,
-  pathname: PropTypes.string,
   params: PropTypes.object
 };
 
@@ -206,11 +132,9 @@ function Missed({ location }) {
   );
 }
 
-const propTypes = {
+Missed.propTypes = {
   location : PropTypes.object
 };
-
-Missed.propTypes = propTypes;
 
 ReactDOM.render(
   <CDAP />,
