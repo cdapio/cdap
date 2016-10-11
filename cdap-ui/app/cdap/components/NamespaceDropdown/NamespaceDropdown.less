@@ -18,6 +18,28 @@
 @namespace-dropdown-color: #333;
 
 .namespace-dropdown {
+  width: 160px;
+  border-left: 1px solid #666666;
+  padding: 0;
+  font-size: 14px;
+  user-select: none;
+  display: inline-block;
+
+  div[disabled] { cursor: not-allowed; }
+
+  .dropdown-toggle { height: 50px; }
+
+  .fa.fa-angle-down {
+    line-height: 50px;
+    font-size: 17px;
+  }
+
+  .namespace-display {
+    display: inline-block;
+    width: 87%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   .no-namespace {
     .dropdown-menu {
       width: 160px;
@@ -72,7 +94,6 @@
       a.namespace-link {
         color: @namespace-dropdown-color;
         text-decoration: inherit;
-        color: inherit;
         cursor: auto;
         padding-right: 0;
         border-bottom: 1px solid @namespace-action-bg;

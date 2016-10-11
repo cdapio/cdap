@@ -24,9 +24,9 @@ import SpotlightSearch from 'components/SpotlightSearch';
 require('./HeaderActions.less');
 var classNames = require('classnames');
 import NamespaceDropdown from 'components/NamespaceDropdown';
+import ProductsDropdown from 'components/ProductsDropdown';
 
 export default class HeaderActions extends Component {
-
   constructor(props) {
     super(props);
     this.state = {
@@ -36,7 +36,6 @@ export default class HeaderActions extends Component {
     this.logout = this.logout.bind(this);
     this.toggleSettingsDropdown = this.toggleSettingsDropdown.bind(this);
   }
-
   logout() {
     cookie.remove('CDAP_Auth_Token', { path: '/' });
     cookie.remove('CDAP_Auth_User', { path: '/' });
@@ -51,7 +50,6 @@ export default class HeaderActions extends Component {
       settingsOpen : !this.state.settingsOpen
     });
   }
-  
   render() {
 
     let topRow = '';
@@ -135,11 +133,13 @@ export default class HeaderActions extends Component {
               </DropdownMenu>
             </Dropdown>
           </div>
-          <div className="navbar-item namespace-dropdown">
+          <div className="namespace-dropdown">
             <NamespaceDropdown />
           </div>
+          <div className="products-dropdown">
+            <ProductsDropdown currentChoice="cdap"/>
+          </div>
         </ul>
-
       </div>
     );
   }
