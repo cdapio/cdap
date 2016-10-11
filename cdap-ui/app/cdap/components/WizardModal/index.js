@@ -20,14 +20,14 @@ import classnames from 'classnames';
 
 require('./WizardModal.less');
 
-export default function WizardModal({children, title, isOpen, toggle, className}) {
+export default function WizardModal({children, title, isOpen, toggle, className, backdrop}) {
   return (
     <Modal
       isOpen={isOpen}
       toggle={toggle}
       className={classnames("wizard-modal", className)}
       size="lg"
-      backdrop={false}
+      backdrop={backdrop}
     >
       <ModalHeader>
         <span className="pull-left">
@@ -59,7 +59,8 @@ export default function WizardModal({children, title, isOpen, toggle, className}
 WizardModal.defaultProps = {
   title: 'Wizard',
   isOpen: false,
-  closeHandler: () => {}
+  closeHandler: () => {},
+  backdrop: false
 };
 
 WizardModal.propTypes = {
@@ -67,5 +68,6 @@ WizardModal.propTypes = {
   title: PropTypes.string,
   isOpen: PropTypes.bool,
   toggle: PropTypes.func,
-  className: PropTypes.string
+  className: PropTypes.string,
+  backdrop: PropTypes.bool
 };
