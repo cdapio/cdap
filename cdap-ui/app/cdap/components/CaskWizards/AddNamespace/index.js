@@ -20,24 +20,13 @@ import AddNamespaceStore from 'services/WizardStores/AddNamespace/AddNamespaceSt
 import AddNamespaceActions from 'services/WizardStores/AddNamespace/AddNamespaceActions';
 import AddNamespaceWizardConfig from 'services/WizardConfigs/AddNamespaceWizardConfig';
 import { PublishNamespace } from 'services/WizardStores/AddNamespace/ActionCreator';
-import Redirect from 'react-router/Redirect';
 
 export default class AddNamespaceWizard extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      showWizard: this.props.isOpen,
-      redirectTo: false
+      showWizard: this.props.isOpen
     };
-    this.redirect = this.redirect.bind(this);
-  }
-  toggleWizard(returnResult) {
-    if (this.state.showWizard) {
-      this.props.onClose(returnResult);
-    }
-    this.setState({
-      showWizard: !this.state.showWizard
-    });
   }
   componentWillReceiveProps({isOpen}) {
     this.setState({
@@ -63,30 +52,22 @@ export default class AddNamespaceWizard extends Component {
     });
   }
 
-  redirect(){
-    this.setState({
-      redirectTo: true
-    });
-  }
-
   render() {
     return (
       <div>
-      {
-        this.state.redirectTo && <Redirect to="/" />
-      }
         {
           this.state.showWizard ?
             <WizardModal
               title={this.props.context ? this.props.context + " | Add Namespace" : "Add Namespace"}
               isOpen={this.state.showWizard}
-              toggle={this.redirect}
+              toggle={this.props.onClose}
               className="add-namespace-wizard"
+              backdrop={this.props.backdrop}
             >
               <Wizard
                 wizardConfig={AddNamespaceWizardConfig}
                 onSubmit={this.createNamespace.bind(this)}
-                onClose={this.redirect}
+                onClose={this.props.onClose}
                 store={AddNamespaceStore}
               />
             </WizardModal>
@@ -100,5 +81,6 @@ export default class AddNamespaceWizard extends Component {
 AddNamespaceWizard.propTypes = {
   isOpen: PropTypes.bool,
   context: PropTypes.string,
-  onClose: PropTypes.func
+  onClose: PropTypes.func,
+  backdrop: PropTypes.bool
 };

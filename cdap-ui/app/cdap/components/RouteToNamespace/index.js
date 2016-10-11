@@ -46,16 +46,16 @@ export default class RouteToNamespace extends Component {
     if (!list || list.length === 0) { return; }
 
     /**
-     * 1. Check if cookie exist, if not, check default
-     * 2. Check existence of such namespace, if not take first one from the list
+     * 1. Check if localStorage has a 'DefaultNamespace' set by the user, if not,
+     * 2. Check if there is a 'default' namespace from backend, if not,
+     * 3. Take first one from the list of namespaces from backend.
      **/
 
-    let namespaceCookie = localStorage.getItem('NS');
-
+    let defaultNamespace = localStorage.getItem('DefaultNamespace');
     let selectedNamespace;
 
-    if (namespaceCookie) {
-      selectedNamespace = this.findNamespace(list, namespaceCookie);
+    if(!selectedNamespace && defaultNamespace) {
+      selectedNamespace = {name: defaultNamespace};
     }
 
     if (!selectedNamespace) {

@@ -25,6 +25,7 @@ import SpotlightSearch from 'components/SpotlightSearch';
 require('./HeaderActions.less');
 var classNames = require('classnames');
 const shortid = require('shortid');
+import AbstractWizard from 'components/AbstractWizard';
 
 export default class HeaderActions extends Component {
 
@@ -35,6 +36,7 @@ export default class HeaderActions extends Component {
       name : Store.getState().userName,
       namespaceList : [],
       namespaceOpen : false,
+      openNamespaceWizard: false,
       currentNamespace: Store.getState().selectedNamespace
     };
     this.logout = this.logout.bind(this);
@@ -111,13 +113,18 @@ export default class HeaderActions extends Component {
               <span className="namespace-name pull-left">{item.name}</span>
               <span className="default-ns-section pull-right">
                 {check}
-                <span className="default-btn">
-                  <span
-                    className="btn btn-default btn-xs"
-                    onClick={() => localStorage.setItem('DefaultNamespace', item.name)}>
-                    Default
-                  </span>
-                </span>
+                {
+                  defaultNamespace !== item.name ?
+                    (<span className="default-btn">
+                      <span
+                        className="btn btn-default btn-xs"
+                        onClick={() => localStorage.setItem('DefaultNamespace', item.name)}>
+                        Default
+                      </span>
+                    </span>)
+                    :
+                    null
+                }
               </span>
             </div>
           </Link>
@@ -137,6 +144,17 @@ export default class HeaderActions extends Component {
       payload: {
         selectedNamespace : name
       }
+    });
+  }
+  showNamespaceWizard() {
+    this.setState({
+      openNamespaceWizard: true,
+      namespaceOpen : !this.state.namespaceOpen
+    });
+  }
+  hideNamespaceWizard() {
+    this.setState({
+      openNamespaceWizard: false
     });
   }
 
@@ -245,22 +263,34 @@ export default class HeaderActions extends Component {
                 </div>
                 {
                   this.namespaceMap.length > 0 ?
-                    (<div className="namespace-action text-center">
-                      Manage Namespaces
-                    </div>)
+                    (
+                      <div
+                        className="namespace-action text-center"
+                        onClick={this.showNamespaceWizard.bind(this)}
+                      >
+                        Manage Namespaces
+                      </div>
+                    )
                   :
                     (
-                      <div className="namespace-action text-center">
+                      <div
+                        className="namespace-action text-center"
+                        onClick={this.showNamespaceWizard.bind(this)}
+                      >
                         Add Namespace
                       </div>
                     )
-
-
                 }
               </DropdownMenu>
             </Dropdown>
           </div>
         </ul>
+        <AbstractWizard
+          isOpen={this.state.openNamespaceWizard}
+          onClose={this.hideNamespaceWizard.bind(this)}
+          wizardType='add_namespace'
+          backdrop={true}
+        />
       </div>
     );
   }
