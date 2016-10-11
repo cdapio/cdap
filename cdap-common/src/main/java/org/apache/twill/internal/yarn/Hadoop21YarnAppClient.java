@@ -109,7 +109,7 @@ public final class Hadoop21YarnAppClient extends AbstractIdleService implements 
 
         try {
           yarnClient.submitApplication(appSubmissionContext);
-          return new ProcessControllerImpl(yarnClient, appId);
+          return new ProcessControllerImpl(appId);
         } catch (Exception e) {
           LOG.error("Failed to submit application {}", appId, e);
           throw Throwables.propagate(e);
@@ -141,7 +141,7 @@ public final class Hadoop21YarnAppClient extends AbstractIdleService implements 
 
   @Override
   public ProcessController<YarnApplicationReport> createProcessController(ApplicationId appId) {
-    return new ProcessControllerImpl(createYarnClient(), appId);
+    return new ProcessControllerImpl(appId);
   }
 
   @Override
@@ -164,19 +164,17 @@ public final class Hadoop21YarnAppClient extends AbstractIdleService implements 
     // no-op. code that calls createYarnClient() is responsible for stopping each individual yarn client
   }
 
-  private static final class ProcessControllerImpl implements ProcessController<YarnApplicationReport> {
-    private final YarnClient yarnClient;
+  private final class ProcessControllerImpl implements ProcessController<YarnApplicationReport> {
     private final ApplicationId appId;
 
-    ProcessControllerImpl(YarnClient yarnClient, ApplicationId appId) {
-      this.yarnClient = yarnClient;
+    ProcessControllerImpl(ApplicationId appId) {
       this.appId = appId;
     }
 
     @Override
     public YarnApplicationReport getReport() {
       try {
-        return new Hadoop21YarnApplicationReport(yarnClient.getApplicationReport(appId));
+        return new Hadoop21YarnApplicationReport(createYarnClient().getApplicationReport(appId));
       } catch (Exception e) {
         LOG.error("Failed to get application report {}", appId, e);
         throw Throwables.propagate(e);
@@ -186,6 +184,7 @@ public final class Hadoop21YarnAppClient extends AbstractIdleService implements 
     @Override
     public void cancel() {
       try {
+        YarnClient yarnClient = createYarnClient();
         yarnClient.killApplication(appId);
         yarnClient.stop();
       } catch (Exception e) {

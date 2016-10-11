@@ -34,6 +34,7 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
@@ -82,6 +83,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -108,12 +110,13 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private final PreferencesStore preferencesStore;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
+  private final Impersonator impersonator;
 
   @Inject
   ProgramLifecycleService(Store store, NamespaceStore nsStore, ProgramRuntimeService runtimeService,
                           CConfiguration cConf, PropertiesResolver propertiesResolver,
                           PreferencesStore preferencesStore, AuthorizationEnforcer authorizationEnforcer,
-                          AuthenticationContext authenticationContext) {
+                          AuthenticationContext authenticationContext, Impersonator impersonator) {
     this.store = store;
     this.nsStore = nsStore;
     this.runtimeService = runtimeService;
@@ -123,6 +126,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     this.preferencesStore = preferencesStore;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
+    this.impersonator = impersonator;
   }
 
   @Override
@@ -386,7 +390,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   public ListenableFuture<ProgramController> issueStop(ProgramId programId, @Nullable String runId) throws Exception {
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runId);
+    final ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runId);
     if (runtimeInfo == null) {
       if (!store.applicationExists(programId.toId().getApplication())) {
         throw new ApplicationNotFoundException(programId.toId().getApplication());
@@ -407,7 +411,13 @@ public class ProgramLifecycleService extends AbstractIdleService {
       }
       throw new BadRequestException(String.format("Program '%s' is not running.", programId));
     }
-    return runtimeInfo.getController().stop();
+
+    return impersonator.doAs(programId.getParent().getParent(), new Callable<ListenableFuture<ProgramController>>() {
+      @Override
+      public ListenableFuture<ProgramController> call() throws Exception {
+        return runtimeInfo.getController().stop();
+      }
+    });
   }
 
   /**
