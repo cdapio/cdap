@@ -26,7 +26,8 @@
 # if <output-filepath> not provided, outputs to standard out
 
 # Also, a tool for comparing XML and SDL files.
-# Given a list of files in OTHER_CDAP_XML_FILES, can compare them
+#
+# Given a list of files in OTHER_CDAP_XML_SDL_FILES, can compare them
 # with the XML file in CDAP_DEFAULT_XML
 
 
@@ -55,7 +56,7 @@ RELATIVE_PATH = '../../..'
 CDAP_DEFAULT_XML = 'cdap-common/src/main/resources/cdap-default.xml'
 CDAP_DEFAULT_EXCLUSIONS = 'cdap-default-exclusions.txt'
 
-OTHER_CDAP_XML_FILES = 'cdap-xml-files.txt'
+OTHER_CDAP_XML_SDL_FILES = 'cdap-xml-sdl-files.txt'
 
 FIRST_TWO_SECTIONS = ['General Configuration', 'Global Configuration']
 
@@ -110,11 +111,14 @@ XML_DESCRIP_CLOSE = '    </description>\n'
 XML_FINAL         = '    <final>true</final>\n'
 XML_PROP_CLOSE    = '  </property>\n\n'
 XML_CONFIG_CLOSE  = '</configuration>\n'
-
+XML_OTHER         = "  Current:"
+ 
 SDL_CONFIG_LABEL  = "   %s"
 SDL_CONFIG_NAME   = "          \"configName\": \"%s\","
+SDL_OTHER         = "        Current:"
 SDL_DESCRIPTION   = "          \"description\": \"%s\","
 SDL_DEFAULT       = "          \"default\": \"%s\","
+
 
 class Item:
     MAX_RST_VALUE_CHAR_LENGTH = 40
@@ -123,7 +127,7 @@ class Item:
     def encode(value):
         import cgi
         if value:
-            return cgi.escape(value).encode('ascii', 'xmlcharrefreplace')
+            return cgi.escape(value).encode('ascii', 'xmlcharrefreplace') if type(value) == type(' ') else value
         else:
             return ''
 
@@ -225,7 +229,6 @@ class Item:
 
 
 class Section:
-
     def __init__(self, name=''):
         self.name = name.strip()
         self.final = None
@@ -275,12 +278,34 @@ class PIParser(ET.XMLTreeBuilder):
         self._target.end(ET.PI)
 
 
+class XML_Source_File:
+    def __init__(self, source='', excluded=[]):
+        self.source = source
+        self.excluded = excluded
+        
+    def add_exclusion(self, exclusion):
+        if exclusion not in self.excluded:
+            self.excluded.append(exclusion)
+            
+    def compare(self, default_xml_file, update, compare_values):
+        print "Comparing\n  %s\nto\n  %s" % (self.source, default_xml_file)
+        self._compare(default_xml_file, update, compare_values)
+        
+    def _compare(self, default_xml_file, update, compare_values):
+        compare_xml_files(default_xml_file, self.source, update=update, compare_values=compare_values, exclusions=self.excluded)
+
+            
+class SDL_Source_File(XML_Source_File):
+    def _compare(self, default_xml_file, update, compare_values):
+        compare_xml_sdl(default_xml_file, self.source, update=update, compare_values=compare_values, exclusions=self.excluded)
+
+
 def parse_options():
     """Parses args options."""
 
     parser = OptionParser(
         usage="%prog [options]",
-        description='Generates an RST file from an XML file such as cdap-default.xml')
+        description="Generates an RST file from an XML file such as 'cdap-default.xml'")
 
     # Generation, source and target
     
@@ -288,7 +313,7 @@ def parse_options():
         '-a', '--all',
         dest='compare_all',
         action='store_true',
-        help="Compares all files listed in '%s' to '%s'" % (OTHER_CDAP_XML_FILES, CDAP_DEFAULT_XML),
+        help="Compares all files listed in '%s' to '%s'" % (OTHER_CDAP_XML_SDL_FILES, CDAP_DEFAULT_XML),
         default=False)
 
     parser.add_option(
@@ -397,6 +422,9 @@ def log(message, type):
     """Basic logger, print output directly to stdout and errors to stderr."""
     (sys.stdout if type == 'notice' else sys.stderr).write(message + "\n")
 
+def is_string_type(var):
+    return type(var) == type(' ')
+
 def default_xml_filepath(extra_path=''):
     return os.path.join(SOURCE_PATH, RELATIVE_PATH, CDAP_DEFAULT_XML + extra_path)
     
@@ -412,14 +440,54 @@ def load_exclusions():
         else:
             lines.append(line.rstrip('\n'))
     return lines
-#     return [line.rstrip('\n') for line in open(exclusions_path)]
 
-def load_xml_files():
-    func = 'load_xml_files'
-    xml_files_path = os.path.join(SOURCE_PATH, OTHER_CDAP_XML_FILES)
-    if not os.path.isfile(xml_files_path):
-        raise Exception(func, "'%s' not a valid path" % xml_files_path)
-    return [line.rstrip('\n') for line in open(xml_files_path)]
+def load_xml_sdl_files():
+    func = 'load_xml_sdl_files'
+    xml_sdl_files_path = os.path.join(SOURCE_PATH, OTHER_CDAP_XML_SDL_FILES)
+    if not os.path.isfile(xml_sdl_files_path):
+        raise Exception(func, "'%s' not a valid path" % xml_sdl_files_path)
+    lines = [line.rstrip('\n') for line in open(xml_sdl_files_path)]
+    in_file = False
+    files = []
+    file = None
+    print "Reading sources and exclusions from %s" % xml_sdl_files_path
+    for line in lines:
+        if not line or line.startswith(' '):
+            if file:
+                files.append(file)
+                file = None
+            continue
+        elif line.startswith('#'):
+            continue
+        elif line.startswith('-'):
+            property = line[1:].strip()
+            if file:
+                print "    Property exclusion: '%s'" % property
+                file.add_exclusion(property) 
+            else:
+                print "    WARNING Property in wrong location: outside file: %s" % property
+        else:
+            if file:
+                files.append(file)
+                file = None            
+            print "  Source: %s" % line
+            
+            if line.startswith('http'):
+                f, f_source = download_to_file(line)
+            else:
+                f = os.path.join(SOURCE_PATH, RELATIVE_PATH, line)
+
+            if f.endswith(".xml") or f.endswith(".xml.example"):
+                file = XML_Source_File(f)
+            elif f.endswith(".sdl"):
+                file = SDL_Source_File(f)
+            else:
+                print "Unknown filetype for: '%s'" % f
+            
+    if file:
+        files.append(file)
+    print
+    return files
 
 def load_xml(source, include_exclusions=False, include_comments=True):
     func = 'load_xml'
@@ -584,7 +652,7 @@ def load_summary(source='', props_only=False, ignore=False):
 
 def load_xml_source(source_title, source):
     # Loads XML from source, described as source_title
-    print "Loading '%s': %s" % (source_title, source)
+    print "Loading '%s':" % source_title
     items, tree = load_xml(source, include_exclusions=True, include_comments=False)
     print "  Items: %s" % len(items)
     items.sort(key = lambda p: p.name)
@@ -610,15 +678,20 @@ def compare_files(source, other_source, target=None, update=False, compare_value
         print "Unknown filetype for: %s" % source
         print "Unknown filetype for: %s" % other_source
 
-def compare_xml_files(source, other_source, target=None, update=False, compare_values=False):
+def compare_xml_files(source, other_source, target=None, update=False, compare_values=False, exclusions=[]):
     # Compares two XML files
     items = load_xml_source('source', source)    
     other_items = load_xml_source('other_source', other_source)
     mis_matches_list = compare_items(items, other_items, update, compare_values)
     if update:
         print "Updates:\n"
-        for name, item_description in mis_matches_list:
+        if not mis_matches_list:
+            print "  No updates required."
+        for name, item_description, other_item_description in mis_matches_list:
             print name
+            if name in exclusions:
+                print "%s in exclusions list: ignored\n" % name
+                continue
             if compare_values:
                 print XML_VALUE_SUB % item_description
             else:
@@ -627,6 +700,8 @@ def compare_xml_files(source, other_source, target=None, update=False, compare_v
                     xml += XML_DESCRIP_SUB % line
                 xml += XML_DESCRIP_CLOSE
                 print xml
+            print "%s\n      %s\n" % (XML_OTHER, other_item_description)
+        print
             
 def compare_items(items_list, other_items_list, update=False, compare_values=False):
     # Compares two lists of source_title, items, items_keys, items_dict
@@ -662,22 +737,22 @@ def compare_items(items_list, other_items_list, update=False, compare_values=Fal
     mis_matches_list = []
     for name in in_both:
         if compare_values:
-            item_description = items_dict[name].value
-            other_item_description = other_items_dict[name].value
+            item = items_dict[name].value
+            other_item = other_items_dict[name].value
         else:
-            item_description = items_dict[name].description
-            other_item_description = other_items_dict[name].description
-        if item_description != other_item_description:
+            item = items_dict[name].description
+            other_item = other_items_dict[name].description
+        if str(item) != str(other_item):
             print "  Item '%s' does not match" % name
-            mis_matches_list.append((name, item_description))
+            mis_matches_list.append((name, item, other_item))
         else:
             matches += 1
-    print "Comparision matches:     %d" % matches
-    print "Comparision mis-matches: %d" % len(mis_matches_list)
     comparision = "descriptions"
     if compare_values:
         comparision = "values"
     print "Comparing %s" % comparision
+    print "Comparision matches:     %d" % matches
+    print "Comparision mis-matches: %d" % len(mis_matches_list)
     if len(in_both) + len(only_in_other_source) < len(other_items_keys):
         # other_items_keys has a duplicate key
         other_items_copy = []
@@ -694,12 +769,12 @@ def compare_items(items_list, other_items_list, update=False, compare_values=Fal
     print
     return mis_matches_list
 
-def compare_xml_sdl(source, other_source, target=None, update=False, compare_values=False):
+def compare_xml_sdl(source, other_source, target=None, update=False, compare_values=False, exclusions=[]):
     # Compares an XML source to an SDL source
     items = load_xml_source('XML source', source)
     
     sdl_source_title = 'SDL other source'
-    print "Loading '%s': %s" % (sdl_source_title, other_source)
+    print "Loading '%s':\nLoading %s" % (sdl_source_title, other_source)
     f = open(other_source)
     # FIXME: Using json.load, but it doesn't handle "<" and ">" correctly. See "twill.jvm.gc.opts" for example.
     sdl = json.load(f)
@@ -710,38 +785,58 @@ def compare_xml_sdl(source, other_source, target=None, update=False, compare_val
     other_items = []
     for p in sdl["parameters"]:
         if "configName" in p:
-            other_items.append(Item(name=p["configName"], description=p["description"]))
+            value = p["default"] if "default" in p else None
+            other_items.append(Item(name=p["configName"], value=value, description=p["description"]))
+#             print "configName: %s\n value: %s" % (p["configName"], value)
     for r in sdl["roles"]:
         if "parameters" in r:
             for p in r["parameters"]:
                 if "configName" in p:
-                    other_items.append(Item(name=p["configName"], description=p["description"]))
+                    value = p["default"] if "default" in p else None
+                    other_items.append(Item(name=p["configName"], value=value, description=p["description"]))
     print "  Items: %s" % len(other_items)
     other_items.sort(key = lambda p: p.name)
     other_items_keys = []
     other_items_dict = {}
-    for item in other_items:
-        other_items_keys.append(item.name)
-        other_items_dict[item.name] = item
+    for other_item in other_items:
+        if other_item.name not in other_items_keys:
+            other_items_keys.append(other_item.name)
+        else:
+            print "WARNING: duplicate item: %s" % other_item.name
+        other_items_dict[other_item.name] = other_item
     other_items = (sdl_source_title, other_items, other_items_keys, other_items_dict)
     mis_matches_list = compare_items(items, other_items, compare_values=compare_values)
     if update:
         print "Updates:\n"
-        for config_name, item_description in mis_matches_list:
-            print SDL_CONFIG_LABEL % config_name.replace('.', '_')
-            if not compare_values and item_description:
-                print SDL_DESCRIPTION % item_description.replace('"', '\\"')
+        if not mis_matches_list:
+            print "  No updates required."
+        for config_name, item_d_v, other_item_d_v in mis_matches_list:
+            if config_name in exclusions:
+                print "%s in exclusions list: ignored" % config_name
+                print
+                continue
+            config_name_display = config_name.replace('.', '_') if is_string_type(config_name) else config_name
+            item_display = item_d_v.replace('"', '\\"') if is_string_type(item_d_v) else item_d_v
+            other_item_display = other_item_d_v.replace('"', '\\"') if is_string_type(other_item_d_v) else other_item_d_v
+            print SDL_CONFIG_LABEL % config_name_display
+            if not compare_values and item_display:
+                print SDL_DESCRIPTION % item_display
             print SDL_CONFIG_NAME % config_name
-            if compare_values and item_description:
-                print SDL_DEFAULT % item_description.replace('"', '\\"')
+            if compare_values and item_display:
+                print SDL_DEFAULT % item_display
             print
-            if not compare_values and item_description:
+            if not compare_values and item_display:
+                print SDL_OTHER
                 print SDL_DESCRIPTION % other_items_dict[config_name].description
-            
-            
+                print
+            if compare_values and item_display:
+                print SDL_OTHER
+                print SDL_DEFAULT % other_item_d_v
+                print
+    
 def download_to_file(url):
-    # Downloads from a URL to a temp file and returns
-    # a filepath and the data downloaded
+    # Downloads from a URL to a temp file and
+    # returns a filepath and the data downloaded
     import urllib
     import tempfile
     f = tempfile.NamedTemporaryFile(delete=False)
@@ -752,33 +847,13 @@ def download_to_file(url):
     f.close()
     return f, source
 
-def compare_all_xml(options):
-    # Compares each file listed in OTHER_CDAP_XML_FILES
+def compare_all(update=False, compare_values=False):
+    # Compares each file listed in OTHER_CDAP_XML_SDL_FILES
     # to CDAP_DEFAULT_XML
-    update = options.compare_all_update
-    compare_values = options.compare_values
-    files = load_xml_files()
-    for file in files:
-        if not file or file.startswith(' ') or file.startswith('#'):
-            continue
-        elif file.startswith("http"):
-            f, f_source = download_to_file(file)
-            if file.endswith(".xml"):
-                print "XML file from: %s" % file
-                compare_xml_files(default_xml_filepath(), f.name, update=update, compare_values=compare_values)
-            if file.endswith(".sdl"):
-                print "SDL file from: %s" % file
-                compare_xml_sdl(default_xml_filepath(), f.name, update=update, compare_values=compare_values)
-        else:
-            f = os.path.join(SOURCE_PATH, RELATIVE_PATH, file)
-            if file.endswith(".xml") or file.endswith(".xml.example"):
-                print "XML file: %s" % file
-                compare_xml_files(default_xml_filepath(), f, update=update, compare_values=compare_values)
-            elif file.endswith(".sdl"):
-                print "SDL file: %s" % file
-                compare_xml_sdl(default_xml_filepath(), f, update=update, compare_values=compare_values)
-            else:
-                print "Unknown filetype for: %s" % file
+    default = default_xml_filepath()
+    xml_sdl_files = load_xml_sdl_files()
+    for xml_sdl_file in xml_sdl_files:
+        xml_sdl_file.compare(default, update, compare_values)
             
 def main():
     """ Main program entry point."""
@@ -788,8 +863,8 @@ def main():
     try:
         options.logger = log
         if options.compare_all:
-            print "\nComparing all XML Files (update=%s) to '%s'...\n" % (options.compare_all_update, CDAP_DEFAULT_XML)
-            compare_all_xml(options)
+            print "\nComparing all XML and SDL Files (update=%s) to '%s'..." % (options.compare_all_update, CDAP_DEFAULT_XML)
+            compare_all(options.compare_all_update, options.compare_values)
         if options.compare:
             print "\nComparing Files... "
             compare_files(options.source, options.other_source, options.target, compare_values=options.compare_values)
