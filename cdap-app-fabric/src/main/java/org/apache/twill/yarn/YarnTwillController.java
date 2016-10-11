@@ -41,13 +41,14 @@ import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 
 /**
  * A {@link org.apache.twill.api.TwillController} that controllers application running on Hadoop YARN.
@@ -62,7 +63,7 @@ public final class YarnTwillController extends AbstractTwillController implement
   private final String appName;
   private final Callable<ProcessController<YarnApplicationReport>> startUp;
   private ProcessController<YarnApplicationReport> processController;
-  private ResourceReportClient resourcesClient;
+  private volatile ResourceReportClient resourcesClient;
 
   // Thread for polling yarn for application status if application got ZK session expire.
   // Only used by the instanceUpdate/Delete method, which is from serialized call from ZK callback.
@@ -137,14 +138,6 @@ public final class YarnTwillController extends AbstractTwillController implement
         LOG.info("Yarn application {} {} is not in running state. Shutting down controller.",
                  appName, appId, Constants.APPLICATION_MAX_START_SECONDS);
         forceShutDown();
-      } else {
-        try {
-          URL resourceUrl = URI.create(String.format("http://%s:%d", report.getHost(), report.getRpcPort()))
-            .resolve(TrackerService.PATH).toURL();
-          resourcesClient = new ResourceReportClient(resourceUrl);
-        } catch (IOException e) {
-          resourcesClient = null;
-        }
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -333,7 +326,37 @@ public final class YarnTwillController extends AbstractTwillController implement
   @Override
   public ResourceReport getResourceReport() {
     // in case the user calls this before starting, return null
+    ResourceReportClient resourcesClient = getResourcesClient();
     return (resourcesClient == null) ? null : resourcesClient.get();
+  }
+
+  @Nullable
+  private ResourceReportClient getResourcesClient() {
+    if (resourcesClient != null) {
+      return resourcesClient;
+    }
+    synchronized (this) {
+      if (resourcesClient != null) {
+        return resourcesClient;
+      }
+
+      YarnApplicationReport report = processController.getReport();
+      String host = report.getHost();
+      int port = report.getRpcPort();
+      if (host == null || host.equals("N/A") || port == -1) {
+        return null;
+      }
+
+      try {
+        URL resourceUrl = URI.create(String.format("http://%s:%d", host, port))
+          .resolve(TrackerService.PATH).toURL();
+        resourcesClient = new ResourceReportClient(resourceUrl);
+      } catch (MalformedURLException e) {
+        LOG.warn("Invalid resource url for {}, {}", host, port, e);
+      }
+
+      return resourcesClient;
+    }
   }
 
   // begin change CDAP-5135
