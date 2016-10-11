@@ -40,7 +40,6 @@ import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -78,6 +77,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.base.Optional;
@@ -131,6 +131,7 @@ public class HBaseQueueDebugger extends AbstractIdleService {
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final Store store;
   private final Impersonator impersonator;
+  private final AuthorizationEnforcementService authorizationEnforcementService;
 
   @Inject
   public HBaseQueueDebugger(HBaseTableUtil tableUtil, HBaseQueueAdmin queueAdmin,
@@ -138,7 +139,8 @@ public class HBaseQueueDebugger extends AbstractIdleService {
                             ZKClientService zkClientService,
                             TransactionExecutorFactory txExecutorFactory,
                             NamespaceQueryAdmin namespaceQueryAdmin,
-                            Store store, Impersonator impersonator) {
+                            Store store, Impersonator impersonator,
+                            AuthorizationEnforcementService authorizationEnforcementService) {
     this.tableUtil = tableUtil;
     this.queueAdmin = queueAdmin;
     this.queueClientFactory = queueClientFactory;
@@ -147,15 +149,18 @@ public class HBaseQueueDebugger extends AbstractIdleService {
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.store = store;
     this.impersonator = impersonator;
+    this.authorizationEnforcementService = authorizationEnforcementService;
   }
 
   @Override
   protected void startUp() throws Exception {
     zkClientService.startAndWait();
+    authorizationEnforcementService.startAndWait();
   }
 
   @Override
   protected void shutDown() throws Exception {
+    authorizationEnforcementService.stopAndWait();
     zkClientService.stopAndWait();
   }
 
