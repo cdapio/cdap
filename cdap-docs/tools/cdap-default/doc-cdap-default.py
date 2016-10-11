@@ -783,17 +783,18 @@ def compare_xml_sdl(source, other_source, target=None, update=False, compare_val
     # "roles": a list; each element has a "parameters"
     # some parameters have a configName and description
     other_items = []
-    for p in sdl["parameters"]:
-        if "configName" in p:
-            value = p["default"] if "default" in p else None
-            other_items.append(Item(name=p["configName"], value=value, description=p["description"]))
-#             print "configName: %s\n value: %s" % (p["configName"], value)
+    params_list = []
+    if "parameters" in sdl:
+        params_list.append(sdl["parameters"])
     for r in sdl["roles"]:
         if "parameters" in r:
-            for p in r["parameters"]:
-                if "configName" in p:
-                    value = p["default"] if "default" in p else None
-                    other_items.append(Item(name=p["configName"], value=value, description=p["description"]))
+            params_list.append(r["parameters"])
+    for params in params_list:
+        for p in params:
+            if "configName" in p:
+                value = str(p["default"]) if "default" in p else ""
+                value = value.lower() if value in ("True", "False") else value
+                other_items.append(Item(name=p["configName"], value=value, description=p["description"]))
     print "  Items: %s" % len(other_items)
     other_items.sort(key = lambda p: p.name)
     other_items_keys = []
@@ -824,7 +825,6 @@ def compare_xml_sdl(source, other_source, target=None, update=False, compare_val
             print SDL_CONFIG_NAME % config_name
             if compare_values and item_display:
                 print SDL_DEFAULT % item_display
-            print
             if not compare_values and item_display:
                 print SDL_OTHER
                 print SDL_DESCRIPTION % other_items_dict[config_name].description
