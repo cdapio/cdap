@@ -158,6 +158,9 @@ public abstract class IntegrationTestBase {
           return false;
         }
 
+        // For non-default namespaces, simply check that the dataset service is up with list().
+        // If list() does not throw exception, which means the http request receives response
+        // status HTTP_OK and dataset service is up, then check if default namespace exists, if so return true.
         List<NamespaceMeta> list = getNamespaceClient().list();
 
         if (!configuredNamespace.equals(NamespaceId.DEFAULT)) {
