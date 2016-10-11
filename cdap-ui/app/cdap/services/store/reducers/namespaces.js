@@ -14,7 +14,7 @@
  * the License.
  */
 
- export default function namespaces(state = null, action) {
+ export default function namespaces(state = [], action) {
    switch (action.type) {
      case 'UPDATE_NAMESPACES':
        return action.payload.namespaces;
