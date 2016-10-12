@@ -156,10 +156,26 @@ public abstract class IntegrationTestBase {
         if (!getMonitorClient().allSystemServicesOk()) {
           return false;
         }
-        // Check that the dataset service is up with list(). If list() does not throw exception, which means the http
-        // request receives response status HTTP_OK and dataset service is up, return true.
-        getNamespaceClient().list();
-        return true;
+
+        // For non-default namespaces, simply check that the dataset service is up with list().
+        // If list() does not throw exception, which means the http request receives response
+        // status HTTP_OK and dataset service is up, then check if default namespace exists, if so return true.
+        List<NamespaceMeta> list = getNamespaceClient().list();
+
+        if (!configuredNamespace.equals(NamespaceId.DEFAULT)) {
+          return true;
+        }
+
+        // If configured namespace is default namespace, check if it has been created. There can be a race condition
+        // where default namespace is not created yet, but integration test starts executing. This check makes sure
+        // default namespace exists before integration test starts
+        for (NamespaceMeta namespaceMeta : list) {
+          if (namespaceMeta.getNamespaceId().equals(NamespaceId.DEFAULT)) {
+            return true;
+          }
+        }
+
+        return false;
       }
     };
 
