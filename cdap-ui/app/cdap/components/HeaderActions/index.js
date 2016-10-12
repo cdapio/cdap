@@ -24,7 +24,7 @@ import SpotlightSearch from 'components/SpotlightSearch';
 require('./HeaderActions.less');
 var classNames = require('classnames');
 import NamespaceDropdown from 'components/NamespaceDropdown';
-import ProductsDropdown from 'components/ProductsDropdown';
+import ProductsDrawer from 'components/ProductsDrawer';
 
 export default class HeaderActions extends Component {
   constructor(props) {
@@ -137,7 +137,7 @@ export default class HeaderActions extends Component {
             <NamespaceDropdown />
           </div>
           <div className="products-dropdown">
-            <ProductsDropdown currentChoice="cdap"/>
+            <ProductsDrawer currentChoice="cdap"/>
           </div>
         </ul>
       </div>

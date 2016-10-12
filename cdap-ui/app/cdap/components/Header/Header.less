@@ -16,7 +16,6 @@
 
 @import "../../styles/variables.less";
 
-@navbar-bg: #464a56;
 @navbar-brand-bg: #363945;
 @navbar-height: 50px;
 
@@ -28,18 +27,13 @@
     border: 0;
     font-weight: 500;
 
-    &.cdap { .product-navbar-mixins(@cdap-orange, @cdap-orange); }
-    &.hydrator { .product-navbar-mixins(@hydrator-blue, #43AAFF); }
-    &.tracker { .product-navbar-mixins(@tracker-green, @tracker-green); }
-
     .brand-header {
-      width: 200px;
       float: left;
       a { color: white; }
 
       .navbar-brand {
-        border-right: 4px solid;
-        background-color: @navbar-brand-bg;
+        background-color: transparent;
+        padding: 10px;
       }
     }
 
@@ -78,7 +72,7 @@
         font-size: 14px;
         &:hover,
         &:focus {
-          background-color: inherit;
+          color: @cdap-orange;
         }
       }
     }
@@ -104,7 +98,7 @@
       font-size: 17px;
       cursor: pointer;
       float: left;
-      padding: 0 20px;
+      padding: 0 12px;
 
       .namespace-holder {
         height: inherit;
@@ -142,61 +136,6 @@
     right: 0;
     background: rgba(0, 0, 0, 0.6);
     z-index: 1040;
-
-    a.sidebar-item {
-      color: white;
-      background-color: #323232;
-      display: block;
-      &:hover { background-color: #424242; }
-    }
-
-    .sidebar {
-      width: 200px;
-      height: 100%;
-      background-color: #2c2c2c;
-      color: white;
-      font-weight: 500;
-      user-select: none;
-
-      .sidebar-item {
-        font-size: 14px;
-        line-height: 50px;
-        height: 50px;
-      }
-
-      h5 {
-        margin-left: 10px;
-        font-weight: 500;
-        color: #cccccc;
-      }
-
-      .top { border-bottom: 1px solid #666666; }
-
-      .brand {
-        height: @navbar-height;
-
-        .brand-icon,
-        .product-name {
-          float: left;
-        }
-
-        .brand-icon {
-          border-right: 4px solid;
-          padding: 16px 15px;
-          line-height: 18px;
-          height: 50px;
-          font-size: 17px;
-
-          &.cdap { border-color: @cdap-orange; }
-          &.hydrator { border-color: @hydrator-blue; }
-          &.tracker { border-color: @tracker-green; }
-        }
-        .product-name {
-          margin-left: 10px;
-        }
-
-      }
-    }
   }
 }
 
