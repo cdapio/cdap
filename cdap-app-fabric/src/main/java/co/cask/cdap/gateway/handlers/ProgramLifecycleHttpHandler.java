@@ -217,7 +217,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("type") String type,
                         @PathParam("id") String id) throws Exception {
     if (type.equals("schedules")) {
-      getScheduleStatus(responder, namespaceId, appId, id);
+      JsonObject json = new JsonObject();
+      json.addProperty("status", lifecycleService.getScheduleStatus(namespaceId, appId, id).toString());
+      responder.sendJson(HttpResponseStatus.OK, json);
       return;
     }
 
@@ -232,13 +234,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     Map<String, String> status = ImmutableMap.of("status", programStatus.name());
     responder.sendJson(HttpResponseStatus.OK, status);
-  }
-
-  private void getScheduleStatus(HttpResponder responder, String namespaceId, String appId, String scheduleName)
-    throws Exception {
-    JsonObject json = new JsonObject();
-    json.addProperty("status", lifecycleService.getScheduleStatus(namespaceId, appId, scheduleName).toString());
-    responder.sendJson(HttpResponseStatus.OK, json);
   }
 
   /**
@@ -272,7 +267,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                             @PathParam("id") String id,
                             @PathParam("action") String action) throws Exception {
     if ("schedules".equals(type)) {
-      suspendResumeSchedule(responder, namespaceId, appId, id, action);
+      lifecycleService.suspendResumeSchedule(namespaceId, appId, id, action);
+      responder.sendJson(HttpResponseStatus.OK, "OK");
       return;
     }
 
@@ -304,12 +300,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         throw new NotFoundException(String.format("%s action was not found", action));
     }
     responder.sendStatus(HttpResponseStatus.OK);
-  }
-
-  private void suspendResumeSchedule(HttpResponder responder, String namespaceId, String appId, String scheduleName,
-                                     String action) throws Exception {
-    lifecycleService.suspendResumeSchedule(namespaceId, appId, scheduleName, action);
-    responder.sendJson(HttpResponseStatus.OK, "OK");
   }
 
   /**
