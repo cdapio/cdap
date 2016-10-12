@@ -19,6 +19,7 @@ package co.cask.cdap.data.tools;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
@@ -27,14 +28,21 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import com.google.inject.Inject;
+import org.apache.commons.collections.MultiMap;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.AbstractMap;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -48,23 +56,21 @@ public class StreamStateStoreUpgrader extends AbstractQueueUpgrader {
   @Inject
   public StreamStateStoreUpgrader(LocationFactory locationFactory, HBaseTableUtil tableUtil,
                                   NamespacedLocationFactory namespacedLocationFactory, Configuration conf,
-                                  NamespaceQueryAdmin namespaceQueryAdmin) {
-    super(locationFactory, namespacedLocationFactory, tableUtil, conf, namespaceQueryAdmin);
+                                  NamespaceQueryAdmin namespaceQueryAdmin, Impersonator impersonator) {
+    super(locationFactory, namespacedLocationFactory, tableUtil, conf, namespaceQueryAdmin, impersonator);
   }
 
   @Override
-  protected Iterable<TableId> getTableIds() throws Exception {
-    return Lists.transform(namespaceQueryAdmin.list(), new Function<NamespaceMeta, TableId>() {
-      @Override
-      public TableId apply(NamespaceMeta input) {
-        try {
-          TableId tableId = StreamUtils.getStateStoreTableId(input.getNamespaceId().toId());
-          return tableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
-        } catch (IOException e) {
-          throw Throwables.propagate(e);
-        }
-      }
-    });
+  protected Multimap<NamespaceId, TableId> getTableIds() throws Exception {
+    Multimap<NamespaceId, TableId> tableIdsMap = HashMultimap.create();
+    for (NamespaceMeta namespaceMeta : namespaceQueryAdmin.list()) {
+      TableId tableId = StreamUtils.getStateStoreTableId(namespaceMeta.getNamespaceId().toId());
+      // need to convert TableId. See javadoc of StreamUtils.getStateStoreTableId
+      TableId convertedTableId =
+        tableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
+      tableIdsMap.put(namespaceMeta.getNamespaceId(), convertedTableId);
+    }
+    return tableIdsMap;
   }
 
   @Nullable

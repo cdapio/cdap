@@ -24,6 +24,8 @@ import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.security.ImpersonationUtils;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data.view.ViewAdmin;
@@ -46,13 +48,16 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.store.NamespaceStore;
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.concurrent.Callable;
 
 /**
  * Updates system metadata for existing entities.
@@ -68,11 +73,12 @@ public class ExistingEntitySystemMetadataWriter {
   private final ArtifactStore artifactStore;
   private final LocationFactory locationFactory;
   private final CConfiguration cConf;
+  private final Impersonator impersonator;
 
   @Inject
   ExistingEntitySystemMetadataWriter(MetadataStore metadataStore, NamespaceStore nsStore, Store store,
                                      ArtifactStore artifactStore, StreamAdmin streamAdmin, ViewAdmin viewAdmin,
-                                     LocationFactory locationFactory, CConfiguration cConf) {
+                                     LocationFactory locationFactory, CConfiguration cConf, Impersonator impersonator) {
     this.metadataStore = metadataStore;
     this.nsStore = nsStore;
     this.store = store;
@@ -81,6 +87,7 @@ public class ExistingEntitySystemMetadataWriter {
     this.artifactStore = artifactStore;
     this.locationFactory = locationFactory;
     this.cConf = cConf;
+    this.impersonator = impersonator;
   }
 
   public void write(DatasetFramework dsFramework) throws Exception {
@@ -136,14 +143,21 @@ public class ExistingEntitySystemMetadataWriter {
     SystemDatasetInstantiatorFactory systemDatasetInstantiatorFactory =
       new SystemDatasetInstantiatorFactory(locationFactory, dsFramework, cConf);
     try (SystemDatasetInstantiator systemDatasetInstantiator = systemDatasetInstantiatorFactory.create()) {
+      UserGroupInformation ugi = impersonator.getUGI(namespace.toEntityId());
+
       for (DatasetSpecificationSummary summary : dsFramework.getInstances(namespace)) {
-        Id.DatasetInstance dsInstance = Id.DatasetInstance.from(namespace, summary.getName());
+        final Id.DatasetInstance dsInstance = Id.DatasetInstance.from(namespace, summary.getName());
         DatasetProperties dsProperties = DatasetProperties.of(summary.getProperties());
         String dsType = summary.getType();
         Dataset dataset = null;
         try {
           try {
-            dataset = systemDatasetInstantiator.getDataset(dsInstance);
+            dataset = ImpersonationUtils.doAs(ugi, new Callable<Dataset>() {
+              @Override
+              public Dataset call() throws Exception {
+                return systemDatasetInstantiator.getDataset(dsInstance);
+              }
+            });
           } catch (Exception e) {
             LOG.warn("Exception while instantiating dataset {}", dsInstance, e);
           }

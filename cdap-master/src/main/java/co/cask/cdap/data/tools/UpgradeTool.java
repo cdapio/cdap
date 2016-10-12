@@ -413,7 +413,6 @@ public class UpgradeTool {
   }
 
   private void performCoprocessorUpgrade() throws Exception {
-
     LOG.info("Upgrading User and System HBase Tables ...");
     dsUpgrade.upgrade();
 
@@ -425,7 +424,6 @@ public class UpgradeTool {
     try {
       UpgradeTool upgradeTool = new UpgradeTool();
       upgradeTool.doMain(args);
-      LOG.info("Upgrade completed successfully");
     } catch (Throwable t) {
       LOG.error("Failed to upgrade ...", t);
       System.exit(1);
