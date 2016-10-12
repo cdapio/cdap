@@ -27,8 +27,6 @@ require('./Home.less');
 
 const defaultFilter = ['app', 'dataset', 'stream'];
 
-//To-Do:
-//1. Update the new sort options to accept i18n
 class Home extends Component {
   constructor(props) {
     super(props);
@@ -52,16 +50,16 @@ class Home extends Component {
     ];
     this.sortOptions = [
       {
-        displayName: T.translate('features.Home.Header.sortOptions.nameAsc'),
-        sort: 'name',
-        order: 'asc',
-        fullSort: 'name asc'
+        displayName: T.translate('features.Home.Header.sortOptions.nameAsc.displayName'),
+        sort: T.translate('features.Home.Header.sortOptions.nameAsc.sortField'),
+        order: T.translate('features.Home.Header.sortOptions.nameAsc.sortOrder'),
+        fullSort: T.translate('features.Home.Header.sortOptions.nameAsc.fullSort')
       },
       {
-        displayName: T.translate('features.Home.Header.sortOptions.nameDesc'),
-        sort: 'name',
-        order: 'desc',
-        fullSort: 'name desc'
+        displayName: T.translate('features.Home.Header.sortOptions.nameDesc.displayName'),
+        sort: T.translate('features.Home.Header.sortOptions.nameDesc.sortField'),
+        order: T.translate('features.Home.Header.sortOptions.nameDesc.sortOrder'),
+        fullSort: T.translate('features.Home.Header.sortOptions.nameDesc.fullSort')
       }
     ];
     this.state = {
@@ -102,7 +100,7 @@ class Home extends Component {
 
   //Construct and return query object from query parameters
   getQueryObject() {
-    let filters = [];
+    let filters = '';
     let sortBy = '';
     let orderBy = '';
     let searchTerm = '';
@@ -183,6 +181,9 @@ class Home extends Component {
   }
 
   handleSortClick(option) {
+    this.setState({
+      sortObj : option
+    });
     this.search(this.state.query, this.state.filter, option);
   }
 

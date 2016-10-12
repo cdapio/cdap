@@ -70,8 +70,16 @@ features:
       search-placeholder: Search entities ...
       sort: Sort
       sortOptions:
-        nameAsc: A - Z
-        nameDesc: Z - A
+        nameAsc:
+          displayName: A - Z
+          sortField: name
+          sortOrder: asc
+          fullSort: name asc
+        nameDesc:
+          displayName: Z - A
+          sortField: name
+          sortOrder: desc
+          fullSort: name desc
     FastActions:
       deleteConfirmation: Are you sure you want to delete {entityId}?
       truncateConfirmation: Are you sure you want to truncate {entityId}?
