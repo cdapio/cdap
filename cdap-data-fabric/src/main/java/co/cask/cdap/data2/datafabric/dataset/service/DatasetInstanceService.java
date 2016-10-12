@@ -37,7 +37,6 @@ import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.id.DatasetId;
@@ -146,7 +145,7 @@ public class DatasetInstanceService {
    * Gets a dataset instance.
    *
    * @param instance instance to get
-   * @param owners the {@link Id}s that will be using the dataset instance
+   * @param owners the {@link EntityId entities} that will be using the dataset instance
    * @return the dataset instance's {@link DatasetMeta}
    * @throws NotFoundException if either the namespace or dataset instance is not found,
    * @throws IOException if there is a problem in making an HTTP request to check if the namespace exists
@@ -233,13 +232,13 @@ public class DatasetInstanceService {
     DatasetId newInstance = ConversionHelpers.toDatasetInstanceId(namespaceId, name);
     DatasetSpecification existing = instanceManager.get(newInstance);
     if (existing != null) {
-      throw new DatasetAlreadyExistsException(newInstance.toId());
+      throw new DatasetAlreadyExistsException(newInstance);
     }
 
     DatasetTypeMeta typeMeta = getTypeInfo(namespace, props.getTypeName());
     if (typeMeta == null) {
       // Type not found in the instance's namespace and the system namespace. Bail out.
-      throw new DatasetTypeNotFoundException(ConversionHelpers.toDatasetTypeId(namespace, props.getTypeName()).toId());
+      throw new DatasetTypeNotFoundException(ConversionHelpers.toDatasetTypeId(namespace, props.getTypeName()));
     }
 
     // It is now determined that a new dataset will be created. First grant privileges, then create the dataset.
@@ -290,7 +289,7 @@ public class DatasetInstanceService {
     ensureNamespaceExists(instance.getParent());
     DatasetSpecification existing = instanceManager.get(instance);
     if (existing == null) {
-      throw new DatasetNotFoundException(instance.toId());
+      throw new DatasetNotFoundException(instance);
     }
 
     LOG.info("Update dataset {}, properties: {}", instance.getEntityName(), ConversionHelpers.toJson(properties));
@@ -300,7 +299,7 @@ public class DatasetInstanceService {
     if (typeMeta == null) {
       // Type not found in the instance's namespace and the system namespace. Bail out.
       throw new DatasetTypeNotFoundException(
-        ConversionHelpers.toDatasetTypeId(instance.getParent(), existing.getType()).toId());
+        ConversionHelpers.toDatasetTypeId(instance.getParent(), existing.getType()));
     }
 
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
@@ -329,7 +328,7 @@ public class DatasetInstanceService {
     ensureNamespaceExists(instance.getParent());
     DatasetSpecification spec = instanceManager.get(instance);
     if (spec == null) {
-      throw new DatasetNotFoundException(instance.toId());
+      throw new DatasetNotFoundException(instance);
     }
 
     authorizationEnforcer.enforce(instance, authenticationContext.getPrincipal(), Action.ADMIN);
@@ -393,7 +392,7 @@ public class DatasetInstanceService {
         break;
       case "truncate":
         if (instanceManager.get(instance) == null) {
-          throw new DatasetNotFoundException(instance.toId());
+          throw new DatasetNotFoundException(instance);
         }
         authorizationEnforcer.enforce(instance, principal, Action.ADMIN);
         opExecutorClient.truncate(instance);
@@ -401,7 +400,7 @@ public class DatasetInstanceService {
         break;
       case "upgrade":
         if (instanceManager.get(instance) == null) {
-          throw new DatasetNotFoundException(instance.toId());
+          throw new DatasetNotFoundException(instance);
         }
         authorizationEnforcer.enforce(instance, principal, Action.ADMIN);
         opExecutorClient.upgrade(instance);
@@ -453,13 +452,13 @@ public class DatasetInstanceService {
     disableExplore(instance);
 
     if (!instanceManager.delete(instance)) {
-      throw new DatasetNotFoundException(instance.toId());
+      throw new DatasetNotFoundException(instance);
     }
     metaCache.invalidate(instance);
 
     DatasetTypeMeta typeMeta = getTypeInfo(instance.getParent(), spec.getType());
     if (typeMeta == null) {
-      throw new DatasetNotFoundException(instance.toId());
+      throw new DatasetNotFoundException(instance);
     }
     opExecutorClient.drop(instance, typeMeta, spec);
 
@@ -514,7 +513,7 @@ public class DatasetInstanceService {
   private void ensureNamespaceExists(NamespaceId namespace) throws Exception {
     if (!NamespaceId.SYSTEM.equals(namespace)) {
       if (!namespaceQueryAdmin.exists(namespace.toId())) {
-        throw new NamespaceNotFoundException(namespace.toId());
+        throw new NamespaceNotFoundException(namespace);
       }
     }
   }

@@ -93,7 +93,7 @@ public class StreamViewClient {
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(id);
+      throw new NotFoundException(id.toEntityId());
     }
   }
 
@@ -123,7 +123,7 @@ public class StreamViewClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(id);
+      throw new NotFoundException(id.toEntityId());
     }
     return ObjectResponse.fromJsonBody(response, ViewDetail.class, GSON).getResponseObject();
   }

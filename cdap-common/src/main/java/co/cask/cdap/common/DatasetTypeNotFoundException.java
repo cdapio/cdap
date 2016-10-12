@@ -16,21 +16,21 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetTypeId;
 
 /**
  * Thrown when a dataset type is not found
  */
 public class DatasetTypeNotFoundException extends NotFoundException {
 
-  private final Id.DatasetType id;
+  private final DatasetTypeId id;
 
-  public DatasetTypeNotFoundException(Id.DatasetType id) {
+  public DatasetTypeNotFoundException(DatasetTypeId id) {
     super(id);
     this.id = id;
   }
 
-  public Id.DatasetType getId() {
+  public DatasetTypeId getId() {
     return id;
   }
 }

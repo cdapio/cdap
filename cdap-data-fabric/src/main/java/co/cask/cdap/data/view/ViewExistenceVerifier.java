@@ -47,7 +47,7 @@ public class ViewExistenceVerifier implements EntityExistenceVerifier<StreamView
       throw Throwables.propagate(e);
     }
     if (!exists) {
-      throw new ViewNotFoundException(viewId.toId());
+      throw new ViewNotFoundException(viewId);
     }
   }
 }

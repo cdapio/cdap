@@ -17,21 +17,21 @@
 package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ScheduleId;
 
 /**
  * Thrown when a schedule is not found.
  */
 public class ScheduleNotFoundException extends NotFoundException {
 
-  private final Id.Schedule id;
+  private final ScheduleId scheduleId;
 
-  public ScheduleNotFoundException(Id.Schedule id) {
-    super(id);
-    this.id = id;
+  public ScheduleNotFoundException(ScheduleId scheduleId) {
+    super(scheduleId);
+    this.scheduleId = scheduleId;
   }
 
-  public Id.Schedule getId() {
-    return id;
+  public ScheduleId getScheduleId() {
+    return scheduleId;
   }
 }

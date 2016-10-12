@@ -128,7 +128,7 @@ public class PluginService extends AbstractIdleService {
     // get parent artifacts
     Set<ArtifactRange> parentArtifactRanges = artifactDetail.getMeta().getUsableBy();
     if (parentArtifactRanges.isEmpty()) {
-      throw new ArtifactNotFoundException(artifact);
+      throw new ArtifactNotFoundException(artifact.toEntityId());
     }
 
     // just pick the first parent artifact from the set.
@@ -137,7 +137,7 @@ public class PluginService extends AbstractIdleService {
     List<ArtifactDetail> artifactDetails = artifactRepository.getArtifacts(parentArtifactRange);
     if (artifactDetails.isEmpty()) {
       // should not happen
-      throw new ArtifactNotFoundException(artifact);
+      throw new ArtifactNotFoundException(artifact.toEntityId());
     }
 
     // return the first one from the artifact details list.

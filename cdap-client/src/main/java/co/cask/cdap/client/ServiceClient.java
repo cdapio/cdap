@@ -77,7 +77,7 @@ public class ServiceClient {
                                                HttpURLConnection.HTTP_NOT_FOUND);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(service);
+      throw new NotFoundException(service.toEntityId());
     }
     return ObjectResponse.fromJsonBody(response, ServiceSpecification.class).getResponseObject();
   }
@@ -121,7 +121,7 @@ public class ServiceClient {
                                                HttpURLConnection.HTTP_NOT_FOUND, HttpURLConnection.HTTP_BAD_REQUEST,
                                                HttpURLConnection.HTTP_UNAVAILABLE);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(service);
+      throw new NotFoundException(service.toEntityId());
     }
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_UNAVAILABLE) {

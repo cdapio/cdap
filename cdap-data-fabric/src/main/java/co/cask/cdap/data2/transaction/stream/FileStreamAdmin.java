@@ -548,7 +548,7 @@ public class FileStreamAdmin implements StreamAdmin {
         @Override
         public Void call() throws Exception {
           if (!exists(stream)) {
-            throw new StreamNotFoundException(stream.toId());
+            throw new StreamNotFoundException(stream);
           }
           viewAdmin.delete(viewId);
           return null;
@@ -559,7 +559,7 @@ public class FileStreamAdmin implements StreamAdmin {
   @Override
   public List<StreamViewId> listViews(final StreamId streamId) throws Exception {
     if (!exists(streamId)) {
-      throw new StreamNotFoundException(streamId.toId());
+      throw new StreamNotFoundException(streamId);
     }
     return viewAdmin.list(streamId);
   }
@@ -568,7 +568,7 @@ public class FileStreamAdmin implements StreamAdmin {
   public ViewSpecification getView(final StreamViewId viewId) throws Exception {
     final StreamId stream = viewId.getParent();
     if (!exists(stream)) {
-      throw new StreamNotFoundException(stream.toId());
+      throw new StreamNotFoundException(stream);
     }
     return viewAdmin.get(viewId);
   }
@@ -577,7 +577,7 @@ public class FileStreamAdmin implements StreamAdmin {
   public boolean viewExists(StreamViewId viewId) throws Exception {
     StreamId stream = viewId.getParent();
     if (!exists(stream)) {
-      throw new StreamNotFoundException(stream.toId());
+      throw new StreamNotFoundException(stream);
     }
     return viewAdmin.exists(viewId);
   }

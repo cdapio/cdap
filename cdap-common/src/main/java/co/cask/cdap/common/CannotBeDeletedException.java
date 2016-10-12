@@ -16,36 +16,36 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.EntityId;
 
 /**
  * Thrown when an element cannot be deleted.
  */
 public class CannotBeDeletedException extends ConflictException {
 
-  private final Id objectId;
+  private final EntityId entityId;
   private final String reason;
 
-  public CannotBeDeletedException(Id id) {
+  public CannotBeDeletedException(EntityId id) {
     super(String.format("'%s' could not be deleted", id));
-    this.objectId = id;
+    this.entityId = id;
     this.reason = null;
   }
 
-  public CannotBeDeletedException(Id id, String reason) {
+  public CannotBeDeletedException(EntityId id, String reason) {
     super(String.format("'%s' could not be deleted. Reason: %s", id, reason));
-    this.objectId = id;
+    this.entityId = id;
     this.reason = reason;
   }
 
-  public CannotBeDeletedException(Id id, Throwable cause) {
+  public CannotBeDeletedException(EntityId id, Throwable cause) {
     super(String.format("'%s' could not be deleted. Reason: %s", id, cause.getMessage()), cause);
-    this.objectId = id;
+    this.entityId = id;
     this.reason = cause.getMessage();
   }
 
-  public Id getObjectId() {
-    return objectId;
+  public EntityId getEntityId() {
+    return entityId;
   }
 
   public String getReason() {

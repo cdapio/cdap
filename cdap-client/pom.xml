@@ -81,10 +81,6 @@
         </exclusion>
         <exclusion>
           <groupId>org.apache.twill</groupId>
-          <artifactId>twill-api</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.apache.twill</groupId>
           <artifactId>twill-zookeeper</artifactId>
         </exclusion>
         <exclusion>

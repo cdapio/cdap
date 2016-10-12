@@ -16,21 +16,21 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamViewId;
 
 /**
  * Thrown when a view is not found
  */
 public class ViewNotFoundException extends NotFoundException {
 
-  private final Id.Stream.View id;
+  private final StreamViewId id;
 
-  public ViewNotFoundException(Id.Stream.View id) {
+  public ViewNotFoundException(StreamViewId id) {
     super(id);
     this.id = id;
   }
 
-  public Id.Stream.View getId() {
+  public StreamViewId getId() {
     return id;
   }
 }

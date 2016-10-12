@@ -121,7 +121,7 @@ public class ArtifactClient {
       restClient.execute(HttpMethod.GET, url, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(namespace);
+      throw new NotFoundException(namespace.toEntityId());
     }
     return ObjectResponse.<List<ArtifactSummary>>fromJsonBody(response, ARTIFACT_SUMMARIES_TYPE).getResponseObject();
   }
@@ -161,7 +161,7 @@ public class ArtifactClient {
     HttpResponse response = restClient.execute(
       HttpMethod.GET, url, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ArtifactNotFoundException(namespace, artifactName);
+      throw new ArtifactNotFoundException(namespace.toEntityId(), artifactName);
     }
     return ObjectResponse.<List<ArtifactSummary>>fromJsonBody(response, ARTIFACT_SUMMARIES_TYPE).getResponseObject();
   }
@@ -206,7 +206,7 @@ public class ArtifactClient {
     HttpResponse response =
       restClient.execute(HttpMethod.GET, url, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ArtifactNotFoundException(artifactId);
+      throw new ArtifactNotFoundException(artifactId.toEntityId());
     }
     return ObjectResponse.fromJsonBody(response, ArtifactInfo.class, GSON).getResponseObject();
   }
@@ -319,7 +319,7 @@ public class ArtifactClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ArtifactNotFoundException(artifactId);
+      throw new ArtifactNotFoundException(artifactId.toEntityId());
     }
     return ObjectResponse.<List<String>>fromJsonBody(response, EXTENSIONS_TYPE).getResponseObject();
   }
@@ -366,7 +366,7 @@ public class ArtifactClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ArtifactNotFoundException(artifactId);
+      throw new ArtifactNotFoundException(artifactId.toEntityId());
     }
     return ObjectResponse.<List<PluginSummary>>fromJsonBody(response, PLUGIN_SUMMARIES_TYPE).getResponseObject();
   }
@@ -590,7 +590,7 @@ public class ArtifactClient {
 
     int responseCode = response.getResponseCode();
     if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ArtifactNotFoundException(artifactId);
+      throw new ArtifactNotFoundException(artifactId.toEntityId());
     } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(response.getResponseBodyAsString());
     }
@@ -620,7 +620,7 @@ public class ArtifactClient {
 
     int responseCode = response.getResponseCode();
     if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ArtifactNotFoundException(artifactId);
+      throw new ArtifactNotFoundException(artifactId.toEntityId());
     } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(response.getResponseBodyAsString());
     }
@@ -654,7 +654,7 @@ public class ArtifactClient {
 
     int responseCode = response.getResponseCode();
     if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ArtifactNotFoundException(artifactId);
+      throw new ArtifactNotFoundException(artifactId.toEntityId());
     } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(response.getResponseBodyAsString());
     }
@@ -686,7 +686,7 @@ public class ArtifactClient {
 
     int responseCode = response.getResponseCode();
     if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ArtifactNotFoundException(artifactId);
+      throw new ArtifactNotFoundException(artifactId.toEntityId());
     } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(response.getResponseBodyAsString());
     }

@@ -35,7 +35,7 @@ public class InMemoryEntityExistenceVerifier implements EntityExistenceVerifier 
   @Override
   public void ensureExists(EntityId entityId) throws NotFoundException {
     if (!entities.contains(entityId)) {
-      throw new NotFoundException(entityId.toId());
+      throw new NotFoundException(entityId);
     }
   }
 }

@@ -17,25 +17,21 @@
 package co.cask.cdap.common;
 
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 
 /**
  * Thrown when a namespace cannot be created due to errors.
  */
 public class NamespaceCannotBeCreatedException extends CannotBeCreatedException {
 
-  private final Id.Namespace namespaceId;
+  private final NamespaceId namespaceId;
 
-  public NamespaceCannotBeCreatedException(Id.Namespace namespaceId, String reason) {
-    super(namespaceId, reason);
-    this.namespaceId = namespaceId;
-  }
-
-  public NamespaceCannotBeCreatedException(Id.Namespace namespaceId, Throwable cause) {
+  public NamespaceCannotBeCreatedException(NamespaceId namespaceId, Throwable cause) {
     super(namespaceId, cause);
     this.namespaceId = namespaceId;
   }
 
-  public Id.Namespace getNamespaceId() {
+  public NamespaceId getNamespaceId() {
     return namespaceId;
   }
 }

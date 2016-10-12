@@ -62,7 +62,7 @@ public abstract class AbstractNamespaceQueryClient implements NamespaceQueryAdmi
     HttpResponse response =
       execute(HttpRequest.get(resolve(String.format("namespaces/%s", namespaceId.getId()))).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NamespaceNotFoundException(namespaceId);
+      throw new NamespaceNotFoundException(namespaceId.toEntityId());
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return ObjectResponse.fromJsonBody(response, NamespaceMeta.class).getResponseObject();
     }

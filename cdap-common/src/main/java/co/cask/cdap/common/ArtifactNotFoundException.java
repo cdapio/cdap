@@ -16,18 +16,19 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 
 /**
  * Thrown when an artifact does not exist.
  */
 public class ArtifactNotFoundException extends NotFoundException {
 
-  public ArtifactNotFoundException(Id.Namespace namespace, String name) {
-    super("artifact", namespace.getId() + ":" + name);
+  public ArtifactNotFoundException(NamespaceId namespace, String name) {
+    super("artifact", namespace.getNamespace() + ":" + name);
   }
 
-  public ArtifactNotFoundException(Id.Artifact artifactId) {
+  public ArtifactNotFoundException(ArtifactId artifactId) {
     super("artifact", artifactId.toString());
   }
 }

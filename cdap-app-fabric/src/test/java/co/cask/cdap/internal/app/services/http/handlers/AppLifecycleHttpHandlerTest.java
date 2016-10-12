@@ -35,7 +35,6 @@ import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -62,7 +61,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testDeployNonExistingNamespace() throws Exception {
     HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, "random");
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
-    NotFoundException nfe = new NamespaceNotFoundException(Id.Namespace.from("random"));
+    NotFoundException nfe = new NamespaceNotFoundException(new NamespaceId("random"));
     Assert.assertEquals(nfe.getMessage(), readResponse(response));
   }
 
@@ -413,7 +412,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
       String.format("apps/%s/versions/%s", wordCountApp1.getApplication(), wordCountApp1.getVersion()),
       Constants.Gateway.API_VERSION_3_TOKEN, wordCountApp1.getNamespace()));
     Assert.assertEquals(409, response.getStatusLine().getStatusCode());
-    Assert.assertEquals("'" + program1.getParent().toId() + "' could not be deleted. Reason: The following programs" +
+    Assert.assertEquals("'" + program1.getParent() + "' could not be deleted. Reason: The following programs" +
                           " are still running: " + program1.getProgram(), readResponse(response));
 
     stopProgram(program1, null, 200, null);

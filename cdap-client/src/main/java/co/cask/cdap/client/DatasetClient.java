@@ -30,6 +30,7 @@ import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -105,7 +106,7 @@ public class DatasetClient {
                                             String.format("data/datasets/%s", instance.getId()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(instance);
+      throw new NotFoundException(instance.toEntityId());
     }
     return ObjectResponse.fromJsonBody(response, DatasetMeta.class).getResponseObject();
   }
@@ -131,9 +132,9 @@ public class DatasetClient {
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND,
                                                HttpURLConnection.HTTP_CONFLICT);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new DatasetTypeNotFoundException(Id.DatasetType.from(instance.getNamespace(), properties.getTypeName()));
+      throw new DatasetTypeNotFoundException(new DatasetTypeId(instance.getNamespaceId(), properties.getTypeName()));
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
-      throw new DatasetAlreadyExistsException(instance);
+      throw new DatasetAlreadyExistsException(instance.toEntityId());
     }
   }
 
@@ -171,7 +172,7 @@ public class DatasetClient {
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND,
                                                HttpURLConnection.HTTP_CONFLICT);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(instance);
+      throw new NotFoundException(instance.toEntityId());
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
       throw new ConflictException(response.getResponseBodyAsString());
     }
@@ -214,7 +215,7 @@ public class DatasetClient {
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new DatasetNotFoundException(instance);
+      throw new DatasetNotFoundException(instance.toEntityId());
     }
   }
 
@@ -313,7 +314,7 @@ public class DatasetClient {
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(instance);
+      throw new NotFoundException(instance.toEntityId());
     }
     return ObjectResponse.fromJsonBody(response, new TypeToken<Map<String, String>>() { }).getResponseObject();
   }

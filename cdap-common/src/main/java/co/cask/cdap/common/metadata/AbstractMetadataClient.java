@@ -1122,7 +1122,7 @@ public abstract class AbstractMetadataClient {
       throw new BadRequestException(response.getResponseBodyAsString());
     }
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(namespacedId);
+      throw new NotFoundException(namespacedId.toEntityId());
     }
     return response;
   }

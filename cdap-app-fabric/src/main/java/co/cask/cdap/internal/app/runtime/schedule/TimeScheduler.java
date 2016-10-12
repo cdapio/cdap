@@ -25,7 +25,6 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.internal.schedule.TimeSchedule;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -492,7 +491,7 @@ final class TimeScheduler implements Scheduler {
     throws org.quartz.SchedulerException, ScheduleNotFoundException {
     Trigger trigger = scheduler.getTrigger(getGroupedTriggerKey(program, programType, scheduleName));
     if (trigger == null) {
-      throw new ScheduleNotFoundException(Id.Schedule.from(program.getParent().toId(), scheduleName));
+      throw new ScheduleNotFoundException(program.getParent().schedule(scheduleName));
     }
     return  trigger;
   }

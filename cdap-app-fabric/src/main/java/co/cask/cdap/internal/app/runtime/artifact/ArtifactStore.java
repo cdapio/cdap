@@ -276,7 +276,7 @@ public class ArtifactStore {
             addArtifactsToList(artifacts, row);
           }
           if (artifacts.isEmpty()) {
-            throw new ArtifactNotFoundException(namespace.toId(), artifactName);
+            throw new ArtifactNotFoundException(namespace, artifactName);
           }
 
           return Collections.unmodifiableList(artifacts);
@@ -303,7 +303,7 @@ public class ArtifactStore {
           ArtifactCell artifactCell = new ArtifactCell(artifactId);
           byte[] value = getMetaTable(context).get(artifactCell.rowkey, artifactCell.column);
           if (value == null) {
-            throw new ArtifactNotFoundException(artifactId);
+            throw new ArtifactNotFoundException(artifactId.toEntityId());
           }
           return GSON.fromJson(Bytes.toString(value), ArtifactData.class);
         }
@@ -426,7 +426,7 @@ public class ArtifactStore {
 
           SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins = getPluginsInArtifact(metaTable, parentArtifactId);
           if (plugins == null) {
-            throw new ArtifactNotFoundException(parentArtifactId);
+            throw new ArtifactNotFoundException(parentArtifactId.toEntityId());
           }
 
           // should be able to scan by column prefix as well... instead, we have to filter out by namespace
@@ -474,7 +474,7 @@ public class ArtifactStore {
             });
 
           if (plugins == null) {
-            throw new ArtifactNotFoundException(parentArtifactId);
+            throw new ArtifactNotFoundException(parentArtifactId.toEntityId());
           }
 
           try (Scanner scanner = metaTable.scan(scanPlugins(parentArtifactId, type))) {
@@ -520,7 +520,7 @@ public class ArtifactStore {
             ArtifactCell parentCell = new ArtifactCell(parentArtifactId);
             byte[] parentDataBytes = metaTable.get(parentCell.rowkey, parentCell.column);
             if (parentDataBytes == null) {
-              throw new ArtifactNotFoundException(parentArtifactId);
+              throw new ArtifactNotFoundException(parentArtifactId.toEntityId());
             }
 
             SortedMap<ArtifactDescriptor, PluginClass> plugins = new TreeMap<>();
@@ -585,7 +585,7 @@ public class ArtifactStore {
           Table metaTable = getMetaTable(context);
           byte[] existingMetaBytes = metaTable.get(artifactCell.rowkey, artifactCell.column);
           if (existingMetaBytes == null) {
-            throw new ArtifactNotFoundException(artifactId);
+            throw new ArtifactNotFoundException(artifactId.toEntityId());
           }
 
           ArtifactData old = GSON.fromJson(Bytes.toString(existingMetaBytes), ArtifactData.class);
@@ -628,7 +628,7 @@ public class ArtifactStore {
           @Override
           public void run(DatasetContext context) throws Exception {
             if (getMetaTable(context).get(artifactCell.rowkey, artifactCell.column) != null) {
-              throw new ArtifactAlreadyExistsException(artifactId);
+              throw new ArtifactAlreadyExistsException(artifactId.toEntityId());
             }
           }
         });
@@ -657,7 +657,7 @@ public class ArtifactStore {
           boolean isSnapshot = artifactId.getVersion().isSnapshot();
           if (existingMetaBytes != null && !isSnapshot) {
             // non-snapshot artifacts are immutable. If there is existing metadata, stop here.
-            throw new ArtifactAlreadyExistsException(artifactId);
+            throw new ArtifactAlreadyExistsException(artifactId.toEntityId());
           }
 
           ArtifactData data = new ArtifactData(destination, artifactMeta);

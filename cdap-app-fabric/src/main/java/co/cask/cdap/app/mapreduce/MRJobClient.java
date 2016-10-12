@@ -23,6 +23,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.MRJobInfo;
 import co.cask.cdap.proto.MRTaskInfo;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -35,8 +36,6 @@ import org.apache.hadoop.mapred.JobStatus;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapred.TaskReport;
 import org.apache.hadoop.mapreduce.TaskCounter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -48,7 +47,6 @@ import java.util.Map;
  * from the Job History Server.
  */
 public class MRJobClient implements MRJobInfoFetcher {
-  private static final Logger LOG = LoggerFactory.getLogger(MRJobClient.class);
   private final Configuration hConf;
 
   @Inject
@@ -72,7 +70,7 @@ public class MRJobClient implements MRJobInfoFetcher {
     JobClient jobClient = new JobClient(hConf);
     JobStatus[] jobs = jobClient.getAllJobs();
 
-    JobStatus thisJob = findJobForRunId(jobs, runId);
+    JobStatus thisJob = findJobForRunId(jobs, runId.toEntityId());
 
     RunningJob runningJob = jobClient.getJob(thisJob.getJobID());
     if (runningJob == null) {
@@ -89,9 +87,9 @@ public class MRJobClient implements MRJobInfoFetcher {
                          toMRTaskInfos(mapTaskReports), toMRTaskInfos(reduceTaskReports), true);
   }
 
-  private JobStatus findJobForRunId(JobStatus[] jobs, Id.Run runId) throws NotFoundException {
+  private JobStatus findJobForRunId(JobStatus[] jobs, ProgramRunId runId) throws NotFoundException {
     for (JobStatus job : jobs) {
-      if (job.getJobName().startsWith(runId.getId())) {
+      if (job.getJobName().startsWith(runId.getRun())) {
         return job;
       }
     }
