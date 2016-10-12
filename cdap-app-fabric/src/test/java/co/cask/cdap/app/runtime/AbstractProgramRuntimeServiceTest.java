@@ -25,7 +25,6 @@ import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.security.DefaultImpersonator;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
@@ -81,8 +80,7 @@ public class AbstractProgramRuntimeServiceTest {
     final Program program = createDummyProgram();
 
     final ProgramRuntimeService runtimeService =
-      new AbstractProgramRuntimeService(CConfiguration.create(), runnerFactory, null,
-                                        new DefaultImpersonator(CConfiguration.create(), null, null)) {
+      new AbstractProgramRuntimeService(CConfiguration.create(), runnerFactory, null) {
       @Override
       public ProgramLiveInfo getLiveInfo(Id.Program programId) {
         return new ProgramLiveInfo(programId, "runtime") { };
@@ -156,8 +154,7 @@ public class AbstractProgramRuntimeServiceTest {
 
     final Program program = createDummyProgram();
     final ProgramRuntimeService runtimeService =
-      new AbstractProgramRuntimeService(CConfiguration.create(), runnerFactory, null,
-                                        new DefaultImpersonator(CConfiguration.create(), null, null)) {
+      new AbstractProgramRuntimeService(CConfiguration.create(), runnerFactory, null) {
       @Override
       public ProgramLiveInfo getLiveInfo(Id.Program programId) {
         return new ProgramLiveInfo(programId, "runtime") { };
@@ -378,8 +375,7 @@ public class AbstractProgramRuntimeServiceTest {
     protected TestProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
                                         @Nullable ArtifactRepository artifactRepository,
                                         @Nullable RuntimeInfo extraInfo) {
-      super(cConf, programRunnerFactory, artifactRepository,
-            new DefaultImpersonator(CConfiguration.create(), null, null));
+      super(cConf, programRunnerFactory, artifactRepository);
       this.extraInfo = extraInfo;
     }
 
