@@ -27,6 +27,8 @@ require('./Home.less');
 
 const defaultFilter = ['app', 'dataset', 'stream'];
 
+//To-Do:
+//1. Update the new sort options to accept i18n
 class Home extends Component {
   constructor(props) {
     super(props);
@@ -39,10 +41,6 @@ class Home extends Component {
         displayName: T.translate('commons.entity.artifact.plural'),
         id: 'artifact'
       },
-      // {
-      //   displayName: T.translate('commons.entity.program.plural'),
-      //   id: 'program'
-      // },
       {
         displayName: T.translate('commons.entity.dataset.plural'),
         id: 'dataset'
@@ -51,19 +49,19 @@ class Home extends Component {
         displayName: T.translate('commons.entity.stream.plural'),
         id: 'stream'
       }
-      // {
-      //   displayName: T.translate('commons.entity.view.plural'),
-      //   id: 'view'
-      // },
     ];
     this.sortOptions = [
       {
         displayName: T.translate('features.Home.Header.sortOptions.nameAsc'),
-        sort: 'name asc'
+        sort: 'name',
+        order: 'asc',
+        fullSort: 'name asc'
       },
       {
         displayName: T.translate('features.Home.Header.sortOptions.nameDesc'),
-        sort: 'name desc'
+        sort: 'name',
+        order: 'desc',
+        fullSort: 'name desc'
       }
     ];
     this.state = {
@@ -74,38 +72,13 @@ class Home extends Component {
       selectedEntity: null,
       loading: true
     };
-    this.makeSortFilterParams = this.makeSortFilterParams.bind(this);
-    this.processQueryString = this.processQueryString.bind(this);
+    this.updateQueryString = this.updateQueryString.bind(this);
+    this.getQueryObject = this.getQueryObject.bind(this);
   }
-
   componentWillReceiveProps(nextProps) {
     this.search(this.state.query, this.state.filter, this.state.sortObj, nextProps.params.namespace);
   }
-
-  processQueryString() {
-    let filtersArr = [];
-    let sortTerm = '';
-    let searchTerm = '';
-    let sortOpt;
-
-    if(this.props.location.query){
-      filtersArr = this.props.location.query.filter ? this.props.location.query.filter.split(',') : [];
-      sortTerm = this.props.location.query.sort ? this.props.location.query.sort : '';
-      searchTerm = this.props.location.query.search ? this.props.location.query.search : '';
-    }
-
-    sortOpt = this.sortOptions.filter((option) => {
-      return option.sort === sortTerm;
-    });
-
-    return {
-      'filter' : filtersArr,
-      'sort' : sortOpt[0],
-      'search' : searchTerm
-    };
-  }
-
-  componentDidMount() {
+  componentWillMount() {
     Store.dispatch({
       type: 'SELECT_NAMESPACE',
       payload: {
@@ -113,22 +86,52 @@ class Home extends Component {
       }
     });
 
-    //Parse URL and apply filters / sort
-    let filterSortObj = this.processQueryString();
-    let urlFilters;
-    let urlSort;
-    let urlSearch;
+    //Set state of application filters to match that of query string
+    let queryObject = this.getQueryObject();
+    this.setState({
+      filter: queryObject.filter,
+      sortObj: queryObject.sort,
+      query: queryObject.query
+    });
+  }
 
-    if(typeof filterSortObj.filter !== 'undefined' && filterSortObj.filter.length === 0){
-      urlFilters = this.state.filter;
-    } else {
-      urlFilters = filterSortObj.filter;
+  //Retrieve entities for rendering
+  componentDidMount(){
+    this.search();
+  }
+
+  //Construct and return query object from query parameters
+  getQueryObject() {
+    let filters = [];
+    let sortBy = '';
+    let orderBy = '';
+    let searchTerm = '';
+    let sortOption = '';
+    let query = this.props.location.query;
+
+    //Get filters, order, sort, search from query
+    if(query){
+      orderBy = typeof query.order === 'string' ? query.order : '';
+      sortBy = typeof query.sort === 'string' ? query.sort : '';
+      searchTerm = typeof query.q === 'string' ? query.q : '';
+      if(typeof query.filter === 'string'){
+        filters = [query.filter];
+      } else if(Array.isArray(query.filter)){
+        filters = query.filter;
+      }
     }
 
-    urlSearch = filterSortObj.search;
-    urlSort = filterSortObj.sort;
+    //Ensure sort combination is valid
+    sortOption = this.sortOptions.filter((option) => {
+      return ( sortBy === option.sort && orderBy === option.order);
+    });
 
-    this.search(urlSearch, urlFilters, urlSort);
+    //If query parameters are valid return those else return the current state's parameters
+    return ({
+      'query' : searchTerm ? searchTerm : this.state.query,
+      'sort' : sortOption.length === 0 ? this.state.sortObj : sortOption[0],
+      'filter' : filters ? filters : this.state.filter
+    });
   }
 
   search(
@@ -137,7 +140,7 @@ class Home extends Component {
     sortObj = this.state.sortObj,
     namespace = this.props.params.namespace
   ) {
-
+    //No entity types requested - set state and return
     if (filter.length === 0) {
       this.setState({query, filter, sortObj, entities: [], selectedEntity: null, loading: false});
       return;
@@ -149,7 +152,7 @@ class Home extends Component {
       namespace: namespace,
       query: `${query}*`,
       target: filter,
-      sort: sortObj.sort
+      sort: sortObj.fullSort
     };
 
     MySearchApi.search(params)
@@ -168,15 +171,15 @@ class Home extends Component {
   }
 
   handleFilterClick(option) {
-    let arr = [...this.state.filter];
+    let filters = [...this.state.filter];
     if (this.state.filter.includes(option.id)) {
-      let index = arr.indexOf(option.id);
-      arr.splice(index, 1);
+      let index = filters.indexOf(option.id);
+      filters.splice(index, 1);
     } else {
-      arr.push(option.id);
+      filters.push(option.id);
     }
 
-    this.search(this.state.query, arr, this.state.sortObj);
+    this.search(this.state.query, filters, this.state.sortObj);
   }
 
   handleSortClick(option) {
@@ -191,44 +194,51 @@ class Home extends Component {
     this.setState({selectedEntity: uniqueId});
   }
 
-  makeSortFilterParams(){
-    let sortAndFilterParams = '';
-    let sortParams = '';
-    let filterParams = '';
-    let searchParams = '';
+  //Set query string using application state
+  updateQueryString(){
+    let queryString = '';
+    let sort = '';
+    let filter = '';
+    let query = '';
     let queryParams = [];
-    let searchTerm = this.state.query;
 
     if(this.state.sortObj.sort){
-      sortParams = 'sort=' + this.state.sortObj.sort.split(' ').join('+');
-    }
-    filterParams = 'filter=' + this.state.filter.join(',');
-
-    if(searchTerm.length > 0){
-      searchParams = 'search=' + searchTerm;
+      sort = 'sort=' + this.state.sortObj.sort + '&order=' + this.state.sortObj.order;
     }
 
-    queryParams = [sortParams, filterParams, searchParams].filter((element) => {
+    //Filter Params
+    if(this.state.filter.length === 1){
+      filter = 'filter=' + this.state.filter[0];
+    } else if (this.state.filter.length > 1){
+      filter = 'filter=' + this.state.filter.join('&filter=');
+    }
+
+    //Search Param
+    if(this.state.query.length > 0){
+      query = 'q=' + this.state.query;
+    }
+
+    //Combine Query Parameters
+    queryParams = [query, sort, filter].filter((element) => {
       return element.length > 0;
     });
 
-    sortAndFilterParams = queryParams.join('&');
+    queryString = queryParams.join('&');
 
-    if(sortAndFilterParams.length > 0){
-      sortAndFilterParams = '?' + sortAndFilterParams;
+    if(queryString.length > 0){
+      queryString = '?' + queryString;
     }
 
     let obj = {
       title: 'CDAP',
-      url: location.pathname + sortAndFilterParams
+      url: location.pathname + queryString
     };
 
     history.pushState(obj, obj.title, obj.url);
   }
 
   render() {
-
-    this.makeSortFilterParams();
+    this.updateQueryString();
 
     const empty = (
       <h3 className="text-center empty-message">
