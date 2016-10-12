@@ -48,6 +48,12 @@ class Home extends Component {
         id: 'stream'
       }
     ];
+
+    //Accepted filter ids to be compared against incoming query parameters
+    this.acceptedFilterIds = this.filterOptions.map( (item) => {
+      return item.id;
+    });
+
     this.sortOptions = [
       {
         displayName: T.translate('features.Home.Header.sortOptions.nameAsc.displayName'),
@@ -62,6 +68,7 @@ class Home extends Component {
         fullSort: T.translate('features.Home.Header.sortOptions.nameDesc.fullSort')
       }
     ];
+
     this.state = {
       filter: defaultFilter,
       sortObj: this.sortOptions[0],
@@ -73,6 +80,7 @@ class Home extends Component {
     this.updateQueryString = this.updateQueryString.bind(this);
     this.getQueryObject = this.getQueryObject.bind(this);
   }
+
   componentWillReceiveProps(nextProps) {
     this.search(this.state.query, this.state.filter, this.state.sortObj, nextProps.params.namespace);
   }
@@ -87,6 +95,7 @@ class Home extends Component {
     });
 
     let queryObject = this.getQueryObject();
+
     this.setState({
       filter: queryObject.filter,
       sortObj: queryObject.sort,
@@ -101,12 +110,14 @@ class Home extends Component {
 
   //Construct and return query object from query parameters
   getQueryObject() {
-    let filters = '';
     let sortBy = '';
     let orderBy = '';
     let searchTerm = '';
     let sortOption = '';
     let query = this.props.location.query;
+    let filters = '';
+    let verifiedFilters = null;
+    let invalidFilter = false;
 
     //Get filters, order, sort, search from query
     if(query){
@@ -120,16 +131,37 @@ class Home extends Component {
       }
     }
 
-    //Ensure sort combination is valid
+    //Ensure sort parameters are valid
     sortOption = this.sortOptions.filter((option) => {
       return ( sortBy === option.sort && orderBy === option.order);
     });
 
-    //If query parameters are valid return those else return the current state's parameters
+    //Ensure filter parameters are valid
+    if(filters.length > 0){
+      verifiedFilters = filters.filter( (filterOption) => {
+        if(this.acceptedFilterIds.indexOf(filterOption) !== -1){
+          return true;
+        } else {
+          invalidFilter = true;
+          return false;
+        }
+      });
+    }
+
+    //Ensure all defaults are applied if an invalid parameter is passed
+    if(invalidFilter){
+      defaultFilter.forEach(( option ) => {
+        if(verifiedFilters.indexOf(option) === -1){
+          verifiedFilters.push(option);
+        }
+      });
+    }
+
+    //Return valid query parameters or return current state values if query params are invalid
     return ({
       'query' : searchTerm ? searchTerm : this.state.query,
       'sort' : sortOption.length === 0 ? this.state.sortObj : sortOption[0],
-      'filter' : filters ? filters : this.state.filter
+      'filter' : verifiedFilters ? verifiedFilters : this.state.filter
     });
   }
 
@@ -200,7 +232,7 @@ class Home extends Component {
     this.setState({selectedEntity: uniqueId});
   }
 
-  //Set query string using application state
+  //Set query string using current application state
   updateQueryString(){
     let queryString = '';
     let sort = '';
@@ -208,24 +240,24 @@ class Home extends Component {
     let query = '';
     let queryParams = [];
 
-    //Sort Params
+    //Generate sort params
     if(this.state.sortObj.sort){
       sort = 'sort=' + this.state.sortObj.sort + '&order=' + this.state.sortObj.order;
     }
 
-    //Filter Params
+    //Generate filter params
     if(this.state.filter.length === 1){
       filter = 'filter=' + this.state.filter[0];
     } else if (this.state.filter.length > 1){
       filter = 'filter=' + this.state.filter.join('&filter=');
     }
 
-    //Search Param
+    //Generate search param
     if(this.state.query.length > 0){
       query = 'q=' + this.state.query;
     }
 
-    //Combine Query Parameters
+    //Combine query parameters into query string
     queryParams = [query, sort, filter].filter((element) => {
       return element.length > 0;
     });
@@ -240,6 +272,7 @@ class Home extends Component {
       url: location.pathname + queryString
     };
 
+    //Modify URL to match application state
     history.pushState(obj, obj.title, obj.url);
   }
 
@@ -273,7 +306,7 @@ class Home extends Component {
                   { active: entity.uniqueId === this.state.selectedEntity }
                 )
               }
-              key={entity.uniqueId}
+              key={shortid.generate()}
               onClick={this.handleEntityClick.bind(this, entity.uniqueId)}
             >
               <EntityCard
