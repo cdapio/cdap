@@ -20,6 +20,7 @@ import {default as NamespaceStore} from 'services/store/store';
 import {parseMetadata} from 'services/metadata-parser';
 import T from 'i18n-react';
 import Mousetrap from 'mousetrap';
+import classnames from 'classnames';
 import {
   Col,
   Modal,
@@ -42,13 +43,17 @@ export default class SpotlightModal extends Component {
     this.state = {
       searchResults: { results: [] },
       currentPage: 1,
-      numPages: 1
+      numPages: 1,
+      focusIndex: 0
     };
   }
 
   componentWillMount() {
     Mousetrap.bind('right', this.handleNext.bind(this));
     Mousetrap.bind('left', this.handlePrev.bind(this));
+    Mousetrap.bind('up', this.handleUpDownArrow.bind(this, 'UP'));
+    Mousetrap.bind('down', this.handleUpDownArrow.bind(this, 'DOWN'));
+    Mousetrap.bind('enter', this.handleEnter.bind(this));
 
     this.handleSearch(1);
   }
@@ -56,6 +61,9 @@ export default class SpotlightModal extends Component {
   componentWillUnmount() {
     Mousetrap.unbind('right');
     Mousetrap.unbind('left');
+    Mousetrap.unbind('up');
+    Mousetrap.unbind('down');
+    Mousetrap.unbind('enter');
   }
 
   handleNext() {
@@ -64,6 +72,29 @@ export default class SpotlightModal extends Component {
 
   handlePrev() {
     this.handleSearch(this.state.currentPage - 1);
+  }
+
+  handleUpDownArrow(direction) {
+    if (direction === 'UP') {
+      let focusIndex = this.state.focusIndex === 0 ? 0 : this.state.focusIndex - 1;
+      this.setState({focusIndex});
+    } else if (direction ==='DOWN') {
+      let totalResults = this.state.searchResults.results.length;
+
+      let focusIndex = this.state.focusIndex === totalResults - 1 ?
+        this.state.focusIndex : this.state.focusIndex + 1;
+
+      this.setState({focusIndex});
+    }
+  }
+
+  handleEnter() {
+    let entity = parseMetadata(this.state.searchResults.results[this.state.focusIndex]);
+
+    // Redirect to entity once we have entity detail page
+    // Right now console logging entity for identification purposes
+
+    console.log('ENTER on:', entity.id);
   }
 
   handleSearch(page) {
@@ -80,10 +111,10 @@ export default class SpotlightModal extends Component {
       this.setState({
         searchResults: res,
         currentPage: page,
-        numPages: Math.ceil(res.total / PAGE_SIZE)
+        numPages: Math.ceil(res.total / PAGE_SIZE),
+        focusIndex: 0
       });
     });
-
   }
 
   handleRenderPagination() {
@@ -173,7 +204,9 @@ export default class SpotlightModal extends Component {
                 return (
                   <div
                     key={index}
-                    className="row search-results-item"
+                    className={classnames('row search-results-item', {
+                      active: index === this.state.focusIndex
+                    })}
                   >
                     <Col xs="6">
                       <div className="entity-title">

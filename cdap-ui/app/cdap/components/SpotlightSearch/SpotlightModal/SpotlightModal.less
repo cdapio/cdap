@@ -19,7 +19,6 @@
 @row-dark-color: #eeeeee;
 @description-color: #666666;
 @light-grey: #cccccc;
-@tag-border-color: #aaaaaa;
 
 .modal-dialog.search-results-modal {
   margin-top: 95px;
@@ -30,6 +29,7 @@
     background-color: @spotlight-bg-color;
     color: white;
     padding: 10px 15px;
+    border-bottom: 0;
 
     .modal-title {
       font-size: 14px;
@@ -70,7 +70,6 @@
 
       .tag {
         display: inline-block;
-        border: 1px solid @tag-border-color;
         padding: 2px 5px;
         margin-right: 3px;
         margin-top: 3px;
@@ -79,6 +78,16 @@
         color: white;
         border-radius: 3px;
         cursor: pointer;
+      }
+
+      &.active {
+        background-color: @spotlight-bg-color;
+        color: white;
+
+        .tag {
+          background-color: white;
+          color: @spotlight-bg-color;
+        }
       }
     }
 
