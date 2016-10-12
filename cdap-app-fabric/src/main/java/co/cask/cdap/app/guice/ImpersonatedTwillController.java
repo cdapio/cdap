@@ -14,8 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.distributed;
+package co.cask.cdap.app.guice;
 
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Throwables;
@@ -44,18 +45,18 @@ import javax.annotation.Nullable;
  * A {@link TwillController} wrapper that performs impersonation on {@link #getResourceReport()}, {@link #terminate()}
  * and {@link #kill()}.
  */
-public class ImpersonatedTwillController implements TwillController {
+final class ImpersonatedTwillController implements TwillController {
 
   private static final Logger LOG = LoggerFactory.getLogger(ImpersonatedTwillController.class);
 
+  private final TwillController delegate;
   private final Impersonator impersonator;
   private final ProgramId programId;
-  private final TwillController delegate;
 
-  public ImpersonatedTwillController(Impersonator impersonator, ProgramId programId, TwillController delegate) {
+  ImpersonatedTwillController(TwillController delegate, Impersonator impersonator, ProgramId programId) {
+    this.delegate = delegate;
     this.impersonator = impersonator;
     this.programId = programId;
-    this.delegate = delegate;
   }
 
   @Override
@@ -78,13 +79,22 @@ public class ImpersonatedTwillController implements TwillController {
   public ResourceReport getResourceReport() {
     try {
       return impersonator.doAs(programId.getNamespaceId(), new Callable<ResourceReport>() {
+        @Nullable
         @Override
         public ResourceReport call() throws Exception {
           return delegate.getResourceReport();
         }
       });
     } catch (Exception e) {
-      LOG.warn("Failed in getting resource report for {}.", programId, e);
+      // The delegate.getResourceReport() call never throws exception, hence exception caught must due to
+      // impersonation failure.
+      if (Throwables.getRootCause(e) instanceof ServiceUnavailableException) {
+        // If it is due to some underlying service unavailability, log a debug message and return null
+        // It is expected to happen during master process startup
+        LOG.debug("Failed in impersonation for program {}", programId, e);
+      } else {
+        LOG.warn("Unexpected exception in impersonation for program {}", programId, e);
+      }
       return null;
     }
   }

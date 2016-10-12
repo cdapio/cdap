@@ -330,8 +330,17 @@ public final class YarnTwillController extends AbstractTwillController implement
     return (resourcesClient == null) ? null : resourcesClient.get();
   }
 
+  /**
+   * Returns the {@link ResourceReportClient} for fetching resource report from the AM. If the AM is not available,
+   * {@code null} will be returned.
+   */
   @Nullable
   private ResourceReportClient getResourcesClient() {
+    // Only has resource report if the app is running.
+    if (state() != State.RUNNING) {
+      return null;
+    }
+
     if (resourcesClient != null) {
       return resourcesClient;
     }
@@ -344,6 +353,8 @@ public final class YarnTwillController extends AbstractTwillController implement
       String host = report.getHost();
       int port = report.getRpcPort();
       if (host == null || host.equals("N/A") || port == -1) {
+        LOG.warn("Failed to get application host and port from YARN application report: {}, {}",
+                 host, port, new Exception());
         return null;
       }
 

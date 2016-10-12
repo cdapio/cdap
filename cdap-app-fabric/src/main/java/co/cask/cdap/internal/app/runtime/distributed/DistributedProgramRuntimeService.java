@@ -278,12 +278,10 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   private RuntimeInfo createRuntimeInfo(Id.Program programId, TwillController controller, RunId runId) {
     try {
       ProgramDescriptor programDescriptor = store.loadProgram(programId);
-      ImpersonatedTwillController twillController = new ImpersonatedTwillController(impersonator,
-                                                                                    programId.toEntityId(), controller);
-      ProgramController programController = createController(programDescriptor, twillController, runId);
+      ProgramController programController = createController(programDescriptor, controller, runId);
       return programController == null ? null : new SimpleRuntimeInfo(programController,
                                                                       programId.toEntityId(),
-                                                                      twillController.getRunId());
+                                                                      controller.getRunId());
     } catch (Exception e) {
       return null;
     }
