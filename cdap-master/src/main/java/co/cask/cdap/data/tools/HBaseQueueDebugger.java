@@ -36,6 +36,7 @@ import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.security.Impersonator;
@@ -475,9 +476,13 @@ public class HBaseQueueDebugger extends AbstractIdleService {
     }
   }
 
-  public static HBaseQueueDebugger createDebugger() {
+  public static HBaseQueueDebugger createDebugger() throws Exception {
+    CConfiguration cConf = CConfiguration.create();
+    // Note: login has to happen before any objects that need Kerberos credentials are instantiated.
+    SecurityUtil.loginForMasterService(cConf);
+
     Injector injector = Guice.createInjector(
-      new ConfigModule(CConfiguration.create(), HBaseConfiguration.create()),
+      new ConfigModule(cConf, HBaseConfiguration.create()),
       new IOModule(),
       new ZKClientModule(),
       new LocationRuntimeModule().getDistributedModules(),
