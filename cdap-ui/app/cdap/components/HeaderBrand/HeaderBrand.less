@@ -14,18 +14,13 @@
  * the License.
  */
 
-import React from 'react';
-require('./HeaderBrand.less');
-
-export default function HeaderBrand () {
-  return (
-    <div className="brand-header">
-      <a
-        className="navbar-brand"
-        href=""
-      >
-        <div className="company-logo"></div>
-      </a>
-    </div>
-  );
+.company-logo {
+  background: url('/cdap_assets/img/company_logo.png') 0 0 no-repeat;
+  display: inline-block;
+  margin-top: -4px;
+  margin-right: 3px;
+  height: 40px;
+  width: 40px;
+  vertical-align: top;
+  background-size: 40px;
 }

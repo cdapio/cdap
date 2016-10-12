@@ -20,8 +20,9 @@ import T from 'i18n-react';
 import classnames from 'classnames';
 require('./ProductsDropdown.less');
 import head from 'lodash/head';
+import shortid from 'shortid';
 
-export default class ProductsDropdown extends Component {
+export default class ProductsDrawer extends Component {
   constructor(props) {
     super(props);
     let products = [
@@ -58,44 +59,57 @@ export default class ProductsDropdown extends Component {
   }
   render() {
     return (
-      <div>
-        <Dropdown
-          isOpen={this.state.productsDropdown}
-          toggle={this.toggle.bind(this)}
+      <Dropdown
+        isOpen={this.state.productsDropdown}
+        toggle={this.toggle.bind(this)}
+      >
+        <div
+          className={classnames("current-product", this.state.currentChoice.name, {'open': this.state.productsDropdown})}
+          onClick={this.toggle.bind(this)}
         >
-          <div className="current-product"
-            onClick={this.toggle.bind(this)}
-          >
-            <span className={classnames("fa", this.state.currentChoice.icon)}></span>
-            <span className="product-name">{this.state.currentChoice.label}</span>
-          </div>
-          <span className="fa fa-angle-down"></span>
-          <DropdownMenu>
-            {
-              this.state
-                .products
-                .filter(product => product.name !== this.state.currentChoice.name)
-                .map(product => {
-                  return (
-                    <div className="dropdown-item">
-                      <a
-                        className={classnames("product-link", product.name)}
-                        href={product.link}
-                      >
-                        <span className={classnames("fa", product.icon)}></span>
-                        <span>{product.label}</span>
-                      </a>
-                    </div>
-                  );
-                })
-            }
-          </DropdownMenu>
-        </Dropdown>
-      </div>
+          <span className={classnames("fa", this.state.currentChoice.icon)}></span>
+          <span className="product-name">{this.state.currentChoice.label}</span>
+        </div>
+        <DropdownMenu>
+          {
+            this.state
+              .products
+              .filter(product => product.name !== this.state.currentChoice.name)
+              .map(product => {
+                return (
+                  <div
+                    className="dropdown-item"
+                    key={shortid.generate()}
+                  >
+                    <a
+                      className={classnames("product-link", product.name)}
+                      href={product.link}
+                    >
+                      <span className={classnames("fa", product.icon)}></span>
+                      <span>{product.label}</span>
+                    </a>
+                  </div>
+                );
+              })
+          }
+        </DropdownMenu>
+        {
+          this.state.productsDropdown ?
+            (
+              <div
+                className="products-backdrop"
+                onClick={this.toggle.bind(this)}
+              >
+              </div>
+            )
+          :
+            null
+        }
+      </Dropdown>
     );
   }
 }
 
-ProductsDropdown.propTypes = {
+ProductsDrawer.propTypes = {
   currentChoice: PropTypes.string
 };
