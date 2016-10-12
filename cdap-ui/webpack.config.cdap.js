@@ -102,7 +102,8 @@ module.exports = {
       'react-redux',
       'react-router',
       'moment',
-      'react-file-download'
+      'react-file-download',
+      'mousetrap'
     ]
   },
   module: {

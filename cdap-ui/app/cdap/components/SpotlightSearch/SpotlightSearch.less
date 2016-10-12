@@ -15,27 +15,29 @@
  */
 
 @import '../../styles/variables.less';
-@spotlight-search-height: 42px;
+@spotlight-search-height: 32px;
 @spotlight-bg-color: darken(@cdap-darkness, 25%);
 @disabled-color: #999999;
 @border-color: #cccccc;
 
 .spotlight-search-container {
   &.open {
-    margin-top: 4px;
+    margin-top: 8px;
     margin-right: -8px;
   }
 
   .not-open { line-height: @spotlight-search-height; }
   .form-group { margin-bottom: 0; }
-  .form-control-feedback { line-height: @spotlight-search-height; }
+  .form-control-feedback {
+    line-height: @spotlight-search-height;
+    color: @spotlight-bg-color;
+  }
 
   .form-control {
     height: @spotlight-search-height;
-    border-radius: 0;
     border: 0;
-    background-color: @spotlight-bg-color;
-    color: white;
+    background-color: white;
+    color: @spotlight-bg-color;
 
     &:focus {
       box-shadow: none;
@@ -45,10 +47,13 @@
   .search-results-dropdown.dropdown {
     .dropdown-menu {
       width: 200px;
-      left: 0;
-      top: 0;
+      left: -1px;
+      top: -5px;
       border-radius: 0;
       padding-bottom: 0;
+      padding-top: 0;
+      border-bottom-right-radius: 4px;
+      border-bottom-left-radius: 4px;
 
       a.dropdown-item {
         display: block;

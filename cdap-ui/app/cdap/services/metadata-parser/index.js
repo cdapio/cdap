@@ -21,7 +21,13 @@ const iconMap = {
   'cdap-data-streams': 'icon-sparkstreaming',
   datasetinstance: 'icon-datasets',
   stream: 'icon-streams',
-  view: 'icon-streamview'
+  view: 'icon-streamview',
+  'Workflow': 'icon-workflow',
+  'Spark': 'icon-spark',
+  'Mapreduce': 'icon-mapreduce',
+  'Service': 'icon-service',
+  'Worker': 'icon-worker',
+  'Flow': 'icon-tigon'
 };
 
 export function parseMetadata(entity) {
@@ -80,7 +86,7 @@ function createProgramObj(entity) {
     type: entity.entityId.type,
     programType: entity.entityId.id.type,
     metadata: entity,
-    icon: iconMap[entity.entityId.type]
+    icon: iconMap[entity.entityId.id.type]
   };
 }
 

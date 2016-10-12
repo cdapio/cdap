@@ -18,6 +18,8 @@ import React, {Component, PropTypes} from 'react';
 import {MySearchApi} from 'api/search';
 import {default as NamespaceStore} from 'services/store/store';
 import {parseMetadata} from 'services/metadata-parser';
+import T from 'i18n-react';
+import Mousetrap from 'mousetrap';
 import {
   Col,
   Modal,
@@ -39,15 +41,34 @@ export default class SpotlightModal extends Component {
 
     this.state = {
       searchResults: { results: [] },
-      currentPage: 1
+      currentPage: 1,
+      numPages: 1
     };
   }
 
   componentWillMount() {
+    Mousetrap.bind('right', this.handleNext.bind(this));
+    Mousetrap.bind('left', this.handlePrev.bind(this));
+
     this.handleSearch(1);
   }
 
+  componentWillUnmount() {
+    Mousetrap.unbind('right');
+    Mousetrap.unbind('left');
+  }
+
+  handleNext() {
+    this.handleSearch(this.state.currentPage + 1);
+  }
+
+  handlePrev() {
+    this.handleSearch(this.state.currentPage - 1);
+  }
+
   handleSearch(page) {
+    if (page === 0 || page > this.state.numPages) { return; }
+
     let offset = (page - 1) * PAGE_SIZE;
 
     MySearchApi.search({
@@ -58,7 +79,8 @@ export default class SpotlightModal extends Component {
     }).subscribe( (res) => {
       this.setState({
         searchResults: res,
-        currentPage: page
+        currentPage: page,
+        numPages: Math.ceil(res.total / PAGE_SIZE)
       });
     });
 
@@ -68,7 +90,7 @@ export default class SpotlightModal extends Component {
     const total = this.state.searchResults.total;
     if (!total || total <= PAGE_SIZE) { return null; }
 
-    const numPages = Math.ceil(total / PAGE_SIZE);
+    const numPages = this.state.numPages;
     let pageArray = Array.from(Array(numPages).keys()).map( n => n + 1 );
 
     return (
@@ -120,13 +142,22 @@ export default class SpotlightModal extends Component {
       >
         <ModalHeader>
           <span className="pull-left">
-            Search results for: {this.props.query}
+            {
+
+              T.translate('features.SpotlightSearch.SpotlightModal.headerSearchResults', {
+                query: this.props.query
+              })
+            }
           </span>
           <div
             className="close-section pull-right"
           >
             <span className="search-results-total">
-              {this.state.searchResults.total} results found
+              {
+                T.translate('features.SpotlightSearch.SpotlightModal.numResults', {
+                  total: this.state.searchResults.total
+                })
+              }
             </span>
             <span
               className="fa fa-times"
@@ -161,7 +192,7 @@ export default class SpotlightModal extends Component {
                     </Col>
 
                     <Col xs="6">
-                      <div className="entity-tags-container">
+                      <div className="entity-tags-container text-right">
                         {
                           entity.metadata.metadata.SYSTEM.tags.map((tag, i) => {
                             return (

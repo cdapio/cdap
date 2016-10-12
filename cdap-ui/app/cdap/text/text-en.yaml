@@ -191,6 +191,14 @@ features:
     intro-message: Unified Integration Platform for Big Data
     title: Welcome to Cask Data Application Platform
     version-label: Version 4.0.0 Preview
+
+  SpotlightSearch:
+    noResult: No results found
+    showAll: Show all {num} results
+    SpotlightModal:
+      headerSearchResults: "Search results for: {query}"
+      numResults: "{total} results found"
+
   Wizard:
     ArtifactUpload:
       Step1:

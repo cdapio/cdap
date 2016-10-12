@@ -22,6 +22,8 @@ import {parseMetadata} from 'services/metadata-parser';
 import { Dropdown, DropdownMenu, DropdownItem } from 'reactstrap';
 import debounce from 'lodash/debounce';
 import SpotlightModal from 'components/SpotlightSearch/SpotlightModal';
+import Mousetrap from 'mousetrap';
+import T from 'i18n-react';
 require('./SpotlightSearch.less');
 
 const keyMap = {
@@ -53,12 +55,18 @@ export default class SpotlightSearch extends Component {
     };
   }
 
+  componentWillMount() {
+    Mousetrap.bind('?', this.handleSearchClick.bind(this));
+  }
+
   componentDidUpdate() {
     if (!this.state.showSearch) { return; }
     this.spotlightSearch.focus();
   }
 
-  handleSearchClick() {
+  handleSearchClick(event) {
+    if (event) { event.preventDefault(); }
+
     this.setState({showSearch: true});
     let app = document.getElementById('app-container');
     app.addEventListener('click', this.handleCloseSearch);
@@ -86,6 +94,8 @@ export default class SpotlightSearch extends Component {
   }
 
   handleSearch() {
+    if (!this.spotlightSearch) { return; }
+
     let query = this.spotlightSearch.value;
     if (query.length === 0) { return; }
 
@@ -133,7 +143,11 @@ export default class SpotlightSearch extends Component {
           }
           {
             this.state.searchResults.total === 0 ?
-              <DropdownItem tag="a" disabled>No result</DropdownItem> : null
+              (
+                <DropdownItem tag="a" disabled>
+                  {T.translate('features.SpotlightSearch.noResult')}
+                </DropdownItem>
+              ) : null
           }
           {
             this.state.searchResults.total <= VIEW_RESULT_LIMIT ? null :
@@ -142,7 +156,7 @@ export default class SpotlightSearch extends Component {
               onClick={this.handleToggleModal}
               className={classnames('text-center', {hover: this.state.focusIndex === VIEW_RESULT_LIMIT})}
             >
-              Show all {this.state.searchResults.total} results
+              {T.translate('features.SpotlightSearch.showAll', {num: this.state.searchResults.total})}
             </DropdownItem>
           }
         </DropdownMenu>

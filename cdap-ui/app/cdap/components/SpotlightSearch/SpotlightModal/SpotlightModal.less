@@ -23,6 +23,7 @@
 
 .modal-dialog.search-results-modal {
   margin-top: 95px;
+  width: 700px;
 
   .modal-content { border-radius: 0; }
   .modal-header {
@@ -66,13 +67,16 @@
         color: @description-color;
         margin-top: 3px;
       }
-      .entity-tags-container { margin-top: 15px; }
 
       .tag {
+        display: inline-block;
         border: 1px solid @tag-border-color;
-        padding: 3px 10px;
-        margin-right: 5px;
-        background-color: white;
+        padding: 2px 5px;
+        margin-right: 3px;
+        margin-top: 3px;
+        font-size: 10px;
+        background-color: @spotlight-bg-color;
+        color: white;
         border-radius: 3px;
         cursor: pointer;
       }
