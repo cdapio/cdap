@@ -76,6 +76,8 @@ class Home extends Component {
   componentWillReceiveProps(nextProps) {
     this.search(this.state.query, this.state.filter, this.state.sortObj, nextProps.params.namespace);
   }
+
+  //Update Store and State to correspond to query parameters before component renders
   componentWillMount() {
     Store.dispatch({
       type: 'SELECT_NAMESPACE',
@@ -84,7 +86,6 @@ class Home extends Component {
       }
     });
 
-    //Set state of application filters to match that of query string
     let queryObject = this.getQueryObject();
     this.setState({
       filter: queryObject.filter,
@@ -177,6 +178,10 @@ class Home extends Component {
       filters.push(option.id);
     }
 
+    this.setState({
+      filter : filters
+    });
+
     this.search(this.state.query, filters, this.state.sortObj);
   }
 
@@ -203,6 +208,7 @@ class Home extends Component {
     let query = '';
     let queryParams = [];
 
+    //Sort Params
     if(this.state.sortObj.sort){
       sort = 'sort=' + this.state.sortObj.sort + '&order=' + this.state.sortObj.order;
     }
@@ -223,7 +229,6 @@ class Home extends Component {
     queryParams = [query, sort, filter].filter((element) => {
       return element.length > 0;
     });
-
     queryString = queryParams.join('&');
 
     if(queryString.length > 0){
@@ -291,8 +296,8 @@ class Home extends Component {
           activeSort={this.state.sortObj}
           onSortClick={this.handleSortClick.bind(this)}
           onSearch={this.handleSearch.bind(this)}
+          searchText={this.state.query}
         />
-
         <div className="entity-list">
           {entitiesToBeRendered}
         </div>
