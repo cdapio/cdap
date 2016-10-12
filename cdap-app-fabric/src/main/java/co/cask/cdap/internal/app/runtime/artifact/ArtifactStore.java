@@ -744,7 +744,8 @@ public class ArtifactStore {
    */
   @VisibleForTesting
   void clear(final NamespaceId namespace) throws IOException {
-    namespacedLocationFactory.get(namespace.toId(), ARTIFACTS_PATH).delete(true);
+    final Id.Namespace namespaceId = namespace.toId();
+    namespacedLocationFactory.get(namespaceId, ARTIFACTS_PATH).delete(true);
 
     try {
       transactional.execute(new TxRunnable() {
@@ -789,7 +790,7 @@ public class ArtifactStore {
                 // the column is the id of the artifact the plugin is from
                 ArtifactColumn column = ArtifactColumn.parse(columnVal.getKey());
                 // if the plugin artifact is in the namespace we're deleting, delete this column.
-                if (column.artifactId.getNamespace().equals(namespace)) {
+                if (column.artifactId.getNamespace().equals(namespaceId)) {
                   metaTable.delete(row.getRow(), column.getColumn());
                 }
               }
