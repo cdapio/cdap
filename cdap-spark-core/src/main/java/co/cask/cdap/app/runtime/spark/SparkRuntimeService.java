@@ -40,6 +40,7 @@ import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGene
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.lang.Fields;
 import co.cask.cdap.internal.lang.Reflections;
+import co.cask.cdap.security.store.SecureStoreUtils;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
@@ -515,7 +516,16 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         return hadoopClassExcluder.accept(className, classUrl, classPathUrl);
       }
     });
-    appBundler.createBundle(tempLocation, SparkMainWrapper.class, HBaseTableUtilFactory.getHBaseTableUtilClass());
+
+    List<Class<?>> classes = new ArrayList<>();
+    classes.add(SparkMainWrapper.class);
+    classes.add(HBaseTableUtilFactory.getHBaseTableUtilClass());
+
+    // Add KMS class
+    if (SecureStoreUtils.isKMSBacked(cConf) && SecureStoreUtils.isKMSCapable()) {
+      classes.add(SecureStoreUtils.getKMSSecureStore());
+    }
+    appBundler.createBundle(tempLocation, classes);
     return new File(tempLocation.toURI());
   }
 
