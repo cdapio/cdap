@@ -102,6 +102,7 @@
     "react-dom": "15.3.1",
     "react-dropzone": "3.6.0",
     "react-file-download": "0.3.1",
+    "react-helmet": "3.1.0",
     "react-redux": "4.4.5",
     "react-router": "4.0.0-alpha.4",
     "react-youtube": "7.1.1",

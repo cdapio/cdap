@@ -39,10 +39,6 @@ class Home extends Component {
         displayName: T.translate('commons.entity.artifact.plural'),
         id: 'artifact'
       },
-      // {
-      //   displayName: T.translate('commons.entity.program.plural'),
-      //   id: 'program'
-      // },
       {
         displayName: T.translate('commons.entity.dataset.plural'),
         id: 'dataset'
@@ -51,20 +47,25 @@ class Home extends Component {
         displayName: T.translate('commons.entity.stream.plural'),
         id: 'stream'
       }
-      // {
-      //   displayName: T.translate('commons.entity.view.plural'),
-      //   id: 'view'
-      // },
     ];
+
+    //Accepted filter ids to be compared against incoming query parameters
+    this.acceptedFilterIds = this.filterOptions.map( (item) => {
+      return item.id;
+    });
 
     this.sortOptions = [
       {
-        displayName: T.translate('features.Home.Header.sortOptions.nameAsc'),
-        sort: 'name asc'
+        displayName: T.translate('features.Home.Header.sortOptions.nameAsc.displayName'),
+        sort: 'name',
+        order: 'asc',
+        fullSort: 'name asc'
       },
       {
-        displayName: T.translate('features.Home.Header.sortOptions.nameDesc'),
-        sort: 'name desc'
+        displayName: T.translate('features.Home.Header.sortOptions.nameDesc.displayName'),
+        sort: 'name',
+        order: 'desc',
+        fullSort: 'name desc'
       }
     ];
 
@@ -76,21 +77,92 @@ class Home extends Component {
       selectedEntity: null,
       loading: true
     };
-
+    this.updateQueryString = this.updateQueryString.bind(this);
+    this.getQueryObject = this.getQueryObject.bind(this);
   }
 
-  componentDidMount() {
-    this.search();
+  componentWillReceiveProps(nextProps) {
+    this.search(this.state.query, this.state.filter, this.state.sortObj, nextProps.params.namespace);
+  }
+
+  //Update Store and State to correspond to query parameters before component renders
+  componentWillMount() {
     Store.dispatch({
       type: 'SELECT_NAMESPACE',
       payload: {
         selectedNamespace: this.props.params.namespace
       }
     });
+
+    let queryObject = this.getQueryObject();
+
+    this.setState({
+      filter: queryObject.filter,
+      sortObj: queryObject.sort,
+      query: queryObject.query
+    });
   }
 
-  componentWillReceiveProps(nextProps) {
-    this.search(this.state.query, this.state.filter, this.state.sortObj, nextProps.params.namespace);
+  //Retrieve entities for rendering
+  componentDidMount(){
+    this.search();
+  }
+
+  //Construct and return query object from query parameters
+  getQueryObject() {
+    let sortBy = '';
+    let orderBy = '';
+    let searchTerm = '';
+    let sortOption = '';
+    let query = this.props.location.query;
+    let filters = '';
+    let verifiedFilters = null;
+    let invalidFilter = false;
+
+    //Get filters, order, sort, search from query
+    if(query){
+      orderBy = typeof query.order === 'string' ? query.order : '';
+      sortBy = typeof query.sort === 'string' ? query.sort : '';
+      searchTerm = typeof query.q === 'string' ? query.q : '';
+      if(typeof query.filter === 'string'){
+        filters = [query.filter];
+      } else if(Array.isArray(query.filter)){
+        filters = query.filter;
+      }
+    }
+
+    //Ensure sort parameters are valid
+    sortOption = this.sortOptions.filter((option) => {
+      return ( sortBy === option.sort && orderBy === option.order);
+    });
+
+    //Ensure filter parameters are valid
+    if(filters.length > 0){
+      verifiedFilters = filters.filter( (filterOption) => {
+        if(this.acceptedFilterIds.indexOf(filterOption) !== -1){
+          return true;
+        } else {
+          invalidFilter = true;
+          return false;
+        }
+      });
+    }
+
+    //Ensure all defaults are applied if an invalid parameter is passed
+    if(invalidFilter){
+      defaultFilter.forEach(( option ) => {
+        if(verifiedFilters.indexOf(option) === -1){
+          verifiedFilters.push(option);
+        }
+      });
+    }
+
+    //Return valid query parameters or return current state values if query params are invalid
+    return ({
+      'query' : searchTerm ? searchTerm : this.state.query,
+      'sort' : sortOption.length === 0 ? this.state.sortObj : sortOption[0],
+      'filter' : verifiedFilters ? verifiedFilters : this.state.filter
+    });
   }
 
   search(
@@ -99,18 +171,19 @@ class Home extends Component {
     sortObj = this.state.sortObj,
     namespace = this.props.params.namespace
   ) {
-    this.setState({loading: true});
-
+    //No entity types requested - set state and return
     if (filter.length === 0) {
       this.setState({query, filter, sortObj, entities: [], selectedEntity: null, loading: false});
       return;
     }
 
+    this.setState({loading: true});
+
     let params = {
       namespace: namespace,
       query: `${query}*`,
       target: filter,
-      sort: sortObj.sort
+      sort: sortObj.fullSort
     };
 
     MySearchApi.search(params)
@@ -129,18 +202,25 @@ class Home extends Component {
   }
 
   handleFilterClick(option) {
-    let arr = [...this.state.filter];
+    let filters = [...this.state.filter];
     if (this.state.filter.includes(option.id)) {
-      let index = arr.indexOf(option.id);
-      arr.splice(index, 1);
+      let index = filters.indexOf(option.id);
+      filters.splice(index, 1);
     } else {
-      arr.push(option.id);
+      filters.push(option.id);
     }
 
-    this.search(this.state.query, arr, this.state.sortObj);
+    this.setState({
+      filter : filters
+    });
+
+    this.search(this.state.query, filters, this.state.sortObj);
   }
 
   handleSortClick(option) {
+    this.setState({
+      sortObj : option
+    });
     this.search(this.state.query, this.state.filter, option);
   }
 
@@ -152,7 +232,53 @@ class Home extends Component {
     this.setState({selectedEntity: uniqueId});
   }
 
+  //Set query string using current application state
+  updateQueryString(){
+    let queryString = '';
+    let sort = '';
+    let filter = '';
+    let query = '';
+    let queryParams = [];
+
+    //Generate sort params
+    if(this.state.sortObj.sort){
+      sort = 'sort=' + this.state.sortObj.sort + '&order=' + this.state.sortObj.order;
+    }
+
+    //Generate filter params
+    if(this.state.filter.length === 1){
+      filter = 'filter=' + this.state.filter[0];
+    } else if (this.state.filter.length > 1){
+      filter = 'filter=' + this.state.filter.join('&filter=');
+    }
+
+    //Generate search param
+    if(this.state.query.length > 0){
+      query = 'q=' + this.state.query;
+    }
+
+    //Combine query parameters into query string
+    queryParams = [query, sort, filter].filter((element) => {
+      return element.length > 0;
+    });
+    queryString = queryParams.join('&');
+
+    if(queryString.length > 0){
+      queryString = '?' + queryString;
+    }
+
+    let obj = {
+      title: 'CDAP',
+      url: location.pathname + queryString
+    };
+
+    //Modify URL to match application state
+    history.pushState(obj, obj.title, obj.url);
+  }
+
   render() {
+    this.updateQueryString();
+
     const empty = (
       <h3 className="text-center empty-message">
         {T.translate('features.Home.emptyMessage')}
@@ -165,6 +291,34 @@ class Home extends Component {
       </h3>
     );
 
+    let entitiesToBeRendered;
+    if(this.state.loading){
+      entitiesToBeRendered = loading;
+    } else if(this.state.entities.length === 0) {
+      entitiesToBeRendered = empty;
+    } else {
+      entitiesToBeRendered = this.state.entities.map(
+        (entity) => {
+          return (
+            <div
+              className={
+                classNames('entity-card-container',
+                  { active: entity.uniqueId === this.state.selectedEntity }
+                )
+              }
+              key={shortid.generate()}
+              onClick={this.handleEntityClick.bind(this, entity.uniqueId)}
+            >
+              <EntityCard
+                entity={entity}
+                onUpdate={this.search.bind(this)}
+              />
+            </div>
+          );
+        }
+      );
+    }
+
     return (
       <div>
         <HomeHeader
@@ -175,31 +329,10 @@ class Home extends Component {
           activeSort={this.state.sortObj}
           onSortClick={this.handleSortClick.bind(this)}
           onSearch={this.handleSearch.bind(this)}
+          searchText={this.state.query}
         />
         <div className="entity-list">
-          {
-            this.state.loading ? loading :
-            this.state.entities.length === 0 ? empty :
-            this.state.entities.map(
-            (entity) => {
-              return (
-                <div
-                  className={
-                    classNames('entity-card-container',
-                      { active: entity.uniqueId === this.state.selectedEntity }
-                    )
-                  }
-                  key={entity.uniqueId}
-                  onClick={this.handleEntityClick.bind(this, entity.uniqueId)}
-                >
-                  <EntityCard
-                    entity={entity}
-                    onUpdate={this.search.bind(this)}
-                  />
-                </div>
-              );
-            })
-          }
+          {entitiesToBeRendered}
         </div>
       </div>
     );
@@ -209,7 +342,9 @@ class Home extends Component {
 Home.propTypes = {
   params: PropTypes.shape({
     namespace : PropTypes.string
-  })
+  }),
+  location: PropTypes.object,
+  history: PropTypes.object
 };
 
 export default Home;
