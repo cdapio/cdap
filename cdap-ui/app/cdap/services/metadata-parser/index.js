@@ -14,6 +14,8 @@
  * the License.
  */
 
+import EntityIconMap from 'services/entity-icon-map';
+
 export function parseMetadata(entity) {
   let type = entity.entityId.type;
 
@@ -39,7 +41,8 @@ function createArtifactObj(entity) {
     type: entity.entityId.type,
     version: entity.entityId.id.version.version,
     metadata: entity,
-    scope: entity.entityId.id.namespace.id.toLowerCase() === 'system' ? 'SYSTEM' : 'USER'
+    scope: entity.entityId.id.namespace.id.toLowerCase() === 'system' ? 'SYSTEM' : 'USER',
+    icon: EntityIconMap[entity.entityId.type]
   };
 }
 
@@ -48,7 +51,8 @@ function createApplicationObj(entity) {
     id: entity.entityId.id.applicationId,
     type: entity.entityId.type,
     metadata: entity,
-    version: `1.0.0${entity.metadata.SYSTEM.properties.version}`
+    version: `1.0.0${entity.metadata.SYSTEM.properties.version}`,
+    icon: EntityIconMap[entity.entityId.type]
   };
 }
 
@@ -56,7 +60,8 @@ function createDatasetObj(entity) {
   return {
     id: entity.entityId.id.instanceId,
     type: entity.entityId.type,
-    metadata: entity
+    metadata: entity,
+    icon: EntityIconMap[entity.entityId.type]
   };
 }
 
@@ -66,7 +71,8 @@ function createProgramObj(entity) {
     applicationId: entity.entityId.id.application.applicationId,
     type: entity.entityId.type,
     programType: entity.entityId.id.type,
-    metadata: entity
+    metadata: entity,
+    icon: EntityIconMap[entity.entityId.id.type]
   };
 }
 
@@ -74,7 +80,8 @@ function createStreamObj(entity) {
   return {
     id: entity.entityId.id.streamName,
     type: entity.entityId.type,
-    metadata: entity
+    metadata: entity,
+    icon: EntityIconMap[entity.entityId.type]
   };
 }
 
@@ -82,6 +89,7 @@ function createViewObj(entity) {
   return {
     id: entity.entityId.id.id,
     type: entity.entityId.type,
-    metadata: entity
+    metadata: entity,
+    icon: EntityIconMap[entity.entityId.type]
   };
 }

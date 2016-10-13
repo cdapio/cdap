@@ -22,6 +22,7 @@ import PlusButton from '../PlusButton';
 import T from 'i18n-react';
 import orderBy from 'lodash/orderBy';
 import Store from 'services/store/store.js';
+import SpotlightSearch from 'components/SpotlightSearch';
 require('./HeaderActions.less');
 var classNames = require('classnames');
 const shortid = require('shortid');
@@ -168,7 +169,7 @@ export default class HeaderActions extends Component {
       <div className="header-actions">
         <ul className="navbar-list pull-right">
           <div className="navbar-item">
-            <span className="fa fa-search"></span>
+            <SpotlightSearch />
           </div>
           <div className="navbar-item">
             <span className="fa fa-bell"></span>
@@ -189,6 +190,7 @@ export default class HeaderActions extends Component {
             <Dropdown
               isOpen={this.state.settingsOpen}
               toggle={this.toggleSettingsDropdown}
+              className="header-actions-dropdown"
             >
               <DropdownMenu>
                 {topRow}
@@ -218,6 +220,7 @@ export default class HeaderActions extends Component {
             <Dropdown
               isOpen={this.state.namespaceOpen}
               toggle={this.toggleNamespaceDropdown}
+              className="header-actions-dropdown"
             >
               <div
                 className="current-namespace"
