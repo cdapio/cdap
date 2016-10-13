@@ -106,7 +106,7 @@ public class SparkRuntimeContextConfig {
    * @return the {@link ApplicationSpecification} stored in the configuration.
    */
   public ApplicationSpecification getApplicationSpecification() {
-    return GSON.fromJson(hConf.get(HCONF_ATTR_APP_SPEC), ApplicationSpecification.class);
+    return GSON.fromJson(hConf.getRaw(HCONF_ATTR_APP_SPEC), ApplicationSpecification.class);
   }
 
   /**
