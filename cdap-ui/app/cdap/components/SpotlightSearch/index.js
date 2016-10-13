@@ -24,6 +24,7 @@ import debounce from 'lodash/debounce';
 import SpotlightModal from 'components/SpotlightSearch/SpotlightModal';
 import Mousetrap from 'mousetrap';
 import T from 'i18n-react';
+import shortid from 'shortid';
 require('./SpotlightSearch.less');
 
 const keyMap = {
@@ -130,7 +131,7 @@ export default class SpotlightSearch extends Component {
               .map((entity, index) => {
                 return (
                   <DropdownItem
-                    key={index}
+                    key={shortid.generate()}
                     tag='a'
                     className={classnames({hover: this.state.focusIndex === index})}
                   >

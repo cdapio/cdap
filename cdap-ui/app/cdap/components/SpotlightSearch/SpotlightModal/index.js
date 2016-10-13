@@ -21,6 +21,7 @@ import {parseMetadata} from 'services/metadata-parser';
 import T from 'i18n-react';
 import Mousetrap from 'mousetrap';
 import classnames from 'classnames';
+import shortid from 'shortid';
 import {
   Col,
   Modal,
@@ -139,7 +140,7 @@ export default class SpotlightModal extends Component {
             pageArray.map((page) => {
               return (
                 <PaginationItem
-                  key={page}
+                  key={shortid.generate()}
                   active={this.state.currentPage === page}
                 >
                   <PaginationLink onClick={this.handleSearch.bind(this, page)} >
@@ -203,7 +204,7 @@ export default class SpotlightModal extends Component {
               .map((entity, index) => {
                 return (
                   <div
-                    key={index}
+                    key={shortid.generate()}
                     className={classnames('row search-results-item', {
                       active: index === this.state.focusIndex
                     })}
@@ -227,9 +228,9 @@ export default class SpotlightModal extends Component {
                     <Col xs="6">
                       <div className="entity-tags-container text-right">
                         {
-                          entity.metadata.metadata.SYSTEM.tags.map((tag, i) => {
+                          entity.metadata.metadata.SYSTEM.tags.map((tag) => {
                             return (
-                              <Tag key={i}>{tag}</Tag>
+                              <Tag key={shortid.generate()}>{tag}</Tag>
                             );
                           })
                         }
