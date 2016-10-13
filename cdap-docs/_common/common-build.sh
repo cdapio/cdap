@@ -195,13 +195,46 @@ function make_zip() {
     ZIP_DIR_NAME="${PROJECT}-docs-${PROJECT_VERSION}-$1"
   fi
   cd ${TARGET_PATH}
-  mkdir ${PROJECT_VERSION}
-  mv ${HTML} ${PROJECT_VERSION}/en
+  doc_change_py="${TARGET_PATH}/../tools/doc-change.py"
+
+  echo "Removing old directories and zips"
+  rm -rf ${TARGET_PATH}/base 
+  rm -rf ${TARGET_PATH}/current
+  rm -rf ${TARGET_PATH}/${PROJECT_VERSION}
+  rm -rf ${TARGET_PATH}/*.zip
+
+  echo "Creating base"
+  mkdir base
+  cp -r ${HTML} base/en
+#   mv ${HTML} base/en
+  
+#   mkdir ${PROJECT_VERSION}
+#   mv ${HTML} ${PROJECT_VERSION}/en
+
   # Add a redirect index.html file
-  echo "${REDIRECT_EN_HTML}" > ${PROJECT_VERSION}/index.html
-  # Zip everything
-  zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/* --exclude *.DS_Store* *.buildinfo*
+  echo "${REDIRECT_EN_HTML}" > base/index.html
+#   echo "${REDIRECT_EN_HTML}" > ${PROJECT_VERSION}/index.html
+
+  echo "First: canonical numbered version"
+  cp -r base ${PROJECT_VERSION}
+  echo "Zipping ${ZIP_DIR_NAME}-numbered"
+  zip -qr ${ZIP_DIR_NAME}-numbered.zip ${PROJECT_VERSION}/* --exclude *.DS_Store* *.buildinfo*
+  
+  echo "Second: 'current' version, with canonical ref link"
+  cp -r base current
+  python ${doc_change_py} ${TARGET_PATH} current ${PROJECT_VERSION}
+  echo "Zipping ${ZIP_DIR_NAME}-current"
+  zip -qr ${ZIP_DIR_NAME}-current.zip current/* --exclude *.DS_Store* *.buildinfo*
+  
+  echo "Third: 'future' version with robots meta tag"
+  python ${doc_change_py} ${TARGET_PATH} ${PROJECT_VERSION}
+  echo "Zipping ${ZIP_DIR_NAME}-future"
+  zip -qr ${ZIP_DIR_NAME}-future.zip ${PROJECT_VERSION}/* --exclude *.DS_Store* *.buildinfo*
+  
+  echo "Zipping together the zips"
+  zip -q ${ZIP_DIR_NAME}.zip *.zip
 }
+
 
 function build() {
   build_docs

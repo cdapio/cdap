@@ -46,6 +46,8 @@ function usage() {
   echo 
   echo "    docs-github       Clean build of HTML and Javadocs, zipped, for placing on GitHub"
   echo "    docs-web          Clean build of HTML and Javadocs, zipped, for placing on docs.cask.co webserver"
+  echo
+  echo "    pack-web-part     Package the existing build of Web docs (for testing only)"
   echo 
   echo "    clean             Clean up any previous build's target directories"
   echo "    docs-cli          Build CLI input file used in the documentation"
@@ -118,9 +120,11 @@ function run_command() {
     docs-github )       build_docs ${GITHUB};;
     docs-web )          build_docs ${WEB};;
 
-    docs-first-pass )   build_docs_first_pass ;;
+    docs-first-pass )   build_docs_first_pass;;
     docs-github-part )  build_docs_github_part;;
     docs-web-part )     build_docs_web_part;;
+    
+    pack-web-part )     package_docs_web_part;;
     
     docs-cli )          build_docs_cli;;
     javadocs )          build_javadocs ${DOCS};;
@@ -377,12 +381,42 @@ function _build_docs() {
   echo "--------------------------------------------------------"
   build_docs_inner_level ${doc_target}
   build_docs_outer_level ${google_analytics_code}
+  _package_docs ${doc_target} ${zip_target} ${zip_extras}
+#   copy_docs_inner_level
+#   build_zip ${zip_target}
+#   zip_extras ${zip_extras}
+  echo
+  echo "--------------------------------------------------------"
+  echo "Building target \"${doc_target}\" completed."
+  echo "========================================================"
+  echo "========================================================"
+  echo
+}
+
+function package_docs_web_part() {
+  echo "========================================================"
+  echo "Packaging Web Docs"
+  echo "--------------------------------------------------------"
+  echo
+  _package_docs build-web ${WEB} ${TRUE}
+  return $?
+}
+
+function _package_docs() {
+  local doc_target=${1}
+  local zip_target=${2}
+  local zip_extras=${3}
+  echo
+  echo "========================================================"
+  echo "========================================================"
+  echo "Packaging target \"${doc_target}\"..."
+  echo "--------------------------------------------------------"
   copy_docs_inner_level
   build_zip ${zip_target}
   zip_extras ${zip_extras}
   echo
   echo "--------------------------------------------------------"
-  echo "Building target \"${doc_target}\" completed."
+  echo "Packaging target \"${doc_target}\" completed."
   echo "========================================================"
   echo "========================================================"
   echo
