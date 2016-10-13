@@ -47,7 +47,6 @@ public interface WorkerContext extends RuntimeContext, ServiceDiscoverer, Stream
    */
   int getInstanceId();
 
-
   /**
    * Executes a set of operations via a {@link TxRunnable} that are committed as a single transaction.
    * The {@link TxRunnable} can gain access to {@link Dataset} through the {@link DatasetContext} provided

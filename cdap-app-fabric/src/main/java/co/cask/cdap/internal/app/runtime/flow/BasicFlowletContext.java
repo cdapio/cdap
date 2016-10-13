@@ -58,7 +58,6 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
   private volatile int instanceCount;
   private final LoadingCache<String, MetricsContext> queueMetrics;
   private final LoadingCache<ImmutablePair<String, String>, MetricsContext> producerMetrics;
-  private final Transactional transactional;
 
   BasicFlowletContext(Program program, ProgramOptions programOptions, final String flowletId,
                       int instanceId, int instanceCount, Set<String> datasets,
@@ -104,8 +103,6 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
                                           Constants.Metrics.Tag.CONSUMER, BasicFlowletContext.this.flowletId));
         }
       });
-
-    this.transactional = Transactions.createTransactional(getDatasetCache());
   }
 
   @Override
@@ -161,15 +158,5 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
 
   public long getGroupId() {
     return groupId;
-  }
-
-  @Override
-  public void execute(TxRunnable runnable) throws TransactionFailureException {
-    transactional.execute(runnable);
-  }
-
-  @Override
-  public void execute(int timeoutInSeconds, TxRunnable runnable) throws TransactionFailureException {
-    transactional.execute(timeoutInSeconds, runnable);
   }
 }

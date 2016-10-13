@@ -18,8 +18,6 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
@@ -39,7 +37,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
@@ -86,7 +83,6 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
   private final StreamAdmin streamAdmin;
   private final File pluginArchive;
   private final Map<String, LocalizeResource> resourcesToLocalize;
-  private final Transactional transactional;
 
   // key is input name, value is the MapperInput (configuration info) for that input
   private Map<String, MapperInput> inputs;
@@ -121,7 +117,6 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
     this.streamAdmin = streamAdmin;
     this.pluginArchive = pluginArchive;
     this.resourcesToLocalize = new HashMap<>();
-    this.transactional = Transactions.createTransactional(getDatasetCache());
 
     this.inputs = new HashMap<>();
     this.outputFormatProviders = new HashMap<>();
@@ -430,15 +425,5 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
       return workflowProgramInfo.updateMetricsTags(new HashMap<String, String>());
     }
     return Collections.emptyMap();
-  }
-
-  @Override
-  public void execute(TxRunnable runnable) throws TransactionFailureException {
-    transactional.execute(runnable);
-  }
-
-  @Override
-  public void execute(int timeoutInSeconds, TxRunnable runnable) throws TransactionFailureException {
-    transactional.execute(timeoutInSeconds, runnable);
   }
 }
