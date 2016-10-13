@@ -17,6 +17,8 @@ package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.ProgramStatus;
+import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
@@ -29,10 +31,12 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import com.google.common.collect.ImmutableMap;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -51,6 +55,7 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
   private final ProgramWorkflowRunner programWorkflowRunner;
   private final WorkflowToken token;
   private final Map<String, WorkflowNodeState> nodeStates;
+  private final Transactional transactional;
   private ProgramState state;
 
   BasicWorkflowContext(WorkflowSpecification workflowSpec, @Nullable WorkflowActionSpecification spec,
@@ -71,6 +76,7 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
     this.programWorkflowRunner = programWorkflowRunner;
     this.token = token;
     this.nodeStates = nodeStates;
+    this.transactional = Transactions.createTransactional(getDatasetCache());
   }
 
   @Override
@@ -120,5 +126,15 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
   @Override
   public ProgramState getState() {
     return state;
+  }
+
+  @Override
+  public void execute(TxRunnable runnable) throws TransactionFailureException {
+    transactional.execute(runnable);
+  }
+
+  @Override
+  public void execute(int timeoutInSeconds, TxRunnable runnable) throws TransactionFailureException {
+    transactional.execute(timeoutInSeconds, runnable);
   }
 }

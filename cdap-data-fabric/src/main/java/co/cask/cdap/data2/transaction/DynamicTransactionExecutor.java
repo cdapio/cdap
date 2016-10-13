@@ -118,7 +118,16 @@ public class DynamicTransactionExecutor extends AbstractTransactionExecutor {
   }
 
   private <I, O> O executeOnce(Function<I, O> function, I input) throws TransactionFailureException {
-    TransactionContext txContext = txContextSupplier.get();
+    TransactionContext txContext;
+    try {
+      txContext = txContextSupplier.get();
+    } catch (RuntimeException e) {
+      if (e.getCause() instanceof TransactionFailureException) {
+        throw (TransactionFailureException) e.getCause();
+      } else {
+        throw e;
+      }
+    }
     txContext.start();
     O o = null;
     try {

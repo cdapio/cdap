@@ -515,10 +515,11 @@ final class HttpHandlerGenerator {
      * <pre>{@code
      *   public void|BodyConsumer handle(HttpRequest request, HttpResponder responder, ...) {
      *     T handler = getHandler();
-     *     TransactionContext txContext = getTransactionContext();
-     *     DelayedHttpServiceResponder wrappedResponder = wrapResponder(responder, txContext);
+     *     TransactionContext txContext = null;
      *     HttpContentConsumer contentConsumer = null;
      *     try {
+     *       txContext = getTransactionContext();
+     *       DelayedHttpServiceResponder wrappedResponder = wrapResponder(responder, txContext);
      *       txContext.start();
      *       try {
      *         ClassLoader classLoader = ClassLoaders.setContextClassLoader(createHandlerContextClassLoader());
@@ -580,15 +581,31 @@ final class HttpHandlerGenerator {
       mg.checkCast(handlerType);
       mg.storeLocal(handler, handlerType);
 
-      // TransactionContext txContext = getTransactionContext();
+      // TransactionContext txContext = null;
       int txContext = mg.newLocal(txContextType);
+      mg.visitInsn(Opcodes.ACONST_NULL);
+      mg.storeLocal(txContext, txContextType);
+
+      // HttpContentConsumer contentConsumer = null;
+      int contentConsumer = mg.newLocal(httpContentConsumerType);
+      mg.visitInsn(Opcodes.ACONST_NULL);
+      mg.storeLocal(contentConsumer, httpContentConsumerType);
+
+      // DelayedHttpServiceResponder wrappedResponder = wrapResponder(responder, txContext);
+      int wrappedResponder = mg.newLocal(delayedHttpServiceResponderType);
+      mg.visitInsn(Opcodes.ACONST_NULL);
+      mg.storeLocal(wrappedResponder, delayedHttpServiceResponderType);
+
+      // try {  // Outer try for transaction failure
+      mg.mark(txTryBegin);
+
+      // txContext = getTransactionContext();
       mg.loadThis();
       mg.invokeVirtual(classType,
                        Methods.getMethod(TransactionContext.class, "getTransactionContext"));
       mg.storeLocal(txContext, txContextType);
 
-      // DelayedHttpServiceResponder wrappedResponder = wrapResponder(responder, txContext);
-      int wrappedResponder = mg.newLocal(delayedHttpServiceResponderType);
+      // wrappedResponder = wrapResponder(responder, txContext);
       mg.loadThis();
       mg.loadArg(1);
       mg.loadLocal(txContext);
@@ -596,14 +613,6 @@ final class HttpHandlerGenerator {
                        Methods.getMethod(DelayedHttpServiceResponder.class, "wrapResponder",
                                          HttpResponder.class, TransactionContext.class));
       mg.storeLocal(wrappedResponder, delayedHttpServiceResponderType);
-
-      // HttpContentConsumer contentConsumer = null;
-      int contentConsumer = mg.newLocal(httpContentConsumerType);
-      mg.visitInsn(Opcodes.ACONST_NULL);
-      mg.storeLocal(contentConsumer, httpContentConsumerType);
-
-      // try {  // Outer try for transaction failure
-      mg.mark(txTryBegin);
 
       // txContext.start();
       mg.loadLocal(txContext, txContextType);

@@ -19,6 +19,8 @@ package co.cask.cdap.app.runtime.spark;
 import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.data.DatasetInstantiationException;
@@ -32,11 +34,13 @@ import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowInfo;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import com.google.common.base.Throwables;
 import org.apache.spark.SparkConf;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.api.RunId;
 
 import java.net.URI;
@@ -58,10 +62,12 @@ final class BasicSparkClientContext implements SparkClientContext {
   private Resources executorResources;
   private SparkConf sparkConf;
   private ProgramState state;
+  private final Transactional transactional;
 
   BasicSparkClientContext(SparkRuntimeContext sparkRuntimeContext) {
     this.sparkRuntimeContext = sparkRuntimeContext;
     this.localizeResources = new HashMap<>();
+    this.transactional = Transactions.createTransactional(sparkRuntimeContext.getDatasetCache());
 
     SparkSpecification spec = sparkRuntimeContext.getSparkSpecification();
     Map<String, String> runtimeArgs = sparkRuntimeContext.getRuntimeArguments();
@@ -268,5 +274,15 @@ final class BasicSparkClientContext implements SparkClientContext {
 
   void setState(ProgramState state) {
     this.state = state;
+  }
+
+  @Override
+  public void execute(TxRunnable runnable) throws TransactionFailureException {
+    transactional.execute(runnable);
+  }
+
+  @Override
+  public void execute(int timeoutInSeconds, TxRunnable runnable) throws TransactionFailureException {
+    transactional.execute(timeoutInSeconds, runnable);
   }
 }

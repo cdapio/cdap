@@ -20,6 +20,8 @@ import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.internal.api.AbstractPluginConfigurable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -136,6 +138,7 @@ public abstract class AbstractSpark extends AbstractPluginConfigurable<SparkConf
   }
 
   @Override
+  @TransactionPolicy(TransactionControl.IMPLICIT)
   public final void initialize(SparkClientContext context) throws Exception {
     this.context = context;
     initialize();
@@ -147,12 +150,14 @@ public abstract class AbstractSpark extends AbstractPluginConfigurable<SparkConf
    * Default implementation of this method calls the deprecated {@link AbstractSpark#beforeSubmit} method.
    * @throws Exception if there is any error in initializing the Spark
    */
+  @TransactionPolicy(TransactionControl.IMPLICIT)
   protected void initialize() throws Exception {
     beforeSubmit(context);
   }
 
 
   @Override
+  @TransactionPolicy(TransactionControl.IMPLICIT)
   public void destroy() {
     try {
       onFinish(context.getState().getStatus() == ProgramStatus.COMPLETED, context);

@@ -23,6 +23,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.proto.id.StreamId;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionExecutor;
+import org.apache.tephra.TransactionFailureException;
 
 import java.io.IOException;
 
@@ -33,7 +34,7 @@ public interface DataFabricFacade extends QueueClientFactory {
 
   DatasetContext getDatasetContext();
 
-  TransactionContext createTransactionContext();
+  TransactionContext createTransactionContext() throws TransactionFailureException;
 
   TransactionExecutor createTransactionExecutor();
 

@@ -19,6 +19,10 @@ package co.cask.cdap.app.runtime.spark;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.ProgramStatus;
+import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.app.runtime.spark.distributed.SparkContainerLauncher;
@@ -30,7 +34,6 @@ import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
@@ -58,8 +61,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.ShutdownHookManager;
 import org.apache.spark.SparkConf;
 import org.apache.spark.deploy.SparkSubmit;
-import org.apache.tephra.TransactionContext;
-import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
@@ -143,7 +144,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   @Override
   protected void startUp() throws Exception {
     // additional spark job initialization at run-time
-    // This context is for calling beforeSubmit and onFinish on the Spark program
+    // This context is for calling initialize and onFinish on the Spark program
 
     // Fields injection for the Spark program
     // It has to be done in here instead of in SparkProgramRunner for the @UseDataset injection
@@ -154,7 +155,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
                       new DataSetFieldSetter(runtimeContext.getDatasetCache()),
                       new MetricsFieldSetter(runtimeContext));
 
-    beforeSubmit();
+    initialize();
 
     // Creates a temporary directory locally for storing all generated files.
     File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
@@ -283,11 +284,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     }
 
     try {
-      if (spark instanceof ProgramLifecycle) {
-        destroy(state);
-      } else {
-        onFinish(state);
-      }
+      destroy(state);
     } finally {
       cleanupTask.run();
       LOG.debug("Spark program completed: {}", runtimeContext);
@@ -333,13 +330,17 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    * the {@link ProgramLifecycle#initialize} otherwise.
    */
   @SuppressWarnings("unchecked")
-  private void beforeSubmit() throws TransactionFailureException,
-    InterruptedException {
-    DynamicDatasetCache datasetCache = runtimeContext.getDatasetCache();
-    TransactionContext txContext = datasetCache.newTransactionContext();
-    Transactions.execute(txContext, spark.getClass().getName() + ".beforeSubmit()", new Callable<Void>() {
+  private void initialize() throws Exception {
+    final TransactionControl txControl = spark instanceof AbstractSpark
+      ? Transactions.getTransactionControl(TransactionControl.IMPLICIT, AbstractSpark.class, spark, "initialize")
+      : spark instanceof ProgramLifecycle
+      ? Transactions.getTransactionControl(TransactionControl.IMPLICIT, Spark.class,
+                                           spark, "initialize", SparkClientContext.class)
+      : TransactionControl.IMPLICIT;
+
+    TxRunnable runnable = new TxRunnable() {
       @Override
-      public Void call() throws Exception {
+      public void run(DatasetContext ctxt) throws Exception {
         Cancellable cancellable = SparkRuntimeUtils.setContextClassLoader(new SparkClassLoader(runtimeContext));
         try {
           context.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
@@ -348,60 +349,46 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
           } else {
             spark.beforeSubmit(context);
           }
-          return null;
         } finally {
           cancellable.cancel();
         }
       }
-    });
+    };
+    if (TransactionControl.IMPLICIT == txControl) {
+      context.execute(runnable);
+    } else {
+      runnable.run(context);
+    }
   }
 
   /**
-   * Calls the {@link Spark#onFinish(boolean, SparkClientContext)} method.
+   * Calls the destroy or onFinish method of {@link ProgramLifecycle}.
    */
-  private void onFinish(final ProgramState state)
-    throws TransactionFailureException, InterruptedException {
-    DynamicDatasetCache datasetCache = runtimeContext.getDatasetCache();
-    TransactionContext txContext = datasetCache.newTransactionContext();
+  private void destroy(final ProgramState state) throws Exception {
+    final TransactionControl txControl = spark instanceof ProgramLifecycle
+      ? Transactions.getTransactionControl(TransactionControl.IMPLICIT, Spark.class, spark, "destroy")
+      : TransactionControl.IMPLICIT;
 
-    Transactions.execute(txContext, spark.getClass().getName() + ".onFinish()", new Callable<Void>() {
+    TxRunnable runnable = new TxRunnable() {
       @Override
-      public Void call() throws Exception {
+      public void run(DatasetContext ctxt) throws Exception {
         Cancellable cancellable = SparkRuntimeUtils.setContextClassLoader(new SparkClassLoader(runtimeContext));
         try {
           context.setState(state);
-          spark.onFinish(state.getStatus() == ProgramStatus.COMPLETED, context);
-          return null;
+          if (spark instanceof ProgramLifecycle) {
+            ((ProgramLifecycle) spark).destroy();
+          } else {
+            spark.onFinish(state.getStatus() == ProgramStatus.COMPLETED, context);
+          }
         } finally {
           cancellable.cancel();
         }
       }
-    });
-  }
-
-  /**
-   * Calls the destroy method of {@link ProgramLifecycle}.
-   */
-  private void destroy(final ProgramState state) {
-    DynamicDatasetCache datasetCache = runtimeContext.getDatasetCache();
-    TransactionContext txContext = datasetCache.newTransactionContext();
-    try {
-      Transactions.execute(txContext, spark.getClass().getName() + ".destroy()", new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          Cancellable cancellable = SparkRuntimeUtils.setContextClassLoader(new SparkClassLoader(runtimeContext));
-          try {
-            context.setState(state);
-            ((ProgramLifecycle) spark).destroy();
-            return null;
-          } finally {
-            cancellable.cancel();
-          }
-        }
-      });
-    } catch (Throwable e) {
-      LOG.warn("Error executing the destroy method of the Spark program {}",
-               context.getApplicationSpecification().getName(), e);
+    };
+    if (TransactionControl.IMPLICIT == txControl) {
+      context.execute(runnable);
+    } else {
+      runnable.run(context);
     }
   }
 
@@ -599,7 +586,6 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    *
    * @param resources the set of resources that need to be localized.
    * @param targetDir the target directory for the resources to copy / link to.
-   * @return a map from resource name to local file path.
    */
   private void copyUserResources(Map<String, LocalizeResource> resources, File targetDir) throws IOException {
     for (Map.Entry<String, LocalizeResource> entry : resources.entrySet()) {

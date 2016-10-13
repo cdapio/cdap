@@ -30,6 +30,7 @@ import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionContext;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 
 import java.util.Collection;
@@ -109,7 +110,7 @@ public class MultiThreadDatasetCache extends DynamicDatasetCache {
   }
 
   @Override
-  public TransactionContext newTransactionContext() {
+  public TransactionContext newTransactionContext() throws TransactionFailureException {
     return entryForCurrentThread().newTransactionContext();
   }
 

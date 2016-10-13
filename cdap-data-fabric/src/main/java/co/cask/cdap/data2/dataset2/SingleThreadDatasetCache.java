@@ -255,7 +255,11 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
   }
 
   @Override
-  public TransactionContext newTransactionContext() {
+  public TransactionContext newTransactionContext() throws TransactionFailureException {
+    if (txContext != null && txContext.getCurrentTransaction() != null) {
+      throw new TransactionFailureException("Attempt to start a transaction within active transaction " +
+                                              txContext.getCurrentTransaction().getTransactionId());
+    }
     dismissTransactionContext();
     txContext = new DelayedDiscardingTransactionContext(activeTxAwares.values(), extraTxAwares);
     return txContext;
@@ -403,11 +407,10 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
       txContext.start(timeout);
     }
 
-    private void newTxContext() {
-      if (txContext != null && txContext.getCurrentTransaction() != null) {
-        LOG.warn("Starting a new transaction while the previous transaction {} is still on-going. ",
-                 txContext.getCurrentTransaction().getTransactionId());
-        cleanup();
+    private void newTxContext() throws TransactionFailureException {
+      if (getCurrentTransaction() != null) {
+        throw new TransactionFailureException("Attempt to start a transaction within active transaction " +
+                                                getCurrentTransaction().getTransactionId());
       }
       txContext = new TransactionContext(SingleThreadDatasetCache.this.txClient, txAwares);
     }

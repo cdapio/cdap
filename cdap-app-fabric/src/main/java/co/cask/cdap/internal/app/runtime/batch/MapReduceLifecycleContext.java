@@ -20,6 +20,7 @@ import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.batch.Input;
@@ -37,6 +38,7 @@ import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.workflow.WorkflowInfo;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -311,6 +313,18 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   @Override
   public SecureStoreData getSecureData(String namespace, String name) throws Exception {
     return delegate.getSecureData(namespace, name);
+  }
+
+  @Override
+  public void execute(TxRunnable runnable) throws TransactionFailureException {
+    throw new TransactionFailureException("Attempt to start a transaction within active transaction " +
+                                            delegate.getTransaction().getTransactionId());
+  }
+
+  @Override
+  public void execute(int timeoutInSeconds, TxRunnable runnable) throws TransactionFailureException {
+    throw new TransactionFailureException("Attempt to start a transaction within active transaction " +
+                                            delegate.getTransaction().getTransactionId());
   }
 
   @Override
