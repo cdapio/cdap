@@ -22,6 +22,7 @@ import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
+import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.metrics.Metrics;
@@ -35,7 +36,8 @@ import co.cask.cdap.api.workflow.WorkflowInfoProvider;
  */
 @Beta
 public interface SparkClientContext extends RuntimeContext, DatasetContext, ClientLocalizationContext,
-                                            ServiceDiscoverer, PluginContext, WorkflowInfoProvider, SecureStore {
+  Transactional, ServiceDiscoverer, PluginContext, WorkflowInfoProvider, SecureStore {
+
   /**
    * @return The specification used to configure this {@link Spark} job instance.
    */

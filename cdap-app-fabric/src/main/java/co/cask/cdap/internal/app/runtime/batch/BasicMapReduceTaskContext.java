@@ -79,6 +79,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
 
   private final MapReduceSpecification spec;
   private final WorkflowProgramInfo workflowProgramInfo;
+
   private final Transaction transaction;
   private final TaskLocalizationContext taskLocalizationContext;
   private final AuthorizationEnforcer authorizationEnforcer;
@@ -122,6 +123,10 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
     initializeTransactionAwares();
+  }
+
+  Transaction getTransaction() {
+    return transaction;
   }
 
   @Override

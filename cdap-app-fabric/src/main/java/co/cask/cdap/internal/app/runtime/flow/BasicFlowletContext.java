@@ -16,6 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.flow;
 
+import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
@@ -28,12 +30,14 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -99,7 +103,6 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
                                           Constants.Metrics.Tag.CONSUMER, BasicFlowletContext.this.flowletId));
         }
       });
-
   }
 
   @Override
@@ -145,11 +148,11 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
                                      getRunId().getId(), String.valueOf(getInstanceId()));
   }
 
-  public MetricsContext getQueueMetrics(String flowletQueueName) {
+  MetricsContext getQueueMetrics(String flowletQueueName) {
     return queueMetrics.getUnchecked(flowletQueueName);
   }
 
-  public MetricsContext getProducerMetrics(ImmutablePair<String, String> producerAndQueue) {
+  MetricsContext getProducerMetrics(ImmutablePair<String, String> producerAndQueue) {
     return producerMetrics.getUnchecked(producerAndQueue);
   }
 

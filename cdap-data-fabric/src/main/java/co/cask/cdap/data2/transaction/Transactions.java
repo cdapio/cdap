@@ -18,6 +18,8 @@ package co.cask.cdap.data2.transaction;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import com.google.common.base.Functions;
@@ -36,6 +38,8 @@ import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -344,4 +348,59 @@ public final class Transactions {
   private Transactions() {
     // Private the constructor for util class
   }
+
+  /**
+   * Determines the transaction control of a method, as (optionally) annotated with @TransactionPolicy.
+   * If the program's class does not implement the method, the superclass is inspected up to and including
+   * the given base class.
+   *
+   * @param defaultValue returned if no annotation is present
+   * @param baseClass upper bound for the super classes to be inspected
+   * @param program the program
+   * @param methodName the name of the method
+   * @param params the paramters of the method
+   *
+   * @return the transaction control annotated for the method of the program class or its nearest superclass that
+   *         is annotated; or defaultValue if no annotation is present in any of the superclasses.
+   */
+  public static TransactionControl getTransactionControl(TransactionControl defaultValue, Class<?> baseClass,
+                                                         Object program, String methodName, Class<?>... params) {
+    Class<?> cls = program.getClass();
+    while (true) {
+      TransactionControl txControl = getTransactionControl(cls, methodName, params);
+      if (txControl != null) {
+        return txControl;
+      }
+      if (cls == baseClass) {
+        break; // reached bounding superclass
+      }
+      cls = cls.getSuperclass();
+      if (cls == null) {
+        break; // reached Object or an interface
+      }
+    }
+    // if we reach this point, then none of the super classes had an annotation for the method
+    for (Class<?> interf : program.getClass().getInterfaces()) {
+      TransactionControl txControl = getTransactionControl(interf, methodName, params);
+      if (txControl != null) {
+        return txControl;
+      }
+    }
+    return defaultValue;
+  }
+
+  private static TransactionControl getTransactionControl(Class<?> cls, String methodName, Class<?>[] params) {
+    try {
+      Method method = cls.getDeclaredMethod(methodName, params);
+      Annotation annotation = method.getAnnotation(TransactionPolicy.class);
+      if (annotation != null) {
+        return ((TransactionPolicy) annotation).value();
+      }
+    } catch (NoSuchMethodException e) {
+      // this class does not have the method, that is ok
+    }
+    return null;
+  }
+
+
 }

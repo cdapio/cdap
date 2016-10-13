@@ -31,6 +31,7 @@ import com.google.common.base.Supplier;
 import com.google.common.io.Closeables;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionContext;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 
 import java.util.Map;
@@ -228,7 +229,7 @@ public abstract class DynamicDatasetCache implements DatasetContext, Supplier<Tr
    *
    * @return a new transaction context
    */
-  public abstract TransactionContext newTransactionContext();
+  public abstract TransactionContext newTransactionContext() throws TransactionFailureException;
 
   /**
    * Dismiss the current transaction context. This releases the references to the context's
@@ -241,7 +242,11 @@ public abstract class DynamicDatasetCache implements DatasetContext, Supplier<Tr
 
   @Override
   public TransactionContext get() {
-    return newTransactionContext();
+    try {
+      return newTransactionContext();
+    } catch (TransactionFailureException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**
