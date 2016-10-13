@@ -1,0 +1,139 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+@namespace-action-bg: #E7E7E7;
+@namespace-dropdown-color: #333;
+@import "../../styles/variables.less";
+
+.products-dropdown {
+  width: 140px;
+  border-left: 1px solid #666666;
+  padding: 0;
+  font-size: 14px;
+  display: inline-block;
+  vertical-align: top;
+
+  .dropdown {
+    .current-product {
+      padding-left: 10px;
+      display: inline-block;
+      cursor: pointer;
+      width: 100%;
+
+      &.cdap {
+        color: @cdap-orange;
+        &.open {
+          background-color: @cdap-orange;
+          color: white;
+        }
+      }
+      &.hydrator {
+        color: @hydrator-blue;
+        &.open {
+          background-color: @hydrator-blue;
+          color: white;
+        }
+      }
+      &.tracker {
+        color: @tracker-green;
+        &.open {
+          background-color: @tracker-green;
+          color: white;
+        }
+      }
+      [class*="icon-"] {
+        vertical-align: middle;
+      }
+      .product-name {
+        margin-left: 5px;
+      }
+    }
+    &.open {
+      .dropdown-menu {
+        left: 0;
+      }
+    }
+    .dropdown-menu {
+      border-radius: 0;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      height: ~"calc(100vh - 50px)";
+      height: ~"-webkit-calc(100vh - 50px)";
+      height: ~"-moz-calc(100vh - 50px)";
+      display: block;
+      transition: 0.3s ease-in;
+      left: 100%;
+      outline: 0;
+      user-select: none;
+      -moz-user-select: none;
+      -webkit-user-select: none;
+      -ms-user-select: none;
+      background-color: @navbar-bg;
+
+      .dropdown-item {
+        .product-link {
+          color: @namespace-dropdown-color;
+          text-decoration: inherit;
+          cursor: auto;
+          padding-right: 0;
+          display: block;
+          font-size: 13px;
+          padding: 0 10px;
+          line-height: 39px;
+
+          &.cdap {
+            color: @cdap-orange;
+          }
+          &.hydrator {
+            color: @hydrator-blue;
+          }
+          &.tracker {
+            color: @tracker-green;
+          }
+
+          &:hover {
+            &.cdap {
+              background-color: @cdap-orange;
+            }
+            &.hydrator {
+              background-color: @hydrator-blue;
+            }
+            &.tracker {
+              background-color: @tracker-green;
+            }
+            color: white;
+          }
+
+          [class*="icon-"] {
+            vertical-align: middle;
+            margin-right: 5px;
+          }
+        }
+        &:last-child {
+          border: 0;
+        }
+      }
+    }
+    .products-backdrop {
+      position: fixed;
+      left: 0;
+      background-color: black;
+      width: 100vw;
+      height: 100vh;
+      opacity: 0.5;
+    }
+  }
+}

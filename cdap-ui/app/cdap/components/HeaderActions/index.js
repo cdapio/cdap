@@ -17,66 +17,25 @@
 import React, {Component} from 'react';
 import { Dropdown, DropdownMenu, DropdownItem } from 'reactstrap';
 import cookie from 'react-cookie';
-import {Link} from 'react-router';
 import PlusButton from '../PlusButton';
 import T from 'i18n-react';
-import orderBy from 'lodash/orderBy';
 import Store from 'services/store/store.js';
 import SpotlightSearch from 'components/SpotlightSearch';
 require('./HeaderActions.less');
 var classNames = require('classnames');
-const shortid = require('shortid');
+import NamespaceDropdown from 'components/NamespaceDropdown';
+import ProductsDrawer from 'components/ProductsDrawer';
 
 export default class HeaderActions extends Component {
-
   constructor(props) {
     super(props);
     this.state = {
       settingsOpen : false,
       name : Store.getState().userName,
-      namespaceList : [],
-      namespaceOpen : false,
-      currentNamespace: Store.getState().selectedNamespace
     };
     this.logout = this.logout.bind(this);
     this.toggleSettingsDropdown = this.toggleSettingsDropdown.bind(this);
-    this.namespaceList = [];
-    this.namespaceMap = '';
-    this.toggleNamespaceDropdown = this.toggleNamespaceDropdown.bind(this);
-    this.loadNamespacesFromStore = this.loadNamespacesFromStore.bind(this);
   }
-
-  componentWillMount(){
-
-    //Load the namespaces into the dropdown from the store
-    this.namespaceList = Store.getState().namespaces;
-    if(this.namespaceList){
-      this.loadNamespacesFromStore(this.namespaceList, Store.getState().selectedNamespace);
-    }
-
-    //Load updated data into the namespace dropdown
-    Store.subscribe(() => {
-      this.namespaceList = Store.getState().namespaces;
-      let namespaceToUpdate = Store.getState().selectedNamespace;
-      let username = Store.getState().userName;
-
-      if(this.namespaceList){
-        this.loadNamespacesFromStore(this.namespaceList, namespaceToUpdate);
-      }
-
-      this.setState({
-        currentNamespace : namespaceToUpdate,
-        name : username
-      });
-    });
-  }
-
-  toggleSettingsDropdown(){
-    this.setState({
-      settingsOpen : !this.state.settingsOpen
-    });
-  }
-
   logout() {
     cookie.remove('CDAP_Auth_Token', { path: '/' });
     cookie.remove('CDAP_Auth_User', { path: '/' });
@@ -86,53 +45,11 @@ export default class HeaderActions extends Component {
       clientId: 'cdap'
     });
   }
-
-  toggleNamespaceDropdown(){
+  toggleSettingsDropdown(){
     this.setState({
-      namespaceOpen : !this.state.namespaceOpen
+      settingsOpen : !this.state.settingsOpen
     });
   }
-
-  loadNamespacesFromStore (namespaceList, currentNamespace) {
-    if(typeof namespaceList === 'undefined'){
-      return;
-    }
-
-    let sortedNamespaces = orderBy(namespaceList, ['name'], ['asc']);
-
-    this.namespaceMap = sortedNamespaces.map( (item) => {
-      let checkClass = classNames({ "fa fa-check selected-namespace-check": currentNamespace === item.name });
-      let check = <span className={checkClass}></span>;
-
-      return (
-        <Link
-          to={`/ns/${item.name}`}
-          key={shortid.generate()}
-        >
-          <div onClick={this.selectNamespace.bind(this, item.name)}>
-            {check}
-            {item.name}
-          </div>
-        </Link>
-      );
-    });
-  }
-
-  selectNamespace(name){
-    localStorage.setItem('NS', name);
-
-    this.setState({
-      namespaceOpen: false
-    });
-
-    Store.dispatch({
-      type: 'SELECT_NAMESPACE',
-      payload: {
-        selectedNamespace : name
-      }
-    });
-  }
-
   render() {
 
     let topRow = '';
@@ -216,26 +133,11 @@ export default class HeaderActions extends Component {
               </DropdownMenu>
             </Dropdown>
           </div>
-          <div className="navbar-item namespace-dropdown">
-            <Dropdown
-              isOpen={this.state.namespaceOpen}
-              toggle={this.toggleNamespaceDropdown}
-              className="header-actions-dropdown"
-            >
-              <div
-                className="current-namespace"
-                onClick={this.toggleNamespaceDropdown}
-              >
-                <div className="namespace-text">
-                  {this.state.currentNamespace}
-                </div>
-                <span className="fa fa-angle-down pull-right">
-                </span>
-              </div>
-              <DropdownMenu>
-                {this.namespaceMap}
-              </DropdownMenu>
-            </Dropdown>
+          <div className="namespace-dropdown">
+            <NamespaceDropdown />
+          </div>
+          <div className="products-dropdown">
+            <ProductsDrawer currentChoice="cdap"/>
           </div>
         </ul>
       </div>

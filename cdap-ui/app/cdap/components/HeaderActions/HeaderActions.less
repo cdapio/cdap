@@ -16,16 +16,13 @@
 
 @import "../../styles/variables.less";
 @plus-button-color: #52b746;
-
+@namespace-dropdown-color: #333;
 .cask-header {
-
   .active {
     color: #ff6600;
   }
-
   .navbar {
     .header-actions {
-
       .plus-button {
         color: @plus-button-color;
       }
@@ -34,162 +31,66 @@
         color: @cdap-orange;
       }
       .navbar-cog {
-        position: relative;;
+        position: relative;
       }
       .navbar-cog-arrow {
-         position: absolute;
-         right: 18px;
-         top: 35px;
-         width: 0;
-         height: 0;
-         border-left: 10px solid transparent;
-         border-right: 10px solid transparent;
-         border-bottom: 10px solid #ffffff;
+        position: absolute;
+        right: 10px;
+        top: 40px;
+        width: 0;
+        height: 0;
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+        border-bottom: 10px solid #ffffff;
       }
       .hidden {
         visibility: hidden;
       }
-
-      .header-actions-dropdown {
+      .settings-dropdown {
         .dropdown-menu {
-           width: 160px;
-           outline: none;
-           color: #333333;
-           position: absolute;
-           left: -130px;
-           top: -9px;
-           border: none;
+          outline: none;
+          color: @namespace-dropdown-color;
+          position: absolute;
+          left: -73px;
+          border: none;
+          margin: 0;
 
-           .dropdown-divider {
-             border-top: 1px solid #f0f0f0;
-             width: 90%;
-             margin-left: 7px;
-           }
-
-           .dropdown-item {
-             &:hover {
-               background-color: #f5f5f5;
-             }
-
-             a, a:hover{
-               color: #000000;
-               text-decoration: inherit;
-               color: inherit;
-               cursor: auto;
-               padding-right: 0;
-             }
-
-             line-height: 36px;
-           }
-
-           .dropdown-icon {
-             padding: 0 10px;
-           }
-
-           .dropdown-name-row {
-             padding-left: 10px;
-             cursor: default;
-
-             &:hover{
-               background-color: transparent;
-             }
-
-             .dropdown-name {
-               color: #FC6600;
-               margin-left: 5px;
-             }
-
-             .dropdown-name-icon {
-               padding-left: 5px;
-             }
-           }
+          .dropdown-divider {
+            border-top: 1px solid #f0f0f0;
+            width: 90%;
+            margin-left: 7px;
+          }
+          .dropdown-item {
+            &:hover {
+              background-color: #f5f5f5;
+            }
+            a {
+              text-decoration: inherit;
+              color: inherit;
+              cursor: auto;
+              padding-right: 0;
+            }
+            line-height: 36px;
+          }
+          .dropdown-icon {
+            padding: 0 10px;
+          }
+          .dropdown-name-row {
+            padding-left: 10px;
+            cursor: default;
+            &:hover {
+              background-color: transparent;
+            }
+            .dropdown-name {
+              color: #FC6600;
+              margin-left: 5px;
+            }
+            .dropdown-name-icon {
+              padding-left: 5px;
+            }
+          }
         }
       }
     }
-  }
- }
-
-.cask-header .navbar ul {
-
-   .namespace-dropdown {
-
-     .current-namespace {
-       padding-left: 10px;
-       height: 50px;
-
-       span {
-         padding-right: 10px;
-       }
-
-       .namespace-text {
-         width: 120px;
-         height: 50px;
-         text-overflow: ellipsis;
-         white-space: nowrap;
-         overflow: hidden;
-         display: inline-block;
-       }
-     }
-
-     .selected-namespace-check {
-       margin-right: 5px;
-     }
-
-     .namespace-choice {
-       color: #333333;
-       font-size: inherit;
-       padding: 0;
-     }
-
-     .namespace-choice:hover {
-       color: #333333;
-     }
-
-    .header-actions-dropdown {
-      &.open {
-        color: #666666;
-        background-color: #ffffff;
-      }
-
-      .dropdown-menu {
-        position: relative;
-        top: -2px;
-        left: 0;
-        border-bottom-left-radius: 3px;
-        outline: none;
-        border-top-left-radius: 0;
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 3px;
-        border: none;
-        border-top: solid 1px #f5f5f5;
-        max-height: 160px;
-        overflow-y: auto;
-        overflow-x: hidden;
-
-        div {
-          padding-left: 10px;
-          line-height: 36px;
-          width: 100%;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        div:hover {
-          background-color: #F5F5F5;
-          cursor: pointer;
-        }
-
-        a, a:hover{
-          color: #000000;
-          text-decoration: inherit;
-          color: inherit;
-          cursor: auto;
-          padding-right: 0;
-        }
-
-      }
-    }
-
   }
 }

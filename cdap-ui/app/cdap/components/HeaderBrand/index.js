@@ -14,25 +14,18 @@
  * the License.
  */
 
-import React, {PropTypes} from 'react';
-var classNames = require('classnames');
+import React from 'react';
+require('./HeaderBrand.less');
 
-export default function HeaderBrand ({title, icon, onClickHandler}) {
+export default function HeaderBrand () {
   return (
     <div className="brand-header">
-      <a className="navbar-brand"
-         onClick={onClickHandler}>
-        <span className={classNames('fa', icon)}></span>
-      </a>
-      <a href="/" className="menu-item product-title">
-        {title}
+      <a
+        className="navbar-brand"
+        href=""
+      >
+        <div className="company-logo"></div>
       </a>
     </div>
   );
 }
-
-HeaderBrand.propTypes = {
-  title: PropTypes.string,
-  icon: PropTypes.string,
-  onClickHandler: PropTypes.func
-};

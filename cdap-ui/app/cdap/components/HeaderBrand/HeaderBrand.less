@@ -14,11 +14,13 @@
  * the License.
  */
 
- export default function namespaces(state = [], action) {
-   switch (action.type) {
-     case 'UPDATE_NAMESPACES':
-       return action.payload.namespaces;
-     default:
-       return state;
-   }
- }
+.company-logo {
+  background: url('/cdap_assets/img/company_logo.png') 0 0 no-repeat;
+  display: inline-block;
+  margin-top: -4px;
+  margin-right: 3px;
+  height: 40px;
+  width: 40px;
+  vertical-align: top;
+  background-size: 40px;
+}
