@@ -57,15 +57,15 @@ class Home extends Component {
     this.sortOptions = [
       {
         displayName: T.translate('features.Home.Header.sortOptions.nameAsc.displayName'),
-        sort: T.translate('features.Home.Header.sortOptions.nameAsc.sortField'),
-        order: T.translate('features.Home.Header.sortOptions.nameAsc.sortOrder'),
-        fullSort: T.translate('features.Home.Header.sortOptions.nameAsc.fullSort')
+        sort: 'name',
+        order: 'asc',
+        fullSort: 'name asc'
       },
       {
         displayName: T.translate('features.Home.Header.sortOptions.nameDesc.displayName'),
-        sort: T.translate('features.Home.Header.sortOptions.nameDesc.sortField'),
-        order: T.translate('features.Home.Header.sortOptions.nameDesc.sortOrder'),
-        fullSort: T.translate('features.Home.Header.sortOptions.nameDesc.fullSort')
+        sort: 'name',
+        order: 'desc',
+        fullSort: 'name desc'
       }
     ];
 
