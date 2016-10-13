@@ -123,23 +123,24 @@ export default class SpotlightSearch extends Component {
         className="search-results-dropdown"
       >
         <DropdownMenu>
-          {this.state.searchResults.results
-            .filter((entity, index) => index < VIEW_RESULT_LIMIT)
-            .map(parseMetadata)
-            .map((entity, index) => {
-              return (
-                <DropdownItem
-                  key={index}
-                  tag='a'
-                  className={classnames({hover: this.state.focusIndex === index})}
-                >
-                  <span className="icon">
-                    <span className={entity.icon} />
-                  </span>
-                  {entity.id}
-                </DropdownItem>
-              );
-            })
+          {
+            this.state.searchResults.results
+              .filter((entity, index) => index < VIEW_RESULT_LIMIT)
+              .map(parseMetadata)
+              .map((entity, index) => {
+                return (
+                  <DropdownItem
+                    key={index}
+                    tag='a'
+                    className={classnames({hover: this.state.focusIndex === index})}
+                  >
+                    <span className="icon">
+                      <span className={entity.icon} />
+                    </span>
+                    {entity.id}
+                  </DropdownItem>
+                );
+              })
           }
           {
             this.state.searchResults.total === 0 ?

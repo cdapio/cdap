@@ -90,7 +90,7 @@
     "lodash": "https://registry.npmjs.org/lodash/-/lodash-4.0.1.tgz",
     "log4js": "0.6.30",
     "moment": "2.15.0",
-    "mousetrap": "^1.6.0",
+    "mousetrap": "1.6.0",
     "ngreact": "0.3.0",
     "node-uuid": "https://registry.npmjs.org/node-uuid/-/node-uuid-1.4.7.tgz",
     "object-hash": "1.1.0",
