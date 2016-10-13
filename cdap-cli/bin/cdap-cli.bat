@@ -22,7 +22,7 @@ SET CDAP_HOME=%~dp0
 SET CDAP_HOME=%CDAP_HOME:~0,-5%
 
 ECHO:
-ECHO [WARN] %0 is deprecated and will be removed in CDAP 4.1. Please use 'cdap cli' for CDAP command line."
+ECHO [WARN] %0 is deprecated and will be removed in CDAP 5.0. Please use 'cdap cli' for CDAP command line."
 ECHO:
 ECHO   cdap cli %*
 ECHO:
