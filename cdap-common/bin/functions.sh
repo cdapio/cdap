@@ -704,10 +704,13 @@ cdap_version() {
 # returns: true
 #
 cdap_sdk_usage() {
+  echo
   echo "Usage: ${0} sdk {start|stop|restart|status|usage}"
+  echo
   echo "Additional options with start, restart:"
   echo "--enable-debug [ <port> ] to connect to a debug port for Standalone CDAP (default port is 5005)"
   echo "--foreground to run the SDK in the foreground, showing logs on STDOUT"
+  echo
   return 0
 }
 
