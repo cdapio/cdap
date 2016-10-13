@@ -27,6 +27,9 @@
     border: 0;
     font-weight: 500;
 
+    &.cdap { .product-navbar-mixins(@cdap-orange, @cdap-orange); }
+    &.hydrator { .product-navbar-mixins(@hydrator-blue, #43AAFF); }
+    &.tracker { .product-navbar-mixins(@tracker-green, @tracker-green); }
     .brand-header {
       float: left;
       a { color: white; }
@@ -67,7 +70,6 @@
       a {
         padding-left: 0;
         padding-right: 40px;
-        color: #cccccc;
         text-decoration: none;
         font-size: 14px;
         &:hover,
@@ -153,6 +155,7 @@
       &.active {
         color: @active-link-color;
       }
+      color: #ccc;
     }
   }
 }

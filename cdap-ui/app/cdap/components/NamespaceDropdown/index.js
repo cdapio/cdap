@@ -100,10 +100,12 @@ export default class NamespaceDropdown extends Component {
                       <Link
                         to={`/ns/${item.name}`}
                         className="namespace-link"
-                        key={shortid.generate()}>
+                        key={shortid.generate()}
+                      >
                         <div
                           className="clearfix namespace-container"
-                          onClick={this.selectNamespace.bind(this, item.name)}>
+                          onClick={this.selectNamespace.bind(this, item.name)}
+                        >
                           <span className="namespace-name pull-left">{item.name}</span>
                           <span className="default-ns-section pull-right">
                             {check}
@@ -113,7 +115,8 @@ export default class NamespaceDropdown extends Component {
                                   <span className="default-btn">
                                     <span
                                       className="btn btn-default btn-xs"
-                                      onClick={() => localStorage.setItem('DefaultNamespace', item.name)}>
+                                      onClick={() => localStorage.setItem('DefaultNamespace', item.name)}
+                                    >
                                       Default
                                     </span>
                                   </span>

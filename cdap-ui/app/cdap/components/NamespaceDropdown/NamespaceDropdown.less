@@ -16,6 +16,7 @@
 @import "../../styles/variables.less";
 @namespace-action-bg: #E7E7E7;
 @namespace-dropdown-color: #333;
+@namespace-hover-bg: #262933;
 
 .namespace-dropdown {
   width: 160px;
@@ -25,6 +26,13 @@
   user-select: none;
   display: inline-block;
 
+  .dropdown {
+    &.open {
+      .current-namespace {
+        background-color: @namespace-hover-bg;
+      }
+    }
+  }
   div[disabled] { cursor: not-allowed; }
 
   .dropdown-toggle { height: 50px; }
@@ -49,6 +57,10 @@
   .current-namespace {
     padding-left: 10px;
     height: 50px;
+    cursor: pointer;
+    &:hover {
+      background-color: @namespace-hover-bg;
+    }
     span {
       padding-right: 10px;
     }
@@ -108,13 +120,15 @@
         padding: 0 10px;
         color: #666;
         background: @namespace-action-bg;
+        cursor: pointer;
         &:hover {
           background-color: #d8d8d8;
           color: #333;
         }
       }
 
-      &.namespace-container {
+        &.namespace-container {
+          color: #333;
         .namespace-name {
           width: ~"calc(100% - 15px)";
           width: ~"-moz-calc(100% - 15px)";
@@ -142,7 +156,7 @@
       }
     }
     div.namespace-container:hover {
-      background-color: #262933;
+      background-color: @namespace-hover-bg;
       color: white;
       .default-btn {
         display: inline-block;

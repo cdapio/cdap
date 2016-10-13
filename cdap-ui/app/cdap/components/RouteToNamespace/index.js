@@ -54,7 +54,7 @@ export default class RouteToNamespace extends Component {
     let defaultNamespace = localStorage.getItem('DefaultNamespace');
     let selectedNamespace;
 
-    if(!selectedNamespace && defaultNamespace) {
+    if(defaultNamespace) {
       selectedNamespace = {name: defaultNamespace};
     }
 
