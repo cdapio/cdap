@@ -151,11 +151,28 @@ export default class HomeHeader extends Component {
 }
 
 HomeHeader.propTypes = {
-  filterOptions: PropTypes.array,
+  filterOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      displayName : PropTypes.string,
+      id: PropTypes.string
+    })
+  ),
   onFilterClick: PropTypes.func,
-  activeFilter: PropTypes.array,
-  sortOptions: PropTypes.array,
-  activeSort: PropTypes.object,
+  activeFilter: PropTypes.arrayOf(PropTypes.string),
+  sortOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      displayName : PropTypes.string,
+      sort: PropTypes.string,
+      order: PropTypes.string,
+      fullSort: PropTypes.string
+    })
+  ),
+  activeSort: PropTypes.shape({
+    displayName : PropTypes.string,
+    sort: PropTypes.string,
+    order: PropTypes.string,
+    fullSort: PropTypes.string
+  }),
   onSortClick: PropTypes.func,
   onSearch: PropTypes.func,
   searchText: PropTypes.string

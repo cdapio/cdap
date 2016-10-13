@@ -86,7 +86,7 @@ features:
   Dashboard:
     Title: Dashboard
   Management:
-    Title: Administrator
+    Title: Management
     Top:
       version-label: Version
       time-label: Uptime
