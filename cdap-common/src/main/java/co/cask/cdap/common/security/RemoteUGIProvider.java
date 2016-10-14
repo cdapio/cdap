@@ -43,7 +43,6 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
@@ -95,11 +94,10 @@ public class RemoteUGIProvider extends AbstractCachedUGIProvider {
     }
   }
 
-  private URL resolve(String resource) throws MalformedURLException {
+  private URL resolve(String resource) throws IOException {
     Discoverable discoverable = endpointStrategySupplier.get().pick(3L, TimeUnit.SECONDS);
     if (discoverable == null) {
-      throw new RuntimeException(
-        String.format("Cannot discover service %s", Constants.Service.APP_FABRIC_HTTP));
+      throw new IOException(String.format("Cannot discover service %s", Constants.Service.APP_FABRIC_HTTP));
     }
     InetSocketAddress addr = discoverable.getSocketAddress();
 
