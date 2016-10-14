@@ -52,6 +52,9 @@ commons:
       plural: Stream Views
       singular: Stream View
   hydrator: Cask Hydrator
+  keyValPairs:
+    keyPlaceholder: key
+    valuePlaceholder: value
   market: Cask Market
   resource-center: Resource Center
   tracker: Cask Tracker
