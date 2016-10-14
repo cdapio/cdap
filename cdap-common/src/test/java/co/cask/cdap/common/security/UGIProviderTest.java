@@ -153,6 +153,7 @@ public class UGIProviderTest {
 
   @Test
   public void testRemoteUGIProvider() throws Exception {
+    // Starts a mock server to handle remote UGI requests
     final NettyHttpService httpService = NettyHttpService.builder("remoteUGITest")
       .addHttpHandlers(Collections.singleton(new UGIProviderTestHandler()))
       .build();
@@ -172,6 +173,7 @@ public class UGIProviderTest {
         }
       });
 
+      // Create Alice UGI
       RemoteUGIProvider ugiProvider = new RemoteUGIProvider(cConf, discoveryService, locationFactory);
       ImpersonationInfo aliceInfo = new ImpersonationInfo(getPrincipal("alice"), keytabFile.toURI().toString());
       UserGroupInformation aliceUGI = ugiProvider.getConfiguredUGI(aliceInfo);

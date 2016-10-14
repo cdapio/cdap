@@ -52,7 +52,7 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
     } catch (ExecutionException e) {
       // Get the root cause of the failure
       Throwable cause = Throwables.getRootCause(e);
-      // Propagate iff the cause is an IOException
+      // Propagate if the cause is an IOException or RuntimeException
       Throwables.propagateIfPossible(cause, IOException.class);
       // Otherwise always wrap it with IOException
       throw new IOException(cause);
