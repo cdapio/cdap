@@ -64,7 +64,7 @@ import javax.ws.rs.Path;
 public class UGIProviderTest {
 
   @ClassRule
-  public static TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   private static CConfiguration cConf;
   private static MiniDFSCluster miniDFSCluster;
