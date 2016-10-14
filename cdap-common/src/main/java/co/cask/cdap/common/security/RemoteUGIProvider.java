@@ -43,6 +43,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
@@ -94,7 +95,7 @@ public class RemoteUGIProvider extends AbstractCachedUGIProvider {
     }
   }
 
-  private String resolve(String resource) {
+  private URL resolve(String resource) throws MalformedURLException {
     Discoverable discoverable = endpointStrategySupplier.get().pick(3L, TimeUnit.SECONDS);
     if (discoverable == null) {
       throw new RuntimeException(
@@ -102,29 +103,23 @@ public class RemoteUGIProvider extends AbstractCachedUGIProvider {
     }
     InetSocketAddress addr = discoverable.getSocketAddress();
 
-    return String.format("http://%s:%s%s/%s",
-                         addr.getHostName(), addr.getPort(), "/v1", resource);
+    URI baseURI = URI.create(String.format("http://%s:%d", addr.getHostName(), addr.getPort()));
+    return baseURI.resolve("/v1/" + resource).toURL();
   }
 
-  private HttpResponse executeRequest(ImpersonationInfo impersonationInfo) {
-    String resolvedUrl = resolve("/impersonation/credentials");
-    try {
-      URL url = new URL(resolvedUrl);
-      HttpRequest.Builder builder = HttpRequest.post(url).withBody(GSON.toJson(impersonationInfo));
-      HttpResponse response = HttpRequests.execute(builder.build(), httpRequestConfig);
-      if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
-        return response;
-      }
-      throw new RuntimeException(String.format("%s Response: %s.",
-                                               createErrorMessage(resolvedUrl), response));
-    } catch (IOException e) {
-      throw new RuntimeException(createErrorMessage(resolvedUrl), e);
+  private HttpResponse executeRequest(ImpersonationInfo impersonationInfo) throws IOException {
+    URL url = resolve("impersonation/credentials");
+    HttpRequest.Builder builder = HttpRequest.post(url).withBody(GSON.toJson(impersonationInfo));
+    HttpResponse response = HttpRequests.execute(builder.build(), httpRequestConfig);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
+      return response;
     }
+    throw new IOException(String.format("%s Response: %s.", createErrorMessage(url), response));
   }
 
   // creates error message, encoding details about the request
-  private static String createErrorMessage(String resolvedUrl) {
-    return String.format("Error making request to AppFabric Service at %s.", resolvedUrl);
+  private static String createErrorMessage(URL url) {
+    return String.format("Error making request to AppFabric Service at %s.", url);
   }
 
   private static Credentials readCredentials(Location location) throws IOException {

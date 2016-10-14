@@ -34,6 +34,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
@@ -83,7 +84,7 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
 
       return UserGroupInformation.loginUserFromKeytabAndReturnUGI(expandedPrincipal, localKeytabFile.getAbsolutePath());
     } finally {
-      if (isKeytabLocal && !localKeytabFile.delete()) {
+      if (!isKeytabLocal && !localKeytabFile.delete()) {
         LOG.warn("Failed to delete file: {}", localKeytabFile);
       }
     }
@@ -108,7 +109,7 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
     // copy to this local file
     LOG.debug("Copying keytab file from {} to {}", keytabLocation, localKeytabFile);
     try (InputStream is = keytabLocation.getInputStream()) {
-      Files.copy(is, localKeytabFile);
+      Files.copy(is, localKeytabFile, StandardCopyOption.REPLACE_EXISTING);
     }
 
     return localKeytabFile.toFile();

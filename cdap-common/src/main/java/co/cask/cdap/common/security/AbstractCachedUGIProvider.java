@@ -18,6 +18,7 @@ package co.cask.cdap.common.security;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -56,6 +57,12 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
       // Otherwise always wrap it with IOException
       throw new IOException(cause);
     }
+  }
+
+  @VisibleForTesting
+  void invalidCache() {
+    ugiCache.invalidateAll();
+    ugiCache.cleanUp();
   }
 
   private LoadingCache<ImpersonationInfo, UserGroupInformation> createUGICache(CConfiguration cConf) {
