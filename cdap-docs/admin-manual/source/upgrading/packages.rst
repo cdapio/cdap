@@ -77,12 +77,6 @@ and then restart CDAP:
 
        $ sudo apt-get install --only-upgrade '^cdap.*'
 
-#. If you are upgrading a secure Hadoop cluster, you should authenticate with ``kinit``
-   as the user that runs CDAP Master (the CDAP user)
-   before the next step (the running of the upgrade tool)::
-
-     $ kinit -kt <keytab> <principal>
-
 #. Run the upgrade tool, as the user that runs CDAP Master (the CDAP user, indicated by ``<cdap-user>``)::
 
      $ sudo -u <cdap-user> /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
