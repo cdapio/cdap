@@ -42,6 +42,7 @@ import co.cask.cdap.logging.read.ReadRange;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import com.google.common.collect.Lists;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -58,6 +59,7 @@ import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -145,50 +147,47 @@ public class TestFileLogging {
     List<LogEvent> allEvents = logCallback1.getEvents();
     Assert.assertEquals(60, allEvents.size());
 
-    LoggingTester.LogCallback logCallback2 = new LoggingTester.LogCallback();
-    logTail.getLog(loggingContext, allEvents.get(10).getLoggingEvent().getTimeStamp(),
-                   allEvents.get(15).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER, logCallback2);
-    List<LogEvent> events = logCallback2.getEvents();
+    List<LogEvent> events =
+      Lists.newArrayList(logTail.getLog(loggingContext, allEvents.get(10).getLoggingEvent().getTimeStamp(),
+                                        allEvents.get(15).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER));
+
     Assert.assertEquals(5, events.size());
     Assert.assertEquals(allEvents.get(10).getLoggingEvent().getFormattedMessage(),
                         events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals(allEvents.get(14).getLoggingEvent().getFormattedMessage(),
                         events.get(4).getLoggingEvent().getFormattedMessage());
 
-    LoggingTester.LogCallback logCallback3 = new LoggingTester.LogCallback();
-    logTail.getLog(loggingContext, allEvents.get(0).getLoggingEvent().getTimeStamp(),
-                   allEvents.get(59).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER, logCallback3);
-    events = logCallback3.getEvents();
+
+    events =
+      Lists.newArrayList(logTail.getLog(loggingContext, allEvents.get(0).getLoggingEvent().getTimeStamp(),
+                                        allEvents.get(59).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER));
     Assert.assertEquals(59, events.size());
     Assert.assertEquals(allEvents.get(0).getLoggingEvent().getFormattedMessage(),
                         events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals(allEvents.get(58).getLoggingEvent().getFormattedMessage(),
                         events.get(58).getLoggingEvent().getFormattedMessage());
 
-    LoggingTester.LogCallback logCallback4 = new LoggingTester.LogCallback();
-    logTail.getLog(loggingContext, allEvents.get(12).getLoggingEvent().getTimeStamp(),
-                   allEvents.get(41).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER, logCallback4);
-    events = logCallback4.getEvents();
+    events =
+      Lists.newArrayList(logTail.getLog(loggingContext, allEvents.get(12).getLoggingEvent().getTimeStamp(),
+                                        allEvents.get(41).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER));
     Assert.assertEquals(29, events.size());
     Assert.assertEquals(allEvents.get(12).getLoggingEvent().getFormattedMessage(),
                         events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals(allEvents.get(40).getLoggingEvent().getFormattedMessage(),
                         events.get(28).getLoggingEvent().getFormattedMessage());
 
-    LoggingTester.LogCallback logCallback5 = new LoggingTester.LogCallback();
-    logTail.getLog(loggingContext, allEvents.get(22).getLoggingEvent().getTimeStamp(),
-                   allEvents.get(38).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER, logCallback5);
-    events = logCallback5.getEvents();
+    events =
+      Lists.newArrayList(logTail.getLog(loggingContext, allEvents.get(22).getLoggingEvent().getTimeStamp(),
+                                        allEvents.get(38).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER));
     Assert.assertEquals(16, events.size());
     Assert.assertEquals(allEvents.get(22).getLoggingEvent().getFormattedMessage(),
                         events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals(allEvents.get(37).getLoggingEvent().getFormattedMessage(),
                         events.get(15).getLoggingEvent().getFormattedMessage());
 
-    LoggingTester.LogCallback logCallback6 = new LoggingTester.LogCallback();
-    logTail.getLog(loggingContext, allEvents.get(41).getLoggingEvent().getTimeStamp(),
-                   allEvents.get(59).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER, logCallback6);
-    events = logCallback6.getEvents();
+    events =
+      Lists.newArrayList(logTail.getLog(loggingContext, allEvents.get(41).getLoggingEvent().getTimeStamp(),
+                                        allEvents.get(59).getLoggingEvent().getTimeStamp(), Filter.EMPTY_FILTER));
     Assert.assertEquals(18, events.size());
     Assert.assertEquals(allEvents.get(41).getLoggingEvent().getFormattedMessage(),
                         events.get(0).getLoggingEvent().getFormattedMessage());
@@ -197,9 +196,8 @@ public class TestFileLogging {
 
     // Try with null run id, should get all logs for FLOW_1
     LoggingContext loggingContext1 = new FlowletLoggingContext("TFL_NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE1");
-    LoggingTester.LogCallback logCallback7 = new LoggingTester.LogCallback();
-    logTail.getLog(loggingContext1, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER, logCallback7);
-    events = logCallback7.getEvents();
+    events =
+      Lists.newArrayList(logTail.getLog(loggingContext1, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER));
     Assert.assertEquals(100, events.size());
   }
 }

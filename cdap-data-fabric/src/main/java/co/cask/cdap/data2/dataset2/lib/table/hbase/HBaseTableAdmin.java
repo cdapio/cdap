@@ -33,6 +33,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.tephra.TxConstants;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -124,7 +125,9 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
       splits = GSON.fromJson(splitsProperty, byte[][].class);
     }
 
-    tableUtil.createTableIfNotExists(getAdmin(), tableId, tableDescriptor.build(), splits);
+    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      tableUtil.createTableIfNotExists(admin, tableId, tableDescriptor.build(), splits);
+    }
   }
 
   @Override

@@ -290,6 +290,8 @@ public final class AvroFileWriter implements Closeable, Flushable {
         this.dataFileWriter.create(schema, this.outputStream);
         this.dataFileWriter.setSyncInterval(syncIntervalBytes);
         this.createTime = System.currentTimeMillis();
+        // Sync the file as soon as it is created, otherwise a zero length Avro file can get created on OOM
+        sync();
       } catch (Exception e) {
         close();
         throw new IOException("Exception while creating file " + location, e);

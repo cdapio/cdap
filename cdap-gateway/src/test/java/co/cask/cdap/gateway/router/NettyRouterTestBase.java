@@ -243,7 +243,7 @@ public abstract class NettyRouterTestBase {
     for (int i = 0; i < numElements; ++i) {
       final int elem = i;
       final Request request = new RequestBuilder("GET")
-        .setUrl(resolveURI(DEFAULT_SERVICE, String.format("%s/%s-%d", "/v1/ping", "async", i)))
+        .setUrl(resolveURI(DEFAULT_SERVICE, String.format("%s/%s-%d", "/v1/echo", "async", i)))
         .build();
       asyncHttpClient.executeRequest(request,
                                      new AsyncCompletionHandler<Void>() {
@@ -252,6 +252,9 @@ public abstract class NettyRouterTestBase {
                                          latch.countDown();
                                          Assert.assertEquals(HttpResponseStatus.OK.getCode(),
                                                              response.getStatusCode());
+                                         String responseBody = response.getResponseBody();
+                                         LOG.trace("Got response {}", responseBody);
+                                         Assert.assertEquals("async-" + elem, responseBody);
                                          numSuccessfulRequests.incrementAndGet();
                                          return null;
                                        }
@@ -678,6 +681,16 @@ public abstract class NettyRouterTestBase {
      */
     public class ServerHandler extends AbstractHttpHandler {
       private final Logger log = LoggerFactory.getLogger(ServerHandler.class);
+      @GET
+      @Path("/v1/echo/{text}")
+      public void echo(@SuppressWarnings("UnusedParameters") HttpRequest request, final HttpResponder responder,
+                       @PathParam("text") String text) {
+        numRequests.incrementAndGet();
+        log.trace("Got text {}", text);
+
+        responder.sendString(HttpResponseStatus.OK, text);
+      }
+
       @GET
       @Path("/v1/ping/{text}")
       public void ping(@SuppressWarnings("UnusedParameters") HttpRequest request, final HttpResponder responder,

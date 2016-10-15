@@ -36,10 +36,11 @@ import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -77,6 +78,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.base.Optional;
@@ -110,6 +112,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /**
@@ -128,6 +131,8 @@ public class HBaseQueueDebugger extends AbstractIdleService {
   private final TransactionExecutorFactory txExecutorFactory;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final Store store;
+  private final Impersonator impersonator;
+  private final AuthorizationEnforcementService authorizationEnforcementService;
 
   @Inject
   public HBaseQueueDebugger(HBaseTableUtil tableUtil, HBaseQueueAdmin queueAdmin,
@@ -135,7 +140,8 @@ public class HBaseQueueDebugger extends AbstractIdleService {
                             ZKClientService zkClientService,
                             TransactionExecutorFactory txExecutorFactory,
                             NamespaceQueryAdmin namespaceQueryAdmin,
-                            Store store) {
+                            Store store, Impersonator impersonator,
+                            AuthorizationEnforcementService authorizationEnforcementService) {
     this.tableUtil = tableUtil;
     this.queueAdmin = queueAdmin;
     this.queueClientFactory = queueClientFactory;
@@ -143,47 +149,59 @@ public class HBaseQueueDebugger extends AbstractIdleService {
     this.txExecutorFactory = txExecutorFactory;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.store = store;
+    this.impersonator = impersonator;
+    this.authorizationEnforcementService = authorizationEnforcementService;
   }
 
   @Override
   protected void startUp() throws Exception {
     zkClientService.startAndWait();
+    authorizationEnforcementService.startAndWait();
   }
 
   @Override
   protected void shutDown() throws Exception {
+    authorizationEnforcementService.stopAndWait();
     zkClientService.stopAndWait();
   }
 
   public void scanAllQueues() throws Exception {
-    QueueStatistics totalStats = new QueueStatistics();
+    final QueueStatistics totalStats = new QueueStatistics();
 
     List<NamespaceMeta> namespaceMetas = namespaceQueryAdmin.list();
     for (NamespaceMeta namespaceMeta : namespaceMetas) {
-      Id.Namespace namespaceId = Id.Namespace.from(namespaceMeta.getName());
+      final Id.Namespace namespaceId = Id.Namespace.from(namespaceMeta.getName());
 
-      Collection<ApplicationSpecification> apps = store.getAllApplications(namespaceId);
-      for (ApplicationSpecification app : apps) {
-        Id.Application appId = Id.Application.from(namespaceId, app.getName());
+      final Collection<ApplicationSpecification> apps = store.getAllApplications(namespaceId);
+      impersonator.doAs(namespaceMeta, new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          for (ApplicationSpecification app : apps) {
+            Id.Application appId = Id.Application.from(namespaceId, app.getName());
 
-        for (FlowSpecification flow : app.getFlows().values()) {
-          Id.Flow flowId = Id.Flow.from(appId, flow.getName());
+            for (FlowSpecification flow : app.getFlows().values()) {
+              Id.Flow flowId = Id.Flow.from(appId, flow.getName());
 
-          SimpleQueueSpecificationGenerator queueSpecGenerator =
-            new SimpleQueueSpecificationGenerator(flowId.getApplication());
+              SimpleQueueSpecificationGenerator queueSpecGenerator =
+                new SimpleQueueSpecificationGenerator(flowId.getApplication());
 
-          Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> table =
-            queueSpecGenerator.create(flow);
-          for (Table.Cell<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> cell : table.cellSet()) {
-            if (cell.getRowKey().getType() == FlowletConnection.Type.FLOWLET) {
-              for (QueueSpecification queue : cell.getValue()) {
-                QueueStatistics queueStats = scanQueue(queue.getQueueName(), null);
-                totalStats.add(queueStats);
+              Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> table =
+                queueSpecGenerator.create(flow);
+              for (Table.Cell<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> cell
+                : table.cellSet()) {
+                if (cell.getRowKey().getType() == FlowletConnection.Type.FLOWLET) {
+                  for (QueueSpecification queue : cell.getValue()) {
+                    QueueStatistics queueStats = scanQueue(queue.getQueueName(), null);
+                    totalStats.add(queueStats);
+                  }
+                }
               }
             }
           }
+          return null;
         }
-      }
+      });
+
     }
 
     System.out.printf("Total results for all queues: %s\n", totalStats.getReport(showTxTimestampOnly()));
@@ -458,9 +476,13 @@ public class HBaseQueueDebugger extends AbstractIdleService {
     }
   }
 
-  public static HBaseQueueDebugger createDebugger() {
+  public static HBaseQueueDebugger createDebugger() throws Exception {
+    CConfiguration cConf = CConfiguration.create();
+    // Note: login has to happen before any objects that need Kerberos credentials are instantiated.
+    SecurityUtil.loginForMasterService(cConf);
+
     Injector injector = Guice.createInjector(
-      new ConfigModule(CConfiguration.create(), HBaseConfiguration.create()),
+      new ConfigModule(cConf, HBaseConfiguration.create()),
       new IOModule(),
       new ZKClientModule(),
       new LocationRuntimeModule().getDistributedModules(),

@@ -64,6 +64,13 @@ function makeApp (authAddress, cdapConfig) {
   app.use(bodyParser.urlencoded({ extended: false }));
   app.use(cookieParser());
 
+  app.use(function (err, req, res, next) {
+    log.error(err);
+    res.status(500).send(err);
+    next(err);
+  });
+
+
   // serve the config file
   app.get('/config.js', function (req, res) {
 
@@ -109,7 +116,7 @@ function makeApp (authAddress, cdapConfig) {
   app.post('/downloadQuery', function(req, res) {
     var url = req.body.backendUrl;
 
-    log.info('Download Start: ', req.body.queryHandle);
+    log.info('Download Query Start: ', req.body.queryHandle);
 
     request({
       method: 'POST',
@@ -127,6 +134,65 @@ function makeApp (authAddress, cdapConfig) {
       log.error('Error downloading query: ', e);
     });
 
+  });
+
+  app.get('/downloadLogs', function(req, res) {
+    var url = decodeURIComponent(req.query.backendUrl);
+    log.info('Download Logs Start: ', url);
+    var customHeaders;
+    var requestObject = {
+      method: 'GET',
+      url: url,
+      rejectUnauthorized: false,
+      requestCert: true,
+      agent: false,
+    };
+
+    if (req.cookies['CDAP_Auth_Token']) {
+      customHeaders = {
+        authorization: 'Bearer ' + req.cookies['CDAP_Auth_Token']
+      };
+    }
+
+    if (customHeaders) {
+      requestObject.headers = customHeaders;
+    }
+
+    try {
+      request(requestObject)
+        .on('error', function (e) {
+          log.error('Error request logs: ', e);
+        })
+        .on('response',
+          function (response) {
+            // This happens when use tries to access the link directly when
+            // no autorization token present
+            if (response.statusCode !== 200) {
+              res.send('Not Authorized to view logs.');
+            }
+
+            var type = req.query.type;
+            var responseHeaders = {
+              'Cache-Control': 'no-cache, no-store'
+            };
+
+            if (type === 'download') {
+              var filename = req.query.filename;
+              responseHeaders['Content-Disposition'] = 'attachment; filename='+filename;
+            } else {
+              responseHeaders['Content-Type'] = 'text/plain';
+            }
+
+            res.set(responseHeaders);
+          }
+        )
+        .pipe(res)
+        .on('error', function (e) {
+          log.error('Error downloading logs: ', e);
+        });
+    } catch(e) {
+      log.error('Downloading logs failed, ', e);
+    }
   });
 
   /*
@@ -273,6 +339,13 @@ function makeApp (authAddress, cdapConfig) {
         } else {
           res.status(response.statusCode).send('OK');
         }
+      }).on('error', function (err) {
+        try {
+          res.status(500).send(err);
+        } catch(e) {
+          log.error('Failed sending exception to client', e);
+        }
+        log.error(err);
       });
     }
   ]);

@@ -22,7 +22,6 @@ import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -70,8 +69,6 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
   protected final CConfiguration cConf;
   protected final HBaseTableUtil tableUtil;
 
-  private HBaseAdmin admin;
-
   protected AbstractHBaseDataSetAdmin(TableId tableId, Configuration hConf, CConfiguration cConf,
                                       HBaseTableUtil tableUtil) {
     this.tableId = tableId;
@@ -87,24 +84,28 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
 
   @Override
   public boolean exists() throws IOException {
-    return tableUtil.tableExists(getAdmin(), tableId);
+    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      return tableUtil.tableExists(admin, tableId);
+    }
   }
 
   @Override
   public void truncate() throws IOException {
-    tableUtil.truncateTable(getAdmin(), tableId);
+    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      tableUtil.truncateTable(admin, tableId);
+    }
   }
 
   @Override
   public void drop() throws IOException {
-    tableUtil.dropTable(getAdmin(), tableId);
+    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      tableUtil.dropTable(admin, tableId);
+    }
   }
 
   @Override
   public void close() throws IOException {
-    if (admin != null) {
-      admin.close();
-    }
+    // no-op
   }
 
   /**
@@ -117,75 +118,78 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
    */
   public void updateTable(boolean force) throws IOException {
 
-    HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(getAdmin(), tableId);
+    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(admin, tableId);
 
-    // update any table properties if necessary
-    boolean needUpdate = needsUpdate(tableDescriptor) || force;
+      // update any table properties if necessary
+      boolean needUpdate = needsUpdate(tableDescriptor) || force;
 
-    // Get the cdap version from the table
-    ProjectInfo.Version version = HBaseTableUtil.getVersion(tableDescriptor);
+      // Get the cdap version from the table
+      ProjectInfo.Version version = HBaseTableUtil.getVersion(tableDescriptor);
 
-    if (!needUpdate && version.compareTo(ProjectInfo.getVersion()) >= 0) {
-      // If neither the table spec nor the cdap version have changed, no need to update
-      LOG.info("Table '{}' has not changed and its version '{}' is same or greater " +
-                 "than current CDAP version '{}'", tableId, version, ProjectInfo.getVersion());
-      return;
-    }
+      if (!needUpdate && version.compareTo(ProjectInfo.getVersion()) >= 0) {
+        // If neither the table spec nor the cdap version have changed, no need to update
+        LOG.info("Table '{}' has not changed and its version '{}' is same or greater " +
+                   "than current CDAP version '{}'", tableId, version, ProjectInfo.getVersion());
+        return;
+      }
 
-    // create a new descriptor for the table update
-    HTableDescriptorBuilder newDescriptor = tableUtil.buildHTableDescriptor(tableDescriptor);
+      // create a new descriptor for the table update
+      HTableDescriptorBuilder newDescriptor = tableUtil.buildHTableDescriptor(tableDescriptor);
 
-    // Generate the coprocessor jar
-    CoprocessorJar coprocessorJar = createCoprocessorJar();
-    Location jarLocation = coprocessorJar.getJarLocation();
+      // Generate the coprocessor jar
+      CoprocessorJar coprocessorJar = createCoprocessorJar();
+      Location jarLocation = coprocessorJar.getJarLocation();
 
-    // Check if coprocessor upgrade is needed
-    Map<String, HBaseTableUtil.CoprocessorInfo> coprocessorInfo = HBaseTableUtil.getCoprocessorInfo(tableDescriptor);
-    // For all required coprocessors, check if they've need to be upgraded.
-    for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
-      HBaseTableUtil.CoprocessorInfo info = coprocessorInfo.get(coprocessor.getName());
-      if (info != null) {
-        // The same coprocessor has been configured, check by the file name hash to see if they are the same.
-        if (!jarLocation.getName().equals(info.getPath().getName())) {
-          // Remove old one and add the new one.
-          newDescriptor.removeCoprocessor(info.getClassName());
+      // Check if coprocessor upgrade is needed
+      Map<String, HBaseTableUtil.CoprocessorInfo> coprocessorInfo = HBaseTableUtil.getCoprocessorInfo(tableDescriptor);
+      // For all required coprocessors, check if they've need to be upgraded.
+      for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
+        HBaseTableUtil.CoprocessorInfo info = coprocessorInfo.get(coprocessor.getName());
+        if (info != null) {
+          // The same coprocessor has been configured, check by the file name hash to see if they are the same.
+          if (!jarLocation.getName().equals(info.getPath().getName())) {
+            // Remove old one and add the new one.
+            newDescriptor.removeCoprocessor(info.getClassName());
+            addCoprocessor(newDescriptor, coprocessor, jarLocation, coprocessorJar.getPriority(coprocessor));
+          }
+        } else {
+          // The coprocessor is missing from the table, add it.
           addCoprocessor(newDescriptor, coprocessor, jarLocation, coprocessorJar.getPriority(coprocessor));
         }
-      } else {
-        // The coprocessor is missing from the table, add it.
-        addCoprocessor(newDescriptor, coprocessor, jarLocation, coprocessorJar.getPriority(coprocessor));
       }
-    }
 
-    // Removes all old coprocessors
-    Set<String> coprocessorNames = ImmutableSet.copyOf(Iterables.transform(coprocessorJar.coprocessors, CLASS_TO_NAME));
-    for (String remove : Sets.difference(coprocessorInfo.keySet(), coprocessorNames)) {
-      newDescriptor.removeCoprocessor(remove);
-    }
+      // Removes all old coprocessors
+      Set<String> coprocessorNames = ImmutableSet.copyOf(Iterables.transform(coprocessorJar.coprocessors,
+                                                                             CLASS_TO_NAME));
+      for (String remove : Sets.difference(coprocessorInfo.keySet(), coprocessorNames)) {
+        newDescriptor.removeCoprocessor(remove);
+      }
 
-    HBaseTableUtil.setVersion(newDescriptor);
-    HBaseTableUtil.setTablePrefix(newDescriptor, cConf);
+      HBaseTableUtil.setVersion(newDescriptor);
+      HBaseTableUtil.setTablePrefix(newDescriptor, cConf);
 
-    LOG.info("Updating table '{}'...", tableId);
-    boolean enableTable = false;
-    try {
-      tableUtil.disableTable(getAdmin(), tableId);
-      enableTable = true;
-    } catch (TableNotEnabledException e) {
-      // TODO (CDAP-7324) This is a workaround and should be removed once we have pure hbase coprocessor upgrade
-      // (CDAP-7095)
-      // If the table is in cdap_system namespace enable it regardless so that they can be used later. See CDAP-7324
-      if (isSystemTable()) {
+      LOG.info("Updating table '{}'...", tableId);
+      boolean enableTable = false;
+      try {
+        tableUtil.disableTable(admin, tableId);
         enableTable = true;
-      } else {
-        LOG.debug("Table '{}' was not enabled before update and will not be enabled after update.", tableId);
+      } catch (TableNotEnabledException e) {
+        // TODO (CDAP-7324) This is a workaround and should be removed once we have pure hbase coprocessor upgrade
+        // (CDAP-7095)
+        // If the table is in cdap_system namespace enable it regardless so that they can be used later. See CDAP-7324
+        if (isSystemTable()) {
+          enableTable = true;
+        } else {
+          LOG.debug("Table '{}' was not enabled before update and will not be enabled after update.", tableId);
+        }
       }
-    }
 
-    tableUtil.modifyTable(getAdmin(), newDescriptor.build());
-    if (enableTable) {
-      LOG.debug("Enabling table '{}'...", tableId);
-      tableUtil.enableTable(getAdmin(), tableId);
+      tableUtil.modifyTable(admin, newDescriptor.build());
+      if (enableTable) {
+        LOG.debug("Enabling table '{}'...", tableId);
+        tableUtil.enableTable(admin, tableId);
+      }
     }
 
     LOG.info("Table '{}' update completed.", tableId);
@@ -259,12 +263,5 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     public int size() {
       return coprocessors.size();
     }
-  }
-
-  protected HBaseAdmin getAdmin() throws IOException {
-    if (admin == null) {
-      admin = new HBaseAdmin(hConf);
-    }
-    return admin;
   }
 }

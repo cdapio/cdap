@@ -1,3 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
 <!--
   Copyright © 2016 Cask Data, Inc.
 
@@ -12,15 +14,21 @@
   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
   License for the specific language governing permissions and limitations under
   the License.
--->
+  -->
 
-<div class="modal hydrator-modal"
-      ng-class="{in: animate}"
-      ng-style="{'z-index': 1050 + index*10, display: 'block'}"
-      data-ng-click="close($event)">
-  <div class="modal-dialog raw-modal-dialog modal-lg"
-       ng-class="{'expand': $parent.RawLogsModalCtrl.windowMode == 'expand'}">
-    <div class="modal-content" uib-modal-transclude>
-    </div>
-  </div>
-</div>
+<configuration>
+
+  <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="FileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+  </appender>
+
+  <root level="INFO">
+    <appender-ref ref="Console"/>
+  </root>
+
+</configuration>

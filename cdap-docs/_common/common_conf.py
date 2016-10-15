@@ -220,12 +220,20 @@ if git_build_vars.has_key(GIT_BRANCH_PARENT):
     cdap_java_source_github_pattern = "https://github.com/caskdata/cdap/blob/%s/%%s" % git_build_vars[GIT_BRANCH_PARENT]
 else:
     cdap_java_source_github_pattern = ''
+    
 GIT_BRANCH_CDAP_SECURITY_EXTN = 'GIT_BRANCH_CDAP_SECURITY_EXTN'
 if git_build_vars.has_key(GIT_BRANCH_CDAP_SECURITY_EXTN):
     cdap_security_extn_github_pattern = "https://github.com/caskdata/cdap-security-extn/blob/%s/%%s" % \
         git_build_vars[GIT_BRANCH_CDAP_SECURITY_EXTN]
 else:
     cdap_security_extn_github_pattern = ''
+
+GIT_BRANCH_CDAP_GUIDES = 'GIT_BRANCH_CDAP_GUIDES'
+if git_build_vars.has_key(GIT_BRANCH_CDAP_GUIDES):
+    cdap_guides_github_pattern = "https://github.com/cdap-guides/%%s/tree/%s" % \
+        git_build_vars[GIT_BRANCH_CDAP_GUIDES]
+else:
+    cdap_guides_github_pattern = ''
 
 extlinks = {
     'cdap-ui': ('http://localhost:9999/ns/default/%s', None),
@@ -240,6 +248,8 @@ extlinks = {
     'cdap-java-source-github': (cdap_java_source_github_pattern, None),
     'cdap-security-extn-source-github': (cdap_security_extn_github_pattern, None),
     'cask-issue': ('https://issues.cask.co/browse/%s', ''),
+    'cask-repository-parcels-cdap': ("http://repository.cask.co/parcels/cdap/%s/%%s" % short_version, None),
+    'cdap-guides': (cdap_guides_github_pattern, None),
 }
 
 # A string of reStructuredText that will be included at the end of every source file that

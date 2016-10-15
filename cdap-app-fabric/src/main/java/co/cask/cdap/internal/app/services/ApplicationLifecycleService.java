@@ -410,7 +410,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                        new com.google.common.base.Predicate<ProgramRuntimeService.RuntimeInfo>() {
       @Override
       public boolean apply(ProgramRuntimeService.RuntimeInfo runtimeInfo) {
-        return runtimeInfo.getProgramId().toEntityId().getApplication().equals(appId.getId());
+        return runtimeInfo.getProgramId().toEntityId().getParent().equals(appId.toEntityId());
       }
     });
 

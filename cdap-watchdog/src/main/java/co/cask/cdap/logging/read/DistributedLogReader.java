@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.read;
 
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -109,9 +110,9 @@ public final class DistributedLogReader implements LogReader {
   }
 
   @Override
-  public void getLog(final LoggingContext loggingContext, final long fromTimeMs, final long toTimeMs,
-                          final Filter filter, final Callback callback) {
-    fileLogReader.getLog(loggingContext, fromTimeMs, toTimeMs, filter, callback);
+  public CloseableIterator<LogEvent> getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs,
+                                            Filter filter) {
+    return fileLogReader.getLog(loggingContext, fromTimeMs, toTimeMs, filter);
   }
 
   private long getCheckpointTime(LoggingContext loggingContext) {

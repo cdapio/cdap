@@ -78,6 +78,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -128,6 +129,12 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Before
   public void setUp() throws Exception {
     getNamespaceAdmin().create(new NamespaceMeta.Builder().setName(testSpace).build());
+  }
+
+  @Test
+  public void testOrgHamcrest() {
+    // this tests that org.hamcrest classes can be used in tests without class loading conflicts (see CDAP-7391)
+    Assert.assertThat("oh hello yeah", CoreMatchers.containsString("hello"));
   }
 
   @Test
