@@ -32,11 +32,19 @@ Improvements
 - :cask-issue:`CDAP-7385` - The Log HTTP Handler and Router have been fixed to allow the
   streaming of larger logs files.
 
+- :cask-issue:`CDAP-7404` - Added authorization for schedules in CDAP.
+
+- :cask-issue:`HYDRATOR-997` - The SSH hostname and the command to be executed are now
+  macro-enabled for the SSH action plugin.
+
 Bug Fixes
 ---------
 
 - :cask-issue:`CDAP-7250` - Fixed an issue where dataset usage was not being recorded
   after an application was deleted.
+
+- :cask-issue:`CDAP-7318` - Fixed an issue that would cause MapReduce and Spark programs
+  to fail if too many macros were being used.
 
 - :cask-issue:`CDAP-7321` - Fixed a problem with upgrading CDAP using the CDAP Upgrade
   Tool.
@@ -62,12 +70,16 @@ Bug Fixes
 - :cask-issue:`CDAP-7386` - Fixed an error in the "CDAP Introduction" tutorial's
   "Transforming Your Data" example of an application configuration.
 
-- :cask-issue:`CDAP-7391` - Fixes an issue that caused unit test failures when using
+- :cask-issue:`CDAP-7391` - Fixed an issue that caused unit test failures when using
   ``org.hamcrest`` classes.
 
 - :cask-issue:`CDAP-7392` - Fixed an issue where the Java process corresponding to the
   MapReduce application master kept running even if the application was moved to the
   FINISHED state.
+
+- :cask-issue:`CDAP-7438`, :cask-issue:`CDAP-7439` - Removed the requirement of running
+  "kinit" prior to running either the Upgrade or Transaction Debugger tools of CDAP on a
+  secure Hadoop cluster.
 
 - :cask-issue:`HYDRATOR-791` - Fixed a problem with Hydrator pipelines using a DBSource
   not working in an HDP cluster.
