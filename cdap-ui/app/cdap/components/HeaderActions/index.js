@@ -14,7 +14,7 @@
  * the License.
  */
 
-import React, {Component} from 'react';
+import React, {Component, PropTypes} from 'react';
 import { Dropdown, DropdownMenu, DropdownItem } from 'reactstrap';
 import cookie from 'react-cookie';
 import PlusButton from '../PlusButton';
@@ -134,13 +134,18 @@ export default class HeaderActions extends Component {
             </Dropdown>
           </div>
           <div className="namespace-dropdown">
-            <NamespaceDropdown />
+            <NamespaceDropdown tag={this.props.tag}/>
           </div>
           <div className="products-dropdown">
-            <ProductsDrawer currentChoice="cdap"/>
+            <ProductsDrawer currentChoice={this.props.product}/>
           </div>
         </ul>
       </div>
     );
   }
 }
+
+HeaderActions.propTypes = {
+  tag: PropTypes.string,
+  product: PropTypes.string
+};

@@ -115,7 +115,8 @@ module.exports = {
           /node_modules/,
           /bower_components/,
           /dist/,
-          /cdap_dist/
+          /cdap_dist/,
+          /common_dist/
         ]
       }
     ],

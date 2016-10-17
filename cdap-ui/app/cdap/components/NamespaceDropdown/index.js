@@ -14,7 +14,7 @@
  * the License.
  */
 
-import React, {Component} from 'react';
+import React, {Component, PropTypes} from 'react';
 import {Dropdown, DropdownMenu} from 'reactstrap';
 import classnames from 'classnames';
 import AbstractWizard from 'components/AbstractWizard';
@@ -70,6 +70,14 @@ export default class NamespaceDropdown extends Component {
     });
   }
   render() {
+    let LinkEl = Link;
+    let baseurl = '';
+    if (this.props.tag) {
+      let basename = document.querySelector('base');
+      basename = basename.getAttribute('href') ? basename.getAttribute('href') : null;
+      LinkEl = this.props.tag;
+      baseurl = `${basename}`;
+    }
     return (
       <div>
         <Dropdown
@@ -97,8 +105,9 @@ export default class NamespaceDropdown extends Component {
                     let checkClass = classnames({ "fa fa-star":  defaultNamespace === item.name });
                     let check = <span className={checkClass}></span>;
                     return (
-                      <Link
-                        to={`/ns/${item.name}`}
+                      <LinkEl
+                        href={baseurl + `/ns/${item.name}`}
+                        to={baseurl + `/ns/${item.name}`}
                         className="namespace-link"
                         key={shortid.generate()}
                       >
@@ -126,7 +135,7 @@ export default class NamespaceDropdown extends Component {
                             }
                           </span>
                         </div>
-                      </Link>
+                      </LinkEl>
                     );
                   })
               }
@@ -164,3 +173,7 @@ export default class NamespaceDropdown extends Component {
     );
   }
 }
+
+NamespaceDropdown.propTypes = {
+  tag: PropTypes.node
+};

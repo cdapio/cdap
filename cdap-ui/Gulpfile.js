@@ -21,10 +21,7 @@ var gulp = require('gulp'),
     del = require('del'),
     mainBowerFiles = require('main-bower-files'),
     merge = require('merge-stream'),
-    autoprefixer = require('autoprefixer'),
-    plusbuttonwebpack = require('./webpack.config.plusbutton'),
-    gutil = require("gulp-util"),
-    webpack = require('webpack');
+    autoprefixer = require('autoprefixer');
 
 function getEs6Directives(isNegate) {
   var es6directives = [
@@ -342,8 +339,8 @@ gulp.task('tpl', function() {
     .pipe(plug.livereload());
 });
 
-gulp.task('js', ['js:lib', 'js:aceworkers', 'js:app', 'polyfill', 'webpack:plusbutton:build-dev']);
-gulp.task('watch:js', ['watch:js:app', 'watch:js:app:babel', 'polyfill', 'watch:webpack:plusbutton:build-dev']);
+gulp.task('js', ['js:lib', 'js:aceworkers', 'js:app', 'polyfill']);
+gulp.task('watch:js', ['watch:js:app', 'watch:js:app:babel', 'polyfill']);
 
 gulp.task('css', ['css:lib', 'css:app']);
 gulp.task('style', ['css']);
@@ -355,7 +352,7 @@ gulp.task('lint', function() {
     '!./app/cdap/**/*.js',
     '!./app/login/**/*.js',
     '!./app/lib/**/*.js',
-    '!./app/plusbutton/**/*.js',
+    '!./app/common/**/*.js',
     './server/*.js'
   ])
     .pipe(plug.plumber())
@@ -409,33 +406,6 @@ gulp.task('rev:replace', ['html:main', 'rev:manifest'], function() {
 gulp.task('watch:build', ['watch:js', 'css', 'img', 'tpl', 'html']);
 gulp.task('distribute', ['clean', 'build', 'rev:replace']);
 gulp.task('default', ['lint', 'build']);
-
-gulp.task('watch:webpack:plusbutton:build-dev', function(callback) {
-  // run webpack
-  var firstTime = false;
-  webpack(plusbuttonwebpack, function(err, stats) {
-    if(err) throw new gutil.PluginError("webpack:build-dev", err);
-    gutil.log("[webpack:build-dev]", stats.toString({
-      chunks: false,
-      colors: true
-    }));
-    if (!firstTime) {
-      firstTime = true;
-      callback();
-    }
-  });
-});
-
-gulp.task('webpack:plusbutton:build-dev', function(callback) {
-  webpack(plusbuttonwebpack, function(err, stats) {
-    if(err) throw new gutil.PluginError("webpack:build-dev", err);
-    gutil.log("[webpack:build-dev]", stats.toString({
-      chunks: false,
-      colors: true
-    }));
-    callback();
-  });
-});
 /*
   watch
  */
@@ -450,7 +420,7 @@ gulp.task('watch', ['jshint', 'build'], function() {
   ];
   jsAppSource = jsAppSource.concat(getEs6Directives(true));
 
-  gulp.watch(jsAppSource, ['jshint', 'watch:js:app', 'watch:webpack:plusbutton:build-dev']);
+  gulp.watch(jsAppSource, ['jshint', 'watch:js:app']);
 
   var jsAppBabelSource = [];
   jsAppBabelSource = jsAppBabelSource.concat(getEs6Directives(false));

@@ -44,9 +44,13 @@ export default class Header extends Component {
             <HeaderBrand/>
             <HeaderNavbarList
               list={this.state.navbarItemList}
+              tag={this.props.tag}
               store={Store}
             />
-            <HeaderActions />
+          <HeaderActions
+            tag={this.props.tag}
+            product="cdap"
+          />
           </nav>
         </div>
       </div>
@@ -58,5 +62,6 @@ Header.propTypes = {
   navbarItemList: PropTypes.arrayOf(PropTypes.shape({
     linkTo: PropTypes.string,
     title: PropTypes.string
-  }))
+  })),
+  tag: PropTypes.string
 };

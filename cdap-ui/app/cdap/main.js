@@ -37,7 +37,7 @@ import Router from 'react-router/BrowserRouter';
 import T from 'i18n-react';
 import Match from 'react-router/Match';
 import Miss from 'react-router/Miss';
-import Store from 'services/store/store';
+import {default as NamespaceStore} from 'services/store/store';
 import CaskVideoModal from 'components/CaskVideoModal';
 import RouteToNamespace from 'components/RouteToNamespace';
 import Helmet from 'react-helmet';
@@ -49,7 +49,7 @@ class CDAP extends Component {
     this.closeCaskVideo = this.closeCaskVideo.bind(this);
     this.openCaskVideo = this.openCaskVideo.bind(this);
     this.state = {
-      selectedNamespace : Store.getState().selectedNamespace,
+      selectedNamespace : NamespaceStore.getState().selectedNamespace,
       videoOpen : false
     };
   }
@@ -71,7 +71,7 @@ class CDAP extends Component {
     MyNamespaceApi.pollList()
       .subscribe((res) => {
         if (res.length > 0){
-          Store.dispatch({
+          NamespaceStore.dispatch({
             type: 'UPDATE_NAMESPACES',
             payload: {
               namespaces : res
@@ -92,6 +92,14 @@ class CDAP extends Component {
         clientId: 'cdap'
       });
       return null;
+    }
+    if (window.CDAP_CONFIG.securityEnabled) {
+      NamespaceStore.dispatch({
+        type: 'UPDATE_USERNAME',
+        payload: {
+          username: cookie.load('CDAP_Auth_User')
+        }
+      });
     }
 
     return (

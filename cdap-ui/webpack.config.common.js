@@ -16,7 +16,7 @@
 var webpack = require('webpack');
 var plugins = [
   new webpack.optimize.DedupePlugin(),
-  new webpack.optimize.CommonsChunkPlugin("plusbutton-lib", "plusbutton-lib.js", Infinity),
+  new webpack.optimize.CommonsChunkPlugin("common-lib", "common-lib.js", Infinity),
   // by default minify it.
   new webpack.DefinePlugin({
     'process.env':{
@@ -58,10 +58,10 @@ var loaders = [
 ];
 
 module.exports = {
-  context: __dirname + '/app/plusbutton',
+  context: __dirname + '/app/common',
   entry: {
-    'plusbutton': ['./plusbutton.js'],
-    'plusbutton-lib': [
+    'common': ['./cask-header.js'],
+    'common-lib': [
       'classnames',
       'reactstrap',
       'i18n-react',
@@ -80,7 +80,8 @@ module.exports = {
           /node_modules/,
           /bower_components/,
           /dist/,
-          /cdap_dist/
+          /cdap_dist/,
+          /login_dist/
         ]
       }
     ],
@@ -88,8 +89,8 @@ module.exports = {
   },
   output: {
     filename: './[name].js',
-    path: __dirname + '/plusbutton_dist',
-    library: 'PlusButton',
+    path: __dirname + '/common_dist',
+    library: 'CaskCommon',
     libraryTarget: 'umd'
   },
   externals: {

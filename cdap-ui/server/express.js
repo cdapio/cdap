@@ -47,7 +47,7 @@ var express = require('express'),
       __dirname + '/../cdap_dist'
     ),
     MARKET_DIST_PATH=require('path').normalize(
-      __dirname + '/../plusbutton_dist'
+      __dirname + '/../common_dist'
     ),
     fs = require('fs');
 
@@ -288,7 +288,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       finalhandler(req, res)(false); // 404
     }
   ]);
-  app.use('/plusbutton_assets', [
+  app.use('/common_assets', [
     express.static(MARKET_DIST_PATH, {
       index: false
     }),

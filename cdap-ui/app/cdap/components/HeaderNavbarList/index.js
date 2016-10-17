@@ -16,6 +16,7 @@
 import React, {PropTypes} from 'react';
 import { connect } from 'react-redux';
 import {Link} from 'react-router';
+import shortid from 'shortid';
 
 const mapStateToProps = (state) => {
   return {
@@ -23,32 +24,34 @@ const mapStateToProps = (state) => {
   };
 };
 
-function HeaderNavbarList({namespace}){
+function HeaderNavbarList({list}){
   return (
     <ul className="navbar-list">
-      <li>
-        <Link
-          to={`/ns/${namespace}`}
-          activeClassName="active"
-          activeOnlyWhenExact
-        >
-          Home
-        </Link>
-      </li>
-
-      <li className="disabled">
-        Dashboard
-      </li>
-
-      <li>
-        <Link
-          to="/management"
-          activeClassName="active"
-          activeOnlyWhenExact
-        >
-          Management
-        </Link>
-      </li>
+        {
+          Array.isArray(list) ?
+            list.map(item => {
+              return (
+                <li
+                  key={shortid.generate()}
+                  className={item.className}
+                >
+                  {
+                    item.disabled ?
+                      item.title
+                    :
+                      <Link
+                        to={item.linkTo}
+                        activeClassName="active"
+                      >
+                        {item.title}
+                      </Link>
+                    }
+                </li>
+              );
+            })
+          :
+            null
+        }
     </ul>
   );
 }
@@ -58,7 +61,6 @@ HeaderNavbarList.propTypes = {
     title: PropTypes.string,
     linkTo: PropTypes.string
   })),
-  namespace: PropTypes.string,
   store: PropTypes.object
 };
 
