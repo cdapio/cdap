@@ -318,9 +318,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
               } finally {
                 ClassLoaders.setContextClassLoader(oldClassLoader);
               }
-              return addCleanupListener(
-                new ImpersonatedTwillController(impersonator, program.getId().toEntityId(), twillController),
-                program, tempDir);
+              return addCleanupListener(twillController, program, tempDir);
             }
           });
         }
@@ -338,7 +336,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     if (SecureStoreUtils.isKMSBacked(cConf) && SecureStoreUtils.isKMSCapable()) {
       return Collections.singletonList(SecureStoreUtils.getKMSSecureStore());
     } else {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
   }
 
