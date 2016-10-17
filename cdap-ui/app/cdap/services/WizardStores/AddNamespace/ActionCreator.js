@@ -26,8 +26,6 @@ const PublishNamespace = () => {
     config : {}
   };
 
-  // let preferences = {};
-
   if (state.general.description) {
     putParams["description"] = state.general.description;
   }
@@ -56,22 +54,25 @@ const PublishNamespace = () => {
     putParams["config"]["scheduluer.queue.name"] = state.preferences.schedulerQueueName;
   }
 
-  // if(state.preferences.keyValues && state.preferences.keyValues.pairs.length > 0){
-  //   preferences = state.preferences.keyValues.pairs;
-  // }
-
-  console.log('NS store: ', AddNamespaceStore.getState());
-
   return MyNamespaceApi
-          .create(urlParams, putParams);
-  // return {
-  //   'create' : MyNamespaceApi
-  //              .create(urlParams, putParams),
-  //   'setPreferences' : MyNamespaceApi
-  //                      .setPreferences(urlParams, preferences)
-  // };
-    // .setPreferences(urlParams, preferences);
-    // .setPreferences(urlParams, AddNamespaceStore.getState().)
+    .create(urlParams, putParams);
 };
 
-export {PublishNamespace};
+const PublishPreferences = () => {
+  let state = AddNamespaceStore.getState();
+  let urlParams = {
+    namespace: state.general.name
+  };
+  let preferences = {};
+
+  if(state.preferences.keyValues && state.preferences.keyValues.pairs.length > 0){
+    state.preferences.keyValues.pairs.forEach((pair) => {
+      preferences[pair.key] = pair.value;
+    });
+
+    return MyNamespaceApi
+      .setPreferences(urlParams, preferences);
+  }
+};
+
+export {PublishNamespace, PublishPreferences};

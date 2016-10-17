@@ -19,7 +19,7 @@ import Wizard from 'components/Wizard';
 import AddNamespaceStore from 'services/WizardStores/AddNamespace/AddNamespaceStore';
 import AddNamespaceActions from 'services/WizardStores/AddNamespace/AddNamespaceActions';
 import AddNamespaceWizardConfig from 'services/WizardConfigs/AddNamespaceWizardConfig';
-import { PublishNamespace } from 'services/WizardStores/AddNamespace/ActionCreator';
+import { PublishNamespace, PublishPreferences } from 'services/WizardStores/AddNamespace/ActionCreator';
 
 export default class AddNamespaceWizard extends Component {
   constructor(props) {
@@ -34,18 +34,10 @@ export default class AddNamespaceWizard extends Component {
     });
   }
   createNamespace(){
-    let state = AddNamespaceStore.getState();
-    // let publishNSObj = PublishNamespace();
-    // console.log('publishobj: ', publishNSObj);
-
-    PublishNamespace()
-      .create()
+    return PublishNamespace()
       .flatMap(
-        res => {
-          if (res) {
-            return Promise.resolve(res);
-          }
-          return Promise.resolve(state.general.name);
+        () => {
+          return PublishPreferences();
         }
       );
   }
