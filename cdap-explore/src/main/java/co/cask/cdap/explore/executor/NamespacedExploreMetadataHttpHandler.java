@@ -17,7 +17,7 @@
 package co.cask.cdap.explore.executor;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.security.Impersonator;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.TableNotFoundException;

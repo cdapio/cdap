@@ -161,7 +161,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
       private final CConfiguration cConf;
 
       @Inject
-      public CredentialsDirProvider(CConfiguration cConf) {
+      CredentialsDirProvider(CConfiguration cConf) {
         this.cConf = cConf;
       }
 

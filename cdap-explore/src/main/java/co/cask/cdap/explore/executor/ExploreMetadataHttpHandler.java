@@ -17,7 +17,7 @@
 package co.cask.cdap.explore.executor;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.security.Impersonator;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.MetaDataInfo;
@@ -30,14 +30,12 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.sql.SQLException;
 import java.util.concurrent.Callable;
 import javax.ws.rs.DELETE;
