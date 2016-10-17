@@ -50,7 +50,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Makes requests to ImpersonationHandler to request credentials.
  */
-public class RemoteUGIProvider extends AbstractCachedUGIProvider {
+public class RemoteUGIProvider implements UGIProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoteUGIProvider.class);
   private static final Gson GSON = new Gson();
@@ -62,7 +62,6 @@ public class RemoteUGIProvider extends AbstractCachedUGIProvider {
   @Inject
   RemoteUGIProvider(CConfiguration cConf, final DiscoveryServiceClient discoveryClient,
                     LocationFactory locationFactory) {
-    super(cConf);
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {
@@ -70,54 +69,58 @@ public class RemoteUGIProvider extends AbstractCachedUGIProvider {
       }
     });
     this.locationFactory = locationFactory;
+
     this.httpRequestConfig = new DefaultHttpRequestConfig();
   }
 
-  @Override
-  protected UserGroupInformation createUGI(ImpersonationInfo impersonationInfo) throws IOException {
-    String credentialsURI = executeRequest(impersonationInfo).getResponseBodyAsString();
-    LOG.debug("Received response: {}", credentialsURI);
-
-    Location location = locationFactory.create(URI.create(credentialsURI));
-    try {
-      UserGroupInformation impersonatedUGI = UserGroupInformation.createRemoteUser(impersonationInfo.getPrincipal());
-      impersonatedUGI.addCredentials(readCredentials(location));
-      return impersonatedUGI;
-    } finally {
-      try {
-        if (!location.delete()) {
-          LOG.warn("Failed to delete location: {}", location);
-        }
-      } catch (IOException e) {
-        LOG.warn("Exception raised when deleting location {}", location, e);
-      }
-    }
-  }
-
-  private URL resolve(String resource) throws IOException {
+  private String resolve(String resource) {
     Discoverable discoverable = endpointStrategySupplier.get().pick(3L, TimeUnit.SECONDS);
     if (discoverable == null) {
-      throw new IOException(String.format("Cannot discover service %s", Constants.Service.APP_FABRIC_HTTP));
+      throw new RuntimeException(
+        String.format("Cannot discover service %s", Constants.Service.APP_FABRIC_HTTP));
     }
     InetSocketAddress addr = discoverable.getSocketAddress();
 
-    URI baseURI = URI.create(String.format("http://%s:%d", addr.getHostName(), addr.getPort()));
-    return baseURI.resolve("/v1/" + resource).toURL();
+    return String.format("http://%s:%s%s/%s",
+                         addr.getHostName(), addr.getPort(), "/v1", resource);
   }
 
-  private HttpResponse executeRequest(ImpersonationInfo impersonationInfo) throws IOException {
-    URL url = resolve("impersonation/credentials");
-    HttpRequest.Builder builder = HttpRequest.post(url).withBody(GSON.toJson(impersonationInfo));
-    HttpResponse response = HttpRequests.execute(builder.build(), httpRequestConfig);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
-      return response;
+  private HttpResponse executeRequest(ImpersonationInfo impersonationInfo) {
+    String resolvedUrl = resolve("/impersonation/credentials");
+    try {
+      URL url = new URL(resolvedUrl);
+      HttpRequest.Builder builder = HttpRequest.post(url).withBody(GSON.toJson(impersonationInfo));
+      HttpResponse response = HttpRequests.execute(builder.build(), httpRequestConfig);
+      if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
+        return response;
+      }
+      throw new RuntimeException(String.format("%s Response: %s.",
+                                               createErrorMessage(resolvedUrl), response));
+    } catch (IOException e) {
+      throw new RuntimeException(createErrorMessage(resolvedUrl), e);
     }
-    throw new IOException(String.format("%s Response: %s.", createErrorMessage(url), response));
   }
 
   // creates error message, encoding details about the request
-  private static String createErrorMessage(URL url) {
-    return String.format("Error making request to AppFabric Service at %s.", url);
+  private static String createErrorMessage(String resolvedUrl) {
+    return String.format("Error making request to AppFabric Service at %s.", resolvedUrl);
+  }
+
+  @Override
+  public UserGroupInformation getConfiguredUGI(ImpersonationInfo impersonationInfo) throws IOException {
+    String credentialsURI = executeRequest(impersonationInfo).getResponseBodyAsString();
+    LOG.debug("Received response: {}", credentialsURI);
+
+    UserGroupInformation impersonatedUGI = UserGroupInformation.createRemoteUser(impersonationInfo.getPrincipal());
+
+    Location location = locationFactory.create(URI.create(credentialsURI));
+    Credentials credentials = readCredentials(location);
+    boolean deleted = location.delete();
+    if (!deleted) {
+      LOG.warn("Failed to delete location: {}", location);
+    }
+    impersonatedUGI.addCredentials(credentials);
+    return impersonatedUGI;
   }
 
   private static Credentials readCredentials(Location location) throws IOException {
