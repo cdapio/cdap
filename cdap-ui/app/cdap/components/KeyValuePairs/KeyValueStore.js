@@ -26,7 +26,7 @@ const defaultAction = {
   payload: {}
 };
 const defaultKeyValues = {
-  "keyValues" : [defaultPair]
+  "pairs" : [defaultPair]
 };
 
 const keyValues = (state = [], action=defaultAction) => {

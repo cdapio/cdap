@@ -35,7 +35,11 @@ export default class AddNamespaceWizard extends Component {
   }
   createNamespace(){
     let state = AddNamespaceStore.getState();
-    return PublishNamespace()
+    // let publishNSObj = PublishNamespace();
+    // console.log('publishobj: ', publishNSObj);
+
+    PublishNamespace()
+      .create()
       .flatMap(
         res => {
           if (res) {
