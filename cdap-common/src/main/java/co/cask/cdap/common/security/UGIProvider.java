@@ -26,7 +26,8 @@ import java.io.IOException;
 public interface UGIProvider {
 
   /**
-   * Returns a {@link UserGroupInformation} based on the given {@link ImpersonationInfo}.
+   * Looks up the Kerberos principal to be impersonated for a given user and returns a {@link UserGroupInformation}
+   * for that principal.
    *
    * @param impersonationInfo information specifying how to create the UGI
    * @return the {@link UserGroupInformation} for the configured user
