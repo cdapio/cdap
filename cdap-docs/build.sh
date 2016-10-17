@@ -336,7 +336,7 @@ function build_docs_github_part() {
   echo "--------------------------------------------------------"
   echo
   # Don't add the zip_extras (.htaccess files) to Github
-  _build_docs build-github ${GOOGLE_TAG_MANAGER_CODE_GITHUB} ${GITHUB}
+  _build_docs build-github ${GOOGLE_TAG_MANAGER_CODE_GITHUB} ${GITHUB} ${FALSE}
   return $?
 }
 
@@ -412,8 +412,8 @@ function _package_docs() {
   echo "Packaging target \"${doc_target}\"..."
   echo "--------------------------------------------------------"
   copy_docs_inner_level
-  build_zip ${zip_target}
-  zip_extras ${zip_extras}
+  build_zip ${zip_target} ${zip_extras}
+#   zip_extras ${zip_extras}
   echo
   echo "--------------------------------------------------------"
   echo "Packaging target \"${doc_target}\" completed."
@@ -494,19 +494,75 @@ function copy_docs_inner_level() {
 }
 
 function build_zip() {
+  local zip_target=${1}
+  local zip_extras=${2}
   set_project_path
-  make_zip ${1}
+  set_version
+  if [ "x${1}" == "x" ]; then
+    ZIP_DIR_NAME="${PROJECT}-docs-${PROJECT_VERSION}"
+  else
+    ZIP_DIR_NAME="${PROJECT}-docs-${PROJECT_VERSION}-$1"
+  fi
+  cd ${TARGET_PATH}
+  doc_change_py="${TARGET_PATH}/../tools/doc-change.py"
+
+  echo "Removing old directories and zips"
+  rm -rf ${TARGET_PATH}/base 
+  rm -rf ${TARGET_PATH}/current
+  rm -rf ${TARGET_PATH}/${PROJECT_VERSION}
+  rm -rf ${TARGET_PATH}/*.zip
+
+  echo "Creating base"
+  mkdir base
+  cp -r ${HTML} base/en
+
+  # Add a redirect index.html file
+  echo "${REDIRECT_EN_HTML}" > base/index.html
+
+  echo "1: Canonical numbered version ${ZIP_DIR_NAME}-numbered"
+  cp -r base ${PROJECT_VERSION}
+  zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/* --exclude *.DS_Store* *.buildinfo*
+  if [[ "x${zip_extras}" != "x" ]]; then
+    echo "Creating and adding a .htaccess file (404 file)"
+    rewrite ${SCRIPT_PATH}/${COMMON_SOURCE}/${HTACCESS} ${TARGET_PATH}/${PROJECT_VERSION}/.${HTACCESS} "<version>" "${PROJECT_VERSION}"
+    zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/.${HTACCESS}
+  fi
+  mv ${ZIP_DIR_NAME}.zip ${ZIP_DIR_NAME}-numbered.zip
+  
+  echo "2: 'future' version with robots meta tag ${ZIP_DIR_NAME}-future"
+  python ${doc_change_py} ${TARGET_PATH} --current=${PROJECT_VERSION} ${PROJECT_VERSION}
+  zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/* --exclude *.DS_Store* *.buildinfo*
+  if [[ "x${zip_extras}" != "x" ]]; then
+    echo "Adding existing .htaccess file"
+    zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/.${HTACCESS}
+  fi
+  mv ${ZIP_DIR_NAME}.zip ${ZIP_DIR_NAME}-future.zip
+    
+  echo "3: 'current' version, with canonical ref link ${ZIP_DIR_NAME}-current"
+  cp -r base current
+  python ${doc_change_py} ${TARGET_PATH} --current=${PROJECT_VERSION} current
+  zip -qr ${ZIP_DIR_NAME}.zip current/* --exclude *.DS_Store* *.buildinfo*
+  if [[ "x${zip_extras}" != "x" ]]; then
+    echo "Creating and adding a .htaccess file (404 file)"
+    rewrite ${SCRIPT_PATH}/${COMMON_SOURCE}/${HTACCESS} ${TARGET_PATH}/current/.${HTACCESS} "<version>" "current"
+    zip -qr ${ZIP_DIR_NAME}.zip current/.${HTACCESS}
+  fi
+  mv ${ZIP_DIR_NAME}.zip ${ZIP_DIR_NAME}-current.zip
+  
+  echo "Zipping together the zips"
+  zip -q ${ZIP_DIR_NAME}.zip *.zip
 }
 
-function zip_extras() {
-  if [[ "x${1}" == "x" ]]; then
-    return
-  fi
-  echo "Adding .htaccess file (404 file)"
-  rewrite ${SCRIPT_PATH}/${COMMON_SOURCE}/${HTACCESS} ${TARGET_PATH}/${PROJECT_VERSION}/.${HTACCESS} "<version>" "${PROJECT_VERSION}"
-  cd ${TARGET_PATH}
-  zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/.${HTACCESS}
-}
+
+# function zip_extras() {
+#   if [[ "x${1}" == "x" ]]; then
+#     return
+#   fi
+#   echo "Adding .htaccess file (404 file)"
+#   rewrite ${SCRIPT_PATH}/${COMMON_SOURCE}/${HTACCESS} ${TARGET_PATH}/${PROJECT_VERSION}/.${HTACCESS} "<version>" "${PROJECT_VERSION}"
+#   cd ${TARGET_PATH}
+#   zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/.${HTACCESS}
+# }
 
 function clean_targets() {
   # Removes all outer- and (sometimes) inner-level build ${TARGET} directories

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#  Copyright © 2016 Cask Data, Inc.
+# Copyright © 2016 Cask Data, Inc.
 #
 # Changes a doc set in place, modifying the headers.
 #
@@ -182,16 +182,10 @@ def main():
     """
     options, args = parse_options()
 
-#     print "options: %s" % options
-#     print "args: %s" % args
-#     return
-    
     if len(args) == 1:
         walk_docs_path(args[0], ghpages=options.ghpages, current=options.current)
     elif len(args) == 2:
         convert_doc_set(args[1], args[0], ghpages=options.ghpages, current=options.current)
-#     elif len(args) == 3:
-#         convert_doc_set(args[1], args[0], ghpages=options.ghpages, new_version=args[2], current=options.current)
     else:
         print "Need to supply a documentation set directory: should end with CDAP"
         print "args: %s" % args
