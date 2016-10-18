@@ -18,17 +18,9 @@ import {combineReducers, createStore} from 'redux';
 import KeyValueStoreActions from './KeyValueStoreActions';
 var shortid = require('shortid');
 
-const defaultPair = {
-  key: '',
-  value : '',
-  uniqueId: shortid.generate()
-};
 const defaultAction = {
   type: '',
   payload: {}
-};
-const defaultKeyValues = {
-  "pairs" : [defaultPair]
 };
 
 const keyValues = (state = [], action=defaultAction) => {
@@ -67,15 +59,18 @@ const keyValues = (state = [], action=defaultAction) => {
         });
       }
       return stateCopy;
+    case KeyValueStoreActions.onReset:
+      return [];
     default:
       return state;
   }
 };
 
-const createKeyValueStore = (initialState = defaultKeyValues) => {
+const createKeyValueStore = (initialState = []) => {
   return createStore(
     combineReducers({keyValues}),
-    initialState
+    initialState,
+    window.devToolsExtension ? window.devToolsExtension() : f => f
   );
 };
 

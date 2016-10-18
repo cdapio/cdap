@@ -81,6 +81,9 @@ export default class KeyValuePairs extends Component {
   }
   componentWillUnmount() {
     this.subscription();
+    this.keyValueStore.dispatch({
+      type: KeyValueStoreActions.onReset
+    });
   }
   componentWillReceiveProps(nextProps) {
     this.setState({

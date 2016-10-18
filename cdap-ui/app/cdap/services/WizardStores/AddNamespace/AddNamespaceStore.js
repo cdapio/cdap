@@ -197,6 +197,16 @@ const preferences = (state = defaultPreferences, action = defaultAction) => {
         keyValues : action.payload.keyValues
       });
       return stateCopy;
+    case AddNamespaceActions.onReset:
+      return {
+        keyValues : {
+          pairs: [{
+            key : '',
+            value : '',
+            uniqueId : shortid.generate()
+          }]
+        }
+      };
     default:
       return state;
   }

@@ -288,9 +288,9 @@ features:
          ssd-label: "General Information"
          sld-desc:  "Specifies the name and the description of Namespace"
          name-label: "Name"
-         name-placeholder: "Namespace Name Example"
+         name-placeholder: "Namespace Name"
          description-label: "Description"
-         description-placeholder: "Description Example"
+         description-placeholder: "Description"
          scheduler-queue-label: "Scheduler Queue"
          scheduler-queue-placeholder: "Specify the YARN queue name to be associated with this namespace"
        Step2:
