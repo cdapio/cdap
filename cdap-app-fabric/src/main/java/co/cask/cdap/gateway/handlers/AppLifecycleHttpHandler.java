@@ -307,7 +307,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void deleteAllApps(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId) throws Exception {
     NamespaceId id = validateNamespace(namespaceId);
-    applicationLifecycleService.removeAll(id.toId());
+    applicationLifecycleService.removeAll(id);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 

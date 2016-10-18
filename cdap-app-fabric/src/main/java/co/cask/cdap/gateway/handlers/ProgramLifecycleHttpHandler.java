@@ -543,18 +543,30 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   @GET
-  @Path("/apps/{app-id}/{program-type}/{program-id}")
+  @Path("/apps/{app-name}/{program-type}/{program-name}")
   public void programSpecification(HttpRequest request, HttpResponder responder,
-                                   @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
+                                   @PathParam("namespace-id") String namespaceId, @PathParam("app-name") String appName,
                                    @PathParam("program-type") String type,
-                                   @PathParam("program-id") String programId) throws Exception {
+                                   @PathParam("program-name") String programName) throws Exception {
+    programSpecification(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, type, programName);
+  }
+
+
+  @GET
+  @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}")
+  public void programSpecification(HttpRequest request, HttpResponder responder,
+                                   @PathParam("namespace-id") String namespaceId, @PathParam("app-name") String appName,
+                                   @PathParam("app-version") String appVersion,
+                                   @PathParam("program-type") String type,
+                                   @PathParam("program-name") String programName) throws Exception {
     ProgramType programType = getProgramType(type);
     if (programType == null) {
       throw new MethodNotAllowedException(request.getMethod(), request.getUri());
     }
 
-    ProgramId id = new ProgramId(namespaceId, appId, programType, programId);;
-    ProgramSpecification specification = lifecycleService.getProgramSpecification(id);
+    ApplicationId application = new ApplicationId(namespaceId, appName, appVersion);
+    ProgramId programId = application.program(programType, programName);
+    ProgramSpecification specification = lifecycleService.getProgramSpecification(programId);
     if (specification == null) {
       throw new NotFoundException(programId);
     }

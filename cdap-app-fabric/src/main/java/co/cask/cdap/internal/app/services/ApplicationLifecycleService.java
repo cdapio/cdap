@@ -199,27 +199,24 @@ ApplicationLifecycleService extends AbstractIdleService {
                                          com.google.common.base.Predicate<ApplicationRecord> predicate)
     throws Exception {
     List<ApplicationRecord> appRecords = new ArrayList<>();
-    Set<String> appNames = new HashSet<>();
+    Set<ApplicationId> appIds = new HashSet<>();
     for (ApplicationSpecification appSpec : store.getAllApplications(namespace)) {
-      appNames.add(appSpec.getName());
+      appIds.add(namespace.app(appSpec.getName(), appSpec.getAppVersion()));
     }
 
-    for (String appName : appNames) {
-      Collection<ApplicationId> appIds = store.getAllAppVersionsAppIds(namespace.app(appName));
-      for (ApplicationId appId : appIds) {
-        ApplicationSpecification appSpec = store.getApplication(appId);
-        if (appSpec == null) {
-          continue;
-        }
+    for (ApplicationId appId : appIds) {
+      ApplicationSpecification appSpec = store.getApplication(appId);
+      if (appSpec == null) {
+        continue;
+      }
 
-        // possible if this particular app was deploy prior to v3.2 and upgrade failed for some reason.
-        ArtifactId artifactId = appSpec.getArtifactId();
-        ArtifactSummary artifactSummary = artifactId == null ?
-          new ArtifactSummary(appSpec.getName(), null) : ArtifactSummary.from(artifactId);
-        ApplicationRecord record = new ApplicationRecord(artifactSummary, appId, appSpec.getDescription());
-        if (predicate.apply(record)) {
-          appRecords.add(record);
-        }
+      // possible if this particular app was deploy prior to v3.2 and upgrade failed for some reason.
+      ArtifactId artifactId = appSpec.getArtifactId();
+      ArtifactSummary artifactSummary = artifactId == null ?
+        new ArtifactSummary(appSpec.getName(), null) : ArtifactSummary.from(artifactId);
+      ApplicationRecord record = new ApplicationRecord(artifactSummary, appId, appSpec.getDescription());
+      if (predicate.apply(record)) {
+        appRecords.add(record);
       }
     }
 
@@ -412,10 +409,10 @@ ApplicationLifecycleService extends AbstractIdleService {
    * @param namespaceId the {@link Id.Namespace} under which all application should be deleted
    * @throws Exception
    */
-  public void removeAll(final Id.Namespace namespaceId) throws Exception {
+  public void removeAll(final NamespaceId namespaceId) throws Exception {
     List<ApplicationSpecification> allSpecs = new ArrayList<>(
-      store.getAllApplications(namespaceId.toEntityId()));
-    final String namespace = namespaceId.getId();
+      store.getAllApplications(namespaceId));
+    final String namespace = namespaceId.getNamespace();
     //Check if any program associated with this namespace is running
     Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
       Iterables.filter(runtimeService.listAll(ProgramType.values()),
@@ -435,19 +432,16 @@ ApplicationLifecycleService extends AbstractIdleService {
     if (!runningPrograms.isEmpty()) {
       String appAllRunningPrograms = Joiner.on(',')
         .join(runningPrograms);
-      throw new CannotBeDeletedException(namespaceId.toEntityId(),
+      throw new CannotBeDeletedException(namespaceId,
                                          "The following programs are still running: " + appAllRunningPrograms);
     }
     //All Apps are STOPPED, delete them
-    Set<String> appNames = new HashSet<>();
+    Set<ApplicationId> appIds = new HashSet<>();
     for (ApplicationSpecification appSpec : allSpecs) {
-      appNames.add(appSpec.getName());
+      appIds.add(namespaceId.app(appSpec.getName(), appSpec.getAppVersion()));
     }
-    for (String appName : appNames) {
-      Collection<ApplicationId> appIds = store.getAllAppVersionsAppIds(new ApplicationId(namespace, appName));
-      for (ApplicationId appId : appIds) {
-        removeApplication(appId);
-      }
+    for (ApplicationId appId : appIds) {
+      removeApplication(appId);
     }
   }
 

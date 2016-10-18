@@ -90,7 +90,7 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
     // Delete all dashboards associated with this namespace
     dashboardStore.delete(namespaceId.getNamespace());
     // Delete all applications
-    applicationLifecycleService.removeAll(namespaceId.toId());
+    applicationLifecycleService.removeAll(namespaceId);
     // Delete all the schedules
     scheduler.deleteAllSchedules(namespaceId);
     // Delete datasets and modules
