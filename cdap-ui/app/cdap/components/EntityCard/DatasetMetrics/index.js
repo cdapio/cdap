@@ -17,7 +17,7 @@
 import React, {Component, PropTypes} from 'react';
 import {MyMetricApi} from '../../../api/metric';
 import {MyDatasetApi} from '../../../api/dataset';
-import {default as NamespaceStore} from 'services/store/store';
+import NamespaceStore from 'services/NamespaceStore';
 
 export default class DatasetMetrics extends Component {
   constructor(props) {

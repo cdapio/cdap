@@ -23,7 +23,7 @@ import PublishPipelineActionCreator from 'services/WizardStores/PublishPipeline/
 import head from 'lodash/head';
 import shortid from 'shortid';
 import MyUserStoreApi from 'api/userstore';
-import {default as NamespaceStore} from 'services/store/store';
+import NamespaceStore from 'services/NamespaceStore';
 import {MyPipelineApi} from 'api/pipeline';
 
 import T from 'i18n-react';

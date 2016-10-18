@@ -17,7 +17,7 @@
 import React, {Component, PropTypes} from 'react';
 import {MyMetricApi} from '../../../api/metric';
 import {MyStreamApi} from '../../../api/stream';
-import {default as NamespaceStore} from 'services/store/store';
+import NamespaceStore from 'services/NamespaceStore';
 
 export default class StreamMetrics extends Component {
   constructor(props) {

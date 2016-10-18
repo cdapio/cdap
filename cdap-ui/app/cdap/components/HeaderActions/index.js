@@ -19,7 +19,7 @@ import { Dropdown, DropdownMenu, DropdownItem } from 'reactstrap';
 import cookie from 'react-cookie';
 import PlusButton from '../PlusButton';
 import T from 'i18n-react';
-import Store from 'services/store/store.js';
+import NamespaceStore from 'services/NamespaceStore';
 import SpotlightSearch from 'components/SpotlightSearch';
 require('./HeaderActions.less');
 var classNames = require('classnames');
@@ -31,7 +31,7 @@ export default class HeaderActions extends Component {
     super(props);
     this.state = {
       settingsOpen : false,
-      name : Store.getState().userName,
+      name : NamespaceStore.getState().userName,
     };
     this.logout = this.logout.bind(this);
     this.toggleSettingsDropdown = this.toggleSettingsDropdown.bind(this);

@@ -18,7 +18,7 @@ import React, {Component, PropTypes} from 'react';
 import {Dropdown, DropdownMenu} from 'reactstrap';
 import classnames from 'classnames';
 import AbstractWizard from 'components/AbstractWizard';
-import {default as NamespaceStore} from 'services/store/store.js';
+import NamespaceStore from 'services/NamespaceStore';
 import {Link} from 'react-router';
 const shortid = require('shortid');
 require('./NamespaceDropdown.less');

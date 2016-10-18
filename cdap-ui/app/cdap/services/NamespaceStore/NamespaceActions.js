@@ -14,11 +14,10 @@
  * the License.
  */
 
- export default function namespaces(state = [], action) {
-   switch (action.type) {
-     case 'UPDATE_NAMESPACES':
-       return action.payload.namespaces;
-     default:
-       return state;
-   }
- }
+const NamespaceActions = {
+  selectNamespace : 'SELECT_NAMESPACE',
+  updateUsername : 'UPDATE_USERNAME',
+  updateNamespaces : 'UPDATE_NAMESPACES'
+};
+
+export default NamespaceActions;

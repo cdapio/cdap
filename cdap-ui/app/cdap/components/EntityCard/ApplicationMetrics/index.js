@@ -16,7 +16,7 @@
 
 import React, {Component, PropTypes} from 'react';
 import {MyAppApi} from '../../../api/app';
-import {default as NamespaceStore} from 'services/store/store';
+import NamespaceStore from 'services/NamespaceStore';
 
 export default class ApplicationMetrics extends Component {
   constructor(props) {
