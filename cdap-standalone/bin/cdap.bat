@@ -46,13 +46,29 @@ REM Process command line
 IF "%1" == "cli" GOTO CLI
 IF "%1" == "sdk" GOTO SDK
 IF "%1" == "tx-debugger" GOTO TX_DEBUGGER
-IF "%1" == "usage" GOTO USAGE
-IF "%1" == "/?" GOTO USAGE
-IF "%1" == "/help" GOTO USAGE
-IF "%1" == "-h" GOTO USAGE
-IF "%1" == "--help" GOTO USAGE
-IF "%1" == "" GOTO USAGE
-GOTO CLI
+REM Process deprecated SDK arguments
+IF "%1" == "start" GOTO SDK_DEPRECATED
+IF "%1" == "stop" GOTO SDK_DEPRECATED
+IF "%1" == "restart" GOTO SDK_DEPRECATED
+IF "%1" == "status" GOTO SDK_DEPRECATED
+IF "%1" == "reset" GOTO SDK_DEPRECATED
+REM Everything else gets usage
+GOTO USAGE
+
+:SDK_DEPRECATED
+REM Process deprecated SDK arguments
+ECHO:
+ECHO [WARN] %0 is deprecated and will be removed in CDAP 5.0. Please use 'cdap sdk' for CDAP command line."
+ECHO:
+ECHO   cdap sdk %*
+ECHO:
+ECHO:
+IF "%1" == "start" GOTO SDK_START
+IF "%1" == "stop" GOTO SDK_STOP
+IF "%1" == "restart" GOTO SDK_RESTART
+IF "%1" == "status" GOTO SDK_STATUS
+IF "%1" == "reset" GOTO SDK_RESET
+GOTO SDK_USAGE
 
 :SDK
 REM Process SDK arguments
