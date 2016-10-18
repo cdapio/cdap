@@ -46,6 +46,7 @@ export default class HomeHeader extends Component {
   }
 
   render() {
+
     const placeholder = T.translate('features.Home.Header.search-placeholder');
 
     const sortDropdown = (
@@ -70,7 +71,7 @@ export default class HomeHeader extends Component {
                 >
                   {option.displayName}
                   {
-                    this.props.activeSort.sort === option.sort ?
+                    this.props.activeSort.fullSort === option.fullSort ?
                     <span className="fa fa-check pull-right"></span> :
                     null
                   }
@@ -127,6 +128,7 @@ export default class HomeHeader extends Component {
               type="text"
               className="form-control"
               placeholder={placeholder}
+              defaultValue={this.props.searchText}
               onChange={this.debouncedHandleSearch}
               ref={ref => this.searchBox = ref}
             />
@@ -149,11 +151,29 @@ export default class HomeHeader extends Component {
 }
 
 HomeHeader.propTypes = {
-  filterOptions: PropTypes.array,
+  filterOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      displayName : PropTypes.string,
+      id: PropTypes.string
+    })
+  ),
   onFilterClick: PropTypes.func,
-  activeFilter: PropTypes.array,
-  sortOptions: PropTypes.array,
-  activeSort: PropTypes.object,
+  activeFilter: PropTypes.arrayOf(PropTypes.string),
+  sortOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      displayName : PropTypes.string,
+      sort: PropTypes.string,
+      order: PropTypes.string,
+      fullSort: PropTypes.string
+    })
+  ),
+  activeSort: PropTypes.shape({
+    displayName : PropTypes.string,
+    sort: PropTypes.string,
+    order: PropTypes.string,
+    fullSort: PropTypes.string
+  }),
   onSortClick: PropTypes.func,
-  onSearch: PropTypes.func
+  onSearch: PropTypes.func,
+  searchText: PropTypes.string
 };

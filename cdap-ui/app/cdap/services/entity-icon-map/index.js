@@ -14,11 +14,20 @@
  * the License.
  */
 
- export default function namespaces(state = [], action) {
-   switch (action.type) {
-     case 'UPDATE_NAMESPACES':
-       return action.payload.namespaces;
-     default:
-       return state;
-   }
- }
+const EntityIconMap = {
+  application: 'icon-fist',
+  artifact: 'fa fa-archive',
+  'cdap-data-pipeline': 'icon-ETLBatch',
+  'cdap-data-streams': 'icon-sparkstreaming',
+  datasetinstance: 'icon-datasets',
+  stream: 'icon-streams',
+  view: 'icon-streamview',
+  'Workflow': 'icon-workflow',
+  'Spark': 'icon-spark',
+  'Mapreduce': 'icon-mapreduce',
+  'Service': 'icon-service',
+  'Worker': 'icon-worker',
+  'Flow': 'icon-tigon'
+};
+
+export default EntityIconMap;

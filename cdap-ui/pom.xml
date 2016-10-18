@@ -133,6 +133,7 @@
                   <exclude>**/bower_components/**</exclude>
                   <exclude>**/node_modules/**</exclude>
                   <exclude>**/dist/**</exclude>
+                  <exclude>**/plusbutton_dist/**</exclude>
                   <exclude>**/cdap_dist/**</exclude>
                   <exclude>**/login_dist/**</exclude>
                   <exclude>**/logs/**</exclude>
@@ -291,6 +292,9 @@
                     </copy>
                     <copy todir = "${stage.opt.dir}/dist">
                       <fileset dir = "dist" />
+                    </copy>
+                    <copy todir = "${stage.opt.dir}/plusbutton_dist">
+                      <fileset dir = "plusbutton_dist" />
                     </copy>
                     <copy todir = "${stage.opt.dir}/cdap_dist">
                       <fileset dir = "cdap_dist" />

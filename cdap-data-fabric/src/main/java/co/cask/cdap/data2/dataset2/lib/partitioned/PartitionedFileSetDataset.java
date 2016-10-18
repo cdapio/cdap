@@ -615,6 +615,9 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
         }
         count++;
       }
+      if (count == 0) {
+        warnIfInvalidPartitionFilter(filter, partitioning);
+      }
     }
   }
 
@@ -927,6 +930,21 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   }
 
   //------ private helpers below here --------------------------------------------------------------
+
+  /**
+   * Logs a warning if the partition filter contains a field that is not part of the partitioning.
+   */
+  private void warnIfInvalidPartitionFilter(PartitionFilter filter, Partitioning partitioning) {
+    if (null == filter) {
+      return;
+    }
+    for (Map.Entry<String, PartitionFilter.Condition<? extends Comparable>> entry : filter.getConditions().entrySet()) {
+      if (!partitioning.getFields().containsKey(entry.getKey())) {
+        LOG.warn("Partition filter cannot match any partitions in dataset '{}' because it contains field '{}' " +
+                   "that is not a valid partitioning field", getName(), entry.getKey());
+      }
+    }
+  }
 
   /**
    * Validates the partition key against the partitioning.

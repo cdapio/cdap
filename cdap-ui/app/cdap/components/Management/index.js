@@ -23,6 +23,8 @@ import AdminDetailPanel from '../AdminDetailPanel';
 import AdminConfigurePane from '../AdminConfigurePane';
 import AdminOverviewPane from '../AdminOverviewPane';
 import AbstractWizard from 'components/AbstractWizard';
+import Redirect from 'react-router/Redirect';
+import Helmet from 'react-helmet';
 
 import T from 'i18n-react';
 var shortid = require('shortid');
@@ -78,6 +80,7 @@ class Management extends Component {
       application: 'CDAP',
       lastUpdated: 15,
       loading: false,
+      redirectTo: false,
       wizard : {
         actionIndex : null,
         actionType : null
@@ -127,7 +130,8 @@ class Management extends Component {
         wizard: {
           actionIndex: null,
           actionType: null
-        }
+        },
+        redirectTo: true
       });
   }
 
@@ -153,9 +157,17 @@ class Management extends Component {
         </li>
       );
     });
+    let lastAccessedNamespace = localStorage.getItem('NS');
+    let redirectUrl = lastAccessedNamespace ? `/ns/${lastAccessedNamespace}` : '/';
 
     return (
        <div className="management">
+        {
+          this.state.redirectTo && <Redirect to={redirectUrl} />
+        }
+        <Helmet
+          title={T.translate('features.Management.Title')}
+        />
         <div className="top-panel">
           <div className="admin-row top-row">
             <InfoCard
@@ -198,9 +210,8 @@ class Management extends Component {
           isOpen={this.state.wizard.actionIndex !== null && this.state.wizard.actionType !== null}
           onClose={this.closeWizard.bind(this)}
           wizardType={this.state.wizard.actionType}
-          context={'Configure'}
+          backdrop={true}
         />
-        <div className={classNames("mgmt-modal-overlay" , {"hide" : this.state.wizard.actionType === null})}></div>
       </div>
     );
   }

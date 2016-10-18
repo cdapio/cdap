@@ -29,6 +29,7 @@ export default class ArtifactMetrics extends Component {
       type: '-',
       loading: true
     };
+    this.unsub = null;
   }
 
   componentWillMount() {
@@ -45,7 +46,7 @@ export default class ArtifactMetrics extends Component {
       artifactVersion: this.props.entity.version,
     };
 
-    MyArtifactApi.listExtensions(extensionParams)
+    this.unsub = MyArtifactApi.listExtensions(extensionParams)
       .combineLatest(MyAppApi.getDeployedApp(appsParams), MyArtifactApi.get(extensionParams))
       .subscribe((res) => {
         this.setState({
@@ -55,6 +56,9 @@ export default class ArtifactMetrics extends Component {
           loading: false
         });
       });
+  }
+  componentWillUnmount() {
+    this.unsub.dispose();
   }
 
   render () {

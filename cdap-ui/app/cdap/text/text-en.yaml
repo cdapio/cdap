@@ -61,6 +61,7 @@ commons:
   schemaLabel: Schema
 features:
   Home:
+    Title: CDAP - Home
     emptyMessage: No entities found in the system.
     Cards:
       type: "Type: "
@@ -69,12 +70,17 @@ features:
       search-placeholder: Search entities ...
       sort: Sort
       sortOptions:
-        nameAsc: A - Z
-        nameDesc: Z - A
+        nameAsc:
+          displayName: A - Z
+        nameDesc:
+          displayName: Z - A
     FastActions:
       deleteConfirmation: Are you sure you want to delete {entityId}?
       truncateConfirmation: Are you sure you want to truncate {entityId}?
+  Dashboard:
+    Title: Dashboard
   Management:
+    Title: Management
     Top:
       version-label: Version
       time-label: Uptime
@@ -191,6 +197,14 @@ features:
     intro-message: Unified Integration Platform for Big Data
     title: Welcome to Cask Data Application Platform
     version-label: Version 4.0.0 Preview
+
+  SpotlightSearch:
+    noResult: No results found
+    showAll: Show all {num} results
+    SpotlightModal:
+      headerSearchResults: "Search results for: {query}"
+      numResults: "{total} results found"
+
   Wizard:
     ArtifactUpload:
       Step1:
