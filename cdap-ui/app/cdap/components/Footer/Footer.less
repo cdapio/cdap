@@ -24,16 +24,8 @@ footer {
   width: 100%;
   bottom: 0;
 
-  span.cask-logo {
-    background: url('/cdap_assets/img/cask_footer_logo.svg') 0 0 no-repeat;
-    display: inline-block;
-    margin-top: -4px;
-    margin-right: 3px;
-    height: 40px;
-    width: 45px;
-    vertical-align: top;
-  }
   > .container {
+    width: 100%;
     padding-right: 15px;
     padding-left: 15px;
   }
@@ -41,18 +33,15 @@ footer {
     margin: 10px 0;
 
     > div {
-      @media (min-width: @screen-md-max) {
+      @media (min-width: @screen-sm-min) {
         &:first-child { text-align: left; }
         &:last-child { text-align: right; }
       }
 
-      @media (max-width: @screen-md-max) { text-align: center; }
+      @media (max-width: @screen-xs-max) {
+        text-align: center;
+      }
     }
-  }
-  img {
-    height: 26px;
-    width: 26px;
-    margin-right: 8px;
   }
   p,
   ul {

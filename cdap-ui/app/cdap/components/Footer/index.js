@@ -33,7 +33,6 @@ export default class Footer extends Component {
           <div className="row text-muted">
             <div className="col-sm-6 text-uppercase">
               <p>
-                <span className="cask-logo"></span>
                 <span>Copyright &copy; {this.copyrightYear} Cask Data, Inc.</span>
               </p>
             </div>
