@@ -31,12 +31,17 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
+import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
 import com.google.common.collect.ImmutableList;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +53,8 @@ import javax.inject.Inject;
 @Beta
 public class ServiceClient {
 
+  private static final Gson GSON = new Gson();
+  private static final Type MAP_STRING_INTEGER_TYPE = new TypeToken<Map<String, Integer>>() { }.getType();
   private final RESTClient restClient;
   private final ClientConfig config;
 
@@ -173,5 +180,87 @@ public class ServiceClient {
                                          String.format("apps/%s/versions/%s/services/%s/methods/",
                                                        service.getApplication(), service.getVersion(),
                                                        service.getProgram()));
+  }
+
+  /**
+   * Gets RouteConfig of a service with versions.
+   *
+   * @param namespace the namespace of the service
+   * @param appName the name of the application containing the service,
+   *                can be obtained by ApplicationId.getApplication()
+   * @param serviceName the service name, can be obtained by ProgramId.getProgram() or ServiceId.getProgram()
+   * @return a Map of {@link String} application version
+   * and {@link Integer} percentage of traffic routed to the version.
+   */
+  public Map<String, Integer> getRouteConfig(NamespaceId namespace, String appName, String serviceName)
+    throws UnauthorizedException, IOException, UnauthenticatedException {
+    URL url = buildRouteConfigUrl(namespace, appName, serviceName);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
+    return ObjectResponse.<Map<String, Integer>>fromJsonBody(response, MAP_STRING_INTEGER_TYPE).getResponseObject();
+  }
+
+  /**
+   * Stores RouteConfig a service with versions.
+   *
+   * @param namespace the namespace of the service
+   * @param appName the name of the application containing the service,
+   *                can be obtained by ApplicationId.getApplication()
+   * @param serviceName the service name, can be obtained by ProgramId.getProgram() or ServiceId.getProgram()
+   * @param routeConfig a Map of {@link String} application version and {@link Integer} percentage of
+   *                    traffic routed to the version.
+   */
+  public void storeRouteConfig(NamespaceId namespace, String appName, String serviceName,
+                               Map<String, Integer> routeConfig)
+    throws IOException, UnauthorizedException, UnauthenticatedException {
+    URL url = buildRouteConfigUrl(namespace, appName, serviceName);
+    HttpRequest request = HttpRequest.put(url)
+      .withBody(GSON.toJson(routeConfig, MAP_STRING_INTEGER_TYPE)).build();
+    restClient.upload(request, config.getAccessToken());
+  }
+
+  /**
+   * Deletes RouteConfig of an application.
+   *
+   * @param namespace the namespace of the service
+   * @param appName the name of the application containing the service,
+   *                can be obtained by ApplicationId.getApplication()
+   * @param serviceName the service name, can be obtained by ProgramId.getProgram() or ServiceId.getProgram()
+   */
+  public void deleteRouteConfig(NamespaceId namespace, String appName, String serviceName)
+    throws IOException, UnauthorizedException, UnauthenticatedException {
+    URL url = buildRouteConfigUrl(namespace, appName, serviceName);
+    restClient.execute(HttpMethod.DELETE, url, config.getAccessToken());
+  }
+
+  /**
+   * Calls the non-versioned service endpoint for a given method and get routed to a specific version by the Router
+   *
+   * @param namespace the namespace of the service
+   * @param appName the name of the application containing the service,
+   *                can be obtained by ApplicationId.getApplication()
+   * @param serviceName the service name, can be obtained by ProgramId.getProgram() or ServiceId.getProgram()
+   * @param methodPath the path specifying only the method
+   *
+   * @return {@link HttpResponse} from the service method
+   */
+  public HttpResponse callServiceMethod(NamespaceId namespace, String appName, String serviceName, String methodPath)
+    throws IOException, UnauthorizedException, UnauthenticatedException {
+    String path = String.format("apps/%s/services/%s/methods/%s", appName, serviceName, methodPath);
+    URL url = config.resolveNamespacedURLV3(namespace, path);
+    return restClient.execute(HttpMethod.GET, url, config.getAccessToken());
+  }
+
+  /**
+   * Constructs URL to reach RouteConfig REST API endpoints.
+   *
+   * @param namespace the namespace of the service
+   * @param appName the name of the application containing the service,
+   *                can be obtained by ApplicationId.getApplication()
+   * @param serviceName the service name, can be obtained by ProgramId.getProgram() or ServiceId.getProgram()
+   */
+  private URL buildRouteConfigUrl(NamespaceId namespace, String appName, String serviceName)
+    throws MalformedURLException {
+    String path = String.format("apps/%s/services/%s/routeconfig", appName, serviceName);
+    return config.resolveNamespacedURLV3(namespace, path);
   }
 }

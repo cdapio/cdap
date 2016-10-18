@@ -40,6 +40,7 @@ import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.codec.CustomActionSpecificationCodec;
@@ -277,7 +278,7 @@ public class ProgramClient {
           String status = this.getStatus(program);
           if (!status.equals("STOPPED")) {
             this.stop(program);
-            this.waitForStatus(program, "STOPPED", 60, TimeUnit.SECONDS);
+            this.waitForStatus(program, ProgramStatus.STOPPED, 60, TimeUnit.SECONDS);
           }
         } catch (ProgramNotFoundException e) {
           // IGNORE
@@ -356,13 +357,13 @@ public class ProgramClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws TimeoutException if the program did not achieve the desired program status before the timeout
    * @throws InterruptedException if interrupted while waiting for the desired program status
-   * @deprecated since 4.0.0. Please use {@link #waitForStatus(ProgramId, String, long, TimeUnit)} instead
+   * @deprecated since 4.0.0. Please use {@link #waitForStatus(ProgramId, ProgramStatus, long, TimeUnit)} instead
    */
   @Deprecated
   public void waitForStatus(final Id.Program program, String status, long timeout, TimeUnit timeoutUnit)
     throws UnauthenticatedException, IOException, ProgramNotFoundException,
     TimeoutException, InterruptedException {
-    waitForStatus(program.toEntityId(), status, timeout, timeoutUnit);
+    waitForStatus(program.toEntityId(), ProgramStatus.valueOf(status), timeout, timeoutUnit);
   }
 
   /**
@@ -377,12 +378,12 @@ public class ProgramClient {
    * @throws TimeoutException if the program did not achieve the desired program status before the timeout
    * @throws InterruptedException if interrupted while waiting for the desired program status
    */
-  public void waitForStatus(final ProgramId program, String status, long timeout, TimeUnit timeoutUnit)
+  public void waitForStatus(final ProgramId program, ProgramStatus status, long timeout, TimeUnit timeoutUnit)
     throws UnauthenticatedException, IOException, ProgramNotFoundException,
     TimeoutException, InterruptedException {
 
     try {
-      Tasks.waitFor(status, new Callable<String>() {
+      Tasks.waitFor(status.name(), new Callable<String>() {
         @Override
         public String call() throws Exception {
           return getStatus(program);
@@ -673,17 +674,35 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws ProgramNotFoundException if the application or program could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Please use {@link #getRuntimeArgs(ProgramId)} instead
    */
+  @Deprecated
   public Map<String, String> getRuntimeArgs(Id.Program program)
     throws IOException, UnauthenticatedException, ProgramNotFoundException, UnauthorizedException {
 
-    String path = String.format("apps/%s/%s/%s/runtimeargs",
-                                program.getApplicationId(), program.getType().getCategoryName(), program.getId());
-    URL url = config.resolveNamespacedURLV3(program.getNamespace(), path);
+    return getRuntimeArgs(program.toEntityId());
+  }
+
+  /**
+   * Gets the runtime args of a program.
+   *
+   * @param program the program
+   * @return runtime args of the program
+   * @throws IOException if a network error occurred
+   * @throws ProgramNotFoundException if the application or program could not be found
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public Map<String, String> getRuntimeArgs(ProgramId program)
+    throws IOException, UnauthenticatedException, ProgramNotFoundException, UnauthorizedException {
+
+    String path = String.format("apps/%s/versions/%s/%s/%s/runtimeargs",
+                                program.getApplication(), program.getVersion(),
+                                program.getType().getCategoryName(), program.getProgram());
+    URL url = config.resolveNamespacedURLV3(program.getNamespaceId(), path);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ProgramNotFoundException(program.toEntityId());
+      throw new ProgramNotFoundException(program);
     }
     return ObjectResponse.fromJsonBody(response, new TypeToken<Map<String, String>>() { }).getResponseObject();
   }
@@ -696,17 +715,35 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws ProgramNotFoundException if the application or program could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Please use {@link #setRuntimeArgs(ProgramId, Map)} instead
    */
+  @Deprecated
   public void setRuntimeArgs(Id.Program program, Map<String, String> runtimeArgs)
     throws IOException, UnauthenticatedException, ProgramNotFoundException, UnauthorizedException {
 
-    String path = String.format("apps/%s/%s/%s/runtimeargs",
-                                program.getApplicationId(), program.getType().getCategoryName(), program.getId());
-    URL url = config.resolveNamespacedURLV3(program.getNamespace(), path);
+    setRuntimeArgs(program.toEntityId(), runtimeArgs);
+  }
+
+  /**
+   * Sets the runtime args of a program.
+   *
+   * @param program the program
+   * @param runtimeArgs args of the program
+   * @throws IOException if a network error occurred
+   * @throws ProgramNotFoundException if the application or program could not be found
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public void setRuntimeArgs(ProgramId program, Map<String, String> runtimeArgs)
+    throws IOException, UnauthenticatedException, ProgramNotFoundException, UnauthorizedException {
+
+    String path = String.format("apps/%s/versions/%s/%s/%s/runtimeargs",
+                                program.getApplication(), program.getVersion(),
+                                program.getType().getCategoryName(), program.getProgram());
+    URL url = config.resolveNamespacedURLV3(program.getNamespaceId(), path);
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(runtimeArgs)).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ProgramNotFoundException(program.toEntityId());
+      throw new ProgramNotFoundException(program);
     }
   }
 }

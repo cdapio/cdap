@@ -498,12 +498,27 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Get program runtime args.
    */
   @GET
-  @Path("/apps/{app-id}/{program-type}/{program-id}/runtimeargs")
+  @Path("/apps/{app-name}/{program-type}/{program-name}/runtimeargs")
   public void getProgramRuntimeArgs(HttpRequest request, HttpResponder responder,
                                     @PathParam("namespace-id") String namespaceId,
-                                    @PathParam("app-id") String appId,
+                                    @PathParam("app-name") String appName,
                                     @PathParam("program-type") String type,
-                                    @PathParam("program-id") String programId) throws BadRequestException,
+                                    @PathParam("program-name") String programName) throws BadRequestException,
+    NotImplementedException, NotFoundException {
+    getProgramRuntimeArgs(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, type, programName);
+  }
+
+  /**
+   * Get program runtime args.
+   */
+  @GET
+  @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/runtimeargs")
+  public void getProgramRuntimeArgs(HttpRequest request, HttpResponder responder,
+                                    @PathParam("namespace-id") String namespaceId,
+                                    @PathParam("app-name") String appName,
+                                    @PathParam("app-version") String appVersion,
+                                    @PathParam("program-type") String type,
+                                    @PathParam("program-name") String programName) throws BadRequestException,
     NotImplementedException, NotFoundException {
     ProgramType programType = getProgramType(type);
     if (programType == null || programType == ProgramType.WEBAPP) {
@@ -511,13 +526,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                                   "type '%s'.", type));
     }
 
-    ProgramId id = new ProgramId(namespaceId, appId, programType, programId);
-    if (!store.programExists(id)) {
-      throw new NotFoundException(id);
+    ProgramId programId = new ProgramId(namespaceId, appName, programType, programName);
+    if (!store.programExists(programId)) {
+      throw new NotFoundException(programId);
     }
 
-    Map<String, String> runtimeArgs = preferencesStore.getProperties(id.getNamespace(), appId,
-                                                                     type, programId);
+    Map<String, String> runtimeArgs = preferencesStore.getProperties(programId.getNamespace(), appName,
+                                                                     type, programName);
     responder.sendJson(HttpResponseStatus.OK, runtimeArgs);
   }
 
@@ -525,19 +540,33 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Save program runtime args.
    */
   @PUT
-  @Path("/apps/{app-id}/{program-type}/{program-id}/runtimeargs")
+  @Path("/apps/{app-name}/{program-type}/{program-name}/runtimeargs")
   public void saveProgramRuntimeArgs(HttpRequest request, HttpResponder responder,
-                                     @PathParam("namespace-id") String namespaceId,
-                                     @PathParam("app-id") String appId,
-                                     @PathParam("program-type") String type,
-                                     @PathParam("program-id") String programId) throws Exception {
+                                    @PathParam("namespace-id") String namespaceId,
+                                    @PathParam("app-name") String appName,
+                                    @PathParam("program-type") String type,
+                                    @PathParam("program-name") String programName) throws Exception {
+    saveProgramRuntimeArgs(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, type, programName);
+  }
+
+  /**
+   * Save program runtime args.
+   */
+  @PUT
+  @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/runtimeargs")
+  public void saveProgramRuntimeArgs(HttpRequest request, HttpResponder responder,
+                                    @PathParam("namespace-id") String namespaceId,
+                                    @PathParam("app-name") String appName,
+                                    @PathParam("app-version") String appVersion,
+                                    @PathParam("program-type") String type,
+                                    @PathParam("program-name") String programName) throws Exception {
     ProgramType programType = getProgramType(type);
     if (programType == null || programType == ProgramType.WEBAPP) {
       throw new NotFoundException(String.format("Saving program runtime arguments is not supported for program " +
                                                   "type '%s'.", programType));
     }
 
-    lifecycleService.saveRuntimeArgs(new ProgramId(namespaceId, appId, programType, programId),
+    lifecycleService.saveRuntimeArgs(new ProgramId(namespaceId, appName, programType, programName),
                                      decodeArguments(request));
     responder.sendStatus(HttpResponseStatus.OK);
   }
