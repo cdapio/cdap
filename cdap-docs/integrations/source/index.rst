@@ -14,7 +14,8 @@ Integrations
 .. |cask-market-overview| replace:: **Overview:**
 .. _cask-market-overview: cask-market/index.html
 
-- |cask-market-overview|_ Overview of the **Cask Market**
+- |cask-market-overview|_ Summary of the **Cask Market,** a source for re-usable
+  applications, data, and code for CDAP users
 
 .. |cask-market-api| replace:: **API:**
 .. _cask-market-api: cask-market/api.html
