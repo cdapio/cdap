@@ -3,13 +3,20 @@
     :copyright: Copyright © 2016 Cask Data, Inc.
 
 .. _cask-market-api:
-================
-Cask Market APIs
-================
 
-The Cask Market APIs are simply a contract about the directory structure of the marketplace.
-All APIs are relative to a base path. For example, the base path for the public Cask hosted market
-is 'market.cask.co'. The directory structure must be::
+============================
+Cask Market HTTP RESTful API
+============================
+
+.. highlight:: console
+
+The Cask Market HTTP RESTful APIs are simply a contract about the directory structure of the marketplace.
+All APIs are relative to a base path. For example, the base path for the public Cask-hosted market
+is ``'market.cask.co'``. 
+
+.. directory-structure-start
+
+The directory structure must be::
 
   <base>/v1/packages.json
   <base>/v1/packages/<package-name>/<version>/icon.png
@@ -21,56 +28,72 @@ is 'market.cask.co'. The directory structure must be::
   <base>/v1/packages/<package-name>/<version>/<resource2>.asc
   ...
 
+.. directory-structure-end
+
+.. Base URL explanation
+.. --------------------
+.. include:: ../../../reference-manual/source/http-restful-api/base-url.txt
+
 .. _cask-market-get-catalog:
 
 Get Market Catalog
 ==================
+
+.. highlight:: console
+
 To retrieve a list of available packages, submit an HTTP GET request::
 
   GET /v1/packages.json
+
+.. highlight:: json-ellipsis
 
 This will return a JSON array that lists each package and its metadata::
 
   [
     {
-      name: "access-log",
-      version: "1.0.0",
-      description: "Sample access logs in Combined Log Format (CLF)",
-      label: "Access Log Sample",
-      author: "Cask",
-      org: "Cask Data, Inc.",
-      cdapVersion: "[4.0.0-SNAPSHOT,4.1.0)",
-      created: 1473901763,
-      categories: [ "datapack" ]
+      "name": "access-log",
+      "version": "1.0.0",
+      "description": "Sample access logs in Combined Log Format (CLF)",
+      "label": "Access Log Sample",
+      "author": "Cask",
+      "org": "Cask Data, Inc.",
+      "cdapVersion": "[4.0.0-SNAPSHOT,4.1.0)",
+      "created": 1473901763,
+      "categories": [ "datapack" ]
     },
     {
-      name: "bulk-data-transfer",
-      version: "1.0.0",
-      description: "Moving data from structured data source likes traditional relational database into Hadoop is very common in building Data Lakes.
+      "name": "bulk-data-transfer",
+      "version": "1.0.0",
+      "description": "Moving data from structured data source such as a traditional relational database into Hadoop is very common in building Data Lakes.
                     This data application allows you to set-up periodic full data dumps from RDBMS into Hadoop cluster.
                     Data on Hadoop is stored as DB table snapshot. Supports other relational databases.",
-      label: "Bulk Data Transfer",
-      author: "Cask",
-      org: "Cask Data, Inc.",
-      cdapVersion: "[4.0.0-SNAPSHOT,4.1.0)",
-      created: 1473901763,
-      categories: [ "usecase" ]
+      "label": "Bulk Data Transfer",
+      "author": "Cask",
+      "org": "Cask Data, Inc.",
+      "cdapVersion": "[4.0.0-SNAPSHOT,4.1.0)",
+      "created": 1473901763,
+      "categories": [ "usecase" ]
     },
     ...
   ]
 
 Get Package Specification
 =========================
+
+.. highlight:: console
+
 To retrieve a package specification, submit an HTTP GET request::
 
   GET /v1/packages/<package-name>/<version>/spec.json
+
+.. highlight:: json-ellipsis
 
 This will return a JSON object that contains metadata about the package,
 and a list of actions required to install the package::
 
   {
     "label": "Bulk Data Transfer",
-    "description": "Moving data from structured data source likes traditional relational database into Hadoop is very common in building Data Lakes.
+    "description": "Moving data from structured data source such as a traditional relational database into Hadoop is very common in building Data Lakes.
                     This data application allows you to set-up periodic full data dumps from RDBMS into Hadoop cluster.
                     Data on Hadoop is stored as DB table snapshot. Supports other relational databases.",
     "author": "Cask",
@@ -86,9 +109,9 @@ and a list of actions required to install the package::
           {
             "name": "steps",
             "value": [
-              "Download the zip file from Mysql at https://dev.mysql.com/downloads/file/?id=462850",
+              "Download the ZIP file from MySQL at https://dev.mysql.com/downloads/file/?id=462850",
               "Unzip the file",
-              "In the next step, upload the 'mysql-connector-java-5.1.39-bin.jar' file from the zip"
+              "In the next step, upload the 'mysql-connector-java-5.1.39-bin.jar' file from the ZIP"
             ]
           }
         ]
@@ -141,34 +164,47 @@ and a list of actions required to install the package::
     ]
   }
 
+Action Specification
+--------------------
+
 There are several supported actions, each with its own specification.
 If an action fails for any reason, actions completed before it are
 not rolled back. However, each action is idempotent, which means the
-installation can simply be retried once the underylying failure cause has
+installation can simply be retried once the underlying cause of the failure has
 been fixed.
 
-Action Specification
---------------------
 Each action contains a label, type, and arguments::
 
   {
-    "label": [display label],
-    "type": [action type],
+    "label": "<display-label>",
+    "type": "<action-type>",
     "arguments": [
-      "name": [argument name],
-      "value": [argument value],
-      "canModify": true | false (defaults to false)
+      {
+        "name": "<argument-name>",
+        "value": "<argument-value>",
+        "canModify": "true | false (defaults to false)"
+      },
+      ...
     ]
   }
 
-The label is short description that will be displayed to users during the install process.
+The label is a short description that will be displayed to users during the install process.
 Some arguments will reference package resources.
-Descriptions of each action type and their supported arguments are listed below.
+
+Descriptions of each action type and their supported arguments are listed below:
+
+- `informational`_
+- `create_artifact`_
+- `create_stream`_
+- `load_datapack`_
+- `create_app`_
+- `create_pipeline`_
+- `create_pipeline_draft`_
 
 informational
-^^^^^^^^^^^^^
+.............
 Displays information for the user. Does not perform any actions against the CDAP RESTful APIs.
-This can be used, for example, to tell the user to download a jar from a 3rd party website.
+This can be used, for example, to tell the user to download a JAR from a 3rd-party website.
 
 .. list-table::
    :widths: 20 50 10 20
@@ -178,10 +214,12 @@ This can be used, for example, to tell the user to download a jar from a 3rd par
      - Description
      - Required?
      - Default
-   * - steps
+   * - ``steps``
      - JSON array of strings listing steps the user should take
-     - yes
+     - Yes
      -
+
+.. highlight:: json-ellipsis
 
 Example action::
 
@@ -192,16 +230,16 @@ Example action::
       {
         "name": "steps",
         "value": [
-          "Download the zip file from Oracle at https://dev.mysql.com/downloads/file/?id=462850",
+          "Download the ZIP file from Oracle at https://dev.mysql.com/downloads/file/?id=462850",
           "Unzip the file",
-          "In the next step, upload the 'mysql-connector-java-5.1.39-bin.jar' file from the zip"
+          "In the next step, upload the 'mysql-connector-java-5.1.39-bin.jar' file from the ZIP"
         ]
       }
     ]
   }
 
 create_artifact
-^^^^^^^^^^^^^^^
+...............
 Creates a CDAP artifact.
 
 .. list-table::
@@ -212,30 +250,32 @@ Creates a CDAP artifact.
      - Description
      - Required?
      - Default
-   * - name
-     - artifact name
-     - yes
+   * - ``name``
+     - Artifact name
+     - Yes
      -
-   * - jar
-     - package resource containing the artifact jar contents
-     - yes
+   * - ``jar``
+     - Package resource containing the artifact JAR contents
+     - Yes
      -
-   * - scope
-     - artifact scope
-     - no
-     - user
-   * - version
-     - artifact version
-     - no
-     - version contained in the jar manifest
-   * - config
-     - package resource containing artifact parents, plugins, and properties
-     - no
+   * - ``scope``
+     - Artifact scope
+     - No
+     - ``user``
+   * - ``version``
+     - Artifact version
+     - No
+     - Version contained in the JAR manifest
+   * - ``config``
+     - Package resource containing artifact parents, plugins, and properties
+     - No
      -
 
 If the artifact is a plugin artifact, the config argument is used to specify its
-parent artifacts, any 3rd party plugins contained in the artifact, and any properties
+parent artifacts, any 3rd-party plugins contained in the artifact, and any properties
 of the artifact.
+
+.. highlight:: json-ellipsis
 
 Example action::
 
@@ -281,7 +321,7 @@ where mysql-connector-java.json is a package resource with content::
   }
 
 create_stream
-^^^^^^^^^^^^^
+.............
 Creates a CDAP stream.
 
 .. list-table::
@@ -292,18 +332,20 @@ Creates a CDAP stream.
      - Description
      - Required?
      - Default
-   * - name
-     - stream name
-     - yes
+   * - ``name``
+     - Stream name
+     - Yes
      -
-   * - description
-     - stream description
-     - no
+   * - ``description``
+     - Stream description
+     - No
      -
-   * - properties
-     - package resource containing stream properties like the format, ttl, and notification threshold
-     - no
+   * - ``properties``
+     - Package resource containing stream properties such as format, TTL, and notification threshold
+     - No
      -
+
+.. highlight:: json-ellipsis
 
 Example action::
 
@@ -326,7 +368,7 @@ Example action::
     ]
   }
 
-where properties.json is a package resource with content::
+where ``properties.json`` is a package resource with content such as::
 
   {
     "ttl": 9223372036854775,
@@ -345,8 +387,8 @@ where properties.json is a package resource with content::
   }
 
 load_datapack
-^^^^^^^^^^^^^
-Loads a datapack into a CDAP entity, like a stream or dataset.
+.............
+Loads a datapack into a CDAP entity, such as a stream or dataset.
 
 .. list-table::
    :widths: 20 50 10 20
@@ -356,14 +398,16 @@ Loads a datapack into a CDAP entity, like a stream or dataset.
      - Description
      - Required?
      - Default
-   * - name
-     - the name of the CDAP entity to load the data into
-     - yes
+   * - ``name``
+     - The name of the CDAP entity to load the data into
+     - Yes
      -
-   * - files
-     - a JSON array of package resources to load into the CDAP entity
-     - yes
+   * - ``files``
+     - A JSON array of package resources to load into the CDAP entity
+     - Yes
      -
+
+.. highlight:: json-ellipsis
 
 Example action::
 
@@ -382,10 +426,10 @@ Example action::
     ]
   }
 
-where texts1.tsv and texts2.tsv are package resources containing the data to load into the stream.
+where ``texts1.tsv`` and ``texts2.tsv`` are package resources containing the data to load into the stream.
 
 create_app
-^^^^^^^^^^
+..........
 Creates a CDAP application from an existing CDAP artifact.
 
 .. list-table::
@@ -396,18 +440,20 @@ Creates a CDAP application from an existing CDAP artifact.
      - Description
      - Required?
      - Default
-   * - artifact
+   * - ``artifact``
      - JSON Object containing the application's artifact scope, name, and version
-     - yes
+     - Yes
      -
-   * - name
-     - application name
-     - yes
+   * - ``name``
+     - Application name
+     - Yes
      -
-   * - config
-     - package resource containing the application config
-     - no
+   * - ``config``
+     - Package resource containing the application config
+     - No
      -
+
+.. highlight:: json-ellipsis
 
 Example action::
 
@@ -435,7 +481,7 @@ Example action::
     ]
   }
 
-where config.json is a package resource that contains the application configuration::
+where ``config.json`` is a package resource that contains the application configuration::
 
   {
     "stream": "wordStream",
@@ -446,9 +492,9 @@ where config.json is a package resource that contains the application configurat
   }
 
 create_pipeline
-^^^^^^^^^^^^^^^
-Creates a Hydrator pipeline. Very similar to the create_app pipeline,
-except the config is required and the UI will take the user to the Hydrator UI
+...............
+Creates a Hydrator pipeline. Very similar to the ``create_app`` pipeline,
+except that the config is required and the UI will take the user to the Hydrator UI
 instead of the CDAP UI after installation is complete.
 
 .. list-table::
@@ -459,18 +505,20 @@ instead of the CDAP UI after installation is complete.
      - Description
      - Required?
      - Default
-   * - artifact
+   * - ``artifact``
      - JSON Object containing the pipeline's artifact scope, name, and version
-     - yes
+     - Yes
      -
-   * - name
-     - pipeline name
-     - yes
+   * - ``name``
+     - Pipeline name
+     - Yes
      -
-   * - config
-     - package resource containing the pipeline config
-     - yes
+   * - ``config``
+     - Package resource containing the pipeline config
+     - Yes
      -
+
+.. highlight:: json-ellipsis
 
 Example action::
 
@@ -498,13 +546,12 @@ Example action::
     ]
   }
 
-where pipeline.json is a package resource containing the pipeline config.
+where ``pipeline.json`` is a package resource containing the pipeline config.
 
 create_pipeline_draft
-^^^^^^^^^^^^^^^^^^^^^
-Creates a Hydrator pipeline draft. Similar to create_pipeline, except the pipeline
-will not be published. Instead, a draft will be created that the user can then
-go and modify.
+.....................
+Creates a Hydrator pipeline draft. Similar to ``create_pipeline``, except that the pipeline
+will not be published. Instead, a draft will be created that the user can then modify.
 
 .. list-table::
    :widths: 20 50 10 20
@@ -514,18 +561,20 @@ go and modify.
      - Description
      - Required?
      - Default
-   * - artifact
+   * - ``artifact``
      - JSON Object containing the pipeline's artifact scope, name, and version
-     - yes
+     - Yes
      -
-   * - name
-     - pipeline name
-     - yes
+   * - ``name``
+     - Pipeline name
+     - Yes
      -
-   * - config
-     - package resource containing the pipeline config
-     - yes
+   * - ``config``
+     - Package resource containing the pipeline config
+     - Yes
      -
+
+.. highlight:: json-ellipsis
 
 Example action::
 
@@ -555,6 +604,9 @@ Example action::
 
 Get Package Specification Signature
 ===================================
+
+.. highlight:: console
+
 To retrieve the signature for a package specification, submit an HTTP GET request::
 
   GET /v1/packages/<package-name>/<version>/spec.json.asc
@@ -566,15 +618,21 @@ was signed by the publisher.
 
 Get Package Resource
 ====================
+
+.. highlight:: console
+
 To retrieve a package resource, submit an HTTP GET request::
 
   GET /v1/packages/<package-name>/<version>/<resource-name>
 
-The resource can contain arbitrary data. They can be artifact jars, configuration files,
-sample data, or anything else a package action may require.
+The resource can contain arbitrary data. They can be artifact JARs, configuration files,
+sample data, or anything else that a package action may require.
 
 Get Package Resource Signature
 ==============================
+
+.. highlight:: console
+
 To retrieve the signature for a package resource, submit an HTTP GET request::
 
   GET /v1/packages/<package-name>/<version>/<resource-name>.asc
@@ -586,6 +644,9 @@ resource was signed by the publisher.
 
 Get Package Icon
 ================
+
+.. highlight:: console
+
 To retrieve the icon for a package, submit an HTTP GET request::
 
   GET /v1/packages/<package-name>/<version>/icon.png

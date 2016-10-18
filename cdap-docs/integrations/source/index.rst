@@ -9,6 +9,24 @@ Integrations
 ============
 
 
+.. rubric:: Cask Market
+
+.. |cask-market-overview| replace:: **Overview:**
+.. _cask-market-overview: cask-market/index.html
+
+- |cask-market-overview|_ Overview of the **Cask Market**
+
+.. |cask-market-api| replace:: **API:**
+.. _cask-market-api: cask-market/api.html
+
+- |cask-market-api|_ Cask Market APIs
+
+.. |cask-market-custom| replace:: **Custom Hosting:**
+.. _cask-market-custom: cask-market/custom.html
+
+- |cask-market-custom|_ Hosting your own custom Cask Market
+
+
 .. rubric:: Cloudera
 
 .. |cloudera-introduction| replace:: **Overview:**
@@ -56,22 +74,6 @@ Integrations
 
 - |mapr|_ Configuring and installing CDAP on **MapR** *(Administration Manual)*
 
-.. rubric:: Cask Market
-
-.. |cask-market-overview| replace:: **Overview:**
-.. _cask-market-overview: cask-market/index.html
-
-- |cask-market-overview|_ Overview of the **Cask Market**
-
-.. |cask-market-api| replace:: **API:**
-.. _cask-market-api: cask-market/api.html
-
-- |cask-market-api|_ Cask Market APIs
-
-.. |cask-market-custom| replace:: **Custom Hosting:**
-.. _cask-market-custom: cask-market/custom.html
-
-- |cask-market-custom|_ Hosting your own custom Cask Market
 
 .. rubric:: Apache Sentry
 

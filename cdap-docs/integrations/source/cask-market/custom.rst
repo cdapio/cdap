@@ -3,6 +3,7 @@
     :copyright: Copyright © 2016 Cask Data, Inc.
 
 .. _cask-market-custom:
+
 ============================
 Hosting a Custom Cask Market
 ============================
@@ -10,17 +11,12 @@ Hosting a Custom Cask Market
 .. highlight:: console
 
 The Cask Market APIs are simply a contract about the directory structure of the marketplace.
-The directory structure must be::
 
-  <base>/v1/packages.json
-  <base>/v1/packages/<package-name>/<version>/icon.png
-  <base>/v1/packages/<package-name>/<version>/spec.json
-  <base>/v1/packages/<package-name>/<version>/spec.json.asc
-  <base>/v1/packages/<package-name>/<version>/<resource1>
-  <base>/v1/packages/<package-name>/<version>/<resource1>.asc
-  <base>/v1/packages/<package-name>/<version>/<resource2>
-  <base>/v1/packages/<package-name>/<version>/<resource2>.asc
-  ...
+.. Directory structure
+.. --------------------
+.. include:: api.rst
+    :start-after: .. directory-structure-start
+    :end-before: .. directory-structure-end
 
 As such, hosting a custom market can be done by setting up a server that follows the same
 path structure.
