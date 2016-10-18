@@ -1,5 +1,16 @@
 cdap CHANGELOG
 ===============
+
+v2.26.0 (Oct 18, 2016)
+----------------------
+- Remove some settings from cdap-defaults.xml in CDAP ( Issue: #172 )
+- Refactor for less code duplication ( Issue: #173 )
+- Increase mass threshold ( Issue: #174 )
+- Update README.md for CPCP ( Issue: #175 )
+- Disable Style/FrozenStringLiteralComment cop ( Issue: #176 )
+- Support HDP 2.3.6.0 ( Issue: #177 )
+- Use CDAP 3.6.0 release ( Issue: #178 )
+
 v2.25.1 (Sep 27, 2016)
 ----------------------
 - Fix Chef supermarket package ( Issue #171 )
