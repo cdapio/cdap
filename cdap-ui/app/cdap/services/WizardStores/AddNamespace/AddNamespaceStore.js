@@ -18,6 +18,7 @@ import {combineReducers, createStore} from 'redux';
 import AddNamespaceActions from 'services/WizardStores/AddNamespace/AddNamespaceActions';
 import AddNamespaceWizardConfig from 'services/WizardConfigs/AddNamespaceWizardConfig';
 import head from 'lodash/head';
+var shortid = require('shortid');
 
 // Defaults
 const defaultState = {
@@ -46,14 +47,16 @@ const defaultPreferences = {
   keyValues : {
     pairs : [{
       key : '',
-      value : ''
+      value : '',
+      uniqueId : shortid.generate()
     }]
   }
 };
 
 const defaultAction = {
   type: '',
-  payload: {}
+  payload: {},
+  uniqueId: shortid.generate()
 };
 
 const defaultInitialState = {

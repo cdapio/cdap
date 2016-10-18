@@ -16,10 +16,12 @@
 
 import {combineReducers, createStore} from 'redux';
 import KeyValueStoreActions from './KeyValueStoreActions';
+var shortid = require('shortid');
 
 const defaultPair = {
   key: '',
-  value : ''
+  value : '',
+  uniqueId: shortid.generate()
 };
 const defaultAction = {
   type: '',
@@ -50,7 +52,8 @@ const keyValues = (state = [], action=defaultAction) => {
       stateCopy = Object.assign({}, state);
       stateCopy.pairs.push({
         key : '',
-        value : ''
+        value : '',
+        uniqueId: shortid.generate()
       });
       return stateCopy;
     case KeyValueStoreActions.deletePair:
@@ -59,7 +62,8 @@ const keyValues = (state = [], action=defaultAction) => {
       if(!stateCopy.pairs.length){
         stateCopy.pairs.push({
           key : '',
-          value : ''
+          value : '',
+          uniqueId: shortid.generate()
         });
       }
       return stateCopy;

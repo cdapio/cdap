@@ -316,6 +316,7 @@ features:
          name-placeholder: "Preference name"
          value-label: "Value"
          value-placeholder: "Preference value"
+       headerlabel: Add Namespace
        Status:
          creation-error-desc: "Failed to create namespace '%s'"
          creation-success-desc: "Successfully created namespace '%s'"

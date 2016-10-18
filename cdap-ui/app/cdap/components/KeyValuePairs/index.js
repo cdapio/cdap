@@ -19,8 +19,6 @@ import {connect , Provider} from 'react-redux';
 import {createKeyValueStore} from './KeyValueStore';
 import KeyValueStoreActions from './KeyValueStoreActions';
 import KeyValuePair from './KeyValuePair';
-require('./KeyValuePairs.less');
-var shortid = require('shortid');
 
 //Prop Name is used in place of the reserved prop 'key'
 const mapStateToFieldNameProps = (state, ownProps) => {
@@ -93,13 +91,15 @@ export default class KeyValuePairs extends Component {
     return (
       <div>
       {
-        this.state.pairs.map( (field, index) => {
+        this.state.pairs.map( (pair, index) => {
           return (
-            <Provider store={this.keyValueStore} key={shortid.generate()}>
-              <KeyValuePairCopy
-                index={index}
-              />
-            </Provider>
+            <div key={pair.uniqueId}>
+              <Provider store={this.keyValueStore}>
+                <KeyValuePairCopy
+                  index={index}
+                />
+              </Provider>
+            </div>
           );
         })
       }
@@ -112,7 +112,8 @@ KeyValuePairs.propTypes = {
   keyValues: PropTypes.shape({
     pairs: PropTypes.arrayOf(PropTypes.shape({
       key : PropTypes.string,
-      value : PropTypes.string
+      value : PropTypes.string,
+      uniqueId : PropTypes.string
     }))
   }),
   OnKeyValueChange: PropTypes.func

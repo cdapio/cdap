@@ -61,6 +61,7 @@ export default class AddNamespaceWizard extends Component {
             >
               <Wizard
                 wizardConfig={AddNamespaceWizardConfig}
+                wizardType="Add-Namespace"
                 onSubmit={this.createNamespace.bind(this)}
                 onClose={this.props.onClose}
                 store={AddNamespaceStore}

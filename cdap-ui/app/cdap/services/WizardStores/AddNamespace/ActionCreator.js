@@ -42,8 +42,8 @@ const PublishNamespace = () => {
     putParams["config"]["root.directory"] = state.mapping.hdfsDirectory;
   }
 
-  if(state.security.keytabURI){
-    putParams["config"]["keytabURI"] = state.security.keytabURI;
+  if(state.security.keyTab){
+    putParams["config"]["keytabURI"] = state.security.keyTab;
   }
 
   if(state.security.principal){
