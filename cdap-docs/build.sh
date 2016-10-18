@@ -554,6 +554,10 @@ function build_zip() {
   echo
   echo "Zipping together the zips"
   zip -q ${ZIP_DIR_NAME}-archive.zip *.zip
+  # Cleanup
+  rm -rf ${TARGET_PATH}/base 
+  rm -rf ${TARGET_PATH}/current
+  rm ${ZIP_DIR_NAME}-current.zip ${ZIP_DIR_NAME}-future.zip
 }
 
 function clean_targets() {
