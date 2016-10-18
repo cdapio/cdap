@@ -50,7 +50,7 @@ def parse_options():
         "-g", "--ghpages",
         action="store_true",
         dest="ghpages",
-        help="Flags as GitHub pages doc sets; they point to docs.cask.co",
+        help="Flags as a GitHub pages doc set; they point to docs.cask.co",
         default=False)
 
     parser.add_option(

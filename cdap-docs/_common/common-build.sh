@@ -187,55 +187,6 @@ function copy_license_pdfs() {
   cp ${SCRIPT_PATH}/${LICENSES_PDF}/* ${TARGET_PATH}/${HTML}/${LICENSES}
 }
 
-# function make_zip() {
-#   set_version
-#   if [ "x${1}" == "x" ]; then
-#     ZIP_DIR_NAME="${PROJECT}-docs-${PROJECT_VERSION}"
-#   else
-#     ZIP_DIR_NAME="${PROJECT}-docs-${PROJECT_VERSION}-$1"
-#   fi
-#   cd ${TARGET_PATH}
-#   doc_change_py="${TARGET_PATH}/../tools/doc-change.py"
-# 
-#   echo "Removing old directories and zips"
-#   rm -rf ${TARGET_PATH}/base 
-#   rm -rf ${TARGET_PATH}/current
-#   rm -rf ${TARGET_PATH}/${PROJECT_VERSION}
-#   rm -rf ${TARGET_PATH}/*.zip
-# 
-#   echo "Creating base"
-#   mkdir base
-#   cp -r ${HTML} base/en
-# #   mv ${HTML} base/en
-#   
-# #   mkdir ${PROJECT_VERSION}
-# #   mv ${HTML} ${PROJECT_VERSION}/en
-# 
-#   # Add a redirect index.html file
-#   echo "${REDIRECT_EN_HTML}" > base/index.html
-# #   echo "${REDIRECT_EN_HTML}" > ${PROJECT_VERSION}/index.html
-# 
-#   echo "1: canonical numbered version"
-#   cp -r base ${PROJECT_VERSION}
-#   echo "Zipping ${ZIP_DIR_NAME}-numbered"
-#   zip -qr ${ZIP_DIR_NAME}-numbered.zip ${PROJECT_VERSION}/* --exclude *.DS_Store* *.buildinfo*
-#   
-#   echo "2: 'current' version, with canonical ref link"
-#   cp -r base current
-#   python ${doc_change_py} ${TARGET_PATH} --current=${PROJECT_VERSION} current
-#   echo "Zipping ${ZIP_DIR_NAME}-current"
-#   zip -qr ${ZIP_DIR_NAME}-current.zip current/* --exclude *.DS_Store* *.buildinfo*
-#   
-#   echo "3: 'future' version with robots meta tag"
-#   python ${doc_change_py} ${TARGET_PATH} --current=${PROJECT_VERSION} ${PROJECT_VERSION}
-#   echo "Zipping ${ZIP_DIR_NAME}-future"
-#   zip -qr ${ZIP_DIR_NAME}-future.zip ${PROJECT_VERSION}/* --exclude *.DS_Store* *.buildinfo*
-#   
-#   echo "Zipping together the zips"
-#   zip -q ${ZIP_DIR_NAME}.zip *.zip
-# }
-
-
 function build() {
   build_docs
   build_extras

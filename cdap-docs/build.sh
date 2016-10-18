@@ -346,7 +346,7 @@ function stash_github_zip() {
   echo "========================================================"
   echo
   TARGET_TEMP=$(mktemp -d ${TARGET_PATH}/.cdap-docs-github-$$.XXXX)
-  mv ${TARGET_PATH}/*.zip ${TARGET_TEMP}
+  mv ${TARGET_PATH}/*archive.zip ${TARGET_TEMP}
   echo
 }
 
@@ -382,9 +382,6 @@ function _build_docs() {
   build_docs_inner_level ${doc_target}
   build_docs_outer_level ${google_analytics_code}
   _package_docs ${doc_target} ${zip_target} ${zip_extras}
-#   copy_docs_inner_level
-#   build_zip ${zip_target}
-#   zip_extras ${zip_extras}
   echo
   echo "--------------------------------------------------------"
   echo "Building target \"${doc_target}\" completed."
@@ -413,7 +410,6 @@ function _package_docs() {
   echo "--------------------------------------------------------"
   copy_docs_inner_level
   build_zip ${zip_target} ${zip_extras}
-#   zip_extras ${zip_extras}
   echo
   echo "--------------------------------------------------------"
   echo "Packaging target \"${doc_target}\" completed."
@@ -519,26 +515,8 @@ function build_zip() {
   # Add a redirect index.html file
   echo "${REDIRECT_EN_HTML}" > base/index.html
 
-  echo "1: Canonical numbered version ${ZIP_DIR_NAME}-numbered"
-  cp -r base ${PROJECT_VERSION}
-  zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/* --exclude *.DS_Store* *.buildinfo*
-  if [[ "x${zip_extras}" != "x" ]]; then
-    echo "Creating and adding a .htaccess file (404 file)"
-    rewrite ${SCRIPT_PATH}/${COMMON_SOURCE}/${HTACCESS} ${TARGET_PATH}/${PROJECT_VERSION}/.${HTACCESS} "<version>" "${PROJECT_VERSION}"
-    zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/.${HTACCESS}
-  fi
-  mv ${ZIP_DIR_NAME}.zip ${ZIP_DIR_NAME}-numbered.zip
-  
-  echo "2: 'future' version with robots meta tag ${ZIP_DIR_NAME}-future"
-  python ${doc_change_py} ${TARGET_PATH} --current=${PROJECT_VERSION} ${PROJECT_VERSION}
-  zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/* --exclude *.DS_Store* *.buildinfo*
-  if [[ "x${zip_extras}" != "x" ]]; then
-    echo "Adding existing .htaccess file"
-    zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/.${HTACCESS}
-  fi
-  mv ${ZIP_DIR_NAME}.zip ${ZIP_DIR_NAME}-future.zip
-    
-  echo "3: 'current' version, with canonical ref link ${ZIP_DIR_NAME}-current"
+  echo
+  echo "1: 'current' version, with canonical ref link ${ZIP_DIR_NAME}-current"
   cp -r base current
   python ${doc_change_py} ${TARGET_PATH} --current=${PROJECT_VERSION} current
   zip -qr ${ZIP_DIR_NAME}.zip current/* --exclude *.DS_Store* *.buildinfo*
@@ -548,21 +526,35 @@ function build_zip() {
     zip -qr ${ZIP_DIR_NAME}.zip current/.${HTACCESS}
   fi
   mv ${ZIP_DIR_NAME}.zip ${ZIP_DIR_NAME}-current.zip
-  
+
+  echo
+  echo "2: 'future' version with robots meta tag ${ZIP_DIR_NAME}-future"
+  cp -r base ${PROJECT_VERSION}
+  python ${doc_change_py} ${TARGET_PATH} ${PROJECT_VERSION}
+  zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/* --exclude *.DS_Store* *.buildinfo*
+  if [[ "x${zip_extras}" != "x" ]]; then
+    echo "Creating and adding a .htaccess file (404 file)"
+    rewrite ${SCRIPT_PATH}/${COMMON_SOURCE}/${HTACCESS} ${TARGET_PATH}/${PROJECT_VERSION}/.${HTACCESS} "<version>" "${PROJECT_VERSION}"
+    zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/.${HTACCESS}
+  fi
+  mv ${ZIP_DIR_NAME}.zip ${ZIP_DIR_NAME}-future.zip
+  rm -rf ${TARGET_PATH}/${PROJECT_VERSION}
+
+  echo
+  echo "3: Canonical numbered version ${ZIP_DIR_NAME}"
+  cp -r base ${PROJECT_VERSION}
+  python ${doc_change_py} ${TARGET_PATH} --current=${PROJECT_VERSION} ${PROJECT_VERSION}
+  zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/* --exclude *.DS_Store* *.buildinfo*
+  if [[ "x${zip_extras}" != "x" ]]; then
+    echo "Creating and adding a .htaccess file (404 file)"
+    rewrite ${SCRIPT_PATH}/${COMMON_SOURCE}/${HTACCESS} ${TARGET_PATH}/${PROJECT_VERSION}/.${HTACCESS} "<version>" "${PROJECT_VERSION}"
+    zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/.${HTACCESS}
+  fi
+
+  echo
   echo "Zipping together the zips"
-  zip -q ${ZIP_DIR_NAME}.zip *.zip
+  zip -q ${ZIP_DIR_NAME}-archive.zip *.zip
 }
-
-
-# function zip_extras() {
-#   if [[ "x${1}" == "x" ]]; then
-#     return
-#   fi
-#   echo "Adding .htaccess file (404 file)"
-#   rewrite ${SCRIPT_PATH}/${COMMON_SOURCE}/${HTACCESS} ${TARGET_PATH}/${PROJECT_VERSION}/.${HTACCESS} "<version>" "${PROJECT_VERSION}"
-#   cd ${TARGET_PATH}
-#   zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/.${HTACCESS}
-# }
 
 function clean_targets() {
   # Removes all outer- and (sometimes) inner-level build ${TARGET} directories
