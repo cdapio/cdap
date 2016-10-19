@@ -305,7 +305,7 @@
     <value>true</value>
     <description>
       Specify whether to rewrite the yarn.client class in Spark to work
-      around the issue SPARK-13441 in CDM clusters
+      around the issue SPARK-13441 in CDH clusters
     </description>
   </property>
 
