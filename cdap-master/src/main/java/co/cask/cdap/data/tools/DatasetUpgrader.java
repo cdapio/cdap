@@ -19,7 +19,9 @@ package co.cask.cdap.data.tools;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
@@ -29,6 +31,7 @@ import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.data2.util.hbase.HTableNameConverterFactory;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -38,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.Callable;
 import java.util.regex.Pattern;
 
 /**
@@ -52,19 +56,26 @@ public class DatasetUpgrader extends AbstractUpgrader {
   private final LocationFactory locationFactory;
   private final HBaseTableUtil hBaseTableUtil;
   private final DatasetFramework dsFramework;
+  private final Impersonator impersonator;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final Pattern defaultNSUserTablePrefix;
   private final String datasetTablePrefix;
+  private final HTableNameConverter hTableNameConverter = new HTableNameConverterFactory().get();
+
 
   @Inject
   DatasetUpgrader(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
                   NamespacedLocationFactory namespacedLocationFactory,
-                  HBaseTableUtil hBaseTableUtil, DatasetFramework dsFramework) {
+                  HBaseTableUtil hBaseTableUtil, DatasetFramework dsFramework,
+                  NamespaceQueryAdmin namespaceQueryAdmin, Impersonator impersonator) {
     super(locationFactory, namespacedLocationFactory);
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
     this.hBaseTableUtil = hBaseTableUtil;
     this.dsFramework = dsFramework;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.impersonator = impersonator;
     this.datasetTablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
     this.defaultNSUserTablePrefix = Pattern.compile(String.format("^%s\\.user\\..*", datasetTablePrefix));
   }
@@ -90,8 +101,22 @@ public class DatasetUpgrader extends AbstractUpgrader {
   }
 
   private void upgradeUserTables() throws Exception {
+    for (final NamespaceMeta namespaceMeta : namespaceQueryAdmin.list()) {
+      impersonator.doAs(namespaceMeta, new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          upgradeUserTables(namespaceMeta);
+          return null;
+        }
+      });
+    }
+  }
+
+  private void upgradeUserTables(NamespaceMeta namespaceMeta) throws Exception {
+    String hBaseNamespace = hBaseTableUtil.getHBaseNamespace(namespaceMeta);
     try (HBaseAdmin hAdmin = new HBaseAdmin(hConf)) {
-      for (HTableDescriptor desc : hAdmin.listTables()) {
+      for (HTableDescriptor desc :
+        hAdmin.listTableDescriptorsByNamespace(hTableNameConverter.encodeHBaseEntity(hBaseNamespace))) {
         if (isCDAPUserTable(desc)) {
           upgradeUserTable(desc);
         } else if (isStreamOrQueueTable(desc.getNameAsString())) {
@@ -102,7 +127,6 @@ public class DatasetUpgrader extends AbstractUpgrader {
   }
 
   private void upgradeUserTable(HTableDescriptor desc) throws IOException {
-    HTableNameConverter hTableNameConverter = new HTableNameConverterFactory().get();
     TableId tableId = hTableNameConverter.from(desc);
     LOG.info("Upgrading hbase table: {}, desc: {}", tableId, desc);
 

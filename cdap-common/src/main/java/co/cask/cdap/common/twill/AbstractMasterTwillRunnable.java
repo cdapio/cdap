@@ -70,10 +70,10 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
 
   @Override
   public final void initialize(TwillContext context) {
-    LOG.info("Initializing runnable {}", name);
     super.initialize(context);
 
     name = context.getSpecification().getName();
+    LOG.info("Initializing runnable {}", name);
     Map<String, String> configs = context.getSpecification().getConfigs();
 
     try {

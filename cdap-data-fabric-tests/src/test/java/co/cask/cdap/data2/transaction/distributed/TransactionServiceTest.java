@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.data2.transaction.distributed;
 
 import co.cask.cdap.api.common.Bytes;
@@ -25,6 +26,8 @@ import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
+import co.cask.cdap.common.security.UGIProvider;
+import co.cask.cdap.common.security.UnsupportedUGIProvider;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -100,6 +103,7 @@ public class TransactionServiceTest {
           @Override
           protected void configure() {
             bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
+            bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
           }
         },
         new DataFabricModules().getDistributedModules(),
@@ -220,6 +224,7 @@ public class TransactionServiceTest {
                              @Override
                              protected void configure() {
                                bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
+                               bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
                              }
                            },
                            new DataFabricModules().getDistributedModules(),

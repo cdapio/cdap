@@ -20,6 +20,7 @@ import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
@@ -40,6 +41,7 @@ import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
@@ -55,6 +57,7 @@ import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
@@ -110,12 +113,13 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private final PreferencesStore preferencesStore;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
+  private final Scheduler scheduler;
 
   @Inject
   ProgramLifecycleService(Store store, NamespaceStore nsStore, ProgramRuntimeService runtimeService,
                           CConfiguration cConf, PropertiesResolver propertiesResolver,
                           PreferencesStore preferencesStore, AuthorizationEnforcer authorizationEnforcer,
-                          AuthenticationContext authenticationContext) {
+                          AuthenticationContext authenticationContext, Scheduler scheduler) {
     this.store = store;
     this.nsStore = nsStore;
     this.runtimeService = runtimeService;
@@ -125,6 +129,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     this.preferencesStore = preferencesStore;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
+    this.scheduler = scheduler;
   }
 
   @Override
@@ -563,6 +568,90 @@ public class ProgramLifecycleService extends AbstractIdleService {
       default:
         throw new BadRequestException(String.format("Setting instances for program type %s is not supported",
                                                     programId.getType().getPrettyName()));
+    }
+  }
+
+  /**
+   * Gets the state of the given schedule
+   *
+   * @param namespaceId {@link NamespaceId} to which the schedule belongs to
+   * @param appId {@link ApplicationId} to which schedule belongs to
+   * @param scheduleName name of the schedule
+   * @return {@link Scheduler.ScheduleState} of the given schedule
+   * @throws Exception if failed to get the state of the schedule
+   */
+  public Scheduler.ScheduleState getScheduleStatus(String namespaceId, String appId, String scheduleName)
+    throws Exception {
+    ApplicationId applicationId = new ApplicationId(namespaceId, appId);
+    ApplicationSpecification appSpec = store.getApplication(applicationId);
+    if (appSpec == null) {
+      throw new NotFoundException(applicationId);
+    }
+
+    ScheduleSpecification scheduleSpec = appSpec.getSchedules().get(scheduleName);
+    if (scheduleSpec == null) {
+      throw new NotFoundException(scheduleName, String.format("Schedule: %s for application: %s",
+                                                              scheduleName, applicationId));
+    }
+
+    String programName = scheduleSpec.getProgram().getProgramName();
+    ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
+    ProgramId programId = new ProgramId(namespaceId, appId, programType, programName);
+    ensureAccess(programId);
+    return scheduler.scheduleState(programId, programId.getType().getSchedulableType(), scheduleName);
+  }
+
+  /**
+   * Performs an action (suspend/resume) on the given schedule
+   *
+   * @param namespaceId {@link NamespaceId} to which the schedule belongs to
+   * @param appId {@link ApplicationId} to which schedule belongs to
+   * @param scheduleName name of the schedule
+   * @param action the action to perform
+   * @throws Exception if the given action is invalid or failed to perform a valid action on the schedule
+   */
+  public void suspendResumeSchedule(String namespaceId, String appId, String scheduleName,
+                                     String action) throws Exception {
+    if (!action.equals("suspend") && !action.equals("resume")) {
+      throw new BadRequestException("Schedule can only be suspended or resumed.");
+    }
+
+    ApplicationSpecification appSpec = store.getApplication(new ApplicationId(namespaceId, appId));
+    if (appSpec == null) {
+      throw new ApplicationNotFoundException(new ApplicationId(namespaceId, appId));
+    }
+
+    ScheduleSpecification scheduleSpec = appSpec.getSchedules().get(scheduleName);
+    if (scheduleSpec == null) {
+      throw new NotFoundException(new ScheduleId(namespaceId, appId, scheduleName));
+    }
+
+    String programName = scheduleSpec.getProgram().getProgramName();
+    ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
+    ProgramId programId = new ProgramId(namespaceId, appId, programType, programName);
+    // to resume or stop a schedule we want to ensure that the user has EXECUTE privilege on the program. See CDAP-7404
+    authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
+    Scheduler.ScheduleState state = scheduler.scheduleState(programId,
+                                                            scheduleSpec.getProgram().getProgramType(), scheduleName);
+    switch (state) {
+      case NOT_FOUND:
+        throw new NotFoundException(new ScheduleId(namespaceId, appId, scheduleName));
+      case SCHEDULED:
+        if (action.equals("suspend")) {
+          scheduler.suspendSchedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleName);
+        } else {
+          // attempt to resume already resumed schedule
+          throw new ConflictException("Schedule already resumed");
+        }
+        break;
+      case SUSPENDED:
+        if (action.equals("suspend")) {
+          // attempt to suspend already suspended schedule
+          throw new ConflictException("Schedule already suspended");
+        } else {
+          scheduler.resumeSchedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleName);
+        }
+        break;
     }
   }
 

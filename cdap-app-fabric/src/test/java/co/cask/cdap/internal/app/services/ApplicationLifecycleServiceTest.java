@@ -17,13 +17,18 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.MissingMapReduceWorkflowApp;
+import co.cask.cdap.WordCountApp;
 import co.cask.cdap.common.ArtifactNotFoundException;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.io.Files;
@@ -38,6 +43,9 @@ import java.io.File;
 /**
  */
 public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
+
+  private static final String WORDCOUNT_APP_NAME = "WordCountApp";
+  private static final String WORDCOUNT_FLOW_NAME = "WordCountFlow";
 
   private static ApplicationLifecycleService applicationLifecycleService;
   private static LocationFactory locationFactory;
@@ -76,5 +84,32 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
 
     // the artifact should have been cleaned up, and this should throw a not found exception
     artifactRepository.getArtifact(artifactId);
+  }
+
+  @Test
+  public void testAppDeletionMultipleNS() throws Exception {
+
+    // deploy same app in two namespaces
+    deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    deploy(WordCountApp.class);
+    ProgramId wordcountFlow1 = new ProgramId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW,
+                                             WORDCOUNT_FLOW_NAME);
+    ApplicationId defaultNSAppId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), WORDCOUNT_APP_NAME);
+    ApplicationId testNSAppId = new ApplicationId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME);
+
+    // start a program in one namespace
+    // flow is stopped initially
+    Assert.assertEquals("STOPPED", getProgramStatus(wordcountFlow1.toId()));
+    // start a flow and check the status
+    startProgram(wordcountFlow1.toId());
+    waitState(wordcountFlow1.toId(), ProgramRunStatus.RUNNING.toString());
+
+    // delete the app from another (default namespace)
+    deleteApp(defaultNSAppId.toId(), 200);
+
+    // cleanup
+    stopProgram(wordcountFlow1.toId());
+    waitState(wordcountFlow1.toId(), "STOPPED");
+    deleteApp(testNSAppId.toId(), 200);
   }
 }
