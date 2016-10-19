@@ -41,10 +41,6 @@ and then restart CDAP:
 
 1. Stop all flows, services, and other programs in all your applications.
 
-#. If you are upgrading *authorization* enabled CDAP instance you will need to give *cdap* user *ADMIN* privilege on
-   all existing CDAP Namespaces. Note: *ADMIN* privilege does not give *cdap* user any access (*READ/WRITE*)
-   privileges on the Namespaces.
-
 #. Stop all CDAP processes::
 
      $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i stop ; done

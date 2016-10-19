@@ -44,10 +44,6 @@ CDAP:
 
 #. Stop all flows, services, and other programs in all your applications.
 
-#. If you are upgrading *authorization* enabled CDAP instance you will need to give *cdap* user *ADMIN* privilege on
-   all existing CDAP Namespaces. Note: *ADMIN* privilege does not give *cdap* user any access (*READ/WRITE*)
-   privileges on the Namespaces.
-
 #. Stop all CDAP services.
 
 #. Ensure your installed version of the CSD matches the target version of CDAP. For
