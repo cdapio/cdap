@@ -97,6 +97,7 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.api.TwillApplication;
@@ -131,6 +132,7 @@ import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -785,7 +787,9 @@ public class MasterServiceMain extends DaemonMain {
 
           // Add logback xml
           if (Files.exists(logbackFile)) {
-            preparer.withResources().withResources(logbackFile.toUri());
+            preparer
+              .withResources(logbackFile.toUri())
+              .withEnv(Collections.singletonMap("CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR));
           }
 
           // Add yarn queue name if defined
