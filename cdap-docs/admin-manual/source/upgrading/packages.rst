@@ -41,11 +41,9 @@ and then restart CDAP:
 
 1. Stop all flows, services, and other programs in all your applications.
 
-#. If you are upgrading an *authorization-enabled* CDAP instance, you will need to give 
-   the *cdap* user *ADMIN* privileges on all existing CDAP namespaces. **Note:** the *ADMIN*
-   privilege does not give the *cdap* user *READ* or *WRITE* privileges on the namespaces.
-   As these are temporary grants required only for the purpose of running the upgrade tool, 
-   once the upgrade is complete, these grants can be revoked.
+#. If you are upgrading *authorization* enabled CDAP instance you will need to give *cdap* user *ADMIN* privilege on
+   all existing CDAP Namespaces. Note: *ADMIN* privilege does not give *cdap* user any access (*READ/WRITE*)
+   privileges on the Namespaces.
 
 #. Stop all CDAP processes::
 
