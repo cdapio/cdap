@@ -89,13 +89,29 @@ public class ObjectStoreDatasetTest {
     DatasetId strings = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("strings");
     createObjectStoreInstance(strings, String.class);
     
-    ObjectStoreDataset<String> stringStore = dsFrameworkUtil.getInstance(strings);
-    String string = "this is a string";
-    stringStore.write(a, string);
-    String result = stringStore.read(a);
-    Assert.assertEquals(string, result);
+    final ObjectStoreDataset<String> stringStore = dsFrameworkUtil.getInstance(strings);
+    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor(stringStore);
+    final String string = "this is a string";
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        stringStore.write(a, string);
+      }
+    });
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        String result = stringStore.read(a);
+        Assert.assertEquals(string, result);
+      }
+    });
 
-    deleteAndVerify(stringStore, a);
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        deleteAndVerify(stringStore, a);
+      }
+    });
 
     dsFrameworkUtil.deleteInstance(strings);
   }
@@ -105,13 +121,30 @@ public class ObjectStoreDatasetTest {
     DatasetId pairs = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("pairs");
     createObjectStoreInstance(pairs, new TypeToken<ImmutablePair<Integer, String>>() { }.getType());
 
-    ObjectStoreDataset<ImmutablePair<Integer, String>> pairStore = dsFrameworkUtil.getInstance(pairs);
-    ImmutablePair<Integer, String> pair = new ImmutablePair<>(1, "second");
-    pairStore.write(a, pair);
-    ImmutablePair<Integer, String> result = pairStore.read(a);
-    Assert.assertEquals(pair, result);
+    final ObjectStoreDataset<ImmutablePair<Integer, String>> pairStore = dsFrameworkUtil.getInstance(pairs);
+    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor(pairStore);
 
-    deleteAndVerify(pairStore, a);
+    final ImmutablePair<Integer, String> pair = new ImmutablePair<>(1, "second");
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        pairStore.write(a, pair);
+      }
+    });
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        ImmutablePair<Integer, String> result = pairStore.read(a);
+        Assert.assertEquals(pair, result);
+      }
+    });
+
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        deleteAndVerify(pairStore, a);
+      }
+    });
 
     dsFrameworkUtil.deleteInstance(pairs);
   }
@@ -121,17 +154,44 @@ public class ObjectStoreDatasetTest {
     DatasetId customs = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("customs");
     createObjectStoreInstance(customs, new TypeToken<Custom>() { }.getType());
 
-    ObjectStoreDataset<Custom> customStore = dsFrameworkUtil.getInstance(customs);
-    Custom custom = new Custom(42, Lists.newArrayList("one", "two"));
-    customStore.write(a, custom);
-    Custom result = customStore.read(a);
-    Assert.assertEquals(custom, result);
-    custom = new Custom(-1, null);
-    customStore.write(a, custom);
-    result = customStore.read(a);
-    Assert.assertEquals(custom, result);
+    final ObjectStoreDataset<Custom> customStore = dsFrameworkUtil.getInstance(customs);
+    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor(customStore);
 
-    deleteAndVerify(customStore, a);
+    final Custom custom = new Custom(42, Lists.newArrayList("one", "two"));
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        customStore.write(a, custom);
+      }
+    });
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        Custom result = customStore.read(a);
+        Assert.assertEquals(custom, result);
+      }
+    });
+    final Custom custom2 = new Custom(-1, null);
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        customStore.write(a, custom2);
+      }
+    });
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        Custom result = customStore.read(a);
+        Assert.assertEquals(custom2, result);
+      }
+    });
+
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        deleteAndVerify(customStore, a);
+      }
+    });
 
     dsFrameworkUtil.deleteInstance(customs);
   }
@@ -141,13 +201,29 @@ public class ObjectStoreDatasetTest {
     DatasetId inners = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("inners");
     createObjectStoreInstance(inners, new TypeToken<CustomWithInner.Inner<Integer>>() { }.getType());
 
-    ObjectStoreDataset<CustomWithInner.Inner<Integer>> innerStore = dsFrameworkUtil.getInstance(inners);
-    CustomWithInner.Inner<Integer> inner = new CustomWithInner.Inner<>(42, new Integer(99));
-    innerStore.write(a, inner);
-    CustomWithInner.Inner<Integer> result = innerStore.read(a);
-    Assert.assertEquals(inner, result);
+    final ObjectStoreDataset<CustomWithInner.Inner<Integer>> innerStore = dsFrameworkUtil.getInstance(inners);
+    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor(innerStore);
+    final CustomWithInner.Inner<Integer> inner = new CustomWithInner.Inner<>(42, 99);
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        innerStore.write(a, inner);
+      }
+    });
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        CustomWithInner.Inner<Integer> result = innerStore.read(a);
+        Assert.assertEquals(inner, result);
+      }
+    });
 
-    deleteAndVerify(innerStore, a);
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        deleteAndVerify(innerStore, a);
+      }
+    });
 
     dsFrameworkUtil.deleteInstance(inners);
   }
@@ -176,7 +252,7 @@ public class ObjectStoreDatasetTest {
 
     // write a correct object to the pair store
     final ObjectStoreDataset<ImmutablePair<Integer, String>> pairStore = dsFrameworkUtil.getInstance(pairs);
-    TransactionExecutor pairStoreTxnl = dsFrameworkUtil.newTransactionExecutor(store);
+    TransactionExecutor pairStoreTxnl = dsFrameworkUtil.newTransactionExecutor(pairStore);
 
     final ImmutablePair<Integer, String> pair = new ImmutablePair<>(1, "second");
     pairStoreTxnl.execute(new TransactionExecutor.Subroutine() {
@@ -208,7 +284,12 @@ public class ObjectStoreDatasetTest {
       // expected
     }
 
-    deleteAndVerify(pairStore, a);
+    pairStoreTxnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        deleteAndVerify(pairStore, a);
+      }
+    });
 
     dsFrameworkUtil.deleteInstance(pairs);
   }
@@ -233,16 +314,32 @@ public class ObjectStoreDatasetTest {
     TypeRepresentation typeRep = new TypeRepresentation(type);
     Schema schema = new ReflectionSchemaGenerator().generate(type);
 
-    ObjectStoreDataset<Custom> objectStore = new ObjectStoreDataset<>("kv", kvTable, typeRep, schema, loader);
+    final ObjectStoreDataset<Custom> objectStore = new ObjectStoreDataset<>("kv", kvTable, typeRep, schema, loader);
+    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor(objectStore);
 
     // need to call this to actually load the Custom class, because the Custom class is no longer used in the
     // ObjectStoreDataset's constructor, but rather lazily when its actually needed.
     objectStore.getRecordType();
-    objectStore.write("dummy", new Custom(382, Lists.newArrayList("blah")));
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        objectStore.write("dummy", new Custom(382, Lists.newArrayList("blah")));
+      }
+    });
     // verify the class name was recorded (the dummy class loader was used).
-    Assert.assertEquals(Custom.class.getName(), lastClassLoaded.get());
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        Assert.assertEquals(Custom.class.getName(), lastClassLoaded.get());
+      }
+    });
 
-    deleteAndVerify(objectStore, Bytes.toBytes("dummy"));
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        deleteAndVerify(objectStore, Bytes.toBytes("dummy"));
+      }
+    });
 
     dsFrameworkUtil.deleteInstance(kv);
   }
@@ -253,7 +350,7 @@ public class ObjectStoreDatasetTest {
     createObjectStoreInstance(customlist, new TypeToken<List<Custom>>() { }.getType());
 
     final ObjectStoreDataset<List<Custom>> customStore = dsFrameworkUtil.getInstance(customlist);
-    TransactionExecutor txnl = dsFrameworkUtil.newTransactionExecutor(customStore);
+    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor(customStore);
 
     final SortedSet<Long> keysWritten = Sets.newTreeSet();
 
@@ -440,13 +537,34 @@ public class ObjectStoreDatasetTest {
     DatasetId intsInstance = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("ints");
     addIntegerStoreInstance(intsInstance);
 
-    IntegerStore ints = dsFrameworkUtil.getInstance(intsInstance);
-    ints.write(42, 101);
-    Assert.assertEquals((Integer) 101, ints.read(42));
+    final IntegerStore ints = dsFrameworkUtil.getInstance(intsInstance);
+    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor(ints);
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        ints.write(42, 101);
+      }
+    });
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        Assert.assertEquals((Integer) 101, ints.read(42));
+      }
+    });
 
     // test delete
-    ints.delete(42);
-    Assert.assertNull(ints.read(42));
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        ints.delete(42);
+      }
+    });
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        Assert.assertNull(ints.read(42));
+      }
+    });
 
     dsFrameworkUtil.deleteInstance(intsInstance);
   }

@@ -41,6 +41,18 @@ public class TransactionCapturingTable extends AbstractDataset {
     this.tx = tx;
   }
 
+  @Override
+  public void postTxCommit() {
+    super.postTxCommit();
+    this.tx = null;
+  }
+
+  @Override
+  public boolean rollbackTx() throws Exception {
+    this.tx = null;
+    return super.rollbackTx();
+  }
+
   public Transaction getTx() {
     return tx;
   }

@@ -33,7 +33,6 @@ import co.cask.cdap.data2.dataset2.lib.table.PutValue;
 import co.cask.cdap.data2.dataset2.lib.table.Update;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.PrefixedNamespaces;
 import com.google.common.collect.Maps;
-import org.apache.tephra.Transaction;
 
 import java.io.IOException;
 import java.util.Map;
@@ -46,7 +45,6 @@ import javax.annotation.Nullable;
 public class LevelDBTable extends BufferingTable {
 
   private final LevelDBTableCore core;
-  private Transaction tx;
   private long persistedVersion;
 
   public LevelDBTable(DatasetContext datasetContext, String tableName,
@@ -55,13 +53,6 @@ public class LevelDBTable extends BufferingTable {
     super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), tableName),
           false, spec.getProperties());
     this.core = new LevelDBTableCore(getTableName(), service);
-  }
-
-  // TODO this is the same for all OcTableClient implementations -> promote to base class
-  @Override
-  public void startTx(Transaction tx) {
-    super.startTx(tx);
-    this.tx = tx;
   }
 
   @WriteOnly

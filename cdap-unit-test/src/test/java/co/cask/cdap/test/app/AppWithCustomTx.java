@@ -24,6 +24,7 @@ import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
@@ -193,11 +194,17 @@ public class AppWithCustomTx extends AbstractApplication {
   static void recordTransaction(DatasetContext context, String row, String column) {
     TransactionCapturingTable capture = context.getDataset(CAPTURE);
     Transaction tx = capture.getTx();
-    if (tx == null) {
-      return;
-    }
     // we cannot cast because the RevealingTransaction is not visible in the program class loader
     String value = DEFAULT;
+    if (tx == null) {
+      try {
+        capture.getTable().put(new Put(row, column, value));
+        throw new RuntimeException("put to table without transaction should have failed.");
+      } catch (DataSetException e) {
+        // expected
+      }
+      return;
+    }
     if ("RevealingTransaction".equals(tx.getClass().getSimpleName())) {
       int txTimeout;
       try {
