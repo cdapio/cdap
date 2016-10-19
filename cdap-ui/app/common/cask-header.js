@@ -13,9 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import T from 'i18n-react';
-T.setTexts(require('../cdap/text/text-en.yaml'));
-var PlusButton = require('../cdap/components/PlusButton').default;
-var Store = require('../cdap/services/store/store').default;
-export default PlusButton;
-export {Store};
+
+ import T from 'i18n-react';
+ T.setTexts(require('../cdap/text/text-en.yaml'));
+ var HeaderActions = require('../cdap/components/HeaderActions').default;
+ var HeaderBrand = require('../cdap/components/HeaderBrand').default;
+ var Store = require('../cdap/services/store/store').default;
+ export {Store, HeaderBrand, HeaderActions};

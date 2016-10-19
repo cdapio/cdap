@@ -29,17 +29,16 @@ my-global-navbar {
     font-weight: 500;
 
     &.cdap { .product-navbar-mixins(@cdap-orange, @cdap-orange); }
-    &.hydrator { .product-navbar-mixins(@hydrator-blue, #43AAFF); }
+    &.hydrator { .product-navbar-mixins(@hydrator-blue, @hydrator-blue); }
     &.tracker { .product-navbar-mixins(@tracker-green, @tracker-green); }
 
     .brand-header {
-      width: 200px;
-      float: left;
       a { color: white; }
 
       .navbar-brand {
-        border-right: 4px solid;
-        background-color: @navbar-brand-bg;
+        border: 0;
+        background: transparent;
+        padding: 10px;
       }
     }
 
@@ -67,10 +66,6 @@ my-global-navbar {
         color: #cccccc;
         text-decoration: none;
         font-size: 14px;
-        &:hover,
-        &:focus {
-          background-color: inherit;
-        }
       }
     }
 
@@ -98,7 +93,7 @@ my-global-navbar {
       font-size: 17px;
       cursor: pointer;
       float: left;
-      padding: 0 20px;
+      padding: 0 12px;
 
       .namespace-holder {
         height: inherit;
@@ -126,7 +121,7 @@ my-global-navbar {
     .namespace-dropdown {
       width: 160px;
       border-left: 1px solid #666666;
-      padding: 0 10px;
+      padding: 0;
       font-size: 14px;
       user-select: none;
 
@@ -227,5 +222,6 @@ my-global-navbar {
         color: @active-link-color;
       }
     }
+
   }
 }
