@@ -16,7 +16,6 @@
 
 import React, {Component, PropTypes} from 'react';
 import { Dropdown, DropdownMenu, DropdownItem } from 'reactstrap';
-import cookie from 'react-cookie';
 import PlusButton from '../PlusButton';
 import T from 'i18n-react';
 import NamespaceStore from 'services/NamespaceStore';
@@ -25,6 +24,7 @@ require('./HeaderActions.less');
 var classNames = require('classnames');
 import NamespaceDropdown from 'components/NamespaceDropdown';
 import ProductsDrawer from 'components/ProductsDrawer';
+import RedirectToLogin from 'services/redirect-to-login';
 
 export default class HeaderActions extends Component {
   constructor(props) {
@@ -37,13 +37,7 @@ export default class HeaderActions extends Component {
     this.toggleSettingsDropdown = this.toggleSettingsDropdown.bind(this);
   }
   logout() {
-    cookie.remove('CDAP_Auth_Token', { path: '/' });
-    cookie.remove('CDAP_Auth_User', { path: '/' });
-    window.location.href = window.getAbsUIUrl({
-      uiApp: 'login',
-      redirectUrl: location.href,
-      clientId: 'cdap'
-    });
+    RedirectToLogin();
   }
   toggleSettingsDropdown(){
     this.setState({
