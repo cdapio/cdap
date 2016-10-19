@@ -40,24 +40,6 @@ TARGET="target"
 FALSE="false"
 TRUE="true"
 
-# Redirect placed in top to redirect to 'en' directory
-REDIRECT_EN_HTML=$(cat <<EOF
-<!DOCTYPE HTML>
-<html lang="en-US">
-    <head>
-        <meta charset="UTF-8">
-        <meta http-equiv="refresh" content="0;url=en/index.html">
-        <script type="text/javascript">
-            window.location.href = "en/index.html"
-        </script>
-        <title></title>
-    </head>
-    <body>
-    </body>
-</html>
-EOF
-)
-
 SCRIPT=$(basename ${0})
 SCRIPT_PATH=$(pwd)
 MANUAL=$(basename ${SCRIPT_PATH})
@@ -227,13 +209,12 @@ function set_mvn_environment() {
 }
 
 function check_build_rst() {
-  local current_directory=$(pwd)
-  cd ${PROJECT_PATH}
+  pushd ${PROJECT_PATH}
   # check BUILD.rst for changes
   BUILD_RST_PATH="${PROJECT_PATH}/${BUILD_RST}"
   test_an_include "${BUILD_RST_HASH}" "${BUILD_RST_PATH}" "${BUILD_RST_HASH_LOCATION}"
   echo
-  cd ${current_directory}
+  popd
 }
 
 function check_includes() {
@@ -340,8 +321,7 @@ function download_file() {
 
 function set_version() {
   OIFS="${IFS}"
-  local current_directory=$(pwd)
-  cd ${PROJECT_PATH}
+  pushd ${PROJECT_PATH}
   source ${PROJECT_PATH}/${CDAP_DOCS}/vars
   PROJECT_VERSION=$(grep "<version>" pom.xml)
   PROJECT_VERSION=${PROJECT_VERSION#*<version>}
@@ -379,7 +359,7 @@ function set_version() {
       fi
     fi
   fi
-  cd ${current_directory}
+  popd
   IFS="${OIFS}"
   
   if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
@@ -508,8 +488,7 @@ function rewrite() {
   # or if $4=='', substitutes text in-place in file $1, replacing text $2 with text $3
   # or if $3 & $4=='', substitutes text in-place in file $1, using sed command $2
   local rewrite_source=${1}
-  local current_directory=$(pwd)
-  cd ${SCRIPT_PATH}
+  pushd ${SCRIPT_PATH}
   echo "Re-writing"
   echo "    $rewrite_source"
   if [ "x${3}" == "x" ]; then
@@ -540,7 +519,7 @@ function rewrite() {
     echo "    ${sub_string} -> ${new_sub_string} "
     sed -e "s|${sub_string}|${new_sub_string}|g" ${rewrite_source} > ${rewrite_target}
   fi
-  cd ${current_directory}
+  popd
 }
 
 function run_command() {

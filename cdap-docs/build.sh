@@ -503,17 +503,29 @@ function build_zip() {
   doc_change_py="${TARGET_PATH}/../tools/doc-change.py"
 
   echo "Removing old directories and zips"
-  rm -rf ${TARGET_PATH}/base 
-  rm -rf ${TARGET_PATH}/current
-  rm -rf ${TARGET_PATH}/${PROJECT_VERSION}
-  rm -rf ${TARGET_PATH}/*.zip
-
+  rm -rf base current ${PROJECT_VERSION} *.zip
+  local errors=$?
+  if [ "${errors}" != "0" ]; then
+      echo "Could not cleanup old directories and zips"
+      return ${errors}   
+  fi
+  
   echo "Creating base"
   mkdir base
   cp -r ${HTML} base/en
+  errors=$?
+  if [ "${errors}" != "0" ]; then
+      echo "Could not create base"
+      return ${errors}   
+  fi
 
   # Add a redirect index.html file
-  echo "${REDIRECT_EN_HTML}" > base/index.html
+  cp ${SCRIPT_PATH}/${COMMON_SOURCE}/redirect.html base/index.html
+  errors=$?
+  if [ "${errors}" != "0" ]; then
+      echo "Could not add redirect file"
+      return ${errors}   
+  fi
 
   echo
   echo "1: 'current' version, with canonical ref link ${ZIP_DIR_NAME}-current"
@@ -526,6 +538,11 @@ function build_zip() {
     zip -qr ${ZIP_DIR_NAME}.zip current/.${HTACCESS}
   fi
   mv ${ZIP_DIR_NAME}.zip ${ZIP_DIR_NAME}-current.zip
+  errors=$?
+  if [ "${errors}" != "0" ]; then
+      echo "Could not move ${ZIP_DIR_NAME}.zip to ${ZIP_DIR_NAME}-current.zip"
+      return ${errors}   
+  fi
 
   echo
   echo "2: 'future' version with robots meta tag ${ZIP_DIR_NAME}-future"
@@ -538,6 +555,11 @@ function build_zip() {
     zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/.${HTACCESS}
   fi
   mv ${ZIP_DIR_NAME}.zip ${ZIP_DIR_NAME}-future.zip
+  errors=$?
+  if [ "${errors}" != "0" ]; then
+      echo "Could not move ${ZIP_DIR_NAME}.zip to ${ZIP_DIR_NAME}-future.zip"
+      return ${errors}   
+  fi
   rm -rf ${TARGET_PATH}/${PROJECT_VERSION}
 
   echo
@@ -550,14 +572,23 @@ function build_zip() {
     rewrite ${SCRIPT_PATH}/${COMMON_SOURCE}/${HTACCESS} ${TARGET_PATH}/${PROJECT_VERSION}/.${HTACCESS} "<version>" "${PROJECT_VERSION}"
     zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/.${HTACCESS}
   fi
+  errors=$?
+  if [ "${errors}" != "0" ]; then
+      echo "Could not complete canonical numbered version"
+      return ${errors}   
+  fi
 
   echo
   echo "Zipping together the zips"
   zip -q ${ZIP_DIR_NAME}-archive.zip *.zip
+  errors=$?
+  if [ "${errors}" != "0" ]; then
+      echo "Could not zip together the zips"
+      return ${errors}   
+  fi
   # Cleanup
-  rm -rf ${TARGET_PATH}/base 
-  rm -rf ${TARGET_PATH}/current
-  rm ${ZIP_DIR_NAME}-current.zip ${ZIP_DIR_NAME}-future.zip
+  rm -rf base current ${ZIP_DIR_NAME}-current.zip ${ZIP_DIR_NAME}-future.zip
+  return $?
 }
 
 function clean_targets() {
