@@ -239,7 +239,7 @@ trait SparkMain extends Serializable {
       * @param arguments arguments for the Dataset; default is an empty [[scala.collection.Map]]
       * @param splits an [[scala.Option]] of an [[scala.collection.Iterable]] of [[co.cask.cdap.api.data.batch.Split]].
       *               It provided, it will be used to compute the partitions of the RDD;
-      *               default is [[scala.None] and it is up to the Dataset implementation of
+      *               default is [[scala.None]] and it is up to the Dataset implementation of
       *               the [[co.cask.cdap.api.data.batch.BatchReadable]] to decide the partitions
       * @param sec the [[co.cask.cdap.api.spark.SparkExecutionContext]] of the current execution
       * @tparam K key type
@@ -262,7 +262,7 @@ trait SparkMain extends Serializable {
       * @param arguments arguments for the Dataset; default is an empty [[scala.collection.Map]]
       * @param splits an [[scala.Option]] of an [[scala.collection.Iterable]] of [[co.cask.cdap.api.data.batch.Split]].
       *               It provided, it will be used to compute the partitions of the RDD;
-      *               default is [[scala.None] and it is up to the Dataset implementation of
+      *               default is [[scala.None]] and it is up to the Dataset implementation of
       *               the [[co.cask.cdap.api.data.batch.BatchReadable]] to decide the partitions
       * @param sec the [[co.cask.cdap.api.spark.SparkExecutionContext]] of the current execution
       * @tparam K key type

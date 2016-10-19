@@ -18,6 +18,8 @@ package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.data.DatasetContext;
@@ -44,12 +46,14 @@ import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.Maps;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -64,7 +68,7 @@ import javax.annotation.Nullable;
  * Base class for program runtime context
  */
 public abstract class AbstractContext extends AbstractServiceDiscoverer
-  implements SecureStore, DatasetContext, RuntimeContext, PluginContext {
+  implements SecureStore, DatasetContext, Transactional, RuntimeContext, PluginContext {
 
   private final Program program;
   private final ProgramOptions programOptions;
@@ -79,6 +83,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final Admin admin;
   private final long logicalStartTime;
   private final SecureStore secureStore;
+  private final Transactional transactional;
   protected final DynamicDatasetCache datasetCache;
 
   /**
@@ -132,6 +137,9 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                                                   program.getApplicationSpecification().getPlugins());
     this.admin = new DefaultAdmin(dsFramework, new NamespaceId(program.getId().getNamespace()), secureStoreManager);
     this.secureStore = secureStore;
+
+    this.transactional = Transactions.createTransactional(getDatasetCache());
+
   }
 
   private Iterable<? extends EntityId> createOwners(ProgramId programId) {
@@ -338,4 +346,13 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     return secureStore.getSecureData(namespace, name);
   }
 
+  @Override
+  public void execute(TxRunnable runnable) throws TransactionFailureException {
+    transactional.execute(runnable);
+  }
+
+  @Override
+  public void execute(int timeoutInSeconds, TxRunnable runnable) throws TransactionFailureException {
+    transactional.execute(timeoutInSeconds, runnable);
+  }
 }

@@ -17,6 +17,8 @@
 package co.cask.cdap.api.worker;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.internal.api.AbstractPluginConfigurable;
 
 import java.util.Map;
@@ -91,6 +93,7 @@ public abstract class AbstractWorker extends AbstractPluginConfigurable<WorkerCo
   }
 
   @Override
+  @TransactionPolicy(TransactionControl.EXPLICIT)
   public void initialize(WorkerContext context) throws Exception {
     this.context = context;
   }
@@ -105,6 +108,7 @@ public abstract class AbstractWorker extends AbstractPluginConfigurable<WorkerCo
   }
 
   @Override
+  @TransactionPolicy(TransactionControl.EXPLICIT)
   public void destroy() {
     // default no-op
   }

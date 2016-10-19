@@ -99,7 +99,6 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
                                           Constants.Metrics.Tag.CONSUMER, BasicFlowletContext.this.flowletId));
         }
       });
-
   }
 
   @Override

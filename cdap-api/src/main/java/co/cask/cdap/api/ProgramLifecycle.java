@@ -16,6 +16,9 @@
 
 package co.cask.cdap.api;
 
+import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.annotation.TransactionPolicy;
+
 /**
  * Defines program lifecycle.
  * @param <T> type of the program runtime context
@@ -29,11 +32,13 @@ public interface ProgramLifecycle<T extends RuntimeContext> {
    *  @param context An instance of {@link RuntimeContext}
    *  @throws Exception If there is any error during initialization.
    */
+  @TransactionPolicy(TransactionControl.IMPLICIT)
   void initialize(T context) throws Exception;
 
   /**
    * Destroy is the last thing that gets called before the program is
    * shutdown. So, if there are any cleanups then they can be specified here.
    */
+  @TransactionPolicy(TransactionControl.IMPLICIT)
   void destroy();
 }

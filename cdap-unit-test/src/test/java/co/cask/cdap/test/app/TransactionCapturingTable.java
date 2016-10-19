@@ -25,14 +25,14 @@ import org.apache.tephra.Transaction;
 /**
  * A dataset whose only purpose is to remember the transaction when it is started.
  */
-public class CapturingDataset extends AbstractDataset {
+public class TransactionCapturingTable extends AbstractDataset {
 
   private Transaction tx;
-  private final Table table;
+  private Table table;
 
-  public CapturingDataset(DatasetSpecification spec, @EmbeddedDataset("t") Table embedded) {
+  public TransactionCapturingTable(DatasetSpecification spec, @EmbeddedDataset("t") Table embedded) {
     super(spec.getName(), embedded);
-    table = embedded;
+    this.table = embedded;
   }
 
   @Override

@@ -16,7 +16,11 @@
 
 package co.cask.cdap.internal.app.runtime.worker;
 
+import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.worker.Worker;
+import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.lang.ClassLoaders;
@@ -24,6 +28,7 @@ import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.lang.Reflections;
 import com.google.common.collect.ImmutableList;
@@ -89,12 +94,27 @@ public class WorkerDriver extends AbstractExecutionThreadService {
     if (worker == null) {
       return;
     }
-    LOG.debug("Shutting down Worker Program {}", program.getId());
-    ClassLoader classLoader = setContextCombinedClassLoader();
+    TxRunnable runnable = new TxRunnable() {
+      @Override
+      public void run(DatasetContext context) throws Exception {
+        LOG.debug("Shutting down Worker Program {}", program.getId());
+        ClassLoader classLoader = setContextCombinedClassLoader();
+        try {
+          worker.destroy();
+        } finally {
+          ClassLoaders.setContextClassLoader(classLoader);
+        }
+      }
+    };
     try {
-      worker.destroy();
+      TransactionControl txControl = Transactions.getTransactionControl(
+        TransactionControl.EXPLICIT, Worker.class, worker, "destroy");
+      if (TransactionControl.EXPLICIT == txControl) {
+        runnable.run(context);
+      } else {
+        context.execute(runnable);
+      }
     } finally {
-      ClassLoaders.setContextClassLoader(classLoader);
       context.close();
     }
   }
@@ -130,11 +150,23 @@ public class WorkerDriver extends AbstractExecutionThreadService {
   }
 
   private void initialize() throws Exception {
-    ClassLoader classLoader = setContextCombinedClassLoader();
-    try {
-      worker.initialize(context);
-    } finally {
-      ClassLoaders.setContextClassLoader(classLoader);
+    TxRunnable runnable = new TxRunnable() {
+      @Override
+      public void run(DatasetContext ctxt) throws Exception {
+        ClassLoader classLoader = setContextCombinedClassLoader();
+        try {
+          worker.initialize(context);
+        } finally {
+          ClassLoaders.setContextClassLoader(classLoader);
+        }
+      }
+    };
+    TransactionControl txControl = Transactions.getTransactionControl(
+      TransactionControl.EXPLICIT, Worker.class, worker, "initialize", WorkerContext.class);
+    if (TransactionControl.EXPLICIT == txControl) {
+      runnable.run(context);
+    } else {
+      context.execute(runnable);
     }
   }
 

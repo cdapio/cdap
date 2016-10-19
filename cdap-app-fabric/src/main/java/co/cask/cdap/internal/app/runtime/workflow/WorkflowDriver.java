@@ -20,9 +20,12 @@ import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.ProgramStatus;
+import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
@@ -55,6 +58,7 @@ import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.customaction.BasicCustomActionContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowActionConfigurer;
@@ -75,8 +79,6 @@ import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import org.apache.tephra.TransactionContext;
-import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
@@ -203,31 +205,38 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     if (!Workflow.class.isAssignableFrom(clz)) {
       throw new IllegalStateException(String.format("%s is not Workflow.", clz));
     }
-
     Class<? extends Workflow> workflowClass = (Class<? extends Workflow>) clz;
-    Workflow workflow = new InstantiatorFactory(false).get(TypeToken.of(workflowClass)).create();
-
-    TransactionContext transactionContext = basicWorkflowContext.getDatasetCache().newTransactionContext();
-    transactionContext.start();
-
-    try {
-      if (workflow instanceof ProgramLifecycle) {
-        basicWorkflowToken.setCurrentNode(workflowSpec.getName());
-        ClassLoader oldClassLoader = setContextCombinedClassLoader(workflow);
-        try {
-          basicWorkflowContext.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
-          ((ProgramLifecycle<WorkflowContext>) workflow).initialize(basicWorkflowContext);
-        } finally {
-          ClassLoaders.setContextClassLoader(oldClassLoader);
-        }
-        runtimeStore.updateWorkflowToken(workflowRunId, basicWorkflowToken);
-      }
-    } catch (Throwable t) {
-      LOG.error(String.format("Failed to initialize the Workflow %s", workflowRunId), t);
-      transactionContext.abort(new TransactionFailureException("Transaction function failure for transaction. ", t));
+    final Workflow workflow = new InstantiatorFactory(false).get(TypeToken.of(workflowClass)).create();
+    if (!(workflow instanceof ProgramLifecycle)) {
+      return workflow;
     }
-    transactionContext.finish();
+    final TransactionControl txControl =
+      Transactions.getTransactionControl(TransactionControl.IMPLICIT, Workflow.class,
+                                         workflow, "initialize", WorkflowContext.class);
+    if (TransactionControl.EXPLICIT == txControl) {
+      doInitialize(workflow);
+    } else {
+      basicWorkflowContext.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          doInitialize(workflow);
+        }
+      });
+    }
+    runtimeStore.updateWorkflowToken(workflowRunId, basicWorkflowToken);
     return workflow;
+  }
+
+  private void doInitialize(Workflow workflow) throws Exception {
+    basicWorkflowToken.setCurrentNode(workflowSpec.getName());
+    ClassLoader oldClassLoader = setContextCombinedClassLoader(workflow);
+    try {
+      basicWorkflowContext.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
+      //noinspection unchecked
+      ((ProgramLifecycle<WorkflowContext>) workflow).initialize(basicWorkflowContext);
+    } finally {
+      ClassLoaders.setContextClassLoader(oldClassLoader);
+    }
   }
 
   private void blockIfSuspended() {
@@ -285,27 +294,35 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
   @SuppressWarnings("unchecked")
   private void destroyWorkflow() {
-    TransactionContext transactionContext = basicWorkflowContext.getDatasetCache().newTransactionContext();
+    if (!(workflow instanceof ProgramLifecycle)) {
+      return;
+    }
+    final TransactionControl txControl =
+      Transactions.getTransactionControl(TransactionControl.IMPLICIT, Workflow.class, workflow, "destroy");
     try {
-      transactionContext.start();
-      if (workflow instanceof ProgramLifecycle) {
-        basicWorkflowToken.setCurrentNode(workflowSpec.getName());
-        ClassLoader oldClassLoader = setContextCombinedClassLoader(workflow);
-        try {
-          ((ProgramLifecycle<WorkflowContext>) workflow).destroy();
-        } finally {
-          ClassLoaders.setContextClassLoader(oldClassLoader);
-        }
-        runtimeStore.updateWorkflowToken(workflowRunId, basicWorkflowToken);
+      if (TransactionControl.EXPLICIT == txControl) {
+        doDestroy();
+      } else {
+        basicWorkflowContext.execute(new TxRunnable() {
+          @Override
+          public void run(DatasetContext context) throws Exception {
+            doDestroy();
+          }
+        });
       }
-      transactionContext.finish();
+      runtimeStore.updateWorkflowToken(workflowRunId, basicWorkflowToken);
     } catch (Throwable t) {
-      try {
-        transactionContext.abort();
-      } catch (Throwable e) {
-        t.addSuppressed(e);
-      }
       LOG.error(String.format("Failed to destroy the Workflow %s", workflowRunId), t);
+    }
+  }
+
+  private void doDestroy() {
+    basicWorkflowToken.setCurrentNode(workflowSpec.getName());
+    ClassLoader oldClassLoader = setContextCombinedClassLoader(workflow);
+    try {
+      ((ProgramLifecycle<WorkflowContext>) workflow).destroy();
+    } finally {
+      ClassLoaders.setContextClassLoader(oldClassLoader);
     }
   }
 

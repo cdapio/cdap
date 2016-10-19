@@ -18,6 +18,8 @@ package co.cask.cdap.api.workflow;
 
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.ProgramLifecycle;
+import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.api.customaction.CustomAction;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -206,11 +208,13 @@ public abstract class AbstractWorkflow extends AbstractPluginConfigurable<Workfl
   }
 
   @Override
+  @TransactionPolicy(TransactionControl.IMPLICIT)
   public void initialize(WorkflowContext context) throws Exception {
     this.context = context;
   }
 
   @Override
+  @TransactionPolicy(TransactionControl.IMPLICIT)
   public void destroy() {
     // Do nothing
   }

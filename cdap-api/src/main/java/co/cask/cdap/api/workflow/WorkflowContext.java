@@ -19,6 +19,7 @@ import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
+import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.plugin.PluginContext;
@@ -30,7 +31,8 @@ import java.util.Map;
  * Represents the runtime context of a {@link Workflow}. This context is also
  * available to {@link WorkflowAction}.
  */
-public interface WorkflowContext extends RuntimeContext, ServiceDiscoverer, DatasetContext, PluginContext, SecureStore {
+public interface WorkflowContext extends RuntimeContext, Transactional,
+  ServiceDiscoverer, DatasetContext, PluginContext, SecureStore {
 
   WorkflowSpecification getWorkflowSpecification();
 
