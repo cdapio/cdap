@@ -30,7 +30,10 @@ export default class Datasource {
         if (!this.bindings[hash]) { return; }
 
         if (data.statusCode > 299 || data.warning) {
-          this.bindings[hash].rx.onError(data.error || data.response);
+          this.bindings[hash].rx.onError({
+            statusCode: data.statusCode,
+            response: data.response || data.body || data.error
+          });
         } else {
           this.bindings[hash].rx.onNext(data.response);
         }
