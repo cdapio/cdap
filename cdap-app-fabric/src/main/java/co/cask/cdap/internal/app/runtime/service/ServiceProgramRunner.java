@@ -58,7 +58,6 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
   private final ServiceAnnouncer serviceAnnouncer;
-  private final DataFabricFacadeFactory dataFabricFacadeFactory;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
 
@@ -66,7 +65,6 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   public ServiceProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                               DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                               TransactionSystemClient txClient, ServiceAnnouncer serviceAnnouncer,
-                              DataFabricFacadeFactory dataFabricFacadeFactory,
                               SecureStore secureStore, SecureStoreManager secureStoreManager) {
     super(cConf);
     this.metricsCollectionService = metricsCollectionService;
@@ -74,7 +72,6 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
     this.serviceAnnouncer = serviceAnnouncer;
-    this.dataFabricFacadeFactory = dataFabricFacadeFactory;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
   }
@@ -112,7 +109,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
       ServiceHttpServer component = new ServiceHttpServer(host, program, options, spec,
                                                           instanceId, instanceCount, serviceAnnouncer,
                                                           metricsCollectionService, datasetFramework,
-                                                          dataFabricFacadeFactory, txClient, discoveryServiceClient,
+                                                          txClient, discoveryServiceClient,
                                                           pluginInstantiator, secureStore, secureStoreManager);
 
       // Add a service listener to make sure the plugin instantiator is closed when the worker driver finished.

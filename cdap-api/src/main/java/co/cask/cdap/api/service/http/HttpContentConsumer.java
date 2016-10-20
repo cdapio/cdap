@@ -18,6 +18,8 @@ package co.cask.cdap.api.service.http;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.api.dataset.Dataset;
 
 import java.nio.ByteBuffer;
@@ -86,11 +88,13 @@ public abstract class HttpContentConsumer {
   /**
    * This method is invoked when the end of the request body is reached. It must use the given
    * {@link HttpServiceResponder} to send the response in order to complete the HTTP call. This method is
-   * always executed inside a single transaction.
+   * always executed inside a single transaction unless annotated with
+   * {@link TransactionPolicy(TransactionControl}.
    *
    * @param responder a {@link HttpServiceResponder} for sending response
    * @throws Exception if there is any error
    */
+  @TransactionPolicy(TransactionControl.IMPLICIT)
   public abstract void onFinish(HttpServiceResponder responder) throws Exception;
 
   /**
@@ -102,11 +106,13 @@ public abstract class HttpContentConsumer {
    * from either {@link #onReceived(ByteBuffer, Transactional)}
    * or {@link #onFinish(HttpServiceResponder)} methods will have this method invoked.
    * </p><p>
-   * This method is always executed inside a single transaction.
+   * This method is always executed inside a single transaction unless annotated with
+   * {@link TransactionPolicy(TransactionControl}.
    * </p>
    *
    * @param responder a {@link HttpServiceResponder} for sending response
    * @param failureCause the reason of the failure
    */
+  @TransactionPolicy(TransactionControl.IMPLICIT)
   public abstract void onError(HttpServiceResponder responder, Throwable failureCause);
 }
