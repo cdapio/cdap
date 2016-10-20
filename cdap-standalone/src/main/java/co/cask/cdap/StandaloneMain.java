@@ -195,7 +195,7 @@ public class StandaloneMain {
       userInterfaceService = injector.getInstance(UserInterfaceService.class);
     }
 
-    sslEnabled = cConf.getBoolean(Constants.Security.SSL_ENABLED);
+    sslEnabled = cConf.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED);
     securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);
     if (securityEnabled) {
       externalAuthenticationServer = injector.getInstance(ExternalAuthenticationServer.class);

@@ -50,6 +50,7 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -58,7 +59,6 @@ import java.util.concurrent.TimeUnit;
  * Default implementation of {@link StreamWriter}
  */
 public class DefaultStreamWriter implements StreamWriter {
-
   private final EndpointStrategy endpointStrategy;
   private final ConcurrentMap<Id.Stream, Boolean> isStreamRegistered;
   private final RuntimeUsageRegistry runtimeUsageRegistry;
@@ -106,7 +106,9 @@ public class DefaultStreamWriter implements StreamWriter {
     }
 
     InetSocketAddress address = discoverable.getSocketAddress();
-    String path = String.format("http://%s:%d%s/namespaces/%s/streams/%s", address.getHostName(), address.getPort(),
+    String scheme = Arrays.equals(Constants.Security.SSL_URI_SCHEME.getBytes(), discoverable.getPayload()) ?
+      Constants.Security.SSL_URI_SCHEME : Constants.Security.URI_SCHEME;
+    String path = String.format("%s%s:%d%s/namespaces/%s/streams/%s", scheme, address.getHostName(), address.getPort(),
                                 Constants.Gateway.API_VERSION_3, namespace.getId(), stream);
     if (batch) {
       path = String.format("%s/batch", path);
@@ -118,7 +120,7 @@ public class DefaultStreamWriter implements StreamWriter {
     if (authorizationEnabled) {
       builder.addHeader(Constants.Security.Headers.USER_ID, authenticationContext.getPrincipal().getName());
     }
-    HttpResponse response = HttpRequests.execute(builder.build(), new DefaultHttpRequestConfig());
+    HttpResponse response = HttpRequests.execute(builder.build(), new DefaultHttpRequestConfig(false));
     int responseCode = response.getResponseCode();
     if (responseCode == HttpResponseStatus.NOT_FOUND.getCode()) {
       throw new IOException(String.format("Stream %s not found", stream));

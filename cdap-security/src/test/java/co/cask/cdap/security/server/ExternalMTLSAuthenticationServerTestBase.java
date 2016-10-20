@@ -60,7 +60,7 @@ public abstract class ExternalMTLSAuthenticationServerTestBase extends ExternalA
    */
   protected CConfiguration getConfiguration(CConfiguration cConf) {
     String configBase = Constants.Security.AUTH_HANDLER_CONFIG_BASE;
-    cConf.set(Constants.Security.SSL_ENABLED, Boolean.TRUE.toString());
+    cConf.set(Constants.Security.SSL.EXTERNAL_ENABLED, Boolean.TRUE.toString());
 
     // Use random port for testing
     cConf.setInt(Constants.Security.AUTH_SERVER_BIND_PORT, Networks.getRandomPort());

@@ -114,7 +114,7 @@ public abstract class ExternalAuthenticationServerTestBase {
     tokenCodec = injector.getInstance(AccessTokenCodec.class);
     discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
 
-    if (configuration.getBoolean(Constants.Security.SSL_ENABLED)) {
+    if (configuration.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED)) {
       port = configuration.getInt(Constants.Security.AuthenticationServer.SSL_PORT);
     } else {
       port = configuration.getInt(Constants.Security.AUTH_SERVER_BIND_PORT);
