@@ -14,10 +14,8 @@
  * the License.
  */
 
-package co.cask.cdap.security;
+package co.cask.cdap.common.security;
 
-import co.cask.cdap.common.security.ImpersonationInfo;
-import co.cask.cdap.common.security.UGIProvider;
 import org.apache.hadoop.security.UserGroupInformation;
 
 import java.io.IOException;

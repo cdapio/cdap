@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -61,6 +62,13 @@ public abstract class AbstractProgramTwillApplication implements TwillApplicatio
     // sanity check, that should not fail, unless there's a bug elsewhere in the code
     Preconditions.checkArgument(getType().equals(program.getType()),
                                 "Expected=%s, actual=%s", getType(), program.getType());
+  }
+
+  /**
+   * Returns the program id of the program represented by this {@link TwillApplication}.
+   */
+  public final ProgramId getProgramId() {
+    return program.getId();
   }
 
   /**

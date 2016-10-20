@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,8 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.NamespaceClientUnitTestModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.security.UGIProvider;
+import co.cask.cdap.common.security.UnsupportedUGIProvider;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
@@ -45,6 +47,7 @@ import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
@@ -60,7 +63,7 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 
 /**
- * metrics table test for levelDB.
+ * metrics table test for HBase.
  */
 @Category(SlowTests.class)
 public class HBaseMetricsTableTest extends MetricsTableTest {
@@ -86,7 +89,13 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
                                              new DataSetsModules().getInMemoryModules(),
                                              new AuthorizationTestModule(),
                                              new AuthorizationEnforcementModule().getInMemoryModules(),
-                                             new AuthenticationContextModules().getNoOpModule());
+                                             new AuthenticationContextModules().getNoOpModule(),
+                                             new AbstractModule() {
+                                               @Override
+                                               protected void configure() {
+                                                 bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+                                               }
+                                             });
 
     dsFramework = injector.getInstance(DatasetFramework.class);
     tableUtil = injector.getInstance(HBaseTableUtil.class);

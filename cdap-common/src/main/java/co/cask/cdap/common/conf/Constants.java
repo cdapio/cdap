@@ -789,6 +789,8 @@ public final class Constants {
     public static final String CFG_CDAP_MASTER_KRB_KEYTAB_PATH = "cdap.master.kerberos.keytab";
     /** Kerberos principal used by CDAP master */
     public static final String CFG_CDAP_MASTER_KRB_PRINCIPAL = "cdap.master.kerberos.principal";
+
+    public static final String UGI_CACHE_EXPIRATION_MS = "cdap.ugi.cache.expiration.ms";
   }
 
   /**

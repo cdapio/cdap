@@ -27,9 +27,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.internal.app.deploy.pipeline.NamespacedImpersonator;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -70,7 +68,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -91,16 +88,14 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   private final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
   private final ProgramRunnerFactory programRunnerFactory;
   private final ArtifactRepository artifactRepository;
-  private final Impersonator impersonator;
 
   protected AbstractProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
-                                          ArtifactRepository artifactRepository, Impersonator impersonator) {
+                                          ArtifactRepository artifactRepository) {
     this.cConf = cConf;
     this.runtimeInfosLock = new ReentrantReadWriteLock();
     this.runtimeInfos = HashBasedTable.create();
     this.programRunnerFactory = programRunnerFactory;
     this.artifactRepository = artifactRepository;
-    this.impersonator = impersonator;
   }
 
   @Override
@@ -231,7 +226,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     builder.putAll(options.getArguments().asMap());
     for (Map.Entry<String, Plugin> pluginEntry : appSpec.getPlugins().entrySet()) {
       Plugin plugin = pluginEntry.getValue();
-      final File destFile = new File(tempDir, Artifacts.getFileName(plugin.getArtifactId()));
+      File destFile = new File(tempDir, Artifacts.getFileName(plugin.getArtifactId()));
       // Skip if the file has already been copied.
       if (!files.add(destFile.getName())) {
         continue;
@@ -239,21 +234,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
       try {
         ArtifactId artifactId = Artifacts.toArtifactId(programId.getNamespaceId(), plugin.getArtifactId());
-        final ArtifactDetail detail = artifactRepository.getArtifact(artifactId.toId());
-        try {
-          new NamespacedImpersonator(artifactId.getParent(), impersonator).impersonate(
-            new Callable<Void>() {
-              @Override
-              public Void call() throws IOException {
-                Locations.linkOrCopy(detail.getDescriptor().getLocation(), destFile);
-                return null;
-              }});
-        } catch (IOException ioe) {
-          throw ioe;
-        } catch (Exception e) {
-          // should not happen
-          throw Throwables.propagate(e);
-        }
+        copyArtifact(artifactId, artifactRepository.getArtifact(artifactId.toId()), destFile);
       } catch (ArtifactNotFoundException e) {
         throw new IllegalArgumentException(String.format("Artifact %s could not be found", plugin.getArtifactId()), e);
       }
@@ -262,6 +243,19 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     builder.put(ProgramOptionConstants.PLUGIN_DIR, tempDir.getAbsolutePath());
     return new SimpleProgramOptions(options.getName(), new BasicArguments(builder.build()),
                                     options.getUserArguments(), options.isDebug());
+  }
+
+  /**
+   * Copies the artifact jar to the given target file.
+   *
+   * @param artifactId artifact id of the artifact to be copied
+   * @param artifactDetail detail information of the artifact to be copied
+   * @param targetFile target file to copy to
+   * @throws IOException if the copying failed
+   */
+  protected void copyArtifact(ArtifactId artifactId,
+                              ArtifactDetail artifactDetail, File targetFile) throws IOException {
+    Locations.linkOrCopy(artifactDetail.getDescriptor().getLocation(), targetFile);
   }
 
   protected Map<String, String> getExtraProgramOptions() {

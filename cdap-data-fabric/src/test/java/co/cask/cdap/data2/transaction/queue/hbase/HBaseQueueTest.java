@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.data2.transaction.queue.hbase;
 
 import co.cask.cdap.api.common.Bytes;
@@ -23,7 +24,11 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.NamespaceClientUnitTestModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.common.security.Impersonator;
+import co.cask.cdap.common.security.UGIProvider;
+import co.cask.cdap.common.security.UnsupportedUGIProvider;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
@@ -126,7 +131,7 @@ public abstract class HBaseQueueTest extends QueueTest {
   private static Injector injector;
 
   protected static HBaseTableUtil tableUtil;
-  protected static HBaseAdmin hbaseAdmin;
+  private static HBaseAdmin hbaseAdmin;
   private static ZKClientService zkClientService;
 
   @BeforeClass
@@ -162,6 +167,7 @@ public abstract class HBaseQueueTest extends QueueTest {
         @Override
         protected void configure() {
           bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class).in(Scopes.SINGLETON);
+          bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
         }
       }
     );
@@ -426,7 +432,9 @@ public abstract class HBaseQueueTest extends QueueTest {
                                                         injector.getInstance(HBaseTableUtil.class),
                                                         injector.getInstance(DatasetFramework.class),
                                                         injector.getInstance(TransactionExecutorFactory.class),
-                                                        QueueConstants.QueueType.QUEUE);
+                                                        QueueConstants.QueueType.QUEUE,
+                                                        injector.getInstance(NamespaceQueryAdmin.class),
+                                                        injector.getInstance(Impersonator.class));
     oldQueueAdmin.create(queueName);
 
     int buckets = cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS);
