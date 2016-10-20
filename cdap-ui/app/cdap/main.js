@@ -101,7 +101,7 @@ class CDAP extends Component {
     }
     if (window.CDAP_CONFIG.securityEnabled) {
       NamespaceStore.dispatch({
-        type: 'UPDATE_USERNAME',
+        type: NamespaceActions.updateUsername,
         payload: {
           username: cookie.load('CDAP_Auth_User')
         }

@@ -31,7 +31,7 @@ export default class HeaderActions extends Component {
     super(props);
     this.state = {
       settingsOpen : false,
-      name : NamespaceStore.getState().userName,
+      name : NamespaceStore.getState().username,
     };
     this.logout = this.logout.bind(this);
     this.toggleSettingsDropdown = this.toggleSettingsDropdown.bind(this);
