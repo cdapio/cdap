@@ -41,8 +41,7 @@ package 'cdap-master' do
 end
 
 # Include kerberos support
-if node['hadoop'].key?('core_site') && node['hadoop']['core_site'].key?('hadoop.security.authentication') &&
-   node['hadoop']['core_site']['hadoop.security.authentication'] == 'kerberos'
+if hadoop_kerberos?
 
   if node['cdap'].key?('kerberos') && node['cdap']['kerberos'].key?('cdap_keytab') &&
      node['cdap']['kerberos'].key?('cdap_principal') &&
@@ -77,12 +76,11 @@ if node['hadoop'].key?('core_site') && node['hadoop']['core_site'].key?('hadoop.
       action :modify
     end
 
-    include_recipe 'krb5_utils'
     # We need to be hbase to run our shell
     execute 'kinit-as-hbase-user' do
-      command "kinit -kt #{node['krb5_utils']['keytabs_dir']}/hbase.service.keytab hbase/#{node['fqdn']}@#{node['krb5']['krb5_conf']['realms']['default_realm'].upcase}"
+      command "kinit -kt #{node['krb5']['keytabs_dir']}/hbase.service.keytab hbase/#{node['fqdn']}@#{node['krb5']['krb5_conf']['realms']['default_realm'].upcase}"
       user 'hbase'
-      only_if "test -e #{node['krb5_utils']['keytabs_dir']}/hbase.service.keytab"
+      only_if "test -e #{node['krb5']['keytabs_dir']}/hbase.service.keytab"
     end
     # Template for HBase GRANT
     template "#{Chef::Config[:file_cache_path]}/hbase-grant.hbase" do

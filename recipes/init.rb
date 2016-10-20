@@ -54,3 +54,20 @@ end
     end
   end
 end
+
+include_recipe 'krb5' if hadoop_kerberos?
+
+krb5_principal "cdap/#{node['fqdn']}" do
+  randkey true
+  action :create
+  only_if { hadoop_kerberos? }
+end
+
+krb5_keytab "#{node['krb5']['keytabs_dir']}/cdap.service.keytab" do
+  principals ["cdap/#{node['fqdn']}"]
+  owner 'cdap'
+  group 'cdap'
+  mode '0640'
+  action :create
+  only_if { hadoop_kerberos? }
+end
