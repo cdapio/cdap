@@ -296,11 +296,11 @@ function build_docs_cli() {
     mvn -version
     mvn package -pl cdap-docs-gen -am -DskipTests
     warnings=$?
-    if [ "${warnings}" == "0" ]; then
+    if [[ ${warnings} -eq 0 ]]; then
       echo "Completed building of CLI"
       java -cp cdap-docs-gen/target/cdap-docs-gen-${PROJECT_VERSION}.jar:cdap-cli/target/cdap-cli-${PROJECT_VERSION}.jar co.cask.cdap.docgen.cli.GenerateCLIDocsTable > ${target_txt}
       warnings=$?
-      if [ "${warnings}" == "0" ]; then
+      if [[ ${warnings} -eq 0 ]]; then
         echo "CLI input file written to ${target_txt}"
         USING_CLI_DOCS="true"
       else
@@ -396,7 +396,6 @@ function package_docs_web_part() {
   echo "--------------------------------------------------------"
   echo
   _package_docs build-web ${WEB} ${TRUE}
-  return $?
 }
 
 function _package_docs() {
@@ -494,7 +493,7 @@ function build_zip() {
   local zip_extras=${2}
   set_project_path
   set_version
-  if [ "x${1}" == "x" ]; then
+  if [[ -n ${zip_target} ]]; then
     ZIP_DIR_NAME="${PROJECT}-docs-${PROJECT_VERSION}"
   else
     ZIP_DIR_NAME="${PROJECT}-docs-${PROJECT_VERSION}-$1"
@@ -504,17 +503,12 @@ function build_zip() {
 
   echo "Removing old directories and zips"
   rm -rf base current ${PROJECT_VERSION} *.zip
-  local errors=$?
-  if [ "${errors}" != "0" ]; then
-      echo "Could not cleanup old directories and zips"
-      return ${errors}   
-  fi
   
   echo "Creating base"
   mkdir base
   cp -r ${HTML} base/en
   errors=$?
-  if [ "${errors}" != "0" ]; then
+  if [[ ${errors} -ne 0 ]]; then
       echo "Could not create base"
       return ${errors}   
   fi
@@ -522,7 +516,7 @@ function build_zip() {
   # Add a redirect index.html file
   cp ${SCRIPT_PATH}/${COMMON_SOURCE}/redirect.html base/index.html
   errors=$?
-  if [ "${errors}" != "0" ]; then
+  if [[ ${errors} -ne 0 ]]; then
       echo "Could not add redirect file"
       return ${errors}   
   fi
@@ -531,6 +525,11 @@ function build_zip() {
   echo "1: 'current' version, with canonical ref link ${ZIP_DIR_NAME}-current"
   cp -r base current
   python ${doc_change_py} ${TARGET_PATH} --current=${PROJECT_VERSION} current
+  errors=$?
+  if [[ ${errors} -ne 0 ]]; then
+      echo "Could not change doc set ${TARGET_PATH}"
+      return ${errors}   
+  fi
   zip -qr ${ZIP_DIR_NAME}.zip current/* --exclude *.DS_Store* *.buildinfo*
   if [[ "x${zip_extras}" != "x" ]]; then
     echo "Creating and adding a .htaccess file (404 file)"
@@ -539,7 +538,7 @@ function build_zip() {
   fi
   mv ${ZIP_DIR_NAME}.zip ${ZIP_DIR_NAME}-current.zip
   errors=$?
-  if [ "${errors}" != "0" ]; then
+  if [[ ${errors} -ne 0 ]]; then
       echo "Could not move ${ZIP_DIR_NAME}.zip to ${ZIP_DIR_NAME}-current.zip"
       return ${errors}   
   fi
@@ -548,6 +547,11 @@ function build_zip() {
   echo "2: 'future' version with robots meta tag ${ZIP_DIR_NAME}-future"
   cp -r base ${PROJECT_VERSION}
   python ${doc_change_py} ${TARGET_PATH} ${PROJECT_VERSION}
+  errors=$?
+  if [[ ${errors} -ne 0 ]]; then
+      echo "Could not change doc set ${TARGET_PATH}"
+      return ${errors}   
+  fi
   zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/* --exclude *.DS_Store* *.buildinfo*
   if [[ "x${zip_extras}" != "x" ]]; then
     echo "Creating and adding a .htaccess file (404 file)"
@@ -556,7 +560,7 @@ function build_zip() {
   fi
   mv ${ZIP_DIR_NAME}.zip ${ZIP_DIR_NAME}-future.zip
   errors=$?
-  if [ "${errors}" != "0" ]; then
+  if [[ ${errors} -ne 0 ]]; then
       echo "Could not move ${ZIP_DIR_NAME}.zip to ${ZIP_DIR_NAME}-future.zip"
       return ${errors}   
   fi
@@ -566,6 +570,11 @@ function build_zip() {
   echo "3: Canonical numbered version ${ZIP_DIR_NAME}"
   cp -r base ${PROJECT_VERSION}
   python ${doc_change_py} ${TARGET_PATH} --current=${PROJECT_VERSION} ${PROJECT_VERSION}
+  errors=$?
+  if [[ ${errors} -ne 0 ]]; then
+      echo "Could not change doc set ${TARGET_PATH}"
+      return ${errors}   
+  fi
   zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/* --exclude *.DS_Store* *.buildinfo*
   if [[ "x${zip_extras}" != "x" ]]; then
     echo "Creating and adding a .htaccess file (404 file)"
@@ -573,7 +582,7 @@ function build_zip() {
     zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/.${HTACCESS}
   fi
   errors=$?
-  if [ "${errors}" != "0" ]; then
+  if [[ ${errors} -ne 0 ]]; then
       echo "Could not complete canonical numbered version"
       return ${errors}   
   fi
@@ -582,13 +591,12 @@ function build_zip() {
   echo "Zipping together the zips"
   zip -q ${ZIP_DIR_NAME}-archive.zip *.zip
   errors=$?
-  if [ "${errors}" != "0" ]; then
+  if [[ ${errors} -ne 0 ]]; then
       echo "Could not zip together the zips"
       return ${errors}   
   fi
   # Cleanup
   rm -rf base current ${ZIP_DIR_NAME}-current.zip ${ZIP_DIR_NAME}-future.zip
-  return $?
 }
 
 function clean_targets() {

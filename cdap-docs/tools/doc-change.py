@@ -26,10 +26,13 @@
 # For testing, use:
 #
 # ./doc-change.py ../../cdap-gh-pages/cdap --ghpages --current=3.6.0 2.5.0
+# Changes the 2.5.0 doc set; sets empty titles, adds a robots meta-tag
 #
 # ./doc-change.py ../../cdap-gh-pages/cdap --ghpages --current=3.6.0 3.6.0
+# Changes the 3.6.0 doc set; sets empty titles
 #
 # ./doc-change.py ../../cdap-gh-pages/cdap --ghpages --current=3.6.0 current
+# Changes the current doc set; sets empty titles, adds a canonical link-tag
 #
 # To change doc server pages:
 # - Make a copy of the script on the web servers
@@ -41,10 +44,13 @@
 # For testing, use:
 #
 # ./doc-change.py /var/www/docs/cdap --current=3.6.0 2.5.0
-#
+# Changes the 2.5.0 doc set; sets empty titles, adds a robots meta-tag
+# 
 # ./doc-change.py /var/www/docs/cdap --current=3.6.0 3.6.0
+# Changes the 3.6.0 doc set; sets empty titles
 #
 # ./doc-change.py /var/www/docs/cdap --current=3.6.0 current
+# Changes the current doc set; sets empty titles, adds a canonical link-tag
 
 from optparse import OptionParser
 import os
@@ -55,7 +61,7 @@ def parse_options():
     """
 
     parser = OptionParser(
-        usage="%prog [options] doc-directory [doc-set]",
+        usage="%prog doc-directory [options] [doc-set]",
         description="Revises in-place a set of documentation directories; <doc-directory> is a relative or absolute path to a directory containing docsets. <doc-set> is a directory in the <doc-directory>")
 
     parser.add_option(
@@ -134,29 +140,24 @@ def append_links(filepath, version, ghpages=False, ending='', current=None):
 def convert_docs(doc_set_path, ghpages=False, current=None):
     doc_set = os.path.basename(doc_set_path)
     print "Converting doc set '%s' (%s)" % (doc_set, doc_set_path)
-    html_count = 0
-    for root, dirs, files in os.walk(doc_set_path):
-        for f in files:
-            if f.endswith('.html'):
-                html_count += 1
-    print "HTML files to convert: %s" % html_count
-    html_count = 0
+    file_paths = []
     for root, dirs, files in os.walk(doc_set_path):
         for f in files:
             if f.endswith('.html'):
                 filepath = os.path.join(root, f)
-                ending = filepath[len(doc_set_path):]
-                append_links(filepath, doc_set, ghpages, ending, current)
-                html_count += 1
-                sys.stdout.write('.')
-                if (html_count / 100) * 100 == html_count:
-                    sys.stdout.write(" %s\n" % html_count)
-                sys.stdout.flush()
+                file_paths.append(filepath)
+    print "HTML files to convert: %s" % len(file_paths)
+    
+    html_count = 0
+    for file_path in file_paths:
+        ending = filepath[len(doc_set_path):]
+        append_links(filepath, doc_set, ghpages, ending, current)
+        html_count += 1
+        sys.stdout.write('.')
+        if (html_count / 100) * 100 == html_count:
+            sys.stdout.write(" %s\n" % html_count)
+        sys.stdout.flush()
     print "\nConverted HTML files: %s" % html_count
-
-def convert_upper_level_html(html_path):
-    html_file = os.path.basename(html_path)
-    print "Converting html file '%s' (%s)" % (html_file, html_path)
 
 def convert_doc_set(doc_set, docs_path, ghpages=False, current=None):
     if current:
@@ -165,7 +166,8 @@ def convert_doc_set(doc_set, docs_path, ghpages=False, current=None):
     if doc_set.startswith('.'):
         print "Ignoring '%s'" % doc_set
     elif doc_set.endswith('.html'):
-        convert_upper_level_html(doc_set_path)
+        html_file = os.path.basename(doc_set_path)
+        print "Ignoring html file '%s' (%s)" % (html_file, doc_set_path)        
     elif doc_set.replace('.','').replace('-SNAPSHOT','').isdigit():
         convert_docs(doc_set_path, ghpages=ghpages, current=current)
     elif doc_set == 'current':
