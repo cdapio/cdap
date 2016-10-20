@@ -18,14 +18,7 @@
 @import './styles/fonts.less';
 
 #login-form {
-  position: absolute;
-  top: 43%;
-  left: 50%;
-  width: 35%;
-  height: 40%;
-  transform: translate(-50%, -50%);
-  padding: 20px;
-
+  margin-top: 50px;
   .cdap-logo {
     color: #ff6600;
     background: url('/login_assets/img/CDAP_Logotype.svg');
@@ -41,5 +34,15 @@
     margin-left: 10px;
     color: @brand-danger;
     padding-top: 0;
+  }
+}
+@media(min-width: @screen-sm-min) {
+  #login-form {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    width: 35%;
+    transform: translate(-50%, -50%);
+    padding: 20px;
   }
 }
