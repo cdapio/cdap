@@ -27,7 +27,6 @@ import Management from 'components/Management';
 import Dashboard from 'components/Dashboard';
 import Home from 'components/Home';
 import CdapHeader from 'components/CdapHeader';
-import Footer from 'components/Footer';
 import SplashScreen from 'components/SplashScreen';
 import ConnectionExample from 'components/ConnectionExample';
 import Experimental from 'components/Experimental';
@@ -121,7 +120,6 @@ class CDAP extends Component {
             <Match pattern="/socket-example" component={ConnectionExample} />
             <Miss component={Missed} />
           </div>
-          <Footer version={this.version} />
         </div>
       </Router>
     );
