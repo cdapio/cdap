@@ -37,7 +37,8 @@ import Router from 'react-router/BrowserRouter';
 import T from 'i18n-react';
 import Match from 'react-router/Match';
 import Miss from 'react-router/Miss';
-import {default as NamespaceStore} from 'services/store/store';
+import NamespaceStore from 'services/NamespaceStore';
+import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import CaskVideoModal from 'components/CaskVideoModal';
 import RouteToNamespace from 'components/RouteToNamespace';
 import Helmet from 'react-helmet';
@@ -72,7 +73,7 @@ class CDAP extends Component {
       .subscribe((res) => {
         if (res.length > 0){
           NamespaceStore.dispatch({
-            type: 'UPDATE_NAMESPACES',
+            type: NamespaceActions.updateNamespaces,
             payload: {
               namespaces : res
             }

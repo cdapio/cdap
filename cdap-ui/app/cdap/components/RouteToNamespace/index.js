@@ -16,7 +16,7 @@
 
 import React, {Component} from 'react';
 import find from 'lodash/find';
-import Store from 'services/store/store';
+import NamespaceStore from 'services/NamespaceStore';
 import Redirect from 'react-router/Redirect';
 
 export default class RouteToNamespace extends Component {
@@ -29,7 +29,7 @@ export default class RouteToNamespace extends Component {
 
   componentWillMount() {
     this.setNamespace();
-    this.sub = Store.subscribe(this.setNamespace.bind(this));
+    this.sub = NamespaceStore.subscribe(this.setNamespace.bind(this));
   }
 
   componentWillUnmount() {
@@ -41,7 +41,7 @@ export default class RouteToNamespace extends Component {
   }
 
   setNamespace() {
-    let list = Store.getState().namespaces;
+    let list = NamespaceStore.getState().namespaces;
 
     if (!list || list.length === 0) { return; }
 

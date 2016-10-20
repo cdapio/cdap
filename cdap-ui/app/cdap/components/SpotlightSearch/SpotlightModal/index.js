@@ -16,7 +16,7 @@
 
 import React, {Component, PropTypes} from 'react';
 import {MySearchApi} from 'api/search';
-import {default as NamespaceStore} from 'services/store/store';
+import NamespaceStore from 'services/NamespaceStore';
 import {parseMetadata} from 'services/metadata-parser';
 import T from 'i18n-react';
 import Mousetrap from 'mousetrap';

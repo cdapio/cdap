@@ -19,7 +19,7 @@ import {MySearchApi} from '../../api/search';
 import {parseMetadata} from '../../services/metadata-parser';
 import HomeHeader from './HomeHeader';
 import EntityCard from '../EntityCard';
-import Store from 'services/store/store.js';
+import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
 const shortid = require('shortid');
 const classNames = require('classnames');
@@ -87,7 +87,7 @@ class Home extends Component {
 
   //Update Store and State to correspond to query parameters before component renders
   componentWillMount() {
-    Store.dispatch({
+    NamespaceStore.dispatch({
       type: 'SELECT_NAMESPACE',
       payload: {
         selectedNamespace: this.props.params.namespace

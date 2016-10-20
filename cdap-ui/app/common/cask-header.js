@@ -18,5 +18,5 @@
  T.setTexts(require('../cdap/text/text-en.yaml'));
  var HeaderActions = require('../cdap/components/HeaderActions').default;
  var HeaderBrand = require('../cdap/components/HeaderBrand').default;
- var Store = require('../cdap/services/store/store').default;
+ var Store = require('../cdap/services/NamespaceStore').default;
  export {Store, HeaderBrand, HeaderActions};

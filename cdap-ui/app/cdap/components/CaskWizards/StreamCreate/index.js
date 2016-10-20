@@ -21,7 +21,7 @@ import CreateStreamActions from 'services/WizardStores/CreateStream/CreateStream
 import { PublishStream } from 'services/WizardStores/CreateStream/ActionCreator';
 import UploadDataActionCreator from 'services/WizardStores/UploadData/ActionCreator';
 import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
-import {default as NamespaceStore} from 'services/store/store';
+import NamespaceStore from 'services/NamespaceStore';
 
 import CreateStreamWizardConfig, {CreateStreamUploadWizardConfig} from 'services/WizardConfigs/CreateStreamWizardConfig';
 import T from 'i18n-react';

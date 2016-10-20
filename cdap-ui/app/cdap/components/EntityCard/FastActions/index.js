@@ -19,7 +19,7 @@ import {MyAppApi} from 'api/app';
 import {MyArtifactApi} from 'api/artifact';
 import {MyDatasetApi} from 'api/dataset';
 import {MyStreamApi} from 'api/stream';
-import Store from 'services/store/store.js';
+import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
 
 export default class FastActions extends Component {
@@ -30,7 +30,7 @@ export default class FastActions extends Component {
   setupApiAndParams() {
     let api;
     let params = {
-      namespace: Store.getState().selectedNamespace
+      namespace: NamespaceStore.getState().selectedNamespace
     };
 
     switch (this.props.entity.type) {
@@ -125,7 +125,7 @@ export default class FastActions extends Component {
   handleRenderNavigate() {
     let link = window.getAbsUIUrl({
       uiApp: 'cask-hydrator',
-      namespaceId: Store.getState().selectedNamespace,
+      namespaceId: NamespaceStore.getState().selectedNamespace,
       entityType: 'view',
       entityId: this.props.entity.id
     });

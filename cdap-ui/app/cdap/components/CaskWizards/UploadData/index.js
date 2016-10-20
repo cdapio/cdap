@@ -20,7 +20,7 @@ import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
 import UploadDataWizardConfig from 'services/WizardConfigs/UploadDataWizardConfig';
 import UploadDataActions from 'services/WizardStores/UploadData/UploadDataActions';
 import UploadDataActionCreator from 'services/WizardStores/UploadData/ActionCreator';
-import {default as NamespaceStore} from 'services/store/store';
+import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
 import cookie from 'react-cookie';
 

@@ -20,7 +20,7 @@ require('./Header.less');
 import HeaderBrand from '../HeaderBrand';
 import HeaderNavbarList from '../HeaderNavbarList';
 import HeaderActions from '../HeaderActions';
-import Store from '../../services/store/store.js';
+import NamespaceStore from 'services/NamespaceStore';
 
 export default class Header extends Component {
   constructor(props) {
@@ -45,7 +45,7 @@ export default class Header extends Component {
             <HeaderNavbarList
               list={this.state.navbarItemList}
               tag={this.props.tag}
-              store={Store}
+              store={NamespaceStore}
             />
           <HeaderActions
             tag={this.props.tag}

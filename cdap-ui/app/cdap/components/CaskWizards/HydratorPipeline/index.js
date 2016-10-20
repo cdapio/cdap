@@ -17,7 +17,7 @@ import React, {Component, PropTypes} from 'react';
 import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 require('./HydratorPipeline.less');
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
-import {default as NamespaceStore} from 'services/store/store';
+import NamespaceStore from 'services/NamespaceStore';
 
 import T from 'i18n-react';
 
