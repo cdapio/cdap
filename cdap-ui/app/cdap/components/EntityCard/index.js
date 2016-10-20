@@ -20,6 +20,7 @@ import EntityCardHeader from './EntityCardHeader';
 import ApplicationMetrics from './ApplicationMetrics';
 import ArtifactMetrics from './ArtifactMetrics';
 import DatasetMetrics from './DatasetMetrics';
+import ProgramMetrics from './ProgramMetrics';
 import StreamMetrics from './StreamMetrics';
 import classnames from 'classnames';
 import FastActions from 'components/EntityCard/FastActions';
@@ -39,6 +40,8 @@ export default class EntityCard extends Component {
         return <ArtifactMetrics entity={this.props.entity} />;
       case 'datasetinstance':
         return <DatasetMetrics entity={this.props.entity} />;
+      case 'program':
+        return <ProgramMetrics entity={this.props.entity} />;
       case 'stream':
         return <StreamMetrics entity={this.props.entity} />;
       case 'view':
@@ -49,7 +52,7 @@ export default class EntityCard extends Component {
   render() {
     const header = (
       <EntityCardHeader
-        type={this.props.entity.type}
+        entity={this.props.entity}
         systemTags={this.props.entity.metadata.metadata.SYSTEM.tags}
       />
     );

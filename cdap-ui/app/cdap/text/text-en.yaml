@@ -74,11 +74,13 @@ features:
           displayName: A - Z
         nameDesc:
           displayName: Z - A
-    FastActions:
-      deleteConfirmation: Are you sure you want to delete {entityId}?
-      truncateConfirmation: Are you sure you want to truncate {entityId}?
   Dashboard:
     Title: Dashboard
+
+  FastAction:
+    deleteConfirmation: Are you sure you want to delete {entityId}?
+    truncateConfirmation: Are you sure you want to truncate {entityId}?
+
   Management:
     Title: Management
     Top:

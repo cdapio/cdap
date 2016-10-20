@@ -26,8 +26,10 @@ export default class EntityCardHeader extends Component {
   }
 
   getType() {
-    if (this.props.type !== 'application') {
-      return this.props.type;
+    if (this.props.entity.type === 'program') {
+      return this.props.entity.programType.toLowerCase();
+    } else if (this.props.entity.type !== 'application') {
+      return this.props.entity.type;
     }
 
     if (this.props.systemTags.includes('cdap-data-pipeline')) {
@@ -35,30 +37,15 @@ export default class EntityCardHeader extends Component {
     } else if (this.props.systemTags.includes('cdap-data-streams')) {
       return 'cdap-data-streams';
     } else {
-      return this.props.type;
+      return this.props.entity.type;
     }
   }
-
-  getEntityIcon(type) {
-    const iconMap = {
-      application: 'icon-fist',
-      artifact: 'fa fa-archive',
-      'cdap-data-pipeline': 'icon-ETLBatch',
-      'cdap-data-streams': 'icon-sparkstreaming',
-      datasetinstance: 'icon-datasets',
-      stream: 'icon-streams',
-      view: 'icon-streamview'
-    };
-
-    return iconMap[type];
-  }
-
 
   render() {
     return (
       <div className="entity-card-header">
         <h4>
-          <span className={classNames('entity-icon', this.getEntityIcon(this.getType()))}></span>
+          <span className={classNames('entity-icon', this.props.entity.icon)}></span>
           <span className="entity-type">
             {T.translate(`commons.entity.${this.getType()}.singular`)}
           </span>
@@ -69,7 +56,7 @@ export default class EntityCardHeader extends Component {
 }
 
 EntityCardHeader.propTypes = {
-  type: PropTypes.string,
+  entity: PropTypes.object,
   systemTags: PropTypes.array
 };
 
