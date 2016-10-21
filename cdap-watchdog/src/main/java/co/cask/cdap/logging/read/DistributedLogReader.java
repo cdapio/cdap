@@ -45,8 +45,8 @@ public final class DistributedLogReader implements LogReader {
    */
   @Inject
   DistributedLogReader(CConfiguration cConf,
-                              KafkaLogReader kafkaLogReader, FileLogReader fileLogReader,
-                              CheckpointManagerFactory checkpointManagerFactory, StringPartitioner partitioner) {
+                       KafkaLogReader kafkaLogReader, FileLogReader fileLogReader,
+                       CheckpointManagerFactory checkpointManagerFactory, StringPartitioner partitioner) {
     this.kafkaLogReader = kafkaLogReader;
     this.fileLogReader = fileLogReader;
     this.checkpointManager = checkpointManagerFactory.create(cConf.get(Constants.Logging.KAFKA_TOPIC),

@@ -74,7 +74,8 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
     URI keytabURI = URI.create(impersonationInfo.getKeytabURI());
     boolean isKeytabLocal = keytabURI.getScheme() == null || "file".equals(keytabURI.getScheme());
 
-    File localKeytabFile = isKeytabLocal ? new File(keytabURI) : localizeKeytab(locationFactory.create(keytabURI));
+    File localKeytabFile = isKeytabLocal ?
+      new File(keytabURI.getPath()) : localizeKeytab(locationFactory.create(keytabURI));
     try {
       String expandedPrincipal = SecurityUtil.expandPrincipal(impersonationInfo.getPrincipal());
       LOG.debug("Logging in as: principal={}, keytab={}", expandedPrincipal, localKeytabFile);

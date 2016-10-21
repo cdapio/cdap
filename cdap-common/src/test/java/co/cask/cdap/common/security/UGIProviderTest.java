@@ -116,7 +116,7 @@ public class UGIProviderTest {
     DefaultUGIProvider provider = new DefaultUGIProvider(cConf, locationFactory);
 
     // Try with local keytab file
-    ImpersonationInfo aliceInfo = new ImpersonationInfo(getPrincipal("alice"), keytabFile.toURI().toString());
+    ImpersonationInfo aliceInfo = new ImpersonationInfo(getPrincipal("alice"), keytabFile.getAbsolutePath());
     UserGroupInformation aliceUGI = provider.getConfiguredUGI(aliceInfo);
     Assert.assertEquals(UserGroupInformation.AuthenticationMethod.KERBEROS, aliceUGI.getAuthenticationMethod());
     Assert.assertTrue(aliceUGI.hasKerberosCredentials());
