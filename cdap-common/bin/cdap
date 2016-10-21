@@ -23,15 +23,25 @@
 
 __script=${BASH_SOURCE[0]}
 
-__target=$(readlink ${__script}) # TODO: readlink isn't portable, if we support more than Linux/macOS
-if [[ $? -ne 0 ]]; then
-  __target=${__script} # no symlink
-fi
-# Resolve __target
-__target=$(cd $(dirname ${__target}); echo "$(pwd -P)/$(basename ${__target})")
-__app_home=$(cd $(dirname ${__target})/.. >&-; pwd -P)
+# Resolve symlinks
+__readlink() {
+  local __target_file=${1}
+  cd $(dirname ${__target_file})
+  __target_file=$(basename ${__target_file})
+  while test -L ${__target_file}; do
+    __target_file=$(readlink ${__target_file})
+    cd $(dirname ${__target_file})
+    __target_file=$(basename ${__target_file})
+  done
+  echo "$(pwd -P)/${__target_file}"
+}
 
+__target=$(__readlink ${__script})
+__target=$(cd $(dirname ${__target}); echo "$(pwd -P)/$(basename ${__target})")
+
+__app_home=$(cd $(dirname ${__target})/.. >&-; pwd -P)
 __comp_home=${COMPONENT_HOME:-$(cd ${__target%/*/*} >&- 2>/dev/null; pwd -P)}
+
 # Determine if we're in Distributed from packages or SDK/Parcel
 if [[ ${__comp_home%/*} == /opt/cdap ]] && [[ ${__comp_home} != /opt/cdap/sdk* ]]; then
   __app_home=${__comp_home}
