@@ -29,6 +29,7 @@ import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -116,8 +117,24 @@ public class ServiceClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the app or service could not be found
+   * @deprecated since 4.0.0. Please use {@link #getEndpoints(ServiceId)} instead
    */
+  @Deprecated
   public List<ServiceHttpEndpoint> getEndpoints(Id.Service service)
+    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
+    return getEndpoints(service.toEntityId());
+  }
+
+  /**
+   * Gets a list of {@link ServiceHttpEndpoint} that a {@link Service} exposes.
+   *
+   * @param service ID of the service
+   * @return A list of {@link ServiceHttpEndpoint}
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws NotFoundException if the app or service could not be found
+   */
+  public List<ServiceHttpEndpoint> getEndpoints(ServiceId service)
     throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
 
     ServiceSpecification specification = get(service);
@@ -137,21 +154,39 @@ public class ServiceClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the app or service could not be found
    * @throws ServiceUnavailableException if the service has started but is not available right now
+   * @deprecated since 4.0.0. Please use {@link #getAvailability(ServiceId)} instead
    */
+  @Deprecated
   public String getAvailability(Id.Service service) throws IOException, UnauthenticatedException, NotFoundException,
     ServiceUnavailableException, UnauthorizedException {
-    URL url = config.resolveNamespacedURLV3(service.getNamespace(),
-                                            String.format("apps/%s/services/%s/available",
-                                                          service.getApplicationId(), service.getId()));
+    return getAvailability(service.toEntityId());
+  }
+
+  /**
+   * Checks whether the {@link Service} is active.
+   *
+   * @param service ID of the service
+   * @return 'Active' message when service is active
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws NotFoundException if the app or service could not be found
+   * @throws ServiceUnavailableException if the service has started but is not available right now
+   */
+  public String getAvailability(ServiceId service) throws IOException, UnauthenticatedException, NotFoundException,
+    ServiceUnavailableException, UnauthorizedException {
+    URL url = config.resolveNamespacedURLV3(service.getNamespaceId(),
+                                            String.format("apps/%s/versions/%s/services/%s/available",
+                                                          service.getApplication(), service.getVersion(),
+                                                          service.getProgram()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND, HttpURLConnection.HTTP_BAD_REQUEST,
                                                HttpURLConnection.HTTP_UNAVAILABLE);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(service.toEntityId());
+      throw new NotFoundException(service);
     }
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_UNAVAILABLE) {
-      throw new ServiceUnavailableException(service.getId());
+      throw new ServiceUnavailableException(service.getProgram());
     }
     return response.getResponseBodyAsString();
   }

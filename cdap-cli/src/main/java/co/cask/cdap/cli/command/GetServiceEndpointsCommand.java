@@ -53,15 +53,8 @@ public class GetServiceEndpointsCommand extends AbstractAuthCommand implements C
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String[] appAndServiceId = arguments.get(ArgumentName.SERVICE.toString()).split("\\.");
-    if (appAndServiceId.length < 2) {
-      throw new CommandInputError(this);
-    }
-
-    String appId = appAndServiceId[0];
-    String serviceName = appAndServiceId[1];
-    ServiceId serviceId = cliConfig.getCurrentNamespace().app(appId).service(serviceName);
-    List<ServiceHttpEndpoint> endpoints = serviceClient.getEndpoints(serviceId.toId());
+    ServiceId serviceId = parseServiceId(arguments);
+    List<ServiceHttpEndpoint> endpoints = serviceClient.getEndpoints(serviceId);
 
     Table table = Table.builder()
       .setHeader("method", "path")
