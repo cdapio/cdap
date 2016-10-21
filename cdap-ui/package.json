@@ -13,8 +13,10 @@
     "distribute": "node ./node_modules/gulp/bin/gulp.js distribute",
     "build": "node ./node_modules/gulp/bin/gulp.js build",
     "cdap-dev-build-w": "webpack --dev-tools --watch -d",
-    "test": "node ./node_modules/karma/bin/karma start test/karma-conf.js",
-    "test-single-run": "node ./node_modules/karma/bin/karma start test/karma-conf.js --no-auto-watch --single-run"
+    "karma-test": "node ./node_modules/karma/bin/karma start test/karma-conf.js",
+    "karma-test-single-run": "node ./node_modules/karma/bin/karma start test/karma-conf.js --no-auto-watch --single-run",
+    "test": "jest --coverage",
+    "watch-test": "jest --watch"
   },
   "repository": {
     "type": "git",
@@ -61,6 +63,7 @@
     "gulp-uglify": "1.5.1",
     "gulp-util": "3.0.7",
     "gulp-wrapper": "1.0.0",
+    "jest-cli": "16.0.2",
     "jshint": "2.9.2",
     "karma": "0.12.31",
     "karma-chrome-launcher": "0.1.7",
@@ -122,5 +125,19 @@
   },
   "engines": {
     "node": ">= 0.10.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testPathDirs": [
+      "./app/cdap/"
+    ],
+    "modulePaths": [
+      "./app/cdap/"
+    ],
+    "moduleNameMapper": {
+      "^components": "<rootDir>/components",
+      "^services": "<rootDir>/services",
+      "^api": "<rootDir>/api"
+    }
   }
 }
