@@ -89,7 +89,7 @@ GOTO :EOF
 
 :CHECK_JAVA
 REM Check for correct setting for JAVA_HOME path
-if [%JAVA_HOME%] == [] (
+if ["%JAVA_HOME%"] == [] (
   echo ERROR: JAVA_HOME is set to an invalid directory: %JAVA_HOME%
   echo Please set the JAVA_HOME variable in your environment to match the location of your Java installation.
   EXIT /B 1
