@@ -20,6 +20,7 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.util.StatusPrinter;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricStore;
@@ -163,20 +164,26 @@ public class LogSaverPluginTest extends KafkaTestBase {
 
     try {
       startLogSaver();
+
+      FlowletLoggingContext loggingContext =
+        new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE");
+      FileLogReader fileLogReader = injector.getInstance(FileLogReader.class);
+      try (CloseableIterator<LogEvent> events =
+        fileLogReader.getLog(loggingContext, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER)) {
+        Assert.assertFalse(events.hasNext());
+      }
+
       publishLogs();
 
       LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
       String logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
       Location ns1LogBaseDir = locationFactory.create(namespaceDir).append("NS_1").append(logBaseDir);
-      FlowletLoggingContext loggingContext =
-        new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE");
 
       FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
       waitTillLogSaverDone(fileMetaDataManager, loggingContext, "Test log message 59 arg1 arg2");
 
       testLogRead(loggingContext, logBaseDir);
 
-      FileLogReader fileLogReader = injector.getInstance(FileLogReader.class);
       List<LogEvent> events = Lists.newArrayList(
         fileLogReader.getLog(new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE"),
                              0, Long.MAX_VALUE, Filter.EMPTY_FILTER));
@@ -226,7 +233,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
       try {
         final Multimap<String, String> contextMessages = getPublishedKafkaMessages();
         LOG.info("All kafka messages: {}", contextMessages);
-      } catch (Exception e) {
+      } catch (Throwable e) {
         LOG.error("Error while getting published kafka messages {}", e);
       }
       throw t;
