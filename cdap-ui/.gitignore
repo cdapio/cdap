@@ -12,3 +12,4 @@ common_dist/
 target/
 cdap-config.json
 cdap-security-config.json
+coverage/
