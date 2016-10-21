@@ -18,19 +18,24 @@ import React, {Component, PropTypes} from 'react';
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import T from 'i18n-react';
 import debounce from 'lodash/debounce';
+import shortid from 'shortid';
 
 require('./HomeHeader.less');
 
 export default class HomeHeader extends Component {
   constructor(props) {
     super(props);
+    console.log('props: ', props);
 
     this.debouncedHandleSearch = debounce(this.handleSearch.bind(this), 500);
 
     this.state = {
       isFilterExpanded: false,
-      isSortExpanded: false
+      isSortExpanded: false,
+      isPaginationExpanded: false
     };
+
+    this.handlePaginationToggle = this.handlePaginationToggle.bind(this);
   }
 
   handleFilterToggle() {
@@ -39,6 +44,10 @@ export default class HomeHeader extends Component {
 
   handleSortToggle() {
     this.setState({isSortExpanded: !this.state.isSortExpanded});
+  }
+
+  handlePaginationToggle() {
+    this.setState({ isPaginationExpanded : !this.state.isPaginationExpanded});
   }
 
   handleSearch() {
@@ -82,6 +91,52 @@ export default class HomeHeader extends Component {
         </DropdownMenu>
       </Dropdown>
     );
+
+
+    const PaginationDropdown = () => {
+      let number = this.props.numberOfPages;
+      let dropdownItems = [];
+
+      for(let i = 0; i < number*10; i++){
+        dropdownItems.push(
+          <div className="dropdownItems">
+            {i + 1}
+            {
+              this.props.currentPage === (i + 1) ?
+              <span className="fa fa-check pull-right"></span> :
+              null
+            }
+          </div>
+        );
+      }
+
+      return (
+        <Dropdown
+          isOpen={this.state.isPaginationExpanded}
+          toggle={this.handlePaginationToggle}
+        >
+          <DropdownToggle tag="div">
+            <span>{T.translate('features.Home.Header.pagination')}</span>
+            <span className="header-current-page">{this.props.currentPage}</span>
+            <span className="fa fa-caret-down pull-right"></span>
+          </DropdownToggle>
+          <DropdownMenu onClick={e => e.stopPropagation()}>
+            {
+              dropdownItems.map((item, index) => {
+                return (
+                  <DropdownItem
+                    key={shortid.generate()}
+                    onClick={this.props.changePage.bind(this, index+1)}
+                  >
+                    {item}
+                  </DropdownItem>
+                );
+              })
+            }
+          </DropdownMenu>
+        </Dropdown>
+      );
+    };
 
     const filterDropdown = (
       <Dropdown
@@ -141,6 +196,9 @@ export default class HomeHeader extends Component {
         <div className="filter">
           {filterDropdown}
         </div>
+        <div className="pagination-dropdown">
+          <PaginationDropdown />
+        </div>
         <div className="view-selector pull-right">
           <span className="fa fa-th active"></span>
           <span className="fa fa-list"></span>
@@ -175,5 +233,8 @@ HomeHeader.propTypes = {
   }),
   onSortClick: PropTypes.func,
   onSearch: PropTypes.func,
-  searchText: PropTypes.string
+  searchText: PropTypes.string,
+  numberOfPages: PropTypes.number,
+  currentPage: PropTypes.number,
+  changePage: PropTypes.func
 };

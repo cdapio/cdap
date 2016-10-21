@@ -27,6 +27,8 @@ require('./Home.less');
 
 const defaultFilter = ['app', 'dataset', 'stream'];
 
+const VIEW_RESULT_LIMIT = 12;
+
 class Home extends Component {
   constructor(props) {
     super(props);
@@ -79,10 +81,14 @@ class Home extends Component {
       query: '',
       entities: [],
       selectedEntity: null,
-      loading: true
+      loading: true,
+      currentPage: 1
     };
+
+    this.numberOfPages = 0;
     this.updateQueryString = this.updateQueryString.bind(this);
     this.getQueryObject = this.getQueryObject.bind(this);
+    this.handlePageChange = this.handlePageChange.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -187,11 +193,16 @@ class Home extends Component {
       namespace: namespace,
       query: `${query}*`,
       target: filter,
+      size: VIEW_RESULT_LIMIT,
       sort: sortObj.fullSort
     };
 
     MySearchApi.search(params)
       .map((res) => {
+        this.numberOfPages = Math.ceil(res.total / VIEW_RESULT_LIMIT);
+        console.log('Number of pages: ', this.numberOfPages);
+        this.currentPage = res.offset + 1;
+        console.log('response: ', res);
         return res.results
           .map(parseMetadata)
           .map((entity) => {
@@ -201,7 +212,7 @@ class Home extends Component {
           .filter((entity) => entity.id.charAt(0) !== '_');
       })
       .subscribe((res) => {
-        this.setState({query, filter, sortObj, entities: res, selectedEntity: null, loading: false});
+        this.setState({query, filter, sortObj, currentPage : 1, entities: res, selectedEntity: null, loading: false});
       });
   }
 
@@ -219,6 +230,12 @@ class Home extends Component {
     });
 
     this.search(this.state.query, filters, this.state.sortObj);
+  }
+
+  handlePageChange(number) {
+    this.setState({
+      currentPage : number
+    });
   }
 
   handleSortClick(option) {
@@ -334,6 +351,9 @@ class Home extends Component {
           onSortClick={this.handleSortClick.bind(this)}
           onSearch={this.handleSearch.bind(this)}
           searchText={this.state.query}
+          numberOfPages={this.numberOfPages}
+          currentPage={this.state.currentPage}
+          changePage={this.handlePageChange}
         />
         <div className="entity-list">
           {entitiesToBeRendered}

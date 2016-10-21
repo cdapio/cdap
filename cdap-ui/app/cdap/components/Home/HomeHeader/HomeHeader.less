@@ -34,9 +34,14 @@
   left: 0;
   right: 0;
 
+  .header-current-page {
+    margin-left: 5px;
+  }
+
   .search-box,
   .sort,
-  .filter {
+  .filter,
+  .pagination-dropdown {
     float: left;
     border-right: 1px solid @home-header-border-color;
     height: @home-header-height;
@@ -56,6 +61,8 @@
         border: 1px solid @home-header-border-color;
         border-top: 0;
         z-index: 1002;
+        max-height: 235px;
+        overflow-y: auto;
       }
 
       .dropdown-item {
@@ -67,6 +74,9 @@
         text-align: left;
         span { line-height: initial; }
         &:focus { outline: 0; }
+        &:hover {
+          background-color: #E6E6E6;
+        }
       }
     }
   }
@@ -90,7 +100,8 @@
   }
 
   .sort,
-  .filter {
+  .filter,
+  .pagination-dropdown {
     padding: 0 15px;
     font-size: 14px;
     font-weight: 500;
@@ -99,7 +110,8 @@
     &.active { background-color: white; }
   }
 
-  .sort {
+  .sort,
+  .pagination-dropdown {
     width: @sort-box-width;
     .dropdown-menu { min-width: @sort-box-width + 2px; }
   }
