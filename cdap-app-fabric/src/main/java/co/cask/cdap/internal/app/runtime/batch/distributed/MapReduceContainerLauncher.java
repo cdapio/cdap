@@ -78,34 +78,36 @@ public class MapReduceContainerLauncher {
 
     // Creates the MapReduceClassLoader.
     final ClassLoader classLoader = (ClassLoader) mainClassLoader.loadClass(classLoaderName).newInstance();
-
-    try {
-      Thread.currentThread().setContextClassLoader(classLoader);
-
-      // Invoke MapReduceClassLoader.getTaskContextProvider()
-      classLoader.getClass().getDeclaredMethod("getTaskContextProvider").invoke(classLoader);
-      // Invoke StandardOutErrorRedirector.redirectToLogger()
-      classLoader.loadClass("co.cask.cdap.common.logging.StandardOutErrorRedirector")
-        .getDeclaredMethod("redirectToLogger", String.class)
-        .invoke(null, mainClassName);
-
-      Class<?> mainClass = classLoader.loadClass(mainClassName);
-      Method mainMethod = mainClass.getMethod("main", String[].class);
-      mainMethod.setAccessible(true);
-
-      System.out.println("Launch main class " + mainClass + ".main(" + Arrays.toString(args) + ")");
-      mainMethod.invoke(null, new Object[]{args});
-      System.out.println("Main method returned " + mainClass);
-    } finally {
-      if (classLoader instanceof AutoCloseable) {
-        try {
-          ((AutoCloseable) classLoader).close();
-        } catch (Exception e) {
-          System.err.println("Failed to close ClassLoader " + classLoader);
-          e.printStackTrace();
+    Runtime.getRuntime().addShutdownHook(new Thread() {
+      @Override
+      public void run() {
+        if (classLoader instanceof AutoCloseable) {
+          try {
+            ((AutoCloseable) classLoader).close();
+          } catch (Exception e) {
+            System.err.println("Failed to close ClassLoader " + classLoader);
+            e.printStackTrace();
+          }
         }
       }
-    }
+    });
+
+    Thread.currentThread().setContextClassLoader(classLoader);
+
+    // Invoke MapReduceClassLoader.getTaskContextProvider()
+    classLoader.getClass().getDeclaredMethod("getTaskContextProvider").invoke(classLoader);
+    // Invoke StandardOutErrorRedirector.redirectToLogger()
+    classLoader.loadClass("co.cask.cdap.common.logging.StandardOutErrorRedirector")
+      .getDeclaredMethod("redirectToLogger", String.class)
+      .invoke(null, mainClassName);
+
+    Class<?> mainClass = classLoader.loadClass(mainClassName);
+    Method mainMethod = mainClass.getMethod("main", String[].class);
+    mainMethod.setAccessible(true);
+
+    System.out.println("Launch main class " + mainClass + ".main(" + Arrays.toString(args) + ")");
+    mainMethod.invoke(null, new Object[]{args});
+    System.out.println("Main method returned " + mainClass);
   }
 
   /**
