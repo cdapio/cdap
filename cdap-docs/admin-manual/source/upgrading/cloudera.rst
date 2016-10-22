@@ -53,8 +53,9 @@ CDAP:
 #. Use the Cloudera Manager UI to download, distribute, and activate the target
    CDAP parcel version on all cluster hosts.
 
-#. Before starting services, run the *CDAP Upgrade Tool* to upgrade CDAP. From the CDAP Service 
-   page, select "Run CDAP Upgrade" from the Actions menu.
+#. Before starting services, run the *CDAP Upgrade Tool* to upgrade CDAP. From the CDAP Service
+   page, select "Run CDAP Upgrade" from the Actions menu. Note that authorization is disabled in
+   the UpgradeTool, so that the cdap user could upgrade all user's data.
 
 #. Start the CDAP services.  At this point it may be necessary to correct for any changes in
    the CSD.  For example, if new CDAP services were added or removed, you must add or

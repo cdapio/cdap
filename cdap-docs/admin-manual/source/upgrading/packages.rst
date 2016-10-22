@@ -74,7 +74,8 @@ and then restart CDAP:
      $ sudo -u <cdap-user> /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
      
    Note that once you have upgraded an instance of CDAP, you cannot reverse the process; down-grades
-   to a previous version are not possible.
+   to a previous version are not possible. Also note that authorization is disabled in the UpgradeTool,
+   so that the cdap user could upgrade all user's data.
    
    The Upgrade Tool will produce output similar to the following, prompting you to continue with the upgrade:
    
