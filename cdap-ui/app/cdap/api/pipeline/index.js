@@ -14,10 +14,10 @@
  * the License.
  */
 
-import Datasource from '../../services/datasource';
+import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
 import {apiCreator} from '../../services/resource-helper';
 
-let dataSrc = new Datasource();
+let dataSrc = DataSourceConfigurer.getInstance();
 let basepath = '/namespaces/:namespace/apps/:appId';
 
 export const MyPipelineApi = {

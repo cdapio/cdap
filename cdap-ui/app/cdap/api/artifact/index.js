@@ -13,11 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-import Datasource from 'services/datasource';
+import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
 import {apiCreator} from 'services/resource-helper';
 
-let dataSrc = new Datasource();
+let dataSrc = DataSourceConfigurer.getInstance();
 const basepath = '/namespaces/:namespace/artifacts';
 const baseArtifactPath = basepath + '/:artifactId/versions/:version';
 
