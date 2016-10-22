@@ -47,8 +47,6 @@ function usage() {
   echo "    docs-github       Clean build of HTML and Javadocs, zipped, for placing on GitHub"
   echo "    docs-web          Clean build of HTML and Javadocs, zipped, for placing on docs.cask.co webserver"
   echo
-  echo "    pack-web-part     Package the existing build of Web docs (for testing only)"
-  echo 
   echo "    clean             Clean up any previous build's target directories"
   echo "    docs-cli          Build CLI input file used in the documentation"
   echo "    javadocs          Build Javadocs used in documentation"
@@ -125,6 +123,7 @@ function run_command() {
     docs-web-part )     build_docs_web_part;;
     
     pack-web-part )     package_docs_web_part;;
+    pack-github-part )  package_docs_github_part;;
     
     docs-cli )          build_docs_cli;;
     javadocs )          build_javadocs ${DOCS};;
@@ -336,7 +335,7 @@ function build_docs_github_part() {
   echo "--------------------------------------------------------"
   echo
   # Don't add the zip_extras (.htaccess files) to Github
-  _build_docs build-github ${GOOGLE_TAG_MANAGER_CODE_GITHUB} ${GITHUB} ${FALSE}
+  _build_docs ${BUILD_GITHUB} ${GOOGLE_TAG_MANAGER_CODE_GITHUB} ${GITHUB} ${FALSE}
   return $?
 }
 
@@ -352,11 +351,10 @@ function stash_github_zip() {
 
 function restore_github_zip() {
   echo "========================================================"
-  echo "Restoring GitHub Zip"
+  echo "Restoring GitHub Zip from ${TARGET_TEMP}"
   echo "========================================================"
   echo
-  mv ${TARGET_TEMP}/*.zip ${TARGET_PATH}
-  rm -rf ${TARGET_TEMP}
+  mv ${TARGET_TEMP}/*archive.zip ${TARGET_PATH}
   echo
 }
 
@@ -365,7 +363,7 @@ function build_docs_web_part() {
   echo "Building Web Docs"
   echo "--------------------------------------------------------"
   echo
-  _build_docs build-web ${GOOGLE_TAG_MANAGER_CODE_WEB} ${WEB} ${TRUE}
+  _build_docs ${BUILD_WEB} ${GOOGLE_TAG_MANAGER_CODE_WEB} ${WEB} ${TRUE}
   return $?
 }
 
@@ -390,12 +388,22 @@ function _build_docs() {
   echo
 }
 
+# For testing and debugging
 function package_docs_web_part() {
   echo "========================================================"
   echo "Packaging Web Docs"
   echo "--------------------------------------------------------"
   echo
   _package_docs build-web ${WEB} ${TRUE}
+}
+
+# For testing and debugging
+function package_docs_github_part() {
+  echo "========================================================"
+  echo "Packaging GitHub Docs"
+  echo "--------------------------------------------------------"
+  echo
+  _package_docs build-github ${GITHUB} ${FALSE}
 }
 
 function _package_docs() {
@@ -408,7 +416,7 @@ function _package_docs() {
   echo "Packaging target \"${doc_target}\"..."
   echo "--------------------------------------------------------"
   copy_docs_inner_level
-  build_zip ${zip_target} ${zip_extras}
+  build_zip ${doc_target} ${zip_target} ${zip_extras}
   echo
   echo "--------------------------------------------------------"
   echo "Packaging target \"${doc_target}\" completed."
@@ -489,14 +497,24 @@ function copy_docs_inner_level() {
 }
 
 function build_zip() {
-  local zip_target=${1}
-  local zip_extras=${2}
+  local doc_target=${1}
+  local zip_target=${2}
+  local zip_extras=${3}
   set_project_path
   set_version
+  local zip_dir_name
   if [[ -n ${zip_target} ]]; then
-    ZIP_DIR_NAME="${PROJECT}-docs-${PROJECT_VERSION}"
+    zip_dir_name="${PROJECT}-docs-${PROJECT_VERSION}"
   else
-    ZIP_DIR_NAME="${PROJECT}-docs-${PROJECT_VERSION}-$1"
+    zip_dir_name="${PROJECT}-docs-${PROJECT_VERSION}-$1"
+  fi
+  local zip_dir_name_archive
+  local build_flag
+  if [ "x${doc_target}" == "x${BUILD_GITHUB}" ]; then
+    zip_dir_name_archive="${zip_dir_name}-github-archive.zip"
+    build_flag="--ghpages"
+  else
+    zip_dir_name_archive="${zip_dir_name}-web-archive.zip"
   fi
   cd ${TARGET_PATH}
   doc_change_py="${TARGET_PATH}/../tools/doc-change.py"
@@ -522,81 +540,85 @@ function build_zip() {
   fi
 
   echo
-  echo "1: 'current' version, with canonical ref link ${ZIP_DIR_NAME}-current"
+  echo "1: 'current' version, with canonical ref link ${zip_dir_name}-current"
   cp -r base current
-  python ${doc_change_py} ${TARGET_PATH} --current=${PROJECT_VERSION} current
+  python ${doc_change_py} ${build_flag} --type=current --version=${PROJECT_VERSION} ${TARGET_PATH}/current
   errors=$?
   if [[ ${errors} -ne 0 ]]; then
-      echo "Could not change doc set ${TARGET_PATH}"
+      echo "Could not change doc set ${TARGET_PATH}/current"
       return ${errors}   
   fi
-  zip -qr ${ZIP_DIR_NAME}.zip current/* --exclude *.DS_Store* *.buildinfo*
+  zip -qr ${zip_dir_name}.zip current/* --exclude *.DS_Store* *.buildinfo*
   if [[ "x${zip_extras}" != "x" ]]; then
     echo "Creating and adding a .htaccess file (404 file)"
     rewrite ${SCRIPT_PATH}/${COMMON_SOURCE}/${HTACCESS} ${TARGET_PATH}/current/.${HTACCESS} "<version>" "current"
-    zip -qr ${ZIP_DIR_NAME}.zip current/.${HTACCESS}
+    zip -qr ${zip_dir_name}.zip current/.${HTACCESS}
   fi
-  mv ${ZIP_DIR_NAME}.zip ${ZIP_DIR_NAME}-current.zip
+  mv ${zip_dir_name}.zip ${zip_dir_name}-current.zip
   errors=$?
   if [[ ${errors} -ne 0 ]]; then
-      echo "Could not move ${ZIP_DIR_NAME}.zip to ${ZIP_DIR_NAME}-current.zip"
+      echo "Could not move ${zip_dir_name}.zip to ${zip_dir_name}-current.zip"
       return ${errors}   
   fi
 
   echo
-  echo "2: 'future' version with robots meta tag ${ZIP_DIR_NAME}-future"
+  echo "2: 'future' version with robots meta tag ${zip_dir_name}-future"
   cp -r base ${PROJECT_VERSION}
-  python ${doc_change_py} ${TARGET_PATH} ${PROJECT_VERSION}
+  python ${doc_change_py} ${build_flag} --type=future --version=${PROJECT_VERSION} ${TARGET_PATH}/${PROJECT_VERSION}
   errors=$?
   if [[ ${errors} -ne 0 ]]; then
-      echo "Could not change doc set ${TARGET_PATH}"
+      echo "Could not change doc set ${TARGET_PATH}/${PROJECT_VERSION}"
       return ${errors}   
   fi
-  zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/* --exclude *.DS_Store* *.buildinfo*
+  zip -qr ${zip_dir_name}.zip ${PROJECT_VERSION}/* --exclude *.DS_Store* *.buildinfo*
   if [[ "x${zip_extras}" != "x" ]]; then
     echo "Creating and adding a .htaccess file (404 file)"
     rewrite ${SCRIPT_PATH}/${COMMON_SOURCE}/${HTACCESS} ${TARGET_PATH}/${PROJECT_VERSION}/.${HTACCESS} "<version>" "${PROJECT_VERSION}"
-    zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/.${HTACCESS}
+    zip -qr ${zip_dir_name}.zip ${PROJECT_VERSION}/.${HTACCESS}
   fi
-  mv ${ZIP_DIR_NAME}.zip ${ZIP_DIR_NAME}-future.zip
+  mv ${zip_dir_name}.zip ${zip_dir_name}-future.zip
   errors=$?
   if [[ ${errors} -ne 0 ]]; then
-      echo "Could not move ${ZIP_DIR_NAME}.zip to ${ZIP_DIR_NAME}-future.zip"
+      echo "Could not move ${zip_dir_name}.zip to ${zip_dir_name}-future.zip"
       return ${errors}   
   fi
-  rm -rf ${TARGET_PATH}/${PROJECT_VERSION}
+  rm -rf future
+  mv ${PROJECT_VERSION} future
+  errors=$?
+  if [[ ${errors} -ne 0 ]]; then
+      echo "Could not move ${PROJECT_VERSION} to future"
+      return ${errors}   
+  fi
 
   echo
-  echo "3: Canonical numbered version ${ZIP_DIR_NAME}"
+  echo "3: Canonical numbered version ${zip_dir_name}"
   cp -r base ${PROJECT_VERSION}
-  python ${doc_change_py} ${TARGET_PATH} --current=${PROJECT_VERSION} ${PROJECT_VERSION}
+  python ${doc_change_py} ${build_flag} ${TARGET_PATH}/${PROJECT_VERSION}
   errors=$?
   if [[ ${errors} -ne 0 ]]; then
-      echo "Could not change doc set ${TARGET_PATH}"
+      echo "Could not change doc set ${TARGET_PATH}/${PROJECT_VERSION}"
       return ${errors}   
   fi
-  zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/* --exclude *.DS_Store* *.buildinfo*
+  zip -qr ${zip_dir_name}.zip ${PROJECT_VERSION}/* --exclude *.DS_Store* *.buildinfo*
   if [[ "x${zip_extras}" != "x" ]]; then
     echo "Creating and adding a .htaccess file (404 file)"
     rewrite ${SCRIPT_PATH}/${COMMON_SOURCE}/${HTACCESS} ${TARGET_PATH}/${PROJECT_VERSION}/.${HTACCESS} "<version>" "${PROJECT_VERSION}"
-    zip -qr ${ZIP_DIR_NAME}.zip ${PROJECT_VERSION}/.${HTACCESS}
+    zip -qr ${zip_dir_name}.zip ${PROJECT_VERSION}/.${HTACCESS}
   fi
   errors=$?
   if [[ ${errors} -ne 0 ]]; then
-      echo "Could not complete canonical numbered version"
+      echo "Could not complete doc set ${TARGET_PATH}/${PROJECT_VERSION}"
       return ${errors}   
   fi
 
   echo
-  echo "Zipping together the zips"
-  zip -q ${ZIP_DIR_NAME}-archive.zip *.zip
+  echo "Zipping together the zips into ${zip_dir_name_archive}"
+  zip -q ${zip_dir_name_archive} *.zip
   errors=$?
   if [[ ${errors} -ne 0 ]]; then
-      echo "Could not zip together the zips"
+      echo "Could not zip together the zips into ${zip_dir_name_archive}"
       return ${errors}   
   fi
-  # Cleanup
-  rm -rf base current ${ZIP_DIR_NAME}-current.zip ${ZIP_DIR_NAME}-future.zip
 }
 
 function clean_targets() {
