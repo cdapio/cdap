@@ -97,7 +97,7 @@ public class RouteConfigHttpHandler extends AbstractAppFabricHttpHandler {
 
     RouteConfig routeConfig = new RouteConfig(routes);
     if (!routeConfig.isValid()) {
-      throw new BadRequestException("Route Percentage needs to add upto 100.");
+      throw new BadRequestException("Route Percentage needs to add up to 100.");
     }
 
     routeStore.store(programId, routeConfig);

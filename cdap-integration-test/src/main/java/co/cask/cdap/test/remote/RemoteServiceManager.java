@@ -23,7 +23,6 @@ import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.ServiceManager;
