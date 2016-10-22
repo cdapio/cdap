@@ -42,7 +42,6 @@ import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import CaskVideoModal from 'components/CaskVideoModal';
 import RouteToNamespace from 'components/RouteToNamespace';
 import Helmet from 'react-helmet';
-import RedirectToLogin from 'services/redirect-to-login';
 
 class CDAP extends Component {
   constructor(props) {
@@ -83,22 +82,11 @@ class CDAP extends Component {
           } else {
             //To-Do: No namespaces returned ; throw error / redirect
           }
-        },
-        (err) => {
-          if (err.statusCode === 401) {
-            RedirectToLogin();
-          }
-          // Otherwise something is wrong with backend. We need to surface this error.
         }
       );
   }
 
   render() {
-    if ( window.CDAP_CONFIG.securityEnabled && !cookie.load('CDAP_Auth_Token')) {
-      //authentication failed ; redirect to another page
-      RedirectToLogin();
-      return null;
-    }
     if (window.CDAP_CONFIG.securityEnabled) {
       NamespaceStore.dispatch({
         type: NamespaceActions.updateUsername,

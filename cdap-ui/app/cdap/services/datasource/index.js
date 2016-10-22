@@ -40,6 +40,10 @@ export default class Datasource {
           if (shouldCallNextHanlder) {
             this.bindings[hash].rx.onNext(data.response);
           }
+          if (typeof shouldCallNextHandler === 'undefined') {
+            console.error('Handlers: ', genericResponseHandlers);
+            throw 'Handlers for Datasource should return boolean value.';
+          }
         }
 
         if (this.bindings[hash].type === 'REQUEST') {
