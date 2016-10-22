@@ -24,7 +24,10 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.namespace.AbstractNamespaceQueryClient;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
@@ -42,6 +45,7 @@ import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.FlowId;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -73,6 +77,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * admin for queues in hbase.
@@ -94,16 +99,21 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
   private final QueueConstants.QueueType type;
   private final TransactionExecutorFactory txExecutorFactory;
   private final DatasetFramework datasetFramework;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final Impersonator impersonator;
 
   @Inject
-  HBaseQueueAdmin(Configuration hConf,
-                  CConfiguration cConf,
-                  LocationFactory locationFactory,
-                  HBaseTableUtil tableUtil,
-                  DatasetFramework datasetFramework,
-                  TransactionExecutorFactory txExecutorFactory) {
+  public HBaseQueueAdmin(Configuration hConf,
+                         CConfiguration cConf,
+                         LocationFactory locationFactory,
+                         HBaseTableUtil tableUtil,
+                         DatasetFramework datasetFramework,
+                         TransactionExecutorFactory txExecutorFactory,
+                         NamespaceQueryAdmin namespaceQueryAdmin,
+                         Impersonator impersonator) {
+
     this(hConf, cConf, locationFactory, tableUtil, datasetFramework, txExecutorFactory,
-         QueueConstants.QueueType.SHARDED_QUEUE);
+         QueueConstants.QueueType.SHARDED_QUEUE, namespaceQueryAdmin, impersonator);
   }
 
   protected HBaseQueueAdmin(Configuration hConf,
@@ -112,7 +122,9 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
                             HBaseTableUtil tableUtil,
                             DatasetFramework datasetFramework,
                             TransactionExecutorFactory txExecutorFactory,
-                            QueueConstants.QueueType type) {
+                            QueueConstants.QueueType type,
+                            NamespaceQueryAdmin namespaceQueryAdmin,
+                            Impersonator impersonator) {
     super(type);
     this.hConf = hConf;
     this.cConf = cConf;
@@ -121,6 +133,8 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
     this.txExecutorFactory = txExecutorFactory;
     this.datasetFramework = datasetFramework;
     this.type = type;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.impersonator = impersonator;
   }
 
   @Override
@@ -216,11 +230,23 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
 
   @Override
   public void upgrade() throws Exception {
-    // For each table managed by this admin, perform an upgrade
+    // For each queue config table and queue data table in each namespace, perform an upgrade
+    for (final NamespaceMeta namespaceMeta : namespaceQueryAdmin.list()) {
+      impersonator.doAs(namespaceMeta, new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          upgradeQueues(namespaceMeta);
+          return null;
+        }
+      });
+    }
+  }
+
+  private void upgradeQueues(NamespaceMeta namespaceMeta) throws Exception {
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      List<TableId> tableIds = tableUtil.listTables(admin);
+      String hbaseNamespace = tableUtil.getHBaseNamespace(namespaceMeta);
+      List<TableId> tableIds = tableUtil.listTablesInNamespace(admin, hbaseNamespace);
       List<TableId> stateStoreTableIds = Lists.newArrayList();
-      Map<String, String> reverseHBaseNamespace = tableUtil.getHBaseToCDAPNamespaceMap();
 
       for (TableId tableId : tableIds) {
         // It's important to skip config table enabled.
@@ -243,8 +269,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
       // Upgrade of state store table
       for (TableId tableId : stateStoreTableIds) {
         LOG.info("Upgrading queue state store: {}", tableId);
-        String cdapNamespace = reverseHBaseNamespace.get(tableId.getNamespace());
-        DatasetId stateStoreId = createStateStoreDataset(cdapNamespace);
+        DatasetId stateStoreId = createStateStoreDataset(namespaceMeta.getName());
         DatasetAdmin datasetAdmin = datasetFramework.getAdmin(stateStoreId, null);
         if (datasetAdmin == null) {
           LOG.error("No dataset admin available for {}", stateStoreId);

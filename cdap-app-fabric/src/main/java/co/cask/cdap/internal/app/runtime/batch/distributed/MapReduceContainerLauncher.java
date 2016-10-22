@@ -40,7 +40,7 @@ public class MapReduceContainerLauncher {
    * Launches the given main class. The main class will be loaded through the {@link MapReduceClassLoader}.
    *
    * @param mainClassName the main class to launch
-   * @param args arguments for the main class
+   * @param args          arguments for the main class
    */
   @SuppressWarnings("unused")
   public static void launch(String mainClassName, String[] args) {
@@ -68,35 +68,38 @@ public class MapReduceContainerLauncher {
     // Creates the MapReduceClassLoader. It has to be loaded from the MainClassLoader.
     try {
       final ClassLoader classLoader = (ClassLoader) mainClassLoader.loadClass(MapReduceClassLoader.class.getName())
-                                                                   .newInstance();
-      try {
-        Thread.currentThread().setContextClassLoader(classLoader);
-
-        // Setup logging and stdout/stderr redirect
-        // Invoke MapReduceClassLoader.getTaskContextProvider()
-        classLoader.getClass().getDeclaredMethod("getTaskContextProvider").invoke(classLoader);
-        // Invoke StandardOutErrorRedirector.redirectToLogger()
-        classLoader.loadClass("co.cask.cdap.common.logging.StandardOutErrorRedirector")
-          .getDeclaredMethod("redirectToLogger", String.class)
-          .invoke(null, mainClassName);
-
-        Class<?> mainClass = classLoader.loadClass(mainClassName);
-        Method mainMethod = mainClass.getMethod("main", String[].class);
-        mainMethod.setAccessible(true);
-
-        LOG.info("Launch main class {}.main({})", mainClassName, Arrays.toString(args));
-        mainMethod.invoke(null, new Object[]{args});
-        LOG.info("Main method returned {}", mainClassName);
-      } finally {
-        if (classLoader instanceof AutoCloseable) {
-          try {
-            ((AutoCloseable) classLoader).close();
-          } catch (Exception e) {
-            System.err.println("Failed to close ClassLoader " + classLoader);
-            e.printStackTrace();
+        .newInstance();
+      Runtime.getRuntime().addShutdownHook(new Thread() {
+        @Override
+        public void run() {
+          if (classLoader instanceof AutoCloseable) {
+            try {
+              ((AutoCloseable) classLoader).close();
+            } catch (Exception e) {
+              System.err.println("Failed to close ClassLoader " + classLoader);
+              e.printStackTrace();
+            }
           }
         }
-      }
+      });
+
+      Thread.currentThread().setContextClassLoader(classLoader);
+
+      // Setup logging and stdout/stderr redirect
+      // Invoke MapReduceClassLoader.getTaskContextProvider()
+      classLoader.getClass().getDeclaredMethod("getTaskContextProvider").invoke(classLoader);
+      // Invoke StandardOutErrorRedirector.redirectToLogger()
+      classLoader.loadClass("co.cask.cdap.common.logging.StandardOutErrorRedirector")
+        .getDeclaredMethod("redirectToLogger", String.class)
+        .invoke(null, mainClassName);
+
+      Class<?> mainClass = classLoader.loadClass(mainClassName);
+      Method mainMethod = mainClass.getMethod("main", String[].class);
+      mainMethod.setAccessible(true);
+
+      LOG.info("Launch main class {}.main({})", mainClassName, Arrays.toString(args));
+      mainMethod.invoke(null, new Object[]{args});
+      LOG.info("Main method returned {}", mainClassName);
     } catch (Exception e) {
       throw new RuntimeException("Failed to call " + mainClassName + ".main(String[])", e);
     }

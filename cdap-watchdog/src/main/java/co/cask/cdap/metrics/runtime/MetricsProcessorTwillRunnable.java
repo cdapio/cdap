@@ -29,6 +29,9 @@ import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
+import co.cask.cdap.common.security.RemoteUGIProvider;
+import co.cask.cdap.common.security.UGIProvider;
+import co.cask.cdap.common.security.UnsupportedUGIProvider;
 import co.cask.cdap.common.twill.AbstractMasterTwillRunnable;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -48,10 +51,13 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
+import co.cask.cdap.security.authorization.RemotePrivilegesManager;
+import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
@@ -139,8 +145,15 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
       new MetricsProcessorStatusServiceModule(),
       new AuditModule().getDistributedModules(),
       new AuthorizationEnforcementModule().getDistributedModules(),
-      new AuthenticationContextModules().getMasterModule()
-     );
+      new AuthenticationContextModules().getMasterModule(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          // MetricsProcessor should never need to use UGIProvider. It is simply bound in HBaseQueueAdmin
+          bind(UGIProvider.class).to(UnsupportedUGIProvider.class).in(Scopes.SINGLETON);
+        }
+      }
+    );
   }
 
   static final class KafkaMetricsProcessorModule extends PrivateModule {

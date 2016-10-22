@@ -41,7 +41,7 @@ public class NamespacedImpersonator {
    * @return result of callable
    * @throws Exception
    */
-  public  <T> T impersonate(final Callable<T> callable) throws Exception {
+  public <T> T impersonate(final Callable<T> callable) throws Exception {
     // todo namespaceId shouldn't be null, it's passed null only from PluginService. which needs to be updated.
     if (namespaceId == null || namespaceId.equals(NamespaceId.SYSTEM)) {
       // do not impersonate for system namespace

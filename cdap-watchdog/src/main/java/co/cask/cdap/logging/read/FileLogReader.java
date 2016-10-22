@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.read;
 
+import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -170,7 +171,18 @@ public class FileLogReader implements LogReader {
       NavigableMap<Long, Location> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
       if (sortedFiles.isEmpty()) {
         // return empty iterator
-        return null;
+        return new AbstractCloseableIterator<LogEvent>() {
+          @Override
+          protected LogEvent computeNext() {
+            endOfData();
+            return null;
+          }
+
+          @Override
+          public void close() {
+            // no-op
+          }
+        };
       }
 
       List<Location> filesInRange = getFilesInRange(sortedFiles, fromTimeMs, toTimeMs);

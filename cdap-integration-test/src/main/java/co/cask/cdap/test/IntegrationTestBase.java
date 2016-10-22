@@ -28,6 +28,7 @@ import co.cask.cdap.client.MonitorClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.StreamClient;
+import co.cask.cdap.client.StreamViewClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.client.util.RESTClient;
@@ -41,10 +42,15 @@ import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.StreamDetail;
+<<<<<<< HEAD
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
+=======
+import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.id.ApplicationId;
+>>>>>>> release/3.6
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.security.authentication.client.AuthenticationClient;
@@ -73,7 +79,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URI;
+<<<<<<< HEAD
 import java.net.URL;
+=======
+>>>>>>> release/3.6
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -366,6 +375,7 @@ public abstract class IntegrationTestBase {
 
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz) throws IOException {
     return deployApplication(getConfiguredNamespace().toId(), applicationClz);
+<<<<<<< HEAD
   }
 
 
@@ -375,6 +385,8 @@ public abstract class IntegrationTestBase {
 
   protected ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass) throws Exception {
     return getTestManager().addAppArtifact(artifactId, appClass);
+=======
+>>>>>>> release/3.6
   }
 
   protected ApplicationManager getApplicationManager(ApplicationId applicationId) throws Exception {
@@ -392,7 +404,11 @@ public abstract class IntegrationTestBase {
 
     // delete all apps in the namespace
     for (ApplicationRecord app : getApplicationClient().list(namespace.toId())) {
+<<<<<<< HEAD
       getApplicationClient().delete(namespace.app(app.getName(), app.getAppVersion()));
+=======
+      getApplicationClient().delete(namespace.app(app.getName()).toId());
+>>>>>>> release/3.6
     }
     // delete all streams
     for (StreamDetail streamDetail : getStreamClient().list(namespace.toId())) {
