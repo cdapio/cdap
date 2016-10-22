@@ -20,6 +20,8 @@ import {parseMetadata} from '../../services/metadata-parser';
 import HomeHeader from './HomeHeader';
 import EntityCard from '../EntityCard';
 import NamespaceStore from 'services/NamespaceStore';
+import Pagination from 'components/Pagination';
+import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import T from 'i18n-react';
 const shortid = require('shortid');
 const classNames = require('classnames');
@@ -85,7 +87,7 @@ class Home extends Component {
       currentPage: 1
     };
 
-    this.numberOfPages = 0;
+    this.numberOfPages = 10;
     this.updateQueryString = this.updateQueryString.bind(this);
     this.getQueryObject = this.getQueryObject.bind(this);
     this.handlePageChange = this.handlePageChange.bind(this);
@@ -105,11 +107,13 @@ class Home extends Component {
     });
 
     let queryObject = this.getQueryObject();
+    let pageNum = isNaN(queryObject.page) ? 1 : Number(queryObject.page);
 
     this.setState({
       filter: queryObject.filter,
       sortObj: queryObject.sort,
-      query: queryObject.query
+      query: queryObject.query,
+      currentPage: pageNum
     });
   }
 
@@ -126,6 +130,7 @@ class Home extends Component {
     let sortOption = '';
     let query = this.props.location.query;
     let filters = '';
+    let page = '';
     let verifiedFilters = null;
     let invalidFilter = false;
 
@@ -134,6 +139,10 @@ class Home extends Component {
       orderBy = typeof query.order === 'string' ? query.order : '';
       sortBy = typeof query.sort === 'string' ? query.sort : '';
       searchTerm = typeof query.q === 'string' ? query.q : '';
+      page = isNaN(query.page) ? 1 : Number(query.page);
+
+      console.log('Query object is: ', query);
+
       if(typeof query.filter === 'string'){
         filters = [query.filter];
       } else if(Array.isArray(query.filter)){
@@ -171,7 +180,8 @@ class Home extends Component {
     return ({
       'query' : searchTerm ? searchTerm : this.state.query,
       'sort' : sortOption.length === 0 ? this.state.sortObj : sortOption[0],
-      'filter' : verifiedFilters ? verifiedFilters : this.state.filter
+      'filter' : verifiedFilters ? verifiedFilters : this.state.filter,
+      'page' : page
     });
   }
 
@@ -181,6 +191,7 @@ class Home extends Component {
     sortObj = this.state.sortObj,
     namespace = this.props.params.namespace
   ) {
+
     //No entity types requested - set state and return
     if (filter.length === 0) {
       this.setState({query, filter, sortObj, entities: [], selectedEntity: null, loading: false});
@@ -189,20 +200,29 @@ class Home extends Component {
 
     this.setState({loading: true});
 
+    let offset = this.state.currentPage === 1 ? 0 : ((this.state.currentPage - 1) * VIEW_RESULT_LIMIT) - 1;
+    console.log('Current page is: ', this.state.currentPage);
+    console.log('searching with offset: ', offset);
+
+    if(offset < 0){
+      offset = 0;
+    }
+
     let params = {
       namespace: namespace,
       query: `${query}*`,
       target: filter,
       size: VIEW_RESULT_LIMIT,
+      offset: offset,
       sort: sortObj.fullSort
     };
+
+    console.log('Searching with params: ', params);
 
     MySearchApi.search(params)
       .map((res) => {
         this.numberOfPages = Math.ceil(res.total / VIEW_RESULT_LIMIT);
-        console.log('Number of pages: ', this.numberOfPages);
         this.currentPage = res.offset + 1;
-        console.log('response: ', res);
         return res.results
           .map(parseMetadata)
           .map((entity) => {
@@ -212,7 +232,7 @@ class Home extends Component {
           .filter((entity) => entity.id.charAt(0) !== '_');
       })
       .subscribe((res) => {
-        this.setState({query, filter, sortObj, currentPage : 1, entities: res, selectedEntity: null, loading: false});
+        this.setState({query, filter, sortObj, entities: res, selectedEntity: null, loading: false});
       });
   }
 
@@ -233,9 +253,15 @@ class Home extends Component {
   }
 
   handlePageChange(number) {
+    if(number < 1 || number > this.numberOfPages){
+      return;
+    }
+
+    console.log('Setting current page to: ', number);
     this.setState({
       currentPage : number
     });
+    this.search();
   }
 
   handleSortClick(option) {
@@ -259,6 +285,7 @@ class Home extends Component {
     let sort = '';
     let filter = '';
     let query = '';
+    let page = '';
     let queryParams = [];
 
     //Generate sort params
@@ -278,8 +305,11 @@ class Home extends Component {
       query = 'q=' + this.state.query;
     }
 
+    //Generate page param
+    page = 'page=' + this.state.currentPage;
+
     //Combine query parameters into query string
-    queryParams = [query, sort, filter].filter((element) => {
+    queryParams = [query, sort, filter, page].filter((element) => {
       return element.length > 0;
     });
     queryString = queryParams.join('&');
@@ -292,6 +322,8 @@ class Home extends Component {
       title: 'CDAP',
       url: location.pathname + queryString
     };
+
+    console.log('current state is: ', this.state);
 
     //Modify URL to match application state
     history.pushState(obj, obj.title, obj.url);
@@ -313,10 +345,46 @@ class Home extends Component {
     );
 
     let entitiesToBeRendered;
+    let bodyContent;
+
     if(this.state.loading){
       entitiesToBeRendered = loading;
+
+      bodyContent = [true].map(() => {
+          return (
+            <div className="entity-list">
+                <div className="entities-container">
+                  <ReactCSSTransitionGroup
+                    transitionName="loading-animation"
+                    transitionEnterTimeout={200}
+                    transitionLeaveTimeout={200}
+                  >
+                    {entitiesToBeRendered}
+                  </ReactCSSTransitionGroup>
+                </div>
+            </div>
+          );
+      });
+
     } else if(this.state.entities.length === 0) {
       entitiesToBeRendered = empty;
+
+      bodyContent = [true].map(() => {
+          return (
+            <div className="entity-list">
+                <div className="entities-container">
+                  <ReactCSSTransitionGroup
+                    transitionName="empty-animation"
+                    transitionEnterTimeout={400}
+                    transitionLeaveTimeout={400}
+                  >
+                    {entitiesToBeRendered}
+                  </ReactCSSTransitionGroup>
+                </div>
+            </div>
+          );
+      });
+
     } else {
       entitiesToBeRendered = this.state.entities.map(
         (entity) => {
@@ -338,6 +406,23 @@ class Home extends Component {
           );
         }
       );
+
+      bodyContent = [true].map(() => {
+          return (
+            <div className="entity-list">
+                <div className="entities-container">
+                  <ReactCSSTransitionGroup
+                    transitionName="animation--next"
+                    transitionEnterTimeout={400}
+                    transitionLeaveTimeout={400}
+                  >
+                    {entitiesToBeRendered}
+                  </ReactCSSTransitionGroup>
+                </div>
+            </div>
+          );
+      });
+
     }
 
     return (
@@ -355,9 +440,12 @@ class Home extends Component {
           currentPage={this.state.currentPage}
           changePage={this.handlePageChange}
         />
-        <div className="entity-list">
-          {entitiesToBeRendered}
-        </div>
+        <Pagination
+          setCurrentPage={this.handlePageChange}
+          currentPage={this.state.currentPage}
+        >
+          {bodyContent}
+        </Pagination>
       </div>
     );
   }

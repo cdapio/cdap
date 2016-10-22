@@ -97,7 +97,7 @@ export default class HomeHeader extends Component {
       let number = this.props.numberOfPages;
       let dropdownItems = [];
 
-      for(let i = 0; i < number*10; i++){
+      for(let i = 0; i < number; i++){
         dropdownItems.push(
           <div className="dropdownItems">
             {i + 1}

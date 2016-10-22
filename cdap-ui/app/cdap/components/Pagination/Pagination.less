@@ -1,0 +1,150 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+ .loading-enter {
+   opacity: 0.01;
+ }
+
+ .loading-enter.loading-enter-active {
+   opacity: 1;
+   transition: opacity 200ms ease-in;
+ }
+
+ .loading-leave {
+   opacity: 1;
+ }
+
+ .loading-leave.loading-leave-active {
+   opacity: 0.01;
+   transition: opacity 200ms ease-in;
+ }
+
+/* Animation - Slide in direction of Prev */
+.animation--next-enter {
+  transform: translate(110%,0);
+  transition: transform .4s;
+
+  &.animation--next-enter-active {
+    transform: translate(0,0);
+  }
+}
+
+.animation--next-appear {
+  opacity: 0.01;
+}
+
+.animation--next-appear.animation--next-appear-active {
+  opacity: 1;
+  transition: opacity .5s ease-in;
+}
+
+.animation--next-leave {
+  opacity: 1;
+
+  &.animation--next-leave-active {
+    opacity: 0.01;
+    transition: opacity 500ms ease-in;
+  }
+}
+
+/* Animation - Slide in direction of Prev */
+.animation--prev-enter {
+  transform: translate(110%,0);
+  transition: transform .4s;
+
+  &.animation--prev-enter-active {
+    transform: translate(0,0);
+  }
+}
+
+.animation--prev-appear {
+  opacity: 0.01;
+}
+
+.animation--prev-appear.animation--prev-appear-active {
+  opacity: 1;
+  transition: opacity .5s ease-in;
+}
+
+.animation--prev-leave {
+  opacity: 1;
+
+  &.animation--prev-leave-active {
+    opacity: 0.01;
+    transition: opacity 500ms ease-in;
+  }
+}
+
+.pagination-container {
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 15px;
+  margin-right: 15px;
+  overflow-x: hidden;
+
+  .pagination-content {
+    display: inline-block;
+  }
+
+  .change-page-panel {
+    display: inline-block;
+    position: absolute;
+    cursor: pointer;
+
+    /*Page height minus footer height*/
+    height: ~"-moz-calc(100vh - 50px)";
+    height: ~"-webkit-calc(100vh - 50px)";
+    height: ~"calc(100vh - 50px)";
+    z-index: 300;
+    padding-left: 15px;
+    padding-right: 15px;
+    background-color: #E6E6E6;
+    opacity: 0.3;
+    padding-left: 5px;
+    padding-right: 5px;
+
+    &:hover,
+    &.pressed {
+      opacity: 0.8;
+    }
+  }
+  .change-page-panel-left {
+    position: absolute;
+    left: 0;
+  }
+  .change-page-panel-right {
+    position: absolute;
+    right: 0;
+  }
+  .page-change-arrow-container {
+    position: relative;
+    top: 50%;
+    transform: scale(1.5,1);
+
+    .page-change-arrow {
+      position: relative;
+      bottom: 25px;
+    }
+
+  }
+
+  .disabled-page-change {
+    visibility: hidden;
+  }
+
+}
