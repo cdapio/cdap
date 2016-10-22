@@ -15,12 +15,16 @@
  */
 
 import cookie from 'react-cookie';
-export default function RedirectToLogin() {
-  cookie.remove('CDAP_Auth_Token', { path: '/' });
-  cookie.remove('CDAP_Auth_User', { path: '/' });
-  window.location.href = window.getAbsUIUrl({
-    uiApp: 'login',
-    redirectUrl: location.href,
-    clientId: 'cdap'
-  });
+export default function RedirectToLogin(data) {
+  let {statusCode} = data;
+  if (statusCode === 401) {
+    cookie.remove('CDAP_Auth_Token', { path: '/' });
+    cookie.remove('CDAP_Auth_User', { path: '/' });
+    window.location.href = window.getAbsUIUrl({
+      uiApp: 'login',
+      redirectUrl: location.href,
+      clientId: 'cdap'
+    });
+  }
+  return true;
 }

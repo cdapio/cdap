@@ -19,15 +19,17 @@ import uuid from 'node-uuid';
 import Rx from 'rx';
 
 export default class Datasource {
-  constructor() {
+  constructor(genericResponseHandlers = [() => true]) {
     let socketData = Socket.getObservable();
     this.bindings = {};
 
     this.socketSubscription =  socketData.subscribe(
       (data) => {
         let hash = data.resource.id;
-
+        let shouldCallNextHanlder = true;
         if (!this.bindings[hash]) { return; }
+
+        shouldCallNextHanlder = genericResponseHandlers.reduce((prev, curr) => curr(data), () => true);
 
         if (data.statusCode > 299 || data.warning) {
           this.bindings[hash].rx.onError({
@@ -35,7 +37,9 @@ export default class Datasource {
             response: data.response || data.body || data.error
           });
         } else {
-          this.bindings[hash].rx.onNext(data.response);
+          if (shouldCallNextHanlder) {
+            this.bindings[hash].rx.onNext(data.response);
+          }
         }
 
         if (this.bindings[hash].type === 'REQUEST') {
