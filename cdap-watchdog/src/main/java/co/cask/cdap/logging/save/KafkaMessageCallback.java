@@ -82,6 +82,7 @@ public class KafkaMessageCallback implements KafkaConsumer.MessageCallback {
       try {
         GenericRecord genericRecord = serializer.toGenericRecord(message.getPayload());
         ILoggingEvent event = serializer.fromGenericRecord(genericRecord);
+        LOG.trace("Got event {} for partition {}", event, partition);
 
         LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(event.getMDCPropertyMap());
         KafkaLogEvent logEvent = new KafkaLogEvent(genericRecord, event, loggingContext,
@@ -92,9 +93,10 @@ public class KafkaMessageCallback implements KafkaConsumer.MessageCallback {
           oldestProcessed = event.getTimeStamp();
         }
       } catch (Throwable th) {
-        LOG.error("Error processing message at topic {} parition {}",
-                  message.getTopicPartition().getTopic(),
-                  message.getTopicPartition().getPartition());
+        LOG.warn("Message with next offset {} ignored due to exception for topic {} parition {}",
+                 message.getNextOffset(),
+                 message.getTopicPartition().getTopic(),
+                 message.getTopicPartition().getPartition(), th);
       }
     }
 
@@ -104,8 +106,8 @@ public class KafkaMessageCallback implements KafkaConsumer.MessageCallback {
         try {
           processor.process(events.iterator());
         } catch (Throwable th) {
-          LOG.error("Error processing kafka log event in processor {}",
-                    processor.getClass().getSimpleName());
+          LOG.warn("Exception processing {} kafka log events in processor {}, ignoring the exception",
+                   events.size(), processor.getClass().getSimpleName(), th);
         }
       }
 

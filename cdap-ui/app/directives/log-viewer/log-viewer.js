@@ -604,6 +604,13 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
       requestWithOffset();
   };
 
+  vm.preventClick = function (event) {
+    // disabled is not a valid attribute for <a>
+    if (!vm.displayData.length || vm.loading) {
+      event.preventDefault();
+    }
+  };
+
   $scope.$on('$destroy', function() {
     if (unsub) {
       unsub();
