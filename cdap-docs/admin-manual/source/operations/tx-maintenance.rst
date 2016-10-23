@@ -34,7 +34,9 @@ To prune the invalid list manually, follow these steps:
 
   Pick the minimum time across all region servers. In this case, ``1440202895873``.
 
-- Find the minimum prune time across all queues by running the tool ``SimpleHBaseQueueDebugger``. 
+- Find the minimum prune time across all queues by running the tool ``SimpleHBaseQueueDebugger``.
+  Note that authorization is disabled when running the SimpleHBaseQueueDebugger, so that cdap can read all
+  users' tables.
   This should print lines such as::
 
     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.SimpleHBaseQueueDebugger
