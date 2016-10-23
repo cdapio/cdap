@@ -53,7 +53,6 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.store.NamespaceStore;
-import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.LocationFactory;
@@ -152,7 +151,7 @@ public class ExistingEntitySystemMetadataWriter {
       UserGroupInformation ugi = impersonator.getUGI(namespace.toId().toEntityId());
 
       for (DatasetSpecificationSummary summary : dsFramework.getInstances(namespace)) {
-        DatasetId dsInstance = namespace.dataset(summary.getName());
+        final DatasetId dsInstance = namespace.dataset(summary.getName());
         DatasetProperties dsProperties = DatasetProperties.of(summary.getProperties());
         String dsType = summary.getType();
         Dataset dataset = null;
