@@ -150,12 +150,12 @@ Assign CDAP Services to Hosts
 
    CDAP consists of five daemons:
  
-   #. **Master:** Coordinator service which launches CDAP system services into YARN
-   #. **Router:** Serves HTTP endpoints for CDAP applications and REST API
-   #. **Auth Server:** For managing authentication tokens on CDAP clusters with perimeter security enabled
-   #. **Kafka Server:** For transporting CDAP metrics and CDAP system service log data
-   #. **UI:** Web interface to CDAP and :ref:`Cask Hydrator <cask-hydrator>`
-      (for CDAP 3.2.x and later installations)
+   #. **CDAP Master:** Coordinator service which launches CDAP system services into YARN
+   #. **CDAP Router:** Serves HTTP endpoints for CDAP applications and REST API
+   #. **CDAP Auth Server:** For managing authentication tokens on CDAP clusters with perimeter security enabled
+   #. **CDAP Kafka Server:** For transporting CDAP metrics and CDAP system service log data
+   #. **CDAP UI:** Web interface to CDAP, :ref:`Cask Hydrator <cask-hydrator>`, and
+      :ref:`Cask Tracker <cask-tracker-index>` (for CDAP 3.2.x and later installations)
  
    .. figure:: ../_images/ambari/ss03-assign-masters.png
       :figwidth: 100%
@@ -178,16 +178,23 @@ Assign CDAP Services to Hosts
       :align: center
       :class: bordered-image
  
-      **Ambari Dashboard:** Selecting hosts for *CDAP*
+      **Ambari Dashboard:** Selecting hosts for *CDAP*, scrolled to the left
+
+   .. figure:: ../_images/ambari/ss04b-choose-clients.png
+      :figwidth: 100%
+      :width: 800px
+      :align: center
+      :class: bordered-image
  
+      **Ambari Dashboard:** Selecting hosts for *CDAP*, scrolled to the right
+
+
 #. Click *Next* to customize the CDAP installation.
 
 Customize CDAP
 --------------
 
 6. On the **Customize Services** screen, click the *Advanced* tab to bring up the CDAP configuration.
-   Under *Advanced cdap-env*, you can configure environment settings such as heap sizes
-   and the directories used to store logs and pids for the CDAP services which run on the edge nodes.
 
    .. figure:: ../_images/ambari/ss05-config-cdap-env.png
       :figwidth: 100%
@@ -195,7 +202,18 @@ Customize CDAP
       :align: center
       :class: bordered-image
  
-      **Ambari Dashboard:** Customizing Services 1
+      **Ambari Dashboard:** Customizing Services for CDAP
+
+   Under *Advanced cdap-env*, you can configure environment settings such as heap sizes
+   and the directories used to store logs and PIDs for the CDAP services which run on the edge nodes.
+
+   .. figure:: ../_images/ambari/ss05b-config-cdap-env.png
+      :figwidth: 100%
+      :width: 800px
+      :align: center
+      :class: bordered-image
+ 
+      **Ambari Dashboard:** Customizing Services for CDAP, *Advanced* tab
 
 #. Under *Advanced cdap-site*, you can configure all options for the operation and running
    of CDAP and CDAP applications.
@@ -206,10 +224,11 @@ Customize CDAP
       :align: center
       :class: bordered-image
  
-      **Ambari Dashboard:** Customizing Services 2
+      **Ambari Dashboard:** Customizing Services for CDAP, *Advanced cdap-site* section
 
 #. **Router Bind Port, Router Server Port:** These two ports should match; *Router Server
-   Port* is used by the CDAP UI to connect to the CDAP Router service.
+   Port* is used by the CDAP UI to connect to the CDAP Router service. Note that ports
+   used by CDAP must not conflict with any existing (or potential) services on the cluster.
 
    .. figure:: ../_images/ambari/ss07-config-enable-explore.png
       :figwidth: 100%
@@ -217,17 +236,17 @@ Customize CDAP
       :align: center
       :class: bordered-image
  
-      **Ambari Dashboard:** Enabling *CDAP Explore*
+      **Ambari Dashboard:** Customizing Services for CDAP, setting *router.bind.port*
 
    **Additional CDAP configuration properties**, not shown in the web interface, can be
-   added using Ambari's advanced custom properties at the end of the page. Documentation
-   of the available CDAP properties is in the :ref:`appendix-cdap-site.xml`.
+   added using Ambari's *Advanced custom cdap-site* properties, located towards the end of the page.
+   Documentation of the available CDAP properties is in the :ref:`appendix-cdap-site.xml`.
 
    For a **complete explanation of these options,** refer to the :ref:`CDAP documentation
    of cdap-site.xml <appendix-cdap-site.xml>`. 
    
-   **Additional environment variables** can be set, as required, using Ambari's 
-   "Configs > Advanced > Advanced cdap-env".
+   **Additional environment variables**, not shown in the web interface, can be set as
+   required using Ambari's *Advanced custom cdap-env* properties, located towards the end of the page.
 
    .. Environment variables
    .. ---------------------
@@ -255,14 +274,30 @@ Deploying CDAP
 
 #. Ambari will install CDAP and start the services.
 
-   .. figure:: ../_images/ambari/ss09-install-start-test.png
+   .. figure:: ../_images/ambari/ss09a-install-start-test.png
       :figwidth: 100%
       :width: 800px
       :align: center
       :class: bordered-image
  
-      **Ambari Dashboard:** Install, Start, and Test
+      **Ambari Dashboard:** Install, Start, and Test, preparing to install.
       
+   .. figure:: ../_images/ambari/ss09b-install-start-test.png
+      :figwidth: 100%
+      :width: 800px
+      :align: center
+      :class: bordered-image
+ 
+      **Ambari Dashboard:** Install, Start, and Test, in progress.
+
+   .. figure:: ../_images/ambari/ss09c-install-start-test.png
+      :figwidth: 100%
+      :width: 800px
+      :align: center
+      :class: bordered-image
+ 
+      **Ambari Dashboard:** Install, Start, and Test, completed.
+
 #. After the services are installed and started, you will click *Next* to get to the
    Summary screen.
 
@@ -275,7 +310,7 @@ Deploying CDAP
       :align: center
       :class: bordered-image
  
-      **Ambari Dashboard:** Summary
+      **Ambari Dashboard:** *Add Service Wizard* completion summary
 
 #. Click *Complete* to complete the CDAP installation.
 
