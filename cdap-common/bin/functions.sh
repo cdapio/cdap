@@ -367,6 +367,7 @@ cdap_set_hbase() {
     1.0*) __compat="${CDAP_HOME}"/hbase-compat-1.0/lib/* ;;
     1.1*) __compat="${CDAP_HOME}"/hbase-compat-1.1/lib/* ;;
     1.2-cdh*) __compat="${CDAP_HOME}"/hbase-compat-1.2-cdh5.7.0/lib/* ;; # 5.7 and 5.8 are compatible
+    1.2*) __compat="${CDAP_HOME}"/hbase-compat-1.1/lib/* ;; # 1.1 and 1.2 are compatible
     "") die "Unable to determine HBase version! Aborting." ;;
     *) die "Unknown/Unsupported HBase version found: ${HBASE_VERSION}" ;;
   esac
