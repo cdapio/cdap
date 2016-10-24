@@ -92,6 +92,14 @@ public final class LineageWriterDataFabricFacade implements DataFabricFacade, Pr
   }
 
   @Override
+  public void initContext(ProgramRunId run, ProgramRunId workflowId) {
+    programContext.initContext(run);
+    if (queueClientFactory instanceof ProgramContextAware) {
+      ((ProgramContextAware) queueClientFactory).initContext(run, workflowId);
+    }
+  }
+
+  @Override
   public DatasetContext getDatasetContext() {
     return datasetCache;
   }

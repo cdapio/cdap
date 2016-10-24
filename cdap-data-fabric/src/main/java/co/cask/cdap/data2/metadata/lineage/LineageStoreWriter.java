@@ -53,6 +53,21 @@ public interface LineageStoreWriter {
                  @Nullable NamespacedEntityId component);
 
   /**
+   * Add a program-dataset access.
+   *
+   * @param run program run information
+   * @param datasetInstance dataset accessed by the program
+   * @param accessType access type
+   * @param accessTimeMillis time of access
+   * @param component program component such as flowlet id, etc.
+   * @param workflow program workflow
+   */
+  void addAccess(ProgramRunId run, DatasetId datasetInstance,
+                 AccessType accessType, long accessTimeMillis,
+                 @Nullable NamespacedEntityId component,
+                 ProgramRunId workflow);
+
+  /**
    * Add a program-stream access.
    *
    * @param run program run information
@@ -74,4 +89,19 @@ public interface LineageStoreWriter {
   void addAccess(ProgramRunId run, StreamId stream,
                  AccessType accessType, long accessTimeMillis,
                  @Nullable NamespacedEntityId component);
+
+  /**
+   * Add a program-stream access.
+   *
+   * @param run program run information
+   * @param stream stream accessed by the program
+   * @param accessType access type
+   * @param accessTimeMillis time of access
+   * @param component program component such as flowlet id, etc.
+   * @param workflow program workflow
+   */
+  void addAccess(ProgramRunId run, StreamId stream,
+                 AccessType accessType, long accessTimeMillis,
+                 @Nullable NamespacedEntityId component,
+                 ProgramRunId workflow);
 }

@@ -42,4 +42,11 @@ public class ForwardingProgramContextAwareDatasetFramework extends ForwardingDat
       ((ProgramContextAware) delegate).initContext(run, componentId);
     }
   }
+
+  @Override
+  public void initContext(ProgramRunId run, ProgramRunId workflowId) {
+    if (delegate instanceof ProgramContextAware) {
+      ((ProgramContextAware) delegate).initContext(run, workflowId);
+    }
+  }
 }

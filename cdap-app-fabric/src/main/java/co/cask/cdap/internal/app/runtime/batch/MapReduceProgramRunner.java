@@ -22,6 +22,7 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
+import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -50,6 +51,7 @@ import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Preconditions;
@@ -150,7 +152,10 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     // Setup dataset framework context, if required
     if (programDatasetFramework instanceof ProgramContextAware) {
       ProgramId programId = program.getId();
-      ((ProgramContextAware) programDatasetFramework).initContext(programId.run(runId));
+      ProgramRunId workflowId = new ProgramRunId(program.getNamespaceId(), workflowInfo.getName(), ProgramType.WORKFLOW,
+                                                 workflowInfo.getName(), workflowInfo.getRun());
+      ((ProgramContextAware) programDatasetFramework).initContext(programId.run(runId), workflowId);
+
     }
 
     MapReduce mapReduce;

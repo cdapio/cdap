@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.metadata.writer;
 
+import co.cask.cdap.api.workflow.WorkflowInfo;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramRunId;
 
@@ -37,4 +38,13 @@ public interface ProgramContextAware {
    * @param componentId program component
    */
   void initContext(ProgramRunId run, NamespacedEntityId componentId);
+
+  /* DW */
+  /**
+   * Initalize with program run and program component (i.e, flowlet Id, etc.) information.
+
+   * @param run program run
+   * @param workflowId program workflow
+   */
+  void initContext(ProgramRunId run, ProgramRunId workflowId);
 }

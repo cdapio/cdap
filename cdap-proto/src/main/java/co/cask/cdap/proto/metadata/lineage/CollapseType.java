@@ -31,5 +31,9 @@ public enum CollapseType {
   /**
    * Component of a program, like a flowlet, etc.
    */
-  COMPONENT
+  COMPONENT,
+  /**
+   * Workflow of a program
+   */
+  WORKFLOW
 }

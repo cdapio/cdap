@@ -137,6 +137,13 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
     }
   }
 
+  @Override
+  public void initContext(ProgramRunId run, ProgramRunId workflowId) {
+    if (datasetFramework instanceof ProgramContextAware) {
+      ((ProgramContextAware) datasetFramework).initContext(run, workflowId);
+    }
+  }
+
   public static String getConfigTableName() {
     return QueueConstants.STATE_STORE_NAME + "." + HBaseQueueDatasetModule.STATE_STORE_EMBEDDED_TABLE_NAME;
   }

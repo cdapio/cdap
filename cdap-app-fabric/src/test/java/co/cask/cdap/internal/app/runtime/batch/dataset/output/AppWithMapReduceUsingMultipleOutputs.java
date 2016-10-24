@@ -57,6 +57,7 @@ public class AppWithMapReduceUsingMultipleOutputs extends AbstractApplication {
       .setOutputFormat(TextOutputFormat.class)
       .setOutputProperty(TextOutputFormat.SEPERATOR, " ")
       .build());
+
     addMapReduce(new SeparatePurchases());
     addMapReduce(new InvalidMapReduce());
   }

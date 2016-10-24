@@ -28,6 +28,7 @@ import javax.annotation.Nullable;
 public class ProgramContext {
   private final AtomicReference<ProgramRunId> runRef = new AtomicReference<>();
   private final AtomicReference<NamespacedEntityId> componentIdRef = new AtomicReference<>();
+  private final AtomicReference<ProgramRunId> workflowRef = new AtomicReference<>();
 
   public void initContext(ProgramRunId run) {
     runRef.set(run);
@@ -38,6 +39,11 @@ public class ProgramContext {
     componentIdRef.set(componentId);
   }
 
+  public void initContext(ProgramRunId run, ProgramRunId workflowId) {
+    runRef.set(run);
+    workflowRef.set(workflowId);
+  }
+
   @Nullable
   public ProgramRunId getRun() {
     return runRef.get();
@@ -46,5 +52,10 @@ public class ProgramContext {
   @Nullable
   public NamespacedEntityId getComponentId() {
     return componentIdRef.get();
+  }
+
+  @Nullable
+  public ProgramRunId getWorkflow() {
+    return workflowRef.get();
   }
 }

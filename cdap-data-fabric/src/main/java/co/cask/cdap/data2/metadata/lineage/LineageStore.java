@@ -99,6 +99,28 @@ public class LineageStore implements LineageStoreReader, LineageStoreWriter {
   }
 
   /**
+   * Add a program-dataset access.
+   *
+   * @param run program run information
+   * @param datasetInstance dataset accessed by the program
+   * @param accessType access type
+   * @param accessTimeMillis time of access
+   * @param component program component such as flowlet id, etc.
+   * @param workflow program workflow
+   */
+  @Override
+  public void addAccess(final ProgramRunId run, final DatasetId datasetInstance,
+                        final AccessType accessType, final long accessTimeMillis,
+                        @Nullable final NamespacedEntityId component, final ProgramRunId workflow) {
+    execute(new TransactionExecutor.Procedure<LineageDataset>() {
+      @Override
+      public void apply(LineageDataset input) throws Exception {
+        input.addAccess(run, datasetInstance, accessType, accessTimeMillis, component, workflow);
+      }
+    });
+  }
+
+  /**
    * Add a program-stream access.
    *
    * @param run program run information
@@ -131,6 +153,30 @@ public class LineageStore implements LineageStoreReader, LineageStoreWriter {
       }
     });
   }
+
+  /**
+   * Add a program-stream access.
+   *
+   * @param run program run information
+   * @param stream stream accessed by the program
+   * @param accessType access type
+   * @param accessTimeMillis time of access
+   * @param component program component such as flowlet id, etc.
+   * @param workflow program workflow
+   */
+  @Override
+  public void addAccess(final ProgramRunId run, final StreamId stream,
+                        final AccessType accessType, final long accessTimeMillis,
+                        @Nullable final NamespacedEntityId component,
+                        final ProgramRunId workflow) {
+    execute(new TransactionExecutor.Procedure<LineageDataset>() {
+      @Override
+      public void apply(LineageDataset input) throws Exception {
+        input.addAccess(run, stream, accessType, accessTimeMillis, component, workflow);
+      }
+    });
+  }
+
 
   /**
    * @return a set of entities (program and data it accesses) associated with a program run.

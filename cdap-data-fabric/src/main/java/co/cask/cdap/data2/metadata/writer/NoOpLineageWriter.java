@@ -40,6 +40,12 @@ public class NoOpLineageWriter implements LineageWriter {
   }
 
   @Override
+  public void addAccess(ProgramRunId run, DatasetId datasetInstance, AccessType accessType,
+                        @Nullable NamespacedEntityId component, ProgramRunId workflowId) {
+    // no-op
+  }
+
+  @Override
   public void addAccess(ProgramRunId run, StreamId stream, AccessType accessType) {
     // no-op
   }

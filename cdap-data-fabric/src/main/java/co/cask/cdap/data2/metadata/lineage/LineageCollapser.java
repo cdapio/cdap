@@ -79,7 +79,12 @@ public final class LineageCollapser {
   }
 
   private static CollapseKey getCollapseKey(Relation relation, Set<CollapseType> collapseTypes) {
-    CollapseKeyBuilder builder = new CollapseKeyBuilder(relation.getData(), relation.getProgram());
+    CollapseKeyBuilder builder = null;
+    if (collapseTypes.contains(CollapseType.WORKFLOW)) {
+      builder = new CollapseKeyBuilder(relation.getData(), relation.getWorkflow());
+    } else {
+      builder = new CollapseKeyBuilder(relation.getData(), relation.getProgram());
+    }
     if (!collapseTypes.contains(CollapseType.ACCESS)) {
       builder.setAccess(relation.getAccess());
     }

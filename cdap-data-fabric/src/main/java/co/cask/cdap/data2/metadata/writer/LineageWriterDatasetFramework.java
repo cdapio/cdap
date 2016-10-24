@@ -112,6 +112,11 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
   }
 
   @Override
+  public void initContext(ProgramRunId run, ProgramRunId workflowId) {
+    programContext.initContext(run, workflowId);
+  }
+
+  @Override
   public void addInstance(String datasetTypeName, DatasetId datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException, IOException {
     super.addInstance(datasetTypeName, datasetInstanceId, props);
@@ -193,10 +198,11 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
 
   private void doWriteLineage(DatasetId datasetInstanceId, AccessType accessType) {
     ProgramRunId programRunId = programContext.getRun();
+    ProgramRunId workflowId = programContext.getWorkflow();
     if (programRunId != null) {
       NamespacedEntityId componentId = programContext.getComponentId();
       try {
-        lineageWriter.addAccess(programRunId, datasetInstanceId, accessType, componentId);
+        lineageWriter.addAccess(programRunId, datasetInstanceId, accessType, componentId, workflowId);
       } catch (Throwable t) {
         // Failure to write to lineage shouldn't cause dataset operation failure
         LOG.warn("Failed to write lineage information for dataset {} with access type {} from {},{}",

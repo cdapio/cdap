@@ -94,6 +94,13 @@ public final class WorkflowProgramInfo implements WorkflowInfo, Serializable {
   }
 
   /**
+   * Returns the string Run of the Workflow.
+   */
+  public String getRun() {
+    return workflowRunId;
+  }
+
+  /**
    * Returns the name of the program used inside the Workflow.
    */
   public String getProgramNameInWorkflow() {

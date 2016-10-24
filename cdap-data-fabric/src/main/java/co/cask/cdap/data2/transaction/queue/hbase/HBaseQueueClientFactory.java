@@ -97,6 +97,11 @@ public class HBaseQueueClientFactory implements QueueClientFactory, ProgramConte
   }
 
   @Override
+  public void initContext(ProgramRunId run, ProgramRunId workflowId) {
+    queueAdmin.initContext(run, workflowId);
+  }
+
+  @Override
   public QueueProducer createProducer(QueueName queueName) throws IOException {
     return createProducer(queueName, QueueMetrics.NOOP_QUEUE_METRICS);
   }

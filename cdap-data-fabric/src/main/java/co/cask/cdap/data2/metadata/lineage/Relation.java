@@ -36,6 +36,7 @@ public class Relation {
   private final AccessType access;
   private final RunId run;
   private final Set<NamespacedEntityId> components;
+  private final ProgramId workflow;
 
   public Relation(DatasetId data, ProgramId program, AccessType access, RunId run) {
     this(data, program, access, run, Collections.<NamespacedEntityId>emptySet());
@@ -48,6 +49,17 @@ public class Relation {
     this.access = access;
     this.run = run;
     this.components = ImmutableSet.copyOf(components);
+    this.workflow = null;
+  }
+
+  public Relation(DatasetId data, ProgramId program, AccessType access, RunId run,
+                  Set<? extends NamespacedEntityId> components, ProgramId workflow) {
+    this.data = data;
+    this.program = program;
+    this.access = access;
+    this.run = run;
+    this.components = ImmutableSet.copyOf(components);
+    this.workflow = workflow;
   }
 
   public Relation(StreamId stream, ProgramId program, AccessType access, RunId run) {
@@ -61,6 +73,17 @@ public class Relation {
     this.access = access;
     this.run = run;
     this.components = ImmutableSet.copyOf(components);
+    this.workflow = null;
+  }
+
+  public Relation(StreamId stream, ProgramId program, AccessType access, RunId run,
+                  Set<? extends NamespacedEntityId> components, ProgramId workflow) {
+    this.data = stream;
+    this.program = program;
+    this.access = access;
+    this.run = run;
+    this.components = ImmutableSet.copyOf(components);
+    this.workflow = workflow;
   }
 
   public NamespacedEntityId getData() {
@@ -81,6 +104,10 @@ public class Relation {
 
   public Set<NamespacedEntityId> getComponents() {
     return components;
+  }
+
+  public ProgramId getWorkflow() {
+    return workflow;
   }
 
   @Override
@@ -112,6 +139,7 @@ public class Relation {
       ", access=" + access +
       ", runs=" + run +
       ", components=" + components +
+      ", workflow=" + workflow +
       '}';
   }
 }

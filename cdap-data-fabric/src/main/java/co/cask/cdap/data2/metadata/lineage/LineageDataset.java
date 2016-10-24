@@ -75,6 +75,7 @@ public class LineageDataset extends AbstractDataset {
 
   private static final char DATASET_MARKER = 'd';
   private static final char PROGRAM_MARKER = 'p';
+  private static final char WORKFLOW_MARKER = 'w';
   private static final char FLOWLET_MARKER = 'f';
   private static final char STREAM_MARKER = 's';
   private static final char NONE_MARKER = '0';
@@ -111,9 +112,30 @@ public class LineageDataset extends AbstractDataset {
                         AccessType accessType, long accessTimeMillis, @Nullable NamespacedEntityId component) {
     LOG.trace("Recording access run={}, dataset={}, accessType={}, accessTime={}, component={}",
               run, datasetInstance, accessType, accessTimeMillis, component);
-    accessRegistryTable.put(getDatasetKey(datasetInstance, run, accessType, component),
+    accessRegistryTable.put(getDatasetKey(datasetInstance, run, accessType, component, null),
                             ACCESS_TIME_COLS_BYTE, Bytes.toBytes(accessTimeMillis));
-    accessRegistryTable.put(getProgramKey(run, datasetInstance, accessType, component),
+    accessRegistryTable.put(getProgramKey(run, datasetInstance, accessType, component, null),
+                            ACCESS_TIME_COLS_BYTE, Bytes.toBytes(accessTimeMillis));
+  }
+
+  /**
+   * Add a program-dataset access.
+   *
+   * @param run program run information
+   * @param datasetInstance dataset accessed by the program
+   * @param accessType access type
+   * @param accessTimeMillis time of access
+   * @param component program component such as flowlet id, etc.
+   * @param workflow program workflow
+   */
+  public void addAccess(ProgramRunId run, DatasetId datasetInstance,
+                        AccessType accessType, long accessTimeMillis, @Nullable NamespacedEntityId component,
+                        ProgramRunId workflow) {
+    LOG.trace("Recording access run={}, dataset={}, accessType={}, accessTime={}, component={}, workflow={}",
+              run, datasetInstance, accessType, accessTimeMillis, component, workflow);
+    accessRegistryTable.put(getDatasetKey(datasetInstance, run, accessType, component, workflow),
+                            ACCESS_TIME_COLS_BYTE, Bytes.toBytes(accessTimeMillis));
+    accessRegistryTable.put(getProgramKey(run, datasetInstance, accessType, component, workflow),
                             ACCESS_TIME_COLS_BYTE, Bytes.toBytes(accessTimeMillis));
   }
 
@@ -143,9 +165,29 @@ public class LineageDataset extends AbstractDataset {
                         AccessType accessType, long accessTimeMillis, @Nullable NamespacedEntityId component) {
     LOG.trace("Recording access run={}, stream={}, accessType={}, accessTime={}, component={}",
               run, stream, accessType, accessTimeMillis, component);
-    accessRegistryTable.put(getStreamKey(stream, run, accessType, component),
+    accessRegistryTable.put(getStreamKey(stream, run, accessType, component, null),
                             ACCESS_TIME_COLS_BYTE, Bytes.toBytes(accessTimeMillis));
-    accessRegistryTable.put(getProgramKey(run, stream, accessType, component),
+    accessRegistryTable.put(getProgramKey(run, stream, accessType, component, null),
+                            ACCESS_TIME_COLS_BYTE, Bytes.toBytes(accessTimeMillis));
+  }
+
+  /**
+   * Add a program-stream access.
+   *
+   * @param run program run information
+   * @param stream stream accessed by the program
+   * @param accessType access type
+   * @param accessTimeMillis time of access
+   * @param component program component such as flowlet id, etc.
+   */
+  public void addAccess(ProgramRunId run, StreamId stream,
+                        AccessType accessType, long accessTimeMillis, @Nullable NamespacedEntityId component,
+                        ProgramRunId workflow) {
+    LOG.trace("Recording access run={}, stream={}, accessType={}, accessTime={}, component={}, workflow={}",
+              run, stream, accessType, accessTimeMillis, component, workflow);
+    accessRegistryTable.put(getStreamKey(stream, run, accessType, component, workflow),
+                            ACCESS_TIME_COLS_BYTE, Bytes.toBytes(accessTimeMillis));
+    accessRegistryTable.put(getProgramKey(run, stream, accessType, component, workflow),
                             ACCESS_TIME_COLS_BYTE, Bytes.toBytes(accessTimeMillis));
   }
 
@@ -257,33 +299,36 @@ public class LineageDataset extends AbstractDataset {
   }
 
   private byte[] getDatasetKey(DatasetId datasetInstance, ProgramRunId run,
-                               AccessType accessType, @Nullable NamespacedEntityId component) {
+                               AccessType accessType, @Nullable NamespacedEntityId component,
+                               ProgramRunId workflow) {
     MDSKey.Builder builder = new MDSKey.Builder();
     addDataset(builder, datasetInstance);
-    addDataKey(builder, run, accessType, component);
+    addDataKey(builder, run, accessType, component, workflow);
     return builder.build().getKey();
   }
 
   private byte[] getStreamKey(StreamId stream, ProgramRunId run,
-                              AccessType accessType, @Nullable NamespacedEntityId component) {
+                              AccessType accessType, @Nullable NamespacedEntityId component,
+                              ProgramRunId workflow) {
     MDSKey.Builder builder = new MDSKey.Builder();
     addStream(builder, stream);
-    addDataKey(builder, run, accessType, component);
+    addDataKey(builder, run, accessType, component, workflow);
     return builder.build().getKey();
   }
 
   private void addDataKey(MDSKey.Builder builder, ProgramRunId run,
-                          AccessType accessType, @Nullable NamespacedEntityId component) {
+                          AccessType accessType, @Nullable NamespacedEntityId component, ProgramRunId workflow) {
     long invertedStartTime = getInvertedStartTime(run);
     builder.add(invertedStartTime);
     addProgram(builder, run.getParent());
     builder.add(run.getEntityName());
     builder.add(accessType.getType());
     addComponent(builder, component);
+    addWorkflow(builder, workflow.getParent());
   }
 
   private byte[] getProgramKey(ProgramRunId run, DatasetId datasetInstance,
-                               AccessType accessType, @Nullable NamespacedEntityId component) {
+                               AccessType accessType, @Nullable NamespacedEntityId component, ProgramRunId workflow) {
     long invertedStartTime = getInvertedStartTime(run);
     MDSKey.Builder builder = new MDSKey.Builder();
     addProgram(builder, run.getParent());
@@ -292,12 +337,13 @@ public class LineageDataset extends AbstractDataset {
     builder.add(run.getEntityName());
     builder.add(accessType.getType());
     addComponent(builder, component);
+    addWorkflow(builder, workflow.getParent());
 
     return builder.build().getKey();
   }
 
   private byte[] getProgramKey(ProgramRunId run, StreamId stream,
-                               AccessType accessType, @Nullable NamespacedEntityId component) {
+                               AccessType accessType, @Nullable NamespacedEntityId component, ProgramRunId workflow) {
     long invertedStartTime = getInvertedStartTime(run);
     MDSKey.Builder builder = new MDSKey.Builder();
     addProgram(builder, run.getParent());
@@ -306,6 +352,7 @@ public class LineageDataset extends AbstractDataset {
     builder.add(run.getEntityName());
     builder.add(accessType.getType());
     addComponent(builder, component);
+    addWorkflow(builder, workflow.getParent());
 
     return builder.build().getKey();
   }
@@ -430,6 +477,18 @@ public class LineageDataset extends AbstractDataset {
       .add(program.getEntityName());
   }
 
+  private void addWorkflow(MDSKey.Builder keyBuilder, ProgramId workflow) {
+    if (workflow == null) {
+      keyBuilder.add(NONE_MARKER);
+    } else {
+      keyBuilder.add(WORKFLOW_MARKER)
+        .add(workflow.getNamespace())
+        .add(workflow.getParent().getEntityName())
+        .add(workflow.getType().getCategoryName())
+        .add(workflow.getEntityName());
+    }
+  }
+
   private void addComponent(MDSKey.Builder keyBuilder, EntityId component) {
     if (component instanceof FlowletId) {
       keyBuilder.add(FLOWLET_MARKER)
@@ -448,6 +507,7 @@ public class LineageDataset extends AbstractDataset {
         return new StreamId(splitter.getString(), splitter.getString());
 
       case PROGRAM_MARKER:
+      case WORKFLOW_MARKER:
         return new ProgramId(splitter.getString(), splitter.getString(),
                                ProgramType.valueOfCategoryName(splitter.getString()),
                                splitter.getString());
@@ -468,6 +528,21 @@ public class LineageDataset extends AbstractDataset {
 
       default:
         throw new IllegalStateException("Invalid row with component marker " + marker);
+    }
+  }
+
+  @Nullable
+  private NamespacedEntityId toWorkflow(MDSKey.Splitter splitter) {
+    char marker = (char) splitter.getInt();
+    switch (marker) {
+      case NONE_MARKER:
+        return null;
+
+      case WORKFLOW_MARKER :
+        return toEntityId(splitter, marker);
+
+      default:
+        throw new IllegalStateException("Invalid row with workflow marker " + marker);
     }
   }
 
@@ -512,6 +587,9 @@ public class LineageDataset extends AbstractDataset {
     NamespacedEntityId component = toComponent(splitter, program);
     LOG.trace("Got component {}", component);
 
+    ProgramId workflow = (ProgramId) toWorkflow(splitter);
+    LOG.trace("Got workflow {}", workflow);
+
     if (stream == null) {
       return new Relation(datasetInstance,
                           program,
@@ -519,7 +597,8 @@ public class LineageDataset extends AbstractDataset {
                           runId,
                           component == null ?
                             ImmutableSet.<NamespacedEntityId>of() :
-                            ImmutableSet.of((NamespacedEntityId) component));
+                            ImmutableSet.of((NamespacedEntityId) component),
+                          workflow);
     }
 
     return new Relation(stream,
@@ -528,7 +607,8 @@ public class LineageDataset extends AbstractDataset {
                         runId,
                         component == null ?
                           ImmutableSet.<NamespacedEntityId>of() :
-                          ImmutableSet.of((NamespacedEntityId) component));
+                          ImmutableSet.of((NamespacedEntityId) component),
+                        workflow);
   }
 
   private static final class RowKey {

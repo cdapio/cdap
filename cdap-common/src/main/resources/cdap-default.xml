@@ -361,7 +361,7 @@
 
   <property>
     <name>audit.enabled</name>
-    <value>true</value>
+    <value>false</value>
     <description>
       Determines whether to publish audit messages to Apache Kafka
     </description>

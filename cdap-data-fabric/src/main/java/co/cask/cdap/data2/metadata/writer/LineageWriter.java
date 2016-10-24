@@ -49,6 +49,18 @@ public interface LineageWriter {
                  AccessType accessType, @Nullable NamespacedEntityId component);
 
   /**
+   * Add a program-dataset access.
+   *
+   * @param run program run information
+   * @param datasetInstance dataset accessed by the program
+   * @param accessType access type
+   * @param component program component such as flowlet id, etc.
+   * @param workflowId program workflow
+   */
+  void addAccess(ProgramRunId run, DatasetId datasetInstance,
+                 AccessType accessType, @Nullable NamespacedEntityId component, ProgramRunId workflowId);
+
+  /**
    * Add a program-stream access.
    *
    * @param run program run information

@@ -55,7 +55,7 @@ public class BasicLineageWriter implements LineageWriter {
   @Override
   public void addAccess(ProgramRunId run, DatasetId datasetInstance, AccessType accessType,
                         @Nullable NamespacedEntityId component) {
-    if (alreadyRegistered(run, datasetInstance, accessType, component)) {
+    if (alreadyRegistered(run, datasetInstance, accessType, component, null)) {
       return;
     }
 
@@ -66,6 +66,19 @@ public class BasicLineageWriter implements LineageWriter {
   }
 
   @Override
+  public void addAccess(ProgramRunId run, DatasetId datasetInstance, AccessType accessType,
+                        @Nullable NamespacedEntityId component, ProgramRunId ppId) {
+    if (alreadyRegistered(run, datasetInstance, accessType, component, workflowId)) {
+      return;
+    }
+
+    long accessTime = System.currentTimeMillis();
+    LOG.debug("Writing access for run {}, dataset {}, accessType {}, component {}, accessTime = {}, workflow = {}",
+              run, datasetInstance, accessType, component, accessTime, workflowId);
+    lineageStoreWriter.addAccess(run, datasetInstance, accessType, accessTime, component, workflowId);
+  }
+
+  @Override
   public void addAccess(ProgramRunId run, StreamId stream, AccessType accessType) {
     addAccess(run, stream, accessType, null);
   }
@@ -73,7 +86,7 @@ public class BasicLineageWriter implements LineageWriter {
   @Override
   public void addAccess(ProgramRunId run, StreamId stream, AccessType accessType,
                         @Nullable NamespacedEntityId component) {
-    if (alreadyRegistered(run, stream, accessType, component)) {
+    if (alreadyRegistered(run, stream, accessType, component, null)) {
       return;
     }
 
@@ -83,9 +96,22 @@ public class BasicLineageWriter implements LineageWriter {
     lineageStoreWriter.addAccess(run, stream, accessType, accessTime, component);
   }
 
+  @Override
+  public void addAccess(ProgramRunId run, StreamId stream, AccessType accessType,
+                        @Nullable NamespacedEntityId component, ProgramRunId workflowId) {
+    if (alreadyRegistered(run, stream, accessType, component, workflowId)) {
+      return;
+    }
+
+    long accessTime = System.currentTimeMillis();
+    LOG.debug("Writing access for run {}, stream {}, accessType {}, component {}, accessTime = {}, workflow = {}",
+              run, stream, accessType, component, accessTime, workflowId);
+    lineageStoreWriter.addAccess(run, stream, accessType, accessTime, component, workflowId);
+  }
+
   private boolean alreadyRegistered(ProgramRunId run, NamespacedEntityId data, AccessType accessType,
-                                    @Nullable NamespacedEntityId component) {
-    return registered.putIfAbsent(new DataAccessKey(run, data, accessType, component), true) != null;
+                                    @Nullable NamespacedEntityId component, ProgramRunId workflow) {
+    return registered.putIfAbsent(new DataAccessKey(run, data, accessType, component, workflow), true) != null;
   }
 
   /**
@@ -96,13 +122,15 @@ public class BasicLineageWriter implements LineageWriter {
     private final NamespacedEntityId data;
     private final AccessType accessType;
     private final NamespacedEntityId component;
+    private final ProgramRunId workflow;
 
     public DataAccessKey(ProgramRunId run, NamespacedEntityId data, AccessType accessType, 
-                         @Nullable NamespacedEntityId component) {
+                         @Nullable NamespacedEntityId component, ProgramRunId workflow) {
       this.run = run;
       this.data = data;
       this.accessType = accessType;
       this.component = component;
+      this.workflow = workflow;
     }
 
     @Override
@@ -117,12 +145,13 @@ public class BasicLineageWriter implements LineageWriter {
       return Objects.equals(run, dataAccessKey.run) &&
         Objects.equals(data, dataAccessKey.data) &&
         Objects.equals(accessType, dataAccessKey.accessType) &&
-        Objects.equals(component, dataAccessKey.component);
+        Objects.equals(component, dataAccessKey.component) &&
+        Objects.equals(workflow, dataAccessKey.workflow);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(run, data, accessType, component);
+      return Objects.hash(run, data, accessType, component, workflow);
     }
   }
 }

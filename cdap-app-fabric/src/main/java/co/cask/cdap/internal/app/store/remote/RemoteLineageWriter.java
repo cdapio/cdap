@@ -62,6 +62,15 @@ public class RemoteLineageWriter extends RemoteOpsClient implements LineageWrite
   }
 
   @Override
+  public void addAccess(ProgramRunId run, DatasetId datasetInstance, AccessType accessType,
+                        @Nullable NamespacedEntityId component, ProgramRunId workflow) {
+    if (alreadyRegistered(run, datasetInstance, accessType, component, workflow)) {
+      return;
+    }
+    executeRequest("addDatasetAccess", run, datasetInstance, accessType, component, workflow);
+  }
+
+  @Override
   public void addAccess(ProgramRunId run, StreamId stream, AccessType accessType) {
     // delegates on client side; so corresponding method is not required to be implemented on server side
     addAccess(run, stream, accessType, null);
@@ -76,8 +85,18 @@ public class RemoteLineageWriter extends RemoteOpsClient implements LineageWrite
     executeRequest("addStreamAccess", run, stream, accessType, component);
   }
 
+  @Override
+  public void addAccess(ProgramRunId run, StreamId stream, AccessType accessType,
+                        @Nullable NamespacedEntityId component, ProgramRunId workflow) {
+    if (alreadyRegistered(run, stream, accessType, component, workflow)) {
+      return;
+    }
+    executeRequest("addStreamAccess", run, stream, accessType, component, workflow);
+  }
+
   private boolean alreadyRegistered(ProgramRunId run, NamespacedEntityId data, AccessType accessType,
-                                    @Nullable NamespacedEntityId component) {
-    return registered.putIfAbsent(new BasicLineageWriter.DataAccessKey(run, data, accessType, component), true) != null;
+                                    @Nullable NamespacedEntityId component, ProgramRunId workflow) {
+    return registered.putIfAbsent(new BasicLineageWriter.DataAccessKey(run, data, accessType, component, workflow),
+                                  true) != null;
   }
 }
