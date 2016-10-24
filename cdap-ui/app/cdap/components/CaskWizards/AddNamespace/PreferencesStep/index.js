@@ -14,38 +14,41 @@
  * the License.
  */
 import React from 'react';
-import {Col, FormGroup, Label, Form, Input} from 'reactstrap';
-import T from 'i18n-react';
+import KeyValuePairs from 'components/KeyValuePairs';
+import AddNamespaceActions from 'services/WizardStores/AddNamespace/AddNamespaceActions';
+import AddNamespaceStore from 'services/WizardStores/AddNamespace/AddNamespaceStore';
+import {Provider, connect} from 'react-redux';
+require('./PreferencesStep.less');
 
 export default function PreferencesStep() {
-  return(
-      <Form
-        className="form-horizontal"
-        onSubmit={(e) => {
-          e.preventDefault();
-          return false;
-        }}
-      >
-        <FormGroup>
-          <Col xs="3">
-            <Label className="control-label">
-              {T.translate('features.Wizard.Add-Namespace.Step4.name-label')}
-            </Label>
-          </Col>
-          <Col xs="7">
-            <Input />
-          </Col>
-        </FormGroup>
-        <FormGroup>
-          <Col xs="3">
-            <Label className="control-label">
-              {T.translate('features.Wizard.Add-Namespace.Step4.value-label')}
-            </Label>
-          </Col>
-          <Col xs="7">
-            <Input />
-          </Col>
-        </FormGroup>
-      </Form>
+
+  const mapStateToKeyValProps = (state) => {
+    return {
+      keyValues : state.preferences.keyValues
+    };
+  };
+
+  const mapDispatchToKeyValProps = (dispatch) => {
+    return {
+      OnKeyValueChange: (keyValues) => {
+        dispatch({
+          type: AddNamespaceActions.setPreferences,
+          payload: { keyValues }
+        });
+      }
+    };
+  };
+
+  const KeyValuePairsWrapper = connect(
+    mapStateToKeyValProps,
+    mapDispatchToKeyValProps
+  )(KeyValuePairs);
+
+  return (
+    <div className="namespace-preferences">
+      <Provider store={AddNamespaceStore}>
+        <KeyValuePairsWrapper />
+      </Provider>
+    </div>
   );
 }

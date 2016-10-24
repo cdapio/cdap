@@ -19,7 +19,7 @@ import Wizard from 'components/Wizard';
 import AddNamespaceStore from 'services/WizardStores/AddNamespace/AddNamespaceStore';
 import AddNamespaceActions from 'services/WizardStores/AddNamespace/AddNamespaceActions';
 import AddNamespaceWizardConfig from 'services/WizardConfigs/AddNamespaceWizardConfig';
-import { PublishNamespace } from 'services/WizardStores/AddNamespace/ActionCreator';
+import { PublishNamespace, PublishPreferences } from 'services/WizardStores/AddNamespace/ActionCreator';
 
 export default class AddNamespaceWizard extends Component {
   constructor(props) {
@@ -33,16 +33,11 @@ export default class AddNamespaceWizard extends Component {
       showWizard: isOpen
     });
   }
-
   createNamespace(){
-    let state = AddNamespaceStore.getState();
     return PublishNamespace()
       .flatMap(
-        res => {
-          if (res) {
-            return Promise.resolve(res);
-          }
-          return Promise.resolve(state.general.name);
+        () => {
+          return PublishPreferences();
         }
       );
   }
@@ -66,6 +61,7 @@ export default class AddNamespaceWizard extends Component {
             >
               <Wizard
                 wizardConfig={AddNamespaceWizardConfig}
+                wizardType="Add-Namespace"
                 onSubmit={this.createNamespace.bind(this)}
                 onClose={this.props.onClose}
                 store={AddNamespaceStore}
