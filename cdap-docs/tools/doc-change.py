@@ -26,7 +26,7 @@
 # 
 # - If the canonical numbered version:
 #   no changes
-#   If basename is not the numbered version to be used for empty title tags, use
+#   If the version derived from the basename is not the numbered version to be used for empty title tags, use
 #   "--version=version" to specify the version
 #
 # - If the current version (perhaps in a directory called 'current'):
@@ -44,7 +44,8 @@
 # 
 # - If the numbered version: 
 #   adds link tags pointing to the canonical numbered version at docs.cask.co
-#   If basename is not the numbered version to be used, for linking and for empty title tags, use
+#   If the version derived from the basename is not the numbered version to be used for
+#   linking and for empty title tags, use
 #   "--version=version" to specify the version
 #
 # - If the current version (perhaps in a directory called 'current'):

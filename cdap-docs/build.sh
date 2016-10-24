@@ -346,7 +346,6 @@ function stash_github_zip() {
   echo
   TARGET_TEMP=$(mktemp -d ${TARGET_PATH}/.cdap-docs-github-$$.XXXX)
   mv ${TARGET_PATH}/*archive.zip ${TARGET_TEMP}
-  echo
 }
 
 function restore_github_zip() {
@@ -355,7 +354,6 @@ function restore_github_zip() {
   echo "========================================================"
   echo
   mv ${TARGET_TEMP}/*archive.zip ${TARGET_PATH}
-  echo
 }
 
 function build_docs_web_part() {
@@ -394,7 +392,7 @@ function package_docs_web_part() {
   echo "Packaging Web Docs"
   echo "--------------------------------------------------------"
   echo
-  _package_docs build-web ${WEB} ${TRUE}
+  _package_docs ${BUILD_WEB} ${WEB} ${TRUE}
 }
 
 # For testing and debugging
@@ -403,7 +401,7 @@ function package_docs_github_part() {
   echo "Packaging GitHub Docs"
   echo "--------------------------------------------------------"
   echo
-  _package_docs build-github ${GITHUB} ${FALSE}
+  _package_docs ${BUILD_GITHUB} ${GITHUB} ${FALSE}
 }
 
 function _package_docs() {
@@ -502,15 +500,13 @@ function build_zip() {
   local zip_extras=${3}
   set_project_path
   set_version
-  local zip_dir_name
-  if [[ -n ${zip_target} ]]; then
-    zip_dir_name="${PROJECT}-docs-${PROJECT_VERSION}"
-  else
-    zip_dir_name="${PROJECT}-docs-${PROJECT_VERSION}-$1"
-  fi
+  
+  local zip_dir_name="${PROJECT}-docs-${PROJECT_VERSION}"
+  [[ -n ${zip_target} ]] && zip_dir_name += "-${zip_target}"
+
   local zip_dir_name_archive
   local build_flag
-  if [ "x${doc_target}" == "x${BUILD_GITHUB}" ]; then
+  if [[ ${doc_target} == ${BUILD_GITHUB} ]]; then
     zip_dir_name_archive="${zip_dir_name}-github-archive.zip"
     build_flag="--ghpages"
   else
@@ -523,8 +519,7 @@ function build_zip() {
   rm -rf base current ${PROJECT_VERSION} *.zip
   
   echo "Creating base"
-  mkdir base
-  cp -r ${HTML} base/en
+  mkdir base && cp -r ${HTML} base/en
   errors=$?
   if [[ ${errors} -ne 0 ]]; then
       echo "Could not create base"
@@ -548,13 +543,13 @@ function build_zip() {
       echo "Could not change doc set ${TARGET_PATH}/current"
       return ${errors}   
   fi
-  zip -qr ${zip_dir_name}.zip current/* --exclude *.DS_Store* *.buildinfo*
-  if [[ "x${zip_extras}" != "x" ]]; then
+  zip -qr ${zip_dir_name}-current.zip current/* --exclude *.DS_Store* *.buildinfo*
+  if [[ -n ${zip_extras} ]]; then
     echo "Creating and adding a .htaccess file (404 file)"
     rewrite ${SCRIPT_PATH}/${COMMON_SOURCE}/${HTACCESS} ${TARGET_PATH}/current/.${HTACCESS} "<version>" "current"
-    zip -qr ${zip_dir_name}.zip current/.${HTACCESS}
+    zip -qr ${zip_dir_name}-current.zip current/.${HTACCESS}
   fi
-  mv ${zip_dir_name}.zip ${zip_dir_name}-current.zip
+#   mv ${zip_dir_name}.zip ${zip_dir_name}-current.zip
   errors=$?
   if [[ ${errors} -ne 0 ]]; then
       echo "Could not move ${zip_dir_name}.zip to ${zip_dir_name}-current.zip"
