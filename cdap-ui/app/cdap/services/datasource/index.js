@@ -26,10 +26,10 @@ export default class Datasource {
     this.socketSubscription =  socketData.subscribe(
       (data) => {
         let hash = data.resource.id;
-        let shouldCallNextHanlder = true;
+        let shouldCallNextHandler = true;
         if (!this.bindings[hash]) { return; }
 
-        shouldCallNextHanlder = genericResponseHandlers.reduce((prev, curr) => curr(data), () => true);
+        shouldCallNextHandler = genericResponseHandlers.reduce((prev, curr) => prev && curr(data), true);
 
         if (data.statusCode > 299 || data.warning) {
           this.bindings[hash].rx.onError({
@@ -37,7 +37,7 @@ export default class Datasource {
             response: data.response || data.body || data.error
           });
         } else {
-          if (shouldCallNextHanlder) {
+          if (shouldCallNextHandler) {
             this.bindings[hash].rx.onNext(data.response);
           }
           if (typeof shouldCallNextHandler === 'undefined') {

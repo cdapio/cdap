@@ -37,7 +37,7 @@ export default class HeaderActions extends Component {
     this.toggleSettingsDropdown = this.toggleSettingsDropdown.bind(this);
   }
   logout() {
-    RedirectToLogin();
+    RedirectToLogin({statusCode: 401});
   }
   toggleSettingsDropdown(){
     this.setState({
