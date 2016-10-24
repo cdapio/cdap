@@ -137,4 +137,21 @@ describe('metadata-parser', () => {
     expect(parsedMetadata.applicationId).toBe('SomeApplication');
     expect(parsedMetadata.programType).toBe('Flow');
   });
+
+  it('should parse view metadata', () => {
+    const viewMetadata = {
+      entityId: {
+        type: 'view',
+        id: {
+          id: 'ViewName',
+        }
+      }
+    };
+
+    const parsedMetadata = parseMetadata(viewMetadata);
+
+    expect(parsedMetadata.id).toBe('ViewName');
+    expect(parsedMetadata.type).toBe('view');
+
+  });
 });
