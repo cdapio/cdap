@@ -49,15 +49,15 @@ public class SetProgramRuntimeArgsCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
-    String appId = programIdParts[0];
-    String programName = programIdParts[1];
-    ProgramId programId = cliConfig.getCurrentNamespace().app(appId).program(elementType.getProgramType(), programName);
+    ProgramId programId = parseProgramId(arguments, elementType);
+    String appName = programId.getApplication();
+    String appVersion = programId.getVersion();
+    String programName = programId.getProgram();
     String runtimeArgsString = arguments.get(ArgumentName.RUNTIME_ARGS.toString());
     Map<String, String> runtimeArgs = ArgumentParser.parseMap(runtimeArgsString);
-    programClient.setRuntimeArgs(programId.toId(), runtimeArgs);
-    output.printf("Successfully set runtime args of %s '%s' of application '%s' to '%s'\n",
-                  elementType.getName(), programName, appId, runtimeArgsString);
+    programClient.setRuntimeArgs(programId, runtimeArgs);
+    output.printf("Successfully set runtime args of %s '%s.%s' of application '%s' to '%s'\n",
+                  elementType.getName(), programName, appName, appVersion, runtimeArgsString);
   }
 
   @Override

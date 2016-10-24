@@ -47,10 +47,7 @@ public class GetProgramRuntimeArgsCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
-    String appId = programIdParts[0];
-    String programName = programIdParts[1];
-    ProgramId programId = cliConfig.getCurrentNamespace().app(appId).program(elementType.getProgramType(), programName);
+    ProgramId programId = parseProgramId(arguments, elementType);
     Map<String, String> runtimeArgs = programClient.getRuntimeArgs(programId.toId());
     output.printf(GSON.toJson(runtimeArgs));
   }
