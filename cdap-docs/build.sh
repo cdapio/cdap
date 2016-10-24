@@ -549,12 +549,12 @@ function build_zip() {
     rewrite ${SCRIPT_PATH}/${COMMON_SOURCE}/${HTACCESS} ${TARGET_PATH}/current/.${HTACCESS} "<version>" "current"
     zip -qr ${zip_dir_name}-current.zip current/.${HTACCESS}
   fi
-#   mv ${zip_dir_name}.zip ${zip_dir_name}-current.zip
   errors=$?
   if [[ ${errors} -ne 0 ]]; then
-      echo "Could not move ${zip_dir_name}.zip to ${zip_dir_name}-current.zip"
+      echo "Could not create ${zip_dir_name}-current.zip"
       return ${errors}   
   fi
+  rm -rf current
 
   echo
   echo "2: 'future' version with robots meta tag ${zip_dir_name}-future"
@@ -577,13 +577,7 @@ function build_zip() {
       echo "Could not move ${zip_dir_name}.zip to ${zip_dir_name}-future.zip"
       return ${errors}   
   fi
-  rm -rf future
-  mv ${PROJECT_VERSION} future
-  errors=$?
-  if [[ ${errors} -ne 0 ]]; then
-      echo "Could not move ${PROJECT_VERSION} to future"
-      return ${errors}   
-  fi
+  rm -rf ${PROJECT_VERSION}
 
   echo
   echo "3: Canonical numbered version ${zip_dir_name}"
