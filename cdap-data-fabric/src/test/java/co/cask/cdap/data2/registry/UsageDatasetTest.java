@@ -25,6 +25,8 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableSet;
+import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionExecutor;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -55,148 +57,212 @@ public class UsageDatasetTest {
 
   @Test
   public void testOneMapping() throws Exception {
-    UsageDataset usageDataset = getUsageDataset("testOneMapping");
+    final UsageDataset usageDataset = getUsageDataset("testOneMapping");
+    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) usageDataset);
 
     // Add mapping
-    usageDataset.register(flow11, datasetInstance1);
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        usageDataset.register(flow11, datasetInstance1);
+      }
+    });
 
     // Verify mapping
-    Assert.assertEquals(ImmutableSet.of(datasetInstance1), usageDataset.getDatasets(flow11));
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        Assert.assertEquals(ImmutableSet.of(datasetInstance1), usageDataset.getDatasets(flow11));
+      }
+    });
   }
 
   @Test
   public void testProgramDatasetMapping() throws Exception {
-    UsageDataset usageDataset = getUsageDataset("testProgramDatasetMapping");
+    final UsageDataset usageDataset = getUsageDataset("testProgramDatasetMapping");
+    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) usageDataset);
 
     // Add mappings
-    usageDataset.register(flow11, datasetInstance1);
-    usageDataset.register(flow11, datasetInstance3);
-    usageDataset.register(flow12, datasetInstance2);
-    usageDataset.register(service11, datasetInstance1);
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        usageDataset.register(flow11, datasetInstance1);
+        usageDataset.register(flow11, datasetInstance3);
+        usageDataset.register(flow12, datasetInstance2);
+        usageDataset.register(service11, datasetInstance1);
 
-    usageDataset.register(flow21, datasetInstance2);
-    usageDataset.register(service21, datasetInstance1);
+        usageDataset.register(flow21, datasetInstance2);
+        usageDataset.register(service21, datasetInstance1);
+      }
+    });
 
-    // Verify program mappings
-    Assert.assertEquals(ImmutableSet.of(datasetInstance1, datasetInstance3), usageDataset.getDatasets(flow11));
-    Assert.assertEquals(ImmutableSet.of(datasetInstance2), usageDataset.getDatasets(flow12));
-    Assert.assertEquals(ImmutableSet.of(datasetInstance1), usageDataset.getDatasets(service11));
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // Verify program mappings
+        Assert.assertEquals(ImmutableSet.of(datasetInstance1, datasetInstance3), usageDataset.getDatasets(flow11));
+        Assert.assertEquals(ImmutableSet.of(datasetInstance2), usageDataset.getDatasets(flow12));
+        Assert.assertEquals(ImmutableSet.of(datasetInstance1), usageDataset.getDatasets(service11));
 
-    Assert.assertEquals(ImmutableSet.of(datasetInstance2), usageDataset.getDatasets(flow21));
-    Assert.assertEquals(ImmutableSet.of(datasetInstance1), usageDataset.getDatasets(service21));
+        Assert.assertEquals(ImmutableSet.of(datasetInstance2), usageDataset.getDatasets(flow21));
+        Assert.assertEquals(ImmutableSet.of(datasetInstance1), usageDataset.getDatasets(service21));
 
-    // Verify app mappings
-    Assert.assertEquals(ImmutableSet.of(datasetInstance1, datasetInstance2, datasetInstance3),
-                        usageDataset.getDatasets(flow11.getParent()));
-    Assert.assertEquals(ImmutableSet.of(datasetInstance1, datasetInstance2),
-                        usageDataset.getDatasets(flow21.getParent()));
+        // Verify app mappings
+        Assert.assertEquals(ImmutableSet.of(datasetInstance1, datasetInstance2, datasetInstance3),
+                            usageDataset.getDatasets(flow11.getParent()));
+        Assert.assertEquals(ImmutableSet.of(datasetInstance1, datasetInstance2),
+                            usageDataset.getDatasets(flow21.getParent()));
 
-    // Verify dataset mappings
-    Assert.assertEquals(ImmutableSet.of(flow11, service11, service21), usageDataset.getPrograms(datasetInstance1));
-    Assert.assertEquals(ImmutableSet.of(flow12, flow21), usageDataset.getPrograms(datasetInstance2));
-    Assert.assertEquals(ImmutableSet.of(flow11), usageDataset.getPrograms(datasetInstance3));
+        // Verify dataset mappings
+        Assert.assertEquals(ImmutableSet.of(flow11, service11, service21), usageDataset.getPrograms(datasetInstance1));
+        Assert.assertEquals(ImmutableSet.of(flow12, flow21), usageDataset.getPrograms(datasetInstance2));
+        Assert.assertEquals(ImmutableSet.of(flow11), usageDataset.getPrograms(datasetInstance3));
+      }
+    });
 
     // --------- Delete app1 -----------
-    usageDataset.unregister(flow11.getParent());
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        usageDataset.unregister(flow11.getParent());
+      }
+    });
 
-    // There should be no mappings for programs of app1 now
-    Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(flow11));
-    Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(flow12));
-    Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(service11));
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // There should be no mappings for programs of app1 now
+        Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(flow11));
+        Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(flow12));
+        Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(service11));
 
-    Assert.assertEquals(ImmutableSet.of(datasetInstance2), usageDataset.getDatasets(flow21));
-    Assert.assertEquals(ImmutableSet.of(datasetInstance1), usageDataset.getDatasets(service21));
+        Assert.assertEquals(ImmutableSet.of(datasetInstance2), usageDataset.getDatasets(flow21));
+        Assert.assertEquals(ImmutableSet.of(datasetInstance1), usageDataset.getDatasets(service21));
 
-    // Verify app mappings
-    Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(flow11.getParent()));
-    Assert.assertEquals(ImmutableSet.of(datasetInstance1, datasetInstance2),
-                        usageDataset.getDatasets(flow21.getParent()));
+        // Verify app mappings
+        Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(flow11.getParent()));
+        Assert.assertEquals(ImmutableSet.of(datasetInstance1, datasetInstance2),
+                            usageDataset.getDatasets(flow21.getParent()));
 
-    // Verify dataset mappings
-    Assert.assertEquals(ImmutableSet.of(service21), usageDataset.getPrograms(datasetInstance1));
-    Assert.assertEquals(ImmutableSet.of(flow21), usageDataset.getPrograms(datasetInstance2));
-    Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(datasetInstance3));
+        // Verify dataset mappings
+        Assert.assertEquals(ImmutableSet.of(service21), usageDataset.getPrograms(datasetInstance1));
+        Assert.assertEquals(ImmutableSet.of(flow21), usageDataset.getPrograms(datasetInstance2));
+        Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(datasetInstance3));
+      }
+    });
   }
 
   @Test
   public void testAllMappings() throws Exception {
-    UsageDataset usageDataset = getUsageDataset("testAllMappings");
+    final UsageDataset usageDataset = getUsageDataset("testAllMappings");
+    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) usageDataset);
 
     // Add mappings
-    usageDataset.register(flow11, datasetInstance1);
-    usageDataset.register(service21, datasetInstance3);
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        usageDataset.register(flow11, datasetInstance1);
+        usageDataset.register(service21, datasetInstance3);
 
-    usageDataset.register(flow12, stream1);
+        usageDataset.register(flow12, stream1);
+      }
+    });
 
-    // Verify app mappings
-    Assert.assertEquals(ImmutableSet.of(datasetInstance1), usageDataset.getDatasets(flow11));
-    Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(flow12));
-    Assert.assertEquals(ImmutableSet.of(datasetInstance3), usageDataset.getDatasets(service21));
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // Verify app mappings
+        Assert.assertEquals(ImmutableSet.of(datasetInstance1), usageDataset.getDatasets(flow11));
+        Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(flow12));
+        Assert.assertEquals(ImmutableSet.of(datasetInstance3), usageDataset.getDatasets(service21));
 
-    Assert.assertEquals(ImmutableSet.of(stream1), usageDataset.getStreams(flow12));
-    Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(flow22));
+        Assert.assertEquals(ImmutableSet.of(stream1), usageDataset.getStreams(flow12));
+        Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(flow22));
 
-    // Verify dataset/stream mappings
-    Assert.assertEquals(ImmutableSet.of(flow11), usageDataset.getPrograms(datasetInstance1));
-    Assert.assertEquals(ImmutableSet.of(flow12), usageDataset.getPrograms(stream1));
-    Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream2));
+        // Verify dataset/stream mappings
+        Assert.assertEquals(ImmutableSet.of(flow11), usageDataset.getPrograms(datasetInstance1));
+        Assert.assertEquals(ImmutableSet.of(flow12), usageDataset.getPrograms(stream1));
+        Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream2));
+      }
+    });
 
     // --------- Delete app1 -----------
-    usageDataset.unregister(flow11.getParent());
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        usageDataset.unregister(flow11.getParent());
+      }
+    });
 
-    // Verify app mappings
-    Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(flow11));
-    Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(flow12));
-    Assert.assertEquals(ImmutableSet.of(datasetInstance3), usageDataset.getDatasets(service21));
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // Verify app mappings
+        Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(flow11));
+        Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(flow12));
+        Assert.assertEquals(ImmutableSet.of(datasetInstance3), usageDataset.getDatasets(service21));
 
-    Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(flow12));
-    Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(flow22));
+        Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(flow12));
+        Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(flow22));
 
-    // Verify dataset/stream mappings
-    Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(datasetInstance1));
-    Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream1));
-    Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream2));
+        // Verify dataset/stream mappings
+        Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(datasetInstance1));
+        Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream1));
+        Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream2));
 
-    // Verify app mappings
-    Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(flow11));
-    Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(flow12));
-    Assert.assertEquals(ImmutableSet.of(datasetInstance3), usageDataset.getDatasets(service21));
+        // Verify app mappings
+        Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(flow11));
+        Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(flow12));
+        Assert.assertEquals(ImmutableSet.of(datasetInstance3), usageDataset.getDatasets(service21));
 
-    Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(flow12));
-    Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(flow22));
+        Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(flow12));
+        Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(flow22));
 
-    // Verify dataset/stream mappings
-    Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(datasetInstance1));
-    Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream1));
-    Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream2));
+        // Verify dataset/stream mappings
+        Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(datasetInstance1));
+        Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream1));
+        Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream2));
 
-    // Verify app mappings
-    Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(flow11));
-    Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(flow12));
-    Assert.assertEquals(ImmutableSet.of(datasetInstance3), usageDataset.getDatasets(service21));
+        // Verify app mappings
+        Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(flow11));
+        Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(flow12));
+        Assert.assertEquals(ImmutableSet.of(datasetInstance3), usageDataset.getDatasets(service21));
 
-    Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(flow12));
-    Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(flow22));
+        Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(flow12));
+        Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(flow22));
 
-    // Verify dataset/stream mappings
-    Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(datasetInstance1));
-    Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream1));
-    Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream2));
+        // Verify dataset/stream mappings
+        Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(datasetInstance1));
+        Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream1));
+        Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream2));
+      }
+    });
 
     // --------- Delete app2 -----------
-    usageDataset.unregister(flow21.getParent());
-    // Verify app mappings
-    Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(flow11));
-    Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(flow12));
-    Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(service21));
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        usageDataset.unregister(flow21.getParent());
+      }
+    });
 
-    Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(flow12));
-    Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(flow22));
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // Verify app mappings
+        Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(flow11));
+        Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(flow12));
+        Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(service21));
 
-    // Verify dataset/stream mappings
-    Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(datasetInstance1));
-    Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream1));
-    Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream2));
+        Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(flow12));
+        Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(flow22));
+
+        // Verify dataset/stream mappings
+        Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(datasetInstance1));
+        Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream1));
+        Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream2));
+      }
+    });
   }
 
   protected static UsageDataset getUsageDataset(String instanceId) throws Exception {
