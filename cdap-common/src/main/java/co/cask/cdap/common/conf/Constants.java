@@ -237,6 +237,18 @@ public final class Constants {
     }
 
     public static final String SERVICE_DESCRIPTION = "Service that maintains transaction states.";
+
+    /**
+     * Configuration for the TransactionDataJanitor coprocessor.
+     */
+    public static final class DataJanitor {
+      /**
+       * Whether or not the TransactionDataJanitor coprocessor should be enabled on tables.
+       * Disable for testing.
+       */
+      public static final String CFG_TX_JANITOR_ENABLE = "data.tx.janitor.enable";
+      public static final boolean DEFAULT_TX_JANITOR_ENABLE = true;
+    }
   }
 
   /**
@@ -429,6 +441,7 @@ public final class Constants {
     public static final String CLIENT_BOSS_THREADS = "router.client.boss.threads";
     public static final String CLIENT_WORKER_THREADS = "router.client.worker.threads";
     public static final String CONNECTION_TIMEOUT_SECS = "router.connection.idle.timeout.secs";
+    public static final String ROUTER_USERSERVICE_FALLBACK_STRAGEY = "router.userservice.fallback.strategy";
 
     /**
      * Defaults.

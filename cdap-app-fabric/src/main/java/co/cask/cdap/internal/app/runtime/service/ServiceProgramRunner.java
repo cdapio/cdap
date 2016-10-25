@@ -35,7 +35,6 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.services.ServiceHttpServer;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
@@ -104,7 +103,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
     // Setup dataset framework context, if required
     if (datasetFramework instanceof ProgramContextAware) {
-      ProgramId programId = program.getId().toEntityId();
+      ProgramId programId = program.getId();
       ((ProgramContextAware) datasetFramework).initContext(programId.run(runId));
     }
 
@@ -143,7 +142,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final class ServiceProgramControllerAdapter extends ProgramControllerServiceAdapter {
     private final ServiceHttpServer service;
 
-    ServiceProgramControllerAdapter(ServiceHttpServer service, Id.Program programId,
+    ServiceProgramControllerAdapter(ServiceHttpServer service, ProgramId programId,
                                     RunId runId, String componentName) {
       super(service, programId, runId, componentName);
       this.service = service;

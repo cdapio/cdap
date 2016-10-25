@@ -14,19 +14,22 @@
  * the License.
  */
 
-import React, {Component} from 'react';
+import React, {Component, PropTypes} from 'react';
 import {MySearchApi} from '../../api/search';
 import {parseMetadata} from '../../services/metadata-parser';
-import Card from '../Card';
 import HomeHeader from './HomeHeader';
+import EntityCard from '../EntityCard';
+import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
-
+const shortid = require('shortid');
+const classNames = require('classnames');
 require('./Home.less');
 
-export default class Home extends Component {
+const defaultFilter = ['app', 'dataset', 'stream'];
+
+class Home extends Component {
   constructor(props) {
     super(props);
-
     this.filterOptions = [
       {
         displayName: T.translate('commons.entity.application.plural'),
@@ -37,91 +40,315 @@ export default class Home extends Component {
         id: 'artifact'
       },
       {
-        displayName: T.translate('commons.entity.program.plural'),
-        id: 'program'
-      },
-      {
         displayName: T.translate('commons.entity.dataset.plural'),
         id: 'dataset'
       },
       {
-        displayName: T.translate('commons.entity.stream.plural'),
-        id: 'stream'
+        displayName: T.translate('commons.entity.program.plural'),
+        id: 'program'
       },
       {
-        displayName: T.translate('commons.entity.view.plural'),
-        id: 'view'
+        displayName: T.translate('commons.entity.stream.plural'),
+        id: 'stream'
+      }
+    ];
+
+    //Accepted filter ids to be compared against incoming query parameters
+    this.acceptedFilterIds = this.filterOptions.map( (item) => {
+      return item.id;
+    });
+
+    this.sortOptions = [
+      {
+        displayName: T.translate('features.Home.Header.sortOptions.nameAsc.displayName'),
+        sort: 'name',
+        order: 'asc',
+        fullSort: 'name asc'
       },
+      {
+        displayName: T.translate('features.Home.Header.sortOptions.nameDesc.displayName'),
+        sort: 'name',
+        order: 'desc',
+        fullSort: 'name desc'
+      }
     ];
 
     this.state = {
-      filter: ['artifact', 'app', 'dataset', 'stream', 'view'],
-      sort: '',
-      entities: []
+      filter: defaultFilter,
+      sortObj: this.sortOptions[0],
+      query: '',
+      entities: [],
+      selectedEntity: null,
+      loading: true
     };
+    this.updateQueryString = this.updateQueryString.bind(this);
+    this.getQueryObject = this.getQueryObject.bind(this);
+  }
 
+  componentWillReceiveProps(nextProps) {
+    this.search(this.state.query, this.state.filter, this.state.sortObj, nextProps.params.namespace);
+  }
+
+  //Update Store and State to correspond to query parameters before component renders
+  componentWillMount() {
+    NamespaceStore.dispatch({
+      type: 'SELECT_NAMESPACE',
+      payload: {
+        selectedNamespace: this.props.params.namespace
+      }
+    });
+
+    let queryObject = this.getQueryObject();
+
+    this.setState({
+      filter: queryObject.filter,
+      sortObj: queryObject.sort,
+      query: queryObject.query
+    });
+  }
+
+  //Retrieve entities for rendering
+  componentDidMount(){
     this.search();
   }
 
-  search(filter) {
+  //Construct and return query object from query parameters
+  getQueryObject() {
+    let sortBy = '';
+    let orderBy = '';
+    let searchTerm = '';
+    let sortOption = '';
+    let query = this.props.location.query;
+    let filters = '';
+    let verifiedFilters = null;
+    let invalidFilter = false;
+
+    //Get filters, order, sort, search from query
+    if(query){
+      orderBy = typeof query.order === 'string' ? query.order : '';
+      sortBy = typeof query.sort === 'string' ? query.sort : '';
+      searchTerm = typeof query.q === 'string' ? query.q : '';
+      if(typeof query.filter === 'string'){
+        filters = [query.filter];
+      } else if(Array.isArray(query.filter)){
+        filters = query.filter;
+      }
+    }
+
+    //Ensure sort parameters are valid
+    sortOption = this.sortOptions.filter((option) => {
+      return ( sortBy === option.sort && orderBy === option.order);
+    });
+
+    //Ensure filter parameters are valid
+    if(filters.length > 0){
+      verifiedFilters = filters.filter( (filterOption) => {
+        if(this.acceptedFilterIds.indexOf(filterOption) !== -1){
+          return true;
+        } else {
+          invalidFilter = true;
+          return false;
+        }
+      });
+    }
+
+    //Ensure all defaults are applied if an invalid parameter is passed
+    if(invalidFilter){
+      defaultFilter.forEach(( option ) => {
+        if(verifiedFilters.indexOf(option) === -1){
+          verifiedFilters.push(option);
+        }
+      });
+    }
+
+    //Return valid query parameters or return current state values if query params are invalid
+    return ({
+      'query' : searchTerm ? searchTerm : this.state.query,
+      'sort' : sortOption.length === 0 ? this.state.sortObj : sortOption[0],
+      'filter' : verifiedFilters ? verifiedFilters : this.state.filter
+    });
+  }
+
+  search(
+    query = this.state.query,
+    filter = this.state.filter,
+    sortObj = this.state.sortObj,
+    namespace = this.props.params.namespace
+  ) {
+    //No entity types requested - set state and return
+    if (filter.length === 0) {
+      this.setState({query, filter, sortObj, entities: [], selectedEntity: null, loading: false});
+      return;
+    }
+
+    this.setState({loading: true});
+
     let params = {
-      namespace: 'default',
-      query: '*',
-      target: filter || this.state.filter
+      namespace: namespace,
+      query: `${query}*`,
+      target: filter,
+      sort: sortObj.fullSort
     };
 
     MySearchApi.search(params)
       .map((res) => {
-        return res.map(parseMetadata);
+        return res.results
+          .map(parseMetadata)
+          .map((entity) => {
+            entity.uniqueId = shortid.generate();
+            return entity;
+          })
+          .filter((entity) => entity.id.charAt(0) !== '_');
       })
-      .subscribe(
-        (res) => {
-          this.setState({entities: res});
-        }
-      );
+      .subscribe((res) => {
+        this.setState({query, filter, sortObj, entities: res, selectedEntity: null, loading: false});
+      });
   }
 
   handleFilterClick(option) {
-    let arr = [...this.state.filter];
+    let filters = [...this.state.filter];
     if (this.state.filter.includes(option.id)) {
-      let index = arr.indexOf(option.id);
-      arr.splice(index, 1);
+      let index = filters.indexOf(option.id);
+      filters.splice(index, 1);
     } else {
-      arr.push(option.id);
+      filters.push(option.id);
     }
 
-    this.search(arr);
-    this.setState({filter: arr});
+    this.setState({
+      filter : filters
+    });
+
+    this.search(this.state.query, filters, this.state.sortObj);
+  }
+
+  handleSortClick(option) {
+    this.setState({
+      sortObj : option
+    });
+    this.search(this.state.query, this.state.filter, option);
+  }
+
+  handleSearch(query) {
+    this.search(query, this.state.filter, this.state.sortObj);
+  }
+
+  handleEntityClick(uniqueId) {
+    this.setState({selectedEntity: uniqueId});
+  }
+
+  //Set query string using current application state
+  updateQueryString(){
+    let queryString = '';
+    let sort = '';
+    let filter = '';
+    let query = '';
+    let queryParams = [];
+
+    //Generate sort params
+    if(this.state.sortObj.sort){
+      sort = 'sort=' + this.state.sortObj.sort + '&order=' + this.state.sortObj.order;
+    }
+
+    //Generate filter params
+    if(this.state.filter.length === 1){
+      filter = 'filter=' + this.state.filter[0];
+    } else if (this.state.filter.length > 1){
+      filter = 'filter=' + this.state.filter.join('&filter=');
+    }
+
+    //Generate search param
+    if(this.state.query.length > 0){
+      query = 'q=' + this.state.query;
+    }
+
+    //Combine query parameters into query string
+    queryParams = [query, sort, filter].filter((element) => {
+      return element.length > 0;
+    });
+    queryString = queryParams.join('&');
+
+    if(queryString.length > 0){
+      queryString = '?' + queryString;
+    }
+
+    let obj = {
+      title: 'CDAP',
+      url: location.pathname + queryString
+    };
+
+    //Modify URL to match application state
+    history.pushState(obj, obj.title, obj.url);
   }
 
   render() {
+    this.updateQueryString();
+
+    const empty = (
+      <h3 className="text-center empty-message">
+        {T.translate('features.Home.emptyMessage')}
+      </h3>
+    );
+
+    const loading = (
+      <h3 className="text-center">
+        <span className="fa fa-spinner fa-spin fa-2x loading-spinner"></span>
+      </h3>
+    );
+
+    let entitiesToBeRendered;
+    if(this.state.loading){
+      entitiesToBeRendered = loading;
+    } else if(this.state.entities.length === 0) {
+      entitiesToBeRendered = empty;
+    } else {
+      entitiesToBeRendered = this.state.entities.map(
+        (entity) => {
+          return (
+            <div
+              className={
+                classNames('entity-card-container',
+                  { active: entity.uniqueId === this.state.selectedEntity }
+                )
+              }
+              key={entity.uniqueId}
+              onClick={this.handleEntityClick.bind(this, entity.uniqueId)}
+            >
+              <EntityCard
+                entity={entity}
+                onUpdate={this.search.bind(this)}
+              />
+            </div>
+          );
+        }
+      );
+    }
+
     return (
       <div>
         <HomeHeader
           filterOptions={this.filterOptions}
           onFilterClick={this.handleFilterClick.bind(this)}
           activeFilter={this.state.filter}
+          sortOptions={this.sortOptions}
+          activeSort={this.state.sortObj}
+          onSortClick={this.handleSortClick.bind(this)}
+          onSearch={this.handleSearch.bind(this)}
+          searchText={this.state.query}
         />
         <div className="entity-list">
-          {this.state.entities.map(
-            (entity, index) => {
-              return (
-                <Card
-                  key={index}
-                  title={entity.id}
-                  cardClass='home-cards'
-                >
-                  <h4>
-                    <span>{T.translate('features.Home.Cards.type')}</span>
-                    <span>{entity.type}</span>
-                  </h4>
-                </Card>
-              );
-            })
-          }
+          {entitiesToBeRendered}
         </div>
-
       </div>
     );
   }
 }
+
+Home.propTypes = {
+  params: PropTypes.shape({
+    namespace : PropTypes.string
+  }),
+  location: PropTypes.object,
+  history: PropTypes.object
+};
+
+export default Home;

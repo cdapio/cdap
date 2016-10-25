@@ -18,22 +18,28 @@
 # This script is the main script for performing all CDAP functions. With it,
 # you can start, stop, or get status on CDAP and its services, run queries,
 # execute CLI commands, and more. Anything not handled by this script is passed
-# to the CDAP CLI to be interpreted. 
+# to the CDAP CLI to be interpreted.
 #
 
-__script=${BASH_SOURCE[0]} __script_bin=$(dirname ${__script})
-__comp_home=${__script%/*/*}
-# Determine if we're in the SDK or distributed
-if [[ ${__comp_home%/*} == /opt/cdap ]]; then
-  __app_home=${__comp_home}
-  __cdap_home=/opt/cdap
-else
-  # We're in the SDK, __app_home and __cdap_home are identical
-  __app_home=$(dirname ${__script_bin})
-  __cdap_home=${__app_home}
-fi
+__script=${BASH_SOURCE[0]}
 
-export CDAP_HOME=${__cdap_home}
+__target=$(readlink ${__script}) # TODO: readlink isn't portable, if we support more than Linux/macOS
+if [[ $? -ne 0 ]]; then
+  __target=${__script} # no symlink
+fi
+# Resolve __target
+__target=$(cd $(dirname ${__target}); echo "$(pwd -P)/$(basename ${__target})")
+__app_home=$(cd $(dirname ${__target})/.. >&-; pwd -P)
+
+__comp_home=${COMPONENT_HOME:-$(cd ${__target%/*/*} >&- 2>/dev/null; pwd -P)}
+# Determine if we're in Distributed from packages or SDK/Parcel
+if [[ ${__comp_home%/*} == /opt/cdap ]] && [[ ${__comp_home} != /opt/cdap/sdk* ]]; then
+  __app_home=${__comp_home}
+  __cdap_home=${CDAP_HOME:-/opt/cdap}
+else
+  # We're in the SDK, __app_home and __cdap_home are identical, but honor CDAP_HOME if it's set (for Parcel)
+  __cdap_home=${CDAP_HOME:-${__app_home}}
+fi
 
 # Source our functions script, which will be located with us
 source "${__app_home}"/bin/functions.sh
@@ -44,6 +50,8 @@ if [[ ${__cdap_home} != ${__fn_home} ]]; then
   die "CDAP_HOME doesn't match output of cdap_home function! Aborting!"
 fi
 
+export CDAP_HOME=${__cdap_home}
+
 # Load user-modifiable configuration
 test -f "${CDAP_CONF}"/cdap-env.sh && source "${CDAP_CONF}"/cdap-env.sh
 
@@ -53,35 +61,39 @@ case ${1} in
   classpath) cdap_service master classpath; __ret=${?} ;;
   cli) shift; cdap_cli ${@}; __ret=${?} ;;
   config-tool) shift; cdap_config_tool ${@}; __ret=${?} ;;
+  upgrade) shift; cdap_upgrade_tool ${@}; __ret=${?} ;;
   run) shift; cdap_run_class ${@}; __ret=${?} ;;
   sdk) shift; cdap_sdk ${@}; __ret=${?} ;;
-  tx-debugger) shift; cdap_tx_debugger ${@}; __ret=${?} ;;
-  -h|--help|usage|'')
+  debug) shift; cdap_debug ${@}; __ret=${?} ;;
+  *)
     echo
     echo "Usage: ${0} <command> [arguments]"
     echo
     echo "  Commands:"
     echo
-    echo "    auth-server       - Sends the arguments to the appropriate service"
+    if [[ $(cdap_context) == 'distributed' ]]; then
+    # No indent to make lining up easier
+    echo "    auth-server  - Sends the arguments (start/stop/etc.) to the appropriate CDAP service on this host"
     echo "    kafka-server"
     echo "    master"
     echo "    router"
     echo "    ui"
     echo
-    echo "    cli               - Starts an interactive CDAP CLI session"
+    echo "    classpath    - Returns the Java CLASSPATH of the CDAP Master service"
+    echo "    run          - Runs a given class with arguments using the CDAP Master CLASSPATH and environment"
+    echo "    upgrade      - Runs the CDAP Upgrade with optional arguments"
     echo
-    echo "    classpath         - Returns the Java CLASSPATH of the CDAP Master service"
-    echo "    config-tool       - Returns JSON encoded CDAP configuration key/value pairs"
-    echo "    run               - Runs a given class with arguments using CDAP CLASSPATH and environment"
-    echo "    tx-debugger       - Runs CDAP transaction debugger"
+    else
+    echo "    sdk          - Sends the arguments (start/stop/etc.) to the Standalone CDAP service on this host"
     echo
-    echo "    sdk               - Sends the arguments to the SDK service"
+    fi
+    echo "    cli          - Starts an interactive CDAP CLI session"
+    echo "    debug        - Runs CDAP debug functions"
     echo
     echo " Get more help for each command by executing:"
     echo " ${0} <command> --help"
     echo
     ;;
-  *) cdap_cli ${@}; __ret=${?} ;;
 esac
 
 exit ${__ret}

@@ -105,6 +105,9 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   // Report data ops metrics to
   private MetricsCollector metricsCollector;
 
+  // the current transaction
+  protected Transaction tx;
+
   /**
    * Creates an instance of {@link BufferingTable} with row level conflict detection, without readless increments,
    * and no schema.
@@ -271,6 +274,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     // starting with fresh buffer when tx starts
     buff.clear();
     toUndo = null;
+    this.tx = tx;
   }
 
   @Override
@@ -354,6 +358,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     // don't need buffer anymore: tx has been committed
     buff.clear();
     toUndo = null;
+    tx = null;
   }
 
   @Override
@@ -363,7 +368,14 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
       undo(toUndo);
       toUndo = null;
     }
+    tx = null;
     return true;
+  }
+
+  protected void ensureTransactionIsStarted() {
+    if (tx == null) {
+      throw new DataSetException("Attempt to perform a data operation without a transaction");
+    }
   }
 
   /**
@@ -374,6 +386,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   @ReadOnly
   @Override
   public Row get(byte[] row) {
+    ensureTransactionIsStarted();
     reportRead(1);
     try {
       return new Result(row, getRowMap(row));
@@ -386,6 +399,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   @ReadOnly
   @Override
   public Row get(byte[] row, byte[][] columns) {
+    ensureTransactionIsStarted();
     reportRead(1);
     try {
       return new Result(row, getRowMap(row, columns));
@@ -398,6 +412,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   @ReadOnly
   @Override
   public Row get(byte[] row, byte[] startColumn, byte[] stopColumn, int limit) {
+    ensureTransactionIsStarted();
     reportRead(1);
     // checking if the row was deleted inside this tx
     NavigableMap<byte[], Update> buffCols = buff.get(row);
@@ -430,6 +445,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   @ReadOnly
   @Override
   public List<Row> get(List<Get> gets) {
+    ensureTransactionIsStarted();
     try {
       // get persisted, then overwrite with whats buffered
       List<Map<byte[], byte[]>> persistedRows = getPersisted(gets);
@@ -477,6 +493,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   @WriteOnly
   @Override
   public void put(byte[] row, byte[][] columns, byte[][] values) {
+    ensureTransactionIsStarted();
     putInternal(row, columns, values);
     // report metrics _after_ write was performed
     reportWrite(1, getSize(row) + getSize(columns) + getSize(values));
@@ -510,6 +527,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   @WriteOnly
   @Override
   public void delete(byte[] row) {
+    ensureTransactionIsStarted();
     // this is going to be expensive, but the only we can do as delete implementation act on per-column level
     try {
       Map<byte[], byte[]> rowMap = getRowMap(row);
@@ -525,6 +543,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   @WriteOnly
   @Override
   public void delete(byte[] row, byte[][] columns) {
+    ensureTransactionIsStarted();
     if (columns == null) {
       delete(row);
       return;
@@ -545,6 +564,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   @ReadWrite
   @Override
   public Row incrementAndGet(byte[] row, byte[][] columns, long[] amounts) {
+    ensureTransactionIsStarted();
     return internalIncrementAndGet(row, columns, amounts);
   }
 
@@ -598,6 +618,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   @WriteOnly
   @Override
   public void increment(byte[] row, byte[][] columns, long[] amounts) {
+    ensureTransactionIsStarted();
     if (enableReadlessIncrements) {
       NavigableMap<byte[], Update> colVals = buff.get(row);
       if (colVals == null) {
@@ -616,6 +637,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   @ReadWrite
   @Override
   public boolean compareAndSwap(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue) {
+    ensureTransactionIsStarted();
     // TODO: add support for empty values; see https://issues.cask.co/browse/TEPHRA-45 for details.
     if (newValue != null && newValue.length == 0) {
       warnAboutEmptyValue(column);
@@ -651,6 +673,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
    */
   @Override
   public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) {
+    ensureTransactionIsStarted();
     List<KeyRange> keyRanges = SplitsUtil.primitiveGetSplits(numSplits, start, stop);
     return Lists.transform(keyRanges, new Function<KeyRange, Split>() {
       @Nullable
@@ -671,6 +694,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   @ReadOnly
   @Override
   public Scanner scan(Scan scan) {
+    ensureTransactionIsStarted();
     NavigableMap<byte[], NavigableMap<byte[], Update>> bufferMap = scanBuffer(scan);
     try {
       return new BufferingScanner(bufferMap, scanPersisted(scan));

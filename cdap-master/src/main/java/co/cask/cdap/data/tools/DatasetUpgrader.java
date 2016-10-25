@@ -90,12 +90,13 @@ public class DatasetUpgrader extends AbstractUpgrader {
   }
 
   private void upgradeUserTables() throws Exception {
-    HBaseAdmin hAdmin = new HBaseAdmin(hConf);
-    for (HTableDescriptor desc : hAdmin.listTables()) {
-      if (isCDAPUserTable(desc)) {
-        upgradeUserTable(desc);
-      } else if (isStreamOrQueueTable(desc.getNameAsString())) {
-        updateTableDesc(desc, hAdmin);
+    try (HBaseAdmin hAdmin = new HBaseAdmin(hConf)) {
+      for (HTableDescriptor desc : hAdmin.listTables()) {
+        if (isCDAPUserTable(desc)) {
+          upgradeUserTable(desc);
+        } else if (isStreamOrQueueTable(desc.getNameAsString())) {
+          updateTableDesc(desc, hAdmin);
+        }
       }
     }
   }

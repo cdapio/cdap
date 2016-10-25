@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.handlers.hooks;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.gateway.GatewayFastTestsSuite;
 import co.cask.cdap.gateway.GatewayTestBase;
 import com.google.common.base.Charsets;
@@ -34,6 +35,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -87,17 +89,13 @@ public class MetricsReporterHookTestRun extends GatewayTestBase {
    * Verify metrics. It tries couple times to avoid race condition.
    * This is because metrics hook is updated asynchronously.
    */
-  private void verifyMetrics(long expected, String context, String metricsName) throws Exception {
-    int trial = 0;
-    long metrics = -1;
-    while (trial++ < 5) {
-      metrics = getMetricValue(context, metricsName);
-      if (expected == metrics) {
-        return;
+  private void verifyMetrics(long expected, final String context, final String metricsName) throws Exception {
+    Tasks.waitFor(expected, new Callable<Long>() {
+      @Override
+      public Long call() throws Exception {
+        return getMetricValue(context, metricsName);
       }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    Assert.assertEquals(expected, metrics);
+    }, 10L, TimeUnit.SECONDS, 100L, TimeUnit.MILLISECONDS);
   }
 
   private static long getMetricValue(String context, String metricName) throws Exception {

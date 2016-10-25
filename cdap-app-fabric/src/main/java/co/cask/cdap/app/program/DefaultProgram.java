@@ -16,8 +16,8 @@
 package co.cask.cdap.app.program;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import org.apache.twill.filesystem.Location;
 
 import java.io.Closeable;
@@ -55,8 +55,8 @@ public class DefaultProgram implements Program {
   }
 
   @Override
-  public Id.Program getId() {
-    return programDescriptor.getProgramId().toId();
+  public ProgramId getId() {
+    return programDescriptor.getProgramId();
   }
 
   @Override

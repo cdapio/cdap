@@ -49,7 +49,6 @@ import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.Nullable;
 
 /**
  * Jetty service for External Authentication.
@@ -71,8 +70,6 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
   private Cancellable serviceCancellable;
   private Server server;
   private InetAddress bindAddress;
-  @Nullable
-  private String announceAddress;
 
   /**
    * Constants for a valid JSON response.
@@ -97,7 +94,6 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
                                       DiscoveryService discoveryService,
                                       @Named("security.handlers") Map<String, Object> handlers,
                                       @Named(NAMED_EXTERNAL_AUTH) AuditLogHandler auditLogHandler) {
-    this.announceAddress = configuration.get(Constants.Security.AUTH_SERVER_ANNOUNCE_ADDRESS);
     this.port = configuration.getBoolean(Constants.Security.SSL_ENABLED) ?
       configuration.getInt(Constants.Security.AuthenticationServer.SSL_PORT) :
       configuration.getInt(Constants.Security.AUTH_SERVER_BIND_PORT);
@@ -209,9 +205,7 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
 
     // assumes we only have one connector
     final Connector connector = server.getConnectors()[0];
-    InetSocketAddress inetSocketAddress = (announceAddress != null) ?
-      new InetSocketAddress(announceAddress, connector.getLocalPort()) :
-      new InetSocketAddress(connector.getHost(), connector.getLocalPort());
+    InetSocketAddress inetSocketAddress = new InetSocketAddress(connector.getHost(), connector.getLocalPort());
     serviceCancellable = discoveryService.register(
       ResolvingDiscoverable.of(new Discoverable(Constants.Service.EXTERNAL_AUTHENTICATION, inetSocketAddress)));
   }

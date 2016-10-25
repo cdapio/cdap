@@ -31,6 +31,7 @@ angular.module(PKG.name + '.feature.hydrator')
         url: '/ns/:namespace',
         abstract: true,
         template: '<ui-view/>',
+        title: 'Hydrator',
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
           highlightTab: 'development'
@@ -38,6 +39,9 @@ angular.module(PKG.name + '.feature.hydrator')
       })
         .state('hydrator.create', {
           url: '/studio?artifactType&draftId',
+          onEnter: function() {
+            document.title = 'Hydrator Studio';
+          },
           params: {
             data: null,
             isClone: null
@@ -194,6 +198,9 @@ angular.module(PKG.name + '.feature.hydrator')
             authorizedRoles: MYAUTH_ROLE.all,
             highlightTab: 'hydratorList'
           },
+          onEnter: function($stateParams) {
+            document.title = 'Pipeline - ' + $stateParams.pipelineId;
+          },
           resolve : {
             rPipelineDetail: function($stateParams, $q, myPipelineApi, myAlertOnValium, $state) {
               var params = {
@@ -263,6 +270,10 @@ angular.module(PKG.name + '.feature.hydrator')
 
         .state('hydrator.list', {
           url: '?page',
+          title: 'Published Pipelines',
+          onEnter: function() {
+            document.title = 'Published Pipelines';
+          },
           data: {
             authorizedRoles: MYAUTH_ROLE.all,
             highlightTab: 'hydratorList'

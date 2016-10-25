@@ -214,7 +214,7 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
         // UPDATE METRICS COUNT
         angular.forEach(scope.model.metrics, function (value, key) {
           d3.select('#metrics-' + key)
-            .text(value);
+            .text(numberFilter(value));
         });
       };
 

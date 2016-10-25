@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.common.zookeeper.coordination;
 
+import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -33,6 +34,7 @@ import java.net.InetSocketAddress;
  * NOTE: This class may move to different package when needed.
  */
 public class DiscoverableCodec implements JsonSerializer<Discoverable>, JsonDeserializer<Discoverable> {
+  private static final Type BYTE_ARRAY_TYPE = new TypeToken<byte[]>() { }.getType();
 
   @Override
   public JsonElement serialize(Discoverable src, Type typeOfSrc, JsonSerializationContext context) {
@@ -40,6 +42,7 @@ public class DiscoverableCodec implements JsonSerializer<Discoverable>, JsonDese
     jsonObj.addProperty("service", src.getName());
     jsonObj.addProperty("hostname", src.getSocketAddress().getHostName());
     jsonObj.addProperty("port", src.getSocketAddress().getPort());
+    jsonObj.add("payload", context.serialize(src.getPayload()));
     return jsonObj;
   }
 
@@ -51,6 +54,7 @@ public class DiscoverableCodec implements JsonSerializer<Discoverable>, JsonDese
     String hostname = jsonObj.get("hostname").getAsString();
     int port = jsonObj.get("port").getAsInt();
     InetSocketAddress address = new InetSocketAddress(hostname, port);
-    return new Discoverable(service, address);
+    byte[] payload = context.deserialize(jsonObj.get("payload"), BYTE_ARRAY_TYPE);
+    return new Discoverable(service, address, payload);
   }
 }

@@ -49,6 +49,11 @@ public class NoOpAuthorizationContextFactory implements AuthorizationContextFact
     public void execute(TxRunnable runnable) throws TransactionFailureException {
       // no-op
     }
+
+    @Override
+    public void execute(int timeoutInSeconds, TxRunnable runnable) throws TransactionFailureException {
+      // no-op
+    }
   }
 
   private static class NoOpDatasetContext implements DatasetContext {

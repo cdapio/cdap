@@ -27,6 +27,8 @@ import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.apache.tephra.TransactionExecutor;
+import org.apache.tephra.TransactionFailureException;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -56,10 +58,12 @@ public class TimeseriesTableScannerTest {
   private static final String DEST_DEVICE_ID_TAG = "dest_device_id";
 
   private static TimeseriesTable table = null;
+  private static TransactionExecutor txnl = null;
   @BeforeClass
   public static void setup() throws Exception {
     dsFrameworkUtil.createInstance("timeseriesTable", facts, DatasetProperties.EMPTY);
     table = dsFrameworkUtil.getInstance(facts);
+    txnl = dsFrameworkUtil.newTransactionExecutor(table);
   }
 
   @AfterClass
@@ -69,19 +73,24 @@ public class TimeseriesTableScannerTest {
 
   @Test
   public void test() throws Exception {
-    long now = System.currentTimeMillis();
+    final long now = System.currentTimeMillis();
 
     sendData(now);
 
     // verify
-    testScan(now);
-    testNoRow(now);
-    testFilter(now);
-    testNoTagMatch(now);
-    testReadEntryWithoutTag(now);
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        testScan(now);
+        testNoRow(now);
+        testFilter(now);
+        testNoTagMatch(now);
+        testReadEntryWithoutTag(now);
+      }
+    });
   }
 
-  private void sendData(long now) throws IOException, InterruptedException {
+  private void sendData(long now) throws IOException, InterruptedException, TransactionFailureException {
     // send facts in time window (now - 10 mins, now)
     Fact f1 = new Fact(now - TimeUnit.MINUTES.toMillis(1),
                        ImmutableMap.of(SRC_TAG, "10.192.18.0", DST_TAG, "10.123.8.20", SRC_DEVICE_ID_TAG, "device1",
@@ -202,16 +211,21 @@ public class TimeseriesTableScannerTest {
   }
 
 
-  private void writeFact(Fact fact) {
-    long ts = fact.getTs();
-    byte[] srcTag = Bytes.toBytes(fact.getDimensions().get(SRC_DEVICE_ID_TAG));
-    byte[] destTag = Bytes.toBytes(fact.getDimensions().get(DEST_DEVICE_ID_TAG));
-    if (fact.getDimensions().get(SRC_DEVICE_ID_TAG).equals("1.1.1.1")) {
-      table.write(new TimeseriesTable.Entry(ALL_KEY, Bytes.toBytes(fact.getDimensions().get(DST_TAG)), ts));
-    } else {
-      table.write(new TimeseriesTable.Entry(ALL_KEY, Bytes.toBytes(fact.getDimensions().get(DST_TAG)), ts,
-                                            srcTag, destTag));
-    }
+  private void writeFact(final Fact fact) throws InterruptedException, TransactionFailureException {
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        long ts = fact.getTs();
+        byte[] srcTag = Bytes.toBytes(fact.getDimensions().get(SRC_DEVICE_ID_TAG));
+        byte[] destTag = Bytes.toBytes(fact.getDimensions().get(DEST_DEVICE_ID_TAG));
+        if (fact.getDimensions().get(SRC_DEVICE_ID_TAG).equals("1.1.1.1")) {
+          table.write(new TimeseriesTable.Entry(ALL_KEY, Bytes.toBytes(fact.getDimensions().get(DST_TAG)), ts));
+        } else {
+          table.write(new TimeseriesTable.Entry(ALL_KEY, Bytes.toBytes(fact.getDimensions().get(DST_TAG)), ts,
+                                                srcTag, destTag));
+        }
+      }
+    });
   }
 
   private class Fact {

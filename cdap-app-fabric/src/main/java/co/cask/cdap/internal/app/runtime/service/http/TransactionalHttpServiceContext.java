@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import org.apache.tephra.TransactionContext;
+import org.apache.tephra.TransactionFailureException;
 
 /**
  * Defines a {@link HttpServiceContext} that supports transactions.
@@ -28,7 +29,7 @@ public interface TransactionalHttpServiceContext extends HttpServiceContext {
    * Get a {@link TransactionContext} for a HttpServiceHandler.
    * @return a new transaction context
    */
-  TransactionContext newTransactionContext();
+  TransactionContext newTransactionContext() throws TransactionFailureException;
 
   /**
    * Dismiss the {@link TransactionContext} for the HttpServiceHandler.

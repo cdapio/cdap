@@ -85,12 +85,8 @@ public final class LoggingEvent implements ILoggingEvent {
     this.loggerName = loggingEvent.getLoggerName();
     this.loggerContextVO = loggingEvent.getLoggerContextVO();
     this.throwableProxy = ThrowableProxyVO.build(loggingEvent.getThrowableProxy());
-
-    if (loggingEvent.hasCallerData()) {
-      this.callerData = loggingEvent.getCallerData();
-    }
+    this.callerData = loggingEvent.getCallerData();
     this.hasCallerData = loggingEvent.hasCallerData();
-
     this.marker = loggingEvent.getMarker();
     this.mdc = loggingEvent.getMDCPropertyMap();
     this.timestamp = loggingEvent.getTimeStamp();

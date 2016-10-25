@@ -18,6 +18,7 @@ package co.cask.cdap.client.config;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
@@ -81,8 +82,8 @@ public class ConnectionConfig {
     return getURI().resolve(String.format("/%s/%s", apiVersion, path));
   }
 
-  public URI resolveNamespacedURI(Id.Namespace namespace, String apiVersion, String path) {
-    return getURI().resolve(String.format("/%s/namespaces/%s/%s", apiVersion, namespace.getId(), path));
+  public URI resolveNamespacedURI(NamespaceId namespace, String apiVersion, String path) {
+    return getURI().resolve(String.format("/%s/namespaces/%s/%s", apiVersion, namespace.getNamespace(), path));
   }
 
   public String getHostname() {

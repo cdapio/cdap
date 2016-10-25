@@ -14,36 +14,37 @@
  * the License.
  */
 
-.cask-entity-card {
+.cask-marketplace-entity-card {
+  cursor: pointer;
   // FIXME: Need to add large and small sizes
   &.medium {
-    width: 125px;
+    width: 130px;
     height: 200px;
     text-align: center;
-    margin: 30px;
-    float: left;
+    margin: 0 10px;
+    display: inline-block;
+    vertical-align: top;
 
     .image-container {
-      width: 125px;
-      height: 125px;
-      background-color: gray;
+      width: 100px;
+      height: 100px;
       display: inline-block;
+      margin: 10px 0 10px 0;
 
       img {
-        width: 125px;
-        height: 125px;
+        width: inherit;
+        height: inherit;
       }
     }
     .metadata-container {
       text-align: center;
-
+      font-size: 13px;
       .metadata-name {
-        font-size: 14px;
         color: #333;
       }
       .metadata-version {
         font-size: 12px;
-        color: #333;
+        color: gray;
       }
     }
   }

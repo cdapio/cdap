@@ -51,7 +51,7 @@ export default class ConfigurableTab extends Component{
   }
   render() {
     return (
-      <div className="cask-wizard">
+      <div className="cask-configurable-tab">
         <Tabs layout={this.state.layout}>
           <TabHeaders>
             {this.state.tabs.map((tab, index) => {
@@ -62,6 +62,7 @@ export default class ConfigurableTab extends Component{
                   onClick={() => this.setTab(tab.id)}
                   activeTab={this.isActiveTab(tab.id)}
                 >
+                  <span className={`${tab.icon} tab-header-icon`}></span>
                   <span>{tab.name}</span>
                 </TabHead>
               );

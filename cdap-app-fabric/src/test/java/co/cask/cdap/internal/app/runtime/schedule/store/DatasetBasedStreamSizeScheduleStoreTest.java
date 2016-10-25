@@ -22,6 +22,9 @@ import co.cask.cdap.internal.app.runtime.schedule.StreamSizeScheduleState;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
@@ -37,8 +40,8 @@ public class DatasetBasedStreamSizeScheduleStoreTest {
 
   public static DatasetBasedStreamSizeScheduleStore scheduleStore;
 
-  private static final Id.Application APP_ID = new Id.Application(Id.Namespace.DEFAULT, "AppWithStreamSizeSchedule");
-  private static final Id.Program PROGRAM_ID = new Id.Program(APP_ID, ProgramType.WORKFLOW, "SampleWorkflow");
+  private static final ApplicationId APP_ID = NamespaceId.DEFAULT.app("AppWithStreamSizeSchedule");
+  private static final ProgramId PROGRAM_ID = APP_ID.program(ProgramType.WORKFLOW, "SampleWorkflow");
   private static final Id.Stream STREAM_ID = Id.Stream.from(Id.Namespace.DEFAULT, "stream");
   private static final StreamSizeSchedule STREAM_SCHEDULE_1 = new StreamSizeSchedule("Schedule1", "Every 1M",
                                                                                      STREAM_ID.getId(), 1);

@@ -7,6 +7,8 @@ bower_components/
 dist/
 cdap_dist/
 login_dist/
+plusbutton_dist
+common_dist/
 target/
 cdap-config.json
 cdap-security-config.json

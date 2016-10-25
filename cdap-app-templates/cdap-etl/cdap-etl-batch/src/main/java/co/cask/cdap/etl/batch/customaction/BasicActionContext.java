@@ -56,6 +56,11 @@ public class BasicActionContext extends AbstractStageContext implements ActionCo
   }
 
   @Override
+  public void execute(int timeout, TxRunnable runnable) throws TransactionFailureException {
+    context.execute(timeout, runnable);
+  }
+
+  @Override
   public Map<String, String> listSecureData(String namespace) throws Exception {
     return context.listSecureData(namespace);
   }

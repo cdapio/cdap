@@ -140,7 +140,7 @@ class TrackerResultsController {
     this.myTrackerApi.search(params)
       .$promise
       .then( (res) => {
-        this.fullResults = res.map(this.parseResult.bind(this));
+        this.fullResults = res.results.map(this.parseResult.bind(this));
         this.searchResults = angular.copy(this.fullResults);
         if (this.searchResults.length) {
           this.fetchTruthMeter();

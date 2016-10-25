@@ -43,6 +43,9 @@ angular.module(PKG.name + '.feature.tracker')
         templateUrl: '/assets/features/tracker/templates/tracker-enable.html',
         controller: 'TrackerEnableController',
         controllerAs: 'EnableController',
+        onEnter: function() {
+          document.title = 'Enable Tracker';
+        },
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
         },
@@ -174,12 +177,18 @@ angular.module(PKG.name + '.feature.tracker')
         },
         templateUrl: '/assets/features/tracker/templates/main.html',
         controller: 'TrackerMainController',
+        onEnter: function() {
+          document.title = 'Tracker Home';
+        },
         controllerAs: 'MainController'
       })
 
       .state('tracker.integrations', {
         url: '/integrations',
         templateUrl: '/assets/features/tracker/templates/integrations.html',
+        onEnter: function() {
+          document.title = 'Tracker Integrations';
+        },
         controller: 'TrackerIntegrationsController',
         controllerAs: 'IntegrationsController',
         data: {
@@ -193,6 +202,9 @@ angular.module(PKG.name + '.feature.tracker')
         templateUrl: '/assets/features/tracker/templates/tags.html',
         controller: 'TrackerTagsController',
         controllerAs: 'TagsController',
+        onEnter: function() {
+          document.title = 'Tracker Tags';
+        },
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
           highlightTab: 'tags'
@@ -215,6 +227,9 @@ angular.module(PKG.name + '.feature.tracker')
           templateUrl: '/assets/features/tracker/templates/results.html',
           controller: 'TrackerResultsController',
           controllerAs: 'ResultsController',
+          onEnter: function() {
+            document.title = 'Search Query Result';
+          },
           data: {
             authorizedRoles: MYAUTH_ROLE.all,
             highlightTab: 'search'
@@ -226,6 +241,9 @@ angular.module(PKG.name + '.feature.tracker')
           templateUrl: '/assets/features/tracker/templates/entity.html',
           controller: 'TrackerEntityController',
           controllerAs: 'EntityController',
+          onEnter: function($stateParams) {
+            document.title = 'Tracker - ' + $stateParams.entityId + ' Detailed view';
+          },
           data: {
             authorizedRoles: MYAUTH_ROLE.all,
             highlightTab: 'search'
@@ -278,6 +296,9 @@ angular.module(PKG.name + '.feature.tracker')
             templateUrl: '/assets/features/tracker/templates/metadata.html',
             controller: 'TrackerMetadataController',
             controllerAs: 'MetadataController',
+            onEnter: function($stateParams) {
+              document.title = 'Tracker - ' + $stateParams.entityId + ' Metadata view';
+            },
             data: {
               authorizedRoles: MYAUTH_ROLE.all,
               highlightTab: 'search'
@@ -287,6 +308,9 @@ angular.module(PKG.name + '.feature.tracker')
             url: '/lineage?start&end&method',
             templateUrl: '/assets/features/tracker/templates/lineage.html',
             controller: 'TrackerLineageController',
+            onEnter: function($stateParams) {
+              document.title = 'Tracker - ' + $stateParams.entityId + ' Lineage';
+            },
             controllerAs: 'LineageController',
             data: {
               authorizedRoles: MYAUTH_ROLE.all,
@@ -298,6 +322,9 @@ angular.module(PKG.name + '.feature.tracker')
             templateUrl: '/assets/features/tracker/templates/audit.html',
             controller: 'TrackerAuditController',
             controllerAs: 'AuditController',
+            onEnter: function($stateParams) {
+              document.title = 'Tracker - ' + $stateParams.entityId + ' Audit view';
+            },
             data: {
               authorizedRoles: MYAUTH_ROLE.all,
               highlightTab: 'search'
@@ -308,6 +335,9 @@ angular.module(PKG.name + '.feature.tracker')
             templateUrl: '/assets/features/tracker/templates/usage.html',
             controller: 'TrackerUsageController',
             controllerAs: 'UsageController',
+            onEnter: function($stateParams) {
+              document.title = 'Tracker - ' + $stateParams.entityId + ' Usage view';
+            },
             data: {
               authorizedRoles: MYAUTH_ROLE.all,
               highlightTab: 'search'
@@ -318,6 +348,9 @@ angular.module(PKG.name + '.feature.tracker')
             templateUrl: '/assets/features/tracker/templates/preview.html',
             controller: 'TrackerPreviewController',
             controllerAs: 'PreviewController',
+            onEnter: function($stateParams) {
+              document.title = 'Tracker - ' + $stateParams.entityId + ' preview';
+            },
             data: {
               authorizedRoles: MYAUTH_ROLE.all,
               highlightTab: 'search'

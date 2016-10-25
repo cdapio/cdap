@@ -15,24 +15,29 @@
  */
 
 import React from 'react';
+
 import Header from '../Header';
 import T from 'i18n-react';
 
 export default function CdapHeader() {
+
   var navbarItemList = [
     {
-      linkTo: 'home',
+      linkTo: '',
       title: T.translate('features.Navbar.CDAP.home')
     },
     {
-      linkTo: 'dashboard',
+      linkTo: '/dashboard',
+      disabled: true,
+      className: 'disabled',
       title: T.translate('features.Navbar.CDAP.dashboard')
     },
     {
-      linkTo: 'management',
+      linkTo: '/management',
       title: T.translate('features.Navbar.CDAP.management')
     }
   ];
+
   return (
     <Header
       navbarItemList={navbarItemList}

@@ -24,13 +24,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.spark.api.java.JavaPairRDD;
 
-import java.io.DataInput;
-import java.io.DataInputStream;
-import java.io.DataOutput;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -41,30 +34,6 @@ import java.util.Set;
  * deserialization for those mappings.
  */
 public final class SparkBatchSinkFactory {
-
-  public static SparkBatchSinkFactory deserialize(InputStream inputStream) throws IOException {
-    DataInput input = new DataInputStream(inputStream);
-    Map<String, OutputFormatProvider> outputFormatProviders = Serializations.deserializeMap(
-      input, new Serializations.ObjectReader<OutputFormatProvider>() {
-      @Override
-      public OutputFormatProvider read(DataInput input) throws IOException {
-        return new BasicOutputFormatProvider(input.readUTF(),
-                                             Serializations.deserializeMap(input,
-                                                                           Serializations.createStringObjectReader()));
-      }
-    });
-    Map<String, DatasetInfo> datasetInfos = Serializations.deserializeMap(
-      input, new Serializations.ObjectReader<DatasetInfo>() {
-      @Override
-      public DatasetInfo read(DataInput input) throws IOException {
-        return DatasetInfo.deserialize(input);
-      }
-    });
-    Map<String, Set<String>> sinkOutputs = Serializations.deserializeMap(
-      input, Serializations.createStringSetObjectReader());
-    return new SparkBatchSinkFactory(outputFormatProviders, datasetInfos, sinkOutputs);
-  }
-
   private final Map<String, OutputFormatProvider> outputFormatProviders;
   private final Map<String, DatasetInfo> datasetInfos;
   private final Map<String, Set<String>> sinkOutputs;
@@ -73,14 +42,6 @@ public final class SparkBatchSinkFactory {
     this.outputFormatProviders = new HashMap<>();
     this.datasetInfos = new HashMap<>();
     this.sinkOutputs = new HashMap<>();
-  }
-
-  private SparkBatchSinkFactory(Map<String, OutputFormatProvider> providers,
-                                Map<String, DatasetInfo> datasetInfos,
-                                Map<String, Set<String>> sinkOutputs) {
-    this.outputFormatProviders = providers;
-    this.datasetInfos = datasetInfos;
-    this.sinkOutputs = sinkOutputs;
   }
 
   void addOutput(String stageName, Output output) {
@@ -115,24 +76,6 @@ public final class SparkBatchSinkFactory {
     addStageOutput(stageName, alias);
   }
 
-  void serialize(OutputStream outputStream) throws IOException {
-    DataOutput output = new DataOutputStream(outputStream);
-    Serializations.serializeMap(outputFormatProviders, new Serializations.ObjectWriter<OutputFormatProvider>() {
-      @Override
-      public void write(OutputFormatProvider outputFormatProvider, DataOutput output) throws IOException {
-        output.writeUTF(outputFormatProvider.getOutputFormatClassName());
-        Serializations.serializeMap(outputFormatProvider.getOutputFormatConfiguration(),
-                                    Serializations.createStringObjectWriter(), output);
-      }
-    }, output);
-    Serializations.serializeMap(datasetInfos, new Serializations.ObjectWriter<DatasetInfo>() {
-      @Override
-      public void write(DatasetInfo datasetInfo, DataOutput output) throws IOException {
-        datasetInfo.serialize(output);
-      }
-    }, output);
-    Serializations.serializeMap(sinkOutputs, Serializations.createStringSetObjectWriter(), output);
-  }
 
   public <K, V> void writeFromRDD(JavaPairRDD<K, V> rdd, JavaSparkExecutionContext sec, String sinkName,
                                   Class<K> keyClass, Class<V> valueClass) {
@@ -171,14 +114,19 @@ public final class SparkBatchSinkFactory {
     sinkOutputs.put(stageName, outputs);
   }
 
-  private static final class BasicOutputFormatProvider implements OutputFormatProvider {
+  static final class BasicOutputFormatProvider implements OutputFormatProvider {
 
     private final String outputFormatClassName;
     private final Map<String, String> configuration;
 
-    private BasicOutputFormatProvider(String outputFormatClassName, Map<String, String> configuration) {
+    BasicOutputFormatProvider(String outputFormatClassName, Map<String, String> configuration) {
       this.outputFormatClassName = outputFormatClassName;
       this.configuration = ImmutableMap.copyOf(configuration);
+    }
+
+    BasicOutputFormatProvider() {
+      this.outputFormatClassName = "";
+      this.configuration = new HashMap<>();
     }
 
     @Override

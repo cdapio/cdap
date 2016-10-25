@@ -133,6 +133,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -857,6 +858,7 @@ public class MasterServiceMain extends DaemonMain {
      * runnable.
      */
     private TwillPreparer prepareExploreContainer(TwillPreparer preparer) {
+      Set<File> cdapJars = new LinkedHashSet<>();
       try {
         // Put jars needed by Hive in the containers classpath. Those jars are localized in the Explore
         // container by MasterTwillApplication, so they are available for ExploreServiceTwillRunnable
@@ -865,6 +867,9 @@ public class MasterServiceMain extends DaemonMain {
         Set<File> jars = ExploreServiceUtils.traceExploreDependencies(tempDir);
         for (File jarFile : jars) {
           LOG.trace("Adding jar file to classpath: {}", jarFile.getName());
+          if (jarFile.getName().startsWith("co.cask.cdap.")) {
+            cdapJars.add(jarFile);
+          }
           preparer = preparer.withClassPaths(jarFile.getName());
         }
       } catch (IOException e) {
@@ -887,7 +892,8 @@ public class MasterServiceMain extends DaemonMain {
         if (file.getName().matches(".*\\.xml") && !file.getName().equals("logback.xml")) {
           if (addedFiles.add(file.getName())) {
             LOG.debug("Adding config file: {}", file.getAbsolutePath());
-            preparer = preparer.withResources(ExploreServiceUtils.updateConfFileForExplore(file, tempDir).toURI());
+            preparer = preparer.withResources(ExploreServiceUtils.updateConfFileForExplore(file, tempDir,
+                                                                                           cdapJars).toURI());
           } else {
             LOG.warn("Ignoring duplicate config file: {}", file.getAbsolutePath());
           }

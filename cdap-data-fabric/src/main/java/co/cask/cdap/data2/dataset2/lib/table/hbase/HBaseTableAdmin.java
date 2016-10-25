@@ -33,6 +33,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.tephra.TxConstants;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -124,7 +125,9 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
       splits = GSON.fromJson(splitsProperty, byte[][].class);
     }
 
-    tableUtil.createTableIfNotExists(getAdmin(), tableId, tableDescriptor.build(), splits);
+    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+      tableUtil.createTableIfNotExists(admin, tableId, tableDescriptor.build(), splits);
+    }
   }
 
   @Override
@@ -206,8 +209,8 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
     ImmutableList.Builder<Class<? extends Coprocessor>> coprocessors = ImmutableList.builder();
     if (transactional) {
       // tx janitor
-      if (conf.getBoolean(TxConstants.DataJanitor.CFG_TX_JANITOR_ENABLE,
-                          TxConstants.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
+      if (conf.getBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE,
+                          Constants.Transaction.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
         coprocessors.add(dataJanitorClass);
       }
     }

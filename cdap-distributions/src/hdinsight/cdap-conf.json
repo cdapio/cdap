@@ -1,9 +1,19 @@
 {
   "cdap": {
     "cdap_site": {
+      "dashboard.bind.port": "11011",
+      "dataset.executor.container.memory.mb": "1536",
       "explore.enabled": "{{EXPLORE_ENABLED}}",
+      "explore.executor.container.memory.mb": "2304",
+      "http.client.read.timeout.ms": "120000",
       "kafka.server.log.dirs": "/var/cdap/kafka-logs",
-      "router_bind_port": "11015",
+      "log.saver.run.memory.megs": "1536",
+      "master.service.memory.mb": "1536",
+      "metrics.memory.mb": "1536",
+      "metrics.processor.memory.mb": "1536",
+      "router.bind.port": "11015",
+      "stream.container.memory.mb": "1536",
+      "twill.java.reserved.memory.mb": "350",
       "zookeeper.quorum": "{{ZK_QUORUM}}"
     },
     "cdap_env": {

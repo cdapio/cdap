@@ -199,12 +199,22 @@ ApplicationLifecycleService extends AbstractIdleService {
                                          com.google.common.base.Predicate<ApplicationRecord> predicate)
     throws Exception {
     List<ApplicationRecord> appRecords = new ArrayList<>();
+    Set<ApplicationId> appIds = new HashSet<>();
     for (ApplicationSpecification appSpec : store.getAllApplications(namespace)) {
+      appIds.add(namespace.app(appSpec.getName(), appSpec.getAppVersion()));
+    }
+
+    for (ApplicationId appId : appIds) {
+      ApplicationSpecification appSpec = store.getApplication(appId);
+      if (appSpec == null) {
+        continue;
+      }
+
       // possible if this particular app was deploy prior to v3.2 and upgrade failed for some reason.
       ArtifactId artifactId = appSpec.getArtifactId();
       ArtifactSummary artifactSummary = artifactId == null ?
         new ArtifactSummary(appSpec.getName(), null) : ArtifactSummary.from(artifactId);
-      ApplicationRecord record = new ApplicationRecord(artifactSummary, appSpec.getName(), appSpec.getDescription());
+      ApplicationRecord record = new ApplicationRecord(artifactSummary, appId, appSpec.getDescription());
       if (predicate.apply(record)) {
         appRecords.add(record);
       }
@@ -234,6 +244,15 @@ ApplicationLifecycleService extends AbstractIdleService {
     }
     ensureAccess(appId);
     return ApplicationDetail.fromSpec(appSpec);
+  }
+
+  public Collection<String> getAppVerions(String namespace, String application) throws Exception {
+    Collection<ApplicationId> appIds = store.getAllAppVersionsAppIds(new ApplicationId(namespace, application));
+    List<String> versions = new ArrayList<>();
+    for (ApplicationId appId : appIds) {
+      versions.add(appId.getVersion());
+    }
+    return versions;
   }
 
   /**
@@ -390,23 +409,24 @@ ApplicationLifecycleService extends AbstractIdleService {
    * @param namespaceId the {@link Id.Namespace} under which all application should be deleted
    * @throws Exception
    */
-  public void removeAll(final Id.Namespace namespaceId) throws Exception {
+  public void removeAll(final NamespaceId namespaceId) throws Exception {
     List<ApplicationSpecification> allSpecs = new ArrayList<>(
-      store.getAllApplications(namespaceId.toEntityId()));
+      store.getAllApplications(namespaceId));
+    final String namespace = namespaceId.getNamespace();
     //Check if any program associated with this namespace is running
     Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
       Iterables.filter(runtimeService.listAll(ProgramType.values()),
                        new com.google.common.base.Predicate<ProgramRuntimeService.RuntimeInfo>() {
                          @Override
                          public boolean apply(ProgramRuntimeService.RuntimeInfo runtimeInfo) {
-                           return runtimeInfo.getProgramId().toEntityId().getNamespace().equals(namespaceId.getId());
+                           return runtimeInfo.getProgramId().getNamespace().equals(namespace);
                          }
                        });
 
     Set<String> runningPrograms = new HashSet<>();
     for (ProgramRuntimeService.RuntimeInfo runtimeInfo : runtimeInfos) {
-      runningPrograms.add(runtimeInfo.getProgramId().toEntityId().getApplication() +
-                            ": " + runtimeInfo.getProgramId().toEntityId().getProgram());
+      runningPrograms.add(runtimeInfo.getProgramId().getApplication() +
+                            ": " + runtimeInfo.getProgramId().getProgram());
     }
 
     if (!runningPrograms.isEmpty()) {
@@ -416,9 +436,12 @@ ApplicationLifecycleService extends AbstractIdleService {
                                          "The following programs are still running: " + appAllRunningPrograms);
     }
     //All Apps are STOPPED, delete them
+    Set<ApplicationId> appIds = new HashSet<>();
     for (ApplicationSpecification appSpec : allSpecs) {
-      ApplicationId id = new ApplicationId(namespaceId.getId(), appSpec.getName());
-      deleteApp(id, appSpec);
+      appIds.add(namespaceId.app(appSpec.getName(), appSpec.getAppVersion()));
+    }
+    for (ApplicationId appId : appIds) {
+      removeApplication(appId);
     }
   }
 
@@ -429,36 +452,48 @@ ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception
    */
   public void removeApplication(final ApplicationId appId) throws Exception {
+    ensureNoRunningPrograms(appId);
+    ApplicationSpecification spec = store.getApplication(appId);
+    if (spec == null) {
+      throw new NotFoundException(appId.toId());
+    }
+    // if the application has only one version, do full deletion, else only delete the specified version
+    if (store.getAllAppVersions(appId).size() == 1) {
+      deleteApp(appId, spec);
+      return;
+    }
+    deleteAppVersion(appId, spec);
+  }
+
+  /**
+   * Find if the given application has running programs
+   *
+   * @param appId the id of the application to find running programs for
+   * @throws CannotBeDeletedException : the application cannot be deleted because of running programs
+   */
+  private void ensureNoRunningPrograms(final ApplicationId appId) throws CannotBeDeletedException {
     //Check if all are stopped.
     Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
       Iterables.filter(runtimeService.listAll(ProgramType.values()),
                        new com.google.common.base.Predicate<ProgramRuntimeService.RuntimeInfo>() {
                          @Override
                          public boolean apply(ProgramRuntimeService.RuntimeInfo runtimeInfo) {
-                           return runtimeInfo.getProgramId().toEntityId().getApplication()
-                             .equals(appId.getApplication());
+                           return runtimeInfo.getProgramId().getParent().equals(appId);
                          }
                        });
 
     Set<String> runningPrograms = new HashSet<>();
     for (ProgramRuntimeService.RuntimeInfo runtimeInfo : runtimeInfos) {
-      runningPrograms.add(runtimeInfo.getProgramId().toEntityId().getProgram());
+      runningPrograms.add(runtimeInfo.getProgramId().getProgram());
     }
 
     if (!runningPrograms.isEmpty()) {
       String appAllRunningPrograms = Joiner.on(',')
         .join(runningPrograms);
-      throw new CannotBeDeletedException(appId.toId(),
+      throw new CannotBeDeletedException(appId,
                                          "The following programs are still running: " + appAllRunningPrograms);
     }
-
-    ApplicationSpecification spec = store.getApplication(appId);
-    if (spec == null) {
-      throw new NotFoundException(appId);
-    }
-    deleteApp(appId, spec);
   }
-
 
   /**
    * Get detail about the plugin in the specified application
@@ -491,30 +526,19 @@ ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Delete the metrics for an application, or if null is provided as the application ID, for all apps.
+   * Delete the metrics for an application.
    *
    * @param applicationId the application to delete metrics for.
-   * If null, metrics for all applications in the namespace are deleted.
    */
-  private void deleteMetrics(String namespaceId, String applicationId) throws Exception {
-    Collection<ApplicationSpecification> applications = Lists.newArrayList();
-    NamespaceId namespace = new NamespaceId(namespaceId);
-    if (applicationId == null) {
-      applications = this.store.getAllApplications(namespace);
-    } else {
-      ApplicationSpecification spec = this.store.getApplication(namespace.app(applicationId));
-      applications.add(spec);
-    }
-
+  private void deleteMetrics(ApplicationId applicationId) throws Exception {
+    ApplicationSpecification spec = this.store.getApplication(applicationId);
     long endTs = System.currentTimeMillis() / 1000;
     Map<String, String> tags = Maps.newHashMap();
-    tags.put(Constants.Metrics.Tag.NAMESPACE, namespaceId);
-    for (ApplicationSpecification application : applications) {
-      // add or replace application name in the tagMap
-      tags.put(Constants.Metrics.Tag.APP, application.getName());
-      MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, tags);
-      metricStore.delete(deleteQuery);
-    }
+    tags.put(Constants.Metrics.Tag.NAMESPACE, applicationId.getNamespace());
+    // add or replace application name in the tagMap
+    tags.put(Constants.Metrics.Tag.APP, spec.getName());
+    MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, tags);
+    metricStore.delete(deleteQuery);
   }
 
   /**
@@ -580,11 +604,11 @@ ApplicationLifecycleService extends AbstractIdleService {
 
     //Delete the schedules
     for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
-      Id.Program workflowProgramId = Id.Program.from(idApplication, ProgramType.WORKFLOW, workflowSpec.getName());
+      ProgramId workflowProgramId = appId.program(ProgramType.WORKFLOW, workflowSpec.getName());
       scheduler.deleteSchedules(workflowProgramId, SchedulableProgramType.WORKFLOW);
     }
 
-    deleteMetrics(appId.getNamespace(), appId.getApplication());
+    deleteMetrics(appId);
 
     //Delete all preferences of the application and of all its programs
     deletePreferences(appId);
@@ -607,6 +631,8 @@ ApplicationLifecycleService extends AbstractIdleService {
 
       impersonator.doAs(appId.getParent(), new Callable<Void>() {
 
+        // TODO: (CDAP-7326) since one worker or flow can only be ran by a single instance of APP, (also a single
+        // version), should delete flow for each version
         @Override
         public Void call() throws Exception {
           for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
@@ -629,6 +655,24 @@ ApplicationLifecycleService extends AbstractIdleService {
     } catch (Exception e) {
       LOG.warn("Failed to unregister usage of app: {}", appId, e);
     }
+  }
+
+  /**
+   * Delete the specified application version without performing checks that its programs are stopped.
+   *
+   * @param appId the id of the application to delete
+   * @param spec the spec of the application to delete
+   * @throws Exception
+   */
+  private void deleteAppVersion(final ApplicationId appId, ApplicationSpecification spec) throws Exception {
+    // enforce ADMIN privileges on the app
+    authorizationEnforcer.enforce(appId, authenticationContext.getPrincipal(), Action.ADMIN);
+    //Delete the schedules
+    for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
+      ProgramId workflowProgramId = appId.program(ProgramType.WORKFLOW, workflowSpec.getName());
+      scheduler.deleteSchedules(workflowProgramId, SchedulableProgramType.WORKFLOW);
+    }
+    store.removeApplication(appId);
   }
 
   // Delete route configs for all services, if they are present, in that Application

@@ -16,10 +16,15 @@
 
 package co.cask.cdap.internal.app.services.http.handlers;
 
+import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.RouteConfigHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.id.ApplicationId;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
 import org.apache.http.HttpResponse;
@@ -40,6 +45,17 @@ public class RouteConfigHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testRouteStore() throws Exception {
     // deploy, check the status
+    Id.Artifact artifactId = Id.Artifact.from(new Id.Namespace(TEST_NAMESPACE1), "wordcountapp", VERSION1);
+    addAppArtifact(artifactId, WordCountApp.class).getStatusLine().getStatusCode();
+
+    ApplicationId appIdV1 = new ApplicationId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, "v1");
+    ApplicationId appIdV2 = new ApplicationId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, "v2");
+    AppRequest<ConfigTestApp.ConfigClass> request = new AppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), null);
+    Assert.assertEquals(200, deploy(appIdV1, request).getStatusLine().getStatusCode());
+    Assert.assertEquals(200, deploy(appIdV2, request).getStatusLine().getStatusCode());
+
+
     HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
@@ -59,5 +75,33 @@ public class RouteConfigHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, getResponse.getStatusLine().getStatusCode());
     Assert.assertEquals("{}", getResult);
     Assert.assertEquals(404, doDelete(routeAPI).getStatusLine().getStatusCode());
+
+    // Invalid Routes should return 400
+    routes = ImmutableMap.<String, Integer>builder().put("v1", 50).build();
+    response = doPut(routeAPI, GSON.toJson(routes));
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+
+    // Valid Routes but non-existing services should return 400
+    routes = ImmutableMap.<String, Integer>builder().put("v1", 30).put("v2", 70).build();
+
+    String nonexistNamespaceRouteAPI = getVersionedAPIPath(
+      String.format("apps/%s/services/%s/routeconfig", WORDCOUNT_APP_NAME, WORDCOUNT_SERVICE_NAME),
+      Constants.Gateway.API_VERSION_3_TOKEN, "_NONEXIST_NAMESPACE_");
+    response = doPut(nonexistNamespaceRouteAPI, GSON.toJson(routes));
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+
+    String nonexistAppRouteAPI = getVersionedAPIPath(
+      String.format("apps/%s/services/%s/routeconfig", "_NONEXIST_APP", WORDCOUNT_SERVICE_NAME),
+      Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    response = doPut(nonexistAppRouteAPI, GSON.toJson(routes));
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+
+    routes = ImmutableMap.<String, Integer>builder().put("_NONEXIST_v1", 30).put("_NONEXIST_v2", 70).build();
+    response = doPut(routeAPI, GSON.toJson(routes));
+    Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+
+    // Delete apps
+    deleteApp(appIdV1, 200);
+    deleteApp(appIdV2, 200);
   }
 }

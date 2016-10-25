@@ -14,34 +14,28 @@
  * the License.
  */
 
-import React, {Component} from 'react';
+import React, {Component, PropTypes} from 'react';
 import { Dropdown, DropdownMenu, DropdownItem } from 'reactstrap';
 import cookie from 'react-cookie';
 import PlusButton from '../PlusButton';
 import T from 'i18n-react';
-
+import NamespaceStore from 'services/NamespaceStore';
+import SpotlightSearch from 'components/SpotlightSearch';
 require('./HeaderActions.less');
 var classNames = require('classnames');
-
+import NamespaceDropdown from 'components/NamespaceDropdown';
+import ProductsDrawer from 'components/ProductsDrawer';
 
 export default class HeaderActions extends Component {
-
   constructor(props) {
     super(props);
     this.state = {
       settingsOpen : false,
-      name : cookie.load('CDAP_Auth_User')
+      name : NamespaceStore.getState().userName,
     };
     this.logout = this.logout.bind(this);
     this.toggleSettingsDropdown = this.toggleSettingsDropdown.bind(this);
   }
-
-  toggleSettingsDropdown(){
-    this.setState({
-      settingsOpen : !this.state.settingsOpen
-    });
-  }
-
   logout() {
     cookie.remove('CDAP_Auth_Token', { path: '/' });
     cookie.remove('CDAP_Auth_User', { path: '/' });
@@ -51,7 +45,11 @@ export default class HeaderActions extends Component {
       clientId: 'cdap'
     });
   }
-
+  toggleSettingsDropdown(){
+    this.setState({
+      settingsOpen : !this.state.settingsOpen
+    });
+  }
   render() {
 
     let topRow = '';
@@ -83,18 +81,19 @@ export default class HeaderActions extends Component {
         </div>
       );
     }
+
     return (
       <div className="header-actions">
         <ul className="navbar-list pull-right">
           <div className="navbar-item">
-            <span className="fa fa-search"></span>
+            <SpotlightSearch />
           </div>
           <div className="navbar-item">
-            <span className="fa fa-bolt"></span>
+            <span className="fa fa-bell"></span>
           </div>
           <PlusButton className="navbar-item" />
           <div
-            className="navbar-item navbar-cog"
+            className="navbar-item settings-dropdown navbar-cog"
             onClick={this.toggleSettingsDropdown}
           >
             <span
@@ -108,6 +107,7 @@ export default class HeaderActions extends Component {
             <Dropdown
               isOpen={this.state.settingsOpen}
               toggle={this.toggleSettingsDropdown}
+              className="header-actions-dropdown"
             >
               <DropdownMenu>
                 {topRow}
@@ -133,11 +133,19 @@ export default class HeaderActions extends Component {
               </DropdownMenu>
             </Dropdown>
           </div>
-          <div className="navbar-item namespace-dropdown dropdown">
-            <span> Namespace </span>
+          <div className="namespace-dropdown">
+            <NamespaceDropdown tag={this.props.tag}/>
+          </div>
+          <div className="products-dropdown">
+            <ProductsDrawer currentChoice={this.props.product}/>
           </div>
         </ul>
       </div>
     );
   }
 }
+
+HeaderActions.propTypes = {
+  tag: PropTypes.string,
+  product: PropTypes.string
+};

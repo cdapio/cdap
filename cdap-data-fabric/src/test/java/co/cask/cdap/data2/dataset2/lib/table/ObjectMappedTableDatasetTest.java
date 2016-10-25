@@ -27,6 +27,8 @@ import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.collect.Lists;
+import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionExecutor;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -50,19 +52,53 @@ public class ObjectMappedTableDatasetTest {
     dsFrameworkUtil.createInstance(ObjectMappedTable.class.getName(), RECORDS_ID,
                                    ObjectMappedTableProperties.builder().setType(Record.class).build());
     try {
-      ObjectMappedTableDataset<Record> records = dsFrameworkUtil.getInstance(RECORDS_ID);
-      Record record = new Record(Integer.MAX_VALUE, Long.MAX_VALUE, Float.MAX_VALUE, null, "foobar",
-                                 Bytes.toBytes("foobar"), ByteBuffer.wrap(Bytes.toBytes("foobar")), UUID.randomUUID());
-      records.write("123", record);
-      Record actual = records.read("123");
-      Assert.assertEquals(record, actual);
-      record = new Record(Integer.MAX_VALUE, Long.MAX_VALUE, null, Double.MAX_VALUE, "foobar",
-                          Bytes.toBytes("foobar"), ByteBuffer.wrap(Bytes.toBytes("foobar")), UUID.randomUUID());
-      records.write("123", record);
-      actual = records.read("123");
-      Assert.assertEquals(record, actual);
-      records.delete("123");
-      Assert.assertNull(records.read("123"));
+      final ObjectMappedTableDataset<Record> records = dsFrameworkUtil.getInstance(RECORDS_ID);
+      TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) records);
+
+      final Record record = new Record(Integer.MAX_VALUE, Long.MAX_VALUE, Float.MAX_VALUE, null, "foobar",
+                                       Bytes.toBytes("foobar"), ByteBuffer.wrap(Bytes.toBytes("foobar")),
+                                       UUID.randomUUID());
+      txnl.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          records.write("123", record);
+        }
+      });
+      txnl.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          Record actual = records.read("123");
+          Assert.assertEquals(record, actual);
+        }
+      });
+      final Record record2 = new Record(Integer.MAX_VALUE, Long.MAX_VALUE, null, Double.MAX_VALUE, "foobar",
+                                        Bytes.toBytes("foobar"), ByteBuffer.wrap(Bytes.toBytes("foobar")),
+                                        UUID.randomUUID());
+      txnl.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          records.write("123", record2);
+        }
+      });
+      txnl.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          Record actual = records.read("123");
+          Assert.assertEquals(record2, actual);
+        }
+      });
+      txnl.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          records.delete("123");
+        }
+      });
+      txnl.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          Assert.assertNull(records.read("123"));
+        }
+      });
     } finally {
       dsFrameworkUtil.deleteInstance(RECORDS_ID);
     }
@@ -73,28 +109,40 @@ public class ObjectMappedTableDatasetTest {
     dsFrameworkUtil.createInstance(ObjectMappedTable.class.getName(), RECORDS_ID,
                                    ObjectMappedTableProperties.builder().setType(Record.class).build());
     try {
-      ObjectMappedTableDataset<Record> records = dsFrameworkUtil.getInstance(RECORDS_ID);
+      final ObjectMappedTableDataset<Record> records = dsFrameworkUtil.getInstance(RECORDS_ID);
+      TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) records);
+
       Record record1 = new Record(Integer.MAX_VALUE, Long.MAX_VALUE, Float.MAX_VALUE, Double.MAX_VALUE, "foobar",
                                   Bytes.toBytes("foobar"), ByteBuffer.wrap(Bytes.toBytes("foobar")), UUID.randomUUID());
       Record record2 = new Record(Integer.MIN_VALUE, Long.MIN_VALUE, Float.MIN_VALUE, Double.MIN_VALUE, "baz",
                                   Bytes.toBytes("baz"), ByteBuffer.wrap(Bytes.toBytes("baz")), UUID.randomUUID());
       Record record3 = new Record(1, 0L, 3.14f, 3.14159265358979323846, "hello",
                                   Bytes.toBytes("world"), ByteBuffer.wrap(Bytes.toBytes("yo")), UUID.randomUUID());
-      List<KeyValue<byte[], Record>> recordList = Lists.newArrayList();
+      final List<KeyValue<byte[], Record>> recordList = Lists.newArrayList();
       recordList.add(new KeyValue<>(Bytes.toBytes("123"), record1));
       recordList.add(new KeyValue<>(Bytes.toBytes("456"), record2));
       recordList.add(new KeyValue<>(Bytes.toBytes("789"), record3));
 
-      for (KeyValue<byte[], Record> record : recordList) {
-        records.write(record.getKey(), record.getValue());
+      for (final KeyValue<byte[], Record> record : recordList) {
+        txnl.execute(new TransactionExecutor.Subroutine() {
+          @Override
+          public void apply() throws Exception {
+            records.write(record.getKey(), record.getValue());
+          }
+        });
       }
 
-      List<KeyValue<byte[], Record>> actualList = Lists.newArrayList();
-      CloseableIterator<KeyValue<byte[], Record>> results = records.scan((String) null, null);
-      while (results.hasNext()) {
-        actualList.add(results.next());
-      }
-      results.close();
+      final List<KeyValue<byte[], Record>> actualList = Lists.newArrayList();
+      txnl.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          CloseableIterator<KeyValue<byte[], Record>> results = records.scan((String) null, null);
+          while (results.hasNext()) {
+            actualList.add(results.next());
+          }
+          results.close();
+        }
+      });
       Assert.assertEquals(recordList.size(), actualList.size());
       for (int i = 0; i < actualList.size(); i++) {
         KeyValue<byte[], Record> expected = recordList.get(i);
@@ -103,30 +151,40 @@ public class ObjectMappedTableDatasetTest {
         Assert.assertEquals(expected.getValue(), actual.getValue());
       }
 
-      results = records.scan("789", null);
-      KeyValue<byte[], Record> actualRecord = results.next();
-      Assert.assertFalse(results.hasNext());
-      Assert.assertArrayEquals(actualRecord.getKey(), recordList.get(2).getKey());
-      Assert.assertEquals(actualRecord.getValue(), recordList.get(2).getValue());
-      results.close();
+      txnl.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          CloseableIterator<KeyValue<byte[], Record>> results = records.scan("789", null);
+          KeyValue<byte[], Record> actualRecord = results.next();
+          Assert.assertFalse(results.hasNext());
+          Assert.assertArrayEquals(actualRecord.getKey(), recordList.get(2).getKey());
+          Assert.assertEquals(actualRecord.getValue(), recordList.get(2).getValue());
+          results.close();
 
-      results = records.scan(null, "124");
-      actualRecord = results.next();
-      Assert.assertFalse(results.hasNext());
-      Assert.assertArrayEquals(actualRecord.getKey(), recordList.get(0).getKey());
-      Assert.assertEquals(actualRecord.getValue(), recordList.get(0).getValue());
-      results.close();
+          results = records.scan(null, "124");
+          actualRecord = results.next();
+          Assert.assertFalse(results.hasNext());
+          Assert.assertArrayEquals(actualRecord.getKey(), recordList.get(0).getKey());
+          Assert.assertEquals(actualRecord.getValue(), recordList.get(0).getValue());
+          results.close();
 
-      results = records.scan(null, "123");
-      Assert.assertFalse(results.hasNext());
-      results.close();
+          results = records.scan(null, "123");
+          Assert.assertFalse(results.hasNext());
+          results.close();
+        }
+      });
 
-      Scan scan = new Scan(null, null);
-      results = records.scan(scan);
-      actualList = Lists.newArrayList();
-      while (results.hasNext()) {
-        actualList.add(results.next());
-      }
+      actualList.clear();
+      txnl.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          Scan scan = new Scan(null, null);
+          CloseableIterator<KeyValue<byte[], Record>> results = records.scan(scan);
+          while (results.hasNext()) {
+            actualList.add(results.next());
+          }
+        }
+      });
       Assert.assertEquals(recordList.size(), actualList.size());
     } finally {
       dsFrameworkUtil.deleteInstance(RECORDS_ID);
@@ -138,44 +196,62 @@ public class ObjectMappedTableDatasetTest {
     dsFrameworkUtil.createInstance(ObjectMappedTable.class.getName(), RECORDS_ID,
                                    ObjectMappedTableProperties.builder().setType(Record.class).build());
     try {
-      ObjectMappedTableDataset<Record> records = dsFrameworkUtil.getInstance(RECORDS_ID);
-      Record record = new Record(Integer.MAX_VALUE, Long.MAX_VALUE, Float.MAX_VALUE, Double.MAX_VALUE, "foobar",
-                                  Bytes.toBytes("foobar"), ByteBuffer.wrap(Bytes.toBytes("foobar")), UUID.randomUUID());
-      byte[] rowkey = Bytes.toBytes("row1");
-      records.write(rowkey, record);
+      final ObjectMappedTableDataset<Record> records = dsFrameworkUtil.getInstance(RECORDS_ID);
+      TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) records);
+
+      final Record record = new Record(Integer.MAX_VALUE, Long.MAX_VALUE, Float.MAX_VALUE, Double.MAX_VALUE, "foobar",
+                                       Bytes.toBytes("foobar"), ByteBuffer.wrap(Bytes.toBytes("foobar")),
+                                       UUID.randomUUID());
+      final byte[] rowkey = Bytes.toBytes("row1");
+      txnl.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          records.write(rowkey, record);
+        }
+      });
 
       // should not include the record, since upper bound is not inclusive
-      List<Split> splits = records.getSplits(1, null, rowkey);
-      List<Record> recordsRead = new ArrayList<>();
-      for (Split split : splits) {
-        SplitReader<byte[], Record> splitReader = records.createSplitReader(split);
-        try {
-          splitReader.initialize(split);
-          while (splitReader.nextKeyValue()) {
-            recordsRead.add(splitReader.getCurrentValue());
+      txnl.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          List<Split> splits = records.getSplits(1, null, rowkey);
+          List<Record> recordsRead = new ArrayList<>();
+          for (Split split : splits) {
+            SplitReader<byte[], Record> splitReader = records.createSplitReader(split);
+            try {
+              splitReader.initialize(split);
+              while (splitReader.nextKeyValue()) {
+                recordsRead.add(splitReader.getCurrentValue());
+              }
+            } finally {
+              splitReader.close();
+            }
           }
-        } finally {
-          splitReader.close();
+          Assert.assertEquals(0, recordsRead.size());
         }
-      }
-      Assert.assertEquals(0, recordsRead.size());
+      });
 
       // should include the record, since lower bound is inclusive
-      splits = records.getSplits(1, rowkey, null);
-      recordsRead.clear();
-      for (Split split : splits) {
-        SplitReader<byte[], Record> splitReader = records.createSplitReader(split);
-        try {
-          splitReader.initialize(split);
-          while (splitReader.nextKeyValue()) {
-            recordsRead.add(splitReader.getCurrentValue());
+      txnl.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          List<Split> splits = records.getSplits(1, rowkey, null);
+          List<Record> recordsRead = new ArrayList<>();
+          for (Split split : splits) {
+            SplitReader<byte[], Record> splitReader = records.createSplitReader(split);
+            try {
+              splitReader.initialize(split);
+              while (splitReader.nextKeyValue()) {
+                recordsRead.add(splitReader.getCurrentValue());
+              }
+            } finally {
+              splitReader.close();
+            }
           }
-        } finally {
-          splitReader.close();
+          Assert.assertEquals(1, recordsRead.size());
+          Assert.assertEquals(record, recordsRead.get(0));
         }
-      }
-      Assert.assertEquals(1, recordsRead.size());
-      Assert.assertEquals(record, recordsRead.get(0));
+      });
     } finally {
       dsFrameworkUtil.deleteInstance(RECORDS_ID);
     }

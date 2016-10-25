@@ -99,8 +99,8 @@ public class DataStreamsTest extends HydratorTestBase {
     DataStreamsConfig etlConfig = DataStreamsConfig.builder()
       .addStage(new ETLStage("source", MockSource.getPlugin(schema, input)))
       .addStage(new ETLStage("sink", MockSink.getPlugin("output")))
-      .addStage(new ETLStage("jacksonFilter", StringValueFilterTransform.getPlugin("name", "jackson")))
-      .addStage(new ETLStage("dwayneFilter", StringValueFilterCompute.getPlugin("name", "dwayne")))
+      .addStage(new ETLStage("jacksonFilter", StringValueFilterTransform.getPlugin("${field}", "jackson")))
+      .addStage(new ETLStage("dwayneFilter", StringValueFilterCompute.getPlugin("${field}", "dwayne")))
       .addConnection("source", "jacksonFilter")
       .addConnection("jacksonFilter", "dwayneFilter")
       .addConnection("dwayneFilter", "sink")
@@ -112,7 +112,7 @@ public class DataStreamsTest extends HydratorTestBase {
     ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
-    sparkManager.start();
+    sparkManager.start(ImmutableMap.of("field", "name"));
     sparkManager.waitForStatus(true, 10, 1);
 
     final DataSetManager<Table> outputManager = getDataset("output");

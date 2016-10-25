@@ -126,8 +126,8 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
 
   let getInitialState = () => {
     return {
-      startTime: Date.now(),
-      scrollPosition: Date.now(),
+      startTime: null,
+      scrollPosition: null,
       fullScreen: false,
       searchResults: [],
       totalLogs: 0,

@@ -111,7 +111,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
 
     // Setup dataset framework context, if required
     if (datasetFramework instanceof ProgramContextAware) {
-      ProgramId programId = program.getId().toEntityId();
+      ProgramId programId = program.getId();
       ((ProgramContextAware) datasetFramework).initContext(programId.run(runId));
     }
 
@@ -150,7 +150,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final class WorkerControllerServiceAdapter extends ProgramControllerServiceAdapter {
     private final WorkerDriver workerDriver;
 
-    WorkerControllerServiceAdapter(WorkerDriver workerDriver, Id.Program programId, RunId runId, String componentName) {
+    WorkerControllerServiceAdapter(WorkerDriver workerDriver, ProgramId programId, RunId runId, String componentName) {
       super(workerDriver, programId, runId, componentName);
       this.workerDriver = workerDriver;
     }

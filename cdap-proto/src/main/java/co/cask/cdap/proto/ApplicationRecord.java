@@ -17,6 +17,7 @@
 package co.cask.cdap.proto;
 
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.id.ApplicationId;
 
 import java.util.Objects;
 
@@ -31,40 +32,21 @@ public class ApplicationRecord {
   private final String description;
   private final ArtifactSummary artifact;
 
-  public ApplicationRecord(ArtifactSummary artifact, String name, String description) {
+
+  public ApplicationRecord(ArtifactSummary artifact, ApplicationId appId, String description) {
     this.type = "App";
     this.artifact = artifact;
-    this.name = name;
+    this.name = appId.getApplication();
     this.description = description;
-    this.version = artifact.getVersion();
-    this.id = name;
-  }
-
-  @Deprecated
-  public ApplicationRecord(String name, String version, String description) {
-    this("App", name, name, version, description);
-  }
-
-  @Deprecated
-  public ApplicationRecord(String type, String id, String name, String version, String description) {
-    this.type = type;
-    this.id = id;
-    this.name = name;
-    this.version = version;
-    this.description = description;
-    this.artifact = null;
+    this.version = appId.getVersion();
+    this.id = appId.getApplication();
   }
 
   public ArtifactSummary getArtifact() {
     return artifact;
   }
 
-  /**
-   * @deprecated use {@link #getArtifact()} instead
-   * @return the version of the artifact used to create the application
-   */
-  @Deprecated
-  public String getVersion() {
+  public String getAppVersion() {
     return version;
   }
 

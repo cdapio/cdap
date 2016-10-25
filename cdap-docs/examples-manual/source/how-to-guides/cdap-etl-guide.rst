@@ -14,7 +14,7 @@
 .. pull-quote::
 
   **Source Code Repository:** Source code (and other resources) for this guide are available at the 
-  `CDAP Guides GitHub repository <https://github.com/cdap-guides/cdap-etl-guide>`__.
+  :cdap-guides:`CDAP Guides GitHub repository <cdap-etl-guide>`.
 
 .. include:: ../../target/_includes/cdap-etl-guide/README.rst
    :start-line: 4

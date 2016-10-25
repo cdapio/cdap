@@ -14,6 +14,35 @@
  * the License.
  */
 
+class MyLinkButtonCtrl {
+  constructor($stateParams) {
+    this.entities.forEach(entity => {
+
+      if (entity.entityType === 'streams') {
+        entity.url = window.getTrackerUrl({
+          stateName: 'tracker.detail.entity.metadata',
+          stateParams: {
+            namespace: $stateParams.namespace,
+            entityType: 'streams',
+            entityId: entity.streamId
+          }
+        });
+      } else {
+        entity.url = window.getTrackerUrl({
+          stateName: 'tracker.detail.entity.metadata',
+          stateParams: {
+            namespace: $stateParams.namespace,
+            entityType: 'datasets',
+            entityId: entity.datasetId
+          }
+        });
+      }
+
+    });
+  }
+}
+MyLinkButtonCtrl.$inject = ['$stateParams'];
+
 angular.module(PKG.name + '.commons')
   .directive('myLinkButton', function() {
     return {
@@ -22,7 +51,7 @@ angular.module(PKG.name + '.commons')
         entities: '='
       },
       bindToController: true,
-      controller: () => {},
+      controller: MyLinkButtonCtrl,
       controllerAs: 'MyLinkButtonCtrl',
       templateUrl: 'my-link-button/my-link-button.html'
     };

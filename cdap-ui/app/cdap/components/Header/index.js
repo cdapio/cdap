@@ -20,15 +20,13 @@ require('./Header.less');
 import HeaderBrand from '../HeaderBrand';
 import HeaderNavbarList from '../HeaderNavbarList';
 import HeaderActions from '../HeaderActions';
-import HeaderSidebar from '../HeaderSidebar';
-import T from 'i18n-react';
+import NamespaceStore from 'services/NamespaceStore';
 
 export default class Header extends Component {
   constructor(props) {
     super(props);
     this.props = props;
     this.state = {
-      showSidebar: false,
       navbarItemList: this.props.navbarItemList
     };
   }
@@ -37,30 +35,23 @@ export default class Header extends Component {
     e.nativeEvent.stopImmediatePropagation();
     return false;
   }
-  toggleSidebar() {
-    this.setState({showSidebar: !this.state.showSidebar});
-  }
   render() {
+
     return (
       <div className="cask-header">
         <div className="navbar navbar-fixed-top">
           <nav className="navbar cdap">
-            <HeaderBrand
-              title={T.translate('commons.cdap')}
-              icon="icon-fist"
-              onClickHandler={this.toggleSidebar.bind(this)}
-            />
+            <HeaderBrand/>
             <HeaderNavbarList
               list={this.state.navbarItemList}
+              tag={this.props.tag}
+              store={NamespaceStore}
             />
-            <HeaderActions />
-          </nav>
-        </div>
-        <div className={this.state.showSidebar ? 'display-container': 'hide'}
-             onClick={this.toggleSidebar.bind(this)}>
-          <HeaderSidebar
-            onClickHandler={this.sidebarClickNoOp.bind(this)}
+          <HeaderActions
+            tag={this.props.tag}
+            product="cdap"
           />
+          </nav>
         </div>
       </div>
     );
@@ -71,5 +62,6 @@ Header.propTypes = {
   navbarItemList: PropTypes.arrayOf(PropTypes.shape({
     linkTo: PropTypes.string,
     title: PropTypes.string
-  }))
+  })),
+  tag: PropTypes.string
 };

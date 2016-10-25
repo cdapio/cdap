@@ -44,6 +44,7 @@ import org.apache.tephra.TransactionSystemClient;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -113,7 +114,7 @@ public class LocalRouteStore implements RouteStore  {
         public RouteConfig call(DatasetContext context) throws Exception {
           byte[] value = getRouteTable(context).read(ServiceDiscoverable.getName(serviceId));
           if (value == null) {
-            return null;
+            return new RouteConfig(Collections.<String, Integer>emptyMap());
           }
 
           Map<String, Integer> routeConfigs = GSON.fromJson(Bytes.toString(value), MAP_STRING_INTEGER_TYPE);

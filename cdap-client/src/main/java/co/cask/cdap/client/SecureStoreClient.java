@@ -80,7 +80,7 @@ public class SecureStoreClient {
       throw new SecureKeyAlreadyExistsException(secureKeyId);
     }
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NamespaceNotFoundException(secureKeyId.getParent().toId());
+      throw new NamespaceNotFoundException(secureKeyId.getParent());
     }
   }
 
@@ -156,7 +156,7 @@ public class SecureStoreClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NamespaceNotFoundException(namespaceId.toId());
+      throw new NamespaceNotFoundException(namespaceId);
     }
     return ObjectResponse.fromJsonBody(response, new TypeToken<Map<String, String>>() { }).getResponseObject();
   }

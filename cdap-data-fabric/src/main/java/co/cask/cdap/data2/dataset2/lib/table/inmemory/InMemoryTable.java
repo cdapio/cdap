@@ -42,12 +42,9 @@ import java.util.NavigableMap;
 import javax.annotation.Nullable;
 
 /**
- *
+ * In-memory implementation of Table.
  */
 public class InMemoryTable extends BufferingTable {
-  private static final long NO_TX_VERSION = 0L;
-
-  private Transaction tx;
 
   /**
    * To be used in tests which do not need namespaces
@@ -81,12 +78,6 @@ public class InMemoryTable extends BufferingTable {
   public InMemoryTable(DatasetContext datasetContext, DatasetSpecification spec, CConfiguration cConf) {
     super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), spec.getName()),
           false, spec.getProperties());
-  }
-
-  @Override
-  public void startTx(Transaction tx) {
-    super.startTx(tx);
-    this.tx = tx;
   }
 
   @WriteOnly

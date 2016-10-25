@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,8 @@ package co.cask.cdap.client.config;
 import co.cask.cdap.client.exception.DisconnectedException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.common.http.HttpRequestConfig;
 import com.google.common.base.Supplier;
@@ -27,12 +29,10 @@ import com.google.common.base.Suppliers;
 import java.net.MalformedURLException;
 import java.net.URL;
 import javax.annotation.Nullable;
-import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Configuration for the Java client API
  */
-@ThreadSafe
 public class ClientConfig {
 
   private static final boolean DEFAULT_VERIFY_SSL_CERTIFICATE = true;
@@ -47,17 +47,17 @@ public class ClientConfig {
   private static final String DEFAULT_VERSION = Constants.Gateway.API_VERSION_3_TOKEN;
 
   @Nullable
-  private final ConnectionConfig connectionConfig;
-  private final boolean verifySSLCert;
+  private ConnectionConfig connectionConfig;
+  private boolean verifySSLCert;
 
-  private final int defaultReadTimeout;
-  private final int defaultConnectTimeout;
-  private final int uploadReadTimeout;
-  private final int uploadConnectTimeout;
+  private int defaultReadTimeout;
+  private int defaultConnectTimeout;
+  private int uploadReadTimeout;
+  private int uploadConnectTimeout;
 
-  private final int unavailableRetryLimit;
-  private final String apiVersion;
-  private final Supplier<AccessToken> accessToken;
+  private int unavailableRetryLimit;
+  private String apiVersion;
+  private Supplier<AccessToken> accessToken;
 
   private ClientConfig(@Nullable ConnectionConfig connectionConfig,
                        boolean verifySSLCert, int unavailableRetryLimit,
@@ -123,8 +123,22 @@ public class ClientConfig {
    *             in a URL like "http://example.com:11015/v3/&lt;namespace&gt;/apps".
    * @return URL of the resolved path
    * @throws MalformedURLException
+   * @deprecated since 4.0.0. Please use {@link #resolveNamespacedURLV3(NamespaceId, String)} instead
    */
+  @Deprecated
   public URL resolveNamespacedURLV3(Id.Namespace namespace, String path) throws MalformedURLException {
+    return resolveNamespacedURLV3(namespace.toEntityId(), path);
+  }
+
+  /**
+   * Resolves a path against the target CDAP server with the provided namespace, using V3 APIs
+   *
+   * @param path Path to the HTTP endpoint. For example, "apps" would result
+   *             in a URL like "http://example.com:11015/v3/&lt;namespace&gt;/apps".
+   * @return URL of the resolved path
+   * @throws MalformedURLException
+   */
+  public URL resolveNamespacedURLV3(NamespaceId namespace, String path) throws MalformedURLException {
     return getConnectionConfig().resolveNamespacedURI(namespace, Constants.Gateway.API_VERSION_3_TOKEN, path).toURL();
   }
 
@@ -162,6 +176,10 @@ public class ClientConfig {
     return uploadConnectTimeout;
   }
 
+  public void setConnectionConfig(@Nullable ConnectionConfig connectionConfig) {
+    this.connectionConfig = connectionConfig;
+  }
+
   public ConnectionConfig getConnectionConfig() {
     if (connectionConfig == null) {
       throw new DisconnectedException();
@@ -173,12 +191,47 @@ public class ClientConfig {
     return verifySSLCert;
   }
 
+  public void setVerifySSLCert(boolean verifySSLCert) {
+    this.verifySSLCert = verifySSLCert;
+  }
+
+  public void setDefaultReadTimeout(int defaultReadTimeout) {
+    this.defaultReadTimeout = defaultReadTimeout;
+  }
+
+  public void setDefaultConnectTimeout(int defaultConnectTimeout) {
+    this.defaultConnectTimeout = defaultConnectTimeout;
+  }
+
+  public void setUploadReadTimeout(int uploadReadTimeout) {
+    this.uploadReadTimeout = uploadReadTimeout;
+  }
+
+  public void setUploadConnectTimeout(int uploadConnectTimeout) {
+    this.uploadConnectTimeout = uploadConnectTimeout;
+  }
+
+  public void setUnavailableRetryLimit(int unavailableRetryLimit) {
+    this.unavailableRetryLimit = unavailableRetryLimit;
+  }
+
   public String getApiVersion() {
     return apiVersion;
   }
 
   public int getUnavailableRetryLimit() {
     return unavailableRetryLimit;
+  }
+
+  public void setApiVersion(String apiVersion) {
+    this.apiVersion = apiVersion;
+  }
+
+  public void setAllTimeouts(int timeout) {
+    this.defaultConnectTimeout = timeout;
+    this.defaultReadTimeout = timeout;
+    this.uploadConnectTimeout = timeout;
+    this.uploadReadTimeout = timeout;
   }
 
   @Nullable
@@ -188,6 +241,14 @@ public class ClientConfig {
 
   public Supplier<AccessToken> getAccessTokenSupplier() {
     return accessToken;
+  }
+
+  public void setAccessToken(Supplier<AccessToken> accessToken) {
+    this.accessToken = accessToken;
+  }
+
+  public void setAccessToken(AccessToken accessToken) {
+    this.accessToken = Suppliers.ofInstance(accessToken);
   }
 
   public static Builder builder() {
@@ -252,14 +313,6 @@ public class ClientConfig {
 
     public Builder setDefaultConnectTimeout(int defaultConnectTimeout) {
       this.defaultConnectTimeout = defaultConnectTimeout;
-      return this;
-    }
-
-    public Builder setAllTimeouts(int defaultTimeout) {
-      this.uploadReadTimeout = defaultTimeout;
-      this.uploadConnectTimeout = defaultTimeout;
-      this.defaultReadTimeout = defaultTimeout;
-      this.defaultConnectTimeout = defaultTimeout;
       return this;
     }
 

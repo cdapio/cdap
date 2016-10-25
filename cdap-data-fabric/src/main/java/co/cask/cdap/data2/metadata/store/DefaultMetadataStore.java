@@ -390,9 +390,12 @@ public class DefaultMetadataStore implements MetadataStore {
     // Score results
     final Map<NamespacedEntityId, Integer> weightedResults = new HashMap<>();
     for (MetadataEntry metadataEntry : results) {
-      Integer score = weightedResults.get(metadataEntry.getTargetId());
-      score = score == null ? 0 : score;
-      weightedResults.put(metadataEntry.getTargetId(), score + 1);
+      //TODO Remove this null check after CDAP-7228 resolved. Since previous CDAP version may have null value.
+      if (metadataEntry != null) {
+        Integer score = weightedResults.get(metadataEntry.getTargetId());
+        score = score == null ? 0 : score;
+        weightedResults.put(metadataEntry.getTargetId(), score + 1);
+      }
     }
 
     // Sort the results by score

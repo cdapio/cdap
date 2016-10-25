@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -64,10 +64,10 @@ public class CLIConfig implements TableRendererConfig {
   private static final int MIN_LINE_WIDTH = 40;
 
   private static final Gson GSON = new Gson();
+  private final ClientConfig clientConfig;
   private final FilePathResolver resolver;
   private final String version;
   private final PrintStream output;
-  private ClientConfig clientConfig;
   private CLIConnectionConfig connectionConfig;
 
   private TableRenderer tableRenderer;
@@ -141,14 +141,14 @@ public class CLIConfig implements TableRendererConfig {
 
   public void setConnectionConfig(@Nullable CLIConnectionConfig connectionConfig) {
     this.connectionConfig = connectionConfig;
-    this.clientConfig = new ClientConfig.Builder(clientConfig).setConnectionConfig(connectionConfig).build();
+    clientConfig.setConnectionConfig(connectionConfig);
     notifyConnectionChanged();
   }
 
   public void tryConnect(CLIConnectionConfig connectionConfig, boolean verifySSLCert,
                          PrintStream output, boolean debug) throws Exception {
     try {
-      clientConfig = new ClientConfig.Builder(clientConfig).setVerifySSLCert(verifySSLCert).build();
+      clientConfig.setVerifySSLCert(verifySSLCert);
       UserAccessToken userToken = acquireAccessToken(clientConfig, connectionConfig, output, debug);
       AccessToken accessToken = null;
       if (userToken != null) {
@@ -158,7 +158,7 @@ public class CLIConfig implements TableRendererConfig {
       }
       checkConnection(clientConfig, connectionConfig, accessToken);
       setConnectionConfig(connectionConfig);
-      clientConfig = new ClientConfig.Builder(clientConfig).setAccessToken(accessToken).build();
+      clientConfig.setAccessToken(accessToken);
       output.printf("Successfully connected to CDAP instance at %s", connectionConfig.getURI().toString());
       output.println();
     } catch (IOException e) {
@@ -169,11 +169,10 @@ public class CLIConfig implements TableRendererConfig {
 
   public void updateAccessToken(PrintStream output) throws IOException {
     UserAccessToken newAccessToken = getNewAccessToken(clientConfig.getConnectionConfig(), output, false);
-    clientConfig = new ClientConfig.Builder(clientConfig).setAccessToken(newAccessToken.getAccessToken()).build();
+    clientConfig.setAccessToken(newAccessToken.getAccessToken());
   }
 
-  private void checkConnection(ClientConfig baseClientConfig, ConnectionConfig connectionInfo,
-                               @Nullable AccessToken accessToken)
+  private void checkConnection(ClientConfig baseClientConfig, ConnectionConfig connectionInfo, AccessToken accessToken)
     throws IOException, UnauthenticatedException, UnauthorizedException {
     ClientConfig clientConfig = new ClientConfig.Builder(baseClientConfig)
       .setConnectionConfig(connectionInfo)

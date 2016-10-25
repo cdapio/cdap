@@ -99,7 +99,7 @@ public abstract class AbstractProgramTwillApplication implements TwillApplicatio
     addRunnables(runnables);
 
     Builder.MoreRunnable moreRunnable = Builder.with()
-      .setName(TwillAppNames.toTwillAppName(program.getId().toEntityId()))
+      .setName(TwillAppNames.toTwillAppName(program.getId()))
       .withRunnable();
 
     Builder.RunnableSetter runnableSetter = null;

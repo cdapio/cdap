@@ -22,9 +22,9 @@ import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.XSlowTests;
@@ -79,7 +79,7 @@ public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
 
   private long getSparkMetric(String applicationId, String sparkId, String metricName) throws Exception {
     Map<String, String> context = ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, Id.Namespace.DEFAULT.getId(),
+      Constants.Metrics.Tag.NAMESPACE, NamespaceId.DEFAULT.getEntityName(),
       Constants.Metrics.Tag.APP, applicationId,
       Constants.Metrics.Tag.SPARK, sparkId);
 

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.mock.transform;
 
+import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
@@ -55,7 +56,10 @@ public class StringValueFilterTransform extends Transform<StructuredRecord, Stru
    * Config for the transform.
    */
   public static class Config extends PluginConfig {
+    @Macro
     private String field;
+
+    @Macro
     private String value;
   }
 
@@ -68,8 +72,8 @@ public class StringValueFilterTransform extends Transform<StructuredRecord, Stru
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    properties.put("field", new PluginPropertyField("field", "", "string", true, false));
-    properties.put("value", new PluginPropertyField("value", "", "string", true, false));
+    properties.put("field", new PluginPropertyField("field", "", "string", true, true));
+    properties.put("value", new PluginPropertyField("value", "", "string", true, true));
     return new PluginClass(Transform.PLUGIN_TYPE, "StringValueFilter", "", StringValueFilterTransform.class.getName(),
                            "config", properties);
   }

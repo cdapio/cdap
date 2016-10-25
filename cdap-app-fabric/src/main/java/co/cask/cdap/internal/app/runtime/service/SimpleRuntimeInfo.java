@@ -56,8 +56,8 @@ public final class SimpleRuntimeInfo implements ProgramRuntimeService.RuntimeInf
   }
 
   @Override
-  public Id.Program getProgramId() {
-    return programId.toId();
+  public ProgramId getProgramId() {
+    return programId;
   }
 
   @Nullable

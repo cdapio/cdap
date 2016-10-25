@@ -16,7 +16,6 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.EntityId;
 
 /**
@@ -26,19 +25,9 @@ public class AlreadyExistsException extends ConflictException {
 
   private final Object objectId;
 
-  public AlreadyExistsException(Id id) {
-    super(String.format("'%s' already exists", id));
-    this.objectId = id;
-  }
-
   public AlreadyExistsException(EntityId entityId) {
     super(String.format("'%s' already exists", entityId));
     this.objectId = entityId;
-  }
-
-  public AlreadyExistsException(Id id, String message) {
-    super(message);
-    this.objectId = id;
   }
 
   public Object getObjectId() {

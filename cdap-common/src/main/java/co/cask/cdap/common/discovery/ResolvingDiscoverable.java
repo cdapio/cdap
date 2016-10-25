@@ -30,7 +30,7 @@ public class ResolvingDiscoverable extends Discoverable {
   private static final Logger LOG = LoggerFactory.getLogger(ResolvingDiscoverable.class);
 
   private ResolvingDiscoverable(Discoverable discoverable) {
-    super(discoverable.getName(), discoverable.getSocketAddress());
+    super(discoverable.getName(), discoverable.getSocketAddress(), discoverable.getPayload());
   }
 
   public static ResolvingDiscoverable of(Discoverable discoverable) {

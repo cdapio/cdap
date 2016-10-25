@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.logging.LoggingConfiguration;
@@ -39,7 +40,6 @@ import com.google.common.collect.RowSortedTable;
 import com.google.common.collect.TreeBasedTable;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.inject.Inject;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,11 +78,10 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
   private CountDownLatch countDownLatch;
   private int partition;
 
-  @Inject
   KafkaLogWriterPlugin(CConfiguration cConf, FileMetaDataManager fileMetaDataManager,
                        CheckpointManagerFactory checkpointManagerFactory, RootLocationFactory rootLocationFactory,
-                       NamespacedLocationFactory namespacedLocationFactory, Impersonator impersonator)
-    throws Exception {
+                       NamespaceQueryAdmin namespaceQueryAdmin, NamespacedLocationFactory namespacedLocationFactory,
+                       Impersonator impersonator) throws Exception {
 
     this.serializer = new LoggingEventSerializer();
     this.messageTable = TreeBasedTable.create();
@@ -153,7 +152,8 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
 
     this.logFileWriter = new CheckpointingLogFileWriter(avroFileWriter, checkpointManager, checkpointIntervalMs);
     long retentionDurationMs = TimeUnit.MILLISECONDS.convert(retentionDurationDays, TimeUnit.DAYS);
-    this.logCleanup = new LogCleanup(fileMetaDataManager, rootLocationFactory, retentionDurationMs, impersonator);
+    this.logCleanup = new LogCleanup(fileMetaDataManager, rootLocationFactory, namespaceQueryAdmin,
+                                     namespacedLocationFactory, logBaseDir, retentionDurationMs, impersonator);
   }
 
   @Override

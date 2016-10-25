@@ -131,8 +131,8 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
     private final SystemDatasetInstantiator instantiator;
     private final NamespaceId namespaceId;
 
-    protected LineageRecordingDatasetCache(LoadingCache<DatasetCacheKey, Dataset> delegate,
-                                           SystemDatasetInstantiator instantiator, NamespaceId namespaceId) {
+    private LineageRecordingDatasetCache(LoadingCache<DatasetCacheKey, Dataset> delegate,
+                                         SystemDatasetInstantiator instantiator, NamespaceId namespaceId) {
       super(delegate);
       this.instantiator = instantiator;
       this.namespaceId = namespaceId;
@@ -242,7 +242,7 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
    *
    * @param dataset this is an Object because we need to pass in TransactionAware or Dataset
    */
-  public void discardSafely(Object dataset) {
+  private void discardSafely(Object dataset) {
     // iterates over all datasets but we do not expect this map to become large
     for (Map.Entry<DatasetCacheKey, Dataset> entry : datasetCache.asMap().entrySet()) {
       if (dataset == entry.getValue()) {
@@ -255,7 +255,11 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
   }
 
   @Override
-  public TransactionContext newTransactionContext() {
+  public TransactionContext newTransactionContext() throws TransactionFailureException {
+    if (txContext != null && txContext.getCurrentTransaction() != null) {
+      throw new TransactionFailureException("Attempted to start a transaction within active transaction " +
+                                              txContext.getCurrentTransaction().getTransactionId());
+    }
     dismissTransactionContext();
     txContext = new DelayedDiscardingTransactionContext(activeTxAwares.values(), extraTxAwares);
     return txContext;
@@ -375,7 +379,7 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
     /**
      * Mark a tx-aware for discarding after the transaction is complete.
      */
-    public void discardAfterTx(TransactionAware txAware) {
+    private void discardAfterTx(TransactionAware txAware) {
       toDiscard.add(txAware);
       txAwares.remove(txAware);
     }
@@ -393,13 +397,22 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
 
     @Override
     public void start() throws TransactionFailureException {
-      if (txContext != null && txContext.getCurrentTransaction() != null) {
-        LOG.warn("Starting a new transaction while the previous transaction {} is still on-going. ",
-                 txContext.getCurrentTransaction().getTransactionId());
-        cleanup();
+      newTxContext();
+      txContext.start();
+    }
+
+    @Override
+    public void start(int timeout) throws TransactionFailureException {
+      newTxContext();
+      txContext.start(timeout);
+    }
+
+    private void newTxContext() throws TransactionFailureException {
+      if (getCurrentTransaction() != null) {
+        throw new TransactionFailureException("Attempted to start a transaction within active transaction " +
+                                                getCurrentTransaction().getTransactionId());
       }
       txContext = new TransactionContext(SingleThreadDatasetCache.this.txClient, txAwares);
-      txContext.start();
     }
 
     @Override
@@ -424,6 +437,20 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
     @Override
     public Transaction getCurrentTransaction() {
       return txContext == null ? null : txContext.getCurrentTransaction();
+    }
+
+    @Override
+    public void abort() throws TransactionFailureException {
+      if (txContext == null) {
+        // same behavior as Tephra's TransactionContext
+        // might be called by some generic exception handler even though already aborted/finished - we allow that
+        return;
+      }
+      try {
+        txContext.abort();
+      } finally {
+        cleanup();
+      }
     }
 
     @Override

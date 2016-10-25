@@ -1,0 +1,55 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+.wizard-step-content-container {
+  height: 100%;
+  .step-content {
+    padding: 10px;
+  }
+  .step-banner {
+    background: #464a57;
+    color: #fff;
+    padding: 5px 15px;
+    height: 51px;
+
+    h4 {
+      margin: 3px 0 5px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    p {
+      margin: 0;
+      font-size: 12px;
+    }
+
+    .progress-counter {
+      line-height: 40px;
+      vertical-align: middle;
+    }
+  }
+  .step-content {
+    height: ~"calc(100% - 52px)";
+    height: ~"-moz-calc(100% - 52px)";
+    height: ~"-webkit-calc(100% - 52px)";
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    .fa.fa-asterisk {
+      line-height: 32px;
+      vertical-align: middle;
+    }
+  }
+}

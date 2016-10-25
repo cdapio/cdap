@@ -16,13 +16,17 @@
 
 package co.cask.cdap.gateway.router;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.service.ServiceDiscoverable;
 import co.cask.cdap.common.utils.Networks;
-import co.cask.cdap.gateway.discovery.DistributionEndpointStrategy;
+import co.cask.cdap.gateway.discovery.RouteFallbackStrategy;
+import co.cask.cdap.gateway.discovery.UserServiceEndpointStrategy;
 import co.cask.cdap.route.store.RouteStore;
 import com.google.common.base.Objects;
+import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -56,10 +60,11 @@ public class RouterServiceLookup {
   private final LoadingCache<CacheKey, EndpointStrategy> discoverableCache;
   private final RouterPathLookup routerPathLookup;
   private final RouteStore routeStore;
+  private final RouteFallbackStrategy fallbackStrategy;
 
   @Inject
-  public RouterServiceLookup(DiscoveryServiceClient discoveryServiceClient, RouterPathLookup routerPathLookup,
-                             RouteStore routeStore) {
+  public RouterServiceLookup(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
+                             RouterPathLookup routerPathLookup, RouteStore routeStore) {
     this.discoveryServiceClient = discoveryServiceClient;
     this.routerPathLookup = routerPathLookup;
     this.discoverableCache = CacheBuilder.newBuilder()
@@ -71,6 +76,8 @@ public class RouterServiceLookup {
         }
       });
     this.routeStore = routeStore;
+    this.fallbackStrategy = RouteFallbackStrategy.valueOfRouteFallbackStrategy(
+      cConf.get(Constants.Router.ROUTER_USERSERVICE_FALLBACK_STRAGEY));
   }
 
   /**
@@ -118,13 +125,13 @@ public class RouterServiceLookup {
       // Routing to webapp is a special case. If the service contains "$HOST" the destination is webapp
       // Otherwise the destination service will be other cdap services.
       // Path lookup can be skipped for requests to webapp.
-      String destService = routerPathLookup.getRoutingService(service, path, httpRequest);
-      if (destService == null) {
+      RouteDestination destService = routerPathLookup.getRoutingService(service, path, httpRequest);
+      if (destService == null || Strings.isNullOrEmpty(destService.getServiceName())) {
         return null;
       }
 
       CacheKey cacheKey = new CacheKey(destService, host, path);
-      LOG.trace("Request was routed from {} to: {}", path, cacheKey.getService());
+      LOG.trace("Request was routed from {} to: {}", path, cacheKey.getRouteDestination());
 
       return discoverableCache.get(cacheKey);
     } catch (ExecutionException e) {
@@ -138,8 +145,8 @@ public class RouterServiceLookup {
 
   private EndpointStrategy loadCache(CacheKey cacheKey) throws Exception {
     EndpointStrategy endpointStrategy;
-    String service = cacheKey.getService();
-    if (service.contains("$HOST")) {
+    RouteDestination routeDestination = cacheKey.getRouteDestination();
+    if (routeDestination.getServiceName().contains("$HOST")) {
       // Route URLs to host in the header.
       endpointStrategy = discoverService(cacheKey);
 
@@ -148,7 +155,7 @@ public class RouterServiceLookup {
         endpointStrategy = discoverDefaultService(cacheKey);
       }
     } else {
-      endpointStrategy = discover(service);
+      endpointStrategy = discover(routeDestination);
     }
 
     if (endpointStrategy.pick() == null) {
@@ -163,13 +170,14 @@ public class RouterServiceLookup {
   private EndpointStrategy discoverService(CacheKey key)
     throws UnsupportedEncodingException, ExecutionException {
     // First try with path routing
-    String lookupService = genLookupName(key.getService(), key.getHost(), key.getFirstPathPart());
-    EndpointStrategy endpointStrategy = discover(lookupService);
+    String lookupService = genLookupName(key.getRouteDestination().getServiceName(),
+                                         key.getHost(), key.getFirstPathPart());
+    EndpointStrategy endpointStrategy = discover(new RouteDestination(lookupService));
 
     if (endpointStrategy.pick() == null) {
       // Try without path routing
-      lookupService = genLookupName(key.getService(), key.getHost());
-      endpointStrategy = discover(lookupService);
+      lookupService = genLookupName(key.getRouteDestination().getServiceName(), key.getHost());
+      endpointStrategy = discover(new RouteDestination(lookupService));
     }
 
     return endpointStrategy;
@@ -178,20 +186,23 @@ public class RouterServiceLookup {
   private EndpointStrategy discoverDefaultService(CacheKey key)
     throws UnsupportedEncodingException, ExecutionException {
     // Try only path routing
-    String lookupService = genLookupName(key.getService(), DEFAULT_SERVICE_NAME, key.getFirstPathPart());
-    return discover(lookupService);
+    String lookupService = genLookupName(key.getRouteDestination().getServiceName(),
+                                         DEFAULT_SERVICE_NAME, key.getFirstPathPart());
+    return discover(new RouteDestination(lookupService));
   }
 
-  private EndpointStrategy discover(String discoverName) throws ExecutionException {
-    LOG.debug("Looking up service name {}", discoverName);
+  private EndpointStrategy discover(RouteDestination routeDestination) throws ExecutionException {
+    LOG.debug("Looking up service name {}", routeDestination);
     // If its a user service, then use DistributionEndpoint Strategy
-    ServiceDiscovered serviceDiscovered = discoveryServiceClient.discover(discoverName);
+    String serviceName = routeDestination.getServiceName();
+    ServiceDiscovered serviceDiscovered = discoveryServiceClient.discover(serviceName);
 
-    EndpointStrategy endpointStrategy = ServiceDiscoverable.isServiceDiscoverable(discoverName) ?
-      new DistributionEndpointStrategy(serviceDiscovered, routeStore, ServiceDiscoverable.getId(discoverName)) :
+    EndpointStrategy endpointStrategy = ServiceDiscoverable.isServiceDiscoverable(serviceName) ?
+      new UserServiceEndpointStrategy(serviceDiscovered, routeStore, ServiceDiscoverable.getId(serviceName),
+                                      fallbackStrategy, routeDestination.getVersion()) :
       new RandomEndpointStrategy(serviceDiscovered);
     if (endpointStrategy.pick(300L, TimeUnit.MILLISECONDS) == null) {
-      LOG.debug("Discoverable endpoint {} not found", discoverName);
+      LOG.debug("Discoverable endpoint {} not found", routeDestination);
     }
     return endpointStrategy;
   }
@@ -207,21 +218,21 @@ public class RouterServiceLookup {
   }
 
   private static final class CacheKey {
-    private final String service;
+    private final RouteDestination routeDestination;
     private final String host;
     private final String firstPathPart;
     private final int hashCode;
 
-    private CacheKey(String service, String host, String path) {
-      this.service = service;
+    private CacheKey(RouteDestination routeDestination, String host, String path) {
+      this.routeDestination = routeDestination;
       this.host = host;
       int ind = path.indexOf('/', 1);
       this.firstPathPart = ind == -1 ? path : path.substring(0, ind);
-      this.hashCode = Objects.hashCode(service, host, firstPathPart);
+      this.hashCode = Objects.hashCode(routeDestination, host, firstPathPart);
     }
 
-    public String getService() {
-      return service;
+    public RouteDestination getRouteDestination() {
+      return routeDestination;
     }
 
     public String getHost() {
@@ -242,7 +253,7 @@ public class RouterServiceLookup {
       }
 
       CacheKey other = (CacheKey) o;
-      return Objects.equal(service, other.service)
+      return Objects.equal(routeDestination, other.routeDestination)
         && Objects.equal(host, other.host)
         && Objects.equal(firstPathPart, other.firstPathPart);
     }
@@ -255,7 +266,7 @@ public class RouterServiceLookup {
     @Override
     public String toString() {
       return Objects.toStringHelper(this)
-        .add("service", service)
+        .add("routeDestination", routeDestination)
         .add("host", host)
         .add("firstPathPart", firstPathPart)
         .toString();

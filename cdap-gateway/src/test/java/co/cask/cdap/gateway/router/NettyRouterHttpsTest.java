@@ -167,7 +167,7 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
 
       router =
         new NettyRouter(cConf, sConf, InetAddresses.forString(hostname),
-                        new RouterServiceLookup((DiscoveryServiceClient) discoveryService,
+                        new RouterServiceLookup(cConf, (DiscoveryServiceClient) discoveryService,
                                                 new RouterPathLookup(), routeStore),
                         new SuccessTokenValidator(), accessTokenTransformer, discoveryServiceClient);
       router.startAndWait();

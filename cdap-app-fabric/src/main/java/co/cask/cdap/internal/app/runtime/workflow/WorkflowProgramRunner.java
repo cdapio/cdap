@@ -102,7 +102,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
 
     // Setup dataset framework context, if required
     if (datasetFramework instanceof ProgramContextAware) {
-      ProgramId programId = program.getId().toEntityId();
+      ProgramId programId = program.getId();
       ((ProgramContextAware) datasetFramework).initContext(programId.run(runId));
     }
 

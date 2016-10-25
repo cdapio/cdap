@@ -183,7 +183,7 @@ public class ExploreTableManager {
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
       dataset = datasetInstantiator.getDataset(datasetId);
       if (dataset == null) {
-        throw new DatasetNotFoundException(datasetId.toId());
+        throw new DatasetNotFoundException(datasetId);
       }
       createStatement = generateCreateStatement(dataset, spec, datasetId, tableNaming.getTableName(datasetId));
     } catch (IOException e) {
@@ -235,7 +235,7 @@ public class ExploreTableManager {
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
       dataset = datasetInstantiator.getDataset(datasetId);
       if (dataset == null) {
-        throw new DatasetNotFoundException(datasetId.toId());
+        throw new DatasetNotFoundException(datasetId);
       }
       alterStatements = generateAlterStatements(datasetId, tableName, dataset, spec, oldSpec);
     } catch (IOException e) {
@@ -283,7 +283,7 @@ public class ExploreTableManager {
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
       dataset = datasetInstantiator.getDataset(datasetId);
       if (dataset == null) {
-        throw new DatasetNotFoundException(datasetId.toId());
+        throw new DatasetNotFoundException(datasetId);
       }
       deleteStatement = generateDeleteStatement(dataset, tableName);
     } catch (IOException e) {

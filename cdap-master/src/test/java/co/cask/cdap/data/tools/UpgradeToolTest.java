@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.tools;
 
+import com.google.inject.Injector;
 import org.junit.Test;
 
 /**
@@ -24,7 +25,10 @@ import org.junit.Test;
 public class UpgradeToolTest {
   @Test
   public void testInjector() throws Exception {
-    new UpgradeTool();
+    Injector upgradeToolInjector = new UpgradeTool().createInjector();
+    // should not throw exception
+    // Test the UpgradeDatasetServiceManager injector creation
+    upgradeToolInjector.getInstance(UpgradeDatasetServiceManager.class);
     // should not throw exception
   }
 }

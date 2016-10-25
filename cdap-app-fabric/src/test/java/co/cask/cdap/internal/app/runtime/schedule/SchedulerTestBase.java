@@ -31,6 +31,9 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -62,9 +65,8 @@ public abstract class SchedulerTestBase {
   protected static MetricStore metricStore;
   protected static Injector injector;
 
-  private static final Id.Application APP_ID = new Id.Application(Id.Namespace.DEFAULT,
-                                                                  "AppWithStreamSizeSchedule");
-  private static final Id.Program PROGRAM_ID = new Id.Program(APP_ID, ProgramType.WORKFLOW, "SampleWorkflow");
+  private static final ApplicationId APP_ID = NamespaceId.DEFAULT.app("AppWithStreamSizeSchedule");
+  private static final ProgramId PROGRAM_ID = APP_ID.workflow("SampleWorkflow");
   private static final String SCHEDULE_NAME_1 = "SampleSchedule1";
   private static final String SCHEDULE_NAME_2 = "SampleSchedule2";
   private static final SchedulableProgramType PROGRAM_TYPE = SchedulableProgramType.WORKFLOW;
@@ -118,7 +120,7 @@ public abstract class SchedulerTestBase {
                         streamSizeScheduler.scheduleState(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1));
     Assert.assertEquals(Scheduler.ScheduleState.SCHEDULED,
                         streamSizeScheduler.scheduleState(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2));
-    int runs = store.getRuns(PROGRAM_ID.toEntityId(), ProgramRunStatus.ALL, 0, Long.MAX_VALUE, 100).size();
+    int runs = store.getRuns(PROGRAM_ID, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, 100).size();
     Assert.assertEquals(0, runs);
 
     StreamMetricsPublisher metricsPublisher = createMetricsPublisher(STREAM_ID);
@@ -174,7 +176,7 @@ public abstract class SchedulerTestBase {
    * Waits until there is nothing running for the given program.
    */
   private void waitUntilFinished(final ProgramRuntimeService runtimeService,
-                                 final Id.Program program, long maxWaitSeconds) throws Exception {
+                                 final ProgramId program, long maxWaitSeconds) throws Exception {
     Tasks.waitFor(false, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
@@ -186,23 +188,23 @@ public abstract class SchedulerTestBase {
   /**
    * Waits for the given program ran for the given number of times.
    */
-  private void waitForRuns(final Store store, final Id.Program programId,
+  private void waitForRuns(final Store store, final ProgramId programId,
                            int expectedRuns, long timeoutSeconds) throws Exception {
     Tasks.waitFor(expectedRuns, new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
-        return store.getRuns(programId.toEntityId(), ProgramRunStatus.COMPLETED, 0, Long.MAX_VALUE, 100).size();
+        return store.getRuns(programId, ProgramRunStatus.COMPLETED, 0, Long.MAX_VALUE, 100).size();
       }
     }, timeoutSeconds, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
   }
 
-  private boolean isProgramRunning(ProgramRuntimeService runtimeService, final Id.Program program) {
+  private boolean isProgramRunning(ProgramRuntimeService runtimeService, final ProgramId program) {
     Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
       Iterables.filter(runtimeService.listAll(ProgramType.values()),
                        new Predicate<ProgramRuntimeService.RuntimeInfo>() {
       @Override
       public boolean apply(ProgramRuntimeService.RuntimeInfo runtimeInfo) {
-        return runtimeInfo.getProgramId().toEntityId().equals(program);
+        return runtimeInfo.getProgramId().equals(program);
       }
     });
     return !Iterables.isEmpty(runtimeInfos);

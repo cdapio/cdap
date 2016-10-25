@@ -49,8 +49,8 @@ public class DescribeAppCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    ApplicationId appId = cliConfig.getCurrentNamespace().app(arguments.get(ArgumentName.APP.toString()));
-    List<ProgramRecord> programsList = applicationClient.listPrograms(appId.toId());
+    ApplicationId appId = parseApplicationId(arguments);
+    List<ProgramRecord> programsList = applicationClient.listPrograms(appId);
 
     Table table = Table.builder()
       .setHeader("type", "id", "description")
@@ -65,11 +65,13 @@ public class DescribeAppCommand extends AbstractAuthCommand {
 
   @Override
   public String getPattern() {
-    return String.format("describe app <%s>", ArgumentName.APP);
+    return String.format("describe app <%s> [version <%s>]", ArgumentName.APP, ArgumentName.APP_VERSION);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Describes %s", Fragment.of(Article.A, ElementType.APP.getName()));
+    return String.format("Describes %s with an optional version. If version is not provided, default version \"%s\" " +
+                           "will be used", Fragment.of(Article.A, ElementType.APP.getName()),
+                         ApplicationId.DEFAULT_VERSION);
   }
 }

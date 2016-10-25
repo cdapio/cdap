@@ -115,7 +115,7 @@ public class PreferencesClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(namespace);
+      throw new NotFoundException(namespace.toEntityId());
     }
     return ObjectResponse.fromJsonBody(response, new TypeToken<Map<String, String>>() { }).getResponseObject();
   }
@@ -135,7 +135,7 @@ public class PreferencesClient {
     HttpResponse response = restClient.execute(HttpMethod.PUT, url, GSON.toJson(preferences), null,
                                                config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(namespace);
+      throw new NotFoundException(namespace.toEntityId());
     }
   }
 
@@ -154,7 +154,7 @@ public class PreferencesClient {
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(namespace);
+      throw new NotFoundException(namespace.toEntityId());
     }
   }
 
@@ -177,7 +177,7 @@ public class PreferencesClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(application);
+      throw new NotFoundException(application.toEntityId());
     }
     return ObjectResponse.fromJsonBody(response, new TypeToken<Map<String, String>>() { }).getResponseObject();
   }
@@ -199,7 +199,7 @@ public class PreferencesClient {
     HttpResponse response = restClient.execute(HttpMethod.PUT, url, GSON.toJson(preferences), null,
                                                config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(application);
+      throw new NotFoundException(application.toEntityId());
     }
   }
 
@@ -219,7 +219,7 @@ public class PreferencesClient {
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(application);
+      throw new NotFoundException(application.toEntityId());
     }
   }
 
@@ -243,7 +243,7 @@ public class PreferencesClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ProgramNotFoundException(program);
+      throw new ProgramNotFoundException(program.toEntityId());
     }
     return ObjectResponse.fromJsonBody(response, new TypeToken<Map<String, String>>() { }).getResponseObject();
   }
@@ -265,7 +265,7 @@ public class PreferencesClient {
     HttpResponse response = restClient.execute(HttpMethod.PUT, url, GSON.toJson(preferences), null,
                                                config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ProgramNotFoundException(program);
+      throw new ProgramNotFoundException(program.toEntityId());
     }
   }
 
@@ -286,7 +286,7 @@ public class PreferencesClient {
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ProgramNotFoundException(program);
+      throw new ProgramNotFoundException(program.toEntityId());
     }
   }
 }

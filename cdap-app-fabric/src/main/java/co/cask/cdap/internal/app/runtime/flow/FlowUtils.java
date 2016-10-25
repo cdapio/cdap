@@ -47,6 +47,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
@@ -145,7 +146,7 @@ public final class FlowUtils {
    * @return A Multimap from flowletId to QueueName where the flowlet is a consumer of.
    */
   public static Multimap<String, QueueName> configureQueue(Program program, FlowSpecification flowSpec,
-                                                           StreamAdmin streamAdmin, QueueAdmin queueAdmin,
+                                                           final StreamAdmin streamAdmin, QueueAdmin queueAdmin,
                                                            TransactionExecutorFactory txExecutorFactory) {
     // Generate all queues specifications
     ApplicationId appId = new ApplicationId(program.getNamespaceId(), program.getApplicationId());
@@ -174,6 +175,7 @@ public final class FlowUtils {
     try {
       // Configure each stream consumer in the Flow. Also collects all queue configurers.
       final List<ConsumerGroupConfigurer> groupConfigurers = Lists.newArrayList();
+      final Map<StreamId, Map<Long, Integer>> streamConfigurers = Maps.newHashMap();
 
       for (Map.Entry<QueueName, Collection<ConsumerGroupConfig>> entry : queueConfigs.asMap().entrySet()) {
         LOG.info("Queue config for {} : {}", entry.getKey(), entry.getValue());
@@ -182,7 +184,7 @@ public final class FlowUtils {
           for (ConsumerGroupConfig config : entry.getValue()) {
             configs.put(config.getGroupId(), config.getGroupSize());
           }
-          streamAdmin.configureGroups(entry.getKey().toStreamId(), configs);
+          streamConfigurers.put(entry.getKey().toStreamId(), configs);
         } else {
           groupConfigurers.add(new ConsumerGroupConfigurer(queueAdmin.getQueueConfigurer(entry.getKey()),
                                                            entry.getValue()));
@@ -197,6 +199,9 @@ public final class FlowUtils {
             public void apply() throws Exception {
               for (ConsumerGroupConfigurer configurer : groupConfigurers) {
                 configurer.configure();
+              }
+              for (Map.Entry<StreamId, Map<Long, Integer>> entry : streamConfigurers.entrySet()) {
+                streamAdmin.configureGroups(entry.getKey(), entry.getValue());
               }
             }
           });
@@ -273,7 +278,7 @@ public final class FlowUtils {
           // Inspect the flowlet consumer
           FlowletDefinition flowletDefinition = entry.getValue();
           Class<?> flowletClass = program.getClassLoader().loadClass(flowletDefinition.getFlowletSpec().getClassName());
-          long groupId = generateConsumerGroupId(program.getId().toEntityId(), flowletId);
+          long groupId = generateConsumerGroupId(program.getId(), flowletId);
 
           addConsumerGroup(queueSpec, flowletClass, groupId,
                            flowletDefinition.getInstances(), schemaGenerator, groupConfigs);

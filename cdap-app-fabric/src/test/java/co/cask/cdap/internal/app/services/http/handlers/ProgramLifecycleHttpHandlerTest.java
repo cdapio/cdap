@@ -23,6 +23,7 @@ import co.cask.cdap.AppWithWorkflow;
 import co.cask.cdap.DummyAppWithTrackingTable;
 import co.cask.cdap.SleepingWorkflowApp;
 import co.cask.cdap.WordCountApp;
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
@@ -49,8 +50,12 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
+import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
@@ -120,6 +125,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   private static final String EMPTY_ARRAY_JSON = "[]";
   private static final String STOPPED = "STOPPED";
+  private static final String RUNNING = "RUNNING";
 
   @Category(XSlowTests.class)
   @Test
@@ -233,6 +239,124 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
+  @Test
+  public void testVersionedProgramStartStopStatus() throws Exception {
+    Id.Artifact wordCountArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcountapp", VERSION1);
+    addAppArtifact(wordCountArtifactId, WordCountApp.class);
+    AppRequest<? extends Config> wordCountRequest = new AppRequest<>(
+      new ArtifactSummary(wordCountArtifactId.getName(), wordCountArtifactId.getVersion().getVersion()));
+
+    ApplicationId wordCountApp1 = NamespaceId.DEFAULT.app("WordCountApp", VERSION1);
+    ProgramId wordcountFlow1 = wordCountApp1.program(ProgramType.FLOW, "WordCountFlow");
+    
+    Id.Application wordCountAppDefault = wordCountApp1.toId();
+    Id.Program wordcountFlowDefault = wordcountFlow1.toId();
+
+    ApplicationId wordCountApp2 = NamespaceId.DEFAULT.app("WordCountApp", VERSION2);
+    ProgramId wordcountFlow2 = wordCountApp2.program(ProgramType.FLOW, "WordCountFlow");
+
+    // Start wordCountApp1
+    Assert.assertEquals(200, deploy(wordCountApp1, wordCountRequest).getStatusLine().getStatusCode());
+
+    // Start wordCountApp1 with default version
+    Assert.assertEquals(200, deploy(wordCountAppDefault, wordCountRequest).getStatusLine().getStatusCode());
+
+    // flow is stopped initially
+    Assert.assertEquals(STOPPED, getProgramStatus(wordcountFlow1));
+    // start flow
+    startProgram(wordcountFlow1, 200);
+    waitState(wordcountFlow1, RUNNING);
+    // same flow cannot be run concurrently in the same app version
+    startProgram(wordcountFlow1, 409);
+
+    // start flow in a wrong namespace
+    startProgram(new NamespaceId(TEST_NAMESPACE1)
+                            .app(wordcountFlow1.getApplication(), wordcountFlow1.getVersion())
+                            .program(wordcountFlow1.getType(), wordcountFlow1.getProgram()), 404);
+
+    // Start the second version of the app
+    Assert.assertEquals(200, deploy(wordCountApp2, wordCountRequest).getStatusLine().getStatusCode());
+
+    // same flow cannot be run concurrently in multiple versions of the same app
+    startProgram(wordcountFlow2, 409);
+    startProgram(wordcountFlowDefault, 409);
+
+    stopProgram(wordcountFlow1, null, 200, null);
+    waitState(wordcountFlow1, "STOPPED");
+
+    // wordcountFlow2 can be run after wordcountFlow1 is stopped
+    startProgram(wordcountFlow2, 200);
+    stopProgram(wordcountFlow2, null, 200, null);
+
+    ProgramId wordFrequencyService1 = wordCountApp1.program(ProgramType.SERVICE, "WordFrequencyService");
+    ProgramId wordFrequencyService2 = wordCountApp2.program(ProgramType.SERVICE, "WordFrequencyService");
+    Id.Program wordFrequencyServiceDefault = wordFrequencyService1.toId();
+    // service is stopped initially
+    Assert.assertEquals(STOPPED, getProgramStatus(wordFrequencyService1));
+    // start service
+    startProgram(wordFrequencyService1, 200);
+    waitState(wordFrequencyService1, RUNNING);
+    // wordFrequencyService2 is stopped initially
+    Assert.assertEquals(STOPPED, getProgramStatus(wordFrequencyService2));
+    // start service in version2
+    startProgram(wordFrequencyService2, 200);
+    waitState(wordFrequencyService2, RUNNING);
+    // wordFrequencyServiceDefault is stopped initially
+    Assert.assertEquals(STOPPED, getProgramStatus(wordFrequencyServiceDefault));
+    // start service in default version
+    startProgram(wordFrequencyServiceDefault, 200);
+    waitState(wordFrequencyServiceDefault, RUNNING);
+    // same service cannot be run concurrently in the same app version
+    startProgram(wordFrequencyService1, 409);
+    stopProgram(wordFrequencyService1, null, 200, null);
+    Assert.assertEquals(STOPPED, getProgramStatus(wordFrequencyService1));
+    // wordFrequencyService1 can be run after wordFrequencyService1 is stopped
+    startProgram(wordFrequencyService1, 200);
+
+    stopProgram(wordFrequencyService1, null, 200, null);
+    stopProgram(wordFrequencyService2, null, 200, null);
+    stopProgram(wordFrequencyServiceDefault, null, 200, null);
+
+    Id.Artifact sleepWorkflowArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "sleepworkflowapp", VERSION1);
+    addAppArtifact(sleepWorkflowArtifactId, SleepingWorkflowApp.class);
+    AppRequest<? extends Config> sleepWorkflowRequest = new AppRequest<>(
+      new ArtifactSummary(sleepWorkflowArtifactId.getName(), sleepWorkflowArtifactId.getVersion().getVersion()));
+
+    ApplicationId sleepWorkflowApp1 = new ApplicationId(Id.Namespace.DEFAULT.getId(), "SleepingWorkflowApp", VERSION1);
+    ProgramId sleepWorkflow1 = sleepWorkflowApp1.program(ProgramType.WORKFLOW, "SleepWorkflow");
+
+    ApplicationId sleepWorkflowApp2 = new ApplicationId(Id.Namespace.DEFAULT.getId(), "SleepingWorkflowApp", VERSION2);
+    ProgramId sleepWorkflow2 = sleepWorkflowApp2.program(ProgramType.WORKFLOW, "SleepWorkflow");
+
+    // Start wordCountApp1
+    Assert.assertEquals(200, deploy(sleepWorkflowApp1, sleepWorkflowRequest).getStatusLine().getStatusCode());
+    // workflow is stopped initially
+    Assert.assertEquals(STOPPED, getProgramStatus(sleepWorkflow1));
+    // start workflow in a wrong version
+    startProgram(sleepWorkflow2, 404);
+    // Start wordCountApp2
+    Assert.assertEquals(200, deploy(sleepWorkflowApp2, sleepWorkflowRequest).getStatusLine().getStatusCode());
+
+    // start multiple workflow simultaneously
+    startProgram(sleepWorkflow1, 200);
+    startProgram(sleepWorkflow2, 200);
+    startProgram(sleepWorkflow1, 200);
+    startProgram(sleepWorkflow2, 200);
+    // stop multiple workflow simultaneously
+    // This will stop all concurrent runs of the Workflow version 1.0.0
+    stopProgram(sleepWorkflow1, null, 200, null);
+    // This will stop all concurrent runs of the Workflow version 2.0.0
+    stopProgram(sleepWorkflow2, null, 200, null);
+    Assert.assertEquals(STOPPED, getProgramStatus(sleepWorkflow1));
+    Assert.assertEquals(STOPPED, getProgramStatus(sleepWorkflow2));
+    // cleanup
+    deleteApp(wordCountApp1, 200);
+    deleteApp(wordCountApp2, 200);
+    deleteApp(wordCountAppDefault, 200);
+    deleteApp(sleepWorkflowApp1, 200);
+    deleteApp(sleepWorkflowApp2, 200);
+  }
+
   @Category(XSlowTests.class)
   @Test
   public void testProgramStartStopStatusErrors() throws Exception {
@@ -274,7 +398,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // start program twice
     startProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME));
-    waitState(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), "RUNNING");
+    waitState(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), RUNNING);
 
     startProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME),
                  409); // conflict
@@ -423,17 +547,17 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // Test missing app, programType, etc
     List<JsonObject> returnedBody = readResponse(doPost(statusUrl1, "[{'appId':'NotExist', 'programType':'Flow', " +
       "'programId':'WordCountFlow'}]"), LIST_OF_JSONOBJECT_TYPE);
-    Assert.assertEquals(new NotFoundException(Id.Application.from("testnamespace1", "NotExist")).getMessage(),
+    Assert.assertEquals(new NotFoundException(new ApplicationId("testnamespace1", "NotExist")).getMessage(),
                         returnedBody.get(0).get("error").getAsString());
     returnedBody = readResponse(
       doPost(statusUrl1, "[{'appId':'WordCountApp', 'programType':'flow', 'programId':'NotExist'}," +
         "{'appId':'WordCountApp', 'programType':'flow', 'programId':'WordCountFlow'}]"), LIST_OF_JSONOBJECT_TYPE);
-    Assert.assertEquals(new NotFoundException(Id.Program.from("testnamespace1", "WordCountApp", ProgramType.FLOW,
-                                                              "NotExist")).getMessage(),
+    Assert.assertEquals(new NotFoundException(new ProgramId("testnamespace1", "WordCountApp", ProgramType.FLOW,
+                                                            "NotExist")).getMessage(),
                         returnedBody.get(0).get("error").getAsString());
     Assert.assertEquals(
       new NotFoundException(
-        Id.Program.from("testnamespace1", "WordCountApp", ProgramType.FLOW, "NotExist")).getMessage(),
+        new ProgramId("testnamespace1", "WordCountApp", ProgramType.FLOW, "NotExist")).getMessage(),
       returnedBody.get(0).get("error").getAsString());
     // The programType should be consistent. Second object should have proper status
     Assert.assertEquals("Flow", returnedBody.get(1).get("programType").getAsString());
@@ -490,11 +614,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       "{'appId': 'WordCountApp', 'programType': 'Service', 'programId': 'WordFrequencyService'}," +
       "{'appId': 'WordCountApp', 'programType': 'Mapreduce', 'programId': 'VoidMapReduceJob'}]");
     returnedBody = readResponse(response, LIST_OF_JSONOBJECT_TYPE);
-    Assert.assertEquals(new NotFoundException(Id.Application.from("testnamespace2", "WordCountApp")).getMessage(),
+    Assert.assertEquals(new NotFoundException(new ApplicationId("testnamespace2", "WordCountApp")).getMessage(),
                         returnedBody.get(0).get("error").getAsString());
-    Assert.assertEquals(new NotFoundException(Id.Application.from("testnamespace2", "WordCountApp")).getMessage(),
+    Assert.assertEquals(new NotFoundException(new ApplicationId("testnamespace2", "WordCountApp")).getMessage(),
                         returnedBody.get(1).get("error").getAsString());
-    Assert.assertEquals(new NotFoundException(Id.Application.from("testnamespace2", "WordCountApp")).getMessage(),
+    Assert.assertEquals(new NotFoundException(new ApplicationId("testnamespace2", "WordCountApp")).getMessage(),
                         returnedBody.get(2).get("error").getAsString());
   }
 
@@ -795,17 +919,27 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testMultipleWorkflowSchedules() throws Exception {
     // Deploy the app
-    HttpResponse response = deploy(AppWithMultipleScheduledWorkflows.class, Constants.Gateway.API_VERSION_3_TOKEN,
-                                   TEST_NAMESPACE2);
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    NamespaceId testNamespace2 = new NamespaceId(TEST_NAMESPACE2);
+    Id.Namespace idTestNamespace2 = testNamespace2.toId();
+    Id.Artifact artifactId = Id.Artifact.from(idTestNamespace2, "appwithmultiplescheduledworkflows", VERSION1);
+    addAppArtifact(artifactId, AppWithMultipleScheduledWorkflows.class);
+    AppRequest<? extends Config> appRequest = new AppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
+    Id.Application appDefault = new Id.Application(idTestNamespace2, APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME);
+    ApplicationId app1 = testNamespace2.app(APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME, VERSION1);
+    ApplicationId app2 = testNamespace2.app(APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME, VERSION2);
+    Assert.assertEquals(200, deploy(appDefault, appRequest).getStatusLine().getStatusCode());
+    Assert.assertEquals(200, deploy(app1, appRequest).getStatusLine().getStatusCode());
+    Assert.assertEquals(200, deploy(app2, appRequest).getStatusLine().getStatusCode());
 
+    // Schedule spec from non-versioned API
     List<ScheduleSpecification> someSchedules = getSchedules(TEST_NAMESPACE2, APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME,
                                                              APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW);
     Assert.assertEquals(2, someSchedules.size());
     Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW, someSchedules.get(0).getProgram().getProgramName());
     Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW, someSchedules.get(1).getProgram().getProgramName());
 
-
+    // Schedule spec from non-versioned API
     List<ScheduleSpecification> anotherSchedules = getSchedules(TEST_NAMESPACE2, APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME,
                                                                 APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW);
     Assert.assertEquals(3, anotherSchedules.size());
@@ -815,6 +949,30 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                         anotherSchedules.get(1).getProgram().getProgramName());
     Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW,
                         anotherSchedules.get(2).getProgram().getProgramName());
+
+    deleteApp(appDefault, 200);
+
+    // Schedule spec of app1 from versioned API
+    List<ScheduleSpecification> someSchedules1 = getSchedules(TEST_NAMESPACE2, APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME,
+                                                              VERSION1, APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW);
+    Assert.assertEquals(2, someSchedules1.size());
+    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW, someSchedules1.get(0).getProgram().getProgramName());
+    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW, someSchedules1.get(1).getProgram().getProgramName());
+
+    deleteApp(app1, 200);
+
+    // Schedule spec of app2 from versioned API
+    List<ScheduleSpecification> anotherSchedules2 = getSchedules(TEST_NAMESPACE2, APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME,
+                                                                VERSION2, APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW);
+    Assert.assertEquals(3, anotherSchedules2.size());
+    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW,
+                        anotherSchedules2.get(0).getProgram().getProgramName());
+    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW,
+                        anotherSchedules2.get(1).getProgram().getProgramName());
+    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW,
+                        anotherSchedules2.get(2).getProgram().getProgramName());
+
+    deleteApp(app2, 200);
   }
 
   @Test

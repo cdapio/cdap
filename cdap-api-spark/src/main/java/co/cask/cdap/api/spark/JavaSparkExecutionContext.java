@@ -20,6 +20,7 @@ import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.TaskLocalizationContext;
 import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.batch.Split;
@@ -37,6 +38,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.spark.Partition;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.tephra.TransactionFailureException;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -477,4 +479,12 @@ public abstract class JavaSparkExecutionContext implements RuntimeContext, Trans
    */
   public abstract <K, V> void saveAsDataset(JavaPairRDD<K, V> rdd, String namespace, String datasetName,
                                             Map<String, String> arguments);
+
+  /**
+   * Transactions with a custom timeout are not supported in Spark.
+   *
+   * @throws TransactionFailureException always
+   */
+  public abstract void execute(int timeoutInSeconds, TxRunnable runnable) throws TransactionFailureException;
+
 }

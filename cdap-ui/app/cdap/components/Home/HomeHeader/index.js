@@ -15,14 +15,17 @@
  */
 
 import React, {Component, PropTypes} from 'react';
+import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import T from 'i18n-react';
+import debounce from 'lodash/debounce';
 
 require('./HomeHeader.less');
-var classNames = require('classnames');
 
 export default class HomeHeader extends Component {
   constructor(props) {
     super(props);
+
+    this.debouncedHandleSearch = debounce(this.handleSearch.bind(this), 500);
 
     this.state = {
       isFilterExpanded: false,
@@ -34,38 +37,85 @@ export default class HomeHeader extends Component {
     this.setState({isFilterExpanded: !this.state.isFilterExpanded});
   }
 
-  render() {
-    const placeholder = T.translate('features.Home.Header.search-placeholder');
-    let filterDropdown;
+  handleSortToggle() {
+    this.setState({isSortExpanded: !this.state.isSortExpanded});
+  }
 
-    if (this.state.isFilterExpanded) {
-      filterDropdown = (
-        <div className="dropdown"
-          onClick={e => e.stopPropagation()}
-        >
-          <ul className="list-unstyled">
-            {
-              this.props.filterOptions.map((option) => {
-                return (
-                  <li key={option.id}>
-                    <div className="checkbox">
-                      <label>
-                        <input
-                          type="checkbox"
-                          checked={this.props.activeFilter.includes(option.id)}
-                          onChange={this.props.onFilterClick.bind(this, option)}
-                        />
-                        {option.displayName}
-                      </label>
-                    </div>
-                  </li>
-                );
-              })
-            }
-          </ul>
-        </div>
-      );
-    }
+  handleSearch() {
+    this.props.onSearch(this.searchBox.value);
+  }
+
+  render() {
+
+    const placeholder = T.translate('features.Home.Header.search-placeholder');
+
+    const sortDropdown = (
+      <Dropdown
+        isOpen={this.state.isSortExpanded}
+        toggle={this.handleSortToggle.bind(this)}
+      >
+        <DropdownToggle tag='div'>
+          {this.state.isSortExpanded ?
+            <span>{T.translate('features.Home.Header.sort')}</span> :
+            <span>{this.props.activeSort.displayName}</span>
+          }
+          <span className="fa fa-caret-down pull-right"></span>
+        </DropdownToggle>
+        <DropdownMenu>
+          {
+            this.props.sortOptions.map((option, index) => {
+              return (
+                <DropdownItem
+                  key={index}
+                  onClick={this.props.onSortClick.bind(this, option)}
+                >
+                  {option.displayName}
+                  {
+                    this.props.activeSort.fullSort === option.fullSort ?
+                    <span className="fa fa-check pull-right"></span> :
+                    null
+                  }
+                </DropdownItem>
+              );
+            })
+          }
+        </DropdownMenu>
+      </Dropdown>
+    );
+
+    const filterDropdown = (
+      <Dropdown
+        isOpen={this.state.isFilterExpanded}
+        toggle={this.handleFilterToggle.bind(this)}
+      >
+        <DropdownToggle tag='div'>
+          <span>{T.translate('features.Home.Header.filters')}</span>
+          <span className="fa fa-filter pull-right"></span>
+        </DropdownToggle>
+        <DropdownMenu onClick={e => e.stopPropagation()}>
+          {
+            this.props.filterOptions.map((option) => {
+              return (
+                <DropdownItem
+                  key={option.id}
+                >
+                  <div className="checkbox">
+                    <label onClick={e => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={this.props.activeFilter.includes(option.id)}
+                        onChange={this.props.onFilterClick.bind(this, option)}
+                      />
+                      {option.displayName}
+                    </label>
+                  </div>
+                </DropdownItem>
+              );
+            })
+          }
+        </DropdownMenu>
+      </Dropdown>
+    );
 
     return (
       <div className="home-header">
@@ -78,38 +128,52 @@ export default class HomeHeader extends Component {
               type="text"
               className="form-control"
               placeholder={placeholder}
+              defaultValue={this.props.searchText}
+              onChange={this.debouncedHandleSearch}
+              ref={ref => this.searchBox = ref}
             />
             <span className="fa fa-search form-control-feedback"></span>
           </div>
         </div>
-
         <div className="sort">
-          <span>{T.translate('features.Home.Header.sort')}</span>
-          <span className="fa fa-caret-down pull-right"></span>
+          {sortDropdown}
         </div>
-
-        <div className={classNames('filter', { 'active': this.state.isFilterExpanded })}>
-          <div onClick={this.handleFilterToggle.bind(this)}>
-            <span>{T.translate('features.Home.Header.filters')}</span>
-            <span className="fa fa-filter pull-right"></span>
-          </div>
-
+        <div className="filter">
           {filterDropdown}
-
         </div>
-
         <div className="view-selector pull-right">
           <span className="fa fa-th active"></span>
           <span className="fa fa-list"></span>
         </div>
-
       </div>
     );
   }
 }
 
 HomeHeader.propTypes = {
-  filterOptions: PropTypes.array,
+  filterOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      displayName : PropTypes.string,
+      id: PropTypes.string
+    })
+  ),
   onFilterClick: PropTypes.func,
-  activeFilter: PropTypes.array
+  activeFilter: PropTypes.arrayOf(PropTypes.string),
+  sortOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      displayName : PropTypes.string,
+      sort: PropTypes.string,
+      order: PropTypes.string,
+      fullSort: PropTypes.string
+    })
+  ),
+  activeSort: PropTypes.shape({
+    displayName : PropTypes.string,
+    sort: PropTypes.string,
+    order: PropTypes.string,
+    fullSort: PropTypes.string
+  }),
+  onSortClick: PropTypes.func,
+  onSearch: PropTypes.func,
+  searchText: PropTypes.string
 };

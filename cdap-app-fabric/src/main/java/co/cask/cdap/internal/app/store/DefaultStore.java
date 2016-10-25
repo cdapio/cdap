@@ -158,7 +158,7 @@ public class DefaultStore implements Store {
     }
 
     if (!programExists(id, appMeta.getSpec())) {
-      throw new ProgramNotFoundException(id.toId());
+      throw new ProgramNotFoundException(id);
     }
 
     return new ProgramDescriptor(id, appMeta.getSpec());
@@ -303,7 +303,7 @@ public class DefaultStore implements Store {
       return;
     }
 
-    workflowDataset.write(workflowId.toId(), runRecord, programRunsList);
+    workflowDataset.write(workflowId, runRecord, programRunsList);
   }
 
   @Override
@@ -699,6 +699,33 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public Collection<ApplicationSpecification> getAllAppVersions(final ApplicationId id) {
+    return txExecute(transactional, new TxCallable<Collection<ApplicationSpecification>>() {
+      @Override
+      public Collection<ApplicationSpecification> call(DatasetContext context) throws Exception {
+        return Lists.transform(
+          getAppMetadataStore(context).getAllAppVersions(id.getNamespace(), id.getApplication()),
+          new Function<ApplicationMeta, ApplicationSpecification>() {
+            @Override
+            public ApplicationSpecification apply(ApplicationMeta input) {
+              return input.getSpec();
+            }
+          });
+      }
+    });
+  }
+
+  @Override
+  public Collection<ApplicationId> getAllAppVersionsAppIds(final ApplicationId id) {
+    return txExecute(transactional, new TxCallable<Collection<ApplicationId>>() {
+      @Override
+      public Collection<ApplicationId> call(DatasetContext context) throws Exception {
+        return getAppMetadataStore(context).getAllAppVersionsAppIds(id.getNamespace(), id.getApplication());
+      }
+    });
+  }
+
+  @Override
   public void addSchedule(final ProgramId program, final ScheduleSpecification scheduleSpecification) {
     txExecute(transactional, new TxRunnable() {
       @Override
@@ -821,6 +848,15 @@ public class DefaultStore implements Store {
   void clear() throws Exception {
     truncate(dsFramework.getAdmin(APP_META_INSTANCE_ID, null));
     truncate(dsFramework.getAdmin(WORKFLOW_STATS_INSTANCE_ID, null));
+  }
+
+  public void upgradeAppVersion() throws Exception {
+    txExecute(transactional, new TxRunnable() {
+      @Override
+      public void run(DatasetContext context) throws Exception {
+        getAppMetadataStore(context).upgradeVersionKeys();
+      }
+    });
   }
 
   private void truncate(DatasetAdmin admin) throws Exception {

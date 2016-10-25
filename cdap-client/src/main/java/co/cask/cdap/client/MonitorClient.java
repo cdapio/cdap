@@ -23,10 +23,10 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ServiceNotEnabledException;
 import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.SystemServiceLiveInfo;
 import co.cask.cdap.proto.SystemServiceMeta;
+import co.cask.cdap.proto.id.SystemServiceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -74,13 +74,12 @@ public class MonitorClient {
   public SystemServiceLiveInfo getSystemServiceLiveInfo(String serviceName)
     throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
 
-    Id.SystemService systemService = Id.SystemService.from(serviceName);
     URL url = config.resolveURLV3(String.format("system/services/%s/live-info", serviceName));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     String responseBody = new String(response.getResponseBody());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(systemService);
+      throw new NotFoundException(new SystemServiceId(serviceName));
     }
     return GSON.fromJson(responseBody, SystemServiceLiveInfo.class);
   }
@@ -112,14 +111,13 @@ public class MonitorClient {
   public String getSystemServiceStatus(String serviceName)
     throws IOException, NotFoundException, BadRequestException, UnauthenticatedException, UnauthorizedException {
 
-    Id.SystemService systemService = Id.SystemService.from(serviceName);
     URL url = config.resolveURL(String.format("system/services/%s/status", serviceName));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND,
                                                HttpURLConnection.HTTP_BAD_REQUEST);
     String responseBody = new String(response.getResponseBody());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(systemService);
+      throw new NotFoundException(new SystemServiceId(serviceName));
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(responseBody);
     }
@@ -167,14 +165,13 @@ public class MonitorClient {
   public void setSystemServiceInstances(String serviceName, int instances)
     throws IOException, NotFoundException, BadRequestException, UnauthenticatedException, UnauthorizedException {
 
-    Id.SystemService systemService = Id.SystemService.from(serviceName);
     URL url = config.resolveURL(String.format("system/services/%s/instances", serviceName));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND,
                                                HttpURLConnection.HTTP_BAD_REQUEST);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(systemService);
+      throw new NotFoundException(new SystemServiceId(serviceName));
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(new String(response.getResponseBody()));
     }
@@ -193,13 +190,12 @@ public class MonitorClient {
   public int getSystemServiceInstances(String serviceName)
     throws IOException, NotFoundException, ServiceNotEnabledException, UnauthenticatedException, UnauthorizedException {
 
-    Id.SystemService systemService = Id.SystemService.from(serviceName);
     URL url = config.resolveURL(String.format("system/services/%s/instances", serviceName));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND,
                                                HttpURLConnection.HTTP_FORBIDDEN);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(systemService);
+      throw new NotFoundException(new SystemServiceId(serviceName));
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN) {
       throw new ServiceNotEnabledException(serviceName);
     }

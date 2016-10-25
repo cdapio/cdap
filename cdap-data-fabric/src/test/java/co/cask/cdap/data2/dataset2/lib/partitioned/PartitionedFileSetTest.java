@@ -56,6 +56,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -153,6 +154,8 @@ public class PartitionedFileSetTest {
   public void testMetadataForNonexistentPartition() throws Exception {
     PartitionedFileSet pfs = dsFrameworkUtil.getInstance(pfsInstance);
     PartitionKey key = generateUniqueKey();
+    TransactionContext txContext = new TransactionContext(txClient, (TransactionAware) pfs);
+    txContext.start();
     try {
       // didn't add any partitions to the dataset, so any partition key should throw a PartitionNotFoundException
       pfs.addMetadata(key, "metaKey", "metaValue");
@@ -160,6 +163,8 @@ public class PartitionedFileSetTest {
     } catch (PartitionNotFoundException e) {
       Assert.assertEquals(pfsInstance.getEntityName(), e.getPartitionedFileSetName());
       Assert.assertEquals(key, e.getPartitionKey());
+    } finally {
+      txContext.abort();
     }
   }
 
@@ -699,6 +704,20 @@ public class PartitionedFileSetTest {
   }
 
   @Test
+  public void testInvalidPartitionFilter() throws Exception {
+    final PartitionedFileSet pfs = dsFrameworkUtil.getInstance(pfsInstance);
+
+    dsFrameworkUtil.newTransactionExecutor((TransactionAware) pfs).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // this should succeed without error (but log a warning)
+        Assert.assertEquals(Collections.EMPTY_SET,
+                            pfs.getPartitions(PartitionFilter.builder().addValueCondition("me-not-there", 42).build()));
+      }
+    });
+  }
+
+  @Test
   public void testInvalidPartitionKey() throws Exception {
     final PartitionedFileSet pfs = dsFrameworkUtil.getInstance(pfsInstance);
 
@@ -706,7 +725,7 @@ public class PartitionedFileSetTest {
       @Override
       public void apply() throws Exception {
         try {
-          PartitionOutput output = pfs.getPartitionOutput(
+          pfs.getPartitionOutput(
             PartitionKey.builder().addField("i", 1).addField("l", 2L).build());
           Assert.fail("should have thrown exception due to missing field");
         } catch (IllegalArgumentException e) {

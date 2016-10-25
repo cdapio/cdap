@@ -18,6 +18,10 @@ import React, {PropTypes, Component} from 'react';
 import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import {MyMarketApi} from '../../api/market';
 import T from 'i18n-react';
+import AbstractWizard from 'components/AbstractWizard';
+import classnames from 'classnames';
+import shortid from 'shortid';
+import moment from 'moment';
 
 require('./MarketEntityModal.less');
 
@@ -26,7 +30,13 @@ export default class MarketEntityModal extends Component {
     super(props);
 
     this.state = {
-      entityDetail: {}
+      entityDetail: {},
+      wizard: {
+        actionIndex: null,
+        actionType: null,
+        action: null
+      },
+      completedActions: []
     };
   }
 
@@ -40,30 +50,97 @@ export default class MarketEntityModal extends Component {
       console.log('Error', err);
     });
   }
+  closeWizard(returnResult) {
+    if (returnResult) {
+      this.setState({
+        completedActions: this.state.completedActions.concat([this.state.wizard.actionIndex]),
+        wizard: {
+          actionIndex: null,
+          actionType: null,
+          action: null
+        }
+      });
+      return;
+    }
+    this.setState({
+      wizard: {
+        actionIndex: null,
+        actionType: null
+      }
+    });
+  }
+  openWizard(actionIndex, actionType, action) {
+    this.setState({
+      wizard: {
+        actionIndex,
+        actionType,
+        action
+      }
+    });
+  }
+
+  getVersion() {
+    const versionElem = (
+      <span>
+        <strong>
+          {this.state.entityDetail.cdapVersion}
+        </strong>
+      </span>
+    );
+
+    return this.state.entityDetail.cdapVersion ? versionElem : null;
+  }
+
+  getIcon(actionType) {
+    const iconMap = {
+      create_stream: 'icon-streams',
+      create_app: 'icon-app',
+      create_pipeline: 'icon-pipelines',
+      create_pipeline_draft: 'icon-pipelines',
+      create_artifact: 'icon-artifacts',
+      informational: 'fa-info',
+      load_datapack: 'fa-upload',
+
+    };
+
+    return iconMap[actionType];
+  }
 
   render() {
     let actions;
-
     if (this.state.entityDetail.actions) {
       actions = (
-        <div className="market-entity-actions text-center">
+        <div className="market-entity-actions">
           {
             this.state.entityDetail.actions.map((action, index) => {
+              let isCompletedAction = this.state.completedActions.indexOf(index) !== -1 ;
+              let actionName = T.translate('features.Market.action-types.' + action.type + '.name');
+              let actionIcon = this.getIcon(action.type);
               return (
                 <div
-                  className="action"
-                  key={index}
+                  className="action-container text-center"
+                  key={shortid.generate()}
+                  onClick={this.openWizard.bind(this, index, action.type, action)}
                 >
-                  <div className="action-image">
+                  <div
+                    className="action"
+                    key={index}
+                  >
+                    <div className="step text-center">
+                      <span className={classnames("badge", {'completed' : isCompletedAction})}>{index + 1}</span>
+                    </div>
+                    <div className="action-icon">
+                      <div className={classnames("fa", actionIcon)}></div>
+                    </div>
+                    <div className="action-description">
+                      {action.label}
+                    </div>
+                    <button
+                      className={classnames("btn btn-link", {'btn-completed': isCompletedAction})}
+                    >
+                      { actionName }
+                    </button>
                   </div>
-
-                  <div className="action-description text-center">
-                    <span>{index + 1}. </span>
-                    {action.type}
-                  </div>
-                  <button className="btn btn-text">
-                    Add
-                  </button>
                 </div>
               );
             })
@@ -79,13 +156,20 @@ export default class MarketEntityModal extends Component {
         className="market-entity-modal"
         size="md"
       >
-        <ModalHeader>
+        <ModalHeader toggle={this.props.onCloseHandler.bind(this)}>
           <span className="pull-left">
             { this.props.entity.label }
           </span>
           <span className="version pull-right">
-            <span>{T.translate('features.MarketEntityModal.version')}</span>
-            { this.props.entity.version }
+            <span className="version-text">
+              {T.translate('features.MarketEntityModal.version')}
+            </span>
+            <span className="version-number">{ this.props.entity.version }</span>
+            <span
+              className="fa fa-times"
+              onClick={this.props.onCloseHandler.bind(this)}
+            >
+            </span>
           </span>
         </ModalHeader>
         <ModalBody>
@@ -93,15 +177,43 @@ export default class MarketEntityModal extends Component {
             <div className="entity-modal-image">
               <img src={MyMarketApi.getIcon(this.props.entity)} />
             </div>
-            <div className="entity-description">
-              {this.state.entityDetail.description}
+            <div className="entity-content">
+              <div className="entity-description">
+                {this.state.entityDetail.description}
+              </div>
+              <div className="entity-metadata">
+                <div>Author</div>
+                <span>
+                  <strong>
+                    {this.state.entityDetail.author}
+                  </strong>
+                </span>
+                <div>Company</div>
+                <span>
+                  <strong>
+                    {this.state.entityDetail.org}
+                  </strong>
+                </span>
+                <div>Created</div>
+                <span>
+                  <strong>
+                    {(moment(this.state.entityDetail.created * 1000)).format('MM-DD-YYYY HH:mm A')}
+                  </strong>
+                </span>
+                {this.state.entityDetail.cdapVersion ? <div>CDAP Version</div> : null}
+                {this.getVersion()}
+              </div>
             </div>
           </div>
 
-          <hr />
-
           {actions}
 
+          <AbstractWizard
+            isOpen={this.state.wizard.actionIndex !== null && this.state.wizard.actionType !== null}
+            onClose={this.closeWizard.bind(this)}
+            wizardType={this.state.wizard.actionType}
+            input={{action: this.state.wizard.action, package: this.props.entity}}
+          />
         </ModalBody>
       </Modal>
     );

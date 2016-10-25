@@ -16,7 +16,6 @@
 
 package co.cask.cdap.explore.service;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
@@ -40,6 +39,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.util.VersionInfo;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.tez.dag.api.TezConfiguration;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.internal.utils.Dependencies;
 import org.objectweb.asm.ClassReader;
@@ -56,7 +56,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -65,7 +64,6 @@ import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.security.CodeSource;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -129,6 +127,7 @@ public class ExploreServiceUtils {
   private static final Pattern HIVE_SITE_FILE_PATTERN = Pattern.compile("^.*/hive-site\\.xml$");
   private static final Pattern YARN_SITE_FILE_PATTERN = Pattern.compile("^.*/yarn-site\\.xml$");
   private static final Pattern MAPRED_SITE_FILE_PATTERN = Pattern.compile("^.*/mapred-site\\.xml$");
+  private static final Pattern TEZ_SITE_FILE_PATTERN = Pattern.compile("^.*/tez-site\\.xml$");
 
   public static Class<? extends ExploreService> getHiveService() {
     HiveSupport hiveVersion = checkHiveSupport(null);
@@ -426,38 +425,28 @@ public class ExploreServiceUtils {
    * All other conf files are returned without any update.
    * @param confFile conf file to update
    * @param tempDir temp dir to create files if necessary
+   * @param cdapJars set of cdap jar files to be added in the beginning of the classpath
    * @return the new conf file to use in place of confFile
    */
-  public static File updateConfFileForExplore(File confFile, File tempDir) {
+  public static File updateConfFileForExplore(File confFile, File tempDir, Set<File> cdapJars) {
     if (HIVE_SITE_FILE_PATTERN.matcher(confFile.getAbsolutePath()).matches()) {
       return updateHiveConfFile(confFile, tempDir);
     } else if (YARN_SITE_FILE_PATTERN.matcher(confFile.getAbsolutePath()).matches()) {
-      return updateYarnConfFile(confFile, tempDir);
+      return updateYarnConfFile(confFile, tempDir, cdapJars);
     } else if (MAPRED_SITE_FILE_PATTERN.matcher(confFile.getAbsolutePath()).matches()) {
-      return updateMapredConfFile(confFile, tempDir);
+      return updateMapredConfFile(confFile, tempDir, cdapJars);
+    } else if (TEZ_SITE_FILE_PATTERN.matcher(confFile.getAbsolutePath()).matches()) {
+      return updateTezConfFile(confFile, tempDir, cdapJars);
     } else {
       return confFile;
     }
-  }
-
-  @Nullable
-  private static String getCdapCommonJarName() {
-    try {
-      CodeSource codeSource = CConfiguration.class.getProtectionDomain().getCodeSource();
-      if (codeSource != null) {
-        return Paths.get(codeSource.getLocation().toURI().getPath()).getFileName().toString();
-      }
-    } catch (SecurityException | URISyntaxException e) {
-      LOG.warn("Failed to get jar name for cdap-common.", e);
-    }
-    return null;
   }
 
   /**
    * Change yarn-site.xml file, and return a temp copy of it to which are added
    * necessary options.
    */
-  private static File updateYarnConfFile(File confFile, File tempDir) {
+  private static File updateYarnConfFile(File confFile, File tempDir, Set<File> cdapJars) {
     Configuration conf = new Configuration(false);
     try {
       conf.addResource(confFile.toURI().toURL());
@@ -469,13 +458,15 @@ public class ExploreServiceUtils {
     String yarnAppClassPath = conf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
                                        Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
 
-    // We first add cdap-common.jar to the classpath so that FileContextLocationFactory from cdap-common gets
-    // picked instead of FileContextLocationFactory from Apache Twill. We then add the pwd/* to the classpath.
-    // so user's jar will take precedence. Without pwd/* in the beginning of classpath, job.jar will be at
+    // We add cdap jars to the classpath in the beginning. We then add the pwd/* to the classpath.
+    // So user's jar will take precedence. Without pwd/* in the beginning of classpath, job.jar will be at
     // the beginning of the classpath. Since job.jar has old guava version classes, we want to add pwd/* before.
-    String cdapCommonJarName = getCdapCommonJarName();
-    String cdapCommonJarClassPath = cdapCommonJarName == null ? "" : "$PWD/" + cdapCommonJarName + ",";
-    yarnAppClassPath = cdapCommonJarClassPath + "$PWD/*," + yarnAppClassPath;
+    String cdapJarsClassPath = "";
+    for (File cdapJar : cdapJars) {
+      cdapJarsClassPath = cdapJarsClassPath + "$PWD/" + cdapJar.getName() + ",";
+    }
+
+    yarnAppClassPath = cdapJarsClassPath + "$PWD/*," + yarnAppClassPath;
 
     LOG.debug("Setting yarn.application.classpath to {}", yarnAppClassPath);
     conf.set(YarnConfiguration.YARN_APPLICATION_CLASSPATH, yarnAppClassPath);
@@ -495,7 +486,7 @@ public class ExploreServiceUtils {
    * Change mapred-site.xml file, and return a temp copy of it to which are added
    * necessary options.
    */
-  private static File updateMapredConfFile(File confFile, File tempDir) {
+  private static File updateMapredConfFile(File confFile, File tempDir, Set<File> cdapJars) {
     Configuration conf = new Configuration(false);
     try {
       conf.addResource(confFile.toURI().toURL());
@@ -507,14 +498,14 @@ public class ExploreServiceUtils {
     String mrAppClassPath = conf.get(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH,
                                      MRJobConfig.DEFAULT_MAPREDUCE_APPLICATION_CLASSPATH);
 
-    // TODO Remove the logic of adding cdap-common.jar after CDAP-4923 is fixed.
-    // We first add cdap-common.jar to the classpath so that FileContextLocationFactory from cdap-common gets
-    // picked instead of FileContextLocationFactory from Apache Twill. We then add the pwd/* to the classpath.
+    // We add cdap jars to the classpath in the beginning. We then add the pwd/* to the classpath.
     // so user's jar will take precedence. Without pwd/* in the beginning of classpath, job.jar will be at
     // the beginning of the classpath. Since job.jar has old guava version classes, we want to add pwd/* before.
-    String cdapCommonJarName = getCdapCommonJarName();
-    String cdapCommonJarClassPath = cdapCommonJarName == null ? "" : "$PWD/" + cdapCommonJarName + ",";
-    mrAppClassPath = cdapCommonJarClassPath + "$PWD/*," + mrAppClassPath;
+    String cdapJarsClassPath = "";
+    for (File cdapJar : cdapJars) {
+      cdapJarsClassPath = cdapJarsClassPath + "$PWD/" + cdapJar.getName() + ",";
+    }
+    mrAppClassPath = cdapJarsClassPath + "$PWD/*," + mrAppClassPath;
 
     LOG.debug("Setting mapreduce.application.classpath to {}", mrAppClassPath);
     conf.set(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH, mrAppClassPath);
@@ -528,6 +519,47 @@ public class ExploreServiceUtils {
     }
 
     return newMapredConfFile;
+  }
+
+  /**
+   * Change tez-site.xml file, and return a temp copy of it to which are added
+   * necessary options.
+   */
+  private static File updateTezConfFile(File confFile, File tempDir, Set<File> cdapJars) {
+    Configuration conf = new Configuration(false);
+    try {
+      conf.addResource(confFile.toURI().toURL());
+    } catch (MalformedURLException e) {
+      LOG.error("File {} is malformed.", confFile, e);
+      throw Throwables.propagate(e);
+    }
+
+    // We add cdap jars to the classpath in the beginning.
+    String tezClassPath = conf.get(TezConfiguration.TEZ_CLUSTER_ADDITIONAL_CLASSPATH_PREFIX);
+
+    String cdapJarsClassPath = "";
+    for (File cdapJar : cdapJars) {
+      // Note that Tez expects the classpath seperator as ":"
+      cdapJarsClassPath = cdapJarsClassPath + "$PWD/" + cdapJar.getName() + File.pathSeparator;
+    }
+    String additionalClassPath = cdapJarsClassPath;
+    if (tezClassPath != null && !tezClassPath.trim().isEmpty()) {
+      additionalClassPath = cdapJarsClassPath + tezClassPath;
+    }
+
+    LOG.debug(String.format("Setting %s to %s",
+                            TezConfiguration.TEZ_CLUSTER_ADDITIONAL_CLASSPATH_PREFIX, additionalClassPath));
+
+    conf.set(TezConfiguration.TEZ_CLUSTER_ADDITIONAL_CLASSPATH_PREFIX, additionalClassPath);
+    File newTezConfFile = new File(tempDir, "tez-site.xml");
+    try (FileOutputStream os = new FileOutputStream(newTezConfFile)) {
+      conf.writeXml(os);
+    } catch (IOException e) {
+      LOG.error("Problem creating and writing to temporary tez-site.xml conf file at {}", newTezConfFile, e);
+      throw Throwables.propagate(e);
+    }
+
+    return newTezConfFile;
   }
 
   /**

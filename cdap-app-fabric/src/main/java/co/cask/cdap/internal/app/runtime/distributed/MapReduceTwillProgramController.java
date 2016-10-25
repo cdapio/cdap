@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ProgramId;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.slf4j.Logger;
@@ -28,7 +28,7 @@ final class MapReduceTwillProgramController extends AbstractTwillProgramControll
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceTwillProgramController.class);
 
-  MapReduceTwillProgramController(Id.Program programId, TwillController controller, RunId runId) {
+  MapReduceTwillProgramController(ProgramId programId, TwillController controller, RunId runId) {
     super(programId, controller, runId);
   }
 

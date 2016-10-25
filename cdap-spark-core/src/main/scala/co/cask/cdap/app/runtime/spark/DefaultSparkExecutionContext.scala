@@ -97,11 +97,11 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
 
       sparkTransaction.fold({
         LOG.debug("Spark program={}, runId={}, jobId={} starts without transaction",
-                  runtimeContext.getProgram.getId.toEntityId, getRunId, jobId)
+                  runtimeContext.getProgram.getId, getRunId, jobId)
         sparkTxService.jobStarted(jobId, stageIds)
       })(info => {
         LOG.debug("Spark program={}, runId={}, jobId={} starts with auto-commit={} on transaction {}",
-                  runtimeContext.getProgram.getId.toEntityId, getRunId, jobId,
+                  runtimeContext.getProgram.getId, getRunId, jobId,
                   info.commitOnJobEnded().toString, info.getTransaction)
         sparkTxService.jobStarted(jobId, stageIds, info)
         info.onJobStarted()
@@ -129,7 +129,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
 
   override def getRunId: RunId = runtimeContext.getRunId
 
-  override def getNamespace: String = runtimeContext.getProgram.getId.getNamespaceId
+  override def getNamespace: String = runtimeContext.getProgram.getNamespaceId
 
   override def getAdmin: Admin = runtimeContext.getAdmin
 
@@ -153,6 +153,10 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
 
   override def execute(runnable: TxRunnable): Unit = {
     transactional.execute(runnable)
+  }
+
+  override def execute(timeout: Int, runnable: TxRunnable): Unit = {
+    transactional.execute(timeout, runnable)
   }
 
   override def fromDataset[K: ClassTag, V: ClassTag](sc: SparkContext,
@@ -315,7 +319,7 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
     val oldStreamId = streamId.toId
 
     // Register for stream usage for the Spark program
-    val oldProgramId = runtimeContext.getProgram.getId.toEntityId
+    val oldProgramId = runtimeContext.getProgram.getId
     val owners = List(oldProgramId)
     try {
       runtimeContext.getStreamAdmin.register(owners, oldStreamId.toEntityId)

@@ -137,6 +137,12 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
             });
           }
         });
+      } else {
+        Channel outboundChannel = (Channel) inboundChannel.getAttachment();
+        if (outboundChannel != null) {
+          // Set outbound channel to be readable in case previous request has set it as non-readable
+          outboundChannel.setReadable(true);
+        }
       }
 
       // Send the message.
@@ -159,6 +165,28 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
     }
 
     return request;
+  }
+
+  @Override
+  public void channelInterestChanged(ChannelHandlerContext ctx, final ChannelStateEvent e) throws Exception {
+    final Channel outboundChannel = (Channel) e.getChannel().getAttachment();
+    if (outboundChannel != null) {
+      outboundChannel.getPipeline().execute(new Runnable() {
+        @Override
+        public void run() {
+          // If inboundChannel is not saturated anymore, continue accepting
+          // the outbound traffic from the outboundChannel.
+          if (e.getChannel().isWritable()) {
+            LOG.trace("Setting outboundChannel readable.");
+            outboundChannel.setReadable(true);
+          } else {
+            // If inboundChannel is saturated, do not read outboundChannel
+            LOG.trace("Setting outboundChannel non-readable.");
+            outboundChannel.setReadable(false);
+          }
+        }
+      });
+    }
   }
 
   @Override

@@ -16,25 +16,21 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 
 /**
  * Thrown when a namespace already exists.
  */
 public class NamespaceAlreadyExistsException extends AlreadyExistsException {
 
-  private final Id.Namespace id;
+  private final NamespaceId id;
 
-  public NamespaceAlreadyExistsException(Id.Namespace id) {
+  public NamespaceAlreadyExistsException(NamespaceId id) {
     super(id);
     this.id = id;
   }
-  public NamespaceAlreadyExistsException(Id.Namespace id, String message) {
-    super(id, message);
-    this.id = id;
-  }
 
-  public Id.Namespace getId() {
+  public NamespaceId getId() {
     return id;
   }
 }

@@ -34,6 +34,7 @@ angular.module(PKG.name + '.commons')
         actionOrigin = settings.actionOrigin,
         actionTarget = settings.actionTarget;
 
+    let localX,localY;
 
     var SHOW_METRICS_THRESHOLD = 0.8;
     var METRICS_THRESHOLD = 999999999999;
@@ -439,7 +440,6 @@ angular.module(PKG.name + '.commons')
         if (nodesTimeout) {
           $timeout.cancel(nodesTimeout);
         }
-
         nodesTimeout = $timeout(function () {
           var nodes = document.querySelectorAll('.box');
           addEndpoints();
@@ -447,7 +447,15 @@ angular.module(PKG.name + '.commons')
           if (!vm.isDisabled) {
             vm.instance.draggable(nodes, {
               start: function (drag) {
-
+                let currentCoOrdinates = {
+                  x: drag.e.clientX,
+                  y: drag.e.clientY,
+                };
+                if (currentCoOrdinates.x === localX && currentCoOrdinates.y === localY) {
+                  return;
+                }
+                localX = currentCoOrdinates.x;
+                localY = currentCoOrdinates.y;
                 if (selected.indexOf(drag.el.id) === -1) {
                   vm.clearNodeSelection();
                 }

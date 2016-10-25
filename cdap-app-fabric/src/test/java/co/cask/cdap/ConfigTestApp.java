@@ -27,6 +27,9 @@ import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceRequest;
+import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.worker.AbstractWorker;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -35,6 +38,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 
 /**
  *
@@ -45,23 +50,33 @@ public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass
   public static final String NAME = ConfigTestApp.class.getSimpleName();
   public static final String FLOW_NAME = "simpleFlow";
   public static final String FLOWLET_NAME = "simpleFlowlet";
+  public static final String SERVICE_NAME = "simpleService";
+  public static final String DEFAULT_RESPONSE = "defaultResponse";
   public static final String DEFAULT_STREAM = "defaultStream";
   public static final String DEFAULT_TABLE = "defaultTable";
 
   public static class ConfigClass extends Config {
     private String streamName;
     private String tableName;
+    private String serviceResponse;
 
     public ConfigClass() {
       this.streamName = DEFAULT_STREAM;
       this.tableName = DEFAULT_TABLE;
+      this.serviceResponse = DEFAULT_RESPONSE;
+    }
+
+    public ConfigClass(String streamName, String tableName, String serviceResponse) {
+      Preconditions.checkArgument(!Strings.isNullOrEmpty(streamName));
+      Preconditions.checkArgument(!Strings.isNullOrEmpty(tableName));
+      Preconditions.checkArgument(!Strings.isNullOrEmpty(serviceResponse));
+      this.streamName = streamName;
+      this.tableName = tableName;
+      this.serviceResponse = serviceResponse;
     }
 
     public ConfigClass(String streamName, String tableName) {
-      Preconditions.checkArgument(!Strings.isNullOrEmpty(streamName));
-      Preconditions.checkArgument(!Strings.isNullOrEmpty(tableName));
-      this.streamName = streamName;
-      this.tableName = tableName;
+      this(streamName, tableName, DEFAULT_RESPONSE);
     }
 
     public String getStreamName() {
@@ -71,6 +86,10 @@ public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass
     public String getTableName() {
       return tableName;
     }
+
+    public String getServiceResponse() {
+      return serviceResponse;
+    }
   }
 
   @Override
@@ -79,6 +98,22 @@ public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass
     ConfigClass configObj = getConfig();
     addWorker(new DefaultWorker(configObj.streamName));
     addFlow(new SimpleFlow(configObj.streamName, configObj.tableName));
+    addService(SERVICE_NAME, new SimpleHandler(configObj.getServiceResponse()));
+  }
+
+  public static class SimpleHandler extends AbstractHttpServiceHandler {
+    @Property
+    private final String response;
+
+    public SimpleHandler(String response) {
+      this.response = response;
+    }
+
+    @GET
+    @Path("ping")
+    public void handle(HttpServiceRequest request, HttpServiceResponder responder) throws IOException {
+      responder.sendString(response);
+    }
   }
 
   private static class SimpleFlow extends AbstractFlow {

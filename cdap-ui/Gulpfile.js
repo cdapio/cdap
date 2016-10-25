@@ -233,6 +233,9 @@ gulp.task('js:lib', function() {
       './bower_components/angular-inview/angular-inview.js',
       './bower_components/d3-tip/index.js',
       './bower_components/esprima/esprima.js',
+      './node_modules/react/dist/react-with-addons.min.js',
+      './node_modules/react-dom/dist/react-dom.min.js',
+      './node_modules/ngreact/ngReact.min.js',
 
       './app/lib/avsc-bundle.js'
     ].concat([
@@ -337,7 +340,7 @@ gulp.task('tpl', function() {
 });
 
 gulp.task('js', ['js:lib', 'js:aceworkers', 'js:app', 'polyfill']);
-gulp.task('watch:js', ['js:lib', 'js:aceworkers', 'watch:js:app:hydrator', 'watch:js:app:tracker', 'watch:js:app:babel', 'polyfill']);
+gulp.task('watch:js', ['watch:js:app', 'watch:js:app:babel', 'polyfill']);
 
 gulp.task('css', ['css:lib', 'css:app']);
 gulp.task('style', ['css']);
@@ -349,6 +352,7 @@ gulp.task('lint', function() {
     '!./app/cdap/**/*.js',
     '!./app/login/**/*.js',
     '!./app/lib/**/*.js',
+    '!./app/common/**/*.js',
     './server/*.js'
   ])
     .pipe(plug.plumber())
@@ -402,11 +406,10 @@ gulp.task('rev:replace', ['html:main', 'rev:manifest'], function() {
 gulp.task('watch:build', ['watch:js', 'css', 'img', 'tpl', 'html']);
 gulp.task('distribute', ['clean', 'build', 'rev:replace']);
 gulp.task('default', ['lint', 'build']);
-
 /*
   watch
  */
-gulp.task('watch', ['jshint', 'watch:build'], function() {
+gulp.task('watch', ['jshint', 'build'], function() {
   plug.livereload.listen();
 
   var jsAppSource = [

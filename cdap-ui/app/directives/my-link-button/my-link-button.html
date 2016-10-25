@@ -20,23 +20,23 @@
   </button>
   <ul class="pull-right" uib-dropdown-menu>
     <li ng-repeat="dataset in MyLinkButtonCtrl.entities">
-      <a ng-if="dataset.entityType === 'datasets'"
+      <!-- <a ng-if="dataset.entityType === 'datasets'"
           ui-sref="datasets.detail.overview.status({datasetId: dataset.datasetId})">
           <span class="fa icon-fist"></span>
           <span>{{dataset.datasetId}}</span>
-      </a>
+      </a> -->
       <a ng-if="dataset.entityType === 'datasets'"
-          ui-sref="tracker.detail.entity.metadata({entityType: 'datasets', entityId: dataset.datasetId})">
+          href="{{dataset.url}}">
           <span class="fa icon-tracker"></span>
           <span>{{dataset.datasetId}}</span>
       </a>
-      <a ng-if="dataset.entityType === 'streams'"
+<!--       <a ng-if="dataset.entityType === 'streams'"
           ui-sref="streams.detail.overview.status({streamId: dataset.streamId})">
           <span class="fa icon-fist"></span>
           <span>{{dataset.streamId}}</span>
-      </a>
+      </a> -->
       <a ng-if="dataset.entityType === 'streams'"
-          ui-sref="tracker.detail.entity.metadata({entityType: 'streams', entityId: dataset.streamId})">
+          href="{{dataset.url}}">
           <span class="fa icon-tracker"></span>
           <span>{{dataset.streamId}}</span>
       </a>

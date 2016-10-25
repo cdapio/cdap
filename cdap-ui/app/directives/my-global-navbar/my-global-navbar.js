@@ -14,99 +14,85 @@
  * the License.
  */
 
-function NavbarController ($scope, $state, myNamespace, EventPipe, MYAUTH_EVENT, myAuth, MY_CONFIG, $cookies, myHelpers) {
-  'ngInject';
-
-  let vm = this;
-
-  vm.$cookies = $cookies;
-
-  function findActiveProduct() {
-    var baseTag, baseUrl;
-    if ($state.is('userprofile')) {
-      baseTag = document.getElementsByTagName('base');
-      baseUrl = baseTag[0].getAttribute('href');
-      if (baseUrl.indexOf('hydrator') !== -1) {
-        return 'hydrator';
-      } else if (baseUrl.indexOf('tracker') !== -1) {
-        return 'tracker';
-      } else {
-        return 'cdap';
-      }
-    }
-    if ($state.includes('hydrator.**')) {
-      return 'hydrator';
-    } else if ($state.includes('tracker.**') || $state.is('tracker-enable')) {
-      return 'tracker';
-    } else {
-      return 'cdap';
-    }
-  }
-  vm.showSidebar = false;
-  vm.toggleSidebar = () => {
-    vm.showSidebar = !vm.showSidebar;
-  };
-  vm.securityEnabled = MY_CONFIG.securityEnabled;
-  vm.environment = MY_CONFIG.isEnterprise ? 'Distributed' : 'Standalone';
-
-  $scope.$on('$stateChangeSuccess', function(event, toState) {
-    vm.highlightTab = toState.data && toState.data.highlightTab;
-    vm.activeProduct = findActiveProduct();
-    vm.showSidebar = false;
-  });
-
-  // NAMESPACE
-  vm.namespaces = [];
-  function updateNamespaceList() {
-    myNamespace.getList(true)
-      .then(function(list) {
-        vm.namespaces = list;
-      });
-  }
-  // Listening for event from namespace create or namespace delete
-  EventPipe.on('namespace.update', updateNamespaceList);
-
-  vm.currentUser = myAuth.getUsername();
-  $scope.$on (MYAUTH_EVENT.loginSuccess, () => {
-    vm.currentUser = myAuth.getUsername();
-    updateNamespaceList();
-  });
-  $scope.$on (MYAUTH_EVENT.logoutSuccess, () => {
-    vm.currentUser = myAuth.getUsername();
-    vm.namespaces = [];
-  });
-
-  vm.logout = myAuth.logout.bind(myAuth);
-  vm.changeNamespace = (ns) => {
-    if ($state.params.namespace === ns.name) { return; }
-
-    $cookies.put('CDAP_Namespace', ns.name);
-
-    if ($state.includes('hydrator.**')) {
-      $state.go('hydrator.list', { namespace: ns.name });
-    } else if ($state.includes('tracker.**') || $state.is('tracker-enable')) {
-      $state.go('tracker.home', { namespace: ns.name });
-    } else if ($state.includes('dashboard.**')){
-      $state.go('dashboard.standard.cdap', { namespace: ns.name });
-    } else {
-      $state.go('overview', { namespace: ns.name });
-    }
-  };
-
-  vm.getAbsUIUrl = myHelpers.getAbsUIUrl;
-  $scope.$on('$destroy', () => {
-    $cookies.remove('CDAP_Namespace');
-  });
-
-}
-
-
 angular.module(PKG.name+'.commons')
+  .directive('caskHeaderActions', function(reactDirective) {
+    return reactDirective(window.CaskCommon.HeaderActions);
+  })
+  .directive('caskHeaderBrand', function(reactDirective) {
+    return reactDirective(window.CaskCommon.HeaderBrand);
+  })
   .directive('myGlobalNavbar', () => {
     return {
       restrict: 'E',
       templateUrl: 'my-global-navbar/my-global-navbar.html',
-      controller: NavbarController,
+      controller: function($scope, $state, myNamespace, EventPipe, myAuth) {
+        var vm = this;
+        function findActiveProduct() {
+          var baseTag, baseUrl;
+          if ($state.is('userprofile')) {
+            baseTag = document.getElementsByTagName('base');
+            baseUrl = baseTag[0].getAttribute('href');
+            if (baseUrl.indexOf('hydrator') !== -1) {
+              return 'hydrator';
+            } else if (baseUrl.indexOf('tracker') !== -1) {
+              return 'tracker';
+            } else {
+              return 'cdap';
+            }
+          }
+          if ($state.includes('hydrator.**')) {
+            return 'hydrator';
+          } else if ($state.includes('tracker.**') || $state.is('tracker-enable')) {
+            return 'tracker';
+          } else {
+            return 'cdap';
+          }
+        }
+        if (window.CDAP_CONFIG.securityEnabled && myAuth.isAuthenticated()) {
+          window.CaskCommon.Store.dispatch({
+            type: 'UPDATE_USERNAME',
+            payload: {
+              username: myAuth.getUsername()
+            }
+          });
+          vm.currentUser = myAuth.getUsername();
+        }
+        $scope.$on('$stateChangeSuccess', function(event, toState) {
+          vm.highlightTab = toState.data && toState.data.highlightTab;
+          if (!$state.params.namespace) {
+            return;
+          }
+          if (window.CaskCommon && window.CaskCommon.Store) {
+            window.CaskCommon.Store.dispatch({
+              type: 'SELECT_NAMESPACE',
+              payload: {
+                selectedNamespace : $state.params.namespace
+              }
+            });
+            window.CaskCommon.Store.dispatch({
+              type: 'UPDATE_NAMESPACES',
+              payload: {
+                namespaces: vm.namespaces
+              }
+            });
+          }
+          vm.activeProduct = findActiveProduct();
+        });
+        vm.namespaces = [];
+        function updateNamespaceList() {
+          myNamespace.getList(true)
+            .then(function(list) {
+              vm.namespaces = list;
+              window.CaskCommon.Store.dispatch({
+                type: 'UPDATE_NAMESPACES',
+                payload: {
+                  namespaces: vm.namespaces
+                }
+              });
+            });
+        }
+        EventPipe.on('namespace.update', updateNamespaceList);
+      },
       controllerAs: 'Navbar'
     };
   });

@@ -523,7 +523,7 @@ introduce a ``Tokenizer`` interface::
 Now we change our ``WordCountMapper`` to use the plugin framework to instantiate and use a ``Tokenizer``::
 
   public static class WordCountMapper extends Mapper<LongWritable, Text, Text, LongWritable>
-    implements ProgramLifecycle<MapReduceContext> {
+    implements ProgramLifecycle<MapReduceTaskContext> {
     private static final LongWritable ONE = new LongWritable(1);
     private Text word = new Text();
     private Tokenizer tokenizer;
@@ -538,7 +538,7 @@ Now we change our ``WordCountMapper`` to use the plugin framework to instantiate
     }
 
     @Override
-    public void initialize(MapReduceContext context) throws Exception {
+    public void initialize(MapReduceTaskContext context) throws Exception {
       tokenizer = context.newPluginInstance("tokenizerId");
     }
 

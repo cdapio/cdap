@@ -4,9 +4,12 @@
 
 .. _apache-sentry:
 
-=============
+.. NOTE: Because this file includes the cdap-sentry-extension-readme.txt with its headings
+..       a "+" has been used instead of "=" to push all included levels down one level.
+
++++++++++++++
 Apache Sentry
-=============
++++++++++++++
 
 .. _apache-sentry-configuration:
 
@@ -37,5 +40,5 @@ authorization of non-CDAP components, users can also use the CDAP Sentry Authori
 Extension to enforce authorization on CDAP entities using Apache Sentry.
 
 .. include:: /../target/_includes/cdap-sentry-extension-readme.txt
-    :start-line: 4
+    :start-line: 6
     :end-before: Share and Discuss!

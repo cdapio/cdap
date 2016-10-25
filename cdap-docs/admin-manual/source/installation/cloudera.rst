@@ -225,7 +225,8 @@ cm_ig_parcels.html>`__, but in summary these are the steps:
 - If the Cask parcel repository is inaccessible to your cluster, please see :ref:`these
   suggestions <faqs-cloudera-direct-parcel-access>`.
 - The CDAP parcels are hosted at a repository determined by the CDAP version.
-  For instance, the CDAP |short-version| parcel metadata is accessed by Cloudera Manager at this URL:
+  For instance, the CDAP |short-version| parcel metadata is accessed by Cloudera Manager at 
+  :cask-repository-parcels-cdap:`this URL: <manifest.json>`
   
   .. parsed-literal::
   
@@ -339,6 +340,7 @@ Add Service Wizard: Customize Role Assignments
 
    **Add Service Wizard, Page 2:** Completed role assignments.
    
+.. _cloudera-installation-add-service-wizard-configuration:
 
 Add Service Wizard: Reviewing Configuration
 -------------------------------------------

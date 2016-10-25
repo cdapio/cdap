@@ -44,7 +44,7 @@ public class StreamExistenceVerifier implements EntityExistenceVerifier<StreamId
       throw Throwables.propagate(e);
     }
     if (!exists) {
-      throw new StreamNotFoundException(streamId.toId());
+      throw new StreamNotFoundException(streamId);
     }
   }
 }

@@ -9,8 +9,13 @@ Hadoop Configuration
    YARN memory capacity is the leading cause of apparent failures that we see reported.
    We recommend starting with these settings:
    
-   - ``yarn.nodemanager.delete.debug-delay-sec``: 43200
+   - ``yarn.nodemanager.delete.debug-delay-sec``: 43200 *(see note below)*
    - ``yarn.scheduler.minimum-allocation-mb``: 512 mb
+   
+   The value we recommend for ``yarn.nodemanager.delete.debug-delay-sec`` (``43200`` or 12
+   hours) is what we use internally at Cask for testing as that provides adequate time to
+   capture the logs of any failures. However, you should use an appropriate non-zero value
+   specific to your environment. A large value can be expensive from a storage perspective.
    
    Please ensure your ``yarn.nodemanager.resource.cpu-vcores`` and
    ``yarn.nodemanager.resource.memory-mb`` settings are set sufficiently to run CDAP,

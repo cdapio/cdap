@@ -24,6 +24,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.test.AbstractApplicationManager;
 import co.cask.cdap.test.ApplicationManager;
@@ -53,7 +54,7 @@ import java.util.Set;
  * A default implementation of {@link ApplicationManager}.
  */
 public class DefaultApplicationManager extends AbstractApplicationManager {
-  private final Set<Id.Program> runningProcesses = Sets.newSetFromMap(Maps.<Id.Program, Boolean>newConcurrentMap());
+  private final Set<ProgramId> runningProcesses = Sets.newSetFromMap(Maps.<ProgramId, Boolean>newConcurrentMap());
   private final AppFabricClient appFabricClient;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final MetricsManager metricsManager;
@@ -62,8 +63,8 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   public DefaultApplicationManager(DiscoveryServiceClient discoveryServiceClient,
                                    AppFabricClient appFabricClient,
                                    MetricsManager metricsManager,
-                                   @Assisted("applicationId") Id.Application application) {
-    super(application);
+                                   @Assisted("applicationId")ApplicationId applicationId) {
+    super(applicationId);
     this.discoveryServiceClient = discoveryServiceClient;
     this.appFabricClient = appFabricClient;
     this.metricsManager = metricsManager;
@@ -71,44 +72,44 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
 
   @Override
   public FlowManager getFlowManager(String flowName) {
-    Id.Program programId = Id.Program.from(application, ProgramType.FLOW, flowName);
+    Id.Program programId = Id.Program.from(application.toId(), ProgramType.FLOW, flowName);
     return new DefaultFlowManager(programId, appFabricClient, this, metricsManager);
   }
 
   @Override
   public MapReduceManager getMapReduceManager(String programName) {
-    Id.Program programId = Id.Program.from(application, ProgramType.MAPREDUCE, programName);
+    Id.Program programId = Id.Program.from(application.toId(), ProgramType.MAPREDUCE, programName);
     return new DefaultMapReduceManager(programId, this);
   }
 
   @Override
   public SparkManager getSparkManager(String jobName) {
-    Id.Program programId = Id.Program.from(application, ProgramType.SPARK, jobName);
+    Id.Program programId = Id.Program.from(application.toId(), ProgramType.SPARK, jobName);
     return new DefaultSparkManager(programId, this);
   }
 
   @Override
   public WorkflowManager getWorkflowManager(String workflowName) {
-    Id.Program programId = Id.Program.from(application, ProgramType.WORKFLOW, workflowName);
+    Id.Program programId = Id.Program.from(application.toId(), ProgramType.WORKFLOW, workflowName);
     return new DefaultWorkflowManager(programId, appFabricClient, this);
   }
 
   @Override
   public ServiceManager getServiceManager(String serviceName) {
-    Id.Program programId = Id.Program.from(application, ProgramType.SERVICE, serviceName);
+    ProgramId programId = application.service(serviceName);
     return new DefaultServiceManager(programId, appFabricClient, discoveryServiceClient, this, metricsManager);
   }
 
   @Override
   public WorkerManager getWorkerManager(String workerName) {
-    Id.Program programId = Id.Program.from(application, ProgramType.WORKER, workerName);
+    Id.Program programId = Id.Program.from(application.toId(), ProgramType.WORKER, workerName);
     return new DefaultWorkerManager(programId, appFabricClient, this);
   }
 
   @Override
   public List<PluginInstanceDetail> getPlugins() {
     try {
-      return appFabricClient.getPlugins(application.toEntityId());
+      return appFabricClient.getPlugins(application);
     } catch (Exception e) {
      throw Throwables.propagate(e);
     }
@@ -117,12 +118,12 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   @Override
   public void stopAll() {
     try {
-      for (Id.Program programId : Iterables.consumingIterable(runningProcesses)) {
+      for (ProgramId programId : Iterables.consumingIterable(runningProcesses)) {
         // have to do a check, since mapreduce jobs could stop by themselves earlier, and appFabricServer.stop will
         // throw error when you stop something that is not running.
         if (isRunning(programId)) {
-          appFabricClient.stopProgram(application.getNamespaceId(), programId.getApplicationId(),
-                                      programId.getId(), programId.getType());
+          appFabricClient.stopProgram(application.getNamespace(), programId.getApplication(),
+                                      programId.getProgram(), programId.getType());
         }
       }
     } catch (Exception e) {
@@ -134,8 +135,21 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   public void stopProgram(Id.Program programId) {
     String programName = programId.getId();
     try {
+      if (runningProcesses.remove(programId.toEntityId())) {
+        appFabricClient.stopProgram(application.getNamespace(), application.getApplication(),
+                                    programName, programId.getType());
+      }
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public void stopProgram(ProgramId programId) {
+    String programName = programId.getProgram();
+    try {
       if (runningProcesses.remove(programId)) {
-        appFabricClient.stopProgram(application.getNamespaceId(), application.getId(),
+        appFabricClient.stopProgram(application.getNamespace(), application.getApplication(), application.getVersion(),
                                     programName, programId.getType());
       }
     } catch (Exception e) {
@@ -145,15 +159,31 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
 
   @Override
   public void startProgram(Id.Program programId, Map<String, String> arguments) {
-  // program can stop by itself, so refreshing info about its state
+    // program can stop by itself, so refreshing info about its state
+    if (!isRunning(programId)) {
+      runningProcesses.remove(programId.toEntityId());
+    }
+
+    Preconditions.checkState(runningProcesses.add(programId.toEntityId()), "Program %s is already running", programId);
+    try {
+      appFabricClient.startProgram(application.getNamespace(), application.getApplication(),
+                                   programId.getId(), programId.getType(), arguments);
+    } catch (Exception e) {
+      runningProcesses.remove(programId.toEntityId());
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public void startProgram(ProgramId programId, Map<String, String> arguments) {
     if (!isRunning(programId)) {
       runningProcesses.remove(programId);
     }
 
     Preconditions.checkState(runningProcesses.add(programId), "Program %s is already running", programId);
     try {
-      appFabricClient.startProgram(application.getNamespaceId(), application.getId(),
-                                   programId.getId(), programId.getType(), arguments);
+      appFabricClient.startProgram(application.getNamespace(), application.getApplication(),
+                                   application.getVersion(), programId.getProgram(), programId.getType(), arguments);
     } catch (Exception e) {
       runningProcesses.remove(programId);
       throw Throwables.propagate(e);
@@ -163,9 +193,20 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   @Override
   public boolean isRunning(Id.Program programId) {
     try {
-      String status = appFabricClient.getStatus(application.getNamespaceId(), programId.getApplicationId(),
+      String status = appFabricClient.getStatus(application.getNamespace(), programId.getApplicationId(),
                                                 programId.getId(), programId.getType());
       // comparing to hardcoded string is ugly, but this is how appFabricServer works now to support legacy UI
+      return "STARTING".equals(status) || "RUNNING".equals(status);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public boolean isRunning(ProgramId programId) {
+    try {
+      String status = appFabricClient.getStatus(application.getNamespace(), programId.getApplication(),
+                                                programId.getVersion(), programId.getProgram(), programId.getType());
       return "STARTING".equals(status) || "RUNNING".equals(status);
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -183,17 +224,17 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
 
   @Override
   public void update(AppRequest appRequest) throws Exception {
-    appFabricClient.updateApplication(application.toEntityId(), appRequest);
+    appFabricClient.updateApplication(application, appRequest);
   }
 
   @Override
   public void delete() throws Exception {
-    appFabricClient.deleteApplication(application.toEntityId());
+    appFabricClient.deleteApplication(application);
   }
 
   @Override
   public ApplicationDetail getInfo() throws Exception {
-    return appFabricClient.getInfo(application.toEntityId());
+    return appFabricClient.getInfo(application);
   }
 
   @Override

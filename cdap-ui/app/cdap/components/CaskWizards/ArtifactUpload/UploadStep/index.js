@@ -1,0 +1,104 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+import React, { PropTypes } from 'react';
+import { connect, Provider } from 'react-redux';
+import ArtifactUploadStore from 'services/WizardStores/ArtifactUpload/ArtifactUploadStore';
+import ArtifactUploadActions from 'services/WizardStores/ArtifactUpload/ArtifactUploadActions';
+import { Form, FormGroup, Col, Label } from 'reactstrap';
+import Dropzone from 'react-dropzone';
+import T from 'i18n-react';
+
+require('./UploadStep.less');
+
+const DragNDropFile = ({file, onDropHandler}) => {
+  return (
+    <Dropzone
+      activeClassName="file-drag-container"
+      className="file-drop-container"
+      onDrop={onDropHandler}>
+      <div className="file-metadata-container text-center">
+        {
+          file.name && file.name.length ? (<span>{file.name}</span>)
+            :
+            (<span>
+               Drag and Drop the file to be uploaded
+              <br />
+              or
+              <br />
+              Click to select file from your computer
+            </span>)
+        }
+      </div>
+    </Dropzone>
+  );
+};
+
+DragNDropFile.propTypes = {
+  file: PropTypes.any,
+  onDropHandler: PropTypes.func
+};
+
+const mapStateWithDNDFileProps = (state) => {
+  return {
+    file: state.upload.file
+  };
+};
+const mapDispatchWithDNDFileProps = (dispatch) => {
+  return {
+    onDropHandler: (e) => {
+      dispatch({
+        type: ArtifactUploadActions.setFilePath,
+        payload: {
+          file: e[0]
+        }
+      });
+    }
+  };
+};
+const ArtifactUploader = connect(
+  mapStateWithDNDFileProps,
+  mapDispatchWithDNDFileProps
+)(DragNDropFile);
+
+
+export default function UploadStep() {
+  return (
+    <Provider store={ArtifactUploadStore}>
+      <Form
+        className="form-horizontal general-info-step"
+        onSubmit={(e) => {
+          e.preventDefault();
+          return false;
+        }}
+      >
+        <h4 className="upload-instruction">
+          {T.translate('features.Wizard.ArtifactUpload.Step1.uploadHelperText')}
+        </h4>
+
+        <FormGroup>
+          <Col xs="3">
+            <Label className="control-label">{T.translate('features.Wizard.ArtifactUpload.Step1.filePathLabel')}</Label>
+          </Col>
+          <Col xs="7">
+            <ArtifactUploader />
+          </Col>
+          <i className="fa fa-asterisk text-danger pull-left"/>
+        </FormGroup>
+      </Form>
+    </Provider>
+  );
+}

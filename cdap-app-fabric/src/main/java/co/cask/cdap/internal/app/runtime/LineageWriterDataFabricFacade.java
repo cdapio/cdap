@@ -42,6 +42,7 @@ import com.google.inject.assistedinject.Assisted;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionExecutor;
+import org.apache.tephra.TransactionFailureException;
 
 import java.io.IOException;
 
@@ -69,7 +70,7 @@ public final class LineageWriterDataFabricFacade implements DataFabricFacade, Pr
     this.streamConsumerFactory = streamConsumerFactory;
     this.txExecutorFactory = txExecutorFactory;
     this.datasetCache = datasetCache;
-    this.programId = program.getId();
+    this.programId = program.getId().toId();
     this.programContext = new ProgramContext();
     this.lineageWriter = lineageWriter;
   }
@@ -96,7 +97,7 @@ public final class LineageWriterDataFabricFacade implements DataFabricFacade, Pr
   }
 
   @Override
-  public TransactionContext createTransactionContext() {
+  public TransactionContext createTransactionContext() throws TransactionFailureException {
     return datasetCache.newTransactionContext();
   }
 

@@ -22,12 +22,14 @@ import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.BatchProgram;
 import co.cask.cdap.proto.BatchProgramResult;
 import co.cask.cdap.proto.BatchProgramStart;
@@ -38,10 +40,13 @@ import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.codec.CustomActionSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -109,16 +114,31 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws ProgramNotFoundException if the program with the specified name could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Please use {@link #start(ProgramId, boolean, Map)} instead
    */
+  @Deprecated
   public void start(Id.Program program, boolean debug, @Nullable Map<String, String> runtimeArgs)
     throws IOException, ProgramNotFoundException, UnauthenticatedException, UnauthorizedException {
+    start(program.toEntityId(), debug, runtimeArgs);
+  }
 
-    String action = debug ? "debug" : "start";
-    String path = String.format("apps/%s/%s/%s/%s",
-                                program.getApplicationId(),
-                                program.getType().getCategoryName(),
-                                program.getId(), action);
-    URL url = config.resolveNamespacedURLV3(program.getNamespace(), path);
+  /**
+   * Starts a program using specified runtime arguments.
+   *
+   * @param program the program to start
+   * @param debug true to start in debug mode
+   * @param runtimeArgs runtime arguments to pass to the program
+   * @throws IOException
+   * @throws ProgramNotFoundException
+   * @throws UnauthenticatedException
+   * @throws UnauthorizedException
+   */
+  public void start(ProgramId program, boolean debug, @Nullable Map<String, String> runtimeArgs) throws IOException,
+    ProgramNotFoundException, UnauthenticatedException, UnauthorizedException {
+    String action = debug ? "debug" :  "start";
+    String path = String.format("apps/%s/versions/%s/%s/%s/%s", program.getApplication(), program.getVersion(),
+                                program.getType().getCategoryName(), program.getProgram(), action);
+    URL url = config.resolveNamespacedURLV3(program.getNamespaceId(), path);
     HttpRequest.Builder request = HttpRequest.post(url);
     if (runtimeArgs != null) {
       request.withBody(GSON.toJson(runtimeArgs));
@@ -186,16 +206,31 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws ProgramNotFoundException if the program with the specified name could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Please use {@link #stop(ProgramId)} instead
    */
+  @Deprecated
   public void stop(Id.Program program)
     throws IOException, ProgramNotFoundException, UnauthenticatedException, UnauthorizedException {
-    String path = String.format("apps/%s/%s/%s/stop",
-                                program.getApplicationId(), program.getType().getCategoryName(), program.getId());
-    URL url = config.resolveNamespacedURLV3(program.getNamespace(), path);
+    stop(program.toEntityId());
+  }
+
+  /**
+   * Stops a program.
+   *
+   * @param programId the program to stop
+   * @throws IOException if a network error occurred
+   * @throws ProgramNotFoundException if the program with specified name could not be found
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public void stop(ProgramId programId) throws IOException, ProgramNotFoundException, UnauthenticatedException,
+    UnauthorizedException {
+    String path = String.format("apps/%s/versions/%s/%s/%s/stop", programId.getApplication(), programId.getVersion(),
+                                programId.getType().getCategoryName(), programId.getProgram());
+    URL url = config.resolveNamespacedURLV3(programId.getNamespaceId().toId(), path);
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ProgramNotFoundException(program);
+      throw new ProgramNotFoundException(programId);
     }
   }
 
@@ -229,20 +264,21 @@ public class ProgramClient {
    * @throws TimeoutException
    */
   public void stopAll(Id.Namespace namespace)
-    throws IOException, UnauthenticatedException, InterruptedException, TimeoutException, UnauthorizedException {
+    throws IOException, UnauthenticatedException, InterruptedException, TimeoutException, UnauthorizedException,
+    ApplicationNotFoundException {
 
-    Map<ProgramType, List<ProgramRecord>> allPrograms = applicationClient.listAllPrograms(namespace);
-    for (Map.Entry<ProgramType, List<ProgramRecord>> entry : allPrograms.entrySet()) {
-      ProgramType programType = entry.getKey();
-      List<ProgramRecord> programRecords = entry.getValue();
+    List<ApplicationRecord> allApps = applicationClient.list(namespace);
+    for (ApplicationRecord applicationRecord : allApps) {
+      ApplicationId appId = new ApplicationId(namespace.getId(), applicationRecord.getName(),
+                                              applicationRecord.getAppVersion());
+      List<ProgramRecord> programRecords = applicationClient.listPrograms(appId);
       for (ProgramRecord programRecord : programRecords) {
         try {
-          Id.Program program = Id.Program.from(namespace, programRecord.getApp(),
-                                               programType, programRecord.getName());
+          ProgramId program = appId.program(programRecord.getType(), programRecord.getName());
           String status = this.getStatus(program);
           if (!status.equals("STOPPED")) {
             this.stop(program);
-            this.waitForStatus(program, "STOPPED", 60, TimeUnit.SECONDS);
+            this.waitForStatus(program, ProgramStatus.STOPPED, 60, TimeUnit.SECONDS);
           }
         } catch (ProgramNotFoundException e) {
           // IGNORE
@@ -259,21 +295,35 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws ProgramNotFoundException if the program with the specified name could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Please use {@link #getStatus(ProgramId)} instead
    */
+  @Deprecated
   public String getStatus(Id.Program program)
     throws IOException, ProgramNotFoundException, UnauthenticatedException, UnauthorizedException {
+    return getStatus(program.toEntityId());
+  }
 
-    String path = String.format("apps/%s/%s/%s/status",
-                                program.getApplicationId(), program.getType().getCategoryName(), program.getId());
-    URL url = config.resolveNamespacedURLV3(program.getNamespace(), path);
+  /**
+   * Gets the status of a program
+   * @param programId the program
+   * @return the status of the program (e.g. STOPPED, STARTING, RUNNING)
+   * @throws IOException if a network error occurred
+   * @throws ProgramNotFoundException if the program with the specified name could not be found
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public String getStatus(ProgramId programId) throws IOException, ProgramNotFoundException, UnauthenticatedException,
+    UnauthorizedException {
+    String path = String.format("apps/%s/versions/%s/%s/%s/status", programId.getApplication(), programId.getVersion(),
+                                programId.getType().getCategoryName(), programId.getProgram());
+    URL url = config.resolveNamespacedURLV3(programId.getNamespaceId(), path);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
-      throw new ProgramNotFoundException(program);
+      throw new ProgramNotFoundException(programId);
     }
 
-    Map<String, String> responseObject
-      = ObjectResponse.<Map<String, String>>fromJsonBody(response, MAP_STRING_STRING_TYPE, GSON).getResponseObject();
+    Map<String, String> responseObject = ObjectResponse.<Map<String, String>>fromJsonBody(
+      response, MAP_STRING_STRING_TYPE, GSON).getResponseObject();
     return responseObject.get("status");
   }
 
@@ -307,13 +357,33 @@ public class ProgramClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws TimeoutException if the program did not achieve the desired program status before the timeout
    * @throws InterruptedException if interrupted while waiting for the desired program status
+   * @deprecated since 4.0.0. Please use {@link #waitForStatus(ProgramId, ProgramStatus, long, TimeUnit)} instead
    */
+  @Deprecated
   public void waitForStatus(final Id.Program program, String status, long timeout, TimeUnit timeoutUnit)
+    throws UnauthenticatedException, IOException, ProgramNotFoundException,
+    TimeoutException, InterruptedException {
+    waitForStatus(program.toEntityId(), ProgramStatus.valueOf(status), timeout, timeoutUnit);
+  }
+
+  /**
+   * Waits for a program to have a certain status.
+   *
+   * @param program the program
+   * @param status the desired status
+   * @param timeout how long to wait in milliseconds until timing out
+   * @throws IOException if a network error occurred
+   * @throws ProgramNotFoundException if the program with the specified name could not be found
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws TimeoutException if the program did not achieve the desired program status before the timeout
+   * @throws InterruptedException if interrupted while waiting for the desired program status
+   */
+  public void waitForStatus(final ProgramId program, ProgramStatus status, long timeout, TimeUnit timeoutUnit)
     throws UnauthenticatedException, IOException, ProgramNotFoundException,
     TimeoutException, InterruptedException {
 
     try {
-      Tasks.waitFor(status, new Callable<String>() {
+      Tasks.waitFor(status.name(), new Callable<String>() {
         @Override
         public String call() throws Exception {
           return getStatus(program);
@@ -323,6 +393,7 @@ public class ProgramClient {
       Throwables.propagateIfPossible(e.getCause(), UnauthenticatedException.class);
       Throwables.propagateIfPossible(e.getCause(), ProgramNotFoundException.class);
       Throwables.propagateIfPossible(e.getCause(), IOException.class);
+      Throwables.propagate(e.getCause());
     }
   }
 
@@ -345,7 +416,7 @@ public class ProgramClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ProgramNotFoundException(program);
+      throw new ProgramNotFoundException(program.toEntityId());
     }
 
     return ObjectResponse.fromJsonBody(response, DistributedProgramLiveInfo.class).getResponseObject();
@@ -371,7 +442,7 @@ public class ProgramClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(flowlet);
+      throw new NotFoundException(flowlet.toEntityId());
     }
 
     return ObjectResponse.fromJsonBody(response, Instances.class).getResponseObject().getInstances();
@@ -398,7 +469,7 @@ public class ProgramClient {
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(flowlet);
+      throw new NotFoundException(flowlet.toEntityId());
     }
   }
 
@@ -419,7 +490,7 @@ public class ProgramClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(worker);
+      throw new NotFoundException(worker.toEntityId());
     }
     return ObjectResponse.fromJsonBody(response, Instances.class).getResponseObject().getInstances();
   }
@@ -442,7 +513,7 @@ public class ProgramClient {
 
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(worker);
+      throw new NotFoundException(worker.toEntityId());
     }
   }
 
@@ -464,7 +535,7 @@ public class ProgramClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(service);
+      throw new NotFoundException(service.toEntityId());
     }
     return ObjectResponse.fromJsonBody(response, Instances.class).getResponseObject().getInstances();
   }
@@ -488,7 +559,7 @@ public class ProgramClient {
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(service);
+      throw new NotFoundException(service.toEntityId());
     }
   }
 
@@ -510,8 +581,7 @@ public class ProgramClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      Id.Program program = Id.Program.from(appId, ProgramType.WORKFLOW, workflowId);
-      throw new NotFoundException(new Id.Run(program, runId));
+      throw new NotFoundException(appId.toEntityId().workflow(workflowId).run(runId));
     }
 
     ObjectResponse<List<WorkflowActionNode>> objectResponse = ObjectResponse.fromJsonBody(
@@ -549,7 +619,7 @@ public class ProgramClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(program);
+      throw new NotFoundException(program.toEntityId());
     }
 
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<RunRecord>>() { }).getResponseObject();
@@ -590,7 +660,7 @@ public class ProgramClient {
     URL url = config.resolveNamespacedURLV3(program.getNamespace(), path);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ProgramNotFoundException(program);
+      throw new ProgramNotFoundException(program.toEntityId());
     }
 
     return new String(response.getResponseBody(), Charsets.UTF_8);
@@ -604,13 +674,31 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws ProgramNotFoundException if the application or program could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Please use {@link #getRuntimeArgs(ProgramId)} instead
    */
+  @Deprecated
   public Map<String, String> getRuntimeArgs(Id.Program program)
     throws IOException, UnauthenticatedException, ProgramNotFoundException, UnauthorizedException {
 
-    String path = String.format("apps/%s/%s/%s/runtimeargs",
-                                program.getApplicationId(), program.getType().getCategoryName(), program.getId());
-    URL url = config.resolveNamespacedURLV3(program.getNamespace(), path);
+    return getRuntimeArgs(program.toEntityId());
+  }
+
+  /**
+   * Gets the runtime args of a program.
+   *
+   * @param program the program
+   * @return runtime args of the program
+   * @throws IOException if a network error occurred
+   * @throws ProgramNotFoundException if the application or program could not be found
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public Map<String, String> getRuntimeArgs(ProgramId program)
+    throws IOException, UnauthenticatedException, ProgramNotFoundException, UnauthorizedException {
+
+    String path = String.format("apps/%s/versions/%s/%s/%s/runtimeargs",
+                                program.getApplication(), program.getVersion(),
+                                program.getType().getCategoryName(), program.getProgram());
+    URL url = config.resolveNamespacedURLV3(program.getNamespaceId(), path);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -627,13 +715,31 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws ProgramNotFoundException if the application or program could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @deprecated since 4.0.0. Please use {@link #setRuntimeArgs(ProgramId, Map)} instead
    */
+  @Deprecated
   public void setRuntimeArgs(Id.Program program, Map<String, String> runtimeArgs)
     throws IOException, UnauthenticatedException, ProgramNotFoundException, UnauthorizedException {
 
-    String path = String.format("apps/%s/%s/%s/runtimeargs",
-                                program.getApplicationId(), program.getType().getCategoryName(), program.getId());
-    URL url = config.resolveNamespacedURLV3(program.getNamespace(), path);
+    setRuntimeArgs(program.toEntityId(), runtimeArgs);
+  }
+
+  /**
+   * Sets the runtime args of a program.
+   *
+   * @param program the program
+   * @param runtimeArgs args of the program
+   * @throws IOException if a network error occurred
+   * @throws ProgramNotFoundException if the application or program could not be found
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public void setRuntimeArgs(ProgramId program, Map<String, String> runtimeArgs)
+    throws IOException, UnauthenticatedException, ProgramNotFoundException, UnauthorizedException {
+
+    String path = String.format("apps/%s/versions/%s/%s/%s/runtimeargs",
+                                program.getApplication(), program.getVersion(),
+                                program.getType().getCategoryName(), program.getProgram());
+    URL url = config.resolveNamespacedURLV3(program.getNamespaceId(), path);
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(runtimeArgs)).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {

@@ -92,7 +92,7 @@ public final class DistributedSparkProgramRunner extends AbstractDistributedProg
                                 spec, localizeResources, eventHandler), sparkAssemblyJarName);
 
     RunId runId = ProgramRunners.getRunId(options);
-    return new SparkTwillProgramController(program.getId().toEntityId(), controller, runId).startListen();
+    return new SparkTwillProgramController(program.getId(), controller, runId).startListen();
   }
 
   private static YarnConfiguration createConfiguration(YarnConfiguration hConf, CConfiguration cConf,

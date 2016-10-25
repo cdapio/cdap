@@ -135,8 +135,9 @@ MapReduce and Datasets
 
 .. rubric: Reading and Writing to Datasets from a MapReduce program
 
-Both a CDAP ``mapper`` and ``reducer`` can directly read or write to a dataset, using
-one of these options:
+Both a CDAP ``Mapper`` and ``Reducer`` can directly read or write to a dataset, using
+one of the following options. (Note that the second and third options can be used for a
+``Partitioner`` or ``Comparator``, if configured on the MapReduce job.)
 
 #. Inject the dataset into the mapper or reducer that uses it. This method
    is useful if the name of the dataset is constant or known at compile time.
@@ -296,7 +297,7 @@ To write to multiple output datasets from a MapReduce program, begin by adding t
     context.addOutput("catalog");
   }
 
-Then, have the ``mapper`` and/or ``reducer`` implement ``ProgramLifeCycle<MapReduceTaskContext>``.
+Then, have the ``Mapper`` and/or ``Reducer`` implement ``ProgramLifeCycle<MapReduceTaskContext>``.
 This is to obtain access to the ``MapReduceTaskContext`` in their initialization methods and
 to be able to write using the write method of the ``MapReduceTaskContext``::
 

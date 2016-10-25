@@ -43,6 +43,16 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
     </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -58,6 +68,18 @@
             </fileset>
             <fileset>
               <directory>dist</directory>
+              <followSymlinks>false</followSymlinks>
+            </fileset>
+            <fileset>
+              <directory>cdap_dist</directory>
+              <followSymlinks>false</followSymlinks>
+            </fileset>
+            <fileset>
+              <directory>login_dist</directory>
+              <followSymlinks>false</followSymlinks>
+            </fileset>
+            <fileset>
+              <directory>common_dist</directory>
               <followSymlinks>false</followSymlinks>
             </fileset>
             <fileset>
@@ -123,6 +145,7 @@
                   <exclude>**/bower_components/**</exclude>
                   <exclude>**/node_modules/**</exclude>
                   <exclude>**/dist/**</exclude>
+                  <exclude>**/common_dist/**</exclude>
                   <exclude>**/cdap_dist/**</exclude>
                   <exclude>**/login_dist/**</exclude>
                   <exclude>**/logs/**</exclude>
@@ -281,6 +304,9 @@
                     </copy>
                     <copy todir = "${stage.opt.dir}/dist">
                       <fileset dir = "dist" />
+                    </copy>
+                    <copy todir = "${stage.opt.dir}/common_dist">
+                      <fileset dir = "common_dist" />
                     </copy>
                     <copy todir = "${stage.opt.dir}/cdap_dist">
                       <fileset dir = "cdap_dist" />

@@ -204,7 +204,7 @@ public class UnitTestManager implements TestManager {
       ArtifactSummary artifactSummary = new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion());
       appFabricClient.deployApplication(applicationId.toId(),
                                         new AppRequest(artifactSummary, configObject));
-      return appManagerFactory.create(applicationId.toId());
+      return appManagerFactory.create(applicationId);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -214,12 +214,18 @@ public class UnitTestManager implements TestManager {
   public ApplicationManager deployApplication(Id.Application appId,
                                               AppRequest appRequest) throws Exception {
     appFabricClient.deployApplication(appId, appRequest);
+    return appManagerFactory.create(appId.toEntityId());
+  }
+
+  @Override
+  public ApplicationManager deployApplication(ApplicationId appId, AppRequest appRequest) throws Exception {
+    appFabricClient.deployApplication(appId, appRequest);
     return appManagerFactory.create(appId);
   }
 
   @Override
   public ApplicationManager getApplicationManager(ApplicationId applicationId) {
-    return appManagerFactory.create(applicationId.toId());
+    return appManagerFactory.create(applicationId);
   }
 
   @Override

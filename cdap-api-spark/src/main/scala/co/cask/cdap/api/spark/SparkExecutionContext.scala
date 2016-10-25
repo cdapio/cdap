@@ -25,9 +25,10 @@ import co.cask.cdap.api.plugin.PluginContext
 import co.cask.cdap.api.security.store.SecureStore
 import co.cask.cdap.api.stream.GenericStreamEventData
 import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
-import co.cask.cdap.api.{RuntimeContext, ServiceDiscoverer, TaskLocalizationContext, Transactional}
+import co.cask.cdap.api._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import org.apache.tephra.TransactionFailureException
 
 import scala.reflect.ClassTag
 
@@ -257,4 +258,11 @@ trait SparkExecutionContext extends RuntimeContext with Transactional {
     */
   def saveAsDataset[K: ClassTag, V: ClassTag](rdd: RDD[(K, V)], namespace: String, datasetName: String,
                                               arguments: Map[String, String]): Unit
+
+  /**
+    * Transactions with a custom timeout are not supported in Spark.
+    *
+    * @throws TransactionFailureException always
+    */
+  def execute(timeoutInSeconds: Int, runnable: TxRunnable): Unit
 }

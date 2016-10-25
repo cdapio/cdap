@@ -36,7 +36,7 @@ export default class PlusButton extends Component {
         onClick={this.onClickHandler.bind(this)}
       >
         <span
-          className="fa fa-plus-circle text-success"
+          className="fa fa-plus-circle plus-button"
           onClick={this.onClickHandler.bind(this)}
         >
         </span>

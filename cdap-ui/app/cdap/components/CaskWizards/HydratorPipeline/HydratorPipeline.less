@@ -1,0 +1,62 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+.wizard-modal.create-stream-wizard {
+  &.hydrator-pipeline-modal {
+    &.modal-dialog {
+      margin-top: 300px;
+      height: auto;
+      width: 400px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+      .modal-content {
+        height: auto;
+        padding: 0;
+
+        .modal-body {
+          height: auto;
+
+          .hydrator-pipeline-content-container {
+            .message {
+              padding: 20px;
+              font-size: 14px;
+              background: white;
+            }
+            .action-buttons {
+              > a.btn.btn-default {
+                > i {
+                  margin-right: 5px;
+                  vertical-align: middle;
+                }
+                &:last-child {
+                  border-right: 0;
+                }
+                width: 50%;
+                border-radius: 0;
+                border-left: 0;
+                padding: 10px;
+                &:hover {
+                  background-color: #5a84e4;
+                  color: #fff;
+                  border-color: #5a84e4;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

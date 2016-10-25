@@ -19,6 +19,8 @@ package co.cask.cdap.api.mapreduce;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.internal.api.AbstractPluginConfigurable;
@@ -166,6 +168,7 @@ public abstract class AbstractMapReduce extends AbstractPluginConfigurable<MapRe
   }
 
   @Override
+  @TransactionPolicy(TransactionControl.IMPLICIT)
   public final void initialize(MapReduceContext context) throws Exception {
     this.context = context;
     initialize();
@@ -177,6 +180,7 @@ public abstract class AbstractMapReduce extends AbstractPluginConfigurable<MapRe
    * Default implementation of this method calls the deprecated {@link AbstractMapReduce#beforeSubmit} method.
    * @throws Exception if there is any error in initializing the MapReduce
    */
+  @TransactionPolicy(TransactionControl.IMPLICIT)
   protected void initialize() throws Exception {
     beforeSubmit(context);
   }
@@ -186,6 +190,7 @@ public abstract class AbstractMapReduce extends AbstractPluginConfigurable<MapRe
    * Default implementation of this method calls the deprecated {@link AbstractMapReduce#onFinish} method.
    */
   @Override
+  @TransactionPolicy(TransactionControl.IMPLICIT)
   public void destroy() {
     try {
       onFinish(context.getState().getStatus() == ProgramStatus.COMPLETED, context);

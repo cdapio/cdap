@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
+import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpResponse;
@@ -75,7 +76,7 @@ public class ScheduleClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
-      throw new NotFoundException(workflow);
+      throw new NotFoundException(workflow.toEntityId());
     }
 
     ObjectResponse<List<ScheduleSpecification>> objectResponse = ObjectResponse.fromJsonBody(
@@ -100,7 +101,7 @@ public class ScheduleClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
-      throw new NotFoundException(workflow);
+      throw new NotFoundException(workflow.toEntityId());
     }
 
     ObjectResponse<List<ScheduledRuntime>> objectResponse = ObjectResponse.fromJsonBody(
@@ -115,7 +116,19 @@ public class ScheduleClient {
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
-      throw new NotFoundException(schedule);
+      throw new NotFoundException(schedule.toEntityId());
+    }
+  }
+
+  public void suspend(ScheduleId scheduleId) throws IOException, UnauthenticatedException, NotFoundException,
+    UnauthorizedException {
+    String path = String.format("apps/%s/versions/%s/schedules/%s/suspend", scheduleId.getApplication(),
+                                scheduleId.getVersion(), scheduleId.getSchedule());
+    URL url = config.resolveNamespacedURLV3(scheduleId.toId().getNamespace(), path);
+    HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
+      throw new NotFoundException(scheduleId);
     }
   }
 
@@ -126,7 +139,19 @@ public class ScheduleClient {
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
-      throw new NotFoundException(schedule);
+      throw new NotFoundException(schedule.toEntityId());
+    }
+  }
+
+  public void resume(ScheduleId scheduleId) throws IOException, UnauthenticatedException, NotFoundException,
+    UnauthorizedException {
+    String path = String.format("apps/%s/versions/%s/schedules/%s/resume", scheduleId.getApplication(),
+                                scheduleId.getVersion(), scheduleId.getSchedule());
+    URL url = config.resolveNamespacedURLV3(scheduleId.toId().getNamespace(), path);
+    HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
+      throw new NotFoundException(scheduleId);
     }
   }
 
@@ -137,7 +162,23 @@ public class ScheduleClient {
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
-      throw new NotFoundException(schedule);
+      throw new NotFoundException(schedule.toEntityId());
+    }
+
+    Map<String, String> responseObject
+      = ObjectResponse.<Map<String, String>>fromJsonBody(response, MAP_STRING_STRING_TYPE, GSON).getResponseObject();
+    return responseObject.get("status");
+  }
+
+  public String getStatus(ScheduleId scheduleId) throws IOException, UnauthenticatedException, NotFoundException,
+    UnauthorizedException {
+    String path = String.format("apps/%s/versions/%s/schedules/%s/status", scheduleId.getApplication(),
+                                scheduleId.getVersion(), scheduleId.getSchedule());
+    URL url = config.resolveNamespacedURLV3(scheduleId.toId().getNamespace(), path);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
+      throw new NotFoundException(scheduleId);
     }
 
     Map<String, String> responseObject

@@ -305,7 +305,7 @@
     <value>true</value>
     <description>
       Specify whether to rewrite the yarn.client class in Spark to work
-      around the issue SPARK-13441 in CDM clusters
+      around the issue SPARK-13441 in CDH clusters
     </description>
   </property>
 
@@ -351,7 +351,7 @@
     <name>workflow.token.max.size.mb</name>
     <value>30</value>
     <description>
-      Maximum allowed size in megabytes of a Workflow Token; if the
+      Maximum allowed size in megabytes of a workflow token; if the
       workflow token exceeds this size, no further updates are allowed
     </description>
   </property>
@@ -1496,6 +1496,18 @@
   </property>
 
   <property>
+    <name>router.userservice.fallback.strategy</name>
+    <value>random</value>
+    <description>
+      If a RouteConfig is not found for a particular user service, this property is used
+      to set the fallback routing strategy. Allowed options: "random", "smallest",
+      "largest", or "drop". A string comparison of the versions of the user service is
+      used for "smallest" or "largest". The "drop" option will not route the request to
+      any service and will return "service not found".
+    </description>
+  </property>
+
+  <property>
     <name>router.webapp.bind.port</name>
     <value>20000</value>
     <description>
@@ -1548,7 +1560,7 @@
     <name>kerberos.auth.relogin.interval.seconds</name>
     <value>300</value>
     <description>
-      Relogin interval in seconds for Kerberos keytab
+      Re-login interval in seconds for Kerberos keytab
     </description>
   </property>
 
@@ -1988,7 +2000,7 @@
     <value>0</value>
     <description>
       Interval in seconds that the CDAP UI waits before exiting when unable to connect to
-      CDAP Router service on startup; use a timeout of 0 to wait indefinitely
+      the CDAP Router service on startup; use a timeout of 0 to wait indefinitely
     </description>
   </property>
 

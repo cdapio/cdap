@@ -435,7 +435,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = HttpRequests.execute(request);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NamespaceNotFoundException(namespaceId.toId());
+      throw new NamespaceNotFoundException(namespaceId);
     }
     Assert.assertEquals(200, response.getResponseCode());
     return GSON.fromJson(response.getResponseBodyAsString(), new TypeToken<List<StreamDetail>>() { }.getType());

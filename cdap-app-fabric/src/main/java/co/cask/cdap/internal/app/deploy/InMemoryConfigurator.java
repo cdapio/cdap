@@ -35,6 +35,7 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ApplicationId;
 import com.google.common.base.Throwables;
 import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.Futures;
@@ -62,6 +63,7 @@ public final class InMemoryConfigurator implements Configurator {
 
   private final CConfiguration cConf;
   private final String applicationName;
+  private final String applicationVersion;
   private final String configString;
   private final File baseUnpackDir;
   // this is the namespace that the app will be in, which may be different than the namespace of the artifact.
@@ -77,11 +79,21 @@ public final class InMemoryConfigurator implements Configurator {
                               String appClassName, ArtifactRepository artifactRepository,
                               ClassLoader artifactClassLoader,
                               @Nullable String applicationName, @Nullable String configString) {
+    this(cConf, appNamespace, artifactId, appClassName, artifactRepository, artifactClassLoader, applicationName,
+         ApplicationId.DEFAULT_VERSION, configString);
+  }
+
+  public InMemoryConfigurator(CConfiguration cConf, Id.Namespace appNamespace, Id.Artifact artifactId,
+                              String appClassName, ArtifactRepository artifactRepository,
+                              ClassLoader artifactClassLoader,
+                              @Nullable String applicationName, @Nullable String applicationVersion,
+                              @Nullable String configString) {
     this.cConf = cConf;
     this.appNamespace = appNamespace;
     this.artifactId = artifactId;
     this.appClassName = appClassName;
     this.applicationName = applicationName;
+    this.applicationVersion = applicationVersion;
     this.configString = configString == null ? "" : configString;
     this.artifactRepository = artifactRepository;
     this.artifactClassLoader = artifactClassLoader;
@@ -193,7 +205,7 @@ public final class InMemoryConfigurator implements Configurator {
         LOG.warn("Exception raised when deleting directory {}", tempDir, e);
       }
     }
-    ApplicationSpecification specification = configurer.createSpecification(applicationName);
+    ApplicationSpecification specification = configurer.createSpecification(applicationName, applicationVersion);
 
     // Convert the specification to JSON.
     // We write the Application specification to output file in JSON format.

@@ -94,20 +94,22 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
   }
 
   private static final class DatasetAdminImpl implements DatasetAdmin {
+    private final Configuration hConf;
     private final TableId tableId;
-    protected final HBaseAdmin admin;
     protected final HBaseTableUtil tableUtil;
 
     private DatasetAdminImpl(DatasetContext datasetContext, String tableName, HBaseTableUtil tableUtil,
                              Configuration hConf) throws IOException {
-      this.admin = new HBaseAdmin(hConf);
+      this.hConf = hConf;
       this.tableUtil = tableUtil;
       this.tableId = tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()), tableName);
     }
 
     @Override
     public boolean exists() throws IOException {
-      return tableUtil.tableExists(admin, tableId);
+      try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+        return tableUtil.tableExists(admin, tableId);
+      }
     }
 
     @Override
@@ -118,17 +120,24 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
 
       HTableDescriptorBuilder tableDescriptor = tableUtil.buildHTableDescriptor(tableId);
       tableDescriptor.addFamily(columnDescriptor);
-      tableUtil.createTableIfNotExists(admin, tableId, tableDescriptor.build());
+
+      try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+        tableUtil.createTableIfNotExists(admin, tableId, tableDescriptor.build());
+      }
     }
 
     @Override
     public void drop() throws IOException {
-      tableUtil.dropTable(admin, tableId);
+      try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+        tableUtil.dropTable(admin, tableId);
+      }
     }
 
     @Override
     public void truncate() throws IOException {
-      tableUtil.truncateTable(admin, tableId);
+      try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+        tableUtil.truncateTable(admin, tableId);
+      }
     }
 
     @Override
@@ -138,7 +147,7 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
 
     @Override
     public void close() throws IOException {
-      admin.close();
+      // no-op
     }
   }
 
@@ -199,5 +208,4 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
       registry.add(new HBaseKVTableDefinition(NoTxKeyValueTable.class.getName()));
     }
   }
-
 }

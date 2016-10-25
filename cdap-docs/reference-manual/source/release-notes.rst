@@ -23,17 +23,209 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 3.6.0 <http://docs.cask.co/cdap/3.6.0/index.html>`__
+=============================================================
+
+Improvements
+------------
+
+- :cask-issue:`CDAP-5771` - Allow concurrent runs of different versions of a service. A
+  RouteConfig can be uploaded to configure the percentage of requests that need to be sent
+  to the different versions.
+
+- :cask-issue:`CDAP-7281` - Improved the PartitionedFileSet to validate the schema of a
+  partition key. Note that this will break code that uses incorrect partition keys, which
+  was previously silently ignored.
+
+- :cask-issue:`CDAP-7343` - All non-versioned endpoints are now directed to applications
+  with a default version. Added test cases with a mixed usage of the new versioned endpoints
+  and the corresponding non-versioned endpoints.
+
+- :cask-issue:`CDAP-7366` - Added an upgrade step that adds a default version ID to jobs
+  and triggers in the Schedule Store.
+
+- :cask-issue:`CDAP-7385` - The Log HTTP Handler and Router have been fixed to allow the
+  streaming of larger logs files.
+
+- :cask-issue:`CDAP-7264` - Added an HTTP RESTful API to create applications with a
+  version.
+
+- :cask-issue:`CDAP-7265` - Added an HTTP RESTful API to start or stop programs of a
+  specific application version.
+
+- :cask-issue:`CDAP-7266` - Added an upgrade step that adds a default application version
+  to existing applications.
+
+- :cask-issue:`CDAP-7268` - Added an HTTP RESTful API to store, fetch, and delete
+  RouteConfigs for user service endpoint routing control.
+
+- :cask-issue:`CDAP-7272` - User services now include their application version in the
+  payload when they announce themselves in Apache Twill.
+
+
+Bug Fixes
+---------
+
+- :cask-issue:`CDAP-3822` - Unit Test framework now has the capability to exclude scala,
+  so users can depend on their own version of the library.
+
+- :cask-issue:`CDAP-7250` - Fixed an issue where dataset usage was not being recorded
+  after an application was deleted.
+
+- :cask-issue:`CDAP-7314` - Fixed a problem with the documentation example links to the
+  CDAP ETL Guide.
+
+- :cask-issue:`CDAP-7321` - Fixed a problem with upgrading CDAP using the CDAP Upgrade
+  Tool.
+
+- :cask-issue:`CDAP-7324` - Fixed a problem with the upgrade tool while upgrading HBase
+  coprocessors.
+
+- :cask-issue:`CDAP-7334` - Fixed a problem with the listing of applications not returning
+  the application version correctly.
+
+- :cask-issue:`CDAP-7353` - Fixed a problem with using "Download All" logs in the
+  browser log viewer by having it fetch and stream the response to the client.
+
+- :cask-issue:`CDAP-7359` - Fixed a problem with NodeJS buffering a response before
+  sending it to a client.
+
+- :cask-issue:`CDAP-7361` - Fixed a problem with log file corruption if the log saver
+  container crashes due to being killed by YARN.
+
+- :cask-issue:`CDAP-7364` - Fixed a problem with the CDAP UI not handling "5xx" error
+  codes correctly.
+
+- :cask-issue:`CDAP-7374` - Fixed Hydrator Studio in the Windows version of Chrome to
+  allow users to open and edit a node configuration.
+
+- :cask-issue:`CDAP-7386` - Fixed an error in the "CDAP Introduction" tutorial's
+  "Transforming Your Data" example of an application configuration.
+
+- :cask-issue:`CDAP-7391` - Fixed an issue that caused unit test failures when using
+  ``org.hamcrest`` classes.
+  
+- :cask-issue:`CDAP-7392` - Fixed an issue where the Java process corresponding to the
+  MapReduce application master kept running even if the application was moved to the FINISHED
+  state.
+
+- :cask-issue:`HYDRATOR-791` - Fixed a problem with Hydrator pipelines using a DBSource
+  not working in an HDP cluster.
+
+- :cask-issue:`HYDRATOR-948` - Fixed a problem with Spark data pipelines not supporting
+  argument values in excess of 64K characters.
+
+
+`Release 3.5.1 <http://docs.cask.co/cdap/3.5.1/index.html>`__
+=============================================================
+
+Known Issues
+------------
+
+- :cask-issue:`CDAP-7175` - If you are upgrading an authorization-enabled CDAP instance,
+  you will need to give the *cdap* user *ADMIN* privileges on all existing CDAP
+  namespaces. See the :ref:`Administration Manual: Upgrading <upgrading-index>` for your
+  distribution for details.
+
+- :cask-issue:`CDAP-7179` - In CDAP 3.5.0, new ``kafka.server.*`` properties replace older
+  properties such as ``kafka.log.dir``, as described in the :ref:`Administration Manual: 
+  Appendices: cdap-site.xml <appendix-cdap-default-deprecated-properties>`. 
+  
+  If you are upgrading from CDAP 3.4.x to 3.5.x, and you have set a value for
+  ``kafka.log.dir`` by using Cloudera Manager's :ref:`safety-valve mechanism
+  <cloudera-installation-add-service-wizard-configuration>`, you need to change to the new
+  property ``kafka.server.log.dirs``, as the deprecated ``kafka.log.dir`` is being ignored
+  in favor of the new property. If you don't, your custom value will be replaced with the
+  default value.
+  
+  
+Improvements
+------------
+
+- :cask-issue:`CDAP-7192` - Added the ability to specify an announce address and port for
+  the ``appfabric`` and ``dataset`` services.
+
+  Deprecated the properties ``app.bind.address`` and ``dataset.service.bind.address``,
+  replacing them with ``master.services.bind.address`` as the bind address for master
+  services.
+
+  Added the properties ``master.services.announce.address``, ``app.announce.port``, and
+  ``dataset.service.announce.port`` for use as announce addresses that are different from
+  the bind address.
+
+- :cask-issue:`CDAP-7240` - Upgraded the version of ``netty-http`` used in CDAP to version
+  0.15, resolving a problem with a NullPointerException being logged on the closing of a
+  network connection.
+
+- :cask-issue:`HYDRATOR-578` - Snapshot sinks now allow users to specify a property
+  ``cleanPartitionsOlderThan`` that cleans up any snapshots older than "x" days.
+
+
+Bug Fixes
+---------
+
+- :cask-issue:`CDAP-6215` - PartitionConsumer appropriately drops partitions that have
+  been deleted from a corresponding PartitionedFileSet.
+  
+- :cask-issue:`CDAP-6404` - Fixed an issue with searching for an entity in Cask Tracker by
+  metadata after a tag with the same prefix has been removed.
+
+- :cask-issue:`CDAP-7138` - Fixed a problem with duplicate logs showing for a running program.
+
+- :cask-issue:`CDAP-7175` - Fixed a bug in the upgrade tool to allow it to run on a CDAP
+  instance with authorization enabled.
+
+- :cask-issue:`CDAP-7178` - Fixed an issue with uploading an application JAR or file to a
+  stream through the CDAP UI.
+
+- :cask-issue:`CDAP-7187` - Fixed a problem with the property
+  ``dataset.service.bind.address`` having no effect.
+
+- :cask-issue:`CDAP-7199` - Corrected errors in the documentation to correctly show how to
+  set the schema on an existing table.
+
+- :cask-issue:`CDAP-7204` - Lineage information is now returned for deleted datasets.
+
+- :cask-issue:`CDAP-7222` - Fixed a problem with being unable to delete a namespace if a
+  configured keytab file doesn't exist.
+
+- :cask-issue:`CDAP-7235` - Fixed a problem with a NullPointerException when the CDAP UI fetches a log.
+
+- :cask-issue:`CDAP-7237` - Prevented accidental grant of additional actions to a user as
+  part of a grant operation when using Apache Sentry as the authorization provider.
+
+- :cask-issue:`CDAP-7248` - Fixed a problem with the FileBatchSource not working with Azure Blob Storage.
+
+- :cask-issue:`CDAP-7249` - Fixed a problem with CDAP Explore using Tez on Azure HDInsight.
+
+- :cask-issue:`HYDRATOR-912` - Fixed an issue where the Joiner plugin was failing in
+  Hydrator pipelines executing in a Spark environment.
+
+- :cask-issue:`HYDRATOR-922` - Fixed a bug that caused the Database Source, Joiner,
+  GroupByAggregate, and Deduplicate plugins to fail on certain versions of Spark.
+
+- :cask-issue:`HYDRATOR-932` - Fixed an error in the documentation of the HDFS Source and
+  Sink with respect to the alias under high-availability.
+
+- :cask-issue:`TRACKER-217` - Fixed an issue preventing the adding of additional tags
+  after an existing tag had been deleted.
+
+
 `Release 3.5.0 <http://docs.cask.co/cdap/3.5.0/index.html>`__
 =============================================================
 
 Known Issues
 ------------
 - :cask-issue:`CDAP-7179` - In CDAP 3.5.0, new ``kafka.server.*`` properties replace older
-  properties such as ``kafka.log.dir``. Though the older properties were marked as
-  deprecated, they are in fact being ignored, and need to be replaced with the current
-  properties as described in the :ref:`Administration Manual: Appendices: cdap-site.xml
-  <appendix-cdap-default-deprecated-properties>`.
-
+  properties such as ``kafka.log.dir``, as described in the :ref:`Administration Manual: 
+  Appendices: cdap-site.xml <appendix-cdap-default-deprecated-properties>`. 
+  
+  **If you are upgrading from CDAP 3.4.x to 3.5.x,** and you have set a value for
+  ``kafka.log.dir`` by using Cloudera Manager's :ref:`safety-valve mechanism
+  <cloudera-installation-add-service-wizard-configuration>`, you need to change to the
+  new property ``kafka.server.log.dirs``, as the deprecated ``kafka.log.dir`` is being
+  ignored in favor of the new property. If you don't, your custom value will be replaced
+  with the default value.
 
 API Changes
 -----------

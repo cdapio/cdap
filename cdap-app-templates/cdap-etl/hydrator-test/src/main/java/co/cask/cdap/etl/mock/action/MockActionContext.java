@@ -110,6 +110,11 @@ public class MockActionContext implements ActionContext {
     // no-op; unused
   }
 
+  @Override
+  public void execute(int timeoutInSeconds, TxRunnable runnable) {
+    // no-op; unused
+  }
+
   /**
    * SettableArguments class for MockActionContext.
    */

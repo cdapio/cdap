@@ -45,6 +45,7 @@ public abstract class AbstractSystemMetadataWriter implements SystemMetadataWrit
   protected static final String TTL_KEY = "ttl";
   protected static final String DESCRIPTION = "description";
   protected static final String CREATION_TIME = "creation-time";
+  protected static final String VERSION = "version";
 
   // The following system properties should not get removed on metadata update
   // since they are not part of entity properties

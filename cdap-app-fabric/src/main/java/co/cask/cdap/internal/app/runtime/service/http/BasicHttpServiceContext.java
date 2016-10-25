@@ -27,6 +27,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import org.apache.tephra.TransactionContext;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -108,7 +109,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
   }
 
   @Override
-  public TransactionContext newTransactionContext() {
+  public TransactionContext newTransactionContext() throws TransactionFailureException {
     return getDatasetCache().newTransactionContext();
   }
 

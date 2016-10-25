@@ -277,42 +277,42 @@ public class ApplicationClientTestRun extends ClientTestBase {
       // check filter by name only
       Set<ApplicationRecord> apps = Sets.newHashSet(appClient.list(Id.Namespace.DEFAULT, "fake", null));
       Set<ApplicationRecord> expected = ImmutableSet.of(
-        new ApplicationRecord(new ArtifactSummary("fake", "1.0.0-SNAPSHOT"), appId1.getId(), ""),
-        new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2.getId(), "")
+        new ApplicationRecord(new ArtifactSummary("fake", "1.0.0-SNAPSHOT"), appId1.toEntityId(), ""),
+        new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2.toEntityId(), "")
       );
       Assert.assertEquals(expected, apps);
 
       apps = Sets.newHashSet(appClient.list(Id.Namespace.DEFAULT, "otherfake", null));
       expected = ImmutableSet.of(
-        new ApplicationRecord(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT"), appId3.getId(), ""));
+        new ApplicationRecord(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT"), appId3.toEntityId(), ""));
       Assert.assertEquals(expected, apps);
 
       // check filter by multiple names
       apps = Sets.newHashSet(appClient.list(Id.Namespace.DEFAULT, ImmutableSet.of("fake", "otherfake"), null));
       expected = ImmutableSet.of(
-        new ApplicationRecord(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT"), appId3.getId(), ""),
-        new ApplicationRecord(new ArtifactSummary("fake", "1.0.0-SNAPSHOT"), appId1.getId(), ""),
-        new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2.getId(), ""));
+        new ApplicationRecord(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT"), appId3.toEntityId(), ""),
+        new ApplicationRecord(new ArtifactSummary("fake", "1.0.0-SNAPSHOT"), appId1.toEntityId(), ""),
+        new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2.toEntityId(), ""));
       Assert.assertEquals(expected, apps);
 
       // check filter by version only
       apps = Sets.newHashSet(appClient.list(Id.Namespace.DEFAULT, (String) null, "0.1.0-SNAPSHOT"));
       expected = ImmutableSet.of(
-        new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2.getId(), "")
+        new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2.toEntityId(), "")
       );
       Assert.assertEquals(expected, apps);
 
       apps = Sets.newHashSet(appClient.list(Id.Namespace.DEFAULT, (String) null, "1.0.0-SNAPSHOT"));
       expected = ImmutableSet.of(
-        new ApplicationRecord(new ArtifactSummary("fake", "1.0.0-SNAPSHOT"), appId1.getId(), ""),
-        new ApplicationRecord(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT"), appId3.getId(), "")
+        new ApplicationRecord(new ArtifactSummary("fake", "1.0.0-SNAPSHOT"), appId1.toEntityId(), ""),
+        new ApplicationRecord(new ArtifactSummary("otherfake", "1.0.0-SNAPSHOT"), appId3.toEntityId(), "")
       );
       Assert.assertEquals(expected, apps);
 
       // check filter by both
       apps = Sets.newHashSet(appClient.list(Id.Namespace.DEFAULT, "fake", "0.1.0-SNAPSHOT"));
       expected = ImmutableSet.of(
-        new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2.getId(), "")
+        new ApplicationRecord(new ArtifactSummary("fake", "0.1.0-SNAPSHOT"), appId2.toEntityId(), "")
       );
       Assert.assertEquals(expected, apps);
     } finally {

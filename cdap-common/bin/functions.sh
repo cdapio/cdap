@@ -120,9 +120,10 @@ cdap_home() {
     echo ${CDAP_HOME}
     return 0
   fi
-  local readonly __script=${BASH_SOURCE[0]} __script_bin=$(dirname ${__script})
-  local readonly __comp_home=${__script%/*/*}
-  if [[ ${__comp_home%/*} == /opt/cdap ]]; then
+  local readonly __script=${BASH_SOURCE[0]}
+  local readonly __script_bin=$(cd $(dirname ${__script}); pwd -P)
+  local readonly __comp_home=$(cd ${__script%/*/*} >&-; pwd -P)
+  if [[ ${__comp_home%/*} == /opt/cdap ]] && [[ ${__comp_home} != /opt/cdap/sdk* ]]; then
     __app_home=${__comp_home}
     __cdap_home=/opt/cdap
   else
@@ -260,7 +261,7 @@ cdap_get_conf() {
 #
 # cdap_kinit
 # Initializes Kerberos ticket using principal/keytab
-# 
+#
 cdap_kinit() {
   local readonly __principal=${CDAP_PRINCIPAL:-$(cdap_get_conf "cdap.master.kerberos.principal" "${CDAP_CONF}"/cdap-site.xml)}
   local readonly __keytab=${CDAP_KEYTAB:-$(cdap_get_conf "cdap.master.kerberos.keytab" "${CDAP_CONF}"/cdap-site.xml)}
@@ -342,7 +343,7 @@ cdap_set_classpath() {
     CLASSPATH=${__cp}
   fi
   export CLASSPATH
-  if [[ ${__verbose} ]]; then
+  if [[ ${__verbose} == 'true' ]]; then
     echo ${CLASSPATH}
   fi
   return 0
@@ -366,6 +367,7 @@ cdap_set_hbase() {
     1.0*) __compat="${CDAP_HOME}"/hbase-compat-1.0/lib/* ;;
     1.1*) __compat="${CDAP_HOME}"/hbase-compat-1.1/lib/* ;;
     1.2-cdh*) __compat="${CDAP_HOME}"/hbase-compat-1.2-cdh5.7.0/lib/* ;; # 5.7 and 5.8 are compatible
+    1.2*) __compat="${CDAP_HOME}"/hbase-compat-1.1/lib/* ;; # 1.1 and 1.2 are compatible
     "") die "Unable to determine HBase version! Aborting." ;;
     *) die "Unknown/Unsupported HBase version found: ${HBASE_VERSION}" ;;
   esac
@@ -539,7 +541,7 @@ cdap_start_bin() {
   nohup nice -n ${NICENESS} ${MAIN_CMD} ${MAIN_CMD_ARGS} ${__args} </dev/null >>${__logfile} 2>&1 &
   __pid=${!}
   __ret=${?}
-  echo $${__pid} >${__pidfile}
+  echo ${__pid} >${__pidfile}
   if ! kill -0 ${__pid} >/dev/null 2>&1; then
     die "${MAIN_CMD} failed to start, please check logs at ${LOG_DIR} for more information"
   fi
@@ -554,7 +556,7 @@ cdap_start_java() {
   local readonly __name=$(echo ${CDAP_SERVICE/-/ } | awk '{for(i=1;i<=NF;i++){ $i=toupper(substr($i,1,1)) substr($i,2) }}1')
   cdap_check_pidfile ${__pidfile} || exit 0 # Error output is done in function
   cdap_create_pid_dir || die "Could not create PID dir: ${PID_DIR}"
-  # Check and set classpath if in development environment. 
+  # Check and set classpath if in development environment.
   cdap_check_and_set_classpath_for_dev_environment "${CDAP_HOME}"
   # Setup classpaths.
   cdap_set_classpath "${CDAP_HOME}"/${__comp_home} "${CDAP_CONF}"
@@ -609,7 +611,7 @@ cdap_run_class() {
   local readonly __ret
   local JAVA_HEAPMAX=${JAVA_HEAPMAX:--Xmx1024m}
   [[ -z ${__class} ]] && echo "[ERROR] No class name given!" && die "Usage: ${0} run <fully-qualified-class> [arguments]"
-  # Check and set classpath if in development environment. 
+  # Check and set classpath if in development environment.
   cdap_check_and_set_classpath_for_dev_environment "${CDAP_HOME}"
   # Setup classpaths.
   cdap_set_classpath "${CDAP_HOME}"/master "${CDAP_CONF}"
@@ -619,7 +621,7 @@ cdap_run_class() {
   cdap_set_hive_classpath || return 1
   # Add proper HBase compatibility to CLASSPATH
   cdap_set_hbase || exit 1
-  cdap_check_or_create_master_local_dir || die "Could not create local directory"
+  cdap_create_local_dir || die "Could not create local directory"
   if [[ -n ${__args} ]] && [[ ${__args} != '' ]]; then
     echo "$(date) Running class ${__class} with arguments: ${__args}"
   else
@@ -653,6 +655,45 @@ cdap_check_and_set_classpath_for_dev_environment() {
   return 0
 }
 
+#
+# cdap_context
+# returns "distributed" or "sdk" based on current CDAP_HOME
+#
+cdap_context() {
+  local readonly __context __version=$(cdap_version)
+  if [[ -e ${CDAP_HOME}/lib/co.cask.cdap.cdap-standalone-${__version}.jar ]]; then
+    __context=sdk
+  else
+    __context=distributed
+  fi
+  echo ${__context}
+}
+
+#
+# cdap_version [component]
+# returns the version of CDAP or <component> in CDAP_HOME, replacing snapshot timestamps with -SNAPSHOT
+#
+cdap_version() {
+  local readonly __component=${1}
+  local readonly __cdap_major __cdap_minor __cdap_patch __cdap_snapshot
+  local __version
+  if [[ -z ${__component} ]]; then
+    __version=$(<${CDAP_HOME}/VERSION)
+  else
+    __version=$(<${CDAP_HOME}/${__component}/VERSION)
+  fi
+  __cdap_major=$(echo ${__version} | cut -d. -f1)
+  __cdap_minor=$(echo ${__version} | cut -d. -f2)
+  __cdap_patch=$(echo ${__version} | cut -d. -f3)
+  __cdap_snapshot=$(echo ${__version} | cut -d. -f4)
+  if [[ -z ${__cdap_snapshot} ]]; then
+    __version=${__cdap_major}.${__cdap_minor}.${__cdap_patch}
+  else
+    __version=${__cdap_major}.${__cdap_minor}.${__cdap_patch}-SNAPSHOT
+  fi
+  echo ${__version}
+}
+
 ###
 #
 # CDAP SDK functions
@@ -664,10 +705,13 @@ cdap_check_and_set_classpath_for_dev_environment() {
 # returns: true
 #
 cdap_sdk_usage() {
+  echo
   echo "Usage: ${0} sdk {start|stop|restart|status|usage}"
+  echo
   echo "Additional options with start, restart:"
   echo "--enable-debug [ <port> ] to connect to a debug port for Standalone CDAP (default port is 5005)"
   echo "--foreground to run the SDK in the foreground, showing logs on STDOUT"
+  echo
   return 0
 }
 
@@ -694,8 +738,8 @@ cdap_sdk_stop() { cdap_stop_pidfile ${__pidfile} "CDAP Standalone (SDK)"; };
 #
 cdap_sdk_check_before_start() {
   cdap_check_pidfile ${__pidfile} || return ${?}
-  cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM} || return ${?}
-  local __node_pid=$(ps | grep ${CDAP_UI_PATH} | grep -v grep | awk '{ print $1 }')
+  cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM:-v0.10.36} || return ${?}
+  local __node_pid=$(ps | grep ${CDAP_UI_PATH:-ui/server.js} | grep -v grep | awk '{ print $1 }')
   if [[ -z ${__node_pid} ]]; then
     : # continue
   else
@@ -721,7 +765,7 @@ cdap_sdk_start() {
     CDAP_SDK_DEFAULT_JVM_OPTS="-Xmx2048m"
   fi
 
-  eval split_jvm_opts ${CDAP_SDK_DEFAULT_JVM_OPTS} ${CDAP_OPTS} ${JAVA_OPTS}
+  eval split_jvm_opts ${CDAP_SDK_DEFAULT_JVM_OPTS} ${CDAP_SDK_OPTS} ${JAVA_OPTS}
   cdap_sdk_check_before_start || return 1
 
   cdap_create_local_dir || die "Failed to create LOCAL_DIR: ${LOCAL_DIR}"
@@ -748,6 +792,9 @@ cdap_sdk_start() {
   CLASSPATH=$(find "${CDAP_HOME}/lib" -type f | sort | tr '\n' ':')
   CLASSPATH="${CLASSPATH}:${CDAP_HOME}/conf/"
 
+  # SDK requires us to be in CDAP_HOME
+  cd ${CDAP_HOME}
+
   # Start SDK processes
   echo -n "$(date) Starting CDAP Standalone (SDK) ..."
   if ${__foreground}; then
@@ -758,7 +805,7 @@ cdap_sdk_start() {
     return ${__ret}
   else
     nohup nice -1 "${JAVA}" ${JVM_OPTS[@]} ${ROUTER_OPTS} -classpath "${CLASSPATH}" co.cask.cdap.StandaloneMain \
-      2>&1 < /dev/null >> "${LOG_DIR}"/cdap.log &
+      </dev/null >>"${LOG_DIR}"/cdap.log 2>&1 &
     __ret=${?}
     __pid=${!}
     echo ${__pid} > ${__pidfile}
@@ -864,7 +911,7 @@ cdap_ui() {
   fi
   local readonly MAIN_CMD=${MAIN_CMD}
   export NODE_ENV="production"
-  local readonly MAIN_CMD_ARGS="${CDAP_HOME}"/${CDAP_UI_PATH}
+  local readonly MAIN_CMD_ARGS="${CDAP_HOME}"/${CDAP_UI_PATH:-ui/server.js}
   cdap_start_bin || die "Failed to start CDAP ${CDAP_SERVICE} service"
 }
 
@@ -873,19 +920,21 @@ cdap_ui() {
 # Runs CDAP CLI with the given options, or starts an interactive shell
 #
 cdap_cli() {
-  local readonly __path __libexec __lib __script="$(basename ${0}):cdap_cli"
+  local readonly __path __libexec __lib __version __script="$(basename ${0}):cdap_cli"
   local readonly __class="co.cask.cdap.cli.CLIMain"
   cdap_set_java || die "Unable to locate JAVA or JAVA_HOME"
-  __path=$(cdap_home)
-  if [[ -d ${__path}/cli/libexec ]]; then
+  __path=${CDAP_HOME}
+  if [[ -d ${__path}/cli/lib ]]; then
     __libexec=${__path}/cli/libexec
     __lib=${__path}/cli/lib
+    __version=$(cdap_version cli)
   else
     __libexec=${__path}/libexec
     __lib=${__path}/lib
+    __version=$(cdap_version)
   fi
-  CLI_CP=${__libexec}/co.cask.cdap.cdap-cli-@@project.version@@.jar
-  CLI_CP+=:${__lib}/co.cask.cdap.cdap-cli-@@project.version@@.jar
+  CLI_CP=${__libexec}/co.cask.cdap.cdap-cli-${__version}.jar
+  CLI_CP+=:${__lib}/co.cask.cdap.cdap-cli-${__version}.jar
   if [[ ${CLASSPATH} == '' ]]; then
     CLASSPATH=${CLI_CP}
   else
@@ -904,10 +953,10 @@ cdap_cli() {
 #
 cdap_config_tool() {
   local readonly __path __libexec __lib __script="$(basename ${0}):cdap_config_tool"
-  local readonly __authfile="${HOME}"/.cdap.accesstoken
+  local readonly __authfile="${HOME}"/.cdap.accesstoken.${HOSTNAME}
   local readonly __ret __class=co.cask.cdap.ui.ConfigurationJsonTool
   cdap_set_java || die "Unable to locate JAVA or JAVA_HOME"
-  __path=$(cdap_home)
+  __path=${CDAP_HOME}
   if [[ -d ${__path}/ui/lib ]]; then
     __libexec=${__path}/ui/libexec
     __lib=${__path}/ui/lib
@@ -938,6 +987,100 @@ cdap_config_tool() {
 
   "${JAVA}" -cp ${CLASSPATH} -Dscript=${__script} ${__class} ${@}
   __ret=${?}
+  return ${__ret}
+}
+
+#
+# cdap_upgrade_tool [arguments]
+#
+cdap_upgrade_tool() {
+  local readonly __args=${@}
+  local readonly __path __libexec __lib __script="$(basename ${0}):cdap_upgrade_tool"
+  local readonly __ret __class=co.cask.cdap.data.tools.UpgradeTool
+  cdap_set_java || die "Unable to locate JAVA or JAVA_HOME"
+  __path=${CDAP_HOME}
+  if [[ -d ${__path}/master/lib ]]; then
+    __libexec=${__path}/master/libexec
+    __lib=${__path}/master/lib
+  else
+    __libexec=${__path}/libexec
+    __lib=${__path}/lib
+  fi
+  if [[ ${CLASSPATH} == "" ]]; then
+    CLASSPATH=${__lib}/*
+  else
+    CLASSPATH=${CLASSPATH}:${__lib}/*
+  fi
+  if [[ -d ${CDAP_CONF} ]]; then
+    CLASSPATH=${CLASSPATH}:"${CDAP_CONF}"
+  elif [[ -d ${__path}/conf ]]; then
+    CLASSPATH=${CLASSPATH}:"${__path}"/conf/
+  fi
+
+  # check arguments
+  if [[ ${1} == 'hbase' ]]; then
+    shift
+    set -- "upgrade_hbase" ${@}
+  else
+    set -- "upgrade" ${@}
+  fi
+
+  "${JAVA}" -cp ${CLASSPATH} -Dscript=${__script} ${__class} ${@}
+  __ret=${?}
+  return ${__ret}
+}
+
+# cdap_tx_debugger
+cdap_tx_debugger() {
+  local readonly __path __libexec __lib __script="$(basename ${0}):cdap_tx_debugger"
+  local readonly __authfile="${HOME}"/.cdap.accesstoken.${HOSTNAME}
+  local readonly __ret __class=co.cask.cdap.data2.transaction.TransactionManagerDebuggerMain
+  cdap_set_java || die "Unable to locate JAVA or JAVA_HOME"
+  __path=${CDAP_HOME}
+  if [[ -d ${__path}/master/libexec ]]; then
+    __libexec=${__path}/master/libexec
+    __lib=${__path}/master/lib
+  else
+    __libexec=${__path}/libexec
+    __lib=${__path}/lib
+  fi
+  if [[ ${CLASSPATH} == "" ]]; then
+    CLASSPATH=${__lib}/*
+  else
+    CLASSPATH=${CLASSPATH}:${__lib}/*
+  fi
+  if [[ -d ${CDAP_CONF} ]]; then
+    CLASSPATH=${CLASSPATH}:"${CDAP_CONF}"
+  elif [[ -d ${__path}/conf ]]; then
+    CLASSPATH=${CLASSPATH}:"${__path}"/conf/
+  fi
+  # add token file arg with default token file if one is not provided
+  local __has_arg=0 __var
+  for __var in ${@}; do
+    if [[ ${__var} == "--token-file" ]]; then
+      __has_arg=1
+    fi
+  done
+  if [[ ${__has_arg} -eq 0 ]] && [[ -f ${__auth_file} ]]; then
+    set -- ${@} "--token-file" "${__auth_file}"
+  fi
+
+  "${JAVA}" -cp ${CLASSPATH} -Dscript=${__script} ${__class} ${@}
+  __ret=${?}
+  return ${__ret}
+}
+
+#
+# cdap_debug <entity> [arguments]
+#
+cdap_debug() {
+  local readonly __entity=${1}
+  shift
+  local readonly __ret __args=${@}
+  case ${__entity} in
+    transactions) cdap_tx_debugger ${__args}; __ret=${?} ;;
+    *) echo "Usage: ${0} debug transactions [arguments]"; __ret=1
+  esac
   return ${__ret}
 }
 
@@ -985,7 +1128,7 @@ cdap_sdk() {
             __port=${__arg}
           fi
         fi
-        CDAP_OPTS+=" -agentlib:jdwp=transport=dt_socket,address=localhost:${__port},server=y,suspend=n"
+        CDAP_SDK_OPTS+=" -agentlib:jdwp=transport=dt_socket,address=localhost:${__port},server=y,suspend=n"
       fi
       # Execute __command
       ${__command} ${__foreground} ${__debug} ${__port} ${__arg}
@@ -1000,52 +1143,8 @@ cdap_sdk() {
   return ${__ret}
 }
 
-# cdap_tx_debugger
-cdap_tx_debugger() {
-  local readonly __path __libexec __lib __script="$(basename ${0}):cdap_tx_debugger"
-  local readonly __authfile="${HOME}"/.cdap.accesstoken
-  local readonly __ret __class=co.cask.cdap.data2.transaction.TransactionManagerDebuggerMain
-  cdap_set_java || die "Unable to locate JAVA or JAVA_HOME"
-  __path=$(cdap_home)
-  if [[ -d ${__path}/master/libexec ]]; then
-    __libexec=${__path}/master/libexec
-    __lib=${__path}/master/lib
-  else
-    __libexec=${__path}/libexec
-    __lib=${__path}/lib
-  fi
-  if [[ ${CLASSPATH} == "" ]]; then
-    CLASSPATH=${__lib}/*
-  else
-    CLASSPATH=${CLASSPATH}:${__lib}/*
-  fi
-  if [[ -d ${CDAP_CONF} ]]; then
-    CLASSPATH=${CLASSPATH}:"${CDAP_CONF}"
-  elif [[ -d ${__path}/conf ]]; then
-    CLASSPATH=${CLASSPATH}:"${__path}"/conf/
-  fi
-  # add token file arg with default token file if one is not provided
-  local __has_arg=0 __var
-  for __var in ${@}; do
-    if [[ ${__var} == "--token-file" ]]; then
-      __has_arg=1
-    fi
-  done
-  if [[ ${__has_arg} -eq 0 ]] && [[ -f ${__auth_file} ]]; then
-    set -- ${@} "--token-file" "${__auth_file}"
-  fi
-
-  "${JAVA}" -cp ${CLASSPATH} -Dscript=${__script} ${__class} ${@}
-  __ret=${?}
-  return ${__ret}
-}
-
 #
 # User-definable variables
-CDAP_NODE_VERSION_MINIMUM=${CDAP_NODE_VERSION_MINIMUM:-v0.10.36}
-
-# Specifies CDAP UI Path
-CDAP_UI_PATH=${CDAP_UI_PATH:-ui/server.js}
 
 # Default CDAP_CONF to /etc/cdap/conf (package default)
 export CDAP_CONF=${CDAP_CONF:-/etc/cdap/conf}
@@ -1078,6 +1177,6 @@ export PID_DIR=${CDAP_PID_DIR:-/var/cdap/run}
 export TEMP_DIR=${CDAP_TEMP_DIR:-/tmp}
 
 # Default SDK options
-CDAP_OPTS="${OPTS} -Djava.security.krb5.realm= -Djava.security.krb5.kdc= -Djava.awt.headless=true"
+CDAP_SDK_OPTS="${OPTS} -Djava.security.krb5.realm= -Djava.security.krb5.kdc= -Djava.awt.headless=true"
 
 export NICENESS=${NICENESS:-0}

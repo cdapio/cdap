@@ -9,8 +9,11 @@ Preparing Package Managers
 CDAP components are available as either Yum ``.rpm`` or APT ``.deb`` packages. There is
 one package for each CDAP component, and each component may have multiple services.
 Additionally, there is a base CDAP package with three utility packages (for HBase
-compatibility) installed which creates the base configuration and the ``cdap`` user. We
-provide packages for *Ubuntu 12* and *CentOS 6*.
+compatibility) installed which creates the base configuration and the ``cdap`` user. 
+
+We provide packages for *Ubuntu 12.04+* and *CentOS 6.0+*. While these are the only
+packages we currently provide, they contain no distribution version-specific code, and the
+same packages will work on equivalent OSes.
 
 Available packaging types:
 

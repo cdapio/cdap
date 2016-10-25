@@ -95,7 +95,7 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
       cConf.setInt(Constants.Router.CONNECTION_TIMEOUT_SECS, CONNECTION_IDLE_TIMEOUT_SECS);
       router =
         new NettyRouter(cConf, sConfiguration, InetAddresses.forString(hostname),
-                        new RouterServiceLookup((DiscoveryServiceClient) discoveryService,
+                        new RouterServiceLookup(cConf, (DiscoveryServiceClient) discoveryService,
                                                 new RouterPathLookup(), routeStore),
                         new SuccessTokenValidator(), accessTokenTransformer, discoveryServiceClient);
       router.startAndWait();

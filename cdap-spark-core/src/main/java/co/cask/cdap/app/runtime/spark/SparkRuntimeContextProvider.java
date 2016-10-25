@@ -175,7 +175,7 @@ public final class SparkRuntimeContextProvider {
                                                                  contextConfig.getApplicationSpecification());
       // Setup dataset framework context, if required
       if (programDatasetFramework instanceof ProgramContextAware) {
-        ProgramRunId programRunId = program.getId().toEntityId()
+        ProgramRunId programRunId = program.getId()
           .run(ProgramRunners.getRunId(contextConfig.getProgramOptions()));
         ((ProgramContextAware) programDatasetFramework).initContext(programRunId);
       }

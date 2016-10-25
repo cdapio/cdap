@@ -160,7 +160,7 @@ object SparkMainWrapper {
         // no-op
       }
     })(baseURI => {
-      val programRunId = runtimeContext.getProgram.getId.toEntityId.run(runtimeContext.getRunId.getId)
+      val programRunId = runtimeContext.getProgram.getId.run(runtimeContext.getRunId.getId)
       val client = new SparkExecutionClient(URI.create(baseURI), programRunId)
       val workflowToken = Option(runtimeContext.getWorkflowInfo).map(_.getWorkflowToken).orNull
       val executor = Executors.newSingleThreadScheduledExecutor(

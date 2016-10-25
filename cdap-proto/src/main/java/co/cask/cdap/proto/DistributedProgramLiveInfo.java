@@ -16,6 +16,8 @@
 
 package co.cask.cdap.proto;
 
+import co.cask.cdap.proto.id.ProgramId;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,7 +30,7 @@ public class DistributedProgramLiveInfo extends ProgramLiveInfo implements Conta
   private final List<Containers.ContainerInfo> containers = new ArrayList<>();
   private final List<String> services = new ArrayList<>();
 
-  public DistributedProgramLiveInfo(Id.Program program, String yarnAppId) {
+  public DistributedProgramLiveInfo(ProgramId program, String yarnAppId) {
     super(program, "distributed");
     this.yarnAppId = yarnAppId;
   }

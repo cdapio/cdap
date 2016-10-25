@@ -61,10 +61,10 @@
       <id>sonatype</id>
       <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
     </repository>
-    <repository>
-      <id>snapshot</id>
-      <url>https://repository.apache.org/content/repositories/snapshots/</url>
-    </repository>
+   <repository>
+     <id>snapshot</id>
+     <url>https://repository.apache.org/content/repositories/snapshots/</url>
+   </repository>
   </repositories>
 
 
@@ -115,6 +115,7 @@
     <hbase11.version>1.1.1</hbase11.version>
     <hbase12cdh570.version>1.2.0-cdh5.7.0</hbase12cdh570.version>
     <hive.version>1.2.1</hive.version>
+    <tez.version>0.8.4</tez.version>
     <hsql.version>2.2.4</hsql.version>
     <http.component.version>4.2.5</http.component.version>
     <jetty.version>6.1.22</jetty.version>
@@ -128,7 +129,7 @@
     <mockito.version>1.9.5</mockito.version>
     <mysql.version>5.1.21</mysql.version>
     <netty.version>3.6.6.Final</netty.version>
-    <netty.http.version>0.16.0-SNAPSHOT</netty.http.version>
+    <netty.http.version>0.16.0</netty.http.version>
     <rs-api.version>2.0</rs-api.version>
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
@@ -137,9 +138,9 @@
     <snappy.version>1.1.1.7</snappy.version>
     <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
-    <tephra.version>0.8.0-incubating</tephra.version>
+    <tephra.version>0.10.0-incubating-SNAPSHOT</tephra.version>
     <thrift.version>0.9.3</thrift.version>
-    <twill.version>0.8.0-SNAPSHOT</twill.version>
+    <twill.version>0.8.0</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
     <spark.version>1.6.1</spark.version>
@@ -1437,6 +1438,12 @@
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-compress</artifactId>
         <version>${commons.compress.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.tez</groupId>
+        <artifactId>tez-api</artifactId>
+        <version>${tez.version}</version>
+        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mockftpserver</groupId>

@@ -25,6 +25,7 @@ import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -48,8 +49,6 @@ import javax.annotation.Nullable;
  * Common implementation of methods to interact with metadata service over HTTP.
  */
 public abstract class AbstractMetadataClient {
-  private static final Type SET_METADATA_SEARCH_RESULT_TYPE =
-    new TypeToken<Set<MetadataSearchResultRecord>>() { }.getType();
   private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecord>>() { }.getType();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
@@ -75,10 +74,10 @@ public abstract class AbstractMetadataClient {
    * @param namespace the namespace to search in
    * @param query the query string with which to search
    * @param target the target type. If null, all possible types will be searched
-   * @return A set of {@link MetadataSearchResultRecord} for the given query.
+   * @return the {@link MetadataSearchResponse} for the given query.
    */
-  public Set<MetadataSearchResultRecord> searchMetadata(Id.Namespace namespace, String query,
-                                                        @Nullable MetadataSearchTargetType target)
+  public MetadataSearchResponse searchMetadata(Id.Namespace namespace, String query,
+                                               @Nullable MetadataSearchTargetType target)
     throws IOException, UnauthenticatedException, UnauthorizedException {
     Set<MetadataSearchTargetType> targets = ImmutableSet.of();
     if (target != null) {
@@ -96,8 +95,8 @@ public abstract class AbstractMetadataClient {
    * @param targets {@link MetadataSearchTargetType}s to search. If empty, all possible types will be searched
    * @return A set of {@link MetadataSearchResultRecord} for the given query.
    */
-  public Set<MetadataSearchResultRecord> searchMetadata(Id.Namespace namespace, String query,
-                                                        Set<MetadataSearchTargetType> targets)
+  public MetadataSearchResponse searchMetadata(Id.Namespace namespace, String query,
+                                               Set<MetadataSearchTargetType> targets)
     throws IOException, UnauthenticatedException, UnauthorizedException {
 
     String path = String.format("metadata/search?query=%s", query);
@@ -106,7 +105,7 @@ public abstract class AbstractMetadataClient {
     }
     URL searchURL = resolve(namespace, path);
     HttpResponse response = execute(HttpRequest.get(searchURL).build());
-    return GSON.fromJson(response.getResponseBodyAsString(), SET_METADATA_SEARCH_RESULT_TYPE);
+    return GSON.fromJson(response.getResponseBodyAsString(), MetadataSearchResponse.class);
   }
 
   /**
@@ -1123,7 +1122,7 @@ public abstract class AbstractMetadataClient {
       throw new BadRequestException(response.getResponseBodyAsString());
     }
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(namespacedId);
+      throw new NotFoundException(namespacedId.toEntityId());
     }
     return response;
   }

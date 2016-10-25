@@ -33,6 +33,9 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
@@ -42,7 +45,9 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Tests for {@link AppLifecycleHttpHandler}
@@ -56,7 +61,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testDeployNonExistingNamespace() throws Exception {
     HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, "random");
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
-    NotFoundException nfe = new NamespaceNotFoundException(Id.Namespace.from("random"));
+    NotFoundException nfe = new NamespaceNotFoundException(new NamespaceId("random"));
     Assert.assertEquals(nfe.getMessage(), readResponse(response));
   }
 
@@ -139,10 +144,10 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, deploy(appId, request).getStatusLine().getStatusCode());
     // Cannot update the app created by versioned API with versionId not ending with "-SNAPSHOT"
     Assert.assertEquals(409, deploy(appId, request).getStatusLine().getStatusCode());
-    Assert.assertEquals(404, getVersionedAppResponse(Id.Namespace.DEFAULT.getId(), appId.getApplication(),
+    Assert.assertEquals(404, getAppResponse(Id.Namespace.DEFAULT.getId(), appId.getApplication(),
                                             "non_existing_version").getStatusLine().getStatusCode());
-    Assert.assertEquals(404, getNonVersionedAppResponse(Id.Namespace.DEFAULT.getId(),
-                                                        appId.getApplication()).getStatusLine().getStatusCode());
+    Assert.assertEquals(404, getAppResponse(Id.Namespace.DEFAULT.getId(),
+                                            appId.getApplication()).getStatusLine().getStatusCode());
 
     // Deploy app with default versionId by non-versioned API
     Id.Application appIdDefault = Id.Application.from(Id.Namespace.DEFAULT, appId.getApplication());
@@ -158,13 +163,25 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), configV2);
     Assert.assertEquals(200, deploy(appIdV2, requestV2).getStatusLine().getStatusCode());
 
+    Set<String> versions = ImmutableSet.of("-SNAPSHOT", "2.0.0", "1.0.0");
+    Assert.assertEquals(versions, getAppVersions(appId.getNamespace(), appId.getApplication()));
+
+    List<JsonObject> appList = getAppList(appId.getNamespace());
+    Set<String> receivedVersions = new HashSet<>();
+    for (JsonObject appRecord : appList) {
+      receivedVersions.add(appRecord.getAsJsonPrimitive("version").getAsString());
+    }
+    Assert.assertEquals(versions, receivedVersions);
+
     JsonObject appDetails = getAppDetails(appId.getNamespace(), appId.getApplication(), appId.getVersion());
     Assert.assertEquals(GSON.toJson(config), appDetails.get("configuration").getAsString());
+    Assert.assertEquals(appId.getVersion(), appDetails.get("appVersion").getAsString());
 
     // Get app info for the app with default versionId by versioned API
     JsonObject appDetailsDefault = getAppDetails(appId.getNamespace(), appId.getApplication(),
                                                  ApplicationId.DEFAULT_VERSION);
     Assert.assertEquals(GSON.toJson(configDefault), appDetailsDefault.get("configuration").getAsString());
+    Assert.assertEquals(ApplicationId.DEFAULT_VERSION, appDetailsDefault.get("appVersion").getAsString());
 
     // Get app info for the app with versionId "version_2" by versioned API
     JsonObject appDetailsV2 = getAppDetails(appId.getNamespace(), appId.getApplication(), appIdV2.getVersion());
@@ -176,12 +193,17 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), configDefault2);
     Assert.assertEquals(200, deploy(appIdDefault.toEntityId(), requestDefault2).getStatusLine().getStatusCode());
 
-    JsonObject appDetailsDefault2 = getAppDetails(appId.getNamespace(), appId.getApplication());
+    JsonObject appDetailsDefault2 = getAppDetails(appIdDefault.getNamespaceId(), appIdDefault.getId());
     Assert.assertEquals(GSON.toJson(configDefault2), appDetailsDefault2.get("configuration").getAsString());
 
-    // Get updated app info for the app with default versionId by non-versioned API
-    JsonObject appDetailsDefault2withVersion = getAppDetails(appId.getNamespace(), appId.getApplication());
-    Assert.assertEquals(GSON.toJson(configDefault2), appDetailsDefault2withVersion.get("configuration").getAsString());
+    // Get updated app info for the app with default versionId by versioned API
+    JsonObject appDetailsDefault2WithVersion = getAppDetails(appIdDefault.getNamespaceId(), appIdDefault.getId(),
+                                                             ApplicationId.DEFAULT_VERSION);
+    Assert.assertEquals(GSON.toJson(configDefault2), appDetailsDefault2WithVersion.get("configuration").getAsString());
+    Assert.assertEquals(ApplicationId.DEFAULT_VERSION, appDetailsDefault.get("appVersion").getAsString());
+    deleteApp(appId, 200);
+    deleteApp(appIdDefault, 200);
+    deleteApp(appIdV2, 200);
   }
 
   /**
@@ -219,7 +241,6 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testListAndGet() throws Exception {
     final String appName = "AppWithDatasetName";
-    Id.Namespace ns1 = Id.Namespace.from(TEST_NAMESPACE1);
     Id.Namespace ns2 = Id.Namespace.from(TEST_NAMESPACE2);
 
     Id.Artifact ns2ArtifactId = Id.Artifact.from(ns2, "bloatedListAndGet", "1.0.0-SNAPSHOT");
@@ -236,13 +257,19 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertNotNull(response.getEntity());
 
+    // deploy with name and version to testnamespace2
+    ApplicationId app1 = new ApplicationId(TEST_NAMESPACE2, appName, VERSION1);
+    response = deploy(app1, new AppRequest<Config>(ArtifactSummary.from(ns2ArtifactId)));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertNotNull(response.getEntity());
+
     //verify testnamespace1 has 1 app
     List<JsonObject> apps = getAppList(TEST_NAMESPACE1);
     Assert.assertEquals(1, apps.size());
 
-    //verify testnamespace2 has 1 app
+    //verify testnamespace2 has 2 app
     apps = getAppList(TEST_NAMESPACE2);
-    Assert.assertEquals(1, apps.size());
+    Assert.assertEquals(2, apps.size());
 
     //get and verify app details in testnamespace1
     JsonObject result = getAppDetails(TEST_NAMESPACE1, "WordCountApp");
@@ -301,6 +328,10 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     result = getAppDetails(TEST_NAMESPACE2, appName);
     Assert.assertEquals(appName, result.get("name").getAsString());
 
+    //get and verify app details in testnamespace2
+    result = getAppDetails(TEST_NAMESPACE2, appName, VERSION1);
+    Assert.assertEquals(appName, result.get("name").getAsString());
+
     //delete app in testnamespace1
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -309,10 +340,14 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     deleteArtifact(ns2ArtifactId, 200);
+
+    //verify testnamespace2 has 0 app
+    apps = getAppList(TEST_NAMESPACE2);
+    Assert.assertEquals(0, apps.size());
   }
 
   /**
-   * Tests deleting an application.
+   * Tests deleting applications with versioned and non-versioned API.
    */
   @Test
   public void testDelete() throws Exception {
@@ -321,6 +356,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                          TEST_NAMESPACE1));
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
+    // Start a fow for the App
     deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Id.Program program = Id.Program.from(TEST_NAMESPACE1, "WordCountApp", ProgramType.FLOW, "WordCountFlow");
     startProgram(program);
@@ -354,6 +390,50 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
                                             TEST_NAMESPACE2));
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
+    // Delete an non-existing app with version
+    response = doDelete(getVersionedAPIPath("apps/XYZ/versions/" + VERSION1,
+                                                         Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    // Deploy an app with version
+    Id.Artifact wordCountArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcountapp", VERSION1);
+    addAppArtifact(wordCountArtifactId, WordCountApp.class);
+    AppRequest<? extends Config> wordCountRequest = new AppRequest<>(
+      new ArtifactSummary(wordCountArtifactId.getName(), wordCountArtifactId.getVersion().getVersion()));
+    ApplicationId wordCountApp1 = NamespaceId.DEFAULT.app("WordCountApp", VERSION1);
+    Assert.assertEquals(200, deploy(wordCountApp1, wordCountRequest).getStatusLine().getStatusCode());
+
+    // Start a flow for the App
+    ProgramId program1 = wordCountApp1.program(ProgramType.FLOW, "WordCountFlow");
+    startProgram(program1, 200);
+    waitState(program1, "RUNNING");
+    // Try to delete an App while its flow is running
+    response = doDelete(getVersionedAPIPath(
+      String.format("apps/%s/versions/%s", wordCountApp1.getApplication(), wordCountApp1.getVersion()),
+      Constants.Gateway.API_VERSION_3_TOKEN, wordCountApp1.getNamespace()));
+    Assert.assertEquals(409, response.getStatusLine().getStatusCode());
+    Assert.assertEquals("'" + program1.getParent() + "' could not be deleted. Reason: The following programs" +
+                          " are still running: " + program1.getProgram(), readResponse(response));
+
+    stopProgram(program1, null, 200, null);
+    waitState(program1, "STOPPED");
+
+    // Delete the app with version in the wrong namespace
+    response = doDelete(getVersionedAPIPath(
+      String.format("apps/%s/versions/%s", wordCountApp1.getApplication(), wordCountApp1.getVersion()),
+      Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
+    //Delete the app with version after stopping the flow
+    response = doDelete(getVersionedAPIPath(
+      String.format("apps/%s/versions/%s", wordCountApp1.getApplication(), wordCountApp1.getVersion()),
+      Constants.Gateway.API_VERSION_3_TOKEN, wordCountApp1.getNamespace()));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = doDelete(getVersionedAPIPath(
+      String.format("apps/%s/versions/%s", wordCountApp1.getApplication(), wordCountApp1.getVersion()),
+      Constants.Gateway.API_VERSION_3_TOKEN, wordCountApp1.getNamespace()));
+    Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+
     //Delete the App after stopping the flow
     response = doDelete(getVersionedAPIPath("apps/WordCountApp/", Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
@@ -367,7 +447,8 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
                                          TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    List<ArtifactSummary> summaries = readResponse(response, new TypeToken<List<ArtifactSummary>>() { }.getType());
+    List<ArtifactSummary> summaries = readResponse(response, new TypeToken<List<ArtifactSummary>>() {
+    }.getType());
     Assert.assertFalse(summaries.isEmpty());
   }
 

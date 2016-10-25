@@ -34,11 +34,12 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactMeta;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.ArtifactClasses;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -84,7 +85,7 @@ public class AbstractProgramRuntimeServiceTest {
       new AbstractProgramRuntimeService(CConfiguration.create(), runnerFactory, null,
                                         new DefaultImpersonator(CConfiguration.create(), null, null)) {
       @Override
-      public ProgramLiveInfo getLiveInfo(Id.Program programId) {
+      public ProgramLiveInfo getLiveInfo(ProgramId programId) {
         return new ProgramLiveInfo(programId, "runtime") { };
       }
 
@@ -106,9 +107,9 @@ public class AbstractProgramRuntimeServiceTest {
 
     runtimeService.startAndWait();
     try {
-      ProgramDescriptor descriptor = new ProgramDescriptor(program.getId().toEntityId(), null, null);
+      ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null, null);
       final ProgramController controller =
-        runtimeService.run(descriptor, new SimpleProgramOptions(program.getId().toEntityId())).getController();
+        runtimeService.run(descriptor, new SimpleProgramOptions(program.getId())).getController();
       Tasks.waitFor(ProgramController.State.COMPLETED, new Callable<ProgramController.State>() {
         @Override
         public ProgramController.State call() throws Exception {
@@ -132,7 +133,7 @@ public class AbstractProgramRuntimeServiceTest {
     // This test is for testing (CDAP-3716)
     // Create a service to simulate an existing running app.
     Service service = new TestService();
-    Id.Program programId = Id.Program.from(Id.Namespace.DEFAULT, "dummyApp", ProgramType.WORKER, "dummy");
+    ProgramId programId = NamespaceId.DEFAULT.app("dummyApp").program(ProgramType.WORKER, "dummy");
     RunId runId = RunIds.generate();
     ProgramRuntimeService.RuntimeInfo extraInfo = createRuntimeInfo(service, programId, runId);
     service.startAndWait();
@@ -159,7 +160,7 @@ public class AbstractProgramRuntimeServiceTest {
       new AbstractProgramRuntimeService(CConfiguration.create(), runnerFactory, null,
                                         new DefaultImpersonator(CConfiguration.create(), null, null)) {
       @Override
-      public ProgramLiveInfo getLiveInfo(Id.Program programId) {
+      public ProgramLiveInfo getLiveInfo(ProgramId programId) {
         return new ProgramLiveInfo(programId, "runtime") { };
       }
 
@@ -182,7 +183,7 @@ public class AbstractProgramRuntimeServiceTest {
     runtimeService.startAndWait();
     try {
       try {
-        ProgramDescriptor descriptor = new ProgramDescriptor(program.getId().toEntityId(), null, null);
+        ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null, null);
 
         // Set of scopes to test
         String programScope = program.getType().getScope();
@@ -210,7 +211,7 @@ public class AbstractProgramRuntimeServiceTest {
           }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
           // Should get an argument
-          Arguments args = argumentsMap.get(program.getId().toEntityId());
+          Arguments args = argumentsMap.get(program.getId());
           Assert.assertNotNull(args);
           Assert.assertEquals(scope.length(), Integer.parseInt(args.getOption("size")));
         }
@@ -241,7 +242,7 @@ public class AbstractProgramRuntimeServiceTest {
         return new ProgramRunner() {
           @Override
           public ProgramController run(Program program, ProgramOptions options) {
-            argumentsMap.put(program.getId().toEntityId(), options.getUserArguments());
+            argumentsMap.put(program.getId(), options.getUserArguments());
 
             Service service = new FastService();
             ProgramController controller = new ProgramControllerServiceAdapter(service, program.getId(),
@@ -272,23 +273,23 @@ public class AbstractProgramRuntimeServiceTest {
       }
 
       @Override
-      public Id.Program getId() {
-        return Id.Program.from(Id.Namespace.DEFAULT, "dummyApp", ProgramType.WORKER, "dummy");
+      public ProgramId getId() {
+        return new ApplicationId(NamespaceId.DEFAULT.getNamespace(), "dummyApp").worker("dummy");
       }
 
       @Override
       public String getName() {
-        return getId().getId();
+        return getId().getProgram();
       }
 
       @Override
       public String getNamespaceId() {
-        return getId().getNamespaceId();
+        return getId().getNamespace();
       }
 
       @Override
       public String getApplicationId() {
-        return getId().getApplicationId();
+        return getId().getApplication();
       }
 
       @Override
@@ -314,8 +315,9 @@ public class AbstractProgramRuntimeServiceTest {
   }
 
   private ProgramRuntimeService.RuntimeInfo createRuntimeInfo(Service service,
-                                                              final Id.Program programId, RunId runId) {
-    final ProgramControllerServiceAdapter controller = new ProgramControllerServiceAdapter(service, programId, runId);
+                                                              final ProgramId programId, RunId runId) {
+    final ProgramControllerServiceAdapter controller =
+      new ProgramControllerServiceAdapter(service, programId, runId);
     return new ProgramRuntimeService.RuntimeInfo() {
       @Override
       public ProgramController getController() {
@@ -328,7 +330,7 @@ public class AbstractProgramRuntimeServiceTest {
       }
 
       @Override
-      public Id.Program getProgramId() {
+      public ProgramId getProgramId() {
         return programId;
       }
 
@@ -384,12 +386,12 @@ public class AbstractProgramRuntimeServiceTest {
     }
 
     @Override
-    public ProgramLiveInfo getLiveInfo(Id.Program programId) {
+    public ProgramLiveInfo getLiveInfo(ProgramId programId) {
       return new ProgramLiveInfo(programId, "runtime") { };
     }
 
     @Override
-    public RuntimeInfo lookup(Id.Program programId, RunId runId) {
+    public RuntimeInfo lookup(ProgramId programId, RunId runId) {
       RuntimeInfo info = super.lookup(programId, runId);
       if (info != null) {
         return info;

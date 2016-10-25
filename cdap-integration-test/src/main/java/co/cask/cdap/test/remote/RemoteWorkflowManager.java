@@ -30,6 +30,7 @@ import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.ScheduleManager;
@@ -106,7 +107,7 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
       @Override
       public void suspend() {
         try {
-          scheduleClient.suspend(Id.Schedule.from(programId.getApplication(), schedName));
+          scheduleClient.suspend(programId.getParent().schedule(schedName));
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
@@ -115,7 +116,7 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
       @Override
       public void resume() {
         try {
-          scheduleClient.resume(Id.Schedule.from(programId.getApplication(), schedName));
+          scheduleClient.resume(programId.getParent().schedule(schedName));
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
@@ -124,7 +125,7 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
       @Override
       public String status(int expectedCode) {
         try {
-          return scheduleClient.getStatus(Id.Schedule.from(programId.getApplication(), schedName));
+          return scheduleClient.getStatus(programId.getParent().schedule(schedName));
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }

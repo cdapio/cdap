@@ -18,6 +18,8 @@ package co.cask.cdap.data2.transaction;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import com.google.common.base.Functions;
@@ -36,6 +38,7 @@ import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -85,7 +88,7 @@ public final class Transactions {
   }
 
 
-  public static Supplier<TransactionContext>
+  private static Supplier<TransactionContext>
   constantContextSupplier(final TransactionSystemClient txClient,
                           final Iterable<? extends TransactionAware> txAwares) {
     return new Supplier<TransactionContext>() {
@@ -187,6 +190,17 @@ public final class Transactions {
       public void execute(TxRunnable runnable) throws TransactionFailureException {
         TransactionContext txContext = datasetCache.newTransactionContext();
         txContext.start();
+        finishExecute(txContext, runnable);
+      }
+
+      public void execute(int timeout, TxRunnable runnable) throws TransactionFailureException {
+        TransactionContext txContext = datasetCache.newTransactionContext();
+        txContext.start(timeout);
+        finishExecute(txContext, runnable);
+      }
+
+      private void finishExecute(TransactionContext txContext, TxRunnable runnable)
+        throws TransactionFailureException {
         try {
           runnable.run(datasetCache);
         } catch (Exception e) {
@@ -233,12 +247,26 @@ public final class Transactions {
   public static Transactional createTransactionalWithRetry(final Transactional transactional,
                                                            final RetryStrategy retryStrategy) {
     return new Transactional() {
+
       @Override
       public void execute(TxRunnable runnable) throws TransactionFailureException {
+        executeInternal(null, runnable);
+      }
+
+      @Override
+      public void execute(int timeoutInSeconds, TxRunnable runnable) throws TransactionFailureException {
+        executeInternal(timeoutInSeconds, runnable);
+      }
+
+      private void executeInternal(Integer timeout, TxRunnable runnable) throws TransactionFailureException {
         int retries = 0;
         while (true) {
           try {
-            transactional.execute(runnable);
+            if (null == timeout) {
+              transactional.execute(runnable);
+            } else {
+              transactional.execute(timeout, runnable);
+            }
             break;
           } catch (TransactionFailureException e) {
             long delay = retryStrategy.nextRetry(e, ++retries);
@@ -295,7 +323,7 @@ public final class Transactions {
     throw Throwables.propagate(cause);
   }
 
-  /**
+  /**\
    * Propagates the given {@link TransactionFailureException}. If the {@link TransactionFailureException#getCause()}
    * doesn't return {@code null}, the cause will be used instead for the propagation. This method will
    * throw the failure exception as-is the given propagated types if the type matches or as {@link RuntimeException}.
@@ -319,4 +347,56 @@ public final class Transactions {
   private Transactions() {
     // Private the constructor for util class
   }
+
+  /**
+   * Determines the transaction control of a method, as (optionally) annotated with @TransactionPolicy.
+   * If the program's class does not implement the method, the superclass is inspected up to and including
+   * the given base class.
+   *
+   * @param defaultValue returned if no annotation is present
+   * @param baseClass upper bound for the super classes to be inspected
+   * @param program the program
+   * @param methodName the name of the method
+   * @param params the parameter types of the method
+   *
+   * @return the transaction control annotated for the method of the program class or its nearest superclass that
+   *         is annotated; or defaultValue if no annotation is present in any of the superclasses
+   */
+  public static TransactionControl getTransactionControl(TransactionControl defaultValue, Class<?> baseClass,
+                                                         Object program, String methodName, Class<?>... params) {
+    Class<?> cls = program.getClass();
+    while (Object.class != cls) { // we know that Object cannot have this annotation :)
+      TransactionControl txControl = getTransactionControl(cls, methodName, params);
+      if (txControl != null) {
+        return txControl;
+      }
+      if (cls == baseClass) {
+        break; // reached bounding superclass
+      }
+      cls = cls.getSuperclass();
+    }
+    // if we reach this point, then none of the super classes had an annotation for the method
+    for (Class<?> interf : program.getClass().getInterfaces()) {
+      TransactionControl txControl = getTransactionControl(interf, methodName, params);
+      if (txControl != null) {
+        return txControl;
+      }
+    }
+    return defaultValue;
+  }
+
+  private static TransactionControl getTransactionControl(Class<?> cls, String methodName, Class<?>[] params) {
+    try {
+      Method method = cls.getDeclaredMethod(methodName, params);
+      TransactionPolicy annotation = method.getAnnotation(TransactionPolicy.class);
+      if (annotation != null) {
+        return annotation.value();
+      }
+    } catch (NoSuchMethodException e) {
+      // this class does not have the method, that is ok
+    }
+    return null;
+  }
+
+
 }

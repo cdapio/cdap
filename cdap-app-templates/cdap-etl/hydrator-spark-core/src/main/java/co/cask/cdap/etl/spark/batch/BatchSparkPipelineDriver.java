@@ -18,7 +18,10 @@ package co.cask.cdap.etl.spark.batch;
 
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.data.batch.InputFormatProvider;
+import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
 import co.cask.cdap.etl.api.batch.BatchSource;
@@ -33,13 +36,12 @@ import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 import org.apache.spark.api.java.JavaSparkContext;
 
-import java.io.DataInputStream;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.lang.reflect.Type;
+import java.io.BufferedReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 
 /**
@@ -47,10 +49,13 @@ import java.util.Map;
  */
 public class BatchSparkPipelineDriver extends SparkPipelineDriver
   implements JavaSparkMain, TxRunnable {
-  private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .registerTypeAdapter(DatasetInfo.class, new DatasetInfoTypeAdapter())
+    .registerTypeAdapter(OutputFormatProvider.class, new OutputFormatProviderTypeAdapter())
+    .registerTypeAdapter(InputFormatProvider.class, new InputFormatProviderTypeAdapter())
+    .registerTypeAdapter(StreamBatchReadable.class, new StreamBatchReadableTypeAdapter())
     .create();
 
   private transient JavaSparkContext jsc;
@@ -83,11 +88,13 @@ public class BatchSparkPipelineDriver extends SparkPipelineDriver
     BatchPhaseSpec phaseSpec = GSON.fromJson(sec.getSpecification().getProperty(Constants.PIPELINEID),
                                              BatchPhaseSpec.class);
 
-    try (InputStream is = new FileInputStream(sec.getLocalizationContext().getLocalFile("HydratorSpark.config"))) {
-      sourceFactory = SparkBatchSourceFactory.deserialize(is);
-      sinkFactory = SparkBatchSinkFactory.deserialize(is);
-      DataInputStream dataInputStream = new DataInputStream(is);
-      stagePartitions = GSON.fromJson(dataInputStream.readUTF(), MAP_TYPE);
+    Path configFile = sec.getLocalizationContext().getLocalFile("HydratorSpark.config").toPath();
+    try (BufferedReader reader = Files.newBufferedReader(configFile, StandardCharsets.UTF_8)) {
+      String object = reader.readLine();
+      SparkBatchSourceSinkFactoryInfo sourceSinkInfo = GSON.fromJson(object, SparkBatchSourceSinkFactoryInfo.class);
+      sourceFactory = sourceSinkInfo.getSparkBatchSourceFactory();
+      sinkFactory = sourceSinkInfo.getSparkBatchSinkFactory();
+      stagePartitions = sourceSinkInfo.getStagePartitions();
     }
     datasetContext = context;
     runPipeline(phaseSpec.getPhase(), BatchSource.PLUGIN_TYPE, sec, stagePartitions);

@@ -19,6 +19,7 @@ package co.cask.cdap.app.runtime.spark;
 import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.data.DatasetInstantiationException;
@@ -37,6 +38,7 @@ import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import com.google.common.base.Throwables;
 import org.apache.spark.SparkConf;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.api.RunId;
 
 import java.net.URI;
@@ -268,5 +270,15 @@ final class BasicSparkClientContext implements SparkClientContext {
 
   void setState(ProgramState state) {
     this.state = state;
+  }
+
+  @Override
+  public void execute(TxRunnable runnable) throws TransactionFailureException {
+    sparkRuntimeContext.execute(runnable);
+  }
+
+  @Override
+  public void execute(int timeoutInSeconds, TxRunnable runnable) throws TransactionFailureException {
+    sparkRuntimeContext.execute(timeoutInSeconds, runnable);
   }
 }

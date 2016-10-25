@@ -48,6 +48,7 @@ import co.cask.cdap.store.NamespaceStore;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -95,6 +96,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private final Impersonator impersonator;
   private final CConfiguration cConf;
   private final LoadingCache<NamespaceId, NamespaceMeta> namespaceMetaCache;
+  private final String masterShortUserName;
 
   @Inject
   DefaultNamespaceAdmin(NamespaceStore nsStore,
@@ -123,6 +125,16 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
         return fetchNamespaceMeta(namespaceId);
       }
     });
+    String masterPrincipal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
+    try {
+      if (cConf.getBoolean(Constants.Security.ENABLED) && SecurityUtil.isKerberosEnabled(cConf)) {
+        this.masterShortUserName = new KerberosName(masterPrincipal).getShortName();
+      } else {
+        this.masterShortUserName = null;
+      }
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   /**
@@ -137,7 +149,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     Preconditions.checkArgument(metadata != null, "Namespace metadata should not be null.");
     NamespaceId namespace = new NamespaceId(metadata.getName());
     if (exists(namespace.toId())) {
-      throw new NamespaceAlreadyExistsException(namespace.toId());
+      throw new NamespaceAlreadyExistsException(namespace);
     }
 
     // if this namespace has custom mapping then validate the given custom mapping
@@ -177,7 +189,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       // failed to create namespace in underlying storage so delete the namespace meta stored in the store earlier
       deleteNamespaceMeta(metadata.getNamespaceId());
       privilegesManager.revoke(namespace);
-      throw new NamespaceCannotBeCreatedException(namespace.toId(), t);
+      throw new NamespaceCannotBeCreatedException(namespace, t);
     }
   }
 
@@ -256,7 +268,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     NamespaceMeta namespaceMeta = get(namespaceId);
 
     if (checkProgramsRunning(namespaceId.toEntityId())) {
-      throw new NamespaceCannotBeDeletedException(namespaceId,
+      throw new NamespaceCannotBeDeletedException(namespaceId.toEntityId(),
                                                   String.format("Some programs are currently running in namespace " +
                                                                   "'%s', please stop them before deleting namespace",
                                                                 namespaceId));
@@ -287,7 +299,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       }
     } catch (Exception e) {
       LOG.warn("Error while deleting namespace {}", namespaceId, e);
-      throw new NamespaceCannotBeDeletedException(namespaceId, e);
+      throw new NamespaceCannotBeDeletedException(namespaceId.toEntityId(), e);
     }
   }
 
@@ -295,11 +307,11 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   public synchronized void deleteDatasets(Id.Namespace namespaceId) throws Exception {
     // TODO: CDAP-870, CDAP-1427: Delete should be in a single transaction.
     if (!exists(namespaceId)) {
-      throw new NamespaceNotFoundException(namespaceId);
+      throw new NamespaceNotFoundException(namespaceId.toEntityId());
     }
 
     if (checkProgramsRunning(namespaceId.toEntityId())) {
-      throw new NamespaceCannotBeDeletedException(namespaceId,
+      throw new NamespaceCannotBeDeletedException(namespaceId.toEntityId(),
                                                   String.format("Some programs are currently running in namespace " +
                                                                   "'%s', please stop them before deleting datasets " +
                                                                   "in the namespace.",
@@ -312,7 +324,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       dsFramework.deleteAllInstances(namespaceId.toEntityId());
     } catch (DatasetManagementException | IOException e) {
       LOG.warn("Error while deleting datasets in namespace {}", namespaceId, e);
-      throw new NamespaceCannotBeDeletedException(namespaceId, e);
+      throw new NamespaceCannotBeDeletedException(namespaceId.toEntityId(), e);
     }
     LOG.debug("Deleted datasets in namespace '{}'.", namespaceId);
   }
@@ -320,7 +332,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   @Override
   public synchronized void updateProperties(Id.Namespace namespaceId, NamespaceMeta namespaceMeta) throws Exception {
     if (!exists(namespaceId)) {
-      throw new NamespaceNotFoundException(namespaceId);
+      throw new NamespaceNotFoundException(namespaceId.toEntityId());
     }
     authorizationEnforcer.enforce(namespaceId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
 
@@ -390,6 +402,12 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       throw e;
     }
     Principal principal = authenticationContext.getPrincipal();
+    // if the principal is same as cdap master principal skip the authorization check and just return the namespace
+    // meta. See: CDAP-7387
+    if (masterShortUserName != null && masterShortUserName.equals(principal.getName())) {
+      return namespaceMeta;
+    }
+
     Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
     if (!filter.apply(namespaceId.toEntityId())) {
       throw new UnauthorizedException(principal, namespaceId.toEntityId());
@@ -426,7 +444,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private NamespaceMeta fetchNamespaceMeta(NamespaceId namespaceId) throws Exception {
     NamespaceMeta ns = nsStore.get(namespaceId);
     if (ns == null) {
-      throw new NamespaceNotFoundException(namespaceId.toId());
+      throw new NamespaceNotFoundException(namespaceId);
     }
     return ns;
   }
@@ -437,7 +455,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
                        new com.google.common.base.Predicate<ProgramRuntimeService.RuntimeInfo>() {
                          @Override
                          public boolean apply(ProgramRuntimeService.RuntimeInfo info) {
-                           return info.getProgramId().getNamespaceId().equals(namespaceId.getNamespace());
+                           return info.getProgramId().getNamespaceId().equals(namespaceId);
                          }
                        });
     return !Iterables.isEmpty(runtimeInfos);

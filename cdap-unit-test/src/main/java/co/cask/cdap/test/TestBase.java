@@ -85,6 +85,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -124,6 +125,8 @@ import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
 import org.apache.tephra.TransactionManager;
+import org.apache.tephra.TransactionSystemClient;
+import org.apache.tephra.inmemory.InMemoryTxSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -416,6 +419,9 @@ public class TestBase {
           bind(StreamAdmin.class).to(FileStreamAdmin.class).in(Singleton.class);
           bind(StreamConsumerFactory.class).to(LevelDBStreamFileConsumerFactory.class).in(Singleton.class);
           bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
+          // we inject a TxSystemClient that creates transaction objects with additional fields for validation
+          bind(InMemoryTxSystemClient.class).in(Scopes.SINGLETON);
+          bind(TransactionSystemClient.class).to(RevealingTxSystemClient.class).in(Scopes.SINGLETON);
         }
       });
   }
@@ -533,6 +539,20 @@ public class TestBase {
    * @return An {@link ApplicationManager} to manage the deployed application
    */
   protected static ApplicationManager deployApplication(Id.Application appId,
+                                                        AppRequest appRequest) throws Exception {
+    ApplicationManager appManager = getTestManager().deployApplication(appId, appRequest);
+    applicationManagers.add(appManager);
+    return appManager;
+  }
+
+  /**
+   * Deploys an {@link Application} with version. The application artifact must already exist.
+   *
+   * @param appId the id of the application to create
+   * @param appRequest the application create or update request
+   * @return An {@link ApplicationManager} to manage the deployed application
+   */
+  protected static ApplicationManager deployApplication(ApplicationId appId,
                                                         AppRequest appRequest) throws Exception {
     ApplicationManager appManager = getTestManager().deployApplication(appId, appRequest);
     applicationManagers.add(appManager);

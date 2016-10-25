@@ -17,7 +17,10 @@
 package co.cask.cdap.etl.spark.batch;
 
 import co.cask.cdap.api.ProgramStatus;
+import co.cask.cdap.api.data.batch.InputFormatProvider;
+import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.SparkClientContext;
@@ -47,11 +50,10 @@ import org.apache.spark.SparkConf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.DataOutput;
-import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -64,7 +66,12 @@ public class ETLSpark extends AbstractSpark {
   private static final Logger LOG = LoggerFactory.getLogger(ETLSpark.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>()).create();
+    .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
+    .registerTypeAdapter(DatasetInfo.class, new DatasetInfoTypeAdapter())
+    .registerTypeAdapter(OutputFormatProvider.class, new OutputFormatProviderTypeAdapter())
+    .registerTypeAdapter(InputFormatProvider.class, new InputFormatProviderTypeAdapter())
+    .registerTypeAdapter(StreamBatchReadable.class, new StreamBatchReadableTypeAdapter())
+    .create();
 
   private final BatchPhaseSpec phaseSpec;
   private Finisher finisher;
@@ -148,11 +155,11 @@ public class ETLSpark extends AbstractSpark {
 
     File configFile = File.createTempFile("HydratorSpark", ".config");
     cleanupFiles.add(configFile);
-    try (OutputStream os = new FileOutputStream(configFile)) {
-      sourceFactory.serialize(os);
-      sinkFactory.serialize(os);
-      DataOutput dataOutput = new DataOutputStream(os);
-      dataOutput.writeUTF(GSON.toJson(stagePartitions));
+    try (Writer writer = Files.newBufferedWriter(configFile.toPath(), StandardCharsets.UTF_8)) {
+      SparkBatchSourceSinkFactoryInfo sourceSinkInfo = new SparkBatchSourceSinkFactoryInfo(sourceFactory,
+                                                                                           sinkFactory,
+                                                                                           stagePartitions);
+      writer.write(GSON.toJson(sourceSinkInfo));
     }
 
     finisher = finishers.build();

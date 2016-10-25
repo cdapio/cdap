@@ -97,6 +97,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
                                                                          artifactId.toId(), appClassName,
                                                                          artifactRepository, artifactClassLoader,
                                                                          deploymentInfo.getApplicationName(),
+                                                                         deploymentInfo.getApplicationVersion(),
                                                                          configString);
 
     ListenableFuture<ConfigResponse> result = inMemoryConfigurator.config();

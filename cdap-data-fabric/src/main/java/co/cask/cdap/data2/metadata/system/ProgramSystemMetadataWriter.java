@@ -49,7 +49,7 @@ public class ProgramSystemMetadataWriter extends AbstractSystemMetadataWriter {
 
   @Override
   protected Map<String, String> getSystemPropertiesToAdd() {
-    return ImmutableMap.of();
+    return ImmutableMap.of(VERSION, programId.getVersion());
   }
 
   @Override

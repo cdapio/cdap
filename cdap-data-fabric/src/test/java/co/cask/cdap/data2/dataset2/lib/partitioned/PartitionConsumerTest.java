@@ -802,6 +802,80 @@ public class PartitionConsumerTest {
     });
   }
 
+  @Test
+  public void testDroppedPartitions() throws Exception {
+    // Tests the case of a partition in the partition consumer working set being dropped from the Partitioned
+    // FileSet (See CDAP-6215)
+    final PartitionedFileSet dataset = dsFrameworkUtil.getInstance(pfsInstance);
+    final TransactionAware txAwareDataset = (TransactionAware) dataset;
+
+    ConsumerConfiguration configuration = ConsumerConfiguration.builder()
+      .setMaxWorkingSetSize(1)
+      // maxRetries needs to be greater than 1, since we fail the partition once
+      .setMaxRetries(2)
+      .build();
+    final PartitionConsumer partitionConsumer = new ConcurrentPartitionConsumer(dataset, new InMemoryStatePersistor(),
+                                                                                configuration);
+
+    final PartitionKey partitionKey1 = generateUniqueKey();
+    final PartitionKey partitionKey2 = generateUniqueKey();
+
+    // Note: These two partitions are added in separate transactions, so that the first can exist in the working set
+    // without the second. Partitions in the same transaction can not be split up (due to their index being the same)
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        dataset.getPartitionOutput(partitionKey1).addPartition();
+      }
+    });
+
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        dataset.getPartitionOutput(partitionKey2).addPartition();
+      }
+    });
+
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+
+        // consuming and aborting the partition numRetries times plus one (for the first attempt) makes it get removed
+        // from the working set
+        List<PartitionDetail> partitionDetails = partitionConsumer.consumePartitions(1).getPartitions();
+        Assert.assertEquals(1, partitionDetails.size());
+        Assert.assertEquals(partitionKey1, partitionDetails.get(0).getPartitionKey());
+
+        // aborting the processing of the partition, to put it back in the working set
+        partitionConsumer.onFinish(partitionDetails, false);
+      }
+    });
+
+    // dropping partitionKey1 from the dataset makes it no longer available for consuming
+
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        dataset.dropPartition(partitionKey1);
+      }
+    });
+
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // first call to consume will drop the partition from the working set, and return nothing, since it was
+        // the only partition in the working set
+        PartitionConsumerResult result = partitionConsumer.consumePartitions(1);
+        Assert.assertEquals(0, result.getPartitions().size());
+        Assert.assertEquals(0, result.getFailedPartitions().size());
+
+        // following calls to consumePartitions will repopulate the working set and return additional partition(s)
+        result = partitionConsumer.consumePartitions(1);
+        Assert.assertEquals(1, result.getPartitions().size());
+        Assert.assertEquals(partitionKey2, result.getPartitions().get(0).getPartitionKey());
+      }
+    });
+  }
 
   /**
    * Custom implementation of {@link ConcurrentPartitionConsumer} that returns only a single partition if it is that

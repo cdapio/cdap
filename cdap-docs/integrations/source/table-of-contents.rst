@@ -7,9 +7,10 @@ CDAP Integrations Table of Contents
 ===================================
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 4
 
     Introduction <index>
+    Cask Market <cask-market/index>
     Cloudera <partners/cloudera/index>
     Apache Sentry <apache-sentry>
     Apache Hadoop KMS <hadoop-kms>

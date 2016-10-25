@@ -164,7 +164,7 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
    * Writes the specified values for the specified columns of the specified row.
    * <p>
    * NOTE: Depending on the implementation, this can work faster than calling {@link #put(byte[], byte[], byte[])}
-   * multiple times (espcially in transactions that alter many columns of one row).
+   * multiple times (especially in transactions that alter many columns of one row).
    *
    * @param row row to write to
    * @param columns columns to write to

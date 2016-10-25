@@ -17,21 +17,21 @@
 package co.cask.cdap.notifications.feeds;
 
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NotificationFeedId;
 
 /**
- * Exception thrown when a {@link Id.NotificationFeed} object is not found.
+ * Exception thrown when a {@link NotificationFeedId} object is not found.
  */
 public class NotificationFeedNotFoundException extends NotFoundException {
 
-  private final Id.NotificationFeed id;
+  private final NotificationFeedId id;
 
-  public NotificationFeedNotFoundException(Id.NotificationFeed id) {
+  public NotificationFeedNotFoundException(NotificationFeedId id) {
     super(id);
     this.id = id;
   }
 
-  public Id.NotificationFeed getId() {
+  public NotificationFeedId getId() {
     return id;
   }
 }

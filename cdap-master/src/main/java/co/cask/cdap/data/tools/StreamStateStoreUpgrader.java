@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,9 @@ import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Function;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -32,6 +34,7 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import javax.annotation.Nullable;
 
 /**
@@ -54,7 +57,12 @@ public class StreamStateStoreUpgrader extends AbstractQueueUpgrader {
     return Lists.transform(namespaceQueryAdmin.list(), new Function<NamespaceMeta, TableId>() {
       @Override
       public TableId apply(NamespaceMeta input) {
-        return StreamUtils.getStateStoreTableId(input.getNamespaceId());
+        try {
+          TableId tableId = StreamUtils.getStateStoreTableId(input.getNamespaceId());
+          return tableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
+        } catch (IOException e) {
+          throw Throwables.propagate(e);
+        }
       }
     });
   }

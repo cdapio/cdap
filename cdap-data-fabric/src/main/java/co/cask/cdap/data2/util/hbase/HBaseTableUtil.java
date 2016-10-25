@@ -649,7 +649,7 @@ public abstract class HBaseTableUtil {
    * Lists all tables in the specified namespace
    *
    * @param admin the {@link HBaseAdmin} to use to communicate with HBase
-   * @param namespaceId namespace for which the tables are being requested
+   * @param namespaceId HBase namespace for which the tables are being requested
    */
   public abstract List<TableId> listTablesInNamespace(HBaseAdmin admin, String namespaceId) throws IOException;
 

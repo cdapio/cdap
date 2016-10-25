@@ -14,79 +14,140 @@
  * the License.
  */
 
-// require('./services/i18n');
-// import Test from './services/i18n';
-import React, {Component} from 'react';
+import React, {Component, PropTypes} from 'react';
 import ReactDOM from 'react-dom';
-import {Router, Route, useRouterHistory, IndexRedirect} from 'react-router';
-import {createHistory} from 'history';
-
-
-const history = useRouterHistory(createHistory)({ basename: '/cask-cdap/' });
 
 require('../ui-utils/url-generator');
 require('font-awesome-webpack!./styles/font-awesome.config.js');
-
-import Management from './components/Management';
-import Dashboard from './components/Dashboard';
-import Home from './components/Home';
-import CdapHeader from './components/CdapHeader';
-import Footer from './components/Footer';
-import SplashScreen from './components/SplashScreen';
-import ConnectionExample from './components/ConnectionExample';
-import Experimental from './components/Experimental';
-import cookie from 'react-cookie';
-
 require('./styles/lib-styles.less');
 require('./styles/common.less');
+require('./styles/main.less');
+
+import Management from 'components/Management';
+import Dashboard from 'components/Dashboard';
+import Home from 'components/Home';
+import CdapHeader from 'components/CdapHeader';
+import Footer from 'components/Footer';
+import SplashScreen from 'components/SplashScreen';
+import ConnectionExample from 'components/ConnectionExample';
+import Experimental from 'components/Experimental';
+import cookie from 'react-cookie';
+import {MyNamespaceApi} from 'api/namespace';
+import Router from 'react-router/BrowserRouter';
+import T from 'i18n-react';
+import Match from 'react-router/Match';
+import Miss from 'react-router/Miss';
+import NamespaceStore from 'services/NamespaceStore';
+import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
+import CaskVideoModal from 'components/CaskVideoModal';
+import RouteToNamespace from 'components/RouteToNamespace';
+import Helmet from 'react-helmet';
 
 class CDAP extends Component {
   constructor(props) {
     super(props);
-    this.props = props;
     this.version = '4.0.0';
+    this.closeCaskVideo = this.closeCaskVideo.bind(this);
+    this.openCaskVideo = this.openCaskVideo.bind(this);
+    this.state = {
+      selectedNamespace : NamespaceStore.getState().selectedNamespace,
+      videoOpen : false
+    };
+  }
+
+  openCaskVideo(){
+    this.setState({
+      videoOpen : true
+    });
+  }
+
+  closeCaskVideo(){
+    this.setState({
+      videoOpen : false
+    });
+  }
+
+  componentWillMount(){
+    // Polls for namespace data
+    MyNamespaceApi.pollList()
+      .subscribe((res) => {
+        if (res.length > 0){
+          NamespaceStore.dispatch({
+            type: NamespaceActions.updateNamespaces,
+            payload: {
+              namespaces : res
+            }
+          });
+        } else {
+          //To-Do: No namespaces returned ; throw error / redirect
+        }
+      });
   }
 
   render() {
-    if( window.CDAP_CONFIG.securityEnabled &&
-        !cookie.load('CDAP_Auth_Token')
-     ){
+    if ( window.CDAP_CONFIG.securityEnabled && !cookie.load('CDAP_Auth_Token')) {
       //authentication failed ; redirect to another page
       window.location.href = window.getAbsUIUrl({
         uiApp: 'login',
         redirectUrl: location.href,
         clientId: 'cdap'
       });
-
       return null;
+    }
+    if (window.CDAP_CONFIG.securityEnabled) {
+      NamespaceStore.dispatch({
+        type: 'UPDATE_USERNAME',
+        payload: {
+          username: cookie.load('CDAP_Auth_User')
+        }
+      });
     }
 
     return (
-      <div>
-        <CdapHeader />
-        <SplashScreen />
-        <div className="container-fluid">
-          {this.props.children}
+      <Router basename="/cask-cdap" history={history}>
+        <div className="cdap-container">
+          <Helmet
+            title={T.translate('features.Home.Title')}
+          />
+          <CdapHeader />
+          <SplashScreen openVideo={this.openCaskVideo}/>
+          <CaskVideoModal isOpen={this.state.videoOpen} onCloseHandler={this.closeCaskVideo}/>
+          <div className="container-fluid">
+            <Match exactly pattern="/" component={RouteToNamespace} />
+            <Match exactly pattern="/notfound" component={Missed} />
+            <Match exactly pattern="/management" component={Management} />
+            <Match exactly pattern="/ns/:namespace" history={history} component={Home} />
+            <Match exactly pattern="/ns/:namespace/dashboard" component={Dashboard} />
+            <Match pattern="/Experimental" component={Experimental} />
+            <Match pattern="/socket-example" component={ConnectionExample} />
+            <Miss component={Missed} />
+          </div>
+          <Footer version={this.version} />
         </div>
-        <Footer version={this.version}/>
-      </div>
+      </Router>
     );
   }
 }
+
 CDAP.propTypes = {
-  children: React.PropTypes.node
+  children: React.PropTypes.node,
+  params: PropTypes.object
+};
+
+function Missed({ location }) {
+  return (
+    <div>
+      <h2>404 - Page Not Found</h2>
+      <p>Page {location.pathname} not found</p>
+    </div>
+  );
+}
+
+Missed.propTypes = {
+  location : PropTypes.object
 };
 
 ReactDOM.render(
-  <Router history={history}>
-    <Route path="/" component={CDAP}>
-      <IndexRedirect to="/home" />
-      <Route name="home" path="home" component={Home}/>
-      <Route name="dashboard" path="dashboard" component={Dashboard}/>
-      <Route path="management" component={Management}/>
-      <Route name="socket" path="socket-example" component={ConnectionExample} />
-      <Route path="experimental" component={Experimental} />
-    </Route>
-  </Router>,
+  <CDAP />,
   document.getElementById('app-container')
 );

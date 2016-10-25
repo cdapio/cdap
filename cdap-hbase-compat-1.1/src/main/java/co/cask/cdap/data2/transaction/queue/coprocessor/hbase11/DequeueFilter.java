@@ -141,7 +141,7 @@ public class DequeueFilter extends FilterBase {
     return skipRow;
   }
 
-  /* Writable implementation for HBase 0.94 */
+  /* Writable implementation */
 
   public void write(DataOutput out) throws IOException {
     DequeueScanAttributes.write(out, consumerConfig);

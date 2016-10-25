@@ -39,11 +39,13 @@ import java.util.Set;
 public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
 
   private final ApplicationSpecification appSpec;
+  private final ApplicationId appId;
 
   public AppSystemMetadataWriter(MetadataStore metadataStore, ApplicationId entityId,
                                  ApplicationSpecification appSpec) {
     super(metadataStore, entityId);
     this.appSpec = appSpec;
+    this.appId = entityId;
   }
 
   @Override
@@ -60,6 +62,7 @@ public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
         existing.add(plugin.getPluginClass());
       }
     }
+    properties.put(VERSION, appId.getVersion());
     return properties.build();
   }
 

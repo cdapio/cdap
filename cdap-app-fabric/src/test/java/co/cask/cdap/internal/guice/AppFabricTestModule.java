@@ -50,6 +50,8 @@ import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModu
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ScheduledRuntime;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
@@ -134,69 +136,69 @@ public final class AppFabricTestModule extends AbstractModule {
   private Scheduler createNoopScheduler() {
     return new Scheduler() {
       @Override
-      public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule) {
+      public void schedule(ProgramId program, SchedulableProgramType programType, Schedule schedule) {
       }
 
       @Override
-      public void schedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
+      public void schedule(ProgramId program, SchedulableProgramType programType, Schedule schedule,
                            Map<String, String> properties) {
       }
 
       @Override
-      public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules) {
+      public void schedule(ProgramId program, SchedulableProgramType programType, Iterable<Schedule> schedules) {
       }
 
       @Override
-      public void schedule(Id.Program program, SchedulableProgramType programType, Iterable<Schedule> schedules,
+      public void schedule(ProgramId program, SchedulableProgramType programType, Iterable<Schedule> schedules,
                            Map<String, String> properties) {
       }
 
       @Override
-      public List<ScheduledRuntime> previousScheduledRuntime(Id.Program program, SchedulableProgramType programType) {
+      public List<ScheduledRuntime> previousScheduledRuntime(ProgramId program, SchedulableProgramType programType) {
         return ImmutableList.of();
       }
 
       @Override
-      public List<ScheduledRuntime> nextScheduledRuntime(Id.Program program, SchedulableProgramType programType) {
+      public List<ScheduledRuntime> nextScheduledRuntime(ProgramId program, SchedulableProgramType programType) {
         return ImmutableList.of();
       }
 
       @Override
-      public List<String> getScheduleIds(Id.Program program, SchedulableProgramType programType) {
+      public List<String> getScheduleIds(ProgramId program, SchedulableProgramType programType) {
         return ImmutableList.of();
       }
 
       @Override
-      public void suspendSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+      public void suspendSchedule(ProgramId program, SchedulableProgramType programType, String scheduleName) {
       }
 
       @Override
-      public void resumeSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+      public void resumeSchedule(ProgramId program, SchedulableProgramType programType, String scheduleName) {
       }
 
       @Override
-      public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule) {
+      public void updateSchedule(ProgramId program, SchedulableProgramType programType, Schedule schedule) {
       }
 
       @Override
-      public void updateSchedule(Id.Program program, SchedulableProgramType programType, Schedule schedule,
+      public void updateSchedule(ProgramId program, SchedulableProgramType programType, Schedule schedule,
                                  Map<String, String> properties) {
       }
 
       @Override
-      public void deleteSchedule(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+      public void deleteSchedule(ProgramId program, SchedulableProgramType programType, String scheduleName) {
       }
 
       @Override
-      public void deleteSchedules(Id.Program programId, SchedulableProgramType programType) {
+      public void deleteSchedules(ProgramId programId, SchedulableProgramType programType) {
       }
 
       @Override
-      public void deleteAllSchedules(Id.Namespace namespaceId) throws SchedulerException {
+      public void deleteAllSchedules(NamespaceId namespaceId) throws SchedulerException {
       }
 
       @Override
-      public ScheduleState scheduleState(Id.Program program, SchedulableProgramType programType, String scheduleName) {
+      public ScheduleState scheduleState(ProgramId program, SchedulableProgramType programType, String scheduleName) {
         return ScheduleState.NOT_FOUND;
       }
     };

@@ -31,6 +31,7 @@ import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
@@ -66,7 +67,7 @@ public class ProgramStore {
    * @param runId run id
    * @return run record for runid
    */
-  public RunRecordMeta getRun(final Id.Program id, final String runId) {
+  public RunRecordMeta getRun(final ProgramId id, final String runId) {
     try {
       return Transactions.execute(transactional, new TxCallable<RunRecordMeta>() {
         @Override

@@ -32,6 +32,14 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     GET, PUT, POST, DELETE
   }
 
+  public static final RouteDestination APP_FABRIC_HTTP = new RouteDestination(Constants.Service.APP_FABRIC_HTTP);
+  public static final RouteDestination METRICS = new RouteDestination(Constants.Service.METRICS);
+  public static final RouteDestination DATASET_MANAGER = new RouteDestination(Constants.Service.DATASET_MANAGER);
+  public static final RouteDestination METADATA_SERVICE = new RouteDestination(Constants.Service.METADATA_SERVICE);
+  public static final RouteDestination EXPLORE_HTTP_USER_SERVICE = new RouteDestination(
+    Constants.Service.EXPLORE_HTTP_USER_SERVICE);
+  public static final RouteDestination STREAMS_SERVICE = new RouteDestination(Constants.Service.STREAMS);
+
   /**
    * Returns the CDAP service which will handle the HttpRequest
    *
@@ -40,7 +48,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
    * @param httpRequest HttpRequest used to get the Http method and account id
    * @return destination service
    */
-  public String getRoutingService(String fallbackService, String requestPath, HttpRequest httpRequest) {
+  public RouteDestination getRoutingService(String fallbackService, String requestPath, HttpRequest httpRequest) {
     try {
       String method = httpRequest.getMethod().getName();
       AllowedMethod requestMethod = AllowedMethod.valueOf(method);
@@ -52,7 +60,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       //But stream calls issued by the UI should be routed to the appropriate CDAP service
       if (fallbackService.contains("$HOST") && (uriParts.length >= 1)
         && !("/" + uriParts[0]).equals(Constants.Gateway.API_VERSION_3)) {
-        return fallbackService;
+        return new RouteDestination(fallbackService);
       }
       if (uriParts[0].equals(Constants.Gateway.API_VERSION_3_TOKEN)) {
         return getV3RoutingService(uriParts, requestMethod);
@@ -60,26 +68,29 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     } catch (Exception e) {
       // Ignore exception. Default routing to app-fabric.
     }
-    return Constants.Service.APP_FABRIC_HTTP;
+    return APP_FABRIC_HTTP;
   }
 
-  private String getV3RoutingService(String [] uriParts, AllowedMethod requestMethod) {
+  private RouteDestination getV3RoutingService(String [] uriParts, AllowedMethod requestMethod) {
     if ((uriParts.length >= 2) && uriParts[1].equals("feeds")) {
       // TODO find a better way to handle that - this looks hackish
       return null;
-    } else if ((uriParts.length >= 9) && "versions".equals(uriParts[5]) && "services".equals(uriParts[7])
+    } else if ((uriParts.length >= 11) && "versions".equals(uriParts[5]) && "services".equals(uriParts[7])
       && "methods".equals(uriParts[9])) {
       // User defined services (version specific) handle methods on them:
       //Path: "/v3/namespaces/{namespace-id}/apps/{app-id}/versions/{version-id}/services/{service-id}/methods/
       //       <user-defined-method-path>"
-      return ServiceDiscoverable.getVersionedName(uriParts[2], uriParts[4], uriParts[6], uriParts[8]);
+      String serviceName = ServiceDiscoverable.getName(uriParts[2], uriParts[4], uriParts[8]);
+      String version = uriParts[6];
+      // TODO: Optimize this instead of creating new object every time
+      return new RouteDestination(serviceName, version);
     } else if ((uriParts.length >= 9) && "services".equals(uriParts[5]) && "methods".equals(uriParts[7])) {
       //User defined services handle methods on them:
       //Path: "/v3/namespaces/{namespace-id}/apps/{app-id}/services/{service-id}/methods/<user-defined-method-path>"
-      return ServiceDiscoverable.getName(uriParts[2], uriParts[4], uriParts[6]);
+      return new RouteDestination(ServiceDiscoverable.getName(uriParts[2], uriParts[4], uriParts[6]));
     } else if (matches(uriParts, "v3", "system", "services", null, "logs")) {
       //Log Handler Path /v3/system/services/<service-id>/logs
-      return Constants.Service.METRICS;
+      return METRICS;
     } else if (matches(uriParts, "v3", "namespaces", null, "apps", null, "metadata") ||
       matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "metadata") ||
       matches(uriParts, "v3", "namespaces", null, "artifacts", null, "versions", null, "metadata") ||
@@ -105,56 +116,56 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       matches(uriParts, "v3", "namespaces", null, "datasets", null, "lineage") ||
       matches(uriParts, "v3", "namespaces", null, "streams", null, "lineage") ||
       matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "runs", null, "metadata")) {
-      return Constants.Service.METADATA_SERVICE;
+      return METADATA_SERVICE;
     } else if (matches(uriParts, "v3", "security", "authorization") ||
       matches(uriParts, "v3", "namespaces", null, "securekeys")) {
       // Authorization and Secure Store Handlers currently run in App Fabric
-      return Constants.Service.APP_FABRIC_HTTP;
+      return APP_FABRIC_HTTP;
     } else if (matches(uriParts, "v3", "security", "store", "namespaces", null)) {
-      return Constants.Service.APP_FABRIC_HTTP;
+      return APP_FABRIC_HTTP;
     } else if ((matches(uriParts, "v3", "namespaces", null, "streams", null, "programs")
       || matches(uriParts, "v3", "namespaces", null, "data", "datasets", null, "programs")) &&
       requestMethod.equals(AllowedMethod.GET)) {
-      return Constants.Service.APP_FABRIC_HTTP;
+      return APP_FABRIC_HTTP;
     } else if ((uriParts.length >= 4) && uriParts[1].equals("namespaces") && uriParts[3].equals("streams")) {
-      return Constants.Service.STREAMS;
+      return STREAMS_SERVICE;
     } else if ((uriParts.length >= 8 && uriParts[7].equals("logs")) ||
       (uriParts.length >= 10 && uriParts[9].equals("logs")) ||
       (uriParts.length >= 6 && uriParts[5].equals("logs"))) {
       //Log Handler Paths:
       // /v3/namespaces/<namespaceid>/apps/<appid>/<programid-type>/<programid>/logs
       // /v3/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}/logs
-      return Constants.Service.METRICS;
+      return METRICS;
     } else if (uriParts.length >= 2 && uriParts[1].equals("metrics")) {
       //Metrics Search Handler Path /v3/metrics
-      return Constants.Service.METRICS;
+      return METRICS;
     } else if (uriParts.length >= 5 && uriParts[1].equals("data") && uriParts[2].equals("explore") &&
       (uriParts[3].equals("queries") || uriParts[3].equals("jdbc") || uriParts[3].equals("namespaces"))) {
       // non-namespaced explore operations. For example, /v3/data/explore/queries/{id}
-      return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
+      return EXPLORE_HTTP_USER_SERVICE;
     } else if (uriParts.length >= 6 && uriParts[3].equals("data") && uriParts[4].equals("explore") &&
       (uriParts[5].equals("queries") || uriParts[5].equals("streams") || uriParts[5].equals("datasets")
         || uriParts[5].equals("tables") || uriParts[5].equals("jdbc"))) {
       // namespaced explore operations. For example, /v3/namespaces/{namespace-id}/data/explore/streams/{stream}/enable
-      return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
+      return EXPLORE_HTTP_USER_SERVICE;
     } else if ((uriParts.length == 3) && uriParts[1].equals("explore") && uriParts[2].equals("status")) {
-      return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
+      return EXPLORE_HTTP_USER_SERVICE;
     } else if (uriParts.length == 7 && uriParts[3].equals("data") && uriParts[4].equals("datasets") &&
       (uriParts[6].equals("flows") || uriParts[6].equals("workers") || uriParts[6].equals("mapreduce"))) {
       // namespaced app fabric data operations:
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/flows
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/workers
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/mapreduce
-      return Constants.Service.APP_FABRIC_HTTP;
+      return APP_FABRIC_HTTP;
     } else if ((uriParts.length >= 4) && uriParts[3].equals("data")) {
       // other data operations. For example:
       // /v3/namespaces/{namespace-id}/data/datasets
       // /v3/namespaces/{namespace-id}/data/datasets/{name}
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/properties
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/admin/{method}
-      return Constants.Service.DATASET_MANAGER;
+      return DATASET_MANAGER;
     }
-    return Constants.Service.APP_FABRIC_HTTP;
+    return APP_FABRIC_HTTP;
   }
 
   /**

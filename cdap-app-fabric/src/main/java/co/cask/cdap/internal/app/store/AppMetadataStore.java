@@ -37,6 +37,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.annotations.VisibleForTesting;
@@ -58,8 +59,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
+import java.nio.BufferUnderflowException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -118,6 +121,24 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   public List<ApplicationMeta> getAllApplications(String namespaceId) {
     return list(new MDSKey.Builder().add(TYPE_APP_META, namespaceId).build(), ApplicationMeta.class);
+  }
+
+  public List<ApplicationMeta> getAllAppVersions(String namespaceId, String appId) {
+    return list(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build(), ApplicationMeta.class);
+  }
+
+  public List<ApplicationId> getAllAppVersionsAppIds(String namespaceId, String appId) {
+    List<ApplicationId> appIds = new ArrayList<>();
+    for (MDSKey key : listKV(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build(),
+                             ApplicationMeta.class).keySet()) {
+      MDSKey.Splitter splitter = key.split();
+      splitter.getBytes(); // skip recordType
+      splitter.getBytes(); // skip namespaceId
+      splitter.getBytes(); // skip appId
+      String versionId = splitter.getString();
+      appIds.add(new NamespaceId(namespaceId).app(appId, versionId));
+    }
+    return appIds;
   }
 
   public void writeApplication(String namespaceId, String appId, String versionId, ApplicationSpecification spec) {
@@ -195,7 +216,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     write(key, nodeStateDetail);
 
     // Get the run record of the Workflow which started this program
-    key = getWorkflowRunRecordKey(workflowRunId.getParent().toId(), workflowRunId.getRun());
+    key = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, workflowRunId.getParent()).add(workflowRunId.getRun()).build();
 
     RunRecordMeta record = get(key, RunRecordMeta.class);
     if (record != null) {
@@ -216,14 +237,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       workflowrunId = systemArgs.get(ProgramOptionConstants.WORKFLOW_RUN_ID);
     }
 
-    MDSKey key = new MDSKey.Builder()
-      .add(TYPE_RUN_RECORD_STARTED)
-      .add(programId.getNamespace())
-      .add(programId.getApplication())
-      .add(programId.getType().name())
-      .add(programId.getProgram())
-      .add(pid)
-      .build();
+    MDSKey key = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, programId).add(pid).build();
 
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     builder.put("runtimeArgs", GSON.toJson(runtimeArgs, MAP_STRING_STRING_TYPE));
@@ -306,17 +320,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   public List<RunRecordMeta> getRuns(ProgramRunStatus status, Predicate<RunRecordMeta> filter) {
     return getRuns(null, status, Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE, filter);
-  }
-
-  private MDSKey.Builder getProgramKeyBuilder(String recordType, @Nullable ProgramId programId) {
-    MDSKey.Builder builder = new MDSKey.Builder().add(recordType);
-    if (programId != null) {
-      builder.add(programId.getNamespace());
-      builder.add(programId.getApplication());
-      builder.add(programId.getType().name());
-      builder.add(programId.getProgram());
-    }
-    return builder;
   }
 
   public List<RunRecordMeta> getRuns(@Nullable ProgramId programId, ProgramRunStatus status,
@@ -559,17 +562,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return workflowToken;
   }
 
-  private MDSKey getWorkflowRunRecordKey(Id.Program workflowId, String workflowRunId) {
-    return new MDSKey.Builder()
-      .add(TYPE_RUN_RECORD_STARTED)
-      .add(workflowId.getNamespaceId())
-      .add(workflowId.getApplicationId())
-      .add(workflowId.getType().name())
-      .add(workflowId.getId())
-      .add(workflowRunId)
-      .build();
-  }
-
   /**
    * @return programs that were running between given start and end time
    */
@@ -626,6 +618,46 @@ public class AppMetadataStore extends MetadataStoreDataset {
       startKey = new MDSKey(Bytes.stopKeyForPrefix(scanFunction.getLastKey().getKey()));
     }
     return batches;
+  }
+
+  public void upgradeVersionKeys() {
+    MDSKey startKey = new MDSKey.Builder().add(TYPE_APP_META).build();
+    Map<MDSKey, ApplicationMeta> appMetas = listKV(startKey, ApplicationMeta.class);
+    Map<MDSKey, ApplicationMeta> newAppMetas = new HashMap<>();
+    for (Map.Entry<MDSKey, ApplicationMeta> oldKey : appMetas.entrySet()) {
+      MDSKey newKey = appendDefaultVersion(oldKey.getKey());
+      newAppMetas.put(newKey, oldKey.getValue());
+    }
+
+    //Delete old rows
+    deleteAll(startKey);
+
+    // Write new rows
+    for (Map.Entry<MDSKey, ApplicationMeta> newMeta : newAppMetas.entrySet()) {
+      write(newMeta.getKey(), newMeta.getValue());
+    }
+  }
+
+  // Append version only if it doesn't have version at the end
+  private static MDSKey appendDefaultVersion(MDSKey oldKey) {
+    MDSKey.Splitter splitter = oldKey.split();
+    int keyParts = 0;
+    try {
+      // max parts = 4 => appMeta.ns.app.version
+      for (int i = 0; i < 4; i++) {
+        splitter.skipString();
+        keyParts++;
+      }
+    } catch (BufferUnderflowException ex) {
+      // expected when the version is not part of the key
+    }
+
+    if (keyParts == 4) {
+      // Key already is versioned, then return old key
+      return oldKey;
+    }
+    // Otherwise, append the key with default version.
+    return new MDSKey.Builder(oldKey).add(ApplicationId.DEFAULT_VERSION).build();
   }
 
   private static class ScanFunction implements Function<MetadataStoreDataset.KeyValue<RunRecordMeta>, Boolean> {

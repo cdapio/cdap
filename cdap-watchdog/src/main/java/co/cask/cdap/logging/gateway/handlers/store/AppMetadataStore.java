@@ -21,12 +21,13 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Duplicate store class for application meatadata.
@@ -44,7 +45,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   // TODO: getRun is duplicated from cdap-app-fabric AppMetadataStore class.
   // Any changes made here will have to be made over there too.
   // JIRA https://issues.cask.co/browse/CDAP-2172
-  public RunRecordMeta getRun(Id.Program program, final String runid) {
+  public RunRecordMeta getRun(ProgramId program, final String runid) {
     // Query active run record first
     RunRecordMeta running = getUnfinishedRun(program, TYPE_RUN_RECORD_STARTED, runid);
     // If program is running, this will be non-null
@@ -65,28 +66,13 @@ public class AppMetadataStore extends MetadataStoreDataset {
   /**
    * @return run records for runs that do not have start time in mds key for the run record.
    */
-  private RunRecordMeta getUnfinishedRun(Id.Program program, String recordType, String runid) {
-    MDSKey runningKey = new MDSKey.Builder()
-      .add(recordType)
-      .add(program.getNamespaceId())
-      .add(program.getApplicationId())
-      .add(program.getType().name())
-      .add(program.getId())
-      .add(runid)
-      .build();
-
+  private RunRecordMeta getUnfinishedRun(ProgramId program, String recordType, String runid) {
+    MDSKey runningKey = getProgramKeyBuilder(recordType, program).add(runid).build();
     return get(runningKey, RunRecordMeta.class);
   }
 
-  private RunRecordMeta getCompletedRun(Id.Program program, final String runid) {
-    MDSKey completedKey = new MDSKey.Builder()
-      .add(TYPE_RUN_RECORD_COMPLETED)
-      .add(program.getNamespaceId())
-      .add(program.getApplicationId())
-      .add(program.getType().name())
-      .add(program.getId())
-      .build();
-
+  private RunRecordMeta getCompletedRun(ProgramId program, final String runid) {
+    MDSKey completedKey = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, program).build();
     // Get start time from RunId
     long programStartSecs = RunIds.getTime(RunIds.fromString(runid), TimeUnit.SECONDS);
     if (programStartSecs > -1) {

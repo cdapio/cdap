@@ -36,7 +36,7 @@ public class ProgramRunExistenceVerifier implements EntityExistenceVerifier<Prog
   @Override
   public void ensureExists(ProgramRunId runId) throws NotFoundException {
     if (store.getRun(runId.getParent(), runId.getRun()) == null) {
-      throw new NotFoundException(runId.toId());
+      throw new NotFoundException(runId);
     }
   }
 }

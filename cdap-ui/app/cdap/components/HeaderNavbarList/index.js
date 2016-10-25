@@ -14,25 +14,44 @@
  * the License.
  */
 import React, {PropTypes} from 'react';
+import { connect } from 'react-redux';
 import {Link} from 'react-router';
+import shortid from 'shortid';
 
-export default function HeaderNavbarList({list}) {
+const mapStateToProps = (state) => {
+  return {
+    namespace : state.selectedNamespace
+  };
+};
+
+function HeaderNavbarList({list}){
   return (
     <ul className="navbar-list">
-      {
-        list.map((navbaritem, index) => {
-          return (
-            <li key={index}>
-              <Link
-                to={navbaritem.linkTo}
-                activeClassName="active"
-              >
-                {navbaritem.title}
-              </Link>
-            </li>
-          );
-        })
-      }
+        {
+          Array.isArray(list) ?
+            list.map(item => {
+              return (
+                <li
+                  key={shortid.generate()}
+                  className={item.className}
+                >
+                  {
+                    item.disabled ?
+                      item.title
+                    :
+                      <Link
+                        to={item.linkTo}
+                        activeClassName="active"
+                      >
+                        {item.title}
+                      </Link>
+                    }
+                </li>
+              );
+            })
+          :
+            null
+        }
     </ul>
   );
 }
@@ -41,5 +60,8 @@ HeaderNavbarList.propTypes = {
   list: PropTypes.arrayOf(PropTypes.shape({
     title: PropTypes.string,
     linkTo: PropTypes.string
-  }))
+  })),
+  store: PropTypes.object
 };
+
+export default connect(mapStateToProps)(HeaderNavbarList);

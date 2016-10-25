@@ -16,11 +16,13 @@
 
 package co.cask.cdap.gateway.handlers;
 
-import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.route.store.RouteConfig;
 import co.cask.cdap.route.store.RouteStore;
@@ -32,7 +34,8 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.lang.reflect.Type;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -63,17 +66,7 @@ public class RouteConfigHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("app-id") String appId,
                              @PathParam("service-id") String serviceId) throws Exception {
     ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
-    ServiceSpecification spec = (ServiceSpecification) lifecycleService.getProgramSpecification(programId);
-    if (spec == null) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      return;
-    }
-
     RouteConfig routeConfig = routeStore.fetch(programId);
-    if (routeConfig == null) {
-      responder.sendJson(HttpResponseStatus.OK, Collections.emptyMap());
-      return;
-    }
     responder.sendJson(HttpResponseStatus.OK, routeConfig.getRoutes());
   }
 
@@ -83,14 +76,31 @@ public class RouteConfigHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("app-id") String appId,
                                @PathParam("service-id") String serviceId) throws Exception {
-    ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
-    ServiceSpecification spec = (ServiceSpecification) lifecycleService.getProgramSpecification(programId);
-    if (spec == null) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      return;
-    }
+    NamespaceId namespace = new NamespaceId(namespaceId);
+    ProgramId programId = namespace.app(appId).service(serviceId);
     Map<String, Integer> routes = parseBody(request, ROUTE_CONFIG_TYPE);
-    routeStore.store(programId, new RouteConfig(routes));
+    if (routes == null || routes.isEmpty()) {
+      throw new BadRequestException("Route config contains invalid format or empty content.");
+    }
+
+    List<ProgramId> nonExistingServices = new ArrayList<>();
+    for (String version : routes.keySet()) {
+      ProgramId routeProgram = namespace.app(appId, version).service(serviceId);
+      if (lifecycleService.getProgramSpecification(routeProgram) == null) {
+        nonExistingServices.add(routeProgram);
+      }
+    }
+    if (nonExistingServices.size() > 0) {
+      throw new BadRequestException("The following versions of the application/service could not be found : "
+                             + nonExistingServices);
+    }
+
+    RouteConfig routeConfig = new RouteConfig(routes);
+    if (!routeConfig.isValid()) {
+      throw new BadRequestException("Route Percentage needs to add up to 100.");
+    }
+
+    routeStore.store(programId, routeConfig);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -100,12 +110,7 @@ public class RouteConfigHttpHandler extends AbstractAppFabricHttpHandler {
                                 @PathParam("namespace-id") String namespaceId,
                                 @PathParam("app-id") String appId,
                                 @PathParam("service-id") String serviceId) throws Exception {
-    ProgramId programId = Ids.namespace(namespaceId).app(appId).service(serviceId);
-    ServiceSpecification spec = (ServiceSpecification) lifecycleService.getProgramSpecification(programId);
-    if (spec == null) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      return;
-    }
+    ProgramId programId = new ProgramId(namespaceId, appId, ProgramType.SERVICE, serviceId);
     routeStore.delete(programId);
     responder.sendStatus(HttpResponseStatus.OK);
   }

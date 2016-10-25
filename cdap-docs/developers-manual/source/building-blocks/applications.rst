@@ -73,6 +73,26 @@ application could include a stream, a flow, a flowlet, and a dataset. It's possi
 stream is not needed, if other methods of bringing in data are used. In the next pages,
 we'll look at these components, and their interactions.
 
+Application Version
+===================
+Applications can be created with a version string. This can be useful when a newer version
+of the same application needs to be created, and you need to distinguish them and run them
+at the same time. Programs of a specific version of an application can be started and
+stopped using the calls of the version-aware :ref:`Lifecycle HTTP RESTful APIs
+<http-restful-api-lifecycle>`. 
+
+If a version is not provided while creating an application (i.e., the application is
+created using a non-version-aware API), a default version of "-SNAPSHOT" is used.
+
+If an application version is specified that matches one that already exists, it will be
+overwritten only if the version string ends with "-SNAPSHOT". Otherwise, versions are
+immutable, and the only way to change a version is to delete the application of that
+version and then redeploy it.
+
+Information about the version-aware RESTful APIs to create, list, and delete applications
+using versions can be found in the :ref:`Lifecycle HTTP RESTful API documentation
+<http-restful-api-lifecycle>`.
+
 Application Configuration
 =========================
 Application classes can use a ``Config`` class to receive a configuration when an Application is created.

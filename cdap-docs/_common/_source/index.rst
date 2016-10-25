@@ -93,7 +93,8 @@ CDAP extensions provide additional capabilities, such as *Cask Hydrator* and *Ca
   - |dev-man-s-black|_ Perimeter security, configuration and client authentication
   - |dev-man-tad-black|_ Test framework plus tools and practices for debugging your applications
   - |dev-man-id-black|_ Different techniques for ingesting data into CDAP
-  - |dev-man-at-black|_ Best practices for CDAP development, class loading in CDAP, adding a custom logback
+  - |dev-man-at-black|_ Adding a custom logback, best practices for CDAP development,
+    class loading in CDAP, configuring program resources
 
 
 .. |admin-manual| replace:: **Administration Manual:**
@@ -124,29 +125,41 @@ CDAP extensions provide additional capabilities, such as *Cask Hydrator* and *Ca
 .. |integrations| replace:: **Integrations:**
 .. _integrations: integrations/index.html
 
-.. |integ-man-c-black| replace:: `Cloudera:`
-.. _integ-man-c-black: integrations/partners/cloudera/index.html
+.. |integ-man-cm-black| replace:: `Cask Market:`
+.. _integ-man-cm-black: integrations/cask-market/index.html
 
-.. |integ-man-j-black| replace:: `JDBC:`
-.. _integ-man-j-black: integrations/jdbc.html
+.. |integ-man-cl-black| replace:: `Cloudera:`
+.. _integ-man-cl-black: integrations/partners/cloudera/index.html
 
-.. |integ-man-o-black| replace:: `ODBC:`
-.. _integ-man-o-black: integrations/odbc.html
+.. |integ-man-as-black| replace:: `Apache Sentry:`
+.. _integ-man-as-black: integrations/apache-sentry.html
 
-.. |integ-man-p-black| replace:: `Pentaho:`
-.. _integ-man-p-black: integrations/pentaho.html
+.. |integ-man-ah-black| replace:: `Apache Hadoop KMS:`
+.. _integ-man-ah-black: integrations/hadoop-kms.html
 
-.. |integ-man-s-black| replace:: `Squirrel:`
-.. _integ-man-s-black: integrations/squirrel.html
+.. |integ-man-jd-black| replace:: `JDBC:`
+.. _integ-man-jd-black: integrations/jdbc.html
+
+.. |integ-man-od-black| replace:: `ODBC:`
+.. _integ-man-od-black: integrations/odbc.html
+
+.. |integ-man-pe-black| replace:: `Pentaho:`
+.. _integ-man-pe-black: integrations/pentaho.html
+
+.. |integ-man-sq-black| replace:: `Squirrel:`
+.. _integ-man-sq-black: integrations/squirrel.html
 
 - |integrations|_ 
 
-  - |integ-man-c-black|_ Integrating CDAP into Cloudera, using Cloudera Manager, running interactive queries with Impala, and
+  - |integ-man-cm-black|_ A source for re-usable applications, data, and code for all CDAP users
+  - |integ-man-cl-black|_ Integrating CDAP into Cloudera, using Cloudera Manager, running interactive queries with Impala, and
     bridging CDAP Metadata with Cloudera's data management tool, Navigator
-  - |integ-man-j-black|_ The CDAP JDBC driver, included with CDAP
-  - |integ-man-o-black|_ The CDAP ODBC driver available for CDAP
-  - |integ-man-p-black|_ *Pentaho Data Integration*, a business intelligence tool that can be used with CDAP
-  - |integ-man-s-black|_ *SquirrelSQL*, a simple JDBC client that can be integrated with CDAP
+  - |integ-man-as-black|_ Configuring and integrating CDAP with *Apache Sentry*
+  - |integ-man-ah-black|_ Configuring and integrating CDAP with *Apache Hadoop Key Management Service (KMS)*
+  - |integ-man-jd-black|_ The CDAP JDBC driver, included with CDAP
+  - |integ-man-od-black|_ The CDAP ODBC driver available for CDAP
+  - |integ-man-pe-black|_ *Pentaho Data Integration*, a business intelligence tool that can be used with CDAP
+  - |integ-man-sq-black|_ *SquirrelSQL*, a simple JDBC client that can be integrated with CDAP
 
 
 .. |examples-manual| replace:: **Examples, Guides, and Tutorials:**
@@ -179,7 +192,7 @@ CDAP extensions provide additional capabilities, such as *Cask Hydrator* and *Ca
 .. _ref-man-clia-black: reference-manual/cli-api.html
 
 .. |ref-man-hra-black| replace:: `HTTP RESTful API:`
-.. _ref-man-hra-black: reference-manual/cli-api.html
+.. _ref-man-hra-black: reference-manual/http-restful-api/index.html
 
 .. |ref-man-jca-black| replace:: `Java Client API:`
 .. _ref-man-jca-black: reference-manual/java-client-api.html

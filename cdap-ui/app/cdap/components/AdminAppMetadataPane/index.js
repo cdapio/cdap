@@ -19,17 +19,9 @@ require('./AdminAppMetadataPane.less');
 import StatContainer from '../StatContainer/index.js';
 var classNames = require('classnames');
 
-var loading = true;
-
-function simulateLoading() {
-  setTimeout( () => {
-    loading = false;
-  }, 1500);
-}
+var loading = false;
 
 function AdminAppMetadataPane(){
-
-  simulateLoading();
 
   var stats = [];
 
@@ -75,7 +67,7 @@ function AdminAppMetadataPane(){
       </div>
       <div className={classNames("spinner-container", {"hidden" : !loading})}>
         <div
-          className={classNames("fa", "fa-spinner", "fa-spin", "spinner", "fa-3x", {"hidden" : !loading})}
+          className={classNames("fa", "fa-spinner", "fa-spin", "spinner", "fa-2x", {"hidden" : !loading})}
         ></div>
       </div>
       <div className="pane-body">

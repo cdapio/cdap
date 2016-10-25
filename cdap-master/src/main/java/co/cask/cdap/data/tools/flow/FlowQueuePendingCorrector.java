@@ -161,7 +161,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
     System.out.println("Running queue.pending correction on namespace " + namespaceId);
     Collection<ApplicationSpecification> apps = store.getAllApplications(namespaceId);
     for (ApplicationSpecification app : apps) {
-      ApplicationId appId = namespaceId.app(app.getName());
+      ApplicationId appId = namespaceId.app(app.getName(), app.getAppVersion());
       run(appId, app);
     }
   }
@@ -240,7 +240,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
                   String flowletQueue, FlowSpecification flow) throws Exception {
     System.out.println("Running queue.pending correction on flow '" + flowId + "' producerFlowlet '" + producerFlowlet
                          + "' consumerFlowlet '" + consumerFlowlet + "' flowletQueue '" + flowletQueue + "'");
-    Map<RunId, ProgramRuntimeService.RuntimeInfo> runtimeInfos = programRuntimeService.list(flowId.toId());
+    Map<RunId, ProgramRuntimeService.RuntimeInfo> runtimeInfos = programRuntimeService.list(flowId);
     Preconditions.checkState(runtimeInfos.isEmpty(), "Cannot run tool when flow " + flowId + " is still running");
 
     SimpleQueueSpecificationGenerator queueSpecGenerator =

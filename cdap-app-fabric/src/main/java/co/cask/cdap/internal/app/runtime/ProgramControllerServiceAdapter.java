@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
@@ -36,11 +36,11 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
 
   private final Service service;
 
-  public ProgramControllerServiceAdapter(Service service, Id.Program programId, RunId runId) {
+  public ProgramControllerServiceAdapter(Service service, ProgramId programId, RunId runId) {
     this(service, programId, runId, null);
   }
 
-  public ProgramControllerServiceAdapter(Service service, Id.Program programId,
+  public ProgramControllerServiceAdapter(Service service, ProgramId programId,
                                          RunId runId, @Nullable String componentName) {
     super(programId, runId, componentName);
     this.service = service;

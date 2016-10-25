@@ -18,27 +18,51 @@
 
 .plus-button-modal {
   overflow-x: hidden;
+
   &.modal-dialog {
     height: 75vh;
     width: 70vw;
-    margin-top: 70px;
+    max-width: 1200px;
+    margin-top: 120px;
 
     .modal-content {
       border-radius: 0;
       height: 100%;
       border: 0;
+      overflow: hidden;
+      background: transparent;
 
       .modal-body {
         padding: 0;
         height: ~"calc(100% - 51px)"; // 100% - 51px for modal header
         height: ~"-moz-calc(100% - 51px)";
         height: ~"-webkit-calc(100% - 51px)";
+        background: #fff;
       }
       .modal-header {
-        padding: 10px 20px;
+        height: 52px;
+        padding: 10px 8px;
         background: @cdap-orange;
         color: white;
         border-bottom: 0;
+
+        .modal-header-icon {
+          font-size: 26px;
+          height: 30px;
+          vertical-align: top;
+          margin-right: 2px;
+        }
+
+        .button-icon {
+          font-size: 17px;
+          margin-right: 5px;
+          height: 25px;
+          vertical-align: middle;
+        }
+
+        .plus-button-modal-toggle-text {
+          vertical-align: middle;
+        }
 
         h4 {
           font-weight: normal;
@@ -47,15 +71,22 @@
           }
         }
         .btn-resource-center {
-          background-color: @cdap-darkorange;
-          border-color: none;
-          color: lightgray;
+          background-color: #464a57;
+          color: #efefef;
+          font-weight: 500;
+          padding: 0 10px 0 5px;
           &:focus {
             outline: 0;
           }
         }
       }
     }
+  }
+}
+
+.plus-button-modal {
+  .plus-modal-header-text {
+    vertical-align: top;
   }
 }
 

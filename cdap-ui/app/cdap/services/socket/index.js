@@ -44,7 +44,7 @@ class Socket {
       try {
         let data = JSON.parse(event.data);
         if (window.CDAP_CONFIG.cdap.uiDebugEnabled) {
-          console.group(data.resource.url);
+          console.groupCollapsed('response: ' + data.resource.url);
           console.log(data.resource);
           console.log(data.response);
           console.groupEnd();
@@ -83,6 +83,11 @@ class Socket {
   }
 
   _doSend(obj) {
+    if (window.CDAP_CONFIG.cdap.uiDebugEnabled) {
+      console.groupCollapsed('request: ' + obj.resource.url);
+      console.log(obj.resource);
+      console.groupEnd();
+    }
     this.socket.send(JSON.stringify(obj));
   }
 }

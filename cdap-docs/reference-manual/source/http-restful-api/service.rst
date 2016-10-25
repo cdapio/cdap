@@ -17,6 +17,9 @@ control the lifecycle of services.
 
 For system services, see the :ref:`http-restful-api-monitor` and its methods.
 
+See the :ref:`Route Config HTTP RESTful API <http-restful-api-route-config>` for
+allocating requests between different versions of a service.
+
 Additional details and examples are found in the :ref:`Developers' Manual: Services <developers:user-services>`.
 
 .. Base URL explanation

@@ -33,26 +33,31 @@ public class ScheduleId extends NamespacedEntityId implements ParentedId<Applica
   private transient Integer hashCode;
 
   public ScheduleId(String namespace, String application, String version, String schedule) {
-    super(namespace, EntityType.SCHEDULE);
+    this(new ApplicationId(namespace, application, version), schedule);
+  }
+
+  public ScheduleId(String namespace, String application, String schedule) {
+    this(new ApplicationId(namespace, application), schedule);
+  }
+
+  ScheduleId(ApplicationId appId, String schedule) {
+    super(appId.getNamespace(), EntityType.SCHEDULE);
+    String application = appId.getApplication();
     if (application == null) {
       throw new NullPointerException("Application name cannot be null.");
     }
     if (application.isEmpty()) {
       throw new IllegalArgumentException("Application name cannot be empty.");
     }
-    if (version == null) {
+    if (appId.getVersion() == null) {
       throw new NullPointerException("Version cannot be null.");
     }
     if (schedule == null) {
       throw new NullPointerException("Schedule id cannot be null.");
     }
     this.application = application;
-    this.version = version;
+    this.version = appId.getVersion();
     this.schedule = schedule;
-  }
-
-  public ScheduleId(String namespace, String application, String schedule) {
-    this(namespace, application, "-SNAPSHOT", schedule);
   }
 
   public String getApplication() {

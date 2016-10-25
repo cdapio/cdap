@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTable;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableAdmin;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.NoTxInMemoryTable;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
@@ -51,7 +52,7 @@ public final class InMemoryStreamConsumerStateStoreFactory implements StreamCons
       admin.create();
     }
     InMemoryTable table =
-      new InMemoryTable(DatasetContext.from(tableId.getNamespace()), tableId.getTableName(), cConf);
+      new NoTxInMemoryTable(DatasetContext.from(tableId.getNamespace()), tableId.getTableName(), cConf);
     return new InMemoryStreamConsumerStateStore(streamConfig, table);
   }
 

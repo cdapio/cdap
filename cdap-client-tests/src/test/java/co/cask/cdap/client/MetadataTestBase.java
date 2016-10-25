@@ -457,9 +457,8 @@ public abstract class MetadataTestBase extends ClientTestBase {
   }
 
   protected Set<MetadataSearchResultRecord> searchMetadata(NamespaceId namespaceId, String query,
-                                                           Set<MetadataSearchTargetType> targets)
-    throws Exception {
-    return metadataClient.searchMetadata(namespaceId.toId(), query, targets);
+                                                           Set<MetadataSearchTargetType> targets) throws Exception {
+    return metadataClient.searchMetadata(namespaceId.toId(), query, targets).getResults();
   }
 
   protected Set<String> getTags(ApplicationId app, MetadataScope scope) throws Exception {

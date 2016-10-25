@@ -17,38 +17,47 @@
 @background-color: #ffffff;
 @text-color: #333333;
 
+
+.configure-button:hover {
+  background-color: #FAFAFA;
+}
+
 .configure-button {
-  display: inline-block;
+  display: inline-flex;
+  flex-direction: row;
+  justify-content: flex-start;
   margin: 20px 0 0px 20px;
   width: 160px;
   height: 50px;
   background-color: @background-color;
   border-radius: 2px;
   box-shadow: 0px 10px 15px -5px rgba(0,0,0,0.4);
+  cursor: pointer;
 
-  i {
-    font-size: 2em;
-    display: inline-block;
-    position: relative;
-    top: 10px;
-    left: 10px;
-    float: left;
-    color: @cdap-orange;
+  .btn-icon {
+
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 50px;
+
+    i {
+      font-size: 24px;
+      position: relative;
+      color: @cdap-orange;
+    }
   }
 
   .configure-button-text {
     font-size: 14px;
-    position: relative;
-    color: @text-color;
-    top: 20px;
-    left: 25px;
-    margin-top: -13px;
-    margin-left: -6px;
-    padding: 0;
-    height: 90%;
-    width: 100px;
-    line-height: 14px;
     font-weight: bold;
+    color: @text-color;
+    padding: 0 5px;
+    width: 100%;
+    height: 50px;
+    line-height: 50px;
     display: inline-block;
     word-break: hidden;
     white-space: pre-wrap;
@@ -56,5 +65,12 @@
     white-space: -pre-wrap;
     white-space: -o-pre-wrap;
     word-wrap: break-word;
+  }
+
+  .btn-text {
+    padding-right: 10px;
+    display: inline-block;
+    vertical-align: middle;
+    line-height: normal;
   }
 }

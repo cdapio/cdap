@@ -92,10 +92,22 @@ public interface ApplicationManager {
   void stopProgram(Id.Program programId);
 
   /**
+   * Stops a particular program.
+   * @param programId the program to stop
+   */
+  void stopProgram(ProgramId programId);
+
+  /**
    * Starts a particular program.
    * @param programId the program to start
    */
   void startProgram(Id.Program programId);
+
+  /**
+   * Starts a particular program.
+   * @param programId the program to start
+   */
+  void startProgram(ProgramId programId);
 
   /**
    * Starts a particular program with arguments.
@@ -104,11 +116,24 @@ public interface ApplicationManager {
   void startProgram(Id.Program programId, Map<String, String> arguments);
 
   /**
+   * Starts a particular program with arguments.
+   * @param programId the program to start
+   */
+  void startProgram(ProgramId programId, Map<String, String> arguments);
+
+  /**
    * Checks whether a particular program is running or not.
    * @param programId the program to check
    * @return true if the program is running; false otherwise.
    */
   boolean isRunning(Id.Program programId);
+
+  /**
+   * Checks whether a particular program is running or not.
+   * @param programId the program to check
+   * @return true if the program is running; false otherwise.
+   */
+  boolean isRunning(ProgramId programId);
 
   /**
    * Gets the history of the program

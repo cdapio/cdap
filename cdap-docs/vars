@@ -49,6 +49,9 @@ GIT_BRANCH_CDAP_INGEST="1.3.0"
 GIT_BRANCH_CDAP_APPS="develop"
 GIT_VERSION_CDAP_APPS="0.8.0"
 
+# Used by examples manual
+GIT_BRANCH_CDAP_GUIDES="develop"
+
 # Used by integrations-manual
 GIT_BRANCH_CDAP_PACKS="develop"
 

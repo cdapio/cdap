@@ -16,8 +16,8 @@
 package co.cask.cdap.app.program;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import org.apache.twill.filesystem.Location;
 
 import java.io.Closeable;
@@ -46,7 +46,7 @@ public interface Program extends Closeable {
   /**
    * Returns the program ID.
    */
-  Id.Program getId();
+  ProgramId getId();
 
   /**
    * Returns name of the program.

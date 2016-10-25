@@ -19,7 +19,8 @@ import {createStore} from 'redux';
 const initialState = {
   list: [],
   filter: '*',
-  loading: true
+  loading: true,
+  isError: false
 };
 
 const market = (state=initialState, action) => {
@@ -28,6 +29,8 @@ const market = (state=initialState, action) => {
       return Object.assign({}, state, { list: action.payload, loading: false });
     case 'SET_FILTER':
       return Object.assign({}, state, { filter: action.payload });
+    case 'SET_ERROR':
+      return Object.assign({}, state, { isError: true, loading: false });
     case 'RESET':
       return Object.assign({}, initialState);
     default:

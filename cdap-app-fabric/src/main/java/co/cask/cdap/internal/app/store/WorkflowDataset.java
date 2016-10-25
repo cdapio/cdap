@@ -66,11 +66,10 @@ public class WorkflowDataset extends AbstractDataset {
     this.table = table;
   }
 
-  void write(Id.Workflow id, RunRecordMeta runRecordMeta, List<ProgramRun> programRunList) {
+  void write(WorkflowId id, RunRecordMeta runRecordMeta, List<ProgramRun> programRunList) {
     long startTs = runRecordMeta.getStartTs();
 
-    MDSKey mdsKey = new MDSKey.Builder().add(id.getApplication().getNamespaceId())
-      .add(id.getApplicationId()).add(id.getId()).add(startTs).build();
+    MDSKey mdsKey = getRowKeyBuilder(id, startTs).build();
     byte[] rowKey = mdsKey.getKey();
     Long stopTs = runRecordMeta.getStopTs();
     Preconditions.checkState(stopTs != null, "Workflow Stats are written when the workflow has completed. Hence, " +
@@ -106,10 +105,8 @@ public class WorkflowDataset extends AbstractDataset {
    * @return List of WorkflowRunRecords
    */
   private List<WorkflowRunRecord> scan(WorkflowId id, long timeRangeStart, long timeRangeEnd) {
-    byte[] startRowKey = new MDSKey.Builder().add(id.getNamespace()).add(id.getApplication()).
-      add(id.getProgram()).add(timeRangeStart).build().getKey();
-    byte[] endRowKey = new MDSKey.Builder().add(id.getNamespace()).add(id.getApplication()).
-      add(id.getProgram()).add(timeRangeEnd).build().getKey();
+    byte[] startRowKey = getRowKeyBuilder(id, timeRangeStart).build().getKey();
+    byte[] endRowKey = getRowKeyBuilder(id, timeRangeEnd).build().getKey();
     Scan scan = new Scan(startRowKey, endRowKey);
 
     Scanner scanner = table.scan(scan);
@@ -230,8 +227,7 @@ public class WorkflowDataset extends AbstractDataset {
   WorkflowRunRecord getRecord(WorkflowId id, String pid) {
     RunId runId = RunIds.fromString(pid);
     long startTime = RunIds.getTime(runId, TimeUnit.SECONDS);
-    MDSKey mdsKey = new MDSKey.Builder().add(id.getNamespace())
-      .add(id.getApplication()).add(id.getProgram()).add(startTime).build();
+    MDSKey mdsKey = getRowKeyBuilder(id, startTime).build();
     byte[] startRowKey = mdsKey.getKey();
 
     Row indexRow = table.get(startRowKey);
@@ -276,8 +272,7 @@ public class WorkflowDataset extends AbstractDataset {
     // Since we want to stop getting the same key, we have the prevStartTime become 1 more than the time at which
     // the last record was found if the (interval * the count of the loop) is less than the time.
     while (prevStartTime <= startTime + (limit * timeInterval)) {
-      MDSKey mdsKey = new MDSKey.Builder().add(id.getNamespace())
-        .add(id.getApplication()).add(id.getProgram()).add(prevStartTime).build();
+      MDSKey mdsKey = getRowKeyBuilder(id, prevStartTime).build();
       byte[] startRowKey = mdsKey.getKey();
       Scan scan = new Scan(startRowKey, null);
       Scanner scanner = table.scan(scan);
@@ -391,5 +386,10 @@ public class WorkflowDataset extends AbstractDataset {
     public String getRunId() {
       return runId;
     }
+    }
+
+  private static MDSKey.Builder getRowKeyBuilder(WorkflowId id, long time) {
+    return new MDSKey.Builder().add(id.getNamespace())
+      .add(id.getApplication()).add(id.getVersion()).add(id.getProgram()).add(time);
   }
 }

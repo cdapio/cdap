@@ -97,7 +97,7 @@ public class ApplicationId extends NamespacedEntityId implements ParentedId<Name
   }
 
   public ScheduleId schedule(String schedule) {
-    return new ScheduleId(namespace, application, schedule);
+    return new ScheduleId(this, schedule);
   }
 
   @Override

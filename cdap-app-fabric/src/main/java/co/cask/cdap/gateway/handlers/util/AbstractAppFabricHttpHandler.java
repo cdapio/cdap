@@ -127,20 +127,11 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
     Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND), programId);
 
     for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
-      if (programId.equals(info.getProgramId().toEntityId())) {
+      if (programId.equals(info.getProgramId())) {
         return info;
       }
     }
     return null;
-  }
-
-  protected void getLiveInfo(HttpResponder responder, Id.Program programId,
-                             ProgramRuntimeService runtimeService) {
-    try {
-      responder.sendJson(HttpResponseStatus.OK, runtimeService.getLiveInfo(programId));
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    }
   }
 
   /**

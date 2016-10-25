@@ -61,6 +61,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.inmemory.InMemoryTxSystemClient;
+import org.apache.tephra.inmemory.TxInMemory;
 import org.apache.tephra.persist.NoOpTransactionStateStorage;
 import org.apache.tephra.persist.TransactionStateStorage;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
@@ -132,7 +133,7 @@ public class HBaseFileStreamAdminTest extends StreamAdminTest {
     zkClientService.startAndWait();
 
     streamAdmin = injector.getInstance(StreamAdmin.class);
-    txManager = injector.getInstance(TransactionManager.class);
+    txManager = TxInMemory.getTransactionManager(injector.getInstance(TransactionSystemClient.class));
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
     inMemoryAuditPublisher = injector.getInstance(InMemoryAuditPublisher.class);

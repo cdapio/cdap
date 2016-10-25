@@ -15,6 +15,9 @@
  */
 package co.cask.cdap.api.customaction;
 
+import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.annotation.TransactionPolicy;
+
 import java.util.Map;
 
 /**
@@ -58,6 +61,7 @@ public abstract class AbstractCustomAction implements CustomAction {
   }
 
   @Override
+  @TransactionPolicy(TransactionControl.IMPLICIT)
   public final void initialize(CustomActionContext context) throws Exception {
     this.context = context;
     initialize();
@@ -67,11 +71,13 @@ public abstract class AbstractCustomAction implements CustomAction {
    * Classes derived from {@link AbstractCustomAction} can override this method to initialize the {@link CustomAction}.
    * @throws Exception if there is any error in initializing the custom action
    */
+  @TransactionPolicy(TransactionControl.IMPLICIT)
   protected void initialize() throws Exception {
     // No-op by default
   }
 
   @Override
+  @TransactionPolicy(TransactionControl.IMPLICIT)
   public void destroy() {
 
   }

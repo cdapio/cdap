@@ -77,7 +77,8 @@ angular
       'angularjs-dropdown-multiselect',
       'hc.marked',
       'ngFileSaver',
-      'infinite-scroll'
+      'infinite-scroll',
+      'react'
     ]).name,
 
     'angular-loading-bar'
@@ -277,7 +278,7 @@ angular
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyCDAPDataSource, MY_CONFIG, MYAUTH_EVENT, EventPipe, myAuth, $window, myAlertOnValium) {
+  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyCDAPDataSource, MY_CONFIG, MYAUTH_EVENT, EventPipe, myAuth, $window, myAlertOnValium, myLoadingService) {
 
     var activeThemeClass = caskTheme.getClassName();
     var dataSource = new MyCDAPDataSource($scope);
@@ -300,7 +301,6 @@ angular
         activeThemeClass = newClassName;
       }
     });
-
     $scope.$on('$stateChangeSuccess', function (event, toState, toParams, fromState) {
       var classes = [];
       if(toState.data && toState.data.bodyClass) {
@@ -320,6 +320,7 @@ angular
 
       $scope.bodyClass = classes.join(' ');
 
+      myLoadingService.hideLoadingIcon();
 
       /**
        *  This is to make sure that the sroll position goes back to the top when user

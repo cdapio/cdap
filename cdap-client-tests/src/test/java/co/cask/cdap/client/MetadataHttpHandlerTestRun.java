@@ -163,8 +163,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Set<MetadataSearchResultRecord> expected = ImmutableSet.of(
       new MetadataSearchResultRecord(application)
     );
-    Set<MetadataSearchResultRecord> searchProperties = searchMetadata(NamespaceId.DEFAULT,
-                                                                      "aKey:aValue",
+    Set<MetadataSearchResultRecord> searchProperties = searchMetadata(NamespaceId.DEFAULT, "aKey:aValue",
                                                                       MetadataSearchTargetType.APP);
     Assert.assertEquals(expected, searchProperties);
     searchProperties = searchMetadata(NamespaceId.DEFAULT, "multiword:wow1", MetadataSearchTargetType.APP);
@@ -734,6 +733,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
                + AllProgramsApp.NoOpWorkflow.NAME, AllProgramsApp.NoOpWorkflow.NAME)
         .put("schedule" + MetadataDataset.KEYVALUE_SEPARATOR + AllProgramsApp.SCHEDULE_NAME,
              AllProgramsApp.SCHEDULE_NAME + MetadataDataset.KEYVALUE_SEPARATOR + AllProgramsApp.SCHEDULE_DESCRIPTION)
+        .put("version", ApplicationId.DEFAULT_VERSION)
         .build(),
       getProperties(app, MetadataScope.SYSTEM));
     Assert.assertEquals(ImmutableSet.of(AllProgramsApp.class.getSimpleName(), AllProgramsApp.NAME),
@@ -1155,7 +1155,8 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   }
 
   private void assertProgramSystemMetadata(ProgramId programId, String mode) throws Exception {
-    Assert.assertTrue(getProperties(programId, MetadataScope.SYSTEM).isEmpty());
+    Assert.assertEquals(ImmutableMap.of("version", ApplicationId.DEFAULT_VERSION),
+                        getProperties(programId, MetadataScope.SYSTEM));
     Set<String> expected = ImmutableSet.of(programId.getProgram(), programId.getType().getPrettyName(), mode);
     if (ProgramType.WORKFLOW == programId.getType()) {
       expected = ImmutableSet.of(programId.getProgram(), programId.getType().getPrettyName(), mode,

@@ -43,23 +43,19 @@
     </div>
     <div class="log-actions">
       <div class="log-action-container">
-        <button  ng-click="LogViewer.openRaw()"
-                class="log-action-btn view-raw btn btn-default"
-                ng-disabled="!LogViewer.displayData.length || !LogViewer.rawUrl.length === 0 || LogViewer.runId === '' || LogViewer.loading">
-            <span ng-if="LogViewer.isOpenRaw">
-              <span class="fa fa-spin fa-refresh"></span>
-            </span>
-            <span>View Raw logs</span>
-        </button>
-        <button class="log-action-btn download-all btn btn-default"
-                ng-click="LogViewer.export()"
-                ng-disabled="!LogViewer.displayData.length || LogViewer.isDownloading || LogViewer.loading">
-          <span ng-if="LogViewer.isDownloading">
-            <span class="fa fa-spin fa-refresh"></span>
-            <span>Downloading</span>
-          </span>
-          <span ng-if="!LogViewer.isDownloading">Download All</span>
-        </button>
+        <a href="{{LogViewer.getDownloadUrl('raw')}}"
+          target="_blank"
+          class="log-action-btn view-raw btn btn-default"
+          ng-disabled="!LogViewer.displayData.length || LogViewer.loading">
+          <span>View Raw Logs</span>
+        </a>
+
+        <a href="{{LogViewer.getDownloadUrl('download')}}"
+          target="_blank"
+          class="log-action-btn download-all btn btn-default"
+          ng-disabled="!LogViewer.displayData.length || LogViewer.loading">
+          <span>Download All</span>
+        </a>
         <div class="search">
           <input type="text" class="log-searchbar" placeholder="Search" ng-model="LogViewer.searchText" ng-model-options="{ debounce: 500 }" ng-change="LogViewer.filterSearch()">
           <span class="fa fa-search"></span>

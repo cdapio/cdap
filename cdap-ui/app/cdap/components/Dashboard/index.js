@@ -15,6 +15,9 @@
  */
 
 import React, {Component} from 'react';
+import Helmet from 'react-helmet';
+import T from 'i18n-react';
+
 export default class Dashboard extends Component {
   constructor(props) {
     super(props);
@@ -23,6 +26,9 @@ export default class Dashboard extends Component {
   render() {
     return (
       <div>
+        <Helmet
+          title={T.translate('features.Dashboard.Title')}
+        />
         <h1> Dashboard Screen </h1>
       </div>
     );

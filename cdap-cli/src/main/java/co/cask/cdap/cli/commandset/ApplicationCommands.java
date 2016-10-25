@@ -22,6 +22,7 @@ import co.cask.cdap.cli.command.app.CreateAppCommand;
 import co.cask.cdap.cli.command.app.DeleteAppCommand;
 import co.cask.cdap.cli.command.app.DeployAppCommand;
 import co.cask.cdap.cli.command.app.DescribeAppCommand;
+import co.cask.cdap.cli.command.app.ListAppVersionsCommand;
 import co.cask.cdap.cli.command.app.ListAppsCommand;
 import co.cask.cdap.cli.command.app.RestartProgramsCommand;
 import co.cask.cdap.cli.command.app.StartProgramsCommand;
@@ -48,6 +49,7 @@ public class ApplicationCommands extends CommandSet<Command> implements Categori
         .add(injector.getInstance(DeployAppCommand.class))
         .add(injector.getInstance(DescribeAppCommand.class))
         .add(injector.getInstance(ListAppsCommand.class))
+        .add(injector.getInstance(ListAppVersionsCommand.class))
         .add(injector.getInstance(RestartProgramsCommand.class))
         .add(injector.getInstance(StartProgramsCommand.class))
         .add(injector.getInstance(StatusProgramsCommand.class))

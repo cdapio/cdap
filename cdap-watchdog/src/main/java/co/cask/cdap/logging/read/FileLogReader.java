@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.read;
 
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.security.Impersonator;
@@ -38,9 +39,12 @@ import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.NavigableMap;
+import java.util.NoSuchElementException;
 
 /**
  * Reads log events from a file.
@@ -92,11 +96,15 @@ public class FileLogReader implements LogReader {
       AvroFileReader logReader = new AvroFileReader(schema);
       NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
       for (Location file : filesInRange) {
-        LOG.trace("Reading file {}", file);
-        logReader.readLog(file, logFilter, fromTimeMs,
-                          Long.MAX_VALUE, maxEvents - callback.getCount(), callback, namespaceId, impersonator);
-        if (callback.getCount() >= maxEvents) {
-          break;
+        try {
+          LOG.trace("Reading file {}", file);
+          logReader.readLog(file, logFilter, fromTimeMs,
+                            Long.MAX_VALUE, maxEvents - callback.getCount(), callback, namespaceId, impersonator);
+          if (callback.getCount() >= maxEvents) {
+            break;
+          }
+        } catch (IOException e) {
+          LOG.warn("Got exception reading log file {}", file, e);
         }
       }
     } catch (Throwable e) {
@@ -127,14 +135,18 @@ public class FileLogReader implements LogReader {
       int count = 0;
       NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
       for (Location file : Lists.reverse(filesInRange)) {
-        LOG.trace("Reading file {}", file);
+        try {
+          LOG.trace("Reading file {}", file);
 
-        Collection<LogEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs, maxEvents - count,
-                                                            namespaceId, impersonator);
-        logSegments.add(events);
-        count += events.size();
-        if (count >= maxEvents) {
-          break;
+          Collection<LogEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs, maxEvents - count,
+                                                              namespaceId, impersonator);
+          logSegments.add(events);
+          count += events.size();
+          if (count >= maxEvents) {
+            break;
+          }
+        } catch (IOException e) {
+          LOG.warn("Got exception reading log file {}", file, e);
         }
       }
 
@@ -148,31 +160,139 @@ public class FileLogReader implements LogReader {
   }
 
   @Override
-  public void getLog(final LoggingContext loggingContext, final long fromTimeMs, final long toTimeMs,
-                     final Filter filter, final Callback callback) {
-    callback.init();
+  public CloseableIterator<LogEvent> getLog(LoggingContext loggingContext, final long fromTimeMs, final long toTimeMs,
+                                            Filter filter) {
     try {
-      Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
-                                                        filter));
+      final Filter logFilter = new AndFilter(ImmutableList.of(LoggingContextHelper.createFilter(loggingContext),
+                                                              filter));
 
       LOG.trace("Using fromTimeMs={}, toTimeMs={}", fromTimeMs, toTimeMs);
       NavigableMap<Long, Location> sortedFiles = fileMetaDataManager.listFiles(loggingContext);
       if (sortedFiles.isEmpty()) {
-        return;
+        // return empty iterator
+        return null;
       }
 
       List<Location> filesInRange = getFilesInRange(sortedFiles, fromTimeMs, toTimeMs);
-      AvroFileReader avroFileReader = new AvroFileReader(schema);
-      NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
-      for (Location file : filesInRange) {
-        LOG.trace("Reading file {}", file);
-        avroFileReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback,
-                               namespaceId, impersonator);
-      }
+
+      final AvroFileReader avroFileReader = new AvroFileReader(schema);
+      final Iterator<Location> filesIter = filesInRange.iterator();
+      final NamespaceId namespaceId = LoggingContextHelper.getNamespaceId(loggingContext);
+
+      CloseableIterator closeableIterator = new CloseableIterator() {
+        private CloseableIterator<LogEvent> curr = null;
+
+        @Override
+        public void close() {
+          if (curr != null) {
+            curr.close();
+          }
+        }
+
+        @Override
+        public boolean hasNext() {
+          return filesIter.hasNext();
+        }
+
+        @Override
+        public CloseableIterator<LogEvent> next() {
+          if (curr != null) {
+            curr.close();
+          }
+          Location file = filesIter.next();
+          LOG.trace("Reading file {}", file);
+          curr = avroFileReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE,
+                                        namespaceId, impersonator);
+          return curr;
+        }
+
+        @Override
+        public void remove() {
+          throw new UnsupportedOperationException("Remove not supported");
+        }
+      };
+
+      return concat(closeableIterator);
     } catch (Throwable e) {
       LOG.error("Got exception: ", e);
-      throw  Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
+  }
+
+  /**
+   * See {@link com.google.common.collect.Iterators#concat(Iterator)}. The difference is that the input types and return
+   * type are CloseableIterator, which closes the inputs that it has opened.
+   */
+  public static <T> CloseableIterator<T> concat(
+    final CloseableIterator<? extends CloseableIterator<? extends T>> inputs) {
+    Preconditions.checkNotNull(inputs);
+    return new CloseableIterator<T>() {
+      @Override
+      public void close() {
+        current.close();
+        current = null;
+        while (inputs.hasNext()) {
+          inputs.next().close();
+        }
+        inputs.close();
+        removeFrom = null;
+      }
+
+      CloseableIterator<? extends T> current = new CloseableIterator<T>() {
+        @Override
+        public void close() {
+        }
+
+        @Override
+        public boolean hasNext() {
+          return false;
+        }
+
+        @Override
+        public T next() {
+          throw new NoSuchElementException();
+        }
+
+        @Override
+        public void remove() {
+          throw new IllegalStateException();
+        }
+      };
+
+      CloseableIterator<? extends T> removeFrom;
+
+      @Override
+      public boolean hasNext() {
+        // http://code.google.com/p/google-collections/issues/detail?id=151
+        // current.hasNext() might be relatively expensive, worth minimizing.
+        boolean currentHasNext;
+        // checkNotNull eager for GWT
+        // note: it must be here & not where 'current' is assigned,
+        // because otherwise we'll have called inputs.next() before throwing
+        // the first NPE, and the next time around we'll call inputs.next()
+        // again, incorrectly moving beyond the error.
+        while (!(currentHasNext = Preconditions.checkNotNull(current).hasNext())
+          && inputs.hasNext()) {
+          current = inputs.next();
+        }
+        return currentHasNext;
+      }
+      @Override
+      public T next() {
+        if (!hasNext()) {
+          throw new NoSuchElementException();
+        }
+        removeFrom = current;
+        return current.next();
+      }
+      @Override
+      public void remove() {
+        Preconditions.checkState(removeFrom != null,
+                                 "no calls to next() since last call to remove()");
+        removeFrom.remove();
+        removeFrom = null;
+      }
+    };
   }
 
   @VisibleForTesting

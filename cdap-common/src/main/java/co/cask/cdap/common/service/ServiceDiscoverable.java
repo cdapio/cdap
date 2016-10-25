@@ -34,15 +34,6 @@ public final class ServiceDiscoverable {
     return String.format("%s.%s.%s.%s", ProgramType.SERVICE.name().toLowerCase(), namespaceId, appId, serviceId);
   }
 
-  public static String getVersionedName(ProgramId programId) {
-    return getVersionedName(programId.getNamespace(), programId.getApplication(), programId.getVersion(),
-                            programId.getProgram());
-  }
-
-  public static String getVersionedName(String namespaceId, String appId, String versionId, String serviceId) {
-    return String.format("serviceversion.%s.%s.%s.%s", namespaceId, appId, versionId, serviceId);
-  }
-
   public static ProgramId getId(String name) {
     int firstIndex = name.indexOf('.');
     int secondIndex = name.indexOf('.', firstIndex + 1);

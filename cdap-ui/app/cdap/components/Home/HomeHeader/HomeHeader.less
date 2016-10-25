@@ -16,18 +16,19 @@
 
 @import "../../../styles/variables.less";
 
-@home-header-background-color: @panel-default-border;
+@home-header-background-color: #efefef;
 @home-header-border-color: darken(@home-header-background-color, 15%);
 @icon-inactive-color: #999999;
 @icon-active-color: @gray-dark;
 
-@home-header-height: 40px;
+@home-header-height: 30px;
+@sort-box-width: 100px;
+@filter-box-width: 150px;
 
 .home-header {
-  // margin: 0 -15px;
   background-color: @home-header-background-color;
   height: @home-header-height;
-  border-bottom: 2px solid @home-header-border-color;
+  border-bottom: 1px solid @home-header-border-color;
   position: fixed;
   top: 50px;
   left: 0;
@@ -37,13 +38,36 @@
   .sort,
   .filter {
     float: left;
-    border-right: 2px solid @home-header-border-color;
+    border-right: 1px solid @home-header-border-color;
     height: @home-header-height;
     line-height: @home-header-height;
 
     span {
       line-height: @home-header-height;
       vertical-align: middle;
+    }
+
+    .dropdown {
+      .dropdown-menu {
+        margin: 0;
+        top: @home-header-height;
+        left: -17px; // aligning with border
+        border-radius: 0;
+        border: 1px solid @home-header-border-color;
+        border-top: 0;
+        z-index: 1002;
+      }
+
+      .dropdown-item {
+        background-color: white;
+        border: 0;
+        display: block;
+        line-height: initial;
+        width: 100%;
+        text-align: left;
+        span { line-height: initial; }
+        &:focus { outline: 0; }
+      }
     }
   }
 
@@ -57,9 +81,9 @@
     }
 
     .form-control {
-      border: 0;
+      border-right: 0;
       border-radius: 0;
-      background-color: transparent;
+      border-top: 0;
 
       &:focus { box-shadow: none; }
     }
@@ -76,26 +100,17 @@
   }
 
   .sort {
-    width: 100px;
+    width: @sort-box-width;
+    .dropdown-menu { min-width: @sort-box-width + 2px; }
   }
 
   .filter {
-    width: 150px;
+    width: @filter-box-width;
     position: relative;
 
-    .dropdown {
-      background-color: white;
-      padding: 0 15px;
-      border: 2px solid @home-header-border-color;
-      border-top: 0;
-      line-height: initial;
-      font-size: 13px;
-      position: absolute;
-      top: 40px;
-      left: -2px;
-      width: 152px;
-      box-shadow: 0px 3px 10px 3px rgba(0,0,0, 0.3);
+    .dropdown-menu { min-width: @filter-box-width + 2px; }
 
+    .dropdown {
       input[type="checkbox"] {
         margin: 2px 0 0 -20px;
       }

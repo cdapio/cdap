@@ -69,6 +69,6 @@ public class ProgramExistenceVerifier implements EntityExistenceVerifier<Program
         return;
       }
     }
-    throw new ProgramNotFoundException(programId.toId());
+    throw new ProgramNotFoundException(programId);
   }
 }

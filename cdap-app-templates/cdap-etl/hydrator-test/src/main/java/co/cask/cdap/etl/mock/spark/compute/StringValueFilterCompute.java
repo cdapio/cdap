@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.mock.spark.compute;
 
+import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
@@ -60,7 +61,10 @@ public class StringValueFilterCompute extends SparkCompute<StructuredRecord, Str
    * Config for the plugin.
    */
   public static class Conf extends PluginConfig {
+    @Macro
     private String field;
+
+    @Macro
     private String value;
   }
 
@@ -73,8 +77,8 @@ public class StringValueFilterCompute extends SparkCompute<StructuredRecord, Str
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    properties.put("field", new PluginPropertyField("field", "", "string", true, false));
-    properties.put("value", new PluginPropertyField("value", "", "string", true, false));
+    properties.put("field", new PluginPropertyField("field", "", "string", true, true));
+    properties.put("value", new PluginPropertyField("value", "", "string", true, true));
     return new PluginClass(SparkCompute.PLUGIN_TYPE, "StringValueFilterCompute", "",
                            StringValueFilterCompute.class.getName(),
                            "conf", properties);

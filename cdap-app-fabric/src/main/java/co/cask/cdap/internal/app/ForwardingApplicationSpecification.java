@@ -48,6 +48,11 @@ public abstract class ForwardingApplicationSpecification implements ApplicationS
     return delegate.getName();
   }
 
+  @Override
+  public String getAppVersion() {
+    return delegate.getAppVersion();
+  }
+
   @Nullable
   @Override
   public String getConfiguration() {

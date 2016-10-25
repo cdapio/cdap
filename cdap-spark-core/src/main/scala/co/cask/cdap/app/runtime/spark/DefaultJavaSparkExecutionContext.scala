@@ -79,6 +79,8 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
 
   override def execute(runnable: TxRunnable): Unit = sec.execute(runnable)
 
+  override def execute(timeout: Int, runnable: TxRunnable): Unit = sec.execute(timeout, runnable)
+
   override def fromDataset[K, V](datasetName: String, arguments: util.Map[String, String],
                                  splits: java.lang.Iterable[_ <: Split]): JavaPairRDD[K, V] = {
     // Create the implicit fake ClassTags to satisfy scala type system at compilation time.

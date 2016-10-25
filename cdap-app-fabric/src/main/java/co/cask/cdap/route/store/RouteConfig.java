@@ -26,18 +26,25 @@ import java.util.Map;
  */
 public class RouteConfig {
   private final Map<String, Integer> routes;
+  private transient Boolean isValid;
 
   public RouteConfig(Map<String, Integer> routes) {
-    int percentageSum = 0;
     Preconditions.checkNotNull(routes);
-    for (Integer percent : routes.values()) {
-      percentageSum += percent;
-    }
-    Preconditions.checkArgument(percentageSum == 100, "Route Percentage needs to add upto 100.");
     this.routes = ImmutableMap.copyOf(routes);
   }
 
   public Map<String, Integer> getRoutes() {
     return routes;
+  }
+
+  public boolean isValid() {
+    if (isValid == null) {
+      int percentageSum = 0;
+      for (Integer percent : routes.values()) {
+        percentageSum += percent;
+      }
+      isValid = (percentageSum == 100);
+    }
+    return isValid;
   }
 }

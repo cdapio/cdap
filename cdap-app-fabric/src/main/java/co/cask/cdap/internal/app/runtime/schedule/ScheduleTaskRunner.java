@@ -30,6 +30,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -73,29 +74,29 @@ public final class ScheduleTaskRunner {
    * @throws TaskExecutionException if program is already running or program is not found.
    * @throws IOException if program failed to start.
    */
-  public ListenableFuture<?> run(Id.Program programId, Map<String, String> systemOverrides,
+  public ListenableFuture<?> run(ProgramId programId, Map<String, String> systemOverrides,
                                  Map<String, String> userOverrides) throws Exception {
     Map<String, String> userArgs = Maps.newHashMap();
     Map<String, String> systemArgs = Maps.newHashMap();
 
     String scheduleName = systemOverrides.get(ProgramOptionConstants.SCHEDULE_NAME);
-    ApplicationSpecification appSpec = store.getApplication(programId.getApplication().toEntityId());
+    ApplicationSpecification appSpec = store.getApplication(programId.getParent());
     if (appSpec == null || appSpec.getSchedules().get(scheduleName) == null) {
       throw new TaskExecutionException(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), programId),
                                        false);
     }
 
     ScheduleSpecification spec = appSpec.getSchedules().get(scheduleName);
-    if (!requirementsChecker.checkSatisfied(programId.toEntityId(), spec.getSchedule())) {
+    if (!requirementsChecker.checkSatisfied(programId, spec.getSchedule())) {
       return Futures.<Void>immediateFuture(null);
     }
 
     // Schedule properties are overridden by resolved preferences
     userArgs.putAll(spec.getProperties());
-    userArgs.putAll(propertiesResolver.getUserProperties(programId));
+    userArgs.putAll(propertiesResolver.getUserProperties(programId.toId()));
     userArgs.putAll(userOverrides);
 
-    systemArgs.putAll(propertiesResolver.getSystemProperties(programId));
+    systemArgs.putAll(propertiesResolver.getSystemProperties(programId.toId()));
     systemArgs.putAll(systemOverrides);
 
     return execute(programId, systemArgs, userArgs);
@@ -106,11 +107,11 @@ public final class ScheduleTaskRunner {
    *
    * @return a {@link ListenableFuture} object that completes when the program completes
    */
-  private ListenableFuture<?> execute(final Id.Program id, Map<String, String> sysArgs,
+  private ListenableFuture<?> execute(final ProgramId id, Map<String, String> sysArgs,
                                       Map<String, String> userArgs) throws Exception {
     ProgramRuntimeService.RuntimeInfo runtimeInfo;
     try {
-      runtimeInfo = lifecycleService.start(id.toEntityId(), sysArgs, userArgs, false);
+      runtimeInfo = lifecycleService.start(id, sysArgs, userArgs, false);
     } catch (ProgramNotFoundException | ApplicationNotFoundException e) {
       throw new TaskExecutionException(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), id),
                                        e, false);

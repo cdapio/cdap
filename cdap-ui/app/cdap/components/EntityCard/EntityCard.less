@@ -1,0 +1,108 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@entity-card-border: 1px solid #cccccc;
+
+.home-cards.cask-card {
+  padding: 0;
+  border: @entity-card-border;
+  text-align: left;
+  border-radius: 0;
+
+  &.artifact .card-header { background-color: #bdc3c7; }
+  &.application .card-header { background-color: #ff6600; }
+  &.datasetinstance .card-header { background-color: #27ae60; }
+  &.stream .card-header { background-color: #3498db; }
+  &.view .card-header { background-color: #1abc9c; }
+  &.program .card-header { background-color: #2c3e50; }
+
+  .card-header {
+    justify-content: flex-start;
+    border-bottom: @entity-card-border;
+    color: white;
+  }
+  .card-body { padding: 0; }
+
+  .entity-id-container {
+    height: 35px;
+    border-bottom: @entity-card-border;
+    padding-left: 10px;
+
+    h4 {
+      font-weight: 500;
+      font-size: 15px;
+      margin: 0;
+      line-height: 35px;
+      vertical-align: middle;
+
+      &.with-version { line-height: initial; }
+    }
+
+    small {
+      font-size: 9px;
+      color: #999999;
+      display: block;
+      margin-top: 2px;
+    }
+  }
+
+  .metrics-container {
+    height: 50px;
+    border-bottom: @entity-card-border;
+    display: flex;
+
+    .metric-item {
+      flex-grow: 1;
+      text-align: center;
+      padding: 5px 0;
+
+      p {
+        margin-bottom: 5px;
+        font-size: 15px;
+        color: #333333;
+        font-weight: 500;
+      }
+      .metric-header {
+        font-weight: 500;
+        font-size: 11px;
+        margin-bottom: 3px;
+        color: #999999;
+      }
+
+      &:not(:last-child) {
+        border-right: @entity-card-border;
+      }
+    }
+  }
+
+  .fast-actions-container {
+    background-color: #95a5a6;
+    color: white;
+    padding: 2px 0;
+
+    .btn-link {
+      text-decoration: none;
+      font-size: 17px;
+      color: white;
+      padding: 0;
+      span { margin: 0 20px; }
+    }
+
+    h4 {
+      margin: 0;
+    }
+  }
+}

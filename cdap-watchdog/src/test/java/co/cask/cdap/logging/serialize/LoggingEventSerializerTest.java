@@ -30,6 +30,8 @@ import kafka.utils.VerifiableProperties;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -46,12 +48,11 @@ public class LoggingEventSerializerTest {
 
   @Test
   public void testEmptySerialization() throws Exception {
+    Logger logger = LoggerFactory.getLogger(LoggingEventSerializerTest.class);
     LoggingEventSerializer serializer = new LoggingEventSerializer(new VerifiableProperties());
-    ch.qos.logback.classic.spi.LoggingEvent iLoggingEvent = new ch.qos.logback.classic.spi.LoggingEvent();
-    iLoggingEvent.setLevel(Level.ERROR);
+    ch.qos.logback.classic.spi.LoggingEvent iLoggingEvent = new ch.qos.logback.classic.spi.LoggingEvent(
+      getClass().getName(), (ch.qos.logback.classic.Logger) logger, Level.ERROR, "message", null, null);
     iLoggingEvent.setThreadName("thread-1");
-    iLoggingEvent.setLoggerName(getClass().getName());
-    iLoggingEvent.setMessage("message");
     iLoggingEvent.setTimeStamp(10000000L);
 
     // Serialize
@@ -115,8 +116,10 @@ public class LoggingEventSerializerTest {
 
   @Test
   public void testNullSerialization() throws Exception {
+    Logger logger = LoggerFactory.getLogger(LoggingEventSerializerTest.class);
     LoggingEventSerializer serializer = new LoggingEventSerializer(new VerifiableProperties());
-    ch.qos.logback.classic.spi.LoggingEvent iLoggingEvent = new ch.qos.logback.classic.spi.LoggingEvent();
+    ch.qos.logback.classic.spi.LoggingEvent iLoggingEvent = new ch.qos.logback.classic.spi.LoggingEvent(
+      null, (ch.qos.logback.classic.Logger) logger, null, null, null, null);
     iLoggingEvent.setThreadName(null);
     iLoggingEvent.setLevel(null);
     iLoggingEvent.setMessage(null);
