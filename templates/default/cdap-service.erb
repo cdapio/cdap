@@ -43,11 +43,6 @@ if [[ -r ${CDAP_CONF}/cdap-env.sh ]]; then
   . "${CDAP_CONF}"/cdap-env.sh
 fi
 
-# how about jdk.sh
-if [[ -r /etc/profile.d/jdk.sh ]]; then
-  . /etc/profile.d/jdk.sh
-fi
-
 <% if @init_krb5.to_s == 'true' %>
 KRB_COMMAND="kinit -kt $CDAP_KEYTAB $CDAP_PRINCIPAL"
 
@@ -67,7 +62,7 @@ CDAP_USER=${CDAP_USER:-<%= @user %>}
 
 # drop permissions to CDAP_USER and run service script
 if [[ $UID -eq 0 ]]; then
-  su ${CDAP_USER} -c "${SVC_COMMAND}"
+  su - ${CDAP_USER} -c "${SVC_COMMAND}"
   ret=$?
 elif [[ ${USER} == ${CDAP_USER} ]]; then
   ${SVC_COMMAND}
