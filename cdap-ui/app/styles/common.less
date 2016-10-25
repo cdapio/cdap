@@ -137,45 +137,6 @@ hr { border-color: lighten(@text-color, 50%); }
 .jumbotron { margin-top: 1em; }
 .nav-tabs > li > a { cursor: pointer; }
 
-footer {
-  font-size: 14px;
-  position: absolute;
-  bottom: 0;
-  z-index: 1400;
-  width: 100%;
-  > .container {
-    padding-right: 15px;
-    padding-left: 15px;
-  }
-  div.text-muted {
-    margin: 10px 0;
-
-    > div {
-      @media (min-width: @screen-md-max) {
-        &:first-child { text-align: left; }
-        &:last-child { text-align: right; }
-      }
-
-      @media (max-width: @screen-md-max) { text-align: center; }
-    }
-  }
-  img {
-    height: 26px;
-    width: 26px;
-    margin-right: 8px;
-  }
-  p,
-  ul {
-    height: 32px;
-    margin: 0;
-  }
-  span,
-  li {
-    line-height: 32px;
-    vertical-align: middle;
-  }
-}
-
 .mapreduce-components {
   margin-top: 15px;
 
