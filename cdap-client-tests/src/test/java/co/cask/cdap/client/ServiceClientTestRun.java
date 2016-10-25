@@ -78,6 +78,8 @@ public class ServiceClientTestRun extends ClientTestBase {
   private final Id.Namespace namespace = Id.Namespace.DEFAULT;
   private final Id.Application app = Id.Application.from(namespace, FakeApp.NAME);
   private final Id.Service service = Id.Service.from(app, PingService.NAME);
+  private static final ServiceId serviceId = new ServiceId(NamespaceId.DEFAULT.getNamespace(), AppReturnsArgs.NAME,
+                                                           AppReturnsArgs.SERVICE);
   private static final ArtifactId artifactId = NamespaceId.DEFAULT.artifact("appreturnsArgs", "1.0.0-SNAPSHOT");
 
   private ArtifactClient artifactClient;
@@ -164,8 +166,7 @@ public class ServiceClientTestRun extends ClientTestBase {
     startService(app1, propMap);
 
     // RouteConfig is empty by default
-    Assert.assertTrue(serviceClient.getRouteConfig(NamespaceId.DEFAULT,
-                                                       AppReturnsArgs.NAME, AppReturnsArgs.SERVICE).isEmpty());
+    Assert.assertTrue(serviceClient.getRouteConfig(serviceId).isEmpty());
 
     // Calls to the non-versioned service endpoint are routed to the only running service of version v1
     assertArgsEqual(propMap);
@@ -194,10 +195,9 @@ public class ServiceClientTestRun extends ClientTestBase {
     storeInvalidRouteConfig(ImmutableMap.of(version1, 100, "NONEXISTING", 0), "NONEXISTING");
 
     // Delete RouteConfig
-    serviceClient.deleteRouteConfig(NamespaceId.DEFAULT, AppReturnsArgs.NAME, AppReturnsArgs.SERVICE);
+    serviceClient.deleteRouteConfig(serviceId);
     // RouteConfig is empty after deletion
-    Assert.assertTrue(serviceClient.getRouteConfig(NamespaceId.DEFAULT, AppReturnsArgs.NAME,
-                                                       AppReturnsArgs.SERVICE).isEmpty());
+    Assert.assertTrue(serviceClient.getRouteConfig(serviceId).isEmpty());
 
     stopService(app1);
     stopService(app2);
@@ -252,21 +252,19 @@ public class ServiceClientTestRun extends ClientTestBase {
 
   private void assertArgsEqual(Map<String, String> expectedArgs)
     throws UnauthorizedException, IOException, UnauthenticatedException {
-    HttpResponse response = serviceClient.callServiceMethod(NamespaceId.DEFAULT, AppReturnsArgs.NAME,
-                                                                AppReturnsArgs.SERVICE, AppReturnsArgs.ENDPOINT);
+    HttpResponse response = serviceClient.callServiceMethod(serviceId, AppReturnsArgs.ENDPOINT);
     Map<String, String> responseMap = GSON.fromJson(response.getResponseBodyAsString(), STRING_MAP_TYPE);
     Assert.assertEquals(expectedArgs, responseMap);
   }
 
   private void storeAndGetValidRouteConfig(Map<String, Integer> routeConfig) throws Exception {
-    serviceClient.storeRouteConfig(NamespaceId.DEFAULT, AppReturnsArgs.NAME, AppReturnsArgs.SERVICE, routeConfig);
-    Assert.assertEquals(routeConfig, serviceClient.getRouteConfig(NamespaceId.DEFAULT, AppReturnsArgs.NAME,
-                                                                      AppReturnsArgs.SERVICE));
+    serviceClient.storeRouteConfig(serviceId, routeConfig);
+    Assert.assertEquals(routeConfig, serviceClient.getRouteConfig(serviceId));
   }
 
   private void storeInvalidRouteConfig(Map<String, Integer> routeConfig, String expectedMsg) throws Exception {
     try {
-      serviceClient.storeRouteConfig(NamespaceId.DEFAULT, AppReturnsArgs.NAME, AppReturnsArgs.SERVICE, routeConfig);
+      serviceClient.storeRouteConfig(serviceId, routeConfig);
     } catch (IOException expected) {
       Assert.assertTrue(expected.getMessage().contains(expectedMsg));
     }

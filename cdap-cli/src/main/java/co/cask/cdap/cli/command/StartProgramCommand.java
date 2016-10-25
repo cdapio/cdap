@@ -80,8 +80,8 @@ public class StartProgramCommand extends AbstractAuthCommand {
 
   @Override
   public String getPattern() {
-    return String.format("start %s <%s> [<%s>]", elementType.getShortName(), elementType.getArgumentName(),
-                         ArgumentName.RUNTIME_ARGS);
+    return String.format("start %s <%s> [version <%s>] [<%s>]", elementType.getShortName(),
+                         elementType.getArgumentName(), ArgumentName.APP_VERSION, ArgumentName.RUNTIME_ARGS);
   }
 
   @Override
