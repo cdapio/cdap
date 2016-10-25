@@ -48,7 +48,7 @@
   "recipes": {
 
   },
-  "version": "2.26.0",
+  "version": "2.26.1",
   "source_url": "https://github.com/caskdata/cdap_cookbook",
   "issues_url": "https://issues.cask.co/browse/COOK/component/10603"
 }
