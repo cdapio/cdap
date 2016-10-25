@@ -31,27 +31,10 @@ export default class Footer extends Component {
       <footer>
         <div className="container">
           <div className="row text-muted">
-            <div className="col-sm-6 text-uppercase">
-              <p>
-                <span className="cask-logo"></span>
-                <span>Copyright &copy; {this.copyrightYear} Cask Data, Inc.</span>
+            <div className="text-uppercase">
+              <p className="text-center">
+                <span>Copyright &copy; 2011-{this.copyrightYear} Cask Data, Inc.</span>
               </p>
-            </div>
-            <div className="col-sm-6">
-              <ul className="list-inline">
-                <li>
-                  {this.version}
-                </li>
-                <li>
-                  <a href="http://cask.co/terms" target="_blank">Terms</a>
-                </li>
-                <li>
-                  <a href="http://cask.co/privacy" target="_blank">Privacy</a>
-                </li>
-                <li>
-                  <a href="http://cask.co/contact" target="_blank">Contact</a>
-                </li>
-              </ul>
             </div>
           </div>
         </div>
