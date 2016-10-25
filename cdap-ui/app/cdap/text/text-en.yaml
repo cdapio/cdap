@@ -63,6 +63,9 @@ commons:
   formatLabel: Format
   schemaLabel: Schema
 features:
+  ConfirmationModal:
+    confirmDefaultText: OK
+    cancelDefaultText: Cancel
   Home:
     Title: CDAP - Home
     emptyMessage: No entities found in the system.
@@ -82,7 +85,10 @@ features:
 
   FastAction:
     deleteConfirmation: Are you sure you want to delete {entityId}?
+    deleteFailed: Failed to delete {entityId}
+    deleteTitle: Delete {entityType}
     truncateConfirmation: Are you sure you want to truncate {entityId}?
+    truncateTitle: Truncate {entityType}
 
   Management:
     Title: Management
