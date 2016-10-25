@@ -286,13 +286,13 @@ Dumping the Transaction Manager
 CDAP comes bundled with a script that allows you to dump the state of the internal
 transaction manager into a local file to allow further investigation. If your CDAP Instance
 tends to become slow, you can use this tool to detect the incriminating transactions.
-This script is called ``cdap tx-debugger`` (on Windows, it is ``tx-debugger.bat``).
+This script is called ``cdap debug transactions`` (on Windows, it is ``tx-debugger.bat``).
 
 To download a snapshot of the state of the TM of the CDAP, use the command:
 
 .. tabbed-parsed-literal::
 
-  $ cdap tx-debugger view --host <name> [--save <filename>]
+  $ cdap debug transactions view --host <name> [--save <filename>]
 
 where `name` is the host name of your CDAP instance, and the optional `filename`
 specifies where the snapshot should be saved. This command will
@@ -303,7 +303,7 @@ with the command:
 
 .. tabbed-parsed-literal::
 
-  $ cdap tx-debugger view --filename <filename>
+  $ cdap debug transactions view --filename <filename>
 
 where `filename` specifies the location where the snapshot has been saved.
 
@@ -328,7 +328,7 @@ use this command to invalidate it:
 
 .. tabbed-parsed-literal::
 
-  $ cdap tx-debugger invalidate --host <name> --transaction <writePtr>
+  $ cdap debug transactions invalidate --host <name> --transaction <writePtr>
 
 Invalidating a transaction when we know for sure that its writes should
 be invalidated is useful, because those writes will then be removed
