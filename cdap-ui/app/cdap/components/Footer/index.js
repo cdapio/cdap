@@ -33,7 +33,7 @@ export default class Footer extends Component {
           <div className="row text-muted">
             <div className="text-uppercase">
               <p className="text-center">
-                <span>Copyright &copy; 2011-{this.copyrightYear} Cask Data, Inc.</span>
+                <span>Copyright &copy; {this.copyrightYear} Cask Data, Inc.</span>
               </p>
             </div>
           </div>
