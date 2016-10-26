@@ -44,19 +44,20 @@ public class DeleteAppCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    ApplicationId appId = cliConfig.getCurrentNamespace().app(arguments.get(ArgumentName.APP.toString()));
-
-    appClient.delete(appId.toId());
+    ApplicationId appId = parseApplicationId(arguments);
+    appClient.delete(appId);
     output.printf("Successfully deleted application '%s'\n", appId.getEntityName());
   }
 
   @Override
   public String getPattern() {
-    return String.format("delete app <%s>", ArgumentName.APP);
+    return String.format("delete app <%s> [version <%s>]", ArgumentName.APP, ArgumentName.APP_VERSION);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Deletes %s", Fragment.of(Article.A, ElementType.APP.getName()));
+    return String.format("Deletes %s with an optional version. If version is not provided, default version \"%s\" " +
+                           "will be used", Fragment.of(Article.A, ElementType.APP.getName()),
+                         ApplicationId.DEFAULT_VERSION);
   }
 }

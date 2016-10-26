@@ -26,7 +26,9 @@ import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
+import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -133,17 +135,38 @@ public abstract class AbstractClientTest {
     throws IOException, ProgramNotFoundException, UnauthenticatedException,
     InterruptedException, UnauthorizedException {
 
-    assertProgramStatus(programClient, program, "RUNNING");
+    assertProgramStatus(programClient, program, ProgramStatus.RUNNING);
   }
 
   protected void assertProgramStopped(ProgramClient programClient, Id.Program program)
     throws IOException, ProgramNotFoundException, UnauthenticatedException,
     InterruptedException, UnauthorizedException {
 
-    assertProgramStatus(programClient, program, "STOPPED");
+    assertProgramStatus(programClient, program, ProgramStatus.STOPPED);
+  }
+  
+  protected void assertProgramStatus(ProgramClient programClient, Id.Program program, ProgramStatus programStatus)
+    throws IOException, ProgramNotFoundException, UnauthenticatedException,
+    InterruptedException, UnauthorizedException {
+
+    assertProgramStatus(programClient, program.toEntityId(), programStatus);
   }
 
-  protected void assertProgramStatus(ProgramClient programClient, Id.Program program, String programStatus)
+  protected void assertProgramRunning(ProgramClient programClient, ProgramId program)
+    throws IOException, ProgramNotFoundException, UnauthenticatedException,
+    InterruptedException, UnauthorizedException {
+
+    assertProgramStatus(programClient, program, ProgramStatus.RUNNING);
+  }
+
+  protected void assertProgramStopped(ProgramClient programClient, ProgramId program)
+    throws IOException, ProgramNotFoundException, UnauthenticatedException,
+    InterruptedException, UnauthorizedException {
+
+    assertProgramStatus(programClient, program, ProgramStatus.STOPPED);
+  }
+
+  protected void assertProgramStatus(ProgramClient programClient, ProgramId program, ProgramStatus programStatus)
     throws IOException, ProgramNotFoundException, UnauthenticatedException,
     InterruptedException, UnauthorizedException {
 
@@ -153,7 +176,7 @@ public abstract class AbstractClientTest {
       // NO-OP
     }
 
-    Assert.assertEquals(programStatus, programClient.getStatus(program));
+    Assert.assertEquals(programStatus.name(), programClient.getStatus(program));
   }
 
   protected File createAppJarFile(Class<?> cls) throws IOException {

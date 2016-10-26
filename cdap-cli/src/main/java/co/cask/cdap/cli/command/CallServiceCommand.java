@@ -69,14 +69,7 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String[] appAndServiceId = arguments.get(ArgumentName.SERVICE.toString()).split("\\.");
-    if (appAndServiceId.length < 2) {
-      throw new CommandInputError(this);
-    }
-
-    String appId = appAndServiceId[0];
-    String serviceId = appAndServiceId[1];
-    ServiceId service = cliConfig.getCurrentNamespace().app(appId).service(serviceId);
+    ServiceId service = parseServiceId(arguments);
 
     String method = arguments.get(ArgumentName.HTTP_METHOD.toString());
     String path = arguments.get(ArgumentName.ENDPOINT.toString());
@@ -94,7 +87,7 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
     }
 
     Map<String, String> headerMap = GSON.fromJson(headers, new TypeToken<Map<String, String>>() { }.getType());
-    URL url = new URL(serviceClient.getServiceURL(service.toId()), path);
+    URL url = new URL(serviceClient.getServiceURL(service), path);
 
     HttpMethod httpMethod = HttpMethod.valueOf(method);
     HttpRequest.Builder builder = HttpRequest.builder(httpMethod, url).addHeaders(headerMap);

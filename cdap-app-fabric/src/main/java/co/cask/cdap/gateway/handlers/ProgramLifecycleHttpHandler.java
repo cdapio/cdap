@@ -66,6 +66,7 @@ import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.ServiceId;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -417,12 +418,27 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Get program runtime args.
    */
   @GET
-  @Path("/apps/{app-id}/{program-type}/{program-id}/runtimeargs")
+  @Path("/apps/{app-name}/{program-type}/{program-name}/runtimeargs")
   public void getProgramRuntimeArgs(HttpRequest request, HttpResponder responder,
                                     @PathParam("namespace-id") String namespaceId,
-                                    @PathParam("app-id") String appId,
+                                    @PathParam("app-name") String appName,
                                     @PathParam("program-type") String type,
-                                    @PathParam("program-id") String programId) throws BadRequestException,
+                                    @PathParam("program-name") String programName) throws BadRequestException,
+    NotImplementedException, NotFoundException {
+    getProgramRuntimeArgs(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, type, programName);
+  }
+
+  /**
+   * Get program runtime args.
+   */
+  @GET
+  @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/runtimeargs")
+  public void getProgramRuntimeArgs(HttpRequest request, HttpResponder responder,
+                                    @PathParam("namespace-id") String namespaceId,
+                                    @PathParam("app-name") String appName,
+                                    @PathParam("app-version") String appVersion,
+                                    @PathParam("program-type") String type,
+                                    @PathParam("program-name") String programName) throws BadRequestException,
     NotImplementedException, NotFoundException {
     ProgramType programType = getProgramType(type);
     if (programType == null || programType == ProgramType.WEBAPP) {
@@ -430,13 +446,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                                   "type '%s'.", type));
     }
 
-    ProgramId id = new ProgramId(namespaceId, appId, programType, programId);
-    if (!store.programExists(id)) {
-      throw new NotFoundException(id);
+    ProgramId programId = new ProgramId(namespaceId, appName, programType, programName);
+    if (!store.programExists(programId)) {
+      throw new NotFoundException(programId);
     }
 
-    Map<String, String> runtimeArgs = preferencesStore.getProperties(id.getNamespace(), appId,
-                                                                     type, programId);
+    Map<String, String> runtimeArgs = preferencesStore.getProperties(programId.getNamespace(), appName,
+                                                                     type, programName);
     responder.sendJson(HttpResponseStatus.OK, runtimeArgs);
   }
 
@@ -444,19 +460,33 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Save program runtime args.
    */
   @PUT
-  @Path("/apps/{app-id}/{program-type}/{program-id}/runtimeargs")
+  @Path("/apps/{app-name}/{program-type}/{program-name}/runtimeargs")
   public void saveProgramRuntimeArgs(HttpRequest request, HttpResponder responder,
-                                     @PathParam("namespace-id") String namespaceId,
-                                     @PathParam("app-id") String appId,
-                                     @PathParam("program-type") String type,
-                                     @PathParam("program-id") String programId) throws Exception {
+                                    @PathParam("namespace-id") String namespaceId,
+                                    @PathParam("app-name") String appName,
+                                    @PathParam("program-type") String type,
+                                    @PathParam("program-name") String programName) throws Exception {
+    saveProgramRuntimeArgs(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, type, programName);
+  }
+
+  /**
+   * Save program runtime args.
+   */
+  @PUT
+  @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/runtimeargs")
+  public void saveProgramRuntimeArgs(HttpRequest request, HttpResponder responder,
+                                    @PathParam("namespace-id") String namespaceId,
+                                    @PathParam("app-name") String appName,
+                                    @PathParam("app-version") String appVersion,
+                                    @PathParam("program-type") String type,
+                                    @PathParam("program-name") String programName) throws Exception {
     ProgramType programType = getProgramType(type);
     if (programType == null || programType == ProgramType.WEBAPP) {
       throw new NotFoundException(String.format("Saving program runtime arguments is not supported for program " +
                                                   "type '%s'.", programType));
     }
 
-    lifecycleService.saveRuntimeArgs(new ProgramId(namespaceId, appId, programType, programId),
+    lifecycleService.saveRuntimeArgs(new ProgramId(namespaceId, appName, programType, programName),
                                      decodeArguments(request));
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -989,21 +1019,35 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Return the availability (i.e. discoverable registration) status of a service.
    */
   @GET
-  @Path("/apps/{app-id}/services/{service-id}/available")
+  @Path("/apps/{app-name}/services/{service-name}/available")
   public void getServiceAvailability(HttpRequest request, HttpResponder responder,
                                      @PathParam("namespace-id") String namespaceId,
-                                     @PathParam("app-id") String appId,
-                                     @PathParam("service-id") String serviceId) throws Exception {
-    ProgramId programId = new ProgramId(namespaceId, appId, ProgramType.SERVICE, serviceId);
-    ProgramStatus status = lifecycleService.getProgramStatus(programId);
+                                     @PathParam("app-name") String appName,
+                                     @PathParam("service-name") String serviceName) throws Exception {
+    getServiceAvailability(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, serviceName);
+  }
+
+  /**
+   * Return the availability (i.e. discoverable registration) status of a service.
+   */
+  @GET
+  @Path("/apps/{app-name}/versions/{app-version}/services/{service-name}/available")
+  public void getServiceAvailability(HttpRequest request, HttpResponder responder,
+                                     @PathParam("namespace-id") String namespaceId,
+                                     @PathParam("app-name") String appName,
+                                     @PathParam("app-version") String appVersion,
+                                     @PathParam("service-name") String serviceName) throws Exception {
+    ServiceId serviceId = new ApplicationId(namespaceId, appName, appVersion).service(serviceName);
+    ProgramStatus status = lifecycleService.getProgramStatus(serviceId);
     if (status == ProgramStatus.STOPPED) {
       responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE, "Service is stopped. Please start it.");
     } else {
       // Construct discoverable name and return 200 OK if discoverable is present. If not return 503.
-      String serviceName = ServiceDiscoverable.getName(programId);
-      EndpointStrategy endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(serviceName));
+      String serviceDiscoverableName = ServiceDiscoverable.getName(serviceId);
+      EndpointStrategy endpointStrategy =
+        new RandomEndpointStrategy(discoveryServiceClient.discover(serviceDiscoverableName));
       if (endpointStrategy.pick(300L, TimeUnit.MILLISECONDS) == null) {
-        LOG.trace("Discoverable endpoint {} not found", serviceName);
+        LOG.trace("Discoverable endpoint {} not found", serviceDiscoverableName);
         responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE,
                              "Service is running but not accepting requests at this time.");
       } else {

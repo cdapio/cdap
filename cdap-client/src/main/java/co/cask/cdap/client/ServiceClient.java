@@ -29,14 +29,20 @@ import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
+import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
 import com.google.common.collect.ImmutableList;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +54,8 @@ import javax.inject.Inject;
 @Beta
 public class ServiceClient {
 
+  private static final Gson GSON = new Gson();
+  private static final Type MAP_STRING_INTEGER_TYPE = new TypeToken<Map<String, Integer>>() { }.getType();
   private final RESTClient restClient;
   private final ClientConfig config;
 
@@ -109,8 +117,24 @@ public class ServiceClient {
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the app or service could not be found
+   * @deprecated since 4.0.0. Please use {@link #getEndpoints(ServiceId)} instead
    */
+  @Deprecated
   public List<ServiceHttpEndpoint> getEndpoints(Id.Service service)
+    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
+    return getEndpoints(service.toEntityId());
+  }
+
+  /**
+   * Gets a list of {@link ServiceHttpEndpoint} that a {@link Service} exposes.
+   *
+   * @param service ID of the service
+   * @return A list of {@link ServiceHttpEndpoint}
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws NotFoundException if the app or service could not be found
+   */
+  public List<ServiceHttpEndpoint> getEndpoints(ServiceId service)
     throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
 
     ServiceSpecification specification = get(service);
@@ -130,21 +154,39 @@ public class ServiceClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the app or service could not be found
    * @throws ServiceUnavailableException if the service has started but is not available right now
+   * @deprecated since 4.0.0. Please use {@link #getAvailability(ServiceId)} instead
    */
+  @Deprecated
   public String getAvailability(Id.Service service) throws IOException, UnauthenticatedException, NotFoundException,
     ServiceUnavailableException, UnauthorizedException {
-    URL url = config.resolveNamespacedURLV3(service.getNamespace(),
-                                            String.format("apps/%s/services/%s/available",
-                                                          service.getApplicationId(), service.getId()));
+    return getAvailability(service.toEntityId());
+  }
+
+  /**
+   * Checks whether the {@link Service} is active.
+   *
+   * @param service ID of the service
+   * @return 'Active' message when service is active
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws NotFoundException if the app or service could not be found
+   * @throws ServiceUnavailableException if the service has started but is not available right now
+   */
+  public String getAvailability(ServiceId service) throws IOException, UnauthenticatedException, NotFoundException,
+    ServiceUnavailableException, UnauthorizedException {
+    URL url = config.resolveNamespacedURLV3(service.getNamespaceId(),
+                                            String.format("apps/%s/versions/%s/services/%s/available",
+                                                          service.getApplication(), service.getVersion(),
+                                                          service.getProgram()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND, HttpURLConnection.HTTP_BAD_REQUEST,
                                                HttpURLConnection.HTTP_UNAVAILABLE);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(service.toEntityId());
+      throw new NotFoundException(service);
     }
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_UNAVAILABLE) {
-      throw new ServiceUnavailableException(service.getId());
+      throw new ServiceUnavailableException(service.getProgram());
     }
     return response.getResponseBodyAsString();
   }
@@ -173,5 +215,87 @@ public class ServiceClient {
                                          String.format("apps/%s/versions/%s/services/%s/methods/",
                                                        service.getApplication(), service.getVersion(),
                                                        service.getProgram()));
+  }
+
+  /**
+   * Gets RouteConfig of a service with versions.
+   *
+   * @param namespace the namespace of the service
+   * @param appName the name of the application containing the service,
+   *                can be obtained by ApplicationId.getApplication()
+   * @param serviceName the service name, can be obtained by ProgramId.getProgram() or ServiceId.getProgram()
+   * @return a Map of {@link String} application version
+   * and {@link Integer} percentage of traffic routed to the version.
+   */
+  public Map<String, Integer> getRouteConfig(NamespaceId namespace, String appName, String serviceName)
+    throws UnauthorizedException, IOException, UnauthenticatedException {
+    URL url = buildRouteConfigUrl(namespace, appName, serviceName);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
+    return ObjectResponse.<Map<String, Integer>>fromJsonBody(response, MAP_STRING_INTEGER_TYPE).getResponseObject();
+  }
+
+  /**
+   * Stores RouteConfig a service with versions.
+   *
+   * @param namespace the namespace of the service
+   * @param appName the name of the application containing the service,
+   *                can be obtained by ApplicationId.getApplication()
+   * @param serviceName the service name, can be obtained by ProgramId.getProgram() or ServiceId.getProgram()
+   * @param routeConfig a Map of {@link String} application version and {@link Integer} percentage of
+   *                    traffic routed to the version.
+   */
+  public void storeRouteConfig(NamespaceId namespace, String appName, String serviceName,
+                               Map<String, Integer> routeConfig)
+    throws IOException, UnauthorizedException, UnauthenticatedException {
+    URL url = buildRouteConfigUrl(namespace, appName, serviceName);
+    HttpRequest request = HttpRequest.put(url)
+      .withBody(GSON.toJson(routeConfig, MAP_STRING_INTEGER_TYPE)).build();
+    restClient.upload(request, config.getAccessToken());
+  }
+
+  /**
+   * Deletes RouteConfig of an application.
+   *
+   * @param namespace the namespace of the service
+   * @param appName the name of the application containing the service,
+   *                can be obtained by ApplicationId.getApplication()
+   * @param serviceName the service name, can be obtained by ProgramId.getProgram() or ServiceId.getProgram()
+   */
+  public void deleteRouteConfig(NamespaceId namespace, String appName, String serviceName)
+    throws IOException, UnauthorizedException, UnauthenticatedException {
+    URL url = buildRouteConfigUrl(namespace, appName, serviceName);
+    restClient.execute(HttpMethod.DELETE, url, config.getAccessToken());
+  }
+
+  /**
+   * Calls the non-versioned service endpoint for a given method and get routed to a specific version by the Router
+   *
+   * @param namespace the namespace of the service
+   * @param appName the name of the application containing the service,
+   *                can be obtained by ApplicationId.getApplication()
+   * @param serviceName the service name, can be obtained by ProgramId.getProgram() or ServiceId.getProgram()
+   * @param methodPath the path specifying only the method
+   *
+   * @return {@link HttpResponse} from the service method
+   */
+  public HttpResponse callServiceMethod(NamespaceId namespace, String appName, String serviceName, String methodPath)
+    throws IOException, UnauthorizedException, UnauthenticatedException {
+    String path = String.format("apps/%s/services/%s/methods/%s", appName, serviceName, methodPath);
+    URL url = config.resolveNamespacedURLV3(namespace, path);
+    return restClient.execute(HttpMethod.GET, url, config.getAccessToken());
+  }
+
+  /**
+   * Constructs URL to reach RouteConfig REST API endpoints.
+   *
+   * @param namespace the namespace of the service
+   * @param appName the name of the application containing the service,
+   *                can be obtained by ApplicationId.getApplication()
+   * @param serviceName the service name, can be obtained by ProgramId.getProgram() or ServiceId.getProgram()
+   */
+  private URL buildRouteConfigUrl(NamespaceId namespace, String appName, String serviceName)
+    throws MalformedURLException {
+    String path = String.format("apps/%s/services/%s/routeconfig", appName, serviceName);
+    return config.resolveNamespacedURLV3(namespace, path);
   }
 }

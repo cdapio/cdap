@@ -14,19 +14,21 @@
  * the License.
  */
 
-const AddNamespaceActions = {
-  setName: 'SET-NAMESPACE-NAME',
-  setDescription: 'SET-NAMESPACE-DESCRIPTION',
-  setSchedulerQueue: 'SET-NAMESPACE-SCHEDULER-QUEUE',
-  setHDFSDirectory: 'SET-HDFS-DIRECTORY',
-  setHiveDatabaseName: 'SET-HIVE-DATABASE-NAME',
-  setHBaseNamespace: 'SET-HBASE-NS-NAME',
-  setPrincipal: 'SET-PRINCIPAL',
-  setKeytab: 'SET-KEYTAB',
-  onError: 'FORM-SUBMIT-FAILURE',
-  onSuccess: 'FORM-SUBMIT-SUCCESS',
-  onReset: 'FORM-RESET',
-  setPreferences: 'SET-PREFERENCES'
-};
+package co.cask.cdap.data2.dataset2.lib.table.inmemory;
 
-export default AddNamespaceActions;
+import co.cask.cdap.api.dataset.DatasetContext;
+import co.cask.cdap.common.conf.CConfiguration;
+
+/**
+ * In-memory implementation of Table that does not require transactions.
+ */
+public class NoTxInMemoryTable extends InMemoryTable {
+  public NoTxInMemoryTable(DatasetContext datasetContext, String name, CConfiguration cConf) {
+    super(datasetContext, name, cConf);
+  }
+
+  @Override
+  protected void ensureTransactionIsStarted() {
+    // no-op: this does not require a transaction
+  }
+}

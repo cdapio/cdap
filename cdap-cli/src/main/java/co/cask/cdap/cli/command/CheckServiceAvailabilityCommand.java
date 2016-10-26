@@ -47,15 +47,8 @@ public class CheckServiceAvailabilityCommand extends AbstractAuthCommand impleme
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String[] appAndServiceId = arguments.get(ArgumentName.SERVICE.toString()).split("\\.");
-    if (appAndServiceId.length < 2) {
-      throw new CommandInputError(this);
-    }
-
-    String appId = appAndServiceId[0];
-    String serviceName = appAndServiceId[1];
-    ServiceId serviceId = cliConfig.getCurrentNamespace().app(appId).service(serviceName);
-    output.println(serviceClient.getAvailability(serviceId.toId()));
+    ServiceId serviceId = parseServiceId(arguments);
+    output.println(serviceClient.getAvailability(serviceId));
   }
 
   @Override

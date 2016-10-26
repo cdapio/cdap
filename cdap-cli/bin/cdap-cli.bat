@@ -19,41 +19,12 @@
 @echo OFF
 SET "CDAP_HOME=%~dp0"
 SET "CDAP_HOME=%CDAP_HOME:~0,-5%"
-SET "JAVACMD=%JAVA_HOME%\bin\java.exe"
-SET CDAP_VERSION=@@project.version@@
 
-SET "CLASSPATH=%CDAP_HOME%\libexec\co.cask.cdap.cdap-cli-%CDAP_VERSION%.jar;%CDAP_HOME%\lib\co.cask.cdap.cdap-cli-%CDAP_VERSION%.jar;%CDAP_HOME%\conf\;"
+ECHO:
+ECHO [WARN] %0 is deprecated and will be removed in CDAP 5.0. Please use 'cdap cli' for CDAP command line."
+ECHO:
+ECHO   cdap cli %*
+ECHO:
+ECHO:
 
-REM Check for 64-bit version of OS. Currently not supporting 32-bit Windows
-IF NOT EXIST "%PROGRAMFILES(X86)%" (
-  echo 32-bit Windows operating system is currently not supported
-  GOTO :FINALLY
-)
-
-REM Check for correct setting for JAVA_HOME path
-if "%JAVA_HOME%" == "" (
-  echo ERROR: JAVA_HOME is set to an invalid directory: %JAVA_HOME%
-  echo Please set the JAVA_HOME variable in your environment to match the location of your Java installation.
-  GOTO :FINALLY
-)
-
-REM Check for Java version
-setlocal ENABLEDELAYEDEXPANSION
-set /a counter=0
-for /f "tokens=* delims= " %%f in ('"%JAVACMD%" -version 2^>^&1') do @(
-  if "!counter!"=="0" set line=%%f
-  set /a counter+=1
-)
-set line=%line:java version "1.=!!%
-set line=%line:~0,1%
-if NOT "%line%" == "7" (
-  if NOT "%line%" == "8" (
-    echo ERROR: Java version not supported. Please install Java 7 or 8 - other versions of Java are not supported.
-    GOTO :FINALLY
-  )
-)
-endlocal
-
-"%JAVACMD%" -classpath "%CLASSPATH%" co.cask.cdap.cli.CLIMain %*
-
-:FINALLY
+"%CDAP_HOME%\bin\cdap.bat" cli %*

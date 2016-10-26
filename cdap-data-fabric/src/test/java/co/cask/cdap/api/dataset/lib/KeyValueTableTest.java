@@ -193,7 +193,7 @@ public class KeyValueTableTest {
 
     final KeyValueTable table1 = dsFrameworkUtil.getInstance(t1);
     final KeyValueTable table2 = dsFrameworkUtil.getInstance(t2);
-    TransactionExecutor txnl = dsFrameworkUtil.newTransactionExecutor(table1, table2);
+    TransactionExecutor txnl = dsFrameworkUtil.newTransactionExecutor(table1, table2, kvTable);
 
     // write a value to table1 and verify it
     txnl.execute(new TransactionExecutor.Subroutine() {
@@ -223,8 +223,13 @@ public class KeyValueTableTest {
       Assert.assertEquals("Cancel transaction", e.getCause().getMessage());
     }
 
-    // add a swap for a third table that should fail
-    Assert.assertFalse(kvTable.compareAndSwap(KEY3, VAL1, VAL1));
+    // test a swap for a third row that should fail
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        Assert.assertFalse(kvTable.compareAndSwap(KEY3, VAL1, VAL1));
+      }
+    });
 
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override

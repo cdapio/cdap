@@ -70,7 +70,6 @@ const mapDispatchToFieldNameProps = (dispatch, ownProps) => {
       }
       return false;
     }
-
   };
 };
 

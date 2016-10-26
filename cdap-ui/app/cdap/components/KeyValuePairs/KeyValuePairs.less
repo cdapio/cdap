@@ -14,6 +14,31 @@
 * the License.
 */
 
-.cask-configurable-tab {
-  height: 100%;
+.key-value-pair-preference {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: -25px;
+
+  input:focus {
+    outline: 0;
+  }
+  .key-input,
+  .value-input {
+    border: none;
+    border-bottom: 1px solid lightgrey;
+    width: 40%;
+    margin-right: 10px;
+  }
+  .add-row-btn,
+  .remove-row-btn {
+    padding-right: 10px;
+    cursor: pointer;
+  }
+  .add-row-btn {
+    color: black;
+  }
+  .remove-row-btn {
+    color: red;
+  }
 }
