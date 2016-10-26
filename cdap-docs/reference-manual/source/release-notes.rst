@@ -24,11 +24,11 @@ Cask Data Application Platform Release Notes
    :depth: 2
 
 `Release 3.6.0 <http://docs.cask.co/cdap/3.6.0/index.html>`__
+=============================================================
 
 Improvements
 ------------
 
-<<<<<<< HEAD
 - :cask-issue:`CDAP-5771` - Allow concurrent runs of different versions of a service. A
   RouteConfig can be uploaded to configure the percentage of requests that need to be sent
   to the different versions.
@@ -62,20 +62,14 @@ Improvements
 - :cask-issue:`CDAP-7272` - User services now include their application version in the
   payload when they announce themselves in Apache Twill.
 
-=======
-- :cask-issue:`CDAP-7385` - The Log HTTP Handler and Router have been fixed to allow the
-  streaming of larger logs files.
-
 - :cask-issue:`CDAP-7404` - Added authorization for schedules in CDAP.
 
 - :cask-issue:`HYDRATOR-997` - The SSH hostname and the command to be executed are now
   macro-enabled for the SSH action plugin.
->>>>>>> release/3.5
 
 Bug Fixes
 ---------
 
-<<<<<<< HEAD
 - :cask-issue:`CDAP-3822` - Unit Test framework now has the capability to exclude scala,
   so users can depend on their own version of the library.
 
@@ -84,13 +78,12 @@ Bug Fixes
 
 - :cask-issue:`CDAP-7314` - Fixed a problem with the documentation example links to the
   CDAP ETL Guide.
-=======
+
 - :cask-issue:`CDAP-7250` - Fixed an issue where dataset usage was not being recorded
   after an application was deleted.
 
 - :cask-issue:`CDAP-7318` - Fixed an issue that would cause MapReduce and Spark programs
   to fail if too many macros were being used.
->>>>>>> release/3.5
 
 - :cask-issue:`CDAP-7321` - Fixed a problem with upgrading CDAP using the CDAP Upgrade
   Tool.
@@ -98,12 +91,9 @@ Bug Fixes
 - :cask-issue:`CDAP-7324` - Fixed a problem with the upgrade tool while upgrading HBase
   coprocessors.
 
-<<<<<<< HEAD
 - :cask-issue:`CDAP-7334` - Fixed a problem with the listing of applications not returning
   the application version correctly.
 
-=======
->>>>>>> release/3.5
 - :cask-issue:`CDAP-7353` - Fixed a problem with using "Download All" logs in the
   browser log viewer by having it fetch and stream the response to the client.
 
@@ -124,21 +114,14 @@ Bug Fixes
 
 - :cask-issue:`CDAP-7391` - Fixed an issue that caused unit test failures when using
   ``org.hamcrest`` classes.
-<<<<<<< HEAD
-  
+
 - :cask-issue:`CDAP-7392` - Fixed an issue where the Java process corresponding to the
   MapReduce application master kept running even if the application was moved to the FINISHED
   state.
-=======
-
-- :cask-issue:`CDAP-7392` - Fixed an issue where the Java process corresponding to the
-  MapReduce application master kept running even if the application was moved to the
-  FINISHED state.
 
 - :cask-issue:`CDAP-7438`, :cask-issue:`CDAP-7439` - Removed the requirement of running
   "kinit" prior to running either the Upgrade or Transaction Debugger tools of CDAP on a
   secure Hadoop cluster.
->>>>>>> release/3.5
 
 - :cask-issue:`HYDRATOR-791` - Fixed a problem with Hydrator pipelines using a DBSource
   not working in an HDP cluster.
