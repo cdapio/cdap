@@ -78,7 +78,7 @@ export default class HeaderActions extends Component {
 
     return (
       <div className="header-actions">
-        <ul className="navbar-list pull-right">
+        <ul className="pull-right">
           <div className="navbar-item">
             <SpotlightSearch />
           </div>

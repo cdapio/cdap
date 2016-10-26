@@ -18,17 +18,10 @@
 @plus-button-color: #52b746;
 @namespace-dropdown-color: #333;
 .cask-header {
-  .active {
-    color: #ff6600;
-  }
   .navbar {
     .header-actions {
       .plus-button {
         color: @plus-button-color;
-      }
-      .navbar-cog:hover,
-      .menu-open {
-        color: @cdap-orange;
       }
       .navbar-cog {
         position: relative;
@@ -75,19 +68,71 @@
           .dropdown-icon {
             padding: 0 10px;
           }
-          .dropdown-name-row {
-            padding-left: 10px;
-            cursor: default;
-            &:hover {
-              background-color: transparent;
-            }
-            .dropdown-name {
-              color: #FC6600;
-              margin-left: 5px;
-            }
-            .dropdown-name-icon {
-              padding-left: 5px;
-            }
+        }
+      }
+    }
+    &.cdap {
+      .navbar-cog:hover,
+      .menu-open {
+        color: @cdap-orange;
+      }
+      .settings-dropdown {
+        .dropdown-name-row {
+          padding-left: 10px;
+          cursor: default;
+          &:hover {
+            background-color: transparent;
+          }
+          .dropdown-name {
+            color: @cdap-orange;
+            margin-left: 5px;
+          }
+          .dropdown-name-icon {
+            padding-left: 5px;
+          }
+        }
+      }
+    }
+    &.hydrator {
+      .navbar-cog:hover,
+      .menu-open {
+        color: @hydrator-blue;
+      }
+      .settings-dropdown {
+        .dropdown-name-row {
+          padding-left: 10px;
+          cursor: default;
+          &:hover {
+            background-color: transparent;
+          }
+          .dropdown-name {
+            color: @hydrator-blue;
+            margin-left: 5px;
+          }
+          .dropdown-name-icon {
+            padding-left: 5px;
+          }
+        }
+      }
+    }
+    &.tracker {
+      .navbar-cog:hover,
+      .menu-open {
+        color: @tracker-green;
+      }
+      .settings-dropdown {
+        .dropdown-name-row {
+          padding-left: 10px;
+          cursor: default;
+          &:hover {
+            background-color: transparent;
+          }
+          .dropdown-name {
+            color: @tracker-green;
+            margin-left: 5px;
+          }
+          .dropdown-name-icon {
+            padding-left: 5px;
           }
         }
       }
