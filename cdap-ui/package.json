@@ -4,19 +4,14 @@
   "description": "Front-end for CDAP",
   "scripts": {
     "start": "node ./server.js",
-    "preui-dev-build": "npm install && ./node_modules/bower/bin/bower install --config.interactive=false",
-    "ui-dev-build": "concurrently 'npm run cdap-dev-build' 'npm run build'",
-    "preui-prod-build": "npm install && ./node_modules/bower/bin/bower install",
-    "ui-prod-build": "concurrently 'npm run cdap-prod-build' 'gulp distribute'",
-    "cdap-dev-build": "NODE_ENV=build webpack",
     "cdap-prod-build": "NODE_ENV=production webpack",
     "distribute": "node ./node_modules/gulp/bin/gulp.js distribute",
     "build": "node ./node_modules/gulp/bin/gulp.js build",
-    "cdap-dev-build-w": "webpack --dev-tools --watch -d",
-    "karma-test": "node ./node_modules/karma/bin/karma start test/karma-conf.js",
-    "karma-test-single-run": "node ./node_modules/karma/bin/karma start test/karma-conf.js --no-auto-watch --single-run",
+    "cdap-dev-build-w": "NODE_ENV=development webpack --dev-tools --watch -d",
     "test": "jest --coverage",
-    "watch-test": "jest --watch"
+    "watch-test": "jest --watch",
+    "karma-test": "node ./node_modules/karma/bin/karma start test/karma-conf.js",
+    "karma-test-single-run": "node ./node_modules/karma/bin/karma start test/karma-conf.js --no-auto-watch --single-run"
   },
   "repository": {
     "type": "git",
@@ -72,7 +67,8 @@
     "main-bower-files": "2.11.1",
     "merge-stream": "1.0.0",
     "style-loader": "0.13.1",
-    "url-loader": "0.5.7"
+    "url-loader": "0.5.7",
+    "webpack-livereload-plugin": "^0.9.0"
   },
   "dependencies": {
     "angular": "1.5.8",
@@ -122,7 +118,7 @@
     "yml-loader": "1.1.0"
   },
   "engines": {
-    "node": ">= 0.10.0"
+    "node": ">= 4.5.0"
   },
   "jest": {
     "testEnvironment": "node",
