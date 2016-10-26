@@ -82,69 +82,35 @@
       }
     }
     &.cdap {
-      .navbar-cog:hover,
-      .menu-open {
-        color: @cdap-orange;
-      }
-      .settings-dropdown {
-        .dropdown-name-row {
-          padding-left: 10px;
-          cursor: default;
-          &:hover {
-            background-color: transparent;
-          }
-          .dropdown-name {
-            color: @cdap-orange;
-            margin-left: 5px;
-          }
-          .dropdown-name-icon {
-            padding-left: 5px;
-          }
-        }
-      }
+      .settings-dropdown-mixin(@cdap-orange);
     }
     &.hydrator {
-      .navbar-cog:hover,
-      .menu-open {
-        color: @hydrator-blue;
-      }
-      .settings-dropdown {
-        .dropdown-name-row {
-          padding-left: 10px;
-          cursor: default;
-          &:hover {
-            background-color: transparent;
-          }
-          .dropdown-name {
-            color: @hydrator-blue;
-            margin-left: 5px;
-          }
-          .dropdown-name-icon {
-            padding-left: 5px;
-          }
-        }
-      }
+      .settings-dropdown-mixin(@hydrator-blue);
     }
     &.tracker {
-      .navbar-cog:hover,
-      .menu-open {
-        color: @tracker-green;
+      .settings-dropdown-mixin(@tracker-green);
+    }
+  }
+}
+
+.settings-dropdown-mixin(@product-color) {
+  .navbar-cog:hover,
+  .menu-open {
+    color: @product-color;
+  }
+  .settings-dropdown {
+    .dropdown-name-row {
+      padding-left: 10px;
+      cursor: default;
+      &:hover {
+        background-color: transparent;
       }
-      .settings-dropdown {
-        .dropdown-name-row {
-          padding-left: 10px;
-          cursor: default;
-          &:hover {
-            background-color: transparent;
-          }
-          .dropdown-name {
-            color: @tracker-green;
-            margin-left: 5px;
-          }
-          .dropdown-name-icon {
-            padding-left: 5px;
-          }
-        }
+      .dropdown-name {
+        color: @product-color;
+        margin-left: 5px;
+      }
+      .dropdown-name-icon {
+        padding-left: 5px;
       }
     }
   }
