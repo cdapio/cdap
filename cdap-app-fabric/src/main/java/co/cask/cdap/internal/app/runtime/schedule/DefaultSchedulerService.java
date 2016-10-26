@@ -24,7 +24,6 @@ import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -91,7 +90,7 @@ public class DefaultSchedulerService {
         builder.put(entry.getKey(), jobDataMap.getString(entry.getKey()));
       }
 
-      ProgramId programId = new ProgramId(namespaceId, applicationId, programType, programName);
+      ProgramId programId = new ApplicationId(namespaceId, applicationId, appVersion).program(programType, programName);
       try {
         taskRunner.run(programId, builder.build(), userOverrides).get();
       } catch (TaskExecutionException e) {
