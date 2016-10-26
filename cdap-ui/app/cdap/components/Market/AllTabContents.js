@@ -104,19 +104,14 @@ export default class AllTabContents extends Component {
     const entities = (
       this.state.entities
         .map((e, index) => (
-          <div
-            className="entity-item-container"
-            onClick={this.handleEntityClick.bind(this, e)}
+          <MarketPlaceEntity
+            name={e.label}
             key={index}
-          >
-            <MarketPlaceEntity
-              name={e.label}
-              subtitle={e.version}
-              icon={this.generateIconPath(e)}
-              size="medium"
-              onClick={this.handleEntityClick.bind(this, e)}
-            />
-          </div>
+            subtitle={e.version}
+            icon={this.generateIconPath(e)}
+            size="medium"
+            onClick={this.handleEntityClick.bind(this, e)}
+          />
         )
       )
     );
