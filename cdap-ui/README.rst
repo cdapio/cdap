@@ -1,62 +1,80 @@
-===============
-CDAP Angular UI
-===============
 
-To build UI:
-===========
+## CDAP UI
 
-Install dependencies and build UI::
+CDAP UI comprises three different webapps - CDAP, Hydrator & Tracker, that we ship as part of every release. CDAP is built in React while Hydrator and Tracker are written in Angular.
 
-  npm install && bower install && gulp clean && gulp build
-  
-To install dependencies:
-========================
+### To build UI
 
-Global dependencies::
+#### Prerequisites
+  - NodeJS Version - 4.5.0
 
-  npm install -g bower gulp
+  CDAP UI requires a minimum NodeJS version of 4.5.0. You could either download (from nodejs.org website) or use a version manager.
+    - [v4.5.0 Download](https://nodejs.org/download/release/v4.5.0/)
+    - [nvm](https://github.com/creationix/nvm#install-script) or
+    - [n](https://github.com/tj/n) from github.
 
-Local dependencies::
-
-  npm install && bower install
+  The node version managers help switching between node version quite seamlessly.
 
 
-To build a running backend
-==========================
+  -  Build tools - `gulp`, `webpack` & `bower`
+
+  CDAP UI extensively uses `bower`, `gulp` & `webpack` during its build process. Even though its not necessary it will be useful if they are installed globally.
+
+  `npm instal gulp bower webpack -g`
+
+#### Install dependencies
+
+```
+npm install
+bower install
+```
+
+#### Build CDAP in React
+
+```
+npm run cdap-dev-build ## build version
+npm run cdap-dev-buil-w ## watch version
+```
+
+#### Build Hydrator & Tracker in Angular
+
+```
+npm run build ## build version
+npm run build-w ## watch version
+```
+
+
+
+### To build a running backend
 
 UI work generally requires having a running CDAP-standalone instance. To build an instance::
 
-  git clone git@github.com:caskdata/cdap.git
-  cd cdap
-  mvn package -pl cdap-standalone -am -DskipTests -P dist,release
-  cd cdap-standalone/target && unzip cdap-sdk-{version}.zip
+```
+git clone git@github.com:caskdata/cdap.git
+cd cdap
+mvn package -pl cdap-standalone -am -DskipTests -P dist,release
+cd cdap-standalone/target
+unzip cdap-sdk-{version}.zip
+cd <cdap-sdk-folder>/bin/cdap sdk start
 
-You can start the standalone backend from the ``cdap-ui/`` directory with::
+```
+Once you have started the SDK it starts the UI node server as part of its init script.
 
-  npm run backend start
+### To work on UI code
 
-To just run the UI code::
+If you want to develop and test UI against the SDK that was just built above you need to first kill the node server started by the SDK and follow process mentioned below,
 
-  gulp build && npm start
+Each in their own tab
 
-
-To work on UI code
-==================
-
-Each in their own tab:
-
-- ``gulp watch`` (autobuild + livereload)
+- ``gulp watch`` (autobuild + livereload of angular app)
+- `npm run cdap-dev-build-w` (autobuild + livereload of react app)
 - ``npm start`` (http-server)
-- ``npm test`` (runs karma for unit tests)
-- ``open http://localhost:8080``
+- ``open http://localhost:11011``
 
+If you are working on common components shared between all the apps (for instance the Header) then you need to build an additional `common` library that we use across all as follows,
 
-To build a release
-==================
-
-This will put necessary items in the ``target/`` directory::
-
-  bin/build.sh
+- ``webpack --config webpack.config.common.js -d ## build version``
+- ``webpack --config webpack.config.common.js --watch -d ## watch version``
 
 
 License and Trademarks

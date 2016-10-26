@@ -7,6 +7,8 @@
     "cdap-prod-build": "NODE_ENV=production webpack",
     "distribute": "node ./node_modules/gulp/bin/gulp.js distribute",
     "build": "node ./node_modules/gulp/bin/gulp.js build",
+    "build-w": "node ./node_modules/gulp/bin/gulp.js build",
+    "cdap-dev-build": "NODE_ENV=development webpack --dev-tools -d",
     "cdap-dev-build-w": "NODE_ENV=development webpack --dev-tools --watch -d",
     "test": "jest --coverage",
     "watch-test": "jest --watch",
