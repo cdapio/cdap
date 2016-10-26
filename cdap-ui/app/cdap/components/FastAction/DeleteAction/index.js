@@ -43,7 +43,6 @@ export default class DeleteAction extends Component {
     this.setState({modal: !this.state.modal});
   }
 
-
   action() {
     this.setState({loading: true});
     let api;
@@ -87,17 +86,21 @@ export default class DeleteAction extends Component {
           icon="fa fa-trash"
           action={this.toggleModal}
         />
-        <ConfirmationModal
-          headerTitle={T.translate('features.FastAction.deleteTitle', {entityType: this.props.entity.type})}
-          toggleModal={this.toggleModal}
-          confirmationText={T.translate('features.FastAction.deleteConfirmation', {entityId: this.props.entity.id})}
-          confirmFn={this.action}
-          cancelFn={this.toggleModal}
-          isOpen={this.state.modal}
-          isLoading={this.state.loading}
-          errorMessage={this.state.errorMessage}
-          extendedMessage={this.state.extendedMessage}
-        />
+        {
+          this.state.modal ? (
+            <ConfirmationModal
+              headerTitle={T.translate('features.FastAction.deleteTitle', {entityType: this.props.entity.type})}
+              toggleModal={this.toggleModal}
+              confirmationText={T.translate('features.FastAction.deleteConfirmation', {entityId: this.props.entity.id})}
+              confirmFn={this.action}
+              cancelFn={this.toggleModal}
+              isOpen={this.state.modal}
+              isLoading={this.state.loading}
+              errorMessage={this.state.errorMessage}
+              extendedMessage={this.state.extendedMessage}
+            />
+          ) : null
+        }
       </span>
     );
   }

@@ -88,6 +88,7 @@ features:
     deleteFailed: Failed to delete {entityId}
     deleteTitle: Delete {entityType}
     truncateConfirmation: Are you sure you want to truncate {entityId}?
+    truncateFailed: Failed to truncate {entityId}
     truncateTitle: Truncate {entityType}
 
   Management:

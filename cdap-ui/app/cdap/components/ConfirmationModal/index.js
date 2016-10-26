@@ -17,6 +17,7 @@
 import React, { Component, PropTypes } from 'react';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import CardActionFeedback from 'components/CardActionFeedback';
+import Mousetrap from 'mousetrap';
 import T from 'i18n-react';
 
 require('./ConfirmationModal.less');
@@ -24,6 +25,14 @@ require('./ConfirmationModal.less');
 export default class ConfirmationModal extends Component {
   constructor(props) {
     super(props);
+  }
+
+  componentWillMount() {
+    Mousetrap.bind('enter', this.props.confirmFn);
+  }
+
+  componentWillUnmount() {
+    Mousetrap.unbind('enter');
   }
 
   renderModalBody() {
