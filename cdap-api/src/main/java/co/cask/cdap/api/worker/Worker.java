@@ -38,6 +38,7 @@ public interface Worker extends Runnable, ProgramLifecycle<WorkerContext> {
    * but instead it can start its own transactions using {@link WorkerContext#execute(TxRunnable)}.
    * methods.
    */
+  @Override
   @TransactionPolicy(TransactionControl.EXPLICIT)
   void initialize(WorkerContext context) throws Exception;
 
@@ -47,6 +48,7 @@ public interface Worker extends Runnable, ProgramLifecycle<WorkerContext> {
    * Note that unlike most program types, this method is not called within an implicit transaction,
    * but instead it can start its own transactions using {@link WorkerContext#execute(TxRunnable)}.
    */
+  @Override
   @TransactionPolicy(TransactionControl.EXPLICIT)
   void destroy();
 
