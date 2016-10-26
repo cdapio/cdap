@@ -1,103 +1,97 @@
-========
- CDAP UI
-========
+=======
+CDAP UI
+=======
 
-CDAP UI comprises three different webapps - CDAP, Hydrator & Tracker, that we ship as part of every release. CDAP is built in React while Hydrator and Tracker are written in Angular.
+CDAP UI comprises three different webapps -- CDAP, Hydrator, and Tracker -- that we ship as part of every release.
+CDAP is built in React while Hydrator and Tracker are written in Angular.
 
-------------
- To build UI
-------------
+Building the UI
+===============
 
-^^^^^^^^^^^^^^
- Prerequisites
-^^^^^^^^^^^^^^
-- NodeJS Version - 4.5.0
+Prerequisites
+-------------
+- NodeJS Version: 4.5.0 or higher
 
-  CDAP UI requires a minimum NodeJS version of 4.5.0. You could either download (from nodejs.org website) or use a version manager.
+  CDAP UI requires a minimum NodeJS version of 4.5.0. 
+  You could either download from the nodejs.org website or use a version manager.
 
-  - `v4.5.0 Download <https://nodejs.org/download/release/v4.5.0/>`_
+  - `v4.5.0 Download <https://nodejs.org/download/release/v4.5.0/>`__
 
-  - `nvm <https://github.com/creationix/nvm#install-script>`_ or
-  - `n <https://github.com/tj/n>`_ from github.
+  - `nvm <https://github.com/creationix/nvm#install-script>`__ or
+  
+  - `n <https://github.com/tj/n>`__ from github.
 
   The node version managers help switching between node version quite seamlessly.
 
--  Build tools - ``gulp``, ``webpack`` & ``bower``
+- Build tools: ``gulp``, ``webpack``, and ``bower``
 
-  CDAP UI extensively uses `bower`, `gulp` & `webpack` during its build process. Even though its not necessary it will be useful if they are installed globally::
+  CDAP UI extensively uses ``bower``, ``gulp``, and ``webpack`` during its build process.
+  Even though it's not necessary, it will be useful if they are installed globally::
 
-    npm instal gulp bower webpack -g
+    $ npm instal gulp bower webpack -g
 
-
-^^^^^^^^^^^^^^^^^^^^^
- Install dependencies
-^^^^^^^^^^^^^^^^^^^^^
-
+Install Dependencies
+--------------------
 ::
 
-  npm install
-  bower install
+  $ npm install
+  $ bower install
 
 
-^^^^^^^^^^^^^^^^^^^
-Build CDAP in React
-^^^^^^^^^^^^^^^^^^^
-
+Building CDAP in React
+======================
 ::
 
-  npm run cdap-dev-build ## build version
-  npm run cdap-dev-buil-w ## watch version
+  $ npm run cdap-dev-build ## build version
+  $ npm run cdap-dev-buil-w ## watch version
 
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
- Build Hydrator & Tracker in Angular
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Building Hydrator and Tracker in Angular
+========================================
 ::
 
-  npm run build ## build version
-  npm run build-w ## watch version
+  $ npm run build ## build version
+  $ npm run build-w ## watch version
 
 
----------------------------
- To build a running backend
----------------------------
-
+Building a Running Backend
+==========================
 UI work generally requires having a running CDAP-standalone instance. To build an instance::
 
-    git clone git@github.com:caskdata/cdap.git
-    cd cdap
-    mvn package -pl cdap-standalone -am -DskipTests -P dist,release
-    cd cdap-standalone/target
-    unzip cdap-sdk-{version}.zip
-    cd <cdap-sdk-folder>/bin/cdap sdk start
+    $ git clone git@github.com:caskdata/cdap.git
+    $ cd cdap
+    $ mvn package -pl cdap-standalone -am -DskipTests -P dist,release
+    $ cd cdap-standalone/target
+    $ unzip cdap-sdk-{version}.zip
+    $ cd <cdap-sdk-folder>
+    $ bin/cdap sdk start
 
+Once you have started the SDK, it starts the UI node server as part of its init script.
 
-Once you have started the SDK it starts the UI node server as part of its init script.
+To work on UI Code
+------------------
+If you want to develop and test the UI against the SDK that was just built as above,
+you need to first kill the node server started by the SDK and follow this process:
 
--------------------
- To work on UI code
--------------------
+Start these processes, each in their own terminal tab or browser window:
 
-If you want to develop and test UI against the SDK that was just built above you need to first kill the node server started by the SDK and follow process mentioned below,
+- ``$ gulp watch`` (autobuild + livereload of angular app)
+- ``$ npm run cdap-dev-build-w`` (autobuild + livereload of react app)
+- ``$ npm start`` (http-server)
+- ``$ open http://localhost:11011``
 
-Each in their own tab
+If you are working on common components shared between all the apps (for instance, the Header)
+then you need to build an additional ``common`` library that is used across all:
 
-- ``gulp watch`` (autobuild + livereload of angular app)
-- ``npm run cdap-dev-build-w`` (autobuild + livereload of react app)
-- ``npm start`` (http-server)
-- ``open http://localhost:11011``
-
-If you are working on common components shared between all the apps (for instance the Header) then you need to build an additional `common` library that we use across all as follows,
-
-- ``webpack --config webpack.config.common.js -d ## build version``
-- ``webpack --config webpack.config.common.js --watch -d ## watch version``
+- ``$ webpack --config webpack.config.common.js -d ## build version``
+- ``$ webpack --config webpack.config.common.js --watch -d ## watch version``
 
 
 ======================
 License and Trademarks
 ======================
 
-Copyright © 2015 Cask Data, Inc.
+Copyright © 2016 Cask Data, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
 in compliance with the License. You may obtain a copy of the License at
