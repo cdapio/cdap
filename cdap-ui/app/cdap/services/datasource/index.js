@@ -26,10 +26,9 @@ export default class Datasource {
     this.socketSubscription =  socketData.subscribe(
       (data) => {
         let hash = data.resource.id;
-        let shouldCallNextHandler = true;
         if (!this.bindings[hash]) { return; }
 
-        shouldCallNextHandler = genericResponseHandlers.reduce((prev, curr) => prev && curr(data), true);
+        genericResponseHandlers.forEach(handler => handler(data));
 
         if (data.statusCode > 299 || data.warning) {
           this.bindings[hash].rx.onError({
@@ -37,13 +36,7 @@ export default class Datasource {
             response: data.response || data.body || data.error
           });
         } else {
-          if (shouldCallNextHandler) {
-            this.bindings[hash].rx.onNext(data.response);
-          }
-          if (typeof shouldCallNextHandler === 'undefined') {
-            console.error('Handlers: ', genericResponseHandlers);
-            throw 'Handlers for Datasource should return boolean value.';
-          }
+          this.bindings[hash].rx.onNext(data.response);
         }
 
         if (this.bindings[hash].type === 'REQUEST') {
