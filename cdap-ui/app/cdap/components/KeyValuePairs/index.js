@@ -41,9 +41,18 @@ const mapDispatchToFieldNameProps = (dispatch, ownProps) => {
         payload: {index: ownProps.index}
       });
     },
+    keypress: (e) => {
+      if(e.which === 13){
+        dispatch({
+          type: KeyValueStoreActions.addPair,
+          payload: {index: ownProps.index}
+        });
+      }
+    },
     addRow: () => {
       dispatch({
-        type: KeyValueStoreActions.addPair
+        type: KeyValueStoreActions.addPair,
+        payload: {index: ownProps.index}
       });
     },
     onChange: (fieldProp, e) => {
@@ -72,10 +81,11 @@ export default class KeyValuePairs extends Component {
     };
     this.keyValueStore = createKeyValueStore({keyValues});
     this.subscription = this.keyValueStore.subscribe(() => {
-      OnKeyValueChange(this.keyValueStore.getState().keyValues);
       this.setState(this.keyValueStore.getState().keyValues);
+      OnKeyValueChange(this.keyValueStore.getState().keyValues);
     });
   }
+
   shouldComponentUpdate(nextProps) {
     return this.state.pairs.length !== nextProps.keyValues.pairs.length;
   }

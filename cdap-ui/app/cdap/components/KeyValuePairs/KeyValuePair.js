@@ -17,13 +17,14 @@ import React, { PropTypes } from 'react';
 require('./KeyValuePairs.less');
 import T from 'i18n-react';
 
-const KeyValuePair = ({name, value, addRow, removeRow, onChange}) => {
+const KeyValuePair = ({name, value, addRow, removeRow, onChange, keypress}) => {
+
   return (
     <div className="key-value-pair-preference">
-      <input type="text" value={name} onChange={onChange.bind(null, 'key')} placeholder={T.translate('commons.keyValPairs.keyPlaceholder')} className="key-input" />
-      <input type="text" value={value} onChange={onChange.bind(null, 'value')} placeholder={T.translate('commons.keyValPairs.valuePlaceholder')} className="value-input" />
-      <span className="fa fa-plus add-row-btn" onClick={addRow} />
-      <span className="fa fa-trash remove-row-btn" onClick={removeRow} />
+      <input type="text" value={name} onKeyPress={keypress} onChange={onChange.bind(null, 'key')} placeholder={T.translate('commons.keyValPairs.keyPlaceholder')} className="key-input mousetrap" />
+      <input type="text" value={value} onKeyPress={keypress} onChange={onChange.bind(null, 'value')} placeholder={T.translate('commons.keyValPairs.valuePlaceholder')} className="value-input mousetrap" />
+      <button type="submit" className="fa fa-plus add-row-btn" onClick={addRow} />
+      <button type="submit" className="fa fa-trash remove-row-btn" onClick={removeRow} />
     </div>
   );
 };
@@ -34,7 +35,8 @@ KeyValuePair.propTypes = {
   value: PropTypes.string,
   onChange: PropTypes.func,
   addRow: PropTypes.func,
-  removeRow: PropTypes.func
+  removeRow: PropTypes.func,
+  keypress: PropTypes.func
 };
 
 export default KeyValuePair;

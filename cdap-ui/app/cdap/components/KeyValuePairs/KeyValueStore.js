@@ -42,9 +42,9 @@ const keyValues = (state = [], action=defaultAction) => {
       return stateCopy;
     case KeyValueStoreActions.addPair:
       stateCopy = Object.assign({}, state);
-      stateCopy.pairs.push({
+      stateCopy.pairs.splice(action.payload.index + 1, 0, {
         key : '',
-        value : '',
+        value: '',
         uniqueId: shortid.generate()
       });
       return stateCopy;
