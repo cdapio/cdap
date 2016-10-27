@@ -21,8 +21,8 @@ const KeyValuePair = ({name, value, addRow, removeRow, onChange, keypress}) => {
 
   return (
     <div className="key-value-pair-preference">
-      <input type="text" value={name} onKeyPress={keypress} onChange={onChange.bind(null, 'key')} placeholder={T.translate('commons.keyValPairs.keyPlaceholder')} className="key-input mousetrap" />
-      <input type="text" value={value} onKeyPress={keypress} onChange={onChange.bind(null, 'value')} placeholder={T.translate('commons.keyValPairs.valuePlaceholder')} className="value-input mousetrap" />
+      <input type="text" value={name} autoFocus={true} onKeyPress={keypress} onChange={onChange.bind(null, 'key')} placeholder={T.translate('commons.keyValPairs.keyPlaceholder')} className="key-input" />
+      <input type="text" value={value} onKeyPress={keypress} onChange={onChange.bind(null, 'value')} placeholder={T.translate('commons.keyValPairs.valuePlaceholder')} className="value-input" />
       <button type="submit" className="fa fa-plus add-row-btn" onClick={addRow} />
       <button type="submit" className="fa fa-trash remove-row-btn" onClick={removeRow} />
     </div>
