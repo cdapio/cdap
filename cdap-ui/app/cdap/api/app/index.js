@@ -14,10 +14,9 @@
  * the License.
  */
 
-import Datasource from 'services/datasource';
 import {apiCreator} from 'services/resource-helper';
-
-let dataSrc = new Datasource();
+import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
+let dataSrc = DataSourceConfigurer.getInstance();
 let basepath = '/namespaces/:namespace/apps';
 
 export const MyAppApi = {

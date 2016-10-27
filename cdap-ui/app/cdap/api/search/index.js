@@ -14,10 +14,10 @@
  * the License.
  */
 
-import Datasource from 'services/datasource';
+import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
 import {apiCreator} from 'services/resource-helper';
 
-let dataSrc = new Datasource();
+let dataSrc = DataSourceConfigurer.getInstance();
 let searchpath = '/namespaces/:namespace/metadata/search';
 
 export const MySearchApi = {

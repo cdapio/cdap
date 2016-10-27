@@ -13,13 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+import Datasource from 'services/datasource';
+import RedirectToLogin from 'services/redirect-to-login';
 
-import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
-import {apiCreator} from 'services/resource-helper';
-
-let dataSrc = DataSourceConfigurer.getInstance();
-const basepath = '/metrics/query';
-
-export const MyMetricApi = {
-  query: apiCreator(dataSrc, 'POST', 'REQUEST', basepath )
+let DatasourceConfigurer = {
+  getInstance(handlers = []) {
+    if (Array.isArray(handlers)) {
+      return new Datasource([...handlers, RedirectToLogin]);
+    } else {
+      console.trace();
+      throw "'handlers' for Datasource should be an array";
+    }
+  }
 };
+
+export default DatasourceConfigurer;

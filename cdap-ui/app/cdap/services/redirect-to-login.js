@@ -14,12 +14,17 @@
  * the License.
  */
 
-import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
-import {apiCreator} from 'services/resource-helper';
-
-let dataSrc = DataSourceConfigurer.getInstance();
-const basepath = '/metrics/query';
-
-export const MyMetricApi = {
-  query: apiCreator(dataSrc, 'POST', 'REQUEST', basepath )
-};
+import cookie from 'react-cookie';
+export default function RedirectToLogin(data) {
+  let {statusCode} = data;
+  if (statusCode === 401) {
+    cookie.remove('CDAP_Auth_Token', { path: '/' });
+    cookie.remove('CDAP_Auth_User', { path: '/' });
+    window.location.href = window.getAbsUIUrl({
+      uiApp: 'login',
+      redirectUrl: location.href,
+      clientId: 'cdap'
+    });
+  }
+  return true;
+}
