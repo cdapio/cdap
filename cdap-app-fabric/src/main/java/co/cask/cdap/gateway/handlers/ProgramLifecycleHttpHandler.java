@@ -21,7 +21,6 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.metrics.MetricStore;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -42,8 +41,6 @@ import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
-import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.BatchProgram;
@@ -155,17 +152,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   protected final ProgramRuntimeService runtimeService;
 
-  /**
-   * Scheduler provides ability to schedule/un-schedule the jobs.
-   */
-  protected final Scheduler scheduler;
-
   @Inject
   ProgramLifecycleHttpHandler(Store store, ProgramRuntimeService runtimeService,
                               DiscoveryServiceClient discoveryServiceClient,
                               ProgramLifecycleService lifecycleService,
                               QueueAdmin queueAdmin,
-                              Scheduler scheduler, PreferencesStore preferencesStore,
+                              PreferencesStore preferencesStore,
                               MRJobInfoFetcher mrJobInfoFetcher,
                               MetricStore metricStore) {
     this.store = store;
@@ -174,7 +166,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.lifecycleService = lifecycleService;
     this.metricStore = metricStore;
     this.queueAdmin = queueAdmin;
-    this.scheduler = scheduler;
     this.preferencesStore = preferencesStore;
     this.mrJobInfoFetcher = mrJobInfoFetcher;
   }
@@ -231,7 +222,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("program-id") String programId) throws Exception {
     ApplicationId applicationId = new ApplicationId(namespaceId, appId);
     if (SCHEDULES.equals(type)) {
-      getScheduleStatus(responder, applicationId, programId);
+      JsonObject json = new JsonObject();
+      json.addProperty("status", lifecycleService.getScheduleStatus(namespaceId, appId, programId).toString());
+      responder.sendJson(HttpResponseStatus.OK, json);
       return;
     }
     ProgramType programType;
@@ -260,7 +253,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("program-id") String programId) throws Exception {
     ApplicationId applicationId = new ApplicationId(namespaceId, appId, versionId);
     if (SCHEDULES.equals(type)) {
-      getScheduleStatus(responder, applicationId, programId);
+      JsonObject json = new JsonObject();
+      json.addProperty("status", lifecycleService.getScheduleStatus(namespaceId, appId, programId).toString());
+      responder.sendJson(HttpResponseStatus.OK, json);
       return;
     }
 
@@ -275,28 +270,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     Map<String, String> status = ImmutableMap.of("status", programStatus.name());
     responder.sendJson(HttpResponseStatus.OK, status);
-  }
-
-  private void getScheduleStatus(HttpResponder responder, ApplicationId applicationId, String scheduleName)
-    throws NotFoundException, SchedulerException {
-    ApplicationSpecification appSpec = store.getApplication(applicationId);
-    if (appSpec == null) {
-      throw new NotFoundException(applicationId);
-    }
-
-    ScheduleSpecification scheduleSpec = appSpec.getSchedules().get(scheduleName);
-    if (scheduleSpec == null) {
-      throw new NotFoundException(scheduleName, String.format("Schedule: %s for application: %s",
-                                                              scheduleName, applicationId.getApplication()));
-    }
-
-    String programName = scheduleSpec.getProgram().getProgramName();
-    ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
-    ProgramId programId = applicationId.program(programType, programName);
-    JsonObject json = new JsonObject();
-    json.addProperty("status", scheduler.scheduleState(programId, programId.getType().getSchedulableType(),
-                                                       scheduleName).toString());
-    responder.sendJson(HttpResponseStatus.OK, json);
   }
 
   /**
@@ -348,7 +321,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                String appVersion, String type, String programId, String action) throws Exception {
     ApplicationId applicationId = new ApplicationId(namespaceId, appId, appVersion);
     if ("schedules".equals(type)) {
-      performScheduleAction(responder, applicationId, programId, action);
+      lifecycleService.suspendResumeSchedule(namespaceId, appId, programId, action);
+      responder.sendJson(HttpResponseStatus.OK, "OK");
       return;
     }
 
@@ -380,61 +354,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         throw new NotFoundException(String.format("%s action was not found", action));
     }
     responder.sendStatus(HttpResponseStatus.OK);
-  }
-
-  private void performScheduleAction(HttpResponder responder, ApplicationId appId,
-                                     String scheduleName, String action) throws SchedulerException {
-    try {
-      if (!action.equals("suspend") && !action.equals("resume")) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Schedule can only be suspended or resumed.");
-        return;
-      }
-
-      ApplicationSpecification appSpec = store.getApplication(appId);
-      if (appSpec == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "App: " + appId.getApplication() + " not found");
-        return;
-      }
-
-      ScheduleSpecification scheduleSpec = appSpec.getSchedules().get(scheduleName);
-      if (scheduleSpec == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Schedule: " + scheduleName + " not found");
-        return;
-      }
-
-      String programName = scheduleSpec.getProgram().getProgramName();
-      ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
-      ProgramId programId = appId.program(programType, programName);
-      Scheduler.ScheduleState state = scheduler.scheduleState(programId, scheduleSpec.getProgram().getProgramType(),
-                                                              scheduleName);
-      switch (state) {
-        case NOT_FOUND:
-          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-          break;
-        case SCHEDULED:
-          if (action.equals("suspend")) {
-            scheduler.suspendSchedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleName);
-            responder.sendJson(HttpResponseStatus.OK, "OK");
-          } else {
-            // attempt to resume already resumed schedule
-            responder.sendJson(HttpResponseStatus.CONFLICT, "Already resumed");
-          }
-          break;
-        case SUSPENDED:
-          if (action.equals("suspend")) {
-            // attempt to suspend already suspended schedule
-            responder.sendJson(HttpResponseStatus.CONFLICT, "Schedule already suspended");
-          } else {
-            scheduler.resumeSchedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleName);
-            responder.sendJson(HttpResponseStatus.OK, "OK");
-          }
-          break;
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (NotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    }
   }
 
   /**

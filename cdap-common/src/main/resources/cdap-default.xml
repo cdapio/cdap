@@ -1549,6 +1549,15 @@
   </property>
 
   <property>
+    <name>cdap.ugi.cache.expiration.ms</name>
+    <value>3600000</value>
+    <description>
+      UserGroupInformation cache entry expiration time in milliseconds. It is only used when impersonation is
+      enabled.
+    </description>
+  </property>
+
+  <property>
     <name>kerberos.auth.enabled</name>
     <value>${security.enabled}</value>
     <description>

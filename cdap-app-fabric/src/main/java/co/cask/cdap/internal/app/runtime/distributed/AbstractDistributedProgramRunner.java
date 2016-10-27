@@ -55,6 +55,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.TwillApplication;
@@ -233,7 +234,9 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
                 twillPreparer.setSchedulerQueue(schedulerQueueName);
               }
               if (logbackURI != null) {
-                twillPreparer.withResources(logbackURI);
+                twillPreparer
+                  .withResources(logbackURI)
+                  .withEnv(Collections.singletonMap("CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR));
               }
 
               String logLevelConf = cConf.get(Constants.COLLECT_APP_CONTAINER_LOG_LEVEL).toUpperCase();
@@ -336,7 +339,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     if (SecureStoreUtils.isKMSBacked(cConf) && SecureStoreUtils.isKMSCapable()) {
       return Collections.singletonList(SecureStoreUtils.getKMSSecureStore());
     } else {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
   }
 

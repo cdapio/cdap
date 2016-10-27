@@ -14,18 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.security;
+package co.cask.cdap.common.security;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.kerberos.SecurityUtil;
-import co.cask.cdap.common.security.ImpersonationInfo;
-import co.cask.cdap.common.security.UGIProvider;
 import co.cask.cdap.common.utils.DirUtils;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Files;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
@@ -35,27 +30,35 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.util.EnumSet;
 import java.util.Set;
 
 /**
  * Provides a UGI by logging in with a keytab file for that user.
  */
-public class DefaultUGIProvider implements UGIProvider {
+public class DefaultUGIProvider extends AbstractCachedUGIProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultUGIProvider.class);
 
-  private final CConfiguration cConf;
   private final LocationFactory locationFactory;
+  private final File tempDir;
+  private static final FileAttribute<Set<PosixFilePermission>> OWNER_ONLY_ATTRS =
+    PosixFilePermissions.asFileAttribute(EnumSet.of(PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_READ));
 
   @Inject
   DefaultUGIProvider(CConfiguration cConf, LocationFactory locationFactory) {
-    this.cConf = cConf;
+    super(cConf);
     this.locationFactory = locationFactory;
+    this.tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
   }
 
   /**
@@ -65,36 +68,25 @@ public class DefaultUGIProvider implements UGIProvider {
    * @throws IOException if there was any IOException during localization of the keytab
    */
   @Override
-  public UserGroupInformation getConfiguredUGI(ImpersonationInfo impersonationInfo) throws IOException {
+  protected UserGroupInformation createUGI(ImpersonationInfo impersonationInfo) throws IOException {
     LOG.debug("Configured impersonation info: {}", impersonationInfo);
 
-    // by default, don't delete any file
-    File cleanupFile = null;
+    URI keytabURI = URI.create(impersonationInfo.getKeytabURI());
+    boolean isKeytabLocal = keytabURI.getScheme() == null || "file".equals(keytabURI.getScheme());
 
+    File localKeytabFile = isKeytabLocal ?
+      new File(keytabURI.getPath()) : localizeKeytab(locationFactory.create(keytabURI));
     try {
-      URI keytabURI = URI.create(impersonationInfo.getKeytabURI());
-
-      File localKeytabFile;
-      if (keytabURI.getScheme() == null || "file".equals(keytabURI.getScheme())) {
-        localKeytabFile = new File(keytabURI.getPath());
-      } else {
-        localKeytabFile = localizeKeytab(locationFactory.create(keytabURI));
-        // since we localized the keytab file, remove it after we're done with it
-        cleanupFile = localKeytabFile;
-      }
-
       String expandedPrincipal = SecurityUtil.expandPrincipal(impersonationInfo.getPrincipal());
       LOG.debug("Logging in as: principal={}, keytab={}", expandedPrincipal, localKeytabFile);
 
-      Preconditions.checkArgument(java.nio.file.Files.isReadable(localKeytabFile.toPath()),
+      Preconditions.checkArgument(Files.isReadable(localKeytabFile.toPath()),
                                   "Keytab file is not a readable file: %s", localKeytabFile);
 
       return UserGroupInformation.loginUserFromKeytabAndReturnUGI(expandedPrincipal, localKeytabFile.getAbsolutePath());
     } finally {
-      if (cleanupFile != null) {
-        if (!cleanupFile.delete()) {
-          LOG.warn("Failed to delete file: {}", cleanupFile);
-        }
+      if (!isKeytabLocal && !localKeytabFile.delete()) {
+        LOG.warn("Failed to delete file: {}", localKeytabFile);
       }
     }
   }
@@ -106,15 +98,7 @@ public class DefaultUGIProvider implements UGIProvider {
    * @return local keytab file
    */
   private File localizeKeytab(Location keytabLocation) throws IOException {
-    // if scheme is not specified, assume its local file
-    URI keytabURI = keytabLocation.toURI();
-    if (keytabURI.getScheme() == null || "file".equals(keytabURI.getScheme())) {
-      return new File(keytabURI.getPath());
-    }
-
     // ensure temp dir exists
-    File tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     if (!DirUtils.mkdirs(tempDir)) {
       throw new IOException(String.format(
         "Could not create temporary directory at %s, while localizing keytab", tempDir));
@@ -122,16 +106,13 @@ public class DefaultUGIProvider implements UGIProvider {
 
     // create a local file with restricted permissions
     // only allow the owner to read/write, since it contains credentials
-    FileAttribute<Set<PosixFilePermission>> ownerOnlyAttrs =
-      PosixFilePermissions.asFileAttribute(ImmutableSet.of(PosixFilePermission.OWNER_WRITE,
-                                                           PosixFilePermission.OWNER_READ));
-    Path localKeytabFile = java.nio.file.Files.createTempFile(tempDir.toPath(), null, "keytab.localized",
-                                                              ownerOnlyAttrs);
-
+    Path localKeytabFile = Files.createTempFile(tempDir.toPath(), null, "keytab.localized", OWNER_ONLY_ATTRS);
     // copy to this local file
     LOG.debug("Copying keytab file from {} to {}", keytabLocation, localKeytabFile);
+    try (InputStream is = keytabLocation.getInputStream()) {
+      Files.copy(is, localKeytabFile, StandardCopyOption.REPLACE_EXISTING);
+    }
 
-    Files.copy(Locations.newInputSupplier(keytabLocation), localKeytabFile.toFile());
     return localKeytabFile.toFile();
   }
 }
