@@ -20,6 +20,7 @@ import org.apache.twill.discovery.ServiceDiscovered;
 
 import java.util.Iterator;
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Randomly picks endpoint from the list of available endpoints.
@@ -38,11 +39,10 @@ public final class RandomEndpointStrategy extends AbstractEndpointStrategy {
     // Reservoir sampling
     Discoverable result = null;
     Iterator<Discoverable> itor = serviceDiscovered.iterator();
-    Random random = new Random();
     int count = 0;
     while (itor.hasNext()) {
       Discoverable next = itor.next();
-      if (random.nextInt(++count) == 0) {
+      if (ThreadLocalRandom.current().nextInt(++count) == 0) {
         result = next;
       }
     }
