@@ -37,7 +37,6 @@ import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -210,7 +209,11 @@ public final class LoggingContextHelper {
 
   public static Filter createFilter(LoggingContext loggingContext) {
     if (loggingContext instanceof ServiceLoggingContext) {
-      String systemId = getNamespaceOrSystemIDFromSystemTagMap(loggingContext.getSystemTagsMap());
+      LoggingContext.SystemTag namespaceOrSystemID = getNamespaceOrSystemID(loggingContext.getSystemTagsMap());
+      if (namespaceOrSystemID == null) {
+        throw new IllegalArgumentException("No namespace or system id present");
+      }
+      String systemId = namespaceOrSystemID.getValue();
       String componentId = loggingContext.getSystemTagsMap().get(ServiceLoggingContext.TAG_COMPONENT_ID).getValue();
       String tagName = ServiceLoggingContext.TAG_SERVICE_ID;
       String entityId = loggingContext.getSystemTagsMap().get(ServiceLoggingContext.TAG_SERVICE_ID).getValue();
@@ -377,20 +380,11 @@ public final class LoggingContextHelper {
   }
 
   @Nullable
-  private static String getNamespaceOrSystemID(Map<String, String> tags) {
+  private static <T> T getNamespaceOrSystemID(Map<String, T> tags) {
     // Note: In CDAP 3.5 we removed  SystemLoggingContext which had tag .systemId so if NamespaceLoggingContext
     // .TAG_NAMESPACE_ID does not exist we use ServiceLoggingContext.TAG_SYSTEM_ID to support backward
     // compatibility for the logs which are in kafka and needs to be written to HDFS through log saver. See CDAP-7482
     return tags.containsKey(NamespaceLoggingContext.TAG_NAMESPACE_ID) ? tags.get
       (NamespaceLoggingContext.TAG_NAMESPACE_ID) : tags.get(ServiceLoggingContext.TAG_SYSTEM_ID);
-  }
-
-  @Nullable
-  private static String getNamespaceOrSystemIDFromSystemTagMap(Map<String, LoggingContext.SystemTag> systemTagsMap) {
-    Map<String, String> newMap = new HashMap<>();
-    for (Map.Entry<String, LoggingContext.SystemTag> entry : systemTagsMap.entrySet()) {
-      newMap.put(entry.getKey(), entry.getValue().getValue());
-    }
-    return getNamespaceOrSystemID(newMap);
   }
 }
