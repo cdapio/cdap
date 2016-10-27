@@ -62,3 +62,5 @@ GIT_BRANCH_CASK_HYDRATOR="develop"
 # Used for Tracker documentation
 GIT_BRANCH_CASK_TRACKER="develop"
 
+# Google Analytics Code
+GOOGLE_TAG_MANAGER_CODE="GTM-KWLFGH"
