@@ -263,7 +263,7 @@ New Features
 - :cask-issue:`CDAP-2963` - All HBase Tables created through CDAP will now have a key
   ``cdap.version`` in the ``HTableDescriptor``.
 
-- :cask-issue:`CDAP-3368` - Add location for ``cdap-cli.sh`` to PATH in distributed CDAP
+- :cask-issue:`CDAP-3368` - Add location for ``cdap cli`` to PATH in distributed CDAP
   packages.
 
 - :cask-issue:`CDAP-3890` - Improved performance of the Dataset Service.
@@ -1780,7 +1780,7 @@ Bug Fixes
   Fixed an issue where tags search were failing for certain tags.
 
 - `CDAP-4141 <https://issues.cask.co/browse/CDAP-4141>`__ -
-  Fixed node.js version checking for the ``cdap.sh`` script in the CDAP SDK.
+  Fixed node.js version checking for the ``cdap sdk`` script in the CDAP SDK.
 
 - `CDAP-4373 <https://issues.cask.co/browse/CDAP-4373>`__ -
   Fixed a problem that prevented MapReduce jobs from being run when the Resource Manager
@@ -4158,8 +4158,8 @@ New Features
 - **Command Line Interface (CLI)**
 
   - CLI can now directly connect to a CDAP instance of your choice at startup by using
-    ``cdap-cli.sh --uri <uri>``.
-  - Support for runtime arguments, which can be listed by running ``"cdap-cli.sh --help"``.
+    ``cdap cli --uri <uri>``.
+  - Support for runtime arguments, which can be listed by running ``"cdap cli --help"``.
   - Table rendering can be configured using ``"cli render as <alt|csv>"``. 
     The option ``"alt"`` is the default, with ``"csv"`` available for copy & pasting.
   - Stream statistics can be computed using ``"get stream-stats <stream-id>"``.
@@ -4643,7 +4643,7 @@ CDAP Bug Fixes
   - Failed to execute SQL queries.
   
 - Removed dependencies on SNAPSHOT artifacts for *netty-http* and *auth-clients*. 
-- Corrected an error in the message printed by the startup script ``cdap.sh``.
+- Corrected an error in the message printed by the startup script ``cdap sdk``.
 - Resolved a problem with the reading of the properties file by the CDAP Flume Client of CDAP Ingest library
   without first checking if authentication was enabled.
 
@@ -4651,7 +4651,7 @@ Other Changes
 -------------
 
 - The scripts ``send-query.sh``, ``access-token.sh`` and ``access-token.bat`` has been replaced by the 
-  :ref:`CDAP Command Line Interface, <cli>` ``cdap-cli.sh``.
+  :ref:`CDAP Command Line Interface, <cli>` ``cdap cli``.
 - The CDAP Command Line Interface now uses and saves access tokens when connecting to a secure CDAP instance.
 - The CDAP Java Stream Client now allows empty String events to be sent.
 - The CDAP Python Authentication Client's ``configure()`` method now takes a dictionary rather than a filepath.

@@ -80,7 +80,7 @@ Standalone CDAP SDK directory, using the Command Line Interface:
   
 .. tabbed-parsed-literal::
   
-  $ cdap-cli.sh load stream trainingDataStream examples/SpamClassifier/src/test/resources/trainingData.txt
+  $ cdap cli load stream trainingDataStream examples/SpamClassifier/src/test/resources/trainingData.txt
   
   Successfully loaded file to stream 'trainingDataStream'
 
@@ -102,7 +102,7 @@ There are three ways to start the Spark program:
 
    .. tabbed-parsed-literal::
 
-     $ cdap-cli.sh start spark |example|.\ |example-spark| "kafka.brokers=broker1-host:port kafka.topics=topic1,topic2"
+     $ cdap cli start spark |example|.\ |example-spark| "kafka.brokers=broker1-host:port kafka.topics=topic1,topic2"
 
 #. Send a query via an HTTP request using a ``curl`` command:
 
@@ -133,7 +133,7 @@ To query the *messageClassificationStore* ObjectStore using the ``MessageClassif
 
   .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh call service SpamClassifier.MessageClassification GET status/1
+    $ cdap cli call service SpamClassifier.MessageClassification GET status/1
     
     Ham
 

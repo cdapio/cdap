@@ -67,7 +67,7 @@ or, using the CDAP CLI:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh get flow live WordCount.WordCounter
+  $ cdap cli get flow live WordCount.WordCounter
 
 The response is formatted in JSON and—pretty-printed— would look similar to this::
 
@@ -286,13 +286,19 @@ Dumping the Transaction Manager
 CDAP comes bundled with a script that allows you to dump the state of the internal
 transaction manager into a local file to allow further investigation. If your CDAP Instance
 tends to become slow, you can use this tool to detect the incriminating transactions.
-This script is called ``tx-debugger.sh`` (on Windows, it is ``tx-debugger.bat``).
+This script is called ``cdap debug transactions`` (on Windows, it is ``tx-debugger.bat``).
 
 To download a snapshot of the state of the TM of the CDAP, use the command:
 
 .. tabbed-parsed-literal::
 
-  $ tx-debugger.sh view --host <name> [--save <filename>]
+  .. Linux
+  
+  $ cdap debug transactions view --host <name> [--save <filename>]
+
+  .. Windows
+  
+  > tx-debugger.bat view --host <name> [--save <filename>]
 
 where `name` is the host name of your CDAP instance, and the optional `filename`
 specifies where the snapshot should be saved. This command will
@@ -303,7 +309,13 @@ with the command:
 
 .. tabbed-parsed-literal::
 
-  $ tx-debugger.sh view --filename <filename>
+  .. Linux
+  
+  $ cdap debug transactions view --filename <filename>
+
+  .. Windows
+  
+  > tx-debugger.bat view --filename <filename>
 
 where `filename` specifies the location where the snapshot has been saved.
 
@@ -328,9 +340,14 @@ use this command to invalidate it:
 
 .. tabbed-parsed-literal::
 
-  $ tx-debugger.sh invalidate --host <name> --transaction <writePtr>
+  .. Linux
+  
+  $ cdap debug transactions invalidate --host <name> --transaction <writePtr>
+
+  .. Windows
+  
+  > tx-debugger.bat invalidate --host <name> --transaction <writePtr>
 
 Invalidating a transaction when we know for sure that its writes should
 be invalidated is useful, because those writes will then be removed
 from the concerned Tables.
-

@@ -58,15 +58,15 @@ remove software, the admin user and password are both ``cdap``.
 Starting and Stopping Standalone CDAP
 ============================================
 
-Use the ``cdap.sh`` script to start and stop the Standalone CDAP:
+Use the ``cdap`` script (located in ``/opt/cdap/sdk/bin``) to start and stop the Standalone CDAP:
 
 .. tabbed-parsed-literal::
    :tabs: "Linux Virtual Machine"
    :independent:
 
-   $ /opt/cdap/sdk/bin/cdap.sh start
+   $ /opt/cdap/sdk/bin/cdap sdk start
      . . .
-   $ /opt/cdap/sdk/bin/cdap.sh stop
+   $ /opt/cdap/sdk/bin/cdap sdk stop
 
 Note that starting CDAP is not necessary if you use the Virtual Machine, as it
 starts the Standalone CDAP automatically on startup.

@@ -121,7 +121,7 @@ applications from it, the preferred method of deploying it is to use the CDAP CL
 
 .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh load artifact examples/WikipediaPipeline/target/WikipediaPipeline-|release|.jar name WikipediaPipelineApp version |release|
+    $ cdap cli load artifact examples/WikipediaPipeline/target/WikipediaPipeline-|release|.jar name WikipediaPipelineApp version |release|
 
     Successfully added artifact with name 'WikipediaPipelineApp'
 
@@ -129,7 +129,7 @@ applications from it, the preferred method of deploying it is to use the CDAP CL
 
 .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh create app wiki-lda WikipediaPipelineApp |release| user examples/|example|/resources/wikipedia-lda.json
+    $ cdap cli create app wiki-lda WikipediaPipelineApp |release| user examples/|example|/resources/wikipedia-lda.json
     
     Successfully created application
 
@@ -137,7 +137,7 @@ applications from it, the preferred method of deploying it is to use the CDAP CL
 
 .. tabbed-parsed-literal::
     
-  $ cdap-cli.sh create app wiki-kmeans WikipediaPipelineApp |release| user examples/|example|/resources/wikipedia-kmeans.json
+  $ cdap cli create app wiki-kmeans WikipediaPipelineApp |release| user examples/|example|/resources/wikipedia-kmeans.json
 
   Successfully created application
 
@@ -156,7 +156,7 @@ The *pageTitleStream* consumes events in the format returned by the Facebook "Li
   
   .. tabbed-parsed-literal::
 
-      $ cdap-cli.sh load stream pageTitleStream examples/WikipediaPipeline/resources/fb-likes-data.txt
+      $ cdap cli load stream pageTitleStream examples/WikipediaPipeline/resources/fb-likes-data.txt
     
       Successfully loaded file to stream 'pageTitleStream'
 
@@ -167,7 +167,7 @@ The *pageTitleStream* consumes events in the format returned by the Facebook "Li
 
   .. tabbed-parsed-literal::
 
-      $ cdap-cli.sh load stream wikiStream examples/WikipediaPipeline/resources/wikipedia-data.txt
+      $ cdap cli load stream wikiStream examples/WikipediaPipeline/resources/wikipedia-data.txt
     
       Successfully loaded file to stream 'wikiStream'
 
@@ -214,7 +214,7 @@ You can also do this from a terminal:
 
   .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh start workflow |example|.\ |example-workflow| "\"min.pages.threshold=0 mode=online\""
+    $ cdap cli start workflow |example|.\ |example-workflow| "\"min.pages.threshold=0 mode=online\""
     
     Successfully started workflow '|example-workflow|' of application '|example|'
     with provided runtime arguments 'min.pages.threshold=0 mode=online'
@@ -251,7 +251,7 @@ The service exposes these REST APIs, which can be accessed either with the CDAP 
 
   .. tabbed-parsed-literal::
   
-    $ cdap-cli.sh call service |example|.\ |example-service| GET /v1/functions/lda/topics
+    $ cdap cli call service |example|.\ |example-service| GET /v1/functions/lda/topics
   
     $ curl -w"\n" -X GET "localhost:11015/v3/namespaces/default/apps/|example|/services/|example-service|/methods/v1/functions/lda/topics"
   
@@ -261,7 +261,7 @@ The service exposes these REST APIs, which can be accessed either with the CDAP 
 
   .. tabbed-parsed-literal::
   
-    $ cdap-cli.sh call service |example|.\ |example-service| GET /v1/functions/lda/topics/0
+    $ cdap cli call service |example|.\ |example-service| GET /v1/functions/lda/topics/0
     
     $ curl -w"\n" -X GET "localhost:11015/v3/namespaces/default/apps/|example|/services/|example-service|/methods/v1/functions/lda/topics/0"
     
@@ -275,7 +275,7 @@ The service exposes these REST APIs, which can be accessed either with the CDAP 
 
   .. tabbed-parsed-literal::
   
-      $ cdap-cli.sh call service |example|.\ |example-service| GET /v1/functions/topn/words
+      $ cdap cli call service |example|.\ |example-service| GET /v1/functions/topn/words
       
       $ curl -w"\n" -X GET "localhost:11015/v3/namespaces/default/apps/|example|/services/|example-service|/methods/v1/functions/topn/words"
 

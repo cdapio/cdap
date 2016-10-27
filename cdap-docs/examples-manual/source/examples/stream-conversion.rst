@@ -133,7 +133,7 @@ You can now wait for the workflow to run, after which you can query the partitio
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh execute "\"show partitions dataset_converted\""
+  $ cdap cli execute "\"show partitions dataset_converted\""
   
   +============================================+
   | partition: STRING                          |
@@ -150,7 +150,7 @@ You can also query the data in the dataset. For example, to find the five most f
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh execute "\"select count(*) as count, body from dataset_converted group by body order by count desc limit 5\""
+  $ cdap cli execute "\"select count(*) as count, body from dataset_converted group by body order by count desc limit 5\""
   
   +==============================+
   | count: BIGINT | body: STRING |

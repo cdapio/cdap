@@ -20,9 +20,9 @@ Starting the Services
 
   .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh start service |example|.\ |example-service1|
-    $ cdap-cli.sh start service |example|.\ |example-service2|
-    $ cdap-cli.sh start service |example|.\ |example-service3|
+    $ cdap cli start service |example|.\ |example-service1|
+    $ cdap cli start service |example|.\ |example-service2|
+    $ cdap cli start service |example|.\ |example-service3|
     
     Successfully started service '|example-service1|' of application '|example|' with stored runtime arguments '{}'
     Successfully started service '|example-service2|' of application '|example|' with stored runtime arguments '{}'

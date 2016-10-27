@@ -17,4 +17,4 @@ You can now remove the application as described in :ref:`Removing an Application
 
   .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh delete app |example|
+    $ cdap cli delete app |example|

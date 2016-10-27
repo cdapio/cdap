@@ -48,13 +48,13 @@ In the examples and commands that follow, for brevity we will use these conventi
   on a UNIX-type system or Windows.
   
 - The `CDAP Command Line Interface (CLI) <http://docs.cask.co/cdap/current/en/reference-manual/cli-api.html>`__
-  is included in the SDK in the ``bin`` directory, either at ``bin/cdap-cli.sh`` or |---|
-  on Windows |---| ``bin\cdap-cli.bat``. The CLI allows you to quickly access CDAP
+  is included in the SDK in the ``bin`` directory, either at ``bin/cdap cli`` or |---|
+  on Windows |---| ``bin\cdap.bat cli``. The CLI allows you to quickly access CDAP
   facilities from a command line environment.
   
-- For brevity in the commands given below, we will simply use ``cdap-cli.sh`` for the CDAP
-  Command Line Interface. Substitute the actual path of ``./<CDAP-SDK-HOME>/bin/cdap-cli.sh``,
-  or ``<CDAP-SDK-HOME>\bin\cdap-cli.bat`` on Windows, as appropriate. 
+- For brevity in the commands given below, we will simply use ``cdap cli`` for the CDAP
+  Command Line Interface. Substitute the actual path of ``./<CDAP-SDK-HOME>/bin/cdap cli``,
+  or ``<CDAP-SDK-HOME>\bin\cdap.bat cli`` on Windows, as appropriate. 
 
 - A Windows-version of the application ``curl`` is included in the CDAP SDK as
   ``libexec\bin\curl.exe``; use it as a substitute for ``curl`` in examples.
@@ -127,9 +127,9 @@ To deploy and start the application, make sure CDAP is running and then execute:
 .. tabbed-parsed-literal::
 
   $ cd $CDAP-SDK-HOME
-  $ cdap-cli.sh deploy app examples/cdap-apps-release-cdap-|short-version|-compatible/Wise/target/cdap-wise-|cdap-apps-version|.jar
-  $ cdap-cli.sh start flow Wise.WiseFlow 
-  $ cdap-cli.sh start service Wise.WiseService
+  $ cdap cli deploy app examples/cdap-apps-release-cdap-|short-version|-compatible/Wise/target/cdap-wise-|cdap-apps-version|.jar
+  $ cdap cli start flow Wise.WiseFlow 
+  $ cdap cli start service Wise.WiseService
 
 You should get responses similar to::
 
@@ -306,7 +306,7 @@ We have already prepared a sample of Web server access logs for you to inject in
 .. tabbed-parsed-literal::
 
    $ cd $CDAP-SDK-HOME
-   $ cdap-cli.sh load stream logEventStream examples/cdap-apps-release-cdap-|short-version|-compatible/Wise/resources/apache.accesslog text/plain
+   $ cdap cli load stream logEventStream examples/cdap-apps-release-cdap-|short-version|-compatible/Wise/resources/apache.accesslog text/plain
 
    Successfully loaded file to stream 'logEventStream'
    
@@ -526,7 +526,7 @@ You can manually run the ``WiseWorkflow`` using
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh start workflow Wise.WiseWorkflow
+  $ cdap cli start workflow Wise.WiseWorkflow
           
   Successfully started workflow 'WiseWorkflow' of application 'Wise' 
   with stored runtime arguments '{}'
@@ -546,7 +546,7 @@ Using the ``curl`` command and the CLI, example use of the service would be:
   $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.185/count"
   21
   
-  $ cdap-cli.sh call service Wise.WiseService GET ip/255.255.255.185/count  
+  $ cdap cli call service Wise.WiseService GET ip/255.255.255.185/count  
 
   < 200 OK
   < Content-Length: 2

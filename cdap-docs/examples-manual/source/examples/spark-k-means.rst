@@ -81,7 +81,7 @@ Standalone CDAP SDK directory, using the Command Line Interface:
   
 .. tabbed-parsed-literal::
   
-  $ cdap-cli.sh load stream pointsStream examples/SparkKMeans/resources/points.txt
+  $ cdap cli load stream pointsStream examples/SparkKMeans/resources/points.txt
   
   Successfully loaded file to stream 'pointsStream'
 
@@ -97,7 +97,7 @@ There are three ways to start the Spark program:
 
    .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh start spark SparkKMeans.SparkKMeansProgram "args='3'"
+    $ cdap cli start spark SparkKMeans.SparkKMeansProgram "args='3'"
 
 #. Send a query via an HTTP request using the ``curl`` command:
 
@@ -115,7 +115,7 @@ To query the *centers* ObjectStore using the ``CentersService``, you can:
 
   .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh call service SparkKMeans.CentersService GET centers/1
+    $ cdap cli call service SparkKMeans.CentersService GET centers/1
     
     306.52261306532665,306.52261306532665,793.7956448911223
 
