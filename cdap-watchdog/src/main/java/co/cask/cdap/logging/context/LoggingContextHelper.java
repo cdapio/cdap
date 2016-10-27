@@ -376,6 +376,7 @@ public final class LoggingContextHelper {
     return builder.build();
   }
 
+  @Nullable
   private static String getNamespaceOrSystemID(Map<String, String> tags) {
     // Note: In CDAP 3.5 we removed  SystemLoggingContext which had tag .systemId so if NamespaceLoggingContext
     // .TAG_NAMESPACE_ID does not exist we use ServiceLoggingContext.TAG_SYSTEM_ID to support backward
@@ -384,6 +385,7 @@ public final class LoggingContextHelper {
       (NamespaceLoggingContext.TAG_NAMESPACE_ID) : tags.get(ServiceLoggingContext.TAG_SYSTEM_ID);
   }
 
+  @Nullable
   private static String getNamespaceOrSystemIDFromSystemTagMap(Map<String, LoggingContext.SystemTag> systemTagsMap) {
     Map<String, String> newMap = new HashMap<>();
     for (Map.Entry<String, LoggingContext.SystemTag> entry : systemTagsMap.entrySet()) {
