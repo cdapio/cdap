@@ -284,7 +284,7 @@ and send some data to it as comma-delimited text:
   |cdap >| send stream trades "AAPL,8,113.02"
   |cdap >| send stream trades "NFLX,10,437.45"
 
-If we run a query over the stream, we can see each event as text::
+If we run a query over the stream, we can see each event as text:
 
 .. tabbed-parsed-literal::
    :tabs: "CDAP CLI"
@@ -301,7 +301,7 @@ If we run a query over the stream, we can see each event as text::
 
 Since we know the body of every event is comma-separated text and that each event contains
 three fields, we can set a format and schema on the stream to allow us to run more
-complicated queries::
+complicated queries:
 
 .. tabbed-parsed-literal::
    :tabs: "CDAP CLI"
