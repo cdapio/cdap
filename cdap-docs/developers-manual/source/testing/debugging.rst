@@ -292,7 +292,13 @@ To download a snapshot of the state of the TM of the CDAP, use the command:
 
 .. tabbed-parsed-literal::
 
+  .. Linux
+  
   $ cdap debug transactions view --host <name> [--save <filename>]
+
+  .. Windows
+  
+  > tx-debugger.bat view --host <name> [--save <filename>]
 
 where `name` is the host name of your CDAP instance, and the optional `filename`
 specifies where the snapshot should be saved. This command will
@@ -303,7 +309,13 @@ with the command:
 
 .. tabbed-parsed-literal::
 
+  .. Linux
+  
   $ cdap debug transactions view --filename <filename>
+
+  .. Windows
+  
+  > tx-debugger.bat view --filename <filename>
 
 where `filename` specifies the location where the snapshot has been saved.
 
@@ -328,9 +340,14 @@ use this command to invalidate it:
 
 .. tabbed-parsed-literal::
 
+  .. Linux
+  
   $ cdap debug transactions invalidate --host <name> --transaction <writePtr>
+
+  .. Windows
+  
+  > tx-debugger.bat invalidate --host <name> --transaction <writePtr>
 
 Invalidating a transaction when we know for sure that its writes should
 be invalidated is useful, because those writes will then be removed
 from the concerned Tables.
-
