@@ -148,7 +148,7 @@ public class ExistingEntitySystemMetadataWriter {
     SystemDatasetInstantiatorFactory systemDatasetInstantiatorFactory =
       new SystemDatasetInstantiatorFactory(locationFactory, dsFramework, cConf);
     try (SystemDatasetInstantiator systemDatasetInstantiator = systemDatasetInstantiatorFactory.create()) {
-      UserGroupInformation ugi = impersonator.getUGI(namespace.toId().toEntityId());
+      UserGroupInformation ugi = impersonator.getUGI(namespace);
 
       for (DatasetSpecificationSummary summary : dsFramework.getInstances(namespace)) {
         final DatasetId dsInstance = namespace.dataset(summary.getName());

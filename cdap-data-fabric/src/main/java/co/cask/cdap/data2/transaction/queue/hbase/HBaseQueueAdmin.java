@@ -101,7 +101,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
   private final Impersonator impersonator;
 
   @Inject
-  public HBaseQueueAdmin(Configuration hConf,
+  HBaseQueueAdmin(Configuration hConf,
                          CConfiguration cConf,
                          LocationFactory locationFactory,
                          HBaseTableUtil tableUtil,
