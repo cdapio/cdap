@@ -36,6 +36,7 @@ function usage() {
   echo "  Action (select one)"
   echo
   echo "    docs-set          Clean build of HTML, CLI, and Javadocs, zipped, ready for deploying"
+  echo "    docs-all          alias to \"docs-set\""
   echo 
   echo "    docs              Dirty build of HTML, skipping CLI, Javadocs, or zipping"
   echo 
@@ -61,6 +62,7 @@ function run_command() {
   case ${1} in
     clean )             clean_targets;;
     docs )              build_docs_only;;
+    docs-all )          build_docs_set;;
     docs-cli )          build_docs_cli;;
     docs-first-pass )   build_docs_first_pass;;
     docs-second-pass )  build_docs_second_pass;;
