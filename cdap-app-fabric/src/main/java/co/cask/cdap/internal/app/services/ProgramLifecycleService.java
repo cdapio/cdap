@@ -805,7 +805,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     final Map<RunId, RuntimeInfo> runIdToRuntimeInfo = runtimeService.list(programType);
 
     LOG.trace("Start getting run records not actually running ...");
-    List<RunRecordMeta> notActuallyRunning = store.getRuns(ProgramRunStatus.RUNNING,
+    Collection<RunRecordMeta> notActuallyRunning = store.getRuns(ProgramRunStatus.RUNNING,
                                                            new com.google.common.base.Predicate<RunRecordMeta>() {
       @Override
       public boolean apply(RunRecordMeta input) {
@@ -813,7 +813,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
         // Check if it is not actually running.
         return !runIdToRuntimeInfo.containsKey(RunIds.fromString(runId));
       }
-    });
+    }).values();
     LOG.trace("End getting {} run records not actually running.", notActuallyRunning.size());
 
     final Map<String, ProgramId> runIdToProgramId = new HashMap<>();

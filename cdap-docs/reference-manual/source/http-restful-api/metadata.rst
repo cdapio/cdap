@@ -666,9 +666,13 @@ where:
      - Number of levels of lineage output to return. Defaults to 10. Determines how far back the provenance
        of the data in the lineage chain is calculated.
    * - ``collapse``
-     - An optional set of ``collapse`` types (any of ``access``, ``run`` or ``component``) by which to 
+     - An optional set of ``collapse`` types (any of ``access``, ``run``, or ``component``) by which to 
        :ref:`collapse the lineage output <http-restful-api-metadata-lineage-collapse>`. 
-       By default, lineage output is not collapsed. Multiple collapse parameters is supported.
+       By default, lineage output is not collapsed. Multiple collapse parameters are supported.
+   * - ``rollup``
+     - An optional ``rollup`` type to use to :ref:`rollup the lineage output
+       <http-restful-api-metadata-lineage-rollup>`. By default, lineage output is not rolled up.
+       Currently supports the value ``workflow``.
 
 See in the Metrics HTTP RESTful API :ref:`Querying by a Time Range <http-restful-api-metrics-time-range>`
 for examples of the "now" time syntax.
@@ -783,8 +787,8 @@ Here is an example, pretty-printed::
 
 Collapsing Lineage Output
 -------------------------
-Lineage output can be collapsed by `access`, `run` or `component`. Collapsing allows you to group all the lineage
-relations for the specified collapse type together in the lineage output. Collapsing is useful when you do not want
+Lineage output can be collapsed by ``access``, ``run``, or ``component``. Collapsing allows you to group all the lineage
+relations for the specified collapse-type together in the lineage output. Collapsing is useful when you do not want
 to differentiate between multiple lineage relations that only differ by the collapse-type. 
 
 For example, consider a program that wrote to a dataset in multiple runs over a specified time interval. 
@@ -793,9 +797,10 @@ If you do not want to differentiate between lineage relations involving differen
 the query parameter ``collapse=run`` to the lineage API. This would collapse the lineage relations in the 
 output to group the multiple runs of the program together. 
 
-You can also collapse lineage relations by `access` |---| which will group together those relations that 
-differ only in access types; or by `component` |---| which will group together those that differ only in 
-components together. The lineage HTTP RESTful API also allows you to use multiple `collapse` parameters in the same query.
+You can also collapse lineage relations by `access` (which will group together those relations that 
+differ only by access type) or by `component` (which will group together those that differ only by 
+component together). The lineage HTTP RESTful API also allows you to use multiple `collapse`` parameters
+in the same query.
 
 Consider these relations from the output of a lineage API request::
 
@@ -867,7 +872,7 @@ Consider these relations from the output of a lineage API request::
     }
   ]
 
-Collapsing the above by `run` would group the runs together as::
+Collapsing the above by ``run`` would group the runs together as::
 
   "relations": [
     {
@@ -913,7 +918,7 @@ Collapsing the above by `run` would group the runs together as::
     }
   ]
 
-Collapsing by `access` would produce::
+Collapsing by ``access`` would produce::
 
   "relations": [
     {
@@ -959,7 +964,7 @@ Collapsing by `access` would produce::
     }
   ]
 
-Similarly, collapsing by `component` will generate::
+Similarly, collapsing by ``component`` will generate::
 
   "relations": [
     {
@@ -1017,6 +1022,148 @@ Similarly, collapsing by `component` will generate::
     }
   ]
 
+.. _http-restful-api-metadata-lineage-rollup:
+
+Rolling Up Lineage Output
+-------------------------
+Lineage rollup allows you to group multiple entities together for a condensed view in the lineage output.
+
+Currently, for the parameter ``rollup``, only the value ``workflow`` is supported, which allows programs 
+to be grouped together into workflows if multiple programs are created as part of a workflow.
+
+For example, suppose you have a workflow that starts two programs to complete an associated task. If you do not want to
+differentiate between lineage relations involving different programs of this workflow, you could provide the query
+parameter ``rollup=workflow`` to the lineage API. This would rollup the lineage relations in the output to show
+corresponding workflows instead of individual programs.
+
+Consider these relations from the output of a lineage API request::
+
+  {
+    "start": 1442863938,
+    "end": 1442881938,
+    "relations": [
+      {
+        "data": "dataset.default.purchases",
+        "program": "mapreduce.default.PurchaseHistory.phase-1",
+        "access": "read",
+        "runs": [
+          "4b5d7891-60a7-11e5-a9b0-42010af01c4d"
+        ],
+        "components": [
+          "reader"
+        ]
+      },
+      {
+        "data": "dataset.default.purchases",
+        "program": "mapreduce.default.PurchaseHistory.phase-2",
+        "access": "unknown",
+        "runs": [
+          "7d6r7891-60a7-11e5-a9b0-42010af01c4d"
+        ],
+        "components": [
+          "collector"
+        ]
+      }
+    ],
+    "data": {
+      "dataset.default.purchases": {
+        "entityId": {
+          "id": {
+            "instanceId": "purchases",
+            "namespace": {
+              "id": "default"
+            }
+          },
+          "type": "datasetinstance"
+        }
+      },
+    },
+    "programs": {
+      "mapreduce.default.PurchaseHistory.phase-1": {
+        "entityId": {
+          "id": {
+            "application": {
+              "applicationId": "PurchaseHistory",
+              "namespace": {
+                "id": "default"
+              }
+            },
+            "id": "phase-1",
+            "type": "Mapreduce"
+          },
+          "type": "program"
+        }
+      },
+      "mapreduce.default.PurchaseHistory.phase-2": {
+        "entityId": {
+          "id": {
+            "application": {
+              "applicationId": "PurchaseHistory",
+              "namespace": {
+                "id": "default"
+              }
+            },
+            "id": "phase-2",
+            "type": "Mapreduce"
+          },
+          "type": "program"
+        }
+      }
+    },
+  }
+
+Rolling up the above using ``rollup=workflow`` would group the programs together as::
+
+  {
+    "start": 1442863938,
+    "end": 1442881938,
+    "relations": [
+      {
+        "data": "dataset.default.purchases",
+        "program": "workflows.default.PurchaseHistory.DataPipelineWorkflow",
+        "access": [
+          "read",
+          "unknown"
+        ],
+        "runs": [
+          "5b3ar7891-60a7-11e5-a9b0-42010af01c4d"
+        ],
+        "components": [
+          "reader"
+        ]
+      },
+    ],
+    "data": {
+      "dataset.default.purchases": {
+        "entityId": {
+          "id": {
+            "instanceId": "purchases",
+            "namespace": {
+                "id": "default"
+            }
+          },
+          "type": "datasetinstance"
+        }
+      },
+    },
+    "programs": {
+      "workflows.default.PurchaseHistory.DataPipelineWorkflow": {
+        "entityId": {
+          "id": {
+            "application": {
+              "applicationId": "PurchaseHistory",
+              "namespace": {
+                "id": "default"
+              }
+            },
+            "id": "DataPipelineWorkflow",
+            "type": "Workflow"
+          },
+          "type": "program"
+        }
+      },
+    },
+  }
 
 .. _http-restful-api-metadata-run:
 
