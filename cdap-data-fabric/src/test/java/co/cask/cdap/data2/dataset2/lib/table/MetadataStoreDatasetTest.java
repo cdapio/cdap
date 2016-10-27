@@ -18,20 +18,26 @@ package co.cask.cdap.data2.dataset2.lib.table;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
+import org.apache.hadoop.hbase.security.access.SecureTestUtil;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class MetadataStoreDatasetTest {
   @ClassRule
@@ -46,10 +52,17 @@ public class MetadataStoreDatasetTest {
     MetadataStoreDataset metadataStoreDataset = new MetadataStoreDataset(table);
     Assert.assertNotNull(metadataStoreDataset);
 
+    Map<MDSKey, Integer> expectedMap = new HashMap<>();
+    Map<MDSKey, Integer> expectedMapHalf = new HashMap<>();
+
     // Write some values
     for (int i = 0; i < 5; ++i) {
       MDSKey mdsKey = new MDSKey.Builder().add(i).build();
       metadataStoreDataset.write(mdsKey, i);
+      expectedMap.put(mdsKey, i);
+      if ((i % 2) == 0) {
+        expectedMapHalf.put(mdsKey, i);
+      }
     }
 
     // Fetch one record at a time
@@ -84,6 +97,13 @@ public class MetadataStoreDatasetTest {
       Assert.assertEquals(i, (int) Iterables.get(val.values(), 0));
       Assert.assertEquals(i + 1, (int) Iterables.get(val.values(), 1));
     }
+
+    // Fetch all keys using keySet
+    Map<MDSKey, Integer> val = metadataStoreDataset.listKV(expectedMap.keySet(), Integer.class, 5);
+    Assert.assertEquals(expectedMap, val);
+
+    Map<MDSKey, Integer> valHalf = metadataStoreDataset.listKV(expectedMapHalf.keySet(), Integer.class, 5);
+    Assert.assertEquals(expectedMapHalf, valHalf);
   }
 
   @Test

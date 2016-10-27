@@ -72,6 +72,7 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
@@ -95,6 +96,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -1218,8 +1220,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       ProgramRunStatus runStatus = (status == null) ? ProgramRunStatus.ALL :
         ProgramRunStatus.valueOf(status.toUpperCase());
-      List<RunRecord> records =
-        Lists.transform(store.getRuns(programId, runStatus, start, end, limit), CONVERT_TO_RUN_RECORD);
+
+      Collection<RunRecord> records = Collections2.transform(
+        store.getRuns(programId, runStatus, start, end, limit).values(),
+        CONVERT_TO_RUN_RECORD
+      );
+
       responder.sendJson(HttpResponseStatus.OK, records);
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(String.format("Invalid status %s. Supported options for status of runs are " +
