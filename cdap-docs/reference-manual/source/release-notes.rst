@@ -26,22 +26,23 @@ Cask Data Application Platform Release Notes
 `Release 3.6.1 <http://docs.cask.co/cdap/3.6.1/index.html>`__
 =============================================================
 
-- :cask-issue:`CDAP-7250` - Fixed an issue where dataset usage was not being recorded
-  after an application was deleted.
-
-- :cask-issue:`CDAP-7318` - Fixed an issue that would cause MapReduce and Spark programs
-  to fail if too many macros were being used.
+Improvements
+------------
 
 - :cask-issue:`CDAP-7404` - Added authorization for schedules in CDAP.
-
-- :cask-issue:`CDAP-7438`, :cask-issue:`CDAP-7439` - Removed the requirement of running
-  "kinit" prior to running either the Upgrade or Transaction Debugger tools of CDAP on a
-  secure Hadoop cluster.
 
 - :cask-issue:`HYDRATOR-997` - The SSH hostname and the command to be executed are now
   macro-enabled for the SSH action plugin.
 
+Bug Fixes
+---------
 
+- :cask-issue:`CDAP-7318` - Fixed an issue that would cause MapReduce and Spark programs
+  to fail if too many macros were being used.
+
+- :cask-issue:`CDAP-7438`, :cask-issue:`CDAP-7439` - Removed the requirement of running
+  "kinit" prior to running either the Upgrade or Transaction Debugger tools of CDAP on a
+  secure Hadoop cluster.
 
 `Release 3.6.0 <http://docs.cask.co/cdap/3.6.0/index.html>`__
 =============================================================
@@ -81,6 +82,9 @@ Improvements
 
 - :cask-issue:`CDAP-7272` - User services now include their application version in the
   payload when they announce themselves in Apache Twill.
+
+- :cask-issue:`CDAP-7250` - Fixed an issue where dataset usage was not being recorded
+  after an application was deleted.
 
 Bug Fixes
 ---------
