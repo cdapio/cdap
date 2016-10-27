@@ -212,7 +212,7 @@ public class CLIMain {
 
   public String getPrompt(CLIConnectionConfig config) {
     try {
-      return "cdap (" + config.getURI().resolve("/" + config.getNamespace()) + ")> ";
+      return "cdap (" + config.getURI().resolve("/" + config.getNamespace().getId()) + ")> ";
     } catch (DisconnectedException e) {
       return "cdap (DISCONNECTED)> ";
     }
