@@ -37,7 +37,6 @@ export default class AllTabContents extends Component {
     };
 
     this.unsub = MarketStore.subscribe(() => {
-      console.log('Filtering entities');
       this.setState({entities: this.getFilterdEntities()});
       const {loading, isError} = MarketStore.getState();
       this.setState({loading, isError});
@@ -51,7 +50,6 @@ export default class AllTabContents extends Component {
   getFilterdEntities() {
     const {list, filter} = MarketStore.getState();
     if (filter === '*') {
-      // this.setState({entities: list});
       return list;
     }
 

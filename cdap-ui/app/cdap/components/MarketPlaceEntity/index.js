@@ -23,7 +23,6 @@ export default function MarketPlaceEntity({ style, name, subtitle, icon, onClick
       closeable
       cardClass="market-place-package-card"
       style={style}
-      onClose={() => console.log('Closing the card')}
     >
       <div
         className="package-icon-container"
