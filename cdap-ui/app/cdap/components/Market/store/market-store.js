@@ -15,6 +15,7 @@
  */
 
 import {createStore} from 'redux';
+import shortid from 'shortid';
 
 const initialState = {
   list: [],
@@ -26,7 +27,10 @@ const initialState = {
 const market = (state=initialState, action) => {
   switch (action.type) {
     case 'SET_ENTITIES':
-      return Object.assign({}, state, { list: action.payload, loading: false });
+      return Object.assign({}, state, {
+        list: action.payload.map(entity => Object.assign(entity, {id: shortid.generate()})), 
+        loading: false
+      });
     case 'SET_FILTER':
       return Object.assign({}, state, { filter: action.payload });
     case 'SET_ERROR':

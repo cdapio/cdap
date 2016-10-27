@@ -14,7 +14,6 @@
  * the License.
  */
 import React, {PropTypes} from 'react';
-// import classnames from 'classnames';
 import Card from '../Card';
 require('./MarketPlaceEntity.less');
 export default function MarketPlaceEntity({ style, name, subtitle, icon, onClick}) {

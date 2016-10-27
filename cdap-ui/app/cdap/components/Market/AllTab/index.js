@@ -16,12 +16,12 @@
 
 import React, {Component} from 'react';
 // import SearchTextBox from '../SearchTextBox';
-import MarketPlaceEntity from '../MarketPlaceEntity';
+import MarketPlaceEntity from 'components/MarketPlaceEntity';
 import T from 'i18n-react';
-import MarketStore from './store/market-store.js';
+import MarketStore from 'components/Market/store/market-store.js';
 import Fuse from 'fuse.js';
 import MarketEntityModal from 'components/MarketEntityModal';
-import {MyMarketApi} from '../../api/market';
+import {MyMarketApi} from 'api/market';
 require('./AllTabContents.less');
 
 export default class AllTabContents extends Component {
@@ -29,7 +29,7 @@ export default class AllTabContents extends Component {
     super(props);
     this.state = {
       searchStr: '',
-      entities: [],
+      entities: this.getFilterdEntities(),
       loading: MarketStore.getState().loading,
       isError: MarketStore.getState().isError,
       activeEntity: null,
@@ -37,7 +37,8 @@ export default class AllTabContents extends Component {
     };
 
     this.unsub = MarketStore.subscribe(() => {
-      this.filterEntities();
+      console.log('Filtering entities');
+      this.setState({entities: this.getFilterdEntities()});
       const {loading, isError} = MarketStore.getState();
       this.setState({loading, isError});
     });
@@ -45,14 +46,13 @@ export default class AllTabContents extends Component {
 
   componentWillUnmount () {
     this.unsub();
-    MarketStore.dispatch({type: 'RESET'});
   }
 
-  filterEntities() {
+  getFilterdEntities() {
     const {list, filter} = MarketStore.getState();
     if (filter === '*') {
-      this.setState({entities: list});
-      return;
+      // this.setState({entities: list});
+      return list;
     }
 
     const fuseOptions = {
@@ -67,9 +67,7 @@ export default class AllTabContents extends Component {
     };
 
     let fuse = new Fuse(list, fuseOptions);
-    let search = fuse.search(filter);
-
-    this.setState({entities: search});
+    return fuse.search(filter);
   }
 
   onSearch(changeEvent) {
