@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -121,7 +122,7 @@ public class LoggingEventSerializerTest {
   @Test
   public void testOldSystemLoggingContext() throws Exception {
     // see: CDAP-7482
-    Map<String, String> mdcMap = Maps.newHashMap();
+    Map<String, String> mdcMap = new HashMap<>();
     mdcMap.put(ServiceLoggingContext.TAG_SYSTEM_ID, "ns1");
     mdcMap.put(ComponentLoggingContext.TAG_COMPONENT_ID, "comp1");
     mdcMap.put(ServiceLoggingContext.TAG_SERVICE_ID, "ser1");
@@ -130,7 +131,7 @@ public class LoggingEventSerializerTest {
     iLoggingEvent.setCallerData(new StackTraceElement[]{
       null
     });
-    iLoggingEvent.getMDCPropertyMap().putAll(mdcMap);
+    iLoggingEvent.setMDCPropertyMap(mdcMap);
     LoggingEvent event = new LoggingEvent(iLoggingEvent);
 
     Assert.assertTrue(LoggingContextHelper.getLoggingContext(event.getMDCPropertyMap())
