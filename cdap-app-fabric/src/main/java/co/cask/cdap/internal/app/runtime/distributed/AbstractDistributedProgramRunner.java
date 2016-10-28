@@ -42,9 +42,8 @@ import co.cask.cdap.security.TokenSecureStoreUpdater;
 import co.cask.cdap.security.store.SecureStoreUtils;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
@@ -100,6 +99,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
   private static final String HADOOP_CONF_FILE_NAME = "hConf.xml";
   private static final String CDAP_CONF_FILE_NAME = "cConf.xml";
   private static final String APP_SPEC_FILE_NAME = "appSpec.json";
+  private static final String LOGBACK_FILE_NAME = "logback.xml";
   private static final JarCacheTracker jarCacheTracker = JarCacheTracker.INSTANCE;
 
   protected final YarnConfiguration hConf;
@@ -202,6 +202,11 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
                                                              File.createTempFile("appSpec", ".json", tempDir))));
 
       final URI logbackURI = getLogBackURI(program, tempDir);
+      if (logbackURI != null) {
+        // Localize the logback xml
+        localizeResources.put(LOGBACK_FILE_NAME, new LocalizeResource(logbackURI, false));
+      }
+
       final String programOptions = GSON.toJson(options, ProgramOptions.class);
 
       // Obtains and add the HBase delegation token as well (if in non-secure mode, it's a no-op)
@@ -222,7 +227,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
               // because inside Spark code, it will set and unset the SPARK_YARN_MODE system properties, causing
               // fork in distributed mode not working. Setting it in the environment, which Spark uses for defaults,
               // so it can't be unset by Spark
-              twillPreparer.withEnv(Collections.singletonMap("SPARK_YARN_MODE", "true"));
+              twillPreparer.withEnv(ImmutableMap.of("SPARK_YARN_MODE", "true",
+                                                    "CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR));
               if (options.isDebug()) {
                 twillPreparer.enableDebugging();
               }
@@ -233,10 +239,9 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
                 LOG.info("Setting scheduler queue for app {} as {}", program.getId(), schedulerQueueName);
                 twillPreparer.setSchedulerQueue(schedulerQueueName);
               }
+
               if (logbackURI != null) {
-                twillPreparer
-                  .withResources(logbackURI)
-                  .withEnv(Collections.singletonMap("CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR));
+                twillPreparer.addJVMOptions("-Dlogback.configurationFile=" + LOGBACK_FILE_NAME);
               }
 
               String logLevelConf = cConf.get(Constants.COLLECT_APP_CONTAINER_LOG_LEVEL).toUpperCase();
@@ -257,9 +262,6 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
                   new ApplicationLogHandler(new PrinterLogHandler(new PrintWriter(System.out)), logLevel));
               }
 
-              String yarnAppClassPath =
-                hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
-                          Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
               // Add secure tokens
               if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
                 // TokenSecureStoreUpdater.update() ignores parameters
@@ -269,11 +271,15 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
               Iterable<Class<?>> dependencies = Iterables.concat(
                 Collections.singletonList(HBaseTableUtilFactory.getHBaseTableUtilClass()),
                 getKMSSecureStore(cConf), extraDependencies);
+
+              Iterable<String> yarnAppClassPath = Arrays.asList(
+                hConf.getStrings(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
+                                 YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
+
               twillPreparer
                 .withDependencies(dependencies)
-                .withClassPaths(Iterables.concat(extraClassPaths, Splitter.on(',').trimResults()
-                  .split(hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, ""))))
-                .withApplicationClassPaths(Splitter.on(",").trimResults().split(yarnAppClassPath))
+                .withClassPaths(Iterables.concat(extraClassPaths, yarnAppClassPath))
+                .withApplicationClassPaths(yarnAppClassPath)
                 .withBundlerClassAcceptor(new HadoopClassExcluder() {
                   @Override
                   public boolean accept(String className, URL classUrl, URL classPathUrl) {
