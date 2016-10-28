@@ -69,6 +69,9 @@ export default class TruncateAction extends Component {
   }
 
   render() {
+    const actionLabel = T.translate('features.FastAction.truncateLabel');
+    const headerTitle = `${actionLabel} ${this.props.entity.type}`;
+
     return (
       <span>
         <FastActionButton
@@ -78,10 +81,10 @@ export default class TruncateAction extends Component {
         {
           this.state.modal ? (
             <ConfirmationModal
-              headerTitle={T.translate('features.FastAction.truncateTitle', {entityType: this.props.entity.type})}
+              headerTitle={headerTitle}
               toggleModal={this.toggleModal}
               confirmationText={T.translate('features.FastAction.truncateConfirmation', {entityId: this.props.entity.id})}
-              confirmButtonText={T.translate('features.FastAction.truncateConfirmButton')}
+              confirmButtonText={actionLabel}
               confirmFn={this.action}
               cancelFn={this.toggleModal}
               isOpen={this.state.modal}

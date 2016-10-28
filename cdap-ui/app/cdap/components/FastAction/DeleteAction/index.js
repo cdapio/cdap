@@ -80,6 +80,9 @@ export default class DeleteAction extends Component {
   }
 
   render() {
+    const actionLabel = T.translate('features.FastAction.deleteLabel');
+    const headerTitle = `${actionLabel} ${this.props.entity.type}`;
+
     return (
       <span>
         <FastActionButton
@@ -89,10 +92,10 @@ export default class DeleteAction extends Component {
         {
           this.state.modal ? (
             <ConfirmationModal
-              headerTitle={T.translate('features.FastAction.deleteTitle', {entityType: this.props.entity.type})}
+              headerTitle={headerTitle}
               toggleModal={this.toggleModal}
               confirmationText={T.translate('features.FastAction.deleteConfirmation', {entityId: this.props.entity.id})}
-              confirmButtonText={T.translate('features.FastAction.deleteConfirmButton')}
+              confirmButtonText={actionLabel}
               confirmFn={this.action}
               cancelFn={this.toggleModal}
               isOpen={this.state.modal}

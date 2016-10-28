@@ -85,13 +85,11 @@ features:
 
   FastAction:
     deleteConfirmation: Are you sure you want to delete {entityId}?
-    deleteConfirmButton: Delete
+    deleteLabel: Delete
     deleteFailed: Failed to delete {entityId}
-    deleteTitle: Delete {entityType}
     truncateConfirmation: Are you sure you want to truncate {entityId}?
-    truncateConfirmButton: Truncate
+    truncateLabel: Truncate
     truncateFailed: Failed to truncate {entityId}
-    truncateTitle: Truncate {entityType}
 
   Management:
     Title: Management
