@@ -35,7 +35,8 @@ export default class DeleteAction extends Component {
       modal: false,
       loading: false,
       errorMessage: '',
-      extendedMessage: ''
+      extendedMessage: '',
+      disabled: this.props.entity.type === 'artifact' && this.props.entity.scope === 'SYSTEM'
     };
   }
 
@@ -88,6 +89,7 @@ export default class DeleteAction extends Component {
         <FastActionButton
           icon="fa fa-trash"
           action={this.toggleModal}
+          disabled={this.state.disabled}
         />
         {
           this.state.modal ? (
@@ -114,6 +116,7 @@ DeleteAction.propTypes = {
   entity: PropTypes.shape({
     id: PropTypes.string.isRequired,
     version: PropTypes.string,
+    scope: PropTypes.oneOf(['SYSTEM', 'USER']),
     type: PropTypes.oneOf(['application', 'artifact', 'datasetinstance', 'stream']).isRequired
   }),
   onSuccess: PropTypes.func
