@@ -44,14 +44,6 @@ CDAP:
 
 #. Stop all flows, services, and other programs in all your applications.
 
-#. If you are upgrading an *authorization-enabled* CDAP instance, you will need to give 
-   the *cdap* user *ADMIN* privileges on all existing CDAP namespaces. **Note:** the *ADMIN*
-   privilege does not give the *cdap* user *READ* or *WRITE* privileges on the namespaces.
-   As these are temporary grants required only for the purpose of running the upgrade tool, 
-   once the upgrade is complete, these grants can be revoked. (Alternatively, you can disable
-   authorization before running the upgrade tool and then re-enable it after the upgrade is completed.
-   See the :ref:`Administration Manual: Authorization <admin-authorization>` for details.)
-
 #. Stop all CDAP services.
 
 #. Ensure your installed version of the CSD matches the target version of CDAP. For
@@ -61,8 +53,9 @@ CDAP:
 #. Use the Cloudera Manager UI to download, distribute, and activate the target
    CDAP parcel version on all cluster hosts.
 
-#. Before starting services, run the *CDAP Upgrade Tool* to upgrade CDAP. From the CDAP Service 
-   page, select "Run CDAP Upgrade" from the Actions menu.
+#. Before starting services, run the *CDAP Upgrade Tool* to upgrade CDAP. From the CDAP Service
+   page, select "Run CDAP Upgrade" from the Actions menu. Note that authorization is disabled in
+   the UpgradeTool, so that the cdap user could upgrade all user's data.
 
 #. Start the CDAP services.  At this point it may be necessary to correct for any changes in
    the CSD.  For example, if new CDAP services were added or removed, you must add or
