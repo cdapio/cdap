@@ -92,7 +92,7 @@ public final class LoggingContextHelper {
       throw new IllegalArgumentException("Tags are empty, cannot determine logging context");
     }
 
-    String namespaceId = getNamespaceOrSystemID(tags);
+    String namespaceId = getByNamespaceOrSystemID(tags);
 
     String applicationId = tags.get(ApplicationLoggingContext.TAG_APPLICATION_ID);
 
@@ -209,11 +209,11 @@ public final class LoggingContextHelper {
 
   public static Filter createFilter(LoggingContext loggingContext) {
     if (loggingContext instanceof ServiceLoggingContext) {
-      LoggingContext.SystemTag namespaceOrSystemID = getNamespaceOrSystemID(loggingContext.getSystemTagsMap());
-      if (namespaceOrSystemID == null) {
+      LoggingContext.SystemTag systemTag = getByNamespaceOrSystemID(loggingContext.getSystemTagsMap());
+      if (systemTag == null) {
         throw new IllegalArgumentException("No namespace or system id present");
       }
-      String systemId = namespaceOrSystemID.getValue();
+      String systemId = systemTag.getValue();
       String componentId = loggingContext.getSystemTagsMap().get(ServiceLoggingContext.TAG_COMPONENT_ID).getValue();
       String tagName = ServiceLoggingContext.TAG_SERVICE_ID;
       String entityId = loggingContext.getSystemTagsMap().get(ServiceLoggingContext.TAG_SERVICE_ID).getValue();
@@ -380,7 +380,7 @@ public final class LoggingContextHelper {
   }
 
   @Nullable
-  private static <T> T getNamespaceOrSystemID(Map<String, T> tags) {
+  private static <T> T getByNamespaceOrSystemID(Map<String, T> tags) {
     // Note: In CDAP 3.5 we removed  SystemLoggingContext which had tag .systemId so if NamespaceLoggingContext
     // .TAG_NAMESPACE_ID does not exist we use ServiceLoggingContext.TAG_SYSTEM_ID to support backward
     // compatibility for the logs which are in kafka and needs to be written to HDFS through log saver. See CDAP-7482
