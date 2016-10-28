@@ -16,6 +16,10 @@
 
 package co.cask.cdap.api.service.http;
 
+import co.cask.cdap.api.ProgramLifecycle;
+import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.annotation.TransactionPolicy;
+
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -32,7 +36,7 @@ import javax.ws.rs.Path;
  * Example:
  * <p>
  *   <pre><code>
- *      public class MyHttpHanlder implements HttpServiceHandler {
+ *      public class MyHttpHandler implements HttpServiceHandler {
  *
  *        {@literal @}GET
  *        {@literal @}Path("/ping")
@@ -51,12 +55,31 @@ import javax.ws.rs.Path;
  *      }
  *   </code></pre>
  * <p>
- * To handle HTTP request with large body, it's is better to have the handler method to return
- * a {@link HttpContentConsumer} to avoid running out of memory.
+ * To handle HTTP request with large body, it is better to have the handler method to return
+ * a {@link HttpContentConsumer} to avoid running out of memory. Similarly, to return a response
+ * with a large body, it is preferable to return respond with {@link HttpContentProducer}.
+ *
+ * By default, all handler methods are executed within an implicit transaction, that is, you
+ * can access datasets and perform transactional data operations from the handler method.
+ * In some cases, for example, if the handler does not need to perform data operations, or if
+ * the time it takes to complete all operations may exceed the transaction timeout, it is
+ * better to annotate the method with a different transaction policy, for example:
+ * <p>
+ *        {@literal @}GET
+ *        {@literal @}Path("/ping")
+ *        {@literal @}TransactionPolicy(TransactionControl.EXPLICIT)
+ *        public void process(HttpServiceRequest request, HttpServiceResponder responder) {
+ *          getContext().execute(60, new TxRunnable() {
+ *            // perform data operations
+ *          });
+ *          responder.sendString("Hello World");
+ *        }
+ * </p>
  *
  * @see HttpContentConsumer
+ * @see HttpContentProducer
  */
-public interface HttpServiceHandler {
+public interface HttpServiceHandler extends ProgramLifecycle<HttpServiceContext> {
 
   /**
    * Configures this HttpServiceHandler with the given {@link HttpServiceConfigurer}.
@@ -67,17 +90,21 @@ public interface HttpServiceHandler {
   void configure(HttpServiceConfigurer configurer);
 
   /**
-   * Invoked when the Custom User Service using this HttpServiceHandler is initialized.
-   * This method can be used to initialize any user related resources at runtime.
-   *
-   * @param context the HTTP service runtime context
-   * @throws Exception
+   * Invoked whenever a new instance of this HttpServiceHandler is created. Note that this
+   * can happen at any time, because handler instances expire after a period of inactivity
+   * and are recreated when there is need for a new handler to serve an incoming request.
+   * That means that the time it takes to initialize adds to the time it takes to serve the
+   * request. It is therefore recommended to keep this method very lightweight.
    */
+  @Override
+  @TransactionPolicy(TransactionControl.IMPLICIT)
   void initialize(HttpServiceContext context) throws Exception;
 
   /**
-   * Invoked after the Custom User Service using this HttpServiceHandler is destroyed.
-   * Use this method to perform any necessary cleanup.
+   * Invoked whenever an instance of this HttpServiceHandler is destroyed. This may happen
+   * when the service is shut down, or when a handler instance expires due to inactivity.
    */
+  @Override
+  @TransactionPolicy(TransactionControl.IMPLICIT)
   void destroy();
 }

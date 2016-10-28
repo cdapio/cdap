@@ -113,6 +113,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -1206,7 +1207,14 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       flowManager.waitForStatus(false);
 
       serviceManager.waitForStatus(true);
-      callServicePut(serviceManager.getServiceURL(), "test", "hello");
+      callServicePut(serviceManager.getServiceURL(), "tx", "hello");
+      callServicePut(serviceManager.getServiceURL(), "tx", AppWithCustomTx.FAIL_PRODUCER, 200);
+      callServicePut(serviceManager.getServiceURL(), "tx", AppWithCustomTx.FAIL_CONSUMER, 500);
+      callServicePut(serviceManager.getServiceURL(), "notx", "hello");
+      callServicePut(serviceManager.getServiceURL(), "notx", AppWithCustomTx.FAIL_PRODUCER, 200);
+      callServicePut(serviceManager.getServiceURL(), "notx", AppWithCustomTx.FAIL_CONSUMER, 500);
+      serviceManager.stop();
+      serviceManager.waitForStatus(false);
 
       txMRManager.waitForFinish(10L, TimeUnit.SECONDS);
       notxMRManager.waitForFinish(10L, TimeUnit.SECONDS);
@@ -1246,8 +1254,70 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
         { AppWithCustomTx.WORKER_NOTX, AppWithCustomTx.RUNTIME_NEST, AppWithCustomTx.FAILED },
 
         // transactions attempted by the service
-        { AppWithCustomTx.CONSUMER, AppWithCustomTx.RUNTIME_TX, AppWithCustomTx.TIMEOUT_CONSUMER_RUNTIME },
-        { AppWithCustomTx.PRODUCER, AppWithCustomTx.RUNTIME_TX, AppWithCustomTx.TIMEOUT_PRODUCER_RUNTIME },
+        { AppWithCustomTx.HANDLER_TX, AppWithCustomTx.INITIALIZE, AppWithCustomTx.DEFAULT },
+        { AppWithCustomTx.HANDLER_TX, AppWithCustomTx.INITIALIZE_NEST, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.HANDLER_TX, AppWithCustomTx.DESTROY, AppWithCustomTx.DEFAULT },
+        { AppWithCustomTx.HANDLER_TX, AppWithCustomTx.DESTROY_NEST, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.HANDLER_TX, AppWithCustomTx.RUNTIME, AppWithCustomTx.DEFAULT },
+        { AppWithCustomTx.HANDLER_TX, AppWithCustomTx.RUNTIME_NEST, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.CONSUMER_TX, AppWithCustomTx.RUNTIME, null },
+        { AppWithCustomTx.CONSUMER_TX, AppWithCustomTx.RUNTIME_TX, AppWithCustomTx.TIMEOUT_CONSUMER_RUNTIME },
+        { AppWithCustomTx.CONSUMER_TX, AppWithCustomTx.RUNTIME_TX_T, AppWithCustomTx.TIMEOUT_CONSUMER_RUNTIME },
+        { AppWithCustomTx.CONSUMER_TX, AppWithCustomTx.RUNTIME_NEST, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.CONSUMER_TX, AppWithCustomTx.RUNTIME_NEST_T, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.CONSUMER_TX, AppWithCustomTx.RUNTIME_NEST_CT, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.CONSUMER_TX, AppWithCustomTx.RUNTIME_NEST_TC, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.CONSUMER_TX, AppWithCustomTx.DESTROY, AppWithCustomTx.DEFAULT },
+        { AppWithCustomTx.CONSUMER_TX, AppWithCustomTx.DESTROY_NEST, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.CONSUMER_TX, AppWithCustomTx.ONERROR, AppWithCustomTx.DEFAULT },
+        { AppWithCustomTx.CONSUMER_TX, AppWithCustomTx.ONERROR_NEST, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.PRODUCER_TX, AppWithCustomTx.RUNTIME, null },
+        { AppWithCustomTx.PRODUCER_TX, AppWithCustomTx.RUNTIME_TX, AppWithCustomTx.TIMEOUT_PRODUCER_RUNTIME },
+        { AppWithCustomTx.PRODUCER_TX, AppWithCustomTx.RUNTIME_TX_T, AppWithCustomTx.TIMEOUT_PRODUCER_RUNTIME },
+        { AppWithCustomTx.PRODUCER_TX, AppWithCustomTx.RUNTIME_NEST, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.PRODUCER_TX, AppWithCustomTx.RUNTIME_NEST_T, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.PRODUCER_TX, AppWithCustomTx.RUNTIME_NEST_CT, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.PRODUCER_TX, AppWithCustomTx.RUNTIME_NEST_TC, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.PRODUCER_TX, AppWithCustomTx.DESTROY, AppWithCustomTx.DEFAULT },
+        { AppWithCustomTx.PRODUCER_TX, AppWithCustomTx.DESTROY_NEST, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.PRODUCER_TX, AppWithCustomTx.ONERROR, AppWithCustomTx.DEFAULT },
+        { AppWithCustomTx.PRODUCER_TX, AppWithCustomTx.ONERROR_NEST, AppWithCustomTx.FAILED },
+
+        { AppWithCustomTx.HANDLER_NOTX, AppWithCustomTx.INITIALIZE, null },
+        { AppWithCustomTx.HANDLER_NOTX, AppWithCustomTx.INITIALIZE_TX, AppWithCustomTx.TIMEOUT_HANDLER_INITIALIZE },
+        { AppWithCustomTx.HANDLER_NOTX, AppWithCustomTx.INITIALIZE_NEST, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.HANDLER_NOTX, AppWithCustomTx.DESTROY, null },
+        { AppWithCustomTx.HANDLER_NOTX, AppWithCustomTx.DESTROY_TX, AppWithCustomTx.TIMEOUT_HANDLER_DESTROY },
+        { AppWithCustomTx.HANDLER_NOTX, AppWithCustomTx.DESTROY_NEST, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.HANDLER_NOTX, AppWithCustomTx.RUNTIME, null },
+        { AppWithCustomTx.HANDLER_NOTX, AppWithCustomTx.RUNTIME_TX, AppWithCustomTx.TIMEOUT_HANDLER_RUNTIME },
+        { AppWithCustomTx.HANDLER_NOTX, AppWithCustomTx.RUNTIME_NEST, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.CONSUMER_NOTX, AppWithCustomTx.RUNTIME, null },
+        { AppWithCustomTx.CONSUMER_NOTX, AppWithCustomTx.RUNTIME_TX, AppWithCustomTx.TIMEOUT_CONSUMER_RUNTIME },
+        { AppWithCustomTx.CONSUMER_NOTX, AppWithCustomTx.RUNTIME_TX_T, AppWithCustomTx.TIMEOUT_CONSUMER_RUNTIME },
+        { AppWithCustomTx.CONSUMER_NOTX, AppWithCustomTx.RUNTIME_NEST, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.CONSUMER_NOTX, AppWithCustomTx.RUNTIME_NEST_T, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.CONSUMER_NOTX, AppWithCustomTx.RUNTIME_NEST_CT, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.CONSUMER_NOTX, AppWithCustomTx.RUNTIME_NEST_TC, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.CONSUMER_NOTX, AppWithCustomTx.DESTROY, null },
+        { AppWithCustomTx.CONSUMER_NOTX, AppWithCustomTx.DESTROY_TX, AppWithCustomTx.TIMEOUT_CONSUMER_DESTROY },
+        { AppWithCustomTx.CONSUMER_NOTX, AppWithCustomTx.DESTROY_NEST, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.CONSUMER_NOTX, AppWithCustomTx.ONERROR, null },
+        { AppWithCustomTx.CONSUMER_NOTX, AppWithCustomTx.ONERROR_TX, AppWithCustomTx.TIMEOUT_CONSUMER_ERROR },
+        { AppWithCustomTx.CONSUMER_NOTX, AppWithCustomTx.ONERROR_NEST, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.PRODUCER_NOTX, AppWithCustomTx.RUNTIME, null },
+        { AppWithCustomTx.PRODUCER_NOTX, AppWithCustomTx.RUNTIME_TX, AppWithCustomTx.TIMEOUT_PRODUCER_RUNTIME },
+        { AppWithCustomTx.PRODUCER_NOTX, AppWithCustomTx.RUNTIME_TX_T, AppWithCustomTx.TIMEOUT_PRODUCER_RUNTIME },
+        { AppWithCustomTx.PRODUCER_NOTX, AppWithCustomTx.RUNTIME_NEST, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.PRODUCER_NOTX, AppWithCustomTx.RUNTIME_NEST_T, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.PRODUCER_NOTX, AppWithCustomTx.RUNTIME_NEST_CT, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.PRODUCER_NOTX, AppWithCustomTx.RUNTIME_NEST_TC, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.PRODUCER_NOTX, AppWithCustomTx.DESTROY, null },
+        { AppWithCustomTx.PRODUCER_NOTX, AppWithCustomTx.DESTROY_TX, AppWithCustomTx.TIMEOUT_PRODUCER_DESTROY },
+        { AppWithCustomTx.PRODUCER_NOTX, AppWithCustomTx.DESTROY_NEST, AppWithCustomTx.FAILED },
+        { AppWithCustomTx.PRODUCER_NOTX, AppWithCustomTx.ONERROR, null },
+        { AppWithCustomTx.PRODUCER_NOTX, AppWithCustomTx.ONERROR_TX, AppWithCustomTx.TIMEOUT_PRODUCER_ERROR },
+        { AppWithCustomTx.PRODUCER_NOTX, AppWithCustomTx.ONERROR_NEST, AppWithCustomTx.FAILED },
 
         // transactions attempted by the workflows
         { AppWithCustomTx.WORKFLOW_TX, AppWithCustomTx.INITIALIZE, AppWithCustomTx.DEFAULT },
@@ -1797,14 +1867,24 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       return reader.readLine();
     }
   }
+
   private String callServicePut(URL serviceURL, String path, String body) throws IOException {
+    return callServicePut(serviceURL, path, body, null);
+  }
+
+  @Nullable
+  private String callServicePut(URL serviceURL, String path, String body, Integer expectedStatus) throws IOException {
     HttpURLConnection connection = (HttpURLConnection) new URL(serviceURL.toString() + path).openConnection();
     connection.setDoOutput(true);
     connection.setRequestMethod("PUT");
     try (OutputStreamWriter out = new OutputStreamWriter(connection.getOutputStream())) {
       out.write(body);
     }
-    Assert.assertEquals(200, connection.getResponseCode());
+    int expected = expectedStatus == null ? 200 : expectedStatus;
+    Assert.assertEquals(expected, connection.getResponseCode());
+    if (expectedStatus != null) {
+      return null;
+    }
     try (
       BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charsets.UTF_8))
     ) {

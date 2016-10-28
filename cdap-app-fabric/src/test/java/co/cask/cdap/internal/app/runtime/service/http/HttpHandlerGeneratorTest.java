@@ -18,7 +18,11 @@ package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -88,6 +92,8 @@ import javax.ws.rs.PathParam;
  */
 public class HttpHandlerGeneratorTest {
 
+  private static final String IN_TX = "in-tx";
+
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
@@ -96,7 +102,9 @@ public class HttpHandlerGeneratorTest {
 
     @GET
     @Path("/handle")
+    @TransactionPolicy(TransactionControl.EXPLICIT)
     public void process(HttpServiceRequest request, HttpServiceResponder responder) {
+      Assert.assertNull(System.getProperty(IN_TX));
       responder.sendString("Hello World");
     }
   }
@@ -112,12 +120,14 @@ public class HttpHandlerGeneratorTest {
     @Path("/echo/{name}")
     @POST
     public void echo(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("name") String name) {
+      Assert.assertNotNull(System.getProperty(IN_TX));
       responder.sendString(Charsets.UTF_8.decode(request.getContent()).toString() + " " + name);
     }
 
     @Path("/echo/firstHeaders")
     @GET
     public void echoFirstHeaders(HttpServiceRequest request, HttpServiceResponder responder) {
+      Assert.assertNotNull(System.getProperty(IN_TX));
       Map<String, List<String>> headers = request.getAllHeaders();
       responder.sendStatus(200, Maps.transformValues(headers, new Function<List<String>, String>() {
         @Override
@@ -130,6 +140,7 @@ public class HttpHandlerGeneratorTest {
     @Path("/echo/allHeaders")
     @GET
     public void echoAllHeaders(HttpServiceRequest request, HttpServiceResponder responder) {
+      Assert.assertNotNull(System.getProperty(IN_TX));
       List<Map.Entry<String, String>> headers = new ArrayList<>();
       for (Map.Entry<String, List<String>> entry : request.getAllHeaders().entrySet()) {
         for (String value : entry.getValue()) {
@@ -168,14 +179,27 @@ public class HttpHandlerGeneratorTest {
     public HttpContentConsumer upload(HttpServiceRequest request,
                                       HttpServiceResponder responder,
                                       @PathParam("file") String file) throws IOException {
+      Assert.assertNotNull(System.getProperty(IN_TX));
       return new FileContentConsumer(new File(outputDir, file));
+    }
+
+    @Path("/upload-no-tx/{file}")
+    @PUT
+    @TransactionPolicy(TransactionControl.EXPLICIT)
+    public HttpContentConsumer uploadNoTx(HttpServiceRequest request,
+                                          HttpServiceResponder responder,
+                                          @PathParam("file") String file) throws IOException {
+      Assert.assertNull(System.getProperty(IN_TX));
+      return new NoTxFileContentConsumer(new File(outputDir, file));
     }
 
     @Path("/download/{file}")
     @GET
+    @TransactionPolicy(TransactionControl.EXPLICIT)
     public void download(HttpServiceRequest request,
                          HttpServiceResponder responder,
                          @PathParam("file") String file) {
+      Assert.assertNull(System.getProperty(IN_TX));
       Location location = Locations.toLocation(new File(outputDir, file));
       try {
         responder.send(200, location, "text/plain");
@@ -190,6 +214,7 @@ public class HttpHandlerGeneratorTest {
     public HttpContentConsumer uploadDownload(HttpServiceRequest request,
                                               HttpServiceResponder responder,
                                               @PathParam("file") String file) throws IOException {
+      Assert.assertNotNull(System.getProperty(IN_TX));
       final File targetFile = new File(outputDir, file);
       return new FileContentConsumer(targetFile) {
         @Override
@@ -219,18 +244,53 @@ public class HttpHandlerGeneratorTest {
 
     @Override
     public void onFinish(HttpServiceResponder responder) throws Exception {
+      validateTransaction();
       channel.close();
       response(responder);
     }
 
     @Override
     public void onError(HttpServiceResponder responder, Throwable failureCause) {
+      validateTransaction();
       Closeables.closeQuietly(channel);
       LOG.error("Failed when handling upload", failureCause);
     }
 
     protected void response(HttpServiceResponder responder) throws IOException {
       responder.sendStatus(200);
+    }
+
+    protected void validateTransaction() {
+      Assert.assertNotNull(System.getProperty(IN_TX));
+    }
+  }
+
+  private static class NoTxFileContentConsumer extends FileContentConsumer {
+
+    NoTxFileContentConsumer(File file) throws IOException {
+      super(file);
+    }
+
+    @Override
+    public void onReceived(ByteBuffer chunk, Transactional transactional) throws Exception {
+      super.onReceived(chunk, transactional);
+    }
+
+    @Override
+    @TransactionPolicy(TransactionControl.EXPLICIT)
+    public void onFinish(HttpServiceResponder responder) throws Exception {
+      super.onFinish(responder);
+    }
+
+    @Override
+    @TransactionPolicy(TransactionControl.EXPLICIT)
+    public void onError(HttpServiceResponder responder, Throwable failureCause) {
+      super.onError(responder, failureCause);
+    }
+
+    @Override
+    protected void validateTransaction() {
+      Assert.assertNull(System.getProperty(IN_TX));
     }
   }
 
@@ -313,43 +373,47 @@ public class HttpHandlerGeneratorTest {
     service.startAndWait();
     try {
       InetSocketAddress bindAddress = service.getBindAddress();
-
-      // Make a PUT call
-      HttpURLConnection urlConn = (HttpURLConnection) new URL(
-        String.format("http://%s:%d/content/upload/test.txt",
-                      bindAddress.getHostName(), bindAddress.getPort())).openConnection();
-      try {
-        urlConn.setReadTimeout(2000);
-        urlConn.setDoOutput(true);
-        urlConn.setRequestMethod("PUT");
-        // Set to use default chunk size
-        urlConn.setChunkedStreamingMode(-1);
-
-        // Write over 1MB of data
-        // One fragment is 10K of data
-        byte[] fragment = Strings.repeat("0123456789", 1024).getBytes(Charsets.UTF_8);
-        File localFile = TEMP_FOLDER.newFile();
-        try (
-          OutputStream os = urlConn.getOutputStream();
-          FileOutputStream fos = new FileOutputStream(localFile)
-        ) {
-          for (int i = 0; i < 100; i++) {
-            os.write(fragment);
-            fos.write(fragment);
-          }
-        }
-
-        Assert.assertEquals(200, urlConn.getResponseCode());
-
-        // File written on the remote end should be > 1K and should be the same as the local one
-        File remoteFile = new File(outputDir, "test.txt");
-        Assert.assertTrue(remoteFile.length() > 1024);
-        Assert.assertEquals(Files.hash(localFile, Hashing.md5()), Files.hash(remoteFile, Hashing.md5()));
-      } finally {
-        urlConn.disconnect();
-      }
+      testUpload(outputDir, bindAddress, "");
+      testUpload(outputDir, bindAddress, "-no-tx");
     } finally {
       service.stopAndWait();
+    }
+  }
+
+  private void testUpload(File outputDir, InetSocketAddress bindAddress, String suffix) throws Exception {
+    // Make a PUT call
+    HttpURLConnection urlConn = (HttpURLConnection) new URL(
+      String.format("http://%s:%d/content/upload%s/test%s.txt",
+                    bindAddress.getHostName(), bindAddress.getPort(), suffix, suffix)).openConnection();
+    try {
+      urlConn.setReadTimeout(2000);
+      urlConn.setDoOutput(true);
+      urlConn.setRequestMethod("PUT");
+      // Set to use default chunk size
+      urlConn.setChunkedStreamingMode(-1);
+
+      // Write over 1MB of data
+      // One fragment is 10K of data
+      byte[] fragment = Strings.repeat("0123456789", 1024).getBytes(Charsets.UTF_8);
+      File localFile = TEMP_FOLDER.newFile();
+      try (
+        OutputStream os = urlConn.getOutputStream();
+        FileOutputStream fos = new FileOutputStream(localFile)
+      ) {
+        for (int i = 0; i < 100; i++) {
+          os.write(fragment);
+          fos.write(fragment);
+        }
+      }
+
+      Assert.assertEquals(200, urlConn.getResponseCode());
+
+      // File written on the remote end should be > 1K and should be the same as the local one
+      File remoteFile = new File(outputDir, String.format("test%s.txt", suffix));
+      Assert.assertTrue(remoteFile.length() > 1024);
+      Assert.assertEquals(Files.hash(localFile, Hashing.md5()), Files.hash(remoteFile, Hashing.md5()));
+    } finally {
+      urlConn.disconnect();
     }
   }
 
@@ -614,18 +678,22 @@ public class HttpHandlerGeneratorTest {
 
         @Override
         public void start() throws TransactionFailureException {
+          System.setProperty(IN_TX, "true");
         }
 
         @Override
         public void finish() throws TransactionFailureException {
+          System.clearProperty(IN_TX);
         }
 
         @Override
         public void abort() throws TransactionFailureException {
+          System.clearProperty(IN_TX);
         }
 
         @Override
         public void abort(TransactionFailureException cause) throws TransactionFailureException {
+          System.clearProperty(IN_TX);
         }
       };
     }
@@ -726,6 +794,56 @@ public class HttpHandlerGeneratorTest {
     @Override
     public SecureStoreData getSecureData(String namespace, String name) throws Exception {
       return null;
+    }
+
+    @Override
+    public void execute(TxRunnable runnable) throws TransactionFailureException {
+      execute(30, runnable);
+    }
+
+    @Override
+    public void execute(int timeoutInSeconds, TxRunnable runnable) throws TransactionFailureException {
+      try {
+        // a poor man's way to validate whether a transaction has started
+        System.setProperty(IN_TX, "true");
+        runnable.run(new DatasetContext() {
+          @Override
+          public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
+            throw new UnsupportedOperationException();
+          }
+
+          @Override
+          public <T extends Dataset> T getDataset(String namespace, String name) throws DatasetInstantiationException {
+            throw new UnsupportedOperationException();
+          }
+
+          @Override
+          public <T extends Dataset> T getDataset(String name,
+                                                  Map<String, String> arguments) throws DatasetInstantiationException {
+            throw new UnsupportedOperationException();
+          }
+
+          @Override
+          public <T extends Dataset> T getDataset(String namespace, String name,
+                                                  Map<String, String> arguments) throws DatasetInstantiationException {
+            throw new UnsupportedOperationException();
+          }
+
+          @Override
+          public void releaseDataset(Dataset dataset) {
+            throw new UnsupportedOperationException();
+          }
+
+          @Override
+          public void discardDataset(Dataset dataset) {
+            throw new UnsupportedOperationException();
+          }
+        });
+      } catch (Exception e) {
+        throw new UnsupportedOperationException();
+      } finally {
+        System.clearProperty(IN_TX);
+      }
     }
   }
 }
