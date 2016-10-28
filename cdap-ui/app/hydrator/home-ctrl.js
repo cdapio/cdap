@@ -23,8 +23,14 @@ angular.module(PKG.name + '.feature.hydrator')
     }
     // Needed to inject StatusFactory here for angular to instantiate the service and start polling.
     // check that $state.params.namespace is valid
+
+    //Access local storage for currently set namespace; if none is currently set resort to default ns
+    let ns = localStorage.getItem('NS');
+    let defaultNS = localStorage.getItem('DefaultNamespace');
+    let setNamespace = ns ? ns : defaultNS;
+
     var n = rNsList.filter(function (one) {
-      return one.name === $state.params.namespace;
+      return one.name === setNamespace;
     });
 
     function checkNamespace (ns) {
@@ -33,6 +39,7 @@ angular.module(PKG.name + '.feature.hydrator')
 
     var PREFKEY = 'feature.home.ns.latest';
 
+    //Do we even need to be using mySessionStorage?
     if(!n.length) {
       mySessionStorage.get(PREFKEY)
         .then(function (latest) {
@@ -53,6 +60,7 @@ angular.module(PKG.name + '.feature.hydrator')
     }
     else {
       mySessionStorage.set(PREFKEY, $state.params.namespace);
+      $state.go('hydrator.list', { namespace: setNamespace }, { reload: true});
     }
     myLoadingService.hideLoadingIcon();
   });

@@ -23,8 +23,14 @@ angular.module(PKG.name + '.feature.tracker')
     }
     // Needed to inject StatusFactory here for angular to instantiate the service and start polling.
     // check that $state.params.namespace is valid
+
+    //Access local storage for currently set namespace; if none is currently set resort to default ns
+    let ns = localStorage.getItem('NS');
+    let defaultNS = localStorage.getItem('DefaultNamespace');
+    let setNamespace = ns ? ns : defaultNS;
+
     var n = rNsList.filter(function (one) {
-      return one.name === $state.params.namespace;
+      return one.name === setNamespace;
     });
 
     function checkNamespace (ns) {
@@ -53,6 +59,7 @@ angular.module(PKG.name + '.feature.tracker')
     }
     else {
       mySessionStorage.set(PREFKEY, $state.params.namespace);
+      $state.go('tracker-enable', { namespace: setNamespace }, { reload: true});
     }
     myLoadingService.hideLoadingIcon();
   });
