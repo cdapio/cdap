@@ -339,6 +339,15 @@ if release:
 .. |literal-release| replace:: ``%(release)s``
 """ % {'release': release}
 
+    if release.endswith('SNAPSHOT'):
+        source_link = 'develop'
+    else:
+        source_link = "v%s" % release
+    rst_epilog += """
+.. |source-link| replace:: `GitHub <https://github.com/caskdata/cdap/archive/%(source_link)s.zip>`__
+.. |ui-read-me| replace:: `CDAP UI README <https://github.com/caskdata/cdap/blob/%(source_link)s/cdap-ui/README.rst>`__
+""" % {'source_link': source_link}
+
 if current_year:
     rst_epilog += """
 .. |current_year| replace:: %(current_year)s
