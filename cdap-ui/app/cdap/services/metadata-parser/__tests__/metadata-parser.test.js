@@ -29,7 +29,8 @@ describe('metadata-parser', () => {
         SYSTEM: {
           properties: {
             version: '-SNAPSHOT'
-          }
+          },
+          tags: ['PurchaseHistory']
         }
       }
     };
@@ -39,7 +40,30 @@ describe('metadata-parser', () => {
     expect(parsedMetadata.id).toBe('ApplicationName');
     expect(parsedMetadata.version).toBe('1.0.0-SNAPSHOT');
     expect(parsedMetadata.type).toBe('application');
+    expect(parsedMetadata.isHydrator).toBe(false);
+  });
 
+  it('should detect hydrator pipeline', () => {
+    const applicationMetadata = {
+      entityId: {
+        type: 'application',
+        id: {
+          applicationId: 'ApplicationName'
+        }
+      },
+      metadata: {
+        SYSTEM: {
+          properties: {
+            version: '-SNAPSHOT'
+          },
+          tags: ['cdap-data-pipeline']
+        }
+      }
+    };
+
+    const parsedMetadata = parseMetadata(applicationMetadata);
+
+    expect(parsedMetadata.isHydrator).toBe(true);
   });
 
   it('should parse artifact metadata', () => {

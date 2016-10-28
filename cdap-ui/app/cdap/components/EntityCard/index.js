@@ -24,6 +24,7 @@ import ProgramMetrics from './ProgramMetrics';
 import StreamMetrics from './StreamMetrics';
 import classnames from 'classnames';
 import FastActions from 'components/EntityCard/FastActions';
+import JumpButton from 'components/JumpButton';
 
 require('./EntityCard.less');
 
@@ -49,6 +50,21 @@ export default class EntityCard extends Component {
     }
   }
 
+  renderJumpButton() {
+    const entity = this.props.entity;
+    if (!['datasetinstance', 'stream'].includes(entity.type) && !entity.isHydrator) {
+      return null;
+    }
+
+    return (
+      <div className="jump-button-container text-center pull-right">
+        <JumpButton
+          entity={this.props.entity}
+        />
+      </div>
+    );
+  }
+
   render() {
     const header = (
       <EntityCardHeader
@@ -62,13 +78,16 @@ export default class EntityCard extends Component {
         header={header}
         cardClass={`home-cards ${this.props.entity.type}`}
       >
-        <div className="entity-id-container">
-          <h4
-            className={classnames({'with-version': this.props.entity.version})}
-          >
-            {this.props.entity.id}
-          </h4>
-          <small>{this.props.entity.version}</small>
+        <div className="entity-information clearfix">
+          <div className="entity-id-container">
+            <h4
+              className={classnames({'with-version': this.props.entity.version})}
+            >
+              {this.props.entity.id}
+            </h4>
+            <small>{this.props.entity.version}</small>
+          </div>
+          {this.renderJumpButton()}
         </div>
 
         {this.renderEntityStatus()}
