@@ -153,6 +153,10 @@ public class UpgradeTool {
 
   public UpgradeTool() throws Exception {
     this.cConf = CConfiguration.create();
+    if (this.cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
+      LOG.info("Disabling authorization for {}.", getClass().getSimpleName());
+      this.cConf.setBoolean(Constants.Security.Authorization.ENABLED, false);
+    }
     // Note: login has to happen before any objects that need Kerberos credentials are instantiated.
     SecurityUtil.loginForMasterService(cConf);
 
