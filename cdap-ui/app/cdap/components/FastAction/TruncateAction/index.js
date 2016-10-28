@@ -81,6 +81,7 @@ export default class TruncateAction extends Component {
               headerTitle={T.translate('features.FastAction.truncateTitle', {entityType: this.props.entity.type})}
               toggleModal={this.toggleModal}
               confirmationText={T.translate('features.FastAction.truncateConfirmation', {entityId: this.props.entity.id})}
+              confirmButtonText={T.translate('features.FastAction.truncateConfirmButton')}
               confirmFn={this.action}
               cancelFn={this.toggleModal}
               isOpen={this.state.modal}

@@ -92,6 +92,7 @@ export default class DeleteAction extends Component {
               headerTitle={T.translate('features.FastAction.deleteTitle', {entityType: this.props.entity.type})}
               toggleModal={this.toggleModal}
               confirmationText={T.translate('features.FastAction.deleteConfirmation', {entityId: this.props.entity.id})}
+              confirmButtonText={T.translate('features.FastAction.deleteConfirmButton')}
               confirmFn={this.action}
               cancelFn={this.toggleModal}
               isOpen={this.state.modal}

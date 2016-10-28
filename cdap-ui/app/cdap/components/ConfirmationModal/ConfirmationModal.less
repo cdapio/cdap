@@ -25,13 +25,15 @@
   }
 
   .modal-header {
-    padding: 5px 10px;
+    padding: 0 10px;
     background-color: @header-color;
     border-bottom: 0;
+    height: 40px;
 
     .modal-title {
       font-weight: 500;
       color: white;
+      line-height: 40px;
     }
   }
 
@@ -52,12 +54,14 @@
 
     .confirmation-button-options {
       border-top: 1px solid @button-border-color;
+      height: 40px;
 
       .btn {
         width: 50%;
         background-color: white;
         border-radius: 0;
         border: 0;
+        height: 100%;
 
         &:not(:last-child) {
           border-right: 1px solid @button-border-color;
