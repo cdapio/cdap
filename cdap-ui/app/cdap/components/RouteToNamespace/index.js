@@ -46,23 +46,31 @@ export default class RouteToNamespace extends Component {
     if (!list || list.length === 0) { return; }
 
     /**
-     * 1. Check if localStorage has a 'DefaultNamespace' set by the user, if not,
-     * 2. Check if there is a 'default' namespace from backend, if not,
-     * 3. Take first one from the list of namespaces from backend.
+     * 1. Check if localStorage has an already selected namespace set by the user, if not,
+     * 2. Check if localStorage has a 'DefaultNamespace' set by the user, if not,
+     * 3. Check if there is a 'default' namespace from backend, if not,
+     * 4. Take first one from the list of namespaces from backend.
      **/
 
-    let defaultNamespace = localStorage.getItem('DefaultNamespace');
     let selectedNamespace;
+    let defaultNamespace;
+    let currentSelectedNamespace = localStorage.getItem('NS');
 
-    if(defaultNamespace) {
+    //Check #1
+    if(currentSelectedNamespace){
+      selectedNamespace = {name: currentSelectedNamespace};
+    }
+    //Check #2
+    if(!selectedNamespace){
+      defaultNamespace = localStorage.getItem('DefaultNamespace');
       selectedNamespace = {name: defaultNamespace};
     }
-
-    if (!selectedNamespace) {
+    //Check #3
+    if(!selectedNamespace) {
       selectedNamespace = this.findNamespace(list, 'default');
     }
-
-    if (!selectedNamespace) {
+    //Check #4
+    if(!selectedNamespace){
       selectedNamespace = list[0].name;
     } else {
       selectedNamespace = selectedNamespace.name;

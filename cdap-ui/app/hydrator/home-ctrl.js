@@ -39,7 +39,6 @@ angular.module(PKG.name + '.feature.hydrator')
 
     var PREFKEY = 'feature.home.ns.latest';
 
-    //Do we even need to be using mySessionStorage?
     if(!n.length) {
       mySessionStorage.get(PREFKEY)
         .then(function (latest) {
