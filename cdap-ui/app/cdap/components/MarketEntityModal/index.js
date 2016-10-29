@@ -16,7 +16,7 @@
 
 import React, {PropTypes, Component} from 'react';
 import { Modal, ModalHeader, ModalBody } from 'reactstrap';
-import {MyMarketApi} from '../../api/market';
+import {MyMarketApi} from 'api/market';
 import T from 'i18n-react';
 import AbstractWizard from 'components/AbstractWizard';
 import classnames from 'classnames';
