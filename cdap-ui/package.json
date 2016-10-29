@@ -104,6 +104,7 @@
     "react-helmet": "3.1.0",
     "react-redux": "4.4.5",
     "react-router": "4.0.0-alpha.4",
+    "react-tether": "0.5.2",
     "react-youtube": "7.1.1",
     "reactstrap": "3.2.0",
     "redux": "https://registry.npmjs.org/redux/-/redux-3.5.2.tgz",
