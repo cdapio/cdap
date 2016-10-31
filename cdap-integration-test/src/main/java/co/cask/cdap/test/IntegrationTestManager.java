@@ -39,6 +39,7 @@ import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ProgramResources;
+import co.cask.cdap.explore.jdbc.ExploreConnectionParams;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.test.AppJarHelper;
@@ -52,6 +53,7 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.test.remote.RemoteApplicationManager;
 import co.cask.cdap.test.remote.RemoteArtifactManager;
 import co.cask.cdap.test.remote.RemoteStreamManager;
@@ -78,7 +80,9 @@ import java.lang.reflect.Type;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.sql.Connection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.jar.Manifest;
@@ -416,9 +420,21 @@ public class IntegrationTestManager implements TestManager {
 
   @Override
   public Connection getQueryClient(Id.Namespace namespace) throws Exception {
+
+    Map<String, String> connParams = new HashMap<>();
+    connParams.put(ExploreConnectionParams.Info.NAMESPACE.getName(), namespace.getId());
+    AccessToken accessToken = clientConfig.getAccessToken();
+    if (accessToken != null) {
+      connParams.put(ExploreConnectionParams.Info.EXPLORE_AUTH_TOKEN.getName(), accessToken.getValue());
+    }
+    connParams.put(ExploreConnectionParams.Info.SSL_ENABLED.getName(),
+                   Boolean.toString(clientConfig.getConnectionConfig().isSSLEnabled()));
+    connParams.put(ExploreConnectionParams.Info.VERIFY_SSL_CERT.getName(),
+                   Boolean.toString(clientConfig.isVerifySSLCert()));
+
     ConnectionConfig connConfig = clientConfig.getConnectionConfig();
-    String url = String.format("%s%s:%d?namespace=%s", Constants.Explore.Jdbc.URL_PREFIX, connConfig.getHostname(),
-                               connConfig.getPort(), namespace.getId());
+    String url = String.format("%s%s:%d?%s", Constants.Explore.Jdbc.URL_PREFIX, connConfig.getHostname(),
+                               connConfig.getPort(), Joiner.on("&").withKeyValueSeparator("=").join(connParams));
     return new ExploreDriver().connect(url, new Properties());
   }
 
