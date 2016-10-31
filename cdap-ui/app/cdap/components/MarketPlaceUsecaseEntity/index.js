@@ -17,12 +17,8 @@ import React, {PropTypes, Component} from 'react';
 import {MyMarketApi} from '../../api/market';
 import Card from 'components/Card';
 import moment from 'moment';
-import T from 'i18n-react';
-import classnames from 'classnames';
-import shortid from 'shortid';
 require('./MarketPlaceUsecaseEntity.less');
-import getIcon from 'services/market-action-icon-map';
-import AbstractWizard from 'components/AbstractWizard';
+import MarketActionsContainer from 'components/MarketActionsContainer';
 
 export default class MarketPlaceUsecaseEntity extends Component {
   constructor(props) {
@@ -30,44 +26,13 @@ export default class MarketPlaceUsecaseEntity extends Component {
     this.state = {
       showActions: false,
       loadingActions: false,
-      entityDetail: {},
-      wizard: {
-        actionIndex: null,
-        actionType: null,
-        action: null
-      },
-      completedActions: []
+      entityDetail: {}
     };
   }
-
-  closeWizard(returnResult) {
-    if (returnResult) {
-      this.setState({
-        completedActions: this.state.completedActions.concat([this.state.wizard.actionIndex]),
-        wizard: {
-          actionIndex: null,
-          actionType: null,
-          action: null
-        }
-      });
-      return;
-    }
-    this.setState({
-      wizard: {
-        actionIndex: null,
-        actionType: null
-      }
-    });
-  }
-
-  openWizard(actionIndex, actionType, action) {
-    this.setState({
-      wizard: {
-        actionIndex,
-        actionType,
-        action
-      }
-    });
+  getChildContext() {
+    return {
+      entity: this.props.entity
+    };
   }
 
   getVersion() {
@@ -103,55 +68,6 @@ export default class MarketPlaceUsecaseEntity extends Component {
       console.log('Error', err);
       this.setState({loadingActions: false});
     });
-  }
-
-  getActions() {
-    if (this.state.loadingActions) {
-      return (
-        <div className="market-entity-actions text-center">
-          <h3 className="fa fa-spin fa-refresh"></h3>
-        </div>
-      );
-    }
-
-    return (
-      <div className="market-entity-actions">
-        {
-          this.state.entityDetail.actions.map((action, index) => {
-            let isCompletedAction = this.state.completedActions.indexOf(index) !== -1 ;
-            let actionName = T.translate('features.Market.action-types.' + action.type + '.name');
-            let actionIcon = getIcon(action.type);
-            return (
-              <div
-                className="action-container text-center"
-                key={shortid.generate()}
-                onClick={this.openWizard.bind(this, index, action.type, action)}
-              >
-                <div
-                  className="action"
-                  key={index}
-                >
-                  <div className="step text-center">
-                    <span className={classnames("badge", {'completed' : isCompletedAction})}>{index + 1}</span>
-                  </div>
-                  <div className="action-icon">
-                    <div className={classnames("fa", actionIcon)}></div>
-                  </div>
-                  <div className="action-description">
-                    {action.label}
-                  </div>
-                  <button
-                    className={classnames("btn btn-link", {'btn-completed': isCompletedAction})}
-                  >
-                    { actionName }
-                  </button>
-                </div>
-              </div>
-            );
-          })
-        }
-      </div>
-    );
   }
 
   render() {
@@ -202,21 +118,31 @@ export default class MarketPlaceUsecaseEntity extends Component {
           </div>
           {
             this.state.showActions ?
-              this.getActions()
+              <MarketActionsContainer
+                actions={this.state.entityDetail.actions}
+              />
             :
               null
           }
         </div>
-        <AbstractWizard
-          isOpen={this.state.wizard.actionIndex !== null && this.state.wizard.actionType !== null}
-          onClose={this.closeWizard.bind(this)}
-          wizardType={this.state.wizard.actionType}
-          input={{action: this.state.wizard.action, package: this.props.entity}}
-        />
       </Card>
     );
   }
 }
+
+MarketPlaceUsecaseEntity.childContextTypes = {
+  entity: PropTypes.shape({
+    name: PropTypes.string,
+    version: PropTypes.string,
+    label: PropTypes.string,
+    author: PropTypes.string,
+    description: PropTypes.string,
+    org: PropTypes.string,
+    created: PropTypes.number,
+    cdapVersion: PropTypes.string
+  })
+};
+
 MarketPlaceUsecaseEntity.propTypes = {
   className: PropTypes.string,
   entity: PropTypes.shape({

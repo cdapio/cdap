@@ -18,6 +18,8 @@ import Card from '../Card';
 import {MyMarketApi} from 'api/market';
 import classnames from 'classnames';
 import TetherComponent from 'react-tether';
+import MarketActionsContainer from 'components/MarketActionsContainer';
+import AbstractWizard from 'components/AbstractWizard';
 
 require('./MarketPlaceEntity.less');
 export default class MarketPlaceEntity extends Component {
@@ -25,9 +27,16 @@ export default class MarketPlaceEntity extends Component {
     super(props);
     this.state = {
       expandedMode: false,
-      entityDetail: {}
+      entityDetail: {},
+      performSingleAction: false
     };
   }
+  getChildContext() {
+    return {
+      entity: this.props.entity
+    };
+  }
+
   fetchEntityDetail() {
     MyMarketApi.get({
       packageName: this.props.entity.name,
@@ -52,15 +61,79 @@ export default class MarketPlaceEntity extends Component {
     let verticalPosition = 'top';
     let horizontalPosition = 'left';
     let positionClassName='position-left';
+    let cardWidth;
+    const isEntityDetailAvailable = () => {
+      if (!this.state.entityDetail || !Array.isArray(this.state.entityDetail.actions)) {
+        return false;
+      }
+      return true;
+    };
     if (this.packageCardRef) {
       let cardRects = this.packageCardRef.getBoundingClientRect();
       let parentRects = this.packageCardRef.parentElement.getBoundingClientRect();
-      if (parentRects.right < (cardRects.left + 400)) {
-        verticalPosition = 'top';
+      let activeTab = document.querySelector('.tab-content .tab-pane.active');
+      cardWidth = 400;
+      if (isEntityDetailAvailable() && this.state.entityDetail.actions.length > 1) {
+        cardWidth = Math.max((parentRects.right - cardRects.left) , (cardRects.right - parentRects.left));
+        cardWidth = cardWidth - 20;
+      }
+      let shouldPositionLeft = () => parentRects.right > (cardRects.left + cardWidth);
+      let shouldPositionRight = () => parentRects.left < (cardRects.right - cardWidth);
+      let shouldPositionTop = () => (cardRects.top - activeTab.top) > (activeTab.bottom - cardRects.bottom);
+      if (shouldPositionLeft()) {
+        horizontalPosition = 'left';
+        positionClassName = 'position-left';
+      } else if (shouldPositionRight()){
         horizontalPosition = 'right';
-        positionClassName = 'position-right';
+        positionClassName='position-right';
+      }
+      if (shouldPositionTop()) {
+        verticalPosition = 'bottom';
+      } else {
+        verticalPosition = 'top';
       }
     }
+
+    const getConsolidatedFooter = () => {
+      if (isEntityDetailAvailable()) {
+        if (this.state.entityDetail.actions.length > 1) {
+          return (
+            <div>
+              <MarketActionsContainer
+                actions={this.state.entityDetail.actions}
+              />
+              <div className="text-right">
+                <button className="btn btn-default"
+                  onClick={this.toggleDetailedMode.bind(this)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          );
+        } else if (this.state.entityDetail.actions.length === 1) {
+          return (
+            <div className="text-right">
+              <button
+                className="btn btn-primary"
+                onClick={() => this.setState({performSingleAction: true})}
+              >
+                Submit
+                <AbstractWizard
+                  isOpen={this.state.performSingleAction}
+                  onClose={() => this.setState({performSingleAction: false})}
+                  wizardType={this.state.entityDetail.actions[0].type}
+                  input={{action: this.state.entityDetail.actions[0], package: this.props.entity}}
+                />
+              </button>
+              <button className="btn btn-default" onClick={this.toggleDetailedMode.bind(this)}> Cancel </button>
+            </div>
+          );
+        } else {
+          return null;
+        }
+      }
+    };
 
     return (
 
@@ -69,7 +142,7 @@ export default class MarketPlaceEntity extends Component {
         targetAttachment={`${verticalPosition} ${horizontalPosition}`}
         className={classnames("market-place-package-card expanded", positionClassName)}
         constraints={[{to: 'scrollParent', attachment: 'together'}]}
-        style={{'z-index': 1500, height: 0, margin: 0}}
+        style={{'z-index': 1050, height: 0, margin: 0, width: cardWidth + 'px'}}
       >
         <div
           className="market-place-package-card"
@@ -136,20 +209,29 @@ export default class MarketPlaceEntity extends Component {
                 <p>
                   {this.props.entity.description}
                 </p>
-                <div className="text-right">
-                  <button className="btn btn-primary"> Submit </button>
-                  <button className="btn btn-default" onClick={this.toggleDetailedMode.bind(this)}> Cancel </button>
-                </div>
+                { getConsolidatedFooter() }
               </div>
             </Card>
           :
             null
           }
-
       </TetherComponent>
     );
   }
 }
+
+MarketPlaceEntity.childContextTypes = {
+  entity: PropTypes.shape({
+    name: PropTypes.string,
+    version: PropTypes.string,
+    label: PropTypes.string,
+    author: PropTypes.string,
+    description: PropTypes.string,
+    org: PropTypes.string,
+    created: PropTypes.number,
+    cdapVersion: PropTypes.string
+  })
+};
 
 MarketPlaceEntity.propTypes = {
   className: PropTypes.string,
