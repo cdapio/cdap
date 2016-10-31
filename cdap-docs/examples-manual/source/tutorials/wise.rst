@@ -60,7 +60,7 @@ In the examples and commands that follow, for brevity we will use these conventi
   ``libexec\bin\curl.exe``; use it as a substitute for ``curl`` in examples.
 
 - If you add the SDK bin directory to your path, you can simplify the commands. From within
-  the CDAP-SDK-home directory, enter:
+  the ``<CDAP-SDK-HOME>`` directory, enter:
   
   .. tabbed-parsed-literal::
   
@@ -85,14 +85,14 @@ Building and running WISE v\ |cdap-apps-version| is straightforward. We’ll ass
 already downloaded, installed, and have started an instance of CDAP, as described in the
 :ref:`CDAP Software Development Kit (SDK) <standalone-index>`.
 
-Change to the directory where you have installed the CDAP SDK Standalone, and download the
-WISE source code:
+Change to ``examples`` directory of the directory where you have installed the CDAP SDK
+Standalone, and download the WISE source code:
 
 .. tabbed-parsed-literal::
 
-  $ cd <CDAP-SDK-HOME>
+  $ cd <CDAP-SDK-HOME>/examples
   $ curl -w"\n" -X GET "https://codeload.github.com/caskdata/cdap-apps/zip/release/cdap-|short-version|-compatible" \
-  --output examples/cdap-apps-release-cdap-|short-version|-compatible.zip  
+  --output cdap-apps-release-cdap-|short-version|-compatible.zip  
 
 Unzip the directory and change to the source directory:
 
@@ -100,13 +100,11 @@ Unzip the directory and change to the source directory:
 
   .. Linux
 
-  $ cd examples
   $ unzip cdap-apps-release-cdap-|short-version|-compatible.zip
   $ cd cdap-apps-release-cdap-|short-version|-compatible/Wise
   
   .. Windows
 
-  > cd examples
   > jar xf cdap-apps-release-cdap-|short-version|-compatible.zip
   > cd cdap-apps-release-cdap-|short-version|-compatible\Wise
 
@@ -126,7 +124,7 @@ To deploy and start the application, make sure CDAP is running and then execute:
 
 .. tabbed-parsed-literal::
 
-  $ cd $CDAP-SDK-HOME
+  $ cd <CDAP-SDK-HOME>
   $ cdap cli deploy app examples/cdap-apps-release-cdap-|short-version|-compatible/Wise/target/cdap-wise-|cdap-apps-version|.jar
   $ cdap cli start flow Wise.WiseFlow 
   $ cdap cli start service Wise.WiseService
@@ -305,7 +303,7 @@ We have already prepared a sample of Web server access logs for you to inject in
 
 .. tabbed-parsed-literal::
 
-   $ cd $CDAP-SDK-HOME
+   $ cd <CDAP-SDK-HOME>
    $ cdap cli load stream logEventStream examples/cdap-apps-release-cdap-|short-version|-compatible/Wise/resources/apache.accesslog text/plain
 
    Successfully loaded file to stream 'logEventStream'

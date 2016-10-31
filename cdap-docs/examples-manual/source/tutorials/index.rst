@@ -1,14 +1,14 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 :hide-toc: true
 
 .. _tutorials:
 
-============================================
+=========
 Tutorials
-============================================
+=========
 
 .. toctree::
    :maxdepth: 1
