@@ -16,12 +16,12 @@
 
 import React, {Component} from 'react';
 // import SearchTextBox from '../SearchTextBox';
-import MarketPlaceEntity from '../MarketPlaceEntity';
+import MarketPlaceEntity from 'components/MarketPlaceEntity';
 import T from 'i18n-react';
-import MarketStore from './store/market-store.js';
+import MarketStore from 'components/Market/store/market-store.js';
 import Fuse from 'fuse.js';
 import MarketEntityModal from 'components/MarketEntityModal';
-import {MyMarketApi} from '../../api/market';
+import {MyMarketApi} from 'api/market';
 require('./AllTabContents.less');
 
 export default class AllTabContents extends Component {
@@ -29,7 +29,7 @@ export default class AllTabContents extends Component {
     super(props);
     this.state = {
       searchStr: '',
-      entities: [],
+      entities: this.getFilteredEntities(),
       loading: MarketStore.getState().loading,
       isError: MarketStore.getState().isError,
       activeEntity: null,
@@ -37,7 +37,7 @@ export default class AllTabContents extends Component {
     };
 
     this.unsub = MarketStore.subscribe(() => {
-      this.filterEntities();
+      this.setState({entities: this.getFilteredEntities()});
       const {loading, isError} = MarketStore.getState();
       this.setState({loading, isError});
     });
@@ -45,14 +45,12 @@ export default class AllTabContents extends Component {
 
   componentWillUnmount () {
     this.unsub();
-    MarketStore.dispatch({type: 'RESET'});
   }
 
-  filterEntities() {
+  getFilteredEntities() {
     const {list, filter} = MarketStore.getState();
     if (filter === '*') {
-      this.setState({entities: list});
-      return;
+      return list;
     }
 
     const fuseOptions = {
@@ -67,9 +65,7 @@ export default class AllTabContents extends Component {
     };
 
     let fuse = new Fuse(list, fuseOptions);
-    let search = fuse.search(filter);
-
-    this.setState({entities: search});
+    return fuse.search(filter);
   }
 
   onSearch(changeEvent) {
@@ -104,19 +100,14 @@ export default class AllTabContents extends Component {
     const entities = (
       this.state.entities
         .map((e, index) => (
-          <div
-            className="entity-item-container"
-            onClick={this.handleEntityClick.bind(this, e)}
+          <MarketPlaceEntity
+            name={e.label}
             key={index}
-          >
-            <MarketPlaceEntity
-              name={e.label}
-              subtitle={e.version}
-              icon={this.generateIconPath(e)}
-              size="medium"
-              onClick={this.handleEntityClick.bind(this, e)}
-            />
-          </div>
+            subtitle={e.version}
+            icon={this.generateIconPath(e)}
+            size="medium"
+            onClick={this.handleEntityClick.bind(this, e)}
+          />
         )
       )
     );
