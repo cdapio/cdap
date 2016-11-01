@@ -361,12 +361,33 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Default it returns all.
    */
   @GET
-  @Path("/apps/{app-id}/{program-type}/{program-id}/runs")
+  @Path("/apps/{app-name}/{program-type}/{program-name}/runs")
   public void programHistory(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
-                             @PathParam("app-id") String appId,
+                             @PathParam("app-name") String appName,
                              @PathParam("program-type") String type,
-                             @PathParam("program-id") String programId,
+                             @PathParam("program-name") String programName,
+                             @QueryParam("status") String status,
+                             @QueryParam("start") String startTs,
+                             @QueryParam("end") String endTs,
+                             @QueryParam("limit") @DefaultValue("100") final int resultLimit)
+    throws Exception {
+    programHistory(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, type,
+                   programName, status, startTs, endTs, resultLimit);
+  }
+
+  /**
+   * Returns program runs of an app version based on options it returns either currently running or completed or failed.
+   * Default it returns all.
+   */
+  @GET
+  @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/runs")
+  public void programHistory(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId,
+                             @PathParam("app-name") String appName,
+                             @PathParam("app-version") String appVersion,
+                             @PathParam("program-type") String type,
+                             @PathParam("program-name") String programName,
                              @QueryParam("status") String status,
                              @QueryParam("start") String startTs,
                              @QueryParam("end") String endTs,
@@ -380,7 +401,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     long start = (startTs == null || startTs.isEmpty()) ? 0 : Long.parseLong(startTs);
     long end = (endTs == null || endTs.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(endTs);
 
-    ProgramId program = new ProgramId(namespaceId, appId, programType, programId);
+    ProgramId program = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
     ProgramSpecification specification = lifecycleService.getProgramSpecification(program);
     if (specification == null) {
       throw new NotFoundException(program);
@@ -392,19 +413,34 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns run record for a particular run of a program.
    */
   @GET
-  @Path("/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}")
+  @Path("/apps/{app-name}/{program-type}/{program-name}/runs/{run-id}")
   public void programRunRecord(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
-                             @PathParam("app-id") String appId,
+                             @PathParam("app-name") String appName,
                              @PathParam("program-type") String type,
-                             @PathParam("program-id") String programId,
+                             @PathParam("program-name") String programName,
                              @PathParam("run-id") String runid) throws NotFoundException {
+    programRunRecord(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, type, programName, runid);
+  }
+
+  /**
+   * Returns run record for a particular run of a program of an app version.
+   */
+  @GET
+  @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/runs/{run-id}")
+  public void programRunRecord(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId,
+                               @PathParam("app-name") String appName,
+                               @PathParam("app-version") String appVersion,
+                               @PathParam("program-type") String type,
+                               @PathParam("program-name") String programName,
+                               @PathParam("run-id") String runid) throws NotFoundException {
     ProgramType programType = getProgramType(type);
     if (programType == null || programType == ProgramType.WEBAPP) {
       throw new NotFoundException(String.format("Program run record is not supported for program type '%s'.",
                                                 programType));
     }
-    ProgramId progId = new ProgramId(namespaceId, appId, programType, programId);
+    ProgramId progId = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
     RunRecordMeta runRecordMeta = store.getRun(progId, runid);
     if (runRecordMeta != null) {
       RunRecord runRecord = CONVERT_TO_RUN_RECORD.apply(runRecordMeta);

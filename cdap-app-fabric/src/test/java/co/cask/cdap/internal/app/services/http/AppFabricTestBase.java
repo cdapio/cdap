@@ -414,9 +414,9 @@ public abstract class AppFabricTestBase {
   }
 
   protected HttpResponse deploy(ApplicationId appId, AppRequest<? extends Config> appRequest) throws Exception {
-    String deployPath = getVersionedAPIPath(String.format("apps/%s/versions/%s/create", appId.getApplication(),
-                                                          appId.getVersion()),
-                                            appId.getNamespace());
+      String deployPath = getVersionedAPIPath(String.format("apps/%s/versions/%s/create", appId.getApplication(),
+                                                            appId.getVersion()),
+                                              appId.getNamespace());
     HttpEntityEnclosingRequestBase request = getPost(deployPath);
     return executeDeploy(request, appRequest);
   }
@@ -687,8 +687,8 @@ public abstract class AppFabricTestBase {
       path = String.format("apps/%s/versions/%s/%s/%s/stop", program.getApplication(), program.getVersion(),
                            program.getType().getCategoryName(), program.getProgram());
     } else {
-      path = String.format("apps/%s/%s/%s/runs/%s/stop", program.getApplication(),
-                           program.getType().getCategoryName(), program.getProgram(), runId);
+      // TODO: HTTP endpoint for stopping a program run of an app version not implemented
+      path = null;
     }
     HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespace()));
     Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
