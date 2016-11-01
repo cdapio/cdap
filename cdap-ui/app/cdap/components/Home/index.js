@@ -28,7 +28,6 @@ const classNames = require('classnames');
 require('./Home.less');
 
 const defaultFilter = ['app', 'dataset', 'stream'];
-
 const VIEW_RESULT_LIMIT = 12;
 
 class Home extends Component {
@@ -88,7 +87,8 @@ class Home extends Component {
       animationDirection: 'next'
     };
 
-    this.numberOfPages = 10;
+    //By default, expect a single page -- update when search is performed and we can parse it
+    this.numberOfPages = 1;
     this.updateQueryString = this.updateQueryString.bind(this);
     this.getQueryObject = this.getQueryObject.bind(this);
     this.handlePageChange = this.handlePageChange.bind(this);
@@ -108,6 +108,7 @@ class Home extends Component {
       }
     });
 
+    //Process and return valid query parameters
     let queryObject = this.getQueryObject();
 
     this.setState({
@@ -141,6 +142,11 @@ class Home extends Component {
       sortBy = typeof query.sort === 'string' ? query.sort : '';
       searchTerm = typeof query.q === 'string' ? query.q : '';
       page = isNaN(query.page) ? 1 : Number(query.page);
+
+      //Enforce non-negative / zero page number
+      if(page <= 0){
+        page = 1;
+      }
 
       if(typeof query.filter === 'string'){
         filters = [query.filter];
@@ -227,7 +233,12 @@ class Home extends Component {
           .filter((entity) => entity.id.charAt(0) !== '_');
       })
       .subscribe((res) => {
-        this.setState({query, filter, sortObj, entities: res, selectedEntity: null, loading: false});
+        this.setState({query, filter, sortObj, entities: res, selectedEntity: null, loading: false, entityErr: ''});
+      }, () => {
+        //On Error: render page as if there are no results found
+        this.setState({
+          loading : false
+        });
       });
   }
 
@@ -382,7 +393,6 @@ class Home extends Component {
             </div>
           );
       };
-
     } else {
       entitiesToBeRendered = this.state.entities.map(
         (entity) => {
