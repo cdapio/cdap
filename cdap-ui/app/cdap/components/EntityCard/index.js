@@ -52,7 +52,7 @@ export default class EntityCard extends Component {
 
   renderJumpButton() {
     const entity = this.props.entity;
-    if (!['datasetinstance', 'stream'].includes(entity.type) && !entity.isHydrator) {
+    if (['datasetinstance', 'stream'].indexOf(entity.type) === -1 && !entity.isHydrator) {
       return null;
     }
 
