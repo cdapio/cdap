@@ -14,65 +14,109 @@
  * the License.
  */
 
-import React, {PropTypes} from 'react';
+import React, {PropTypes, Component} from 'react';
 import NamespaceStore from 'services/NamespaceStore';
 import {MyAppApi} from 'api/app';
 import {MyArtifactApi} from 'api/artifact';
 import {MyDatasetApi} from 'api/dataset';
 import {MyStreamApi} from 'api/stream';
 import FastActionButton from '../FastActionButton';
+import ConfirmationModal from 'components/ConfirmationModal';
 import T from 'i18n-react';
 
-export default function DeleteAction({entity, onSuccess}) {
-  let api;
-  let params = {
-    namespace: NamespaceStore.getState().selectedNamespace
-  };
-  switch (entity.type) {
-    case 'application':
-      api = MyAppApi.delete;
-      params.appId = entity.id;
-      break;
-    case 'artifact':
-      api = MyArtifactApi.delete;
-      params.artifactId = entity.id;
-      params.version = entity.version;
-      break;
-    case 'datasetinstance':
-      api = MyDatasetApi.delete;
-      params.datasetId = entity.id;
-      break;
-    case 'stream':
-      api = MyStreamApi.delete;
-      params.streamId = entity.id;
-      break;
+export default class DeleteAction extends Component {
+  constructor(props) {
+    super(props);
+
+    this.action = this.action.bind(this);
+    this.toggleModal = this.toggleModal.bind(this);
+
+    this.state = {
+      modal: false,
+      loading: false,
+      errorMessage: '',
+      extendedMessage: '',
+      disabled: this.props.entity.type === 'artifact' && this.props.entity.scope === 'SYSTEM'
+    };
   }
 
-  function action() {
-    let confirmation = confirm(
-      T.translate('features.FastAction.deleteConfirmation', {entityId: entity.id})
-    );
+  toggleModal() {
+    this.setState({modal: !this.state.modal});
+  }
 
-    if (confirmation) {
-      api(params)
-        .subscribe(onSuccess, (err) => {
-          alert(err);
-        });
+  action() {
+    this.setState({loading: true});
+    let api;
+    let params = {
+      namespace: NamespaceStore.getState().selectedNamespace
+    };
+    switch (this.props.entity.type) {
+      case 'application':
+        api = MyAppApi.delete;
+        params.appId = this.props.entity.id;
+        break;
+      case 'artifact':
+        api = MyArtifactApi.delete;
+        params.artifactId = this.props.entity.id;
+        params.version = this.props.entity.version;
+        break;
+      case 'datasetinstance':
+        api = MyDatasetApi.delete;
+        params.datasetId = this.props.entity.id;
+        break;
+      case 'stream':
+        api = MyStreamApi.delete;
+        params.streamId = this.props.entity.id;
+        break;
     }
+
+    api(params)
+      .subscribe(this.props.onSuccess, (err) => {
+        this.setState({
+          loading: false,
+          errorMessage: T.translate('features.FastAction.deleteFailed', {entityId: this.props.entity.id}),
+          extendedMessage: err
+        });
+      });
   }
 
-  return (
-    <FastActionButton
-      icon="fa fa-trash"
-      action={action}
-    />
-  );
+  render() {
+    const actionLabel = T.translate('features.FastAction.deleteLabel');
+    const headerTitle = `${actionLabel} ${this.props.entity.type}`;
+
+    return (
+      <span>
+        <FastActionButton
+          icon="fa fa-trash"
+          action={this.toggleModal}
+          disabled={this.state.disabled}
+        />
+        {
+          this.state.modal ? (
+            <ConfirmationModal
+              headerTitle={headerTitle}
+              toggleModal={this.toggleModal}
+              confirmationText={T.translate('features.FastAction.deleteConfirmation', {entityId: this.props.entity.id})}
+              confirmButtonText={actionLabel}
+              confirmFn={this.action}
+              cancelFn={this.toggleModal}
+              isOpen={this.state.modal}
+              isLoading={this.state.loading}
+              errorMessage={this.state.errorMessage}
+              extendedMessage={this.state.extendedMessage}
+            />
+          ) : null
+        }
+      </span>
+    );
+  }
 }
 
 DeleteAction.propTypes = {
   entity: PropTypes.shape({
     id: PropTypes.string.isRequired,
     version: PropTypes.string,
+    scope: PropTypes.oneOf(['SYSTEM', 'USER']),
     type: PropTypes.oneOf(['application', 'artifact', 'datasetinstance', 'stream']).isRequired
   }),
   onSuccess: PropTypes.func
