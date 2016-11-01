@@ -120,7 +120,7 @@
     "node": ">= 4.5.0"
   },
   "jest": {
-    "testEnvironment": "node",
+    "testEnvironment": "jsdom",
     "testPathDirs": [
       "./app/cdap/"
     ],

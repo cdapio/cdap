@@ -91,6 +91,11 @@ features:
     truncateLabel: Truncate
     truncateFailed: Failed to truncate {entityId}
 
+  JumpButton:
+    buttonLabel: Jump
+    viewHydrator: View in Hydrator
+    viewTracker: View in Tracker
+
   Management:
     Title: Management
     Top:
