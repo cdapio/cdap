@@ -21,7 +21,7 @@ import T from 'i18n-react';
 import classnames from 'classnames';
 import shortid from 'shortid';
 require('./MarketPlaceUsecaseEntity.less');
-import iconMap from 'services/market-action-icon-map';
+import getIcon from 'services/market-action-icon-map';
 import AbstractWizard from 'components/AbstractWizard';
 
 export default class MarketPlaceUsecaseEntity extends Component {
@@ -120,7 +120,7 @@ export default class MarketPlaceUsecaseEntity extends Component {
           this.state.entityDetail.actions.map((action, index) => {
             let isCompletedAction = this.state.completedActions.indexOf(index) !== -1 ;
             let actionName = T.translate('features.Market.action-types.' + action.type + '.name');
-            let actionIcon = iconMap[action.type];
+            let actionIcon = getIcon(action.type);
             return (
               <div
                 className="action-container text-center"

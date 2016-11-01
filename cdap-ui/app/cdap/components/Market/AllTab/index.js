@@ -29,7 +29,7 @@ export default class AllTabContents extends Component {
     super(props);
     this.state = {
       searchStr: '',
-      entities: this.getFilterdEntities(),
+      entities: this.getFilteredEntities(),
       loading: MarketStore.getState().loading,
       isError: MarketStore.getState().isError,
       activeEntity: null,
@@ -37,7 +37,7 @@ export default class AllTabContents extends Component {
     };
 
     this.unsub = MarketStore.subscribe(() => {
-      this.setState({entities: this.getFilterdEntities()});
+      this.setState({entities: this.getFilteredEntities()});
       const {loading, isError} = MarketStore.getState();
       this.setState({loading, isError});
     });
@@ -47,7 +47,7 @@ export default class AllTabContents extends Component {
     this.unsub();
   }
 
-  getFilterdEntities() {
+  getFilteredEntities() {
     const {list, filter} = MarketStore.getState();
     if (filter === '*') {
       return list;

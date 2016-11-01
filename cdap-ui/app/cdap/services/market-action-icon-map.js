@@ -22,6 +22,12 @@ const iconMap = {
   create_artifact: 'icon-artifacts',
   informational: 'fa-info',
   load_datapack: 'fa-upload',
+  __default__: 'fa-tasks'
 };
 
-export default iconMap;
+const getIcon = (action) => {
+  return (iconMap[action]) ? iconMap[action]: iconMap['__default__'];
+};
+
+export default getIcon;
+export {iconMap};

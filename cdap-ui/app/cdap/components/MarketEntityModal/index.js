@@ -22,7 +22,7 @@ import AbstractWizard from 'components/AbstractWizard';
 import classnames from 'classnames';
 import shortid from 'shortid';
 import moment from 'moment';
-import iconMap from 'services/market-action-icon-map';
+import getIcon from 'services/market-action-icon-map';
 
 require('./MarketEntityModal.less');
 
@@ -91,7 +91,7 @@ export default class MarketEntityModal extends Component {
 
     return this.state.entityDetail.cdapVersion ? versionElem : null;
   }
-  
+
   render() {
     let actions;
     if (this.state.entityDetail.actions) {
@@ -101,7 +101,7 @@ export default class MarketEntityModal extends Component {
             this.state.entityDetail.actions.map((action, index) => {
               let isCompletedAction = this.state.completedActions.indexOf(index) !== -1 ;
               let actionName = T.translate('features.Market.action-types.' + action.type + '.name');
-              let actionIcon = iconMap[action.type];
+              let actionIcon = getIcon(action.type);
               return (
                 <div
                   className="action-container text-center"
