@@ -18,21 +18,16 @@ import React, {Component, PropTypes} from 'react';
 import {MySearchApi} from 'api/search';
 import NamespaceStore from 'services/NamespaceStore';
 import {parseMetadata} from 'services/metadata-parser';
-import T from 'i18n-react';
 import Mousetrap from 'mousetrap';
 import classnames from 'classnames';
 import shortid from 'shortid';
 import Pagination from 'components/Pagination';
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
+import SpotlightModalHeader from './SpotlightModalHeader';
 
 import {
-  Dropdown,
-  DropdownToggle,
-  DropdownMenu,
-  DropdownItem,
   Col,
   Modal,
-  ModalHeader,
   ModalBody,
   Tag
 } from 'reactstrap';
@@ -189,8 +184,6 @@ export default class SpotlightModal extends Component {
       );
     };
 
-    let pageArray = Array.from(Array(this.state.numPages).keys()).map( n => n + 1 );
-
     return (
       <Modal
         isOpen={this.props.isOpen}
@@ -199,56 +192,14 @@ export default class SpotlightModal extends Component {
         size="lg"
         backdrop={true}
       >
-        <ModalHeader>
-          <span className="pull-left">
-            {
-
-              T.translate('features.SpotlightSearch.SpotlightModal.headerSearchResults', {
-                query: this.props.query
-              })
-            }
-          </span>
-          <div
-            className="close-section pull-right"
-          >
-            <span className="search-results-total">
-              {
-                T.translate('features.SpotlightSearch.SpotlightModal.numResults', {
-                  total: this.state.searchResults.total
-                })
-              }
-            </span>
-            <span>
-            <Dropdown
-              isOpen={this.state.isPaginationExpanded}
-              toggle={this.handlePaginationToggle}
-            >
-              <DropdownToggle tag="div">
-                <span>Page: {this.state.currentPage}</span>
-                <span className="fa fa-caret-down pull-right"></span>
-              </DropdownToggle>
-              <DropdownMenu>
-                {
-                  pageArray.map((page, index) => {
-                    return (
-                      <DropdownItem
-                        key={index}
-                        onClick={this.handleSearch.bind(this, page)}
-                      >
-                        {page}
-                      </DropdownItem>
-                    );
-                  })
-                }
-              </DropdownMenu>
-            </Dropdown>
-            </span>
-            <span
-              className="fa fa-times"
-              onClick={this.props.toggle}
-            />
-          </div>
-        </ModalHeader>
+        <SpotlightModalHeader
+          toggle={this.props.toggle}
+          handleSearch={this.handleSearch.bind(this)}
+          currentPage={this.state.currentPage}
+          query={this.props.query}
+          numPages={this.state.numPages}
+          total={this.state.searchResults.total}
+        />
         <ModalBody>
           <div className="search-results-container">
             <Pagination

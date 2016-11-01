@@ -24,6 +24,8 @@ import {
   DropdownItem
 } from 'reactstrap';
 
+require('./SpotlightModal.less');
+
  export default class SpotlightModalHeader extends Component {
    constructor(props){
      super(props);
@@ -35,6 +37,7 @@ import {
    }
 
    toggleExpansion() {
+     console.log('toggle initiated!');
      this.setState({
        isDropdownExpanded : !this.state.isDropdownExpanded
      });
@@ -60,13 +63,13 @@ import {
            <span className="search-results-total">
              {
                T.translate('features.SpotlightSearch.SpotlightModal.numResults', {
-                 total: this.state.searchResults.total
+                 total: this.props.total
                })
              }
            </span>
            <span>
            <Dropdown
-             isOpen={this.state.isPaginationExpanded}
+             isOpen={this.state.isDropdownExpanded}
              toggle={this.toggleExpansion}
            >
              <DropdownToggle tag="div">
@@ -105,5 +108,6 @@ import {
    handleSearch: PropTypes.func,
    currentPage: PropTypes.number,
    query: PropTypes.string,
-   numPages: PropTypes.number
+   numPages: PropTypes.number,
+   total: PropTypes.number
  };
