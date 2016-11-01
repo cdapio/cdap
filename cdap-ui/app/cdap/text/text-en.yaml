@@ -84,10 +84,10 @@ features:
     Title: Dashboard
 
   FastAction:
-    deleteConfirmation: Are you sure you want to delete {entityId}?
+    deleteConfirmation: Are you sure you want to delete *_{entityId}_*?
     deleteLabel: Delete
     deleteFailed: Failed to delete {entityId}
-    truncateConfirmation: Are you sure you want to truncate {entityId}?
+    truncateConfirmation: Are you sure you want to truncate *_{entityId}_*?
     truncateLabel: Truncate
     truncateFailed: Failed to truncate {entityId}
 
