@@ -14,6 +14,8 @@
  * the License.
  */
 
+/* Arrows */
+
  .loading-enter {
    opacity: 0.01;
  }
@@ -62,7 +64,7 @@
 
 /* Animation - Slide in direction of Prev */
 .animation--prev-enter {
-  transform: translate(110%,0);
+  transform: translate(-110%,0);
   transition: transform .4s;
 
   &.animation--prev-enter-active {
@@ -70,21 +72,11 @@
   }
 }
 
-.animation--prev-appear {
-  opacity: 0.01;
-}
-
-.animation--prev-appear.animation--prev-appear-active {
-  opacity: 1;
-  transition: opacity .5s ease-in;
-}
-
 .animation--prev-leave {
   opacity: 1;
 
   &.animation--prev-leave-active {
-    opacity: 0.01;
-    transition: opacity 500ms ease-in;
+    transform: translate(100%, 0);
   }
 }
 
@@ -113,8 +105,7 @@
     z-index: 300;
     padding-left: 15px;
     padding-right: 15px;
-    background-color: #E6E6E6;
-    opacity: 0.3;
+    opacity: 0;
     padding-left: 5px;
     padding-right: 5px;
 

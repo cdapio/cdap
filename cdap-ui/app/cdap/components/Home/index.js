@@ -84,13 +84,15 @@ class Home extends Component {
       entities: [],
       selectedEntity: null,
       loading: true,
-      currentPage: 1
+      currentPage: 1,
+      animationDirection: 'next'
     };
 
     this.numberOfPages = 10;
     this.updateQueryString = this.updateQueryString.bind(this);
     this.getQueryObject = this.getQueryObject.bind(this);
     this.handlePageChange = this.handlePageChange.bind(this);
+    this.setAnimationDirection = this.setAnimationDirection.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -107,13 +109,12 @@ class Home extends Component {
     });
 
     let queryObject = this.getQueryObject();
-    let pageNum = isNaN(queryObject.page) ? 1 : Number(queryObject.page);
 
     this.setState({
       filter: queryObject.filter,
       sortObj: queryObject.sort,
       query: queryObject.query,
-      currentPage: pageNum
+      currentPage: queryObject.page
     });
   }
 
@@ -140,8 +141,6 @@ class Home extends Component {
       sortBy = typeof query.sort === 'string' ? query.sort : '';
       searchTerm = typeof query.q === 'string' ? query.q : '';
       page = isNaN(query.page) ? 1 : Number(query.page);
-
-      console.log('Query object is: ', query);
 
       if(typeof query.filter === 'string'){
         filters = [query.filter];
@@ -201,8 +200,6 @@ class Home extends Component {
     this.setState({loading: true});
 
     let offset = this.state.currentPage === 1 ? 0 : ((this.state.currentPage - 1) * VIEW_RESULT_LIMIT) - 1;
-    console.log('Current page is: ', this.state.currentPage);
-    console.log('searching with offset: ', offset);
 
     if(offset < 0){
       offset = 0;
@@ -216,8 +213,6 @@ class Home extends Component {
       offset: offset,
       sort: sortObj.fullSort
     };
-
-    console.log('Searching with params: ', params);
 
     MySearchApi.search(params)
       .map((res) => {
@@ -252,14 +247,13 @@ class Home extends Component {
     this.search(this.state.query, filters, this.state.sortObj);
   }
 
-  handlePageChange(number) {
-    if(number < 1 || number > this.numberOfPages){
+  handlePageChange(pageNumber) {
+    if(pageNumber < 1 || pageNumber > this.numberOfPages){
       return;
     }
 
-    console.log('Setting current page to: ', number);
     this.setState({
-      currentPage : number
+      currentPage : pageNumber
     });
     this.search();
   }
@@ -323,10 +317,14 @@ class Home extends Component {
       url: location.pathname + queryString
     };
 
-    console.log('current state is: ', this.state);
-
     //Modify URL to match application state
     history.pushState(obj, obj.title, obj.url);
+  }
+
+  setAnimationDirection(direction) {
+    this.setState({
+      animationDirection : direction
+    });
   }
 
   render() {
@@ -350,7 +348,7 @@ class Home extends Component {
     if(this.state.loading){
       entitiesToBeRendered = loading;
 
-      bodyContent = [true].map(() => {
+      bodyContent = () => {
           return (
             <div className="entity-list">
                 <div className="entities-container">
@@ -364,12 +362,12 @@ class Home extends Component {
                 </div>
             </div>
           );
-      });
+      };
 
     } else if(this.state.entities.length === 0) {
       entitiesToBeRendered = empty;
 
-      bodyContent = [true].map(() => {
+      bodyContent = () => {
           return (
             <div className="entity-list">
                 <div className="entities-container">
@@ -383,7 +381,7 @@ class Home extends Component {
                 </div>
             </div>
           );
-      });
+      };
 
     } else {
       entitiesToBeRendered = this.state.entities.map(
@@ -407,12 +405,12 @@ class Home extends Component {
         }
       );
 
-      bodyContent = [true].map(() => {
+      bodyContent = () => {
           return (
             <div className="entity-list">
                 <div className="entities-container">
                   <ReactCSSTransitionGroup
-                    transitionName="animation--next"
+                    transitionName={"animation--" + this.state.animationDirection}
                     transitionEnterTimeout={400}
                     transitionLeaveTimeout={400}
                   >
@@ -421,7 +419,7 @@ class Home extends Component {
                 </div>
             </div>
           );
-      });
+      };
 
     }
 
@@ -438,11 +436,12 @@ class Home extends Component {
           searchText={this.state.query}
           numberOfPages={this.numberOfPages}
           currentPage={this.state.currentPage}
-          changePage={this.handlePageChange}
+          onPageChange={this.handlePageChange}
         />
         <Pagination
           setCurrentPage={this.handlePageChange}
           currentPage={this.state.currentPage}
+          setDirection={this.setAnimationDirection}
         >
           {bodyContent}
         </Pagination>

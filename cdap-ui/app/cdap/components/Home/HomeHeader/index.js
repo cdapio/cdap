@@ -25,16 +25,13 @@ require('./HomeHeader.less');
 export default class HomeHeader extends Component {
   constructor(props) {
     super(props);
-    console.log('props: ', props);
-
-    this.debouncedHandleSearch = debounce(this.handleSearch.bind(this), 500);
-
     this.state = {
       isFilterExpanded: false,
       isSortExpanded: false,
       isPaginationExpanded: false
     };
 
+    this.debouncedHandleSearch = debounce(this.handleSearch.bind(this), 500);
     this.handlePaginationToggle = this.handlePaginationToggle.bind(this);
   }
 
@@ -94,10 +91,10 @@ export default class HomeHeader extends Component {
 
 
     const PaginationDropdown = () => {
-      let number = this.props.numberOfPages;
+      let numberOfPages = this.props.numberOfPages;
       let dropdownItems = [];
 
-      for(let i = 0; i < number; i++){
+      for(let i = 0; i < numberOfPages; i++){
         dropdownItems.push(
           <div className="dropdownItems">
             {i + 1}
@@ -126,7 +123,7 @@ export default class HomeHeader extends Component {
                 return (
                   <DropdownItem
                     key={shortid.generate()}
-                    onClick={this.props.changePage.bind(this, index+1)}
+                    onClick={this.props.onPageChange.bind(this, index+1)}
                   >
                     {item}
                   </DropdownItem>
@@ -236,5 +233,5 @@ HomeHeader.propTypes = {
   searchText: PropTypes.string,
   numberOfPages: PropTypes.number,
   currentPage: PropTypes.number,
-  changePage: PropTypes.func
+  onPageChange: PropTypes.func
 };

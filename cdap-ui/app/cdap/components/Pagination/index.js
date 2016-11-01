@@ -25,31 +25,19 @@ export default class Pagination extends Component {
     super(props);
     this.state = {
       numResults : 0,
-      animationDirection: 'next',
       leftPressed: false,
       rightPressed: false
     };
-    this.handlePageChange = this.handlePageChange.bind(this);
     this.goToNext = this.goToNext.bind(this);
     this.goToPrev = this.goToPrev.bind(this);
   }
 
   componentWillMount(){
-    console.log('Component will mount!');
     Mousetrap.bind('right', this.goToNext);
     Mousetrap.bind('left', this.goToPrev);
   }
 
-  componentDidMount() {
-    console.log('Component did mount!!');
-  }
-
-  handlePageChange(){
-    console.log('handled page change');
-  }
-
   goToPrev() {
-
     //Highlight the side that is pressed
     this.setState({
       leftPressed: true
@@ -60,11 +48,11 @@ export default class Pagination extends Component {
       });
     }, 250);
 
+    this.props.setDirection('prev');
     this.props.setCurrentPage(this.props.currentPage-1);
   }
 
   goToNext(){
-
     //Highlight the side that is pressed
     this.setState({
       rightPressed: true
@@ -75,12 +63,14 @@ export default class Pagination extends Component {
       });
     }, 250);
 
+    this.props.setDirection('next');
     this.props.setCurrentPage(this.props.currentPage+1);
   }
 
   render() {
     let pageChangeRightClass = classNames('change-page-panel', 'change-page-panel-right', {'pressed' : this.state.rightPressed});
     let pageChangeLeftClass = classNames('change-page-panel', 'change-page-panel-left', {'pressed' : this.state.leftPressed});
+
     return (
       <div className="pagination-container">
         <div onClick={this.goToPrev}
@@ -91,7 +81,7 @@ export default class Pagination extends Component {
           </div>
         </div>
         <div id="pagination-content">
-          {this.props.children}
+          {this.props.children()}
         </div>
         <div onClick={this.goToNext}
           className={pageChangeRightClass}
@@ -106,12 +96,9 @@ export default class Pagination extends Component {
 }
 
 Pagination.propTypes = {
-  endpoint: PropTypes.string,
   currentPage: PropTypes.number,
-  children: PropTypes.object,
-  setNumPages: PropTypes.func,
+  children: PropTypes.func,
   setCurrentPage: PropTypes.func,
-  numPerPage: PropTypes.number,
-  setDirection: PropTypes.func,
-  paginationContent: PropTypes.element
+  // numPerPage: PropTypes.number,
+  setDirection: PropTypes.func
 };
