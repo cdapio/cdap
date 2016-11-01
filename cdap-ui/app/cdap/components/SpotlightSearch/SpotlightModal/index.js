@@ -22,7 +22,6 @@ import Mousetrap from 'mousetrap';
 import classnames from 'classnames';
 import shortid from 'shortid';
 import Pagination from 'components/Pagination';
-import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import SpotlightModalHeader from './SpotlightModalHeader';
 
 import {
@@ -45,15 +44,12 @@ export default class SpotlightModal extends Component {
       currentPage: 1,
       numPages: 1,
       focusIndex: 0,
-      isPaginationExpanded: false,
-      animationDirection: 'next'
+      isPaginationExpanded: false
     };
     this.handlePaginationToggle = this.handlePaginationToggle.bind(this);
   }
 
   componentWillMount() {
-    Mousetrap.bind('right', this.handleNext.bind(this));
-    Mousetrap.bind('left', this.handlePrev.bind(this));
     Mousetrap.bind('up', this.handleUpDownArrow.bind(this, 'UP'));
     Mousetrap.bind('down', this.handleUpDownArrow.bind(this, 'DOWN'));
     Mousetrap.bind('enter', this.handleEnter.bind(this));
@@ -62,19 +58,9 @@ export default class SpotlightModal extends Component {
   }
 
   componentWillUnmount() {
-    Mousetrap.unbind('right');
-    Mousetrap.unbind('left');
     Mousetrap.unbind('up');
     Mousetrap.unbind('down');
     Mousetrap.unbind('enter');
-  }
-
-  handleNext() {
-    this.handleSearch(this.state.currentPage + 1);
-  }
-
-  handlePrev() {
-    this.handleSearch(this.state.currentPage - 1);
   }
 
   handleUpDownArrow(direction) {
@@ -172,17 +158,13 @@ export default class SpotlightModal extends Component {
         })
       );
 
-    bodyContent = () => {
-      return (
-        <ReactCSSTransitionGroup
-          transitionName={"animation--" + this.state.animationDirection}
-          transitionEnterTimeout={400}
-          transitionLeaveTimeout={400}
-        >
-          {searchResultsToBeRendered}
-        </ReactCSSTransitionGroup>
-      );
-    };
+      bodyContent = () => {
+        return (
+          <div>
+            {searchResultsToBeRendered}
+          </div>
+        );
+      };
 
     return (
       <Modal

@@ -14,6 +14,52 @@
  * the License.
  */
 
+ /* Animation - Slide in direction of Next */
+ .entity-animation--next-enter {
+   transform: translate(110%,0);
+   transition: transform .4s;
+
+   &.entity-animation--next-enter-active {
+     transform: translate(0,0);
+   }
+ }
+
+ .entity-animation--next-appear {
+   opacity: 0.01;
+ }
+
+ .entity-animation--next-appear.animation--next-appear-active {
+   opacity: 1;
+   transition: opacity .5s ease-in;
+ }
+
+ .entity-animation--next-leave {
+   opacity: 1;
+
+   &.entity-animation--next-leave-active {
+     opacity: 0.01;
+     transition: opacity 500ms ease-in;
+   }
+ }
+
+ /* Animation - Slide in direction of Prev */
+ .entity-animation--prev-enter {
+   transform: translate(-110%,0);
+   transition: transform .4s;
+
+   &.entity-animation--prev-enter-active {
+     transform: translate(0,0);
+   }
+ }
+
+ .entity-animation--prev-leave {
+   opacity: 1;
+
+   &.entity-animation--prev-leave-active {
+     transform: translate(100%, 0);
+   }
+ }
+
 .entity-list {
   text-align: left;
   margin-top: 55px; // height of home header

@@ -37,18 +37,26 @@ export default class Pagination extends Component {
     Mousetrap.bind('left', this.goToPrev);
   }
 
+  componentWillUnmount(){
+    Mousetrap.unbind('left');
+    Mousetrap.unbind('right');
+  }
+
   goToPrev() {
     //Highlight the side that is pressed
     this.setState({
       leftPressed: true
     });
+
     setTimeout(() => {
       this.setState({
         leftPressed: false
       });
     }, 250);
 
-    this.props.setDirection('prev');
+    if(this.props.setDirection){
+      this.props.setDirection('prev');
+    }
     this.props.setCurrentPage(this.props.currentPage-1);
   }
 
@@ -57,19 +65,24 @@ export default class Pagination extends Component {
     this.setState({
       rightPressed: true
     });
+
     setTimeout(() => {
       this.setState({
         rightPressed: false
       });
     }, 250);
 
-    this.props.setDirection('next');
+    if(this.props.setDirection){
+      this.props.setDirection('next');
+    }
     this.props.setCurrentPage(this.props.currentPage+1);
   }
 
   render() {
     let pageChangeRightClass = classNames('change-page-panel', 'change-page-panel-right', {'pressed' : this.state.rightPressed});
     let pageChangeLeftClass = classNames('change-page-panel', 'change-page-panel-left', {'pressed' : this.state.leftPressed});
+    Mousetrap.bind('right', this.goToNext);
+    Mousetrap.bind('left', this.goToPrev);
 
     return (
       <div className="pagination-container">
@@ -99,6 +112,5 @@ Pagination.propTypes = {
   currentPage: PropTypes.number,
   children: PropTypes.func,
   setCurrentPage: PropTypes.func,
-  // numPerPage: PropTypes.number,
   setDirection: PropTypes.func
 };

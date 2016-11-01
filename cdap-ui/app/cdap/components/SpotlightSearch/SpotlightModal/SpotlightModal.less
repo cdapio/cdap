@@ -39,6 +39,15 @@
         display: inline-block;
         margin-right: 26px;
 
+        .current-page {
+          margin-left: 5px;
+        }
+
+        .fa-caret-down {
+          margin-top: 4px;
+          margin-left: 10px;
+        }
+
         .dropdown-menu {
           min-width: 65px;
           outline: 0;
@@ -50,6 +59,7 @@
           color: black;
           background-color: white;
           width: 100%;
+          text-align: left;
           outline: 0;
 
           &:hover {
@@ -75,6 +85,8 @@
 
   .modal-body {
     padding: 0;
+    min-height: 550px;
+    max-height: 550px;
 
     .search-results-item {
       padding: 5px 0;

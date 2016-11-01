@@ -28,7 +28,7 @@ const classNames = require('classnames');
 require('./Home.less');
 
 const defaultFilter = ['app', 'dataset', 'stream'];
-const VIEW_RESULT_LIMIT = 12;
+const PAGE_SIZE = 12;
 
 class Home extends Component {
   constructor(props) {
@@ -82,13 +82,13 @@ class Home extends Component {
       query: '',
       entities: [],
       selectedEntity: null,
+      numPages: 1,
       loading: true,
       currentPage: 1,
       animationDirection: 'next'
     };
 
     //By default, expect a single page -- update when search is performed and we can parse it
-    this.numberOfPages = 1;
     this.updateQueryString = this.updateQueryString.bind(this);
     this.getQueryObject = this.getQueryObject.bind(this);
     this.handlePageChange = this.handlePageChange.bind(this);
@@ -132,7 +132,7 @@ class Home extends Component {
     let sortOption = '';
     let query = this.props.location.query;
     let filters = '';
-    let page = '';
+    let page = this.state.currentPage;
     let verifiedFilters = null;
     let invalidFilter = false;
 
@@ -141,9 +141,8 @@ class Home extends Component {
       orderBy = typeof query.order === 'string' ? query.order : '';
       sortBy = typeof query.sort === 'string' ? query.sort : '';
       searchTerm = typeof query.q === 'string' ? query.q : '';
-      page = isNaN(query.page) ? 1 : Number(query.page);
+      page = isNaN(query.page) ? this.state.currentPage : Number(query.page);
 
-      //Enforce non-negative / zero page number
       if(page <= 0){
         page = 1;
       }
@@ -205,25 +204,26 @@ class Home extends Component {
 
     this.setState({loading: true});
 
-    let offset = this.state.currentPage === 1 ? 0 : ((this.state.currentPage - 1) * VIEW_RESULT_LIMIT) - 1;
-
-    if(offset < 0){
-      offset = 0;
+    if(this.state.currentPage === 0){
+      this.setState({loading: false});
+      return;
     }
+
+    let offset = (this.state.currentPage - 1) * PAGE_SIZE;
 
     let params = {
       namespace: namespace,
       query: `${query}*`,
       target: filter,
-      size: VIEW_RESULT_LIMIT,
+      size: PAGE_SIZE,
       offset: offset,
       sort: sortObj.fullSort
     };
 
+    let total;
     MySearchApi.search(params)
       .map((res) => {
-        this.numberOfPages = Math.ceil(res.total / VIEW_RESULT_LIMIT);
-        this.currentPage = res.offset + 1;
+        total = res.total;
         return res.results
           .map(parseMetadata)
           .map((entity) => {
@@ -233,11 +233,21 @@ class Home extends Component {
           .filter((entity) => entity.id.charAt(0) !== '_');
       })
       .subscribe((res) => {
-        this.setState({query, filter, sortObj, entities: res, selectedEntity: null, loading: false, entityErr: ''});
+        this.setState({
+          query,
+          filter,
+          sortObj,
+          entities: res,
+          selectedEntity: null,
+          loading: false,
+          entityErr: false,
+          numPages: Math.ceil(total / PAGE_SIZE)
+        });
       }, () => {
         //On Error: render page as if there are no results found
         this.setState({
-          loading : false
+          loading : false,
+          entityErr : true
         });
       });
   }
@@ -259,14 +269,16 @@ class Home extends Component {
   }
 
   handlePageChange(pageNumber) {
-    if(pageNumber < 1 || pageNumber > this.numberOfPages){
+    if(pageNumber < 1 || pageNumber > this.state.numPages){
       return;
     }
 
+    let direction = pageNumber >= this.state.currentPage ? 'next' : 'prev';
+
     this.setState({
-      currentPage : pageNumber
-    });
-    this.search();
+      currentPage : pageNumber,
+      animationDirection : direction
+    }, () => this.search());
   }
 
   handleSortClick(option) {
@@ -364,7 +376,7 @@ class Home extends Component {
             <div className="entity-list">
                 <div className="entities-container">
                   <ReactCSSTransitionGroup
-                    transitionName="loading-animation"
+                    transitionName=""
                     transitionEnterTimeout={200}
                     transitionLeaveTimeout={200}
                   >
@@ -375,21 +387,15 @@ class Home extends Component {
           );
       };
 
-    } else if(this.state.entities.length === 0) {
+    } else if(this.state.entities.length === 0 || this.state.entityErr) {
       entitiesToBeRendered = empty;
 
       bodyContent = () => {
           return (
             <div className="entity-list">
-                <div className="entities-container">
-                  <ReactCSSTransitionGroup
-                    transitionName="empty-animation"
-                    transitionEnterTimeout={400}
-                    transitionLeaveTimeout={400}
-                  >
-                    {entitiesToBeRendered}
-                  </ReactCSSTransitionGroup>
-                </div>
+              <div className="entities-container">
+                {entitiesToBeRendered}
+              </div>
             </div>
           );
       };
@@ -420,7 +426,7 @@ class Home extends Component {
             <div className="entity-list">
                 <div className="entities-container">
                   <ReactCSSTransitionGroup
-                    transitionName={"animation--" + this.state.animationDirection}
+                    transitionName={"entity-animation--" + this.state.animationDirection}
                     transitionEnterTimeout={400}
                     transitionLeaveTimeout={400}
                   >
@@ -444,7 +450,7 @@ class Home extends Component {
           onSortClick={this.handleSortClick.bind(this)}
           onSearch={this.handleSearch.bind(this)}
           searchText={this.state.query}
-          numberOfPages={this.numberOfPages}
+          numberOfPages={this.state.numPages}
           currentPage={this.state.currentPage}
           onPageChange={this.handlePageChange}
         />

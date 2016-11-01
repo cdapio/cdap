@@ -14,79 +14,10 @@
  * the License.
  */
 
-/* Arrows */
-
- .loading-enter {
-   opacity: 0.01;
- }
-
- .loading-enter.loading-enter-active {
-   opacity: 1;
-   transition: opacity 200ms ease-in;
- }
-
- .loading-leave {
-   opacity: 1;
- }
-
- .loading-leave.loading-leave-active {
-   opacity: 0.01;
-   transition: opacity 200ms ease-in;
- }
-
-/* Animation - Slide in direction of Prev */
-.animation--next-enter {
-  transform: translate(110%,0);
-  transition: transform .4s;
-
-  &.animation--next-enter-active {
-    transform: translate(0,0);
-  }
-}
-
-.animation--next-appear {
-  opacity: 0.01;
-}
-
-.animation--next-appear.animation--next-appear-active {
-  opacity: 1;
-  transition: opacity .5s ease-in;
-}
-
-.animation--next-leave {
-  opacity: 1;
-
-  &.animation--next-leave-active {
-    opacity: 0.01;
-    transition: opacity 500ms ease-in;
-  }
-}
-
-/* Animation - Slide in direction of Prev */
-.animation--prev-enter {
-  transform: translate(-110%,0);
-  transition: transform .4s;
-
-  &.animation--prev-enter-active {
-    transform: translate(0,0);
-  }
-}
-
-.animation--prev-leave {
-  opacity: 1;
-
-  &.animation--prev-leave-active {
-    transform: translate(100%, 0);
-  }
-}
-
 .pagination-container {
-
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-left: 15px;
-  margin-right: 15px;
   overflow-x: hidden;
 
   .pagination-content {

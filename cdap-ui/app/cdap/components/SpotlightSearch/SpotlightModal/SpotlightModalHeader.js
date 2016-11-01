@@ -16,12 +16,9 @@
 
 import React, {Component, PropTypes} from 'react';
 import T from 'i18n-react';
+import PaginationDropdown from 'components/Pagination/PaginationDropdown';
 import {
-  ModalHeader,
-  Dropdown,
-  DropdownToggle,
-  DropdownMenu,
-  DropdownItem
+  ModalHeader
 } from 'reactstrap';
 
 require('./SpotlightModal.less');
@@ -32,20 +29,16 @@ require('./SpotlightModal.less');
      this.state = {
        isDropdownExpanded : false
      };
-
      this.toggleExpansion = this.toggleExpansion.bind(this);
    }
 
    toggleExpansion() {
-     console.log('toggle initiated!');
      this.setState({
        isDropdownExpanded : !this.state.isDropdownExpanded
      });
    }
 
    render() {
-
-     let pageArray = Array.from(Array(this.props.numPages).keys()).map( n => n + 1 );
 
      return(
        <ModalHeader>
@@ -68,29 +61,11 @@ require('./SpotlightModal.less');
              }
            </span>
            <span>
-           <Dropdown
-             isOpen={this.state.isDropdownExpanded}
-             toggle={this.toggleExpansion}
-           >
-             <DropdownToggle tag="div">
-               <span>Page: {this.props.currentPage}</span>
-               <span className="fa fa-caret-down pull-right"></span>
-             </DropdownToggle>
-             <DropdownMenu>
-               {
-                 pageArray.map((page, index) => {
-                   return (
-                     <DropdownItem
-                       key={index}
-                       onClick={this.props.handleSearch.bind(this, page)}
-                     >
-                       {page}
-                     </DropdownItem>
-                   );
-                 })
-               }
-             </DropdownMenu>
-           </Dropdown>
+           <PaginationDropdown
+            numberOfPages={this.props.numPages}
+            currentPage={this.props.currentPage}
+            onPageChange={this.props.handleSearch.bind(this)}
+           />
            </span>
            <span
              className="fa fa-times"
