@@ -22,6 +22,7 @@ import co.cask.cdap.api.TxRunnable
 import co.cask.cdap.api.data.batch.Split
 import co.cask.cdap.api.data.format.FormatSpecification
 import co.cask.cdap.api.flow.flowlet.StreamEvent
+import co.cask.cdap.api.preview.DataTracer
 import co.cask.cdap.api.spark.SparkExecutionContext
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -116,4 +117,6 @@ class SerializableSparkExecutionContext(val delegate: SparkExecutionContext) ext
   override def writeExternal(out: ObjectOutput) = {
     // no-op
   }
+
+  override def getDataTracer(loggerName: String): DataTracer = delegate.getDataTracer(loggerName)
 }

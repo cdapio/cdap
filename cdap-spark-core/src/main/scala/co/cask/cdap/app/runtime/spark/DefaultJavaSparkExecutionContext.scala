@@ -25,6 +25,7 @@ import co.cask.cdap.api.data.format.FormatSpecification
 import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
+import co.cask.cdap.api.preview.DataTracer
 import co.cask.cdap.api.security.store.{SecureStore, SecureStoreData}
 import co.cask.cdap.api.spark.{JavaSparkExecutionContext, SparkExecutionContext, SparkSpecification}
 import co.cask.cdap.api.stream.{GenericStreamEventData, StreamEventDecoder}
@@ -189,6 +190,8 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
     implicit val vTag: ClassTag[V] = createClassTag
     sec.saveAsDataset(JavaPairRDD.toRDD(rdd), namespace, datasetName, arguments.toMap)
   }
+
+  override def getDataTracer(loggerName: String): DataTracer = sec.getDataTracer(loggerName)
 
   @throws[IOException]
   override def listSecureData(namespace: String): util.Map[String, String] = {
