@@ -443,7 +443,7 @@ logical start time of the job (the same as the scheduled time of the containing 
 
 Writing to the *bounceCountStore* dataset from the MapReduce 
 ------------------------------------------------------------
-In the ``BounceCountsMapReduce.configure()`` method seen earlier, the ``setOutputDataset``
+In the ``BounceCountsMapReduce.initialize()`` method seen earlier, the ``context.addOutput()``
 method sets the ``bounceCountsStore`` dataset as the output of the job.
 It means that the key/value pairs output by the reducer of the MapReduce will be directly
 written to that dataset.
