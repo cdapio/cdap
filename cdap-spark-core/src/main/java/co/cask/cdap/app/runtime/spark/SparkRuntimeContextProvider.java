@@ -20,6 +20,7 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.app.guice.DistributedProgramRunnableModule;
+import co.cask.cdap.app.preview.DebugLoggerFactory;
 import co.cask.cdap.app.program.DefaultProgram;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
@@ -190,7 +191,9 @@ public final class SparkRuntimeContextProvider {
         injector.getInstance(SecureStore.class),
         injector.getInstance(SecureStoreManager.class),
         injector.getInstance(AuthorizationEnforcer.class),
-        injector.getInstance(AuthenticationContext.class)
+        injector.getInstance(AuthenticationContext.class),
+        contextConfig.getPreviewId(),
+        injector.getInstance(DebugLoggerFactory.class)
       );
       LoggingContextAccessor.setLoggingContext(sparkRuntimeContext.getLoggingContext());
       return sparkRuntimeContext;

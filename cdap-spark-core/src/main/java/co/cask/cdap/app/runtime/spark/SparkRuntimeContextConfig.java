@@ -24,6 +24,7 @@ import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import co.cask.cdap.proto.id.PreviewId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -56,6 +57,7 @@ public class SparkRuntimeContextConfig {
   private static final String HCONF_ATTR_PROGRAM_OPTIONS = "cdap.spark.program.options";
   private static final String HCONF_ATTR_WORKFLOW_INFO = "cdap.spark.program.workflow.info";
   private static final String HCONF_ATTR_LOCAL_RESOURCES = "cdap.spark.local.resources";
+  private static final String HCONF_ATTR_PREVIEW_ID = "cdap.spark.preview.id";
 
   private final Configuration hConf;
 
@@ -98,6 +100,7 @@ public class SparkRuntimeContextConfig {
     setWorkflowProgramInfo(context.getWorkflowInfo());
     setLocalizedResourceNames(localizeResourceNames);
     setPluginArchive(pluginArchive);
+    setPreviewId(context.getPreviewId());
 
     return this;
   }
@@ -150,6 +153,12 @@ public class SparkRuntimeContextConfig {
     return hConf.get(Constants.Plugin.ARCHIVE);
   }
 
+  @Nullable
+  public PreviewId getPreviewId() {
+    String previewIdJson = hConf.get(HCONF_ATTR_PREVIEW_ID);
+    return previewIdJson == null ? null : GSON.fromJson(previewIdJson, PreviewId.class);
+  }
+
   /**
    * Serialize the {@link ApplicationSpecification} to the configuration.
    */
@@ -193,6 +202,12 @@ public class SparkRuntimeContextConfig {
   private void setPluginArchive(@Nullable File pluginArchive) {
     if (pluginArchive != null) {
       hConf.set(Constants.Plugin.ARCHIVE, pluginArchive.getName());
+    }
+  }
+
+  private void setPreviewId(@Nullable PreviewId previewId) {
+    if (previewId != null) {
+      hConf.set(HCONF_ATTR_PREVIEW_ID, GSON.toJson(previewId));
     }
   }
 }

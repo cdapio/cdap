@@ -34,6 +34,7 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.api.preview.DebugLogger;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.workflow.WorkflowInfo;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -301,6 +302,11 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   @Override
   public Admin getAdmin() {
     return delegate.getAdmin();
+  }
+
+  @Override
+  public DebugLogger getLogger(String loggerName) {
+    return delegate.getLogger(loggerName);
   }
 
   @Override

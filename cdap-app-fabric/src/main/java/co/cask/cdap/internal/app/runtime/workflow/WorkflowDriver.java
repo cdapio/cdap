@@ -43,6 +43,7 @@ import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.api.workflow.WorkflowNodeType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.app.preview.DebugLoggerFactory;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
@@ -55,6 +56,7 @@ import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.customaction.BasicCustomActionContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowActionConfigurer;
@@ -64,6 +66,7 @@ import co.cask.cdap.logging.context.WorkflowLoggingContext;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.PreviewId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Preconditions;
@@ -75,6 +78,7 @@ import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.gson.Gson;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
@@ -135,6 +139,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final PluginInstantiator pluginInstantiator;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
+  private final PreviewId previewId;
+  private final DebugLoggerFactory debugLoggerFactory;
 
   private NettyHttpService httpService;
   private volatile Thread runningThread;
@@ -147,7 +153,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                  DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                  TransactionSystemClient txClient, RuntimeStore runtimeStore, CConfiguration cConf,
                  @Nullable PluginInstantiator pluginInstantiator, SecureStore secureStore,
-                 SecureStoreManager secureStoreManager) {
+                 SecureStoreManager secureStoreManager, DebugLoggerFactory debugLoggerFactory) {
     this.program = program;
     this.programOptions = options;
     this.hostname = hostname;
@@ -162,11 +168,15 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                                          program, options);
 
     this.basicWorkflowToken = new BasicWorkflowToken(cConf.getInt(Constants.AppFabric.WORKFLOW_TOKEN_MAX_SIZE_MB));
+    String previewIdJson = options.getArguments().getOption(ProgramOptionConstants.PREVIEW_ID);
+    this.previewId = previewIdJson == null ? null : new Gson().fromJson(previewIdJson, PreviewId.class);
+    this.debugLoggerFactory = debugLoggerFactory;
     this.basicWorkflowContext = new BasicWorkflowContext(workflowSpec, null, null,
                                                          basicWorkflowToken, program, programOptions,
                                                          metricsCollectionService, datasetFramework, txClient,
                                                          discoveryServiceClient, nodeStates, pluginInstantiator,
-                                                         secureStore, secureStoreManager);
+                                                         secureStore, secureStoreManager,
+                                                         previewId, debugLoggerFactory);
 
     this.workflowRunId = program.getId().run(basicWorkflowContext.getRunId());
     this.loggingContext = new WorkflowLoggingContext(program.getNamespaceId(), program.getApplicationId(),
@@ -436,7 +446,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                                       metricsCollectionService, datasetFramework,
                                                                       txClient, discoveryServiceClient,
                                                                       pluginInstantiator, secureStore,
-                                                                      secureStoreManager);
+                                                                      secureStoreManager, previewId,
+                                                                      debugLoggerFactory);
       customActionExecutor = new CustomActionExecutor(workflowRunId, context, instantiator, classLoader);
     }
 
@@ -494,7 +505,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     WorkflowContext context = new BasicWorkflowContext(workflowSpec, null, null, token, program, programOptions,
                                                        metricsCollectionService, datasetFramework, txClient,
                                                        discoveryServiceClient, nodeStates, pluginInstantiator,
-                                                       secureStore, secureStoreManager);
+                                                       secureStore, secureStoreManager, previewId, debugLoggerFactory);
     Iterator<WorkflowNode> iterator;
     if (predicate.apply(context)) {
       // execute the if branch
@@ -606,7 +617,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     return new BasicWorkflowContext(workflowSpec, actionSpec, runner, token,
                                     program, programOptions, metricsCollectionService,
                                     datasetFramework, txClient, discoveryServiceClient, nodeStates,
-                                    pluginInstantiator, secureStore, secureStoreManager);
+                                    pluginInstantiator, secureStore, secureStoreManager, previewId, debugLoggerFactory);
   }
 
   private Supplier<List<WorkflowActionNode>> createStatusSupplier() {

@@ -29,8 +29,10 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.preview.DebugLogger;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
+import co.cask.cdap.app.preview.DebugLoggerFactory;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.Constants;
@@ -38,6 +40,7 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.preview.DefaultDebugLogger;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetInputFormatProvider;
@@ -54,6 +57,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.PreviewId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.mapreduce.Job;
@@ -103,10 +107,12 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
                         @Nullable File pluginArchive,
                         @Nullable PluginInstantiator pluginInstantiator,
                         SecureStore secureStore,
-                        SecureStoreManager secureStoreManager) {
+                        SecureStoreManager secureStoreManager,
+                        @Nullable PreviewId previewId,
+                        DebugLoggerFactory debugLoggerFactory) {
     super(program, programOptions, spec.getDataSets(), dsFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, createMetricsTags(workflowProgramInfo), secureStore, secureStoreManager,
-          pluginInstantiator);
+          pluginInstantiator, previewId, debugLoggerFactory);
 
     this.workflowProgramInfo = workflowProgramInfo;
     this.loggingContext = createLoggingContext(program.getId(), getRunId(), workflowProgramInfo);

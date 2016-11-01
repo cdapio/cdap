@@ -21,6 +21,7 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.app.preview.DebugLoggerFactory;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.Constants;
@@ -34,6 +35,7 @@ import co.cask.cdap.logging.context.SparkLoggingContext;
 import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.PreviewId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
@@ -74,10 +76,11 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
                       SecureStore secureStore,
                       SecureStoreManager secureStoreManager,
                       AuthorizationEnforcer authorizationEnforcer,
-                      AuthenticationContext authenticationContext) {
+                      AuthenticationContext authenticationContext,
+                      PreviewId previewId, DebugLoggerFactory debugLoggerFactory) {
     super(program, programOptions, getSparkSpecification(program).getDatasets(), datasetFramework, txClient,
           discoveryServiceClient, true, metricsCollectionService, createMetricsTags(workflowProgramInfo),
-          secureStore, secureStoreManager, pluginInstantiator);
+          secureStore, secureStoreManager, pluginInstantiator, previewId, debugLoggerFactory);
 
     this.hConf = hConf;
     this.txClient = txClient;

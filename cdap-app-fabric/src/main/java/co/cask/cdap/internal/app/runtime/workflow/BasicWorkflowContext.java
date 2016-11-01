@@ -25,6 +25,7 @@ import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.app.preview.DebugLoggerFactory;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.Constants;
@@ -32,6 +33,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.proto.id.PreviewId;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -60,12 +62,13 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
                        DatasetFramework datasetFramework, TransactionSystemClient txClient,
                        DiscoveryServiceClient discoveryServiceClient, Map<String, WorkflowNodeState> nodeStates,
                        @Nullable PluginInstantiator pluginInstantiator,
-                       SecureStore secureStore, SecureStoreManager secureStoreManager) {
+                       SecureStore secureStore, SecureStoreManager secureStoreManager,
+                       PreviewId previewId, DebugLoggerFactory debugLoggerFactory) {
     super(program, programOptions, (spec == null) ? new HashSet<String>() : spec.getDatasets(),
           datasetFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, Collections.singletonMap(Constants.Metrics.Tag.WORKFLOW_RUN_ID,
                                                              ProgramRunners.getRunId(programOptions).getId()),
-          secureStore, secureStoreManager, pluginInstantiator);
+          secureStore, secureStoreManager, pluginInstantiator, previewId, debugLoggerFactory);
     this.workflowSpec = workflowSpec;
     this.specification = spec;
     this.programWorkflowRunner = programWorkflowRunner;

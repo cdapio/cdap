@@ -30,10 +30,12 @@ import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.api.preview.DebugLogger;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
+import co.cask.cdap.app.preview.DebugLoggerFactory;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.services.AbstractServiceDiscoverer;
@@ -48,8 +50,10 @@ import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.PreviewId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.Maps;
+import com.sun.org.apache.xml.internal.resolver.helpers.Debug;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -79,6 +83,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final Admin admin;
   private final long logicalStartTime;
   private final SecureStore secureStore;
+  private final PreviewId previewId;
+  private final DebugLoggerFactory debugLoggerFactory;
   protected final DynamicDatasetCache datasetCache;
 
   /**
@@ -88,9 +94,11 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             Set<String> datasets, DatasetFramework dsFramework, TransactionSystemClient txClient,
                             DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded,
                             @Nullable MetricsCollectionService metricsService, Map<String, String> metricsTags,
-                            SecureStore secureStore, SecureStoreManager secureStoreManager) {
+                            SecureStore secureStore, SecureStoreManager secureStoreManager,
+                            @Nullable PreviewId previewId, DebugLoggerFactory debugLoggerFactory) {
     this(program, programOptions, datasets, dsFramework, txClient,
-         discoveryServiceClient, multiThreaded, metricsService, metricsTags, secureStore, secureStoreManager, null);
+         discoveryServiceClient, multiThreaded, metricsService, metricsTags, secureStore, secureStoreManager, null,
+         previewId, debugLoggerFactory);
   }
 
   /**
@@ -101,7 +109,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded,
                             @Nullable MetricsCollectionService metricsService, Map<String, String> metricsTags,
                             SecureStore secureStore, SecureStoreManager secureStoreManager,
-                            @Nullable PluginInstantiator pluginInstantiator) {
+                            @Nullable PluginInstantiator pluginInstantiator, @Nullable PreviewId previewId,
+                            DebugLoggerFactory debugLoggerFactory) {
     super(program.getId());
 
     this.program = program;
@@ -132,6 +141,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                                                   program.getApplicationSpecification().getPlugins());
     this.admin = new DefaultAdmin(dsFramework, new NamespaceId(program.getId().getNamespace()), secureStoreManager);
     this.secureStore = secureStore;
+    this.previewId = previewId;
+    this.debugLoggerFactory = debugLoggerFactory;
   }
 
   private Iterable<? extends Id> createOwners(ProgramId programId) {
@@ -338,4 +349,13 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     return secureStore.getSecureData(namespace, name);
   }
 
+  @Override
+  public DebugLogger getLogger(String loggerName) {
+    return debugLoggerFactory.getLogger(loggerName, previewId);
+  }
+
+  @Nullable
+  public PreviewId getPreviewId() {
+    return previewId;
+  }
 }

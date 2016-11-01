@@ -33,6 +33,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.internal.app.preview.NoopDebugLogger;
+import co.cask.cdap.internal.app.preview.NoopDebugLoggerFactory;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.logging.context.WorkerLoggingContext;
@@ -75,7 +77,7 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
     super(program, programOptions, spec.getDatasets(),
           datasetFramework, transactionSystemClient, discoveryServiceClient, true,
           metricsCollectionService, ImmutableMap.of(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId)),
-          secureStore, secureStoreManager, pluginInstantiator);
+          secureStore, secureStoreManager, pluginInstantiator, null, new NoopDebugLoggerFactory());
 
     this.specification = spec;
     this.instanceId = instanceId;

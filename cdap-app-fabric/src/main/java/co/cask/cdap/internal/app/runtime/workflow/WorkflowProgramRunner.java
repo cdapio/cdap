@@ -22,6 +22,7 @@ import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.app.preview.DebugLoggerFactory;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -63,6 +64,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final CConfiguration cConf;
+  private final DebugLoggerFactory debugLoggerFactory;
 
   @Inject
   public WorkflowProgramRunner(ProgramRunnerFactory programRunnerFactory, ServiceAnnouncer serviceAnnouncer,
@@ -70,7 +72,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
                                MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                                DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
                                RuntimeStore runtimeStore, CConfiguration cConf, SecureStore secureStore,
-                               SecureStoreManager secureStoreManager) {
+                               SecureStoreManager secureStoreManager, DebugLoggerFactory debugLoggerFactory) {
     super(cConf);
     this.programRunnerFactory = programRunnerFactory;
     this.serviceAnnouncer = serviceAnnouncer;
@@ -83,6 +85,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.cConf = cConf;
+    this.debugLoggerFactory = debugLoggerFactory;
   }
 
   @Override
@@ -111,7 +114,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
     WorkflowDriver driver = new WorkflowDriver(program, options, hostname, workflowSpec, programRunnerFactory,
                                                metricsCollectionService, datasetFramework, discoveryServiceClient,
                                                txClient, runtimeStore, cConf, pluginInstantiator,
-                                               secureStore, secureStoreManager);
+                                               secureStore, secureStoreManager, debugLoggerFactory);
     // Controller needs to be created before starting the driver so that the state change of the driver
     // service can be fully captured by the controller.
     ProgramController controller = new WorkflowProgramController(program, driver, serviceAnnouncer, runId);

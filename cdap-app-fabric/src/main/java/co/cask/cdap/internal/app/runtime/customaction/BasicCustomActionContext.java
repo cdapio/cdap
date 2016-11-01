@@ -24,6 +24,7 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.app.preview.DebugLoggerFactory;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -31,6 +32,7 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import co.cask.cdap.proto.id.PreviewId;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -55,12 +57,13 @@ public class BasicCustomActionContext extends AbstractContext implements CustomA
                                   DatasetFramework datasetFramework, TransactionSystemClient txClient,
                                   DiscoveryServiceClient discoveryServiceClient,
                                   @Nullable PluginInstantiator pluginInstantiator,
-                                  SecureStore secureStore, SecureStoreManager secureStoreManager) {
+                                  SecureStore secureStore, SecureStoreManager secureStoreManager,
+                                  PreviewId previewId, DebugLoggerFactory debugLoggerFactory) {
 
     super(workflow, programOptions, customActionSpecification.getDatasets(),
           datasetFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, workflowProgramInfo.updateMetricsTags(new HashMap<String, String>()), secureStore,
-          secureStoreManager, pluginInstantiator);
+          secureStoreManager, pluginInstantiator, previewId, debugLoggerFactory);
 
     this.customActionSpecification = customActionSpecification;
     this.workflowProgramInfo = workflowProgramInfo;

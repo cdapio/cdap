@@ -24,6 +24,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.preview.NoopDebugLoggerFactory;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import org.apache.tephra.TransactionContext;
@@ -71,7 +72,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
     super(program, programOptions, spec == null ? Collections.<String>emptySet() : spec.getDatasets(),
           dsFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, createMetricsTags(spec, instanceId),
-          secureStore, secureStoreManager, pluginInstantiator);
+          secureStore, secureStoreManager, pluginInstantiator, null, new NoopDebugLoggerFactory());
     this.spec = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;

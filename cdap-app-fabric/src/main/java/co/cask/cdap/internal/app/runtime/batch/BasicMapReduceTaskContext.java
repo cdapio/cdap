@@ -31,6 +31,7 @@ import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
+import co.cask.cdap.app.preview.DebugLoggerFactory;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.Constants;
@@ -43,6 +44,7 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.ForwardingSplitReader;
 import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputs;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import co.cask.cdap.proto.id.PreviewId;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
@@ -111,10 +113,11 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                             SecureStore secureStore,
                             SecureStoreManager secureStoreManager,
                             AuthorizationEnforcer authorizationEnforcer,
-                            AuthenticationContext authenticationContext) {
+                            AuthenticationContext authenticationContext,
+                            PreviewId previewId, DebugLoggerFactory debugLoggerFactory) {
     super(program, programOptions, ImmutableSet.<String>of(), dsFramework, txClient, discoveryServiceClient, true,
           metricsCollectionService, createMetricsTags(taskId, type, workflowProgramInfo), secureStore,
-          secureStoreManager, pluginInstantiator);
+          secureStoreManager, pluginInstantiator, previewId, debugLoggerFactory);
     this.workflowProgramInfo = workflowProgramInfo;
     this.transaction = transaction;
     this.spec = spec;

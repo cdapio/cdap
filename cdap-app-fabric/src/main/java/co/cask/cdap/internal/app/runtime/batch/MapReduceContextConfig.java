@@ -25,6 +25,7 @@ import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import co.cask.cdap.proto.id.PreviewId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -70,6 +71,7 @@ final class MapReduceContextConfig {
   private static final String HCONF_ATTR_NEW_TX = "cdap.mapreduce.newtx";
   private static final String HCONF_ATTR_LOCAL_FILES = "cdap.mapreduce.local.files";
   private static final String HCONF_ATTR_PROGRAM_OPTIONS = "cdap.mapreduce.program.options";
+  private static final String HCONF_ATTR_PREVIEW_ID = "cdap.mapreduce.preview.id";
 
   private final Configuration hConf;
 
@@ -101,6 +103,7 @@ final class MapReduceContextConfig {
     setConf(conf);
     setTx(tx);
     setLocalizedResources(localizedUserResources);
+    setPreviewId(context.getPreviewId());
   }
 
   private void setProgramId(ProgramId programId) {
@@ -235,5 +238,17 @@ final class MapReduceContextConfig {
    */
   public Transaction getTx() {
     return GSON.fromJson(hConf.get(HCONF_ATTR_NEW_TX), Transaction.class);
+  }
+
+  private void setPreviewId(@Nullable PreviewId previewId) {
+    if (previewId != null) {
+      hConf.set(HCONF_ATTR_PREVIEW_ID, GSON.toJson(previewId));
+    }
+  }
+
+  @Nullable
+  public PreviewId getPreviewId() {
+    String previewIdJson = hConf.get(HCONF_ATTR_PREVIEW_ID);
+    return previewIdJson == null ? null : GSON.fromJson(previewIdJson, PreviewId.class);
   }
 }

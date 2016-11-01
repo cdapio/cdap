@@ -22,6 +22,7 @@ import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.app.preview.DebugLoggerFactory;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramClassLoaderProvider;
@@ -50,6 +51,7 @@ import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.PreviewId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
@@ -59,6 +61,7 @@ import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -100,6 +103,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   private final SecureStoreManager secureStoreManager;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
+  private final DebugLoggerFactory debugLoggerFactory;
 
   @Inject
   SparkProgramRunner(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
@@ -107,7 +111,8 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                      MetricsCollectionService metricsCollectionService,
                      DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin,
                      RuntimeStore runtimeStore, SecureStore secureStore, SecureStoreManager secureStoreManager,
-                     AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext) {
+                     AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
+                     DebugLoggerFactory debugLoggerFactory) {
     super(cConf);
     this.cConf = cConf;
     this.hConf = hConf;
@@ -122,6 +127,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     this.secureStoreManager = secureStoreManager;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
+    this.debugLoggerFactory = debugLoggerFactory;
   }
 
   @Override
@@ -163,13 +169,16 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
       if (pluginInstantiator != null) {
         closeables.addFirst(pluginInstantiator);
       }
+      String previewIdJson = arguments.getOption(ProgramOptionConstants.PREVIEW_ID);
+      PreviewId previewId = previewIdJson == null ? null : new Gson().fromJson(previewIdJson, PreviewId.class);
 
       SparkRuntimeContext runtimeContext = new SparkRuntimeContext(new Configuration(hConf), program, options,
                                                                    txClient, programDatasetFramework,
                                                                    discoveryServiceClient,
                                                                    metricsCollectionService, streamAdmin, workflowInfo,
                                                                    pluginInstantiator, secureStore, secureStoreManager,
-                                                                   authorizationEnforcer, authenticationContext);
+                                                                   authorizationEnforcer, authenticationContext,
+                                                                   previewId, debugLoggerFactory);
       closeables.addFirst(runtimeContext);
 
       Spark spark;
