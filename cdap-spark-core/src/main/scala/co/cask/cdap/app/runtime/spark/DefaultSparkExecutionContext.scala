@@ -29,6 +29,7 @@ import co.cask.cdap.api.dataset.Dataset
 import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
+import co.cask.cdap.api.preview.DebugLogger
 import co.cask.cdap.api.security.store.{SecureStore, SecureStoreData, SecureStoreMetadata}
 import co.cask.cdap.api.spark.{SparkExecutionContext, SparkSpecification}
 import co.cask.cdap.api.stream.GenericStreamEventData
@@ -280,6 +281,8 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
       }
     }, TransactionType.IMPLICIT)
   }
+
+  override def getLogger(loggerName: String): DebugLogger = runtimeContext.getLogger(loggerName)
 
   @throws[IOException]
   def list(namespace: String): util.Map[String, String] = {

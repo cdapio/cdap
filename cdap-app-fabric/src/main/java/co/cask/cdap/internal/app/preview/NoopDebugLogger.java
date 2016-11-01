@@ -20,7 +20,7 @@ import co.cask.cdap.api.preview.DebugLogger;
 /**
  * Implementation of the {@link DebugLogger} which logs nothing.
  */
-public class NoopDebugLogger implements DebugLogger{
+public class NoopDebugLogger implements DebugLogger {
 
   @Override
   public void info(String propertyName, Object propertyValue) {

@@ -22,7 +22,7 @@ import co.cask.cdap.proto.id.PreviewId;
 /**
  * Implementation of {@link DebugLoggerFactory} which creates {@link NoopDebugLogger}
  */
-public class NoopDebugLoggerFactory implements DebugLoggerFactory{
+public class NoopDebugLoggerFactory implements DebugLoggerFactory {
 
   @Override
   public DebugLogger getLogger(String loggerName, PreviewId previewId) {

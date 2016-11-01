@@ -53,7 +53,6 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.PreviewId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.Maps;
-import com.sun.org.apache.xml.internal.resolver.helpers.Debug;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
