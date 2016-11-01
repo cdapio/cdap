@@ -80,7 +80,7 @@ export default class Pagination extends Component {
             <span className="page-change-arrow fa fa-chevron-left fa-2x"></span>
           </div>
         </div>
-        <div id="pagination-content">
+        <div className="pagination-content">
           {this.props.children()}
         </div>
         <div onClick={this.goToNext}

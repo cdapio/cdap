@@ -22,15 +22,19 @@ import T from 'i18n-react';
 import Mousetrap from 'mousetrap';
 import classnames from 'classnames';
 import shortid from 'shortid';
+import Pagination from 'components/Pagination';
+import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
+
 import {
+  Dropdown,
+  DropdownToggle,
+  DropdownMenu,
+  DropdownItem,
   Col,
   Modal,
   ModalHeader,
   ModalBody,
-  Tag,
-  Pagination,
-  PaginationItem,
-  PaginationLink
+  Tag
 } from 'reactstrap';
 
 require('./SpotlightModal.less');
@@ -45,8 +49,11 @@ export default class SpotlightModal extends Component {
       searchResults: { results: [] },
       currentPage: 1,
       numPages: 1,
-      focusIndex: 0
+      focusIndex: 0,
+      isPaginationExpanded: false,
+      animationDirection: 'next'
     };
+    this.handlePaginationToggle = this.handlePaginationToggle.bind(this);
   }
 
   componentWillMount() {
@@ -89,6 +96,12 @@ export default class SpotlightModal extends Component {
     }
   }
 
+  handlePaginationToggle() {
+    this.setState({
+      isPaginationExpanded: !this.state.isPaginationExpanded
+    });
+  }
+
   handleEnter() {
     let entity = parseMetadata(this.state.searchResults.results[this.state.focusIndex]);
 
@@ -118,52 +131,66 @@ export default class SpotlightModal extends Component {
     });
   }
 
-  handleRenderPagination() {
-    const total = this.state.searchResults.total;
-    if (!total || total <= PAGE_SIZE) { return null; }
-
-    const numPages = this.state.numPages;
-    let pageArray = Array.from(Array(numPages).keys()).map( n => n + 1 );
-
-    return (
-      <div className="results-pagination text-center">
-        <Pagination>
-          <PaginationItem disabled={this.state.currentPage === 1}>
-            <PaginationLink
-              onClick={this.handleSearch.bind(this, this.state.currentPage - 1)}
-            >
-              <span className="fa fa-chevron-left"></span>
-            </PaginationLink>
-          </PaginationItem>
-
-          {
-            pageArray.map((page) => {
-              return (
-                <PaginationItem
-                  key={shortid.generate()}
-                  active={this.state.currentPage === page}
-                >
-                  <PaginationLink onClick={this.handleSearch.bind(this, page)} >
-                    {page}
-                  </PaginationLink>
-                </PaginationItem>
-              );
-            })
-          }
-
-          <PaginationItem disabled={this.state.currentPage === numPages}>
-            <PaginationLink
-              onClick={this.handleSearch.bind(this, this.state.currentPage + 1)}
-            >
-              <span className="fa fa-chevron-right"></span>
-            </PaginationLink>
-          </PaginationItem>
-        </Pagination>
-      </div>
-    );
-  }
-
   render() {
+    let bodyContent;
+
+    let searchResultsToBeRendered = (
+        this.state.searchResults.results
+        .map(parseMetadata)
+        .map((entity, index) => {
+          return (
+            <div
+              key={shortid.generate()}
+              className={classnames('row search-results-item', {
+                active: index === this.state.focusIndex
+              })}
+            >
+              <Col xs="6">
+                <div className="entity-title">
+                  <span className="entity-icon">
+                    <span className={entity.icon} />
+                  </span>
+                  <span className="entity-name">
+                    {entity.id}
+                  </span>
+                </div>
+                <div className="entity-description">
+                  <span>
+                    {entity.metadata.metadata.SYSTEM.properties.description}
+                  </span>
+                </div>
+              </Col>
+
+              <Col xs="6">
+                <div className="entity-tags-container text-right">
+                  {
+                    entity.metadata.metadata.SYSTEM.tags.map((tag) => {
+                      return (
+                        <Tag key={shortid.generate()}>{tag}</Tag>
+                      );
+                    })
+                  }
+                </div>
+              </Col>
+            </div>
+          );
+        })
+      );
+
+    bodyContent = () => {
+      return (
+        <ReactCSSTransitionGroup
+          transitionName={"animation--" + this.state.animationDirection}
+          transitionEnterTimeout={400}
+          transitionLeaveTimeout={400}
+        >
+          {searchResultsToBeRendered}
+        </ReactCSSTransitionGroup>
+      );
+    };
+
+    let pageArray = Array.from(Array(this.state.numPages).keys()).map( n => n + 1 );
+
     return (
       <Modal
         isOpen={this.props.isOpen}
@@ -191,6 +218,31 @@ export default class SpotlightModal extends Component {
                 })
               }
             </span>
+            <span>
+            <Dropdown
+              isOpen={this.state.isPaginationExpanded}
+              toggle={this.handlePaginationToggle}
+            >
+              <DropdownToggle tag="div">
+                <span>Page: {this.state.currentPage}</span>
+                <span className="fa fa-caret-down pull-right"></span>
+              </DropdownToggle>
+              <DropdownMenu>
+                {
+                  pageArray.map((page, index) => {
+                    return (
+                      <DropdownItem
+                        key={index}
+                        onClick={this.handleSearch.bind(this, page)}
+                      >
+                        {page}
+                      </DropdownItem>
+                    );
+                  })
+                }
+              </DropdownMenu>
+            </Dropdown>
+            </span>
             <span
               className="fa fa-times"
               onClick={this.props.toggle}
@@ -199,50 +251,13 @@ export default class SpotlightModal extends Component {
         </ModalHeader>
         <ModalBody>
           <div className="search-results-container">
-            {this.state.searchResults.results
-              .map(parseMetadata)
-              .map((entity, index) => {
-                return (
-                  <div
-                    key={shortid.generate()}
-                    className={classnames('row search-results-item', {
-                      active: index === this.state.focusIndex
-                    })}
-                  >
-                    <Col xs="6">
-                      <div className="entity-title">
-                        <span className="entity-icon">
-                          <span className={entity.icon} />
-                        </span>
-                        <span className="entity-name">
-                          {entity.id}
-                        </span>
-                      </div>
-                      <div className="entity-description">
-                        <span>
-                          {entity.metadata.metadata.SYSTEM.properties.description}
-                        </span>
-                      </div>
-                    </Col>
-
-                    <Col xs="6">
-                      <div className="entity-tags-container text-right">
-                        {
-                          entity.metadata.metadata.SYSTEM.tags.map((tag) => {
-                            return (
-                              <Tag key={shortid.generate()}>{tag}</Tag>
-                            );
-                          })
-                        }
-                      </div>
-                    </Col>
-                  </div>
-                );
-              })
-            }
+            <Pagination
+              setCurrentPage={this.handleSearch.bind(this)}
+              currentPage={this.state.currentPage}
+            >
+              {bodyContent}
+            </Pagination>
           </div>
-
-          {this.handleRenderPagination()}
         </ModalBody>
       </Modal>
     );
