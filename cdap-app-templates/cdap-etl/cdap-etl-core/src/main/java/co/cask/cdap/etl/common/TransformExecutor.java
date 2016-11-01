@@ -20,6 +20,8 @@ import co.cask.cdap.etl.api.Destroyable;
 import co.cask.cdap.etl.api.InvalidEntry;
 import co.cask.cdap.etl.api.Transformation;
 import com.google.common.collect.ImmutableList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -35,6 +37,7 @@ import java.util.Set;
  *
  */
 public class TransformExecutor<IN> implements Destroyable {
+  private static final Logger LOG = LoggerFactory.getLogger(TransformExecutor.class);
 
   private final Set<String> startingPoints;
   private final Map<String, TransformDetail> transformDetailMap;
@@ -84,15 +87,14 @@ public class TransformExecutor<IN> implements Destroyable {
       transformDetail.getEntries().clear();
     }
 
+    Collection<String> nextStages = transformDetail.getNextStages();
     for (T inputEntry : input) {
       transformation.transform(inputEntry, transformDetail);
+      for (String nextStage : nextStages) {
+        LOG.info("Emitting entries from {}, to {}", stageName, nextStage);
+        executeTransformation(nextStage, transformDetail.getEntries());
+      }
     }
-
-    Collection<String> nextStages = transformDetail.getNextStages();
-    for (String nextStage : nextStages) {
-      executeTransformation(nextStage, transformDetail.getEntries());
-    }
-
   }
 
   public void resetEmitter() {
