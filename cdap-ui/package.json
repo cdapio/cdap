@@ -69,7 +69,7 @@
     "merge-stream": "1.0.0",
     "style-loader": "0.13.1",
     "url-loader": "0.5.7",
-    "webpack-livereload-plugin": "^0.9.0"
+    "webpack-livereload-plugin": "0.9.0"
   },
   "dependencies": {
     "angular": "1.5.8",
