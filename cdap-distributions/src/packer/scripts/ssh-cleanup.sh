@@ -14,24 +14,8 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-#
-# Sets up Chef cookbook directory for "knife cookbook site install"
-#
-
-# Create directory
-mkdir -p /var/chef/cookbooks
-cd /var/chef/cookbooks
-
-# Initialize Git repository
-touch .gitignore
-
-if [[ $(which apt-get 2>/dev/null) ]]; then
-  apt-get install -y --no-install-recommends git || exit 1
-else
-  yum install -y git || exit 1
-fi
-git init || exit 1
-git add .gitignore
-git commit -m 'Initial commit'
+# Delete SSH keys
+rm -f /etc/ssh/*_key /etc/ssh/*_key.pub
+rm -f /root/.ssh/authorized_keys* /home/*/.ssh/authorized_keys*
 
 exit 0
