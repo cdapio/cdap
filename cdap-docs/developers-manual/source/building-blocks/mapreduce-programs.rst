@@ -268,7 +268,7 @@ To read a range of keys and give a hint that you want 16 splits, write::
   public void initialize() throws Exception {
     MapReduceContext context = getContext();
     ...
-    context.setInput("myTable", kvTable.getSplits(16, startKey, stopKey));
+    context.addInput(Input.ofDataset("myTable", kvTable.getSplits(16, startKey, stopKey)));
   }
 
 .. _mapreduce-datasets-output:
@@ -294,8 +294,8 @@ To write to multiple output datasets from a MapReduce program, begin by adding t
 
   public void beforeSubmit(MapReduceContext context) throws Exception {
     ...
-    context.addOutput("productCounts");
-    context.addOutput("catalog");
+    context.addOutput(Input.ofDataset("productCounts"));
+    context.addOutput(Input.ofDataset("catalog"));
   }
 
 Then, have the ``Mapper`` and/or ``Reducer`` implement ``ProgramLifeCycle<MapReduceTaskContext>``.

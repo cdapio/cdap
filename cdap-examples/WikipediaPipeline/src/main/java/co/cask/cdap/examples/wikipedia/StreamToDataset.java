@@ -20,6 +20,7 @@ import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
@@ -79,7 +80,7 @@ public class StreamToDataset extends AbstractMapReduce {
     LOG.info("Using '{}' as the input stream and '{}' as the output dataset.", inputStream, outputDataset);
     job.setMapperClass(mapper);
     context.addInput(Input.ofStream(inputStream));
-    context.addOutput(outputDataset);
+    context.addOutput(Output.ofDataset(outputDataset));
   }
 
   @Override

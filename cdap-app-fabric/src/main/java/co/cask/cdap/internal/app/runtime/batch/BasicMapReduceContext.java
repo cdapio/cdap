@@ -178,38 +178,6 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
   }
 
   @Override
-  public void setInput(StreamBatchReadable stream) {
-    setInput(new StreamInputFormatProvider(Id.Namespace.from(getProgram().getNamespaceId()), stream, streamAdmin));
-  }
-
-  @Override
-  public void setInput(String datasetName) {
-    setInput(datasetName, ImmutableMap.<String, String>of());
-  }
-
-  @Override
-  public void setInput(String datasetName, Map<String, String> arguments) {
-    setInput(createInputFormatProvider(datasetName, arguments, null));
-  }
-
-  @Override
-  public void setInput(String datasetName, List<Split> splits) {
-    setInput(datasetName, ImmutableMap.<String, String>of(), splits);
-  }
-
-  @Override
-  public void setInput(String datasetName, Map<String, String> arguments, List<Split> splits) {
-    setInput(createInputFormatProvider(datasetName, arguments, splits));
-  }
-
-  @Override
-  public void setInput(InputFormatProvider inputFormatProvider) {
-    // with the setInput method, only 1 input will be set, and so the name does not matter much.
-    // make it immutable to prevent calls to addInput after setting a single input.
-    inputs = ImmutableMap.of(inputFormatProvider.getInputFormatClassName(), new MapperInput(inputFormatProvider));
-  }
-
-  @Override
   public void addInput(Input input) {
     addInput(input, null);
   }
@@ -257,18 +225,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
     }
   }
 
-  @Override
-  public void addOutput(String datasetName) {
-    addOutput(datasetName, Collections.<String, String>emptyMap());
-  }
-
-  @Override
-  public void addOutput(String datasetName, Map<String, String> arguments) {
-    addOutput(Output.ofDataset(datasetName, arguments));
-  }
-
-  @Override
-  public void addOutput(String alias, OutputFormatProvider outputFormatProvider) {
+  private void addOutput(String alias, OutputFormatProvider outputFormatProvider) {
     if (this.outputFormatProviders.containsKey(alias)) {
       throw new IllegalArgumentException("Output already configured: " + alias);
     }
