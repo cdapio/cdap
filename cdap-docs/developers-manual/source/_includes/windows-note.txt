@@ -1,4 +1,3 @@
 **Note:** There is an issue with running Microsoft Windows and using the CDAP Standalone
-scripts when ``JAVA_HOME`` is defined as a path with spaces in it. A workaround is to use
-a definition of ``JAVA_HOME`` that does not include spaces, such as
-``C:\PROGRA~1\Java\jdk1.7.0_79\bin`` or ``C:\ProgramData\Oracle\Java\javapath``.
+scripts when ``CDAP_HOME`` is defined as a path with spaces in it. Until this is addressed,
+do not use a path with space characters in it for ``CDAP_HOME.``
