@@ -20,6 +20,7 @@ import classnames from 'classnames';
 import MarketActionsContainer from 'components/MarketActionsContainer';
 import AbstractWizard from 'components/AbstractWizard';
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
+import MarketStore from 'components/Market/store/market-store';
 
 require('./MarketPlaceEntity.less');
 export default class MarketPlaceEntity extends Component {
@@ -30,7 +31,19 @@ export default class MarketPlaceEntity extends Component {
       entityDetail: {},
       performSingleAction: false
     };
+    this.unsub = MarketStore.subscribe(() => {
+      let marketState = MarketStore.getState();
+      if ((marketState.activeEntity !== this.props.entityId) && this.state.expandedMode) {
+        this.setState({
+          expandedMode: false
+        });
+      }
+    });
   }
+  componentWillUnmount() {
+    this.unsub();
+  }
+
   getChildContext() {
     return {
       entity: this.props.entity
@@ -56,6 +69,12 @@ export default class MarketPlaceEntity extends Component {
   toggleDetailedMode() {
     this.fetchEntityDetail();
     this.setState({expandedMode: !this.state.expandedMode});
+    MarketStore.dispatch({
+      type: 'SET_ACTIVE_ENTITY',
+      payload: {
+        entityId: this.props.entityId
+      }
+    });
   }
   render() {
     const isEntityDetailAvailable = () => {
@@ -233,6 +252,7 @@ MarketPlaceEntity.childContextTypes = {
 MarketPlaceEntity.propTypes = {
   className: PropTypes.string,
   style: PropTypes.object,
+  entityId: PropTypes.string,
   entity: PropTypes.shape({
     name: PropTypes.string,
     version: PropTypes.string,

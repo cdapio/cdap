@@ -19,6 +19,7 @@ import Card from 'components/Card';
 import moment from 'moment';
 require('./MarketPlaceUsecaseEntity.less');
 import MarketActionsContainer from 'components/MarketActionsContainer';
+import MarketStore from 'components/Market/store/market-store.js';
 
 export default class MarketPlaceUsecaseEntity extends Component {
   constructor(props) {
@@ -28,11 +29,22 @@ export default class MarketPlaceUsecaseEntity extends Component {
       loadingActions: false,
       entityDetail: {}
     };
+    this.unsub = MarketStore.subscribe(() => {
+      let state = MarketStore.getState();
+      if (state.activeEntity !== this.props.entityId && this.state.showActions) {
+        this.setState({
+          showActions: false
+        });
+      }
+    });
   }
   getChildContext() {
     return {
       entity: this.props.entity
     };
+  }
+  componentWillUnmount() {
+    this.unsub();
   }
 
   getVersion() {
@@ -55,6 +67,12 @@ export default class MarketPlaceUsecaseEntity extends Component {
     this.setState({
       loadingActions: true,
       showActions: true
+    });
+    MarketStore.dispatch({
+      type: 'SET_ACTIVE_ENTITY',
+      payload: {
+        entityId: this.props.entityId
+      }
     });
     MyMarketApi.get({
       packageName: this.props.entity.name,
@@ -145,6 +163,7 @@ MarketPlaceUsecaseEntity.childContextTypes = {
 
 MarketPlaceUsecaseEntity.propTypes = {
   className: PropTypes.string,
+  entityId: PropTypes.string,
   entity: PropTypes.shape({
     name: PropTypes.string,
     version: PropTypes.string,

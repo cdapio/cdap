@@ -84,6 +84,7 @@ export default class AllTabContents extends Component {
         .map((e, index) => (
           <MarketPlaceEntity
             key={index}
+            entityId={e.id}
             entity={e}
           />
         )

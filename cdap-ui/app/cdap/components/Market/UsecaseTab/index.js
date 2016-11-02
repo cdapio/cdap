@@ -57,6 +57,7 @@ export default class UsecaseTab extends Component {
               <MarketPlaceUsecaseEntity
                 key={entity.id}
                 entity={entity}
+                entityId={entity.id}
               />
             ))
         }
