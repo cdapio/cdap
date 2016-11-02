@@ -17,9 +17,9 @@ import React, {PropTypes, Component} from 'react';
 import Card from '../Card';
 import {MyMarketApi} from 'api/market';
 import classnames from 'classnames';
-import TetherComponent from 'react-tether';
 import MarketActionsContainer from 'components/MarketActionsContainer';
 import AbstractWizard from 'components/AbstractWizard';
+import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 
 require('./MarketPlaceEntity.less');
 export default class MarketPlaceEntity extends Component {
@@ -58,42 +58,38 @@ export default class MarketPlaceEntity extends Component {
     this.setState({expandedMode: !this.state.expandedMode});
   }
   render() {
-    let verticalPosition = 'top';
-    let horizontalPosition = 'left';
-    let positionClassName='position-left';
-    let cardWidth;
     const isEntityDetailAvailable = () => {
       if (!this.state.entityDetail || !Array.isArray(this.state.entityDetail.actions)) {
         return false;
       }
       return true;
     };
+
+    let style = {
+      position: 'absolute'
+    };
+    let positionClassName;
+    let cardWidth = 400;
+
     if (this.packageCardRef) {
-      let cardRects = this.packageCardRef.getBoundingClientRect();
       let parentRects = this.packageCardRef.parentElement.getBoundingClientRect();
-      let activeTab = document.querySelector('.tab-content .tab-pane.active');
-      cardWidth = 400;
-      if (isEntityDetailAvailable() && this.state.entityDetail.actions.length > 1) {
-        cardWidth = Math.max((parentRects.right - cardRects.left) , (cardRects.right - parentRects.left));
-        cardWidth = cardWidth - 20;
+      let cardRects = this.packageCardRef.getBoundingClientRect();
+      if (isEntityDetailAvailable()) {
+        if (this.state.entityDetail.actions.length > 1) {
+          cardWidth = Math.max((parentRects.right - cardRects.left), (cardRects.right - parentRects.left));
+        }
       }
-      let shouldPositionLeft = () => parentRects.right > (cardRects.left + cardWidth);
-      let shouldPositionRight = () => parentRects.left < (cardRects.right - cardWidth);
-      let shouldPositionTop = () => (cardRects.top - activeTab.top) > (activeTab.bottom - cardRects.bottom);
+      cardWidth = cardWidth - 20;
+      let shouldPositionLeft = () => parentRects.right > (cardRects.left + (cardWidth - 20));
+      let shouldPositionRight = () => parentRects.left < (cardRects.right - (cardWidth - 20));
+
       if (shouldPositionLeft()) {
-        horizontalPosition = 'left';
-        positionClassName = 'position-left';
-      } else if (shouldPositionRight()){
-        horizontalPosition = 'right';
-        positionClassName='position-right';
-      }
-      if (shouldPositionTop()) {
-        verticalPosition = 'bottom';
-      } else {
-        verticalPosition = 'top';
+          positionClassName = 'position-left';
+      } else if (shouldPositionRight()) {
+          positionClassName = 'position-right';
       }
     }
-
+    style.width = cardWidth;
     const getConsolidatedFooter = () => {
       if (isEntityDetailAvailable()) {
         if (this.state.entityDetail.actions.length > 1) {
@@ -135,20 +131,9 @@ export default class MarketPlaceEntity extends Component {
       }
     };
 
-    return (
-
-      <TetherComponent
-        attachment={`${verticalPosition} ${horizontalPosition}`}
-        targetAttachment={`${verticalPosition} ${horizontalPosition}`}
-        className={classnames("market-place-package-card expanded", positionClassName)}
-        constraints={[{to: 'scrollParent', attachment: 'together'}]}
-        style={{'z-index': 1050, height: 0, margin: 0, width: cardWidth + 'px'}}
-      >
-        <div
-          className="market-place-package-card"
-          ref={(ref) => this.packageCardRef = ref}
-          onClick={this.toggleDetailedMode.bind(this)}
-        >
+    const getRightCard = () => {
+      return !this.state.expandedMode ?
+        (
           <Card
             ref={(ref)=> this.cardRef = ref}
             onClick={this.toggleDetailedMode.bind(this)}
@@ -164,58 +149,70 @@ export default class MarketPlaceEntity extends Component {
               <div>{this.props.entity.name}</div>
             </div>
           </Card>
-        </div>
-        {
-          this.state.expandedMode ?
-            <Card
-              ref={(ref)=> this.cardRef = ref}
-              size="LG"
-              cardClass={classnames("market-place-package-card")}
-              style={this.props.style}
-              onClick={this.openDetailedMode.bind(this)}
-            >
-              <div className="clearfix">
-                <div
-                  className="package-icon-container"
-                  onClick={this.toggleDetailedMode.bind(this)}>
-                  <img src={MyMarketApi.getIcon(this.props.entity)} />
-                </div>
+        )
+      :
+        (
+          <Card
+            ref={(ref)=> this.cardRef = ref}
+            size="LG"
+            cardStyle={style}
+            onClick={this.openDetailedMode.bind(this)}
+          >
+            <div className="clearfix">
+              <div
+                className="package-icon-container"
+                onClick={this.toggleDetailedMode.bind(this)}>
+                <img src={MyMarketApi.getIcon(this.props.entity)} />
+              </div>
 
-                <div className="package-medata-container">
-                  <strong className="package-label"> {this.props.entity.label} </strong>
-                  <div className="package-metadata">
-                    <div>
-                      <span>
-                        <strong> Version </strong>
-                      </span>
-                      <span> {this.props.entity.version} </span>
-                    </div>
-                    <div>
-                      <span>
-                        <strong> Organization </strong>
-                      </span>
-                      <span> {this.props.entity.org} </span>
-                    </div>
-                    <div>
-                      <span>
-                        <strong> Author </strong>
-                      </span>
-                      <span> {this.props.entity.author} </span>
-                    </div>
+              <div className="package-medata-container">
+                <strong className="package-label"> {this.props.entity.label} </strong>
+                <div className="package-metadata">
+                  <div>
+                    <span>
+                      <strong> Version </strong>
+                    </span>
+                    <span> {this.props.entity.version} </span>
+                  </div>
+                  <div>
+                    <span>
+                      <strong> Organization </strong>
+                    </span>
+                    <span> {this.props.entity.org} </span>
+                  </div>
+                  <div>
+                    <span>
+                      <strong> Author </strong>
+                    </span>
+                    <span> {this.props.entity.author} </span>
                   </div>
                 </div>
               </div>
-              <div className="pacakge-footer">
-                <p>
-                  {this.props.entity.description}
-                </p>
-                { getConsolidatedFooter() }
-              </div>
-            </Card>
-          :
-            null
-          }
-      </TetherComponent>
+            </div>
+            <div className="pacakge-footer">
+              <p>
+                {this.props.entity.description}
+              </p>
+              { getConsolidatedFooter() }
+            </div>
+          </Card>
+        );
+    };
+
+    return (
+      <div
+        className={classnames("market-place-package-card", {[positionClassName + ' expanded']: this.state.expandedMode})}
+        ref={(ref)=> this.packageCardRef = ref}
+      >
+        <ReactCSSTransitionGroup
+          transitionName="package-transition"
+          transitionAppearTimeout={300}
+          transitionEnterTimeout={500}
+          transitionLeaveTimeout={300}
+        >
+          {getRightCard()}
+        </ReactCSSTransitionGroup>
+      </div>
     );
   }
 }
