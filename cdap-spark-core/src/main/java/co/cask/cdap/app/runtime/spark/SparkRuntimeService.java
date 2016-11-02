@@ -37,6 +37,7 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.LocalizationUtils;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGenerator;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.lang.Fields;
@@ -44,13 +45,11 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.security.store.SecureStoreUtils;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -74,7 +73,6 @@ import scala.Tuple2;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Writer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -211,7 +209,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
           localizeResources.add(new LocalizeResource(pluginArchive, true));
         }
 
-        File logbackJar = createLogbackJar(tempDir);
+        File logbackJar = ProgramRunners.createLogbackJar(tempDir);
         if (logbackJar != null) {
           localizeResources.add(new LocalizeResource(logbackJar));
           logbackJarName = logbackJar.getName();
@@ -560,32 +558,6 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       cConf.writeXml(writer);
     }
     return file;
-  }
-
-  /**
-   * Creates a jar in the given directory that contains a logback.xml loaded from the current ClassLoader.
-   *
-   * @param targetDir directory where the logback.xml should be copied to
-   * @return the {@link File} where the logback.xml jar copied to or {@code null} if "logback.xml" is not found
-   *         in the current ClassLoader.
-   */
-  @Nullable
-  private File createLogbackJar(File targetDir) throws IOException {
-    // Localize logback.xml
-    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), getClass().getClassLoader());
-    try (InputStream input = cl.getResourceAsStream("logback.xml")) {
-      if (input != null) {
-        File logbackJar = File.createTempFile("logback.xml", ".jar", targetDir);
-        try (JarOutputStream output = new JarOutputStream(new FileOutputStream(logbackJar))) {
-          output.putNextEntry(new JarEntry("logback.xml"));
-          ByteStreams.copy(input, output);
-        }
-        return logbackJar;
-      } else {
-        LOG.warn("Could not find logback.xml for Spark!");
-      }
-    }
-    return null;
   }
 
   /**

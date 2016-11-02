@@ -95,9 +95,6 @@ chef-solo -o 'recipe[ulimit::default],recipe[cdap::fullstack],recipe[cdap::init]
 # Temporary Hack to workaround CDAP-4089
 rm -f /opt/cdap/kafka/lib/log4j.log4j-1.2.14.jar
 
-# Temporary Hack to workaround CDAP-7288
-rm -f /opt/cdap/master/lib/org.apache.tez.tez-api-0.8.4.jar
-
 # Start CDAP Services
 for i in /etc/init.d/cdap-*
 do

@@ -422,11 +422,11 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       SessionHandle sessionHandle = null;
       OperationHandle operationHandle = null;
       Map<String, String> sessionConf = startSession();
+      String database = getHiveDatabase(schemaPattern);
 
       try {
         sessionHandle = openHiveSession(sessionConf);
 
-        String database = getHiveDatabase(schemaPattern);
         operationHandle = cliService.getColumns(sessionHandle, catalog, database,
                                                 tableNamePattern, columnNamePattern);
         QueryHandle handle = saveReadOnlyOperation(operationHandle, sessionHandle, sessionConf, "", database);
@@ -435,7 +435,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         return handle;
       } catch (Throwable e) {
         closeInternal(getQueryHandle(sessionConf),
-                      new ReadOnlyOperationInfo(sessionHandle, operationHandle, sessionConf, "", ""));
+                      new ReadOnlyOperationInfo(sessionHandle, operationHandle, sessionConf, "", database));
         throw e;
       }
     } catch (HiveSQLException e) {
@@ -481,17 +481,17 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       SessionHandle sessionHandle = null;
       OperationHandle operationHandle = null;
       Map<String, String> sessionConf = startSession();
+      String database = getHiveDatabase(schemaPattern);
 
       try {
         sessionHandle = openHiveSession(sessionConf);
-        String database = getHiveDatabase(schemaPattern);
         operationHandle = cliService.getSchemas(sessionHandle, catalog, database);
         QueryHandle handle = saveReadOnlyOperation(operationHandle, sessionHandle, sessionConf, "", database);
         LOG.trace("Retrieving schemas: catalog {}, schema {}", catalog, database);
         return handle;
       } catch (Throwable e) {
         closeInternal(getQueryHandle(sessionConf),
-                      new ReadOnlyOperationInfo(sessionHandle, operationHandle, sessionConf, "", ""));
+                      new ReadOnlyOperationInfo(sessionHandle, operationHandle, sessionConf, "", database));
         throw e;
       }
     } catch (HiveSQLException e) {
@@ -510,10 +510,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       SessionHandle sessionHandle = null;
       OperationHandle operationHandle = null;
       Map<String, String> sessionConf = startSession();
+      String database = getHiveDatabase(schemaPattern);
 
       try {
         sessionHandle = openHiveSession(sessionConf);
-        String database = getHiveDatabase(schemaPattern);
         operationHandle = cliService.getFunctions(sessionHandle, catalog,
                                                   database, functionNamePattern);
         QueryHandle handle = saveReadOnlyOperation(operationHandle, sessionHandle, sessionConf, "", database);
@@ -522,7 +522,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         return handle;
       } catch (Throwable e) {
         closeInternal(getQueryHandle(sessionConf),
-                      new ReadOnlyOperationInfo(sessionHandle, operationHandle, sessionConf, "", ""));
+                      new ReadOnlyOperationInfo(sessionHandle, operationHandle, sessionConf, "", database));
         throw e;
       }
     } catch (HiveSQLException e) {
@@ -581,10 +581,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       SessionHandle sessionHandle = null;
       OperationHandle operationHandle = null;
       Map<String, String> sessionConf = startSession();
+      String database = getHiveDatabase(schemaPattern);
 
       try {
         sessionHandle = openHiveSession(sessionConf);
-        String database = getHiveDatabase(schemaPattern);
         operationHandle = cliService.getTables(sessionHandle, catalog, database,
                                                tableNamePattern, tableTypes);
         QueryHandle handle = saveReadOnlyOperation(operationHandle, sessionHandle, sessionConf, "", database);
@@ -593,7 +593,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         return handle;
       } catch (Throwable e) {
         closeInternal(getQueryHandle(sessionConf),
-                      new ReadOnlyOperationInfo(sessionHandle, operationHandle, sessionConf, "", ""));
+                      new ReadOnlyOperationInfo(sessionHandle, operationHandle, sessionConf, "", database));
         throw e;
       }
     } catch (HiveSQLException e) {
@@ -835,10 +835,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         SessionHandle sessionHandle = null;
         OperationHandle operationHandle = null;
         Map<String, String> sessionConf = startSession();
+        String database = getHiveDatabase(namespace.getId());
         try {
           sessionHandle = openHiveSession(sessionConf);
 
-          String database = getHiveDatabase(namespace.getId());
           String statement = String.format("DROP DATABASE %s", database);
           operationHandle = executeAsync(sessionHandle, statement);
           QueryHandle handle = saveReadOnlyOperation(operationHandle, sessionHandle, sessionConf, statement, database);
@@ -846,7 +846,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
           return handle;
         } catch (Throwable e) {
           closeInternal(getQueryHandle(sessionConf),
-                        new ReadOnlyOperationInfo(sessionHandle, operationHandle, sessionConf, "", ""));
+                        new ReadOnlyOperationInfo(sessionHandle, operationHandle, sessionConf, "", database));
           throw e;
         }
       } catch (HiveSQLException e) {
@@ -868,9 +868,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       SessionHandle sessionHandle = null;
       OperationHandle operationHandle = null;
       Map<String, String> sessionConf = startSession(namespace);
+      String database = getHiveDatabase(namespace.getId());
       try {
         sessionHandle = openHiveSession(sessionConf);
-        String database = getHiveDatabase(namespace.getId());
         // Switch database to the one being passed in.
         setCurrentDatabase(database);
 
@@ -896,7 +896,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         return handle;
       } catch (Throwable e) {
         closeInternal(getQueryHandle(sessionConf),
-                      new ReadWriteOperationInfo(sessionHandle, operationHandle, sessionConf, "", ""));
+                      new ReadWriteOperationInfo(sessionHandle, operationHandle, sessionConf, "", database));
         throw e;
       }
     } catch (HiveSQLException e) {
@@ -923,9 +923,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       OperationHandle operationHandle = null;
       LOG.trace("Got statement '{}' with additional session configuration {}", statement, additionalSessionConf);
       Map<String, String> sessionConf = startSession(namespace, additionalSessionConf);
+      String database = getHiveDatabase(namespace.getId());
       try {
         sessionHandle = openHiveSession(sessionConf);
-        String database = getHiveDatabase(namespace.getId());
         // Switch database to the one being passed in.
         setCurrentDatabase(database);
 
@@ -936,7 +936,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         return handle;
       } catch (Throwable e) {
         closeInternal(getQueryHandle(sessionConf),
-                      new ReadWriteOperationInfo(sessionHandle, operationHandle, sessionConf, "", ""));
+                      new ReadWriteOperationInfo(sessionHandle, operationHandle, sessionConf, "", database));
         throw e;
       }
     } catch (HiveSQLException e) {
@@ -1154,7 +1154,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     String namespaceHiveDb = getHiveDatabase(namespace.getId());
     for (Map.Entry<QueryHandle, OperationInfo> entry : activeHandleCache.asMap().entrySet()) {
       try {
-        if (entry.getValue().getNamespace().equals(namespaceHiveDb)) {
+        if (entry.getValue().getHiveDatabase().equals(namespaceHiveDb)) {
           // we use empty query statement for get tables, get schemas, we don't need to return it this method call.
           if (!entry.getValue().getStatement().isEmpty()) {
             QueryStatus status = getStatus(entry.getKey());
@@ -1170,7 +1170,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     for (Map.Entry<QueryHandle, InactiveOperationInfo> entry : inactiveHandleCache.asMap().entrySet()) {
       InactiveOperationInfo inactiveOperationInfo = entry.getValue();
-      if (inactiveOperationInfo.getNamespace().equals(getHiveDatabase(namespace.getId()))) {
+      if (inactiveOperationInfo.getHiveDatabase().equals(getHiveDatabase(namespace.getId()))) {
         // we use empty query statement for get tables, get schemas, we don't need to return it this method call.
         if (!inactiveOperationInfo.getStatement().isEmpty()) {
           if (inactiveOperationInfo.getStatus() == null) {
@@ -1193,7 +1193,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     int count = 0;
     String namespaceHiveDb = getHiveDatabase(namespace.getId());
     for (Map.Entry<QueryHandle, OperationInfo> entry : activeHandleCache.asMap().entrySet()) {
-      if (entry.getValue().getNamespace().equals(namespaceHiveDb)) {
+      if (entry.getValue().getHiveDatabase().equals(namespaceHiveDb)) {
         // we use empty query statement for get tables, get schemas, we don't need to return it this method call.
         if (!entry.getValue().getStatement().isEmpty()) {
           count++;
@@ -1411,11 +1411,12 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
    * @param statement SQL statement executed with the call.
    * @return {@link QueryHandle} that represents the Hive operation being run.
    */
-  protected QueryHandle saveReadOnlyOperation(OperationHandle operationHandle, SessionHandle sessionHandle,
-                                              Map<String, String> sessionConf, String statement, String namespace) {
+  private QueryHandle saveReadOnlyOperation(OperationHandle operationHandle, SessionHandle sessionHandle,
+                                            Map<String, String> sessionConf, String statement, String hiveDatabase) {
     QueryHandle handle = QueryHandle.fromId(sessionConf.get(Constants.Explore.QUERY_ID));
     activeHandleCache.put(handle,
-                          new ReadOnlyOperationInfo(sessionHandle, operationHandle, sessionConf, statement, namespace));
+                          new ReadOnlyOperationInfo(sessionHandle, operationHandle, sessionConf,
+                                                    statement, hiveDatabase));
     return handle;
   }
 
@@ -1427,12 +1428,12 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
    * @param statement SQL statement executed with the call.
    * @return {@link QueryHandle} that represents the Hive operation being run.
    */
-  protected QueryHandle saveReadWriteOperation(OperationHandle operationHandle, SessionHandle sessionHandle,
-                                               Map<String, String> sessionConf, String statement, String namespace) {
+  private QueryHandle saveReadWriteOperation(OperationHandle operationHandle, SessionHandle sessionHandle,
+                                             Map<String, String> sessionConf, String statement, String hiveDatabase) {
     QueryHandle handle = QueryHandle.fromId(sessionConf.get(Constants.Explore.QUERY_ID));
     activeHandleCache.put(handle,
                           new ReadWriteOperationInfo(sessionHandle, operationHandle,
-                                                     sessionConf, statement, namespace));
+                                                     sessionConf, statement, hiveDatabase));
     return handle;
   }
 
