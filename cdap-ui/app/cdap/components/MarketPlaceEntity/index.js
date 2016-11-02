@@ -21,6 +21,7 @@ import MarketActionsContainer from 'components/MarketActionsContainer';
 import AbstractWizard from 'components/AbstractWizard';
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import MarketStore from 'components/Market/store/market-store';
+import T from 'i18n-react';
 
 require('./MarketPlaceEntity.less');
 export default class MarketPlaceEntity extends Component {
@@ -133,7 +134,7 @@ export default class MarketPlaceEntity extends Component {
                 className="btn btn-primary"
                 onClick={() => this.setState({performSingleAction: true})}
               >
-                Submit
+                {T.translate('features.Market.action-types.' + this.state.entityDetail.actions[0].type + '.name')}
                 <AbstractWizard
                   isOpen={this.state.performSingleAction}
                   onClose={() => this.setState({performSingleAction: false})}
