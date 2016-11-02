@@ -82,6 +82,7 @@ org.apache.tephra.tephra-hbase-compat-0.98-0.8.0-incubating.jar,org.apache.tephr
 org.apache.tephra.tephra-hbase-compat-1.0-0.8.0-incubating.jar,org.apache.tephra,tephra-hbase-compat-1.0
 org.apache.tephra.tephra-hbase-compat-1.0-cdh-0.8.0-incubating.jar,org.apache.tephra,tephra-hbase-compat-1.0-cdh
 org.apache.tephra.tephra-hbase-compat-1.1-0.8.0-incubating.jar,org.apache.tephra,tephra-hbase-compat-1.1
+org.apache.tez.tez-api-0.8.4.jar,org.apache.tez,tez-api
 org.apache.thrift.libthrift-0.9.3.jar,org.apache.thrift,libthrift
 org.apache.twill.twill-api-0.7.0-incubating.jar,org.apache.twill,twill-api
 org.apache.twill.twill-common-0.7.0-incubating.jar,org.apache.twill,twill-common
