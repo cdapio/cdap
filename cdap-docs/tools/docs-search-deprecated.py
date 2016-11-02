@@ -33,9 +33,8 @@ try:
     import urllib2
 except Exception, e:
     if sys.version_info < (2, 7):
-        raise Exception("Must use python 2.7 or greater\n" + str(e))
-    else:
-        raise Exception(e)
+        print "\nMust use python 2.7 or greater.\n"
+    raise e
 
 
 def parse_options():
