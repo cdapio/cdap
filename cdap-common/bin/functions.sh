@@ -96,6 +96,21 @@ logecho() {
   echo ${@} | tee -a ${__logfile}
 }
 
+#
+# __readlink <file|directory>
+#
+__readlink() {
+  local __target_file=${1}
+  cd $(dirname ${__target_file})
+  __target_file=$(basename ${__target_file})
+  while test -L ${__target_file}; do
+    __target_file=$(readlink ${__target_file})
+    cd $(dirname ${__target_file})
+    __target_file=$(basename ${__target_file})
+  done
+  echo "$(pwd -P)/${__target_file}"
+}
+
 ###
 #
 # Directory functions
