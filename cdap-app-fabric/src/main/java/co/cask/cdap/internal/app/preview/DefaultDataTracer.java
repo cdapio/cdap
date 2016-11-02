@@ -15,31 +15,37 @@
  */
 package co.cask.cdap.internal.app.preview;
 
-import co.cask.cdap.api.preview.DebugLogger;
+import co.cask.cdap.api.preview.DataTracer;
+import co.cask.cdap.app.store.preview.PreviewStore;
+import co.cask.cdap.proto.id.ApplicationId;
 
 /**
- * Implementation of the {@link DebugLogger} which logs nothing.
+ * Default implementation of {@link DataTracer}, the data are preserved using {@link PreviewStore}
  */
-public class NoopDebugLogger implements DebugLogger {
+class DefaultDataTracer implements DataTracer {
 
-  private final String loggerName;
+  private final String tracerName;
+  private final ApplicationId applicationId;
+  private final PreviewStore previewStore;
 
-  public NoopDebugLogger(String loggerName) {
-    this.loggerName = loggerName;
+  DefaultDataTracer(ApplicationId applicationId, String tracerName, PreviewStore previewStore) {
+    this.tracerName = tracerName;
+    this.applicationId = applicationId;
+    this.previewStore = previewStore;
   }
 
   @Override
   public void info(String propertyName, Object propertyValue) {
-    // no-op
+    previewStore.put(applicationId, tracerName, propertyName, propertyValue);
   }
 
   @Override
   public String getName() {
-    return loggerName;
+    return tracerName;
   }
 
   @Override
   public boolean isEnabled() {
-    return false;
+    return true;
   }
 }

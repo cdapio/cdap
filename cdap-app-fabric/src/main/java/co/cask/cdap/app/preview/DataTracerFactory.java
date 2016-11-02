@@ -13,19 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.app.preview;
+package co.cask.cdap.app.preview;
 
-import co.cask.cdap.api.preview.DebugLogger;
-import co.cask.cdap.app.preview.DebugLoggerFactory;
+import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.proto.id.ApplicationId;
 
 /**
- * Implementation of {@link DebugLoggerFactory} which creates {@link NoopDebugLogger}
+ * DataTracerFactory will be injected in the Program context classes. This may not be directly used by Applications.
  */
-public class NoopDebugLoggerFactory implements DebugLoggerFactory {
+public interface DataTracerFactory {
 
-  @Override
-  public DebugLogger getLogger(String loggerName, ApplicationId applicationId) {
-    return new NoopDebugLogger(loggerName);
-  }
+  /**
+   * Get the {@link DataTracer} used to put the debug data.
+   * @param applicationId the name of the tracer with which the data to be associated
+   * @param tracerName the name of the tracer with which the data to be associated
+   * @return the instance of the DataTracer
+   */
+  DataTracer getDataTracer(ApplicationId applicationId, String tracerName);
 }

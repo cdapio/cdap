@@ -13,20 +13,28 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.app.preview;
-
-import co.cask.cdap.api.preview.DebugLogger;
-import co.cask.cdap.proto.id.ApplicationId;
+package co.cask.cdap.api.preview;
 
 /**
- * DebugLoggerFactory will be injected in the Program context classes. This may not be directly used by Applications.
+ * Interface used by the CDAP applications to log the debug data.
  */
-public interface DebugLoggerFactory {
+public interface DataTracer {
 
   /**
-   * Get the {@link DebugLogger} used to log the debug data.
-   * @param loggerName the name of the logger with which the log data to be associated
-   * @return the instance of the DebugLogger
+   * Logs the data at INFO level. Multiple values can be logged against the same property.
+   *
+   * @param propertyName the the name of the property
+   * @param propertyValue the value associated with the property
    */
-  DebugLogger getLogger(String loggerName, ApplicationId applicationId);
+  void info(String propertyName, Object propertyValue);
+
+  /**
+   * Return the name of the tracer instance.
+   */
+  String getName();
+
+  /**
+   * Returns {@code true} if application is running in debug mode otherwise false is returned.
+   */
+  boolean isEnabled();
 }

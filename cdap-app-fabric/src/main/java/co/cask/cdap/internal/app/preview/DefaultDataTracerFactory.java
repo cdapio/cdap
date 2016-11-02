@@ -15,36 +15,26 @@
  */
 package co.cask.cdap.internal.app.preview;
 
-import co.cask.cdap.api.preview.DebugLogger;
+import co.cask.cdap.api.preview.DataTracer;
+import co.cask.cdap.app.preview.DataTracerFactory;
+import co.cask.cdap.app.store.preview.PreviewStore;
 import co.cask.cdap.proto.id.ApplicationId;
-
-import javax.annotation.Nullable;
+import com.google.inject.Inject;
 
 /**
- * Default implementation of {@link DebugLogger}
+ * Default implementation of {@link DataTracerFactory}
  */
-public class DefaultDebugLogger implements DebugLogger {
+public class DefaultDataTracerFactory implements DataTracerFactory {
 
-  private final String loggerName;
-  private final ApplicationId applicationId;
+  private final PreviewStore previewStore;
 
-  public DefaultDebugLogger(String loggerName, @Nullable ApplicationId applicationId) {
-    this.loggerName = loggerName;
-    this.applicationId = applicationId;
+  @Inject
+  public DefaultDataTracerFactory(PreviewStore previewStore) {
+    this.previewStore = previewStore;
   }
 
   @Override
-  public void info(String propertyName, Object propertyValue) {
-    // no-op until PreviewStore is implemented.
-  }
-
-  @Override
-  public String getName() {
-    return loggerName;
-  }
-
-  @Override
-  public boolean isEnabled() {
-    return true;
+  public DataTracer getDataTracer(ApplicationId applicationId, String tracerName) {
+    return new DefaultDataTracer(applicationId, tracerName, previewStore);
   }
 }

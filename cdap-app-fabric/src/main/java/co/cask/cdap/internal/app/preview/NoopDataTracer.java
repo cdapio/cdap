@@ -15,20 +15,31 @@
  */
 package co.cask.cdap.internal.app.preview;
 
-import co.cask.cdap.api.preview.DebugLogger;
-import co.cask.cdap.app.preview.DebugLoggerFactory;
-import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.api.preview.DataTracer;
 
 /**
- * Default implementation of {@link DebugLoggerFactory}
+ * Implementation of the {@link DataTracer} which logs nothing.
  */
-public class DefaultDebugLoggerFactory implements DebugLoggerFactory {
+class NoopDataTracer implements DataTracer {
 
-  public DefaultDebugLoggerFactory() {
+  private final String tracerName;
+
+  NoopDataTracer(String tracerName) {
+    this.tracerName = tracerName;
   }
 
   @Override
-  public DebugLogger getLogger(String loggerName, ApplicationId applicationId) {
-    return new DefaultDebugLogger(loggerName, applicationId);
+  public void info(String propertyName, Object propertyValue) {
+    // no-op
+  }
+
+  @Override
+  public String getName() {
+    return tracerName;
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return false;
   }
 }
