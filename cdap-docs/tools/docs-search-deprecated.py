@@ -25,15 +25,17 @@
 #
 # Requires Python 2.7 and Beautiful Soup.
 
+import os
+import sys
 try:
     from bs4 import BeautifulSoup
     from optparse import OptionParser
-    import os
-    import sys
     import urllib2
 except Exception, e:
-    print "\nAre you running under Python 2.7? It's required.\n"
-    raise
+    if sys.version_info < (2, 7):
+        raise Exception("Must use python 2.7 or greater\n" + str(e))
+    else:
+        raise Exception(e)
 
 
 def parse_options():
