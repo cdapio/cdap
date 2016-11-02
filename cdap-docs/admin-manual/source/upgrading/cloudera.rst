@@ -55,7 +55,7 @@ CDAP:
 
 #. Before starting services, run the *CDAP Upgrade Tool* to upgrade CDAP. From the CDAP Service
    page, select "Run CDAP Upgrade" from the Actions menu. Note that authorization is disabled in
-   the UpgradeTool, so that the cdap user could upgrade all user's data.
+   the *UpgradeTool* so that the ``cdap`` user can upgrade all users' data.
 
 #. Start the CDAP services.  At this point it may be necessary to correct for any changes in
    the CSD.  For example, if new CDAP services were added or removed, you must add or

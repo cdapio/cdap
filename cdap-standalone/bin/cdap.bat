@@ -24,6 +24,13 @@ REM Double-quotes surround string to include a space character but are not inclu
 REM As CDAP_HOME can include a space, any use of it needs to be surrounded in double-quotes
 SET "CDAP_HOME=%~dp0"
 SET "CDAP_HOME=%CDAP_HOME:~0,-5%"
+IF /i NOT "%CDAP_HOME: =%"=="%CDAP_HOME%" (
+  echo CDAP_HOME "%CDAP_HOME%"
+  echo Contains one or more space characters, will not work correctly, and is not supported.
+  echo Exiting. 
+  GOTO :FINALLY
+)
+
 SET CDAP_VERSION=@@project.version@@
 
 REM Double-quotes surround string to include a space character but are not included in string

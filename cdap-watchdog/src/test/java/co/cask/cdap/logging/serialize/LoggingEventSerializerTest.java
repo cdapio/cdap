@@ -21,9 +21,12 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.LoggerContextVO;
 import ch.qos.logback.classic.spi.ThrowableProxy;
+import co.cask.cdap.common.logging.ComponentLoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
+import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.logging.logback.TestLoggingContext;
 import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
+import co.cask.cdap.logging.context.LoggingContextHelper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import kafka.utils.VerifiableProperties;
@@ -34,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -112,6 +116,26 @@ public class LoggingEventSerializerTest {
     ILoggingEvent actualEvent = serializer.fromBytes(ByteBuffer.wrap(serializedBytes));
     System.out.println(actualEvent);
     assertLoggingEventEquals(iLoggingEvent, actualEvent);
+  }
+
+
+  @Test
+  public void testOldSystemLoggingContext() throws Exception {
+    // see: CDAP-7482
+    Map<String, String> mdcMap = new HashMap<>();
+    mdcMap.put(ServiceLoggingContext.TAG_SYSTEM_ID, "ns1");
+    mdcMap.put(ComponentLoggingContext.TAG_COMPONENT_ID, "comp1");
+    mdcMap.put(ServiceLoggingContext.TAG_SERVICE_ID, "ser1");
+
+    ch.qos.logback.classic.spi.LoggingEvent iLoggingEvent = new ch.qos.logback.classic.spi.LoggingEvent();
+    iLoggingEvent.setCallerData(new StackTraceElement[]{
+      null
+    });
+    iLoggingEvent.setMDCPropertyMap(mdcMap);
+    LoggingEvent event = new LoggingEvent(iLoggingEvent);
+
+    Assert.assertTrue(LoggingContextHelper.getLoggingContext(event.getMDCPropertyMap())
+                        instanceof ServiceLoggingContext);
   }
 
   @Test
