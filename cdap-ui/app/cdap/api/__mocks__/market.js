@@ -12,14 +12,31 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
-import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
-import {apiCreator} from '../../services/resource-helper';
+import Rx from 'rx';
 
-let dataSrc = DataSourceConfigurer.getInstance();
-let basepath = '/namespaces/:namespace/apps/:appId';
-
-export const MyPipelineApi = {
-  publish: apiCreator(dataSrc, 'PUT', 'REQUEST', basepath)
+const MyMarketApi = {
+  __eDetail: {}
 };
+
+
+MyMarketApi.getIcon = function getIcon() {
+  return '/some/random/Image/path';
+};
+
+function setEntityDetail(entityDetail) {
+  this.__eDetail = entityDetail;
+}
+
+MyMarketApi.get = function() {
+  let subject = new Rx.Subject();
+  setTimeout(() => {
+    subject.onNext(this.__eDetail);
+  });
+  return subject;
+};
+
+MyMarketApi.__setEntityDetail = setEntityDetail.bind(MyMarketApi);
+
+module.exports = {MyMarketApi};
