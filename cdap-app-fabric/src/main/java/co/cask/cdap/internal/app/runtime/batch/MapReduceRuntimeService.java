@@ -20,7 +20,9 @@ import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
@@ -51,6 +53,7 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.input.MapperInput;
 import co.cask.cdap.internal.app.runtime.batch.dataset.input.MultipleInputs;
 import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputs;
 import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputsMainOutputWrapper;
+import co.cask.cdap.internal.app.runtime.batch.dataset.output.ProvidedOutput;
 import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGenerator;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
@@ -112,6 +115,7 @@ import java.net.URL;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -516,42 +520,39 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       : TransactionControl.IMPLICIT;
 
     if (TransactionControl.EXPLICIT == txControl) {
-      ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
-      try {
-        doInitialize();
-      } finally {
-        ClassLoaders.setContextClassLoader(oldClassLoader);
-      }
-    }
-    TransactionContext txContext = context.getTransactionContext();
-    Transactions.execute(txContext, "initialize", new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
-        try {
-          if (TransactionControl.IMPLICIT == txControl) {
-            doInitialize();
-          }
-          // set input/outputs info, and get one of the configured mapper's TypeToken
-          TypeToken<?> mapperTypeToken = setInputsIfNeeded(job);
-          setOutputsIfNeeded(job);
-          setOutputClassesIfNeeded(job, mapperTypeToken);
-          setMapOutputClassesIfNeeded(job, mapperTypeToken);
-          return null;
-        } finally {
-          ClassLoaders.setContextClassLoader(oldClassLoader);
+      doInitialize(job);
+    } else {
+      context.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          doInitialize(job);
         }
-      }
-    });
+      });
+    }
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
+    try {
+      // set input/outputs info, and get one of the configured mapper's TypeToken
+      TypeToken<?> mapperTypeToken = setInputsIfNeeded(job);
+      setOutputsIfNeeded(job);
+      setOutputClassesIfNeeded(job, mapperTypeToken);
+      setMapOutputClassesIfNeeded(job, mapperTypeToken);
+    } finally {
+      ClassLoaders.setContextClassLoader(oldClassLoader);
+    }
   }
 
-  private void doInitialize() throws Exception {
+  private void doInitialize(Job job) throws Exception {
     context.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
-    if (mapReduce instanceof ProgramLifecycle) {
-      //noinspection unchecked
-      ((ProgramLifecycle) mapReduce).initialize(context);
-    } else {
-      mapReduce.beforeSubmit(context);
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
+    try {
+      if (mapReduce instanceof ProgramLifecycle) {
+        //noinspection unchecked
+        ((ProgramLifecycle) mapReduce).initialize(context);
+      } else {
+        mapReduce.beforeSubmit(context);
+      }
+    } finally {
+      ClassLoaders.setContextClassLoader(oldClassLoader);
     }
     // once the initialize method is executed, set the status of the MapReduce to RUNNING
     context.setState(new ProgramState(ProgramStatus.RUNNING, null));
@@ -611,8 +612,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
             // TODO (CDAP-1952): this should be done in the output committer, to make the M/R fail if addPartition fails
             // TODO (CDAP-1952): also, should failure of an output committer change the status of the program run?
             boolean success = succeeded;
-            for (Map.Entry<String, OutputFormatProvider> dsEntry : context.getOutputFormatProviders().entrySet()) {
-              if (!commitOutput(succeeded, dsEntry.getKey(), dsEntry.getValue())) {
+            for (ProvidedOutput output : context.getOutputs().values()) {
+              if (!commitOutput(succeeded, output.getAlias(), output.getOutputFormatProvider())) {
                 success = false;
               }
             }
@@ -696,7 +697,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     for (Map.Entry<String, MapperInput> mapperInputEntry : context.getMapperInputs().entrySet()) {
       MapperInput mapperInput = mapperInputEntry.getValue();
       InputFormatProvider provider = mapperInput.getInputFormatProvider();
-      Map<String, String> inputFormatConfiguration = new HashMap<>(provider.getInputFormatConfiguration());
+      Map<String, String> inputFormatConfiguration = mapperInput.getInputFormatConfiguration();
 
       // default to what is configured on the job, if user didn't specify a mapper for an input
       Class<? extends Mapper> mapperClass = mapperInput.getMapper() == null ? jobMapperClass : mapperInput.getMapper();
@@ -726,7 +727,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       }
 
       MultipleInputs.addInput(job, mapperInputEntry.getKey(),
-                              provider.getInputFormatClassName(), inputFormatConfiguration, mapperClass);
+                              mapperInput.getInputFormatClassName(), inputFormatConfiguration, mapperClass);
     }
 
     // if firstMapperClass is null, then, user is not going through our APIs to add input; leave the job's input format
@@ -761,18 +762,17 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    * Sets the configurations used for outputs.
    */
   private void setOutputsIfNeeded(Job job) {
-    Map<String, OutputFormatProvider> outputFormatProviders = context.getOutputFormatProviders();
-    LOG.debug("Using as output for MapReduce Job: {}", outputFormatProviders.keySet());
-
-    if (outputFormatProviders.isEmpty()) {
+    Map<String, ProvidedOutput> outputsMap = context.getOutputs();
+    LOG.debug("Using as output for MapReduce Job: {}", outputsMap.keySet());
+    Collection<ProvidedOutput> outputs = outputsMap.values();
+    if (outputs.isEmpty()) {
       // user is not going through our APIs to add output; leave the job's output format to user
       return;
-    } else if (outputFormatProviders.size() == 1) {
+    } else if (outputs.size() == 1) {
       // If only one output is configured through the context, then set it as the root OutputFormat
-      Map.Entry<String, OutputFormatProvider> next = outputFormatProviders.entrySet().iterator().next();
-      OutputFormatProvider outputFormatProvider = next.getValue();
-      ConfigurationUtil.setAll(outputFormatProvider.getOutputFormatConfiguration(), job.getConfiguration());
-      job.getConfiguration().set(Job.OUTPUT_FORMAT_CLASS_ATTR, outputFormatProvider.getOutputFormatClassName());
+      ProvidedOutput output = outputs.iterator().next();
+      ConfigurationUtil.setAll(output.getOutputFormatConfiguration(), job.getConfiguration());
+      job.getConfiguration().set(Job.OUTPUT_FORMAT_CLASS_ATTR, output.getOutputFormatClassName());
       return;
     }
     // multiple output formats configured via the context. We should use a RecordWriter that doesn't support writing
@@ -781,16 +781,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                                                          new HashMap<String, String>());
     job.setOutputFormatClass(MultipleOutputsMainOutputWrapper.class);
 
-    for (Map.Entry<String, OutputFormatProvider> entry : outputFormatProviders.entrySet()) {
-      String outputName = entry.getKey();
-      OutputFormatProvider outputFormatProvider = entry.getValue();
-
-      String outputFormatClassName = outputFormatProvider.getOutputFormatClassName();
-      if (outputFormatClassName == null) {
-        throw new IllegalArgumentException("Output '" + outputName + "' provided null as the output format");
-      }
-
-      Map<String, String> outputConfig = outputFormatProvider.getOutputFormatConfiguration();
+    for (ProvidedOutput output : outputs) {
+      String outputName = output.getAlias();
+      String outputFormatClassName = output.getOutputFormatClassName();
+      Map<String, String> outputConfig = output.getOutputFormatConfiguration();
       MultipleOutputs.addNamedOutput(job, outputName, outputFormatClassName,
                                      job.getOutputKeyClass(), job.getOutputValueClass(), outputConfig);
 

@@ -19,32 +19,52 @@ package co.cask.cdap.internal.app.runtime.batch.dataset.input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import org.apache.hadoop.mapreduce.Mapper;
 
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
  * Encapsulates {@link InputFormatProvider} and a {@link Mapper} to use for that input.
  */
 public class MapperInput {
+  private final String alias;
   private final InputFormatProvider inputFormatProvider;
+  private final String inputFormatClassName;
+  private final Map<String, String> inputFormatConfiguration;
   private final Class<? extends Mapper> mapper;
-
-  /**
-   * Creates an instance of MapperInput with the given InputFormatProvider.
-   */
-  public MapperInput(InputFormatProvider inputFormatProvider) {
-    this(inputFormatProvider, null);
-  }
 
   /**
    * Creates an instance of MapperInput with the given InputFormatProvider and specified Mapper class.
    */
-  public MapperInput(InputFormatProvider inputFormatProvider, @Nullable Class<? extends Mapper> mapper) {
+  public MapperInput(String alias, InputFormatProvider inputFormatProvider, @Nullable Class<? extends Mapper> mapper) {
+    this.alias = alias;
     this.inputFormatProvider = inputFormatProvider;
+    this.inputFormatClassName = inputFormatProvider.getInputFormatClassName();
+    this.inputFormatConfiguration = inputFormatProvider.getInputFormatConfiguration();
     this.mapper = mapper;
+    if (inputFormatClassName == null) {
+      throw new IllegalArgumentException(
+        "Input '" + alias + "' provided null as the input format");
+    }
+    if (inputFormatConfiguration == null) {
+      throw new IllegalArgumentException(
+        "Input '" + alias + "' provided null as the input format configuration");
+    }
+  }
+
+  public String getAlias() {
+    return alias;
   }
 
   public InputFormatProvider getInputFormatProvider() {
     return inputFormatProvider;
+  }
+
+  public String getInputFormatClassName() {
+    return inputFormatClassName;
+  }
+
+  public Map<String, String> getInputFormatConfiguration() {
+    return inputFormatConfiguration;
   }
 
   @Nullable

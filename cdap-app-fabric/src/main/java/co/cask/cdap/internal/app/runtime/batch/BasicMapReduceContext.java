@@ -23,7 +23,6 @@ import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
-import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
@@ -43,6 +42,7 @@ import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetInputFormatProvider;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetOutputFormatProvider;
 import co.cask.cdap.internal.app.runtime.batch.dataset.input.MapperInput;
+import co.cask.cdap.internal.app.runtime.batch.dataset.output.ProvidedOutput;
 import co.cask.cdap.internal.app.runtime.batch.stream.StreamInputFormatProvider;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -67,7 +67,6 @@ import java.io.File;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -79,13 +78,14 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
   private final MapReduceSpecification spec;
   private final LoggingContext loggingContext;
   private final WorkflowProgramInfo workflowProgramInfo;
-  private final Map<String, OutputFormatProvider> outputFormatProviders;
   private final StreamAdmin streamAdmin;
   private final File pluginArchive;
   private final Map<String, LocalizeResource> resourcesToLocalize;
 
   // key is input name, value is the MapperInput (configuration info) for that input
-  private Map<String, MapperInput> inputs;
+  private final Map<String, MapperInput> inputs;
+  private final Map<String, ProvidedOutput> outputs;
+
   private Job job;
   private Resources mapperResources;
   private Resources reducerResources;
@@ -119,7 +119,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
     this.resourcesToLocalize = new HashMap<>();
 
     this.inputs = new HashMap<>();
-    this.outputFormatProviders = new HashMap<>();
+    this.outputs = new HashMap<>();
 
     if (spec.getInputDataSet() != null) {
       addInput(Input.ofDataset(spec.getInputDataSet()));
@@ -184,18 +184,13 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
 
   @SuppressWarnings("unchecked")
   private void addInput(String alias, InputFormatProvider inputFormatProvider, @Nullable Class<?> mapperClass) {
-    // prevent calls to addInput after setting a single input.
-    if (inputs instanceof ImmutableMap) {
-      throw new IllegalStateException("Can not add inputs after setting a single input.");
-    }
-
     if (mapperClass != null && !Mapper.class.isAssignableFrom(mapperClass)) {
       throw new IllegalArgumentException("Specified mapper class must extend Mapper.");
     }
     if (inputs.containsKey(alias)) {
       throw new IllegalArgumentException("Input already configured: " + alias);
     }
-    inputs.put(alias, new MapperInput(inputFormatProvider, (Class<? extends Mapper>) mapperClass));
+    inputs.put(alias, new MapperInput(alias, inputFormatProvider, (Class<? extends Mapper>) mapperClass));
   }
 
   @Override
@@ -226,10 +221,10 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
   }
 
   private void addOutput(String alias, OutputFormatProvider outputFormatProvider) {
-    if (this.outputFormatProviders.containsKey(alias)) {
+    if (this.outputs.containsKey(alias)) {
       throw new IllegalArgumentException("Output already configured: " + alias);
     }
-    this.outputFormatProviders.put(alias, outputFormatProvider);
+    this.outputs.put(alias, new ProvidedOutput(alias, outputFormatProvider));
   }
 
   @Override
@@ -263,21 +258,17 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
   }
 
   /**
-   * Gets the MapperInputs for this MapReduce job.
-   *
-   * @return a mapping from input name to the MapperInputs for that input
+   * @return a mapping from input name to the MapperInputs for the MapReduce job
    */
   Map<String, MapperInput> getMapperInputs() {
     return ImmutableMap.copyOf(inputs);
   }
 
   /**
-   * Gets the OutputFormatProviders for this MapReduce job.
-   *
-   * @return the OutputFormatProviders for the MapReduce job
+   * @return a map from output name to provied output for the MapReduce job
    */
-  Map<String, OutputFormatProvider> getOutputFormatProviders() {
-    return ImmutableMap.copyOf(outputFormatProviders);
+  Map<String, ProvidedOutput> getOutputs() {
+    return ImmutableMap.copyOf(outputs);
   }
 
   @Override
@@ -357,12 +348,6 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
       new DatasetInputFormatProvider(datasetInput.getNamespace(), datasetName, datasetArgs, dataset,
                                      datasetInput.getSplits(), MapReduceBatchReadableInputFormat.class);
     return (Input.InputFormatProviderInput) Input.of(datasetName, datasetInputFormatProvider).alias(originalAlias);
-  }
-
-  private InputFormatProvider createInputFormatProvider(String datasetName,
-                                                        Map<String, String> datasetArgs,
-                                                        @Nullable List<Split> splits) {
-    return createInput((Input.DatasetInput) Input.ofDataset(datasetName, datasetArgs, splits)).getInputFormatProvider();
   }
 
   /**

@@ -18,11 +18,17 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Output;
+import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.TimeseriesTable;
 import co.cask.cdap.api.dataset.table.Table;
@@ -35,7 +41,11 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.mapreduce.lib.partition.HashPartitioner;
+
+import java.util.Map;
 
 /**
  *
@@ -50,8 +60,11 @@ public class AppWithMapReduce extends AbstractApplication {
     createDataset("timeSeries", TimeseriesTable.class);
     createDataset("counters", Table.class);
     createDataset("countersFromContext", Table.class);
+    createDataset("recorder", KeyValueTable.class);
     addMapReduce(new ClassicWordCount());
     addMapReduce(new AggregateTimeseriesByTag());
+    addMapReduce(new FaiiingMR());
+    addMapReduce(new ExplicitFaiiingMR());
   }
 
   /**
@@ -185,6 +198,63 @@ public class AppWithMapReduce extends AbstractApplication {
     @Override
     public Configuration getConf() {
       return conf;
+    }
+  }
+
+  public static class FaiiingMR extends AbstractMapReduce {
+
+    @Override
+    public void initialize() throws Exception {
+
+      // this write should be invalidated if any of the following fails
+      KeyValueTable kvTable = getContext().getDataset("recorder");
+      kvTable.write("initialized", "true");
+
+      if (getContext().getRuntimeArguments().containsKey("failInput")) {
+        getContext().addInput(Input.of("x", new FailingInputFormatProvider()));
+      }
+      if (getContext().getRuntimeArguments().containsKey("failOutput")) {
+        getContext().addOutput(Output.of("x", new FailingOutputFormatProvider()));
+      }
+    }
+  }
+
+  public static class ExplicitFaiiingMR extends FaiiingMR {
+
+    @Override
+    @TransactionPolicy(TransactionControl.EXPLICIT)
+    public void initialize() throws Exception {
+      getContext().execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          ExplicitFaiiingMR.super.initialize();
+        }
+      });
+    }
+  }
+
+  public static class FailingInputFormatProvider implements InputFormatProvider {
+
+    @Override
+    public String getInputFormatClassName() {
+      return TextInputFormat.class.getName();
+    }
+
+    @Override
+    public Map<String, String> getInputFormatConfiguration() {
+      throw new RuntimeException("fail on purpose");
+    }
+  }
+
+  public static class FailingOutputFormatProvider implements OutputFormatProvider {
+    @Override
+    public String getOutputFormatClassName() {
+      return TextOutputFormat.class.getName();
+    }
+
+    @Override
+    public Map<String, String> getOutputFormatConfiguration() {
+      throw new RuntimeException("fail on purpose");
     }
   }
 }

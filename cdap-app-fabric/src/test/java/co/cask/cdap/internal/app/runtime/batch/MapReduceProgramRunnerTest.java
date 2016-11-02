@@ -60,6 +60,8 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.ExternalResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -82,6 +84,9 @@ import javax.annotation.Nullable;
  */
 @Category(XSlowTests.class)
 public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
+
+  private static final Logger LOG = LoggerFactory.getLogger(MapReduceProgramRunnerTest.class);
+
   @ClassRule
   public static final ExternalResource RESOURCE = new ExternalResource() {
     @Override
@@ -620,10 +625,57 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     table.write(new TimeseriesTable.Entry(metric2, Bytes.toBytes(4L), 3, tag1, tag3));
   }
 
-  private void runProgram(ApplicationWithPrograms app, Class<?> programClass, boolean frequentFlushing,
-                          boolean expectedStatus)
-    throws Exception {
-    HashMap<String, String> userArgs = Maps.newHashMap();
+  @Test
+  public void testFailureInInit() throws Exception {
+    final ApplicationWithPrograms app = deployApp(AppWithMapReduce.class);
+
+    testFailureInInit("true", app, AppWithMapReduce.FaiiingMR.class, ImmutableMap.<String, String>of());
+    testFailureInInit("false", app, AppWithMapReduce.FaiiingMR.class, ImmutableMap.of("failInput", "true"));
+    testFailureInInit("false", app, AppWithMapReduce.FaiiingMR.class, ImmutableMap.of("failOutput", "true"));
+    testFailureInInit("true", app, AppWithMapReduce.ExplicitFaiiingMR.class, ImmutableMap.<String, String>of());
+    testFailureInInit("false", app, AppWithMapReduce.ExplicitFaiiingMR.class, ImmutableMap.of("failInput", "true"));
+    testFailureInInit("false", app, AppWithMapReduce.ExplicitFaiiingMR.class, ImmutableMap.of("failOutput", "true"));
+  }
+
+  public void testFailureInInit(final String expected, ApplicationWithPrograms app,
+                                Class<?> programClass, Map<String, String> args) throws Exception {
+    // We want to verify that when a mapreduce fails during initialize(), especially
+    // if an input or output format provider fails to produce its configuration, the
+    // writes by that initialize() method are rolled back. (Background: prior to
+    // CDAP-7476, the input/output format provider was called *after* initialize
+    // returns, and therefore that transaction may have been committed already.
+
+    datasetCache.newTransactionContext();
+    final KeyValueTable kvTable = datasetCache.getDataset("recorder");
+    Transactions.createTransactionExecutor(txExecutorFactory, datasetCache.getTransactionAwares()).execute(
+      new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() {
+          // the table should not have initialized=true
+          kvTable.write("initialized", "false");
+        }
+      });
+
+    // 2) run job
+    final long start = System.currentTimeMillis();
+    runProgram(app, programClass, args, false);
+    final long stop = System.currentTimeMillis();
+
+    // 3) verify results
+    Transactions.createTransactionExecutor(txExecutorFactory, datasetCache.getTransactionAwares()).execute(
+      new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() {
+          // the table should not have initialized=true
+          Assert.assertEquals(expected, Bytes.toString(kvTable.read("initialized")));
+        }
+      });
+    datasetCache.dismissTransactionContext();
+  }
+
+  private void runProgram(ApplicationWithPrograms app, Class<?> programClass,
+                          boolean frequentFlushing, boolean expectedStatus) throws Exception {
+    Map<String, String> userArgs = new HashMap<>();
     userArgs.put("metric", "metric");
     userArgs.put("startTs", "1");
     userArgs.put("stopTs", "3");
@@ -631,6 +683,12 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     if (frequentFlushing) {
       userArgs.put("frequentFlushing", "true");
     }
+    runProgram(app, programClass, userArgs, expectedStatus);
+  }
+
+  private void runProgram(ApplicationWithPrograms app, Class<?> programClass,
+                          Map<String, String> userArgs, boolean expectedStatus) throws Exception {
+    LOG.info("Starting {} with arguments {}", programClass.getName(), userArgs);
     Assert.assertEquals(expectedStatus, runProgram(app, programClass, new BasicArguments(userArgs)));
   }
 
