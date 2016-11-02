@@ -372,27 +372,23 @@ class Home extends Component {
       entitiesToBeRendered = loading;
 
       bodyContent = (
-        <div className="entity-list">
-            <div className="entities-container">
-              <ReactCSSTransitionGroup
-                transitionName=""
-                transitionEnterTimeout={200}
-                transitionLeaveTimeout={200}
-              >
-                {entitiesToBeRendered}
-              </ReactCSSTransitionGroup>
-            </div>
-        </div>
+          <ReactCSSTransitionGroup
+            component="div"
+            className="entities-container"
+            transitionName=""
+            transitionEnterTimeout={200}
+            transitionLeaveTimeout={200}
+          >
+            {entitiesToBeRendered}
+          </ReactCSSTransitionGroup>
       );
 
     } else if(this.state.entities.length === 0 || this.state.entityErr) {
       entitiesToBeRendered = empty;
 
       bodyContent = (
-        <div className="entity-list">
-          <div className="entities-container">
-            {entitiesToBeRendered}
-          </div>
+        <div className="entities-container">
+          {entitiesToBeRendered}
         </div>
       );
 
@@ -419,17 +415,15 @@ class Home extends Component {
       );
 
       bodyContent = (
-        <div className="entity-list">
-            <div className="entities-container">
-              <ReactCSSTransitionGroup
-                transitionName={"entity-animation--" + this.state.animationDirection}
-                transitionEnterTimeout={400}
-                transitionLeaveTimeout={400}
-              >
-                {entitiesToBeRendered}
-              </ReactCSSTransitionGroup>
-            </div>
-        </div>
+        <ReactCSSTransitionGroup
+          component="div"
+          className="entities-container"
+          transitionName={"entity-animation--" + this.state.animationDirection}
+          transitionEnterTimeout={400}
+          transitionLeaveTimeout={400}
+        >
+          {entitiesToBeRendered}
+        </ReactCSSTransitionGroup>
       );
 
     }

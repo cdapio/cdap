@@ -116,7 +116,7 @@ export default class JumpButton extends Component {
             'fa-chevron-up': this.state.dropdownOpen
           })} />
         </DropdownToggle>
-        <DropdownMenu className="jump-button-dropdown">
+        <DropdownMenu className="jump-button-dropdown" right>
           {this.getJumpActions()}
         </DropdownMenu>
       </ButtonDropdown>
