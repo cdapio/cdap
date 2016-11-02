@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2015 Cask Data, Inc.
+# Copyright © 2015-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -22,11 +22,15 @@ rm -f /lib/udev/rules.d/75-persistent-net-generator.rules
 rm -rf /dev/.udev/ /var/lib/dhcp/*
 
 # Remove HWADDR/UUID from ifcfg-* files (RHEL-compatable)
-for ndev in /etc/sysconfig/network-scripts/ifcfg-*; do
+for ndev in $(ls -1 /etc/sysconfig/network-scripts/ifcfg-* 2>/dev/null); do
   [[ "${ndev##*/}" != "ifcfg-lo" ]] && sed -i '/^HWADDR/d;/^UUID/d' ${ndev}
 done
 
 # Adding a 2 sec delay to the interface up, to make the dhclient happy
-echo "pre-up sleep 2" >> /etc/network/interfaces
+if [[ -e /etc/network/interfaces.d/eth0.cfg ]]; then
+  echo "pre-up sleep 2" >> /etc/network/interfaces.d/eth0.cfg
+else
+  echo "pre-up sleep 2" >> /etc/network/interfaces
+fi
 
 exit 0
