@@ -59,6 +59,7 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
   private final QueueAdmin queueAdmin;
   private final StreamAdmin streamAdmin;
   private final TransactionExecutorFactory txExecutorFactory;
+  private final Impersonator impersonator;
 
   @Inject
   DistributedFlowProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf,
@@ -70,6 +71,7 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.txExecutorFactory = txExecutorFactory;
+    this.impersonator = impersonator;
   }
 
   @Override
@@ -99,7 +101,7 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
                                                                             flowSpec, localizeResources, eventHandler));
       DistributedFlowletInstanceUpdater instanceUpdater =
         new DistributedFlowletInstanceUpdater(program.getId(), controller, queueAdmin,
-                                              streamAdmin, flowletQueues, txExecutorFactory);
+                                              streamAdmin, flowletQueues, txExecutorFactory, impersonator);
       RunId runId = ProgramRunners.getRunId(options);
       return new FlowTwillProgramController(program.getId(), controller, instanceUpdater, runId).startListen();
     } catch (Exception e) {

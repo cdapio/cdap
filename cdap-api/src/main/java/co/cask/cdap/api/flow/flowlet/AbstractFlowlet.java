@@ -17,6 +17,8 @@
 package co.cask.cdap.api.flow.flowlet;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.internal.api.AbstractProgramDatasetConfigurable;
 
@@ -130,11 +132,13 @@ public abstract class AbstractFlowlet extends AbstractProgramDatasetConfigurable
   }
 
   @Override
+  @TransactionPolicy(TransactionControl.IMPLICIT)
   public void initialize(FlowletContext context) throws Exception {
     this.flowletContext = context;
   }
 
   @Override
+  @TransactionPolicy(TransactionControl.IMPLICIT)
   public void destroy() {
     // Nothing to do.
   }

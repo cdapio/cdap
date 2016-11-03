@@ -255,11 +255,17 @@ public class TimePartitionedFileSetTest {
     // make sure the dataset has no partitions
     final TimePartitionedFileSet tpfs = dsFrameworkUtil.getInstance(TPFS_INSTANCE);
     TransactionAware txAwareDataset = (TransactionAware) tpfs;
-    validateTimePartitions(tpfs, 0L, MAX, Collections.<Long, String>emptyMap());
+    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset);
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        validateTimePartitions(tpfs, 0L, MAX, Collections.<Long, String>emptyMap());
+      }
+    });
 
     Date date = DATE_FORMAT.parse("6/4/12 10:00 am");
     final long time = date.getTime();
-    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+    txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         tpfs.addPartition(time, "file");

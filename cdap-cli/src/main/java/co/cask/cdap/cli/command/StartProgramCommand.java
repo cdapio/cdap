@@ -56,23 +56,24 @@ public class StartProgramCommand extends AbstractAuthCommand {
       throw new CommandInputError(this);
     }
 
-    String appId = programIdParts[0];
-    String programName = programIdParts[1];
-    ProgramId programId = cliConfig.getCurrentNamespace().app(appId).program(elementType.getProgramType(), programName);
+    ProgramId programId = parseProgramId(arguments, elementType);
+    String appName = programId.getApplication();
+    String appVersion = programId.getVersion();
+    String programName = programId.getProgram();
 
-    String runtimeArgsString = arguments.get(ArgumentName.RUNTIME_ARGS.toString(), "");
+    String runtimeArgsString = arguments.getOptional(ArgumentName.RUNTIME_ARGS.toString(), "");
     if (runtimeArgsString == null || runtimeArgsString.isEmpty()) {
       // run with stored runtime args
-      programClient.start(programId.toId(), isDebug);
-      runtimeArgsString = GSON.toJson(programClient.getRuntimeArgs(programId.toId()));
-      output.printf("Successfully started %s '%s' of application '%s' with stored runtime arguments '%s'\n",
-                    elementType.getName(), programName, appId, runtimeArgsString);
+      programClient.start(programId, isDebug, null);
+      runtimeArgsString = GSON.toJson(programClient.getRuntimeArgs(programId));
+      output.printf("Successfully started %s '%s' of application '%s.%s' with stored runtime arguments '%s'\n",
+                    elementType.getName(), programName, appName, appVersion, runtimeArgsString);
     } else {
       // run with user-provided runtime args
       Map<String, String> runtimeArgs = ArgumentParser.parseMap(runtimeArgsString);
-      programClient.start(programId.toId(), isDebug, runtimeArgs);
-      output.printf("Successfully started %s '%s' of application '%s' with provided runtime arguments '%s'\n",
-                    elementType.getName(), programName, appId, runtimeArgsString);
+      programClient.start(programId, isDebug, runtimeArgs);
+      output.printf("Successfully started %s '%s' of application '%s.%s' with provided runtime arguments '%s'\n",
+                    elementType.getName(), programName, appName, appVersion, runtimeArgsString);
     }
 
   }

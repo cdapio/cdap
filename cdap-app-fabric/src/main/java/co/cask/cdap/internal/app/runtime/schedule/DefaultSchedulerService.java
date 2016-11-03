@@ -17,13 +17,13 @@
 package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -54,8 +54,9 @@ public class DefaultSchedulerService {
     private final ScheduleTaskRunner taskRunner;
 
     ScheduledJob(Store store, ProgramLifecycleService lifecycleService, PropertiesResolver propertiesResolver,
-                 ListeningExecutorService taskExecutor) {
-      this.taskRunner = new ScheduleTaskRunner(store, lifecycleService, propertiesResolver, taskExecutor);
+                 ListeningExecutorService taskExecutor, NamespaceQueryAdmin namespaceQueryAdmin, CConfiguration cConf) {
+      this.taskRunner = new ScheduleTaskRunner(store, lifecycleService, propertiesResolver, taskExecutor,
+                                               namespaceQueryAdmin, cConf);
     }
 
     @Override
@@ -72,7 +73,7 @@ public class DefaultSchedulerService {
       String applicationId = parts[1];
       String appVersion = parts[2];
       ProgramType programType = ProgramType.valueOf(parts[3]);
-      String programId = parts[4];
+      String programName = parts[4];
       String scheduleName = parts[5];
 
       LOG.debug("Schedule execute {}", key);
@@ -89,12 +90,15 @@ public class DefaultSchedulerService {
         builder.put(entry.getKey(), jobDataMap.getString(entry.getKey()));
       }
 
+      ProgramId programId = new ApplicationId(namespaceId, applicationId, appVersion).program(programType, programName);
       try {
-        taskRunner.run(new ApplicationId(namespaceId, applicationId, appVersion).program(programType, programId),
-                       builder.build(), userOverrides).get();
+        taskRunner.run(programId, builder.build(), userOverrides).get();
       } catch (TaskExecutionException e) {
         throw new JobExecutionException(e.getMessage(), e.getCause(), e.isRefireImmediately());
       } catch (Throwable t) {
+        // Do not  remove this log line. The exception at higher level gets caught by the quartz scheduler and is not
+        // logged in cdap master logs making it hard to debug issues.
+        LOG.info("Error while running program {}. {}", programId, t);
         throw new JobExecutionException(t.getMessage(), t.getCause(), false);
       }
     }

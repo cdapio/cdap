@@ -16,6 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
+import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.service.http.HttpContentConsumer;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
@@ -59,6 +61,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Modifier;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -111,9 +114,13 @@ final class HttpHandlerGenerator {
     Type.getType(HEAD.class)
   );
 
+  private static final Type TX_POLICY_TYPE = Type.getType(TransactionPolicy.class);
+  private static final Type TX_CONTROL_TYPE = Type.getType(TransactionControl.class);
+
   /**
    * Generates a new class that implements {@link HttpHandler} by copying methods signatures from the given
-   * {@link HttpServiceHandler} class. Calls to {@link HttpServiceHandler} methods are transactional.
+   * {@link HttpServiceHandler} class. Calls to {@link HttpServiceHandler} methods are transactional unless
+   * the method is annotated with {@link TransactionPolicy(TransactionControl)}.
    *
    * @param delegateType type of the {@link HttpServiceHandler}
    * @param pathPrefix prefix for all {@code @PATH} annotation
@@ -380,10 +387,23 @@ final class HttpHandlerGenerator {
       // If any annotations of the method is one of those HttpMethod,
       // this is a handler process, hence need to copy.
       boolean handlerMethod = false;
+      TransactionControl txCtrl = TransactionControl.IMPLICIT;
       for (AnnotationNode annotation : annotations) {
         if (isHandlerMethod(Type.getType(annotation.desc))) {
           handlerMethod = true;
-          break;
+        } else if (TX_POLICY_TYPE.equals(Type.getType(annotation.desc))) {
+          List list = annotation.values;
+          for (Iterator iter = list.iterator(); iter.hasNext(); ) {
+            if ("value".equals(iter.next()) && iter.hasNext()) {
+              Object value = iter.next();
+              if (String[].class.equals(value.getClass())) {
+                String[] values = (String[]) value;
+                if (values.length == 2 && TX_CONTROL_TYPE.equals(Type.getType(values[0]))) {
+                  txCtrl = TransactionControl.valueOf(values[1]);
+                }
+              }
+            }
+          }
         }
       }
 
@@ -440,7 +460,7 @@ final class HttpHandlerGenerator {
       }
 
       // Each request method is wrapped by a transaction lifecycle.
-      generateTransactionalDelegateBody(mg, new Method(name, desc));
+      generateTransactionalDelegateBody(mg, new Method(name, desc), txCtrl);
 
       super.visitEnd();
     }
@@ -515,11 +535,13 @@ final class HttpHandlerGenerator {
      * <pre>{@code
      *   public void|BodyConsumer handle(HttpRequest request, HttpResponder responder, ...) {
      *     T handler = getHandler();
-     *     TransactionContext txContext = getTransactionContext();
-     *     DelayedHttpServiceResponder wrappedResponder = wrapResponder(responder, txContext);
      *     HttpContentConsumer contentConsumer = null;
+     *     DelayedHttpServiceResponder wrappedResponder = wrapResponder(responder);
      *     try {
+     *       // only start tx if transaction control is IMPLICIT
+     *       TransactionContext txContext = getTransactionContext();
      *       txContext.start();
+     *       // only generate this try catch block if transaction control is IMPLICIT
      *       try {
      *         ClassLoader classLoader = ClassLoaders.setContextClassLoader(createHandlerContextClassLoader());
      *         try {
@@ -528,14 +550,20 @@ final class HttpHandlerGenerator {
      *         } finally {
      *           ClassLoaders.setContextClassLoader(classLoader);
      *         }
+     *       // only generate this try catch block if transaction control is IMPLICIT
      *       } catch (Throwable t) {
      *         LOG.error("User handler exception", t);
      *         txContext.abort(new TransactionFailureException("User handler exception", t));
      *       }
+     *       // only finish tx if transaction control is IMPLICIT
      *       txContext.finish();
-     *     } catch (TransactionFailureException e) {
+     *     } catch (TransactionFailureException e) { // generate only if transaction constrol is IMPLICIT
      *        LOG.error("Transaction failure: ", e);
      *        wrappedResponder.setTransactionFailureResponse(e);
+     *        contentConsumer = null;
+     *     } catch (Throwable t) { // generate only if transaction constrol is EXPLICIT
+     *        LOG.error("User Handler exception", t);
+     *        wrappedResponder.setTransactionFailureResponse(t);
      *        contentConsumer = null;
      *     }
      *     if (contentConsumer == null) {
@@ -545,12 +573,12 @@ final class HttpHandlerGenerator {
      *     }
      *
      *     // Only generated if handler method returns HttpContentConsumer
-     *     [return wrapContentConsumer(httpContentConsumer, wrappedResponder, txContext);]
+     *     [return wrapContentConsumer(httpContentConsumer, wrappedResponder);]
      *   }
      * }
      * </pre>
      */
-    private void generateTransactionalDelegateBody(GeneratorAdapter mg, Method method) {
+    private void generateTransactionalDelegateBody(GeneratorAdapter mg, Method method, TransactionControl txCtrl) {
       Type handlerType = Type.getType(delegateType.getRawType());
       Type txContextType = Type.getType(TransactionContext.class);
       Type txFailureExceptionType = Type.getType(TransactionFailureException.class);
@@ -569,8 +597,12 @@ final class HttpHandlerGenerator {
       Label handlerCatch = mg.newLabel();
       Label handlerFinish = mg.newLabel();
 
-      mg.visitTryCatchBlock(txTryBegin, txTryEnd, txCatch, txFailureExceptionType.getInternalName());
-      mg.visitTryCatchBlock(handlerTryBegin, handlerTryEnd, handlerCatch, throwableType.getInternalName());
+      if (TransactionControl.IMPLICIT == txCtrl) {
+        mg.visitTryCatchBlock(txTryBegin, txTryEnd, txCatch, txFailureExceptionType.getInternalName());
+        mg.visitTryCatchBlock(handlerTryBegin, handlerTryEnd, handlerCatch, throwableType.getInternalName());
+      } else {
+        mg.visitTryCatchBlock(txTryBegin, txTryEnd, txCatch, throwableType.getInternalName());
+      }
 
       // T handler = getHandler();
       int handler = mg.newLocal(handlerType);
@@ -580,38 +612,41 @@ final class HttpHandlerGenerator {
       mg.checkCast(handlerType);
       mg.storeLocal(handler, handlerType);
 
-      // TransactionContext txContext = getTransactionContext();
-      int txContext = mg.newLocal(txContextType);
-      mg.loadThis();
-      mg.invokeVirtual(classType,
-                       Methods.getMethod(TransactionContext.class, "getTransactionContext"));
-      mg.storeLocal(txContext, txContextType);
-
-      // DelayedHttpServiceResponder wrappedResponder = wrapResponder(responder, txContext);
-      int wrappedResponder = mg.newLocal(delayedHttpServiceResponderType);
-      mg.loadThis();
-      mg.loadArg(1);
-      mg.loadLocal(txContext);
-      mg.invokeVirtual(classType,
-                       Methods.getMethod(DelayedHttpServiceResponder.class, "wrapResponder",
-                                         HttpResponder.class, TransactionContext.class));
-      mg.storeLocal(wrappedResponder, delayedHttpServiceResponderType);
-
       // HttpContentConsumer contentConsumer = null;
       int contentConsumer = mg.newLocal(httpContentConsumerType);
       mg.visitInsn(Opcodes.ACONST_NULL);
       mg.storeLocal(contentConsumer, httpContentConsumerType);
 
+      // DelayedHttpServiceResponder wrappedResponder = wrapResponder(responder);;
+      int wrappedResponder = mg.newLocal(delayedHttpServiceResponderType);
+      mg.loadThis();
+      mg.loadArg(1);
+      mg.invokeVirtual(classType,
+                       Methods.getMethod(DelayedHttpServiceResponder.class, "wrapResponder", HttpResponder.class));
+      mg.storeLocal(wrappedResponder, delayedHttpServiceResponderType);
+
       // try {  // Outer try for transaction failure
       mg.mark(txTryBegin);
 
-      // txContext.start();
-      mg.loadLocal(txContext, txContextType);
-      mg.invokeVirtual(txContextType, Methods.getMethod(void.class, "start"));
+      // only start tx if transaction control is IMPLICIT
+      int txContext = 0;
+      if (TransactionControl.IMPLICIT == txCtrl) {
 
-      // try { // Inner try for user handler failure
-      mg.mark(handlerTryBegin);
+        // TransactionContext txContext = getTransactionContext();
+        txContext = mg.newLocal(txContextType);
+        mg.loadThis();
+        mg.invokeVirtual(classType,
+                         Methods.getMethod(TransactionContext.class, "getTransactionContext"));
+        mg.storeLocal(txContext, txContextType);
 
+        // txContext.start();
+        mg.loadLocal(txContext, txContextType);
+        mg.invokeVirtual(txContextType, Methods.getMethod(void.class, "start"));
+
+        // only generate this try catch block if transaction control is IMPLICIT
+        // try { // Inner try for user handler failure
+        mg.mark(handlerTryBegin);
+      }
       // If no body consumer, generates:
       // this.getHandler(wrapRequest(request), wrappedResponder, ...);
       //
@@ -622,59 +657,68 @@ final class HttpHandlerGenerator {
         mg.storeLocal(contentConsumer, httpContentConsumerType);
       }
 
-      // } // end of inner try
-      mg.mark(handlerTryEnd);
-      mg.goTo(handlerFinish);
+      if (TransactionControl.IMPLICIT == txCtrl) {
+        // } // end of inner try
+        mg.mark(handlerTryEnd);
+        mg.goTo(handlerFinish);
 
-      // } catch (Throwable t) {  // inner try-catch
-      mg.mark(handlerCatch);
-      int throwable = mg.newLocal(throwableType);
-      mg.storeLocal(throwable);
+        // } catch (Throwable t) {  // inner try-catch
+        mg.mark(handlerCatch);
+        int throwable = mg.newLocal(throwableType);
+        mg.storeLocal(throwable);
 
-      // LOG.error("User handler exception", e);
-      mg.getStatic(classType, "LOG", loggerType);
-      mg.visitLdcInsn("User handler exception: ");
-      mg.loadLocal(throwable);
-      mg.invokeInterface(loggerType, Methods.getMethod(void.class, "error", String.class, Throwable.class));
+        // LOG.error("User handler exception", e);
+        mg.getStatic(classType, "LOG", loggerType);
+        mg.visitLdcInsn("User handler exception: ");
+        mg.loadLocal(throwable);
+        mg.invokeInterface(loggerType, Methods.getMethod(void.class, "error", String.class, Throwable.class));
 
-      // transactionContext.abort(new TransactionFailureException("User handler exception: ", e));
-      mg.loadLocal(txContext, txContextType);
-      mg.newInstance(txFailureExceptionType);
-      mg.dup();
-      mg.visitLdcInsn("User handler exception: ");
-      mg.loadLocal(throwable);
-      mg.invokeConstructor(txFailureExceptionType,
-                           Methods.getMethod(void.class, "<init>", String.class, Throwable.class));
-      mg.invokeVirtual(txContextType, Methods.getMethod(void.class, "abort", TransactionFailureException.class));
+        // transactionContext.abort(new TransactionFailureException("User handler exception: ", e));
+        mg.loadLocal(txContext, txContextType);
+        mg.newInstance(txFailureExceptionType);
+        mg.dup();
+        mg.visitLdcInsn("User handler exception: ");
+        mg.loadLocal(throwable);
+        mg.invokeConstructor(txFailureExceptionType,
+                             Methods.getMethod(void.class, "<init>", String.class, Throwable.class));
+        mg.invokeVirtual(txContextType, Methods.getMethod(void.class, "abort", TransactionFailureException.class));
 
-      // } // end of inner catch
-      mg.mark(handlerFinish);
+        // } // end of inner catch
+        mg.mark(handlerFinish);
 
-      // txContext.finish()
-      mg.loadLocal(txContext, txContextType);
-      mg.invokeVirtual(txContextType, Methods.getMethod(void.class, "finish"));
-
+        // only finish tx if transaction control is IMPLICIT
+        // txContext.finish()
+        mg.loadLocal(txContext, txContextType);
+        mg.invokeVirtual(txContextType, Methods.getMethod(void.class, "finish"));
+      }
       mg.goTo(txTryEnd);
 
       // } // end of outer try
       mg.mark(txTryEnd);
       mg.goTo(txFinish);
 
-      // } catch (TransactionFailureException e) {
+      // } catch
       mg.mark(txCatch);
-      int txFailureException = mg.newLocal(txFailureExceptionType);
-      mg.storeLocal(txFailureException, txFailureExceptionType);
+
+      // } catch (TransactionFailureException e) {  // IMPLICIT
+      // } catch (Throwable t) { // EXPLICIT
+
+      Type caughtType = TransactionControl.IMPLICIT == txCtrl ? txFailureExceptionType : throwableType;
+      String message = TransactionControl.IMPLICIT == txCtrl ? "Transaction Failure: " : "User Handler failure: ";
+
+      int throwable = mg.newLocal(caughtType);
+      mg.storeLocal(throwable, caughtType);
 
       // LOG.error("Transaction failure: ", e);
       mg.getStatic(classType, "LOG", loggerType);
-      mg.visitLdcInsn("Transaction Failure: ");
-      mg.loadLocal(txFailureException);
+      mg.visitLdcInsn(message);
+      mg.loadLocal(throwable);
       mg.invokeInterface(loggerType, Methods.getMethod(void.class, "error", String.class,
                                                        Throwable.class));
 
       // wrappedResponder.setTransactionFailureResponse(e);
       mg.loadLocal(wrappedResponder);
-      mg.loadLocal(txFailureException);
+      mg.loadLocal(throwable);
       mg.invokeVirtual(delayedHttpServiceResponderType, Methods.getMethod(void.class, "setTransactionFailureResponse",
                                                                           Throwable.class));
 
@@ -691,7 +735,7 @@ final class HttpHandlerGenerator {
       //   wrappedResponder.execute();
       //   return null;
       // }
-      // return wrapContentConsumer(httpContentConsumer, wrappedResponder, txContext);
+      // return wrapContentConsumer(httpContentConsumer, wrappedResponder);
       //
       // Otherwise, generates
       // wrappedResponder.execute();
@@ -713,15 +757,13 @@ final class HttpHandlerGenerator {
 
         // IMPORTANT: If body consumer is used, calling wrapContentConsumer must be
         // the last thing to do in this generated method since the current context will be captured
-        // return wrapContentConsumer(httpContentConsumer, wrappedResponder, txContext);
+        // return wrapContentConsumer(httpContentConsumer, wrappedResponder);
         mg.loadThis();
         mg.loadLocal(contentConsumer);
         mg.loadLocal(wrappedResponder);
-        mg.loadLocal(txContext);
         mg.invokeVirtual(classType, Methods.getMethod(BodyConsumer.class, "wrapContentConsumer",
                                                       HttpContentConsumer.class,
-                                                      DelayedHttpServiceResponder.class,
-                                                      TransactionContext.class));
+                                                      DelayedHttpServiceResponder.class));
         mg.returnValue();
       } else {
         // wrappedResponder.execute()

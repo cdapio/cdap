@@ -21,6 +21,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
 
+import java.util.Objects;
+
 /**
  * Encapsulates information necessary to impersonate a user - principal and keytab path.
  */
@@ -76,5 +78,22 @@ public final class ImpersonationInfo {
       "principal='" + principal + '\'' +
       ", keytabURI='" + keytabURI + '\'' +
       '}';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ImpersonationInfo that = (ImpersonationInfo) o;
+    return Objects.equals(principal, that.principal) && Objects.equals(keytabURI, that.keytabURI);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(principal, keytabURI);
   }
 }

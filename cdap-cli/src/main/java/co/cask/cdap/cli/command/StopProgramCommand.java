@@ -44,17 +44,14 @@ public class StopProgramCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
-    if (programIdParts.length < 2) {
-      throw new CommandInputError(this);
-    }
+    ProgramId programId = parseProgramId(arguments, elementType);
+    String appName = programId.getApplication();
+    String appVersion = programId.getVersion();
+    String programName = programId.getProgram();
 
-    String appId = programIdParts[0];
-    String programName = programIdParts[1];
-    ProgramId programId = cliConfig.getCurrentNamespace().app(appId).program(elementType.getProgramType(), programName);
-
-    programClient.stop(programId.toId());
-    output.printf("Successfully stopped %s '%s' of application '%s'\n", elementType.getName(), programName, appId);
+    programClient.stop(programId);
+    output.printf("Successfully stopped %s '%s' of application '%s.%s'\n", elementType.getName(), programName,
+                  appName, appVersion);
   }
 
   @Override

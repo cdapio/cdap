@@ -21,7 +21,7 @@
     <name>stream.notification.threshold</name>
     <value>1</value>
     <description>
-      Size of data, in megabytes, to be ingested by a stream before a
+      Size of data in megabytes to be ingested by a stream before a
       notification is published
     </description>
   </property>

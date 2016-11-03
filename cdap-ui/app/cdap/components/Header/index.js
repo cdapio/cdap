@@ -20,7 +20,7 @@ require('./Header.less');
 import HeaderBrand from '../HeaderBrand';
 import HeaderNavbarList from '../HeaderNavbarList';
 import HeaderActions from '../HeaderActions';
-import Store from '../../services/store/store.js';
+import NamespaceStore from 'services/NamespaceStore';
 
 export default class Header extends Component {
   constructor(props) {
@@ -44,9 +44,13 @@ export default class Header extends Component {
             <HeaderBrand/>
             <HeaderNavbarList
               list={this.state.navbarItemList}
-              store={Store}
+              tag={this.props.tag}
+              store={NamespaceStore}
             />
-            <HeaderActions />
+          <HeaderActions
+            tag={this.props.tag}
+            product="cdap"
+          />
           </nav>
         </div>
       </div>
@@ -58,5 +62,6 @@ Header.propTypes = {
   navbarItemList: PropTypes.arrayOf(PropTypes.shape({
     linkTo: PropTypes.string,
     title: PropTypes.string
-  }))
+  })),
+  tag: PropTypes.string
 };

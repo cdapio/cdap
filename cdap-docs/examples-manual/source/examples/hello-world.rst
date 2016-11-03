@@ -119,10 +119,10 @@ You can also use the CDAP CLI:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh send stream who "'Alice Cumberbund'"
-  $ cdap-cli.sh send stream who "Bob"
-  $ cdap-cli.sh send stream who "'Jane Doe'"
-  $ cdap-cli.sh send stream who "Tom"
+  $ cdap cli send stream who "'Alice Cumberbund'"
+  $ cdap cli send stream who "Bob"
+  $ cdap cli send stream who "'Jane Doe'"
+  $ cdap cli send stream who "Tom"
   ...
   
 

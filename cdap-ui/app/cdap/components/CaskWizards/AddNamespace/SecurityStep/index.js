@@ -14,39 +14,94 @@
  * the License.
  */
 import React from 'react';
-import {Col, FormGroup, Label, Form, Input} from 'reactstrap';
+import {Col, FormGroup, Label, Form} from 'reactstrap';
+import AddNamespaceStore from 'services/WizardStores/AddNamespace/AddNamespaceStore';
+import AddNamespaceActions  from 'services/WizardStores/AddNamespace/AddNamespaceActions';
+import InputWithValidations from 'components/InputWithValidations';
+import {Provider, connect} from 'react-redux';
 import T from 'i18n-react';
 
-export default function SecurityStep() {
-  return(
+//Principal
+const mapStateToPrincipalProps = (state) => {
+  return {
+    value: state.security.principal,
+    type: 'text',
+    placeholder: T.translate('features.Wizard.Add-Namespace.Step3.principal-placeholder')
+  };
+};
 
-    <Form
-      className="form-horizontal"
-      onSubmit={(e) => {
-        e.preventDefault();
-        return false;
-      }}
-    >
-      <FormGroup>
-        <Col xs="3">
-          <Label className="control-label">
-            {T.translate('features.Wizard.Add-Namespace.Step3.principal-label')}
-          </Label>
-        </Col>
-        <Col xs="7">
-          <Input />
-        </Col>
-      </FormGroup>
-      <FormGroup>
-        <Col xs="3">
-          <Label className="control-label">
-            {T.translate('features.Wizard.Add-Namespace.Step3.keytab-uri-label')}
-          </Label>
-        </Col>
-        <Col xs="7">
-          <Input />
-        </Col>
-      </FormGroup>
-    </Form>
+const mapDispatchToPrincipalProps = (dispatch) => {
+  return {
+    onChange: (e) => {
+      dispatch({
+        type: AddNamespaceActions.setPrincipal,
+        payload: { principal : e.target.value }
+      });
+    }
+  };
+};
+
+//KeytabURI
+const mapStateTokeytabURIProps = (state) => {
+  return {
+    value: state.security.keyTab,
+    type: 'text',
+    placeholder: T.translate('features.Wizard.Add-Namespace.Step3.keytab-uri-placeholder')
+  };
+};
+
+const mapDispatchTokeytabURIProps = (dispatch) => {
+  return {
+    onChange: (e) => {
+      dispatch({
+        type: AddNamespaceActions.setKeytab,
+        payload: { keyTab : e.target.value }
+      });
+    }
+  };
+};
+
+const InputPrincipal = connect(
+  mapStateToPrincipalProps,
+  mapDispatchToPrincipalProps
+)(InputWithValidations);
+
+const InputKeytabURI = connect(
+  mapStateTokeytabURIProps,
+  mapDispatchTokeytabURIProps
+)(InputWithValidations);
+
+export default function PreferencesStep() {
+  return(
+      <Provider store={AddNamespaceStore}>
+        <Form
+          className="form-horizontal"
+          onSubmit={(e) => {
+            e.preventDefault();
+            return false;
+          }}
+        >
+          <FormGroup>
+            <Col xs="3">
+              <Label className="control-label">
+                {T.translate('features.Wizard.Add-Namespace.Step3.principal-label')}
+              </Label>
+            </Col>
+            <Col xs="7">
+              <InputPrincipal />
+            </Col>
+          </FormGroup>
+          <FormGroup>
+            <Col xs="3">
+              <Label className="control-label">
+                {T.translate('features.Wizard.Add-Namespace.Step3.keytab-uri-label')}
+              </Label>
+            </Col>
+            <Col xs="7">
+              <InputKeytabURI />
+            </Col>
+          </FormGroup>
+        </Form>
+      </Provider>
   );
 }

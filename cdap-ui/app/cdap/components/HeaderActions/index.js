@@ -14,36 +14,30 @@
  * the License.
  */
 
-import React, {Component} from 'react';
+import React, {Component, PropTypes} from 'react';
 import { Dropdown, DropdownMenu, DropdownItem } from 'reactstrap';
-import cookie from 'react-cookie';
 import PlusButton from '../PlusButton';
 import T from 'i18n-react';
-import Store from 'services/store/store.js';
+import NamespaceStore from 'services/NamespaceStore';
 import SpotlightSearch from 'components/SpotlightSearch';
 require('./HeaderActions.less');
 var classNames = require('classnames');
 import NamespaceDropdown from 'components/NamespaceDropdown';
 import ProductsDrawer from 'components/ProductsDrawer';
+import RedirectToLogin from 'services/redirect-to-login';
 
 export default class HeaderActions extends Component {
   constructor(props) {
     super(props);
     this.state = {
       settingsOpen : false,
-      name : Store.getState().userName,
+      name : NamespaceStore.getState().username,
     };
     this.logout = this.logout.bind(this);
     this.toggleSettingsDropdown = this.toggleSettingsDropdown.bind(this);
   }
   logout() {
-    cookie.remove('CDAP_Auth_Token', { path: '/' });
-    cookie.remove('CDAP_Auth_User', { path: '/' });
-    window.location.href = window.getAbsUIUrl({
-      uiApp: 'login',
-      redirectUrl: location.href,
-      clientId: 'cdap'
-    });
+    RedirectToLogin({statusCode: 401});
   }
   toggleSettingsDropdown(){
     this.setState({
@@ -134,13 +128,18 @@ export default class HeaderActions extends Component {
             </Dropdown>
           </div>
           <div className="namespace-dropdown">
-            <NamespaceDropdown />
+            <NamespaceDropdown tag={this.props.tag}/>
           </div>
           <div className="products-dropdown">
-            <ProductsDrawer currentChoice="cdap"/>
+            <ProductsDrawer currentChoice={this.props.product}/>
           </div>
         </ul>
       </div>
     );
   }
 }
+
+HeaderActions.propTypes = {
+  tag: PropTypes.string,
+  product: PropTypes.string
+};

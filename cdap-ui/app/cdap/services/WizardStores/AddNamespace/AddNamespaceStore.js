@@ -18,7 +18,7 @@ import {combineReducers, createStore} from 'redux';
 import AddNamespaceActions from 'services/WizardStores/AddNamespace/AddNamespaceActions';
 import AddNamespaceWizardConfig from 'services/WizardConfigs/AddNamespaceWizardConfig';
 import head from 'lodash/head';
-
+var shortid = require('shortid');
 
 // Defaults
 const defaultState = {
@@ -43,22 +43,26 @@ const defaultSecurityState = Object.assign({
   keyTab: ''
 }, defaultState);
 
-const defaultPreferencesState = Object.assign({
-  preferencesKey: '',
-  preferencesVal: ''
-}, defaultState);
-
+const defaultPreferences = {
+  keyValues : {
+    pairs : [{
+      key : '',
+      value : '',
+      uniqueId : shortid.generate()
+    }]
+  }
+};
 
 const defaultAction = {
   type: '',
-  payload: {}
+  payload: {},
+  uniqueId: shortid.generate()
 };
 
 const defaultInitialState = {
   general: defaultGeneralState,
   mapping: defaultMappingState,
-  security: defaultSecurityState,
-  preferences: defaultPreferencesState
+  security: defaultSecurityState
 };
 
 // Utilities. FIXME: Move to a common place?
@@ -76,8 +80,6 @@ const generalStepRequiredFields = head(
     .steps
     .filter(step => step.id === 'general')
   ).requiredFields;
-
-
 
 const onErrorHandler = (reducerId, stateCopy, action) => {
   stateCopy = Object.assign({}, stateCopy);
@@ -155,8 +157,7 @@ const mapping = (state = null, action = defaultAction) => {
       return state;
   }
   return Object.assign({}, stateCopy, {
-    __complete: isComplete(stateCopy),
-    __error: action.payload.error || false
+    __complete: true
   });
 };
 
@@ -183,41 +184,36 @@ const security = (state = null, action = defaultAction) => {
       return state;
   }
   return Object.assign({}, stateCopy, {
-    __complete: isComplete(stateCopy),
+    __complete: true,
     __error: action.payload.error || false
   });
 };
 
-const preferences = (state = null, action = defaultAction) => {
+const preferences = (state = defaultPreferences, action = defaultAction) => {
   let stateCopy;
   switch (action.type) {
-    case AddNamespaceActions.setPreferencesKey:
+    case AddNamespaceActions.setPreferences :
       stateCopy = Object.assign({}, state, {
-        preferencesKey: action.payload.preferencesKey
+        keyValues : action.payload.keyValues
       });
-      break;
-    case AddNamespaceActions.setPreferencesVal:
-      stateCopy = Object.assign({}, state, {
-        preferencesVal: action.payload.preferencesVal
-      });
-      break;
-    case AddNamespaceActions.onError:
-      return onErrorHandler('preferences', Object.assign({}, state), action);
-    case AddNamespaceActions.onSuccess:
-      return onSuccessHandler('preferences', Object.assign({}, state), action);
+      return stateCopy;
     case AddNamespaceActions.onReset:
-      return defaultPreferencesState;
+      return {
+        keyValues : {
+          pairs: [{
+            key : '',
+            value : '',
+            uniqueId : shortid.generate()
+          }]
+        }
+      };
     default:
       return state;
   }
-  return Object.assign({}, stateCopy, {
-    __complete: isComplete(stateCopy),
-    __error: action.payload.error || false
-  });
 };
 
 // Store
-const createStoreWrapper = () => {
+const createAddNamespaceStore = () => {
   return createStore(
     combineReducers({
       general,
@@ -229,6 +225,6 @@ const createStoreWrapper = () => {
   );
 };
 
-const addNamespaceStore = createStoreWrapper();
+const addNamespaceStore = createAddNamespaceStore();
 export default addNamespaceStore;
-export {createStoreWrapper};
+export {createAddNamespaceStore};

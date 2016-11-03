@@ -137,7 +137,7 @@ for the 2012 season of the NFL (National Football League):
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh call service SportResults.UploadService PUT leagues/nfl/seasons/2012 body:file examples/SportResults/resources/nfl-2012.csv
+  $ cdap cli call service SportResults.UploadService PUT leagues/nfl/seasons/2012 body:file examples/SportResults/resources/nfl-2012.csv
   
 Using a ``curl``  command:
 
@@ -151,11 +151,11 @@ Feel free to add more seasons |---| and sport leagues:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh call service SportResults.UploadService PUT leagues/nfl/seasons/2013 body:file examples/SportResults/resources/nfl-2013.csv
+  $ cdap cli call service SportResults.UploadService PUT leagues/nfl/seasons/2013 body:file examples/SportResults/resources/nfl-2013.csv
   
-  $ cdap-cli.sh call service SportResults.UploadService PUT leagues/nba/seasons/2012 body:file examples/SportResults/resources/nba-2012.csv
+  $ cdap cli call service SportResults.UploadService PUT leagues/nba/seasons/2012 body:file examples/SportResults/resources/nba-2012.csv
 
-  $ cdap-cli.sh call service SportResults.UploadService PUT leagues/nba/seasons/2013 body:file examples/SportResults/resources/nba-2013.csv
+  $ cdap cli call service SportResults.UploadService PUT leagues/nba/seasons/2013 body:file examples/SportResults/resources/nba-2013.csv
   
 Note that the files can only be uploaded once for each season and league. A subsequent upload would fail because the file partition already exists.
 
@@ -165,7 +165,7 @@ To run the ``ScoreCounter`` over all seasons of the NFL:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh start mapreduce SportResults.ScoreCounter "league='nfl'"
+  $ cdap cli start mapreduce SportResults.ScoreCounter "league='nfl'"
   
 Note that the MapReduce can only be run once for each league. A subsequent run would fail because the output already exists.
 
@@ -177,25 +177,25 @@ see the existing partitions of a dataset, use the ``show partitions`` query:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh execute "\"show partitions dataset_results\""
+  $ cdap cli execute "\"show partitions dataset_results\""
 
 For example, to find the three games with the highest point difference in the 2012 NFL season, over all
 seasons (that have been uploaded), and for all seasons of all sport leagues:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh execute "\"select * from dataset_results where league='nfl' and season=2012 order by winnerpoints-loserpoints desc limit 3\""
+  $ cdap cli execute "\"select * from dataset_results where league='nfl' and season=2012 order by winnerpoints-loserpoints desc limit 3\""
 
-  $ cdap-cli.sh execute "\"select * from dataset_results where league='nfl' order by winnerpoints-loserpoints desc limit 3\""
+  $ cdap cli execute "\"select * from dataset_results where league='nfl' order by winnerpoints-loserpoints desc limit 3\""
 
-  $ cdap-cli.sh execute "\"select * from dataset_results order by winnerpoints-loserpoints desc limit 3\""
+  $ cdap cli execute "\"select * from dataset_results order by winnerpoints-loserpoints desc limit 3\""
 
 You can also explore the *totals* dataset. For example, to find the NFL teams team that, over their history,
 have scored the least points compared to the points they conceded:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh execute "\"select * from dataset_totals where league = 'nfl' order by conceded - scored desc limit 3"\"
+  $ cdap cli execute "\"select * from dataset_totals where league = 'nfl' order by conceded - scored desc limit 3"\"
   
 The last command would produce results (your results may vary, depending on the datasets you load) such as::
 

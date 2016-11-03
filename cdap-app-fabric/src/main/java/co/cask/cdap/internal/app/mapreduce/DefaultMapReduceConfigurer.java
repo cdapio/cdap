@@ -74,16 +74,6 @@ public final class DefaultMapReduceConfigurer extends DefaultPluginConfigurer im
   }
 
   @Override
-  public void setInputDataset(String dataset) {
-    this.inputDataset = dataset;
-  }
-
-  @Override
-  public void setOutputDataset(String dataset) {
-    this.outputDataset = dataset;
-  }
-
-  @Override
   public void setDriverResources(Resources resources) {
     this.driverResources = resources;
   }

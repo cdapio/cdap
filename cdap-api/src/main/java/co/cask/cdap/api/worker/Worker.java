@@ -17,6 +17,9 @@
 package co.cask.cdap.api.worker;
 
 import co.cask.cdap.api.ProgramLifecycle;
+import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.annotation.TransactionPolicy;
 
 /**
  * Defines a Worker.
@@ -27,6 +30,27 @@ public interface Worker extends Runnable, ProgramLifecycle<WorkerContext> {
    * Configure a Worker.
    */
   void configure(WorkerConfigurer configurer);
+
+  /**
+   * Initialize the Worker.
+   *
+   * Note that unlike most program types, this method is not called within an implicit transaction,
+   * but instead it can start its own transactions using {@link WorkerContext#execute(TxRunnable)}.
+   * methods.
+   */
+  @Override
+  @TransactionPolicy(TransactionControl.EXPLICIT)
+  void initialize(WorkerContext context) throws Exception;
+
+  /**
+   * Destroy the Worker.
+   *
+   * Note that unlike most program types, this method is not called within an implicit transaction,
+   * but instead it can start its own transactions using {@link WorkerContext#execute(TxRunnable)}.
+   */
+  @Override
+  @TransactionPolicy(TransactionControl.EXPLICIT)
+  void destroy();
 
   /**
    * Request to stop the running worker.

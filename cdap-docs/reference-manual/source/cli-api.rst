@@ -27,7 +27,7 @@ Interactive Mode
 
 .. highlight:: console
 
-To run the CLI in interactive mode, run the ``cdap-cli.sh`` executable with no arguments from a terminal:
+To run the CLI in interactive mode, run the ``cdap cli`` executable with no arguments from a terminal:
 
 .. tabbed-parsed-literal::
   :tabs: Linux,Windows,"Distributed CDAP","Cloudera Manager Clusters"
@@ -37,19 +37,19 @@ To run the CLI in interactive mode, run the ``cdap-cli.sh`` executable with no a
 
   .. Linux
 
-  $ ./bin/cdap-cli.sh
+  $ ./bin/cdap cli
 
   .. Windows
 
-  > .\bin\cdap-cli.bat
+  > .\bin\cdap.bat cli
   
   .. Distributed CDAP
 
-  $ /opt/cdap/cli/bin/cdap-cli.sh
+  $ /opt/cdap/cli/bin/cdap cli
   
   .. Cloudera Manager Clusters
   
-  $ /opt/cloudera/parcels/cdap/cli/bin/cdap-cli.sh
+  $ /opt/cloudera/parcels/cdap/cli/bin/cdap cli
 
 
 The executable should bring you into a shell, with a prompt similar to:
@@ -92,7 +92,7 @@ as the argument. For example, to list all applications currently deployed to CDA
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh list apps
+  $ cdap cli list apps
 
 Connecting to Secure CDAP Instances
 -----------------------------------
@@ -112,7 +112,7 @@ The CLI can be started with command-line options:
 
   .. Linux
 
-  usage: cdap-cli.sh [--autoconnect <true|false>] [--debug] [--help]
+  usage: cdap cli [--autoconnect <true|false>] [--debug] [--help]
                      [--verify-ssl <true|false>] [--uri <uri>][--script
                      <script-file>]
    -a,--autoconnect <arg>   If "true", try provided connection (from uri)
@@ -131,7 +131,7 @@ The CLI can be started with command-line options:
 
   .. Windows
 
-  usage: cdap-cli.bat [--autoconnect <true|false>] [--debug] [--help]
+  usage: cdap.bat cli [--autoconnect <true|false>] [--debug] [--help]
                       [--verify-ssl <true|false>] [--uri <uri>][--script
                       <script-file>]
    -a,--autoconnect <arg>   If "true", try provided connection (from uri)

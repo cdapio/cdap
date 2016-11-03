@@ -37,7 +37,8 @@ import Router from 'react-router/BrowserRouter';
 import T from 'i18n-react';
 import Match from 'react-router/Match';
 import Miss from 'react-router/Miss';
-import Store from 'services/store/store';
+import NamespaceStore from 'services/NamespaceStore';
+import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import CaskVideoModal from 'components/CaskVideoModal';
 import RouteToNamespace from 'components/RouteToNamespace';
 import Helmet from 'react-helmet';
@@ -49,7 +50,7 @@ class CDAP extends Component {
     this.closeCaskVideo = this.closeCaskVideo.bind(this);
     this.openCaskVideo = this.openCaskVideo.bind(this);
     this.state = {
-      selectedNamespace : Store.getState().selectedNamespace,
+      selectedNamespace : NamespaceStore.getState().selectedNamespace,
       videoOpen : false
     };
   }
@@ -69,29 +70,30 @@ class CDAP extends Component {
   componentWillMount(){
     // Polls for namespace data
     MyNamespaceApi.pollList()
-      .subscribe((res) => {
-        if (res.length > 0){
-          Store.dispatch({
-            type: 'UPDATE_NAMESPACES',
-            payload: {
-              namespaces : res
-            }
-          });
-        } else {
-          //To-Do: No namespaces returned ; throw error / redirect
+      .subscribe(
+        (res) => {
+          if (res.length > 0){
+            NamespaceStore.dispatch({
+              type: NamespaceActions.updateNamespaces,
+              payload: {
+                namespaces : res
+              }
+            });
+          } else {
+            //To-Do: No namespaces returned ; throw error / redirect
+          }
         }
-      });
+      );
   }
 
   render() {
-    if ( window.CDAP_CONFIG.securityEnabled && !cookie.load('CDAP_Auth_Token')) {
-      //authentication failed ; redirect to another page
-      window.location.href = window.getAbsUIUrl({
-        uiApp: 'login',
-        redirectUrl: location.href,
-        clientId: 'cdap'
+    if (window.CDAP_CONFIG.securityEnabled) {
+      NamespaceStore.dispatch({
+        type: NamespaceActions.updateUsername,
+        payload: {
+          username: cookie.load('CDAP_Auth_User')
+        }
       });
-      return null;
     }
 
     return (

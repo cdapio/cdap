@@ -255,7 +255,16 @@ public abstract class TableConcurrentTest<T extends Table> extends TableTest<T> 
     Assert.assertTrue("First thread failed. ", success1.get());
     Assert.assertTrue("Second thread failed. ", success2.get());
     // perform a read - if the table was not opened successfully this will fail
-    getTable(CONTEXT1, "conccreate").get(new byte[]{'a'}, new byte[][]{{'b'}});
+    final Table t = getTable(CONTEXT1, "conccreate");
+    Assert.assertNotNull(t);
+    TransactionExecutor txExecutor =
+      txExecutorFactory.createExecutor(Lists.newArrayList((TransactionAware) t));
+    txExecutor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        t.get(new byte[]{'a'}, new byte[][]{{'b'}});
+      }
+    });
   }
 
   class CreateThread extends Thread {

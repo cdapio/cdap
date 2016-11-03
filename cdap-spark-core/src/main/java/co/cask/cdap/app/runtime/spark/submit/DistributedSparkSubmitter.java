@@ -25,6 +25,7 @@ import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.proto.id.ProgramRunId;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.Collections;
@@ -63,6 +64,8 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
     if (updateInterval > 0) {
       config.put("spark.yarn.token.renewal.interval", Long.toString(updateInterval));
     }
+    config.put("spark.yarn.appMasterEnv.CDAP_LOG_DIR",  ApplicationConstants.LOG_DIR_EXPANSION_VAR);
+    config.put("spark.executorEnv.CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR);
 
     return config;
   }

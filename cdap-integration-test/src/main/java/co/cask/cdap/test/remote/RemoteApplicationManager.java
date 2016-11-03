@@ -30,6 +30,7 @@ import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.test.AbstractApplicationManager;
 import co.cask.cdap.test.DefaultMapReduceManager;
 import co.cask.cdap.test.DefaultSparkManager;
@@ -54,17 +55,17 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   private final ApplicationClient applicationClient;
   private final RESTClient restClient;
 
+  @Deprecated
   public RemoteApplicationManager(Id.Application application, ClientConfig clientConfig, RESTClient restClient) {
-    super(application);
+    this(application.toEntityId(), clientConfig, restClient);
+  }
 
+  public RemoteApplicationManager(ApplicationId application, ClientConfig clientConfig, RESTClient restClient) {
+    super(application);
     this.clientConfig = clientConfig;
     this.programClient = new ProgramClient(clientConfig, restClient);
     this.applicationClient = new ApplicationClient(clientConfig, restClient);
     this.restClient = restClient;
-  }
-
-  public RemoteApplicationManager(ApplicationId application, ClientConfig clientConfig, RESTClient restClient) {
-    this(application.toId(), clientConfig, restClient);
   }
 
   @Override
@@ -93,8 +94,8 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
 
   @Override
   public ServiceManager getServiceManager(String serviceName) {
-    Id.Service programId = Id.Service.from(application.toId(), serviceName);
-    return new RemoteServiceManager(programId, clientConfig, restClient, this);
+    ServiceId serviceId = new ServiceId(application, serviceName);
+    return new RemoteServiceManager(serviceId, clientConfig, restClient, this);
   }
 
   @Override
@@ -115,11 +116,11 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   @Override
   public void stopAll() {
     try {
-      for (ProgramRecord programRecord : applicationClient.listPrograms(application.toId())) {
+      for (ProgramRecord programRecord : applicationClient.listPrograms(application)) {
         // have to do a check, since appFabricServer.stop will throw error when you stop something that is not running.
-        Id.Program id = Id.Program.from(application.toId(), programRecord.getType(), programRecord.getName());
+        ProgramId id = application.program(programRecord.getType(), programRecord.getName());
         if (isRunning(id)) {
-          programClient.stop(Id.Program.from(application.toId(), id.getType(), id.getId()));
+          programClient.stop(id);
         }
       }
     } catch (Exception e) {
@@ -204,12 +205,12 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
 
   @Override
   public void delete() throws Exception {
-    applicationClient.delete(application.toId());
+    applicationClient.delete(application);
   }
 
   @Override
   public ApplicationDetail getInfo() throws Exception {
-    return applicationClient.get(application.toId());
+    return applicationClient.get(application);
   }
 
   @Override

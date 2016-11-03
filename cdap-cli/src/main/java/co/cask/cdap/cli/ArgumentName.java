@@ -20,7 +20,7 @@ package co.cask.cdap.cli;
  * Argument names.
  */
 public enum ArgumentName {
-  PROGRAM("app-id.program-id"),
+  PROGRAM("app-id.[app-version.]program-id"),
   STREAM("stream-id"),
   WORKER("app-id.worker-id"),
   METHOD("app-id.method-id"),
@@ -62,6 +62,7 @@ public enum ArgumentName {
   DATASET_MODULE_JAR_CLASSNAME("module-jar-classname"),
   QUERY("query"),
   APP("app-id"),
+  APP_VERSION("app-version"),
   PROGRAM_TYPES("program-types"),
   VIEW("view-id"),
   HTTP_METHOD("http-method"),

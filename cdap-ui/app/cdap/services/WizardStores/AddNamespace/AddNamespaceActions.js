@@ -23,11 +23,10 @@ const AddNamespaceActions = {
   setHBaseNamespace: 'SET-HBASE-NS-NAME',
   setPrincipal: 'SET-PRINCIPAL',
   setKeytab: 'SET-KEYTAB',
-  setPreferencesKey: 'SET-KEY',
-  setPreferencesVal: 'SET-VALUE',
   onError: 'FORM-SUBMIT-FAILURE',
   onSuccess: 'FORM-SUBMIT-SUCCESS',
-  onReset: 'FORM-RESET'
+  onReset: 'FORM-RESET',
+  setPreferences: 'SET-PREFERENCES'
 };
 
 export default AddNamespaceActions;

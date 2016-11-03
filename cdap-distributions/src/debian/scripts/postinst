@@ -30,20 +30,6 @@ case "$1" in
     chown -R cdap.cdap /var/log/cdap
     chown -R cdap.cdap /var/run/cdap
     chown -R cdap.cdap /var/cdap/run
-    chmod +x /opt/cdap/$package_name/bin/service
-
-    if stat -t /opt/cdap/$package_name/conf/*-env.sh >/dev/null 2>&1 ; then
-      find -L /opt/cdap/$package_name/conf -name '*-env.sh' | xargs -n1 basename | sed 's/-env.sh//' | while read svcname; do
-        # refresh internal symlinks
-        if [ -h "/opt/cdap/$package_name/bin/svc-$svcname" ]; then
-          unlink /opt/cdap/$package_name/bin/svc-$svcname
-        fi
-        ln -s /opt/cdap/$package_name/bin/service /opt/cdap/$package_name/bin/svc-$svcname
-        if [ -x "/etc/init.d/cdap-$svcname" ]; then
-          update-rc.d cdap-$svcname defaults >/dev/null
-        fi
-      done
-    fi
   ;;
 
   abort-upgrade|abort-remove|abort-deconfigure)

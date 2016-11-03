@@ -42,13 +42,13 @@ In the examples and commands that follow, for brevity we will use these conventi
   on a UNIX-type system or Windows.
   
 - The `CDAP Command Line Interface (CLI) <http://docs.cask.co/cdap/current/en/reference-manual/cli-api.html>`__
-  is included in the SDK in the ``bin`` directory, either at ``bin/cdap-cli.sh`` or |---|
-  on Windows |---| ``bin\cdap-cli.bat``. The CLI allows you to quickly access CDAP
+  is included in the SDK in the ``bin`` directory, either at ``bin/cdap cli`` or |---|
+  on Windows |---| ``bin\cdap.bat cli``. The CLI allows you to quickly access CDAP
   facilities from a command line environment.
   
-- For brevity in the commands given below, we will simply use ``cdap-cli.sh`` for the CDAP
-  Command Line Interface. Substitute the actual path of ``./<CDAP-SDK-HOME>/bin/cdap-cli.sh``,
-  or ``<CDAP-SDK-HOME>\bin\cdap-cli.bat`` on Windows, as appropriate. 
+- For brevity in the commands given below, we will simply use ``cdap cli`` for the CDAP
+  Command Line Interface. Substitute the actual path of ``./<CDAP-SDK-HOME>/bin/cdap cli``,
+  or ``<CDAP-SDK-HOME>\bin\cdap.bat cli`` on Windows, as appropriate. 
 
 - A Windows-version of the application ``curl`` is included in the CDAP SDK as
   ``libexec\bin\curl.exe``; use it as a substitute for ``curl`` in examples.
@@ -124,7 +124,7 @@ You can load the artifact into your running instance of CDAP either by using the
 
 .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh load artifact cdap-wise-|cdap-apps-version|/target/cdap-wise-|cdap-apps-version|.jar 
+    $ cdap cli load artifact cdap-wise-|cdap-apps-version|/target/cdap-wise-|cdap-apps-version|.jar 
 
     Successfully added artifact with name 'cdap-wise'
 
@@ -142,7 +142,7 @@ include the ``cdap-apps/Wise`` directory, such as:
 
 .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh load artifact cdap-apps/Wise/target/cdap-wise-|cdap-apps-version|.jar 
+    $ cdap cli load artifact cdap-apps/Wise/target/cdap-wise-|cdap-apps-version|.jar 
 
     or
 
@@ -155,7 +155,7 @@ You can create the application by using the CLI:
 
 .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh create app Wise cdap-wise |cdap-apps-version| user
+    $ cdap cli create app Wise cdap-wise |cdap-apps-version| user
 
     Successfully created application
 
@@ -177,7 +177,7 @@ Now that the application is deployed, we can start the real-time processing:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh start flow Wise.WiseFlow
+  $ cdap cli start flow Wise.WiseFlow
   
   Successfully started Flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}'
 
@@ -192,7 +192,7 @@ At any time, you can find out whether the flow is running:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh get flow status Wise.WiseFlow
+  $ cdap cli get flow status Wise.WiseFlow
   
   RUNNING
   
@@ -211,12 +211,12 @@ Command Line Interface:
 
   .. Linux
 
-  $ cdap-cli.sh send stream logEventStream \''255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] '\
+  $ cdap cli send stream logEventStream \''255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] '\
   '"GET /cdap.html HTTP/1.0" 401 2969 " " "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)"'\'
   
   .. Windows
 
-  > cdap-cli.bat send stream logEventStream ^
+  > cdap.bat cli send stream logEventStream ^
   \"255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] 'GET /cdap.html HTTP/1.0' 401 2969 ' ' 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)'\" 
 
 Or, you can use ``curl`` and an HTTP request:
@@ -242,13 +242,13 @@ to the stream. Use the CLI to send the events to the stream:
 
 .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh load stream logEventStream cdap-wise-|cdap-apps-version|/resources/apache.accesslog text/plain
+    $ cdap cli load stream logEventStream cdap-wise-|cdap-apps-version|/resources/apache.accesslog text/plain
     
 If you have downloaded the source code instead of the artifact, the file will be a different location:
 
 .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh load stream logEventStream cdap-apps/Wise/resources/apache.accesslog text/plain
+    $ cdap cli load stream logEventStream cdap-apps/Wise/resources/apache.accesslog text/plain
 
 
 This will run for a number of seconds until all events are inserted.
@@ -267,7 +267,7 @@ in a time range of 3 minutes duration, starting 5 minutes ago:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh get stream logEventStream -5m +3m 5
+  $ cdap cli get stream logEventStream -5m +3m 5
   
 Results::
 
@@ -302,7 +302,7 @@ you will need to go to find the events:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh get stream logEventStream -60m +3m 5
+  $ cdap cli get stream logEventStream -60m +3m 5
 
 The same query can be made using curl with an HTTP request. However, you'll need to adjust the
 start and end of the time range to milliseconds since the start of the Epoch:
@@ -369,11 +369,11 @@ repeating the injection of events into the stream:
 
 .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh load stream logEventStream cdap-wise-|cdap-apps-version|/resources/apache.accesslog text/plain
+    $ cdap cli load stream logEventStream cdap-wise-|cdap-apps-version|/resources/apache.accesslog text/plain
 
     or
 
-    $ cdap-cli.sh load stream logEventStream cdap-apps/Wise/resources/apache.accesslog text/plain
+    $ cdap cli load stream logEventStream cdap-apps/Wise/resources/apache.accesslog text/plain
   
 If you double-click on the right-most flowlet (*pageViewCount*) you see the current number of
 events being processed by each flowlet:
@@ -391,7 +391,7 @@ can start the service using the Command Line Interface:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh start service Wise.WiseService
+  $ cdap cli start service Wise.WiseService
   
   Successfully started Service 'WiseService' of application 'Wise' with stored runtime arguments '{}'
   
@@ -428,7 +428,7 @@ Or, we can find out how many times the URL ``/home.html`` was accessed from the 
   -d "/home.html"
   6
   
-  $ cdap-cli.sh call service Wise.WiseService POST ip/255.255.255.249/count body "/home.html"
+  $ cdap cli call service Wise.WiseService POST ip/255.255.255.249/count body "/home.html"
   
   < 200 OK
   < Content-Length: 2
@@ -445,7 +445,7 @@ table (reformatted to fit):
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh execute "\"SELECT * FROM dataset_pageviewstore WHERE key = '255.255.255.249'\""
+  $ cdap cli execute "\"SELECT * FROM dataset_pageviewstore WHERE key = '255.255.255.249'\""
 
 Results::
 
@@ -480,7 +480,7 @@ CLI:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh start mapreduce Wise.BounceCountsMapReduce
+  $ cdap cli start mapreduce Wise.BounceCountsMapReduce
   
   Successfully started MapReduce program 'BounceCountsMapReduce' of application 'Wise' with stored runtime arguments '{}'
   
@@ -507,7 +507,7 @@ bounce counts with SQL. Let's take a look at the schema first:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh execute "\"DESCRIBE dataset_bouncecountstore\""
+  $ cdap cli execute "\"DESCRIBE dataset_bouncecountstore\""
 
 Results::
 
@@ -523,7 +523,7 @@ For example, to get the five URLs with the highest bounce-to-visit ratio (or bou
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh execute "\"SELECT uri, bounces/totalvisits AS ratio \
+  $ cdap cli execute "\"SELECT uri, bounces/totalvisits AS ratio \
   FROM dataset_bouncecountstore ORDER BY ratio DESC LIMIT 5\""
   
 Results::
@@ -547,7 +547,7 @@ fixed columns:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh execute "\"SELECT key AS ip, uri, count FROM dataset_pageviewstore \
+  $ cdap cli execute "\"SELECT key AS ip, uri, count FROM dataset_pageviewstore \
   LATERAL VIEW explode(value) t AS uri,count ORDER BY count DESC LIMIT 10\""
 
 Results::
@@ -577,7 +577,7 @@ pages?
 
   .. Linux
 
-  $ cdap-cli.sh execute "\"SELECT views.uri, ratio, ip, count FROM \
+  $ cdap cli execute "\"SELECT views.uri, ratio, ip, count FROM \
        (SELECT uri, totalvisits/bounces AS ratio \
           FROM dataset_bouncecountstore ORDER BY ratio DESC LIMIT 3) bounce, \
        (SELECT key AS ip, uri, count \
@@ -586,7 +586,7 @@ pages?
     
   .. Windows
   
-  > cdap-cli.bat execute \"SELECT views.uri, ratio, ip, count FROM (SELECT uri, totalvisits/bounces AS ratio FROM dataset_bouncecountstore ORDER BY ratio DESC LIMIT 3) bounce, (SELECT key AS ip, uri, count FROM dataset_pageviewstore LATERAL VIEW explode(value) t AS uri,count) views WHERE views.uri = bounce.uri AND views.count >= 3\"
+  > cdap.bat cli execute \"SELECT views.uri, ratio, ip, count FROM (SELECT uri, totalvisits/bounces AS ratio FROM dataset_bouncecountstore ORDER BY ratio DESC LIMIT 3) bounce, (SELECT key AS ip, uri, count FROM dataset_pageviewstore LATERAL VIEW explode(value) t AS uri,count) views WHERE views.uri = bounce.uri AND views.count >= 3\"
     
 Results::
 

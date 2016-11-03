@@ -19,32 +19,12 @@ package co.cask.cdap.api.mapreduce;
 import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.ProgramConfigurer;
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.data.batch.Input;
-import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 
 /**
  * Configurer for configuring {@link MapReduce}.
  */
 public interface MapReduceConfigurer extends DatasetConfigurer, ProgramConfigurer, PluginConfigurer {
-
-  /**
-   * Sets the name of the dataset used as input for the {@link MapReduce}.
-   *
-   * @deprecated as of 3.4.0. Use {@link MapReduceContext#addInput(Input)}
-   *             in beforeSubmit, instead.
-   */
-  @Deprecated
-  void setInputDataset(String dataset);
-
-  /**
-   * Sets the name of the dataset used as output for the {@link MapReduce}.
-   *
-   * @deprecated as of 3.4.0. Use {@link MapReduceContext#addOutput(Output)}
-   *             in beforeSubmit, instead.
-   */
-  @Deprecated
-  void setOutputDataset(String dataset);
 
   /**
    * Sets the resources requirement for the driver of the MapReduce.

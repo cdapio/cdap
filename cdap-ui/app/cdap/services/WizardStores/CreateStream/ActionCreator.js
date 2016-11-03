@@ -15,7 +15,7 @@
  */
 import CreateStreamStore from 'services/WizardStores/CreateStream/CreateStreamStore';
 import {MyStreamApi} from 'api/stream';
-import {default as NamespaceStore} from 'services/store/store';
+import NamespaceStore from 'services/NamespaceStore';
 
 const PublishStream = () => {
   let state = CreateStreamStore.getState();

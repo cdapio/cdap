@@ -19,9 +19,12 @@ package co.cask.cdap.format;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.List;
 
 /**
  * Test for {@link StructuredRecordStringConverter} class from {@link StructuredRecord} to json string
@@ -29,6 +32,39 @@ import org.junit.Test;
 @SuppressWarnings("unchecked")
 public class StructuredRecordStringConverterTest {
   Schema schema;
+
+  @SuppressWarnings("AssertEqualsBetweenInconvertibleTypes")
+  @Test
+  public void testPrimitiveArrays() throws Exception {
+    Schema arraysSchema = Schema.recordOf(
+      "arrays",
+      Schema.Field.of("int", Schema.arrayOf(Schema.of(Schema.Type.INT))),
+      Schema.Field.of("long", Schema.arrayOf(Schema.of(Schema.Type.LONG))),
+      Schema.Field.of("float", Schema.arrayOf(Schema.of(Schema.Type.FLOAT))),
+      Schema.Field.of("double", Schema.arrayOf(Schema.of(Schema.Type.DOUBLE))),
+      Schema.Field.of("bool", Schema.arrayOf(Schema.of(Schema.Type.BOOLEAN))));
+    StructuredRecord expected = StructuredRecord.builder(arraysSchema)
+      .set("int", new int[]{ Integer.MIN_VALUE, 0, Integer.MAX_VALUE })
+      .set("long", new long[] { Long.MIN_VALUE, 0L, Long.MAX_VALUE })
+      .set("float", new float[] { Float.MIN_VALUE, 0f, Float.MAX_VALUE })
+      .set("double", new double[] { Double.MIN_VALUE, 0d, Double.MAX_VALUE })
+      .set("bool", new boolean[] { false, true })
+      .build();
+    String recordOfJson = StructuredRecordStringConverter.toJsonString(expected);
+    StructuredRecord actual = StructuredRecordStringConverter.fromJsonString(recordOfJson, arraysSchema);
+
+    List<Integer> expectedInts = ImmutableList.of(Integer.MIN_VALUE, 0, Integer.MAX_VALUE);
+    List<Long> expectedLongs = ImmutableList.of(Long.MIN_VALUE, 0L, Long.MAX_VALUE);
+    List<Float> expectedFloats = ImmutableList.of(Float.MIN_VALUE, 0f, Float.MAX_VALUE);
+    List<Double> expectedDoubles = ImmutableList.of(Double.MIN_VALUE, 0d, Double.MAX_VALUE);
+    List<Boolean> expectedBools = ImmutableList.of(false, true);
+
+    Assert.assertEquals(expectedInts, actual.get("int"));
+    Assert.assertEquals(expectedLongs, actual.get("long"));
+    Assert.assertEquals(expectedFloats, actual.get("float"));
+    Assert.assertEquals(expectedDoubles, actual.get("double"));
+    Assert.assertEquals(expectedBools, actual.get("bool"));
+  }
 
   @Test
   public void checkConversion() throws Exception {

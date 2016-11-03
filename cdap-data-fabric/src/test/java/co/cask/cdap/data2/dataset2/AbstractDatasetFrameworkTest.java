@@ -225,6 +225,7 @@ public abstract class AbstractDatasetFrameworkTest {
     Assert.assertNotNull(admin);
     final Table table = framework.getDataset(MY_TABLE, DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(table);
+    txnl = new DefaultTransactionExecutor(new MinimalTxSystemClient(), (TransactionAware) table);
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {

@@ -47,7 +47,7 @@ var express = require('express'),
       __dirname + '/../cdap_dist'
     ),
     MARKET_DIST_PATH=require('path').normalize(
-      __dirname + '/../plusbutton_dist'
+      __dirname + '/../common_dist'
     ),
     fs = require('fs');
 
@@ -167,6 +167,11 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       requestObject.headers = customHeaders;
     }
 
+    var type = req.query.type;
+    var responseHeaders = {
+      'Cache-Control': 'no-cache, no-store'
+    };
+
     try {
       request(requestObject)
         .on('error', function (e) {
@@ -176,23 +181,16 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
           function (response) {
             // This happens when use tries to access the link directly when
             // no autorization token present
-            if (response.statusCode !== 200) {
-              res.send('Not Authorized to view logs.');
+            if (response.statusCode === 200) {
+              if (type === 'download') {
+                var filename = req.query.filename;
+                responseHeaders['Content-Disposition'] = 'attachment; filename='+filename;
+              } else {
+                responseHeaders['Content-Type'] = 'text/plain';
+              }
+
+              res.set(responseHeaders);
             }
-
-            var type = req.query.type;
-            var responseHeaders = {
-              'Cache-Control': 'no-cache, no-store'
-            };
-
-            if (type === 'download') {
-              var filename = req.query.filename;
-              responseHeaders['Content-Disposition'] = 'attachment; filename='+filename;
-            } else {
-              responseHeaders['Content-Type'] = 'text/plain';
-            }
-
-            res.set(responseHeaders);
           }
         )
         .pipe(res)
@@ -288,7 +286,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       finalhandler(req, res)(false); // 404
     }
   ]);
-  app.use('/plusbutton_assets', [
+  app.use('/common_assets', [
     express.static(MARKET_DIST_PATH, {
       index: false
     }),

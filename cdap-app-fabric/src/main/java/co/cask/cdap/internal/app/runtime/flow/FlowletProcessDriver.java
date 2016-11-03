@@ -225,8 +225,8 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     }
 
     // Begin transaction and dequeue
-    TransactionContext txContext = dataFabricFacade.createTransactionContext();
     try {
+      TransactionContext txContext = dataFabricFacade.createTransactionContext();
       txContext.start();
 
       try {

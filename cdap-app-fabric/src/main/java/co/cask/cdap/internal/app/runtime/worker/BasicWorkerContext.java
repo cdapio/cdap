@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.worker;
 
-import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.stream.StreamBatchWriter;
 import co.cask.cdap.api.data.stream.StreamWriter;
@@ -32,7 +31,6 @@ import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.logging.context.WorkerLoggingContext;
@@ -59,7 +57,6 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
   private final int instanceId;
   private final LoggingContext loggingContext;
   private final StreamWriter streamWriter;
-  private final Transactional transactional;
   private volatile int instanceCount;
 
   BasicWorkerContext(WorkerSpecification spec, Program program, ProgramOptions programOptions,
@@ -82,7 +79,6 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
     this.instanceCount = instanceCount;
     this.loggingContext = createLoggingContext(program.getId().toId(), getRunId());
     this.streamWriter = streamWriterFactory.create(new Id.Run(program.getId().toId(), getRunId().getId()), getOwners());
-    this.transactional = Transactions.createTransactional(getDatasetCache());
   }
 
   private LoggingContext createLoggingContext(Id.Program programId, RunId runId) {
@@ -99,20 +95,14 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
     return specification;
   }
 
+  // TODO (CDAP-6837): this is inconsistent with Transactional.execute(runnable). Streamline this as part of CDAP-6837
   @Override
   public void execute(TxRunnable runnable) {
     try {
-      transactional.execute(runnable);
+      super.execute(runnable);
     } catch (TransactionFailureException e) {
       throw Throwables.propagate(e);
     }
-  }
-
-  // TODO (CDAP-6837): this is not consistent with execute(runnable). Streamline this in the course of CDAP-6837
-
-  @Override
-  public void execute(int timeout, TxRunnable runnable) throws TransactionFailureException {
-    transactional.execute(timeout, runnable);
   }
 
   @Override

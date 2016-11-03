@@ -18,11 +18,13 @@ package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.service.http.HttpContentConsumer;
 import co.cask.cdap.api.service.http.HttpContentProducer;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.http.BodyConsumer;
 import co.cask.http.BodyProducer;
 import co.cask.http.HttpResponder;
@@ -85,13 +87,19 @@ final class BodyConsumerAdapter extends BodyConsumer {
 
   @Override
   public void finished(HttpResponder responder) {
+    TransactionControl txCtrl = Transactions.getTransactionControl(
+      TransactionControl.IMPLICIT, HttpContentConsumer.class, delegate, "onFinish", HttpServiceResponder.class);
     try {
-      transactional.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          delegate.onFinish(BodyConsumerAdapter.this.responder);
-        }
-      });
+      if (TransactionControl.IMPLICIT == txCtrl) {
+        transactional.execute(new TxRunnable() {
+          @Override
+          public void run(DatasetContext context) throws Exception {
+            delegate.onFinish(BodyConsumerAdapter.this.responder);
+          }
+        });
+      } else {
+        delegate.onFinish(BodyConsumerAdapter.this.responder);
+      }
     } catch (Throwable t) {
       onError(t, this.responder);
       return;
@@ -149,13 +157,20 @@ final class BodyConsumerAdapter extends BodyConsumer {
 
     // To the HttpContentConsumer, once onError is called, no other methods will be triggered
     completed = true;
+    TransactionControl txCtrl = Transactions.getTransactionControl(TransactionControl.IMPLICIT,
+                                                                   HttpContentConsumer.class, delegate, "onError",
+                                                                   HttpServiceResponder.class, Throwable.class);
     try {
-      transactional.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          delegate.onError(responder, cause);
-        }
-      });
+      if (TransactionControl.IMPLICIT == txCtrl) {
+        transactional.execute(new TxRunnable() {
+          @Override
+          public void run(DatasetContext context) throws Exception {
+            delegate.onError(responder, cause);
+          }
+        });
+      } else {
+        delegate.onError(responder, cause);
+      }
     } catch (Throwable t) {
       responder.setTransactionFailureResponse(t);
     } finally {

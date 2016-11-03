@@ -15,179 +15,62 @@
  */
 
 import React, {Component, PropTypes} from 'react';
-import {MyAppApi} from 'api/app';
-import {MyArtifactApi} from 'api/artifact';
-import {MyDatasetApi} from 'api/dataset';
-import {MyStreamApi} from 'api/stream';
-import Store from 'services/store/store.js';
-import T from 'i18n-react';
+import FastAction from 'components/FastAction';
 
 export default class FastActions extends Component {
   constructor(props) {
     super(props);
   }
 
-  setupApiAndParams() {
-    let api;
-    let params = {
-      namespace: Store.getState().selectedNamespace
-    };
+  listOfFastActions() {
+    let fastActionTypes = [];
 
     switch (this.props.entity.type) {
       case 'artifact':
-        api = MyArtifactApi;
-        params.artifactId = this.props.entity.id;
-        params.version = this.props.entity.version;
+        fastActionTypes = ['delete'];
         break;
       case 'application':
-        api = MyAppApi;
-        params.appId = this.props.entity.id;
+        fastActionTypes = ['delete'];
         break;
       case 'stream':
-        api = MyStreamApi;
-        params.streamId = this.props.entity.id;
+        fastActionTypes = ['truncate', 'delete'];
         break;
       case 'datasetinstance':
-        api = MyDatasetApi;
-        params.datasetId = this.props.entity.id;
+        fastActionTypes = ['truncate', 'delete'];
+        break;
+      case 'program':
+        fastActionTypes = ['startStop'];
         break;
     }
 
-    return { api, params };
+    return fastActionTypes;
   }
 
-  handleEntityDelete() {
-    let text = T.translate(
-      'features.Home.FastActions.deleteConfirmation',
-      { entityId: this.props.entity.id}
-    );
-    let confirmation = confirm(text);
+  onSuccess(action) {
+    if (action === 'startStop') { return; }
 
-    if (!confirmation) { return; }
-
-    let { api, params } = this.setupApiAndParams();
-
-    api.delete(params)
-      .subscribe(
-        () => {
-          this.props.onUpdate();
-        },
-        (err) => {
-          alert(err);
-        }
-      );
+    this.props.onUpdate();
   }
-
-  handleEntityTruncate() {
-    let text = T.translate(
-      'features.Home.FastActions.truncateConfirmation',
-      { entityId: this.props.entity.id}
-    );
-    let confirmation = confirm(text);
-    if (!confirmation) { return; }
-
-    let { api, params } = this.setupApiAndParams();
-
-    api.truncate(params)
-      .subscribe(
-        () => {
-          this.props.onUpdate();
-        },
-        (err) => {
-          alert(err);
-        }
-      );
-  }
-
-  handleRenderDelete(disabled) {
-    return (
-      <button
-        className="btn btn-link"
-        onClick={this.handleEntityDelete.bind(this)}
-        disabled={disabled}
-      >
-        <span className="fa fa-trash"></span>
-      </button>
-    );
-  }
-
-  handleRenderTruncate() {
-    return (
-      <button
-        className="btn btn-link"
-        onClick={this.handleEntityTruncate.bind(this)}
-      >
-        <span className="fa fa-scissors"></span>
-      </button>
-    );
-  }
-
-  handleRenderNavigate() {
-    let link = window.getAbsUIUrl({
-      uiApp: 'cask-hydrator',
-      namespaceId: Store.getState().selectedNamespace,
-      entityType: 'view',
-      entityId: this.props.entity.id
-    });
-
-    return (
-      <a href={link} className="btn btn-link">
-        <span className="fa fa-external-link-square"></span>
-      </a>
-    );
-  }
-
-  createApplicationActions() {
-    const tags = this.props.entity.metadata.metadata.SYSTEM.tags;
-
-    let navigateAction;
-    if (tags.includes('cdap-data-pipeline') || tags.includes('cdap-data-streams')) {
-      navigateAction = this.handleRenderNavigate();
-    }
-
-    return (
-      <span>
-        {navigateAction}
-        {this.handleRenderDelete()}
-      </span>
-    );
-  }
-
-  createArtifactActions() {
-    return (
-      <span>
-        {this.handleRenderDelete(this.props.entity.scope === 'SYSTEM')}
-      </span>
-    );
-  }
-
-  createDatasetAndStreamsActions() {
-    return (
-      <span>
-        {this.handleRenderTruncate()}
-        {this.handleRenderDelete()}
-      </span>
-    );
-  }
-
-
-  handleEntityFastActions() {
-    switch (this.props.entity.type) {
-      case 'application':
-        return this.createApplicationActions();
-      case 'artifact':
-        return this.createArtifactActions();
-      case 'datasetinstance':
-      case 'stream':
-        return this.createDatasetAndStreamsActions();
-    }
-  }
-
 
   render () {
+    const fastActions = this.listOfFastActions();
+
     return (
       <h4 className="text-center">
-        {this.handleEntityFastActions()}
+        <span>
+          {
+            fastActions.map((action) => {
+              return (
+                <FastAction
+                  key={action}
+                  type={action}
+                  entity={this.props.entity}
+                  onSuccess={this.onSuccess.bind(this, action)}
+                />
+              );
+            })
+          }
+        </span>
       </h4>
     );
   }

@@ -27,11 +27,13 @@ export default function CdapHeader() {
       title: T.translate('features.Navbar.CDAP.home')
     },
     {
-      linkTo: 'dashboard',
+      linkTo: '/dashboard',
+      disabled: true,
+      className: 'disabled',
       title: T.translate('features.Navbar.CDAP.dashboard')
     },
     {
-      linkTo: 'management',
+      linkTo: '/management',
       title: T.translate('features.Navbar.CDAP.management')
     }
   ];

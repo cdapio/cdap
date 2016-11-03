@@ -24,29 +24,9 @@ version="<%= @version %>"
 
 case "$1" in
     remove)
-      if stat -t /opt/cdap/$package_name/conf/*-env.sh >/dev/null 2>&1 ; then
-        find -L /opt/cdap/$package_name/conf -name '*-env.sh' | xargs -n1 basename | sed 's/-env.sh//' | while read svcname; do
-          # stop each service
-          if [ -x "/etc/init.d/cdap-$svcname" ]; then
-            invoke-rc.d cdap-$svcname stop || :
-          fi
-          if [ -h "/opt/cdap/$package_name/bin/svc-$svcname" ]; then
-            unlink /opt/cdap/$package_name/bin/svc-$svcname > /dev/null 2>&1 ||:
-          fi
-          rm -f /opt/cdap/$package_name/version ||:
-        done
-      fi
     ;;
 
     upgrade|deconfigure)
-      if stat -t /opt/cdap/$package_name/conf/*-env.sh >/dev/null 2>&1 ; then
-        find -L /opt/cdap/$package_name/conf -name '*-env.sh' | xargs -n1 basename | sed 's/-env.sh//' | while read svcname; do
-          if [ -h "/opt/cdap/$package_name/bin/svc-$svcname" ]; then
-            unlink /opt/cdap/$package_name/bin/svc-$svcname > /dev/null 2>&1 ||:
-          fi
-          rm -f /opt/cdap/$package_name/version ||:
-        done
-      fi
     ;;
 
     failed-upgrade)

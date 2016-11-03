@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
@@ -32,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.annotation.concurrent.NotThreadSafe;
@@ -51,19 +53,21 @@ final class DistributedFlowletInstanceUpdater {
   private final StreamAdmin streamAdmin;
   private final Multimap<String, QueueName> consumerQueues;
   private final TransactionExecutorFactory txExecutorFactory;
+  private final Impersonator impersonator;
 
   DistributedFlowletInstanceUpdater(ProgramId programId, TwillController twillController, QueueAdmin queueAdmin,
                                     StreamAdmin streamAdmin, Multimap<String, QueueName> consumerQueues,
-                                    TransactionExecutorFactory txExecutorFactory) {
+                                    TransactionExecutorFactory txExecutorFactory, Impersonator impersonator) {
     this.programId = programId;
     this.twillController = twillController;
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.consumerQueues = consumerQueues;
     this.txExecutorFactory = txExecutorFactory;
+    this.impersonator = impersonator;
   }
 
-  void update(String flowletId, int newInstanceCount, FlowSpecification flowSpec) throws Exception {
+  void update(final String flowletId, final int newInstanceCount, FlowSpecification flowSpec) throws Exception {
     // Find all flowlets that are source of the given flowletId.
     Set<String> flowlets = getUpstreamFlowlets(flowSpec, flowletId, Sets.<String>newHashSet());
     flowlets.add(flowletId);
@@ -74,9 +78,17 @@ final class DistributedFlowletInstanceUpdater {
       // Need to suspend one by one due to a bug in Twill (TWILL-123)
       twillController.sendCommand(id, ProgramCommands.SUSPEND).get();
     }
-    FlowUtils.reconfigure(consumerQueues.get(flowletId),
-                          FlowUtils.generateConsumerGroupId(programId, flowletId), newInstanceCount,
-                          streamAdmin, queueAdmin, txExecutorFactory);
+
+    impersonator.doAs(programId.getNamespaceId(), new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        FlowUtils.reconfigure(consumerQueues.get(flowletId),
+                              FlowUtils.generateConsumerGroupId(programId, flowletId), newInstanceCount,
+                              streamAdmin, queueAdmin, txExecutorFactory);
+        return null;
+      }
+    });
+
     twillController.changeInstances(flowletId, newInstanceCount).get();
     for (String id : flowlets) {
       twillController.sendCommand(id, ProgramCommands.RESUME).get();

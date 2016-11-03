@@ -19,13 +19,18 @@ package co.cask.cdap.logging.appender.kafka;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.logging.LoggingConfiguration;
+import com.google.common.util.concurrent.Futures;
 import kafka.javaapi.producer.Producer;
 import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * A Kafka producer that publishes log messages to Kafka brokers.
@@ -53,19 +58,44 @@ public final class SimpleKafkaProducer {
 
     ProducerConfig config = new ProducerConfig(props);
     kafkaTopic = cConf.get(Constants.Logging.KAFKA_TOPIC);
-    producer = new Producer<>(config);
+    producer = createProducer(config);
   }
 
   public void publish(String key, byte[] bytes) {
+    // Clear the interrupt flag, otherwise it won't be able to publish
+    boolean threadInterrupted = Thread.interrupted();
     try {
       KeyedMessage<String, byte[]> data = new KeyedMessage<>(kafkaTopic, key, bytes);
       producer.send(data);
     } catch (Throwable t) {
       LOG.error("Exception when trying to publish log message to kafka with key {} and topic {}", key, kafkaTopic, t);
+    } finally {
+      // Reset the interrupt flag if needed
+      if (threadInterrupted) {
+        Thread.currentThread().interrupt();
+      }
     }
   }
 
   public void stop() {
     producer.close();
+  }
+
+  /**
+   * Creates a {@link Producer} using the given configuration. The producer instance will be created from a
+   * daemon thread to make sure the async thread created inside Kafka is also a daemon thread.
+   */
+  private <K, V> Producer<K, V> createProducer(final ProducerConfig config) {
+    ExecutorService executor = Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("create-producer"));
+    try {
+      return Futures.getUnchecked(executor.submit(new Callable<Producer<K, V>>() {
+        @Override
+        public Producer<K, V> call() throws Exception {
+          return new Producer<>(config);
+        }
+      }));
+    } finally {
+      executor.shutdownNow();
+    }
   }
 }

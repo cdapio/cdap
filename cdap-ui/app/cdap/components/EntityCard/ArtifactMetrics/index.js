@@ -17,7 +17,7 @@
 import React, {Component, PropTypes} from 'react';
 import {MyAppApi} from '../../../api/app';
 import {MyArtifactApi} from '../../../api/artifact';
-import {default as NamespaceStore} from 'services/store/store';
+import NamespaceStore from 'services/NamespaceStore';
 
 export default class ArtifactMetrics extends Component {
   constructor(props) {

@@ -6,8 +6,8 @@
     "isDirectory": true
   },
   "cdap-cli": {
-    "destination": "/usr/bin/cdap-cli.sh",
-    "source": "cli/bin/cdap-cli.sh",
+    "destination": "/usr/bin/cdap",
+    "source": "cli/bin/cdap",
     "priority": 10,
     "isDirectory": false
   }

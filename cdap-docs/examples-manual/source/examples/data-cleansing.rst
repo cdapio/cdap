@@ -83,7 +83,7 @@ Begin by uploading a file containing some newline-separated JSON records into th
 
   .. Linux
 
-  $ cdap-cli.sh call service DataCleansing.DataCleansingService POST v1/records/raw body:file examples/DataCleansing/resources/person.json
+  $ cdap cli call service DataCleansing.DataCleansingService POST v1/records/raw body:file examples/DataCleansing/resources/person.json
   
   < 200 OK
   < Content-Length: 0
@@ -92,7 +92,7 @@ Begin by uploading a file containing some newline-separated JSON records into th
 
   .. Windows
 
-  > cdap-cli.bat call service DataCleansing.DataCleansingService POST v1/records/raw body:file examples\DataCleansing\resources\person.json
+  > cdap.bat cli call service DataCleansing.DataCleansingService POST v1/records/raw body:file examples\DataCleansing\resources\person.json
   
   < 200 OK
   < Content-Length: 0
@@ -117,7 +117,7 @@ example, we'll simply use ``1`` as the value.
 
   .. tabbed-parsed-literal::
 
-      $ cdap-cli.sh start mapreduce |example|.\ |example-mapreduce| output.partition.key=1
+      $ cdap cli start mapreduce |example|.\ |example-mapreduce| output.partition.key=1
       
       Successfully started mapreduce '|example-mapreduce|' of application '|example|' 
       with provided runtime arguments 'output.partition.key=1'
@@ -139,7 +139,7 @@ To sample the *cleanRecords* ``PartitionedFileSet``, execute an explore query us
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh execute "\"SELECT record FROM dataset_cleanRecords where TIME = 1 LIMIT 5\""
+  $ cdap cli execute "\"SELECT record FROM dataset_cleanRecords where TIME = 1 LIMIT 5\""
 
 - Alternatively, go to the *rawRecords*
   :cdap-ui-datasets-explore:`dataset overview page, explore tab <rawRecords>`

@@ -33,11 +33,15 @@ import co.cask.cdap.data2.metadata.indexer.SchemaIndexer;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
 import co.cask.cdap.proto.codec.NamespacedIdCodec;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
@@ -116,8 +120,7 @@ public class MetadataDataset extends AbstractDataset {
   /**
    * Sets a metadata property for the specified {@link NamespacedEntityId}.
    *
-   * @param targetId The target Id: {@link Id.Application} / {@link Id.Program} /
-   *                 {@link Id.DatasetInstance}/{@link Id.Stream}
+   * @param targetId The target Id: {@link ApplicationId} / {@link ProgramId} / {@link DatasetId}/ {@link StreamId}
    * @param key The metadata key to be added
    * @param value The metadata value to be added
    */
@@ -128,8 +131,8 @@ public class MetadataDataset extends AbstractDataset {
   /**
    * Sets a metadata property for the specified {@link NamespacedEntityId}.
    *
-   * @param targetId The target Id: {@link Id.Application} / {@link Id.Program} /
-   *                 {@link Id.DatasetInstance}/{@link Id.Stream}
+   * @param targetId The target Id: {@link ApplicationId} / {@link ProgramId} /
+   *                 {@link DatasetId}/{@link StreamId}
    * @param key The metadata key to be added
    * @param value The metadata value to be added
    * @param indexer the indexer to use to create indexes for this key-value property
@@ -213,8 +216,7 @@ public class MetadataDataset extends AbstractDataset {
     byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
 
     Map<String, String> metadata = new HashMap<>();
-    Scanner scan = indexedTable.scan(startKey, stopKey);
-    try {
+    try (Scanner scan = indexedTable.scan(startKey, stopKey)) {
       Row next;
       while ((next = scan.next()) != null) {
         String key = MdsKey.getMetadataKey(targetType, next.getRow());
@@ -225,8 +227,6 @@ public class MetadataDataset extends AbstractDataset {
         metadata.put(key, Bytes.toString(value));
       }
       return metadata;
-    } finally {
-      scan.close();
     }
   }
 
@@ -261,15 +261,6 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   /**
-   * Removes all metadata for the specified {@link NamespacedEntityId}.
-   *
-   * @param targetId the {@link NamespacedEntityId} for which metadata is to be removed
-   */
-  private void removeMetadata(NamespacedEntityId targetId) {
-    removeMetadata(targetId, Predicates.<String>alwaysTrue());
-  }
-
-  /**
    * Removes the specified keys from the metadata of the specified {@link NamespacedEntityId}.
    *
    * @param targetId the {@link NamespacedEntityId} for which the specified metadata keys are to be removed
@@ -299,8 +290,7 @@ public class MetadataDataset extends AbstractDataset {
 
     List<String> deletedMetadataKeys = new LinkedList<>();
 
-    Scanner scan = indexedTable.scan(prefix, stopKey);
-    try {
+    try (Scanner scan = indexedTable.scan(prefix, stopKey)) {
       Row next;
       while ((next = scan.next()) != null) {
         String value = next.getString(VALUE_COLUMN);
@@ -314,8 +304,6 @@ public class MetadataDataset extends AbstractDataset {
           deletedMetadataKeys.add(metadataKey);
         }
       }
-    } finally {
-      scan.close();
     }
 
     // delete all the indexes for all deleted metadata key
@@ -337,14 +325,11 @@ public class MetadataDataset extends AbstractDataset {
     byte[] startKey = mdsKey.getKey();
     byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
 
-    Scanner scan = indexedTable.scan(startKey, stopKey);
-    try {
+    try (Scanner scan = indexedTable.scan(startKey, stopKey)) {
       Row next;
       while ((next = scan.next()) != null) {
         deleteIndexRow(next);
       }
-    } finally {
-      scan.close();
     }
   }
 
@@ -464,8 +449,7 @@ public class MetadataDataset extends AbstractDataset {
     Multimap<NamespacedEntityId, MetadataEntry> metadataMap = HashMultimap.create();
     byte[] start = fuzzyKeys.get(0).getFirst();
     byte[] end = Bytes.stopKeyForPrefix(fuzzyKeys.get(fuzzyKeys.size() - 1).getFirst());
-    Scanner scan = indexedTable.scan(new Scan(start, end, new FuzzyRowFilter(fuzzyKeys)));
-    try {
+    try (Scanner scan = indexedTable.scan(new Scan(start, end, new FuzzyRowFilter(fuzzyKeys)))) {
       Row next;
       while ((next = scan.next()) != null) {
         MetadataEntry metadataEntry = convertRow(next);
@@ -473,8 +457,6 @@ public class MetadataDataset extends AbstractDataset {
           metadataMap.put(metadataEntry.getTargetId(), metadataEntry);
         }
       }
-    } finally {
-      scan.close();
     }
 
     // Create metadata objects for each entity from grouped rows
@@ -522,7 +504,7 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   /**
-   * Searches entities that match the specified search query in the specified namespace and {@link Id.Namespace#SYSTEM}
+   * Searches entities that match the specified search query in the specified namespace and {@link NamespaceId#SYSTEM}
    * for the specified {@link MetadataSearchTargetType}.
    *
    * @param namespaceId the namespace to search in
@@ -578,8 +560,8 @@ public class MetadataDataset extends AbstractDataset {
    * <ol>
    *   <li>Splitting on {@link #SPACE_SEPARATOR_PATTERN} and trimming</li>
    *   <li>Handling {@link #KEYVALUE_SEPARATOR}, so searches of the pattern key:value* can be supported</li>
-   *   <li>Prepending the result with the specified namespaceId and {@link Id.Namespace#SYSTEM} so the search can
-   *   be restricted to entities in the specified namespace and {@link Id.Namespace#SYSTEM}.</li>
+   *   <li>Prepending the result with the specified namespaceId and {@link NamespaceId#SYSTEM} so the search can
+   *   be restricted to entities in the specified namespace and {@link NamespaceId#SYSTEM}.</li>
    * </ol>t
    *
    * @param namespaceId the namespaceId to search in
@@ -599,8 +581,8 @@ public class MetadataDataset extends AbstractDataset {
       searchTerms.add(namespaceId + KEYVALUE_SEPARATOR + formattedSearchTerm);
       // for non-system namespaces, also add the system namespace, so entities from system namespace are surfaced
       // in the search results as well
-      if (!Id.Namespace.SYSTEM.getId().equals(namespaceId)) {
-        searchTerms.add(Id.Namespace.SYSTEM.getId() + KEYVALUE_SEPARATOR + formattedSearchTerm);
+      if (!NamespaceId.SYSTEM.getEntityName().equals(namespaceId)) {
+        searchTerms.add(NamespaceId.SYSTEM.getEntityName() + KEYVALUE_SEPARATOR + formattedSearchTerm);
       }
     }
     return searchTerms;

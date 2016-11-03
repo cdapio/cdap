@@ -48,13 +48,13 @@ In the examples and commands that follow, for brevity we will use these conventi
   on a UNIX-type system or Windows.
   
 - The `CDAP Command Line Interface (CLI) <http://docs.cask.co/cdap/current/en/reference-manual/cli-api.html>`__
-  is included in the SDK in the ``bin`` directory, either at ``bin/cdap-cli.sh`` or |---|
-  on Windows |---| ``bin\cdap-cli.bat``. The CLI allows you to quickly access CDAP
+  is included in the SDK in the ``bin`` directory, either at ``bin/cdap cli`` or |---|
+  on Windows |---| ``bin\cdap.bat cli``. The CLI allows you to quickly access CDAP
   facilities from a command line environment.
   
-- For brevity in the commands given below, we will simply use ``cdap-cli.sh`` for the CDAP
-  Command Line Interface. Substitute the actual path of ``./<CDAP-SDK-HOME>/bin/cdap-cli.sh``,
-  or ``<CDAP-SDK-HOME>\bin\cdap-cli.bat`` on Windows, as appropriate. 
+- For brevity in the commands given below, we will simply use ``cdap cli`` for the CDAP
+  Command Line Interface. Substitute the actual path of ``./<CDAP-SDK-HOME>/bin/cdap cli``,
+  or ``<CDAP-SDK-HOME>\bin\cdap.bat cli`` on Windows, as appropriate. 
 
 - A Windows-version of the application ``curl`` is included in the CDAP SDK as
   ``libexec\bin\curl.exe``; use it as a substitute for ``curl`` in examples.
@@ -127,9 +127,9 @@ To deploy and start the application, make sure CDAP is running and then execute:
 .. tabbed-parsed-literal::
 
   $ cd $CDAP-SDK-HOME
-  $ cdap-cli.sh deploy app examples/cdap-apps-release-cdap-|short-version|-compatible/Wise/target/cdap-wise-|cdap-apps-version|.jar
-  $ cdap-cli.sh start flow Wise.WiseFlow 
-  $ cdap-cli.sh start service Wise.WiseService
+  $ cdap cli deploy app examples/cdap-apps-release-cdap-|short-version|-compatible/Wise/target/cdap-wise-|cdap-apps-version|.jar
+  $ cdap cli start flow Wise.WiseFlow 
+  $ cdap cli start service Wise.WiseService
 
 You should get responses similar to::
 
@@ -306,7 +306,7 @@ We have already prepared a sample of Web server access logs for you to inject in
 .. tabbed-parsed-literal::
 
    $ cd $CDAP-SDK-HOME
-   $ cdap-cli.sh load stream logEventStream examples/cdap-apps-release-cdap-|short-version|-compatible/Wise/resources/apache.accesslog text/plain
+   $ cdap cli load stream logEventStream examples/cdap-apps-release-cdap-|short-version|-compatible/Wise/resources/apache.accesslog text/plain
 
    Successfully loaded file to stream 'logEventStream'
    
@@ -418,8 +418,8 @@ The ``configure()`` method is defined as:
 
 .. literalinclude:: /../target/_includes/tutorial-wise/BounceCountsMapReduce.java
    :language: java
-   :lines: 41-48   
-   :append: . . . 
+   :lines: 42-49
+   :append: . . .
 
 It sets the ID (name) of the MapReduce program as *BounceCountsMapReduce*, and specifies any datasets
 that will be used in the program. 
@@ -431,7 +431,7 @@ done in the ``initialize()`` method of the ``BounceCountsMapReduce`` class:
 
 .. literalinclude:: /../target/_includes/tutorial-wise/BounceCountsMapReduce.java
    :language: java
-   :lines: 49-82   
+   :lines: 50-83
    :dedent: 2
 
 As mentioned earlier, the input of the MapReduce is the *logEventStream*. This
@@ -443,7 +443,7 @@ logical start time of the job (the same as the scheduled time of the containing 
 
 Writing to the *bounceCountStore* dataset from the MapReduce 
 ------------------------------------------------------------
-In the ``BounceCountsMapReduce.configure()`` method seen earlier, the ``setOutputDataset``
+In the ``BounceCountsMapReduce.initialize()`` method seen earlier, the ``context.addOutput()``
 method sets the ``bounceCountsStore`` dataset as the output of the job.
 It means that the key/value pairs output by the reducer of the MapReduce will be directly
 written to that dataset.
@@ -454,12 +454,12 @@ interface:
 .. literalinclude:: /../target/_includes/tutorial-wise/BounceCountStore.java
    :language: java
    :lines: 39-41
-   :append:   . . . 
+   :append:   . . .
 
 .. literalinclude:: /../target/_includes/tutorial-wise/BounceCountStore.java
    :language: java
-   :lines: 96-99   
-   :prepend:   . . . 
+   :lines: 96-99
+   :prepend:   . . .
 
 This ``BatchWritable`` interface, defining a ``write()`` method, is intended to allow datasets to
 be the output of MapReduce programs. The two generic types that it takes as parameters must
@@ -481,16 +481,16 @@ Our Mapper and Reducer are standard Hadoop classes with these signatures:
 
 .. literalinclude:: /../target/_includes/tutorial-wise/BounceCountsMapReduce.java
    :language: java
-   :lines: 87   
-   :prepend: . . . 
-   :append: . . . 
+   :lines: 88
+   :prepend: . . .
+   :append: . . .
    :dedent: 2
 
 .. literalinclude:: /../target/_includes/tutorial-wise/BounceCountsMapReduce.java
    :language: java
-   :lines: 108   
-   :prepend: . . . 
-   :append: . . . 
+   :lines: 109
+   :prepend: . . .
+   :append: . . .
    :dedent: 2
 
 Each generic parameter of the Mapper and the Reducer contains:
@@ -526,7 +526,7 @@ You can manually run the ``WiseWorkflow`` using
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh start workflow Wise.WiseWorkflow
+  $ cdap cli start workflow Wise.WiseWorkflow
           
   Successfully started workflow 'WiseWorkflow' of application 'Wise' 
   with stored runtime arguments '{}'
@@ -546,7 +546,7 @@ Using the ``curl`` command and the CLI, example use of the service would be:
   $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.185/count"
   21
   
-  $ cdap-cli.sh call service Wise.WiseService GET ip/255.255.255.185/count  
+  $ cdap cli call service Wise.WiseService GET ip/255.255.255.185/count  
 
   < 200 OK
   < Content-Length: 2

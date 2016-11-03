@@ -1,0 +1,525 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@font-face {
+	font-family: 'icomoon';
+	src:url('../fonts/icomoon.eot');
+	src:url('../fonts/icomoon.eot') format('embedded-opentype'),
+  		url('../fonts/icomoon.woff') format('woff'),
+  		url('../fonts/icomoon.ttf') format('truetype'),
+  		url('../fonts/icomoon.svg') format('svg');
+	font-weight: normal;
+	font-style: normal;
+}
+
+.icon-tagmanagement:before {
+  content: "\e99b";
+}
+.icon-viewinvalidtransactions:before {
+  content: "\e99c";
+}
+.icon-deletealldatasets:before {
+  content: "\e99d";
+}
+.icon-resetinstance:before {
+  content: "\e99e";
+}
+.icon-manageroles:before {
+  content: "\e99f";
+}
+.icon-addroles:before {
+  content: "\e9a0";
+}
+.icon-instancepreference:before {
+  content: "\e9a1";
+}
+.icon-managenamespaces:before {
+  content: "\e9a2";
+}
+.icon-deletenamespaces:before {
+  content: "\e9a3";
+}
+.icon-addnamespaces:before {
+  content: "\e9a4";
+}
+.icon-viewconfiguration:before {
+  content: "\e9a5";
+}
+.icon-CaskMarket:before {
+  content: "\e998";
+}
+.icon-CDAPExtensions:before {
+  content: "\e999";
+}
+.icon-resourcecenter:before {
+  content: "\e99a";
+}
+.icon-datapacks:before {
+  content: "\e993";
+}
+.icon-usecases:before {
+  content: "\e994";
+}
+.icon-pipelines:before {
+  content: "\e995";
+}
+.icon-artifacts:before {
+  content: "\e996";
+}
+.icon-all:before {
+  content: "\e997";
+}
+.icon-support:before {
+  content: "\e98f";
+}
+.icon-logout:before {
+  content: "\e990";
+}
+.icon-caskhome:before {
+  content: "\e991";
+}
+.icon-documentation:before {
+  content: "\e992";
+}
+.icon-Encryptor:before {
+  content: "\e98e";
+}
+.icon-Decryptor:before {
+  content: "\e97c";
+}
+.icon-Amazon-Kinesis:before {
+  content: "\e97d";
+}
+.icon-Big-Query:before {
+  content: "\e97e";
+}
+.icon-ORC:before {
+  content: "\e97f";
+}
+.icon-rowdenormalizer:before {
+  content: "\e980";
+}
+.icon-joiner:before {
+  content: "\e981";
+}
+.icon-COBOLcopybookreader:before {
+  content: "\e982";
+}
+.icon-deduplicator:before {
+  content: "\e983";
+}
+.icon-azureblobstore:before {
+  content: "\e984";
+}
+.icon-FTP:before {
+  content: "\e985";
+}
+.icon-groupby:before {
+  content: "\e986";
+}
+.icon-sparkmachinelearning:before {
+  content: "\e987";
+}
+.icon-excelinputsource:before {
+  content: "\e988";
+}
+.icon-solr:before {
+  content: "\e989";
+}
+.icon-XMLparser:before {
+  content: "\e98a";
+}
+.icon-XMLreader:before {
+  content: "\e98b";
+}
+.icon-valuemapper:before {
+  content: "\e98c";
+}
+.icon-sparkstreaming:before {
+  content: "\e98d";
+}
+.icon-rename:before {
+  content: "\e979";
+}
+.icon-archive:before {
+  content: "\e97a";
+}
+.icon-ssh:before {
+  content: "\e97b";
+}
+.icon-runtimestart:before {
+  content: "\e975";
+}
+.icon-runtimestarttime:before {
+  content: "\e976";
+}
+.icon-runtimestop:before {
+  content: "\e977";
+}
+.icon-runtimestoptime:before {
+  content: "\e978";
+}
+.icon-emailaction:before {
+  content: "\e96f";
+}
+.icon-filecopyaction:before {
+  content: "\e970";
+}
+.icon-filemoveaction:before {
+  content: "\e971";
+}
+.icon-impalahiveaction:before {
+  content: "\e972";
+}
+.icon-SQLaction:before {
+  content: "\e973";
+}
+.icon-sshaction:before {
+  content: "\e974";
+}
+.icon-lock_close:before {
+    content: "\e96d";
+}
+.icon-lock_open:before {
+    content: "\e96e";
+}
+.icon-disable:before {
+    content: "\e969";
+}
+.icon-enable:before {
+    content: "\e96a";
+}
+.icon-needle_sl:before {
+    content: "\e96b";
+}
+.icon-needle_lg:before {
+    content: "\e96c";
+}
+.icon-collapse:before {
+    content: "\e964";
+}
+.icon-config:before {
+    content: "\e965";
+}
+.icon-expend:before {
+    content: "\e966";
+}
+.icon-eye:before {
+    content: "\e967";
+}
+.icon-logview:before {
+    content: "\e968";
+}
+.icon-deduper:before {
+    content: "\e95e";
+}
+.icon-distinct:before {
+    content: "\e95f";
+}
+.icon-naivebayestrainer:before {
+    content: "\e960";
+}
+.icon-groupbyaggregate:before {
+    content: "\e961";
+}
+.icon-naivebayesclassifier:before {
+    content: "\e962";
+}
+.icon-upload:before {
+    content: "\e963";
+}
+.icon-streamview:before {
+    content: "\e95d";
+}
+.icon-tracker:before {
+    content: "\e95c";
+}
+.icon-javascript:before {
+    content: "\e95b";
+}
+.icon-jsonformatter:before {
+    content: "\e95a";
+}
+.icon-structuredrecord:before {
+    content: "\e93f";
+}
+.icon-csvformatter:before {
+    content: "\e940";
+}
+.icon-csvparser:before {
+    content: "\e949";
+}
+.icon-jsonparser:before {
+    content: "\e94a";
+}
+.icon-clonerecord:before {
+    content: "\e94b";
+}
+.icon-streamformatter:before {
+    content: "\e94c";
+}
+.icon-compressor:before {
+    content: "\e94d";
+}
+.icon-decompressor:before {
+    content: "\e94e";
+}
+.icon-hasher:before {
+    content: "\e94f";
+}
+.icon-decoder:before {
+    content: "\e950";
+}
+.icon-encoder:before {
+    content: "\e951";
+}
+.icon-pythonevaluator:before {
+    content: "\e952";
+}
+.icon-mongodb:before {
+    content: "\e953";
+}
+.icon-teradata:before {
+    content: "\e954";
+}
+.icon-cassandra:before {
+    content: "\e955";
+}
+.icon-elasticsearch:before {
+    content: "\e956";
+}
+.icon-hive:before {
+    content: "\e957";
+}
+.icon-hdfs:before {
+    content: "\e958";
+}
+.icon-hbase:before {
+    content: "\e959";
+}
+.icon-jms:before {
+    content: "\e93e";
+}
+.icon-amazonsqs:before {
+    content: "\e900";
+}
+.icon-corevalidator:before {
+    content: "\e901";
+}
+.icon-cube:before {
+    content: "\e902";
+}
+.icon-database:before {
+    content: "\e903";
+}
+.icon-datagenerator:before {
+    content: "\e904";
+}
+.icon-file:before {
+    content: "\e905";
+}
+.icon-kafka:before {
+    content: "\e906";
+}
+.icon-kvtable:before {
+    content: "\e907";
+}
+.icon-logparser:before {
+    content: "\e908";
+}
+.icon-s3:before {
+    content: "\e909";
+}
+.icon-s3avro:before {
+    content: "\e90a";
+}
+.icon-s3parquet:before {
+    content: "\e90b";
+}
+.icon-script:before {
+    content: "\e90c";
+}
+.icon-scriptfilter:before {
+    content: "\e90d";
+}
+.icon-sink:before {
+    content: "\e90e";
+}
+.icon-snapshotavro:before {
+    content: "\e90f";
+}
+.icon-snapshotparquet:before {
+    content: "\e910";
+}
+.icon-streams:before {
+    content: "\e911";
+}
+.icon-table:before {
+    content: "\e912";
+}
+.icon-tpfsavro:before {
+    content: "\e913";
+}
+.icon-tpfsparquet:before {
+    content: "\e914";
+}
+.icon-twitter:before {
+    content: "\e915";
+}
+.icon-validator:before {
+    content: "\e916";
+}
+.icon-adapter:before {
+    content: "\e917";
+}
+.icon-app:before {
+    content: "\e918";
+}
+.icon-applicationtemplates:before {
+    content: "\e919";
+}
+.icon-avro:before {
+    content: "\e91a";
+}
+.icon-calendar:before {
+    content: "\e91b";
+}
+.icon-clean:before {
+    content: "\e91c";
+}
+.icon-clone:before {
+    content: "\e91d";
+}
+.icon-configuration:before {
+    content: "\e91e";
+}
+.icon-datasets:before {
+    content: "\e91f";
+}
+.icon-datatypes:before {
+    content: "\e920";
+}
+.icon-delete:before {
+    content: "\e921";
+}
+.icon-draft:before {
+    content: "\e922";
+}
+.icon-ETLBatch:before, .icon-cdap-etl-batch:before {
+    content: "\e923";
+}
+.icon-ETLRealtime:before, .icon-cdap-etl-realtime:before {
+    content: "\e924";
+}
+.icon-ETLsinks:before {
+    content: "\e925";
+}
+.icon-ETLsources:before {
+    content: "\e926";
+}
+.icon-ETLtemplates:before {
+    content: "\e927";
+}
+.icon-ETLtransforms:before {
+    content: "\e928";
+}
+.icon-export:before {
+    content: "\e929";
+}
+.icon-failed:before {
+    content: "\e92a";
+}
+.icon-fist:before {
+    content: "\e92b";
+}
+.icon-fit:before {
+    content: "\e92c";
+}
+.icon-hydrator:before {
+    content: "\e92d";
+}
+.icon-import:before {
+    content: "\e92e";
+}
+.icon-mapreduce:before {
+    content: "\e92f";
+}
+.icon-paused:before {
+    content: "\e930";
+}
+.icon-plugin-stream:before {
+    content: "\e931";
+}
+.icon-programtypes:before {
+    content: "\e932";
+}
+.icon-projection:before {
+    content: "\e933";
+}
+.icon-publish:before {
+    content: "\e934";
+}
+.icon-reset:before {
+    content: "\e935";
+}
+.icon-running:before {
+    content: "\e936";
+}
+.icon-savedraft:before {
+    content: "\e937";
+}
+.icon-schemaedge:before {
+    content: "\e938";
+}
+.icon-service:before {
+    content: "\e939";
+}
+.icon-spark:before {
+    content: "\e93a";
+}
+.icon-start:before {
+    content: "\e93b";
+}
+.icon-stopped:before {
+    content: "\e93c";
+}
+.icon-suspend:before {
+    content: "\e93d";
+}
+.icon-systempreferences:before {
+    content: "\e941";
+}
+.icon-systemsecurity:before {
+    content: "\e942";
+}
+.icon-tigon:before {
+    content: "\e943";
+}
+.icon-validate:before {
+    content: "\e944";
+}
+.icon-worker:before {
+    content: "\e945";
+}
+.icon-workflow:before {
+    content: "\e946";
+}
+.icon-zoomIn:before {
+    content: "\e947";
+}
+.icon-zoomout:before {
+    content: "\e948";
+}

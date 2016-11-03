@@ -21,6 +21,7 @@ import ConfigurableTab from '../ConfigurableTab';
 import {MyMarketApi} from '../../api/market';
 import MarketAction from './action/market-action.js';
 import find from 'lodash/find';
+import MarketStore from 'components/Market/store/market-store.js';
 
 export default class Market extends Component {
   componentWillMount () {
@@ -38,6 +39,9 @@ export default class Market extends Component {
     MarketAction.setFilter(searchFilter);
   }
 
+  componentWillUnmount() {
+    MarketStore.dispatch({type: 'RESET'});
+  }
   render() {
     return (
       <ConfigurableTab

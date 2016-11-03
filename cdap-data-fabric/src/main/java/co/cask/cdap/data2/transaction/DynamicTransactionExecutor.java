@@ -118,7 +118,20 @@ public class DynamicTransactionExecutor extends AbstractTransactionExecutor {
   }
 
   private <I, O> O executeOnce(Function<I, O> function, I input) throws TransactionFailureException {
-    TransactionContext txContext = txContextSupplier.get();
+    TransactionContext txContext;
+    try {
+      txContext = txContextSupplier.get();
+    } catch (RuntimeException e) {
+      // supplier.get() cannot throw checked exceptions. Therefore, the context supplier
+      // must wrap a possible TransactionFailureException into a runtime exception.
+      // this can happen, for example, if the supplier has an active transaction,
+      // and this would represent a nested transaction.
+      if (e.getCause() instanceof TransactionFailureException) {
+        throw (TransactionFailureException) e.getCause();
+      } else {
+        throw e;
+      }
+    }
     txContext.start();
     O o = null;
     try {

@@ -21,7 +21,6 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.metrics.MetricStore;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -42,8 +41,6 @@ import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
-import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.BatchProgram;
@@ -69,6 +66,7 @@ import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.ServiceId;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -154,17 +152,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   protected final ProgramRuntimeService runtimeService;
 
-  /**
-   * Scheduler provides ability to schedule/un-schedule the jobs.
-   */
-  protected final Scheduler scheduler;
-
   @Inject
   ProgramLifecycleHttpHandler(Store store, ProgramRuntimeService runtimeService,
                               DiscoveryServiceClient discoveryServiceClient,
                               ProgramLifecycleService lifecycleService,
                               QueueAdmin queueAdmin,
-                              Scheduler scheduler, PreferencesStore preferencesStore,
+                              PreferencesStore preferencesStore,
                               MRJobInfoFetcher mrJobInfoFetcher,
                               MetricStore metricStore) {
     this.store = store;
@@ -173,7 +166,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.lifecycleService = lifecycleService;
     this.metricStore = metricStore;
     this.queueAdmin = queueAdmin;
-    this.scheduler = scheduler;
     this.preferencesStore = preferencesStore;
     this.mrJobInfoFetcher = mrJobInfoFetcher;
   }
@@ -230,7 +222,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("program-id") String programId) throws Exception {
     ApplicationId applicationId = new ApplicationId(namespaceId, appId);
     if (SCHEDULES.equals(type)) {
-      getScheduleStatus(responder, applicationId, programId);
+      JsonObject json = new JsonObject();
+      json.addProperty("status", lifecycleService.getScheduleStatus(namespaceId, appId, programId).toString());
+      responder.sendJson(HttpResponseStatus.OK, json);
       return;
     }
     ProgramType programType;
@@ -259,7 +253,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("program-id") String programId) throws Exception {
     ApplicationId applicationId = new ApplicationId(namespaceId, appId, versionId);
     if (SCHEDULES.equals(type)) {
-      getScheduleStatus(responder, applicationId, programId);
+      JsonObject json = new JsonObject();
+      json.addProperty("status", lifecycleService.getScheduleStatus(namespaceId, appId, programId).toString());
+      responder.sendJson(HttpResponseStatus.OK, json);
       return;
     }
 
@@ -274,28 +270,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     Map<String, String> status = ImmutableMap.of("status", programStatus.name());
     responder.sendJson(HttpResponseStatus.OK, status);
-  }
-
-  private void getScheduleStatus(HttpResponder responder, ApplicationId applicationId, String scheduleName)
-    throws NotFoundException, SchedulerException {
-    ApplicationSpecification appSpec = store.getApplication(applicationId);
-    if (appSpec == null) {
-      throw new NotFoundException(applicationId);
-    }
-
-    ScheduleSpecification scheduleSpec = appSpec.getSchedules().get(scheduleName);
-    if (scheduleSpec == null) {
-      throw new NotFoundException(scheduleName, String.format("Schedule: %s for application: %s",
-                                                              scheduleName, applicationId.getApplication()));
-    }
-
-    String programName = scheduleSpec.getProgram().getProgramName();
-    ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
-    ProgramId programId = applicationId.program(programType, programName);
-    JsonObject json = new JsonObject();
-    json.addProperty("status", scheduler.scheduleState(programId, programId.getType().getSchedulableType(),
-                                                       scheduleName).toString());
-    responder.sendJson(HttpResponseStatus.OK, json);
   }
 
   /**
@@ -347,7 +321,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                String appVersion, String type, String programId, String action) throws Exception {
     ApplicationId applicationId = new ApplicationId(namespaceId, appId, appVersion);
     if ("schedules".equals(type)) {
-      performScheduleAction(responder, applicationId, programId, action);
+      lifecycleService.suspendResumeSchedule(namespaceId, appId, programId, action);
+      responder.sendJson(HttpResponseStatus.OK, "OK");
       return;
     }
 
@@ -379,61 +354,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         throw new NotFoundException(String.format("%s action was not found", action));
     }
     responder.sendStatus(HttpResponseStatus.OK);
-  }
-
-  private void performScheduleAction(HttpResponder responder, ApplicationId appId,
-                                     String scheduleName, String action) throws SchedulerException {
-    try {
-      if (!action.equals("suspend") && !action.equals("resume")) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Schedule can only be suspended or resumed.");
-        return;
-      }
-
-      ApplicationSpecification appSpec = store.getApplication(appId);
-      if (appSpec == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "App: " + appId.getApplication() + " not found");
-        return;
-      }
-
-      ScheduleSpecification scheduleSpec = appSpec.getSchedules().get(scheduleName);
-      if (scheduleSpec == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Schedule: " + scheduleName + " not found");
-        return;
-      }
-
-      String programName = scheduleSpec.getProgram().getProgramName();
-      ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
-      ProgramId programId = appId.program(programType, programName);
-      Scheduler.ScheduleState state = scheduler.scheduleState(programId, scheduleSpec.getProgram().getProgramType(),
-                                                              scheduleName);
-      switch (state) {
-        case NOT_FOUND:
-          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-          break;
-        case SCHEDULED:
-          if (action.equals("suspend")) {
-            scheduler.suspendSchedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleName);
-            responder.sendJson(HttpResponseStatus.OK, "OK");
-          } else {
-            // attempt to resume already resumed schedule
-            responder.sendJson(HttpResponseStatus.CONFLICT, "Already resumed");
-          }
-          break;
-        case SUSPENDED:
-          if (action.equals("suspend")) {
-            // attempt to suspend already suspended schedule
-            responder.sendJson(HttpResponseStatus.CONFLICT, "Schedule already suspended");
-          } else {
-            scheduler.resumeSchedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleName);
-            responder.sendJson(HttpResponseStatus.OK, "OK");
-          }
-          break;
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (NotFoundException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-    }
   }
 
   /**
@@ -498,12 +418,27 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Get program runtime args.
    */
   @GET
-  @Path("/apps/{app-id}/{program-type}/{program-id}/runtimeargs")
+  @Path("/apps/{app-name}/{program-type}/{program-name}/runtimeargs")
   public void getProgramRuntimeArgs(HttpRequest request, HttpResponder responder,
                                     @PathParam("namespace-id") String namespaceId,
-                                    @PathParam("app-id") String appId,
+                                    @PathParam("app-name") String appName,
                                     @PathParam("program-type") String type,
-                                    @PathParam("program-id") String programId) throws BadRequestException,
+                                    @PathParam("program-name") String programName) throws BadRequestException,
+    NotImplementedException, NotFoundException {
+    getProgramRuntimeArgs(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, type, programName);
+  }
+
+  /**
+   * Get program runtime args.
+   */
+  @GET
+  @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/runtimeargs")
+  public void getProgramRuntimeArgs(HttpRequest request, HttpResponder responder,
+                                    @PathParam("namespace-id") String namespaceId,
+                                    @PathParam("app-name") String appName,
+                                    @PathParam("app-version") String appVersion,
+                                    @PathParam("program-type") String type,
+                                    @PathParam("program-name") String programName) throws BadRequestException,
     NotImplementedException, NotFoundException {
     ProgramType programType = getProgramType(type);
     if (programType == null || programType == ProgramType.WEBAPP) {
@@ -511,13 +446,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                                   "type '%s'.", type));
     }
 
-    ProgramId id = new ProgramId(namespaceId, appId, programType, programId);
-    if (!store.programExists(id)) {
-      throw new NotFoundException(id);
+    ProgramId programId = new ProgramId(namespaceId, appName, programType, programName);
+    if (!store.programExists(programId)) {
+      throw new NotFoundException(programId);
     }
 
-    Map<String, String> runtimeArgs = preferencesStore.getProperties(id.getNamespace(), appId,
-                                                                     type, programId);
+    Map<String, String> runtimeArgs = preferencesStore.getProperties(programId.getNamespace(), appName,
+                                                                     type, programName);
     responder.sendJson(HttpResponseStatus.OK, runtimeArgs);
   }
 
@@ -525,36 +460,62 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Save program runtime args.
    */
   @PUT
-  @Path("/apps/{app-id}/{program-type}/{program-id}/runtimeargs")
+  @Path("/apps/{app-name}/{program-type}/{program-name}/runtimeargs")
   public void saveProgramRuntimeArgs(HttpRequest request, HttpResponder responder,
-                                     @PathParam("namespace-id") String namespaceId,
-                                     @PathParam("app-id") String appId,
-                                     @PathParam("program-type") String type,
-                                     @PathParam("program-id") String programId) throws Exception {
+                                    @PathParam("namespace-id") String namespaceId,
+                                    @PathParam("app-name") String appName,
+                                    @PathParam("program-type") String type,
+                                    @PathParam("program-name") String programName) throws Exception {
+    saveProgramRuntimeArgs(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, type, programName);
+  }
+
+  /**
+   * Save program runtime args.
+   */
+  @PUT
+  @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/runtimeargs")
+  public void saveProgramRuntimeArgs(HttpRequest request, HttpResponder responder,
+                                    @PathParam("namespace-id") String namespaceId,
+                                    @PathParam("app-name") String appName,
+                                    @PathParam("app-version") String appVersion,
+                                    @PathParam("program-type") String type,
+                                    @PathParam("program-name") String programName) throws Exception {
     ProgramType programType = getProgramType(type);
     if (programType == null || programType == ProgramType.WEBAPP) {
       throw new NotFoundException(String.format("Saving program runtime arguments is not supported for program " +
                                                   "type '%s'.", programType));
     }
 
-    lifecycleService.saveRuntimeArgs(new ProgramId(namespaceId, appId, programType, programId),
+    lifecycleService.saveRuntimeArgs(new ProgramId(namespaceId, appName, programType, programName),
                                      decodeArguments(request));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @GET
-  @Path("/apps/{app-id}/{program-type}/{program-id}")
+  @Path("/apps/{app-name}/{program-type}/{program-name}")
   public void programSpecification(HttpRequest request, HttpResponder responder,
-                                   @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
+                                   @PathParam("namespace-id") String namespaceId, @PathParam("app-name") String appName,
                                    @PathParam("program-type") String type,
-                                   @PathParam("program-id") String programId) throws Exception {
+                                   @PathParam("program-name") String programName) throws Exception {
+    programSpecification(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, type, programName);
+  }
+
+
+  @GET
+  @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}")
+  public void programSpecification(HttpRequest request, HttpResponder responder,
+                                   @PathParam("namespace-id") String namespaceId, @PathParam("app-name") String appName,
+                                   @PathParam("app-version") String appVersion,
+                                   @PathParam("program-type") String type,
+                                   @PathParam("program-name") String programName) throws Exception {
     ProgramType programType = getProgramType(type);
     if (programType == null) {
       throw new MethodNotAllowedException(request.getMethod(), request.getUri());
     }
 
-    ProgramId id = new ProgramId(namespaceId, appId, programType, programId);;
-    ProgramSpecification specification = lifecycleService.getProgramSpecification(id);
+    ApplicationId application = new ApplicationId(namespaceId, appName, appVersion);
+    ProgramId programId = application.program(programType, programName);
+    ProgramSpecification specification = lifecycleService.getProgramSpecification(programId);
     if (specification == null) {
       throw new NotFoundException(programId);
     }
@@ -1058,21 +1019,35 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Return the availability (i.e. discoverable registration) status of a service.
    */
   @GET
-  @Path("/apps/{app-id}/services/{service-id}/available")
+  @Path("/apps/{app-name}/services/{service-name}/available")
   public void getServiceAvailability(HttpRequest request, HttpResponder responder,
                                      @PathParam("namespace-id") String namespaceId,
-                                     @PathParam("app-id") String appId,
-                                     @PathParam("service-id") String serviceId) throws Exception {
-    ProgramId programId = new ProgramId(namespaceId, appId, ProgramType.SERVICE, serviceId);
-    ProgramStatus status = lifecycleService.getProgramStatus(programId);
+                                     @PathParam("app-name") String appName,
+                                     @PathParam("service-name") String serviceName) throws Exception {
+    getServiceAvailability(request, responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, serviceName);
+  }
+
+  /**
+   * Return the availability (i.e. discoverable registration) status of a service.
+   */
+  @GET
+  @Path("/apps/{app-name}/versions/{app-version}/services/{service-name}/available")
+  public void getServiceAvailability(HttpRequest request, HttpResponder responder,
+                                     @PathParam("namespace-id") String namespaceId,
+                                     @PathParam("app-name") String appName,
+                                     @PathParam("app-version") String appVersion,
+                                     @PathParam("service-name") String serviceName) throws Exception {
+    ServiceId serviceId = new ApplicationId(namespaceId, appName, appVersion).service(serviceName);
+    ProgramStatus status = lifecycleService.getProgramStatus(serviceId);
     if (status == ProgramStatus.STOPPED) {
       responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE, "Service is stopped. Please start it.");
     } else {
       // Construct discoverable name and return 200 OK if discoverable is present. If not return 503.
-      String serviceName = ServiceDiscoverable.getName(programId);
-      EndpointStrategy endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(serviceName));
+      String serviceDiscoverableName = ServiceDiscoverable.getName(serviceId);
+      EndpointStrategy endpointStrategy =
+        new RandomEndpointStrategy(discoveryServiceClient.discover(serviceDiscoverableName));
       if (endpointStrategy.pick(300L, TimeUnit.MILLISECONDS) == null) {
-        LOG.trace("Discoverable endpoint {} not found", serviceName);
+        LOG.trace("Discoverable endpoint {} not found", serviceDiscoverableName);
         responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE,
                              "Service is running but not accepting requests at this time.");
       } else {

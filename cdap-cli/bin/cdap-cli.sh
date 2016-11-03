@@ -25,10 +25,17 @@ echo
 echo
 
 __script=${BASH_SOURCE[0]}
-
-__target=$(readlink ${__script}) # TODO: readlink isn't portable, if we support more than Linux/macOS
-if [[ $? -ne 0 ]]; then
-  __target=${__script} # no symlink
-fi
+__readlink() {
+  local __target_file=${1}
+  cd $(dirname ${__target_file})
+  __target_file=$(basename ${__target_file})
+  while test -L ${__target_file}; do
+    __target_file=$(readlink ${__target_file})
+    cd $(dirname ${__target_file})
+    __target_file=$(basename ${__target_file})
+  done
+  echo "$(pwd -P)/${__target_file}"
+}
+__target=$(__readlink ${__script})
 __app_home=$(cd $(dirname ${__target})/.. >&-; pwd -P)
 ${__app_home}/bin/cdap cli ${@}

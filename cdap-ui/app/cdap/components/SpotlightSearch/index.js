@@ -17,7 +17,7 @@
 import React, {Component} from 'react';
 import classnames from 'classnames';
 import {MySearchApi} from 'api/search';
-import {default as NamespaceStore} from 'services/store/store';
+import NamespaceStore from 'services/NamespaceStore';
 import {parseMetadata} from 'services/metadata-parser';
 import { Dropdown, DropdownMenu, DropdownItem } from 'reactstrap';
 import debounce from 'lodash/debounce';

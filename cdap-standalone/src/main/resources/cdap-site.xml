@@ -43,7 +43,8 @@
     <name>app.program.runtime.extensions.dir</name>
     <value>ext/runtimes</value>
     <description>
-      Semicolon-separated list of local directories scanned for program runtime extension.
+      Semicolon-separated list of local directories that are scanned for
+      program runtime extensions
     </description>
   </property>
 
@@ -54,7 +55,7 @@
     <name>data.local.storage.blocksize</name>
     <value>1024</value>
     <description>
-      Block size in bytes for data fabric when in standalone mode
+      Block size in bytes for data fabric when in Standalone CDAP
     </description>
   </property>
 
@@ -62,7 +63,7 @@
     <name>data.local.storage.cachesize</name>
     <value>104857600</value>
     <description>
-      Cache size in bytes for data fabric when in standalone mode
+      Cache size in bytes for data fabric when in Standalone CDAP
     </description>
   </property>
 
@@ -89,7 +90,7 @@
     <name>log.retention.duration.days</name>
     <value>7</value>
     <description>
-      Log file HDFS retention duration in days
+      Duration in days of log file HDFS retention
     </description>
   </property>
 
@@ -100,7 +101,7 @@
     <name>metrics.data.table.retention.resolution.1.seconds</name>
     <value>7200</value>
     <description>
-      Retention resolution of the 1-second resolution table in seconds;
+      Retention resolution in seconds of the 1-second resolution table;
       default retention period is 2 hours
     </description>
   </property>
@@ -139,8 +140,8 @@
     <name>stream.container.instances</name>
     <value>1</value>
     <description>
-      Number of YARN container instances for the stream handler; 
-      in standalone mode, it's always one
+      Number of YARN container instances for the stream handler; in
+      Standalone CDAP, it is always one
     </description>
   </property>
 
@@ -178,7 +179,7 @@
     <name>kafka.server.log.dirs</name>
     <value>${local.data.dir}/kafka-logs</value>
     <description>
-      Log directory for Kafka server
+      Comma-separated list of CDAP Kafka service log storage directories
     </description>
   </property>
 

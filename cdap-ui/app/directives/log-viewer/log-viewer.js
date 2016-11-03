@@ -412,7 +412,7 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
     // Generate backend path
     let startTime = Math.floor(vm.startTimeMs/1000);
-    let path = `/namespaces/${vm.namespaceId}/apps/${vm.appId}/${vm.programType}/${vm.programId}/runs/${vm.runId}/logs?start=${startTime}`;
+    let path = `/namespaces/${vm.namespaceId}/apps/${vm.appId}/${vm.programType}/${vm.programId}/runs/${vm.runId}/logs?start=${startTime}&escape=false`;
     path = encodeURIComponent(myCdapUrl.constructUrl({_cdapPath: path}));
 
     let url = `/downloadLogs?backendUrl=${path}&type=${type}`;
@@ -602,6 +602,13 @@ function LogViewerController ($scope, LogViewerStore, myLogsApi, LOGVIEWERSTORE_
 
   vm.scrollFn = function(){
       requestWithOffset();
+  };
+
+  vm.preventClick = function (event) {
+    // disabled is not a valid attribute for <a>
+    if (!vm.displayData.length || vm.loading) {
+      event.preventDefault();
+    }
   };
 
   $scope.$on('$destroy', function() {

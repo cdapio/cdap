@@ -71,6 +71,18 @@
               <followSymlinks>false</followSymlinks>
             </fileset>
             <fileset>
+              <directory>cdap_dist</directory>
+              <followSymlinks>false</followSymlinks>
+            </fileset>
+            <fileset>
+              <directory>login_dist</directory>
+              <followSymlinks>false</followSymlinks>
+            </fileset>
+            <fileset>
+              <directory>common_dist</directory>
+              <followSymlinks>false</followSymlinks>
+            </fileset>
+            <fileset>
               <directory>node</directory>
               <followSymlinks>false</followSymlinks>
             </fileset>
@@ -133,7 +145,7 @@
                   <exclude>**/bower_components/**</exclude>
                   <exclude>**/node_modules/**</exclude>
                   <exclude>**/dist/**</exclude>
-                  <exclude>**/plusbutton_dist/**</exclude>
+                  <exclude>**/common_dist/**</exclude>
                   <exclude>**/cdap_dist/**</exclude>
                   <exclude>**/login_dist/**</exclude>
                   <exclude>**/logs/**</exclude>
@@ -293,8 +305,8 @@
                     <copy todir = "${stage.opt.dir}/dist">
                       <fileset dir = "dist" />
                     </copy>
-                    <copy todir = "${stage.opt.dir}/plusbutton_dist">
-                      <fileset dir = "plusbutton_dist" />
+                    <copy todir = "${stage.opt.dir}/common_dist">
+                      <fileset dir = "common_dist" />
                     </copy>
                     <copy todir = "${stage.opt.dir}/cdap_dist">
                       <fileset dir = "cdap_dist" />

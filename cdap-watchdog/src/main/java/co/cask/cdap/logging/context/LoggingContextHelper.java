@@ -36,8 +36,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.filesystem.Location;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Map;
@@ -50,7 +48,6 @@ import javax.annotation.Nullable;
 public final class LoggingContextHelper {
 
   private static final String ACCOUNT_ID = ".accountId";
-  private static final Logger LOG = LoggerFactory.getLogger(LoggingContext.class);
 
   private static final Map<String, String> LOG_TAG_TO_METRICS_TAG_MAP =
     ImmutableMap.<String, String>builder()
@@ -103,7 +100,8 @@ public final class LoggingContextHelper {
       throw new IllegalArgumentException("Tags are empty, cannot determine logging context");
     }
 
-    String namespaceId = tags.get(NamespaceLoggingContext.TAG_NAMESPACE_ID);
+    String namespaceId = getByNamespaceOrSystemID(tags);
+
     String applicationId = tags.get(ApplicationLoggingContext.TAG_APPLICATION_ID);
 
     String componentId = tags.get(ComponentLoggingContext.TAG_COMPONENT_ID);
@@ -219,14 +217,28 @@ public final class LoggingContextHelper {
 
   public static Filter createFilter(LoggingContext loggingContext) {
     if (loggingContext instanceof ServiceLoggingContext) {
-      String systemId = loggingContext.getSystemTagsMap().get(ServiceLoggingContext.TAG_NAMESPACE_ID).getValue();
+      LoggingContext.SystemTag systemTag = getByNamespaceOrSystemID(loggingContext.getSystemTagsMap());
+      if (systemTag == null) {
+        throw new IllegalArgumentException("No namespace or system id present");
+      }
+      String systemId = systemTag.getValue();
       String componentId = loggingContext.getSystemTagsMap().get(ServiceLoggingContext.TAG_COMPONENT_ID).getValue();
       String tagName = ServiceLoggingContext.TAG_SERVICE_ID;
       String entityId = loggingContext.getSystemTagsMap().get(ServiceLoggingContext.TAG_SERVICE_ID).getValue();
-      return new AndFilter(
-        ImmutableList.of(new MdcExpression(ServiceLoggingContext.TAG_NAMESPACE_ID, systemId),
-                         new MdcExpression(ServiceLoggingContext.TAG_COMPONENT_ID, componentId),
-                         new MdcExpression(tagName, entityId)));
+      ImmutableList.Builder<Filter> filterBuilder = ImmutableList.builder();
+      // In CDAP 3.5 we removed SystemLoggingContext which had tag .systemId and now we use .namespaceId but to
+      // support backward compatibility have an or filter so that we can read old logs too. See CDAP-7482
+      OrFilter namespaceFilter = new OrFilter(ImmutableList.of(new MdcExpression(
+                                                                 NamespaceLoggingContext.TAG_NAMESPACE_ID, systemId),
+                                                               new MdcExpression(ServiceLoggingContext.TAG_SYSTEM_ID,
+                                                                                 systemId)));
+
+      filterBuilder.add(namespaceFilter);
+      filterBuilder.add(new MdcExpression(ServiceLoggingContext.TAG_COMPONENT_ID, componentId));
+      filterBuilder.add(new MdcExpression(tagName, entityId));
+
+      return new AndFilter(filterBuilder.build());
+
     } else {
       String namespaceId = loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_NAMESPACE_ID).getValue();
       String applId = loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_APPLICATION_ID).getValue();
@@ -373,5 +385,14 @@ public final class LoggingContextHelper {
     builder.put(Constants.Metrics.Tag.COMPONENT,
                 context.getSystemTagsMap().get(ServiceLoggingContext.TAG_SERVICE_ID).getValue());
     return builder.build();
+  }
+
+  @Nullable
+  private static <T> T getByNamespaceOrSystemID(Map<String, T> tags) {
+    // Note: In CDAP 3.5 we removed  SystemLoggingContext which had tag .systemId so if NamespaceLoggingContext
+    // .TAG_NAMESPACE_ID does not exist we use ServiceLoggingContext.TAG_SYSTEM_ID to support backward
+    // compatibility for the logs which are in kafka and needs to be written to HDFS through log saver. See CDAP-7482
+    return tags.containsKey(NamespaceLoggingContext.TAG_NAMESPACE_ID) ? tags.get
+      (NamespaceLoggingContext.TAG_NAMESPACE_ID) : tags.get(ServiceLoggingContext.TAG_SYSTEM_ID);
   }
 }

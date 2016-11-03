@@ -17,10 +17,12 @@
 var webpack = require('webpack');
 var CopyWebpackPlugin = require('copy-webpack-plugin');
 var path = require('path');
+var LiveReloadPlugin = require('webpack-livereload-plugin');
 var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 var plugins = [
   new webpack.optimize.CommonsChunkPlugin("common", "common.js", Infinity),
   new LodashModuleReplacementPlugin,
+  new LiveReloadPlugin(),
   new webpack.optimize.DedupePlugin(),
   new CopyWebpackPlugin([
     {
@@ -115,7 +117,8 @@ module.exports = {
           /node_modules/,
           /bower_components/,
           /dist/,
-          /cdap_dist/
+          /cdap_dist/,
+          /common_dist/
         ]
       }
     ],

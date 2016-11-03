@@ -52,13 +52,13 @@ import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.tephra.TransactionContext;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -80,7 +80,6 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
   private final LoggingContext loggingContext;
   private final WorkflowProgramInfo workflowProgramInfo;
   private final Map<String, OutputFormatProvider> outputFormatProviders;
-  private final TransactionContext txContext;
   private final StreamAdmin streamAdmin;
   private final File pluginArchive;
   private final Map<String, LocalizeResource> resourcesToLocalize;
@@ -115,7 +114,6 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
       RuntimeArguments.extractScope("task", "mapper", getRuntimeArguments()), spec.getMapperResources());
     this.reducerResources = SystemArguments.getResources(
       RuntimeArguments.extractScope("task", "reducer", getRuntimeArguments()), spec.getReducerResources());
-    this.txContext = getDatasetCache().newTransactionContext();
     this.streamAdmin = streamAdmin;
     this.pluginArchive = pluginArchive;
     this.resourcesToLocalize = new HashMap<>();
@@ -131,8 +129,8 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
     }
   }
 
-  public TransactionContext getTransactionContext() {
-    return txContext;
+  public TransactionContext getTransactionContext() throws TransactionFailureException {
+    return getDatasetCache().newTransactionContext();
   }
 
   private LoggingContext createLoggingContext(ProgramId programId, RunId runId,
@@ -177,38 +175,6 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
   @Override
   public <T> T getHadoopJob() {
     return (T) job;
-  }
-
-  @Override
-  public void setInput(StreamBatchReadable stream) {
-    setInput(new StreamInputFormatProvider(Id.Namespace.from(getProgram().getNamespaceId()), stream, streamAdmin));
-  }
-
-  @Override
-  public void setInput(String datasetName) {
-    setInput(datasetName, ImmutableMap.<String, String>of());
-  }
-
-  @Override
-  public void setInput(String datasetName, Map<String, String> arguments) {
-    setInput(createInputFormatProvider(datasetName, arguments, null));
-  }
-
-  @Override
-  public void setInput(String datasetName, List<Split> splits) {
-    setInput(datasetName, ImmutableMap.<String, String>of(), splits);
-  }
-
-  @Override
-  public void setInput(String datasetName, Map<String, String> arguments, List<Split> splits) {
-    setInput(createInputFormatProvider(datasetName, arguments, splits));
-  }
-
-  @Override
-  public void setInput(InputFormatProvider inputFormatProvider) {
-    // with the setInput method, only 1 input will be set, and so the name does not matter much.
-    // make it immutable to prevent calls to addInput after setting a single input.
-    inputs = ImmutableMap.of(inputFormatProvider.getInputFormatClassName(), new MapperInput(inputFormatProvider));
   }
 
   @Override
@@ -259,18 +225,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
     }
   }
 
-  @Override
-  public void addOutput(String datasetName) {
-    addOutput(datasetName, Collections.<String, String>emptyMap());
-  }
-
-  @Override
-  public void addOutput(String datasetName, Map<String, String> arguments) {
-    addOutput(Output.ofDataset(datasetName, arguments));
-  }
-
-  @Override
-  public void addOutput(String alias, OutputFormatProvider outputFormatProvider) {
+  private void addOutput(String alias, OutputFormatProvider outputFormatProvider) {
     if (this.outputFormatProviders.containsKey(alias)) {
       throw new IllegalArgumentException("Output already configured: " + alias);
     }

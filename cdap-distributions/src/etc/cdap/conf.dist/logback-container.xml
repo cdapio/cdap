@@ -44,14 +44,14 @@
   <logger name="Explore.stderr" level="INFO"/>
 
     <appender name="Rolling" class="ch.qos.logback.core.rolling.RollingFileAppender">
-      <!-- LOG_DIRS is the environment variable set by YARN for container logs -->
-      <file>${LOG_DIRS}/program.log</file>
+      <!-- CDAP_LOG_DIR is the environment variable set by CDAP for logs -->
+      <file>${CDAP_LOG_DIR}/program.log</file>
       <encoder>
         <pattern>%d{ISO8601} - %-5p [%t:%logger{1}@%L] - %m%n</pattern>
       </encoder>
       <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
         <!-- Daily rollover at midnight-->
-        <fileNamePattern>${LOG_DIRS}/program.%d.log</fileNamePattern>
+        <fileNamePattern>${CDAP_LOG_DIR}/program.%d.log</fileNamePattern>
 
         <!-- Keep 2 weeks of history -->
         <maxHistory>14</maxHistory>

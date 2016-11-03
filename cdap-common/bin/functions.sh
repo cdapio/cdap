@@ -96,6 +96,21 @@ logecho() {
   echo ${@} | tee -a ${__logfile}
 }
 
+#
+# __readlink <file|directory>
+#
+__readlink() {
+  local __target_file=${1}
+  cd $(dirname ${__target_file})
+  __target_file=$(basename ${__target_file})
+  while test -L ${__target_file}; do
+    __target_file=$(readlink ${__target_file})
+    cd $(dirname ${__target_file})
+    __target_file=$(basename ${__target_file})
+  done
+  echo "$(pwd -P)/${__target_file}"
+}
+
 ###
 #
 # Directory functions
@@ -367,6 +382,7 @@ cdap_set_hbase() {
     1.0*) __compat="${CDAP_HOME}"/hbase-compat-1.0/lib/* ;;
     1.1*) __compat="${CDAP_HOME}"/hbase-compat-1.1/lib/* ;;
     1.2-cdh*) __compat="${CDAP_HOME}"/hbase-compat-1.2-cdh5.7.0/lib/* ;; # 5.7 and 5.8 are compatible
+    1.2*) __compat="${CDAP_HOME}"/hbase-compat-1.1/lib/* ;; # 1.1 and 1.2 are compatible
     "") die "Unable to determine HBase version! Aborting." ;;
     *) die "Unknown/Unsupported HBase version found: ${HBASE_VERSION}" ;;
   esac

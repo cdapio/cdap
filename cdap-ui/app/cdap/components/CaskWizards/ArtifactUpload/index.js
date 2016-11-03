@@ -23,7 +23,7 @@ import ArtifactUploadActionCreator from 'services/WizardStores/ArtifactUpload/Ac
 import {MyMarketApi} from 'api/market';
 import T from 'i18n-react';
 import find from 'lodash/find';
-import {default as NamespaceStore} from 'services/store/store';
+import NamespaceStore from 'services/NamespaceStore';
 
 require('./ArtifactUpload.less');
 

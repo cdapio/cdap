@@ -75,14 +75,14 @@ Examples:
     
     .. Linux
 
-    $ cdap-cli.sh start flow HelloWorld.WhoFlow
+    $ cdap cli start flow HelloWorld.WhoFlow
     Successfully started flow 'WhoFlow' of application 'HelloWorld' with stored runtime arguments '{}'
     
     $ curl -o /etc/yum.repos.d/cask.repo http://repository.cask.co/centos/6/x86_64/cdap/|short-version|/cask.repo
     
     .. Windows
     
-    > cdap-cli.bat start flow HelloWorld.WhoFlow
+    > cdap.bat cli start flow HelloWorld.WhoFlow
     Successfully started flow 'WhoFlow' of application 'HelloWorld' with stored runtime arguments '{}'
 
     > <CDAP-SDK-HOME>\libexec\bin\curl.exe -d c:\|release| -X POST 'http://repository.cask.co/centos/6/x86_64/cdap/|short-version|/cask.repo'
@@ -95,7 +95,7 @@ strings in the commands must be on a single line to convert successfully.
 
 .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh start flow HelloWorld.WhoFlow
+    $ cdap cli start flow HelloWorld.WhoFlow
     Successfully started flow 'WhoFlow' of application 'HelloWorld' with stored runtime arguments '{}'
     
     $ curl -o /etc/yum.repos.d/cask.repo http://repository.cask.co/centos/6/x86_64/cdap/|short-version|/cask.repo
@@ -256,7 +256,7 @@ def convert(c, state={}):
     w = []
     leading_whitespace = ' ' * (len(c) - len(c.lstrip()))
     text_list = c.split()
-    CLI = 'cdap-cli.sh'
+    CLI = 'cdap cli'
     CURL = 'curl'
     DATA_OPTIONS = ['-d', '--data', '--data-ascii']
     HEADER_OPTIONS = ['-H', '--header']

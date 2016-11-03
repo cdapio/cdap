@@ -41,8 +41,10 @@ import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.StreamDetail;
+import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.security.authentication.client.AuthenticationClient;
@@ -361,6 +363,15 @@ public abstract class IntegrationTestBase {
     return deployApplication(getConfiguredNamespace().toId(), applicationClz);
   }
 
+
+  protected ApplicationManager deployApplication(ApplicationId appId, AppRequest appRequest) throws Exception {
+    return getTestManager().deployApplication(appId, appRequest);
+  }
+
+  protected ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass) throws Exception {
+    return getTestManager().addAppArtifact(artifactId, appClass);
+  }
+
   protected ApplicationManager getApplicationManager(ApplicationId applicationId) throws Exception {
     return getTestManager().getApplicationManager(applicationId);
   }
@@ -376,7 +387,7 @@ public abstract class IntegrationTestBase {
 
     // delete all apps in the namespace
     for (ApplicationRecord app : getApplicationClient().list(namespace.toId())) {
-      getApplicationClient().delete(namespace.app(app.getName()).toId());
+      getApplicationClient().delete(namespace.app(app.getName(), app.getAppVersion()));
     }
     // delete all streams
     for (StreamDetail streamDetail : getStreamClient().list(namespace.toId())) {

@@ -14,35 +14,30 @@
  * the License.
  */
 import React, {PropTypes} from 'react';
-import classnames from 'classnames';
+import Card from '../Card';
 require('./MarketPlaceEntity.less');
-
-export default function MarketPlaceEntity({size, className, style, name, subtitle, icon, onClick}) {
+export default function MarketPlaceEntity({ style, name, subtitle, icon, onClick}) {
   return (
-    <div
-      className={classnames("cask-marketplace-entity-card", className, size)}
+    <Card
+      size="LG"
+      closeable
+      cardClass="market-place-package-card"
       style={style}
     >
       <div
-        className="image-container"
-        onClick={onClick}
-      >
+        className="package-icon-container"
+        onClick={onClick}>
         <img src={icon} />
       </div>
-      <div className="metadata-container" onClick={onClick}>
-        <div className="metadata-version">{subtitle}</div>
-        <div className="metadata-name">{name}</div>
+      <div onClick={onClick}>
+        <div>{subtitle}</div>
+        <div>{name}</div>
       </div>
-    </div>
+    </Card>
   );
 }
 
-MarketPlaceEntity.defaultProps = {
-  size: 'small'
-};
-
 MarketPlaceEntity.propTypes = {
-  size: PropTypes.string,
   className: PropTypes.string,
   style: PropTypes.object,
   name: PropTypes.string,

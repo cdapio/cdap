@@ -154,6 +154,8 @@ public class PartitionedFileSetTest {
   public void testMetadataForNonexistentPartition() throws Exception {
     PartitionedFileSet pfs = dsFrameworkUtil.getInstance(pfsInstance);
     PartitionKey key = generateUniqueKey();
+    TransactionContext txContext = new TransactionContext(txClient, (TransactionAware) pfs);
+    txContext.start();
     try {
       // didn't add any partitions to the dataset, so any partition key should throw a PartitionNotFoundException
       pfs.addMetadata(key, "metaKey", "metaValue");
@@ -161,6 +163,8 @@ public class PartitionedFileSetTest {
     } catch (PartitionNotFoundException e) {
       Assert.assertEquals(pfsInstance.getEntityName(), e.getPartitionedFileSetName());
       Assert.assertEquals(key, e.getPartitionKey());
+    } finally {
+      txContext.abort();
     }
   }
 

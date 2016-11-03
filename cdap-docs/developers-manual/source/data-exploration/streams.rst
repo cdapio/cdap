@@ -158,9 +158,11 @@ and has no settings.
 
 .. highlight:: console
 
-For example::
+For example:
 
-  $ cdap-cli.sh call set stream format mystream avro "col1 string, col2 map<string,int> not null, col3 record<x:double, y:float>"
+.. tabbed-parsed-literal::
+
+  $ cdap cli call set stream format mystream avro "col1 string, col2 map<string,int> not null, col3 record<x:double, y:float>"
 
 .. _stream-exploration-stream-format-clf:
 
@@ -210,9 +212,11 @@ These formats only support scalars as column types, except for the very last col
 can be an array of strings. All types can be nullable. If no schema is given, the default
 schema is an array of strings. Neither maps nor records are supported as data types.
 
-For example::
+For example:
 
-  $ cdap-cli.sh set stream format mystream csv "col1 string, col2 int not null, col3 array<string>"
+.. tabbed-parsed-literal::
+
+  $ cdap cli set stream format mystream csv "col1 string, col2 int not null, col3 array<string>"
 
 
 .. _stream-exploration-stream-format-grok:
@@ -222,9 +226,11 @@ Grok Formats
 ``grok`` allows unstructured data to be parsed into a structured format using `grok
 filters <http://logstash.net/docs/latest/filters/grok>`__. The grok filters are passed as
 a setting with the key ``"pattern"``. For example, to create a :ref:`stream-view <stream-views>` ``mygrok``
-on an existing stream ``mystream`` using the CDAP CLI::
+on an existing stream ``mystream`` using the CDAP CLI:
 
-  $ cdap-cli.sh create stream-view mystream mygrok format grok \
+.. tabbed-parsed-literal::
+
+  $ cdap cli create stream-view mystream mygrok format grok \
       schema "facility string, priority string, message string" \
       settings "pattern=(?<facility>\b(?:[0-9]+)\b).(?<priority>\b(?:[0-9]+)\b) (?<message>.*)"
 
@@ -251,9 +257,11 @@ The ``text`` format simply interprets each event body as a string. The format su
 schema, namely a record with a single field of type ``string``. The format supports a ``charset`` setting
 that allows you to specify the charset of the text. It defaults to ``utf-8``.
 
-For example::
+For example:
 
-  $ cdap-cli.sh set stream format mystream text "data string not null" "charset=ISO-8859-1"
+.. tabbed-parsed-literal::
+
+  $ cdap cli set stream format mystream text "data string not null" "charset=ISO-8859-1"
 
 
 End-to-End Example
@@ -265,39 +273,47 @@ and schema to the stream, then query the stream.
 .. highlight:: console
   
 Suppose we want to create a stream for stock trades. We first create the stream
-and send some data to it as comma-delimited text::
+and send some data to it as comma-delimited text:
 
-  $ cdap-cli.sh
-  cdap > create stream trades
-  cdap > send stream trades "AAPL,50,112.98"
-  cdap > send stream trades "AAPL,100,112.87"
-  cdap > send stream trades "AAPL,8,113.02"
-  cdap > send stream trades "NFLX,10,437.45"
+.. tabbed-parsed-literal::
 
-If we run a query over the stream, we can see each event as text::
+  $ cdap cli
+  |cdap >| create stream trades
+  |cdap >| send stream trades "AAPL,50,112.98"
+  |cdap >| send stream trades "AAPL,100,112.87"
+  |cdap >| send stream trades "AAPL,8,113.02"
+  |cdap >| send stream trades "NFLX,10,437.45"
 
-  cdap > execute "select * from stream_trades"
-  +===================================================================================================+
-  | stream_trades.ts: BIGINT | stream_trades.headers: map<string,string> | stream_trades.body: STRING |
-  +===================================================================================================+
-  | 1422493022983            | {}                                        | AAPL,50,112.98             |
-  | 1422493027358            | {}                                        | AAPL,100,112.87            |
-  | 1422493031802            | {}                                        | AAPL,8,113.02              |
-  | 1422493036080            | {}                                        | NFLX,10,437.45             |
-  +===================================================================================================+
+If we run a query over the stream, we can see each event as text:
+
+.. tabbed-parsed-literal::
+   :tabs: "CDAP CLI"
+       
+   |cdap >| execute "select * from stream_trades"
+   +===================================================================================================+
+   | stream_trades.ts: BIGINT | stream_trades.headers: map<string,string> | stream_trades.body: STRING |
+   +===================================================================================================+
+   | 1422493022983            | {}                                        | AAPL,50,112.98             |
+   | 1422493027358            | {}                                        | AAPL,100,112.87            |
+   | 1422493031802            | {}                                        | AAPL,8,113.02              |
+   | 1422493036080            | {}                                        | NFLX,10,437.45             |
+   +===================================================================================================+
 
 Since we know the body of every event is comma-separated text and that each event contains
 three fields, we can set a format and schema on the stream to allow us to run more
-complicated queries::
+complicated queries:
 
-  cdap > set stream format trades csv "ticker string, num_traded int, price double"
-  cdap > execute "select ticker, count(*) as transactions, sum(num_traded) as volume from stream_trades group by ticker order by volume desc"
-  +========================================================+
-  | ticker: STRING | transactions: BIGINT | volume: BIGINT |
-  +========================================================+
-  | AAPL           | 3                    | 158            |
-  | NFLX           | 1                    | 10             |
-  +========================================================+
+.. tabbed-parsed-literal::
+   :tabs: "CDAP CLI"
+       
+   |cdap >| set stream format trades csv "ticker string, num_traded int, price double"
+   |cdap >| execute "select ticker, count(*) as transactions, sum(num_traded) as volume from stream_trades group by ticker order by volume desc"
+   +========================================================+
+   | ticker: STRING | transactions: BIGINT | volume: BIGINT |
+   +========================================================+
+   | AAPL           | 3                    | 158            |
+   | NFLX           | 1                    | 10             |
+   +========================================================+
 
 
 Formulating Queries

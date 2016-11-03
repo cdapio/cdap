@@ -20,7 +20,7 @@ import CreateStreamWithUploadStore from 'services/WizardStores/CreateStreamWithU
 import CreateStreamWithUploadAction from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadActions';
 import { CreateStream } from 'services/WizardStores/CreateStreamWithUpload/ActionCreator';
 import UploadDataActionCreator from 'services/WizardStores/UploadData/ActionCreator';
-import {default as NamespaceStore} from 'services/store/store';
+import NamespaceStore from 'services/NamespaceStore';
 
 import CreateStreamUploadWizardConfig from 'services/WizardConfigs/CreateStreamWithUploadWizardConfig';
 import T from 'i18n-react';
