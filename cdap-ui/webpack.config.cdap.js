@@ -44,6 +44,7 @@ var plugins = [
   ])
 ];
 var mode = process.env.NODE_ENV;
+
 if (mode === 'production' || mode === 'build') {
   plugins.push(
     new webpack.DefinePlugin({
@@ -59,6 +60,7 @@ if (mode === 'production' || mode === 'build') {
     })
   );
 }
+
 var loaders = [
   {
     test: /\.less$/,

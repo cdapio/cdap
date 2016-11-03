@@ -29,7 +29,7 @@
   position: fixed;
   height: 100vh;
   width: 100vw;
-  background: black;
+  background: #000;
   top: 0;
   left: 0;
   opacity: 0.5;
@@ -39,20 +39,66 @@
   display: block;
   position: absolute;
   left: 50%;
-  top: 420px;
+  top: 50%;
   transform: translate(-50%, -65%);
   animation: topTransition ease-in-out 1s;
-  width: 32%;
-  height: 300px;
+  min-height: 400px;
   z-index: 1031;
-  min-width: 500px;
-  max-width: 540px;
+  min-width: 600px;
+  max-width: 640px;
+
+  .second-line-form {
+    padding-top: 5px;
+  }
+  .splash-checkbox {
+    margin-right: 5px;
+    padding-top: 10px;
+  }
+  .registration-form {
+    padding: 10px;
+    text-align: left;
+    margin: auto;
+    input {
+      outline: 0;
+      margin-left: 10px;
+      margin-right: 10px;
+      height: 22px;
+      border: none;
+      background-color: transparent;
+      border-bottom: 1px solid #fff;
+      color: #fff;
+    }
+
+    ::-webkit-input-placeholder {
+        color:    #fff;
+    }
+    :-moz-j {
+       color:    #fff;
+       opacity:  1;
+    }
+    ::-moz-placeholder {
+       color:    #fff;
+       opacity:  1;
+    }
+    :-ms-input-placeholder {
+       color:    #fff;
+    }
+
+    .first-name,
+    .last-name,
+    .email {
+      margin-left: 10px;
+      margin-right: 10px;
+    }
+
+    .last-name {
+      margin-left: 0;
+    }
+  }
 
   .icon-fist {
     color: @splash-font-color;
     font-size: 9em;
-    position: relative;
-    top: 5px;
   }
 
   .version-label {
@@ -80,8 +126,10 @@
   }
   .group {
     display: flex;
-    justify-content: center;
-    margin-top: -10px;
+    justify-content: space-between;
+    width: 415px;
+    margin-left: auto;
+    margin-right: auto;
 
     &.no-registration {
       justify-content: center;
@@ -111,6 +159,7 @@
   padding-top: 15px;
   color: @card-font-color;
   box-shadow: 0 0 15px #000000;
+  height: 100%;
 
   &.card-SM { width: 33%; }
   &.card-MD { width: 66%; }
@@ -125,10 +174,18 @@
   }
 }
 
+.cask-video-container {
+  padding-top: 35px;
+}
 .splash-screen .fa.fa-times:hover {
   color: #00008B;
 }
-
+.splash-main-container {
+  height: 245px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
 .splash-screen .card-header {
   display: flex;
   justify-content: center;
