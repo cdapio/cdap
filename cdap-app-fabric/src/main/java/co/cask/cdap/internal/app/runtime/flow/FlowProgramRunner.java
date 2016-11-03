@@ -22,15 +22,20 @@ import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.store.RuntimeStore;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
+import co.cask.cdap.internal.app.runtime.AbstractProgramRunner;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -49,17 +54,20 @@ import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.annotation.Nullable;
 
 /**
  *
  */
-public final class FlowProgramRunner implements ProgramRunner {
+public final class FlowProgramRunner extends AbstractProgramRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(FlowProgramRunner.class);
 
@@ -70,7 +78,9 @@ public final class FlowProgramRunner implements ProgramRunner {
 
   @Inject
   public FlowProgramRunner(Provider<FlowletProgramRunner> flowletProgramRunnerProvider, StreamAdmin streamAdmin,
-                           QueueAdmin queueAdmin, TransactionExecutorFactory txExecutorFactory) {
+                           QueueAdmin queueAdmin, TransactionExecutorFactory txExecutorFactory,
+                           CConfiguration cConf, RuntimeStore runtimeStore, DatasetFramework datasetFramework) {
+    super(cConf, runtimeStore, datasetFramework);
     this.flowletProgramRunnerProvider = flowletProgramRunnerProvider;
     this.streamAdmin = streamAdmin;
     this.queueAdmin = queueAdmin;
@@ -78,7 +88,11 @@ public final class FlowProgramRunner implements ProgramRunner {
   }
 
   @Override
-  public ProgramController run(Program program, ProgramOptions options) {
+  protected ProgramController startProgram(Program program, ProgramOptions options, RunId runId,
+                                           DatasetFramework datasetFramework,
+                                           @Nullable PluginInstantiator pluginInstantiator,
+                                           @Nullable WorkflowProgramInfo workflowInfo,
+                                           Deque<Closeable> closeables) throws Exception {
     // Extract and verify parameters
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -90,16 +104,11 @@ public final class FlowProgramRunner implements ProgramRunner {
     FlowSpecification flowSpec = appSpec.getFlows().get(program.getName());
     Preconditions.checkNotNull(flowSpec, "Missing FlowSpecification for %s", program.getName());
 
-    try {
-      // Launch flowlet program runners
-      RunId runId = ProgramRunners.getRunId(options);
-      Multimap<String, QueueName> consumerQueues = FlowUtils.configureQueue(program, flowSpec,
-                                                                            streamAdmin, queueAdmin, txExecutorFactory);
-      final Table<String, Integer, ProgramController> flowlets = createFlowlets(program, options, flowSpec);
-      return new FlowProgramController(flowlets, program, options, flowSpec, consumerQueues);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+    // Launch flowlet program runners
+    Multimap<String, QueueName> consumerQueues = FlowUtils.configureQueue(program, flowSpec,
+                                                                          streamAdmin, queueAdmin, txExecutorFactory);
+    final Table<String, Integer, ProgramController> flowlets = createFlowlets(program, options, flowSpec);
+    return new FlowProgramController(flowlets, program, options, flowSpec, consumerQueues);
   }
 
   /**

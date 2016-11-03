@@ -16,7 +16,6 @@
 
 package co.cask.cdap.app.runtime;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.id.ProgramId;

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.service;
 
-import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
@@ -25,36 +24,35 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
-import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
-import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
+import co.cask.cdap.internal.app.runtime.AbstractProgramRunner;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.internal.app.services.ServiceHttpServer;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
-import com.google.common.io.Closeables;
-import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
-import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.internal.ServiceListenerAdapter;
+
+import java.io.Closeable;
+import java.util.Deque;
+import javax.annotation.Nullable;
 
 /**
  * A {@link ProgramRunner} that runs a component inside a Service (either a HTTP Server or a Worker).
  */
-public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
+public class ServiceProgramRunner extends AbstractProgramRunner {
 
   private final MetricsCollectionService metricsCollectionService;
-  private final DatasetFramework datasetFramework;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
   private final ServiceAnnouncer serviceAnnouncer;
@@ -65,10 +63,10 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   public ServiceProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                               DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                               TransactionSystemClient txClient, ServiceAnnouncer serviceAnnouncer,
-                              SecureStore secureStore, SecureStoreManager secureStoreManager) {
-    super(cConf);
+                              SecureStore secureStore, SecureStoreManager secureStoreManager,
+                              RuntimeStore runtimeStore) {
+    super(cConf, runtimeStore, datasetFramework);
     this.metricsCollectionService = metricsCollectionService;
-    this.datasetFramework = datasetFramework;
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
     this.serviceAnnouncer = serviceAnnouncer;
@@ -77,23 +75,22 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   }
 
   @Override
-  public ProgramController run(Program program, ProgramOptions options) {
+  protected ProgramController startProgram(Program program, ProgramOptions options, RunId runId,
+                                           DatasetFramework datasetFramework,
+                                           @Nullable PluginInstantiator pluginInstantiator,
+                                           @Nullable WorkflowProgramInfo workflowInfo,
+                                           Deque<Closeable> closeables) {
     int instanceId = Integer.parseInt(options.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID, "-1"));
     Preconditions.checkArgument(instanceId >= 0, "Missing instance Id");
 
     int instanceCount = Integer.parseInt(options.getArguments().getOption(ProgramOptionConstants.INSTANCES, "0"));
     Preconditions.checkArgument(instanceCount > 0, "Invalid or missing instance count");
 
-    RunId runId = ProgramRunners.getRunId(options);
-
-    ApplicationSpecification appSpec = program.getApplicationSpecification();
-    Preconditions.checkNotNull(appSpec, "Missing application specification.");
-
     ProgramType programType = program.getType();
     Preconditions.checkNotNull(programType, "Missing processor type.");
     Preconditions.checkArgument(programType == ProgramType.SERVICE, "Only Service process type is supported.");
 
-    ServiceSpecification spec = appSpec.getServices().get(program.getName());
+    ServiceSpecification spec = program.getApplicationSpecification().getServices().get(program.getName());
 
     String host = options.getArguments().getOption(ProgramOptionConstants.HOST);
     Preconditions.checkArgument(host != null, "No hostname is provided");
@@ -104,36 +101,16 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
       ((ProgramContextAware) datasetFramework).initContext(programId.run(runId));
     }
 
-    final PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
-    try {
-      ServiceHttpServer component = new ServiceHttpServer(host, program, options, spec,
-                                                          instanceId, instanceCount, serviceAnnouncer,
-                                                          metricsCollectionService, datasetFramework,
-                                                          txClient, discoveryServiceClient,
-                                                          pluginInstantiator, secureStore, secureStoreManager);
+    ServiceHttpServer component = new ServiceHttpServer(host, program, options, spec,
+                                                        instanceId, instanceCount, serviceAnnouncer,
+                                                        metricsCollectionService, datasetFramework,
+                                                        txClient, discoveryServiceClient,
+                                                        pluginInstantiator, secureStore, secureStoreManager);
 
-      // Add a service listener to make sure the plugin instantiator is closed when the worker driver finished.
-      component.addListener(new ServiceListenerAdapter() {
-        @Override
-        public void terminated(Service.State from) {
-          Closeables.closeQuietly(pluginInstantiator);
-        }
-
-        @Override
-        public void failed(Service.State from, Throwable failure) {
-          Closeables.closeQuietly(pluginInstantiator);
-        }
-      }, Threads.SAME_THREAD_EXECUTOR);
-
-
-      ProgramController controller = new ServiceProgramControllerAdapter(component, program.getId(), runId,
-                                                                         spec.getName() + "-" + instanceId);
-      component.start();
-      return controller;
-    } catch (Throwable t) {
-      Closeables.closeQuietly(pluginInstantiator);
-      throw t;
-    }
+    ProgramController controller = new ServiceProgramControllerAdapter(component, program.getId(), runId,
+                                                                       spec.getName() + "-" + instanceId);
+    component.start();
+    return controller;
   }
 
   private static final class ServiceProgramControllerAdapter extends ProgramControllerServiceAdapter {

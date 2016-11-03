@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.worker;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
@@ -27,37 +26,36 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
-import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
+import co.cask.cdap.internal.app.runtime.AbstractProgramRunner;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
-import com.google.common.io.Closeables;
-import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
-import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.internal.ServiceListenerAdapter;
+
+import java.io.Closeable;
+import java.util.Deque;
+import javax.annotation.Nullable;
 
 /**
  * A {@link ProgramRunner} that runs a {@link Worker}.
  */
-public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
+public class WorkerProgramRunner extends AbstractProgramRunner {
   private static final Gson GSON = new Gson();
 
   private final MetricsCollectionService metricsCollectionService;
-  private final DatasetFramework datasetFramework;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
   private final StreamWriterFactory streamWriterFactory;
@@ -68,10 +66,10 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   public WorkerProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                              DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                              TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory,
-                             SecureStore secureStore, SecureStoreManager secureStoreManager) {
-    super(cConf);
+                             SecureStore secureStore, SecureStoreManager secureStoreManager,
+                             RuntimeStore runtimeStore) {
+    super(cConf, runtimeStore, datasetFramework);
     this.metricsCollectionService = metricsCollectionService;
-    this.datasetFramework = datasetFramework;
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
     this.streamWriterFactory = streamWriterFactory;
@@ -80,9 +78,11 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   }
 
   @Override
-  public ProgramController run(Program program, ProgramOptions options) {
-    ApplicationSpecification appSpec = program.getApplicationSpecification();
-    Preconditions.checkNotNull(appSpec, "Missing application specification.");
+  protected ProgramController startProgram(Program program, ProgramOptions options, RunId runId,
+                                           DatasetFramework datasetFramework,
+                                           final @Nullable PluginInstantiator pluginInstantiator,
+                                           @Nullable WorkflowProgramInfo workflowInfo,
+                                           Deque<Closeable> closeables) {
 
     int instanceId = Integer.parseInt(options.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID, "-1"));
     Preconditions.checkArgument(instanceId >= 0, "Missing instance Id");
@@ -90,13 +90,11 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
     int instanceCount = Integer.parseInt(options.getArguments().getOption(ProgramOptionConstants.INSTANCES, "0"));
     Preconditions.checkArgument(instanceCount > 0, "Invalid or missing instance count");
 
-    RunId runId = ProgramRunners.getRunId(options);
-
     ProgramType programType = program.getType();
     Preconditions.checkNotNull(programType, "Missing processor type.");
     Preconditions.checkArgument(programType == ProgramType.WORKER, "Only Worker process type is supported.");
 
-    WorkerSpecification workerSpec = appSpec.getWorkers().get(program.getName());
+    WorkerSpecification workerSpec = program.getApplicationSpecification().getWorkers().get(program.getName());
     Preconditions.checkArgument(workerSpec != null, "Missing Worker specification for %s", program.getId());
     String instances = options.getArguments().getOption(ProgramOptionConstants.INSTANCES,
                                                         String.valueOf(workerSpec.getInstances()));
@@ -115,36 +113,17 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
       ((ProgramContextAware) datasetFramework).initContext(programId.run(runId));
     }
 
-    final PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
-    try {
-      BasicWorkerContext context = new BasicWorkerContext(newWorkerSpec, program, options, instanceId, instanceCount,
-                                                          metricsCollectionService, datasetFramework, txClient,
-                                                          discoveryServiceClient, streamWriterFactory,
-                                                          pluginInstantiator, secureStore, secureStoreManager);
+    BasicWorkerContext context = new BasicWorkerContext(newWorkerSpec, program, options, instanceId, instanceCount,
+                                                        metricsCollectionService, datasetFramework, txClient,
+                                                        discoveryServiceClient, streamWriterFactory,
+                                                        pluginInstantiator, secureStore, secureStoreManager);
 
-      WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
+    WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 
-      // Add a service listener to make sure the plugin instantiator is closed when the worker driver finished.
-      worker.addListener(new ServiceListenerAdapter() {
-        @Override
-        public void terminated(Service.State from) {
-          Closeables.closeQuietly(pluginInstantiator);
-        }
-
-        @Override
-        public void failed(Service.State from, Throwable failure) {
-          Closeables.closeQuietly(pluginInstantiator);
-        }
-      }, Threads.SAME_THREAD_EXECUTOR);
-
-      ProgramController controller = new WorkerControllerServiceAdapter(worker, program.getId(), runId,
-                                                                        workerSpec.getName() + "-" + instanceId);
-      worker.start();
-      return controller;
-    } catch (Throwable t) {
-      Closeables.closeQuietly(pluginInstantiator);
-      throw t;
-    }
+    ProgramController controller = new WorkerControllerServiceAdapter(worker, program.getId(), runId,
+                                                                      workerSpec.getName() + "-" + instanceId);
+    worker.start();
+    return controller;
   }
 
   private static final class WorkerControllerServiceAdapter extends ProgramControllerServiceAdapter {

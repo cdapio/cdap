@@ -37,13 +37,11 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRecord;
@@ -76,7 +74,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
-import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -315,68 +312,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
     ProgramDescriptor programDescriptor = store.loadProgram(programId);
     BasicArguments systemArguments = new BasicArguments(systemArgs);
     BasicArguments userArguments = new BasicArguments(userArgs);
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.run(programDescriptor, new SimpleProgramOptions(
+    return runtimeService.run(programDescriptor, new SimpleProgramOptions(
       programId.getProgram(), systemArguments, userArguments, debug));
-
-    final ProgramController controller = runtimeInfo.getController();
-    final String runId = controller.getRunId().getId();
-    final String twillRunId = runtimeInfo.getTwillRunId() == null ? null : runtimeInfo.getTwillRunId().getId();
-    if (programId.getType() != ProgramType.MAPREDUCE && programId.getType() != ProgramType.SPARK) {
-      // MapReduce/Spark state recording is done by the MapReduceProgramRunner/SparkProgramRunner
-      // TODO [JIRA: CDAP-2013] Same needs to be done for other programs as well
-      controller.addListener(new AbstractListener() {
-        @Override
-        public void init(ProgramController.State state, @Nullable Throwable cause) {
-          // Get start time from RunId
-          long startTimeInSeconds = RunIds.getTime(controller.getRunId(), TimeUnit.SECONDS);
-          if (startTimeInSeconds == -1) {
-            // If RunId is not time-based, use current time as start time
-            startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-          }
-          store.setStart(programId, runId, startTimeInSeconds, twillRunId, userArgs, systemArgs);
-          if (state == ProgramController.State.COMPLETED) {
-            completed();
-          }
-          if (state == ProgramController.State.ERROR) {
-            error(controller.getFailureCause());
-          }
-        }
-
-        @Override
-        public void completed() {
-          LOG.debug("Program {} completed successfully.", programId);
-          store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                        ProgramController.State.COMPLETED.getRunStatus());
-        }
-
-        @Override
-        public void killed() {
-          LOG.debug("Program {} killed.", programId);
-          store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                        ProgramController.State.KILLED.getRunStatus());
-        }
-
-        @Override
-        public void suspended() {
-          LOG.debug("Suspending Program {} {}.", programId, runId);
-          store.setSuspend(programId, runId);
-        }
-
-        @Override
-        public void resuming() {
-          LOG.debug("Resuming Program {} {}.", programId, runId);
-          store.setResume(programId, runId);
-        }
-
-        @Override
-        public void error(Throwable cause) {
-          LOG.info("Program stopped with error {}, {}", programId, runId, cause);
-          store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                        ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
-        }
-      }, Threads.SAME_THREAD_EXECUTOR);
-    }
-    return runtimeInfo;
   }
 
   /**
