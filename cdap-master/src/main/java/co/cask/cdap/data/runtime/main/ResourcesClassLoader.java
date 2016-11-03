@@ -17,8 +17,6 @@
 package co.cask.cdap.data.runtime.main;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,32 +30,36 @@ import javax.annotation.Nullable;
  * does not contain the resource. Classes and other objects are loaded from its parent classloader.
  */
 public class ResourcesClassLoader extends URLClassLoader {
-  private static final Logger LOG = LoggerFactory.getLogger(ResourcesClassLoader.class);
-
-  private final URLClassLoader resourceClassLoader;
 
   public ResourcesClassLoader(URL[] resourceUrls, ClassLoader parent) {
-    super(new URL[0], parent);
-    this.resourceClassLoader = new URLClassLoader(resourceUrls, ClassLoader.getSystemClassLoader().getParent());
+    super(resourceUrls, parent);
   }
 
   @Override
   public URL getResource(String name) {
-    URL resource = firstNonNull(resourceClassLoader.getResource(name), super.getResource(name));
-    LOG.trace("Returning {} for {}", resource, name);
-    return resource;
+    // Instead of following normal Classloader delegation, we try to find the resource from this classloader first
+    return firstNonNull(findResource(name), super.getResource(name));
   }
 
   @Override
   public Enumeration<URL> getResources(String name) throws IOException {
-    Enumeration<URL> resources = firstNonNull(resourceClassLoader.getResources(name), super.getResources(name));
-    LOG.trace("Returning {} for {}", resources, name);
-    return resources;
+    Enumeration<URL> resources = findResources(name);
+    // If the resources is empty, use the normal classloader resource resolution
+    if (resources.hasMoreElements()) {
+      return resources;
+    }
+    return super.getResources(name);
   }
 
   @Override
   public InputStream getResourceAsStream(String name) {
-    return firstNonNull(resourceClassLoader.getResourceAsStream(name), super.getResourceAsStream(name));
+    URL resource = getResource(name);
+    try {
+      return resource == null ? null : resource.openStream();
+    } catch (Exception e) {
+      // According to the javadoc, if the caller doesn't have the privilege opening the stream, null will be returned.
+      return null;
+    }
   }
 
   @VisibleForTesting

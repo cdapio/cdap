@@ -440,17 +440,18 @@ cdap_set_hive_classpath() {
     # If Hive classpath is successfully determined, derive explore
     # classpath from it and export it to use it in the launch command
     if [[ -n ${HIVE_HOME} ]] && [[ -n ${HIVE_CONF_DIR} ]] && [[ -n ${HADOOP_CONF_DIR} ]]; then
-      EXPLORE_CONF_FILES=$(ls -1dF ${HIVE_CONF_DIR}/* ${HADOOP_CONF_DIR}/* | sed -e '/\/$/d' | tr '\n' ':')
-      EXPLORE_CLASSPATH=$(ls -1 ${HIVE_HOME}/lib/hive-exec-* ${HIVE_HOME}/lib/*.jar | tr '\n' ':')
+      EXPLORE_CONF_DIRS="${HIVE_CONF_DIR}:${HADOOP_CONF_DIR}"
+      HIVE_CLASSPATH=${HIVE_CLASSPATH:-$(echo -e "${HIVE_VARS}" | grep '^env:CLASSPATH=' | cut -d= -f2)}
+      EXPLORE_CLASSPATH=${HIVE_CLASSPATH}
       if [[ -n ${TEZ_HOME} ]] && [[ -n ${TEZ_CONF_DIR} ]]; then
         # tez-site.xml also need to be passed to explore service
-        EXPLORE_CONF_FILES=${EXPLORE_CONF_FILES}:${TEZ_CONF_DIR}/tez-site.xml:
+        EXPLORE_CONF_DIRS="${EXPLORE_CONF_DIRS}:${TEZ_CONF_DIR}"
       fi
       if [[ ${HIVE_EXEC_ENGINE} == spark ]]; then
         # We require SPARK_HOME to be set for CDAP to include the Spark assembly JAR for Explore
         cdap_set_spark || die "Unable to get SPARK_HOME, but default Hive engine is Spark"
       fi
-      export EXPLORE_CONF_FILES EXPLORE_CLASSPATH
+      export EXPLORE_CONF_DIRS EXPLORE_CLASSPATH
     fi
   fi
 }
@@ -586,7 +587,7 @@ cdap_start_java() {
     cdap_set_spark || logecho "Could not determine SPARK_HOME! Spark support unavailable!"
     # Master requires setting hive classpath
     cdap_set_hive_classpath || return 1
-    local readonly __explore="-Dexplore.conf.files=${EXPLORE_CONF_FILES} -Dexplore.classpath=${EXPLORE_CLASSPATH}"
+    local readonly __explore="-Dexplore.conf.dirs=${EXPLORE_CONF_DIRS} -Dexplore.classpath=${EXPLORE_CLASSPATH}"
     __defines+=" ${__explore}"
     # Add proper HBase compatibility to CLASSPATH
     cdap_set_hbase || return 1

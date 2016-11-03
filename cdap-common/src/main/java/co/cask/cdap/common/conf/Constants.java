@@ -824,11 +824,8 @@ public final class Constants {
     public static final String START_ON_DEMAND = "explore.start.on.demand";
     public static final String DATASET_NAME = "explore.dataset.name";
     public static final String DATASET_NAMESPACE = "explore.dataset.namespace";
-    public static final String VIEW_NAME = "explore.view.name";
     public static final String STREAM_NAME = "explore.stream.name";
     public static final String STREAM_NAMESPACE = "explore.stream.namespace";
-    public static final String EXPLORE_CLASSPATH = "explore.classpath";
-    public static final String EXPLORE_CONF_FILES = "explore.conf.files";
     public static final String PREVIEWS_DIR_NAME = "explore.previews.dir";
     // a marker so that we know which tables are created by CDAP
     public static final String CDAP_NAME = "cdap.name";
