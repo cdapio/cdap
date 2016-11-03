@@ -51,19 +51,19 @@ DOC_GEN_PY="${SCRIPT_PATH}/../tools/doc-gen.py"
 TARGET_PATH="${SCRIPT_PATH}/${TARGET}"
 SOURCE_PATH="${SCRIPT_PATH}/${SOURCE}"
 
-if [ "x${2}" == "x" ]; then
+if [[ -z ${2} ]]; then
   PROJECT_PATH="${SCRIPT_PATH}/../.."
 else
   PROJECT_PATH="${SCRIPT_PATH}/../../../${2}"
 fi
-PROJECT_PATH=`python -c "from os import path; print(path.realpath('${PROJECT_PATH}'));"`
+PROJECT_PATH=$(cd ${PROJECT_PATH}; pwd -P)
 
 API_JAVADOCS="${PROJECT_PATH}/target/site/${APIDOCS}"
 
 CHECK_INCLUDES=''
 LOCAL_INCLUDES=''
 
-if [[ "x${COLOR_LOGS}" != "x" ]]; then
+if [[ -n ${COLOR_LOGS} ]]; then
   SPHINX_COLOR=''
   RED="$(tput setaf 1)"
   BOLD="$(tput bold)"
@@ -163,10 +163,10 @@ function check_build_rst() {
 }
 
 function check_includes() {
-  if [ "${DOCS_LOCAL}" == "${TRUE}" ]; then
+  if [[ ${DOCS_LOCAL} == ${TRUE} ]]; then
     LOCAL_INCLUDES="${TRUE}"
   fi
-  if [ "${CHECK_INCLUDES}" == "${TRUE}" ]; then
+  if [[ ${CHECK_INCLUDES} == ${TRUE} ]]; then
     echo_red_bold "Downloading and checking files to be included."
     # Build includes
     local target_includes_dir=${SCRIPT_PATH}/${TARGET}/${INCLUDES}
@@ -204,7 +204,7 @@ function test_an_include() {
   if [[ -n ${target} ]]; then
     local file_name=$(basename ${target})
   
-    if [[ "${OSTYPE}" == "darwin"* ]]; then
+    if [[ ${OSTYPE} == "darwin"* ]]; then
       new_md5_hash=$(md5 -q ${target})
     else
       new_md5_hash=$(md5sum ${target} | awk '{print $1}')
@@ -213,10 +213,10 @@ function test_an_include() {
     # If the new_md5_hash is in the NOT_FOUND_HASHES, it will set as the not_found_hash
     local not_found_hash=`echo ${NOT_FOUND_HASHES[@]} | grep -o "${new_md5_hash}"`
   
-    if [[ "${new_md5_hash}" == "${not_found_hash}" ]]; then
+    if [[ ${new_md5_hash} == ${not_found_hash} ]]; then
       m="${WARNING} ${RED_BOLD}${file_name} not found!${NO_COLOR}"
       m="${m}\nfile: ${target}"
-    elif [[ "${new_md5_hash}" != "${md5_hash}" ]]; then
+    elif [[ ${new_md5_hash} != ${md5_hash} ]]; then
       m="${WARNING} ${RED_BOLD}${file_name} has changed! Compare files and update hash!${NO_COLOR}"
       m="${m}\nfile: ${target}"
       m="${m}\nOld MD5 Hash: ${md5_hash} New MD5 Hash: ${new_md5_hash}"
@@ -253,7 +253,7 @@ function download_file() {
     local target=${includes_dir}/${file_name}
   fi
   
-  if [ ! -d "${includes_dir}" ]; then
+  if [[ ! -d ${includes_dir} ]]; then
     mkdir ${includes_dir}
     echo "Creating Includes Directory: ${includes_dir}"
   fi
@@ -266,19 +266,19 @@ function download_file() {
 
 function build_license_pdfs() {
   set_version
-  cd ${SCRIPT_PATH}
+  pushd ${SCRIPT_PATH} > /dev/null
   PROJECT_VERSION_TRIMMED=${PROJECT_VERSION%%-SNAPSHOT*}
   rm -rf ${SCRIPT_PATH}/${LICENSES_PDF}
   mkdir ${SCRIPT_PATH}/${LICENSES_PDF}
-  # paths are relative to location of $DOC_GEN_PY script
-  LIC_PDF="../../../${REFERENCE}/${LICENSES_PDF}"
-  LIC_RST="../${REFERENCE}/source/${LICENSES}"
+  LIC_PDF="${PROJECT_PATH}/${CDAP_DOCS}/${REFERENCE}/${LICENSES_PDF}"
+  LIC_RST="${PROJECT_PATH}/${CDAP_DOCS}/${REFERENCE}/source/${LICENSES}"
   PDFS="cdap-enterprise-dependencies cdap-level-1-dependencies cdap-standalone-dependencies cdap-ui-dependencies"
   for PDF in ${PDFS}; do
     echo
     echo "Building ${PDF}"
     python ${DOC_GEN_PY} -g pdf -o ${LIC_PDF}/${PDF}.pdf -b ${PROJECT_VERSION_TRIMMED} ${LIC_RST}/${PDF}.rst
   done
+  popd > /dev/null
 }
 
 function copy_license_pdfs() {
@@ -288,11 +288,11 @@ function copy_license_pdfs() {
 function set_mvn_environment() {
   check_build_rst
   cd ${PROJECT_PATH}
-  if [[ "${OSTYPE}" == "darwin"* ]]; then
+  if [[ ${OSTYPE} == "darwin"* ]]; then
     # TODO: hard-coded Java version 1.7
     export JAVA_HOME=$(/usr/libexec/java_home -v 1.7)
+    java -version
   else
-#     export JAVA_HOME=/usr/lib/jvm/jdk1.7.0_75
     if [[ -z ${JAVA_HOME} ]]; then
       if [[ -z ${JAVA_JDK_VERSION} ]]; then
         JAVA_JDK_VERSION="jdk1.7.0_75"
@@ -320,23 +320,23 @@ function set_version() {
   fi
   # Determine branch and branch type: one of develop, master, release, develop-feature, release-feature
   # If unable to determine type, uses develop-feature
-  if [ "${full_branch}" == "develop" -o  "${full_branch}" == "master" ]; then
+  if [[ ${full_branch} == "develop" ]] || [[ ${full_branch} == "master" ]]; then
     GIT_BRANCH="${full_branch}"
     GIT_BRANCH_TYPE=${GIT_BRANCH}
-  elif [ "${full_branch:0:4}" == "docs" ]; then
+  elif [[ ${full_branch:0:4} == "docs" ]]; then
     GIT_BRANCH="${full_branch}"
-    if [ "${GIT_BRANCH_PARENT:0:7}" == "develop" ]; then
+    if [[ ${GIT_BRANCH_PARENT:0:7} == "develop" ]]; then
       GIT_BRANCH_TYPE="develop-feature"
     elif [[ -z ${GIT_BRANCH_TYPE} ]]; then
       GIT_BRANCH_TYPE="release-feature"
     fi
-  elif [ "${GIT_BRANCH:0:7}" == "release" ]; then
+  elif [[ ${GIT_BRANCH:0:7} == "release" ]]; then
     GIT_BRANCH_TYPE="release"
   else
     # We are on a feature branch: but from develop or release?
     # This is not easy to determine. This can fail very easily.
     if [[ -z ${GIT_BRANCH_TYPE} ]]; then
-      if [ "${GIT_BRANCH_PARENT:0:7}" == "release" ]; then
+      if [[ ${GIT_BRANCH_PARENT:0:7} == "release" ]]; then
         GIT_BRANCH_TYPE="release-feature"
       else
         GIT_BRANCH_TYPE="develop-feature"
@@ -346,7 +346,7 @@ function set_version() {
   popd > /dev/null
   IFS="${OIFS}"
   
-  if [ "${GIT_BRANCH_TYPE:0:7}" == "develop" ]; then
+  if [[ ${GIT_BRANCH_TYPE:0:7} == "develop" ]]; then
     GIT_BRANCH_CASK_HYDRATOR="develop"
     GIT_BRANCH_CASK_TRACKER="develop"
   fi
@@ -395,7 +395,7 @@ function get_cask_tracker_version() {
 function clear_messages_file() {
   unset -v MESSAGES
   TMP_MESSAGES_FILE="${TARGET_PATH}/.$(basename $0).$$.messages"
-  if [ ! -d ${TARGET_PATH} ]; then
+  if [[ ! -d ${TARGET_PATH} ]]; then
     echo "Making directory ${TARGET_PATH}"
     mkdir ${TARGET_PATH}
   fi
@@ -480,7 +480,7 @@ function rewrite() {
   if [[ -z ${3} ]]; then
     local sub_string=${2}
     echo "    $sub_string"
-    if [ "$(uname)" == "Darwin" ]; then
+    if [[ $(uname) == "Darwin" ]]; then
       sed -i ".bak" "${sub_string}" ${rewrite_source}
       rm ${rewrite_source}.bak
     else
@@ -490,7 +490,7 @@ function rewrite() {
     local sub_string=${2}
     local new_sub_string=${3}
     echo "    ${sub_string} -> ${new_sub_string} "
-    if [ "$(uname)" == "Darwin" ]; then
+    if [[ $(uname) == "Darwin" ]]; then
       sed -i ".bak" "s|${sub_string}|${new_sub_string}|g" ${rewrite_source}
       rm ${rewrite_source}.bak
     else

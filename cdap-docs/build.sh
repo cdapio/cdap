@@ -26,6 +26,7 @@
 # USE_LOCAL: Set to use local copies of source, rather than downloading referenced files
 # NO_JAVADOCS: Set to not build Javadocs, no matter which actions are used (for testing)
 
+cd $(cd $(dirname ${BASH_SOURCE[0]}); pwd -P)
 source ./vars
 source _common/common-build.sh
 
@@ -51,7 +52,7 @@ function usage() {
 }
 
 function error_usage() {
-  if [ $1 ]; then
+  if [[ -n $1 ]]; then
     echo_red_bold "Unknown action: " $1
     echo
   fi
@@ -169,27 +170,34 @@ function build_javadocs() {
   else
     USING_JAVADOCS="true"
     export USING_JAVADOCS
-    if [ "${javadoc_type}" == "${ALL}" ]; then
-      local javadoc_run="mvn javadoc:aggregate -P release"
-    else
-      local javadoc_run="mvn clean site -P templates"
-    fi
-    if [ "${DEBUG}" == "${TRUE}" ]; then
+
+    echo "JAVA Version:"
+    set_mvn_environment
+    source ${PROJECT_PATH}/cdap-common/bin/functions.sh
+    cdap_set_java
+    java -version
+    echo
+    
+    echo "Maven Version:"
+    mvn -version
+    echo
+    
+    if [[ ${DEBUG} == ${TRUE} ]]; then
       local debug_flag="-X"
     else
       local debug_flag=''
     fi
-    set_mvn_environment
-    echo "JAVA_HOME: ${JAVA_HOME}"
-    echo "JAVA Version:"
-    java -version
-    echo "Maven Version:"
-    mvn -version
+    if [[ ${javadoc_type} == ${ALL} ]]; then
+      javadoc_run="javadoc:aggregate"
+    else
+      javadoc_run="site"
+    fi
+
     local start=`date`
-    echo "Maven clean install"
-    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean install -P examples,templates,release -DskipTests -Dgpg.skip=true
-    echo "Maven javadoc_run"
-    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" ${javadoc_run} -DskipTests -DisOffline=false ${debug_flag}
+    
+    MAVEN_OPTS="-Xmx4g -XX:MaxPermSize=256m" # match other CDAP builds
+    mvn clean package ${javadoc_run} -P examples,templates,release -DskipTests -Dgpg.skip=true -DisOffline=false ${debug_flag}
+
     warnings=$?
     if [[ ${warnings} -eq 0 ]]; then
       echo
@@ -240,6 +248,8 @@ function build_docs_cli() {
 }
 
 function build_docs_inner_level() {
+# Change to each manual, and run the local ./build.sh from there.
+# Each manual can (and does) have a customised build script, using the common-build.sh as a base.
   for i in ${MANUALS}; do
     echo "========================================================"
     echo "Building \"${i}\", target \"${1}\"..."
@@ -290,7 +300,7 @@ function copy_docs_inner_level() {
 
   local project_dir
   # Rewrite 404 file, using branch if not a release
-  if [ "x${GIT_BRANCH_TYPE}" == "xfeature" ]; then
+  if [[ ${GIT_BRANCH_TYPE} == "feature" ]]; then
     project_dir=${PROJECT_VERSION}-${GIT_BRANCH}
   else
     project_dir=${PROJECT_VERSION}
@@ -351,7 +361,7 @@ function clean_targets() {
   mkdir ${TARGET_PATH}
   echo "Cleaned ${TARGET_PATH} directory"
   echo
-  if [ "${doc_type}" != "${DOCS_OUTER}" ]; then
+  if [[ ${doc_type} != ${DOCS_OUTER} ]]; then
     for i in ${MANUALS}; do
       rm -rf ${SCRIPT_PATH}/${i}/${TARGET}/*
       echo "Cleaned ${SCRIPT_PATH}/${i}/${TARGET} directories"
@@ -385,9 +395,9 @@ function set_and_display_version() {
 
 function set_project_path() {
   PROJECT_PATH="${SCRIPT_PATH}/.."
-  PROJECT_PATH=$(cd ${PROJECT_PATH} && pwd)
+  PROJECT_PATH=$(cd ${PROJECT_PATH} && pwd -P)
   SOURCE_PATH="${SCRIPT_PATH}/../../"
-  SOURCE_PATH=$(cd ${SOURCE_PATH} && pwd)
+  SOURCE_PATH=$(cd ${SOURCE_PATH} && pwd -P)
 }
 
 function setup() {
@@ -398,7 +408,7 @@ function setup() {
     echo "Manual or CDAP_DOCS set incorrectly: are you in the correct directory?"
     exit ${E_WRONG_DIRECTORY}
   fi
-  if [[ " ${MANUALS[@]}" =~ "${MANUAL} " || "${MANUAL}" == "${CDAP_DOCS}" ]]; then
+  if [[ " ${MANUALS[@]}" =~ "${MANUAL} " || ${MANUAL} == ${CDAP_DOCS} ]]; then
     if [[ -z ${quiet} ]]; then
       echo "Check for starting directory: Using \"${MANUAL}\""
     fi
@@ -411,8 +421,11 @@ function setup() {
     echo "Did not find MANUAL \"${MANUAL}\": are you in the correct directory?"
     exit ${E_WRONG_DIRECTORY}
   fi
-  exit 1
+  return 1
 }
 
 setup quiet
+if [[ $? -ne 0 ]]; then
+    exit $?   
+fi
 run_command  ${1}

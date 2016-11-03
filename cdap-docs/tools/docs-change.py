@@ -21,29 +21,26 @@
 # - Looks for any empty title tags (<tile></title>) and adds the version in between, such as
 #   <tile>CDAP 3.6.0 Documentation</title>
 #
-# - If the canonical numbered version:
-#   adds link tags pointing to the canonical numbered version pointing to docs.cask.co
-#   indicated by option "--type=canonical"
-#   If the version derived from the basename is not the numbered version to be used for empty title tags, use
-#   "--version=version" to specify the version
-#   Only added if not already existing
+# - By default (unless flagged by "--robots"), adds link tags pointing to the canonical
+#   numbered version at docs.cask.co. Only added if not already existing.
 #
-# - If "robots" version or version ends with "-SNAPSHOT":
-#   adds meta tags of "robots:no-index, no-follow"
-#   indicated by options "--type=future" and "--version=version",
-#   where version is the numbered version to be used for empty title tags
-#   Only added if not already existing
+# - If flagged by "--robots" or version ends with "-SNAPSHOT", adds meta tags of 
+#   "robots:no-index, no-follow". Only added if not already existing.
+#
+# - If the version derived from the basename is not the numbered version to be used for
+#   empty title tags or the canonical link, use "--version=version" to specify the version.
+#
 #
 # Examples
 #
 # python doc-change.py ~/Source/cdap/cdap-docs/target/3.6.0
 # Changes the "3.6.0" doc set; sets empty titles, adds canonical link to 3.6.0
 #
-# python doc-change.py --type=canonical --version=3.6.0 ~/Source/cdap/cdap-docs/target/current
+# python doc-change.py --version=3.6.0 ~/Source/cdap/cdap-docs/target/current
 # Changes the "current" doc set; sets empty titles, adds canonical link to 3.6.0
 # 
-# python doc-change.py --type=robots ~/Source/cdap/cdap-docs/target/3.6.0
-# Changes the "3.6.0" doc set; sets empty titles, adds a robots no-index meta-tag
+# python doc-change.py --robots ~/Source/cdap/cdap-docs/target/3.6.0
+# Changes the "3.6.0" doc set; sets empty titles, adds a robots no-index no-follow meta-tag
 
 from optparse import OptionParser
 import os
@@ -55,20 +52,24 @@ def parse_options():
 
     parser = OptionParser(
         usage="%prog [options] doc-set",
-        description="Revises in-place a doc set (doc-set), given as an absolute path to a doc set directory")
+        description="Revises in-place a doc set (doc-set), given as an absolute path to a "
+        "doc set directory. Unless flagged as 'robots' or is a '-SNAPSHOT' version, it "
+        "adds canonical links pointing to a numbered doc set. Looks for any empty title "
+        "tags (<tile></title>) and adds the version in between, such as <tile>CDAP version "
+        "Documentation</title>.")
 
     parser.add_option(
-        "-t", "--type",
-        dest="type",
-        help="Process type: canonical [default] or robots; "
-        "canonical: adds canonical link refs pointing to a numbered doc set; "
-        "robots: added no-index, no-follow meta tags.",
-        default="canonical")
+        "-r", "--robots",
+        action="store_true",
+        dest="robots",
+        help="If present, indicates that instead of canonical links, "
+        "robots (no-index, no-follow) meta tags are to be added",
+        default=False)
 
     parser.add_option(
         "-v", "--version",
         dest="version",
-        help="Set a version, to be used for filling empty title tags and canonical numbered references; "
+        help="Set a version, to be used for filling empty title tags and any added canonical numbered references; "
         "if not set, the basename of the doc-set is used instead",
         default=None)
 
@@ -80,7 +81,7 @@ def parse_options():
 
     return options, args, parser
     
-def append_links(file_path, doc_set_path, doc_set, type, version):
+def append_links(file_path, doc_set_path, doc_set, robots=False, version=None):
     # Get file content
     file_object = open(file_path, 'r')
     file_string = file_object.read()
@@ -90,14 +91,14 @@ def append_links(file_path, doc_set_path, doc_set, type, version):
     # Look for an empty title tag
     empty_title_tags = '<title>%s</title>'
     empty_title_tags_index = file_string.lower().find(empty_title_tags % '')
-    if empty_title_tags_index != -1:
+    if empty_title_tags_index != -1 and version:
         empty_title_tags_end_index = empty_title_tags_index + len(empty_title_tags % '')
         file_string = file_string[:empty_title_tags_index] + empty_title_tags % "CDAP %s Documentation" % version + file_string[empty_title_tags_end_index:]
         dirty = True
     
     
     # Set robots meta-tag no-index no-follow on "future" and SNAPSHOT pages, but only if there isn't one already
-    if type == 'robots' or version.endswith("-SNAPSHOT") and file_string.lower().find('<meta name="robots"') == -1:
+    if (robots or (version and version.endswith("-SNAPSHOT"))) and file_string.lower().find('<meta name="robots"') == -1:
         meta_tag = '\n    <meta name=\"robots\" content=\"noindex, nofollow\">\n'
         open_head_tag = '<head>'
         open_head_tag_index = file_string.lower().find(open_head_tag)
@@ -107,7 +108,7 @@ def append_links(file_path, doc_set_path, doc_set, type, version):
             dirty = True
 
     # Set canonical headers, but only if there isn't one already
-    if type == 'canonical' and file_string.lower().find('<link rel="canonical"') == -1:
+    if not robots and file_string.lower().find('<link rel="canonical"') == -1:
         domain = 'docs.cask.co'
         end_path = file_path[len(doc_set_path):]
         canonical_link_tag = '\n\n    <link rel="canonical" href="http://%s/cdap/%s">\n' % (domain, version + end_path)
@@ -124,7 +125,7 @@ def append_links(file_path, doc_set_path, doc_set, type, version):
         file_object.write(file_string)
         file_object.close()
 
-def convert_doc_set(doc_set_path, type="canonical", version=None):
+def convert_doc_set(doc_set_path, robots=False, version=None):
     doc_set = os.path.basename(doc_set_path)
     if not version:
         version = doc_set
@@ -139,7 +140,7 @@ def convert_doc_set(doc_set_path, type="canonical", version=None):
     
     html_count = 0
     for file_path in file_paths:
-        append_links(file_path, doc_set_path, doc_set, type, version)
+        append_links(file_path, doc_set_path, doc_set, robots, version)
         html_count += 1
         sys.stdout.write('.')
         if (html_count / 100) * 100 == html_count:
@@ -152,7 +153,7 @@ def main():
     """
     options, args, parser = parse_options()
     if len(args) == 1:
-        convert_doc_set(args[0], type=options.type, version=options.version)
+        convert_doc_set(args[0], robots=options.robots, version=options.version)
     else:
         parser.print_help()
         print "\nOptions: %s" % options
