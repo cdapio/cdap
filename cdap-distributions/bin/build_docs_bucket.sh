@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright © 2015-2016 Cask Data, Inc.
+# Copyright © 2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -58,12 +58,12 @@ function get_repo_version() {
 }
 
 function sync_from_s3() {
-  s3cmd sync s3://${S3_BUCKET}/${S3_REPO_PATH}/${__repo_version} ${TARGET_DIR}
+  s3cmd sync s3://${S3_BUCKET}/${S3_REPO_PATH}/${__repo_version}/ ${TARGET_DIR}
 }
 
 function robots_tags() {
   local __dir=${1}
-  python ${DOCS_HOME}/tools/docs-change.py --robots=true ${__dir}
+  python ${DOCS_HOME}/tools/docs-change.py --robots ${__dir}
 }
 
 __repo_version=$(get_repo_version)
