@@ -105,7 +105,8 @@ module.exports = {
       'react-router',
       'moment',
       'react-file-download',
-      'mousetrap'
+      'mousetrap',
+      'papaparse'
     ]
   },
   module: {
