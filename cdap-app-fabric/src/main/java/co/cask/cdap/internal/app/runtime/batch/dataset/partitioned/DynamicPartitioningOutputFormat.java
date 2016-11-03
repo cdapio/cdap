@@ -41,9 +41,7 @@ import org.apache.hadoop.mapreduce.security.TokenCache;
 import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -92,6 +90,7 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
 
       // a cache storing the record writers for different output files.
       Map<PartitionKey, RecordWriter<K, V>> recordWriters = new HashMap<>();
+      Map<PartitionKey, TaskAttemptContext> contexts = new HashMap<>();
 
       public void write(K key, V value) throws IOException, InterruptedException {
         PartitionKey partitionKey = dynamicPartitioner.getPartitionKey(key, value);
@@ -101,8 +100,10 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
           String finalPath = relativePath + "/" + outputName;
 
           // if we don't have the record writer yet for the final path, create one and add it to the cache
-          rw = getBaseRecordWriter(getTaskAttemptContext(job, finalPath));
+          TaskAttemptContext taskAttemptContext = getTaskAttemptContext(job, finalPath);
+          rw = getBaseRecordWriter(taskAttemptContext);
           this.recordWriters.put(partitionKey, rw);
+          this.contexts.put(partitionKey, taskAttemptContext);
         }
         rw.write(key, value);
       }
@@ -110,10 +111,9 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
       @Override
       public void close(TaskAttemptContext context) throws IOException, InterruptedException {
         try {
-          List<RecordWriter<?, ?>> recordWriters = new ArrayList<>();
-          recordWriters.addAll(this.recordWriters.values());
-          MultipleOutputs.closeRecordWriters(recordWriters, context);
-
+          Map<PartitionKey, RecordWriter<?, ?>> recordWriters = new HashMap<>();
+          recordWriters.putAll(this.recordWriters);
+          MultipleOutputs.closeRecordWriters(recordWriters, contexts);
           taskContext.flushOperations();
         } catch (Exception e) {
           throw new IOException(e);
