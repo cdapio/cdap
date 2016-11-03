@@ -47,7 +47,6 @@ SCRIPT=$(basename ${0})
 SCRIPT_PATH=$(pwd)
 MANUAL=$(basename ${SCRIPT_PATH})
 
-DOC_GEN_PY="${SCRIPT_PATH}/../tools/doc-gen.py"
 TARGET_PATH="${SCRIPT_PATH}/${TARGET}"
 SOURCE_PATH="${SCRIPT_PATH}/${SOURCE}"
 
@@ -57,6 +56,8 @@ else
   PROJECT_PATH="${SCRIPT_PATH}/../../../${2}"
 fi
 PROJECT_PATH=$(cd ${PROJECT_PATH}; pwd -P)
+
+DOCS_GEN_PY="${PROJECT_PATH}/${CDAP_DOCS}/tools/docs-gen.py"
 
 API_JAVADOCS="${PROJECT_PATH}/target/site/${APIDOCS}"
 
@@ -276,7 +277,7 @@ function build_license_pdfs() {
   for PDF in ${PDFS}; do
     echo
     echo "Building ${PDF}"
-    python ${DOC_GEN_PY} -g pdf -o ${LIC_PDF}/${PDF}.pdf -b ${PROJECT_VERSION_TRIMMED} ${LIC_RST}/${PDF}.rst
+    python ${DOCS_GEN_PY} -g pdf -o ${LIC_PDF}/${PDF}.pdf -b ${PROJECT_VERSION_TRIMMED} ${LIC_RST}/${PDF}.rst
   done
   popd > /dev/null
 }

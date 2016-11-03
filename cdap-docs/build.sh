@@ -321,7 +321,7 @@ function build_docs_package() {
   echo "Set project path and version"
   local zip_dir_name="${PROJECT}-docs-${PROJECT_VERSION}"
   cd ${TARGET_PATH}
-  doc_change_py="${TARGET_PATH}/../tools/doc-change.py"
+  docs_change_py="${SCRIPT_PATH}/tools/docs-change.py"
   echo "Removing old directories and zips"
   rm -rf ${PROJECT_VERSION} *.zip
   echo "Creating ${PROJECT_VERSION}"
@@ -339,7 +339,7 @@ function build_docs_package() {
       return ${errors}   
   fi
   echo "Canonical numbered version ${zip_dir_name}"
-  python ${doc_change_py} ${TARGET_PATH}/${PROJECT_VERSION}
+  python ${docs_change_py} ${TARGET_PATH}/${PROJECT_VERSION}
   errors=$?
   if [[ ${errors} -ne 0 ]]; then
       echo "Could not change doc set ${TARGET_PATH}/${PROJECT_VERSION}"
