@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,8 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
+import co.cask.cdap.common.ServiceUnavailableException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.explore.service.Explore;
@@ -67,6 +69,7 @@ import java.net.URL;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -105,14 +108,21 @@ abstract class ExploreHttpClient implements Explore {
     return null;
   }
 
-  protected boolean isAvailable() {
-    try {
-      HttpResponse response = doGet("explore/status");
-      return response.getResponseCode() == HttpURLConnection.HTTP_OK;
-    } catch (Exception e) {
-      LOG.info("Caught exception when checking Explore availability", e);
-      return false;
+  public void ping() throws UnauthenticatedException, ServiceUnavailableException, ExploreException {
+    HttpResponse response = doGet("explore/status");
+    if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
+      return;
     }
+    if (response.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+      throw new UnauthenticatedException(response.getResponseBodyAsString());
+    }
+    if (response.getResponseCode() == HttpURLConnection.HTTP_UNAVAILABLE) {
+      throw new ServiceUnavailableException(Constants.Service.EXPLORE_HTTP_USER_SERVICE);
+    }
+
+    throw new ExploreException(String.format("Unexpected response while checking explore status. " +
+                                               "Received code '%s' and response message '%s'.",
+                                             response.getResponseCode(), response.getResponseBodyAsString()));
   }
 
   protected QueryHandle doEnableExploreStream(Id.Stream stream, String tableName,

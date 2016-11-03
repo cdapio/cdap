@@ -208,7 +208,7 @@ public class BaseHiveExploreServiceTest {
     datasetFramework = injector.getInstance(DatasetFramework.class);
     exploreClient = injector.getInstance(ExploreClient.class);
     exploreService = injector.getInstance(ExploreService.class);
-    Assert.assertTrue(exploreClient.isServiceAvailable());
+    exploreClient.ping();
 
     notificationService = injector.getInstance(NotificationService.class);
     notificationService.startAndWait();
