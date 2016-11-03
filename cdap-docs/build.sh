@@ -319,7 +319,7 @@ function build_docs_package() {
   set_project_path
   set_version
   echo "Set project path and version"
-  local zip_dir_name="${PROJECT}-docs-${PROJECT_VERSION}"
+  local zip_dir_name="${PROJECT}-docs-${PROJECT_VERSION}-web"
   cd ${TARGET_PATH}
   docs_change_py="${SCRIPT_PATH}/tools/docs-change.py"
   echo "Removing old directories and zips"
