@@ -28,15 +28,11 @@
   .change-page-panel {
     display: inline-block;
     position: absolute;
+    top: 0;
     cursor: pointer;
-
     /*Page height minus footer height*/
-    height: ~"-moz-calc(100vh - 50px)";
-    height: ~"-webkit-calc(100vh - 50px)";
-    height: ~"calc(100vh - 50px)";
+    height: 100%;
     z-index: 300;
-    padding-left: 15px;
-    padding-right: 15px;
     opacity: 0;
     padding-left: 5px;
     padding-right: 5px;
@@ -47,23 +43,14 @@
     }
   }
   .change-page-panel-left {
-    position: absolute;
     left: 0;
   }
   .change-page-panel-right {
-    position: absolute;
     right: 0;
   }
   .page-change-arrow-container {
     position: relative;
     top: 50%;
-    transform: scale(1.5,1);
-
-    .page-change-arrow {
-      position: relative;
-      bottom: 25px;
-    }
-
   }
 
   .disabled-page-change {

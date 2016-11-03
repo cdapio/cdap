@@ -94,7 +94,7 @@ export default class Pagination extends Component {
           </div>
         </div>
         <div className="pagination-content">
-          {this.props.children()}
+          {this.props.children}
         </div>
         <div onClick={this.goToNext}
           className={pageChangeRightClass}
@@ -110,7 +110,7 @@ export default class Pagination extends Component {
 
 Pagination.propTypes = {
   currentPage: PropTypes.number,
-  children: PropTypes.func,
+  children: PropTypes.node,
   setCurrentPage: PropTypes.func,
   setDirection: PropTypes.func
 };

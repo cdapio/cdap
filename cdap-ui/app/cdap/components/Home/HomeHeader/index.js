@@ -27,12 +27,10 @@ export default class HomeHeader extends Component {
     super(props);
     this.state = {
       isFilterExpanded: false,
-      isSortExpanded: false,
-      isPaginationExpanded: false
+      isSortExpanded: false
     };
 
     this.debouncedHandleSearch = debounce(this.handleSearch.bind(this), 500);
-    this.handlePaginationToggle = this.handlePaginationToggle.bind(this);
   }
 
   handleFilterToggle() {
@@ -41,10 +39,6 @@ export default class HomeHeader extends Component {
 
   handleSortToggle() {
     this.setState({isSortExpanded: !this.state.isSortExpanded});
-  }
-
-  handlePaginationToggle() {
-    this.setState({ isPaginationExpanded : !this.state.isPaginationExpanded});
   }
 
   handleSearch() {

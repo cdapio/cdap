@@ -158,13 +158,11 @@ export default class SpotlightModal extends Component {
         })
       );
 
-      bodyContent = () => {
-        return (
-          <div>
-            {searchResultsToBeRendered}
-          </div>
-        );
-      };
+      bodyContent = (
+        <div>
+          {searchResultsToBeRendered}
+        </div>
+      );
 
     return (
       <Modal

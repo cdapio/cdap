@@ -371,34 +371,31 @@ class Home extends Component {
     if(this.state.loading){
       entitiesToBeRendered = loading;
 
-      bodyContent = () => {
-          return (
-            <div className="entity-list">
-                <div className="entities-container">
-                  <ReactCSSTransitionGroup
-                    transitionName=""
-                    transitionEnterTimeout={200}
-                    transitionLeaveTimeout={200}
-                  >
-                    {entitiesToBeRendered}
-                  </ReactCSSTransitionGroup>
-                </div>
+      bodyContent = (
+        <div className="entity-list">
+            <div className="entities-container">
+              <ReactCSSTransitionGroup
+                transitionName=""
+                transitionEnterTimeout={200}
+                transitionLeaveTimeout={200}
+              >
+                {entitiesToBeRendered}
+              </ReactCSSTransitionGroup>
             </div>
-          );
-      };
+        </div>
+      );
 
     } else if(this.state.entities.length === 0 || this.state.entityErr) {
       entitiesToBeRendered = empty;
 
-      bodyContent = () => {
-          return (
-            <div className="entity-list">
-              <div className="entities-container">
-                {entitiesToBeRendered}
-              </div>
-            </div>
-          );
-      };
+      bodyContent = (
+        <div className="entity-list">
+          <div className="entities-container">
+            {entitiesToBeRendered}
+          </div>
+        </div>
+      );
+
     } else {
       entitiesToBeRendered = this.state.entities.map(
         (entity) => {
@@ -421,21 +418,19 @@ class Home extends Component {
         }
       );
 
-      bodyContent = () => {
-          return (
-            <div className="entity-list">
-                <div className="entities-container">
-                  <ReactCSSTransitionGroup
-                    transitionName={"entity-animation--" + this.state.animationDirection}
-                    transitionEnterTimeout={400}
-                    transitionLeaveTimeout={400}
-                  >
-                    {entitiesToBeRendered}
-                  </ReactCSSTransitionGroup>
-                </div>
+      bodyContent = (
+        <div className="entity-list">
+            <div className="entities-container">
+              <ReactCSSTransitionGroup
+                transitionName={"entity-animation--" + this.state.animationDirection}
+                transitionEnterTimeout={400}
+                transitionLeaveTimeout={400}
+              >
+                {entitiesToBeRendered}
+              </ReactCSSTransitionGroup>
             </div>
-          );
-      };
+        </div>
+      );
 
     }
 

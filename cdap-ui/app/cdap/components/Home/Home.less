@@ -17,7 +17,7 @@
  /* Animation - Slide in direction of Next */
  .entity-animation--next-enter {
    transform: translate(110%,0);
-   transition: transform .4s;
+   transition: transform 400ms;
 
    &.entity-animation--next-enter-active {
      transform: translate(0,0);
@@ -30,7 +30,7 @@
 
  .entity-animation--next-appear.animation--next-appear-active {
    opacity: 1;
-   transition: opacity .5s ease-in;
+   transition: opacity 500ms ease-in;
  }
 
  .entity-animation--next-leave {
@@ -45,7 +45,7 @@
  /* Animation - Slide in direction of Prev */
  .entity-animation--prev-enter {
    transform: translate(-110%,0);
-   transition: transform .4s;
+   transition: transform 400ms;
 
    &.entity-animation--prev-enter-active {
      transform: translate(0,0);
