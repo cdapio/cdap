@@ -163,6 +163,13 @@ features:
         name: Download
       load_datapack:
         name: Load
+  MarketPlaceEntity:
+    Metadata:
+      version: Version
+      author: Author
+      company: Company
+      created: Created
+      cdapversion: CDAP Version
   MarketEntityModal:
     version: "Version :"
   Navbar:

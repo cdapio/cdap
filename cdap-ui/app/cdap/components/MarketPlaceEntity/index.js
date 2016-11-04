@@ -179,37 +179,41 @@ export default class MarketPlaceEntity extends Component {
             onClick={this.openDetailedMode.bind(this)}
           >
             <div className="clearfix">
-              <div
-                className="package-icon-container"
-                onClick={this.toggleDetailedMode.bind(this)}>
+              <div className="package-icon-container">
                 <img src={MyMarketApi.getIcon(this.props.entity)} />
               </div>
 
-              <div className="package-medata-container">
+              <div className="package-metadata-container">
                 <strong className="package-label"> {this.props.entity.label} </strong>
                 <div className="package-metadata">
                   <div>
                     <span>
-                      <strong> Version </strong>
+                      <strong> {T.translate('features.MarketPlaceEntity.Metadata.version')} </strong>
                     </span>
                     <span> {this.props.entity.version} </span>
                   </div>
                   <div>
                     <span>
-                      <strong> Organization </strong>
+                      <strong> {T.translate('features.MarketPlaceEntity.Metadata.company')} </strong>
                     </span>
                     <span> {this.props.entity.org} </span>
                   </div>
                   <div>
                     <span>
-                      <strong> Author </strong>
+                      <strong> {T.translate('features.MarketPlaceEntity.Metadata.author')} </strong>
                     </span>
                     <span> {this.props.entity.author} </span>
+                  </div>
+                  <div>
+                    <span>
+                      <strong> {T.translate('features.MarketPlaceEntity.Metadata.cdapversion')} </strong>
+                    </span>
+                    <span> {this.props.entity.cdapVersion} </span>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="pacakge-footer">
+            <div className="package-footer">
               <p>
                 {this.props.entity.description}
               </p>
