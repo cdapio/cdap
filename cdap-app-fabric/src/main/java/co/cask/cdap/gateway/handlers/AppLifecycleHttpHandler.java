@@ -286,7 +286,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * TODO: Delete an application specified by appId and versionId.
+   * Delete an application specified by appId and versionId.
    */
   @DELETE
   @Path("/apps/{app-id}/versions/{version-id}")
