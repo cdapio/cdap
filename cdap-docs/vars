@@ -15,13 +15,6 @@ ALL="all"
 DOCS="docs"
 DOCS_LOCAL="docs-local"
 DOCS_OUTER="docs-outer"
-GITHUB="github"
-GITHUB_ONLY="Github-only"
-WEB="web"
-WEB_ONLY="Web-only"
-WITH="with"
-WITHOUT="without"
-WITH_JAVADOCS="$WITHOUT"
 
 CDAP_MANUALS="introduction developers-manual admin-manual integrations examples-manual reference-manual faqs"
 EXTENSION_MANUALS="hydrator-manual tracker-manual"
@@ -55,10 +48,11 @@ GIT_BRANCH_CDAP_GUIDES="develop"
 # Used by integrations-manual
 GIT_BRANCH_CDAP_PACKS="develop"
 
-# Used for building Hydrator documentation
+# Used for Hydrator documentation
 GIT_BRANCH_CASK_HYDRATOR="develop"
-# GIT_BRANCH_CASK_HYDRATOR="release/1.5"
 
 # Used for Tracker documentation
 GIT_BRANCH_CASK_TRACKER="develop"
 
+# Google Analytics Code
+GOOGLE_TAG_MANAGER_CODE="GTM-KWLFGH"

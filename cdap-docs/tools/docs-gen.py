@@ -238,7 +238,7 @@ def get_absolute_path(file_path, name, input_file, func):
 
 def startup_checks():
     if sys.version_info < (2, 7):
-        raise "Must use python 2.7 or greater"
+        raise Exception("Must use python 2.7 or greater")
 
 #
 # Main function
@@ -247,10 +247,10 @@ def startup_checks():
 def main():
     """ Main program entry point.
     """
-    startup_checks()
-    options, input_file = parse_options()
 
     try:
+        startup_checks()
+        options, input_file = parse_options()
         options.logger = log
         if options.generate == "pdf":
             print "PDF generation..."

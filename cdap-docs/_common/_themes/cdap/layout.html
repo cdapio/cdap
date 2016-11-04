@@ -90,7 +90,25 @@
       </div>
       {%- endif %}
 {%- endmacro %}
-
+{%- macro googletagmanager() %}{%- if html_google_tag_manager_code is defined %}
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','{{ html_google_tag_manager_code }}');</script>
+    <!-- End Google Tag Manager -->
+    
+    {%- endif %}
+{%- endmacro %}
+{%- macro googletagmanagerbody() %}{%- if html_google_tag_manager_code is defined %}
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ html_google_tag_manager_code }}"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    
+    {%- endif %}
+{%- endmacro %}
 {%- macro script() %}
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -106,25 +124,6 @@
     {%- endfor %}
     <script type="text/javascript" src="{{ pathto('_static/copy-to-clipboard.js', 1) }}"></script>
     <script type="text/javascript" src="{{ pathto('_static/tabbed-parsed-literal.js', 1) }}"></script>
-    <!-- Annotator -->
-<!-- 
-    <script type="text/javascript" src="{{ pathto('_static/cdap-annotator-full.js', 1) }}"></script>
-    <!~~ annotator.min.css_t included in css files ~~>
-    <script type="text/javascript" src="{{ pathto('_static/cdap-annotator.js', 1) }}"></script>
- -->
-    <!-- Annotator end -->
-    <!-- Google Tag Manager start -->
-    {%- if html_google_tag_manager_code is defined %}
-    <script>dataLayer = [];</script>
-    <noscript><iframe src="//www.googletagmanager.com/ns.html?id={{ html_google_tag_manager_code }}"
-    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','{{ html_google_tag_manager_code }}');</script>
-    {%- endif %}
-    <!-- Google Tag Manager end -->
 {%- endmacro %}
 
 {%- macro css() %}
@@ -179,6 +178,7 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    {{ googletagmanager() }}
     <meta http-equiv="Content-Type" content="text/html; charset={{ encoding }}" />
     {{ metatags }}
     {# Code to add custom theme values as meta_tags #}
@@ -228,6 +228,7 @@
 {%- block extrahead %} {% endblock %}
   </head>
   <body role="document">
+{{ googletagmanagerbody() }}
 {%- block header %}{% endblock %}
 
 {%- block relbar1 %}{{ relbar() }}{% endblock %}
