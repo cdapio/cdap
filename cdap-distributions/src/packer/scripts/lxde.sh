@@ -42,19 +42,6 @@ Icon=eclipse
 Categories=GNOME;GTK;Development;
 EOF
 
-# IntelliJ Menu entry
-cat > /usr/share/applications/idea.desktop << EOF
-[Desktop Entry]
-Encoding=UTF-8
-Name=IntelliJ IDEA
-Comment=Start IntelliJ
-Exec=/opt/idea/bin/idea.sh
-TryExec=/opt/idea/bin/idea.sh
-Type=Application
-Icon=idea
-Categories=GNOME;GTK;Development;
-EOF
-
 # CDAP Docs Menu Entry
 cat > /usr/share/applications/cdap-docs.desktop << EOF
 [Desktop Entry]
