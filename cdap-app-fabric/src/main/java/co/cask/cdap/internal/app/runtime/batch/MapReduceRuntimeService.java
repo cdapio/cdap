@@ -45,6 +45,7 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.LocalizationUtils;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.batch.dataset.UnsupportedOutputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.input.MapperInput;
 import co.cask.cdap.internal.app.runtime.batch.dataset.input.MultipleInputs;
@@ -84,6 +85,7 @@ import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionConflictException;
@@ -100,7 +102,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -276,10 +277,14 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         classpath.add(launcherJar.getName());
 
         // Localize logback.xml
-        Location logbackLocation = createLogbackJar(tempLocation);
+        Location logbackLocation = ProgramRunners.createLogbackJar(tempLocation);
         if (logbackLocation != null) {
           job.addCacheFile(logbackLocation.toURI());
           classpath.add(logbackLocation.getName());
+
+          mapredConf.set("yarn.app.mapreduce.am.env", "CDAP_LOG_DIR=" + ApplicationConstants.LOG_DIR_EXPANSION_VAR);
+          mapredConf.set("mapreduce.map.env", "CDAP_LOG_DIR=" + ApplicationConstants.LOG_DIR_EXPANSION_VAR);
+          mapredConf.set("mapreduce.reduce.env", "CDAP_LOG_DIR=" + ApplicationConstants.LOG_DIR_EXPANSION_VAR);
         }
 
         // Get all the jars in jobJar and sort them lexically before adding to the classpath
@@ -1067,30 +1072,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Location pluginLocation = targetDir.append(pluginArchive.getName()).getTempFile(".jar");
     Files.copy(pluginArchive, Locations.newOutputSupplier(pluginLocation));
     return pluginLocation;
-  }
-
-  /**
-   * Creates a jar in the given directory that contains a logback.xml loaded from the current ClassLoader.
-   *
-   * @param targetDir directory where the logback.xml should be copied to
-   * @return the {@link Location} where the logback.xml jar copied to or {@code null} if "logback.xml" is not found
-   *         in the current ClassLoader.
-   */
-  @Nullable
-  private Location createLogbackJar(Location targetDir) throws IOException {
-    try (InputStream input = Thread.currentThread().getContextClassLoader().getResourceAsStream("logback.xml")) {
-      if (input != null) {
-        Location logbackJar = targetDir.append("logback").getTempFile(".jar");
-        try (JarOutputStream output = new JarOutputStream(logbackJar.getOutputStream())) {
-          output.putNextEntry(new JarEntry("logback.xml"));
-          ByteStreams.copy(input, output);
-        }
-        return logbackJar;
-      } else {
-        LOG.warn("Could not find logback.xml for MapReduce!");
-      }
-    }
-    return null;
   }
 
   /**

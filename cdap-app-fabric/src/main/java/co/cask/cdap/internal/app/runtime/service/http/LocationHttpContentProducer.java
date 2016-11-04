@@ -17,6 +17,8 @@
 package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.api.service.http.HttpContentProducer;
 import com.google.common.io.Closeables;
 import org.apache.twill.filesystem.Location;
@@ -70,11 +72,13 @@ public class LocationHttpContentProducer extends HttpContentProducer {
   }
 
   @Override
+  @TransactionPolicy(TransactionControl.EXPLICIT)
   public void onFinish() throws Exception {
     inputStream.close();
   }
 
   @Override
+  @TransactionPolicy(TransactionControl.EXPLICIT)
   public void onError(Throwable failureCause) {
     Closeables.closeQuietly(inputStream);
     LOG.warn("Failure in producing http content from location {}", location, failureCause);

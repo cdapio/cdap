@@ -31,7 +31,7 @@ final class InactiveOperationInfo extends OperationInfo {
   InactiveOperationInfo(OperationInfo operationInfo, List<ColumnDesc> schema, QueryStatus status) {
     super(operationInfo.getSessionHandle(), operationInfo.getOperationHandle(),
           operationInfo.getSessionConf(), operationInfo.getStatement(),
-          operationInfo.getTimestamp(), operationInfo.getNamespace(), operationInfo.isReadOnly());
+          operationInfo.getTimestamp(), operationInfo.getHiveDatabase(), operationInfo.isReadOnly());
     this.schema = schema;
     this.status = status;
   }

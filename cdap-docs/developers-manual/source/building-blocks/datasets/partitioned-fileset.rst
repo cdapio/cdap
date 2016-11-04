@@ -149,8 +149,7 @@ a partition with that league as the only key::
     Map<String, String> inputArgs = Maps.newHashMap();
     PartitionedFileSetArguments.setInputPartitionFilter(
       inputArgs, PartitionFilter.builder().addValueCondition("league", league).build());
-    PartitionedFileSet input = context.getDataset("results", inputArgs);
-    context.setInput("results", input);
+    context.addInput(Input.ofDataset("results", inputArgs));
 
     // Each run writes its output to a partition for the league
     Map<String, String> outputArgs = Maps.newHashMap();
@@ -205,7 +204,7 @@ Then set the class of the custom partitioner as runtime arguments of the output 
 
   Map<String, String> cleanRecordsArgs = new HashMap<>();
   PartitionedFileSetArguments.setDynamicPartitioner(cleanRecordsArgs, TimeAndZipPartitioner.class);
-  context.addOutput(DataCleansing.CLEAN_RECORDS, cleanRecordsArgs);
+  context.addOutput(Output.ofDataset(DataCleansing.CLEAN_RECORDS, cleanRecordsArgs));
 
 With this, each record processed by the MapReduce job will be written to a path corresponding
 to the ``Partition`` that it was mapped to by the ``DynamicPartitioner``, and the set of new ``Partition``\ s

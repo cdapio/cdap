@@ -78,7 +78,7 @@ Installation
       
             $ unzip cdap-sdk-|release|.zip
             $ cd cdap-sdk-|release|
-            $ ./bin/cdap.sh start
+            $ ./bin/cdap sdk start
           
             Starting Standalone CDAP ................
             Standalone CDAP started successfully.
@@ -88,7 +88,7 @@ Installation
             
             > jar xf cdap-sdk-|release|.zip
             > cd cdap-sdk-|release|
-            > bin\cdap.bat start
+            > .\bin\cdap sdk start
           
             Starting Standalone CDAP ................
             Standalone CDAP started successfully.
@@ -118,7 +118,7 @@ Installation
      * -  
        - .. tabbed-parsed-literal::
 
-            $ ./bin/cdap-cli.sh
+            $ ./bin/cdap cli
             
             Successfully connected to CDAP instance at \http://localhost:11015/default
             |cdap >| 

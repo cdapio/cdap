@@ -41,9 +41,9 @@ to use the namespace *my_namespace*, you would replace ``default`` with ``my_nam
 Accessing CLI, curl, and the SDK bin
 ------------------------------------ 
 
-- For brevity in the commands given below, we will simply use ``cdap-cli.sh`` for the CDAP
-  Command Line Interface. Substitute the actual path of ``./<CDAP-SDK-HOME>/bin/cdap-cli.sh``,
-  or ``<CDAP-SDK-HOME>\bin\cdap-cli.bat`` on Windows, as appropriate. 
+- For brevity in the commands given below, we will simply use ``cdap cli`` for the CDAP
+  Command Line Interface. Substitute the actual path of ``./<CDAP-SDK-HOME>/bin/cdap cli``,
+  or ``<CDAP-SDK-HOME>\bin\cdap.bat cli`` on Windows, as appropriate. 
 
 - A Windows-version of the application ``curl`` is included in the CDAP SDK as
   ``libexec\bin\curl.exe``; use it as a substitute for ``curl`` in examples.
@@ -109,13 +109,13 @@ Once CDAP is started, you can deploy an application using an example JAR by any 
 
   .. tabbed-parsed-literal::
 
-      $ cdap-cli.sh load artifact examples/|example-dir|/target/|example|-|release|.jar
+      $ cdap cli load artifact examples/|example-dir|/target/|example|-|release|.jar
       Successfully added artifact with name '|example|'
 
-      $ cdap-cli.sh create app <app name> |example| |release| user
+      $ cdap cli create app <app name> |example| |release| user
       Successfully created application
 
-  The CLI can be accessed under Windows using the ``bin\cdap-cli.bat`` script.
+  The CLI can be accessed under Windows using the ``bin\cdap.bat cli`` script.
   
 - Use an application such as ``curl`` (a Windows-version is included in the CDAP SDK in
   ``libexec\bin\curl.exe``):
@@ -147,7 +147,7 @@ Once an application is deployed, there are multiple methods for starting an appl
   
   .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh start <program-type> <app-id.program-id>
+    $ cdap cli start <program-type> <app-id.program-id>
     
   .. list-table::
     :widths: 20 80
@@ -176,7 +176,7 @@ Once an application is deployed:
 
   .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh stop <program-type> <app-id.program-id>
+    $ cdap cli stop <program-type> <app-id.program-id>
     
     
 .. _cdap-building-running-removing:
@@ -196,7 +196,7 @@ From the Standalone CDAP SDK directory, you can also use the Command Line Interf
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh delete app <app-id>
+  $ cdap cli delete app <app-id>
 
 Note that any storage (datasets) created or used by the application will remain, as they
 are independent of the application. Datasets can be deleted from the |datasets|_ page of

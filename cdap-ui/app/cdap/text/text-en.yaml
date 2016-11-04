@@ -52,6 +52,9 @@ commons:
       plural: Stream Views
       singular: Stream View
   hydrator: Cask Hydrator
+  keyValPairs:
+    keyPlaceholder: key
+    valuePlaceholder: value
   market: Cask Market
   resource-center: Resource Center
   tracker: Cask Tracker
@@ -60,6 +63,9 @@ commons:
   formatLabel: Format
   schemaLabel: Schema
 features:
+  ConfirmationModal:
+    confirmDefaultText: OK
+    cancelDefaultText: Cancel
   Home:
     Title: CDAP - Home
     emptyMessage: No entities found in the system.
@@ -74,11 +80,22 @@ features:
           displayName: A - Z
         nameDesc:
           displayName: Z - A
-    FastActions:
-      deleteConfirmation: Are you sure you want to delete {entityId}?
-      truncateConfirmation: Are you sure you want to truncate {entityId}?
   Dashboard:
     Title: Dashboard
+
+  FastAction:
+    deleteConfirmation: Are you sure you want to delete *_{entityId}_*?
+    deleteLabel: Delete
+    deleteFailed: Failed to delete {entityId}
+    truncateConfirmation: Are you sure you want to truncate *_{entityId}_*?
+    truncateLabel: Truncate
+    truncateFailed: Failed to truncate {entityId}
+
+  JumpButton:
+    buttonLabel: Jump
+    viewHydrator: View in Hydrator
+    viewTracker: View in Tracker
+
   Management:
     Title: Management
     Top:
@@ -146,6 +163,13 @@ features:
         name: Download
       load_datapack:
         name: Load
+  MarketPlaceEntity:
+    Metadata:
+      version: Version
+      author: Author
+      company: Company
+      created: Created
+      cdapversion: CDAP Version
   MarketEntityModal:
     version: "Version :"
   Navbar:
@@ -285,7 +309,7 @@ features:
          ssd-label: "General Information"
          sld-desc:  "Specifies the name and the description of Namespace"
          name-label: "Name"
-         name-placeholder: "Name of the namespace you would like to have"
+         name-placeholder: "Namespace Name"
          description-label: "Description"
          description-placeholder: "Description"
          scheduler-queue-label: "Scheduler Queue"
@@ -294,18 +318,18 @@ features:
          ssd-label: "Namespace Mapping"
          sld-label: "Specifies mapping of namespace resources to the underlying existing storage resources"
          hdfs-root-directory-label: "HDFS Root Directory"
-         hdfs-root-directory-placeholder: "Specify the root directory of HDFS to be used as this namespace root"
+         hdfs-root-directory-placeholder: "Root directory of HDFS for new namespace root"
          hive-db-name-label: "Hive Database Name"
-         hive-db-name-placeholder: "Specify the Hive database name to be used for this namespace"
+         hive-db-name-placeholder: "Hive db name for new namespace"
          hbase-nm-name-label: "HBase Namespace Name"
-         hbase-nm-name-placeholder: "Specify the name of the existing namespace in HBase to be used for this namespace"
+         hbase-nm-name-placeholder: "Existing namespace in HBase for new namespace"
        Step3:
          ssd-label: "Security"
          sld-label: "Specifies credentials for securely impersonating programs running as specified user"
          principal-label: "Principal"
-         principal-placeholder: "Specifies the user to be impersonated for all jobs running in this namespace"
+         principal-placeholder: "User to be impersonated for jobs in new namespace"
          keytab-uri-label: "Keytab URI"
-         keytab-uri-placeholder: "Specifies the location to keytab file associated with the principal"
+         keytab-uri-placeholder: "Location of keytab file associated with the principal"
        Step4:
          ssd-label: "Preferences"
          sld-label: "Specify preferences to applied at the namespace level"
@@ -313,6 +337,7 @@ features:
          name-placeholder: "Preference name"
          value-label: "Value"
          value-placeholder: "Preference value"
+       headerlabel: Add Namespace
        Status:
          creation-error-desc: "Failed to create namespace '%s'"
          creation-success-desc: "Successfully created namespace '%s'"

@@ -55,6 +55,7 @@ import javax.annotation.Nullable;
 // Additionally, we have updated it to not have a single YarnClient, but instead a collection of YarnClients, one per
 // UGI. We need to do this because YarnClient is not designed to be reusable across UGIs. Even if the calling UGI
 // changes, the Yarn user still is the original UGI that constructed the YARN client.
+@SuppressWarnings({"unused", "WeakerAccess"})
 public final class Hadoop21YarnAppClient extends AbstractIdleService implements YarnAppClient {
 
   private static final Logger LOG = LoggerFactory.getLogger(Hadoop21YarnAppClient.class);
@@ -75,47 +76,54 @@ public final class Hadoop21YarnAppClient extends AbstractIdleService implements 
   @Override
   public ProcessLauncher<ApplicationMasterInfo> createLauncher(TwillSpecification twillSpec,
                                                                @Nullable String schedulerQueue) throws Exception {
-    final YarnClient yarnClient = createYarnClient();
-    // Request for new application
-    YarnClientApplication application = yarnClient.createApplication();
-    final GetNewApplicationResponse response = application.getNewApplicationResponse();
-    final ApplicationId appId = response.getApplicationId();
+    YarnClient yarnClient = createYarnClient();
+    try {
+      // Request for new application
+      YarnClientApplication application = yarnClient.createApplication();
+      final GetNewApplicationResponse response = application.getNewApplicationResponse();
+      final ApplicationId appId = response.getApplicationId();
 
-    // Setup the context for application submission
-    final ApplicationSubmissionContext appSubmissionContext = application.getApplicationSubmissionContext();
-    appSubmissionContext.setApplicationId(appId);
-    appSubmissionContext.setApplicationName(twillSpec.getName());
+      // Setup the context for application submission
+      final ApplicationSubmissionContext appSubmissionContext = application.getApplicationSubmissionContext();
+      appSubmissionContext.setApplicationId(appId);
+      appSubmissionContext.setApplicationName(twillSpec.getName());
 
-    if (schedulerQueue != null) {
-      appSubmissionContext.setQueue(schedulerQueue);
-    }
-
-    // TODO: Make it adjustable through TwillSpec (TWILL-90)
-    // Set the resource requirement for AM
-    final Resource capability = adjustMemory(response, Resource.newInstance(Constants.APP_MASTER_MEMORY_MB, 1));
-    ApplicationMasterInfo appMasterInfo = new ApplicationMasterInfo(appId, capability.getMemory(),
-                                                                    capability.getVirtualCores());
-
-    ApplicationSubmitter submitter = new ApplicationSubmitter() {
-      @Override
-      public ProcessController<YarnApplicationReport> submit(YarnLaunchContext context) {
-        ContainerLaunchContext launchContext = context.getLaunchContext();
-
-        appSubmissionContext.setAMContainerSpec(launchContext);
-        appSubmissionContext.setResource(capability);
-        appSubmissionContext.setMaxAppAttempts(2);
-
-        try {
-          yarnClient.submitApplication(appSubmissionContext);
-          return new ProcessControllerImpl(yarnClient, appId);
-        } catch (Exception e) {
-          LOG.error("Failed to submit application {}", appId, e);
-          throw Throwables.propagate(e);
-        }
+      if (schedulerQueue != null) {
+        appSubmissionContext.setQueue(schedulerQueue);
       }
-    };
 
-    return new ApplicationMasterProcessLauncher(appMasterInfo, submitter);
+      // TODO: Make it adjustable through TwillSpec (TWILL-90)
+      // Set the resource requirement for AM
+      final Resource capability = adjustMemory(response, Resource.newInstance(Constants.APP_MASTER_MEMORY_MB, 1));
+      ApplicationMasterInfo appMasterInfo = new ApplicationMasterInfo(appId, capability.getMemory(),
+                                                                      capability.getVirtualCores());
+
+      ApplicationSubmitter submitter = new ApplicationSubmitter() {
+        @Override
+        public ProcessController<YarnApplicationReport> submit(YarnLaunchContext context) {
+          ContainerLaunchContext launchContext = context.getLaunchContext();
+
+          appSubmissionContext.setAMContainerSpec(launchContext);
+          appSubmissionContext.setResource(capability);
+          appSubmissionContext.setMaxAppAttempts(2);
+
+          YarnClient yarnClient = createYarnClient();
+          try {
+            yarnClient.submitApplication(appSubmissionContext);
+            return new ProcessControllerImpl(appId);
+          } catch (Exception e) {
+            LOG.error("Failed to submit application {}", appId, e);
+            throw Throwables.propagate(e);
+          } finally {
+            yarnClient.stop();
+          }
+        }
+      };
+
+      return new ApplicationMasterProcessLauncher(appMasterInfo, submitter);
+    } finally {
+      yarnClient.stop();
+    }
   }
 
   private Resource adjustMemory(GetNewApplicationResponse response, Resource capability) {
@@ -139,7 +147,7 @@ public final class Hadoop21YarnAppClient extends AbstractIdleService implements 
 
   @Override
   public ProcessController<YarnApplicationReport> createProcessController(ApplicationId appId) {
-    return new ProcessControllerImpl(createYarnClient(), appId);
+    return new ProcessControllerImpl(appId);
   }
 
   @Override
@@ -162,39 +170,42 @@ public final class Hadoop21YarnAppClient extends AbstractIdleService implements 
     // no-op. code that calls createYarnClient() is responsible for stopping each individual yarn client
   }
 
-  private static final class ProcessControllerImpl implements ProcessController<YarnApplicationReport> {
-    private final YarnClient yarnClient;
+  private final class ProcessControllerImpl implements ProcessController<YarnApplicationReport> {
     private final ApplicationId appId;
 
-    ProcessControllerImpl(YarnClient yarnClient, ApplicationId appId) {
-      this.yarnClient = yarnClient;
+    ProcessControllerImpl(ApplicationId appId) {
       this.appId = appId;
     }
 
     @Override
     public YarnApplicationReport getReport() {
+      YarnClient yarnClient = createYarnClient();
       try {
         return new Hadoop21YarnApplicationReport(yarnClient.getApplicationReport(appId));
       } catch (Exception e) {
         LOG.error("Failed to get application report {}", appId, e);
         throw Throwables.propagate(e);
+      } finally {
+        yarnClient.stop();
       }
     }
 
     @Override
     public void cancel() {
+      YarnClient yarnClient = createYarnClient();
       try {
         yarnClient.killApplication(appId);
-        yarnClient.stop();
       } catch (Exception e) {
         LOG.error("Failed to kill application {}", appId, e);
         throw Throwables.propagate(e);
+      } finally {
+        yarnClient.stop();
       }
     }
 
     @Override
     public void close() throws Exception {
-      yarnClient.close();
+      // no-op
     }
   }
 }

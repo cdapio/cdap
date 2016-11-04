@@ -137,7 +137,7 @@ gulp.task('css:app', ['css:lint'], function() {
     .pipe(plug.concat('app.css'))
     .pipe(plug.postcss(processor))
     .pipe(gulp.dest('./dist/assets/bundle'))
-    .pipe(plug.livereload());
+    .pipe(plug.livereload({ port: 35728 }));
 });
 gulp.task('css:lint', function () {
 
@@ -267,15 +267,15 @@ gulp.task('fonts', function() {
 // Build using watch
 gulp.task('watch:js:app:hydrator', function() {
   return getExtensionBuildPipeline('hydrator')
-    .pipe(plug.livereload());
+    .pipe(plug.livereload({ port: 35728 }));
 });
 gulp.task('watch:js:app:tracker', function() {
   return getExtensionBuildPipeline('tracker')
-    .pipe(plug.livereload());
+    .pipe(plug.livereload({ port: 35728 }));
 });
 gulp.task('watch:js:app:babel', function() {
   return getBabelBuildPipeline()
-    .pipe(plug.livereload());
+    .pipe(plug.livereload({ port: 35728 }));
 });
 
 // Build once.
@@ -314,7 +314,7 @@ gulp.task('html:partials', function() {
     ])
       .pipe(plug.htmlmin({ removeComments: true }))
       .pipe(gulp.dest('./dist/assets/features'))
-      .pipe(plug.livereload());
+      .pipe(plug.livereload({ port: 35728 }));
 });
 gulp.task('html:main', function() {
   return gulp.src([
@@ -336,7 +336,7 @@ gulp.task('tpl', function() {
     }))
     .pipe(plug.concat('tpl.js'))
     .pipe(gulp.dest('./dist/assets/bundle'))
-    .pipe(plug.livereload());
+    .pipe(plug.livereload({ port: 35728 }));
 });
 
 gulp.task('js', ['js:lib', 'js:aceworkers', 'js:app', 'polyfill']);
@@ -410,7 +410,7 @@ gulp.task('default', ['lint', 'build']);
   watch
  */
 gulp.task('watch', ['jshint', 'build'], function() {
-  plug.livereload.listen();
+  plug.livereload.listen({ port: 35728 });
 
   var jsAppSource = [
     './app/**/*.js',

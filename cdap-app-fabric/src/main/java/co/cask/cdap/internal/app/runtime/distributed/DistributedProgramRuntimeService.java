@@ -31,6 +31,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -38,6 +39,7 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
 import co.cask.cdap.internal.app.runtime.AbstractResourceReporter;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
@@ -49,8 +51,10 @@ import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Predicate;
+import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSetMultimap;
@@ -74,11 +78,14 @@ import org.apache.twill.internal.yarn.YarnUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 import static co.cask.cdap.proto.Containers.ContainerInfo;
@@ -100,6 +107,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   private final StreamAdmin streamAdmin;
   private final TransactionExecutorFactory txExecutorFactory;
   private final ProgramResourceReporter resourceReporter;
+  private final Impersonator impersonator;
 
   @Inject
   DistributedProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, TwillRunner twillRunner,
@@ -108,15 +116,17 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
                                    Configuration hConf, CConfiguration cConf,
                                    TransactionExecutorFactory txExecutorFactory,
                                    ArtifactRepository artifactRepository, Impersonator impersonator) {
-    super(cConf, programRunnerFactory, artifactRepository, impersonator);
+    super(cConf, programRunnerFactory, artifactRepository);
     this.twillRunner = twillRunner;
     this.store = store;
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.txExecutorFactory = txExecutorFactory;
     this.resourceReporter = new ClusterResourceReporter(metricsCollectionService, hConf);
+    this.impersonator = impersonator;
   }
 
+  @Nullable
   @Override
   protected RuntimeInfo createRuntimeInfo(ProgramController controller, ProgramId programId) {
     if (controller instanceof AbstractTwillProgramController) {
@@ -124,6 +134,24 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       return new SimpleRuntimeInfo(controller, programId, twillRunId);
     }
     return null;
+  }
+
+  @Override
+  protected void copyArtifact(ArtifactId artifactId,
+                              final ArtifactDetail artifactDetail, final File targetFile) throws IOException {
+    try {
+      impersonator.doAs(artifactId.getParent(), new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          Locations.linkOrCopy(artifactDetail.getDescriptor().getLocation(), targetFile);
+          return null;
+        }
+      });
+    } catch (Exception e) {
+      Throwables.propagateIfPossible(e, IOException.class);
+      // should not happen
+      throw Throwables.propagate(e);
+    }
   }
 
   // TODO SAGAR better data structure to support this efficiently
@@ -151,7 +179,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         continue;
       }
 
-      if (!id.toId().equals(programId)) {
+      if (!id.equals(programId)) {
         continue;
       }
 
@@ -252,13 +280,15 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     try {
       ProgramDescriptor programDescriptor = store.loadProgram(programId);
       ProgramController programController = createController(programDescriptor, controller, runId);
-      return programController == null ? null : new SimpleRuntimeInfo(programController, programId,
+      return programController == null ? null : new SimpleRuntimeInfo(programController,
+                                                                      programId,
                                                                       controller.getRunId());
     } catch (Exception e) {
       return null;
     }
   }
 
+  @Nullable
   private ProgramController createController(ProgramDescriptor programDescriptor,
                                              TwillController controller, RunId runId) {
     AbstractTwillProgramController programController = null;
@@ -269,7 +299,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         FlowSpecification flowSpec = programDescriptor.getSpecification();
         DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(
           programDescriptor.getProgramId(), controller, queueAdmin, streamAdmin,
-          getFlowletQueues(programDescriptor.getProgramId().getParent(), flowSpec), txExecutorFactory
+          getFlowletQueues(programDescriptor.getProgramId().getParent(), flowSpec),
+          txExecutorFactory, impersonator
         );
         programController = new FlowTwillProgramController(programId, controller, instanceUpdater, runId);
         break;

@@ -14,6 +14,7 @@
  * the License.
  */
 
+
 package co.cask.cdap.internal.app.store;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -21,6 +22,7 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -34,11 +36,15 @@ import com.google.common.base.Ticker;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.inject.Injector;
+import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionExecutor;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -52,12 +58,14 @@ import java.util.concurrent.TimeUnit;
 public class AppMetadataStoreTest {
   private static DatasetFramework datasetFramework;
   private static CConfiguration cConf;
+  private static TransactionExecutorFactory txExecutorFactory;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
     Injector injector = AppFabricTestHelper.getInjector();
     AppFabricTestHelper.ensureNamespaceExists(NamespaceId.DEFAULT.toId());
     datasetFramework = injector.getInstance(DatasetFramework.class);
+    txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     cConf = injector.getInstance(CConfiguration.class);
   }
 
@@ -68,75 +76,90 @@ public class AppMetadataStoreTest {
 
     Table table = datasetFramework.getDataset(storeTable, ImmutableMap.<String, String>of(), null);
     Assert.assertNotNull(table);
-    AppMetadataStore metadataStoreDataset = new AppMetadataStore(table, cConf);
+    final AppMetadataStore metadataStoreDataset = new AppMetadataStore(table, cConf);
+    TransactionExecutor txnl = txExecutorFactory.createExecutor(
+      Collections.singleton((TransactionAware) metadataStoreDataset));
 
     // Add some run records
     TreeSet<Long> expected = new TreeSet<>();
     for (int i = 0; i < 100; ++i) {
       ApplicationId application = NamespaceId.DEFAULT.app("app" + i);
-      ProgramId program = application.program(ProgramType.values()[i % ProgramType.values().length],
-                                              "program" + i);
-      RunId runId = RunIds.generate((i + 1) * 10000);
+      final ProgramId program = application.program(ProgramType.values()[i % ProgramType.values().length],
+                                                    "program" + i);
+      final RunId runId = RunIds.generate((i + 1) * 10000);
       expected.add(RunIds.getTime(runId, TimeUnit.MILLISECONDS));
       // Start the program and stop it
-      metadataStoreDataset.recordProgramStart(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
-                                              null, null, null);
-      metadataStoreDataset.recordProgramStop(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
-                                             ProgramRunStatus.values()[i % ProgramRunStatus.values().length], null);
+      final int j = i;
+      txnl.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          metadataStoreDataset.recordProgramStart(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
+                                                  null, null, null);
+          metadataStoreDataset.recordProgramStop(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
+                                                 ProgramRunStatus.values()[j % ProgramRunStatus.values().length], null);
+        }
+      });
     }
 
     // Run full scan
-    runScan(metadataStoreDataset, expected, 0, Long.MAX_VALUE);
+    runScan(txnl, metadataStoreDataset, expected, 0, Long.MAX_VALUE);
 
     // In all below assertions, TreeSet and metadataStore both have start time inclusive and end time exclusive.
     // Run the scan with time limit
-    runScan(metadataStoreDataset, expected.subSet(30 * 10000L, 90 * 10000L),
+    runScan(txnl, metadataStoreDataset, expected.subSet(30 * 10000L, 90 * 10000L),
             TimeUnit.MILLISECONDS.toSeconds(30 * 10000), TimeUnit.MILLISECONDS.toSeconds(90 * 10000));
 
-    runScan(metadataStoreDataset, expected.subSet(90 * 10000L, 101 * 10000L),
+    runScan(txnl, metadataStoreDataset, expected.subSet(90 * 10000L, 101 * 10000L),
             TimeUnit.MILLISECONDS.toSeconds(90 * 10000), TimeUnit.MILLISECONDS.toSeconds(101 * 10000));
 
     // After range
-    runScan(metadataStoreDataset, expected.subSet(101 * 10000L, 200 * 10000L),
+    runScan(txnl, metadataStoreDataset, expected.subSet(101 * 10000L, 200 * 10000L),
             TimeUnit.MILLISECONDS.toSeconds(101 * 10000), TimeUnit.MILLISECONDS.toSeconds(200 * 10000));
 
     // Identical start and end time
-    runScan(metadataStoreDataset, expected.subSet(31 * 10000L, 31 * 10000L),
+    runScan(txnl, metadataStoreDataset, expected.subSet(31 * 10000L, 31 * 10000L),
             TimeUnit.MILLISECONDS.toSeconds(31 * 10000), TimeUnit.MILLISECONDS.toSeconds(31 * 10000));
 
     // One unit difference between start and end time
-    runScan(metadataStoreDataset, expected.subSet(30 * 10000L, 31 * 10000L),
+    runScan(txnl, metadataStoreDataset, expected.subSet(30 * 10000L, 31 * 10000L),
             TimeUnit.MILLISECONDS.toSeconds(30 * 10000), TimeUnit.MILLISECONDS.toSeconds(31 * 10000));
 
     // Before range
-    runScan(metadataStoreDataset, expected.subSet(1000L, 10000L),
+    runScan(txnl, metadataStoreDataset, expected.subSet(1000L, 10000L),
             TimeUnit.MILLISECONDS.toSeconds(1000), TimeUnit.MILLISECONDS.toSeconds(10000));
   }
 
-  private void runScan(AppMetadataStore metadataStoreDataset, Set<Long> expected, long startTime, long stopTime) {
-    // Run the scan
-    Set<Long> actual = new TreeSet<>();
-    int maxScanTimeMillis = 25;
-    // Create a ticker that counts one millisecond per element, so that we can test batching
-    // Hence number of elements per batch = maxScanTimeMillis
-    CountingTicker countingTicker = new CountingTicker(1);
-    List<Iterable<RunId>> batches =
-      metadataStoreDataset.getRunningInRangeForStatus("runRecordCompleted", startTime, stopTime, maxScanTimeMillis,
-                                                      countingTicker);
-    Iterable<RunId> runIds = Iterables.concat(batches);
-    Iterables.addAll(actual, Iterables.transform(runIds, new Function<RunId, Long>() {
+  private void runScan(TransactionExecutor txnl, final AppMetadataStore metadataStoreDataset,
+                       final Set<Long> expected, final long startTime, final long stopTime)
+    throws InterruptedException, TransactionFailureException {
+    txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
-      public Long apply(RunId input) {
-        return RunIds.getTime(input, TimeUnit.MILLISECONDS);
-      }
-    }));
+      public void apply() throws Exception {
+        // Run the scan
+        Set<Long> actual = new TreeSet<>();
+        int maxScanTimeMillis = 25;
+        // Create a ticker that counts one millisecond per element, so that we can test batching
+        // Hence number of elements per batch = maxScanTimeMillis
+        CountingTicker countingTicker = new CountingTicker(1);
+        List<Iterable<RunId>> batches =
+          metadataStoreDataset.getRunningInRangeForStatus("runRecordCompleted", startTime, stopTime, maxScanTimeMillis,
+                                                          countingTicker);
+        Iterable<RunId> runIds = Iterables.concat(batches);
+        Iterables.addAll(actual, Iterables.transform(runIds, new Function<RunId, Long>() {
+          @Override
+          public Long apply(RunId input) {
+            return RunIds.getTime(input, TimeUnit.MILLISECONDS);
+          }
+        }));
 
-    Assert.assertEquals(expected, actual);
-    int numBatches = Iterables.size(batches);
-    // Each batch needs 2 extra calls to Ticker.read, once during init and once for final condition check
-    // Hence the number of batches should be --
-    // (num calls to Ticker.read - (2 * numBatches)) / number of elements per batch
-    Assert.assertEquals((countingTicker.getNumProcessed() - (2 * numBatches)) / maxScanTimeMillis, numBatches);
+        Assert.assertEquals(expected, actual);
+        int numBatches = Iterables.size(batches);
+        // Each batch needs 2 extra calls to Ticker.read, once during init and once for final condition check
+        // Hence the number of batches should be --
+        // (num calls to Ticker.read - (2 * numBatches)) / number of elements per batch
+        Assert.assertEquals((countingTicker.getNumProcessed() - (2 * numBatches)) / maxScanTimeMillis, numBatches);
+      }
+    });
   }
 
   @Test
@@ -146,20 +169,24 @@ public class AppMetadataStoreTest {
 
     Table table = datasetFramework.getDataset(storeTable, ImmutableMap.<String, String>of(), null);
     Assert.assertNotNull(table);
-    AppMetadataStore metadataStoreDataset = new AppMetadataStore(table, cConf);
+    final AppMetadataStore metadataStoreDataset = new AppMetadataStore(table, cConf);
+
+    TransactionExecutor txnl = txExecutorFactory.createExecutor(
+      Collections.singleton((TransactionAware) metadataStoreDataset));
 
     // Add some run records
-    Set<String> expected = new TreeSet<>();
-    Set<String> expectedHalf = new TreeSet<>();
+    final Set<String> expected = new TreeSet<>();
+    final Set<String> expectedHalf = new TreeSet<>();
 
-    Set<ProgramRunId> programRunIdSet = new HashSet<>();
-    Set<ProgramRunId> programRunIdSetHalf = new HashSet<>();
+    final Set<ProgramRunId> programRunIdSet = new HashSet<>();
+    final Set<ProgramRunId> programRunIdSetHalf = new HashSet<>();
     for (int i = 0; i < 100; ++i) {
       ApplicationId application = NamespaceId.DEFAULT.app("app" + i);
-      ProgramId program = application.program(ProgramType.values()[i % ProgramType.values().length],
-                                              "program" + i);
-      RunId runId = RunIds.generate((i + 1) * 10000);
+      final ProgramId program = application.program(ProgramType.values()[i % ProgramType.values().length],
+                                                    "program" + i);
+      final RunId runId = RunIds.generate((i + 1) * 10000);
       expected.add(runId.toString());
+      final int index = i;
 
       // Add every other runId
       if ((i % 2) == 0) {
@@ -175,38 +202,51 @@ public class AppMetadataStoreTest {
         programRunIdSetHalf.add(programRunId);
       }
 
-      // Start the program and stop it
-      metadataStoreDataset.recordProgramStart(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
-                                              null, null, null);
-      metadataStoreDataset.recordProgramStop(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
-                                             ProgramRunStatus.values()[i % ProgramRunStatus.values().length], null);
+      txnl.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+
+          // Start the program and stop it
+          metadataStoreDataset.recordProgramStart(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
+                                                  null, null, null);
+          metadataStoreDataset.recordProgramStop(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
+                                                 ProgramRunStatus.values()[index % ProgramRunStatus.values().length],
+                                                 null);
+        }
+      });
     }
 
-    Map<ProgramRunId, RunRecordMeta> runMap =  metadataStoreDataset.getRuns(programRunIdSet);
-    Set<String> actual = new TreeSet<>();
-    for (Map.Entry<ProgramRunId, RunRecordMeta> entry : runMap.entrySet()) {
-      actual.add(entry.getValue().getPid());
-    }
-    Assert.assertEquals(expected, actual);
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+
+        Map<ProgramRunId, RunRecordMeta> runMap = metadataStoreDataset.getRuns(programRunIdSet);
+        Set<String> actual = new TreeSet<>();
+        for (Map.Entry<ProgramRunId, RunRecordMeta> entry : runMap.entrySet()) {
+          actual.add(entry.getValue().getPid());
+        }
+        Assert.assertEquals(expected, actual);
 
 
-    Map<ProgramRunId, RunRecordMeta> runMapHalf =  metadataStoreDataset.getRuns(programRunIdSetHalf);
-    Set<String> actualHalf = new TreeSet<>();
-    for (Map.Entry<ProgramRunId, RunRecordMeta> entry : runMapHalf.entrySet()) {
-      actualHalf.add(entry.getValue().getPid());
-    }
-    Assert.assertEquals(expectedHalf, actualHalf);
+        Map<ProgramRunId, RunRecordMeta> runMapHalf = metadataStoreDataset.getRuns(programRunIdSetHalf);
+        Set<String> actualHalf = new TreeSet<>();
+        for (Map.Entry<ProgramRunId, RunRecordMeta> entry : runMapHalf.entrySet()) {
+          actualHalf.add(entry.getValue().getPid());
+        }
+        Assert.assertEquals(expectedHalf, actualHalf);
+      }
+    });
   }
 
   private static class CountingTicker extends Ticker {
     private final long elementsPerMillis;
     private int numProcessed = 0;
 
-    public CountingTicker(long elementsPerMillis) {
+    CountingTicker(long elementsPerMillis) {
       this.elementsPerMillis = elementsPerMillis;
     }
 
-    public int getNumProcessed() {
+    int getNumProcessed() {
       return numProcessed;
     }
 

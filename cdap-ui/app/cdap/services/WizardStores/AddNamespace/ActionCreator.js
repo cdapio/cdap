@@ -21,14 +21,58 @@ const PublishNamespace = () => {
   let urlParams = {
     namespace: state.general.name
   };
-  let putParams = {};
+
+  let putParams = {
+    config : {}
+  };
 
   if (state.general.description) {
-    putParams.description = state.general.description;
+    putParams["description"] = state.general.description;
+  }
+
+  if(state.mapping.hbaseNamespace){
+    putParams["config"]["hbase.namespace"] = state.mapping.hbaseNamespace;
+  }
+
+  if(state.mapping.hiveDatabaseName){
+    putParams["config"]["hive.database"] = state.mapping.hiveDatabaseName;
+  }
+
+  if(state.mapping.hdfsDirectory){
+    putParams["config"]["root.directory"] = state.mapping.hdfsDirectory;
+  }
+
+  if(state.security.keyTab){
+    putParams["config"]["keytabURI"] = state.security.keyTab;
+  }
+
+  if(state.security.principal){
+    putParams["config"]["principal"] = state.security.principal;
+  }
+
+  if(state.preferences.schedulerQueueName){
+    putParams["config"]["scheduluer.queue.name"] = state.preferences.schedulerQueueName;
   }
 
   return MyNamespaceApi
     .create(urlParams, putParams);
 };
 
-export {PublishNamespace};
+const PublishPreferences = () => {
+  let state = AddNamespaceStore.getState();
+  let urlParams = {
+    namespace: state.general.name
+  };
+  let preferences = {};
+
+  if(state.preferences.keyValues && state.preferences.keyValues.pairs.length > 0){
+    state.preferences.keyValues.pairs.forEach((pair) => {
+      preferences[pair.key] = pair.value;
+    });
+
+    return MyNamespaceApi
+      .setPreferences(urlParams, preferences);
+  }
+};
+
+export {PublishNamespace, PublishPreferences};

@@ -47,7 +47,7 @@ Deploy the JAR using the CDAP CLI:
   .. container:: highlight
 
     .. parsed-literal::
-      |$| cdap-cli.sh load artifact target/navigator-|navigator-version|-jar
+      |$| cdap cli load artifact target/navigator-|navigator-version|-jar
 
 
 **Step 2:** Create an application configuration file that contains:
@@ -114,7 +114,7 @@ This key contains a property map with these properties:
   .. container:: highlight
 
     .. parsed-literal::
-      |$| cdap-cli.sh create app metaApp navigator |navigator-version| USER appconfig.txt
+      |$| cdap cli create app metaApp navigator |navigator-version| USER appconfig.txt
 
 
 Starting the Application
@@ -124,7 +124,7 @@ To start the MetadataFlow:
   .. container:: highlight
 
     .. parsed-literal::
-      |$| cdap-cli.sh start flow metaApp.MetadataFlow
+      |$| cdap cli start flow metaApp.MetadataFlow
 
 You should now be able to view CDAP Metadata in the Cloudera Navigator UI. Note that all CDAP Entities use ``SDK`` as
 the SourceType and use ``CDAP`` as the namespace (this can be modified). Since the Navigator SDK doesn't allow the adding

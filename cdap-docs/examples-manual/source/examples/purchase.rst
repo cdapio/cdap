@@ -120,14 +120,14 @@ A ``user`` endpoint to add a user's profile information to the system:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh call service PurchaseHistory.UserProfileService POST user body \
+  $ cdap cli call service PurchaseHistory.UserProfileService POST user body \
     '{"id":"Alice","firstName":"Alice","lastName":"Bernard","categories":["fruits"]}'
 
 A ``user/{id}`` endpoint to obtain profile information for a specified user:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh call service PurchaseHistory.UserProfileService GET user/Alice
+  $ cdap cli call service PurchaseHistory.UserProfileService GET user/Alice
   
   < 200 OK
   < Content-Length: 79
@@ -176,7 +176,7 @@ CDAP SDK directory, using the Command Line Interface:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh call service PurchaseHistory.UserProfileService POST user body \
+  $ cdap cli call service PurchaseHistory.UserProfileService POST user body \
     '{"id":"Alice","firstName":"Alice","lastName":"Bernard","categories":["fruits"]}'
     
   Successfully connected to CDAP instance at http://localhost:11015/default
@@ -189,7 +189,7 @@ CDAP SDK directory, using the Command Line Interface:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh load stream purchaseStream examples/Purchase/resources/purchases.txt 
+  $ cdap cli load stream purchaseStream examples/Purchase/resources/purchases.txt 
   Successfully loaded file to stream 'purchaseStream'
 
 .. Starting the Workflow
@@ -210,7 +210,7 @@ To query the *history* ``ObjectStore`` through the |example-service1-italic|, yo
 
   .. tabbed-parsed-literal::
 
-    $ cdap-cli.sh call service PurchaseHistory.PurchaseHistoryService GET history/Alice
+    $ cdap cli call service PurchaseHistory.PurchaseHistoryService GET history/Alice
 
 - Or, send a query via an HTTP request using the ``curl`` command:
 
@@ -236,7 +236,7 @@ From within the SDK root directory:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh execute "\"SELECT * FROM dataset_history WHERE customer IN ('Alice','Bob')\""
+  $ cdap cli execute "\"SELECT * FROM dataset_history WHERE customer IN ('Alice','Bob')\""
 
 This will submit the query, using the *history* table in the ``cdap_user`` namespace, wait
 for its completion and then retrieve and print all results, one by one (example

@@ -56,7 +56,6 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.util.Pair;
-import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionCodec;
 import org.apache.tephra.TxConstants;
 import org.slf4j.Logger;
@@ -91,8 +90,6 @@ public class HBaseTable extends BufferingTable {
   // name length + name of the table: handy to have one cached
   private final byte[] nameAsTxChangePrefix;
 
-  private Transaction tx;
-
   public HBaseTable(DatasetContext datasetContext, DatasetSpecification spec,
                     CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
     super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), spec.getName()),
@@ -119,12 +116,6 @@ public class HBaseTable extends BufferingTable {
                   .add("hTableName", hTableName)
                   .add("nameAsTxChangePrefix", nameAsTxChangePrefix)
                   .toString();
-  }
-
-  @Override
-  public void startTx(Transaction tx) {
-    super.startTx(tx);
-    this.tx = tx;
   }
 
   @Override

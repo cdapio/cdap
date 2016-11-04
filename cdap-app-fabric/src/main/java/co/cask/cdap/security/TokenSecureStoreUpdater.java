@@ -19,12 +19,9 @@ package co.cask.cdap.security;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.security.DelegationTokensUpdater;
-import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.common.security.YarnTokenUtils;
 import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.hive.ExploreUtils;
-import co.cask.cdap.internal.app.runtime.distributed.TwillAppNames;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.hive.HiveTokenUtils;
 import co.cask.cdap.security.hive.JobHistoryServerTokenUtils;
 import com.google.common.base.Throwables;
@@ -57,7 +54,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -71,19 +67,16 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
   private final co.cask.cdap.api.security.store.SecureStore secureStore;
   private final long updateInterval;
   private final boolean secureExplore;
-  private final Impersonator impersonator;
 
   @Inject
   TokenSecureStoreUpdater(YarnConfiguration hConf, CConfiguration cConf,
                           LocationFactory locationFactory,
-                          co.cask.cdap.api.security.store.SecureStore secureStore,
-                          Impersonator impersonator) {
+                          co.cask.cdap.api.security.store.SecureStore secureStore) {
     this.hConf = hConf;
     this.locationFactory = locationFactory;
     this.secureStore = secureStore;
     secureExplore = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED) && UserGroupInformation.isSecurityEnabled();
     updateInterval = calculateUpdateInterval();
-    this.impersonator = impersonator;
   }
 
   private Credentials refreshCredentials() {
@@ -238,28 +231,11 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
 
   @Override
   public SecureStore update(String application, RunId runId) {
-    try {
-      if (Constants.Service.MASTER_SERVICES.equals(application)) {
-        // don't impersonate for the master.services Twill app
-        return update();
-      }
-
-      ProgramId programId = TwillAppNames.fromTwillAppName(application);
-      return impersonator.doAs(programId.getNamespaceId(), new Callable<SecureStore>() {
-        @Override
-        public SecureStore call() throws Exception {
-          return update();
-        }
-      });
-    } catch (Exception e) {
-      // it should already be a runtime exception anyways, since none of the methods in the above callable
-      // throw any checked exceptions
-      throw Throwables.propagate(e);
-    }
+    return update();
   }
 
   /**
-   * Invoked when an update to secure store is needed, but without impersonation
+   * Invoked when an update to secure store is needed.
    */
   public SecureStore update() {
     Credentials credentials = refreshCredentials();

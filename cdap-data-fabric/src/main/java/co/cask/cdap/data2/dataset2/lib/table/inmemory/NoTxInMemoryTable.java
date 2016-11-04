@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.security;
+package co.cask.cdap.data2.dataset2.lib.table.inmemory;
 
-import co.cask.cdap.common.security.ImpersonationInfo;
-import co.cask.cdap.common.security.UGIProvider;
-import org.apache.hadoop.security.UserGroupInformation;
-
-import java.io.IOException;
+import co.cask.cdap.api.dataset.DatasetContext;
+import co.cask.cdap.common.conf.CConfiguration;
 
 /**
- * A UGIProvider that always returns the current user.
+ * In-memory implementation of Table that does not require transactions.
  */
-public class CurrentUGIProvider implements UGIProvider {
+public class NoTxInMemoryTable extends InMemoryTable {
+  public NoTxInMemoryTable(DatasetContext datasetContext, String name, CConfiguration cConf) {
+    super(datasetContext, name, cConf);
+  }
 
   @Override
-  public UserGroupInformation getConfiguredUGI(ImpersonationInfo impersonationInfo) throws IOException {
-    return UserGroupInformation.getCurrentUser();
+  protected void ensureTransactionIsStarted() {
+    // no-op: this does not require a transaction
   }
 }

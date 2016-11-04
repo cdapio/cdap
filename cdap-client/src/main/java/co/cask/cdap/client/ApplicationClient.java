@@ -158,6 +158,30 @@ public class ApplicationClient {
   }
 
   /**
+   * Lists all applications currently deployed, optionally filtering to only include applications that use one of
+   * the specified artifact names and the specified artifact version.
+   *
+   * @param namespace the namespace to list application versions from
+   * @param appName the application name to list versions for
+   * @return list of {@link String} application versions.
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public List<String> listAppVersions(NamespaceId namespace, String appName)
+    throws IOException, UnauthenticatedException, UnauthorizedException, ApplicationNotFoundException {
+    String path = String.format("apps/%s/versions", appName);
+    URL url = config.resolveNamespacedURLV3(namespace, path);
+    HttpRequest request = HttpRequest.get(url).build();
+
+    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new ApplicationNotFoundException(namespace.app(appName));
+    }
+
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<String>>() { }).getResponseObject();
+  }
+
+  /**
    * Get details about the specified application.
    *
    * @param appId the id of the application to get

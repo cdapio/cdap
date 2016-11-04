@@ -109,11 +109,11 @@ started correctly.
      
      .. Linux or Mac OS X
      
-     $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap.sh <command>
+     $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk <command>
 
      .. Windows
      
-     > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap.sh <command>
+     > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk <command>
 
 #. When you are finished, stop CDAP and then shutdown Docker:
 
@@ -125,12 +125,12 @@ started correctly.
      
      .. Linux or Mac OS X
      
-     $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap.sh stop
+     $ docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk stop
      $ docker-machine stop cdap
 
      .. Windows
      
-     > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap.sh stop
+     > docker exec -d cdap-standalone /opt/cdap/sdk/bin/cdap sdk stop
      > docker-machine stop cdap
 
 #. For a full list of Docker Commands, see the `Docker Command Line Documentation.

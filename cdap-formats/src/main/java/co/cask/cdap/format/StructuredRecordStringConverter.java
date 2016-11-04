@@ -32,6 +32,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -342,9 +343,8 @@ public final class StructuredRecordStringConverter {
         writeJson(writer, elementSchema, element);
       }
     } else {
-      Object[] array = (Object[]) value;
-      for (Object anArray : array) {
-        writeJson(writer, elementSchema, anArray);
+      for (int i = 0; i < Array.getLength(value); i++) {
+        writeJson(writer, elementSchema, Array.get(value, i));
       }
     }
     writer.endArray();

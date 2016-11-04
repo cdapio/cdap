@@ -23,6 +23,27 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 3.6.1 <http://docs.cask.co/cdap/3.6.1/index.html>`__
+=============================================================
+
+Improvements
+------------
+
+- :cask-issue:`CDAP-7404` - Added authorization for schedules in CDAP.
+
+- :cask-issue:`HYDRATOR-997` - The SSH hostname and the command to be executed are now
+  macro-enabled for the SSH action plugin.
+
+Bug Fixes
+---------
+
+- :cask-issue:`CDAP-7318` - Fixed an issue that would cause MapReduce and Spark programs
+  to fail if too many macros were being used.
+
+- :cask-issue:`CDAP-7438`, :cask-issue:`CDAP-7439` - Removed the requirement of running
+  "kinit" prior to running either the Upgrade or Transaction Debugger tools of CDAP on a
+  secure Hadoop cluster.
+
 `Release 3.6.0 <http://docs.cask.co/cdap/3.6.0/index.html>`__
 =============================================================
 
@@ -62,6 +83,8 @@ Improvements
 - :cask-issue:`CDAP-7272` - User services now include their application version in the
   payload when they announce themselves in Apache Twill.
 
+- :cask-issue:`CDAP-7250` - Fixed an issue where dataset usage was not being recorded
+  after an application was deleted.
 
 Bug Fixes
 ---------
@@ -69,11 +92,11 @@ Bug Fixes
 - :cask-issue:`CDAP-3822` - Unit Test framework now has the capability to exclude scala,
   so users can depend on their own version of the library.
 
-- :cask-issue:`CDAP-7250` - Fixed an issue where dataset usage was not being recorded
-  after an application was deleted.
-
 - :cask-issue:`CDAP-7314` - Fixed a problem with the documentation example links to the
   CDAP ETL Guide.
+
+- :cask-issue:`CDAP-7250` - Fixed an issue where dataset usage was not being recorded
+  after an application was deleted.
 
 - :cask-issue:`CDAP-7321` - Fixed a problem with upgrading CDAP using the CDAP Upgrade
   Tool.
@@ -104,7 +127,7 @@ Bug Fixes
 
 - :cask-issue:`CDAP-7391` - Fixed an issue that caused unit test failures when using
   ``org.hamcrest`` classes.
-  
+
 - :cask-issue:`CDAP-7392` - Fixed an issue where the Java process corresponding to the
   MapReduce application master kept running even if the application was moved to the FINISHED
   state.
@@ -263,7 +286,7 @@ New Features
 - :cask-issue:`CDAP-2963` - All HBase Tables created through CDAP will now have a key
   ``cdap.version`` in the ``HTableDescriptor``.
 
-- :cask-issue:`CDAP-3368` - Add location for ``cdap-cli.sh`` to PATH in distributed CDAP
+- :cask-issue:`CDAP-3368` - Add location for ``cdap cli`` to PATH in distributed CDAP
   packages.
 
 - :cask-issue:`CDAP-3890` - Improved performance of the Dataset Service.
@@ -1780,7 +1803,7 @@ Bug Fixes
   Fixed an issue where tags search were failing for certain tags.
 
 - `CDAP-4141 <https://issues.cask.co/browse/CDAP-4141>`__ -
-  Fixed node.js version checking for the ``cdap.sh`` script in the CDAP SDK.
+  Fixed node.js version checking for the ``cdap sdk`` script in the CDAP SDK.
 
 - `CDAP-4373 <https://issues.cask.co/browse/CDAP-4373>`__ -
   Fixed a problem that prevented MapReduce jobs from being run when the Resource Manager
@@ -4158,8 +4181,8 @@ New Features
 - **Command Line Interface (CLI)**
 
   - CLI can now directly connect to a CDAP instance of your choice at startup by using
-    ``cdap-cli.sh --uri <uri>``.
-  - Support for runtime arguments, which can be listed by running ``"cdap-cli.sh --help"``.
+    ``cdap cli --uri <uri>``.
+  - Support for runtime arguments, which can be listed by running ``"cdap cli --help"``.
   - Table rendering can be configured using ``"cli render as <alt|csv>"``. 
     The option ``"alt"`` is the default, with ``"csv"`` available for copy & pasting.
   - Stream statistics can be computed using ``"get stream-stats <stream-id>"``.
@@ -4643,7 +4666,7 @@ CDAP Bug Fixes
   - Failed to execute SQL queries.
   
 - Removed dependencies on SNAPSHOT artifacts for *netty-http* and *auth-clients*. 
-- Corrected an error in the message printed by the startup script ``cdap.sh``.
+- Corrected an error in the message printed by the startup script ``cdap sdk``.
 - Resolved a problem with the reading of the properties file by the CDAP Flume Client of CDAP Ingest library
   without first checking if authentication was enabled.
 
@@ -4651,7 +4674,7 @@ Other Changes
 -------------
 
 - The scripts ``send-query.sh``, ``access-token.sh`` and ``access-token.bat`` has been replaced by the 
-  :ref:`CDAP Command Line Interface, <cli>` ``cdap-cli.sh``.
+  :ref:`CDAP Command Line Interface, <cli>` ``cdap cli``.
 - The CDAP Command Line Interface now uses and saves access tokens when connecting to a secure CDAP instance.
 - The CDAP Java Stream Client now allows empty String events to be sent.
 - The CDAP Python Authentication Client's ``configure()`` method now takes a dictionary rather than a filepath.

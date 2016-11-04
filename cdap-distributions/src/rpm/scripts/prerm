@@ -1,5 +1,5 @@
 #
-# Copyright © 2015 Cask Data, Inc.
+# Copyright © 2015-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -18,17 +18,3 @@
 
 package_name="<%= project %>"
 version="<%= @version %>"
-
-# if no remaining packages installed, stop and remove the service link
-if [ $1 = 0 ]; then 
-  if stat -t /opt/cdap/$package_name/conf/*-env.sh >/dev/null 2>&1 ; then
-    find -L /opt/cdap/$package_name/conf -name '*-env.sh' | xargs -n1 basename | sed 's/-env.sh//' | while read svcname; do
-      service cdap-$svcname stop > /dev/null 2>&1
-      if [[ -h /opt/cdap/$package_name/bin/svc-$svcname ]]; then
-        unlink /opt/cdap/$package_name/bin/svc-$svcname > /dev/null 2>&1
-      fi
-      rm -f /opt/cdap/$package_name/version
-    done
-  fi
-fi
-

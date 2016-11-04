@@ -26,9 +26,6 @@ connectivity information for external service dependencies. If Hadoop system ser
 also running on the same hosts as the CDAP services, they will already have these clients
 installed.
 
-CDAP currently requires Internet access on the CDAP service nodes (or until the issue
-`CDAP-3957 <https://issues.cask.co/browse/CDAP-3957>` is resolved).
-
 **Core Dependencies**
 
 - **HBase:** For system runtime storage and queues

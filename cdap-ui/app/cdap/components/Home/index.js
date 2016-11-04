@@ -44,6 +44,10 @@ class Home extends Component {
         id: 'dataset'
       },
       {
+        displayName: T.translate('commons.entity.program.plural'),
+        id: 'program'
+      },
+      {
         displayName: T.translate('commons.entity.stream.plural'),
         id: 'stream'
       }
@@ -306,7 +310,7 @@ class Home extends Component {
                   { active: entity.uniqueId === this.state.selectedEntity }
                 )
               }
-              key={shortid.generate()}
+              key={entity.uniqueId}
               onClick={this.handleEntityClick.bind(this, entity.uniqueId)}
             >
               <EntityCard

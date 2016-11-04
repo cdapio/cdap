@@ -14,10 +14,10 @@
  * the License.
  */
 
-import Datasource from 'services/datasource';
+import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
 import {apiCreatorAbsPath} from 'services/resource-helper';
 
-let dataSrc = new Datasource();
+let dataSrc = DataSourceConfigurer.getInstance();
 const basepath = `${window.CDAP_UI_CONFIG.market.path}/${window.CDAP_UI_CONFIG.market.version}`;
 
 export const MyMarketApi = {

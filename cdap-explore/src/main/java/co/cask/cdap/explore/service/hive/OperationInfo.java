@@ -34,7 +34,7 @@ public abstract class OperationInfo {
   private final Map<String, String> sessionConf;
   private final String statement;
   private final long timestamp;
-  private final String namespace;
+  private final String hiveDatabase;
   /**
    * Indicates whether this operation changes Datasets or not.
    */
@@ -47,13 +47,13 @@ public abstract class OperationInfo {
 
   OperationInfo(SessionHandle sessionHandle, OperationHandle operationHandle,
                 Map<String, String> sessionConf, String statement, long timestamp,
-                String namespace, boolean readOnly) {
+                String hiveDatabase, boolean readOnly) {
     this.sessionHandle = sessionHandle;
     this.operationHandle = operationHandle;
     this.sessionConf = sessionConf;
     this.statement = statement;
     this.timestamp = timestamp;
-    this.namespace = namespace;
+    this.hiveDatabase = hiveDatabase;
     this.readOnly = readOnly;
   }
 
@@ -93,8 +93,8 @@ public abstract class OperationInfo {
     return previewLock;
   }
 
-  public String getNamespace() {
-    return namespace;
+  public String getHiveDatabase() {
+    return hiveDatabase;
   }
 
   public boolean isReadOnly() {

@@ -81,7 +81,7 @@ Begin by uploading a file containing newline-separated records representing view
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh load stream views examples/ClicksAndViews/resources/views.txt
+  $ cdap cli load stream views examples/ClicksAndViews/resources/views.txt
   
   Successfully loaded file to stream 'views'
 
@@ -89,7 +89,7 @@ Then, upload records representing click events into the *clicks* stream:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh load stream clicks examples/ClicksAndViews/resources/clicks.txt
+  $ cdap cli load stream clicks examples/ClicksAndViews/resources/clicks.txt
 
   Successfully loaded file to stream 'clicks'
 
@@ -108,7 +108,7 @@ The MapReduce will write to a partition based upon its logical start time when i
 
   .. tabbed-parsed-literal::
 
-      $ cdap-cli.sh start mapreduce |example|.\ |example-mapreduce|
+      $ cdap cli start mapreduce |example|.\ |example-mapreduce|
       
       Successfully started mapreduce '|example-mapreduce|' of application '|example|'
       with stored runtime arguments '{}'
@@ -122,7 +122,7 @@ by executing an explore query using the CDAP CLI:
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh execute "\"SELECT * FROM dataset_joined\""
+  $ cdap cli execute "\"SELECT * FROM dataset_joined\""
 
 - Alternatively, go to the *rawRecords*
   :cdap-ui-datasets-explore:`dataset overview page, explore tab <rawRecords>`
@@ -148,7 +148,7 @@ To calculate a click-through rate from this data, you could divide the number of
 
 .. tabbed-parsed-literal::
 
-  $ cdap-cli.sh execute "\"SELECT SUM(numclicks)/COUNT(*) AS CTR FROM dataset_joined\""
+  $ cdap cli execute "\"SELECT SUM(numclicks)/COUNT(*) AS CTR FROM dataset_joined\""
 
 With our sample data, the click through rate is ``0.5``::
 

@@ -200,8 +200,7 @@ this trade-off can be very beneficial for workloads dominated by writes.
 Read-less increments can only be used with the ``increment(...)`` operation, since it does not
 return a value.  To configure a dataset to support read-less increments:
 
-1. Set the property ``dataset.table.readless.increment`` to ``true`` in the DatasetSpecification
-   properties.
+1. Set the property ``dataset.table.readless.increment`` to ``true`` in the Dataset properties.
 2. Use the ``increment(...)`` methods for any operations that do not need the result value of the
    increment operation.
 

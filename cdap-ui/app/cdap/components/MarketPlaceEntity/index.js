@@ -13,40 +13,262 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import React, {PropTypes} from 'react';
+import React, {PropTypes, Component} from 'react';
+import Card from '../Card';
+import {MyMarketApi} from 'api/market';
 import classnames from 'classnames';
-require('./MarketPlaceEntity.less');
+import MarketActionsContainer from 'components/MarketActionsContainer';
+import AbstractWizard from 'components/AbstractWizard';
+import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
+import MarketStore from 'components/Market/store/market-store';
+import T from 'i18n-react';
 
-export default function MarketPlaceEntity({size, className, style, name, subtitle, icon, onClick}) {
-  return (
-    <div
-      className={classnames("cask-marketplace-entity-card", className, size)}
-      style={style}
-    >
+require('./MarketPlaceEntity.less');
+export default class MarketPlaceEntity extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      expandedMode: false,
+      entityDetail: {},
+      performSingleAction: false
+    };
+    this.unsub = MarketStore.subscribe(() => {
+      let marketState = MarketStore.getState();
+      if ((marketState.activeEntity !== this.props.entityId) && this.state.expandedMode) {
+        this.setState({
+          expandedMode: false
+        });
+      }
+    });
+  }
+  componentWillUnmount() {
+    this.unsub();
+  }
+  getChildContext() {
+    return {
+      entity: this.props.entity
+    };
+  }
+  fetchEntityDetail() {
+    MyMarketApi.get({
+      packageName: this.props.entity.name,
+      version: this.props.entity.version
+    }).subscribe((res) => {
+      this.setState({entityDetail: res});
+    }, (err) => {
+      console.log('Error', err);
+    });
+  }
+  openDetailedMode() {
+    if (this.state.expandedMode) {
+      return;
+    }
+    this.fetchEntityDetail();
+    this.toggleDetailedMode();
+  }
+  toggleDetailedMode() {
+    this.setState({expandedMode: !this.state.expandedMode});
+    MarketStore.dispatch({
+      type: 'SET_ACTIVE_ENTITY',
+      payload: {
+        entityId: this.props.entityId
+      }
+    });
+  }
+  render() {
+    const isEntityDetailAvailable = () => {
+      if (!this.state.entityDetail || !Array.isArray(this.state.entityDetail.actions)) {
+        return false;
+      }
+      return true;
+    };
+
+    // FIXME: This could be moved to a utility function. This can be generic.
+    let style = {
+      position: 'absolute'
+    };
+    let positionClassName;
+    let cardWidth = 400;
+
+    if (this.packageCardRef) {
+      let parentRects = this.packageCardRef.parentElement.getBoundingClientRect();
+      let cardRects = this.packageCardRef.getBoundingClientRect();
+      if (isEntityDetailAvailable()) {
+        if (this.state.entityDetail.actions.length > 1) {
+          cardWidth = Math.max((parentRects.right - cardRects.left), (cardRects.right - parentRects.left));
+        }
+      }
+      cardWidth = cardWidth - 20;
+      let shouldPositionLeft = () => parentRects.right > (cardRects.left + (cardWidth - 20));
+      let shouldPositionRight = () => parentRects.left < (cardRects.right - (cardWidth - 20));
+
+      if (shouldPositionLeft()) {
+          positionClassName = 'position-left';
+      } else if (shouldPositionRight()) {
+          positionClassName = 'position-right';
+      }
+    }
+    style.width = cardWidth;
+    const getConsolidatedFooter = () => {
+      if (isEntityDetailAvailable()) {
+        if (this.state.entityDetail.actions.length > 1) {
+          return (
+            <div>
+              <MarketActionsContainer
+                actions={this.state.entityDetail.actions}
+              />
+              <div className="text-right">
+                <button
+                  className="btn btn-default"
+                  onClick={this.toggleDetailedMode.bind(this)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          );
+        } else if (this.state.entityDetail.actions.length === 1) {
+          return (
+            <div className="text-right">
+              <button
+                className="btn btn-primary"
+                onClick={() => this.setState({performSingleAction: true})}
+              >
+                {T.translate('features.Market.action-types.' + this.state.entityDetail.actions[0].type + '.name')}
+                <AbstractWizard
+                  isOpen={this.state.performSingleAction}
+                  onClose={() => this.setState({performSingleAction: false})}
+                  wizardType={this.state.entityDetail.actions[0].type}
+                  input={{action: this.state.entityDetail.actions[0], package: this.props.entity}}
+                />
+              </button>
+              <button
+                className="btn btn-default"
+                onClick={this.toggleDetailedMode.bind(this)}
+              >
+                Cancel
+              </button>
+            </div>
+          );
+        } else {
+          return null;
+        }
+      }
+    };
+
+    const getRightCard = () => {
+      return !this.state.expandedMode ?
+        (
+          <Card
+            ref={(ref)=> this.cardRef = ref}
+            onClick={this.openDetailedMode.bind(this)}
+            size="LG"
+          >
+            <div className="package-icon-container">
+              <img src={MyMarketApi.getIcon(this.props.entity)} />
+            </div>
+            <div>
+              <div>{this.props.entity.version}</div>
+              <div>{this.props.entity.name}</div>
+            </div>
+          </Card>
+        )
+      :
+        (
+          <Card
+            ref={(ref)=> this.cardRef = ref}
+            size="LG"
+            cardStyle={style}
+            onClick={this.openDetailedMode.bind(this)}
+          >
+            <div className="clearfix">
+              <div className="package-icon-container">
+                <img src={MyMarketApi.getIcon(this.props.entity)} />
+              </div>
+
+              <div className="package-metadata-container">
+                <strong className="package-label"> {this.props.entity.label} </strong>
+                <div className="package-metadata">
+                  <div>
+                    <span>
+                      <strong> {T.translate('features.MarketPlaceEntity.Metadata.version')} </strong>
+                    </span>
+                    <span> {this.props.entity.version} </span>
+                  </div>
+                  <div>
+                    <span>
+                      <strong> {T.translate('features.MarketPlaceEntity.Metadata.company')} </strong>
+                    </span>
+                    <span> {this.props.entity.org} </span>
+                  </div>
+                  <div>
+                    <span>
+                      <strong> {T.translate('features.MarketPlaceEntity.Metadata.author')} </strong>
+                    </span>
+                    <span> {this.props.entity.author} </span>
+                  </div>
+                  <div>
+                    <span>
+                      <strong> {T.translate('features.MarketPlaceEntity.Metadata.cdapversion')} </strong>
+                    </span>
+                    <span> {this.props.entity.cdapVersion} </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="package-footer">
+              <p>
+                {this.props.entity.description}
+              </p>
+              { getConsolidatedFooter() }
+            </div>
+          </Card>
+        );
+    };
+
+    return (
       <div
-        className="image-container"
-        onClick={onClick}
+        className={classnames("market-place-package-card", {[positionClassName + ' expanded']: this.state.expandedMode})}
+        ref={(ref)=> this.packageCardRef = ref}
       >
-        <img src={icon} />
+        <ReactCSSTransitionGroup
+          transitionName="package-transition"
+          transitionAppearTimeout={300}
+          transitionEnterTimeout={500}
+          transitionLeaveTimeout={300}
+        >
+          {getRightCard()}
+        </ReactCSSTransitionGroup>
       </div>
-      <div className="metadata-container" onClick={onClick}>
-        <div className="metadata-version">{subtitle}</div>
-        <div className="metadata-name">{name}</div>
-      </div>
-    </div>
-  );
+    );
+  }
 }
 
-MarketPlaceEntity.defaultProps = {
-  size: 'small'
+MarketPlaceEntity.childContextTypes = {
+  entity: PropTypes.shape({
+    name: PropTypes.string,
+    version: PropTypes.string,
+    label: PropTypes.string,
+    author: PropTypes.string,
+    description: PropTypes.string,
+    org: PropTypes.string,
+    created: PropTypes.number,
+    cdapVersion: PropTypes.string
+  })
 };
 
 MarketPlaceEntity.propTypes = {
-  size: PropTypes.string,
   className: PropTypes.string,
   style: PropTypes.object,
-  name: PropTypes.string,
-  subtitle: PropTypes.string,
-  icon: PropTypes.string,
-  onClick: PropTypes.func
+  entityId: PropTypes.string,
+  entity: PropTypes.shape({
+    name: PropTypes.string,
+    version: PropTypes.string,
+    label: PropTypes.string,
+    author: PropTypes.string,
+    description: PropTypes.string,
+    org: PropTypes.string,
+    created: PropTypes.number,
+    cdapVersion: PropTypes.string
+  })
 };

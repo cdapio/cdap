@@ -281,7 +281,9 @@ function emitResponse (resource, error, response, body) {
     this.connection.write(JSON.stringify({
       resource: resource,
       error: error,
-      warning: error.toString()
+      warning: error.toString(),
+      statusCode: response && response.statusCode,
+      response: response && response.body
     }, stripResource));
 
   } else {

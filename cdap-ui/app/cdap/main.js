@@ -70,33 +70,26 @@ class CDAP extends Component {
   componentWillMount(){
     // Polls for namespace data
     MyNamespaceApi.pollList()
-      .subscribe((res) => {
-        if (res.length > 0){
-          NamespaceStore.dispatch({
-            type: NamespaceActions.updateNamespaces,
-            payload: {
-              namespaces : res
-            }
-          });
-        } else {
-          //To-Do: No namespaces returned ; throw error / redirect
+      .subscribe(
+        (res) => {
+          if (res.length > 0){
+            NamespaceStore.dispatch({
+              type: NamespaceActions.updateNamespaces,
+              payload: {
+                namespaces : res
+              }
+            });
+          } else {
+            //To-Do: No namespaces returned ; throw error / redirect
+          }
         }
-      });
+      );
   }
 
   render() {
-    if ( window.CDAP_CONFIG.securityEnabled && !cookie.load('CDAP_Auth_Token')) {
-      //authentication failed ; redirect to another page
-      window.location.href = window.getAbsUIUrl({
-        uiApp: 'login',
-        redirectUrl: location.href,
-        clientId: 'cdap'
-      });
-      return null;
-    }
     if (window.CDAP_CONFIG.securityEnabled) {
       NamespaceStore.dispatch({
-        type: 'UPDATE_USERNAME',
+        type: NamespaceActions.updateUsername,
         payload: {
           username: cookie.load('CDAP_Auth_User')
         }

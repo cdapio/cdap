@@ -16,12 +16,13 @@
 
 import React, {PropTypes, Component} from 'react';
 import { Modal, ModalHeader, ModalBody } from 'reactstrap';
-import {MyMarketApi} from '../../api/market';
+import {MyMarketApi} from 'api/market';
 import T from 'i18n-react';
 import AbstractWizard from 'components/AbstractWizard';
 import classnames from 'classnames';
 import shortid from 'shortid';
 import moment from 'moment';
+import getIcon from 'services/market-action-icon-map';
 
 require('./MarketEntityModal.less');
 
@@ -91,21 +92,6 @@ export default class MarketEntityModal extends Component {
     return this.state.entityDetail.cdapVersion ? versionElem : null;
   }
 
-  getIcon(actionType) {
-    const iconMap = {
-      create_stream: 'icon-streams',
-      create_app: 'icon-app',
-      create_pipeline: 'icon-pipelines',
-      create_pipeline_draft: 'icon-pipelines',
-      create_artifact: 'icon-artifacts',
-      informational: 'fa-info',
-      load_datapack: 'fa-upload',
-
-    };
-
-    return iconMap[actionType];
-  }
-
   render() {
     let actions;
     if (this.state.entityDetail.actions) {
@@ -115,7 +101,7 @@ export default class MarketEntityModal extends Component {
             this.state.entityDetail.actions.map((action, index) => {
               let isCompletedAction = this.state.completedActions.indexOf(index) !== -1 ;
               let actionName = T.translate('features.Market.action-types.' + action.type + '.name');
-              let actionIcon = this.getIcon(action.type);
+              let actionIcon = getIcon(action.type);
               return (
                 <div
                   className="action-container text-center"
