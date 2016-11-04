@@ -103,16 +103,15 @@ public class ServiceClient {
   }
 
   /**
-   * Checks whether the {@link Service} is active.
+   * Checks whether the {@link Service} is active. Returns without throwing any exception if it is active.
    *
    * @param service ID of the service
-   * @return 'Active' message when service is active
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the app or service could not be found
-   * @throws ServiceUnavailableException if the service has started but is not available right now
+   * @throws ServiceUnavailableException if the service is not available
    */
-  public String getAvailability(Id.Service service) throws IOException, UnauthenticatedException, NotFoundException,
+  public void checkAvailability(Id.Service service) throws IOException, UnauthenticatedException, NotFoundException,
     ServiceUnavailableException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(service.getNamespace(),
                                             String.format("apps/%s/services/%s/available",
@@ -127,7 +126,6 @@ public class ServiceClient {
     if (response.getResponseCode() == HttpURLConnection.HTTP_UNAVAILABLE) {
       throw new ServiceUnavailableException(service.getId());
     }
-    return response.getResponseBodyAsString();
   }
 
   public URL getServiceURL(Id.Service service)
