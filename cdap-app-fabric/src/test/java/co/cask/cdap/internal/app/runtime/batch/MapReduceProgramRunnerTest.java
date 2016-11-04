@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
@@ -645,6 +646,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     // CDAP-7476, the input/output format provider was called *after* initialize
     // returns, and therefore that transaction may have been committed already.
 
+    // (1) initialize the table with a known value
     datasetCache.newTransactionContext();
     final KeyValueTable kvTable = datasetCache.getDataset("recorder");
     Transactions.createTransactionExecutor(txExecutorFactory, datasetCache.getTransactionAwares()).execute(
@@ -657,9 +659,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
       });
 
     // 2) run job
-    final long start = System.currentTimeMillis();
     runProgram(app, programClass, args, false);
-    final long stop = System.currentTimeMillis();
 
     // 3) verify results
     Transactions.createTransactionExecutor(txExecutorFactory, datasetCache.getTransactionAwares()).execute(
@@ -668,6 +668,41 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
         public void apply() {
           // the table should not have initialized=true
           Assert.assertEquals(expected, Bytes.toString(kvTable.read("initialized")));
+        }
+      });
+    datasetCache.dismissTransactionContext();
+  }
+
+  @Test
+  public void testFailureInOutputCommitter() throws Exception {
+    final ApplicationWithPrograms app = deployApp(AppWithMapReduce.class);
+
+    // We want to verify that when a mapreduce fails when committing the dataset outputs,
+    // the destroy method is still called and committed.
+
+    // (1) setup the datasets we use
+    datasetCache.newTransactionContext();
+    final KeyValueTable kvTable = datasetCache.getDataset("recorder");
+
+    Transactions.createTransactionExecutor(txExecutorFactory, datasetCache.getTransactionAwares()).execute(
+      new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() {
+          // the table should not have initialized=true
+          kvTable.write("initialized", "false");
+        }
+      });
+
+    // 2) run job
+    runProgram(app, AppWithMapReduce.MapReduceWithFailingOutputCommitter.class, new HashMap<String, String>(), false);
+
+    // 3) verify results
+    Transactions.createTransactionExecutor(txExecutorFactory, datasetCache.getTransactionAwares()).execute(
+      new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() {
+          // the destroy() method should have recorded FAILED status in the kv table
+          Assert.assertEquals(ProgramStatus.FAILED.name(), Bytes.toString(kvTable.read("status")));
         }
       });
     datasetCache.dismissTransactionContext();
