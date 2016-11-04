@@ -325,17 +325,17 @@ public class DefaultStoreTest {
     Assert.assertEquals(1, suspendedHistorymap.size());
 
     // records should be sorted by start time latest to earliest
-    RunRecordMeta run = successHistorymap.get(0);
+    RunRecordMeta run = successHistorymap.values().iterator().next();
     Assert.assertEquals(nowSecs - 10, run.getStartTs());
     Assert.assertEquals(Long.valueOf(nowSecs - 5), run.getStopTs());
     Assert.assertEquals(ProgramController.State.COMPLETED.getRunStatus(), run.getStatus());
 
-    run = failureHistorymap.get(0);
+    run = failureHistorymap.values().iterator().next();
     Assert.assertEquals(nowSecs - 20, run.getStartTs());
     Assert.assertEquals(Long.valueOf(nowSecs - 10), run.getStopTs());
     Assert.assertEquals(ProgramController.State.ERROR.getRunStatus(), run.getStatus());
 
-    run = suspendedHistorymap.get(0);
+    run = suspendedHistorymap.values().iterator().next();
     Assert.assertEquals(run21.getId(), run.getPid());
     Assert.assertEquals(ProgramController.State.SUSPENDED.getRunStatus(), run.getStatus());
 
@@ -351,19 +351,19 @@ public class DefaultStoreTest {
     Assert.assertEquals(runningHistorymap, store.getRuns(programId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, 100));
 
     // Get a run record for running program
-    RunRecordMeta expectedRunning = runningHistorymap.get(0);
+    RunRecordMeta expectedRunning = runningHistorymap.values().iterator().next();
     Assert.assertNotNull(expectedRunning);
     RunRecordMeta actualRunning = store.getRun(programId, expectedRunning.getPid());
     Assert.assertEquals(expectedRunning, actualRunning);
 
     // Get a run record for completed run
-    RunRecordMeta expectedCompleted = successHistorymap.get(0);
+    RunRecordMeta expectedCompleted = successHistorymap.values().iterator().next();
     Assert.assertNotNull(expectedCompleted);
     RunRecordMeta actualCompleted = store.getRun(programId, expectedCompleted.getPid());
     Assert.assertEquals(expectedCompleted, actualCompleted);
 
     // Get a run record for suspended run
-    RunRecordMeta expectedSuspended = suspendedHistorymap.get(0);
+    RunRecordMeta expectedSuspended = suspendedHistorymap.values().iterator().next();
     Assert.assertNotNull(expectedSuspended);
     RunRecordMeta actualSuspended = store.getRun(programId, expectedSuspended.getPid());
     Assert.assertEquals(expectedSuspended, actualSuspended);
