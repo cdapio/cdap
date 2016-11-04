@@ -148,7 +148,6 @@ usage of the dataset. It is also used during the runtime to get the dataset inst
     @Override
     public void configure(FlowletConfigurer configurer) {
       super.configure(configurer);
-      useDatasets(uniqueCountTableName);
     }
 
     public UniqueCounter(String uniqueCountTableName) {

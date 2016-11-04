@@ -17,11 +17,7 @@
 package co.cask.cdap.api.workflow;
 
 import co.cask.cdap.api.customaction.AbstractCustomAction;
-import co.cask.cdap.api.dataset.Dataset;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -67,31 +63,6 @@ public abstract class AbstractWorkflowAction implements WorkflowAction {
 
   protected void setProperties(Map<String, String> properties) {
     configurer.setProperties(properties);
-  }
-
-  /**
-   * Adds the names of {@link Dataset}s used by this workflow action.
-   *
-   * @deprecated Deprecated as of 3.4.0. Dataset can be requested directly through the method
-   *             {@link WorkflowContext#getDataset(String)} at runtime.
-   */
-  @Deprecated
-  protected void useDatasets(String dataset, String...datasets) {
-    List<String> datasetList = new ArrayList<>();
-    datasetList.add(dataset);
-    datasetList.addAll(Arrays.asList(datasets));
-    useDatasets(datasetList);
-  }
-
-  /**
-   * Adds the names of {@link Dataset}s used by this workflow action.
-   *
-   * @deprecated Deprecated as of 3.4.0. Dataset can be requested directly through the method
-   *             {@link WorkflowContext#getDataset(String)} at runtime.
-   */
-  @Deprecated
-  protected void useDatasets(Iterable<String> datasets) {
-    configurer.useDatasets(datasets);
   }
 
   @Override

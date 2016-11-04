@@ -42,7 +42,6 @@ implementation of three methods:
     public void configure() {
       setName("Purchase History Builder MapReduce");
       setDescription("Builds a purchase history for each customer");
-      useDatasets("frequentCustomers");
     }
 
 The configure method is similar to the one found in flows and

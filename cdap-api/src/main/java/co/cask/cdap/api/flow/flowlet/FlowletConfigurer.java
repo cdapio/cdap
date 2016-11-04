@@ -18,7 +18,6 @@ package co.cask.cdap.api.flow.flowlet;
 
 import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.dataset.Dataset;
 
 import java.util.Map;
 
@@ -61,14 +60,4 @@ public interface FlowletConfigurer extends DatasetConfigurer {
    * @param properties properties
    */
   void setProperties(Map<String, String> properties);
-
-  /**
-   * Adds the names of {@link Dataset}s used by the flowlet.
-   *
-   * @param datasets dataset names
-   * @deprecated Deprecated as of 3.4.0. Dataset can be requested directly through the method
-   *             {@link FlowletContext#getDataset(String)} at runtime.
-   */
-  @Deprecated
-  void useDatasets(Iterable<String> datasets);
 }

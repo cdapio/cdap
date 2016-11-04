@@ -17,7 +17,6 @@
 package co.cask.cdap.api.workflow;
 
 import co.cask.cdap.api.customaction.CustomActionConfigurer;
-import co.cask.cdap.api.dataset.Dataset;
 
 import java.util.Map;
 
@@ -49,14 +48,4 @@ public interface WorkflowActionConfigurer {
    * @param properties properties
    */
   void setProperties(Map<String, String> properties);
-
-  /**
-   * Adds the names of {@link Dataset}s used by this workflow action.
-   *
-   * @param datasets dataset names
-   * @deprecated Deprecated as of 3.4.0. Dataset can be requested directly through the method
-   *             {@link WorkflowContext#getDataset(String)} at runtime.
-   */
-  @Deprecated
-  void useDatasets(Iterable<String> datasets);
 }
