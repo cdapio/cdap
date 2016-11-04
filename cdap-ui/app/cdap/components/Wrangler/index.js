@@ -17,6 +17,7 @@
 import React, { Component } from 'react';
 import Papa from 'papaparse';
 import shortid from 'shortid';
+import classnames from 'classnames';
 
 require('./Wrangler.less');
 
@@ -98,13 +99,6 @@ export default class Wrangler extends Component {
     });
   }
 
-  // rowClickHandler(row) {
-  //   console.log('row', row);
-  //   this.setState({
-  //     activeSelectionType: 'ROW',
-  //     activeSelection: row
-  //   });
-  // }
   renderActionList() {
     if (this.state.activeSelectionType === 'COLUMN') {
       return this.renderColumnActions();
@@ -291,7 +285,11 @@ export default class Wrangler extends Component {
   // RENAME
 
   renameColumnClick() {
-    this.setState({isRename: true});
+    this.setState({
+      isMerge: false,
+      isSplit: false,
+      isRename: true
+    });
   }
 
   onRename() {
@@ -321,7 +319,11 @@ export default class Wrangler extends Component {
   // SPLIT
 
   splitColumnClick() {
-    this.setState({isSplit: true});
+    this.setState({
+      isMerge: false,
+      isSplit: true,
+      isRename: false
+    });
   }
 
   onSplit() {
@@ -358,7 +360,11 @@ export default class Wrangler extends Component {
   // MERGE
 
   mergeColumnClick() {
-    this.setState({isMerge: true});
+    this.setState({
+      isMerge: true,
+      isSplit: false,
+      isRename: false
+    });
   }
 
   onMerge() {
@@ -434,6 +440,9 @@ export default class Wrangler extends Component {
                       <th
                         key={head}
                         onClick={this.columnClickHandler.bind(this, head)}
+                        className={classnames('column-name', {
+                          active: this.state.activeSelection === head
+                        })}
                       >
                         {head}
                       </th>
@@ -448,7 +457,20 @@ export default class Wrangler extends Component {
                 return (
                   <tr key={shortid.generate()}>
                     <td>{index+1}</td>
-                    { headers.map((head) => <td key={shortid.generate()}>{row[head]}</td>) }
+                    {
+                      headers.map((head) => {
+                        return (
+                          <td
+                            key={shortid.generate()}
+                            className={classnames({
+                              active: this.state.activeSelection === head
+                            })}
+                          >
+                            {row[head]}
+                          </td>
+                        );
+                      })
+                    }
                   </tr>
                 );
               }) }
