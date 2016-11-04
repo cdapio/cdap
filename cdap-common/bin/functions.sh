@@ -741,7 +741,7 @@ cdap_sdk_cleanup() { echo "Removing ${LOCAL_DIR} and ${LOG_DIR}"; rm -rf ${LOCAL
 # Restarts the CDAP SDK
 # returns: exit code of stop/start, or zero if successful
 #
-cdap_sdk_restart() { cdap_sdk_stop && cdap_sdk_start ${@}; };
+cdap_sdk_restart() { cdap_sdk_stop ; cdap_sdk_start ${@}; };
 
 #
 # cdap_sdk_stop
