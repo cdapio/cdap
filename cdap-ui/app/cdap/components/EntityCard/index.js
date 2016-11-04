@@ -68,6 +68,7 @@ export default class EntityCard extends Component {
   render() {
     const header = (
       <EntityCardHeader
+        className={this.props.entity.type}
         entity={this.props.entity}
         systemTags={this.props.entity.metadata.metadata.SYSTEM.tags}
       />

@@ -36,10 +36,11 @@ export default class JumpButton extends Component {
     this.getJumpActions();
   }
 
-  toggle() {
+  toggle(event) {
     this.setState({
       dropdownOpen: !this.state.dropdownOpen
     });
+    event.stopPropagation();
   }
 
   viewInTrackerLink() {
@@ -108,8 +109,8 @@ export default class JumpButton extends Component {
 
   render() {
     return (
-      <ButtonDropdown isOpen={this.state.dropdownOpen} toggle={this.toggle}>
-        <DropdownToggle className="jump-button">
+      <ButtonDropdown isOpen={this.state.dropdownOpen} toggle={() => {}}>
+        <DropdownToggle className="jump-button" onClick={this.toggle}>
           <span>{T.translate('features.JumpButton.buttonLabel')}</span>
           <span className={classnames('fa pull-right', {
             'fa-chevron-down': !this.state.dropdownOpen,
