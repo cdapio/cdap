@@ -80,13 +80,15 @@ public class LineageHandler extends AbstractHttpHandler {
                              @QueryParam("start") String startStr,
                              @QueryParam("end") String endStr,
                              @QueryParam("levels") @DefaultValue("10") int levels,
-                             @QueryParam("collapse") List<String> collapse) throws Exception {
+                             @QueryParam("collapse") List<String> collapse,
+                             @QueryParam("rollup") String rollup) throws Exception {
 
     checkLevels(levels);
     TimeRange range = parseRange(startStr, endStr);
 
     DatasetId datasetInstance = new DatasetId(namespaceId, datasetId);
-    Lineage lineage = lineageAdmin.computeLineage(datasetInstance, range.getStart(), range.getEnd(), levels);
+    Lineage lineage = lineageAdmin.computeLineage(datasetInstance, range.getStart(), range.getEnd(),
+                                                  levels, rollup);
     responder.sendJson(HttpResponseStatus.OK,
                        LineageSerializer.toLineageRecord(TimeUnit.MILLISECONDS.toSeconds(range.getStart()),
                                                          TimeUnit.MILLISECONDS.toSeconds(range.getEnd()),
@@ -102,13 +104,14 @@ public class LineageHandler extends AbstractHttpHandler {
                             @QueryParam("start") String startStr,
                             @QueryParam("end") String endStr,
                             @QueryParam("levels") @DefaultValue("10") int levels,
-                            @QueryParam("collapse") List<String> collapse) throws Exception {
+                            @QueryParam("collapse") List<String> collapse,
+                            @QueryParam("rollup") String rollup) throws Exception {
 
     checkLevels(levels);
     TimeRange range = parseRange(startStr, endStr);
 
     StreamId streamId = new StreamId(namespaceId, stream);
-    Lineage lineage = lineageAdmin.computeLineage(streamId, range.getStart(), range.getEnd(), levels);
+    Lineage lineage = lineageAdmin.computeLineage(streamId, range.getStart(), range.getEnd(), levels, rollup);
     responder.sendJson(HttpResponseStatus.OK,
                        LineageSerializer.toLineageRecord(TimeUnit.MILLISECONDS.toSeconds(range.getStart()),
                                                          TimeUnit.MILLISECONDS.toSeconds(range.getEnd()),

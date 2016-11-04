@@ -245,13 +245,14 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     }
 
     final Set<RunId> twillRunIds = twillProgramInfo.columnKeySet();
-    List<RunRecordMeta> activeRunRecords = store.getRuns(ProgramRunStatus.RUNNING, new Predicate<RunRecordMeta>() {
+    Collection<RunRecordMeta> activeRunRecords = store.getRuns(ProgramRunStatus.RUNNING,
+                                                               new Predicate<RunRecordMeta>() {
       @Override
       public boolean apply(RunRecordMeta record) {
         return record.getTwillRunId() != null
           && twillRunIds.contains(org.apache.twill.internal.RunIds.fromString(record.getTwillRunId()));
       }
-    });
+    }).values();
 
     for (RunRecordMeta record : activeRunRecords) {
       RunId twillRunIdFromRecord = org.apache.twill.internal.RunIds.fromString(record.getTwillRunId());

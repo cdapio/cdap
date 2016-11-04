@@ -21,6 +21,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -38,6 +39,7 @@ import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.annotations.VisibleForTesting;
@@ -50,6 +52,7 @@ import com.google.common.base.Ticker;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -64,6 +67,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -318,26 +322,38 @@ public class AppMetadataStore extends MetadataStoreDataset {
     write(key, new RunRecordMeta(started, stopTs, runStatus));
   }
 
-  public List<RunRecordMeta> getRuns(ProgramRunStatus status, Predicate<RunRecordMeta> filter) {
-    return getRuns(null, status, Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE, filter);
+  public Map<ProgramRunId, RunRecordMeta> getRuns(ProgramRunStatus status, Predicate<RunRecordMeta> filter) {
+    return getRuns(null, status, 0L, Long.MAX_VALUE, Integer.MAX_VALUE, filter);
   }
 
-  public List<RunRecordMeta> getRuns(@Nullable ProgramId programId, ProgramRunStatus status,
+  public Map<ProgramRunId, RunRecordMeta> getRuns(Set<ProgramRunId> programRunIds) {
+    return getRuns(programRunIds, Integer.MAX_VALUE);
+  }
+
+  private Map<ProgramRunId, RunRecordMeta> getRuns(Set<ProgramRunId> programRunIds, int limit) {
+    Map<ProgramRunId, RunRecordMeta> resultMap = new LinkedHashMap<>();
+    resultMap.putAll(getActiveRuns(programRunIds, limit));
+    resultMap.putAll(getSuspendedRuns(programRunIds, limit - resultMap.size()));
+    resultMap.putAll(getHistoricalRuns(programRunIds, limit - resultMap.size()));
+    return resultMap;
+  }
+
+  public  Map<ProgramRunId, RunRecordMeta> getRuns(@Nullable ProgramId programId, ProgramRunStatus status,
                                      long startTime, long endTime, int limit,
                                      @Nullable Predicate<RunRecordMeta> filter) {
     if (status.equals(ProgramRunStatus.ALL)) {
-      List<RunRecordMeta> resultRecords = Lists.newArrayList();
-      resultRecords.addAll(getActiveRuns(programId, startTime, endTime, limit, filter));
-      resultRecords.addAll(getSuspendedRuns(programId, startTime, endTime, limit - resultRecords.size(), filter));
-      resultRecords.addAll(getHistoricalRuns(programId, status, startTime, endTime,
-                                             limit - resultRecords.size(), filter));
-      return resultRecords;
+      Map<ProgramRunId, RunRecordMeta> resultmap =  new LinkedHashMap<>();
+      resultmap.putAll(getActiveRuns(programId, startTime, endTime, limit, filter));
+      resultmap.putAll(getSuspendedRuns(programId, startTime, endTime, limit - resultmap.size(), filter));
+      resultmap.putAll(getProgramRunIdMap(getHistoricalRuns(programId, status, startTime, endTime,
+                                             limit - resultmap.size(), filter)));
+      return resultmap;
     } else if (status.equals(ProgramRunStatus.RUNNING)) {
       return getActiveRuns(programId, startTime, endTime, limit, filter);
     } else if (status.equals(ProgramRunStatus.SUSPENDED)) {
       return getSuspendedRuns(programId, startTime, endTime, limit, filter);
     } else {
-      return getHistoricalRuns(programId, status, startTime, endTime, limit, filter);
+      return getProgramRunIdMap(getHistoricalRuns(programId, status, startTime, endTime, limit, filter));
     }
   }
 
@@ -402,30 +418,77 @@ public class AppMetadataStore extends MetadataStoreDataset {
     }
   }
 
-  private List<RunRecordMeta> getSuspendedRuns(ProgramId programId, long startTime, long endTime, int limit,
-                                               @Nullable Predicate<RunRecordMeta> filter) {
+  private Map<ProgramRunId, RunRecordMeta> getSuspendedRuns(ProgramId programId, long startTime, long endTime,
+                                                             int limit, @Nullable Predicate<RunRecordMeta> filter) {
     return getNonCompleteRuns(programId, TYPE_RUN_RECORD_SUSPENDED, startTime, endTime, limit, filter);
   }
 
-  private List<RunRecordMeta> getActiveRuns(ProgramId programId, final long startTime, final long endTime, int limit,
-                                            @Nullable Predicate<RunRecordMeta> filter) {
+  private Map<ProgramRunId, RunRecordMeta> getActiveRuns(ProgramId programId, final long startTime, final long endTime,
+                                                          int limit, @Nullable Predicate<RunRecordMeta> filter) {
     return getNonCompleteRuns(programId, TYPE_RUN_RECORD_STARTED, startTime, endTime, limit, filter);
   }
 
-  private List<RunRecordMeta> getNonCompleteRuns(ProgramId programId, String recordType,
+  private Map<ProgramRunId, RunRecordMeta> getNonCompleteRuns(ProgramId programId, String recordType,
                                                  final long startTime, final long endTime, int limit,
                                                  Predicate<RunRecordMeta> filter) {
     MDSKey activeKey = getProgramKeyBuilder(recordType, programId).build();
 
-    return list(activeKey, null, RunRecordMeta.class, limit, andPredicate(new Predicate<RunRecordMeta>() {
-                  @Override
-                  public boolean apply(RunRecordMeta input) {
-                    return input.getStartTs() >= startTime && input.getStartTs() < endTime;
-                  }
-                }, filter));
+    Map<MDSKey, RunRecordMeta> runRecordMap = listKV(activeKey, null, RunRecordMeta.class, limit,
+                                                     andPredicate(new Predicate<RunRecordMeta>() {
+      @Override
+      public boolean apply(RunRecordMeta input) {
+        return input.getStartTs() >= startTime && input.getStartTs() < endTime;
+      }
+    }, filter));
+
+    return getProgramRunIdMap(runRecordMap);
   }
 
-  private List<RunRecordMeta> getHistoricalRuns(ProgramId programId, ProgramRunStatus status,
+  private Map<ProgramRunId, RunRecordMeta> getSuspendedRuns(Set<ProgramRunId> programRunIds, int limit) {
+    return getNonCompleteRuns(programRunIds, TYPE_RUN_RECORD_SUSPENDED, limit);
+  }
+
+  private Map<ProgramRunId, RunRecordMeta> getActiveRuns(Set<ProgramRunId> programRunIds, int limit) {
+    return getNonCompleteRuns(programRunIds, TYPE_RUN_RECORD_STARTED, limit);
+  }
+
+  private Map<ProgramRunId, RunRecordMeta> getNonCompleteRuns(Set<ProgramRunId> programRunIds, String recordType,
+                                                              int limit) {
+    Set<MDSKey> keySet = new HashSet<>();
+    for (ProgramRunId programRunId : programRunIds) {
+      keySet.add(getProgramKeyBuilder(recordType, programRunId).build());
+    }
+    Map<MDSKey, RunRecordMeta> returnMap = listKV(keySet, RunRecordMeta.class, limit);
+    return getProgramRunIdMap(returnMap);
+  }
+
+  private Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(Set<ProgramRunId> programRunIds, int limit) {
+    Set<MDSKey> keySet = new HashSet<>();
+
+    for (ProgramRunId programRunId : programRunIds) {
+      keySet.add(getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programRunId).build());
+    }
+    Map<MDSKey, RunRecordMeta> returnMap = listKV(keySet, RunRecordMeta.class, limit);
+    return getProgramRunIdMap(returnMap);
+  }
+
+  /** Converts MDSkeys in the map to ProgramIDs
+   *
+   * @param keymap map with keys as MDSkeys
+   * @return map with keys as program IDs
+   */
+  private Map<ProgramRunId, RunRecordMeta> getProgramRunIdMap(Map<MDSKey, RunRecordMeta> keymap) {
+    Map<ProgramRunId, RunRecordMeta> programRunIdMap = new LinkedHashMap<>();
+    for (Map.Entry<MDSKey, RunRecordMeta> entry : keymap.entrySet()) {
+      ProgramId programId = getProgramID(entry.getKey());
+      programRunIdMap.put(new ProgramRunId(programId.getNamespace(), programId.getApplication(),
+                                           programId.getType(), programId.getProgram(), entry.getValue().getPid()),
+                          entry.getValue());
+    }
+    return programRunIdMap;
+  }
+
+  private  Map<MDSKey, RunRecordMeta> getHistoricalRuns(ProgramId programId, ProgramRunStatus status,
                                                 final long startTime, final long endTime, int limit,
                                                 @Nullable Predicate<RunRecordMeta> filter) {
     MDSKey historyKey = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programId).build();
@@ -434,19 +497,19 @@ public class AppMetadataStore extends MetadataStoreDataset {
     MDSKey stop = new MDSKey.Builder(historyKey).add(getInvertedTsScanKeyPart(startTime)).build();
     if (status.equals(ProgramRunStatus.ALL)) {
       //return all records (successful and failed)
-      return list(start, stop, RunRecordMeta.class, limit,
+      return listKV(start, stop, RunRecordMeta.class, limit,
                   filter == null ? Predicates.<RunRecordMeta>alwaysTrue() : filter);
     }
 
     if (status.equals(ProgramRunStatus.COMPLETED)) {
-      return list(start, stop, RunRecordMeta.class, limit,
+      return listKV(start, stop, RunRecordMeta.class, limit,
                   andPredicate(getPredicate(ProgramController.State.COMPLETED), filter));
     }
     if (status.equals(ProgramRunStatus.KILLED)) {
-      return list(start, stop, RunRecordMeta.class, limit,
+      return listKV(start, stop, RunRecordMeta.class, limit,
                   andPredicate(getPredicate(ProgramController.State.KILLED), filter));
     }
-    return list(start, stop, RunRecordMeta.class, limit,
+    return listKV(start, stop, RunRecordMeta.class, limit,
                 andPredicate(getPredicate(ProgramController.State.ERROR), filter));
   }
 

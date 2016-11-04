@@ -26,7 +26,7 @@ import java.nio.ByteBuffer;
 /**
  * Metadata entry key
  */
-public final class MDSKey {
+public final class MDSKey implements Comparable<MDSKey> {
   private final byte[] key;
 
   /**
@@ -152,6 +152,11 @@ public final class MDSKey {
   @Override
   public int hashCode() {
     return Bytes.hashCode(key);
+  }
+
+  @Override
+  public int compareTo(MDSKey o) {
+    return Bytes.compareTo(this.getKey(), o.getKey());
   }
 
   /**

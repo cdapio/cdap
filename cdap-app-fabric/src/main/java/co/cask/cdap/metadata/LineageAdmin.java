@@ -16,6 +16,7 @@
 
 package co.cask.cdap.metadata;
 
+import co.cask.cdap.app.services.Data;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
@@ -26,14 +27,18 @@ import co.cask.cdap.data2.metadata.lineage.LineageStore;
 import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.Relation;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.proto.metadata.lineage.CollapseType;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
@@ -50,10 +55,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Service to compute Lineage based on Dataset accesses of a Program stored in {@link LineageStore}.
@@ -117,11 +127,41 @@ public class LineageAdmin {
    * @param startMillis start time period
    * @param endMillis end time period
    * @param levels number of levels to compute lineage for
+   * @param rollup indicates whether to aggregate programs, currently supports rolling up programs into workflows
    * @return lineage for sourceDataset
    */
-  public Lineage computeLineage(final DatasetId sourceDataset, long startMillis, long endMillis, int levels)
-    throws NotFoundException {
-    return doComputeLineage(sourceDataset, startMillis, endMillis, levels);
+  public Lineage computeLineage(final DatasetId sourceDataset, long startMillis, long endMillis,
+                                int levels, String rollup) throws NotFoundException {
+    return doComputeLineage(sourceDataset, startMillis, endMillis, levels, rollup);
+  }
+
+  /**
+   * Computes lineage for a dataset between given time period.
+   *
+   * @param sourceDataset dataset to compute lineage for
+   * @param startMillis start time period
+   * @param endMillis end time period
+   * @param levels number of levels to compute lineage for
+   * @return lineage for sourceDataset
+   */
+  public Lineage computeLineage(final DatasetId sourceDataset, long startMillis, long endMillis,
+                                int levels) throws NotFoundException {
+    return doComputeLineage(sourceDataset, startMillis, endMillis, levels, null);
+  }
+
+  /**
+   * Computes lineage for a stream between given time period.
+   *
+   * @param sourceStream stream to compute lineage for
+   * @param startMillis start time period
+   * @param endMillis end time period
+   * @param levels number of levels to compute lineage for
+   * @param rollup lineage collapse rollup
+   * @return lineage for sourceStream
+   */
+  public Lineage computeLineage(final StreamId sourceStream, long startMillis, long endMillis,
+                                int levels, String rollup) throws NotFoundException {
+    return doComputeLineage(sourceStream, startMillis, endMillis, levels, rollup);
   }
 
   /**
@@ -133,9 +173,9 @@ public class LineageAdmin {
    * @param levels number of levels to compute lineage for
    * @return lineage for sourceStream
    */
-  public Lineage computeLineage(final StreamId sourceStream, long startMillis, long endMillis, int levels)
-    throws NotFoundException {
-    return doComputeLineage(sourceStream, startMillis, endMillis, levels);
+  public Lineage computeLineage(final StreamId sourceStream, long startMillis, long endMillis,
+                                int levels) throws NotFoundException {
+    return doComputeLineage(sourceStream, startMillis, endMillis, levels, null);
   }
 
   /**
@@ -160,8 +200,113 @@ public class LineageAdmin {
                                                RunIds.getTime(runId, TimeUnit.MILLISECONDS));
   }
 
-  private Lineage doComputeLineage(final NamespacedEntityId sourceData, long startMillis, long endMillis, int levels)
+  @Nullable
+  private ProgramRunId getWorkflowProgramRunid (Relation relation, Map<ProgramRunId,
+    RunRecordMeta> runRecordMap, Map<String, ProgramRunId> workflowIdMap) {
+    ProgramRunId workflowProgramRunId = null;
+
+    RunRecordMeta runRecord = runRecordMap.get(
+      new ProgramRunId(relation.getProgram().getNamespace(), relation.getProgram().getApplication(),
+                       relation.getProgram().getType(), relation.getProgram().getProgram(),
+                       relation.getRun().getId()));
+    if (runRecord != null
+      && runRecord.getProperties().containsKey("workflowrunid")) {
+      String workflowRunId = runRecord.getProperties().get("workflowrunid");
+      workflowProgramRunId = workflowIdMap.get(workflowRunId);
+    }
+    return workflowProgramRunId;
+  }
+
+  private Multimap<RelationKey, Relation> getRollupRelations (Multimap<RelationKey, Relation> relations,
+                                                              Map<ProgramRunId, RunRecordMeta> runRecordMap,
+                                                              Map<String, ProgramRunId> workflowIdMap)
     throws NotFoundException {
+
+    Multimap<RelationKey, Relation> relationsNew = HashMultimap.create();
+    for (Map.Entry<RelationKey, Collection<Relation>> entry : relations.asMap().entrySet()) {
+      for (Relation relation : entry.getValue()) {
+        ProgramRunId workflowProgramRunId = getWorkflowProgramRunid(relation, runRecordMap, workflowIdMap);
+        if (workflowProgramRunId == null) {
+          relationsNew.put(entry.getKey(), relation);
+        } else {
+          ProgramId workflowProgramId = new ProgramId(workflowProgramRunId.getNamespace(),
+                                                        workflowProgramRunId.getApplication(),
+                                                        workflowProgramRunId.getType(),
+                                                        workflowProgramRunId.getProgram());
+          Relation workflowRelation;
+          NamespacedEntityId data = relation.getData();
+          if (data instanceof DatasetId) {
+            workflowRelation = new Relation((DatasetId) data, workflowProgramId,
+                                              relation.getAccess(), RunIds.fromString(workflowProgramRunId.getRun()));
+          } else {
+            workflowRelation = new Relation((StreamId) data, workflowProgramId,
+                                              relation.getAccess(), RunIds.fromString(workflowProgramRunId.getRun()));
+          }
+          relationsNew.put(entry.getKey(), workflowRelation);
+        }
+      }
+    }
+    return relationsNew;
+  }
+
+  private Set<String> getWorkflowIds (Multimap<RelationKey, Relation> relations,
+                                      Map<ProgramRunId, RunRecordMeta> runRecordMap) throws NotFoundException {
+
+    final Set<String> workflowIDs = new HashSet<>();
+    for (Relation relation : Iterables.concat(relations.values())) {
+      RunRecordMeta runRecord = runRecordMap.get(
+        new ProgramRunId(relation.getProgram().getNamespace(), relation.getProgram().getApplication(),
+                         relation.getProgram().getType(), relation.getProgram().getProgram(),
+                         relation.getRun().getId()));
+      if (runRecord != null && runRecord.getProperties().containsKey("workflowrunid")) {
+        String workflowRunId = runRecord.getProperties().get("workflowrunid");
+        workflowIDs.add(workflowRunId);
+      }
+    }
+
+    return workflowIDs;
+  }
+
+  private Multimap<RelationKey, Relation> doComputeRollupLineage(Multimap<RelationKey,
+    Relation> relations) throws NotFoundException {
+
+    // Make a set of all ProgramIDs in the relations
+    Set<ProgramRunId> programRunIdSet = new HashSet<>();
+    for (Relation relation : Iterables.concat(relations.values())) {
+      programRunIdSet.add(new ProgramRunId(relation.getProgram().getNamespace(), relation.getProgram().getApplication(),
+                                        relation.getProgram().getType(), relation.getProgram().getProgram(),
+                                        relation.getRun().getId()));
+    }
+
+    // Get RunRecordMeta for all these ProgramRunIDs
+    final Map<ProgramRunId, RunRecordMeta> runRecordMap = store.getRuns(programRunIdSet);
+
+    // Get workflow Run IDs for all the programs in the relations
+    final Set<String> workflowIDs = getWorkflowIds(relations, runRecordMap);
+
+    // Get Program IDs for workflow Run IDs
+    // TODO: These scans could be expensive. CDAP-7571.
+    Map<ProgramRunId, RunRecordMeta> workflowRunRecordMap =
+      store.getRuns(ProgramRunStatus.ALL,
+                    new Predicate<RunRecordMeta>() {
+                      @Override
+                      public boolean apply(RunRecordMeta input) {
+                        return workflowIDs.contains(input.getPid());
+                      }
+                    });
+
+    // Create a map from RunId to ProgramId for all workflows
+    Map<String, ProgramRunId> workflowIdMap = new HashMap<>();
+    for (Map.Entry<ProgramRunId, RunRecordMeta> entry : workflowRunRecordMap.entrySet()) {
+      workflowIdMap.put(entry.getValue().getPid(), entry.getKey());
+    }
+
+    // For all relations, replace ProgramIds with workflow ProgramIds
+    return getRollupRelations(relations, runRecordMap, workflowIdMap);
+  }
+
+  private Lineage doComputeLineage(final NamespacedEntityId sourceData, long startMillis, long endMillis,
+                                   int levels, @Nullable String rollup) throws NotFoundException {
     LOG.trace("Computing lineage for data {}, startMillis {}, endMillis {}, levels {}",
               sourceData, startMillis, endMillis, levels);
 
@@ -217,9 +362,12 @@ public class LineageAdmin {
       }
     }
 
-    Lineage lineage = new Lineage(
-      Iterables.concat(Maps.transformValues(relations.asMap(), COLLAPSE_UNKNOWN_TYPE_FUNCTION).values()));
+    if (rollup != null && rollup.contains("workflow")) {
+      relations = doComputeRollupLineage(relations);
+    }
 
+    Lineage lineage = new Lineage(Iterables.concat(Maps.transformValues(relations.asMap(),
+                                                                        COLLAPSE_UNKNOWN_TYPE_FUNCTION).values()));
     LOG.trace("Got lineage {}", lineage);
     return lineage;
   }

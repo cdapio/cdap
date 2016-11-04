@@ -26,7 +26,9 @@ import co.cask.cdap.data2.metadata.lineage.Lineage;
 import co.cask.cdap.data2.metadata.lineage.LineageStore;
 import co.cask.cdap.data2.metadata.lineage.Relation;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
@@ -47,6 +49,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -82,6 +85,9 @@ public class LineageAdminTest extends AppFabricTestBase {
 
   private final ProgramId program5 = new ProgramId("default", "app5", ProgramType.SERVICE, "service5");
   private final ProgramRunId run5 = program5.run(RunIds.generate(700).getId());
+
+  private final ProgramId program6 = new ProgramId("default", "app6", ProgramType.WORKFLOW, "workflow6");
+  private final ProgramRunId run6 = program6.run(RunIds.generate(700).getId());
 
   @After
   public void cleanup() throws Exception {
@@ -121,7 +127,6 @@ public class LineageAdminTest extends AppFabricTestBase {
     metadataStore.setProperties(MetadataScope.USER, dataset2, run1Data2Meta.getProperties());
     //noinspection ToArrayCallWithZeroLengthArrayArgument
     metadataStore.addTags(MetadataScope.USER, dataset2, run1Data2Meta.getTags().toArray(new String[0]));
-    TimeUnit.MILLISECONDS.sleep(1);
 
     // Add accesses for D3 -> P2 -> D2 -> P1 -> D1 <-> P3
     // We need to use current time here as metadata store stores access time using current time
@@ -494,6 +499,160 @@ public class LineageAdminTest extends AppFabricTestBase {
     );
   }
 
+
+  @Test
+  public void testWorkflowLineage() throws Exception {
+    // Lineage for D3 -> P2 -> D2 -> P1 -> D1
+
+    LineageStore lineageStore = new LineageStore(getTxExecFactory(), getDatasetFramework(),
+                                                 NamespaceId.DEFAULT.dataset("testWorkflowLineage"));
+    Store store = getInjector().getInstance(Store.class);
+    MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityExistenceVerifier());
+
+    // Define metadata
+    MetadataRecord run1AppMeta = new MetadataRecord(program1.getParent(), MetadataScope.USER,
+                                                    toMap("pk1", "pk1"), toSet("pt1"));
+    MetadataRecord run1ProgramMeta = new MetadataRecord(program1, MetadataScope.USER,
+                                                        toMap("pk1", "pk1"), toSet("pt1"));
+    MetadataRecord run1Data1Meta = new MetadataRecord(dataset1, MetadataScope.USER,
+                                                      toMap("dk1", "dk1"), toSet("dt1"));
+    MetadataRecord run1Data2Meta = new MetadataRecord(dataset2, MetadataScope.USER,
+                                                      toMap("dk2", "dk2"), toSet("dt2"));
+
+    // Add metadata
+    metadataStore.setProperties(MetadataScope.USER, program1.getParent(), run1AppMeta.getProperties());
+    //noinspection ToArrayCallWithZeroLengthArrayArgument
+    metadataStore.addTags(MetadataScope.USER, program1.getParent(), run1AppMeta.getTags().toArray(new String[0]));
+    metadataStore.setProperties(MetadataScope.USER, program1, run1ProgramMeta.getProperties());
+    //noinspection ToArrayCallWithZeroLengthArrayArgument
+    metadataStore.addTags(MetadataScope.USER, program1, run1ProgramMeta.getTags().toArray(new String[0]));
+    metadataStore.setProperties(MetadataScope.USER, dataset1, run1Data1Meta.getProperties());
+    //noinspection ToArrayCallWithZeroLengthArrayArgument
+    metadataStore.addTags(MetadataScope.USER, dataset1, run1Data1Meta.getTags().toArray(new String[0]));
+    metadataStore.setProperties(MetadataScope.USER, dataset2, run1Data2Meta.getProperties());
+    //noinspection ToArrayCallWithZeroLengthArrayArgument
+    metadataStore.addTags(MetadataScope.USER, dataset2, run1Data2Meta.getTags().toArray(new String[0]));
+
+    // Add accesses for D3 -> P2 -> D2 -> P1 -> D1 <-> P3
+    // We need to use current time here as metadata store stores access time using current time
+    ProgramRunId run1 = program1.run(RunIds.generate(System.currentTimeMillis()).getId());
+    ProgramRunId run2 = program2.run(RunIds.generate(System.currentTimeMillis()).getId());
+    ProgramRunId run3 = program3.run(RunIds.generate(System.currentTimeMillis()).getId());
+
+    ProgramRunId workflow = program6.run(RunIds.generate(System.currentTimeMillis()).getId());
+
+    ProgramRunId run5 = program5.run(RunIds.generate(System.currentTimeMillis()).getId());
+
+    addWorkflowRuns(store, workflow.getProgram(), workflow.getRun(), run1, run2, run3);
+    addRuns(store, workflow);
+    addRuns(store, run5);
+
+    // It is okay to use current time here since access time is ignore during assertions
+    lineageStore.addAccess(run1, dataset1, AccessType.WRITE, System.currentTimeMillis(), flowlet1);
+    lineageStore.addAccess(run1, dataset1, AccessType.WRITE, System.currentTimeMillis(), flowlet1);
+    lineageStore.addAccess(run1, dataset2, AccessType.READ, System.currentTimeMillis(), flowlet1);
+
+    lineageStore.addAccess(run2, dataset2, AccessType.WRITE, System.currentTimeMillis(), flowlet2);
+    lineageStore.addAccess(run2, dataset3, AccessType.READ, System.currentTimeMillis(), flowlet2);
+
+    lineageStore.addAccess(run3, dataset1, AccessType.UNKNOWN, System.currentTimeMillis());
+
+    lineageStore.addAccess(run5, dataset1, AccessType.READ, System.currentTimeMillis());
+
+
+    // The UNKNOWN access type will get filtered out if there is READ/WRITE. It will be preserved if it is the
+    // only access type
+    Lineage expectedLineage = new Lineage(
+      ImmutableSet.of(
+        new Relation(dataset1, program6, AccessType.WRITE, twillRunId(workflow)),
+        new Relation(dataset2, program6, AccessType.READ, twillRunId(workflow)),
+        new Relation(dataset2, program6, AccessType.WRITE, twillRunId(workflow)),
+        new Relation(dataset3, program6, AccessType.READ, twillRunId(workflow)),
+        new Relation(dataset1, program6, AccessType.UNKNOWN, twillRunId(workflow)),
+        new Relation(dataset1, program5, AccessType.READ, twillRunId(run5))
+      )
+    );
+
+    Lineage resultLineage = lineageAdmin.computeLineage(dataset1, 500, System.currentTimeMillis() + 10000,
+                                                        100, "workflow");
+    // Lineage for D1
+    Assert.assertEquals(expectedLineage, resultLineage);
+
+
+    resultLineage = lineageAdmin.computeLineage(dataset2, 500, System.currentTimeMillis() + 10000,
+                                                100, "workflow");
+    // Lineage for D2
+    Assert.assertEquals(expectedLineage, resultLineage);
+
+
+    // Lineage for D1 for one level should be D2 -> P1 -> D1 <-> P3
+    Lineage oneLevelLineage = lineageAdmin.computeLineage(dataset1, 500, System.currentTimeMillis() + 10000,
+                                                          1, "workflow");
+
+    Assert.assertEquals(
+      ImmutableSet.of(
+        new Relation(dataset1, program6, AccessType.WRITE, twillRunId(workflow)),
+        new Relation(dataset2, program6, AccessType.READ, twillRunId(workflow)),
+        new Relation(dataset1, program5, AccessType.READ, twillRunId(run5)),
+        new Relation(dataset1, program6, AccessType.UNKNOWN, twillRunId(workflow))
+      ),
+      oneLevelLineage.getRelations());
+
+    // Run tests without workflow parameter
+    expectedLineage = new Lineage(
+      ImmutableSet.of(
+        new Relation(dataset1, program1, AccessType.WRITE, twillRunId(run1), toSet(flowlet1)),
+        new Relation(dataset2, program1, AccessType.READ, twillRunId(run1), toSet(flowlet1)),
+        new Relation(dataset2, program2, AccessType.WRITE, twillRunId(run2), toSet(flowlet2)),
+        new Relation(dataset3, program2, AccessType.READ, twillRunId(run2), toSet(flowlet2)),
+        new Relation(dataset1, program3, AccessType.UNKNOWN, twillRunId(run3)),
+        new Relation(dataset1, program5, AccessType.READ, twillRunId(run5))
+      )
+    );
+
+    resultLineage = lineageAdmin.computeLineage(dataset1, 500, System.currentTimeMillis() + 10000,
+                                                        100, null);
+    // Lineage for D1
+    Assert.assertEquals(expectedLineage, resultLineage);
+
+
+    resultLineage = lineageAdmin.computeLineage(dataset2, 500, System.currentTimeMillis() + 10000,
+                                                100, null);
+    // Lineage for D2
+    Assert.assertEquals(expectedLineage, resultLineage);
+
+
+    // Lineage for D1 for one level should be D2 -> P1 -> D1 <-> P3
+    oneLevelLineage = lineageAdmin.computeLineage(dataset1, 500, System.currentTimeMillis() + 10000,
+                                                          1, null);
+
+    Assert.assertEquals(
+      ImmutableSet.of(
+        new Relation(dataset1, program1, AccessType.WRITE, twillRunId(run1), toSet(flowlet1)),
+        new Relation(dataset2, program1, AccessType.READ, twillRunId(run1), toSet(flowlet1)),
+        new Relation(dataset1, program5, AccessType.READ, twillRunId(run5)),
+        new Relation(dataset1, program3, AccessType.UNKNOWN, twillRunId(run3))
+      ),
+      oneLevelLineage.getRelations());
+    
+    // Assert metadata
+    Assert.assertEquals(toSet(run1AppMeta, run1ProgramMeta, run1Data1Meta, run1Data2Meta),
+                        lineageAdmin.getMetadataForRun(run1));
+
+    // Assert that in a different namespace both lineage and metadata should be empty
+    NamespaceId customNamespace = new NamespaceId("custom_namespace");
+    DatasetId customDataset1 = customNamespace.dataset(dataset1.getEntityName());
+    ProgramRunId customRun1 = customNamespace.app(
+      program1.getApplication()).program(program1.getType(),
+                                         program1.getEntityName()).run(run1.getEntityName()
+    );
+    Assert.assertEquals(new Lineage(ImmutableSet.<Relation>of()),
+                        lineageAdmin.computeLineage(customDataset1, 500,
+                                                    System.currentTimeMillis() + 10000, 100));
+    Assert.assertEquals(ImmutableSet.<MetadataRecord>of(), lineageAdmin.getMetadataForRun(customRun1));
+  }
+
   @Test
   public void testScanRange() {
     Set<RunId> runIds = ImmutableSet.of(
@@ -522,6 +681,26 @@ public class LineageAdminTest extends AppFabricTestBase {
     for (ProgramRunId run : runs) {
       store.setStart(run.getParent(), run.getEntityName(), RunIds.getTime(
         RunIds.fromString(run.getEntityName()), TimeUnit.SECONDS));
+    }
+  }
+
+  /** Adds runs which have workflows associated with them
+   *
+   * @param store store instance
+   * @param workflowName name of the workflow
+   * @param workflowRunId run ID associated with all program runs
+   * @param runs list ofo runs to be added
+   */
+  private void addWorkflowRuns(Store store, String workflowName, String workflowRunId, ProgramRunId... runs) {
+    Map<String, String> workflowIDMap = new HashMap<>();
+    Map<String, String> emptyMap = ImmutableMap.of();
+    workflowIDMap.put(ProgramOptionConstants.WORKFLOW_NAME, workflowName);
+    workflowIDMap.put(ProgramOptionConstants.WORKFLOW_NODE_ID, "workflowNodeId");
+    workflowIDMap.put(ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId);
+    for (ProgramRunId run : runs) {
+      store.setStart(run.getParent(), run.getEntityName(), RunIds.getTime(
+        RunIds.fromString(run.getEntityName()), TimeUnit.SECONDS), null,
+                     emptyMap, workflowIDMap);
     }
   }
 
