@@ -25,7 +25,8 @@ angular.module(PKG.name + '.feature.hydrator')
     // check that $state.params.namespace is valid
 
     //Access local storage for currently set namespace; if none is currently set resort to default ns
-    let ns = localStorage.getItem('NS');
+
+    let ns = $state.params.namespace;
     let defaultNS = localStorage.getItem('DefaultNamespace');
     let setNamespace = ns ? ns : defaultNS;
 

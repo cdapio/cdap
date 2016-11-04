@@ -58,15 +58,19 @@ export default class ProductsDrawer extends Component {
     };
   }
   componentWillMount(){
+    this.updateNSLinks();
     NamespaceStore.subscribe(() => {
-      this.namespace = NamespaceStore.getState().selectedNamespace;
-      let products = this.state.products.map((product) => {
-        product.link = product.baselink + `ns/${this.namespace}`;
-        return product;
-      });
-      this.setState({
-        products
-      });
+      this.updateNSLinks();
+    });
+  }
+  updateNSLinks(){
+    this.namespace = NamespaceStore.getState().selectedNamespace;
+    let products = this.state.products.map((product) => {
+      product.link = product.baselink + `ns/${this.namespace}`;
+      return product;
+    });
+    this.setState({
+      products
     });
   }
   toggle() {

@@ -70,7 +70,6 @@ export default class RouteToNamespace extends Component {
       selectedNamespace = selectedNamespace.name;
     }
 
-    localStorage.setItem('NS', selectedNamespace);
     this.setState({selectedNamespace});
   }
 
