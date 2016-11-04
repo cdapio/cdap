@@ -17,6 +17,10 @@ com.jamesmurty.utils.java-xmlbuilder-0.4.jar
 com.jcraft.jsch-0.1.42.jar
 com.jolbox.bonecp-0.8.0.RELEASE.jar
 com.ning.async-http-client-1.7.18.jar
+com.sun.jersey.jersey-client-1.9.jar
+com.sun.jersey.jersey-core-1.9.jar
+com.sun.jersey.jersey-json-1.9.jar
+com.sun.xml.bind.jaxb-impl-2.2.3-1.jar
 com.thoughtworks.paranamer.paranamer-2.3.jar
 com.yammer.metrics.metrics-core-2.2.0.jar
 commons-beanutils.commons-beanutils-1.7.0.jar
@@ -45,6 +49,8 @@ javax.jdo.jdo-api-3.0.1.jar
 javax.servlet.javax.servlet-api-3.0.1.jar
 javax.transaction.jta-1.1.jar
 javax.ws.rs.javax.ws.rs-api-2.0.jar
+javax.xml.bind.jaxb-api-2.2.2.jar
+javax.xml.stream.stax-api-1.0-2.jar
 jline.jline-2.12.jar
 joda-time.joda-time-2.1.jar
 log4j.apache-log4j-extras-1.2.17.jar
@@ -67,6 +73,7 @@ org.apache.avro.avro-mapred-1.6.2.jar
 org.apache.calcite.calcite-avatica-1.2.0-incubating.jar
 org.apache.calcite.calcite-core-1.2.0-incubating.jar
 org.apache.calcite.calcite-linq4j-1.2.0-incubating.jar
+org.apache.commons.commons-collections4-4.1.jar
 org.apache.commons.commons-compress-1.9.jar
 org.apache.commons.commons-lang3-3.3.2.jar
 org.apache.commons.commons-math3-3.1.1.jar
@@ -110,6 +117,7 @@ org.apache.kafka.kafka-clients-0.8.2.2.jar
 org.apache.kafka.kafka_2.10-0.8.2.2.jar
 org.apache.tephra.tephra-api-0.8.0-incubating.jar
 org.apache.tephra.tephra-core-0.8.0-incubating.jar
+org.apache.tez.tez-api-0.8.4.jar
 org.apache.thrift.libfb303-0.9.2.jar
 org.apache.thrift.libthrift-0.9.3.jar
 org.apache.twill.twill-api-0.7.0-incubating.jar
@@ -123,9 +131,12 @@ org.apache.velocity.velocity-1.5.jar
 org.apache.xbean.xbean-reflect-3.6.jar
 org.apache.zookeeper.zookeeper-3.4.5.jar
 org.codehaus.jackson.jackson-core-asl-1.8.8.jar
+org.codehaus.jackson.jackson-jaxrs-1.8.3.jar
 org.codehaus.jackson.jackson-mapper-asl-1.8.8.jar
+org.codehaus.jackson.jackson-xc-1.8.3.jar
 org.codehaus.janino.commons-compiler-2.7.6.jar
 org.codehaus.janino.janino-2.7.6.jar
+org.codehaus.jettison.jettison-1.3.4.jar
 org.datanucleus.datanucleus-api-jdo-3.2.6.jar
 org.datanucleus.datanucleus-core-3.2.10.jar
 org.datanucleus.datanucleus-rdbms-3.2.9.jar

@@ -19,6 +19,7 @@ package co.cask.cdap.explore.client;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.MetaDataInfo;
 import co.cask.cdap.proto.ColumnDesc;
@@ -58,8 +59,8 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
   }
 
   @Override
-  public boolean isServiceAvailable() {
-    return true;
+  public void ping() throws UnauthenticatedException, ExploreException {
+
   }
 
   @Override
