@@ -44,13 +44,11 @@ export default class MarketPlaceEntity extends Component {
   componentWillUnmount() {
     this.unsub();
   }
-
   getChildContext() {
     return {
       entity: this.props.entity
     };
   }
-
   fetchEntityDetail() {
     MyMarketApi.get({
       packageName: this.props.entity.name,
@@ -65,10 +63,10 @@ export default class MarketPlaceEntity extends Component {
     if (this.state.expandedMode) {
       return;
     }
+    this.fetchEntityDetail();
     this.toggleDetailedMode();
   }
   toggleDetailedMode() {
-    this.fetchEntityDetail();
     this.setState({expandedMode: !this.state.expandedMode});
     MarketStore.dispatch({
       type: 'SET_ACTIVE_ENTITY',
@@ -85,6 +83,7 @@ export default class MarketPlaceEntity extends Component {
       return true;
     };
 
+    // FIXME: This could be moved to a utility function. This can be generic.
     let style = {
       position: 'absolute'
     };
@@ -119,7 +118,8 @@ export default class MarketPlaceEntity extends Component {
                 actions={this.state.entityDetail.actions}
               />
               <div className="text-right">
-                <button className="btn btn-default"
+                <button
+                  className="btn btn-default"
                   onClick={this.toggleDetailedMode.bind(this)}
                 >
                   Cancel
@@ -142,7 +142,12 @@ export default class MarketPlaceEntity extends Component {
                   input={{action: this.state.entityDetail.actions[0], package: this.props.entity}}
                 />
               </button>
-              <button className="btn btn-default" onClick={this.toggleDetailedMode.bind(this)}> Cancel </button>
+              <button
+                className="btn btn-default"
+                onClick={this.toggleDetailedMode.bind(this)}
+              >
+                Cancel
+              </button>
             </div>
           );
         } else {
@@ -156,15 +161,13 @@ export default class MarketPlaceEntity extends Component {
         (
           <Card
             ref={(ref)=> this.cardRef = ref}
-            onClick={this.toggleDetailedMode.bind(this)}
+            onClick={this.openDetailedMode.bind(this)}
             size="LG"
           >
-            <div
-              className="package-icon-container"
-              onClick={this.toggleDetailedMode.bind(this)}>
+            <div className="package-icon-container">
               <img src={MyMarketApi.getIcon(this.props.entity)} />
             </div>
-            <div onClick={this.toggleDetailedMode.bind(this)}>
+            <div>
               <div>{this.props.entity.version}</div>
               <div>{this.props.entity.name}</div>
             </div>
