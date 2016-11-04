@@ -1,0 +1,911 @@
+.. meta::
+    :author: Cask Data, Inc.
+    :description: Cask Data Application Platform Included or Linked Libraries
+
+.. _cdap-included-libraries:
+
+============================
+Included or Linked Libraries
+============================
+
+These libraries are either linked or included in CDAP, and their license agreement requires 
+that copyright, a list of conditions, or other information be included in this documentation.
+
+- `antlr-runtime`_
+- `antlr.stringtemplate`_
+- `antlr`_ 
+- `asm-all`_
+- `c3p0`_ 
+- `d3`_
+- `esprima`_
+- `f2j`_
+- `janino`_
+- `javax.activation`_
+- `javax.annotation.jsr250-api`_
+- `javax.servlet-api`_
+- `javax.servlet.jsp.jsp-api`_
+- `javax.transaction.jta`_
+- `javax.ws.rs-api`_
+- `javax.xml.bind.jaxb-api`_
+- `javax.xml.stream.stax-api`_
+- `jaxb-impl`_
+- `jblas`_
+- `jcip-annotations`_
+- `jersey`_
+- `jline2`_
+- `jodd`_
+- `js-beautify`_
+- `jsch`_
+- `json`_
+- `leveldbjni`_
+- `logback`_
+- `netlib-java`_
+- `oro`_
+- `paranamer`_
+- `protobuf-java`_
+- `Scala Libraries`_
+- `xmlenc`_
+
+antlr-runtime
+-------------
+The library `antlr-runtime <http://www.antlr3.org/>`__ is included in CDAP in binary format,
+with `this license: <http://www.antlr3.org/license.html>`__
+
+  | Copyright (c) 2010 Terence Parr All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without modification, are
+  permitted provided that the following conditions are met:
+
+  Redistributions of source code must retain the above copyright notice, this list of
+  conditions and the following disclaimer.
+
+  Redistributions in binary form must reproduce the above copyright notice, this list of
+  conditions and the following disclaimer in the documentation and/or other materials
+  provided with the distribution.
+
+  Neither the name of the author nor the names of its contributors may be used to endorse or
+  promote products derived from this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+  TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+antlr.stringtemplate
+--------------------
+The libraries `antlr.stringtemplate <http://www.stringtemplate.org/index.html>`__ v3 and
+`antlr.ST4 <http://www.stringtemplate.org/index.html>`__ v4 are included in CDAP in binary
+format, with this `license: <http://www.stringtemplate.org/license.html>`__
+
+  | Copyright (c) 2012 Terence Parr
+  | All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without modification, are
+  permitted provided that the following conditions are met:
+
+  Redistributions of source code must retain the above copyright notice, this list of
+  conditions and the following disclaimer.
+
+  Redistributions in binary form must reproduce the above copyright notice, this list of
+  conditions and the following disclaimer in the documentation and/or other materials
+  provided with the distribution.
+
+  Neither the name of the author nor the names of its contributors may be used to endorse or
+  promote products derived from this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+  TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+antlr
+-----
+The library `antlr <http://www.antlr2.org/>`__ is included in CDAP in binary format,
+with `this license: <http://www.antlr2.org/license.html>`__
+
+  ANTLR 2 License
+
+  We reserve no legal rights to the ANTLR--it is fully in the public domain. An individual
+  or company may do whatever they wish with source code distributed with ANTLR or the code
+  generated by ANTLR, including the incorporation of ANTLR, or its output, into commerical
+  software.
+
+  We encourage users to develop software with ANTLR. However, we do ask that credit is given
+  to us for developing ANTLR. By "credit", we mean that if you use ANTLR or incorporate any
+  source code into one of your programs (commercial product, research project, or otherwise)
+  that you acknowledge this fact somewhere in the documentation, research report, etc... If
+  you like ANTLR and have developed a nice tool with the output, please mention that you
+  developed it using ANTLR. In addition, we ask that the headers remain intact in our source
+  code. As long as these guidelines are kept, we expect to continue enhancing this system
+  and expect to make other tools available as they are completed.
+
+  In countries where the Public Domain status of the work may not be valid, the author
+  grants a copyright licence to the general public to deal in the work without restriction
+  and permission to sublicence derivates under the terms of any (OSI approved) Open Source
+  licence.
+
+  The Python parser generator code under antlr/actions/python/ is covered by the 3-clause
+  BSD licence (this part is included in the binary JAR files); the run-time part under
+  lib/python/ is covered by the GNU GPL, version 3 or later (this part is not included in
+  the binary JAR files). See https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=750643#80"
+  for the full details.
+
+asm-all
+-------
+The library `asm-all <http://asm.ow2.org/index.html>`__ is included in CDAP in binary
+format, with this `license: <http://asm.ow2.org/license.html>`__
+
+  Copyright (c) 2000-2011 INRIA, France Telecom
+  All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions
+  are met:
+
+  1. Redistributions of source code must retain the above copyright
+     notice, this list of conditions and the following disclaimer.
+
+  2. Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in the
+     documentation and/or other materials provided with the distribution.
+
+  3. Neither the name of the copyright holders nor the names of its
+     contributors may be used to endorse or promote products derived from
+     this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+  THE POSSIBILITY OF SUCH DAMAGE.
+
+c3p0
+----
+The library `c3p0 <https://github.com/swaldman/c3p0>`__ is included in CDAP in binary format,
+with `this license 
+<https://raw.githubusercontent.com/swaldman/c3p0/master/src/dist-static/LICENSE-EPL>`__
+(Eclipse Public License - v 1.0):
+
+  #. On behalf of all Contributors, Cask Data, Inc. disclaims all warranties and 
+     conditions, express and implied, including warranties or conditions of 
+     title and non-infringement, and implied warranties or conditions of 
+     merchantability and fitness for a particular purpose;
+
+  #. Cask Data, Inc. excludes on behalf of all Contributors all liability for 
+     damages, including direct, indirect, special, incidental and 
+     consequential damages, such as lost profits;
+
+  #. Any provisions which differ from this Agreement are 
+     offered by Cask Data, Inc. alone and not by any other party; and
+
+  #. Source code for *c3p0* may be obtained at https://github.com/swaldman/c3p0.
+
+d3
+--
+The library `d3 <https://github.com/mbostock/d3>`__ is included in CDAP in binary format,
+with `this license: <https://github.com/mbostock/d3/blob/master/LICENSE>`__
+
+  | Copyright (c) 2010-\ |current_year|, Michael Bostock
+  | All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+  * Redistributions of source code must retain the above copyright notice, this
+    list of conditions and the following disclaimer.
+
+  * Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+
+  * The name Michael Bostock may not be used to endorse or promote products
+    derived from this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+  DISCLAIMED. IN NO EVENT SHALL MICHAEL BOSTOCK BE LIABLE FOR ANY DIRECT,
+  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+  OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+esprima
+-------
+The library `esprima <https://github.com/ariya/esprima>`__ is included in CDAP in binary format,
+with `this license: <https://github.com/ariya/esprima/blob/master/LICENSE.BSD>`__
+
+  Copyright (c) jQuery Foundation, Inc. and Contributors, All Rights Reserved.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+  * Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+  
+  * Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+f2j
+---
+The library `f2j <http://icl.cs.utk.edu/f2j/index.html>`__ is included in CDAP in binary format,
+with `this license: <http://icl.cs.utk.edu/f2j/software/index.html>`__
+
+  | Copyright © 2015 The University of Tennessee. All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without modification, are
+  permitted provided that the following conditions are met:
+
+  * Redistributions of source code must retain the above copyright notice, this list of
+    conditions and the following disclaimer.
+
+  * Redistributions in binary form must reproduce the above copyright notice, this list of
+    conditions and the following disclaimer listed in this license in the documentation
+    and/or other materials provided with the distribution.
+
+  * Neither the name of the copyright holders nor the names of its contributors may be
+    used to endorse or promote products derived from this software without specific prior
+    written permission.
+
+  This software is provided by the copyright holders and contributors "as is" and any
+  express or implied warranties, including, but not limited to, the implied warranties of
+  merchantability and fitness for a particular purpose are disclaimed. in no event shall
+  the copyright owner or contributors be liable for any direct, indirect, incidental,
+  special, exemplary, or consequential damages (including, but not limited to, procurement
+  of substitute goods or services; loss of use, data, or profits; or business
+  interruption) however caused and on any theory of liability, whether in contract, strict
+  liability, or tort (including negligence or otherwise) arising in any way out of the use
+  of this software, even if advised of the possibility of such damage.
+
+janino
+------
+The library `janino <https://github.com/janino-compiler/janino>`__ is included in CDAP in
+binary format, with this `license:
+<https://raw.githubusercontent.com/janino-compiler/janino/master/LICENSE>`__
+
+  Janino - An embedded Java[TM] compiler
+
+  | Copyright (c) 2001-2016, Arno Unkrig
+  | Copyright (c) 2015-2016  TIBCO Software Inc.
+  | All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions
+  are met:
+
+  1. Redistributions of source code must retain the above copyright
+     notice, this list of conditions and the following disclaimer.
+  2. Redistributions in binary form must reproduce the above
+     copyright notice, this list of conditions and the following
+     disclaimer in the documentation and/or other materials
+     provided with the distribution.
+  3. Neither the name of JANINO nor the names of its contributors
+     may be used to endorse or promote products derived from this
+     software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+  IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+  IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+javax.activation
+----------------
+The library `javax.activation
+<http://mvnrepository.com/artifact/javax.activation/activation/1.1.1>`__ is included in
+CDAP in binary format, with the `CDDL 1.0 license
+<https://glassfish.dev.java.net/public/CDDLv1.0.html>`__.
+
+javax.annotation.jsr250-api
+---------------------------
+The library `javax.annotation.jsr250-api
+<http://mvnrepository.com/artifact/javax.annotation/jsr250-api/1.0>`__ is included in
+CDAP in binary format, with the `CDDL 1.0 license
+<https://glassfish.dev.java.net/public/CDDLv1.0.html>`__.
+
+javax.servlet-api
+-----------------
+The library `javax.servlet-api
+<http://mvnrepository.com/artifact/javax.servlet/javax.servlet-api/3.0.1>`__ is included in
+CDAP in binary format, with the `CDDL license
+<https://glassfish.dev.java.net/nonav/public/CDDL+GPL.html>`__.
+
+Source code for ``javax.servlet-api`` may be obtained at
+https://java.net/projects/servlet-spec/.
+
+javax.servlet.jsp.jsp-api
+-------------------------
+The library `javax.servlet.jsp.jsp-api
+<http://mvnrepository.com/artifact/javax.annotation/jsr250-api/1.0>`__ is included in
+CDAP in binary format, with the `CDDL 1.0 license
+<https://glassfish.dev.java.net/public/CDDLv1.0.html>`__.
+
+Source code for ``javax.servlet.jsp.jsp-api`` may be obtained at
+https://java.net/projects/servlet-spec/.
+
+javax.transaction.jta
+---------------------
+The library `javax.transaction.jta
+<http://mvnrepository.com/artifact/javax.activation/activation/1.1>`__ is included in
+CDAP in binary format, with the `CDDL 1.0 license
+<https://glassfish.dev.java.net/public/CDDLv1.0.html>`__.
+
+javax.ws.rs-api
+---------------
+The library `javax.ws.rs-api
+<http://mvnrepository.com/artifact/javax.ws.rs/javax.ws.rs-api/2.0-m02>`__ is included in
+CDAP in binary format, with the `CDDL 1.1 license
+<http://glassfish.java.net/public/CDDL+GPL_1_1.html>`__.
+
+Source code for ``javax.ws.rs-api`` may be obtained at
+https://jax-rs-spec.java.net.
+
+javax.xml.bind.jaxb-api
+-----------------------
+The library `javax.xml.bind.jaxb-api
+<http://mvnrepository.com/artifact/javax.annotation/jsr250-api/1.0>`__ is included in
+CDAP in binary format, with the `CDDL 1.1 license
+<http://glassfish.java.net/public/CDDL+GPL_1_1.html>`__.
+
+Source code for ``javax.xml.bind.jaxb-api`` may be obtained at https://jaxb.java.net.
+
+javax.xml.stream.stax-api
+-------------------------
+The library `javax.xml.stream.stax-api
+<https://mvnrepository.com/artifact/javax.xml.stream/stax-api/1.0-2>`__ is included in
+CDAP in binary format, with the `CDDL 1.0 license
+<https://glassfish.dev.java.net/public/CDDLv1.0.html>`__.
+
+jaxb-impl
+---------
+The library `com.sun.xml.bind.jaxb-impl <https://jaxb.java.net/2.2.3u1/>`__ is included in CDAP in binary format,
+with `this license: <https://glassfish.java.net/public/CDDL+GPL_1_1.html>`__
+
+Source code for ``com.sun.xml.bind.jaxb-impl`` may be obtained at
+https://jaxb.java.net/2.2.3u1/jaxb-ri-2_2_3u1.src.zip.
+
+jblas
+-----
+The library `jblas <https://github.com/mikiobraun/jblas>`__ is included in CDAP in binary format,
+with `this license: <https://github.com/mikiobraun/jblas/blob/master/COPYING>`__
+
+  | Copyright (c) 2009, Mikio L. Braun and contributors
+  | All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without modification, are
+  permitted provided that the following conditions are met:
+
+  * Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+
+  * Redistributions in binary form must reproduce the above
+    copyright notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+
+  * Neither the name of the Technische Universität Berlin nor the
+    names of its contributors may be used to endorse or promote products derived from this
+    software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+  THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+  OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+jcip-annotations
+----------------
+The library `net.jcip.jcip-annotations <http://jcip.net>`__ is included in CDAP in binary format,
+with `this license: <http://jcip.net/annotations/doc/index.html>`__
+
+  This software is copyright (c) 2005 Brian Goetz and Tim Peierls and is released under the
+  Creative Commons Attribution License (http://creativecommons.org/licenses/by/2.5). The
+  official home for this software is http://www.jcip.net. Any republication or derived work
+  distributed in source code form must include the copyright and license notice.
+
+jersey
+------
+The libraries of `com.sun.jersey: 
+<https://github.com/jersey/jersey-1.x-old/tree/tags/jersey-1.9/jersey>`__
+
+- ``com.sun.jersey.contribs.jersey-guice``
+- ``com.sun.jersey.jersey-client``
+- ``com.sun.jersey.jersey-core``
+- ``com.sun.jersey.jersey-json``
+- ``com.sun.jersey.jersey-server``
+
+are included in CDAP in binary format, with the `CDDL 1.1 license 
+<https://raw.githubusercontent.com/jersey/jersey-1.x-old/tags/jersey-1.9/jersey/license.html>`__.
+
+Source code for ``com.sun.jersey`` may be obtained at
+https://github.com/jersey/jersey-1.x-old/tree/tags/jersey-1.9/jersey.
+
+jline2
+------
+The library `jline2
+<https://github.com/jline/jline2/tree/jline-2.12>`__ is included in
+CDAP in binary format, with this `license:
+<https://raw.githubusercontent.com/jline/jline2/jline-2.12/LICENSE.txt>`__
+
+  Copyright (c) 2002-2012, the original author or authors.
+  All rights reserved.
+
+  http://www.opensource.org/licenses/bsd-license.php
+
+  Redistribution and use in source and binary forms, with or
+  without modification, are permitted provided that the following
+  conditions are met:
+
+  Redistributions of source code must retain the above copyright
+  notice, this list of conditions and the following disclaimer.
+
+  Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer
+  in the documentation and/or other materials provided with
+  the distribution.
+
+  Neither the name of JLine nor the names of its contributors
+  may be used to endorse or promote products derived from this
+  software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+  BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+  AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
+  EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+  OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+  IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+  OF THE POSSIBILITY OF SUCH DAMAGE.
+
+jodd
+----
+The library `jodd <http://jodd.org/>`__ is included in CDAP in binary format,
+with `this license: <http://jodd.org/license.html>`__
+
+  | Copyright (c) 2003-\ |current_year|, Jodd Team
+  | All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+  1. Redistributions of source code must retain the above copyright notice, this
+     list of conditions and the following disclaimer.
+
+  2. Redistributions in binary form must reproduce the above copyright notice,
+     this list of conditions and the following disclaimer in the documentation
+     and/or other materials provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+  THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+  OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+js-beautify
+-----------
+The library `js-beautify <https://github.com/beautify-web/js-beautify>`__ is included in
+CDAP in binary format, with `this license:
+<https://raw.githubusercontent.com/beautify-web/js-beautify/master/LICENSE>`__
+
+  The MIT License (MIT)
+
+  Copyright (c) 2007-2013 Einar Lielmanis and contributors.
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this
+  software and associated documentation files (the "Software"), to deal in the Software
+  without restriction, including without limitation the rights to use, copy, modify, merge,
+  publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+  to whom the Software is furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies or
+  substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+  PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+  FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+  DEALINGS IN THE SOFTWARE.
+
+jsch
+----
+The library `jsch <http://www.jcraft.com/jsch>`__ is included in CDAP in binary format,
+with `this license: <http://www.jcraft.com/jsch/LICENSE.txt>`__
+
+  | Copyright (c) 2002-2015 Atsuhiko Yamanaka, JCraft,Inc. 
+  | All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+  1. Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+
+  2. Redistributions in binary form must reproduce the above copyright 
+     notice, this list of conditions and the following disclaimer in 
+     the documentation and/or other materials provided with the distribution.
+
+  3. The names of the authors may not be used to endorse or promote products
+     derived from this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR IMPLIED WARRANTIES,
+  INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL JCRAFT,
+  INC. OR ANY CONTRIBUTORS TO THIS SOFTWARE BE LIABLE FOR ANY DIRECT, INDIRECT,
+  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+  OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+  LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+json
+----
+The library `json-20090211
+<http://mvnrepository.com/artifact/org.json/json/20090211>`__ is included in
+CDAP in binary format, with this `license:
+<http://www.json.org/license.html>`__
+
+  Copyright (c) 2002 JSON.org
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this
+  software and associated documentation files (the "Software"), to deal in the Software
+  without restriction, including without limitation the rights to use, copy, modify, merge,
+  publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+  to whom the Software is furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies or
+  substantial portions of the Software.
+
+  The Software shall be used for Good, not Evil.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+  PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+  FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+  DEALINGS IN THE SOFTWARE.
+
+leveldbjni
+----------
+The library `leveldbjni <https://github.com/fusesource/leveldbjni>`__ is included in CDAP in binary format,
+with `this license: <https://raw.githubusercontent.com/fusesource/leveldbjni/leveldbjni-1.8/license.txt>`__
+
+  Copyright (C) 2011, FuseSource Corp.  All rights reserved.
+
+      http://fusesource.com
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are
+  met:
+
+  * Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+  * Redistributions in binary form must reproduce the above
+    copyright notice, this list of conditions and the following disclaimer
+    in the documentation and/or other materials provided with the
+    distribution.
+  * Neither the name of FuseSource Corp. nor the names of its
+    contributors may be used to endorse or promote products derived from
+    this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+logback
+--------------
+The libraries ``logback-classic`` and ``logback-core`` are included in CDAP in binary
+format, with `this license:
+<https://raw.githubusercontent.com/qos-ch/logback/v_1.0.9/LICENSE.txt>`__
+
+  | Logback: the reliable, generic, fast and flexible logging framework.
+  | Copyright (C) 1999-2012, QOS.ch. All rights reserved.
+
+  This program and the accompanying materials are dual-licensed under
+  the terms of the `Eclipse Public License v1.0 <https://www.eclipse.org/legal/epl-v10.html>`__
+  as published by the Eclipse Foundation.
+  
+Source code for ``logback`` may be obtained at https://github.com/qos-ch/logback.
+
+netlib-java
+-----------
+The library `netlib-java <https://github.com/fommil/netlib-java>`__ is included in CDAP in binary format,
+with `this license: <https://github.com/fommil/netlib-java/blob/master/LICENSE.txt>`__
+
+  | Copyright (c) 2013 Samuel Halliday
+  | Copyright (c) 1992-2011 The University of Tennessee and The University
+  |                         of Tennessee Research Foundation.  All rights reserved.
+  | Copyright (c) 2000-2011 The University of California Berkeley. All rights reserved.
+  | Copyright (c) 2006-2011 The University of Colorado Denver.  All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without modification, are
+  permitted provided that the following conditions are met:
+
+  - Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+
+  - Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer listed in this license in
+    the documentation and/or other materials provided with the distribution.
+
+  - Neither the name of the copyright holders nor the names of its
+    contributors may be used to endorse or promote products derived from this software
+    without specific prior written permission.
+
+  The copyright holders provide no reassurances that the source code provided does not
+  infringe any patent, copyright, or any other intellectual property rights of third
+  parties.  The copyright holders disclaim any liability to any recipient for claims
+  brought against recipient by any third party for infringement of that parties
+  intellectual property rights.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+  THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+  OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+oro
+---
+The library `oro <http://archive.apache.org/dist/jakarta/oro/jakarta-oro-2.0.8.zip>`__ is
+included in CDAP in binary format, with the Apache License, Version 1.1:
+
+  Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
+  reserved.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions
+  are met:
+
+  1. Redistributions of source code must retain the above copyright
+     notice, this list of conditions and the following disclaimer.
+
+  2. Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in
+     the documentation and/or other materials provided with the
+     distribution.
+
+  3. The end-user documentation included with the redistribution,
+     if any, must include the following acknowledgment:
+     
+        "This product includes software developed by the
+        Apache Software Foundation (http://www.apache.org/)."
+         
+     Alternately, this acknowledgment may appear in the software itself,
+     if and wherever such third-party acknowledgments normally appear.
+
+  4. The names "Apache" and "Apache Software Foundation", "Jakarta-Oro" 
+     must not be used to endorse or promote products derived from this
+     software without prior written permission. For written
+     permission, please contact apache@apache.org.
+
+  5. Products derived from this software may not be called "Apache" 
+     or "Jakarta-Oro", nor may "Apache" or "Jakarta-Oro" appear in their 
+     name, without prior written permission of the Apache Software Foundation.
+
+  THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR IMPLIED
+  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+  DISCLAIMED.  IN NO EVENT SHALL THE APACHE SOFTWARE FOUNDATION OR
+  ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+  SUCH DAMAGE.
+
+paranamer
+---------
+The library `paranamer <https://github.com/paul-hammant/paranamer/>`__ is included in CDAP
+in binary format, with `this license:
+<https://raw.githubusercontent.com/paul-hammant/paranamer/paranamer-2.3/LICENSE.txt>`__
+
+  | Copyright (c) 2006 Paul Hammant & ThoughtWorks Inc
+  | All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions
+  are met:
+
+  1. Redistributions of source code must retain the above copyright
+     notice, this list of conditions and the following disclaimer.
+  
+  2. Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in the
+     documentation and/or other materials provided with the distribution.
+  
+  3. Neither the name of the copyright holders nor the names of its
+     contributors may be used to endorse or promote products derived from
+     this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+  THE POSSIBILITY OF SUCH DAMAGE.
+
+protobuf-java
+-------------
+The library `protobuf-java <https://github.com/google/protobuf>`__ is included in CDAP in
+binary format, with `this license:
+<https://raw.githubusercontent.com/google/protobuf/master/LICENSE>`__
+
+  This license applies to all parts of Protocol Buffers except the following:
+
+  - Atomicops support for generic gcc, located in
+    src/google/protobuf/stubs/atomicops_internals_generic_gcc.h.
+    This file is copyrighted by Red Hat Inc.
+
+  - Atomicops support for AIX/POWER, located in
+    src/google/protobuf/stubs/atomicops_internals_power.h.
+    This file is copyrighted by Bloomberg Finance LP.
+
+  Copyright 2014, Google Inc.  All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are
+  met:
+
+  * Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+  
+  * Redistributions in binary form must reproduce the above
+    copyright notice, this list of conditions and the following disclaimer
+    in the documentation and/or other materials provided with the
+    distribution.
+  
+  * Neither the name of Google Inc. nor the names of its
+    contributors may be used to endorse or promote products derived from
+    this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+  Code generated by the Protocol Buffer compiler is owned by the owner
+  of the input file used when generating it.  This code is not
+  standalone and requires a support library to be linked with it.  This
+  support library is itself covered by the above license.
+
+Scala Libraries
+---------------
+The `Scala libraries <http://www.scala-lang.org/index.html>`__ are included in CDAP in binary format,
+with `this license: <http://www.scala-lang.org/license.html>`__
+
+  | Copyright (c) 2002-\ |current_year|, EPFL
+  | Copyright (c) 2011-\ |current_year|, Typesafe, Inc.
+  
+  All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+  * Redistributions of source code must retain the above copyright notice, this
+    list of conditions and the following disclaimer.
+
+  * Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+
+  * Neither the name of the EPFL nor the names of its contributors may be used to endorse
+    or promote products derived from this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS” AND ANY
+  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+  THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+  OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  
+xmlenc
+------
+The library `xmlenc
+<http://pilotfiber.dl.sourceforge.net/project/xmlenc/xmlenc/0.52/xmlenc-0.52.tgz>`__ is
+included in CDAP in binary format, with this license:
+
+  Copyright 2003-2005, Ernst de Haan <wfe.dehaan@gmail.com>
+  All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+
+  1. Redistributions of source code must retain the above copyright notice, this
+     list of conditions and the following disclaimer.
+
+  2. Redistributions in binary form must reproduce the above copyright notice,
+     this list of conditions and the following disclaimer in the documentation
+     and/or other materials provided with the distribution.
+
+  3. Neither the name of the copyright holder nor the names of its contributors
+     may be used to endorse or promote products derived from this software
+     without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS "AS IS"
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
