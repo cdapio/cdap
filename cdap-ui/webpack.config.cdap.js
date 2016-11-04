@@ -105,8 +105,7 @@ module.exports = {
       'react-router',
       'moment',
       'react-file-download',
-      'mousetrap',
-      'react-tether'
+      'mousetrap'
     ]
   },
   module: {
