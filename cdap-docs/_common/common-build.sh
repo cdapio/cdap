@@ -277,11 +277,9 @@ function copy_license_pdfs() {
 
 function set_environment() {
   source ${PROJECT_PATH}/cdap-common/bin/functions.sh
-  cdap_set_java
   if [[ ${OSTYPE} == "darwin"* ]]; then
     # NOTE: hard-coded Java version 1.7
     export JAVA_HOME=$(/usr/libexec/java_home -v 1.7)
-    ${JAVA} -version
   else
     if [[ -z ${JAVA_HOME} ]]; then
       if [[ -z ${JAVA_JDK_VERSION} ]]; then
@@ -290,7 +288,9 @@ function set_environment() {
       export JAVA_HOME=/usr/lib/jvm/${JAVA_JDK_VERSION}
     fi
   fi
+  cdap_set_java
   echo "Using JAVA_HOME: ${JAVA_HOME}"
+  ${JAVA} -version
   echo
   mvn -version
   echo
