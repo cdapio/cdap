@@ -282,8 +282,8 @@ function emitResponse (resource, error, response, body) {
       resource: resource,
       error: error,
       warning: error.toString(),
-      statusCode: response.statusCode,
-      response: response.body
+      statusCode: response && response.statusCode,
+      response: response && response.body
     }, stripResource));
 
   } else {

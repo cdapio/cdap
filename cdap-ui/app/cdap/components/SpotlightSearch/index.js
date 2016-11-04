@@ -41,7 +41,7 @@ export default class SpotlightSearch extends Component {
     super(props);
 
     this.handleSearchClick = this.handleSearchClick.bind(this);
-    this.debounceSearch = debounce(this.handleSearch.bind(this, event), 300);
+    this.debounceSearch = debounce(this.handleSearch.bind(this), 300);
     this.handleCloseSearch = this.handleCloseSearch.bind(this);
     this.handleToggleModal = this.handleToggleModal.bind(this);
     this.handleKeyPress = this.handleKeyPress.bind(this);

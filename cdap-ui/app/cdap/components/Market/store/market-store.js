@@ -19,6 +19,7 @@ import shortid from 'shortid';
 
 const initialState = {
   list: [],
+  activeEntity: undefined,
   filter: '*',
   loading: true,
   isError: false
@@ -28,8 +29,12 @@ const market = (state=initialState, action) => {
   switch (action.type) {
     case 'SET_ENTITIES':
       return Object.assign({}, state, {
-        list: action.payload.map(entity => Object.assign(entity, {id: shortid.generate()})), 
+        list: action.payload.map(entity => Object.assign(entity, {id: shortid.generate()})),
         loading: false
+      });
+    case 'SET_ACTIVE_ENTITY':
+      return Object.assign({}, state, {
+        activeEntity: action.payload.entityId
       });
     case 'SET_FILTER':
       return Object.assign({}, state, { filter: action.payload });

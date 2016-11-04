@@ -20,8 +20,6 @@ import MarketPlaceEntity from 'components/MarketPlaceEntity';
 import T from 'i18n-react';
 import MarketStore from 'components/Market/store/market-store.js';
 import Fuse from 'fuse.js';
-import MarketEntityModal from 'components/MarketEntityModal';
-import {MyMarketApi} from 'api/market';
 require('./AllTabContents.less');
 
 export default class AllTabContents extends Component {
@@ -31,9 +29,7 @@ export default class AllTabContents extends Component {
       searchStr: '',
       entities: this.getFilteredEntities(),
       loading: MarketStore.getState().loading,
-      isError: MarketStore.getState().isError,
-      activeEntity: null,
-      entityModalIsOpen: false
+      isError: MarketStore.getState().isError
     };
 
     this.unsub = MarketStore.subscribe(() => {
@@ -73,20 +69,6 @@ export default class AllTabContents extends Component {
     this.setState({searchStr: changeEvent.target.value});
   }
 
-  generateIconPath(entity) {
-    return MyMarketApi.getIcon(entity);
-  }
-
-  handleEntityClick(e) {
-    this.setState({
-      activeEntity: e,
-      entityModalIsOpen: true
-    });
-  }
-
-  handleEntityModalClose() {
-    this.setState({entityModalIsOpen: false});
-  }
 
   handleBodyRender() {
     if (this.state.isError) { return null; }
@@ -101,12 +83,9 @@ export default class AllTabContents extends Component {
       this.state.entities
         .map((e, index) => (
           <MarketPlaceEntity
-            name={e.label}
             key={index}
-            subtitle={e.version}
-            icon={this.generateIconPath(e)}
-            size="medium"
-            onClick={this.handleEntityClick.bind(this, e)}
+            entityId={e.id}
+            entity={e}
           />
         )
       )
@@ -122,18 +101,6 @@ export default class AllTabContents extends Component {
   }
 
   render() {
-    let marketEntityModal;
-
-    if (this.state.entityModalIsOpen) {
-      marketEntityModal = (
-        <MarketEntityModal
-          isOpen={this.state.entityModalIsOpen}
-          onCloseHandler={this.handleEntityModalClose.bind(this)}
-          entity={this.state.activeEntity}
-        />
-      );
-    }
-
     let error;
     if (this.state.isError) {
       error = (
@@ -155,8 +122,6 @@ export default class AllTabContents extends Component {
         <div className="body-section text-center">
           {error}
           {this.handleBodyRender()}
-
-          {marketEntityModal}
         </div>
       </div>
     );

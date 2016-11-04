@@ -15,39 +15,133 @@
  */
 
 @import '../../styles/variables.less';
-.cask-card {
-  &.market-place-package-card {
-    margin: 5px;
-    box-shadow: 1px 2px 10px 0 rgba(0, 0, 0, 0.3);
-    border-radius: 4px;
-    &:hover {
-      box-shadow: 1px 2px 10px 0 @cdap-orange;
+
+.market-place-package-card {
+  margin: 5px;
+  box-shadow: 1px 2px 10px 0 rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+  width: 100%;
+
+  &:hover {
+    box-shadow: 1px 2px 10px 0 @cdap-orange;
+  }
+  /*
+    width of each card = 100% - (padding of parent) - (combined margin of all cards in the row)
+    margin for each card is 5px (as mentioned above).
+    So the combined margin for all cards in say ,
+      4 column layout : 5px + (5px + 5px) + (5px + 5px) + 5px = (3 * 10px)
+      5 column layout : 5px + (5px + 5px) + (5px + 5px) + (5px + 5px) + 5px = (4 * 10px)
+      6 column layout : 5px + (5px + 5px) + (5px + 5px) + (5px + 5px) + (5px + 5px) + 5px = (5 * 10px)
+      n column layout : (n-1 * 10px);
+  */
+  @media (min-width: 1601px)  {
+    width: ~"calc((100% - 20px - 10px - (5 * 10px)) / 6)";
+  }
+  @media (min-width: 1201px) and (max-width: 1600px) {
+    width: ~"calc((100% - 20px - 10px - (3 * 10px)) / 4)";
+  }
+  @media (min-width: 993px) and (max-width: 1200px) {
+    width: ~"calc((100% - 20px - 10px - (2 * 10px)) / 3)";
+  }
+  @media(min-width: 768px) and (max-width: 992px) {
+    width: ~"calc((100% - 20px - 10px - 10px) / 2)";
+  }
+
+  .cask-card {
+    padding: 0;
+  }
+
+  .package-icon-container {
+    img {
+      width: 125px;
     }
-    /*
-      width of each card = 100% - (padding of parent) - (combined margin of all cards in the row)
-      margin for each card is 5px (as mentioned above).
-      So the combined margin for all cards in say ,
-        4 column layout : 5px + (5px + 5px) + (5px + 5px) + 5px = (3 * 10px)
-        5 column layout : 5px + (5px + 5px) + (5px + 5px) + (5px + 5px) + 5px = (4 * 10px)
-        6 column layout : 5px + (5px + 5px) + (5px + 5px) + (5px + 5px) + (5px + 5px) + 5px = (5 * 10px)
-        n column layout : (n-1 * 10px);
-    */
-    @media (min-width: 1601px)  {
-      width: ~"calc((100% - 20px - 10px - (5 * 10px)) / 6)";
+  }
+  &.expanded {
+    cursor: default;
+
+    .cask-card {
+      &.card-LG {
+        z-index: 2;
+
+        .card-body {
+          width: 100%;
+          z-index: 2;
+          background: #ccc;
+          text-align: left;
+          .package-metadata-container {
+            margin-bottom: 10px;
+          }
+        }
+      }
     }
-    @media (min-width: 1201px) and (max-width: 1600px) {
-      width: ~"calc((100% - 20px - 10px - (3 * 10px)) / 4)";
+    &.position-right {
+      .cask-card.card-LG {
+        right: 0px;
+        .card-body {
+          .package-icon-container {
+            float: right;
+            margin-right: 0;
+          }
+        }
+      }
     }
-    @media (min-width: 993px) and (max-width: 1200px) {
-      width: ~"calc((100% - 20px - 10px - (2 * 10px)) / 3)";
-    }
-    @media(min-width: 768px) and (max-width: 992px) {
-      width: ~"calc((100% - 20px - 10px - 10px) / 2)";
+    &.position-left {
+      .cask-card.card-LG {
+        left: 0px;
+      }
     }
     .package-icon-container {
-      img {
-        width: 125px;
+      display: inline-block;
+      vertical-align: top;
+      margin-right: 20px;
+    }
+    .package-metadata-container {
+      display: inline-block;
+      width: ~"calc(100% - 145px)";
+      width: ~"-webkit-calc(100% - 145px)";
+      width: ~"-moz-calc(100% - 145px)";
+
+      > .package-label {
+        font-size: 17px;
       }
+      .package-metadata {
+        margin-top: 10px;
+      }
+    }
+    .package-footer {
+      button {
+        margin-left: 10px;
+      }
+    }
+
+    .package-animation-appear {
+      opacity: 0.01;
+      transition: opacity 300ms ease-in;
+    }
+
+    .package-animation-appear.package-animation-appear-active {
+      opacity: 1;
+    }
+
+    .package-animation-enter {
+      opacity: 0.01;
+    }
+
+    .package-animation-enter.package-animation-enter-active {
+      opacity: 1;
+      transition: opacity 500ms ease-in;
+    }
+
+    .package-animation-leave {
+      opacity: 1;
+    }
+
+    .package-animation-leave.package-animation-leave-active {
+      opacity: 0.01;
+      transition: opacity 300ms ease-in;
     }
   }
 }
