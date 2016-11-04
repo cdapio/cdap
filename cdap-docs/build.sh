@@ -15,16 +15,15 @@
 # the License.
   
 # Build script for docs
-
+#
 # Builds all manuals
 # Builds each of these individually, and then packages them into a single zip file for distribution.
-# _common directory holds common files and scripts.
-
+# The '_common' directory holds common files and scripts.
+#
 # Optional Parameters (passed via environment variable or exported in shell):
 # BELL: Set for the bell function to make a sound when called
 # COLOR_LOGS: Set for color output by Sphinx and these scripts
 # USE_LOCAL: Set to use local copies of source, rather than downloading referenced files
-# NO_JAVADOCS: Set to not build Javadocs, no matter which actions are used (for testing)
 
 cd $(cd $(dirname ${BASH_SOURCE[0]}); pwd -P)
 source ./vars
@@ -80,14 +79,14 @@ function run_command() {
 function display_start_title() {
   echo "========================================================"
   echo "========================================================"
-  echo "$1"
+  echo "${1}"
   echo "--------------------------------------------------------"
   echo
 }
   
 function display_end_title() {
   echo "--------------------------------------------------------"
-  echo "Completed \"$1\""
+  echo "Completed \"${1}\""
   echo "========================================================"
   echo "========================================================"
   echo
@@ -95,7 +94,7 @@ function display_end_title() {
 
 function display_end_title_bell() {
   echo "--------------------------------------------------------"
-  ring_bell "Completed \"$1\""
+  ring_bell "Completed \"${1}\""
   echo "========================================================"
   echo "========================================================"
   echo
@@ -104,7 +103,7 @@ function display_end_title_bell() {
 function build_docs_set() {
   local warnings
   local title="Building Docs Set"
-  display_start_title ${title}
+  display_start_title "${title}"
   
   clean_targets
   clear_messages_file
@@ -119,14 +118,14 @@ function build_docs_set() {
   display_messages
   warnings=$?
   cleanup_messages_file
-  display_end_title_bell ${title}
+  display_end_title_bell "${title}"
   exit ${warnings}
 }
 
 function build_docs_only() {
   local warnings
   local title="Building Docs Only"
-  display_start_title ${title}
+  display_start_title "${title}"
   
   clear_messages_file
   build_docs_second_pass
@@ -135,13 +134,13 @@ function build_docs_only() {
   display_messages
   warnings=$?
   cleanup_messages_file
-  display_end_title_bell ${title}
+  display_end_title_bell "${title}"
   exit ${warnings}
 }
 
 function build_docs_first_pass() {
   local title="Building Docs First Pass"
-  display_start_title ${title}
+  display_start_title "${title}"
 
   build_docs_inner_level build-docs
   
@@ -150,7 +149,7 @@ function build_docs_first_pass() {
 
 function build_docs_second_pass() {
   local title="Building Docs Second Pass"
-  display_start_title ${title}
+  display_start_title "${title}"
 
   build_docs_inner_level build-web
   build_docs_outer_level ${GOOGLE_TAG_MANAGER_CODE}
@@ -160,74 +159,57 @@ function build_docs_second_pass() {
 }
 
 function build_javadocs() {
+  # Used by reference manual to know to copy the javadocs
+  USING_JAVADOCS="true"
+  export USING_JAVADOCS
   local javadoc_type=${1}
   local title="Building Javadocs: '${javadoc_type}'"
-  display_start_title ${title}
-
+  display_start_title "${title}"
   local warnings
-  if [[ -n ${NO_JAVADOCS} ]]; then
-    echo_red_bold "Javadocs disabled."
+  check_build_rst
+  set_environment    
+  if [[ ${DEBUG} == ${TRUE} ]]; then
+    local debug_flag="-X"
   else
-    USING_JAVADOCS="true"
-    export USING_JAVADOCS
-
-    echo "JAVA Version:"
-    set_mvn_environment
-    source ${PROJECT_PATH}/cdap-common/bin/functions.sh
-    cdap_set_java
-    java -version
-    echo
-    
-    echo "Maven Version:"
-    mvn -version
-    echo
-    
-    if [[ ${DEBUG} == ${TRUE} ]]; then
-      local debug_flag="-X"
-    else
-      local debug_flag=''
-    fi
-    if [[ ${javadoc_type} == ${ALL} ]]; then
-      javadoc_run="javadoc:aggregate"
-    else
-      javadoc_run="site"
-    fi
-
-    local start=`date`
-    
-    MAVEN_OPTS="-Xmx4g -XX:MaxPermSize=256m" # match other CDAP builds
-    mvn clean package ${javadoc_run} -P examples,templates,release -DskipTests -Dgpg.skip=true -DisOffline=false ${debug_flag}
-
-    warnings=$?
-    if [[ ${warnings} -eq 0 ]]; then
-      echo
-      echo "Javadocs Build Start: ${start}"
-      echo "                 End: `date`"
-    else
-      echo "Error building Javadocs: ${warnings}"
-    fi
+    local debug_flag=''
   fi
-
+  if [[ ${javadoc_type} == ${ALL} ]]; then
+    javadoc_run="javadoc:aggregate"
+  else
+    javadoc_run="site"
+  fi
+  local start=`date`
+  cd ${PROJECT_PATH}
+  MAVEN_OPTS="-Xmx4g -XX:MaxPermSize=256m" # match other CDAP builds
+  mvn clean package ${javadoc_run} -P examples,templates,release -DskipTests -Dgpg.skip=true -DisOffline=false ${debug_flag}
+  warnings=$?
+  if [[ ${warnings} -eq 0 ]]; then
+    echo
+    echo "Javadocs Build Start: ${start}"
+    echo "                 End: `date`"
+  else
+    echo "Error building Javadocs: ${warnings}"
+  fi
   display_end_title ${title}
   return ${warnings}
 }
 
 function build_docs_cli() {
   local title="Building CLI Input File for docs"
-  display_start_title ${title}
-
+  display_start_title "${title}"
   local warnings
   if [[ -n ${NO_CLI_DOCS} ]]; then
     echo_red_bold "Building CLI input file disabled. '${NO_CLI_DOCS}'"
   else
     local target_txt=${SCRIPT_PATH}/../cdap-docs-gen/${TARGET}/cdap-docs-cli.txt
     set_version
-    set_mvn_environment
-    mvn -version
+    check_build_rst
+    set_environment
+    cd ${PROJECT_PATH}
     mvn package -pl cdap-docs-gen -am -DskipTests
     warnings=$?
     if [[ ${warnings} -eq 0 ]]; then
-      java -cp cdap-docs-gen/target/cdap-docs-gen-${PROJECT_VERSION}.jar:cdap-cli/target/cdap-cli-${PROJECT_VERSION}.jar co.cask.cdap.docgen.cli.GenerateCLIDocsTable > ${target_txt}
+      ${JAVA} -cp cdap-docs-gen/target/cdap-docs-gen-${PROJECT_VERSION}.jar:cdap-cli/target/cdap-cli-${PROJECT_VERSION}.jar co.cask.cdap.docgen.cli.GenerateCLIDocsTable > ${target_txt}
       warnings=$?
       echo
       echo "Completed building of CLI"
@@ -242,7 +224,6 @@ function build_docs_cli() {
     fi
     export USING_CLI_DOCS
   fi
-
   display_end_title ${title}
   return ${warnings}
 }
@@ -267,7 +248,7 @@ function build_docs_outer_level() {
     google_options="-A html_google_tag_manager_code=${1}"
   fi
   local title="Building outer-level docs...tag code ${1}"
-  display_start_title ${title}
+  display_start_title "${title}"
   clean_outer_level
   set_version
   # Copies placeholder file and renames it
@@ -290,7 +271,7 @@ function build_docs_outer_level() {
  
 function copy_docs_inner_level() {
   local title="Copying lower-level documentation"
-  display_start_title ${title}
+  display_start_title "${title}"
   for i in ${MANUALS}; do
     echo "Copying html for ${i}..."
     rm -rf ${TARGET_PATH}/${HTML}/${i}
@@ -315,7 +296,7 @@ function copy_docs_inner_level() {
 
 function build_docs_package() {
   local title="Packaging docs"
-  display_start_title ${title}
+  display_start_title "${title}"
   set_project_path
   set_version
   echo "Set project path and version"
@@ -325,7 +306,7 @@ function build_docs_package() {
   echo "Removing old directories and zips"
   rm -rf ${PROJECT_VERSION} *.zip
   echo "Creating ${PROJECT_VERSION}"
-  mkdir ${PROJECT_VERSION} && cp -r ${HTML} ${PROJECT_VERSION}/en
+  mkdir ${PROJECT_VERSION} && cp -r html ${PROJECT_VERSION}/en
   errors=$?
   if [[ ${errors} -ne 0 ]]; then
       echo "Could not create ${PROJECT_VERSION}"

@@ -14,25 +14,16 @@
   
 # Common code for Build script for docs
 # Not called directly; included in either the main build.sh or the individual manual's build.sh
-
+#
 # Optional Parameters (passed via environment variable or exported in shell):
 # BELL: Set for the bell function to make a sound when called
 # COLOR_LOGS: Set for color output by Sphinx and these scripts
 # USE_LOCAL: Set to use local copies of source, rather than downloading referenced files
 
-API="cdap-api"
-APIDOCS="apidocs"
-APIS="apis"
-BUILD_GITHUB="build-github"
-BUILD_PDF="build-pdf"
-BUILD_WEB="build-web"
+API_DOCS="apidocs"
 CDAP_DOCS="cdap-docs"
 HTML="html"
-HYDRATOR_PLUGINS="hydrator-plugins"
-INCLUDES="_includes"
-JAVADOCS="javadocs"
-LICENSES="licenses"
-LICENSES_PDF="licenses-pdf"
+
 PROJECT="cdap"
 PROJECT_CAPS="CDAP"
 REFERENCE="reference-manual"
@@ -59,7 +50,7 @@ PROJECT_PATH=$(cd ${PROJECT_PATH}; pwd -P)
 
 DOCS_GEN_PY="${PROJECT_PATH}/${CDAP_DOCS}/tools/docs-gen.py"
 
-API_JAVADOCS="${PROJECT_PATH}/target/site/${APIDOCS}"
+API_JAVADOCS="${PROJECT_PATH}/${TARGET}/site/${API_DOCS}"
 
 CHECK_INCLUDES=''
 LOCAL_INCLUDES=''
@@ -83,8 +74,6 @@ SPHINX_BUILD="sphinx-build ${SPHINX_COLOR} -b html -d ${TARGET}/doctrees"
 # Hash of file with "Not Found"; returned by GitHub
 NOT_FOUND_HASHES=("9d1ead73e678fa2f51a70a933b0bf017" "6cb875b80d51f9a26eb05db7f9779011")
 
-ZIP_FILE_NAME=$HTML
-ZIP="${ZIP_FILE_NAME}.zip"
 
 function usage() {
   echo "Build script for '${PROJECT_CAPS}' docs"
@@ -132,7 +121,7 @@ function build_docs() {
   clean
   cd ${SCRIPT_PATH}
   check_includes
-  ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} ${google_tag} ${SOURCE} ${TARGET}/html
+  ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} ${google_tag} ${SOURCE} ${TARGET}/${HTML}
   consolidate_messages
 }
 
@@ -170,7 +159,7 @@ function check_includes() {
   if [[ ${CHECK_INCLUDES} == ${TRUE} ]]; then
     echo_red_bold "Downloading and checking files to be included."
     # Build includes
-    local target_includes_dir=${SCRIPT_PATH}/${TARGET}/${INCLUDES}
+    local target_includes_dir=${SCRIPT_PATH}/${TARGET}/_includes
     rm -rf ${target_includes_dir}
     mkdir ${target_includes_dir}
     download_includes ${target_includes_dir}
@@ -269,10 +258,10 @@ function build_license_pdfs() {
   set_version
   pushd ${SCRIPT_PATH} > /dev/null
   PROJECT_VERSION_TRIMMED=${PROJECT_VERSION%%-SNAPSHOT*}
-  rm -rf ${SCRIPT_PATH}/${LICENSES_PDF}
-  mkdir ${SCRIPT_PATH}/${LICENSES_PDF}
-  LIC_PDF="${PROJECT_PATH}/${CDAP_DOCS}/${REFERENCE}/${LICENSES_PDF}"
-  LIC_RST="${PROJECT_PATH}/${CDAP_DOCS}/${REFERENCE}/source/${LICENSES}"
+  rm -rf ${SCRIPT_PATH}/licenses-pdf
+  mkdir ${SCRIPT_PATH}/licenses-pdf
+  LIC_PDF="${PROJECT_PATH}/${CDAP_DOCS}/${REFERENCE}/licenses-pdf"
+  LIC_RST="${PROJECT_PATH}/${CDAP_DOCS}/${REFERENCE}/${SOURCE}/licenses"
   PDFS="cdap-enterprise-dependencies cdap-level-1-dependencies cdap-standalone-dependencies cdap-ui-dependencies"
   for PDF in ${PDFS}; do
     echo
@@ -283,16 +272,16 @@ function build_license_pdfs() {
 }
 
 function copy_license_pdfs() {
-  cp ${SCRIPT_PATH}/${LICENSES_PDF}/* ${TARGET_PATH}/${HTML}/${LICENSES}
+  cp ${SCRIPT_PATH}/licenses-pdf/* ${TARGET_PATH}/${HTML}/licenses
 }
 
-function set_mvn_environment() {
-  check_build_rst
-  cd ${PROJECT_PATH}
+function set_environment() {
+  source ${PROJECT_PATH}/cdap-common/bin/functions.sh
+  cdap_set_java
   if [[ ${OSTYPE} == "darwin"* ]]; then
-    # TODO: hard-coded Java version 1.7
+    # NOTE: hard-coded Java version 1.7
     export JAVA_HOME=$(/usr/libexec/java_home -v 1.7)
-    java -version
+    ${JAVA} -version
   else
     if [[ -z ${JAVA_HOME} ]]; then
       if [[ -z ${JAVA_JDK_VERSION} ]]; then
@@ -302,6 +291,9 @@ function set_mvn_environment() {
     fi
   fi
   echo "Using JAVA_HOME: ${JAVA_HOME}"
+  echo
+  mvn -version
+  echo
 }
 
 function set_version() {
