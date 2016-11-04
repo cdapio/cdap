@@ -75,8 +75,6 @@ public class AggregateMetricsByTag {
       metrics.gauge("in.map.setup", 1);
       LOG.info("in mapper: setup()");
       long mappersCount = counters.incrementAndGet(new Increment("mapper", "count", 1L)).getLong("count", 0);
-      Assert.assertEquals(mappersCount, countersFromContext.incrementAndGet(new Increment("mapper", "count", 1L))
-                                                                                                  .getLong("count", 0));
       LOG.info("mappers started so far: " + mappersCount);
       metrics.gauge("in.map.setup", 1);
     }
@@ -126,8 +124,6 @@ public class AggregateMetricsByTag {
       metrics.gauge("in.reduce.setup", 1);
       LOG.info("in reducer: setup()");
       long reducersCount = counters.incrementAndGet(new Increment("reducer", "count", 1L)).getLong("count", 0);
-      Assert.assertEquals(reducersCount, countersFromContext.incrementAndGet(new Increment("reducer", "count", 1L))
-                                                                                                  .getLong("count", 0));
       LOG.info("reducers started so far: " + reducersCount);
       metrics.gauge("in.reduce.setup", 1);
     }
