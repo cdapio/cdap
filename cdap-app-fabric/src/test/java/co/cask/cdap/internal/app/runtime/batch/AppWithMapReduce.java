@@ -30,6 +30,12 @@ import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.dataset.lib.PartitionOutput;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
+import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.lib.TimeseriesTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
@@ -41,10 +47,13 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.mapreduce.lib.partition.HashPartitioner;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -61,10 +70,15 @@ public class AppWithMapReduce extends AbstractApplication {
     createDataset("counters", Table.class);
     createDataset("countersFromContext", Table.class);
     createDataset("recorder", KeyValueTable.class);
+    createDataset("pfs", PartitionedFileSet.class,
+                  PartitionedFileSetProperties.builder()
+                    .setPartitioning(Partitioning.builder().addIntField("x").build())
+                    .setOutputFormat(TextOutputFormat.class).build());
     addMapReduce(new ClassicWordCount());
     addMapReduce(new AggregateTimeseriesByTag());
     addMapReduce(new FaiiingMR());
     addMapReduce(new ExplicitFaiiingMR());
+    addMapReduce(new MapReduceWithFailingOutputCommitter());
   }
 
   /**
@@ -255,6 +269,46 @@ public class AppWithMapReduce extends AbstractApplication {
     @Override
     public Map<String, String> getOutputFormatConfiguration() {
       throw new RuntimeException("fail on purpose");
+    }
+  }
+
+  public static class MapReduceWithFailingOutputCommitter extends AbstractMapReduce {
+
+    @Override
+    protected void initialize() throws Exception {
+      // add a partition to the pfs
+      PartitionedFileSet pfs = getContext().getDataset("pfs");
+      PartitionKey key = PartitionKey.builder().addField("x", 1).build();
+      PartitionOutput partitionOutput = pfs.getPartitionOutput(key);
+      partitionOutput.addPartition();
+
+      // configure the same partition as output for the MR
+      Map<String, String> args = new HashMap<>();
+      PartitionedFileSetArguments.setOutputPartitionKey(args, key);
+      getContext().addOutput(Output.ofDataset("pfs", args));
+
+      // configure an input
+      KeyValueTable kv = getContext().getDataset("recorder");
+      kv.write("hello", "world");
+      getContext().addInput(Input.ofDataset("recorder"));
+
+      // configure mapper and no reducers
+      Job job = getContext().getHadoopJob();
+      job.setMapperClass(IdentityMapper.class);
+      job.setNumReduceTasks(0);
+    }
+
+    @Override
+    public void destroy() {
+      KeyValueTable kv = getContext().getDataset("recorder");
+      kv.write("status", getContext().getState().getStatus().name());
+    }
+  }
+
+  public static class IdentityMapper extends Mapper<byte[], byte[], String, String> {
+    @Override
+    protected void map(byte[] key, byte[] value, Context context) throws IOException, InterruptedException {
+      context.write(Bytes.toString(key), Bytes.toString(value));
     }
   }
 }

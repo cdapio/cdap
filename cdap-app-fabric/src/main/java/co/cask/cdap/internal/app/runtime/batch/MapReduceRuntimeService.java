@@ -92,7 +92,6 @@ import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionConflictException;
-import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.ClassAcceptor;
@@ -122,9 +121,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
@@ -393,7 +392,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     } finally {
       // whatever happens we want to call this
       try {
-        destroy(success, failureInfo, job.getConfiguration().getClassLoader());
+        destroy(success, failureInfo);
       } finally {
         context.close();
         cleanupTask.run();
@@ -560,15 +559,16 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
   /**
    * Commit a single output after the MR has finished, if it is an OutputFormatCommitter.
+   * If any axception is thrown by the output committer, sets the failure cause to that exception.
    * @param succeeded whether the run was successful
    * @param outputName the name of the output
    * @param outputFormatProvider the output format provider to commit
-   * @return whether the action was successful (it did not throw an exception)
    */
-  private boolean commitOutput(boolean succeeded, String outputName, OutputFormatProvider outputFormatProvider) {
+  private void commitOutput(boolean succeeded, String outputName, OutputFormatProvider outputFormatProvider,
+                            AtomicReference<Exception> failureCause) {
     if (outputFormatProvider instanceof DatasetOutputCommitter) {
       try {
-        if (succeeded) {
+        if (succeeded && failureCause.get() == null) {
           ((DatasetOutputCommitter) outputFormatProvider).onSuccess();
         } else {
           ((DatasetOutputCommitter) outputFormatProvider).onFailure();
@@ -576,10 +576,13 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       } catch (Throwable t) {
         LOG.error(String.format("Error from %s method of output dataset %s.",
                                 succeeded ? "onSuccess" : "onFailure", outputName), t);
-        return false;
+        if (failureCause.get() != null) {
+          failureCause.get().addSuppressed(t);
+        } else {
+          failureCause.set(t instanceof Exception ? (Exception) t : new RuntimeException(t));
+        }
       }
     }
-    return true;
   }
 
   private ProgramState getProgramState(boolean success, String failureInfo) {
@@ -598,44 +601,55 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   /**
    * Calls the destroy method of {@link ProgramLifecycle}.
    */
-  private void destroy(final boolean succeeded, final String failureInfo, final ClassLoader mapReduceClassLoader) {
-    final TransactionControl txControl = mapReduce instanceof ProgramLifecycle
-      ? Transactions.getTransactionControl(TransactionControl.IMPLICIT, MapReduce.class, mapReduce, "destroy")
-      : TransactionControl.IMPLICIT;
+  private void destroy(final boolean succeeded, final String failureInfo) throws Exception {
+
+    // if any exception happens during output committing, we want the MapReduce to fail.
+    // for that to happen it is not suficient to set the status to failed, we have to throw an exception,
+    // otherwise the shutdown completes successfully and the completed() callback is called.
+    // thus: remember the exception and throw it at the end.
+    final AtomicReference<Exception> failureCause = new AtomicReference<>();
+
+    // TODO (CDAP-1952): this should be done in the output committer, to make the M/R fail if addPartition fails
     try {
-      TransactionContext txContext = context.getTransactionContext();
-      boolean success = Transactions.execute(txContext, "destroy", new Callable<Boolean>() {
+      context.execute(new TxRunnable() {
         @Override
-        public Boolean call() throws Exception {
-          ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(mapReduceClassLoader);
+        public void run(DatasetContext ctxt) throws Exception {
+          ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
           try {
-            // TODO (CDAP-1952): this should be done in the output committer, to make the M/R fail if addPartition fails
-            // TODO (CDAP-1952): also, should failure of an output committer change the status of the program run?
-            boolean success = succeeded;
             for (ProvidedOutput output : context.getOutputs().values()) {
-              if (!commitOutput(succeeded, output.getAlias(), output.getOutputFormatProvider())) {
-                success = false;
-              }
+              commitOutput(succeeded, output.getAlias(), output.getOutputFormatProvider(), failureCause);
             }
-            context.setState(getProgramState(success, failureInfo));
-            if (TransactionControl.IMPLICIT == txControl) {
-              doDestroy(success);
-            }
-            return success;
           } finally {
             ClassLoaders.setContextClassLoader(oldClassLoader);
           }
         }
       });
-      if (TransactionControl.EXPLICIT == txControl) {
-        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(mapReduceClassLoader);
-        try {
-          doDestroy(success);
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
-        } finally {
-          ClassLoaders.setContextClassLoader(oldClassLoader);
-        }
+    } catch (TransactionFailureException e) {
+      LOG.error("Transaction failure when committing dataset outputs", e);
+      if (failureCause.get() != null) {
+        failureCause.get().addSuppressed(e);
+      } else {
+        failureCause.set(e);
+      }
+    }
+
+    final boolean success = succeeded && failureCause.get() == null;
+    context.setState(getProgramState(success, failureInfo));
+
+    final TransactionControl txControl = mapReduce instanceof ProgramLifecycle
+      ? Transactions.getTransactionControl(TransactionControl.IMPLICIT, MapReduce.class, mapReduce, "destroy")
+      : TransactionControl.IMPLICIT;
+
+    try {
+      if (TransactionControl.IMPLICIT == txControl) {
+        context.execute(new TxRunnable() {
+          @Override
+          public void run(DatasetContext context) throws Exception {
+            doDestroy(success);
+          }
+        });
+      } else {
+        doDestroy(success);
       }
     } catch (Throwable e) {
       if (e instanceof TransactionFailureException && e.getCause() != null
@@ -644,16 +658,25 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       }
       LOG.warn("Error executing the destroy method of the MapReduce program {}", context.getProgram().getName(), e);
     }
-  }
 
-  private void doDestroy(boolean success) throws Exception {
-    if (mapReduce instanceof ProgramLifecycle) {
-      ((ProgramLifecycle) mapReduce).destroy();
-    } else {
-      mapReduce.onFinish(success, context);
+    // this is needed to make the run fail if there was an exception. See comment at beginning of this method
+    if (failureCause.get() != null) {
+      throw failureCause.get();
     }
   }
 
+  private void doDestroy(boolean success) throws Exception {
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
+    try {
+      if (mapReduce instanceof ProgramLifecycle) {
+        ((ProgramLifecycle) mapReduce).destroy();
+      } else {
+        mapReduce.onFinish(success, context);
+      }
+    } finally {
+      ClassLoaders.setContextClassLoader(oldClassLoader);
+    }
+  }
 
   private void assertConsistentTypes(Class<? extends Mapper> firstMapperClass,
                                      Map.Entry<Class, Class> firstMapperClassOutputTypes,
