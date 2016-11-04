@@ -21,25 +21,30 @@ import classnames from 'classnames';
 require('./ProductsDropdown.less');
 import head from 'lodash/head';
 import shortid from 'shortid';
+import NamespaceStore from 'services/NamespaceStore';
 
 export default class ProductsDrawer extends Component {
   constructor(props) {
     super(props);
+    this.namespace;
     let products = [
       {
-        link: '/cask-cdap',
+        baselink: '/cask-cdap/',
+        link: '/cask-cdap/',
         label: T.translate('commons.cdap'),
         name: 'cdap',
         icon: 'icon-fist'
       },
       {
-        link: '/cask-hydrator',
+        baselink: '/cask-hydrator/',
+        link: '/cask-hydrator/',
         label: T.translate('commons.hydrator'),
         name: 'hydrator',
         icon: 'icon-hydrator'
       },
       {
-        link: '/cask-tracker',
+        baselink: '/cask-tracker/',
+        link: '/cask-tracker/',
         label: T.translate('commons.tracker'),
         name: 'tracker',
         icon: 'icon-tracker'
@@ -51,6 +56,18 @@ export default class ProductsDrawer extends Component {
       currentChoice,
       products
     };
+  }
+  componentWillMount(){
+    NamespaceStore.subscribe(() => {
+      this.namespace = NamespaceStore.getState().selectedNamespace;
+      let products = this.state.products.map((product) => {
+        product.link = product.baselink + `ns/${this.namespace}`;
+        return product;
+      });
+      this.setState({
+        products
+      });
+    });
   }
   toggle() {
     this.setState({

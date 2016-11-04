@@ -25,6 +25,7 @@ import AdminOverviewPane from '../AdminOverviewPane';
 import AbstractWizard from 'components/AbstractWizard';
 import Redirect from 'react-router/Redirect';
 import Helmet from 'react-helmet';
+import NamespaceStore from 'services/NamespaceStore';
 
 import T from 'i18n-react';
 var shortid = require('shortid');
@@ -86,6 +87,9 @@ class Management extends Component {
         actionType : null
       }
     };
+
+    this.unsub;
+    this.lastAccessedNamespace;
     this.interval = undefined;
     this.clickLeft = this.clickLeft.bind(this);
     this.clickRight = this.clickRight.bind(this);
@@ -96,8 +100,14 @@ class Management extends Component {
 
   componentDidMount(){
     this.openNamespaceWizard();
+    this.lastAccessedNamespace = NamespaceStore.getState().selectedNamespace;
+    this.unsub = NamespaceStore.subscribe(() => {
+      this.lastAccessedNamespace = NamespaceStore.getState().selectedNamespace;
+    });
   }
-
+  componentWillUnmount(){
+    this.unsub();
+  }
   clickLeft() {
     var index = this.applications.indexOf(this.state.application);
     if(index === -1 || index === 0){
@@ -157,9 +167,7 @@ class Management extends Component {
         </li>
       );
     });
-    let lastAccessedNamespace = localStorage.getItem('NS');
-    let redirectUrl = lastAccessedNamespace ? `/ns/${lastAccessedNamespace}` : '/';
-
+    let redirectUrl = this.lastAccessedNamespace ? `/ns/${this.lastAccessedNamespace}` : '/';
     return (
        <div className="management">
         {
