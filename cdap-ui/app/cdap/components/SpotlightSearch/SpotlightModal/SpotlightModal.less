@@ -32,6 +32,43 @@
     padding: 10px 15px;
     border-bottom: 0;
 
+    .close-section{
+      width: 225px;
+
+      .dropdown {
+        display: inline-block;
+        margin-right: 26px;
+
+        .current-page {
+          margin-left: 5px;
+        }
+
+        .fa-caret-down {
+          margin-top: 4px;
+          margin-left: 10px;
+        }
+
+        .dropdown-menu {
+          min-width: 65px;
+          outline: 0;
+        }
+
+        .dropdown-item {
+          border: none;
+          display: block;
+          color: black;
+          background-color: white;
+          width: 100%;
+          text-align: left;
+          outline: 0;
+
+          &:hover {
+            background-color: #2e323b;
+            color: white;
+          }
+        }
+      }
+    }
     .modal-title {
       font-size: 14px;
       font-weight: 500;
@@ -39,7 +76,7 @@
       .search-results-total {
         color: @light-grey;
         font-size: 13px;
-        margin-right: 35px;
+        margin-right: 26px;
       }
 
       span.fa.fa-times { cursor: pointer; }
@@ -48,6 +85,9 @@
 
   .modal-body {
     padding: 0;
+    min-height: 550px;
+    max-height: 550px;
+
     .search-results-item {
       padding: 5px 0;
       margin-right: 0;

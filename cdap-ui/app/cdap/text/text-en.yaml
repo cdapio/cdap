@@ -75,6 +75,7 @@ features:
       filters: Filters
       search-placeholder: Search entities ...
       sort: Sort
+      pagination: Page
       sortOptions:
         nameAsc:
           displayName: A - Z
