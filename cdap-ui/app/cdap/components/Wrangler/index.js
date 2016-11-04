@@ -33,7 +33,9 @@ export default class Wrangler extends Component {
   }
 
   wrangle() {
-    let input = this.wranglerInput.value;
+    // let input = this.wranglerInput.value;
+
+    let input = 'col1,col2,col3\nedwin,1,true,elia,2,3';
 
     let papaConfig = {
       header: this.state.header,
@@ -86,23 +88,30 @@ export default class Wrangler extends Component {
 
     return (
       <div className="wrangler-data">
-        <table className="table">
-          <thead>
-            <tr>
-              { headers.map((head) => <th key={head}>{head}</th>) }
-            </tr>
-          </thead>
+        <div className="col-xs-3 wrangle-transforms">
+          <h4>Actions</h4>
 
-          <tbody>
-            { data.map((row) => {
-              return (
-                <tr key={shortid.generate()}>
-                  { headers.map((head) => <td key={shortid.generate()}>{row[head]}</td>) }
-                </tr>
-              );
-            }) }
-          </tbody>
-        </table>
+          <button className="btn">transform</button>
+        </div>
+        <div className="col-xs-9 wrangle-results">
+          <table className="table">
+            <thead>
+              <tr>
+                { headers.map((head) => <th key={head}>{head}</th>) }
+              </tr>
+            </thead>
+
+            <tbody>
+              { data.map((row) => {
+                return (
+                  <tr key={shortid.generate()}>
+                    { headers.map((head) => <td key={shortid.generate()}>{row[head]}</td>) }
+                  </tr>
+                );
+              }) }
+            </tbody>
+          </table>
+        </div>
       </div>
     );
   }
