@@ -17,18 +17,21 @@
 @entity-card-border: 1px solid #cccccc;
 @jump-button-container-size: 80px;
 
-.home-cards.cask-card {
+.home-cards {
   padding: 0;
   border: @entity-card-border;
   text-align: left;
   border-radius: 0;
+  position: relative;
 
-  .card-header {
-    border-bottom: @entity-card-border;
-    color: white;
+  .cask-card {
+    padding: 0;
+    .card-header {
+      border-bottom: @entity-card-border;
+      color: white;
+    }
+    .card-body { padding: 0; }
   }
-  .card-body { padding: 0; }
-
   .entity-information {
     height: 35px;
     border-bottom: @entity-card-border;

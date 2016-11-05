@@ -25,12 +25,17 @@ import StreamMetrics from './StreamMetrics';
 import classnames from 'classnames';
 import FastActions from 'components/EntityCard/FastActions';
 import JumpButton from 'components/JumpButton';
+import AppOverview from 'components/AppOverview';
 
 require('./EntityCard.less');
 
 export default class EntityCard extends Component {
   constructor(props) {
     super(props);
+    this.state = {
+      overviewMode: false
+    };
+    this.cardRef = null;
   }
 
   renderEntityStatus() {
@@ -65,6 +70,15 @@ export default class EntityCard extends Component {
     );
   }
 
+  toggleOverviewMode() {
+    if (this.props.entity.type !== 'application') {
+      return;
+    }
+    this.setState({
+      overviewMode: !this.state.overviewMode
+    });
+  }
+
   render() {
     const header = (
       <EntityCardHeader
@@ -73,38 +87,74 @@ export default class EntityCard extends Component {
         systemTags={this.props.entity.metadata.metadata.SYSTEM.tags}
       />
     );
-
+    let position = 'left';
+    if (this.cardRef && this.state.overviewMode) {
+      let cardDimension = this.cardRef.getBoundingClientRect();
+      let parentDimension = this.cardRef.parentElement.getBoundingClientRect();
+      let spaceOnLeft = parentDimension.left - cardDimension.left;
+      let spaceOnRight = parentDimension.right - cardDimension.right;
+      let spaceOnTop = parentDimension.top - cardDimension.top;
+      let spaceOnBottom = parentDimension.bottom - cardDimension.bottom;
+      let maxSpace = Math.max(spaceOnLeft, spaceOnRight, spaceOnBottom, spaceOnTop);
+      if (spaceOnLeft === maxSpace) {
+        position = 'left';
+      }
+      if (spaceOnRight === maxSpace) {
+        position = 'right';
+      }
+      if (spaceOnBottom === maxSpace) {
+        position = 'bottom';
+      }
+      if (spaceOnTop === maxSpace) {
+        position = 'top';
+      }
+    }
     return (
-      <Card
-        header={header}
-        cardClass={`home-cards ${this.props.entity.type}`}
+      <div
+        className={classnames('home-cards', this.props.entity.type, this.props.className)}
+        onClick={this.toggleOverviewMode.bind(this)}
+        ref={(ref) => this.cardRef = ref}
       >
-        <div className="entity-information clearfix">
-          <div className="entity-id-container">
-            <h4
-              className={classnames({'with-version': this.props.entity.version})}
-            >
-              {this.props.entity.id}
-            </h4>
-            <small>{this.props.entity.version}</small>
+        <Card header={header} id={`home-cards-${this.props.entity.type}`}>
+          <div className="entity-information clearfix">
+            <div className="entity-id-container">
+              <h4
+                className={classnames({'with-version': this.props.entity.version})}
+              >
+                {this.props.entity.id}
+              </h4>
+              <small>{this.props.entity.version}</small>
+            </div>
+            {this.renderJumpButton()}
           </div>
-          {this.renderJumpButton()}
-        </div>
 
-        {this.renderEntityStatus()}
+          {this.renderEntityStatus()}
 
-        <div className="fast-actions-container">
-          <FastActions
-            entity={this.props.entity}
-            onUpdate={this.props.onUpdate}
-          />
-        </div>
-      </Card>
+          <div className="fast-actions-container">
+            <FastActions
+              entity={this.props.entity}
+              onUpdate={this.props.onUpdate}
+            />
+          </div>
+        </Card>
+        {
+          this.state.overviewMode ?
+            <AppOverview
+              isOpen={this.state.overviewMode}
+              position={position}
+              entity={this.props.entity}
+            />
+          :
+            null
+        }
+      </div>
     );
   }
 }
 
 EntityCard.propTypes = {
   entity: PropTypes.object,
-  onUpdate: PropTypes.func
+  onUpdate: PropTypes.func,
+  className: PropTypes.string,
+  onClick: PropTypes.func
 };
