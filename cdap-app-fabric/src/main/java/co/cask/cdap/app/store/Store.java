@@ -45,6 +45,8 @@ import org.apache.twill.api.RunId;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -98,9 +100,10 @@ public interface Store extends RuntimeStore {
    * @param startTime fetch run history that has started after the startTime in seconds
    * @param endTime   fetch run history that has started before the endTime in seconds
    * @param limit     max number of entries to fetch for this history call
-   * @return          list of logged runs
+   * @return          map of logged runs
    */
-  List<RunRecordMeta> getRuns(ProgramId id, ProgramRunStatus status, long startTime, long endTime, int limit);
+  Map<ProgramRunId, RunRecordMeta> getRuns(ProgramId id, ProgramRunStatus status,
+                                           long startTime, long endTime, int limit);
 
   /**
    * Fetches run records for particular program. Returns only finished runs.
@@ -112,18 +115,26 @@ public interface Store extends RuntimeStore {
    * @param endTime   fetch run history that has started before the endTime in seconds
    * @param limit     max number of entries to fetch for this history call
    * @param filter    predicate to be passed to filter the records
-   * @return          list of logged runs
+   * @return          map of logged runs
    */
-  List<RunRecordMeta> getRuns(ProgramId id, ProgramRunStatus status, long startTime, long endTime, int limit,
-                              Predicate<RunRecordMeta> filter);
+  Map<ProgramRunId, RunRecordMeta> getRuns(ProgramId id, ProgramRunStatus status, long startTime, long endTime,
+                                           int limit, Predicate<RunRecordMeta> filter);
 
   /**
    * Fetches the run records for the particular status.
    * @param status  status of the program running/completed/failed or all
    * @param filter  predicate to be passed to filter the records
-   * @return        list of logged runs
+   * @return        map of logged runs
    */
-  List<RunRecordMeta> getRuns(ProgramRunStatus status, Predicate<RunRecordMeta> filter);
+  Map<ProgramRunId, RunRecordMeta> getRuns(ProgramRunStatus status, Predicate<RunRecordMeta> filter);
+
+
+  /**
+   * Fetches the run records for given ProgramRunIds.
+   * @param programRunIds  list of program RunIds to match against
+   * @return        map of logged runs
+   */
+  Map<ProgramRunId, RunRecordMeta> getRuns(Set<ProgramRunId> programRunIds);
 
   /**
    * Fetches the run record for particular run of a program.

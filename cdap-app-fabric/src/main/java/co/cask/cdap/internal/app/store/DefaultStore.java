@@ -82,6 +82,8 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -371,29 +373,40 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public List<RunRecordMeta> getRuns(final ProgramId id, final ProgramRunStatus status,
+  public Map<ProgramRunId, RunRecordMeta> getRuns(final ProgramId id, final ProgramRunStatus status,
                                      final long startTime, final long endTime, final int limit) {
     return getRuns(id, status, startTime, endTime, limit, null);
   }
 
   @Override
-  public List<RunRecordMeta> getRuns(final ProgramId id, final ProgramRunStatus status,
+  public Map<ProgramRunId, RunRecordMeta> getRuns(final ProgramId id, final ProgramRunStatus status,
                                      final long startTime, final long endTime, final int limit,
                                      @Nullable final Predicate<RunRecordMeta> filter) {
-    return txExecute(transactional, new TxCallable<List<RunRecordMeta>>() {
+    return txExecute(transactional, new TxCallable<Map<ProgramRunId, RunRecordMeta>>() {
       @Override
-      public List<RunRecordMeta> call(DatasetContext context) throws Exception {
+      public Map<ProgramRunId, RunRecordMeta> call(DatasetContext context) throws Exception {
         return getAppMetadataStore(context).getRuns(id, status, startTime, endTime, limit, filter);
       }
     });
   }
 
   @Override
-  public List<RunRecordMeta> getRuns(final ProgramRunStatus status, final Predicate<RunRecordMeta> filter) {
-    return txExecute(transactional, new TxCallable<List<RunRecordMeta>>() {
+  public Map<ProgramRunId, RunRecordMeta> getRuns(final ProgramRunStatus status,
+                                                  final Predicate<RunRecordMeta> filter) {
+    return txExecute(transactional, new TxCallable<Map<ProgramRunId, RunRecordMeta>>() {
       @Override
-      public List<RunRecordMeta> call(DatasetContext context) throws Exception {
+      public Map<ProgramRunId, RunRecordMeta> call(DatasetContext context) throws Exception {
         return getAppMetadataStore(context).getRuns(status, filter);
+      }
+    });
+  }
+
+  @Override
+  public Map<ProgramRunId, RunRecordMeta> getRuns(final Set<ProgramRunId> programRunIds) {
+    return txExecute(transactional, new TxCallable<Map<ProgramRunId, RunRecordMeta>>() {
+      @Override
+      public Map<ProgramRunId, RunRecordMeta> call(DatasetContext context) throws Exception {
+        return getAppMetadataStore(context).getRuns(programRunIds);
       }
     });
   }
