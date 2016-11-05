@@ -38,6 +38,7 @@ public class PartitionedFileSetArguments {
   public static final String OUTPUT_PARTITION_KEY_PREFIX = "output.partition.key.";
   public static final String OUTPUT_PARTITION_METADATA_PREFIX = "output.partition.metadata.";
   public static final String DYNAMIC_PARTITIONER_CLASS_NAME = "output.dynamic.partitioner.class.name";
+  public static final String DYNAMIC_PARTITIONER_ALLOW_CONCURRENCY = "output.dynamic.partitioner.allow.concurrency";
   public static final String INPUT_PARTITION_FILTER = "input.partition.filter";
 
   private static final Gson GSON =
@@ -238,5 +239,43 @@ public class PartitionedFileSetArguments {
    */
   public static String getDynamicPartitioner(Map<String, String> arguments) {
     return arguments.get(DYNAMIC_PARTITIONER_CLASS_NAME);
+  }
+
+  /**
+   * Sets whether concurrent writers are allowed when using DynamicPartitioner.
+   * When concurrency is not allowed, the writer for a particular {@link PartitionKey} is closed when a new partition
+   * key is encountered. If any partition key is encountered for which a corresponding writer has already been closed,
+   * the job's Outputformat will throw an IllegalArgumentException.
+   * Therefore, this should only be used if the data encountered in a task is grouped by the partition key returned
+   * by the DynamicPartitioner.
+   *
+   * @param arguments arguments the runtime arguments to get the class from
+   * @param allowConcurrency whether to allow multiple partition writers concurrently
+   */
+  public static void setDynamicPartitionerConcurrency(Map<String, String> arguments, boolean allowConcurrency) {
+    if (getDynamicPartitioner(arguments) == null) {
+      throw new IllegalArgumentException("Cannot define a setting of DynamicPartitioner, without first setting " +
+                                           "a DynamicPartitioner.");
+    }
+    arguments.put(DYNAMIC_PARTITIONER_ALLOW_CONCURRENCY, Boolean.toString(allowConcurrency));
+  }
+
+  /**
+   * Determines whether concurrent writers are allowed in the case of DynamicPartitioner.
+   *
+   * @param arguments arguments the runtime arguments to get the class from
+   * @return whether concurrent writers are allowed in the case of DynamicPartitioner.
+   */
+  public static boolean isDynamicPartitionerConcurrencyAllowed(Map<String, String> arguments) {
+    if (getDynamicPartitioner(arguments) == null) {
+      throw new IllegalArgumentException("Cannot retrieve a setting of DynamicPartitioner, without first setting " +
+                                           "a DynamicPartitioner.");
+    }
+    String concurrencyAllowed = arguments.get(DYNAMIC_PARTITIONER_ALLOW_CONCURRENCY);
+    if (concurrencyAllowed == null) {
+    // default to true
+      return true;
+    }
+    return Boolean.valueOf(concurrencyAllowed);
   }
 }
