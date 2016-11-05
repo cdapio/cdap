@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -94,7 +94,7 @@ public class ServiceClientTestRun extends ClientTestBase {
     serviceClient = new ServiceClient(clientConfig);
     programClient = new ProgramClient(clientConfig);
     try {
-      serviceClient.getAvailability(service);
+      serviceClient.checkAvailability(service);
       Assert.fail();
     } catch (NotFoundException ex) {
       // Expected since the app has not been deployed yet
@@ -102,7 +102,7 @@ public class ServiceClientTestRun extends ClientTestBase {
 
     appClient.deploy(namespace, createAppJarFile(FakeApp.class));
     try {
-      serviceClient.getAvailability(service);
+      serviceClient.checkAvailability(service);
       Assert.fail();
     } catch (ServiceUnavailableException ex) {
       // Expected since the service has not been started
@@ -141,8 +141,7 @@ public class ServiceClientTestRun extends ClientTestBase {
 
   @Test
   public void testActiveStatus() throws Exception {
-    String responseBody = serviceClient.getAvailability(service);
-    Assert.assertTrue(responseBody.contains("Service is available"));
+    serviceClient.checkAvailability(service);
   }
 
   @Test

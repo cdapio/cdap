@@ -16,10 +16,13 @@
 
 package co.cask.cdap.explore.jdbc;
 
+import co.cask.cdap.common.ServiceUnavailableException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.FixedAddressExploreClient;
+import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
@@ -69,8 +72,12 @@ public class ExploreDriver implements Driver {
 
     ExploreClient exploreClient =
       new FixedAddressExploreClient(params.getHost(), params.getPort(), authToken, sslEnabled, verifySSLCert);
-    if (!exploreClient.isServiceAvailable()) {
-      throw new SQLException("Cannot connect to " + url + ", service unavailable");
+    try {
+      exploreClient.ping();
+    } catch (UnauthenticatedException e) {
+      throw new SQLException("Cannot connect to " + url + ", not authenticated.");
+    } catch (ServiceUnavailableException | ExploreException e) {
+      throw new SQLException("Cannot connect to " + url + ", service not available.");
     }
     return new ExploreConnection(exploreClient, namespace, params);
   }

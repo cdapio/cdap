@@ -98,7 +98,13 @@ public class ExploreDisabledTest {
     datasetService.startAndWait();
 
     exploreClient = injector.getInstance(DiscoveryExploreClient.class);
-    Assert.assertFalse(exploreClient.isServiceAvailable());
+    try {
+      exploreClient.ping();
+      Assert.fail("Expected not to be able to ping explore client.");
+    } catch (Exception e) {
+      Assert.assertTrue(e.getMessage().contains("Cannot discover service " +
+                                                  Constants.Service.EXPLORE_HTTP_USER_SERVICE));
+    }
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
 

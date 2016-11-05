@@ -19,6 +19,8 @@ package co.cask.cdap.explore.client;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.common.ServiceUnavailableException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.explore.service.Explore;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.HandleNotFoundException;
@@ -29,6 +31,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
+import co.cask.common.http.HttpResponse;
 import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -47,6 +50,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -78,8 +82,8 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
-  public boolean isServiceAvailable() {
-    return isAvailable();
+  public void ping() throws UnauthenticatedException, ServiceUnavailableException, ExploreException {
+    super.ping();
   }
 
   @Override
