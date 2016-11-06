@@ -88,6 +88,7 @@ export default class EntityCard extends Component {
       />
     );
     let position = 'left';
+    console.log('Overview mode', this.state.overviewMode, this.props.entity.id);
     if (this.cardRef && this.state.overviewMode) {
       let cardDimension = this.cardRef.getBoundingClientRect();
       let parentDimension = this.cardRef.parentElement.getBoundingClientRect();

@@ -16,14 +16,20 @@
 
 import React, {Component, PropTypes} from 'react';
 import classnames from 'classnames';
+import {MyAppApi} from 'api/app';
+import {objectQuery} from 'services/helpers';
 require('./AppOverview.less');
+import OverviewTabConfig from './OverviewTabConfig';
+import ConfigurableTab from 'components/ConfigurableTab';
+import ApplicationMetrics from 'components/EntityCard/ApplicationMetrics';
 
 export default class AppOverview extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      entity: {},
-      dimension: null
+      entity: this.props.entity,
+      entityDetail: {},
+      dimension: {}
     };
   }
   componentWillReceiveProps(newProps) {
@@ -34,38 +40,73 @@ export default class AppOverview extends Component {
     }
   }
   componentDidMount() {
-    let width = this.overviewRef.getBoundingClientRect();
-    if (width) {
+    let {right, left, width} = this.overviewRef.parentElement.getBoundingClientRect();
+    if (right && left) {
       this.setState({
         dimension: {
-          width
+          right,
+          left: ( left < width ? width: left)
         }
       });
     }
+    let namespace = objectQuery(this.props.entity, 'metadata', 'entityId', 'id', 'namespace', 'id');
+    let appId = this.props.entity.id;
+    MyAppApi
+      .get({
+        namespace,
+        appId
+      })
+      .subscribe(res => {
+        this.setState({
+          entityDetail: res
+        });
+      });
   }
   render() {
     let style={};
-
+    let {left, right} = this.state.dimension;
     if (this.overviewRef) {
       if (this.props.position === 'right') {
-        style.left = this.state.dimension.width;
+        style.left = 310;
+        style.width = `calc(100vw - ${right + 30}px)`; // factoring the container-fluid on body
       }
       if (this.props.position === 'left') {
-        style.right = this.state.dimension.width;
+        style.right = 310;
+        style.width = `calc(100vw - ${left + 30}px)`; //factoring the container-fluid on body
       }
+      console.log('style: ', style);
     }
     return (
       <div
         className={classnames("entity-overview", this.props.position)}
         ref={ref=> this.overviewRef = ref}
+        style={style}
+        onClick={(e) => e.stopPropagation()}
       >
         {
-          this.state.dimension ?
-            <div className="panel panel-default">
-              <div className="panel-heading">Panel heading without title</div>
-              <div className="panel-body">
-                Position: {this.props.position}
-                {JSON.stringify(this.props.entity, null, 4)}
+          Object.keys(this.state.entityDetail).length ?
+            <div>
+              <div className="overview-header clearfix">
+                <span>
+                  {this.state.entityDetail.name}
+                </span>
+                <span>
+                  {this.state.entityDetail.artifact.name}
+                  <small>
+                    Version: {this.state.entityDetail.artifact.version}
+                  </small>
+                </span>
+                <span className="text-right">
+                  <i className="fa fa-info fa-lg"></i>
+                  <i className="fa fa-arrows-alt"></i>
+                  <i className="fa fa-times fa-lg"></i>
+                </span>
+              </div>
+              <div className="overview-content">
+                <ApplicationMetrics entity={this.props.entity}/>
+                <ConfigurableTab
+                  tabConfig={OverviewTabConfig}
+                />
               </div>
             </div>
           :

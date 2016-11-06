@@ -13,19 +13,76 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+@import '../../styles/variables.less';
 
 .entity-overview {
   position: absolute;
   z-index: 1;
+  border: 1px solid #ccc;
+  background: white;
 
   &.right,
   &.left {
     top: 0;
   }
-  &.right {
-    left: 310px;
+
+  .overview-header {
+    border-bottom: 1px solid #ccc;
+    background: @navbar-bg;
+    color: white;
+    font-size: 15px;
+    display: flex;
+
+    span {
+      display: flex;
+      width: 40%;
+      padding: 10px;
+      border: 0;
+      border-right: 1px solid;
+      padding: 5px 10px;
+      &:nth-child(2) {
+        flex-direction: column;
+        small {
+          font-size: 70%;
+        }
+      }
+      &:last-child {
+        border-right: 0;
+        width: 20%;
+        justify-content: flex-end;
+      }
+    }
+    i {
+      line-height: inherit;
+      &:nth-child(2) {
+        margin: 0 20px;
+        line-height: 2;
+      }
+    }
   }
-  &.left {
-    right: 310px;
+  .overview-content {
+    position: relative;
+    .cask-tabs {
+      &.horizontal {
+        > div:first-child {
+          &.cask-tab-headers {
+            height: 50px;
+            line-height: 50px;
+            .cask-tab-head {
+              padding: 0 10px;
+            }
+          }
+        }
+      }
+    }
+    .metrics-container {
+      position: absolute;
+      border-bottom: 0;
+      right: 0;
+      .metric-item {
+        border: 0;
+        padding: 5px 20px;
+      }
+    }
   }
 }

@@ -56,6 +56,10 @@ export default class EntityCardHeader extends Component {
   }
 }
 
+EntityCardHeader.defaultProps = {
+  systemTags: []
+};
+
 EntityCardHeader.propTypes = {
   entity: PropTypes.object,
   systemTags: PropTypes.array,
