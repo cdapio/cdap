@@ -26,12 +26,12 @@ import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.TestBase;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
-import jline.internal.InputStreamReader;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.Connection;
@@ -88,7 +88,7 @@ public class SportResultsTest extends TestBase {
         location = file;
       }
     }
-    BufferedReader reader = new BufferedReader(new InputStreamReader(location.getInputStream()));
+    BufferedReader reader = new BufferedReader(new InputStreamReader(location.getInputStream(), "UTF-8"));
 
     // validate each line
     Map<String, String[]> expected = ImmutableMap.of(
