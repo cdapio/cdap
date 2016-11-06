@@ -15,12 +15,10 @@
  */
 
 import React, {Component, PropTypes} from 'react';
-import { Dropdown, DropdownMenu } from 'reactstrap';
 import T from 'i18n-react';
 import classnames from 'classnames';
 require('./ProductsDropdown.less');
 import head from 'lodash/head';
-import shortid from 'shortid';
 
 export default class ProductsDrawer extends Component {
   constructor(props) {
@@ -59,53 +57,60 @@ export default class ProductsDrawer extends Component {
   }
   render() {
     return (
-      <Dropdown
-        isOpen={this.state.productsDropdown}
-        toggle={this.toggle.bind(this)}
-      >
-        <div
-          className={classnames("current-product", this.state.currentChoice.name, {'open': this.state.productsDropdown})}
-          onClick={this.toggle.bind(this)}
-        >
-          <span className={classnames("fa", this.state.currentChoice.icon)}></span>
-          <span className="product-name">{this.state.currentChoice.label}</span>
+      <div>
+        <div className="brand-header"
+             onClick={this.toggle.bind(this)}>
+          <div className="navbar-brand">
+            <div className={classnames("brand-icon text-center", this.state.currentChoice.name)}>
+              <span className={classnames("fa", this.state.currentChoice.icon)}></span>
+            </div>
+          </div>
+          <div className="menu-item product-title">
+            <span>{this.state.currentChoice.label}</span>
+          </div>
         </div>
-        <DropdownMenu>
-          {
-            this.state
-              .products
-              .filter(product => product.name !== this.state.currentChoice.name)
-              .map(product => {
-                return (
-                  <div
-                    className="dropdown-item"
-                    key={shortid.generate()}
-                  >
-                    <a
-                      className={classnames("product-link", product.name)}
-                      href={product.link}
-                    >
-                      <span className={classnames("fa", product.icon)}></span>
-                      <span>{product.label}</span>
-                    </a>
-                  </div>
-                );
-              })
-          }
-        </DropdownMenu>
+
         {
           this.state.productsDropdown ?
             (
-              <div
-                className="products-backdrop"
-                onClick={this.toggle.bind(this)}
-              >
+              <div className="display-container"
+                   onClick={this.toggle.bind(this)}>
+                <div className="sidebar pull-right">
+                  <a href="/cask-cdap"
+                     className="brand sidebar-item top">
+                    <div className="brand-icon text-center cdap">
+                      <span className="icon-fist"></span>
+                    </div>
+                    <div className="product-name">
+                      <span>{T.translate('commons.cdap')}</span>
+                    </div>
+                  </a>
+                  <h5> Extensions: </h5>
+                  <a href="/cask-hydrator"
+                     className="brand sidebar-item">
+                      <div className="brand-icon text-center hydrator">
+                        <span className="icon-hydrator"></span>
+                      </div>
+                      <div className="product-name">
+                        <span>{T.translate('commons.hydrator')}</span>
+                      </div>
+                   </a>
+                   <a href="/cask-tracker"
+                      className="brand sidebar-item">
+                       <div className="brand-icon text-center tracker">
+                         <span className="icon-tracker"></span>
+                       </div>
+                       <div className="product-name">
+                         <span>{T.translate('commons.tracker')}</span>
+                       </div>
+                    </a>
+                </div>
               </div>
             )
           :
             null
         }
-      </Dropdown>
+      </div>
     );
   }
 }

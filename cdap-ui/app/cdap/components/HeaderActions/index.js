@@ -32,6 +32,7 @@ export default class HeaderActions extends Component {
     this.state = {
       settingsOpen : false,
       name : NamespaceStore.getState().username,
+      environment: window.CDAP_CONFIG.isEnterprise ? 'Distributed' : 'Standalone'
     };
     this.logout = this.logout.bind(this);
     this.toggleSettingsDropdown = this.toggleSettingsDropdown.bind(this);
@@ -77,8 +78,17 @@ export default class HeaderActions extends Component {
     }
 
     return (
-      <div className="header-actions">
-        <ul className="navbar-list pull-right">
+      <div className="header-actions pull-right">
+        <div className="environment">
+          <span>{this.state.environment}</span>
+          {
+            window.CDAP_CONFIG.securityEnabled ?
+              <span className="icon-lock_close"></span>
+            :
+              <span className="icon-lock_open"></span>
+          }
+        </div>
+        <ul className="pull-right">
           <div className="navbar-item">
             <SpotlightSearch />
           </div>

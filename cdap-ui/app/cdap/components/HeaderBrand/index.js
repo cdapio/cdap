@@ -21,7 +21,7 @@ export default function HeaderBrand () {
   return (
     <div className="brand-header">
       <a
-        className="navbar-brand"
+        className="brand-logo"
         href=""
       >
         <div className="company-logo"></div>
