@@ -80,6 +80,9 @@ export default class EntityCard extends Component {
   }
 
   render() {
+    if (!this.props.entity) {
+      return null;
+    }
     const header = (
       <EntityCardHeader
         className={this.props.entity.type}
@@ -88,26 +91,31 @@ export default class EntityCard extends Component {
       />
     );
     let position = 'left';
-    console.log('Overview mode', this.state.overviewMode, this.props.entity.id);
+    let parentdimension = {};
     if (this.cardRef && this.state.overviewMode) {
       let cardDimension = this.cardRef.getBoundingClientRect();
       let parentDimension = this.cardRef.parentElement.getBoundingClientRect();
-      let spaceOnLeft = parentDimension.left - cardDimension.left;
+      let spaceOnLeft = cardDimension.left - parentDimension.left;
       let spaceOnRight = parentDimension.right - cardDimension.right;
-      let spaceOnTop = parentDimension.top - cardDimension.top;
+      let spaceOnTop = cardDimension.top - parentDimension.top;
       let spaceOnBottom = parentDimension.bottom - cardDimension.bottom;
       let maxSpace = Math.max(spaceOnLeft, spaceOnRight, spaceOnBottom, spaceOnTop);
-      if (spaceOnLeft === maxSpace) {
-        position = 'left';
-      }
-      if (spaceOnRight === maxSpace) {
-        position = 'right';
-      }
-      if (spaceOnBottom === maxSpace) {
+      parentdimension = parentDimension;
+      if (maxSpace < 330) {
         position = 'bottom';
-      }
-      if (spaceOnTop === maxSpace) {
-        position = 'top';
+      } else {
+        if (spaceOnLeft === maxSpace) {
+          position = 'left';
+        }
+        if (spaceOnRight === maxSpace) {
+          position = 'right';
+        }
+        if (spaceOnBottom === maxSpace) {
+          position = 'bottom';
+        }
+        if (spaceOnTop === maxSpace) {
+          position = 'top';
+        }
       }
     }
     return (
@@ -143,6 +151,7 @@ export default class EntityCard extends Component {
             <AppOverview
               isOpen={this.state.overviewMode}
               position={position}
+              parentdimension={parentdimension}
               entity={this.props.entity}
             />
           :
@@ -152,6 +161,10 @@ export default class EntityCard extends Component {
     );
   }
 }
+
+EntityCard.defaultProps = {
+  onClick: () => {}
+};
 
 EntityCard.propTypes = {
   entity: PropTypes.object,
