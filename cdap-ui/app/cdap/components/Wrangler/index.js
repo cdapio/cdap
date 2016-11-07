@@ -18,6 +18,7 @@ import React, { Component } from 'react';
 import Papa from 'papaparse';
 import shortid from 'shortid';
 import classnames from 'classnames';
+import {inferColumn} from 'components/Wrangler/type-inference';
 
 require('./Wrangler.less');
 
@@ -31,6 +32,7 @@ export default class Wrangler extends Component {
       skipEmptyLines: false,
       originalData: [],
       headersList: [],
+      columnTypes: {},
       data: [],
       history: [],
       activeSelection: null,
@@ -44,7 +46,7 @@ export default class Wrangler extends Component {
   wrangle() {
     // let input = this.wranglerInput.value;
 
-    let input = 'col1 hehe,col2,col3\nedwin elia,1,true\nelia edwin,2,3';
+    let input = 'col1 hehe,col2,col3\nedwin elia,1,true\nelia edwin,2,3\ndoctor strange,10,50\nThor Odinson,1000,2';
 
     let papaConfig = {
       header: this.state.header,
@@ -75,8 +77,15 @@ export default class Wrangler extends Component {
 
     let headers = Object.keys(formattedData[0]);
 
+    let columnTypes = {};
+    headers.forEach((column) => {
+      columnTypes[column] = inferColumn(formattedData, column);
+    });
+
+
     this.setState({
       headersList: headers,
+      columnTypes: columnTypes,
       originalData: formattedData,
       data: formattedData,
       history: [],
@@ -96,7 +105,6 @@ export default class Wrangler extends Component {
   }
 
   columnClickHandler(column) {
-    console.log('column', column);
     this.setState({
       activeSelectionType: 'COLUMN',
       activeSelection: column
@@ -279,10 +287,14 @@ export default class Wrangler extends Component {
 
     let headers = Object.keys(formattedData[0]);
 
+    let columnTypes = this.state.columnTypes;
+    delete columnTypes[columnToDrop];
+
     this.setState({
       activeSelection: null,
       activeSelectionType: null,
       headersList: headers,
+      columnTypes: columnTypes,
       data: formattedData,
       history: history
     });
@@ -318,8 +330,13 @@ export default class Wrangler extends Component {
       payload: [originalName, newName]
     });
 
+    let columnTypes = this.state.columnTypes;
+    columnTypes[newName] = columnTypes[originalName];
+    delete columnTypes[originalName];
+
     this.setState({
       headersList: headers,
+      columnTypes: columnTypes,
       data: formattedData,
       isRename: false,
       activeSelection: newName,
@@ -360,6 +377,10 @@ export default class Wrangler extends Component {
     headers.splice(index+1, 0, firstSplit);
     headers.splice(index+2, 0, secondSplit);
 
+    let columnTypes = this.state.columnTypes;
+    columnTypes[firstSplit] = inferColumn(formattedData, firstSplit);
+    columnTypes[secondSplit] = inferColumn(formattedData, secondSplit);
+
     let history = this.state.history;
     history.push({
       action: 'SPLIT',
@@ -369,6 +390,7 @@ export default class Wrangler extends Component {
     this.setState({
       isSplit: false,
       headersList: headers,
+      columnTypes: columnTypes,
       data: formattedData,
       history: history,
     });
@@ -401,6 +423,9 @@ export default class Wrangler extends Component {
     const index = headers.indexOf(columnToMerge);
     headers.splice(index+1, 0, columnName);
 
+    let columnTypes = this.state.columnTypes;
+    columnTypes[columnName] = inferColumn(formattedData, columnName);
+
     let history = this.state.history;
     history.push({
       action: 'MERGE',
@@ -410,6 +435,7 @@ export default class Wrangler extends Component {
     this.setState({
       isMerge: false,
       headersList: headers,
+      columnTypes: columnTypes,
       data: formattedData,
       history: history
     });
@@ -465,7 +491,7 @@ export default class Wrangler extends Component {
                           active: this.state.activeSelection === head
                         })}
                       >
-                        {head}
+                        {head} ({this.state.columnTypes[head]})
                       </th>
                     );
                   })
