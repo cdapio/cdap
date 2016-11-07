@@ -285,7 +285,8 @@ export default class Wrangler extends Component {
       payload: [columnToDrop]
     });
 
-    let headers = Object.keys(formattedData[0]);
+    let headers = this.state.headersList;
+    headers.splice(headers.indexOf(columnToDrop), 1);
 
     let columnTypes = this.state.columnTypes;
     delete columnTypes[columnToDrop];

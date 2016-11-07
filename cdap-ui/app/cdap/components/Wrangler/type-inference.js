@@ -22,7 +22,7 @@ import sortBy from 'lodash/sortBy';
  **/
 export function inferType(val) {
   if (typeof val !== 'string') {
-    throw 'Input is not a string';
+    throw 'Input is not a string: ' + typeof val;
   }
 
   // check if boolean
