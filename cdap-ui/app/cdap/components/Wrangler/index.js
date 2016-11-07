@@ -30,6 +30,7 @@ export default class Wrangler extends Component {
       dynamicTyping: false,
       skipEmptyLines: false,
       originalData: [],
+      headersList: [],
       data: [],
       history: [],
       activeSelection: null,
@@ -72,7 +73,10 @@ export default class Wrangler extends Component {
       formattedData = papa.data;
     }
 
+    let headers = Object.keys(formattedData[0]);
+
     this.setState({
+      headersList: headers,
       originalData: formattedData,
       data: formattedData,
       history: [],
@@ -273,9 +277,12 @@ export default class Wrangler extends Component {
       payload: [columnToDrop]
     });
 
+    let headers = Object.keys(formattedData[0]);
+
     this.setState({
       activeSelection: null,
       activeSelectionType: null,
+      headersList: headers,
       data: formattedData,
       history: history
     });
@@ -302,6 +309,9 @@ export default class Wrangler extends Component {
       return row;
     });
 
+    let headers = this.state.headersList;
+    headers[headers.indexOf(originalName)] = newName;
+
     let history = this.state.history;
     history.push({
       action: 'RENAME',
@@ -309,6 +319,7 @@ export default class Wrangler extends Component {
     });
 
     this.setState({
+      headersList: headers,
       data: formattedData,
       isRename: false,
       activeSelection: newName,
@@ -344,6 +355,11 @@ export default class Wrangler extends Component {
       return row;
     });
 
+    let headers = this.state.headersList;
+    let index = headers.indexOf(columnToSplit);
+    headers.splice(index+1, 0, firstSplit);
+    headers.splice(index+2, 0, secondSplit);
+
     let history = this.state.history;
     history.push({
       action: 'SPLIT',
@@ -352,6 +368,7 @@ export default class Wrangler extends Component {
 
     this.setState({
       isSplit: false,
+      headersList: headers,
       data: formattedData,
       history: history,
     });
@@ -380,6 +397,10 @@ export default class Wrangler extends Component {
       return row;
     });
 
+    let headers = this.state.headersList;
+    const index = headers.indexOf(columnToMerge);
+    headers.splice(index+1, 0, columnName);
+
     let history = this.state.history;
     history.push({
       action: 'MERGE',
@@ -388,6 +409,7 @@ export default class Wrangler extends Component {
 
     this.setState({
       isMerge: false,
+      headersList: headers,
       data: formattedData,
       history: history
     });
@@ -408,13 +430,12 @@ export default class Wrangler extends Component {
   }
 
 
-
   renderResultTable() {
     if (this.state.data.length === 0) { return null; }
 
     const data = this.state.data;
 
-    let headers = Object.keys(data[0]);
+    let headers = this.state.headersList;
 
     return (
       <div className="wrangler-data row">
