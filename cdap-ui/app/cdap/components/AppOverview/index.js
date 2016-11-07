@@ -22,6 +22,7 @@ require('./AppOverview.less');
 import OverviewTabConfig from './OverviewTabConfig';
 import ConfigurableTab from 'components/ConfigurableTab';
 import ApplicationMetrics from 'components/EntityCard/ApplicationMetrics';
+import shortid from 'shortid';
 
 export default class AppOverview extends Component {
   constructor(props) {
@@ -30,6 +31,11 @@ export default class AppOverview extends Component {
       entity: this.props.entity,
       entityDetail: {},
       dimension: {}
+    };
+  }
+  getChildContext() {
+    return {
+      entity: this.state.entityDetail
     };
   }
   componentWillReceiveProps(newProps) {
@@ -56,15 +62,45 @@ export default class AppOverview extends Component {
         namespace,
         appId
       })
-      .subscribe(res => {
-        this.setState({
-          entityDetail: res
+      .map(entityDetail => {
+        let programs = entityDetail.programs.map(prog => {
+          prog.uniqueId = shortid.generate();
+          return prog;
         });
+        let datasets = entityDetail.datasets.map(dataset => {
+          dataset.entityId = {
+            id: {
+              instanceId: dataset.name
+            },
+            type: 'datasetinstance'
+          };
+          dataset.uniqueId = shortid.generate();
+          return dataset;
+        });
+
+        let streams = entityDetail.streams.map(stream => {
+          stream.entityId = {
+            id: {
+              streamName: stream.name
+            },
+            type: 'stream'
+          };
+          stream.uniqueId = shortid.generate();
+          return stream;
+        });
+        entityDetail.streams = streams;
+        entityDetail.datasets = datasets;
+        entityDetail.programs = programs;
+        return entityDetail;
+      })
+      .subscribe(entityDetail => {
+        this.setState({ entityDetail });
       });
   }
   render() {
     let style={};
     let {left, right} = this.state.dimension;
+    let {right: parentRight} = this.props.parentdimension;
     if (this.overviewRef) {
       if (this.props.position === 'right') {
         style.left = 310;
@@ -72,9 +108,12 @@ export default class AppOverview extends Component {
       }
       if (this.props.position === 'left') {
         style.right = 310;
-        style.width = `calc(100vw - ${left + 30}px)`; //factoring the container-fluid on body
+        style.width = `calc(100vw - ${(parentRight - left) + 30 + 20}px)`; // factoring the container-fluid on body
       }
-      console.log('style: ', style);
+      if (this.props.position === 'bottom') {
+        style.right = 0;
+        style.width = left + 300 - 30;
+      }
     }
     return (
       <div
@@ -120,6 +159,10 @@ AppOverview.defaultPropTypes = {
   position: 'left'
 };
 
+AppOverview.childContextTypes = {
+  entity: PropTypes.object
+};
+
 AppOverview.propTypes = {
   entity: PropTypes.shape({
     id: PropTypes.string,
@@ -128,6 +171,12 @@ AppOverview.propTypes = {
     metadata: PropTypes.object, // FIXME: Shouldn't be an object
     icon: PropTypes.string,
     isHydrator: PropTypes.bool
+  }),
+  parentdimension: PropTypes.shape({
+    left: PropTypes.number,
+    right: PropTypes.number,
+    bottom: PropTypes.number,
+    top: PropTypes.number
   }),
   position: PropTypes.oneOf([
     'left',

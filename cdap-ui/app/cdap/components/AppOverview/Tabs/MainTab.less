@@ -14,26 +14,11 @@
  * the License.
  */
 
-import React from 'react';
-import MainTab from 'components/AppOverview/Tabs/MainTab';
-import DatasetsTab from 'components/AppOverview/Tabs/DatasetsTab';
-
-const OverviewTabConfig = {
-  defaultTab: 1,
-  layout: 'horizontal',
-  tabs: [
-    {
-      id: 1,
-      icon: '',
-      name: 'Main',
-      content: <MainTab />
-    },
-    {
-      id: 3,
-      icon: '',
-      name: 'Dataset',
-      content: <DatasetsTab />
-    }
-  ]
-};
-export default OverviewTabConfig;
+.app-overview-main-tab {
+  padding: 10px;
+  .home-cards {
+    display: inline-block;
+    margin: 10px 10px 10px 0;
+    width: 300px;
+  }
+}

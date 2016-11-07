@@ -73,15 +73,26 @@
             }
           }
         }
+        .tab-content {
+          .tab-pane {
+            .metrics-container {
+              position: static;
+            }
+          }
+        }
+      }
+    }
+    > .metrics-container {
+      position: absolute;
+      right: 0;
+      border-bottom: 0;
+      .metric-item {
+        padding: 5px 20px;
       }
     }
     .metrics-container {
-      position: absolute;
-      border-bottom: 0;
-      right: 0;
       .metric-item {
         border: 0;
-        padding: 5px 20px;
       }
     }
   }
