@@ -14,23 +14,26 @@
  * the License.
  */
 
-.entity-card-header {
-  padding-left: 10px;
-  width: 100%;
-  h4 {
-    line-height: 15px;
-    margin-top: 5px;
-    margin-bottom: 5px;
-    font-size: 13px;
+import React from 'react';
+import MainTab from 'components/AppOverview/Tabs/MainTab';
+import DatasetsTab from 'components/AppOverview/Tabs/DatasetsTab';
 
-    span { vertical-align: middle; }
-  }
-
-  .entity-type { margin-left: 5px; }
-  &.artifact { background-color: #bdc3c7; }
-  &.application { background-color: #ff6600; }
-  &.datasetinstance { background-color: #27ae60; }
-  &.stream { background-color: #3498db; }
-  &.view { background-color: #1abc9c; }
-  &.program { background-color: #2c3e50; }
-}
+const OverviewTabConfig = {
+  defaultTab: 1,
+  layout: 'horizontal',
+  tabs: [
+    {
+      id: 1,
+      icon: '',
+      name: 'Main',
+      content: <MainTab />
+    },
+    {
+      id: 3,
+      icon: '',
+      name: 'Dataset',
+      content: <DatasetsTab />
+    }
+  ]
+};
+export default OverviewTabConfig;

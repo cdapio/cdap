@@ -369,69 +369,35 @@ class Home extends Component {
     let bodyContent;
 
     if(this.state.loading){
-      entitiesToBeRendered = loading;
-
-      bodyContent = (
-        <div className="entity-list">
-            <div className="entities-container">
-              <ReactCSSTransitionGroup
-                transitionName=""
-                transitionEnterTimeout={200}
-                transitionLeaveTimeout={200}
-              >
-                {entitiesToBeRendered}
-              </ReactCSSTransitionGroup>
-            </div>
-        </div>
-      );
-
+      bodyContent = loading;
     } else if(this.state.entities.length === 0 || this.state.entityErr) {
       entitiesToBeRendered = empty;
 
       bodyContent = (
-        <div className="entity-list">
-          <div className="entities-container">
-            {entitiesToBeRendered}
-          </div>
+        <div className="entities-container">
+          {entitiesToBeRendered}
         </div>
       );
 
     } else {
-      entitiesToBeRendered = this.state.entities.map(
+      bodyContent = this.state.entities.map(
         (entity) => {
           return (
-            <div
+            <EntityCard
               className={
                 classNames('entity-card-container',
                   { active: entity.uniqueId === this.state.selectedEntity }
                 )
               }
+              activeEntity={this.state.selectedEntity}
               key={entity.uniqueId}
               onClick={this.handleEntityClick.bind(this, entity.uniqueId)}
-            >
-              <EntityCard
-                entity={entity}
-                onUpdate={this.search.bind(this)}
-              />
-            </div>
+              entity={entity}
+              onUpdate={this.search.bind(this)}
+            />
           );
         }
       );
-
-      bodyContent = (
-        <div className="entity-list">
-            <div className="entities-container">
-              <ReactCSSTransitionGroup
-                transitionName={"entity-animation--" + this.state.animationDirection}
-                transitionEnterTimeout={400}
-                transitionLeaveTimeout={400}
-              >
-                {entitiesToBeRendered}
-              </ReactCSSTransitionGroup>
-            </div>
-        </div>
-      );
-
     }
 
     return (
@@ -449,13 +415,22 @@ class Home extends Component {
           currentPage={this.state.currentPage}
           onPageChange={this.handlePageChange}
         />
-        <Pagination
-          setCurrentPage={this.handlePageChange}
-          currentPage={this.state.currentPage}
-          setDirection={this.setAnimationDirection}
-        >
-          {bodyContent}
-        </Pagination>
+          <Pagination
+            className="home-content"
+            setCurrentPage={this.handlePageChange}
+            currentPage={this.state.currentPage}
+            setDirection={this.setAnimationDirection}
+          >
+            <ReactCSSTransitionGroup
+              component="div"
+              className="entities-container"
+              transitionName={"entity-animation--" + this.state.animationDirection}
+              transitionEnterTimeout={400}
+              transitionLeaveTimeout={400}
+            >
+              {bodyContent}
+            </ReactCSSTransitionGroup>
+          </Pagination>
       </div>
     );
   }

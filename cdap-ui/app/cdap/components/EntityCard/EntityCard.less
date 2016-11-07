@@ -17,26 +17,21 @@
 @entity-card-border: 1px solid #cccccc;
 @jump-button-container-size: 80px;
 
-.home-cards.cask-card {
+.home-cards {
   padding: 0;
   border: @entity-card-border;
   text-align: left;
   border-radius: 0;
+  position: relative;
 
-  &.artifact .card-header { background-color: #bdc3c7; }
-  &.application .card-header { background-color: #ff6600; }
-  &.datasetinstance .card-header { background-color: #27ae60; }
-  &.stream .card-header { background-color: #3498db; }
-  &.view .card-header { background-color: #1abc9c; }
-  &.program .card-header { background-color: #2c3e50; }
-
-  .card-header {
-    justify-content: flex-start;
-    border-bottom: @entity-card-border;
-    color: white;
+  .cask-card {
+    padding: 0;
+    .card-header {
+      border-bottom: @entity-card-border;
+      color: white;
+    }
+    .card-body { padding: 0; }
   }
-  .card-body { padding: 0; }
-
   .entity-information {
     height: 35px;
     border-bottom: @entity-card-border;
@@ -93,7 +88,6 @@
         margin-bottom: 5px;
         font-size: 15px;
         color: #333333;
-        font-weight: 500;
       }
       .metric-header {
         font-weight: 500;

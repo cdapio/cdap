@@ -103,6 +103,7 @@ export default class Card extends Component {
 
     return (
       <div
+        id={this.props.id}
         className={cardClass}
         onClick={this.onClickHandler.bind(this)}
         style={this.props.cardStyle}
@@ -129,5 +130,6 @@ Card.propTypes = {
   cardClass: PropTypes.string,
   size: PropTypes.oneOf(['SM', 'MD', 'LG']),
   cardStyle: PropTypes.object,
-  onClick: PropTypes.func
+  onClick: PropTypes.func,
+  id: PropTypes.string
 };

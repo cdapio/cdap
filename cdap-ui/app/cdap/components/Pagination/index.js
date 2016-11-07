@@ -17,6 +17,8 @@
 import React, {Component, PropTypes} from 'react';
 import classNames from 'classnames';
 import Mousetrap from 'mousetrap';
+import classnames from 'classnames';
+
 require('./Pagination.less');
 
 export default class Pagination extends Component {
@@ -85,7 +87,7 @@ export default class Pagination extends Component {
     Mousetrap.bind('left', this.goToPrev);
 
     return (
-      <div className="pagination-container">
+      <div className={classnames("pagination-container", this.props.className)}>
         <div onClick={this.goToPrev}
           className={pageChangeLeftClass}
         >
@@ -112,5 +114,6 @@ Pagination.propTypes = {
   currentPage: PropTypes.number,
   children: PropTypes.node,
   setCurrentPage: PropTypes.func,
-  setDirection: PropTypes.func
+  setDirection: PropTypes.func,
+  className: PropTypes.string
 };
