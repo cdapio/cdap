@@ -23,6 +23,8 @@ import OverviewTabConfig from './OverviewTabConfig';
 import ConfigurableTab from 'components/ConfigurableTab';
 import ApplicationMetrics from 'components/EntityCard/ApplicationMetrics';
 import shortid from 'shortid';
+import Rx from 'rx';
+import {isDescendant} from 'services/helpers';
 
 export default class AppOverview extends Component {
   constructor(props) {
@@ -41,6 +43,15 @@ export default class AppOverview extends Component {
       },
       dimension: {}
     };
+    this.documentClickEventListener$ = Rx.Observable.fromEvent(document, 'click')
+      .subscribe((e) => {
+        if (isDescendant(this.overviewRef, e.target)) {
+          return;
+        }
+        if (this.props.onClose) {
+          this.props.onClose();
+        }
+      });
   }
   getChildContext() {
     return {
@@ -98,6 +109,9 @@ export default class AppOverview extends Component {
       .subscribe(entityDetail => {
         this.setState({ entityDetail });
       });
+  }
+  componentWillUnmount() {
+    this.documentClickEventListener$.dispose();
   }
   render() {
     let style={};

@@ -15,6 +15,7 @@
  */
 
 import isObject from 'lodash/isObject';
+import numeral from 'numeral';
 
 /*
   Purpose: Query a json object or an array of json objects
@@ -62,7 +63,44 @@ function objectQuery(obj) {
   }
   return obj;
 }
+export const HUMANREADABLESTORAGE = 'STORAGE';
+function humanReadableNumber(num, type) {
+  if (typeof num !== 'number') {
+    return num;
+  }
+
+  switch(type) {
+    case HUMANREADABLESTORAGE:
+      return convertBytesToHumanReadable(num);
+    default:
+      return numeral(num).format('0,0');
+  }
+
+}
+
+function convertBytesToHumanReadable(bytes) {
+  if (!bytes || typeof bytes !== 'number') {
+    return bytes;
+  }
+  if (bytes < (1024 * 1024)) {
+    return numeral(bytes).format('0.000b');
+  }
+}
+
+function isDescendant(parent, child) {
+  var node = child.parentNode;
+  while (node != null) {
+    if (node == parent) {
+      return true;
+    }
+    node = node.parentNode;
+  }
+  return false;
+}
 
 export {
-  objectQuery
+  objectQuery,
+  convertBytesToHumanReadable,
+  humanReadableNumber,
+  isDescendant
 };

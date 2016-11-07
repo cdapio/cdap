@@ -62,6 +62,7 @@ export default class StartStopAction extends Component {
         alert(err);
       });
     event.stopPropagation();
+    event.nativeEvent.stopImmediatePropagation();
   }
 
   render() {

@@ -19,6 +19,7 @@ import { ButtonDropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reac
 import T from 'i18n-react';
 import classnames from 'classnames';
 import NamespaceStore from 'services/NamespaceStore';
+import Rx from 'rx';
 
 require('./JumpButton.less');
 
@@ -34,6 +35,18 @@ export default class JumpButton extends Component {
     };
 
     this.getJumpActions();
+    this.documentClickEventListener$ = Rx.Observable.fromEvent(document, 'click')
+      .subscribe(() => {
+        if (this.state.dropdownOpen) {
+          this.setState({
+            dropdownOpen: !this.state.dropdownOpen
+          });
+        }
+      });
+  }
+
+  componentWillUnmount() {
+    this.documentClickEventListener$.dispose();
   }
 
   toggle(event) {
@@ -41,6 +54,7 @@ export default class JumpButton extends Component {
       dropdownOpen: !this.state.dropdownOpen
     });
     event.stopPropagation();
+    event.nativeEvent.stopImmediatePropagation();
   }
 
   viewInTrackerLink() {
