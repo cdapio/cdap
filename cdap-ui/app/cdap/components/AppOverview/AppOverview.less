@@ -18,12 +18,58 @@
 .entity-overview {
   position: absolute;
   z-index: 1;
-  border: 1px solid #ccc;
   background: white;
 
   &.right,
   &.left {
     top: 0;
+    .overview-header {
+      &:before {
+        width: 0;
+        height: 0;
+        border: 12px solid #464a56;
+        position: absolute;
+        content: ' ';
+        border-top-color: transparent;
+        border-bottom-color: transparent;
+      }
+    }
+  }
+  &.bottom {
+    margin-top: 12px;
+    .overview-header {
+      &:before {
+        width: 0;
+        height: 0;
+        border: 12px solid #464a56;
+        position: absolute;
+        content: ' ';
+        top: -24px;
+        right: 8px;
+        border-left-color: transparent;
+        border-top-color: transparent;
+        border-right-color: transparent;
+      }
+    }
+  }
+
+  &.right {
+    .overview-header {
+      &:before {
+        left: -12px;
+        top: 8px;
+        border-left: 0;
+      }
+    }
+  }
+  &.left {
+    .overview-header {
+      &:before {
+        right: -12px;
+        top: 8px;
+        border-right: 0;
+      }
+    }
   }
 
   .overview-header {
@@ -62,6 +108,8 @@
   }
   .overview-content {
     position: relative;
+    border: 1px solid #ccc;
+    border-top: 0;
     .cask-tabs {
       &.horizontal {
         > div:first-child {

@@ -101,7 +101,7 @@ export default class EntityCard extends Component {
       let spaceOnBottom = parentDimension.bottom - cardDimension.bottom;
       let maxSpace = Math.max(spaceOnLeft, spaceOnRight, spaceOnBottom, spaceOnTop);
       parentdimension = parentDimension;
-      if (maxSpace < 330) {
+      if (maxSpace < 400) {
         position = 'bottom';
       } else {
         if (spaceOnLeft === maxSpace) {
