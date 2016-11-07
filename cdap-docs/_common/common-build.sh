@@ -475,9 +475,16 @@ function rewrite() {
     echo "    $sub_string"
     if [[ $(uname) == "Darwin" ]]; then
       sed -i ".bak" "${sub_string}" ${rewrite_source}
-      rm ${rewrite_source}.bak
     else
       sed -i "${sub_string}" ${rewrite_source}
+    fi
+    errors=$?
+    if [[ ${errors} -ne 0 ]]; then
+        echo "Could not sed ${sub_string} ${rewrite_source}"
+        return ${errors}   
+    fi
+    if [[ $(uname) == "Darwin" ]]; then
+      rm ${rewrite_source}.bak
     fi
   elif [[ -z ${4} ]]; then
     local sub_string=${2}
@@ -485,9 +492,16 @@ function rewrite() {
     echo "    ${sub_string} -> ${new_sub_string} "
     if [[ $(uname) == "Darwin" ]]; then
       sed -i ".bak" "s|${sub_string}|${new_sub_string}|g" ${rewrite_source}
-      rm ${rewrite_source}.bak
     else
       sed -i "s|${sub_string}|${new_sub_string}|g" ${rewrite_source}
+    fi
+    errors=$?
+    if [[ ${errors} -ne 0 ]]; then
+        echo "Could not sed ${sub_string} ${rewrite_source}"
+        return ${errors}   
+    fi
+    if [[ $(uname) == "Darwin" ]]; then
+      rm ${rewrite_source}.bak
     fi
   else
     local rewrite_target=${2}
@@ -497,6 +511,11 @@ function rewrite() {
     echo "    ${rewrite_target}"
     echo "    ${sub_string} -> ${new_sub_string} "
     sed -e "s|${sub_string}|${new_sub_string}|g" ${rewrite_source} > ${rewrite_target}
+    errors=$?
+    if [[ ${errors} -ne 0 ]]; then
+        echo "Could not sed ${sub_string} ${rewrite_source} ${rewrite_target}"
+        return ${errors}   
+    fi
   fi
   popd  > /dev/null
 }
