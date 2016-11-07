@@ -86,6 +86,7 @@ public final class Constants {
     public static final String METADATA_SERVICE = "metadata.service";
     public static final String MASTER_SERVICES_BIND_ADDRESS = "master.services.bind.address";
     public static final String MASTER_SERVICES_ANNOUNCE_ADDRESS = "master.services.announce.address";
+    public static final String PREVIEW_HTTP = "preview";
   }
 
   /**
@@ -188,6 +189,20 @@ public final class Constants {
      * Name of the property used to identify whether the dataset is local or not.
      */
     public static final String WORKFLOW_LOCAL_DATASET_PROPERTY = "workflow.local.dataset";
+  }
+
+  /**
+   * Preview Configurations
+   */
+  public class Preview {
+    public static final String ENABLED = "enable.preview";
+
+    /**
+     * Guice named bindings.
+     */
+    public static final String HANDLERS_BINDING = "preview.http.handler";
+
+    public static final String ADDRESS = "preview.bind.address";
   }
 
   /**

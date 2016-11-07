@@ -13,24 +13,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+package co.cask.cdap.internal.app.services;
 
-package co.cask.cdap;
-
-import co.cask.cdap.app.preview.PreviewServer;
-import co.cask.cdap.common.conf.CConfiguration;
-import org.apache.hadoop.conf.Configuration;
-import org.junit.Assert;
+import co.cask.cdap.gateway.handlers.preview.PreviewHttpHandler;
+import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.proto.id.ApplicationId;
 import org.junit.Test;
 
+import java.util.HashSet;
+
 /**
- * Tests for {@link StandaloneMain}
+ * Test for {@link PreviewHttpHandler}.
  */
-public class StandaloneMainTest {
+public class PreviewHttpHandlerTest extends AppFabricTestBase {
 
   @Test
-  public void testInjector() {
-    StandaloneMain sdk = StandaloneMain.create(CConfiguration.create(), new Configuration());
-    // PreviewServer instance should be non null
-    Assert.assertNotNull(sdk.getInjector().getInstance(PreviewServer.class));
+  public void testInjector() throws Exception {
+    PreviewHttpHandler handler = getInjector().getInstance(PreviewHttpHandler.class);
+    handler.createPreviewInjector(new ApplicationId("ns", "app"), new HashSet<String>());
   }
 }
