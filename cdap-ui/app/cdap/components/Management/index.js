@@ -101,12 +101,6 @@ class Management extends Component {
   componentDidMount(){
     this.openNamespaceWizard();
     this.lastAccessedNamespace = NamespaceStore.getState().selectedNamespace;
-    this.unsub = NamespaceStore.subscribe(() => {
-      this.lastAccessedNamespace = NamespaceStore.getState().selectedNamespace;
-    });
-  }
-  componentWillUnmount(){
-    this.unsub();
   }
   clickLeft() {
     var index = this.applications.indexOf(this.state.application);

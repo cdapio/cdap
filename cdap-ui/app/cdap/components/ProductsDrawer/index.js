@@ -29,21 +29,18 @@ export default class ProductsDrawer extends Component {
     this.namespace;
     let products = [
       {
-        baselink: '/cask-cdap/',
         link: '/cask-cdap/',
         label: T.translate('commons.cdap'),
         name: 'cdap',
         icon: 'icon-fist'
       },
       {
-        baselink: '/cask-hydrator/',
         link: '/cask-hydrator/',
         label: T.translate('commons.hydrator'),
         name: 'hydrator',
         icon: 'icon-hydrator'
       },
       {
-        baselink: '/cask-tracker/',
         link: '/cask-tracker/',
         label: T.translate('commons.tracker'),
         name: 'tracker',
@@ -66,7 +63,20 @@ export default class ProductsDrawer extends Component {
   updateNSLinks(){
     this.namespace = NamespaceStore.getState().selectedNamespace;
     let products = this.state.products.map((product) => {
-      product.link = product.baselink + `ns/${this.namespace}`;
+
+      switch(product.name) {
+        case 'cdap' :
+          product.link = `/cask-cdap/ns/${this.namespace}`;
+          break;
+        case 'hydrator' :
+          product.link = `/cask-hydrator/ns/${this.namespace}`;
+          break;
+        case 'tracker' :
+          product.link = `/cask-tracker/ns/${this.namespace}`;
+          break;
+        default:
+          break;
+      }
       return product;
     });
     this.setState({
