@@ -68,6 +68,12 @@ export default class DatasetsTab extends Component {
                 );
               })
         }
+        {
+          !this.context.entity.datasets.length && !this.context.entity.streams.length ?
+            <i className="fa fa-spin fa-spinner"></i>
+          :
+            null
+        }
       </div>
     );
   }

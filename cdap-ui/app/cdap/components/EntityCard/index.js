@@ -101,6 +101,8 @@ export default class EntityCard extends Component {
       let spaceOnBottom = parentDimension.bottom - cardDimension.bottom;
       let maxSpace = Math.max(spaceOnLeft, spaceOnRight, spaceOnBottom, spaceOnTop);
       parentdimension = parentDimension;
+      // FIXME: ALERT! Magic number. This is the minimum width needed for the overview popover to look nice.
+      // Definitely needs to be more adaptive & come from css.
       if (maxSpace < 400) {
         position = 'bottom';
       } else {
@@ -149,7 +151,7 @@ export default class EntityCard extends Component {
         {
           this.state.overviewMode ?
             <AppOverview
-              isOpen={this.state.overviewMode}
+              onClose={this.toggleOverviewMode.bind(this)}
               position={position}
               parentdimension={parentdimension}
               entity={this.props.entity}

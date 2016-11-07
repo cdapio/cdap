@@ -29,7 +29,16 @@ export default class AppOverview extends Component {
     super(props);
     this.state = {
       entity: this.props.entity,
-      entityDetail: {},
+      entityDetail: {
+        name: '',
+        artifact: {
+          version: '--',
+          name: '--'
+        },
+        programs: [],
+        datasets: [],
+        streams: []
+      },
       dimension: {}
     };
   }
@@ -38,20 +47,13 @@ export default class AppOverview extends Component {
       entity: this.state.entityDetail
     };
   }
-  componentWillReceiveProps(newProps) {
-    if (newProps.isOpen !== this.state.isOpen) {
-      this.setState({
-        isOpen: newProps.isOpen
-      });
-    }
-  }
   componentDidMount() {
     let {right, left, width} = this.overviewRef.parentElement.getBoundingClientRect();
     if (right && left) {
       this.setState({
         dimension: {
           right,
-          left: ( left < width ? width: left)
+          left: ( left < width ? width : left)
         }
       });
     }
@@ -102,6 +104,8 @@ export default class AppOverview extends Component {
     let {left, right} = this.state.dimension;
     let {right: parentRight} = this.props.parentdimension;
     if (this.overviewRef) {
+      // FIXME: This is a hack. We need to make this as an elegant component that will intelligently
+      // figure out the position based on the intent and containing component.
       if (this.props.position === 'right') {
         style.left = 310;
         style.width = `calc(100vw - ${right + 30}px)`; // factoring the container-fluid on body
@@ -122,35 +126,36 @@ export default class AppOverview extends Component {
         style={style}
         onClick={(e) => e.stopPropagation()}
       >
-        {
-          Object.keys(this.state.entityDetail).length ?
-            <div>
-              <div className="overview-header clearfix">
-                <span>
-                  {this.state.entityDetail.name}
-                </span>
-                <span>
-                  {this.state.entityDetail.artifact.name}
-                  <small>
-                    Version: {this.state.entityDetail.artifact.version}
-                  </small>
-                </span>
-                <span className="text-right">
-                  <i className="fa fa-info fa-lg"></i>
-                  <i className="fa fa-arrows-alt"></i>
-                  <i className="fa fa-times fa-lg"></i>
-                </span>
-              </div>
-              <div className="overview-content">
-                <ApplicationMetrics entity={this.props.entity}/>
-                <ConfigurableTab
-                  tabConfig={OverviewTabConfig}
-                />
-              </div>
-            </div>
-          :
-            null
-        }
+        <div>
+          <div className="overview-header clearfix">
+            <span>
+              {this.state.entityDetail.name}
+              <small>
+                {this.state.entityDetail.description}
+              </small>
+            </span>
+            <span>
+              {this.state.entityDetail.artifact.name}
+              <small>
+                Version: {this.state.entityDetail.artifact.version}
+              </small>
+            </span>
+            <span className="text-right">
+              <i className="fa fa-info fa-lg"></i>
+              <i className="fa fa-arrows-alt"></i>
+              <i
+                className="fa fa-times fa-lg"
+                onClick={this.props.onClose}
+              ></i>
+            </span>
+          </div>
+          <div className="overview-content">
+            <ApplicationMetrics entity={this.props.entity}/>
+            <ConfigurableTab
+              tabConfig={OverviewTabConfig}
+            />
+          </div>
+        </div>
       </div>
     );
   }
@@ -183,5 +188,6 @@ AppOverview.propTypes = {
     'right',
     'top',
     'bottom'
-  ])
+  ]),
+  onClose: PropTypes.func
 };

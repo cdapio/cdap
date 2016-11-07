@@ -24,38 +24,40 @@ export default class MainTab extends Component {
     super(props);
   }
   render() {
-    console.log('context: ', this.context);
     return (
       <div className="app-overview-main-tab">
         {
-          this.context
-              .entity
-              .programs
-              .map( program => {
-                let entity = {
-                  entityId: {
-                    id: {
-                      id: program.id,
-                      application: {
-                        applicationId: program.app
+          this.context.entity.programs.length ?
+            this.context
+                .entity
+                .programs
+                .map( program => {
+                  let entity = {
+                    entityId: {
+                      id: {
+                        id: program.id,
+                        application: {
+                          applicationId: program.app
+                        },
+                        type: program.type
                       },
-                      type: program.type
+                      type: 'program',
                     },
-                    type: 'program',
-                  },
-                  metadata: {
-                    SYSTEM: {}
-                  }
-                };
-                entity = parseMetadata(entity);
-                return (
-                  <EntityCard
-                    className="entity-card-container"
-                    entity={entity}
-                    key={program.uniqueId}
-                  />
-                );
-              })
+                    metadata: {
+                      SYSTEM: {}
+                    }
+                  };
+                  entity = parseMetadata(entity);
+                  return (
+                    <EntityCard
+                      className="entity-card-container"
+                      entity={entity}
+                      key={program.uniqueId}
+                    />
+                  );
+                })
+          :
+            <i className="fa fa-spin fa-spinner"></i>
         }
       </div>
     );

@@ -86,20 +86,20 @@
       border: 0;
       border-right: 1px solid;
       padding: 5px 10px;
-      &:nth-child(2) {
-        flex-direction: column;
-        small {
-          font-size: 70%;
-        }
+      flex-direction: column;
+      small {
+        font-size: 70%;
       }
       &:last-child {
         border-right: 0;
         width: 20%;
         justify-content: flex-end;
+        flex-direction: row;
       }
     }
     i {
       line-height: inherit;
+      cursor: pointer;
       &:nth-child(2) {
         margin: 0 20px;
         line-height: 2;
