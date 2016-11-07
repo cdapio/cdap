@@ -38,6 +38,14 @@ export default class EntityCard extends Component {
     this.cardRef = null;
   }
 
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.activeEntity !== this.props.entity.uniqueId) {
+      this.setState({
+        overviewMode: false
+      });
+    }
+  }
+
   renderEntityStatus() {
     switch (this.props.entity.type) {
       case 'application':
@@ -77,6 +85,9 @@ export default class EntityCard extends Component {
     this.setState({
       overviewMode: !this.state.overviewMode
     });
+    if (this.props.onClick) {
+      this.props.onClick();
+    }
   }
 
   render() {
@@ -172,5 +183,6 @@ EntityCard.propTypes = {
   entity: PropTypes.object,
   onUpdate: PropTypes.func,
   className: PropTypes.string,
-  onClick: PropTypes.func
+  onClick: PropTypes.func,
+  activeEntity: PropTypes.string
 };

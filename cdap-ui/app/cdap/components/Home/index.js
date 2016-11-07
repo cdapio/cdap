@@ -389,6 +389,7 @@ class Home extends Component {
                   { active: entity.uniqueId === this.state.selectedEntity }
                 )
               }
+              activeEntity={this.state.selectedEntity}
               key={entity.uniqueId}
               onClick={this.handleEntityClick.bind(this, entity.uniqueId)}
               entity={entity}
