@@ -61,7 +61,6 @@ export default class NamespaceDropdown extends Component {
     });
   }
   selectNamespace(name){
-    localStorage.setItem('NS', name);
     NamespaceStore.dispatch({
       type: 'SELECT_NAMESPACE',
       payload: {
