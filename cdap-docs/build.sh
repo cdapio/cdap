@@ -325,6 +325,13 @@ function build_docs_package() {
       echo "Could not add redirect file"
       return ${errors}   
   fi
+  echo "Adding .htaccess file (404 file)"
+  rewrite ${SCRIPT_PATH}/${COMMON_SOURCE}/htaccess ${TARGET_PATH}/${PROJECT_VERSION}/.htaccess "<version>" "${PROJECT_VERSION}"
+  errors=$?
+  if [[ ${errors} -ne 0 ]]; then
+      echo "Could not create a .htaccess file"
+      return ${errors}   
+  fi
   echo "Canonical numbered version ${zip_dir_name}"
   python ${docs_change_py} ${TARGET_PATH}/${PROJECT_VERSION}
   errors=$?
@@ -333,7 +340,7 @@ function build_docs_package() {
       return ${errors}   
   fi
   echo "Creating zip ${zip_dir_name}"
-  zip -qr ${zip_dir_name}.zip ${PROJECT_VERSION}/* --exclude *.DS_Store* *.buildinfo*
+  zip -qr ${zip_dir_name}.zip ${PROJECT_VERSION}/* ${PROJECT_VERSION}/.htaccess --exclude *.DS_Store* *.buildinfo*
   errors=$?
   if [[ ${errors} -ne 0 ]]; then
       echo "Could not create zipped doc set ${TARGET_PATH}/${PROJECT_VERSION}"
