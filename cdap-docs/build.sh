@@ -104,38 +104,35 @@ function display_end_title_bell() {
 
 function build_docs_set() {
   _build_docs docs_set "Building Docs Set: docs_set"
-  return $?
 }
 
 function build_docs_only() {
   _build_docs docs_only "Building Docs Only: docs_only"
-  return $?
 }
 
 function build_docs_web_only() {
   _build_docs docs_web_only "Building Docs, CLI, and Zip: docs_web_only"
-  return $?
 }
 
 function _build_docs() {
   local warnings
-  local type="${1}"
-  local title="${2}" 
+  local type=${1}
+  local title=${2}
   display_start_title "${title}"
 
   clean_targets
   clear_messages_file
-  if [[ ${type} -eq "docs_set" ]] || [[ ${type} -eq "docs_web_only" ]]; then
+  if [[ ${type} == "docs_set" ]] || [[ ${type} == "docs_web_only" ]]; then
     build_docs_first_pass
     clear_messages_file
-    if [[ ${type} -eq "docs_set" ]]; then
+    if [[ ${type} == "docs_set" ]]; then
       build_javadocs docs
     fi
     build_docs_cli
   fi
   build_docs_second_pass
   
-  if [[ ${type} -eq "docs_set" ]] || [[ ${type} -eq "docs_web_only" ]]; then
+  if [[ ${type} == "docs_set" ]] || [[ ${type} == "docs_web_only" ]]; then
     build_docs_package
   fi
   
