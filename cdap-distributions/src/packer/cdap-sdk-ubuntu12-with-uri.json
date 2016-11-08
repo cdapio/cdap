@@ -74,6 +74,18 @@
       "only": ["cdap-sdk-vm"]
     },
     {
+      "type": "file",
+      "source": "files/eclipse.tar.gz",
+      "destination": "/tmp/eclipse.tar.gz",
+      "only": ["cdap-sdk-vm"]
+    },
+    {
+      "type": "file",
+      "source": "files/idea.tar.gz",
+      "destination": "/tmp/idea.tar.gz",
+      "only": ["cdap-sdk-vm"]
+    },
+    {
       "type": "chef-solo",
       "remote_cookbook_paths": "/var/chef/cookbooks",
       "run_list": "recipe[maven],recipe[hadoop::flume_agent],recipe[idea],recipe[eclipse]",
@@ -87,11 +99,12 @@
             { "http://download.eclipse.org/releases/luna": "org.eclipse.egit.feature.group" },
             { "http://download.eclipse.org/technology/m2e/releases": "org.eclipse.m2e.feature.feature.group" }
           ],
-          "url": "http://ftp.osuosl.org/pub/eclipse/technology/epp/downloads/release/luna/SR2/eclipse-jee-luna-SR2-linux-gtk-x86_64.tar.gz"
+          "url": "file:///tmp/eclipse.tar.gz"
         },
         "idea": {
           "setup_dir": "/opt",
-          "version": "2016.2.5"
+          "version": "2016.2.5",
+          "url": "file:///tmp/idea.tar.gz"
         },
         "hadoop": {
           "distribution": "hdp",
