@@ -75,6 +75,10 @@ public class NamespaceId extends NamespacedEntityId {
     return new SecureKeyId(namespace, keyName);
   }
 
+  public TopicId topic(String topic) {
+    return new TopicId(namespace, topic);
+  }
+
   @Override
   public Id.Namespace toId() {
     return Id.Namespace.from(namespace);
