@@ -30,6 +30,12 @@ source ./vars
 source _common/common-build.sh
 
 function usage() {
+  local warnings
+  if [[ -n $1 ]]; then
+    echo_red_bold "Unknown action: " $1
+    warnings=1
+    echo
+  fi
   echo "Build script for 'cdap' docs"
   echo "Usage: ${SCRIPT} <action>"
   echo 
@@ -37,6 +43,7 @@ function usage() {
   echo
   echo "    docs-set          Clean build of HTML, CLI, and Javadocs, zipped, ready for deploying"
   echo "    docs-all          alias to \"docs-set\""
+  echo "    docs-web-only     Clean build of HTML, CLI, zipped, skipping Javadocs"
   echo 
   echo "    docs              Dirty build of HTML, skipping CLI, Javadocs, or zipping"
   echo 
@@ -48,32 +55,27 @@ function usage() {
   echo "    licenses          Clean build of License Dependency PDFs"
   echo "    version           Print the version information"
   echo 
-}
-
-function error_usage() {
-  if [[ -n $1 ]]; then
-    echo_red_bold "Unknown action: " $1
-    echo
-  fi
-  usage
+  return ${warnings}
 }
 
 function run_command() {
   case ${1} in
     clean )             clean_targets;;
-    docs )              build_docs_only;;
-    docs-all )          build_docs_set;;
+    docs )              build_docs_only; warnings=$?;;
+    docs-all )          build_docs_set; warnings=$?;;
     docs-cli )          build_docs_cli;;
     docs-first-pass )   build_docs_first_pass;;
     docs-second-pass )  build_docs_second_pass;;
     docs-package )      build_docs_package;;
-    docs-set )          build_docs_set;;
+    docs-set )          build_docs_set; warnings=$?;;
+    docs-web-only )     build_docs_web_only; warnings=$?;;
     javadocs )          build_javadocs docs;;
     javadocs-all )      build_javadocs all;;
     licenses )          build_license_dependency_pdfs;;
     version )           print_version;;
-    * )                 error_usage ${1};;
+    * )                 usage ${1}; warnings=$?;;
   esac
+  return ${warnings}
 }
 
 function display_start_title() {
@@ -101,41 +103,48 @@ function display_end_title_bell() {
 }
 
 function build_docs_set() {
-  local warnings
-  local title="Building Docs Set"
-  display_start_title "${title}"
-  
-  clean_targets
-  clear_messages_file
-  build_docs_first_pass
-  clear_messages_file
-  build_javadocs docs
-  build_docs_cli
-  build_docs_second_pass
-  build_docs_package
-  
-  set_and_display_version
-  display_messages
-  warnings=$?
-  cleanup_messages_file
-  display_end_title_bell "${title}"
-  exit ${warnings}
+  _build_docs docs_set "Building Docs Set: docs_set"
+  return $?
 }
 
 function build_docs_only() {
+  _build_docs docs_only "Building Docs Only: docs_only"
+  return $?
+}
+
+function build_docs_web_only() {
+  _build_docs docs_web_only "Building Docs, CLI, and Zip: docs_web_only"
+  return $?
+}
+
+function _build_docs() {
   local warnings
-  local title="Building Docs Only"
+  local type="${1}"
+  local title="${2}" 
   display_start_title "${title}"
-  
+
+  clean_targets
   clear_messages_file
+  if [[ ${type} -eq "docs_set" ]] || [[ ${type} -eq "docs_web_only" ]]; then
+    build_docs_first_pass
+    clear_messages_file
+    if [[ ${type} -eq "docs_set" ]]; then
+      build_javadocs docs
+    fi
+    build_docs_cli
+  fi
   build_docs_second_pass
+  
+  if [[ ${type} -eq "docs_set" ]] || [[ ${type} -eq "docs_web_only" ]]; then
+    build_docs_package
+  fi
   
   set_and_display_version
   display_messages
   warnings=$?
   cleanup_messages_file
   display_end_title_bell "${title}"
-  exit ${warnings}
+  return ${warnings}
 }
 
 function build_docs_first_pass() {
@@ -409,4 +418,4 @@ setup quiet
 if [[ $? -ne 0 ]]; then
     exit $?   
 fi
-run_command  ${1}
+run_command ${1}
