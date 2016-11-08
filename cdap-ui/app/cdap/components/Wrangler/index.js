@@ -86,9 +86,15 @@ export default class Wrangler extends Component {
 
         <div className="wrangler-input row">
           <div className="col-xs-6">
-            <h3>Upload File</h3>
+            <h3>Instruction to try out</h3>
 
-            <input type="file" />
+            <ol>
+              <li>Paste some input data to the input text area</li>
+              <li>Specify delimiter and configure options</li>
+              <li>Click <strong>Wrangle</strong></li>
+              <li>Click on a column header and the list of actions will show up on the left</li>
+              <li>Choose any action and play around!</li>
+            </ol>
           </div>
           <div className="col-xs-6">
             <h3>Copy Input Text</h3>
