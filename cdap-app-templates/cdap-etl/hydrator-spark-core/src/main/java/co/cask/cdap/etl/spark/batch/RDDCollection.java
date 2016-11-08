@@ -22,14 +22,21 @@ import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.streaming.Windower;
+import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPairCollection;
+import co.cask.cdap.etl.spark.function.AggregatorAggregateFunction;
+import co.cask.cdap.etl.spark.function.AggregatorGroupByFunction;
 import co.cask.cdap.etl.spark.function.CountingFunction;
+import co.cask.cdap.etl.spark.function.PluginFunctionContext;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
+import scala.Tuple2;
+
+import javax.annotation.Nullable;
 
 
 /**
@@ -71,8 +78,25 @@ public class RDDCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public <U> SparkCollection<U> flatMap(FlatMapFunction<T, U> function) {
+  public <U> SparkCollection<U> flatMap(StageInfo stageInfo, FlatMapFunction<T, U> function) {
     return wrap(rdd.flatMap(function));
+  }
+
+  @Override
+  public <U> SparkCollection<U> aggregate(StageInfo stageInfo, @Nullable Integer partitions) {
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageInfo, sec);
+    PairFlatMapFunction<T, Object, T> groupByFunction =
+      new AggregatorGroupByFunction<>(pluginFunctionContext);
+
+    JavaPairRDD<Object, T> keyedCollection = rdd.flatMapToPair(groupByFunction);
+
+    JavaPairRDD<Object, Iterable<T>> groupedCollection = partitions == null ?
+      keyedCollection.groupByKey() : keyedCollection.groupByKey(partitions);
+
+    FlatMapFunction<Tuple2<Object, Iterable<T>>, U> aggregateFunction =
+      new AggregatorAggregateFunction<>(pluginFunctionContext);
+
+    return wrap(groupedCollection.flatMap(aggregateFunction));
   }
 
   @Override
@@ -81,7 +105,8 @@ public class RDDCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public <U> SparkCollection<U> compute(String stageName, SparkCompute<T, U> compute) throws Exception {
+  public <U> SparkCollection<U> compute(StageInfo stageInfo, SparkCompute<T, U> compute) throws Exception {
+    String stageName = stageInfo.getName();
     SparkExecutionPluginContext sparkPluginContext =
       new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, stageName);
     compute.initialize(sparkPluginContext);
@@ -93,13 +118,14 @@ public class RDDCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public void store(String stageName, PairFlatMapFunction<T, Object, Object> sinkFunction) {
+  public void store(StageInfo stageInfo, PairFlatMapFunction<T, Object, Object> sinkFunction) {
     JavaPairRDD<Object, Object> sinkRDD = rdd.flatMapToPair(sinkFunction);
-    sinkFactory.writeFromRDD(sinkRDD, sec, stageName, Object.class, Object.class);
+    sinkFactory.writeFromRDD(sinkRDD, sec, stageInfo.getName(), Object.class, Object.class);
   }
 
   @Override
-  public void store(String stageName, SparkSink<T> sink) throws Exception {
+  public void store(StageInfo stageInfo, SparkSink<T> sink) throws Exception {
+    String stageName = stageInfo.getName();
     SparkExecutionPluginContext sparkPluginContext =
       new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, stageName);
 
@@ -108,7 +134,7 @@ public class RDDCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public SparkCollection<T> window(String stageName, Windower windower) {
+  public SparkCollection<T> window(StageInfo stageInfo, Windower windower) {
     throw new UnsupportedOperationException("Windowing is not supported on RDDs.");
   }
 

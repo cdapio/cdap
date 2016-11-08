@@ -19,8 +19,11 @@ package co.cask.cdap.etl.spark;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.streaming.Windower;
+import co.cask.cdap.etl.planner.StageInfo;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
+
+import javax.annotation.Nullable;
 
 /**
  * Abstraction over different types of spark collections with common shared operations on those collections.
@@ -40,15 +43,17 @@ public interface SparkCollection<T> {
 
   SparkCollection<T> union(SparkCollection<T> other);
 
-  <U> SparkCollection<U> flatMap(FlatMapFunction<T, U> function);
+  <U> SparkCollection<U> flatMap(StageInfo stageInfo, FlatMapFunction<T, U> function);
+
+  <U> SparkCollection<U> aggregate(StageInfo stageInfo, @Nullable Integer partitions);
 
   <K, V> SparkPairCollection<K, V> flatMapToPair(PairFlatMapFunction<T, K, V> function);
 
-  <U> SparkCollection<U> compute(String stageName, SparkCompute<T, U> compute) throws Exception;
+  <U> SparkCollection<U> compute(StageInfo stageInfo, SparkCompute<T, U> compute) throws Exception;
 
-  void store(String stageName, PairFlatMapFunction<T, Object, Object> sinkFunction);
+  void store(StageInfo stageInfo, PairFlatMapFunction<T, Object, Object> sinkFunction);
 
-  void store(String stageName, SparkSink<T> sink) throws Exception;
+  void store(StageInfo stageInfo, SparkSink<T> sink) throws Exception;
 
-  SparkCollection<T> window(String stageName, Windower windower);
+  SparkCollection<T> window(StageInfo stageInfo, Windower windower);
 }

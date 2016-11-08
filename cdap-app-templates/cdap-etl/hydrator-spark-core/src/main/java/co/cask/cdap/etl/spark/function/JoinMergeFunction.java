@@ -31,20 +31,25 @@ import java.util.List;
 /**
  * Function that merges a join result using a BatchJoiner.
  * Non-serializable fields are lazily created since this is used in a Spark closure.
+ *
+ * @param <JOIN_KEY> the type of join key
+ * @param <INPUT_RECORD> the type of input record
+ * @param <OUT> the type of output object
  */
-public class JoinMergeFunction implements FlatMapFunction<Tuple2<Object, List<JoinElement<Object>>>, Object> {
+public class JoinMergeFunction<JOIN_KEY, INPUT_RECORD, OUT>
+  implements FlatMapFunction<Tuple2<JOIN_KEY, List<JoinElement<INPUT_RECORD>>>, OUT> {
   private final PluginFunctionContext pluginFunctionContext;
-  private transient TrackedTransform<Tuple2<Object, List<JoinElement<Object>>>, Object> joinFunction;
-  private transient DefaultEmitter<Object> emitter;
+  private transient TrackedTransform<Tuple2<JOIN_KEY, List<JoinElement<INPUT_RECORD>>>, OUT> joinFunction;
+  private transient DefaultEmitter<OUT> emitter;
 
   public JoinMergeFunction(PluginFunctionContext pluginFunctionContext) {
     this.pluginFunctionContext = pluginFunctionContext;
   }
 
   @Override
-  public Iterable<Object> call(Tuple2<Object, List<JoinElement<Object>>> input) throws Exception {
+  public Iterable<OUT> call(Tuple2<JOIN_KEY, List<JoinElement<INPUT_RECORD>>> input) throws Exception {
     if (joinFunction == null) {
-      BatchJoiner<Object, Object, Object> joiner = pluginFunctionContext.createPlugin();
+      BatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> joiner = pluginFunctionContext.createPlugin();
       BatchJoinerRuntimeContext context = pluginFunctionContext.createJoinerRuntimeContext();
       joiner.initialize(context);
       joinFunction = new TrackedTransform<>(new JoinOnTransform<>(joiner),

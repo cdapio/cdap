@@ -25,8 +25,10 @@ import java.util.List;
 /**
  * Transforms an Object into a singleton list containing the JoinElement of that object. Used to map the initial
  * PairRDD of a join into the type expected by other parts of the join.
+ *
+ * @param <T> type of object
  */
-public class InitialJoinFunction implements Function<Object, List<JoinElement<Object>>> {
+public class InitialJoinFunction<T> implements Function<T, List<JoinElement<T>>> {
   private final String inputStageName;
 
   public InitialJoinFunction(String inputStageName) {
@@ -34,8 +36,8 @@ public class InitialJoinFunction implements Function<Object, List<JoinElement<Ob
   }
 
   @Override
-  public List<JoinElement<Object>> call(Object obj) throws Exception {
-    List<JoinElement<Object>> list = new ArrayList<>(1);
+  public List<JoinElement<T>> call(T obj) throws Exception {
+    List<JoinElement<T>> list = new ArrayList<>(1);
     list.add(new JoinElement<>(inputStageName, obj));
     return list;
   }

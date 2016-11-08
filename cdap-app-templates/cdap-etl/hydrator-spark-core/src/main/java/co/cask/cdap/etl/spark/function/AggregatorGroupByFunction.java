@@ -27,20 +27,24 @@ import scala.Tuple2;
 /**
  * Function that uses a BatchAggregator to perform the groupBy part of the aggregator.
  * Non-serializable fields are lazily created since this is used in a Spark closure.
+ *
+ * @param <GROUP_KEY> type of group key
+ * @param <GROUP_VAL> type of group val
  */
-public class AggregatorGroupByFunction implements PairFlatMapFunction<Object, Object, Object> {
+public class AggregatorGroupByFunction<GROUP_KEY, GROUP_VAL>
+  implements PairFlatMapFunction<GROUP_VAL, GROUP_KEY, GROUP_VAL> {
   private final PluginFunctionContext pluginFunctionContext;
-  private transient TrackedTransform<Object, Tuple2<Object, Object>> groupByFunction;
-  private transient DefaultEmitter<Tuple2<Object, Object>> emitter;
+  private transient TrackedTransform<GROUP_VAL, Tuple2<GROUP_KEY, GROUP_VAL>> groupByFunction;
+  private transient DefaultEmitter<Tuple2<GROUP_KEY, GROUP_VAL>> emitter;
 
   public AggregatorGroupByFunction(PluginFunctionContext pluginFunctionContext) {
     this.pluginFunctionContext = pluginFunctionContext;
   }
 
   @Override
-  public Iterable<Tuple2<Object, Object>> call(Object input) throws Exception {
+  public Iterable<Tuple2<GROUP_KEY, GROUP_VAL>> call(GROUP_VAL input) throws Exception {
     if (groupByFunction == null) {
-      BatchAggregator<Object, Object, Object> aggregator = pluginFunctionContext.createPlugin();
+      BatchAggregator<GROUP_KEY, GROUP_VAL, ?> aggregator = pluginFunctionContext.createPlugin();
       aggregator.initialize(pluginFunctionContext.createBatchRuntimeContext());
       groupByFunction = new TrackedTransform<>(new GroupByTransform<>(aggregator),
                                                pluginFunctionContext.createStageMetrics(),

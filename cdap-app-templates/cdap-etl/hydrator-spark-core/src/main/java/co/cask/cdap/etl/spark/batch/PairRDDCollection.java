@@ -18,8 +18,11 @@ package co.cask.cdap.etl.spark.batch;
 
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
+import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPairCollection;
+import co.cask.cdap.etl.spark.function.JoinMergeFunction;
+import co.cask.cdap.etl.spark.function.PluginFunctionContext;
 import com.google.common.base.Optional;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -63,16 +66,6 @@ public class PairRDDCollection<K, V> implements SparkPairCollection<K, V> {
   @Override
   public <T> SparkPairCollection<K, T> mapValues(Function<V, T> function) {
     return wrap(pairRDD.mapValues(function));
-  }
-
-  @Override
-  public SparkPairCollection<K, Iterable<V>> groupByKey() {
-    return wrap(pairRDD.groupByKey());
-  }
-
-  @Override
-  public SparkPairCollection<K, Iterable<V>> groupByKey(int numPartitions) {
-    return wrap(pairRDD.groupByKey(numPartitions));
   }
 
   @SuppressWarnings("unchecked")

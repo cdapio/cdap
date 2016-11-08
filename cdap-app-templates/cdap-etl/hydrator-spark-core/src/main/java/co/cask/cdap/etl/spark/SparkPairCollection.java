@@ -38,10 +38,6 @@ public interface SparkPairCollection<K, V> {
 
   <T> SparkPairCollection<K, T> mapValues(Function<V, T> function);
 
-  SparkPairCollection<K, Iterable<V>> groupByKey();
-
-  SparkPairCollection<K, Iterable<V>> groupByKey(int numPartitions);
-
   <T> SparkPairCollection<K, Tuple2<V, T>> join(SparkPairCollection<K, T> other);
 
   <T> SparkPairCollection<K, Tuple2<V, T>> join(SparkPairCollection<K, T> other, int numPartitions);

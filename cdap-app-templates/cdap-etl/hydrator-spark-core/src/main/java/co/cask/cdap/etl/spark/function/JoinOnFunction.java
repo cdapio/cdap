@@ -28,12 +28,17 @@ import scala.Tuple2;
 /**
  * Function that uses a BatchJoiner to perform the joinOn part of the join.
  * Non-serializable fields are lazily created since this is used in a Spark closure.
+ *
+ * @param <JOIN_KEY> the type of join key
+ * @param <INPUT_RECORD> the type of input records to the join stage
  */
-public class JoinOnFunction implements PairFlatMapFunction<Object, Object, Object> {
+public class JoinOnFunction<JOIN_KEY, INPUT_RECORD>
+  implements PairFlatMapFunction<INPUT_RECORD, JOIN_KEY, INPUT_RECORD> {
+
   private final PluginFunctionContext pluginFunctionContext;
   private final String inputStageName;
-  private transient TrackedTransform<Object, Tuple2<Object, Object>> joinFunction;
-  private transient DefaultEmitter<Tuple2<Object, Object>> emitter;
+  private transient TrackedTransform<INPUT_RECORD, Tuple2<JOIN_KEY, INPUT_RECORD>> joinFunction;
+  private transient DefaultEmitter<Tuple2<JOIN_KEY, INPUT_RECORD>> emitter;
 
   public JoinOnFunction(PluginFunctionContext pluginFunctionContext, String inputStageName) {
     this.pluginFunctionContext = pluginFunctionContext;
@@ -41,9 +46,9 @@ public class JoinOnFunction implements PairFlatMapFunction<Object, Object, Objec
   }
 
   @Override
-  public Iterable<Tuple2<Object, Object>> call(Object input) throws Exception {
+  public Iterable<Tuple2<JOIN_KEY, INPUT_RECORD>> call(INPUT_RECORD input) throws Exception {
     if (joinFunction == null) {
-      BatchJoiner<Object, Object, Object> joiner = pluginFunctionContext.createPlugin();
+      BatchJoiner<JOIN_KEY, INPUT_RECORD, Object> joiner = pluginFunctionContext.createPlugin();
       BatchJoinerRuntimeContext context = pluginFunctionContext.createJoinerRuntimeContext();
       joiner.initialize(context);
       joinFunction = new TrackedTransform<>(new JoinOnTransform<>(joiner, inputStageName),

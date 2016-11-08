@@ -27,20 +27,25 @@ import scala.Tuple2;
 /**
  * Function that uses a BatchAggregator to perform the aggregate part of the aggregator.
  * Non-serializable fields are lazily created since this is used in a Spark closure.
+ *
+ * @param <GROUP_KEY> type of group key
+ * @param <GROUP_VAL> type of group value
+ * @param <OUT> type of output object
  */
-public class AggregatorAggregateFunction implements FlatMapFunction<Tuple2<Object, Iterable<Object>>, Object> {
+public class AggregatorAggregateFunction<GROUP_KEY, GROUP_VAL, OUT>
+  implements FlatMapFunction<Tuple2<GROUP_KEY, Iterable<GROUP_VAL>>, OUT> {
   private final PluginFunctionContext pluginFunctionContext;
-  private transient TrackedTransform<Tuple2<Object, Iterable<Object>>, Object> aggregateTransform;
-  private transient DefaultEmitter<Object> emitter;
+  private transient TrackedTransform<Tuple2<GROUP_KEY, Iterable<GROUP_VAL>>, OUT> aggregateTransform;
+  private transient DefaultEmitter<OUT> emitter;
 
   public AggregatorAggregateFunction(PluginFunctionContext pluginFunctionContext) {
     this.pluginFunctionContext = pluginFunctionContext;
   }
 
   @Override
-  public Iterable<Object> call(Tuple2<Object, Iterable<Object>> input) throws Exception {
+  public Iterable<OUT> call(Tuple2<GROUP_KEY, Iterable<GROUP_VAL>> input) throws Exception {
     if (aggregateTransform == null) {
-      BatchAggregator<Object, Object, Object> aggregator = pluginFunctionContext.createPlugin();
+      BatchAggregator<GROUP_KEY, GROUP_VAL, OUT> aggregator = pluginFunctionContext.createPlugin();
       aggregator.initialize(pluginFunctionContext.createBatchRuntimeContext());
       aggregateTransform = new TrackedTransform<>(new AggregateTransform<>(aggregator),
                                                   pluginFunctionContext.createStageMetrics(),

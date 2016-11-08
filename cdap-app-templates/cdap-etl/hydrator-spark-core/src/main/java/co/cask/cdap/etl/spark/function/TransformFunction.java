@@ -22,24 +22,27 @@ import co.cask.cdap.etl.common.TrackedTransform;
 import org.apache.spark.api.java.function.FlatMapFunction;
 
 /**
- * Function that uses a BatchSource to transform a pair of objects into a single object.
+ * Function that uses a Transform to perform a flatmap.
  * Non-serializable fields are lazily created since this is used in a Spark closure.
+ *
+ * @param <T> type of input object
+ * @param <U> type of output object
  */
-public class TransformFunction implements FlatMapFunction<Object, Object> {
+public class TransformFunction<T, U> implements FlatMapFunction<T, U> {
   private final PluginFunctionContext pluginFunctionContext;
-  private transient TrackedTransform<Object, Object> transform;
-  private transient DefaultEmitter<Object> emitter;
+  private transient TrackedTransform<T, U> transform;
+  private transient DefaultEmitter<U> emitter;
 
   public TransformFunction(PluginFunctionContext pluginFunctionContext) {
     this.pluginFunctionContext = pluginFunctionContext;
   }
 
   @Override
-  public Iterable<Object> call(Object input) throws Exception {
+  public Iterable<U> call(T input) throws Exception {
     if (transform == null) {
-      Transform<Object, Object> batchSource = pluginFunctionContext.createPlugin();
-      batchSource.initialize(pluginFunctionContext.createBatchRuntimeContext());
-      transform = new TrackedTransform<>(batchSource, pluginFunctionContext.createStageMetrics());
+      Transform<T, U> plugin = pluginFunctionContext.createPlugin();
+      plugin.initialize(pluginFunctionContext.createBatchRuntimeContext());
+      transform = new TrackedTransform<>(plugin, pluginFunctionContext.createStageMetrics());
       emitter = new DefaultEmitter<>();
     }
     emitter.reset();

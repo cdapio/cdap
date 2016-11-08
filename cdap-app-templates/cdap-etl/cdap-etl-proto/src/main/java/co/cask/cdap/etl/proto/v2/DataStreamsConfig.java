@@ -21,6 +21,7 @@ import co.cask.cdap.etl.proto.Connection;
 
 import java.util.Objects;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Data Streams Configuration.
@@ -29,6 +30,8 @@ public final class DataStreamsConfig extends ETLConfig {
   private final String batchInterval;
   private final Resources driverResources;
   private final String extraJavaOpts;
+  private final Boolean disableCheckpoints;
+  private final String checkpointDir;
   // See comments in DataStreamsSparkLauncher for explanation on why we need this.
   private final boolean isUnitTest;
 
@@ -38,12 +41,16 @@ public final class DataStreamsConfig extends ETLConfig {
                             Resources driverResources,
                             boolean stageLoggingEnabled,
                             String batchInterval,
-                            boolean isUnitTest) {
+                            boolean isUnitTest,
+                            boolean disableCheckpoints,
+                            @Nullable String checkpointDir) {
     super(stages, connections, resources, stageLoggingEnabled);
     this.batchInterval = batchInterval;
     this.driverResources = driverResources;
     this.isUnitTest = isUnitTest;
     this.extraJavaOpts = "";
+    this.disableCheckpoints = disableCheckpoints;
+    this.checkpointDir = checkpointDir;
   }
 
   public Resources getDriverResources() {
@@ -58,8 +65,29 @@ public final class DataStreamsConfig extends ETLConfig {
     return isUnitTest;
   }
 
+  public boolean checkpointsDisabled() {
+    return disableCheckpoints == null ? false : disableCheckpoints;
+  }
+
   public String getExtraJavaOpts() {
     return extraJavaOpts == null || extraJavaOpts.isEmpty() ? "-XX:MaxPermSize=256m" : extraJavaOpts;
+  }
+
+  @Nullable
+  public String getCheckpointDir() {
+    return checkpointDir;
+  }
+
+  @Override
+  public String toString() {
+    return "DataStreamsConfig{" +
+      "batchInterval='" + batchInterval + '\'' +
+      ", driverResources=" + driverResources +
+      ", extraJavaOpts='" + extraJavaOpts + '\'' +
+      ", disableCheckpoints=" + disableCheckpoints +
+      ", checkpointDir='" + checkpointDir + '\'' +
+      ", isUnitTest=" + isUnitTest +
+      "} " + super.toString();
   }
 
   @Override
@@ -78,22 +106,15 @@ public final class DataStreamsConfig extends ETLConfig {
 
     return Objects.equals(batchInterval, that.batchInterval) &&
       Objects.equals(driverResources, that.driverResources) &&
-      Objects.equals(extraJavaOpts, that.extraJavaOpts);
+      Objects.equals(extraJavaOpts, that.extraJavaOpts) &&
+      Objects.equals(disableCheckpoints, that.disableCheckpoints) &&
+      Objects.equals(checkpointDir, that.checkpointDir);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), batchInterval, driverResources, extraJavaOpts);
-  }
-
-  @Override
-  public String toString() {
-    return "DataStreamsConfig{" +
-      "batchInterval='" + batchInterval + '\'' +
-      ", driverResources=" + driverResources +
-      ", extraJavaOpts='" + extraJavaOpts + '\'' +
-      ", isUnitTest=" + isUnitTest +
-      "} " + super.toString();
+    return Objects.hash(super.hashCode(), batchInterval, driverResources,
+                        extraJavaOpts, disableCheckpoints, checkpointDir);
   }
 
   public static Builder builder() {
@@ -107,6 +128,7 @@ public final class DataStreamsConfig extends ETLConfig {
     private final boolean isUnitTest;
     private String batchInterval;
     private Resources driverResources;
+    private String checkpointDir;
 
     public Builder() {
       this.isUnitTest = true;
@@ -124,9 +146,14 @@ public final class DataStreamsConfig extends ETLConfig {
       return this;
     }
 
+    public Builder setCheckpointDir(String checkpointDir) {
+      this.checkpointDir = checkpointDir;
+      return this;
+    }
+
     public DataStreamsConfig build() {
       return new DataStreamsConfig(stages, connections, resources, driverResources,
-                                   stageLoggingEnabled, batchInterval, isUnitTest);
+                                   stageLoggingEnabled, batchInterval, isUnitTest, false, checkpointDir);
     }
   }
 }
