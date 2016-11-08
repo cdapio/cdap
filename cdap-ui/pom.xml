@@ -144,6 +144,7 @@
                   <exclude>**/*.svg</exclude>
                   <exclude>**/bower_components/**</exclude>
                   <exclude>**/node_modules/**</exclude>
+                  <exclude>**/coverage/**</exclude>
                   <exclude>**/dist/**</exclude>
                   <exclude>**/common_dist/**</exclude>
                   <exclude>**/cdap_dist/**</exclude>
