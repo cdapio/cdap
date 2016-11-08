@@ -26,6 +26,25 @@ Cask Data Application Platform Release Notes
 `Release 3.5.2 <http://docs.cask.co/cdap/3.5.2/index.html>`__
 =============================================================
 
+Known Issues
+------------
+- :cask-issue:`CDAP-7179` - In CDAP 3.5.0, new ``kafka.server.*`` properties replace older
+  properties such as ``kafka.log.dir``, as described in the :ref:`Administration Manual: 
+  Appendices: cdap-site.xml <appendix-cdap-default-deprecated-properties>`. 
+  
+  **If you are upgrading from CDAP 3.4.x to 3.5.x,** and you have set a value for
+  ``kafka.log.dir`` by using Cloudera Manager's :ref:`safety-valve mechanism
+  <cloudera-installation-add-service-wizard-configuration>`, you need to change to the new
+  property ``kafka.server.log.dirs``, as the deprecated ``kafka.log.dir`` is being ignored
+  in favor of the new property. If you don't, your custom value will be replaced with the
+  default value.
+
+- :cask-issue:`CDAP-7608` - When running in CDAP Standalone, the Cask Hydrator plugin
+  NaiveBayesTrainer has a *permgen* memory leak that leads to an out-of-memory error if
+  the plugin is repeatedly used a number of times, as few as six runs. The only workaround
+  is to reset the memory by restarting CDAP.
+
+
 Improvements
 ------------
 
@@ -40,6 +59,9 @@ Improvements
 Bug Fixes
 ---------
 
+- :cask-issue:`CDAP-7175` - Fixed an issue in the upgrade tool to allow it to run on a
+  CDAP instance with authorization enabled.
+  
 - :cask-issue:`CDAP-7250` - Fixed an issue where dataset usage was not being recorded
   after an application was deleted.
 
@@ -103,7 +125,7 @@ Known Issues
   properties such as ``kafka.log.dir``, as described in the :ref:`Administration Manual: 
   Appendices: cdap-site.xml <appendix-cdap-default-deprecated-properties>`. 
   
-  If you are upgrading from CDAP 3.4.x to 3.5.x, and you have set a value for
+  **If you are upgrading from CDAP 3.4.x to 3.5.x,** and you have set a value for
   ``kafka.log.dir`` by using Cloudera Manager's :ref:`safety-valve mechanism
   <cloudera-installation-add-service-wizard-configuration>`, you need to change to the new
   property ``kafka.server.log.dirs``, as the deprecated ``kafka.log.dir`` is being ignored
