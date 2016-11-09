@@ -29,8 +29,11 @@ import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchJoinerRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
+<<<<<<< 422b6f78f8c89cb7e8460cee5d2dba034e1afb88
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.batch.KVTransformations;
+=======
+>>>>>>> Changes to pass records one by one to sink in hydrator
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.TransformExecutorFactory;
 import co.cask.cdap.etl.batch.conversion.WritableConversion;
@@ -101,7 +104,7 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
     }
     return new MapReduceJoinerRuntimeContext(taskContext, metrics, new DatasetContextLookupProvider(taskContext),
                                              stageName, stageRuntimeArgs, perStageInputSchemas.get(stageName),
-                                             outputSchema);
+                                             outputSchemas.get(stageName));
   }
 
   @SuppressWarnings("unchecked")
@@ -118,19 +121,14 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
       BatchRuntimeContext runtimeContext = createRuntimeContext(stageName);
       batchAggregator.initialize(runtimeContext);
       if (isMapPhase) {
-        return getTrackedEmitKeyStep(
-          KVTransformations.getKVTransformation(stageName, pluginType, isMapPhase,
-                                                new MapperAggregatorTransformation(batchAggregator,
-                                                                                   mapOutputKeyClassName,
-                                                                                   mapOutputValClassName)),
-          stageMetrics, taskContext.getDataTracer(stageName));
+        return getTrackedEmitKeyStep(new MapperAggregatorTransformation(batchAggregator, mapOutputKeyClassName,
+                                                                        mapOutputValClassName),
+                                     stageMetrics, taskContext.getDataTracer(stageName));
       } else {
-        return getTrackedAggregateStep(
-          KVTransformations.getKVTransformation(stageName, pluginType, isMapPhase,
-                                                new ReducerAggregatorTransformation(batchAggregator,
-                                                                                    mapOutputKeyClassName,
-                                                                                    mapOutputValClassName)),
-          stageMetrics, taskContext.getDataTracer(stageName));
+        return getTrackedAggregateStep(new ReducerAggregatorTransformation(batchAggregator,
+                                                                           mapOutputKeyClassName,
+                                                                           mapOutputValClassName),
+                                       stageMetrics, taskContext.getDataTracer(stageName));
       }
     } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
       BatchJoiner<?, ?, ?> batchJoiner = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
@@ -138,22 +136,17 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
       batchJoiner.initialize(runtimeContext);
       if (isMapPhase) {
         return getTrackedEmitKeyStep(
-          KVTransformations.getKVTransformation(stageName, pluginType, isMapPhase,
-                                                new MapperJoinerTransformation(batchJoiner, mapOutputKeyClassName,
-                                                                               mapOutputValClassName)),
-          stageMetrics, taskContext.getDataTracer(stageName));
+          new MapperJoinerTransformation(batchJoiner, mapOutputKeyClassName, mapOutputValClassName), stageMetrics,
+          taskContext.getDataTracer(stageName));
       } else {
         return getTrackedMergeStep(
-          KVTransformations.getKVTransformation(stageName, pluginType, isMapPhase,
-                                                new ReducerJoinerTransformation(batchJoiner, mapOutputKeyClassName,
-                                                                                mapOutputValClassName,
-                                                                                runtimeContext.getInputSchemas()
-                                                                                  .size())),
-          stageMetrics, taskContext.getDataTracer(stageName));
+          new ReducerJoinerTransformation(batchJoiner, mapOutputKeyClassName, mapOutputValClassName,
+                                          runtimeContext.getInputSchemas().size()), stageMetrics,
+          taskContext.getDataTracer(stageName));
       }
     }
-    Transformation transformation = KVTransformations.getKVTransformation(stageName, pluginType, isMapPhase,
-                                                                          getInitializedTransformation(stageName));
+
+    Transformation transformation = getInitializedTransformation(stageName);
     boolean isLimitingSource =
       taskContext.getDataTracer(stageName).isEnabled() && BatchSource.PLUGIN_TYPE.equals(pluginType) && isMapPhase;
     return new TrackedTransform(
@@ -192,7 +185,7 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
     public void transform(KeyValue<String, INPUT_RECORD> input,
                           Emitter<KeyValue<OUT_KEY, TaggedWritable<OUT_VALUE>>> emitter) throws Exception {
       String stageName = input.getKey();
-      JOIN_KEY key = joiner.joinOn(input.getKey(), input.getValue());
+      JOIN_KEY key = joiner.joinOn(stageName, input.getValue());
       TaggedWritable<OUT_VALUE> output = new TaggedWritable<>(stageName,
                                                               inputConversion.toWritable(input.getValue()));
       emitter.emit(new KeyValue<>(keyConversion.toWritable(key), output));

@@ -14,23 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.mapreduce;
+package co.cask.cdap.etl.api.batch;
 
-import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
+import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.etl.api.Emitter;
+
+import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
- * Writes to a single output.
- *
- * @param <KEY_OUT> the output key type
- * @param <VAL_OUT> the output value type
+ * Batch emitter which is used to emit records one by one to next stages
+ * @param <T> type of transform detail
  */
-public class SingleOutputWriter<KEY_OUT, VAL_OUT> extends OutputWriter<KEY_OUT, VAL_OUT> {
-  public SingleOutputWriter(MapReduceTaskContext<KEY_OUT, VAL_OUT> context) {
-    super(context);
-  }
+@Beta
+public abstract class BatchEmitter<T> implements Emitter<Object> {
 
-  public void write(String sinkName, KeyValue<KEY_OUT, VAL_OUT> output) throws Exception {
-    context.write(output.getKey(), output.getValue());
-  }
+  public abstract void addTransformDetail(String stageName, T transformDetail);
+
+  @Nullable
+  public abstract Map<String, T> getNextStages();
 }
