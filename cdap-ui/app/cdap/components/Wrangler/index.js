@@ -37,9 +37,9 @@ export default class Wrangler extends Component {
   }
 
   wrangle() {
-    // let input = this.wranglerInput.value;
+    let input = this.wranglerInput.value;
 
-    let input = 'col1 hehe,col2,col3\nedwin elia,1,true\nelia edwin,2,3\ndoctor strange,10,50\nThor Odinson,1000,2';
+    // let input = 'col1 hehe,col2,col3\nedwin elia,1,true\nelia edwin,2,3\ndoctor strange,10,50\nThor Odinson,1000,2';
 
     let papaConfig = {
       header: this.state.header,
