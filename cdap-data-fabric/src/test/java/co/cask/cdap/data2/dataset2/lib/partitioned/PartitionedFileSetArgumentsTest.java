@@ -145,6 +145,35 @@ public class PartitionedFileSetArgumentsTest {
 
   }
 
+  @Test
+  public void testDynamicPartitionerWriterConcurrency() {
+    Map<String, String> arguments = new HashMap<>();
+
+    // should not be able to get or set the concurrency setting, without a dynamic partitioner set on the arguments
+    try {
+      PartitionedFileSetArguments.isDynamicPartitionerConcurrencyAllowed(arguments);
+      Assert.fail();
+    } catch (IllegalArgumentException expected) {
+    }
+    try {
+      PartitionedFileSetArguments.setDynamicPartitionerConcurrency(arguments, false);
+      Assert.fail();
+    } catch (IllegalArgumentException expected) {
+    }
+
+    // set a DynamicPartitioner
+    PartitionedFileSetArguments.setDynamicPartitioner(arguments, TestDynamicPartitioner.class.getName());
+    // default value should be true
+    Assert.assertTrue(PartitionedFileSetArguments.isDynamicPartitionerConcurrencyAllowed(arguments));
+
+    // try set+get
+    PartitionedFileSetArguments.setDynamicPartitionerConcurrency(arguments, false);
+    Assert.assertFalse(PartitionedFileSetArguments.isDynamicPartitionerConcurrencyAllowed(arguments));
+
+    PartitionedFileSetArguments.setDynamicPartitionerConcurrency(arguments, true);
+    Assert.assertTrue(PartitionedFileSetArguments.isDynamicPartitionerConcurrencyAllowed(arguments));
+  }
+
   private static final class TestDynamicPartitioner extends DynamicPartitioner<Integer, Integer> {
     @Override
     public PartitionKey getPartitionKey(Integer key, Integer value) {
