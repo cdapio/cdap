@@ -162,6 +162,11 @@
       <artifactId>hbase-protocol</artifactId>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.tez</groupId>
+      <artifactId>tez-api</artifactId>
+    </dependency>
+
     <!-- for tools -->
     <dependency>
       <groupId>commons-cli</groupId>

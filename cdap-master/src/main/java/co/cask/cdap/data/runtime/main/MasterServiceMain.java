@@ -35,6 +35,7 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.URLConnections;
 import co.cask.cdap.common.kerberos.SecurityUtil;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
@@ -56,6 +57,8 @@ import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.hive.ExploreUtils;
+import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
+import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -75,9 +78,11 @@ import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
@@ -127,15 +132,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.Writer;
-import java.net.InetAddress;
+import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -346,15 +351,6 @@ public class MasterServiceMain extends DaemonMain {
       }
     } catch (Exception e) {
       LOG.warn("Exception when stopping service {}", service, e);
-    }
-  }
-
-  private InetAddress getLocalHost() {
-    try {
-      return InetAddress.getLocalHost();
-    } catch (UnknownHostException e) {
-      LOG.error("Error obtaining localhost address", e);
-      throw Throwables.propagate(e);
     }
   }
 
@@ -759,17 +755,24 @@ public class MasterServiceMain extends DaemonMain {
                                                   TokenSecureStoreUpdater secureStoreUpdater) {
       try {
         // Create a temp dir for the run to hold temporary files created to run the application
-        Path tempPath = Files.createDirectories(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                                                         cConf.get(Constants.AppFabric.TEMP_DIR)).toPath());
+        Path tempPath = Files.createDirectories(Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                                                          cConf.get(Constants.AppFabric.TEMP_DIR)).toAbsolutePath());
         final Path runDir = Files.createTempDirectory(tempPath, "master");
         try {
           Path cConfFile = saveCConf(cConf, runDir.resolve("cConf.xml"));
           Path hConfFile = saveHConf(hConf, runDir.resolve("hConf.xml"));
           Path logbackFile = saveLogbackConf(runDir.resolve("logback.xml"));
 
+          boolean exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
+          Map<String, LocalizeResource> exploreResources = Collections.emptyMap();
+          List<String> exploreExtraClassPaths = new ArrayList<>();
+          if (exploreEnabled) {
+            exploreResources = getExploreDependencies(runDir, exploreExtraClassPaths);
+          }
+
           TwillPreparer preparer = twillRunner.prepare(
             new MasterTwillApplication(cConf, cConfFile.toFile(), hConfFile.toFile(),
-                                       getSystemServiceInstances(serviceStore)));
+                                       getSystemServiceInstances(serviceStore), exploreResources));
 
           if (cConf.getBoolean(Constants.COLLECT_CONTAINER_LOGS)) {
             if (LOG instanceof ch.qos.logback.classic.Logger) {
@@ -819,8 +822,8 @@ public class MasterServiceMain extends DaemonMain {
             .withBundlerClassAcceptor(new HadoopClassExcluder());
 
           // Add explore dependencies
-          if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
-            prepareExploreContainer(preparer);
+          if (exploreEnabled) {
+            prepareExploreContainer(preparer, exploreExtraClassPaths);
           }
 
           // Add a listener to delete temp files when application started/terminated.
@@ -861,47 +864,34 @@ public class MasterServiceMain extends DaemonMain {
      * add conf files (hive_site.xml, etc) as resources available for the Explore twill
      * runnable.
      */
-    private TwillPreparer prepareExploreContainer(TwillPreparer preparer) {
-      Set<File> cdapJars = new LinkedHashSet<>();
-      try {
-        // Put jars needed by Hive in the containers classpath. Those jars are localized in the Explore
-        // container by MasterTwillApplication, so they are available for ExploreServiceTwillRunnable
-        File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                                                       cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
-        Set<File> jars = ExploreServiceUtils.traceExploreDependencies(tempDir);
-        for (File jarFile : jars) {
-          LOG.trace("Adding jar file to classpath: {}", jarFile.getName());
-          if (jarFile.getName().startsWith("co.cask.cdap.")) {
-            cdapJars.add(jarFile);
-          }
-          preparer = preparer.withClassPaths(jarFile.getName());
-        }
-      } catch (IOException e) {
-        throw new RuntimeException("Unable to trace Explore dependencies", e);
-      }
+    private TwillPreparer prepareExploreContainer(TwillPreparer preparer,
+                                                  Iterable<String> exploreExtraClassPaths) throws IOException {
+      // Adding all hive jar files to the container classpath.
+      // Ideally we only want it for the explore runnable container, but Twill doesn't support it per runnable.
+      // However, setting these extra classpath for non-explore container is fine because those hive will be
+      // missing from the container (localization is done by the MasterTwillApplication for the explore runnable only).
+      preparer = preparer.withClassPaths(exploreExtraClassPaths);
 
-      // EXPLORE_CONF_FILES will be defined in startup scripts if Hive is installed.
-      String hiveConfFiles = System.getProperty(Constants.Explore.EXPLORE_CONF_FILES);
-      LOG.debug("Hive conf files = {}", hiveConfFiles);
-      if (hiveConfFiles == null) {
-        throw new RuntimeException("System property " + Constants.Explore.EXPLORE_CONF_FILES + " is not set");
-      }
-
-      // Add all the conf files needed by hive as resources available to containers
-      File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                                                     cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
-      Iterable<File> hiveConfFilesFiles = ExploreUtils.getClassPathJarsFiles(hiveConfFiles);
+      // Add all the conf files needed by hive as resources. They will be available in the explore container classpath
       Set<String> addedFiles = Sets.newHashSet();
-      for (File file : hiveConfFilesFiles) {
-        if (file.getName().matches(".*\\.xml") && !file.getName().equals("logback.xml")) {
-          if (addedFiles.add(file.getName())) {
-            LOG.debug("Adding config file: {}", file.getAbsolutePath());
-            preparer = preparer.withResources(ExploreServiceUtils.updateConfFileForExplore(file, tempDir,
-                                                                                           cdapJars).toURI());
-          } else {
-            LOG.warn("Ignoring duplicate config file: {}", file.getAbsolutePath());
-          }
+      for (File file : ExploreUtils.getExploreConfFiles()) {
+        String name = file.getName();
+        if (name.equals("logback.xml") || !name.endsWith(".xml")) {
+          continue;
         }
+        if (addedFiles.add(name)) {
+          LOG.debug("Adding config file: {}", file.getAbsolutePath());
+          preparer = preparer.withResources(file.toURI());
+        } else {
+          LOG.warn("Ignoring duplicate config file: {}", file);
+        }
+      }
+
+      // Setup SPARK_HOME environment variable as well if spark is configured
+      String sparkHome = System.getenv(Constants.SPARK_HOME);
+      if (sparkHome != null) {
+        preparer.withEnv(Constants.Service.EXPLORE_HTTP_USER_SERVICE,
+                         Collections.singletonMap(Constants.SPARK_HOME, sparkHome));
       }
 
       return preparer;
@@ -941,5 +931,50 @@ public class MasterServiceMain extends DaemonMain {
 
       return file;
     }
+  }
+
+  private Map<String, LocalizeResource> getExploreDependencies(Path tempDir,
+                                                               List<String> extraClassPaths) throws IOException {
+    // Collect the set of jar files in the master process classloader
+    final Set<File> masterJars = new HashSet<>();
+    for (URL url : ClassLoaders.getClassLoaderURLs(getClass().getClassLoader(), new HashSet<URL>())) {
+      String path = url.getPath();
+      // Only interested in local jar files
+      if (!"file".equals(url.getProtocol()) || !path.endsWith(".jar")) {
+        continue;
+      }
+      try {
+        masterJars.add(new File(url.toURI()));
+      } catch (URISyntaxException e) {
+        // Should happen. Ignore the file and keep proceeding.
+        LOG.warn("Failed to convert local file url to File", e);
+      }
+    }
+
+    // Filter out jar files that are already in the master classpath as those will get localized by twill automatically,
+    // hence no need to localize again.
+    Iterable<File> exploreJars = Iterables.filter(ExploreUtils.getExploreClasspathJarFiles(), new Predicate<File>() {
+      @Override
+      public boolean apply(File file) {
+        return !masterJars.contains(file);
+      }
+    });
+
+    Map<String, LocalizeResource> resources = new HashMap<>();
+    for (File exploreJar : exploreJars) {
+      File targetJar = tempDir.resolve(System.currentTimeMillis() + "-" + exploreJar.getName()).toFile();
+      File resultFile = ExploreServiceUtils.rewriteHiveAuthFactory(exploreJar, targetJar);
+      if (resultFile == targetJar) {
+        LOG.info("Rewritten HiveAuthFactory from jar file {} to jar file {}", exploreJar, resultFile);
+      }
+
+      resources.put(resultFile.getName(), new LocalizeResource(resultFile));
+      extraClassPaths.add(resultFile.getName());
+    }
+
+    // Explore also depends on MR, hence adding MR jars to the classpath.
+    // Depending on how the cluster is configured, we might need to localize the MR framework tgz as well.
+    extraClassPaths.addAll(MapReduceContainerHelper.localizeFramework(hConf, resources));
+    return resources;
   }
 }
