@@ -402,7 +402,7 @@ cdap_set_hbase() {
 cdap_set_hive_classpath() {
   local __explore=${EXPLORE_ENABLED:-$(cdap_get_conf "explore.enabled" "${CDAP_CONF}"/cdap-site.xml true)}
   if [[ ${__explore} == true ]]; then
-    if [[ -z ${HIVE_HOME} ]] || [[ -z ${HIVE_CONF_DIR} ]] || [[ -z ${HADOOP_CONF_DIR} ]]; then
+    if [[ -z ${HIVE_HOME} ]] || [[ -z ${HIVE_CONF_DIR} ]] || [[ -z ${HADOOP_CONF_DIR} ]] || [[ -z ${HIVE_EXEC_ENGINE} ]] || [[ -z ${HIVE_CLASSPATH} ]]; then
       __secure=${KERBEROS_ENABLED:-$(cdap_get_conf "kerberos.auth.enabled" "${CDAP_CONF}"/cdap-site.xml false)}
       if [[ ${__secure} == true ]]; then
         cdap_kinit || return 1
@@ -433,15 +433,15 @@ cdap_set_hive_classpath() {
         HIVE_HOME=${HIVE_HOME:-$(echo -e "${HIVE_VARS}" | grep '^env:HIVE_HOME=' | cut -d= -f2)}
         HIVE_CONF_DIR=${HIVE_CONF_DIR:-$(echo -e "${HIVE_VARS}" | grep '^env:HIVE_CONF_DIR=' | cut -d= -f2)}
         HADOOP_CONF_DIR=${HADOOP_CONF_DIR:-$(echo -e "${HIVE_VARS}" | grep '^env:HADOOP_CONF_DIR=' | cut -d= -f2)}
+        HIVE_CLASSPATH=${HIVE_CLASSPATH:-$(echo -e "${HIVE_VARS}" | grep '^env:CLASSPATH=' | cut -d= -f2)}
         HIVE_EXEC_ENGINE=${HIVE_EXEC_ENGINE:-$(echo -e "${HIVE_VARS}" | grep '^hive.execution.engine=' | cut -d= -f2)}
       fi
     fi
 
     # If Hive classpath is successfully determined, derive explore
     # classpath from it and export it to use it in the launch command
-    if [[ -n ${HIVE_HOME} ]] && [[ -n ${HIVE_CONF_DIR} ]] && [[ -n ${HADOOP_CONF_DIR} ]]; then
+    if [[ -n ${HIVE_HOME} ]] && [[ -n ${HIVE_CONF_DIR} ]] && [[ -n ${HADOOP_CONF_DIR} ]] && [[ -n ${HIVE_CLASSPATH} ]]; then
       EXPLORE_CONF_DIRS="${HIVE_CONF_DIR}:${HADOOP_CONF_DIR}"
-      HIVE_CLASSPATH=${HIVE_CLASSPATH:-$(echo -e "${HIVE_VARS}" | grep '^env:CLASSPATH=' | cut -d= -f2)}
       EXPLORE_CLASSPATH=${HIVE_CLASSPATH}
       if [[ -n ${TEZ_HOME} ]] && [[ -n ${TEZ_CONF_DIR} ]]; then
         # tez-site.xml also need to be passed to explore service
