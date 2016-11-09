@@ -14,11 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark.distributed;
+package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.internal.app.runtime.distributed.AbstractTwillProgramController;
 import co.cask.cdap.proto.id.ProgramId;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
@@ -28,11 +27,11 @@ import org.slf4j.LoggerFactory;
 /**
  * A {@link ProgramController} for {@link Spark} program in distributed mode.
  */
-final class SparkTwillProgramController extends AbstractTwillProgramController {
+public final class SparkTwillProgramController extends AbstractTwillProgramController {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkTwillProgramController.class);
 
-  SparkTwillProgramController(ProgramId programId, TwillController controller, RunId runId) {
+  public SparkTwillProgramController(ProgramId programId, TwillController controller, RunId runId) {
     super(programId, controller, runId);
   }
 
