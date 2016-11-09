@@ -19,6 +19,7 @@ package co.cask.cdap.messaging.store;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,14 @@ import javax.annotation.Nullable;
 /**
  * Table to store information about the topics and their properties.
  */
-public interface MetadataTable {
+public interface MetadataTable extends Closeable {
+
+  /**
+   * Create Metadata Table.
+   *
+   * @throws IOException
+   */
+  void createTableIfNotExists() throws IOException;
 
   /**
    * Fetch the properties of the {@link TopicId}.

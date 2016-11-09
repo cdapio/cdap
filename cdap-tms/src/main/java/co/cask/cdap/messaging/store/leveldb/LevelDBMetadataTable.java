@@ -38,10 +38,19 @@ import javax.annotation.Nullable;
 public class LevelDBMetadataTable implements MetadataTable {
   private static final Gson GSON = new Gson();
   private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private final String tableName;
+  private final LevelDBTableService service;
   private final LevelDBTableCore core;
 
   public LevelDBMetadataTable(LevelDBTableService service, String tableName) throws IOException {
+    this.service = service;
+    this.tableName = tableName;
     this.core = new LevelDBTableCore(tableName, service);
+  }
+
+  @Override
+  public void createTableIfNotExists() throws IOException {
+    service.ensureTableExists(tableName);
   }
 
   @Override
@@ -77,5 +86,10 @@ public class LevelDBMetadataTable implements MetadataTable {
       topicIds.add(new TopicId(namespaceId.getNamespace(), Bytes.toString(topic.getKey())));
     }
     return topicIds;
+  }
+
+  @Override
+  public void close() throws IOException {
+    // no op
   }
 }
