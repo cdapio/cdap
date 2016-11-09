@@ -320,6 +320,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       case WORKER:
         programController = new WorkerTwillProgramController(programId, controller, runId);
         break;
+      case SPARK:
+        programController = new SparkTwillProgramController(programId, controller, runId);
+        break;
     }
     return programController == null ? null : programController.startListen();
   }
