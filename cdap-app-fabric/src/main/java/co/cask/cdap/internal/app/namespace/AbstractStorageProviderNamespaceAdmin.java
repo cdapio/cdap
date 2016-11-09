@@ -106,7 +106,7 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
     // TODO: CDAP-1581: Implement soft delete
     Location namespaceHome = namespacedLocationFactory.get(namespaceId.toId());
     try {
-      if (hasCustomLocation(namespaceQueryAdmin.get(namespaceId.toId()))) {
+      if (hasCustomLocation(namespaceQueryAdmin.get(namespaceId))) {
         LOG.debug("Custom location mapping {} was found while deleting namespace {}. Deleting all data inside it but" +
                     "skipping namespace home directory delete.", namespaceHome, namespaceId);
         // delete everything inside the namespace home but not the namespace home as its user owned directory

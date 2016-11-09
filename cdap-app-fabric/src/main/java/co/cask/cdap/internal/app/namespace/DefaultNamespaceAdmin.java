@@ -147,8 +147,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   public synchronized void create(final NamespaceMeta metadata) throws Exception {
     // TODO: CDAP-1427 - This should be transactional, but we don't support transactions on files yet
     Preconditions.checkArgument(metadata != null, "Namespace metadata should not be null.");
-    NamespaceId namespace = new NamespaceId(metadata.getName());
-    if (exists(namespace.toId())) {
+    NamespaceId namespace = metadata.getNamespaceId();
+    if (exists(namespace)) {
       throw new NamespaceAlreadyExistsException(namespace);
     }
 
@@ -262,21 +262,20 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @throws NamespaceNotFoundException if the specified namespace does not exist
    */
   @Override
-  public synchronized void delete(final Id.Namespace namespaceId) throws Exception {
-    final NamespaceId namespace = namespaceId.toEntityId();
+  public synchronized void delete(final NamespaceId namespaceId) throws Exception {
     // TODO: CDAP-870, CDAP-1427: Delete should be in a single transaction.
     NamespaceMeta namespaceMeta = get(namespaceId);
 
-    if (checkProgramsRunning(namespaceId.toEntityId())) {
-      throw new NamespaceCannotBeDeletedException(namespaceId.toEntityId(),
+    if (checkProgramsRunning(namespaceId)) {
+      throw new NamespaceCannotBeDeletedException(namespaceId,
                                                   String.format("Some programs are currently running in namespace " +
                                                                   "'%s', please stop them before deleting namespace",
                                                                 namespaceId));
     }
 
-    authorizationEnforcer.enforce(namespace, authenticationContext.getPrincipal(), Action.ADMIN);
+    authorizationEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), Action.ADMIN);
 
-    LOG.info("Deleting namespace '{}'.", namespace);
+    LOG.info("Deleting namespace '{}'.", namespaceId);
     try {
       resourceDeleter.get().deleteResources(namespaceMeta);
 
@@ -284,34 +283,34 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       // create default namespace, and hence deleting it may cause undeterministic behavior.
       // Another reason for not deleting the default namespace is that we do not want to call a delete on the default
       // namespace in the storage provider (Hive, HBase, etc), since we re-use their default namespace.
-      if (!NamespaceId.DEFAULT.equals(namespace)) {
+      if (!NamespaceId.DEFAULT.equals(namespaceId)) {
         // Finally delete namespace from MDS and remove from cache
-        deleteNamespaceMeta(namespaceId.toEntityId());
+        deleteNamespaceMeta(namespaceId);
 
         // revoke privileges as the final step. This is done in the end, because if it is done before actual deletion,
         // and deletion fails, we may have a valid (or invalid) namespace in the system, that no one has privileges on,
         // so no one can clean up. This may result in orphaned privileges, which will be cleaned up by the create API
         // if the same namespace is successfully re-created.
-        privilegesManager.revoke(namespace);
-        LOG.info("Namespace '{}' deleted", namespace);
+        privilegesManager.revoke(namespaceId);
+        LOG.info("Namespace '{}' deleted", namespaceId);
       } else {
         LOG.info("Keeping the '{}' namespace after removing all data.", NamespaceId.DEFAULT);
       }
     } catch (Exception e) {
       LOG.warn("Error while deleting namespace {}", namespaceId, e);
-      throw new NamespaceCannotBeDeletedException(namespaceId.toEntityId(), e);
+      throw new NamespaceCannotBeDeletedException(namespaceId, e);
     }
   }
 
   @Override
-  public synchronized void deleteDatasets(Id.Namespace namespaceId) throws Exception {
+  public synchronized void deleteDatasets(NamespaceId namespaceId) throws Exception {
     // TODO: CDAP-870, CDAP-1427: Delete should be in a single transaction.
     if (!exists(namespaceId)) {
-      throw new NamespaceNotFoundException(namespaceId.toEntityId());
+      throw new NamespaceNotFoundException(namespaceId);
     }
 
-    if (checkProgramsRunning(namespaceId.toEntityId())) {
-      throw new NamespaceCannotBeDeletedException(namespaceId.toEntityId(),
+    if (checkProgramsRunning(namespaceId)) {
+      throw new NamespaceCannotBeDeletedException(namespaceId,
                                                   String.format("Some programs are currently running in namespace " +
                                                                   "'%s', please stop them before deleting datasets " +
                                                                   "in the namespace.",
@@ -319,24 +318,24 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     }
 
     // Namespace data can be deleted. Revoke all privileges first
-    authorizationEnforcer.enforce(namespaceId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
+    authorizationEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), Action.ADMIN);
     try {
-      dsFramework.deleteAllInstances(namespaceId.toEntityId());
+      dsFramework.deleteAllInstances(namespaceId);
     } catch (DatasetManagementException | IOException e) {
       LOG.warn("Error while deleting datasets in namespace {}", namespaceId, e);
-      throw new NamespaceCannotBeDeletedException(namespaceId.toEntityId(), e);
+      throw new NamespaceCannotBeDeletedException(namespaceId, e);
     }
     LOG.debug("Deleted datasets in namespace '{}'.", namespaceId);
   }
 
   @Override
-  public synchronized void updateProperties(Id.Namespace namespaceId, NamespaceMeta namespaceMeta) throws Exception {
+  public synchronized void updateProperties(NamespaceId namespaceId, NamespaceMeta namespaceMeta) throws Exception {
     if (!exists(namespaceId)) {
-      throw new NamespaceNotFoundException(namespaceId.toEntityId());
+      throw new NamespaceNotFoundException(namespaceId);
     }
-    authorizationEnforcer.enforce(namespaceId.toEntityId(), authenticationContext.getPrincipal(), Action.ADMIN);
+    authorizationEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), Action.ADMIN);
 
-    NamespaceMeta existingMeta = nsStore.get(namespaceId.toEntityId());
+    NamespaceMeta existingMeta = nsStore.get(namespaceId);
     // Already ensured that namespace exists, so namespace meta should not be null
     Preconditions.checkNotNull(existingMeta);
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder(existingMeta);
@@ -357,7 +356,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     }
     nsStore.update(builder.build());
     // refresh the cache with new meta
-    namespaceMetaCache.refresh(namespaceId.toEntityId());
+    namespaceMetaCache.refresh(namespaceId);
   }
 
   /**
@@ -389,10 +388,10 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @throws UnauthorizedException if the namespace is not authorized to the logged-user
    */
   @Override
-  public NamespaceMeta get(Id.Namespace namespaceId) throws Exception {
+  public NamespaceMeta get(NamespaceId namespaceId) throws Exception {
     NamespaceMeta namespaceMeta;
     try {
-      namespaceMeta = namespaceMetaCache.get(namespaceId.toEntityId());
+      namespaceMeta = namespaceMetaCache.get(namespaceId);
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       if (cause instanceof NamespaceNotFoundException || cause instanceof IOException ||
@@ -409,8 +408,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     }
 
     Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    if (!filter.apply(namespaceId.toEntityId())) {
-      throw new UnauthorizedException(principal, namespaceId.toEntityId());
+    if (!filter.apply(namespaceId)) {
+      throw new UnauthorizedException(principal, namespaceId);
     }
     return namespaceMeta;
   }
@@ -422,11 +421,11 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @return true, if the specified namespace exists, false otherwise
    */
   @Override
-  public boolean exists(Id.Namespace namespaceId) throws Exception {
+  public boolean exists(NamespaceId namespaceId) throws Exception {
     try {
       // here we are not calling get(Id.Namespace namespaceId) method as we don't want authorization enforcement for
       // exists
-      namespaceMetaCache.get(namespaceId.toEntityId());
+      namespaceMetaCache.get(namespaceId);
       return true;
     } catch (ExecutionException e) {
       if (e.getCause() instanceof NamespaceNotFoundException) {

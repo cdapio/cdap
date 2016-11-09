@@ -16,9 +16,9 @@
 
 package co.cask.cdap.common.namespace;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.List;
@@ -46,13 +46,13 @@ public class SimpleNamespaceQueryAdmin implements NamespaceQueryAdmin {
   }
 
   @Override
-  public NamespaceMeta get(Id.Namespace namespaceId) throws Exception {
-    return customNSMap.containsKey(namespaceId.getId()) ? customNSMap.get(namespaceId.getId()) :
-      new NamespaceMeta.Builder().setName(namespaceId.getId()).build();
+  public NamespaceMeta get(NamespaceId namespaceId) throws Exception {
+    return customNSMap.containsKey(namespaceId.getNamespace()) ? customNSMap.get(namespaceId.getNamespace()) :
+      new NamespaceMeta.Builder().setName(namespaceId.getNamespace()).build();
   }
 
   @Override
-  public boolean exists(Id.Namespace namespaceId) throws Exception {
+  public boolean exists(NamespaceId namespaceId) throws Exception {
     // We always return true here since this query admin is only for tests classes where we want to work with
     // namespaces without actually creating the namespace. This is why the get of this method always return a meta so
     // we always return true here.

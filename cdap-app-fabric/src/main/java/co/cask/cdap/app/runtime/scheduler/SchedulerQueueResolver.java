@@ -63,7 +63,7 @@ public class SchedulerQueueResolver {
   public String getQueue(Id.Namespace namespaceId) throws IOException, NamespaceNotFoundException {
     NamespaceMeta meta;
     try {
-      meta = namespaceQueryAdmin.get(namespaceId);
+      meta = namespaceQueryAdmin.get(namespaceId.toEntityId());
     } catch (NamespaceNotFoundException e) {
       throw e;
     } catch (Exception e) {

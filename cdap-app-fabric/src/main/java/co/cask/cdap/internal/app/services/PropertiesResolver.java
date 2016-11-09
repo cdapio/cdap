@@ -61,7 +61,8 @@ public class PropertiesResolver {
     Map<String, String> systemArgs = Maps.newHashMap();
     systemArgs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, queueResolver.getQueue(id.getNamespace()));
     if (SecurityUtil.isKerberosEnabled(cConf)) {
-      ImpersonationInfo impersonationInfo = new ImpersonationInfo(namespaceQueryAdmin.get(id.getNamespace()), cConf);
+      ImpersonationInfo impersonationInfo = new ImpersonationInfo(
+        namespaceQueryAdmin.get(id.toEntityId().getNamespaceId()), cConf);
       systemArgs.put(ProgramOptionConstants.PRINCIPAL, impersonationInfo.getPrincipal());
       systemArgs.put(ProgramOptionConstants.KEYTAB_URI, impersonationInfo.getKeytabURI());
     }

@@ -189,7 +189,7 @@ public abstract class NotificationTest {
     // clear the feeds
     feedManager.deleteFeed(FEED1);
     feedManager.deleteFeed(FEED2);
-    namespaceAdmin.delete(namespace.toId());
+    namespaceAdmin.delete(namespace);
     Assert.assertEquals(0, feedManager.listFeeds(namespace.toId()).size());
   }
 
@@ -266,7 +266,7 @@ public abstract class NotificationTest {
     } finally {
       dsFramework.deleteInstance(myTableInstance);
       feedManager.deleteFeed(FEED1);
-      namespaceAdmin.delete(namespace.toId());
+      namespaceAdmin.delete(namespace);
     }
   }
 

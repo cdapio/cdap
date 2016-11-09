@@ -155,12 +155,12 @@ public class AppFabricTestHelper {
   private static void ensureNamespaceExists(Id.Namespace namespace, CConfiguration cConf) throws Exception {
     NamespaceAdmin namespaceAdmin = getInjector(cConf).getInstance(NamespaceAdmin.class);
     try {
-      if (!namespaceAdmin.exists(namespace)) {
+      if (!namespaceAdmin.exists(namespace.toEntityId())) {
         namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
       }
     } catch (NamespaceAlreadyExistsException e) {
       // There can be race between exists() and create() call.
-      if (!namespaceAdmin.exists(namespace)) {
+      if (!namespaceAdmin.exists(namespace.toEntityId())) {
         throw new IllegalStateException("Failed to create namespace " + namespace, e);
       }
     }

@@ -25,6 +25,7 @@ import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -252,7 +253,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
       } catch (ApplicationNotFoundException e) {
         // ok if this happens, means its already deleted.
       }
-      namespaceClient.delete(invalidNamespace);
+      namespaceClient.delete(invalidNamespace.toEntityId());
     }
   }
 
@@ -261,17 +262,17 @@ public class PreferencesClientTestRun extends ClientTestBase {
     Map<String, String> propMap = Maps.newHashMap();
     propMap.put("k1", "namespace");
 
-    Id.Namespace myspace = Id.Namespace.from("myspace");
-    namespaceClient.create(new NamespaceMeta.Builder().setName(myspace.getId()).build());
+    NamespaceId myspace = new NamespaceId("myspace");
+    namespaceClient.create(new NamespaceMeta.Builder().setName(myspace).build());
 
-    client.setNamespacePreferences(myspace, propMap);
-    Assert.assertEquals(propMap, client.getNamespacePreferences(myspace, false));
-    Assert.assertEquals(propMap, client.getNamespacePreferences(myspace, true));
+    client.setNamespacePreferences(myspace.toId(), propMap);
+    Assert.assertEquals(propMap, client.getNamespacePreferences(myspace.toId(), false));
+    Assert.assertEquals(propMap, client.getNamespacePreferences(myspace.toId(), true));
 
     namespaceClient.delete(myspace);
-    namespaceClient.create(new NamespaceMeta.Builder().setName(myspace.getId()).build());
-    Assert.assertTrue(client.getNamespacePreferences(myspace, false).isEmpty());
-    Assert.assertTrue(client.getNamespacePreferences(myspace, true).isEmpty());
+    namespaceClient.create(new NamespaceMeta.Builder().setName(myspace).build());
+    Assert.assertTrue(client.getNamespacePreferences(myspace.toId(), false).isEmpty());
+    Assert.assertTrue(client.getNamespacePreferences(myspace.toId(), true).isEmpty());
 
     namespaceClient.delete(myspace);
   }

@@ -153,23 +153,23 @@ public abstract class HBaseTableUtil {
     return ImmutableMap.copyOf(reverseMap);
   }
 
-  public String getHBaseNamespace(NamespaceId namespace) throws IOException {
+  public String getHBaseNamespace(NamespaceId namespaceId) throws IOException {
     // Convert CDAP Namespace to HBase namespace
-    if (NamespaceId.SYSTEM.equals(namespace) || NamespaceId.CDAP.equals(namespace) ||
-      NamespaceId.DEFAULT.equals(namespace)) {
-      return toCDAPManagedHBaseNamespace(namespace);
+    if (NamespaceId.SYSTEM.equals(namespaceId) || NamespaceId.CDAP.equals(namespaceId) ||
+      NamespaceId.DEFAULT.equals(namespaceId)) {
+      return toCDAPManagedHBaseNamespace(namespaceId);
     }
 
     if (namespaceQueryAdmin == null) {
       throw new IOException(String.format("NamespaceQueryAdmin is not set and a non-reserved namespace " +
-                                            "lookup is requested. Namespace %s", namespace));
+                                            "lookup is requested. Namespace %s", namespaceId));
     }
 
     try {
-      return getHBaseNamespace(namespaceQueryAdmin.get(namespace.toId()));
+      return getHBaseNamespace(namespaceQueryAdmin.get(namespaceId));
     } catch (Exception ex) {
       throw new IOException(String.format("NamespaceQueryAdmin lookup to get NamespaceMeta failed. " +
-                                            "Can't find mapping for %s", namespace), ex);
+                                            "Can't find mapping for %s", namespaceId), ex);
     }
   }
 

@@ -71,7 +71,7 @@ public class DefaultImpersonator implements Impersonator {
       return UserGroupInformation.getCurrentUser();
     }
     try {
-      return getUGI(namespaceQueryAdmin.get(namespaceId.toId()));
+      return getUGI(namespaceQueryAdmin.get(namespaceId));
     } catch (Exception e) {
       Throwables.propagateIfInstanceOf(e, IOException.class);
       throw Throwables.propagate(e);

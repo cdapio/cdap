@@ -24,6 +24,7 @@ import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.gson.JsonSyntaxException;
@@ -65,7 +66,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/namespaces/{namespace-id}")
   public void getNamespace(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId) throws Exception {
-    NamespaceMeta ns = namespaceAdmin.get(Id.Namespace.from(namespaceId));
+    NamespaceMeta ns = namespaceAdmin.get(new NamespaceId(namespaceId));
     responder.sendJson(HttpResponseStatus.OK, ns);
   }
 
@@ -75,7 +76,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   public void updateNamespaceProperties(HttpRequest request, HttpResponder responder,
                                         @PathParam("namespace-id") String namespaceId) throws Exception {
     NamespaceMeta meta = parseBody(request, NamespaceMeta.class);
-    namespaceAdmin.updateProperties(Id.Namespace.from(namespaceId), meta);
+    namespaceAdmin.updateProperties(new NamespaceId(namespaceId), meta);
     responder.sendString(HttpResponseStatus.OK, String.format("Updated properties for namespace '%s'.", namespaceId));
   }
 
@@ -141,7 +142,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
                                          namespace, Constants.Dangerous.UNRECOVERABLE_RESET));
       return;
     }
-    Id.Namespace namespaceId = Id.Namespace.from(namespace);
+    NamespaceId namespaceId = new NamespaceId(namespace);
     namespaceAdmin.delete(namespaceId);
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -157,7 +158,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
                                          namespace, Constants.Dangerous.UNRECOVERABLE_RESET));
       return;
     }
-    Id.Namespace namespaceId = Id.Namespace.from(namespace);
+    NamespaceId namespaceId = new NamespaceId(namespace);
     namespaceAdmin.deleteDatasets(namespaceId);
     responder.sendStatus(HttpResponseStatus.OK);
   }

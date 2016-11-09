@@ -18,8 +18,8 @@ package co.cask.cdap.common.namespace;
 
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 import com.google.common.base.Predicate;
@@ -49,15 +49,15 @@ public class InMemoryNamespaceClient extends AbstractNamespaceClient {
   }
 
   @Override
-  public NamespaceMeta get(final Id.Namespace namespaceId) throws Exception {
+  public NamespaceMeta get(final NamespaceId namespaceId) throws Exception {
     Iterable<NamespaceMeta> filtered = Iterables.filter(namespaces, new Predicate<NamespaceMeta>() {
       @Override
       public boolean apply(NamespaceMeta input) {
-        return input.getName().equals(namespaceId.getId());
+        return input.getName().equals(namespaceId.getNamespace());
       }
     });
     if (Iterables.size(filtered) == 0) {
-      throw new NamespaceNotFoundException(namespaceId.toEntityId());
+      throw new NamespaceNotFoundException(namespaceId);
     }
     return filtered.iterator().next();
   }
@@ -68,22 +68,22 @@ public class InMemoryNamespaceClient extends AbstractNamespaceClient {
   }
 
   @Override
-  public void delete(final Id.Namespace namespaceId) throws Exception {
+  public void delete(final NamespaceId namespaceId) throws Exception {
     Iterables.removeIf(namespaces, new Predicate<NamespaceMeta>() {
       @Override
       public boolean apply(NamespaceMeta input) {
-        return input.getName().equals(namespaceId.getId());
+        return input.getName().equals(namespaceId.getNamespace());
       }
     });
   }
 
   @Override
-  public void deleteDatasets(Id.Namespace namespaceId) throws Exception {
+  public void deleteDatasets(NamespaceId namespaceId) throws Exception {
     // No-op, we're not managing apps and datasets within InMemoryNamespaceAdmin yet
   }
 
   @Override
-  public void updateProperties(Id.Namespace namespaceId, NamespaceMeta namespaceMeta) throws Exception {
+  public void updateProperties(NamespaceId namespaceId, NamespaceMeta namespaceMeta) throws Exception {
     delete(namespaceId);
     create(namespaceMeta);
   }

@@ -102,7 +102,7 @@ public abstract class IntegrationTestBase {
     assertUnrecoverableResetEnabled();
 
     boolean deleteUponTeardown = false;
-    if (!getNamespaceClient().exists(configuredNamespace.toId())) {
+    if (!getNamespaceClient().exists(configuredNamespace)) {
       getNamespaceClient().create(new NamespaceMeta.Builder().setName(configuredNamespace.toId()).build());
       // if we created the configured namespace, delete it upon teardown
       deleteUponTeardown = true;
@@ -120,7 +120,7 @@ public abstract class IntegrationTestBase {
     for (Map.Entry<NamespaceId, Boolean> namespaceEntry : registeredNamespaces.entrySet()) {
       // there could be a race condition that test case registers the namespace, but fails before
       // creating the actual namespace, so check existence before clearing/deleting the namespace
-      if (!getNamespaceClient().exists(namespaceEntry.getKey().toId())) {
+      if (!getNamespaceClient().exists(namespaceEntry.getKey())) {
         continue;
       }
       Boolean deleteUponTeardown = namespaceEntry.getValue();
@@ -387,7 +387,7 @@ public abstract class IntegrationTestBase {
     getProgramClient().stopAll(namespace.toId());
 
     if (deleteNamespace) {
-      getNamespaceClient().delete(namespace.toId());
+      getNamespaceClient().delete(namespace);
       return;
     }
 
