@@ -42,7 +42,7 @@ Known Issues
 - :cask-issue:`CDAP-7608` - When running in CDAP Standalone, the Cask Hydrator plugin
   NaiveBayesTrainer has a *permgen* memory leak that leads to an out-of-memory error if
   the plugin is repeatedly used a number of times, as few as six runs. The only workaround
-  is to reset the memory by restarting CDAP.
+  is to reset the memory by restarting CDAP Standalone.
 
 
 Improvements
