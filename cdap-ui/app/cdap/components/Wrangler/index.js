@@ -34,17 +34,22 @@ export default class Wrangler extends Component {
       skipEmptyLines: false,
       originalData: []
     };
+
+    this.handleSetHeaders = this.handleSetHeaders.bind(this);
+    this.handleSetSkipEmptyLines = this.handleSetSkipEmptyLines.bind(this);
+    this.wrangle = this.wrangle.bind(this);
+    this.handleData = this.handleData.bind(this);
   }
 
   wrangle() {
-    let input = this.wranglerInput.value;
+    // let input = this.wranglerInput.value;
 
-    // let input = 'col1 hehe,col2,col3\nedwin elia,1,true\nelia edwin,2,3\ndoctor strange,10,50\nThor Odinson,1000,2';
+    let input = 'col1 hehe,col2,col3\nedwin elia,1,true\nelia edwin,2,3\ndoctor strange,10,50\nThor Odinson,1000,2';
 
     let papaConfig = {
       header: this.state.header,
       skipEmptyLines: this.state.skipEmptyLines,
-      complete: this.handleData.bind(this)
+      complete: this.handleData
     };
 
     Papa.parse(input, papaConfig);
@@ -119,7 +124,7 @@ export default class Wrangler extends Component {
               {/* header */}
               <label>
                 <input type="checkbox"
-                  onChange={this.handleSetHeaders.bind(this)}
+                  onChange={this.handleSetHeaders}
                   checked={this.state.headers}
                 /> First line as column name?
               </label>
@@ -129,7 +134,7 @@ export default class Wrangler extends Component {
               {/* skipEmptyLines */}
               <label>
                 <input type="checkbox"
-                  onChange={this.handleSetSkipEmptyLines.bind(this)}
+                  onChange={this.handleSetSkipEmptyLines}
                 /> Skip empty lines?
               </label>
             </div>
@@ -140,7 +145,7 @@ export default class Wrangler extends Component {
         <div className="text-center">
           <button
             className="btn btn-primary"
-            onClick={this.wrangle.bind(this)}
+            onClick={this.wrangle}
           >
             Wrangle
           </button>

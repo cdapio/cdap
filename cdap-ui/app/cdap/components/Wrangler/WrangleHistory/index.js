@@ -32,6 +32,14 @@ export default function WrangleHistory({historyArray}) {
   );
 }
 
+WrangleHistory.defaultProps = {
+  historyArray: []
+};
+
 WrangleHistory.propTypes = {
-  historyArray: PropTypes.array
+  historyArray: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.string,
+    action: PropTypes.string,
+    payload: PropTypes.arrayOf(PropTypes.string)
+  }))
 };

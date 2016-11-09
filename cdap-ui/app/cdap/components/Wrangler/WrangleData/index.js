@@ -48,11 +48,21 @@ export default class WrangleData extends Component {
       isSplit: false,
       isMerge: false
     };
+
+    this.dropColumn = this.dropColumn.bind(this);
+    this.splitColumnClick = this.splitColumnClick.bind(this);
+    this.mergeColumnClick = this.mergeColumnClick.bind(this);
+    this.renameColumnClick = this.renameColumnClick.bind(this);
+    this.onRename = this.onRename.bind(this);
+    this.onSplit = this.onSplit.bind(this);
+    this.onMerge = this.onMerge.bind(this);
   }
 
   renderActionList() {
     if (this.state.activeSelectionType === 'COLUMN') {
       return this.renderColumnActions();
+    } else {
+      return null;
     }
   }
 
@@ -61,13 +71,13 @@ export default class WrangleData extends Component {
       <div className="btn-group-vertical">
         <button
           className="btn btn-default"
-          onClick={this.dropColumn.bind(this)}
+          onClick={this.dropColumn}
         >
           Drop column
         </button>
         <button
           className="btn btn-default"
-          onClick={this.splitColumnClick.bind(this)}
+          onClick={this.splitColumnClick}
         >
           Split column
         </button>
@@ -75,7 +85,7 @@ export default class WrangleData extends Component {
 
         <button
           className="btn btn-default"
-          onClick={this.mergeColumnClick.bind(this)}
+          onClick={this.mergeColumnClick}
         >
           Merge column
         </button>
@@ -83,7 +93,7 @@ export default class WrangleData extends Component {
 
         <button
           className="btn btn-default"
-          onClick={this.renameColumnClick.bind(this)}
+          onClick={this.renameColumnClick}
         >
           Rename column
         </button>
@@ -112,7 +122,7 @@ export default class WrangleData extends Component {
         />
         <button
           className="btn btn-success"
-          onClick={this.onRename.bind(this)}
+          onClick={this.onRename}
         >
           Save
         </button>
@@ -151,7 +161,7 @@ export default class WrangleData extends Component {
         </div>
         <button
           className="btn btn-success"
-          onClick={this.onSplit.bind(this)}
+          onClick={this.onSplit}
         >
           Save
         </button>
@@ -207,7 +217,7 @@ export default class WrangleData extends Component {
         </div>
         <button
           className="btn btn-success"
-          onClick={this.onMerge.bind(this)}
+          onClick={this.onMerge}
         >
           Save
         </button>
@@ -439,6 +449,10 @@ export default class WrangleData extends Component {
   }
 }
 
+WrangleData.defaultProps = {
+  data: []
+};
+
 WrangleData.propTypes = {
-  data: PropTypes.array
+  data: PropTypes.arrayOf(PropTypes.object)
 };
