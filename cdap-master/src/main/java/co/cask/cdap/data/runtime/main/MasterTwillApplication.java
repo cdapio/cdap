@@ -222,8 +222,7 @@ public class MasterTwillApplication implements TwillApplication {
     TwillSpecification.Builder.MoreFile twillSpecs =
       builder.add(
         new ExploreCustomClassLoaderTwillRunnable(
-          new ExploreServiceTwillRunnable(Constants.Service.EXPLORE_HTTP_USER_SERVICE,
-                                          "cConf.xml", "hConf.xml", exploreDependencies.keySet())
+          new ExploreServiceTwillRunnable(Constants.Service.EXPLORE_HTTP_USER_SERVICE, "cConf.xml", "hConf.xml")
             .configure()),
         resourceSpec)
         .withLocalFiles()
