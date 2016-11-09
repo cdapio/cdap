@@ -32,6 +32,7 @@ export default class Wrangler extends Component {
     this.state = {
       header: false,
       skipEmptyLines: false,
+      wranglerInput: '',
       originalData: []
     };
 
@@ -39,12 +40,13 @@ export default class Wrangler extends Component {
     this.handleSetSkipEmptyLines = this.handleSetSkipEmptyLines.bind(this);
     this.wrangle = this.wrangle.bind(this);
     this.handleData = this.handleData.bind(this);
+    this.handleTextInput = this.handleTextInput.bind(this);
   }
 
   wrangle() {
-    // let input = this.wranglerInput.value;
+    let input = this.state.wranglerInput;
 
-    let input = 'col1 hehe,col2,col3\nedwin elia,1,true\nelia edwin,2,3\ndoctor strange,10,50\nThor Odinson,1000,2';
+    // let input = 'col1 hehe,col2,col3\nedwin elia,1,true\nelia edwin,2,3\ndoctor strange,10,50\nThor Odinson,1000,2';
 
     let papaConfig = {
       header: this.state.header,
@@ -83,6 +85,9 @@ export default class Wrangler extends Component {
   handleSetSkipEmptyLines() {
     this.setState({skipEmptyLines: !this.state.skipEmptyLines});
   }
+  handleTextInput(e) {
+    this.setState({wranglerInput: e.target.value});
+  }
 
   render() {
     return (
@@ -105,7 +110,7 @@ export default class Wrangler extends Component {
             <h3>Copy Input Text</h3>
             <textarea
               className="form-control"
-              ref={(ref) => this.wranglerInput = ref}
+              onChange={this.handleTextInput}
             />
           </div>
         </div>
