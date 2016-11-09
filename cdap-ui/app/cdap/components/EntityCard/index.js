@@ -145,7 +145,12 @@ export default class EntityCard extends Component {
               >
                 {this.props.entity.id}
               </h4>
-              <small>{this.props.entity.version}</small>
+              <small>{
+                  this.props.entity.version ?
+                    this.props.entity.version
+                  :
+                    '1.0.0'
+                }</small>
             </div>
             {this.renderJumpButton()}
           </div>

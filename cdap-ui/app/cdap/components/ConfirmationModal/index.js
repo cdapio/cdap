@@ -111,8 +111,14 @@ ConfirmationModal.propTypes = {
   cancelButtonText: PropTypes.string,
   cancelFn: PropTypes.func,
   confirmationElem: PropTypes.element,
-  confirmationText: PropTypes.string,
   confirmButtonText: PropTypes.string,
+  confirmationText: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.arrayOf(PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.node
+    ]))
+  ]),
   confirmFn: PropTypes.func,
   headerTitle: PropTypes.string,
   isOpen: PropTypes.bool,

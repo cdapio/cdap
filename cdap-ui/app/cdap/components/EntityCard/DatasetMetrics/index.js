@@ -18,6 +18,7 @@ import React, {Component, PropTypes} from 'react';
 import {MyMetricApi} from '../../../api/metric';
 import {MyDatasetApi} from '../../../api/dataset';
 import NamespaceStore from 'services/NamespaceStore';
+import {humanReadableNumber} from 'services/helpers';
 
 export default class DatasetMetrics extends Component {
   constructor(props) {
@@ -73,15 +74,15 @@ export default class DatasetMetrics extends Component {
       <div className="metrics-container">
         <div className="metric-item">
           <p className="metric-header">Programs</p>
-          <p>{this.state.loading ? loading : this.state.programs}</p>
+          <p>{this.state.loading ? loading : humanReadableNumber(this.state.programs)}</p>
         </div>
         <div className="metric-item">
           <p className="metric-header">Operations</p>
-          <p>{this.state.loading ? loading : this.state.ops}</p>
+          <p>{this.state.loading ? loading : humanReadableNumber(this.state.ops)}</p>
         </div>
         <div className="metric-item">
           <p className="metric-header">Writes</p>
-          <p>{this.state.loading ? loading : this.state.writes}</p>
+          <p>{this.state.loading ? loading : humanReadableNumber(this.state.writes)}</p>
         </div>
       </div>
     );

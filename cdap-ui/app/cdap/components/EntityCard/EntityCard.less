@@ -27,7 +27,6 @@
   .cask-card {
     padding: 0;
     .card-header {
-      border-bottom: @entity-card-border;
       color: white;
     }
     .card-body { padding: 0; }
@@ -44,7 +43,6 @@
 
   .jump-button-container {
     width: @jump-button-container-size;
-    border-left: @entity-card-border;
     height: 100%;
 
     .jump-button { margin-top: 3px; }
@@ -60,8 +58,11 @@
       font-weight: 500;
       font-size: 15px;
       margin: 0;
-      line-height: 35px;
       vertical-align: middle;
+      width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
 
       &.with-version { line-height: initial; }
     }
@@ -75,18 +76,16 @@
   }
 
   .metrics-container {
-    height: 50px;
-    border-bottom: @entity-card-border;
+    height: 40px;
     display: flex;
 
     .metric-item {
       flex-grow: 1;
       text-align: center;
-      padding: 5px 0;
+      padding: 0;
 
       p {
         margin-bottom: 5px;
-        font-size: 15px;
         color: #333333;
       }
       .metric-header {
@@ -109,7 +108,7 @@
 
     .btn-link {
       text-decoration: none;
-      font-size: 17px;
+      font-size: 13px;
       color: white;
       padding: 0;
       span { margin: 0 20px; }

@@ -43,6 +43,7 @@ export default class DeleteAction extends Component {
   toggleModal(event) {
     this.setState({modal: !this.state.modal});
     event.stopPropagation();
+    event.nativeEvent.stopImmediatePropagation();
   }
 
   action() {
@@ -85,7 +86,6 @@ export default class DeleteAction extends Component {
   render() {
     const actionLabel = T.translate('features.FastAction.deleteLabel');
     const headerTitle = `${actionLabel} ${this.props.entity.type}`;
-
     return (
       <span>
         <FastActionButton

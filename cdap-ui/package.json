@@ -72,7 +72,6 @@
     "webpack-livereload-plugin": "0.9.0"
   },
   "dependencies": {
-    "redux-thunk": "2.0.1",
     "angular": "1.5.8",
     "body-parser": "1.14.2",
     "bootstrap": "3.3.7",
@@ -91,6 +90,7 @@
     "mousetrap": "1.6.0",
     "ngreact": "0.3.0",
     "node-uuid": "https://registry.npmjs.org/node-uuid/-/node-uuid-1.4.7.tgz",
+    "numeral": "1.5.3",
     "object-hash": "1.1.0",
     "q": "1.4.1",
     "react": "15.3.1",
@@ -107,6 +107,7 @@
     "react-youtube": "7.1.1",
     "reactstrap": "3.2.0",
     "redux": "https://registry.npmjs.org/redux/-/redux-3.5.2.tgz",
+    "redux-thunk": "2.0.1",
     "request": "2.69.0",
     "rx": "4.1.0",
     "serve-favicon": "2.3.0",

@@ -17,6 +17,7 @@
 import React, {Component, PropTypes} from 'react';
 import {MyAppApi} from '../../../api/app';
 import NamespaceStore from 'services/NamespaceStore';
+import {humanReadableNumber} from 'services/helpers';
 
 export default class ApplicationMetrics extends Component {
   constructor(props) {
@@ -71,15 +72,15 @@ export default class ApplicationMetrics extends Component {
       <div className="metrics-container">
         <div className="metric-item">
           <p className="metric-header">Programs</p>
-          <p>{this.state.loading ? loading : this.state.numPrograms}</p>
+          <p>{this.state.loading ? loading : humanReadableNumber(this.state.numPrograms)}</p>
         </div>
         <div className="metric-item">
           <p className="metric-header">Running</p>
-          <p>{this.state.loading ? loading : this.state.running}</p>
+          <p>{this.state.loading ? loading : humanReadableNumber(this.state.running)}</p>
         </div>
         <div className="metric-item">
           <p className="metric-header">Failed</p>
-          <p>{this.state.loading ? loading : this.state.failed}</p>
+          <p>{this.state.loading ? loading : humanReadableNumber(this.state.failed)}</p>
         </div>
       </div>
     );
