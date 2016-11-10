@@ -46,6 +46,7 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.lib.Partitioning.FieldType;
+import co.cask.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
@@ -59,6 +60,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Provider;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionConflictException;
@@ -76,6 +79,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -87,7 +91,15 @@ import javax.annotation.Nullable;
 public class PartitionedFileSetDataset extends AbstractDataset implements PartitionedFileSet, DatasetOutputCommitter {
 
   private static final Logger LOG = LoggerFactory.getLogger(PartitionedFileSetDataset.class);
+  private static final Gson GSON =
+    new GsonBuilder().registerTypeAdapter(PartitionKey.class, new PartitionKeyCodec()).create();
   private static final String QUARANTINE_DIR = ".quarantine";
+
+  /**
+   * A key that is guaranteed to be in the input format inconfiguration, where the value represents a GSON-serialized
+   * mapping from a partition's path to its partition key.
+   */
+  public static final String PATH_TO_PARTITIONING_MAPPING = "path.to.partition.mapping";
 
   // column keys
   protected static final byte[] RELATIVE_PATH = { 'p' };
@@ -120,9 +132,9 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
   private Transaction tx;
 
-  // this will store the result of filterInputPaths() after it is called (the result is needed by
+  // this will store the result of getInputKeys() after it is called (the result is needed by
   // both getInputFormat() and getInputFormatConfiguration(), and we don't want to compute it twice).
-  private AtomicReference<Collection<String>> inputPathsCache = null;
+  private AtomicReference<Collection<PartitionKey>> inputKeysCache = null;
 
   public PartitionedFileSetDataset(DatasetContext datasetContext, String name,
                                    Partitioning partitioning, FileSet fileSet, IndexedTable partitionTable,
@@ -454,7 +466,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     }
   }
 
-  protected void addPartitionToExplore(PartitionKey key, String path) {
+  private void addPartitionToExplore(PartitionKey key, String path) {
     if (FileSetProperties.isExploreEnabled(spec.getProperties())) {
       ExploreFacade exploreFacade = exploreFacadeProvider.get();
       if (exploreFacade != null) {
@@ -561,17 +573,16 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     return partitionDetails;
   }
 
-  @VisibleForTesting
-  Collection<String> getPartitionPaths(@Nullable PartitionFilter filter) {
+  private Collection<PartitionKey> getPartitionPaths(@Nullable PartitionFilter filter) {
     // this avoids constructing the Partition object for every partition.
-    final Set<String> paths = Sets.newHashSet();
+    final Set<PartitionKey> partitionKeys = new HashSet<>();
     getPartitions(filter, new PartitionConsumer() {
       @Override
       public void consume(PartitionKey key, String path, @Nullable PartitionMetadata metadata) {
-        paths.add(path);
+        partitionKeys.add(key);
       }
     }, false);
-    return paths;
+    return partitionKeys;
   }
 
   protected void getPartitions(@Nullable PartitionFilter filter, PartitionConsumer consumer) {
@@ -676,8 +687,8 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
   @Override
   public String getInputFormatClassName() {
-    Collection<String> inputPaths = filterInputPaths();
-    if (inputPaths != null && inputPaths.isEmpty()) {
+    Collection<PartitionKey> inputKeys = getInputKeys();
+    if (inputKeys.isEmpty()) {
       return EmptyInputFormat.class.getName();
     }
     return files.getInputFormatClassName();
@@ -685,35 +696,46 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
   @Override
   public Map<String, String> getInputFormatConfiguration() {
-    Collection<String> inputPaths = filterInputPaths();
-    if (inputPaths == null) {
-      return files.getInputFormatConfiguration();
+    Collection<PartitionKey> inputKeys = getInputKeys();
+
+    List<Location> inputLocations = new ArrayList<>(inputKeys.size());
+    Map<String, PartitionKey> pathToKey = new HashMap<>(inputKeys.size());
+    for (PartitionKey key : inputKeys) {
+      PartitionDetail partition = getPartition(key);
+      String path = Objects.requireNonNull(partition).getRelativePath();
+      Location partitionLocation = files.getLocation(path);
+      inputLocations.add(partitionLocation);
+      pathToKey.put(partitionLocation.toURI().toString(), key);
     }
-    List<Location> inputLocations = Lists.newArrayListWithExpectedSize(inputPaths.size());
-    for (String path : inputPaths) {
-      inputLocations.add(files.getLocation(path));
-    }
-    return files.getInputFormatConfiguration(inputLocations);
+
+    Map<String, String> inputFormatConfiguration = files.getInputFormatConfiguration(inputLocations);
+    inputFormatConfiguration.put(PATH_TO_PARTITIONING_MAPPING, GSON.toJson(pathToKey));
+    return inputFormatConfiguration;
   }
 
   /**
-   * Computes the input paths given by the partition filter - if present. Stores the result in a cache and returns it.
+   * Computes and returns the input partition keys given by the partition filter - if present. Otherwise, get the list
+   * of partition keys explicitly specified in the runtime arguments.
+   * Stores the result in a cache and returns it.
    */
-  private Collection<String> filterInputPaths() {
-    if (inputPathsCache != null) {
-      return inputPathsCache.get();
+  private Collection<PartitionKey> getInputKeys() {
+    if (inputKeysCache != null) {
+      return inputKeysCache.get();
     }
-    Collection<String> inputPaths = computeFilterInputPaths();
-    inputPathsCache = new AtomicReference<>(inputPaths);
-    return inputPaths;
+    Collection<PartitionKey> inputKeys = computeInputKeys();
+    if (inputKeys == null) {
+      inputKeys = PartitionedFileSetArguments.getInputPartitionKeys(runtimeArguments);
+    }
+    inputKeysCache = new AtomicReference<>(inputKeys);
+    return inputKeys;
   }
 
   /**
-   * If a partition filter was specified, return the input locations of all partitions
+   * If a partition filter was specified, return the partition keys of all partitions
    * matching the filter. Otherwise return null.
    */
   @Nullable
-  protected Collection<String> computeFilterInputPaths() {
+  protected Collection<PartitionKey> computeInputKeys() {
     PartitionFilter filter;
     try {
       filter = PartitionedFileSetArguments.getInputPartitionFilter(runtimeArguments);

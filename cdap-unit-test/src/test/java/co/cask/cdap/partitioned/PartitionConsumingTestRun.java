@@ -20,6 +20,8 @@ import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.ProgramManager;
@@ -60,7 +62,7 @@ public class PartitionConsumingTestRun extends TestFrameworkTestBase {
       public ProgramManager apply(ApplicationManager input) {
         return input.getMapReduceManager(AppWithPartitionConsumers.WordCountMapReduce.NAME).start();
       }
-    });
+    }, true);
     Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, "default",
                                                Constants.Metrics.Tag.APP, "AppWithPartitionConsumers",
                                                Constants.Metrics.Tag.MAPREDUCE, "WordCountMapReduce",
@@ -78,10 +80,11 @@ public class PartitionConsumingTestRun extends TestFrameworkTestBase {
       public ProgramManager apply(ApplicationManager input) {
         return input.getWorkerManager(AppWithPartitionConsumers.WordCountWorker.NAME).start();
       }
-    });
+    }, false);
   }
 
-  private void testWordCountOnFileSet(Function<ApplicationManager, ProgramManager> runProgram) throws Exception {
+  private void testWordCountOnFileSet(Function<ApplicationManager, ProgramManager> runProgram,
+                                      boolean produceOutputPartitionEachRun) throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithPartitionConsumers.class);
 
     ServiceManager serviceManager = applicationManager.getServiceManager("DatasetService").start();
@@ -115,6 +118,12 @@ public class PartitionConsumingTestRun extends TestFrameworkTestBase {
     programManager = runProgram.apply(applicationManager);
     programManager.waitForFinish(5, TimeUnit.MINUTES);
 
+    List<RunRecord> runs = programManager.getHistory();
+    Assert.assertEquals(3, runs.size());
+    for (RunRecord run : runs) {
+      Assert.assertEquals(ProgramRunStatus.COMPLETED, run.getStatus());
+    }
+
     Assert.assertEquals(new Long(3), getCount(serviceURL, "a"));
     Assert.assertEquals(new Long(3), getCount(serviceURL, "b"));
     Assert.assertEquals(new Long(3), getCount(serviceURL, "c"));
@@ -122,7 +131,9 @@ public class PartitionConsumingTestRun extends TestFrameworkTestBase {
     DataSetManager<PartitionedFileSet> outputLines = getDataset("outputLines");
     Set<PartitionDetail> partitions = outputLines.get().getPartitions(PartitionFilter.ALWAYS_MATCH);
 
-    Assert.assertEquals(2, partitions.size());
+    // each of the three MapReduce runs produces an output partition (even if there's no input data)
+    // however, Worker run doesn't produce a new output partition if there's no new input partition
+    Assert.assertEquals(produceOutputPartitionEachRun ? 3 : 2, partitions.size());
 
     // we only store the counts to the "outputLines" dataset
     List<String> expectedCounts = Lists.newArrayList("1", "1", "2", "2", "3");
