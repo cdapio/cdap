@@ -42,6 +42,7 @@ import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import CaskVideoModal from 'components/CaskVideoModal';
 import RouteToNamespace from 'components/RouteToNamespace';
 import Helmet from 'react-helmet';
+import Wrangler from 'components/Wrangler';
 
 class CDAP extends Component {
   constructor(props) {
@@ -113,6 +114,7 @@ class CDAP extends Component {
             <Match exactly pattern="/ns/:namespace/dashboard" component={Dashboard} />
             <Match pattern="/Experimental" component={Experimental} />
             <Match pattern="/socket-example" component={ConnectionExample} />
+            <Match pattern="/wrangler" component={Wrangler} />
             <Miss component={Missed} />
           </div>
           <Footer version={this.version} />
