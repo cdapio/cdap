@@ -769,6 +769,8 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       PartitionedFileSetArguments.setOutputPartitionMetadata(outputArgs, outputMetadata);
 
       PartitionedFileSetArguments.setDynamicPartitioner(outputArgs, dynamicPartitionerClassName);
+      PartitionedFileSetArguments.setDynamicPartitionerConcurrency(
+        outputArgs, PartitionedFileSetArguments.isDynamicPartitionerConcurrencyAllowed(runtimeArguments));
       outputArgs.put(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME,
                      files.getOutputFormatClassName());
       outputArgs.put(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET, getName());
