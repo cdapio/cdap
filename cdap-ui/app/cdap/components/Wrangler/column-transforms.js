@@ -61,3 +61,57 @@ export function mergeColumn(table, joinKey, firstColumn, secondColumn, columnNam
 
   return formattedData;
 }
+
+export function uppercaseColumn(table, column) {
+  let formattedData = table.map((row) => {
+    let newObj = Object.assign({}, row);
+
+    newObj[column] = newObj[column].toUpperCase();
+
+    return newObj;
+  });
+
+  return formattedData;
+}
+
+export function lowercaseColumn(table, column) {
+  let formattedData = table.map((row) => {
+    let newObj = Object.assign({}, row);
+
+    newObj[column] = newObj[column].toLowerCase();
+
+    return newObj;
+  });
+
+  return formattedData;
+}
+
+export function titlecaseColumn(table, column) {
+  let formattedData = table.map((row) => {
+    let newObj = Object.assign({}, row);
+
+    let titleCase = newObj[column].split(' ')
+      .map((word) => {
+        return word[0].toUpperCase() + word.slice(1);
+      })
+      .join(' ');
+
+    newObj[column] = titleCase;
+
+    return newObj;
+  });
+
+  return formattedData;
+}
+
+export function substringColumn(table, columnToSub, begin, end, columnName) {
+  let formattedData = table.map((row) => {
+    let newObj = Object.assign({}, row);
+
+    newObj[columnName] = newObj[columnToSub].substr(begin, end);
+
+    return newObj;
+  });
+
+  return formattedData;
+}

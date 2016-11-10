@@ -18,7 +18,11 @@ import {
   renameColumn,
   dropColumn,
   splitColumn,
-  mergeColumn
+  mergeColumn,
+  uppercaseColumn,
+  lowercaseColumn,
+  titlecaseColumn,
+  substringColumn
 } from 'components/Wrangler/column-transforms';
 
 describe('Wrangler: Column Transforms', () => {
@@ -27,23 +31,23 @@ describe('Wrangler: Column Transforms', () => {
   beforeEach(() => {
     array = [
       {
-        name: 'Thor Odinson',
+        name: 'thor odinson',
         age: '200'
       },
       {
-        name: 'Loki Odinson',
+        name: 'loki odinson',
         age: '28'
       },
       {
-        name: 'David Pumpkin',
+        name: 'david pumpkin',
         age: '500'
       },
       {
-        name: 'Dracula Bloodsucker',
+        name: 'dracula bloodsucker',
         age: '1500'
       },
       {
-        name: 'Captain America',
+        name: 'captain america',
         age: '500'
       }
     ];
@@ -95,5 +99,49 @@ describe('Wrangler: Column Transforms', () => {
     let merged = array[0][firstColumn] + joinKey + array[0][secondColumn];
 
     expect(formattedData[0][mergedColumnName]).toBe(merged);
+  });
+
+  it('should uppercase column', () => {
+    const columnToTransform = 'name';
+
+    let formattedData = uppercaseColumn(array, columnToTransform);
+
+    expect(formattedData[0][columnToTransform]).toBe(array[0][columnToTransform].toUpperCase());
+    expect(formattedData[4][columnToTransform]).toBe(array[4][columnToTransform].toUpperCase());
+  });
+
+  it('should lowercase column', () => {
+    const columnToTransform = 'name';
+
+    let formattedData = lowercaseColumn(array, columnToTransform);
+
+    expect(formattedData[0][columnToTransform]).toBe(array[0][columnToTransform].toLowerCase());
+    expect(formattedData[4][columnToTransform]).toBe(array[4][columnToTransform].toLowerCase());
+  });
+
+  it('should titlecase column', () => {
+    const columnToTransform = 'name';
+
+    let formattedData = titlecaseColumn(array, columnToTransform);
+
+    const case1Result = 'Thor Odinson';
+    const case3Result = 'David Pumpkin';
+
+    expect(formattedData[0][columnToTransform]).toBe(case1Result);
+    expect(formattedData[2][columnToTransform]).toBe(case3Result);
+  });
+
+  it('should substring column', () => {
+    const columnToSub = 'name';
+    const begin = 0;
+    const end = 5;
+    const newColumn = 'substring';
+
+    let formattedData = substringColumn(array, columnToSub, begin, end, newColumn);
+
+    expect(formattedData[0][newColumn]).toBe(array[0][columnToSub].substr(begin, end));
+    expect(formattedData[0][columnToSub]).toBe(array[0][columnToSub]);
+    expect(formattedData[3][newColumn]).toBe(array[3][columnToSub].substr(begin, end));
+    expect(formattedData[3][columnToSub]).toBe(array[3][columnToSub]);
   });
 });

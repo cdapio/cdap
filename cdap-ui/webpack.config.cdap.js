@@ -107,7 +107,9 @@ module.exports = {
       'react-file-download',
       'mousetrap',
       'papaparse',
-      'rx-dom'
+      'rx-dom',
+      'd3',
+      'chart.js'
     ]
   },
   module: {
