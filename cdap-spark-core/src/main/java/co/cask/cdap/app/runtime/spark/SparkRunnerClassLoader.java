@@ -90,7 +90,6 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
   private static final Set<String> API_CLASSES;
 
   private final boolean rewriteYarnClient;
-  private final boolean rewriteDStreamGraph;
 
   static {
     Set<String> apiClasses = new HashSet<>();
@@ -122,16 +121,13 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
     return urls.toArray(new URL[urls.size()]);
   }
 
-  public SparkRunnerClassLoader(ClassLoader parent,
-                                boolean rewriteYarnClient, boolean rewriteDStreamGraph) throws IOException {
-    this(getClassloaderURLs(parent), parent, rewriteYarnClient, rewriteDStreamGraph);
+  public SparkRunnerClassLoader(ClassLoader parent, boolean rewriteYarnClient) throws IOException {
+    this(getClassloaderURLs(parent), parent, rewriteYarnClient);
   }
 
-  public SparkRunnerClassLoader(URL[] urls, @Nullable ClassLoader parent,
-                                boolean rewriteYarnClient, boolean rewriteDStreamGraph) {
+  public SparkRunnerClassLoader(URL[] urls, @Nullable ClassLoader parent, boolean rewriteYarnClient) {
     super(urls, parent);
     this.rewriteYarnClient = rewriteYarnClient;
-    this.rewriteDStreamGraph = rewriteDStreamGraph;
   }
 
   @Override
@@ -179,7 +175,7 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
       } else if (name.equals(SPARK_YARN_CLIENT_TYPE.getClassName()) && rewriteYarnClient) {
         // Rewrite YarnClient for workaround SPARK-13441.
         cls = defineClient(name, is);
-      } else if (name.equals(SPARK_DSTREAM_GRAPH_TYPE.getClassName()) && rewriteDStreamGraph) {
+      } else if (name.equals(SPARK_DSTREAM_GRAPH_TYPE.getClassName())) {
         // Rewrite DStreamGraph to set TaskSupport on parallel array usage to avoid Thread leak
         cls = defineDStreamGraph(name, is);
       } else if (name.equals(AKKA_REMOTING_TYPE.getClassName())) {
