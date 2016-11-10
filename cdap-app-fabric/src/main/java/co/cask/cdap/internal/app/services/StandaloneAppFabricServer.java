@@ -21,8 +21,8 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
-import co.cask.cdap.internal.app.namespace.DefaultNamespaceEnsurer;
 import co.cask.cdap.internal.app.runtime.artifact.SystemArtifactLoader;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.plugin.PluginService;
@@ -63,7 +63,7 @@ public class StandaloneAppFabricServer extends AppFabricServer {
                                    StreamCoordinatorClient streamCoordinatorClient,
                                    @Named("appfabric.services.names") Set<String> servicesNames,
                                    @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
-                                   DefaultNamespaceEnsurer defaultNamespaceEnsurer,
+                                   NamespaceAdmin namespaceAdmin,
                                    MetricStore metricStore,
                                    SystemArtifactLoader systemArtifactLoader,
                                    PluginService pluginService,
@@ -71,7 +71,7 @@ public class StandaloneAppFabricServer extends AppFabricServer {
                                    RouteStore routeStore) {
     super(configuration, discoveryService, schedulerService, notificationService, hostname, handlers,
           metricsCollectionService, programRuntimeService, applicationLifecycleService,
-          programLifecycleService, streamCoordinatorClient, servicesNames, handlerHookNames, defaultNamespaceEnsurer,
+          programLifecycleService, streamCoordinatorClient, servicesNames, handlerHookNames, namespaceAdmin,
           systemArtifactLoader, pluginService, privilegesFetcherProxyService, routeStore);
     this.metricStore = metricStore;
   }
