@@ -127,7 +127,7 @@ export default class HeaderActions extends Component {
               </DropdownMenu>
             </Dropdown>
           </div>
-          <div className="namespace-dropdown">
+          <div id="header-namespace-dropdown" className="namespace-dropdown">
             <NamespaceDropdown tag={this.props.tag}/>
           </div>
           <div className="products-dropdown">

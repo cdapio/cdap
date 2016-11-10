@@ -21,29 +21,29 @@ var shortid = require('shortid');
 import T from 'i18n-react';
 
 const propTypes = {
-  isLoading: PropTypes.bool
+  isLoading: PropTypes.bool,
+  services: PropTypes.arrayOf(
+    PropTypes.shape({
+      name : PropTypes.string,
+      version: PropTypes.string,
+      url: PropTypes.string,
+      logs: PropTypes.string
+    })
+  )
 };
 
-var overviewCards = [
-  T.translate('features.Management.Component-Overview.cards.cdh'),
-  T.translate('features.Management.Component-Overview.cards.yarn'),
-  T.translate('features.Management.Component-Overview.cards.hdfs'),
-  T.translate('features.Management.Component-Overview.cards.zookeeper'),
-  T.translate('features.Management.Component-Overview.cards.kafka'),
-  T.translate('features.Management.Component-Overview.cards.spark')
-];
-
-function AdminOverviewPane() {
-  var cards = [];
-  for(var i = 0; i < overviewCards.length; i++){
-    cards.push(
+function AdminOverviewPane({services}) {
+  let cards = services.map((service) => {
+    return (
       <OverviewPaneCard
         key={shortid.generate()}
-        name={overviewCards[i]}
-        version={5.6}
+        name={service.name}
+        version={service.version}
+        url={service.url}
+        logs={service.logs}
       />
     );
-  }
+  });
 
   return (
     <div className="overview-pane">

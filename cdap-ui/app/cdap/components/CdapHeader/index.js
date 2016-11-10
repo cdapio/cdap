@@ -23,7 +23,7 @@ export default function CdapHeader() {
 
   var navbarItemList = [
     {
-      linkTo: '',
+      linkTo: '/ns',
       title: T.translate('features.Navbar.CDAP.home')
     },
     {

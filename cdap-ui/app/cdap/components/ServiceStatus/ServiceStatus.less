@@ -14,24 +14,163 @@
  * the License.
  */
 @import '../../styles/variables.less';
-@circle-dimension: 15px;
+@circle-dimension: 20px;
 @circle-margin: 4px;
 @circle-top-offset: 2px;
 
 .service-status {
-  padding-top: 15px;
-  margin-left: 30px;
+  padding-top: 8px;
+  margin-left: 14px;
+  width: 190px;
   display: inline-block;
+  cursor: pointer;
+  position: relative;
+
+  .fa-exclamation-triangle {
+    color: yellow;
+    margin-left: 5px;
+  }
+
+  .service-error-message,
+  .service-error-message-inline {
+    border-radius: 4px;
+    position: absolute;
+    text-align: center;
+    padding: 4px 4px;
+    color: black;
+    border: solid 1px #000;
+    z-index: 2000;
+    min-width: 270px;
+  }
+
+  .service-error-message-inline {
+    color: white;
+    background-color: black;
+    border-radius: 4px;
+    padding: 8px;
+    margin-top: 4px;
+  }
+
+  .fa-caret-up {
+    position: absolute;
+    top: -8px;
+    left: 7px;
+    color: black;
+  }
+
+  .service-error-message {
+    top: -10px;
+    background-color: yellow;
+  }
+
+  .service-dropdown-container {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    right: 0;
+    width: 15px;
+    height: 100%;
+
+    .dropdown-menu {
+      outline: none;
+      color: #333;
+      position: absolute;
+      left: -183.5px;
+      top: -9px;
+      border: none;
+      margin: 0;
+      width: 200px;
+      padding-top: 0;
+      padding-bottom: 0;
+
+      a {
+        text-decoration: inherit;
+        color: inherit;
+        cursor: auto;
+        padding-right: 0;
+      }
+      .provision-dropdown-item {
+        cursor: pointer;
+
+        .provision-input {
+          display: inline-block;
+          width: 50px;
+          height: 20px;
+          margin-left: 5px;
+          padding-left: 5px;
+        }
+
+        .set-provision-btn {
+          line-height: 8px;
+          margin-left: 5px;
+          margin-bottom: 2px;
+          height: 20px;
+          color: white;
+          outline: none;
+        }
+
+        .provision-btn-with-warning {
+          padding-top: 3px;
+        }
+      }
+    }
+
+    span.service-dropdown-caret {
+      color: #fff;
+    }
+
+    .dropdown-menu {
+      outline: 0;
+    }
+    .service-dropdown-item {
+      height: 30px;
+      width: 100%;
+      outline: 0;
+      cursor: auto;
+      line-height: 30px;
+      padding-left: 5px;
+
+      &.dropdown-service-name {
+        border-bottom: 1px solid black;
+      }
+      &.dropdown-service-name:hover {
+        background-color: transparent;
+      }
+
+      .status-label {
+        color: #000;
+        font-weight: bold;
+      }
+
+      .fa-file-text {
+        padding-right: 10px;
+      }
+
+      &:hover {
+        background-color: #ccc;
+      }
+    }
+  }
 
   .status-circle-green {
-    display: inline-block;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
     border-radius: 50%;
+    padding-left: 5px;
+    padding-right: 5px;
     margin-top: @circle-margin;
     width: @circle-dimension;
     height: @circle-dimension;
     background-color: #47B834;
     position: relative;
-    top: @circle-top-offset;
+    color: white;
+
+    .fa-spinner {
+      color: white;
+    }
+
   }
 
   .status-circle-yellow {
@@ -71,6 +210,7 @@
     display: inline-block;
     margin-left: 10px;
     font-size: 14px;
+    font-weight: bold;
     color: #ffffff;
   }
 }

@@ -112,6 +112,18 @@ features:
       virtual-cores: Virtual Cores
       memory: Memory
       application: Application
+    Services:
+      appfabric: App Fabric
+      log_saver: Log Saver
+      metrics_processor: Metrics Processor
+      dataset_executor: Dataset Executor
+      metadata_service: Metadata Service
+      streams: Streams
+      explore_service: Explore Service
+      metrics: Metrics
+      transaction: Transaction
+      setBtn: Set
+      requested: Requested
     Configure:
       title: Configure
       buttons:
@@ -125,11 +137,53 @@ features:
         instance-preference: Instance Preference
         delete-datasets: Delete All Datasets
         view-invalid: View Invalid Transactions
+    DetailPanel:
+      headers:
+        nodes: Nodes
+        entities: Entities
+        apps: Apps
+        blocks: Blocks
+        storage: Storage
+        queues: Queues
+        vcores: VCores
+        memory: Memory
+      labels:
+        accepted: Accepted
+        available: Available
+        corrupt: Corrupt
+        currentCapacity: Current Capacity
+        deadRegionServers: Dead Region Servers
+        decommissioned: Decomissioned
+        decommissionInProgress: Decomission In Progress
+        failed: Failed
+        healthy: Healthy
+        killed: Killed
+        liveRegionServers: Live Region Servers
+        lost: Lost
+        maxCapacity: Max Capacity
+        new: New
+        new_saving: New Saving
+        masters: Masters
+        missing: Missing
+        namespaces: Namespaces
+        namepsaces: Namespaces
+        running: Running
+        rebooted: Rebooted
+        stopped: Stopped
+        submitted: Submitted
+        tables: Tables
+        total: Total
+        totalRegionServers: Total Region Servers
+        underreplicated: Underreplicated
+        used: Used
+        unhealthy: Unhealthy
+
     Component-Overview:
       label: Component Overview
-      cards:
+      headers:
         cdh: CDH
         yarn: YARN
+        hbase: HBASE
         hdfs: HDFS
         zookeeper: Zookeeper
         kafka: Kafka
