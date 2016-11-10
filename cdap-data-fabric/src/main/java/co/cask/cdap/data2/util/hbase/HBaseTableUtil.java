@@ -162,14 +162,14 @@ public abstract class HBaseTableUtil {
 
     if (namespaceQueryAdmin == null) {
       throw new IOException(String.format("NamespaceQueryAdmin is not set and a non-reserved namespace " +
-                                            "lookup is requested. Namespace %s", namespaceId));
+                                            "lookup is requested. Namespace %s", namespaceId.getNamespace()));
     }
 
     try {
       return getHBaseNamespace(namespaceQueryAdmin.get(namespaceId));
     } catch (Exception ex) {
       throw new IOException(String.format("NamespaceQueryAdmin lookup to get NamespaceMeta failed. " +
-                                            "Can't find mapping for %s", namespaceId), ex);
+                                            "Can't find mapping for %s", namespaceId.getNamespace()), ex);
     }
   }
 

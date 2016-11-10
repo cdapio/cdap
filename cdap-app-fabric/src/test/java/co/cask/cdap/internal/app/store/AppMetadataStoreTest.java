@@ -63,7 +63,7 @@ public class AppMetadataStoreTest {
   @BeforeClass
   public static void beforeClass() throws Exception {
     Injector injector = AppFabricTestHelper.getInjector();
-    AppFabricTestHelper.ensureNamespaceExists(NamespaceId.DEFAULT.toId());
+    AppFabricTestHelper.ensureNamespaceExists(NamespaceId.DEFAULT);
     datasetFramework = injector.getInstance(DatasetFramework.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     cConf = injector.getInstance(CConfiguration.class);
