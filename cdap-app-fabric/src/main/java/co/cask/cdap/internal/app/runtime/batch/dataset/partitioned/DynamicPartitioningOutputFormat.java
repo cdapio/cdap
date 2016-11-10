@@ -18,17 +18,10 @@ package co.cask.cdap.internal.app.runtime.batch.dataset.partitioned;
 
 import co.cask.cdap.api.dataset.lib.DynamicPartitioner;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
-import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
-import co.cask.cdap.internal.app.runtime.batch.MapReduceClassLoader;
-import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputs;
-import com.google.common.reflect.TypeToken;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.InvalidJobConfException;
 import org.apache.hadoop.mapreduce.Job;
@@ -41,8 +34,8 @@ import org.apache.hadoop.mapreduce.security.TokenCache;
 import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * This class extends the FileOutputFormat and allows writing dynamically to multiple partitions of a PartitionedFileSet
@@ -57,8 +50,6 @@ import java.util.Map;
 @SuppressWarnings("unused")
 public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V> {
 
-  private FileOutputFormat<K, V> fileOutputFormat;
-
   /**
    * Create a composite record writer that can write key/value data to different output files.
    *
@@ -67,109 +58,16 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
    */
   @Override
   public RecordWriter<K, V> getRecordWriter(final TaskAttemptContext job) throws IOException {
-    final String outputName = FileOutputFormat.getOutputName(job);
-
-    Configuration configuration = job.getConfiguration();
-    Class<? extends DynamicPartitioner> partitionerClass = configuration
-      .getClass(PartitionedFileSetArguments.DYNAMIC_PARTITIONER_CLASS_NAME, null, DynamicPartitioner.class);
-
-    @SuppressWarnings("unchecked")
-    final DynamicPartitioner<K, V> dynamicPartitioner =
-      new InstantiatorFactory(false).get(TypeToken.of(partitionerClass)).create();
-
-    MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(configuration);
-    final BasicMapReduceTaskContext<K, V> taskContext = classLoader.getTaskContextProvider().get(job);
-
-    String outputDatasetName = configuration.get(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET);
-    PartitionedFileSet outputDataset = taskContext.getDataset(outputDatasetName);
-    final Partitioning partitioning = outputDataset.getPartitioning();
-
-    dynamicPartitioner.initialize(taskContext);
-
-    return new RecordWriter<K, V>() {
-
-      // a cache storing the record writers for different output files.
-      Map<PartitionKey, RecordWriter<K, V>> recordWriters = new HashMap<>();
-      Map<PartitionKey, TaskAttemptContext> contexts = new HashMap<>();
-
-      public void write(K key, V value) throws IOException, InterruptedException {
-        PartitionKey partitionKey = dynamicPartitioner.getPartitionKey(key, value);
-        RecordWriter<K, V> rw = this.recordWriters.get(partitionKey);
-        if (rw == null) {
-          String relativePath = PartitionedFileSetDataset.getOutputPath(partitionKey, partitioning);
-          String finalPath = relativePath + "/" + outputName;
-
-          // if we don't have the record writer yet for the final path, create one and add it to the cache
-          TaskAttemptContext taskAttemptContext = getTaskAttemptContext(job, finalPath);
-          rw = getBaseRecordWriter(taskAttemptContext);
-          this.recordWriters.put(partitionKey, rw);
-          this.contexts.put(partitionKey, taskAttemptContext);
-        }
-        rw.write(key, value);
-      }
-
-      @Override
-      public void close(TaskAttemptContext context) throws IOException, InterruptedException {
-        try {
-          Map<PartitionKey, RecordWriter<?, ?>> recordWriters = new HashMap<>();
-          recordWriters.putAll(this.recordWriters);
-          MultipleOutputs.closeRecordWriters(recordWriters, contexts);
-          taskContext.flushOperations();
-        } catch (Exception e) {
-          throw new IOException(e);
-        } finally {
-          dynamicPartitioner.destroy();
-        }
-      }
-    };
-  }
-
-  private boolean isAvroOutputFormat(FileOutputFormat<K, V> fileOutputFormat) {
-    String className = fileOutputFormat.getClass().getName();
-    // use class name String in order avoid having a dependency on the Avro libraries here
-    return "org.apache.avro.mapreduce.AvroKeyOutputFormat".equals(className)
-      || "org.apache.avro.mapreduce.AvroKeyValueOutputFormat".equals(className);
-  }
-
-  private TaskAttemptContext getTaskAttemptContext(TaskAttemptContext context,
-                                                   String newOutputName) throws IOException {
-    Job job = new Job(context.getConfiguration());
-    FileOutputFormat.setOutputName(job, newOutputName);
-    // CDAP-4806 We must set this parameter in addition to calling FileOutputFormat#setOutputName, because
-    // AvroKeyOutputFormat/AvroKeyValueOutputFormat use a different parameter for the output name than FileOutputFormat.
-    if (isAvroOutputFormat(getFileOutputFormat(context))) {
-      job.getConfiguration().set("avro.mo.config.namedOutput", newOutputName);
+    boolean concurrencyAllowed =
+      job.getConfiguration().getBoolean(PartitionedFileSetArguments.DYNAMIC_PARTITIONER_ALLOW_CONCURRENCY, true);
+    if (concurrencyAllowed) {
+      return new MultiWriter<>(job);
+    } else {
+      return new SingleWriter<>(job);
     }
-
-    Path jobOutputPath = createJobSpecificPath(FileOutputFormat.getOutputPath(job), context);
-    FileOutputFormat.setOutputPath(job, jobOutputPath);
-
-    return new TaskAttemptContextImpl(job.getConfiguration(), context.getTaskAttemptID());
   }
-
-  /**
-   * @return A RecordWriter object for the given TaskAttemptContext (configured for a particular file name).
-   * @throws IOException
-   */
-  protected RecordWriter<K, V> getBaseRecordWriter(TaskAttemptContext job) throws IOException, InterruptedException {
-    return getFileOutputFormat(job).getRecordWriter(job);
-  }
-
-  private FileOutputFormat<K, V> getFileOutputFormat(TaskAttemptContext job) {
-    if (fileOutputFormat == null) {
-      Class<? extends FileOutputFormat> delegateOutputFormat = job.getConfiguration()
-        .getClass(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME, null, FileOutputFormat.class);
-
-      @SuppressWarnings("unchecked")
-      FileOutputFormat<K, V> fileOutputFormat =
-        new InstantiatorFactory(false).get(TypeToken.of(delegateOutputFormat)).create();
-      this.fileOutputFormat = fileOutputFormat;
-    }
-    return fileOutputFormat;
-  }
-
   // suffixes a Path with a job-specific string
-  private static Path createJobSpecificPath(Path path, JobContext jobContext) {
+  static Path createJobSpecificPath(Path path, JobContext jobContext) {
     String outputPathSuffix = "_temporary_" + jobContext.getJobID().getId();
     return new Path(path, outputPathSuffix);
   }
@@ -214,5 +112,20 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
       throw new InvalidJobConfException("The job configuration does not contain required property: "
                                           + Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME);
     }
+  }
+
+  // workaround, since FileOutputFormat.getOutputName is protected accessibility.
+  static String getOutputName(TaskAttemptContext job) {
+    return FileOutputFormat.getOutputName(job);
+  }
+
+  // workaround, since FileOutputFormat.setOutputPath is protected accessibility.
+  static void setOutputPath(Path jobOutputPath, Job job) {
+    FileOutputFormat.setOutputPath(job, jobOutputPath);
+  }
+
+  // workaround, since FileOutputFormat.setOutputName is protected accessibility.
+  static void setOutputName(Job job, String newOutputName) {
+    FileOutputFormat.setOutputName(job, newOutputName);
   }
 }
