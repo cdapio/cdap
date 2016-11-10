@@ -167,7 +167,7 @@ public class AuthorizationBootstrapperTest {
       @Override
       public Boolean call() throws Exception {
         try {
-          return namespaceQueryAdmin.exists(NamespaceId.DEFAULT.toId());
+          return namespaceQueryAdmin.exists(NamespaceId.DEFAULT);
         } catch (Exception e) {
           return false;
         }

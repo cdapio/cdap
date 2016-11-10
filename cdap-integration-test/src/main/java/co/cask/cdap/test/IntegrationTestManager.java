@@ -451,7 +451,7 @@ public class IntegrationTestManager implements TestManager {
 
   @Override
   public void deleteNamespace(Id.Namespace namespace) throws Exception {
-    namespaceClient.delete(namespace);
+    namespaceClient.delete(namespace.toEntityId());
   }
 
   @Override

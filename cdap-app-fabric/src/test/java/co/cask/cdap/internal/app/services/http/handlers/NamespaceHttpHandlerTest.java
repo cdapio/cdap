@@ -34,6 +34,7 @@ import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -375,18 +376,18 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
                                                             TEST_NAMESPACE_META2);
     Assert.assertEquals(expectedNamespaces, Sets.newHashSet(namespaces));
 
-    NamespaceMeta namespaceMeta = namespaceClient.get(Id.Namespace.from(TEST_NAMESPACE1));
+    NamespaceMeta namespaceMeta = namespaceClient.get(new NamespaceId(TEST_NAMESPACE1));
     Assert.assertEquals(TEST_NAMESPACE_META1, namespaceMeta);
 
     try {
-      namespaceClient.get(Id.Namespace.from("nonExistentNamespace"));
+      namespaceClient.get(new NamespaceId("nonExistentNamespace"));
       Assert.fail("Did not expect namespace 'nonExistentNamespace' to exist.");
     } catch (NotFoundException expected) {
       // expected
     }
 
     // test create and get
-    Id.Namespace fooNamespace = Id.Namespace.from("fooNamespace");
+    NamespaceId fooNamespace = new NamespaceId("fooNamespace");
     NamespaceMeta toCreate = new NamespaceMeta.Builder().setName(fooNamespace).build();
     namespaceClient.create(toCreate);
     NamespaceMeta receivedMeta = namespaceClient.get(fooNamespace);

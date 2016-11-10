@@ -114,11 +114,11 @@ public class RemoteNamespaceQueryTest {
     nsLocation.mkdirs();
     namespaceAdmin.create(meta);
     NamespaceId namespaceId = new NamespaceId(cdapNamespace);
-    Assert.assertTrue(queryClient.exists(namespaceId.toId()));
-    NamespaceMeta resultMeta = queryClient.get(namespaceId.toId());
+    Assert.assertTrue(queryClient.exists(namespaceId));
+    NamespaceMeta resultMeta = queryClient.get(namespaceId);
     Assert.assertEquals(namespaceConfig, resultMeta.getConfig());
 
-    namespaceAdmin.delete(namespaceId.toId());
-    Assert.assertTrue(!queryClient.exists(namespaceId.toId()));
+    namespaceAdmin.delete(namespaceId);
+    Assert.assertTrue(!queryClient.exists(namespaceId));
   }
 }

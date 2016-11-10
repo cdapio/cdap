@@ -122,7 +122,7 @@ public class ExploreDisabledTest {
   @AfterClass
   public static void stop() throws Exception {
     exploreClient.removeNamespace(namespaceId.toId());
-    namespaceAdmin.delete(namespaceId.toId());
+    namespaceAdmin.delete(namespaceId);
     exploreClient.close();
     datasetService.stopAndWait();
     dsOpExecutor.stopAndWait();

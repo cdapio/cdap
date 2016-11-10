@@ -20,8 +20,8 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NamespaceAlreadyExistsException;
 import co.cask.cdap.common.NamespaceCannotBeDeletedException;
 import co.cask.cdap.common.NamespaceNotFoundException;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 import com.google.gson.Gson;
@@ -37,14 +37,14 @@ public abstract class AbstractNamespaceClient extends AbstractNamespaceQueryClie
   private static final Gson GSON = new Gson();
 
   @Override
-  public void delete(Id.Namespace namespaceId) throws Exception {
-    URL url = resolve(String.format("unrecoverable/namespaces/%s", namespaceId.getId()));
+  public void delete(NamespaceId namespaceId) throws Exception {
+    URL url = resolve(String.format("unrecoverable/namespaces/%s", namespaceId.getNamespace()));
     HttpResponse response = execute(HttpRequest.delete(url).build());
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NamespaceNotFoundException(namespaceId.toEntityId());
+      throw new NamespaceNotFoundException(namespaceId);
     } else if (HttpURLConnection.HTTP_FORBIDDEN == response.getResponseCode()) {
-      throw new NamespaceCannotBeDeletedException(namespaceId.toEntityId(), response.getResponseBodyAsString());
+      throw new NamespaceCannotBeDeletedException(namespaceId, response.getResponseBodyAsString());
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return;
     }
@@ -70,8 +70,8 @@ public abstract class AbstractNamespaceClient extends AbstractNamespaceQueryClie
   }
 
   @Override
-  public void updateProperties(Id.Namespace namespaceId, NamespaceMeta metadata) throws Exception {
-    URL url = resolve(String.format("namespaces/%s/properties", namespaceId.getId()));
+  public void updateProperties(NamespaceId namespaceId, NamespaceMeta metadata) throws Exception {
+    URL url = resolve(String.format("namespaces/%s/properties", namespaceId.getNamespace()));
     HttpResponse response = execute(HttpRequest.put(url).withBody(GSON.toJson(metadata)).build());
     String responseBody = response.getResponseBodyAsString();
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
@@ -84,16 +84,16 @@ public abstract class AbstractNamespaceClient extends AbstractNamespaceQueryClie
   }
 
   @Override
-  public void deleteDatasets(Id.Namespace namespaceId) throws Exception {
-    URL url = resolve(String.format("unrecoverable/namespaces/%s/datasets", namespaceId.getId()));
+  public void deleteDatasets(NamespaceId namespaceId) throws Exception {
+    URL url = resolve(String.format("unrecoverable/namespaces/%s/datasets", namespaceId.getNamespace()));
     HttpResponse response = execute(HttpRequest.delete(url).build());
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NamespaceNotFoundException(namespaceId.toEntityId());
+      throw new NamespaceNotFoundException(namespaceId);
     } else if (HttpURLConnection.HTTP_FORBIDDEN == response.getResponseCode()) {
       String msg = String.format("Datasets in the namespace '%s' cannot be deleted. Reason: '%s'.", namespaceId,
                                  response.getResponseBodyAsString());
-      throw new NamespaceCannotBeDeletedException(namespaceId.toEntityId(), msg);
+      throw new NamespaceCannotBeDeletedException(namespaceId, msg);
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return;
     }
@@ -103,7 +103,7 @@ public abstract class AbstractNamespaceClient extends AbstractNamespaceQueryClie
 
   public void deleteAll() throws Exception {
     for (NamespaceMeta meta : list()) {
-      delete(Id.Namespace.from(meta.getName()));
+      delete(meta.getNamespaceId());
     }
   }
 }

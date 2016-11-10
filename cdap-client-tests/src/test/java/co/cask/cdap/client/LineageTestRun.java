@@ -189,7 +189,7 @@ public class LineageTestRun extends MetadataTestBase {
       // Test non-existent run
       assertRunMetadataNotFound(flow.run(RunIds.generate(1000).getId()));
     } finally {
-      namespaceClient.delete(namespace.toId());
+      namespaceClient.delete(namespace);
     }
   }
 
@@ -324,7 +324,7 @@ public class LineageTestRun extends MetadataTestBase {
                                 new MetadataRecord(stream, MetadataScope.USER, emptyMap(), emptySet())),
                           fetchRunMetadata(spark.run(sparkRunId.getId())));
     } finally {
-      namespaceClient.delete(namespace.toId());
+      namespaceClient.delete(namespace);
     }
   }
 

@@ -19,8 +19,8 @@ package co.cask.cdap.test.app;
 import co.cask.cdap.common.NamespaceCannotBeCreatedException;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.explore.service.ExploreException;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
 import org.junit.Assert;
@@ -35,7 +35,7 @@ import java.sql.ResultSet;
  */
 public class TestSQLQueryTestRun extends TestFrameworkTestBase {
 
-  private final Id.Namespace testSpace = Id.Namespace.from("testspace");
+  private final NamespaceId testSpace = new NamespaceId("testspace");
   private static NamespaceAdmin namespaceAdmin;
 
   @BeforeClass
@@ -110,11 +110,11 @@ public class TestSQLQueryTestRun extends TestFrameworkTestBase {
 
   private void testSQLQuery() throws Exception {
     // Deploying app makes sure that the default namespace is available.
-    deployApplication(testSpace, DummyApp.class);
-    deployDatasetModule(testSpace, "my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
-    deployApplication(testSpace, AppsWithDataset.AppWithAutoCreate.class);
+    deployApplication(testSpace.toId(), DummyApp.class);
+    deployDatasetModule(testSpace.toId(), "my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
+    deployApplication(testSpace.toId(), AppsWithDataset.AppWithAutoCreate.class);
     DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> myTableManager =
-      getDataset(testSpace, "myTable");
+      getDataset(testSpace.toId(), "myTable");
     AppsWithDataset.KeyValueTableDefinition.KeyValueTable kvTable = myTableManager.get();
     kvTable.put("a", "1");
     kvTable.put("b", "2");
@@ -122,7 +122,7 @@ public class TestSQLQueryTestRun extends TestFrameworkTestBase {
     myTableManager.flush();
 
     try (
-      Connection connection = getQueryClient(testSpace);
+      Connection connection = getQueryClient(testSpace.toId());
       ResultSet results = connection.prepareStatement("select first from dataset_mytable where second = '1'")
         .executeQuery()
     ) {

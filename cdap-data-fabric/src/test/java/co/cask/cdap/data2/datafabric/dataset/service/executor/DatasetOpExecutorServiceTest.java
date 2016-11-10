@@ -160,8 +160,8 @@ public class DatasetOpExecutorServiceTest {
     managerService.stopAndWait();
     managerService = null;
 
-    namespaceAdmin.delete(NamespaceId.DEFAULT.toId());
-    namespaceAdmin.delete(bob.getParent().toId());
+    namespaceAdmin.delete(NamespaceId.DEFAULT);
+    namespaceAdmin.delete(bob.getParent());
   }
 
   @Test

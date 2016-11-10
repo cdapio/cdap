@@ -40,7 +40,6 @@ import co.cask.cdap.hive.context.TxnCodec;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.cdap.hive.stream.StreamStorageHandler;
 import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
@@ -807,7 +806,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     startAndWait();
     String customHiveDatabase;
     try {
-      customHiveDatabase = namespaceQueryAdmin.get(namespace.toId()).getConfig().getHiveDatabase();
+      customHiveDatabase = namespaceQueryAdmin.get(namespace).getConfig().getHiveDatabase();
     } catch (Exception e) {
       throw new ExploreException(String.format("Failed to get namespace meta for the namespace %s", namespace));
     }
@@ -1235,7 +1234,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       return namespace;
     }
     try {
-      String customHiveDb = namespaceQueryAdmin.get(Id.Namespace.from(namespace)).getConfig().getHiveDatabase();
+      String customHiveDb = namespaceQueryAdmin.get(new NamespaceId(namespace)).getConfig().getHiveDatabase();
       if (!Strings.isNullOrEmpty(customHiveDb)) {
         return customHiveDb;
       }

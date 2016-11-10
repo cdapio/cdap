@@ -721,7 +721,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     throws NamespaceNotFoundException {
 
     try {
-      namespaceQueryAdmin.get(namespace.toId());
+      namespaceQueryAdmin.get(namespace);
     } catch (NamespaceNotFoundException e) {
       throw e;
     } catch (Exception e) {

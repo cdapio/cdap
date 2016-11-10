@@ -30,6 +30,7 @@ import co.cask.cdap.proto.audit.AuditMessage;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.audit.payload.metadata.MetadataPayload;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.metadata.Metadata;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import com.google.common.base.Predicate;
@@ -73,7 +74,7 @@ public class SystemMetadataAuditPublishTest {
     AppFabricTestHelper.deployApplication(Id.Namespace.DEFAULT, AllProgramsApp.class, null, cConf);
     Set<String> addedMetadata = getAllSystemMetadata();
     Assert.assertFalse(addedMetadata.isEmpty());
-    namespaceAdmin.delete(Id.Namespace.DEFAULT);
+    namespaceAdmin.delete(NamespaceId.DEFAULT);
     Set<String> removedMetadata = getAllSystemMetadata();
     Assert.assertFalse(removedMetadata.isEmpty());
     // Assert that the exact same system properties and tags got added upon app deployment and removed upon deletion

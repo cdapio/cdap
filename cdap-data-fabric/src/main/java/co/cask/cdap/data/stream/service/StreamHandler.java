@@ -186,7 +186,7 @@ public final class StreamHandler extends AbstractHttpHandler {
   public void listStreams(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId) throws Exception {
     // Check for namespace existence. Throws NotFoundException if namespace doesn't exist
-    namespaceQueryAdmin.get(new NamespaceId(namespaceId).toId());
+    namespaceQueryAdmin.get(new NamespaceId(namespaceId));
     List<StreamSpecification> specifications = streamAdmin.listStreams(new NamespaceId(namespaceId));
     List<StreamDetail> streamDetails = new ArrayList<>(specifications.size());
     for (StreamSpecification specification : specifications) {
@@ -212,7 +212,7 @@ public final class StreamHandler extends AbstractHttpHandler {
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("stream") String stream) throws Exception {
     // Check for namespace existence. Throws NotFoundException if namespace doesn't exist
-    namespaceQueryAdmin.get(new NamespaceId(namespaceId).toId());
+    namespaceQueryAdmin.get(new NamespaceId(namespaceId));
 
     StreamId streamId = validateAndGetStreamId(namespaceId, stream);
 

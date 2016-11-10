@@ -169,7 +169,7 @@ public abstract class SchedulerTestBase {
 
   @AfterClass
   public static void tearDown() throws Exception {
-    namespaceAdmin.delete(Id.Namespace.DEFAULT);
+    namespaceAdmin.delete(NamespaceId.DEFAULT);
   }
 
   /**

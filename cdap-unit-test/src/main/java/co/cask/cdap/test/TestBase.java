@@ -448,7 +448,7 @@ public class TestBase {
       authorizerInstantiator.get().grant(NamespaceId.DEFAULT, principal, ImmutableSet.of(Action.ADMIN));
     }
 
-    namespaceAdmin.delete(Id.Namespace.DEFAULT);
+    namespaceAdmin.delete(NamespaceId.DEFAULT);
     authorizerInstantiator.close();
     streamCoordinatorClient.stopAndWait();
     metricsQueryService.stopAndWait();

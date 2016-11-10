@@ -43,15 +43,15 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
   @Test
   public void testNamespaces() throws Exception {
     String namespace = "namespace";
-    Id.Namespace namespaceId = Id.Namespace.from(namespace);
+    NamespaceId namespaceId = new NamespaceId(namespace);
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
 
     int initialCount = namespaceAdmin.list().size();
 
     // TEST_NAMESPACE_META1 is already created in AppFabricTestBase#beforeClass
-    Assert.assertTrue(namespaceAdmin.exists(Id.Namespace.from(TEST_NAMESPACE1)));
+    Assert.assertTrue(namespaceAdmin.exists(new NamespaceId(TEST_NAMESPACE1)));
     // It should be present in cache too
-    Assert.assertNotNull(getFromCache(Id.Namespace.from(TEST_NAMESPACE1).toEntityId()));
+    Assert.assertNotNull(getFromCache(new NamespaceId(TEST_NAMESPACE1)));
     try {
       namespaceAdmin.create(TEST_NAMESPACE_META1);
       Assert.fail("Should not create duplicate namespace.");
@@ -61,7 +61,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
 
     // "random" namespace should not exist
     try {
-      namespaceAdmin.get(Id.Namespace.from("random"));
+      namespaceAdmin.get(new NamespaceId("random"));
       Assert.fail("Namespace 'random' should not exist.");
     } catch (NamespaceNotFoundException e) {
       Assert.assertEquals(new NamespaceId("random"), e.getId());
@@ -75,7 +75,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     }
 
     Assert.assertEquals(initialCount, namespaceAdmin.list().size());
-    Assert.assertFalse(namespaceAdmin.exists(Id.Namespace.from(namespace)));
+    Assert.assertFalse(namespaceAdmin.exists(new NamespaceId(namespace)));
 
     try {
       namespaceAdmin.create(builder.build());
@@ -92,17 +92,18 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     Assert.assertEquals(initialCount + 1, namespaceAdmin.list().size());
     Assert.assertTrue(namespaceAdmin.exists(namespaceId));
     // it should be loaded in cache too since exists calls get
-    Assert.assertNotNull(getFromCache(namespaceId.toEntityId()));
+    Assert.assertNotNull(getFromCache(namespaceId));
     try {
       NamespaceMeta namespaceMeta = namespaceAdmin.get(namespaceId);
-      Assert.assertEquals(namespaceId.getId(), namespaceMeta.getName());
+      Assert.assertEquals(namespaceId.getNamespace(), namespaceMeta.getName());
       Assert.assertEquals("", namespaceMeta.getDescription());
 
       namespaceAdmin.delete(namespaceId);
       // it should be deleted from the cache too
-      Assert.assertNull(getFromCache(namespaceId.toEntityId()));
+      Assert.assertNull(getFromCache(namespaceId));
     } catch (NotFoundException e) {
-      Assert.fail(String.format("Namespace '%s' should be found since it was just created.", namespaceId.getId()));
+      Assert.fail(String.format("Namespace '%s' should be found since it was just created.",
+                                namespaceId.getNamespace()));
     }
 
     namespaceAdmin.create(builder.setDescription("describes " + namespace).build());
@@ -112,15 +113,16 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     try {
       NamespaceMeta namespaceMeta = namespaceAdmin.get(namespaceId);
       // it should be loaded in cache too
-      Assert.assertNotNull(getFromCache(namespaceId.toEntityId()));
-      Assert.assertEquals(namespaceId.getId(), namespaceMeta.getName());
-      Assert.assertEquals("describes " + namespaceId.getId(), namespaceMeta.getDescription());
+      Assert.assertNotNull(getFromCache(namespaceId));
+      Assert.assertEquals(namespaceId.getNamespace(), namespaceMeta.getName());
+      Assert.assertEquals("describes " + namespaceId.getNamespace(), namespaceMeta.getDescription());
 
       namespaceAdmin.delete(namespaceId);
       // it should be deleted from the cache
-      Assert.assertNull(getFromCache(namespaceId.toEntityId()));
+      Assert.assertNull(getFromCache(namespaceId));
     } catch (NotFoundException e) {
-      Assert.fail(String.format("Namespace '%s' should be found since it was just created.", namespaceId.getId()));
+      Assert.fail(String.format("Namespace '%s' should be found since it was just created.",
+                                namespaceId.getNamespace()));
     }
 
     // Verify NotFoundException's contents as well, instead of just checking namespaceService.exists = false
@@ -130,10 +132,10 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
   @Test
   public void testConfigUpdateFailures() throws Exception {
     String namespace = "custompaceNamespace";
-    Id.Namespace namespaceId = Id.Namespace.from(namespace);
+    NamespaceId namespaceId = new NamespaceId(namespace);
     // check that root directory for a namespace cannot be updated
     // create the custom directory since the namespace is being created with custom root directory it needs to exist
-    Location customlocation = namespacedLocationFactory.get(namespaceId);
+    Location customlocation = namespacedLocationFactory.get(namespaceId.toId());
     Assert.assertTrue(customlocation.mkdirs());
     NamespaceMeta nsMeta = new NamespaceMeta.Builder().setName(namespaceId)
       .setRootDirectory(customlocation.toString()).build();
@@ -142,7 +144,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
 
     // Updating the root directory for a namespace should fail
     try {
-      namespaceAdmin.updateProperties(nsMeta.getNamespaceId().toId(),
+      namespaceAdmin.updateProperties(nsMeta.getNamespaceId(),
                                       new NamespaceMeta.Builder(nsMeta).setRootDirectory("/newloc").build());
       Assert.fail();
     } catch (BadRequestException e) {
@@ -151,7 +153,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
 
     // Updating the HBase namespace for a namespace should fail
     try {
-      namespaceAdmin.updateProperties(nsMeta.getNamespaceId().toId(),
+      namespaceAdmin.updateProperties(nsMeta.getNamespaceId(),
                                       new NamespaceMeta.Builder(nsMeta).setHBaseNamespace("custns").build());
       Assert.fail();
     } catch (BadRequestException e) {
@@ -160,7 +162,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
 
     // Updating the hive database for a namespace should fail
     try {
-      namespaceAdmin.updateProperties(nsMeta.getNamespaceId().toId(),
+      namespaceAdmin.updateProperties(nsMeta.getNamespaceId(),
                                       new NamespaceMeta.Builder(nsMeta).setHiveDatabase("newDB").build());
       Assert.fail();
     } catch (BadRequestException e) {
@@ -169,7 +171,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
 
     // removing the root directory mapping for a namespace should fail
     try {
-      namespaceAdmin.updateProperties(nsMeta.getNamespaceId().toId(),
+      namespaceAdmin.updateProperties(nsMeta.getNamespaceId(),
                                       new NamespaceMeta.Builder(nsMeta).setRootDirectory("").build());
       Assert.fail();
     } catch (BadRequestException e) {
@@ -178,7 +180,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
 
     // updating the principal for an existing namespace should fail
     try {
-      namespaceAdmin.updateProperties(nsMeta.getNamespaceId().toId(),
+      namespaceAdmin.updateProperties(nsMeta.getNamespaceId(),
                                       new NamespaceMeta.Builder(nsMeta).setPrincipal("newPrincipal").build());
       Assert.fail();
     } catch (BadRequestException e) {
@@ -187,7 +189,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
 
     // updating the keytabURI for an existing namespace should fail
     try {
-      namespaceAdmin.updateProperties(nsMeta.getNamespaceId().toId(),
+      namespaceAdmin.updateProperties(nsMeta.getNamespaceId(),
                                       new NamespaceMeta.Builder(nsMeta).setKeytabURI("/new/keytab/uri").build());
       Assert.fail();
     } catch (BadRequestException e) {
@@ -234,7 +236,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     Assert.assertTrue(otherNamespace.mkdirs());
     namespaceAdmin.create(new NamespaceMeta.Builder().setName("otherNamespace")
                             .setRootDirectory(otherNamespace.toString()).build());
-    namespaceAdmin.delete(Id.Namespace.from("otherNamespace"));
+    namespaceAdmin.delete(new NamespaceId("otherNamespace"));
 
     // creating a new namespace with same hive database should fails
     verifyAlreadyExist(new NamespaceMeta.Builder().setName("otherNamespace").setHiveDatabase("hivedb").build(),
@@ -260,12 +262,13 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     }
   }
 
-  private static void verifyNotFound(Id.Namespace namespaceId) throws Exception {
+  private static void verifyNotFound(NamespaceId namespaceId) throws Exception {
     try {
       namespaceAdmin.get(namespaceId);
-      Assert.fail(String.format("Namespace '%s' should not be found since it was just deleted", namespaceId.getId()));
+      Assert.fail(String.format("Namespace '%s' should not be found since it was just deleted",
+                                namespaceId.getNamespace()));
     } catch (NamespaceNotFoundException e) {
-      Assert.assertEquals(namespaceId.toEntityId(), e.getId());
+      Assert.assertEquals(namespaceId, e.getId());
     }
   }
 }

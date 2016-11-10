@@ -145,7 +145,7 @@ public abstract class DatasetServiceTestBase {
   @AfterClass
   public static void tearDown() throws Exception {
     Services.chainStop(service, opExecutorService, txManager, authEnforcementService);
-    namespaceAdmin.delete(NamespaceId.DEFAULT.toId());
+    namespaceAdmin.delete(NamespaceId.DEFAULT);
     Locations.deleteQuietly(locationFactory.create(NamespaceId.DEFAULT.getNamespace()));
   }
 

@@ -101,7 +101,7 @@ public final class DistributedStorageProviderNamespaceAdmin extends AbstractStor
     // delete HBase namespace
     NamespaceConfig namespaceConfig;
     try {
-      namespaceConfig = namespaceQueryAdmin.get(namespaceId.toId()).getConfig();
+      namespaceConfig = namespaceQueryAdmin.get(namespaceId).getConfig();
     } catch (Exception ex) {
       throw new IOException("Could not fetch custom HBase mapping.", ex);
     }

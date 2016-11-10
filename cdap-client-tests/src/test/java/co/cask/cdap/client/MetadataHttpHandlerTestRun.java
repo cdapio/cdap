@@ -115,7 +115,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   public void after() throws Exception {
     appClient.delete(application.toId());
     artifactClient.delete(artifactId.toId());
-    namespaceClient.delete(NamespaceId.DEFAULT.toId());
+    namespaceClient.delete(NamespaceId.DEFAULT);
   }
 
   @Test
@@ -1134,7 +1134,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
                         searchMetadata(namespace, "tag1"));
 
     // Delete namespace
-    namespaceClient.delete(namespace.toId());
+    namespaceClient.delete(namespace);
 
     // Assert no metadata
     Assert.assertEquals(ImmutableSet.of(), searchMetadata(namespace, "text"));
