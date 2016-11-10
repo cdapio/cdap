@@ -20,14 +20,18 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.test.XSlowTests;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
@@ -43,7 +47,9 @@ import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -53,36 +59,52 @@ import static co.cask.cdap.internal.app.runtime.batch.AppWithMapReduceUsingAvroD
 import static co.cask.cdap.internal.app.runtime.batch.AppWithMapReduceUsingAvroDynamicPartitioner.OUTPUT_PARTITION_KEY;
 import static co.cask.cdap.internal.app.runtime.batch.AppWithMapReduceUsingAvroDynamicPartitioner.SCHEMA;
 
-@Category(XSlowTests.class)
 /**
  * This tests that we can use DynamicPartitioner with a PartitionedFileSet using
  * AvroKeyOutputFormat/AvroKeyValueOutputFormat.
  */
+@Category(XSlowTests.class)
 public class DynamicPartitionerWithAvroTest extends MapReduceRunnerTestBase {
 
-  private GenericData.Record createRecord(String name, int zip) {
-    GenericData.Record record = new GenericData.Record(SCHEMA);
-    record.put("name", name);
-    record.put("zip", zip);
-    return record;
+  @Test
+  public void testDynamicPartitionerWithAvroMultiWriter() throws Exception {
+    List<? extends GenericRecord> records =
+      ImmutableList.of(createRecord("bob", 95111),
+                       createRecord("sally", 98123),
+                       createRecord("jane", 84125),
+                       createRecord("john", 84125));
+    runDynamicPartitionerMapReduce(records, true, true);
   }
 
   @Test
-  public void testDynamicPartitionerWithAvro() throws Exception {
+  public void testDynamicPartitionerWithAvroSingleWriter() throws Exception {
+    List<? extends GenericRecord> records =
+      ImmutableList.of(createRecord("bob", 95111),
+                       createRecord("sally", 98123),
+                       createRecord("jane", 84125),
+                       createRecord("john", 84125));
+    runDynamicPartitionerMapReduce(records, false, true);
+  }
+
+  @Test
+  public void testDynamicPartitionerWithAvroSingleWriterWithUnorderedData() throws Exception {
+    List<? extends GenericRecord> records =
+      ImmutableList.of(createRecord("bob", 95111),
+                       createRecord("jane", 84125),
+                       createRecord("sally", 98123),
+                       createRecord("john", 84125));
+    // the input data is not ordered by output partition and its limiting to a single writer,
+    // so we expect this job to fail
+    runDynamicPartitionerMapReduce(records, false, false);
+  }
+
+  private void runDynamicPartitionerMapReduce(final List<? extends GenericRecord> records,
+                                              boolean allowConcurrentWriters,
+                                              boolean expectedStatus) throws Exception {
     ApplicationWithPrograms app = deployApp(AppWithMapReduceUsingAvroDynamicPartitioner.class);
 
-    final GenericRecord record1 = createRecord("bob", 95111);
-    final GenericRecord record2 = createRecord("sally", 98123);
-    final GenericRecord record3 = createRecord("jane", 84125);
-    final GenericRecord record4 = createRecord("john", 84125);
-
     final long now = System.currentTimeMillis();
-    // the four records above will fall into the partitions defined by the following three keys
-    // we have four records, but only 3 have unique zip codes (which is what we partition by)
-    final PartitionKey key1 = PartitionKey.builder().addLongField("time", now).addIntField("zip", 95111).build();
-    final PartitionKey key2 = PartitionKey.builder().addLongField("time", now).addIntField("zip", 98123).build();
-    final PartitionKey key3 = PartitionKey.builder().addLongField("time", now).addIntField("zip", 84125).build();
-    final Set<PartitionKey> expectedKeys = ImmutableSet.of(key1, key2, key3);
+    final Multimap<PartitionKey, GenericRecord> keyToRecordsMap = groupByPartitionKey(records, now);
 
     // write values to the input kvTable
     final KeyValueTable kvTable = datasetCache.getDataset(INPUT_DATASET);
@@ -91,17 +113,27 @@ public class DynamicPartitionerWithAvroTest extends MapReduceRunnerTestBase {
         @Override
         public void apply() {
           // the keys are not used; it matters that they're unique though
-          kvTable.write("1", record1.toString());
-          kvTable.write("2", record2.toString());
-          kvTable.write("3", record3.toString());
-          kvTable.write("4", record4.toString());
+          for (int i = 0; i < records.size(); i++) {
+            kvTable.write(Integer.toString(i), records.get(i).toString());
+          }
         }
       });
 
 
+    String allowConcurrencyKey =
+      "dataset." + OUTPUT_DATASET + "." + PartitionedFileSetArguments.DYNAMIC_PARTITIONER_ALLOW_CONCURRENCY;
     // run the partition writer m/r with this output partition time
-    runProgram(app, AppWithMapReduceUsingAvroDynamicPartitioner.DynamicPartitioningMapReduce.class,
-               new BasicArguments(ImmutableMap.of(OUTPUT_PARTITION_KEY, Long.toString(now))));
+    ImmutableMap<String, String> arguments =
+      ImmutableMap.of(OUTPUT_PARTITION_KEY, Long.toString(now),
+                      allowConcurrencyKey, Boolean.toString(allowConcurrentWriters));
+    boolean status = runProgram(app, AppWithMapReduceUsingAvroDynamicPartitioner.DynamicPartitioningMapReduce.class,
+                                new BasicArguments(arguments));
+    Assert.assertEquals(expectedStatus, status);
+
+    if (!expectedStatus) {
+      // if we expect the program to fail, no need to check the output data for expected results
+      return;
+    }
 
     // this should have created a partition in the pfs
     final PartitionedFileSet pfs = datasetCache.getDataset(OUTPUT_DATASET);
@@ -120,26 +152,43 @@ public class DynamicPartitionerWithAvroTest extends MapReduceRunnerTestBase {
           }
           Assert.assertEquals(3, partitions.size());
 
-          Assert.assertEquals(expectedKeys, partitions.keySet());
+          Assert.assertEquals(keyToRecordsMap.keySet(), partitions.keySet());
 
-          // Check the relative path of one partition. Also check that its location = pfs base location + relativePath
-          PartitionDetail partition1 = partitions.get(key1);
-          String relativePath = partition1.getRelativePath();
-          Assert.assertEquals(Long.toString(now) + Path.SEPARATOR + Integer.toString((int) key1.getField("zip")),
-                              relativePath);
+          // Check relative paths of the partitions. Also check that their location = pfs baseLocation + relativePath
+          for (Map.Entry<PartitionKey, PartitionDetail> partitionKeyEntry : partitions.entrySet()) {
+            PartitionDetail partitionDetail = partitionKeyEntry.getValue();
+            String relativePath = partitionDetail.getRelativePath();
+            int zip = (int) partitionKeyEntry.getKey().getField("zip");
+            Assert.assertEquals(Long.toString(now) + Path.SEPARATOR + zip,
+                                relativePath);
 
-          Assert.assertEquals(pfsBaseLocation.append(relativePath), partition1.getLocation());
+            Assert.assertEquals(pfsBaseLocation.append(relativePath), partitionDetail.getLocation());
 
-          Assert.assertEquals(ImmutableList.of(record1), readOutput(partition1.getLocation()));
-          Assert.assertEquals(ImmutableList.of(record2), readOutput(partitions.get(key2).getLocation()));
-          Assert.assertEquals(ImmutableList.of(record3, record4), readOutput(partitions.get(key3).getLocation()));
+          }
+
+          for (Map.Entry<PartitionKey, Collection<GenericRecord>> keyToRecordsEntry :
+            keyToRecordsMap.asMap().entrySet()) {
+
+            Set<GenericRecord> genericRecords = new HashSet<>(keyToRecordsEntry.getValue());
+            Assert.assertEquals(genericRecords, readOutput(partitions.get(keyToRecordsEntry.getKey()).getLocation()));
+          }
         }
       });
   }
 
-  private List<GenericRecord> readOutput(Location location) throws IOException {
+  private Multimap<PartitionKey, GenericRecord> groupByPartitionKey(List<? extends GenericRecord> records, long now) {
+    HashMultimap<PartitionKey, GenericRecord> groupedByPartitionKey = HashMultimap.create();
+    for (GenericRecord record : records) {
+      PartitionKey key =
+        PartitionKey.builder().addLongField("time", now).addIntField("zip", (int) record.get("zip")).build();
+      groupedByPartitionKey.put(key, record);
+    }
+    return groupedByPartitionKey;
+  }
+
+  private Set<GenericRecord> readOutput(Location location) throws IOException {
     DatumReader<GenericRecord> datumReader = new GenericDatumReader<>(SCHEMA);
-    List<GenericRecord> records = new ArrayList<>();
+    Set<GenericRecord> records = new HashSet<>();
     for (Location file : location.list()) {
       if (file.getName().endsWith(".avro")) {
         DataFileStream<GenericRecord> fileStream = new DataFileStream<>(file.getInputStream(), datumReader);
@@ -148,5 +197,12 @@ public class DynamicPartitionerWithAvroTest extends MapReduceRunnerTestBase {
       }
     }
     return records;
+  }
+
+  private GenericData.Record createRecord(String name, int zip) {
+    GenericData.Record record = new GenericData.Record(SCHEMA);
+    record.put("name", name);
+    record.put("zip", zip);
+    return record;
   }
 }
