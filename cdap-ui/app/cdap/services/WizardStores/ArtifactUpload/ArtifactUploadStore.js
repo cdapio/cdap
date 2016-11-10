@@ -28,7 +28,7 @@ const defaultState = {
 
 const defaultConfigureState = Object.assign({
   name: '',
-  type: 'jdbc',
+  type: '',
   description: '',
   classname: '',
   parentArtifact: []

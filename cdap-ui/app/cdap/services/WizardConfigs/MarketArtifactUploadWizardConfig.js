@@ -14,28 +14,15 @@
  * the License.
  */
 
-.artifact-upload-wizard {
-  .modal-body {
-    border: 1px solid #262933;
+import React from 'react';
+import ArtifactUploadWizardConfig from 'services/WizardConfigs/ArtifactUploadWizardConfig';
+import ConfigureStep from 'components/CaskWizards/ArtifactUpload/ConfigureStep';
+import cloneDeep from 'lodash/cloneDeep';
 
-    .wizard-body .wizard-steps-content .form-horizontal {
-      overflow-y: auto;
-      overflow-x: hidden;
-      width: 100%;
-    }
+let commonSteps = cloneDeep(ArtifactUploadWizardConfig);
+commonSteps.steps[1].content = (<ConfigureStep isMarket={true}/>);
 
-    .cask-wizard {
-      .wizard-body {
-        .wizard-steps-content {
-          .wizard-navigation {
-            position: static;
-            width: 100%;
-          }
-        }
-      }
-    }
-    select[multiple] {
-      height: 55px;
-    }
-  }
-}
+const MarketArtifactUploadWizardConfig = commonSteps;
+
+
+export default MarketArtifactUploadWizardConfig;
