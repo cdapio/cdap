@@ -58,14 +58,9 @@ import com.google.common.base.Functions;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
-import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
-import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -78,7 +73,6 @@ import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.tez.dag.api.TezConfiguration;
 import org.apache.twill.api.TwillContext;
-import org.apache.twill.api.TwillRunnableSpecification;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
@@ -100,8 +94,9 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -118,31 +113,13 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
   };
 
   private Injector injector;
-  private Set<String> exploreDependencies;
 
-  public ExploreServiceTwillRunnable(String name, String cConfName, String hConfName,
-                                     Iterable<String> exploreDependencies) {
+  public ExploreServiceTwillRunnable(String name, String cConfName, String hConfName) {
     super(name, cConfName, hConfName);
-    this.exploreDependencies = Sets.newHashSet(exploreDependencies);
-  }
-
-  @Override
-  public TwillRunnableSpecification configure() {
-    TwillRunnableSpecification spec = super.configure();
-    return TwillRunnableSpecification.Builder.with()
-      .setName(spec.getName())
-      .withConfigs(ImmutableMap.<String, String>builder()
-                     .putAll(spec.getConfigs())
-                     .put("explore.dependencies", new Gson().toJson(exploreDependencies))
-                     .build()
-      )
-      .build();
   }
 
   @Override
   protected void doInit(TwillContext context) {
-    exploreDependencies = new Gson().fromJson(context.getSpecification().getConfigs().get("explore.dependencies"),
-                                              new TypeToken<Set<String>>() { }.getType());
     setupHive();
 
     CConfiguration cConf = getCConfiguration();
@@ -235,42 +212,55 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
     }
 
     // Filter out hive jars, only include non-hive jars (e.g. CDAP jars, hbase jars) from the container directory.
+    // Basically those are the jars not directly under the container directory, since we localize hive jars to the
+    // container directory. For non-hive jars, those get expanded by Twill under the $PWD/tmp directory, hence
+    // they won't be directly under $PWD.
+    // We also filter out jar with the same name and only taking the one that comes first in the current classloader
+    // classpath, other the file localization for MR/Spark app launched by Hive will fail
     // For jars not in container directory, they are from the yarn application classpath (e.g. Hadoop jars), which
     // we don't need to include as well.
     List<URL> urls = Arrays.asList(((URLClassLoader) classLoader).getURLs());
     LOG.debug("Classloader urls: {}", urls);
 
-    Iterable<URL> hiveExtraJars = Iterables.filter(urls, new Predicate<URL>() {
-        private final String userDir = System.getProperty("user.dir");
-
-        @Override
-        public boolean apply(URL url) {
-          String path = url.getPath();
-          return path.endsWith(".jar") && !exploreDependencies.contains(getFileName(url)) && path.startsWith(userDir);
-        }
-      });
+    // Need to be a LinkedHashMap since we need to maintain the jar order
+    Map<String, URL> hiveExtraJars = new LinkedHashMap<>();
+    String userDir = System.getProperty("user.dir");
+    for (URL url : urls) {
+      String path = url.getPath();
+      if (!path.endsWith(".jar") || !path.startsWith(userDir) || new File(path).getParent().equals(userDir)) {
+        // This is hive jar, hence exclude it
+        continue;
+      }
+      String fileName = getFileName(url);
+      if (!hiveExtraJars.containsKey(fileName)) {
+        hiveExtraJars.put(fileName, url);
+      } else {
+        LOG.info("Ignore jar with name {} that was added previously with {}", fileName, url);
+      }
+    }
 
     // Set the Hive aux jars property. This is for localizing jars needed for CDAP
     // These dependency files need to be copied over to hive job container.
     // The path are prefixed with "file:" in order to work with Hive started MR job.
     System.setProperty(HiveConf.ConfVars.HIVEAUXJARS.toString(),
-                       Joiner.on(',').join(Iterables.transform(hiveExtraJars, Functions.toStringFunction())));
+                       Joiner.on(',').join(Iterables.transform(hiveExtraJars.values(), Functions.toStringFunction())));
     LOG.debug("Setting {} to {}", HiveConf.ConfVars.HIVEAUXJARS.toString(),
               System.getProperty(HiveConf.ConfVars.HIVEAUXJARS.toString()));
 
     // These dependency files need to be copied over to spark container
     System.setProperty(BaseHiveExploreService.SPARK_YARN_DIST_FILES,
-                       Joiner.on(',').join(Iterables.transform(hiveExtraJars, URL_TO_PATH)));
+                       Joiner.on(',').join(Iterables.transform(hiveExtraJars.values(), URL_TO_PATH)));
     LOG.debug("Setting {} to {}", BaseHiveExploreService.SPARK_YARN_DIST_FILES,
               System.getProperty(BaseHiveExploreService.SPARK_YARN_DIST_FILES));
 
     // Rewrite the yarn-site.xml, mapred-site.xml, hive-site.xml and tez-site.xml for classpath manipulation
-    String extraClassPath = Joiner.on(',').join(Iterables.transform(hiveExtraJars, new Function<URL, String>() {
-      @Override
-      public String apply(URL url) {
-        return "$PWD/" + getFileName(url);
-      }
-    }));
+    String extraClassPath = Joiner.on(',').join(
+      Iterables.transform(hiveExtraJars.keySet(), new Function<String, String>() {
+        @Override
+        public String apply(String name) {
+          return "$PWD/" + name;
+        }
+      }));
     extraClassPath += ",$PWD/*";
 
     rewriteConfigClasspath("yarn-site.xml", YarnConfiguration.YARN_APPLICATION_CLASSPATH,
@@ -292,7 +282,8 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
     LOG.debug("Added hive-exec.jar {} to HADOOP_CLASSPATH to be included for MapReduce jobs launched by Hive",
               hiveExecJar);
     try {
-      setupHadoopBin(Iterables.concat(hiveExtraJars, Collections.singleton(new File(hiveExecJar).toURI().toURL())));
+      setupHadoopBin(Iterables.concat(hiveExtraJars.values(),
+                                      Collections.singleton(new File(hiveExecJar).toURI().toURL())));
     } catch (IOException e) {
       LOG.error("Failed to generate hadoop binary to include hive-exec.jar.", e);
       throw Throwables.propagate(e);
