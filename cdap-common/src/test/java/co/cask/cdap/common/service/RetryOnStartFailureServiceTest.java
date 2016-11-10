@@ -17,8 +17,10 @@
 package co.cask.cdap.common.service;
 
 import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.ServiceListenerAdapter;
 import org.junit.Assert;
@@ -71,7 +73,14 @@ public class RetryOnStartFailureServiceTest {
       RetryStrategies.fixDelay(10, TimeUnit.MILLISECONDS));
     service.startAndWait();
     Assert.assertTrue(failureLatch.await(1, TimeUnit.SECONDS));
-    service.stopAndWait();
+    try {
+      service.stopAndWait();
+      Assert.fail();
+    } catch (UncheckedExecutionException e) {
+      Throwable rootCause = Throwables.getRootCause(e);
+      Assert.assertEquals(RuntimeException.class, rootCause.getClass());
+      Assert.assertEquals("Fail", rootCause.getMessage());
+    }
   }
 
   /**
