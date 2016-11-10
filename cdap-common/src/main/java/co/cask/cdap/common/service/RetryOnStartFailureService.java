@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package co.cask.cdap.common.service;
 
 import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -59,8 +60,12 @@ public class RetryOnStartFailureService extends AbstractService {
 
         while (delay >= 0 && !isInterrupted()) {
           try {
-            delegateService.startAndWait();
             currentDelegate = delegateService;
+            delegateService.start().get();
+            break;
+          } catch (InterruptedException e) {
+            // a service's start can be interrupted, so we don't want to suppress that
+            interrupt();
             break;
           } catch (Throwable t) {
             LOG.debug("Exception raised when starting service {}", delegateServiceName, t);
@@ -84,7 +89,7 @@ public class RetryOnStartFailureService extends AbstractService {
         }
 
         if (isInterrupted()) {
-          LOG.warn("Stop requested for service {} during start failure retry.", delegateServiceName);
+          LOG.warn("Stop requested for service {} during start.", delegateServiceName);
         }
       }
     };
