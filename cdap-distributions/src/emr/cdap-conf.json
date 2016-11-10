@@ -15,14 +15,14 @@
       "router.bind.port": "11015",
       "stream.container.memory.mb": "1536",
       "twill.java.reserved.memory.mb": "350",
-      "router.server.address": "{{ROUTER-HOST-IP}}",
+      "router.server.address": "{{ROUTER_IP_ADDRESS}}",
       "zookeeper.quorum": "{{ZK_QUORUM}}"
     },
     "cdap_env": {
       "explore_enabled": "true",
       "kerberos_enabled": "false",
       "hadoop_conf_dir": "/etc/hadoop/conf",
-      "hadoop_home_warn_suppress": "$(hadoop dfsadmin -safemode wait 2>/dev/null; echo true)",
+      "hadoop_home_warn_suppress": "$(hadoop dfsadmin -safemode wait >/dev/null 2>&1; sleep 1; [[ ${UID} -eq 0 ]] && su - hdfs -c 'for d in /cdap /user/cdap; do hdfs dfs -mkdir -p ${d} ; hdfs dfs -chown cdap ${d}; done' >/dev/null 2>&1; echo true)",
       "hive_home": "/usr/lib/hive",
       "hive_conf_dir": "/etc/hive/conf",
       "hive_classpath": "{{HIVE_CLASSPATH}}",
