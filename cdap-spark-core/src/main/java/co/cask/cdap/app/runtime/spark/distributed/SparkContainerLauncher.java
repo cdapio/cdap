@@ -64,7 +64,7 @@ public final class SparkContainerLauncher {
     // Spark classes are in the system classloader which we want to rewrite.
     URL[] classLoaderUrls = urls.toArray(new URL[urls.size()]);
     ClassLoader classLoader = new SparkRunnerClassLoader(
-      classLoaderUrls, new MainClassLoader(classLoaderUrls, systemClassLoader.getParent()), false, false);
+      classLoaderUrls, new MainClassLoader(classLoaderUrls, systemClassLoader.getParent()), false);
 
     // Sets the context classloader and launch the actual Spark main class.
     Thread.currentThread().setContextClassLoader(classLoader);
