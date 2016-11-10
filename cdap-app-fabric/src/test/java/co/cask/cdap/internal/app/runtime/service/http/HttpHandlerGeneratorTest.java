@@ -30,6 +30,7 @@ import co.cask.cdap.api.dataset.InstanceNotFoundException;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpContentConsumer;
@@ -41,6 +42,7 @@ import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.internal.app.preview.NoopDataTracerFactory;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Charsets;
@@ -784,6 +786,11 @@ public class HttpHandlerGeneratorTest {
           //no-op
         }
       };
+    }
+
+    @Override
+    public DataTracer getDataTracer(String dataTracerName) {
+      return new NoopDataTracerFactory().getDataTracer(null, dataTracerName);
     }
 
     @Override
