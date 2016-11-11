@@ -18,6 +18,10 @@ package co.cask.cdap.common.conf;
 
 import com.google.common.base.Preconditions;
 
+import java.io.File;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -34,6 +38,34 @@ public class CConfigurationUtil extends Configuration {
         destination.set(property, cConf.get(property));
       }
     }
+  }
+
+  /**
+   * Get extra jars set in {@link CConfiguration} as a list of {@link URI}.
+   *
+   * @param cConf {@link CConfiguration} containing the extra jars
+   * @return a list of {@link File} created from the extra jars set in cConf.
+   */
+  public static List<URI> getExtraJars(CConfiguration cConf) {
+    String[] extraJars = cConf.getStrings(Constants.AppFabric.PROGRAM_CONTAINER_DIST_JARS);
+    List<URI> jarURIs = new ArrayList<>();
+    if (extraJars == null) {
+      return jarURIs;
+    }
+    for (String jarPath : extraJars) {
+      URI uri;
+      try {
+        uri = URI.create(jarPath);
+      } catch (IllegalArgumentException e) {
+        // Assume that it is local path and try to create it with File
+        uri = new File(jarPath).toURI();
+      }
+      if (uri.getScheme() == null) { // no scheme, assume it's local file
+        uri = new File(jarPath).toURI();
+      }
+      jarURIs.add(uri);
+    }
+    return jarURIs;
   }
 
   /**

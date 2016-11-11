@@ -25,6 +25,7 @@ import co.cask.cdap.api.spark.SparkExecutionContext;
 import co.cask.cdap.app.runtime.spark.distributed.SparkContainerLauncher;
 import co.cask.cdap.app.runtime.spark.submit.SparkSubmitter;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
@@ -183,6 +184,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         }
       };
 
+      List<String> extraJars = new ArrayList<>();
       if (contextConfig.isLocal()) {
         File metricsConf = SparkMetricsSink.writeConfig(File.createTempFile("metrics", ".properties", tempDir));
         metricsConfPath = metricsConf.getAbsolutePath();
@@ -229,10 +231,15 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
         // Localize the hConf file to executor nodes
         localizeResources.add(new LocalizeResource(saveHConf(hConf, tempDir)));
+
+        for (URI jarURI : CConfigurationUtil.getExtraJars(cConf)) {
+          extraJars.add(LocalizationUtils.getLocalizedName(jarURI));
+          localizeResources.add(new LocalizeResource(jarURI, false));
+        }
       }
 
       final Map<String, String> configs = createSubmitConfigs(sparkJar, tempDir, metricsConfPath, logbackJarName,
-                                                              contextConfig.isLocal());
+                                                              extraJars, contextConfig.isLocal());
       submitSpark = new Callable<ListenableFuture<RunId>>() {
         @Override
         public ListenableFuture<RunId> call() throws Exception {
@@ -435,7 +442,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    */
   private Map<String, String> createSubmitConfigs(File sparkJar, File localDir,
                                                   String metricsConfPath, @Nullable String logbackJarName,
-                                                  boolean localMode) throws Exception {
+                                                  List<String> extraJarPaths, boolean localMode) throws Exception {
     Map<String, String> configs = new HashMap<>();
 
     // Make Spark UI runs on random port. By default, Spark UI runs on port 4040 and it will do a sequential search
@@ -479,8 +486,9 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       Collections.sort(jarFiles);
       Joiner joiner = Joiner.on(File.pathSeparator).skipNulls();
       String classpath = joiner.join(jarFiles);
+      String extraJarsPath = extraJarPaths.size() == 0 ? null : joiner.join(extraJarPaths);
       String extraClassPath = joiner.join(Paths.get("$PWD", CDAP_LAUNCHER_JAR), classpath,
-                                          Paths.get("$PWD", CDAP_SPARK_JAR, "lib", "*"));
+                                          Paths.get("$PWD", CDAP_SPARK_JAR, "lib", "*"), extraJarsPath);
       if (logbackJarName != null) {
         extraClassPath = logbackJarName + File.pathSeparator + extraClassPath;
       }
