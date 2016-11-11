@@ -78,7 +78,7 @@ import javax.annotation.Nullable;
 public class ExploreTableManager {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreTableManager.class);
 
-  // A GSON object that knowns how to serialize Schema type.
+  // A GSON object that knows how to serialize Schema type.
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
@@ -182,9 +182,6 @@ public class ExploreTableManager {
     String createStatement;
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
       dataset = datasetInstantiator.getDataset(datasetId.toId());
-      if (dataset == null) {
-        throw new DatasetNotFoundException(datasetId.toId());
-      }
       createStatement = generateCreateStatement(dataset, spec, datasetId, tableNaming.getTableName(datasetId));
     } catch (IOException e) {
       LOG.error("Exception instantiating dataset {}.", datasetId, e);
@@ -234,9 +231,6 @@ public class ExploreTableManager {
     List<String> alterStatements;
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
       dataset = datasetInstantiator.getDataset(datasetId.toId());
-      if (dataset == null) {
-        throw new DatasetNotFoundException(datasetId.toId());
-      }
       alterStatements = generateAlterStatements(datasetId, tableName, dataset, spec, oldSpec);
     } catch (IOException e) {
       LOG.error("Exception instantiating dataset {}.", datasetId, e);
@@ -283,9 +277,6 @@ public class ExploreTableManager {
     String deleteStatement;
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
       dataset = datasetInstantiator.getDataset(datasetId.toId());
-      if (dataset == null) {
-        throw new DatasetNotFoundException(datasetId.toId());
-      }
       deleteStatement = generateDeleteStatement(dataset, tableName);
     } catch (IOException e) {
       LOG.error("Exception creating dataset classLoaderProvider for dataset {}.", datasetId, e);

@@ -1,5 +1,3 @@
-package co.cask.cdap.explore.service.hive;
-
 /*
  * Copyright © 2015 Cask Data, Inc.
  *
@@ -16,14 +14,20 @@ package co.cask.cdap.explore.service.hive;
  * the License.
  */
 
+package co.cask.cdap.explore.service.hive;
+
 import co.cask.cdap.proto.QueryStatus;
+import com.google.common.base.Throwables;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.SessionHandle;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.annotation.Nullable;
 
 /**
 * Helper class to store information about a Hive operation in progress.
@@ -41,6 +45,7 @@ public abstract class OperationInfo {
   private final boolean readOnly;
   private final Lock nextLock = new ReentrantLock();
   private final Lock previewLock = new ReentrantLock();
+  private final UserGroupInformation ugi;
 
   private File previewFile;
   private QueryStatus status;
@@ -55,6 +60,12 @@ public abstract class OperationInfo {
     this.timestamp = timestamp;
     this.hiveDatabase = hiveDatabase;
     this.readOnly = readOnly;
+    try {
+      // maintain the UGI who created this operation, to use for future operations
+      this.ugi = UserGroupInformation.getCurrentUser();
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   public SessionHandle getSessionHandle() {
@@ -93,8 +104,13 @@ public abstract class OperationInfo {
     return previewLock;
   }
 
+  @Nullable
   public String getHiveDatabase() {
     return hiveDatabase;
+  }
+
+  public UserGroupInformation getUGI() {
+    return ugi;
   }
 
   public boolean isReadOnly() {
