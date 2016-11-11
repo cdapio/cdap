@@ -27,6 +27,7 @@ import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowNodeType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
@@ -38,6 +39,7 @@ import co.cask.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -72,6 +74,17 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
                                    Impersonator impersonator) {
     super(twillRunner, createConfiguration(hConf), cConf, tokenSecureStoreUpdater, impersonator);
     this.runtimeProviderLoader = runtimeProviderLoader;
+  }
+
+
+  @Override
+  public ProgramController createProgramController(TwillController twillController,
+                                                   ProgramDescriptor programDescriptor, RunId runId) {
+    return createProgramController(twillController, programDescriptor.getProgramId(), runId);
+  }
+
+  private ProgramController createProgramController(TwillController twillController, ProgramId programId, RunId runId) {
+    return new WorkflowTwillProgramController(programId, twillController, runId).startListen();
   }
 
   @Override
@@ -134,8 +147,7 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
                                    workflowSpec, localizeResources, eventHandler, driverMeta.resources),
       extraClassPaths, extraDependencies
     );
-    RunId runId = ProgramRunners.getRunId(options);
-    return new WorkflowTwillProgramController(program.getId(), controller, runId).startListen();
+    return createProgramController(controller, program.getId(), ProgramRunners.getRunId(options));
   }
 
   private static YarnConfiguration createConfiguration(YarnConfiguration hConf) {
