@@ -17,6 +17,7 @@
 package co.cask.cdap.explore.executor;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.MetaDataInfo;
@@ -25,6 +26,7 @@ import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -34,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.concurrent.Callable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -50,10 +53,12 @@ public class ExploreMetadataHttpHandler extends AbstractExploreMetadataHttpHandl
   private static final Gson GSON = new Gson();
 
   private final ExploreService exploreService;
+  private final Impersonator impersonator;
 
   @Inject
-  public ExploreMetadataHttpHandler(ExploreService exploreService) {
+  public ExploreMetadataHttpHandler(ExploreService exploreService, Impersonator impersonator) {
     this.exploreService = exploreService;
+    this.impersonator = impersonator;
   }
 
   @POST
@@ -129,7 +134,20 @@ public class ExploreMetadataHttpHandler extends AbstractExploreMetadataHttpHandl
         // Use the namespace id which was passed as path param. It will be same in the meta but this is for consistency
         // we do the same thing in NamespaceHttpHandler.create
         namespaceMeta = new NamespaceMeta.Builder(namespaceMeta).setName(namespaceId).build();
-        return exploreService.createNamespace(namespaceMeta);
+        final NamespaceMeta finalNamespaceMeta = namespaceMeta;
+        try {
+          return impersonator.doAs(namespaceMeta, new Callable<QueryHandle>() {
+            @Override
+            public QueryHandle call() throws Exception {
+              return exploreService.createNamespace(finalNamespaceMeta);
+            }
+          });
+        } catch (ExploreException | SQLException e) {
+          // we know that the callable only throws the above two declared exceptions:
+          throw e;
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
       }
     });
   }
@@ -142,7 +160,19 @@ public class ExploreMetadataHttpHandler extends AbstractExploreMetadataHttpHandl
       @Override
       public QueryHandle execute(HttpRequest request, HttpResponder responder)
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
-        return exploreService.deleteNamespace(new NamespaceId(namespaceId));
+        try {
+          return impersonator.doAs(new NamespaceId(namespaceId), new Callable<QueryHandle>() {
+            @Override
+            public QueryHandle call() throws Exception {
+              return exploreService.deleteNamespace(new NamespaceId(namespaceId));
+            }
+          });
+        } catch (ExploreException | SQLException e) {
+          // we know that the callable only throws the above two declared exceptions:
+          throw e;
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
       }
     });
   }

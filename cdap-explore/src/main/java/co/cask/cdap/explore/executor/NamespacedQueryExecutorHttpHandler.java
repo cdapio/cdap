@@ -17,8 +17,10 @@
 package co.cask.cdap.explore.executor;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
+import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.http.HttpResponder;
@@ -29,11 +31,11 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -47,25 +49,33 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class NamespacedQueryExecutorHttpHandler extends AbstractQueryExecutorHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(NamespacedQueryExecutorHttpHandler.class);
+
   private final ExploreService exploreService;
+  private final Impersonator impersonator;
 
   @Inject
-  public NamespacedQueryExecutorHttpHandler(ExploreService exploreService) {
+  public NamespacedQueryExecutorHttpHandler(ExploreService exploreService, Impersonator impersonator) {
     this.exploreService = exploreService;
+    this.impersonator = impersonator;
   }
 
   @POST
   @Path("data/explore/queries")
   public void query(HttpRequest request, HttpResponder responder,
-                    @PathParam("namespace-id") String namespaceId) throws IOException, ExploreException {
+                    @PathParam("namespace-id") final String namespaceId) throws Exception {
     try {
       Map<String, String> args = decodeArguments(request);
-      String query = args.get("query");
-      Map<String, String> additionalSessionConf = new HashMap<>(args);
+      final String query = args.get("query");
+      final Map<String, String> additionalSessionConf = new HashMap<>(args);
       additionalSessionConf.remove("query");
       LOG.trace("Received query: {}", query);
-      responder.sendJson(HttpResponseStatus.OK,
-                         exploreService.execute(new NamespaceId(namespaceId), query, additionalSessionConf));
+      QueryHandle queryHandle = impersonator.doAs(new NamespaceId(namespaceId), new Callable<QueryHandle>() {
+        @Override
+        public QueryHandle call() throws Exception {
+          return exploreService.execute(new NamespaceId(namespaceId), query, additionalSessionConf);
+        }
+      });
+      responder.sendJson(HttpResponseStatus.OK, queryHandle);
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -86,6 +96,7 @@ public class NamespacedQueryExecutorHttpHandler extends AbstractQueryExecutorHtt
     throws ExploreException, SQLException {
     boolean isForward = "next".equals(cursor);
 
+    // this operation doesn't interact with hive, so doesn't require impersonation
     List<QueryInfo> queries = exploreService.getQueries(new NamespaceId(namespaceId));
     // return the queries by after filtering (> offset) and limiting number of queries
     responder.sendJson(HttpResponseStatus.OK, filterQueries(queries, offset, isForward, limit));
@@ -95,6 +106,7 @@ public class NamespacedQueryExecutorHttpHandler extends AbstractQueryExecutorHtt
   @Path("data/explore/queries/count")
   public void getActiveQueryCount(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId) throws ExploreException {
+    // this operation doesn't interact with hive, so doesn't require impersonation
     int count = exploreService.getActiveQueryCount(new NamespaceId(namespaceId));
     responder.sendJson(HttpResponseStatus.OK, ImmutableMap.of("count", count));
   }

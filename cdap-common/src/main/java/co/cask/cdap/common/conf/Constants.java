@@ -188,6 +188,11 @@ public final class Constants {
      * Name of the property used to identify whether the dataset is local or not.
      */
     public static final String WORKFLOW_LOCAL_DATASET_PROPERTY = "workflow.local.dataset";
+
+    /**
+     * Configuration setting to provide extra jars for programs.
+     */
+    public static final String PROGRAM_CONTAINER_DIST_JARS = "program.container.dist.jars";
   }
 
   /**
@@ -827,6 +832,7 @@ public final class Constants {
     public static final String STREAM_NAME = "explore.stream.name";
     public static final String STREAM_NAMESPACE = "explore.stream.namespace";
     public static final String PREVIEWS_DIR_NAME = "explore.previews.dir";
+    public static final String CREDENTIALS_DIR_NAME = "explore.credentials.dir";
     // a marker so that we know which tables are created by CDAP
     public static final String CDAP_NAME = "cdap.name";
     public static final String CDAP_VERSION = "cdap.version";
