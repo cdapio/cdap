@@ -21,6 +21,7 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.distributed.DistributedProgramControllerFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
@@ -92,7 +93,7 @@ import javax.annotation.Nullable;
 /**
  * Defines the base framework for starting {@link Program} in the cluster.
  */
-public abstract class AbstractDistributedProgramRunner implements ProgramRunner {
+public abstract class AbstractDistributedProgramRunner implements ProgramRunner, DistributedProgramControllerFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractDistributedProgramRunner.class);
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
