@@ -36,11 +36,9 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.ProgramId;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
@@ -103,8 +101,6 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     ProgramId programId = programDescriptor.getProgramId();
 
     ProgramRunner runner = programRunnerFactory.create(programId.getType());
-    Preconditions.checkNotNull(runner, "Fail to get ProgramRunner for type " + programId.getType());
-
     RunId runId = RunIds.generate();
     File tempDir = createTempDirectory(programId, runId);
     Runnable cleanUpTask = createCleanupTask(tempDir, runner);

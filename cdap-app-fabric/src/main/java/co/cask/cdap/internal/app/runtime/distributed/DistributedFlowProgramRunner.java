@@ -18,7 +18,11 @@ package co.cask.cdap.internal.app.runtime.distributed;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.app.queue.QueueSpecification;
+import co.cask.cdap.app.queue.QueueSpecificationGenerator;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
@@ -29,13 +33,19 @@ import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Table;
 import com.google.inject.Inject;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.tephra.TransactionExecutorFactory;
@@ -48,6 +58,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A {@link ProgramRunner} to start a {@link Flow} program in distributed mode.
@@ -72,6 +83,23 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
     this.streamAdmin = streamAdmin;
     this.txExecutorFactory = txExecutorFactory;
     this.impersonator = impersonator;
+  }
+
+  @Override
+  public ProgramController createProgramController(TwillController twillController,
+                                                   ProgramDescriptor programDescriptor, RunId runId) {
+    FlowSpecification flowSpec = programDescriptor.getSpecification();
+    DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(
+      programDescriptor.getProgramId(), twillController, queueAdmin, streamAdmin,
+      getFlowletQueues(programDescriptor.getProgramId().getParent(), flowSpec),
+      txExecutorFactory, impersonator
+    );
+    return createProgramController(twillController, programDescriptor.getProgramId(), runId, instanceUpdater);
+  }
+
+  private ProgramController createProgramController(TwillController twillController, ProgramId programId, RunId runId,
+                                                    DistributedFlowletInstanceUpdater instanceUpdater) {
+    return new FlowTwillProgramController(programId, twillController, instanceUpdater, runId).startListen();
   }
 
   @Override
@@ -102,8 +130,8 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
       DistributedFlowletInstanceUpdater instanceUpdater =
         new DistributedFlowletInstanceUpdater(program.getId(), controller, queueAdmin,
                                               streamAdmin, flowletQueues, txExecutorFactory, impersonator);
-      RunId runId = ProgramRunners.getRunId(options);
-      return new FlowTwillProgramController(program.getId(), controller, instanceUpdater, runId).startListen();
+
+      return createProgramController(controller, program.getId(), ProgramRunners.getRunId(options), instanceUpdater);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -113,5 +141,27 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
   protected EventHandler createEventHandler(CConfiguration cConf) {
     return new AbortOnTimeoutEventHandler(
       cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE), true);
+  }
+
+  /**
+   * Gets the queue configuration of the Flow based on the connections in the given {@link FlowSpecification}.
+   */
+  private Multimap<String, QueueName> getFlowletQueues(ApplicationId appId, FlowSpecification flowSpec) {
+    // Generate all queues specifications
+    Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queueSpecs
+      = new SimpleQueueSpecificationGenerator(appId).create(flowSpec);
+
+    // For storing result from flowletId to queue.
+    ImmutableSetMultimap.Builder<String, QueueName> resultBuilder = ImmutableSetMultimap.builder();
+
+    // Loop through each flowlet
+    for (Map.Entry<String, FlowletDefinition> entry : flowSpec.getFlowlets().entrySet()) {
+      String flowletId = entry.getKey();
+      // For each queue that the flowlet is a consumer, store the number of instances for this flowlet
+      for (QueueSpecification queueSpec : Iterables.concat(queueSpecs.column(flowletId).values())) {
+        resultBuilder.put(flowletId, queueSpec.getQueueName());
+      }
+    }
+    return resultBuilder.build();
   }
 }
