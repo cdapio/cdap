@@ -18,6 +18,7 @@ package co.cask.cdap.data2.dataset2.lib.table;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scan;
@@ -196,12 +197,14 @@ public abstract class BufferingTableTest<T extends BufferingTable> extends Table
     // The test verifies that one can re-use byte arrays passed as parameters to write methods of a table without
     // affecting the stored data.
     // Also, one can re-use (modify) returned data from the table without affecting the stored data.
-    DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE);
+    DatasetProperties props = DatasetProperties.builder().add(
+      Table.PROPERTY_READLESS_INCREMENT, String.valueOf(isReadlessIncrementSupported())).build();
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, MY_TABLE, props);
     admin.create();
     try {
       // writing some data: we'll need it to test delete later
       Transaction tx = txClient.startShort();
-      BufferingTable table = getTable(CONTEXT1, MY_TABLE);
+      BufferingTable table = getTable(CONTEXT1, MY_TABLE, props);
       table.startTx(tx);
 
       table.put(new byte[] {0}, new byte[] {9}, new byte[] {8});

@@ -62,7 +62,7 @@ public class TableProperties {
    * @throws IllegalArgumentException if the property value is not a valid conflict detection level.
    */
   @Nullable
-  static ConflictDetection getConflictDetectionLevel(Map<String, String> props, ConflictDetection defaultLevel) {
+  public static ConflictDetection getConflictDetectionLevel(Map<String, String> props, ConflictDetection defaultLevel) {
     String value = props.get(Table.PROPERTY_CONFLICT_LEVEL);
     if (value == null) {
       return defaultLevel;
