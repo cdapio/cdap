@@ -237,7 +237,13 @@ public class ExploreServiceUtils {
   public static boolean isSparkEngine(HiveConf hiveConf) {
     // We don't support setting engine through session configuration now
     String engine = hiveConf.get("hive.execution.engine");
-    return "spark".equalsIgnoreCase(engine);
+    return "spark".equals(engine);
+  }
+
+  public static boolean isTezEngine(HiveConf hiveConf) {
+    // We don't support setting engine through session configuration now
+    String engine = hiveConf.get("hive.execution.engine");
+    return "tez".equals(engine);
   }
 
 }

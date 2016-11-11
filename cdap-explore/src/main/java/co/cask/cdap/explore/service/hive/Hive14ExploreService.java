@@ -57,13 +57,15 @@ public class Hive14ExploreService extends BaseHiveExploreService {
   public Hive14ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                               CConfiguration cConf, Configuration hConf,
                               @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir,
+                              @Named(Constants.Explore.CREDENTIALS_DIR_NAME) File credentialsDir,
                               StreamAdmin streamAdmin, NamespaceQueryAdmin namespaceQueryAdmin,
                               SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
                               AuthorizationEnforcementService authorizationEnforcementService,
                               AuthorizationEnforcer authorizationEnforcer,
                               AuthenticationContext authenticationContext) {
-    super(txClient, datasetFramework, cConf, hConf, previewsDir, streamAdmin, namespaceQueryAdmin,
-          datasetInstantiatorFactory, authorizationEnforcementService, authorizationEnforcer, authenticationContext);
+    super(txClient, datasetFramework, cConf, hConf, previewsDir, credentialsDir, streamAdmin, namespaceQueryAdmin,
+          datasetInstantiatorFactory, authorizationEnforcementService, authorizationEnforcer,
+          authenticationContext);
     // This config sets the time Hive CLI getOperationStatus method will wait for the status of
     // a running query.
     System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_LONG_POLLING_TIMEOUT.toString(), "50");

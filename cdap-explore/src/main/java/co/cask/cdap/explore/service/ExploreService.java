@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.service;
 
+import co.cask.cdap.explore.service.hive.OperationInfo;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.util.concurrent.Service;
@@ -39,4 +40,14 @@ public interface ExploreService extends Service, Explore {
    * @throws SQLException if there are errors in the SQL statement.
    */
   QueryHandle execute(NamespaceId namespace, String[] statements) throws ExploreException, SQLException;
+
+  /**
+   * Returns an {@link OperationInfo} for a specified {@link QueryHandle}, regardless of whether it is an inactive or
+   * active OperationInfo.
+   *
+   * @param queryHandle the requested query handle
+   * @return a {@link OperationInfo} for the given QueryHandle
+   * @throws HandleNotFoundException if the specified query handle is invalid
+   */
+  OperationInfo getOperationInfo(QueryHandle queryHandle) throws HandleNotFoundException;
 }

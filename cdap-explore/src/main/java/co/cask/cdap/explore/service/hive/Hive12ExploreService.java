@@ -73,13 +73,15 @@ public class Hive12ExploreService extends BaseHiveExploreService {
   public Hive12ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                               CConfiguration cConf, Configuration hConf,
                               @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir,
+                              @Named(Constants.Explore.CREDENTIALS_DIR_NAME) File credentialsDir,
                               StreamAdmin streamAdmin, NamespaceQueryAdmin namespaceQueryAdmin,
                               SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
                               AuthorizationEnforcementService authorizationEnforcementService,
                               AuthorizationEnforcer authorizationEnforcer,
                               AuthenticationContext authenticationContext) {
-    super(txClient, datasetFramework, cConf, hConf, previewsDir, streamAdmin, namespaceQueryAdmin,
-          datasetInstantiatorFactory, authorizationEnforcementService, authorizationEnforcer, authenticationContext);
+    super(txClient, datasetFramework, cConf, hConf, previewsDir, credentialsDir, streamAdmin, namespaceQueryAdmin,
+          datasetInstantiatorFactory, authorizationEnforcementService, authorizationEnforcer,
+          authenticationContext);
   }
 
   @Override

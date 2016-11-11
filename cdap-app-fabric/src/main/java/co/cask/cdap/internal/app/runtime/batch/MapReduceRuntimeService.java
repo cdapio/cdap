@@ -33,6 +33,7 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
@@ -305,6 +306,17 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         Collections.sort(jarFiles);
         classpath.addAll(jarFiles);
         classpath.add("job.jar/classes");
+
+        // Add extra jars set in cConf
+        for (URI jarURI : CConfigurationUtil.getExtraJars(cConf)) {
+          if ("file".equals(jarURI.getScheme())) {
+            Location extraJarLocation = copyFileToLocation(new File(jarURI.getPath()), tempLocation);
+            job.addCacheFile(extraJarLocation.toURI());
+          } else {
+            job.addCacheFile(jarURI);
+          }
+          classpath.add(LocalizationUtils.getLocalizedName(jarURI));
+        }
 
         // Add the mapreduce application classpath at last
         MapReduceContainerHelper.addMapReduceClassPath(mapredConf, classpath);
@@ -1086,9 +1098,19 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     if (pluginArchive == null) {
       return null;
     }
-    Location pluginLocation = targetDir.append(pluginArchive.getName()).getTempFile(".jar");
-    Files.copy(pluginArchive, Locations.newOutputSupplier(pluginLocation));
-    return pluginLocation;
+    return copyFileToLocation(pluginArchive, targetDir);
+  }
+
+  /**
+   * Copies a file to the target location.
+   *
+   * @param targetDir directory where the file should be copied to.
+   * @return {@link Location} to the file or {@code null} if given file is {@code null}.
+   */
+  private Location copyFileToLocation(File file, Location targetDir) throws IOException {
+    Location targetLocation = targetDir.append(file.getName()).getTempFile(".jar");
+    Files.copy(file, Locations.newOutputSupplier(targetLocation));
+    return targetLocation;
   }
 
   /**
@@ -1237,6 +1259,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         }
         localizedFilePath = name;
       }
+      LOG.debug("MapReduce Localizing file {} {}", entry.getKey(), entry.getValue());
       localizedResources.put(name, localizedFilePath);
     }
     return localizedResources;

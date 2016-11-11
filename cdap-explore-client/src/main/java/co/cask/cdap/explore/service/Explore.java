@@ -250,22 +250,22 @@ public interface Explore {
   /**
    * Retrieve a list of all the tables present in Hive Metastore that match the given database name.
    *
-   * @param database database name from which to list the tables. The database has to be accessible by the current
-   *                 user. If it is null, all the databases the user has access to will be inspected.
+   * @param namespace namespace name from which to list the tables. The database has to be accessible by the current
+   *                  user.
    * @return list of table names present in the database.
    * @throws ExploreException on any error getting the tables.
    */
-  List<TableNameInfo> getTables(@Nullable String database) throws ExploreException;
+  List<TableNameInfo> getTables(String namespace) throws ExploreException;
 
   /**
    * Get information about a Hive table.
    *
-   * @param database name of the database the table belongs to.
+   * @param namespace name of the namespace the table belongs to.
    * @param table table name for which to get the schema.
    * @return information about a table.
    * @throws ExploreException on any error getting the tables.
    */
-  TableInfo getTableInfo(@Nullable String database, String table)
+  TableInfo getTableInfo(String namespace, String table)
     throws ExploreException, TableNotFoundException;
 
   /**
