@@ -17,6 +17,9 @@
 package co.cask.cdap.messaging.store.hbase;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.messaging.store.MetadataTable;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;

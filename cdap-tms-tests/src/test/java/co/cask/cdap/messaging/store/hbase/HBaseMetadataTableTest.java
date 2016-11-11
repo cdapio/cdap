@@ -17,6 +17,10 @@
 package co.cask.cdap.messaging.store.hbase;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.data.hbase.HBase98Test;
+import co.cask.cdap.data.hbase.HBaseTestBase;
+import co.cask.cdap.data2.util.hbase.HBase98TableUtil;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.messaging.store.MetadataTable;
 import co.cask.cdap.messaging.store.MetadataTableTest;
 import co.cask.cdap.proto.id.NamespaceId;

@@ -2468,6 +2468,7 @@
 
       <modules>
         <module>cdap-data-fabric-tests</module>
+        <module>cdap-tms-tests</module>
         <module>cdap-cli-tests</module>
         <module>cdap-client-tests</module>
         <module>cdap-app-fabric-tests</module>
