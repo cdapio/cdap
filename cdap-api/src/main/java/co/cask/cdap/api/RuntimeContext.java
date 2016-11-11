@@ -17,6 +17,7 @@
 package co.cask.cdap.api;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.preview.DataTracer;
 import org.apache.twill.api.RunId;
 
 import java.util.Map;
@@ -50,4 +51,11 @@ public interface RuntimeContext {
    * @return an {@link Admin} to perform admin operations.
    */
   Admin getAdmin();
+
+  /**
+   * @param dataTracerName the name of the logger using which the debug information will be logged
+   *
+   * @return an {@link DataTracer} to perform log operations.
+   */
+  DataTracer getDataTracer(String dataTracerName);
 }

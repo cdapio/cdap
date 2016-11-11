@@ -29,18 +29,19 @@ import co.cask.cdap.api.dataset.Dataset
 import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
+import co.cask.cdap.api.preview.DataTracer
 import co.cask.cdap.api.security.store.{SecureStore, SecureStoreData}
 import co.cask.cdap.api.spark.{SparkExecutionContext, SparkSpecification}
 import co.cask.cdap.api.stream.GenericStreamEventData
 import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
 import co.cask.cdap.app.runtime.spark.SparkTransactional.TransactionType
+import co.cask.cdap.app.runtime.spark.preview.SparkDataTracer
 import co.cask.cdap.app.runtime.spark.stream.SparkStreamInputFormat
 import co.cask.cdap.common.conf.ConfigurationUtil
 import co.cask.cdap.data.stream.{AbstractStreamInputFormat, StreamUtils}
 import co.cask.cdap.data2.metadata.lineage.AccessType
 import co.cask.cdap.internal.app.runtime.DefaultTaskLocalizationContext
-import co.cask.cdap.proto.Id
-import co.cask.cdap.proto.id.{ProgramId, StreamId}
+import co.cask.cdap.proto.id.StreamId
 import co.cask.cdap.proto.security.Action
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.LongWritable
@@ -286,6 +287,8 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext,
       }
     }, TransactionType.IMPLICIT)
   }
+
+  override def getDataTracer(tracerName: String): DataTracer = new SparkDataTracer(runtimeContext, tracerName)
 
   @throws[IOException]
   def list(namespace: String): util.Map[String, String] = {

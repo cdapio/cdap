@@ -67,8 +67,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     super(program, programOptions, datasets, dsFramework, txClient, discoveryServiceClient, false, metricsService,
           ImmutableMap.of(Constants.Metrics.Tag.FLOWLET, flowletId,
                           Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId)),
-          secureStore, secureStoreManager
-    );
+          secureStore, secureStoreManager);
 
     this.flowId = program.getName();
     this.flowletId = flowletId;
