@@ -498,7 +498,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
   private boolean isConcurrentRunsAllowed(ProgramType type) {
     // Concurrent runs are only allowed for the Workflow and MapReduce
-    return EnumSet.of(ProgramType.WORKFLOW, ProgramType.MAPREDUCE).contains(type);
+    return EnumSet.of(ProgramType.WORKFLOW, ProgramType.MAPREDUCE, ProgramType.SPARK).contains(type);
   }
 
   @Nullable

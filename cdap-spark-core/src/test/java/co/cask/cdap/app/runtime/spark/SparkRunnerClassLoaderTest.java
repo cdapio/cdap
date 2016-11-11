@@ -41,7 +41,7 @@ public class SparkRunnerClassLoaderTest {
       final URL[] urlArray = urls.toArray(new URL[urls.size()]);
 
       SparkRunnerClassLoader firstCL = new SparkRunnerClassLoader(urlArray,
-                                                                  getClass().getClassLoader(), false, false);
+                                                                  getClass().getClassLoader(), false);
       // Load a class from the first CL.
       firstCL.loadClass("org.apache.spark.SparkContext");
 
@@ -52,7 +52,7 @@ public class SparkRunnerClassLoaderTest {
         @Override
         public void run() {
           SparkRunnerClassLoader secondCL = new SparkRunnerClassLoader(urlArray,
-                                                                       getClass().getClassLoader(), false, false);
+                                                                       getClass().getClassLoader(), false);
           try {
             latch.countDown();
             secondCL.loadClass("org.apache.spark.SparkContext");

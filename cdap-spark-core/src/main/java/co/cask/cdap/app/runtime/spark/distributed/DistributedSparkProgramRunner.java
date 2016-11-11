@@ -20,6 +20,7 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramClassLoaderProvider;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -35,6 +36,7 @@ import co.cask.cdap.internal.app.runtime.distributed.AbstractDistributedProgramR
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -67,6 +69,16 @@ public final class DistributedSparkProgramRunner extends AbstractDistributedProg
   }
 
   @Override
+  public ProgramController createProgramController(TwillController twillController,
+                                                   ProgramDescriptor programDescriptor, RunId runId) {
+    return createProgramController(twillController, programDescriptor.getProgramId(), runId);
+  }
+
+  private ProgramController createProgramController(TwillController twillController, ProgramId programId, RunId runId) {
+    return new SparkTwillProgramController(programId, twillController, runId).startListen();
+  }
+
+  @Override
   protected ProgramController launch(Program program, ProgramOptions options,
                                      Map<String, LocalizeResource> localizeResources,
                                      File tempDir, AbstractDistributedProgramRunner.ApplicationLauncher launcher) {
@@ -91,8 +103,7 @@ public final class DistributedSparkProgramRunner extends AbstractDistributedProg
       new SparkTwillApplication(program, options.getUserArguments(),
                                 spec, localizeResources, eventHandler), sparkAssemblyJarName);
 
-    RunId runId = ProgramRunners.getRunId(options);
-    return new SparkTwillProgramController(program.getId(), controller, runId).startListen();
+    return createProgramController(controller, program.getId(), ProgramRunners.getRunId(options));
   }
 
   private static YarnConfiguration createConfiguration(YarnConfiguration hConf, CConfiguration cConf,
