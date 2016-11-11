@@ -44,6 +44,7 @@ import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.proto.TableNameInfo;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequestConfig;
@@ -51,6 +52,7 @@ import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+import com.google.common.base.Objects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -69,7 +71,6 @@ import java.net.URL;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -340,7 +341,8 @@ abstract class ExploreHttpClient implements Explore {
   }
 
   @Override
-  public QueryHandle getSchemas(String catalog, String schemaPattern) throws ExploreException, SQLException {
+  public QueryHandle getSchemas(@Nullable String catalog,
+                                @Nullable String schemaPattern) throws ExploreException, SQLException {
     String body = GSON.toJson(new SchemasArgs(catalog, schemaPattern));
     String resource = String.format("namespaces/%s/data/explore/jdbc/schemas", schemaPattern);
     HttpResponse response = doPost(resource, body, null);
@@ -351,7 +353,7 @@ abstract class ExploreHttpClient implements Explore {
   }
 
   @Override
-  public QueryHandle getFunctions(String catalog, String schemaPattern, String functionNamePattern)
+  public QueryHandle getFunctions(@Nullable String catalog, @Nullable String schemaPattern, String functionNamePattern)
     throws ExploreException, SQLException {
     String body = GSON.toJson(new FunctionsArgs(catalog, schemaPattern, functionNamePattern));
     String resource = String.format("namespaces/%s/data/explore/jdbc/functions", schemaPattern);
@@ -372,8 +374,8 @@ abstract class ExploreHttpClient implements Explore {
   }
 
   @Override
-  public QueryHandle getTables(String catalog, String schemaPattern,
-                               String tableNamePattern, List<String> tableTypes) throws ExploreException, SQLException {
+  public QueryHandle getTables(@Nullable String catalog, @Nullable String schemaPattern, String tableNamePattern,
+                               @Nullable List<String> tableTypes) throws ExploreException, SQLException {
     String body = GSON.toJson(new TablesArgs(catalog, schemaPattern, tableNamePattern, tableTypes));
     String resource = String.format("namespaces/%s/data/explore/jdbc/tables", schemaPattern);
     HttpResponse response = doPost(resource, body, null);
@@ -384,8 +386,8 @@ abstract class ExploreHttpClient implements Explore {
   }
 
   @Override
-  public List<TableNameInfo> getTables(@Nullable String database) throws ExploreException {
-    HttpResponse response = doGet(String.format("namespaces/%s/data/explore/tables", database));
+  public List<TableNameInfo> getTables(String namespace) throws ExploreException {
+    HttpResponse response = doGet(String.format("namespaces/%s/data/explore/tables", namespace));
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return parseJson(response, TABLES_TYPE);
     }
@@ -393,15 +395,16 @@ abstract class ExploreHttpClient implements Explore {
   }
 
   @Override
-  public TableInfo getTableInfo(@Nullable String database, String table)
+  public TableInfo getTableInfo(String namespace, String table)
     throws ExploreException, TableNotFoundException {
-    HttpResponse response = doGet(String.format("namespaces/%s/data/explore/tables/%s/info", database, table));
+    HttpResponse response = doGet(String.format("namespaces/%s/data/explore/tables/%s/info", namespace, table));
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return parseJson(response, TableInfo.class);
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new TableNotFoundException("Table " + database + table + " not found.");
+      throw new TableNotFoundException(String.format("Namespace %s, table %s not found.", namespace, table));
     }
-    throw new ExploreException("Cannot get the schema of table " + database + table + ". Reason: " + response);
+    throw new ExploreException(String.format("Cannot get the schema of namespace %s, table %s. Reason: %s",
+                                             namespace, table, response));
   }
 
   @Override

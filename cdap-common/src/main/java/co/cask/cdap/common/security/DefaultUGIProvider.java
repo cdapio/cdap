@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.common.utils.FileUtils;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -35,11 +36,6 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.FileAttribute;
-import java.nio.file.attribute.PosixFilePermission;
-import java.nio.file.attribute.PosixFilePermissions;
-import java.util.EnumSet;
-import java.util.Set;
 
 /**
  * Provides a UGI by logging in with a keytab file for that user.
@@ -50,8 +46,6 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
 
   private final LocationFactory locationFactory;
   private final File tempDir;
-  private static final FileAttribute<Set<PosixFilePermission>> OWNER_ONLY_ATTRS =
-    PosixFilePermissions.asFileAttribute(EnumSet.of(PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_READ));
 
   @Inject
   DefaultUGIProvider(CConfiguration cConf, LocationFactory locationFactory) {
@@ -106,7 +100,7 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
 
     // create a local file with restricted permissions
     // only allow the owner to read/write, since it contains credentials
-    Path localKeytabFile = Files.createTempFile(tempDir.toPath(), null, "keytab.localized", OWNER_ONLY_ATTRS);
+    Path localKeytabFile = Files.createTempFile(tempDir.toPath(), null, "keytab.localized", FileUtils.OWNER_ONLY_RW);
     // copy to this local file
     LOG.debug("Copying keytab file from {} to {}", keytabLocation, localKeytabFile);
     try (InputStream is = keytabLocation.getInputStream()) {

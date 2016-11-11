@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,15 +17,18 @@
 package co.cask.cdap.explore.executor;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.security.ImpersonationUtils;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.HandleNotFoundException;
+import co.cask.cdap.explore.service.hive.OperationInfo;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
 import com.google.inject.Inject;
@@ -39,6 +42,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -51,6 +55,7 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.API_VERSION_3)
 public class QueryExecutorHttpHandler extends AbstractQueryExecutorHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(QueryExecutorHttpHandler.class);
+
   private final ExploreService exploreService;
 
   @Inject
@@ -58,14 +63,32 @@ public class QueryExecutorHttpHandler extends AbstractQueryExecutorHttpHandler {
     this.exploreService = exploreService;
   }
 
+  private <T> T doAs(QueryHandle queryHandle,
+                     Callable<T> callable) throws HandleNotFoundException, ExploreException, SQLException {
+    OperationInfo operationInfo = exploreService.getOperationInfo(queryHandle);
+    try {
+      return ImpersonationUtils.doAs(operationInfo.getUGI(), callable);
+    } catch (HandleNotFoundException | SQLException | ExploreException e) {
+      throw e;
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
   @DELETE
   @Path("data/explore/queries/{id}")
   public void closeQuery(HttpRequest request, HttpResponder responder,
-                         @PathParam("id") String id) throws ExploreException {
+                         @PathParam("id") String id) throws ExploreException, SQLException {
     try {
-      QueryHandle handle = QueryHandle.fromId(id);
+      final QueryHandle handle = QueryHandle.fromId(id);
       if (!handle.equals(QueryHandle.NO_OP)) {
-        exploreService.close(handle);
+        doAs(handle, new Callable<Void>() {
+          @Override
+          public Void call() throws Exception {
+            exploreService.close(handle);
+            return null;
+          }
+        });
       }
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IllegalArgumentException e) {
@@ -81,10 +104,15 @@ public class QueryExecutorHttpHandler extends AbstractQueryExecutorHttpHandler {
   public void getQueryStatus(HttpRequest request, HttpResponder responder,
                              @PathParam("id") String id) throws ExploreException {
     try {
-      QueryHandle handle = QueryHandle.fromId(id);
+      final QueryHandle handle = QueryHandle.fromId(id);
       QueryStatus status;
       if (!handle.equals(QueryHandle.NO_OP)) {
-        status = exploreService.getStatus(handle);
+        status = doAs(handle, new Callable<QueryStatus>() {
+          @Override
+          public QueryStatus call() throws Exception {
+            return exploreService.getStatus(handle);
+          }
+        });
       } else {
         status = QueryStatus.NO_OP;
       }
@@ -109,10 +137,15 @@ public class QueryExecutorHttpHandler extends AbstractQueryExecutorHttpHandler {
   public void getQueryResultsSchema(HttpRequest request, HttpResponder responder,
                                     @PathParam("id") String id) throws ExploreException {
     try {
-      QueryHandle handle = QueryHandle.fromId(id);
+      final QueryHandle handle = QueryHandle.fromId(id);
       List<ColumnDesc> schema;
       if (!handle.equals(QueryHandle.NO_OP)) {
-        schema = exploreService.getResultSchema(handle);
+        schema = doAs(handle, new Callable<List<ColumnDesc>>() {
+          @Override
+          public List<ColumnDesc> call() throws Exception {
+            return exploreService.getResultSchema(handle);
+          }
+        });
       } else {
         schema = Lists.newArrayList();
       }
@@ -135,14 +168,19 @@ public class QueryExecutorHttpHandler extends AbstractQueryExecutorHttpHandler {
                                   @PathParam("id") String id) throws IOException, ExploreException {
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
     try {
-      QueryHandle handle = QueryHandle.fromId(id);
+      final QueryHandle handle = QueryHandle.fromId(id);
       List<QueryResult> results;
       if (handle.equals(QueryHandle.NO_OP)) {
         results = Lists.newArrayList();
       } else {
         Map<String, String> args = decodeArguments(request);
-        int size = args.containsKey("size") ? Integer.valueOf(args.get("size")) : 100;
-        results = exploreService.nextResults(handle, size);
+        final int size = args.containsKey("size") ? Integer.valueOf(args.get("size")) : 100;
+        results = doAs(handle, new Callable<List<QueryResult>>() {
+          @Override
+          public List<QueryResult> call() throws Exception {
+            return exploreService.nextResults(handle, size);
+          }
+        });
       }
       responder.sendJson(HttpResponseStatus.OK, results);
     } catch (IllegalArgumentException e) {
@@ -163,12 +201,17 @@ public class QueryExecutorHttpHandler extends AbstractQueryExecutorHttpHandler {
                                     @PathParam("id") String id) throws ExploreException {
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
     try {
-      QueryHandle handle = QueryHandle.fromId(id);
+      final QueryHandle handle = QueryHandle.fromId(id);
       List<QueryResult> results;
       if (handle.equals(QueryHandle.NO_OP)) {
         results = Lists.newArrayList();
       } else {
-        results = exploreService.previewResults(handle);
+        results = doAs(handle, new Callable<List<QueryResult>>() {
+          @Override
+          public List<QueryResult> call() throws Exception {
+            return exploreService.previewResults(handle);
+          }
+        });
       }
       responder.sendJson(HttpResponseStatus.OK, results);
     } catch (IllegalArgumentException e) {
@@ -189,12 +232,24 @@ public class QueryExecutorHttpHandler extends AbstractQueryExecutorHttpHandler {
 
   @POST
   @Path("data/explore/queries/{id}/download")
-  public void downloadQueryResults(HttpRequest request, HttpResponder responder,
-                                   @PathParam("id") final String id) throws ExploreException, IOException {
+  public void downloadQueryResults(final HttpRequest request, final HttpResponder responder,
+                                   @PathParam("id") final String id)
+    throws ExploreException, IOException, SQLException, HandleNotFoundException {
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
+    final QueryHandle handle = QueryHandle.fromId(id);
+    doAs(handle, new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        doDownloadQueryResults(request, responder, handle);
+        return null;
+      }
+    });
+  }
+
+  private void doDownloadQueryResults(HttpRequest request, HttpResponder responder,
+                                      QueryHandle handle) throws ExploreException, IOException {
     boolean responseStarted = false;
     try {
-      QueryHandle handle = QueryHandle.fromId(id);
       if (handle.equals(QueryHandle.NO_OP) ||
         !exploreService.getStatus(handle).getStatus().equals(QueryStatus.OpStatus.FINISHED)) {
         responder.sendStatus(HttpResponseStatus.CONFLICT);

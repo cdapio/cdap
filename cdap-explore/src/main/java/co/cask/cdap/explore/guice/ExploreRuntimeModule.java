@@ -19,6 +19,7 @@ package co.cask.cdap.explore.guice;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
+import co.cask.cdap.common.utils.FileUtils;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.explore.executor.ExploreExecutorHttpHandler;
@@ -135,6 +136,9 @@ public class ExploreRuntimeModule extends RuntimeModule {
 
       bind(File.class).annotatedWith(Names.named(Constants.Explore.PREVIEWS_DIR_NAME))
         .toProvider(PreviewsDirProvider.class);
+
+      bind(File.class).annotatedWith(Names.named(Constants.Explore.CREDENTIALS_DIR_NAME))
+        .toProvider(CredentialsDirProvider.class);
     }
 
     private static final class PreviewsDirProvider implements Provider<File> {
@@ -147,11 +151,35 @@ public class ExploreRuntimeModule extends RuntimeModule {
 
       @Override
       public File get() {
-        String localDirStr = cConf.get(Constants.Explore.LOCAL_DATA_DIR);
-        File previewsDir = new File(localDirStr, "previewsDir");
-        previewsDir.mkdirs();
-        return previewsDir;
+        return createLocalDir(cConf, "previewsDir");
       }
+    }
+
+    private static final class CredentialsDirProvider implements Provider<File> {
+      private final CConfiguration cConf;
+
+      @Inject
+      CredentialsDirProvider(CConfiguration cConf) {
+        this.cConf = cConf;
+      }
+
+      @Override
+      public File get() {
+        return createLocalDir(cConf, "credentialsDir");
+      }
+    }
+
+    private static File createLocalDir(CConfiguration cConf, String dirName) {
+      String localDirStr = cConf.get(Constants.Explore.LOCAL_DATA_DIR);
+      File credentialsDir = new File(localDirStr, dirName);
+
+      try {
+        java.nio.file.Files.createDirectories(credentialsDir.toPath(), FileUtils.OWNER_ONLY_RWX);
+      } catch (IOException ioe) {
+        // we have to wrap the IOException, because Provider#get doesn't declare it
+        Throwables.propagate(ioe);
+      }
+      return credentialsDir;
     }
 
     @Singleton
@@ -163,8 +191,8 @@ public class ExploreRuntimeModule extends RuntimeModule {
 
       @Inject
       ExploreServiceProvider(CConfiguration cConf, Configuration hConf,
-                                    @Named("explore.service.impl") ExploreService exploreService,
-                                    @Named("explore.inmemory") boolean isInMemory) {
+                             @Named("explore.service.impl") ExploreService exploreService,
+                             @Named("explore.inmemory") boolean isInMemory) {
         this.exploreService = exploreService;
         this.cConf = cConf;
         this.hConf = hConf;
@@ -249,6 +277,10 @@ public class ExploreRuntimeModule extends RuntimeModule {
         File previewDir = Files.createTempDir();
         LOG.info("Storing preview files in {}", previewDir.getAbsolutePath());
         bind(File.class).annotatedWith(Names.named(Constants.Explore.PREVIEWS_DIR_NAME)).toInstance(previewDir);
+
+        File credentialsDir = Files.createTempDir();
+        LOG.info("Storing credentials files in {}", credentialsDir.getAbsolutePath());
+        bind(File.class).annotatedWith(Names.named(Constants.Explore.CREDENTIALS_DIR_NAME)).toInstance(credentialsDir);
       } catch (Throwable e) {
         throw Throwables.propagate(e);
       }
