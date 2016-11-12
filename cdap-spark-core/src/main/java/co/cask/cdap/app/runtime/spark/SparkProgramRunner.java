@@ -163,7 +163,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
         closeables.addFirst(pluginInstantiator);
       }
 
-      SparkRuntimeContext runtimeContext = new SparkRuntimeContext(new Configuration(hConf), program, options,
+      SparkRuntimeContext runtimeContext = new SparkRuntimeContext(new Configuration(hConf), program, options, cConf,
                                                                    host, txClient, programDatasetFramework,
                                                                    discoveryServiceClient,
                                                                    metricsCollectionService, streamAdmin, workflowInfo,

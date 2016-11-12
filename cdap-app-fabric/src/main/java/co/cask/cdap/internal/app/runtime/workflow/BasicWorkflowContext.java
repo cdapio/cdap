@@ -27,6 +27,7 @@ import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
@@ -55,13 +56,13 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
 
   BasicWorkflowContext(WorkflowSpecification workflowSpec, @Nullable WorkflowActionSpecification spec,
                        @Nullable ProgramWorkflowRunner programWorkflowRunner,
-                       WorkflowToken token, Program program, ProgramOptions programOptions,
+                       WorkflowToken token, Program program, ProgramOptions programOptions, CConfiguration cConf,
                        MetricsCollectionService metricsCollectionService,
                        DatasetFramework datasetFramework, TransactionSystemClient txClient,
                        DiscoveryServiceClient discoveryServiceClient, Map<String, WorkflowNodeState> nodeStates,
                        @Nullable PluginInstantiator pluginInstantiator,
                        SecureStore secureStore, SecureStoreManager secureStoreManager) {
-    super(program, programOptions, (spec == null) ? new HashSet<String>() : spec.getDatasets(),
+    super(program, programOptions, cConf, (spec == null) ? new HashSet<String>() : spec.getDatasets(),
           datasetFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, Collections.singletonMap(Constants.Metrics.Tag.WORKFLOW_RUN_ID,
                                                              ProgramRunners.getRunId(programOptions).getId()),

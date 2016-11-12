@@ -539,8 +539,7 @@ final class HttpHandlerGenerator {
      *     DelayedHttpServiceResponder wrappedResponder = wrapResponder(responder);
      *     try {
      *       // only start tx if transaction control is IMPLICIT
-     *       TransactionContext txContext = getTransactionContext();
-     *       txContext.start();
+     *       TransactionContext txContext = startTransactionContext();
      *       // only generate this try catch block if transaction control is IMPLICIT
      *       try {
      *         ClassLoader classLoader = ClassLoaders.setContextClassLoader(createHandlerContextClassLoader());
@@ -632,16 +631,12 @@ final class HttpHandlerGenerator {
       int txContext = 0;
       if (TransactionControl.IMPLICIT == txCtrl) {
 
-        // TransactionContext txContext = getTransactionContext();
+        // TransactionContext txContext = startTransactionContext();
         txContext = mg.newLocal(txContextType);
         mg.loadThis();
         mg.invokeVirtual(classType,
-                         Methods.getMethod(TransactionContext.class, "getTransactionContext"));
+                         Methods.getMethod(TransactionContext.class, "startTransactionContext"));
         mg.storeLocal(txContext, txContextType);
-
-        // txContext.start();
-        mg.loadLocal(txContext, txContextType);
-        mg.invokeVirtual(txContextType, Methods.getMethod(void.class, "start"));
 
         // only generate this try catch block if transaction control is IMPLICIT
         // try { // Inner try for user handler failure

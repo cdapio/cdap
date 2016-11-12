@@ -30,6 +30,7 @@ import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
@@ -100,6 +101,7 @@ public class ServiceHttpServer extends AbstractIdleService {
 
   private final Program program;
   private final BasicHttpServiceContext context;
+  private final CConfiguration cConf;
   private final AtomicInteger instanceCount;
   private final ServiceAnnouncer serviceAnnouncer;
   private final List<HandlerDelegatorContext> handlerContexts;
@@ -108,13 +110,15 @@ public class ServiceHttpServer extends AbstractIdleService {
   private Cancellable cancelDiscovery;
   private Timer timer;
 
-  public ServiceHttpServer(String host, Program program, ProgramOptions programOptions, ServiceSpecification spec,
+  public ServiceHttpServer(String host, Program program, ProgramOptions programOptions,
+                           CConfiguration cConf, ServiceSpecification spec,
                            int instanceId, int instanceCount, ServiceAnnouncer serviceAnnouncer,
                            MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                            TransactionSystemClient txClient, DiscoveryServiceClient discoveryServiceClient,
                            @Nullable PluginInstantiator pluginInstantiator,
                            SecureStore secureStore, SecureStoreManager secureStoreManager) {
     this.program = program;
+    this.cConf = cConf;
     this.instanceCount = new AtomicInteger(instanceCount);
     this.serviceAnnouncer = serviceAnnouncer;
     BasicHttpServiceContextFactory contextFactory = createContextFactory(program, programOptions,
@@ -217,7 +221,7 @@ public class ServiceHttpServer extends AbstractIdleService {
     return new BasicHttpServiceContextFactory() {
       @Override
       public BasicHttpServiceContext create(@Nullable HttpServiceHandlerSpecification spec) {
-        return new BasicHttpServiceContext(program, programOptions, spec, instanceId, instanceCount,
+        return new BasicHttpServiceContext(program, programOptions, cConf, spec, instanceId, instanceCount,
                                            metricsCollectionService, datasetFramework, discoveryServiceClient,
                                            txClient, pluginInstantiator, secureStore, secureStoreManager);
       }

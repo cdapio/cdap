@@ -29,7 +29,7 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractProgramRunnerWithPlugin implements ProgramRunner {
 
-  private final CConfiguration cConf;
+  protected final CConfiguration cConf;
 
   public AbstractProgramRunnerWithPlugin(CConfiguration cConf) {
     this.cConf = cConf;

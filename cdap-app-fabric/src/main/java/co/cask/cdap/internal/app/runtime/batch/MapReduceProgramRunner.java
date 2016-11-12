@@ -170,7 +170,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
       }
 
       final BasicMapReduceContext context =
-        new BasicMapReduceContext(program, options, spec,
+        new BasicMapReduceContext(program, options, cConf, spec,
                                   workflowInfo, discoveryServiceClient,
                                   metricsCollectionService, txSystemClient, programDatasetFramework, streamAdmin,
                                   getPluginArchive(options), pluginInstantiator, secureStore, secureStoreManager);

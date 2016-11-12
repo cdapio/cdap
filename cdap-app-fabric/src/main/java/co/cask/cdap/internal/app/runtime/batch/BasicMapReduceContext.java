@@ -32,6 +32,7 @@ import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -92,6 +93,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
   private ProgramState state;
 
   BasicMapReduceContext(Program program, ProgramOptions programOptions,
+                        CConfiguration cConf,
                         MapReduceSpecification spec,
                         @Nullable WorkflowProgramInfo workflowProgramInfo,
                         DiscoveryServiceClient discoveryServiceClient,
@@ -103,7 +105,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
                         @Nullable PluginInstantiator pluginInstantiator,
                         SecureStore secureStore,
                         SecureStoreManager secureStoreManager) {
-    super(program, programOptions, spec.getDataSets(), dsFramework, txClient, discoveryServiceClient, false,
+    super(program, programOptions, cConf, spec.getDataSets(), dsFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, createMetricsTags(workflowProgramInfo), secureStore, secureStoreManager,
           pluginInstantiator);
 

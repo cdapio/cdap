@@ -229,6 +229,16 @@ public final class Constants {
    * Transactions.
    */
   public static final class Transaction {
+
+    /**
+     * The name of the property in cdap-site.xml for the default transaction timeout.
+     */
+    public static final String PROPERTY_TX_TIMEOUT = "data.tx.timeout";
+    /**
+     * The name of the program runtime argument for the transaction timeout.
+     */
+    public static final String ARGUMENT_TX_TIMEOUT = "system.tx.timeout";
+
     /**
      * Twill Runnable configuration.
      */

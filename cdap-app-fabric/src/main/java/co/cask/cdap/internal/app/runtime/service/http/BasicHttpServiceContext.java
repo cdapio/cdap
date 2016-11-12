@@ -22,6 +22,7 @@ import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
@@ -62,14 +63,14 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
    * @param pluginInstantiator {@link PluginInstantiator}
    * @param secureStore
    */
-  public BasicHttpServiceContext(Program program, ProgramOptions programOptions,
+  public BasicHttpServiceContext(Program program, ProgramOptions programOptions, CConfiguration cConf,
                                  @Nullable HttpServiceHandlerSpecification spec,
                                  int instanceId, AtomicInteger instanceCount,
                                  MetricsCollectionService metricsCollectionService,
                                  DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
                                  TransactionSystemClient txClient, @Nullable PluginInstantiator pluginInstantiator,
                                  SecureStore secureStore, SecureStoreManager secureStoreManager) {
-    super(program, programOptions, spec == null ? Collections.<String>emptySet() : spec.getDatasets(),
+    super(program, programOptions, cConf, spec == null ? Collections.<String>emptySet() : spec.getDatasets(),
           dsFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, createMetricsTags(spec, instanceId),
           secureStore, secureStoreManager, pluginInstantiator);
@@ -116,5 +117,12 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
   @Override
   public void dismissTransactionContext() {
     getDatasetCache().dismissTransactionContext();
+  }
+
+  // this implements TransactionalHttpServiceContext.getDefaultTxTimeout,
+  // by calling the same method from super class AbstractContext.
+  @Override
+  public int getDefaultTxTimeout() {
+    return super.getDefaultTxTimeout();
   }
 }

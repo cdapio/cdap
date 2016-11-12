@@ -33,6 +33,7 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
@@ -97,7 +98,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   // so that we can call destroy on them
   private final List<ProgramLifecycle> programLifecycles = new ArrayList<>();
 
-  BasicMapReduceTaskContext(Program program, ProgramOptions programOptions,
+  BasicMapReduceTaskContext(Program program, ProgramOptions programOptions, CConfiguration cConf,
                             @Nullable MapReduceMetrics.TaskType type, @Nullable String taskId,
                             MapReduceSpecification spec,
                             @Nullable WorkflowProgramInfo workflowProgramInfo,
@@ -112,8 +113,8 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                             SecureStoreManager secureStoreManager,
                             AuthorizationEnforcer authorizationEnforcer,
                             AuthenticationContext authenticationContext) {
-    super(program, programOptions, ImmutableSet.<String>of(), dsFramework, txClient, discoveryServiceClient, true,
-          metricsCollectionService, createMetricsTags(taskId, type, workflowProgramInfo), secureStore,
+    super(program, programOptions, cConf,  ImmutableSet.<String>of(), dsFramework, txClient, discoveryServiceClient,
+          true, metricsCollectionService, createMetricsTags(taskId, type, workflowProgramInfo), secureStore,
           secureStoreManager, pluginInstantiator);
     this.workflowProgramInfo = workflowProgramInfo;
     this.transaction = transaction;

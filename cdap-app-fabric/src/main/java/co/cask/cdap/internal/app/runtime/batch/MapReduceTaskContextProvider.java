@@ -24,6 +24,7 @@ import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.program.DefaultProgram;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
@@ -204,11 +205,11 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
             metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
           }
         }
-
+        CConfiguration cConf = injector.getInstance(CConfiguration.class);
         TransactionSystemClient txClient = injector.getInstance(TransactionSystemClient.class);
 
         return new BasicMapReduceTaskContext(
-          program, contextConfig.getProgramOptions(), taskType, taskId,
+          program, contextConfig.getProgramOptions(), cConf, taskType, taskId,
           spec, workflowInfo, discoveryServiceClient, metricsCollectionService, txClient,
           contextConfig.getTx(), programDatasetFramework, classLoader.getPluginInstantiator(),
           contextConfig.getLocalizedResources(), secureStore, secureStoreManager,

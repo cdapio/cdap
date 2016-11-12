@@ -29,7 +29,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
-import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
@@ -106,7 +105,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
     final PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
     try {
-      ServiceHttpServer component = new ServiceHttpServer(host, program, options, spec,
+      ServiceHttpServer component = new ServiceHttpServer(host, program, options, cConf, spec,
                                                           instanceId, instanceCount, serviceAnnouncer,
                                                           metricsCollectionService, datasetFramework,
                                                           txClient, discoveryServiceClient,

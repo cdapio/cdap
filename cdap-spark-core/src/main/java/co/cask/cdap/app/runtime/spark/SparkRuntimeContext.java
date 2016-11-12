@@ -23,6 +23,7 @@ import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -65,7 +66,7 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
   private final AuthenticationContext authenticationContext;
 
   SparkRuntimeContext(Configuration hConf, Program program, ProgramOptions programOptions,
-                      String hostname, TransactionSystemClient txClient,
+                      CConfiguration cConf, String hostname, TransactionSystemClient txClient,
                       DatasetFramework datasetFramework,
                       DiscoveryServiceClient discoveryServiceClient,
                       MetricsCollectionService metricsCollectionService,
@@ -76,7 +77,7 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
                       SecureStoreManager secureStoreManager,
                       AuthorizationEnforcer authorizationEnforcer,
                       AuthenticationContext authenticationContext) {
-    super(program, programOptions, getSparkSpecification(program).getDatasets(), datasetFramework, txClient,
+    super(program, programOptions, cConf, getSparkSpecification(program).getDatasets(), datasetFramework, txClient,
           discoveryServiceClient, true, metricsCollectionService, createMetricsTags(workflowProgramInfo),
           secureStore, secureStoreManager, pluginInstantiator);
 

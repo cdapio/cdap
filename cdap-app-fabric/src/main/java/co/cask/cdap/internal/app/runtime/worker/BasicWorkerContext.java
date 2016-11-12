@@ -28,6 +28,7 @@ import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.stream.StreamWriterFactory;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -60,7 +61,7 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
   private volatile int instanceCount;
 
   BasicWorkerContext(WorkerSpecification spec, Program program, ProgramOptions programOptions,
-                     int instanceId, int instanceCount,
+                     CConfiguration cConf, int instanceId, int instanceCount,
                      MetricsCollectionService metricsCollectionService,
                      DatasetFramework datasetFramework,
                      TransactionSystemClient transactionSystemClient,
@@ -69,7 +70,7 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
                      @Nullable PluginInstantiator pluginInstantiator,
                      SecureStore secureStore,
                      SecureStoreManager secureStoreManager) {
-    super(program, programOptions, spec.getDatasets(),
+    super(program, programOptions, cConf, spec.getDatasets(),
           datasetFramework, transactionSystemClient, discoveryServiceClient, true,
           metricsCollectionService, ImmutableMap.of(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId)),
           secureStore, secureStoreManager, pluginInstantiator);

@@ -117,15 +117,19 @@ public class AppWithCustomTx extends AbstractApplication {
 
   static final String INITIALIZE = "initialize";
   static final String INITIALIZE_TX = "initialize-tx";
+  static final String INITIALIZE_TX_D = "initialize-tx-default";
   static final String INITIALIZE_NEST = "initialize-nest";
   static final String DESTROY = "destroy";
   static final String DESTROY_TX = "destroy-tx";
+  static final String DESTROY_TX_D = "destroy-tx-default";
   static final String DESTROY_NEST = "destroy-nest";
   static final String ONERROR = "error";
   static final String ONERROR_TX = "error-tx";
+  static final String ONERROR_TX_D = "error-tx-default";
   static final String ONERROR_NEST = "error-nest";
   static final String RUNTIME = "runtime";
   static final String RUNTIME_TX = "runtime-tx";
+  static final String RUNTIME_TX_D = "runtime-tx-default";
   static final String RUNTIME_TX_T = "runtime-tx-tx";
   static final String RUNTIME_NEST = "runtime-nest";
   static final String RUNTIME_NEST_T = "runtime-nest-tx";
@@ -195,6 +199,16 @@ public class AppWithCustomTx extends AbstractApplication {
    */
   static void executeRecordTransaction(Transactional transactional,
                                        final String row, final String column, int timeout) {
+    try {
+      transactional.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          recordTransaction(context, row, column + "-default"); // append _D for default timeout
+        }
+      });
+    } catch (TransactionFailureException e) {
+      throw Throwables.propagate(e);
+    }
     try {
       transactional.execute(timeout, new TxRunnable() {
         @Override
@@ -713,7 +727,8 @@ public class AppWithCustomTx extends AbstractApplication {
 
     @ProcessInput
     public void process(@SuppressWarnings("UnusedParameters") StreamEvent event) {
-      // no-op
+      recordTransaction(getContext(), getContext().getName(), RUNTIME);
+      attemptNestedTransaction(getContext(), getContext().getName(), RUNTIME_NEST);
     }
   }
 

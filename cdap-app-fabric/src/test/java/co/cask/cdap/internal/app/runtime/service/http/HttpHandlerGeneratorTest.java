@@ -684,6 +684,11 @@ public class HttpHandlerGeneratorTest {
         }
 
         @Override
+        public void start(int timeout) throws TransactionFailureException {
+          start();
+        }
+
+        @Override
         public void finish() throws TransactionFailureException {
           System.clearProperty(IN_TX);
         }
@@ -703,6 +708,11 @@ public class HttpHandlerGeneratorTest {
     @Override
     public void dismissTransactionContext() {
       // no-op
+    }
+
+    @Override
+    public int getDefaultTxTimeout() {
+      return 30;
     }
 
     @Override
