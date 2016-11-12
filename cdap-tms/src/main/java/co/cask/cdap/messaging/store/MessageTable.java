@@ -64,7 +64,7 @@ public interface MessageTable {
      * Returns the sequence id generated when this entry was written to the message table. This method will not be
      * called on store request.
      */
-    long getSequenceId();
+    short getSequenceId();
   }
 
   /**
