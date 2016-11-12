@@ -25,9 +25,12 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.internal.io.SchemaGenerator;
+import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -40,8 +43,11 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Unit test for ClassLoader.
@@ -153,5 +159,48 @@ public class ClassLoaderTest {
     // Should be able to load both guava and gson class from the class loader
     cl.loadClass(ImmutableList.class.getName());
     cl.loadClass(Gson.class.getName());
+  }
+
+  @Test
+  public void testDefinePackage() throws ClassNotFoundException {
+    // This test is to test classes defined by the InterceptableClassLoader also has package being defined.
+    // Create a classloader using urls from the current classloader and parent as the parent of the current classloader
+    List<URL> urls = ClassLoaders.getClassLoaderURLs(getClass().getClassLoader(), new ArrayList<URL>());
+    ClassLoader cl = new InterceptableClassLoader(urls.toArray(new URL[urls.size()]),
+                                                  getClass().getClassLoader().getParent()) {
+      @Override
+      protected boolean needIntercept(String className) {
+        // We intercept the ClassLoaderTest class (from local file) and all guava classes (from jar)
+        return ClassLoaderTest.class.getName().equals(className) || className.startsWith("com.google.common.");
+      }
+
+      @Override
+      public byte[] rewriteClass(String className, InputStream input) throws IOException {
+        // We don't really rewrite class. Simply read the bytecode from the input stream.
+        return ByteStreams.toByteArray(input);
+      }
+    };
+
+    // Load a non-intercepted class. It should be defined by the intercepting classloader
+    Class<?> cls = cl.loadClass(Application.class.getName());
+    Assert.assertSame(cl, cls.getClassLoader());
+    Assert.assertEquals(Application.class.getPackage().getName(), cls.getPackage().getName());;
+
+    // Load an intercepted class that comes from local file system (non-jar).
+    cls = cl.loadClass(ClassLoaderTest.class.getName());
+    Assert.assertSame(cl, cls.getClassLoader());
+    Assert.assertEquals(ClassLoaderTest.class.getPackage().getName(), cls.getPackage().getName());
+
+    // Load an intercepted guava class that comes from jar file.
+    cls = cl.loadClass(Function.class.getName());
+    Assert.assertSame(cl, cls.getClassLoader());
+    Package functionPackage = cls.getPackage();
+    Assert.assertEquals(Function.class.getPackage().getName(), functionPackage.getName());
+
+    // Load another intercepted guava class that comes from jar file with the same package as Function.
+    cls = cl.loadClass(Supplier.class.getName());
+    Assert.assertSame(cl, cls.getClassLoader());
+    // The Supplier package should be the same as the Function package.
+    Assert.assertSame(functionPackage, cls.getPackage());
   }
 }
