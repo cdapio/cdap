@@ -16,79 +16,96 @@
 
 package co.cask.cdap.messaging.store;
 
-import co.cask.cdap.messaging.data.Message;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.id.TopicId;
 import org.apache.tephra.Transaction;
 
-import java.util.List;
+import java.util.Iterator;
+import javax.annotation.Nullable;
 
 /**
+ * An interface defining the Message Table operations.
  *
+ * @see <a href="https://wiki.cask.co/display/CE/Messaging">Design documentation</a>
  */
 public interface MessageTable {
 
   /**
-   *
-   * @param topicId
-   * @param timestampMs
-   * @param startSeqId
-   * @param limit
-   * @return
+   * Represents an entry (row) in the message table.
    */
-  List<Message> fetch(TopicId topicId, long timestampMs, short startSeqId, int limit);
+  interface Entry {
+
+    /**
+     * Returns {@code true} if the entry is a reference to messages stored in payload table.
+     */
+    boolean isPayloadReference();
+
+    /**
+     * Returns the transaction write pointer stored in this entry. The value returned will be valid
+     * if and only if {@link #isPayloadReference()} returns {@code true}.
+     */
+    long getTransactionWritePointer();
+
+    /**
+     * Returns the message payload if {@link #isPayloadReference()} return {@code false}; otherwise {@code null}
+     * will be returned.
+     */
+    @Nullable
+    byte[] getPayload();
+
+    /**
+     * Returns the timestamp in milliseconds when this entry was written to the message table. This method
+     * will not be called on store request.
+     */
+    long getPublishTimestamp();
+
+    /**
+     * Returns the sequence id generated when this entry was written to the message table. This method will not be
+     * called on store request.
+     */
+    long getSequenceId();
+  }
 
   /**
+   * Fetches message table entries in the given topic that were publish on or after the given start time.
    *
-   * @param topicId
-   * @param timestampMs
-   * @param startSeqId
-   * @param transaction
-   * @param limit
-   * @return
+   * @param topicId the topic to fetch from
+   * @param startTime the publish time to start from
+   * @param limit maximum number of messages to fetch
+   * @param transaction an optional {@link Transaction} to use for fetching
+   * @return a {@link CloseableIterator} of {@link Entry}.
    */
-  List<Message> fetch(TopicId topicId, long timestampMs, short startSeqId, Transaction transaction, int limit);
+  CloseableIterator<Entry> fetch(TopicId topicId, long startTime, int limit, @Nullable Transaction transaction);
 
   /**
+   * Fetches message table entries in the given topic, starting from the given {@link MessageId}.
    *
-   * @param topicId
-   * @param timestampMs
-   * @param startSeqId
-   * @param writeTimestampMs
-   * @param payloadSeqId
-   * @param transaction
-   * @param limit
-   * @return
+   * @param topicId the topic to fetch from
+   * @param messageId the message id to start fetching from
+   * @param inclusive indicate whether to include the given {@link MessageId} as the first message (if still available)
+   *                  or not.
+   * @param limit maximum number of messages to fetch
+   * @param transaction an optional {@link Transaction} to use for fetching
+   * @return a {@link CloseableIterator} of {@link Entry}.
    */
-  List<Message> fetch(TopicId topicId, long timestampMs, short startSeqId, long writeTimestampMs,
-                      short payloadSeqId, Transaction transaction, int limit);
+  CloseableIterator<Entry> fetch(TopicId topicId, MessageId messageId, boolean inclusive,
+                                 int limit, @Nullable Transaction transaction);
 
   /**
-   * Publish messages with a transaction write pointer.
+   * Stores a list of entries to the message table under the given topic.
    *
-   * @param topicId
-   * @param transactionWritePointer
-   * @param timestampMs
-   * @param startSeqId
-   * @param messages
+   * @param topicId the topic to store to
+   * @param entries a list of entries to store. This method guarantees each {@link Entry} will be consumed right away,
+   *                hence it is safe for the {@link Iterator} to reuse the same {@link Entry} instance.
    */
-  void publish(TopicId topicId, long transactionWritePointer, long timestampMs, short startSeqId,
-               List<byte[]> messages);
+  void store(TopicId topicId, Iterator<Entry> entries);
 
   /**
-   * Publish messages without a transaction write pointer.
+   * Delete all entries stored with the given transactionWritePointer under the given topic.
    *
-   * @param topicId
-   * @param timestampMs
-   * @param startSeqId
-   * @param messages
-   */
-  void publish(TopicId topicId, long timestampMs, short startSeqId, List<byte[]> messages);
-
-  /**
-   * Delete all the messages stored with the given transactionWritePointer
-   *
-   * @param topicId
-   * @param transactionWritePointer
+   * @param topicId the topic to delete from
+   * @param transactionWritePointer the transaction write pointer for scanning entries to delete.
    */
   void delete(TopicId topicId, long transactionWritePointer);
 }

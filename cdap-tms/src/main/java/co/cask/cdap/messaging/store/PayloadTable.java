@@ -16,53 +16,72 @@
 
 package co.cask.cdap.messaging.store;
 
-import co.cask.cdap.messaging.data.PayloadMessage;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.id.TopicId;
 
-import java.util.List;
+import java.util.Iterator;
 
 /**
- * Table to store transactional messages.
+ * An interface defining the Payload Table operations.
+ *
+ * @see <a href="https://wiki.cask.co/display/CE/Messaging">Design documentation</a>
  */
 public interface PayloadTable {
 
   /**
-   *
-   * @param topicId
-   * @param transactionWritePointer
-   * @param limit
-   * @return
+   * Represents an entry (row) in the payload table.
    */
-  List<PayloadMessage> fetch(TopicId topicId, long transactionWritePointer, int limit);
+  interface Entry {
+
+    /**
+     * Returns the message payload.
+     */
+    byte[] getPayload();
+
+    /**
+     * Returns the transaction write pointer for storing the payload.
+     */
+    long getTransactionWritePointer();
+
+    /**
+     * Returns the timestamp in milliseconds when the payload was written to the payload table. This method
+     * will not be called on store request.
+     */
+    long getPayloadWriteTimestamp();
+
+    /**
+     * Returns the sequence id generated when the payload was written to the payload table. This method will not
+     * be called on store request.
+     */
+    long getPayloadSequenceId();
+  }
 
   /**
+   * Fetches entries from the payload table under the given topic, starting from the given {@link MessageId}.
    *
-   * @param topicId
-   * @param transactionWritePointer
-   * @param timestampMs
-   * @param sequenceId
-   * @param limit
-   * @return
+   * @param topicId topic to fetch from
+   * @param messageId message Id to start from
+   * @param inclusive {@code true} to include the entry identified by the given {@link MessageId} as the first message
+   * @param limit maximum number of entries to fetch
+   * @return a {@link CloseableIterator} of entries
    */
-  List<PayloadMessage> fetch(TopicId topicId, long transactionWritePointer, long timestampMs, short sequenceId,
-                             int limit);
+  CloseableIterator<Entry> fetch(TopicId topicId, MessageId messageId, boolean inclusive, int limit);
 
   /**
-   * Store messages with a transaction write pointer
+   * Stores a list of entries to the payload table under the given topic.
    *
-   * @param topicId
-   * @param transactionWritePointer
-   * @param timestampMs
-   * @param startSeqId
-   * @param messages
+   * @param topicId topic to store under
+   * @param entries a list of entries to store. This method guarantees each {@link Entry} will be consumed right away,
+   *                hence it is safe for the {@link Iterator} to reuse the same {@link Entry} instance
    */
-  void store(TopicId topicId, long transactionWritePointer, long timestampMs, short startSeqId, List<byte[]> messages);
+  void store(TopicId topicId, Iterator<Entry> entries);
 
   /**
-   * Delete all the messages stored with the given transactionWritePointer
+   * Delete all the messages stored with the given transactionWritePointer under the given topic.
    *
-   * @param topicId
-   * @param transactionWritePointer
+   * @param topicId topic to delete from
+   * @param transactionWritePointer the transaction write pointer for scanning entries to delete.
    */
   void delete(TopicId topicId, long transactionWritePointer);
 }
