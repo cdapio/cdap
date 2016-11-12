@@ -54,7 +54,7 @@ public interface PayloadTable {
      * Returns the sequence id generated when the payload was written to the payload table. This method will not
      * be called on store request.
      */
-    long getPayloadSequenceId();
+    short getPayloadSequenceId();
   }
 
   /**
