@@ -17,13 +17,14 @@
 package co.cask.cdap.messaging.store.hbase;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.hbase.HBase98Test;
 import co.cask.cdap.data.hbase.HBaseTestBase;
-import co.cask.cdap.data2.util.hbase.HBase98TableUtil;
+import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.messaging.store.MetadataTable;
 import co.cask.cdap.messaging.store.MetadataTableTest;
 import co.cask.cdap.proto.id.NamespaceId;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -34,26 +35,29 @@ import org.junit.ClassRule;
 public class HBaseMetadataTableTest extends MetadataTableTest {
 
   @ClassRule
-  public static final HBaseTestBase TEST_BASE = new HBase98Test();
+  public static final HBaseTestBase TEST_BASE = new HBaseTestFactory().get();
   private static final CConfiguration cConf = CConfiguration.create();
 
+  private static HBaseAdmin hBaseAdmin;
   private static HBaseTableUtil tableUtil;
 
   @BeforeClass
   public static void setupBeforeClass() throws Exception {
-    tableUtil = new HBase98TableUtil();
-    tableUtil.setCConf(cConf);
-    tableUtil.createNamespaceIfNotExists(TEST_BASE.getHBaseAdmin(), tableUtil.getHBaseNamespace(NamespaceId.CDAP));
+    hBaseAdmin = TEST_BASE.getHBaseAdmin();
+    hBaseAdmin.getConfiguration().set(HBaseTableUtil.CFG_HBASE_TABLE_COMPRESSION,
+                                      HBaseTableUtil.CompressionType.NONE.name());
+    tableUtil = new HBaseTableUtilFactory(cConf).get();
+    tableUtil.createNamespaceIfNotExists(hBaseAdmin, tableUtil.getHBaseNamespace(NamespaceId.CDAP));
   }
 
   @AfterClass
   public static void teardownAfterClass() throws Exception {
-    tableUtil.deleteAllInNamespace(TEST_BASE.getHBaseAdmin(), tableUtil.getHBaseNamespace(NamespaceId.CDAP));
-    tableUtil.deleteNamespaceIfExists(TEST_BASE.getHBaseAdmin(), tableUtil.getHBaseNamespace(NamespaceId.CDAP));
+    tableUtil.deleteAllInNamespace(hBaseAdmin, tableUtil.getHBaseNamespace(NamespaceId.CDAP));
+    tableUtil.deleteNamespaceIfExists(hBaseAdmin, tableUtil.getHBaseNamespace(NamespaceId.CDAP));
   }
 
   @Override
   protected MetadataTable getTable() throws Exception {
-    return new HBaseMetadataTable(TEST_BASE.getConfiguration(), tableUtil, "metadata");
+    return new HBaseMetadataTable(hBaseAdmin.getConfiguration(), tableUtil, "metadata");
   }
 }

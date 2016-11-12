@@ -55,6 +55,7 @@
       <groupId>org.iq80.leveldb</groupId>
       <artifactId>leveldb</artifactId>
     </dependency>
+
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-hbase-compat-base</artifactId>
