@@ -42,8 +42,13 @@ public interface MessageTable {
     boolean isPayloadReference();
 
     /**
+     * Returns {@code true} if the message is a transactional message
+     */
+    boolean isTransactional();
+
+    /**
      * Returns the transaction write pointer stored in this entry. The value returned will be valid
-     * if and only if {@link #isPayloadReference()} returns {@code true}.
+     * if and only if {@link #isTransactional()} returns {@code true}.
      */
     long getTransactionWritePointer();
 
