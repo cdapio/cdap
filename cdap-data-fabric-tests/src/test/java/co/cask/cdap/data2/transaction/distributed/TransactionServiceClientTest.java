@@ -56,7 +56,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
@@ -182,16 +181,14 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
   }
 
   @Test
-  @Ignore
   @Override
   public void testNegativeTimeout() throws Exception {
-    // TODO bring this test back as part of CDAP-7408 once TEPHRA-194 is fixed
+    super.testNegativeTimeout();
   }
 
   @Test
-  @Ignore
   @Override
   public void testExcessiveTimeout() throws Exception {
-    // TODO bring this test back as part of CDAP-7408 once TEPHRA-194 is fixed
+    super.testExcessiveTimeout();
   }
 }

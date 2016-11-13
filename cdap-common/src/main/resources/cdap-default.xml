@@ -577,6 +577,15 @@
   </property>
 
   <property>
+    <name>data.tx.max.timeout</name>
+    <value>600</value>
+    <description>
+      The limit for the allowed transaction timeout, in seconds. Attempts to
+      start a transaction with a longer timeout will fail.
+    </description>
+  </property>
+
+  <property>
     <name>dataset.data.dir</name>
     <value>data</value>
     <description>
