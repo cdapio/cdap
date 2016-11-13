@@ -17,6 +17,10 @@
 package co.cask.cdap.messaging.store.leveldb;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.messaging.TopicMetadata;
+import co.cask.cdap.messaging.TopicNotFoundException;
 import co.cask.cdap.messaging.store.MetadataTable;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
@@ -26,49 +30,40 @@ import com.google.gson.reflect.TypeToken;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
-import javax.annotation.Nullable;
 
 /**
  * LevelDB implementation of {@link MetadataTable}.
  */
 public class LevelDBMetadataTable implements MetadataTable {
+
   private static final Gson GSON = new Gson();
   private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
-  private final String tableName;
-  private final LevelDBTableService service;
   private final LevelDBTableCore core;
 
   public LevelDBMetadataTable(LevelDBTableService service, String tableName) throws IOException {
-    this.service = service;
-    this.tableName = tableName;
     this.core = new LevelDBTableCore(tableName, service);
   }
 
   @Override
-  public void createTableIfNotExists() throws IOException {
-    service.ensureTableExists(tableName);
-  }
-
-  @Override
-  public Map<String, String> getProperties(TopicId topicId) throws IOException {
+  public TopicMetadata getMetadata(TopicId topicId) throws IOException, TopicNotFoundException {
     NavigableMap<byte[], byte[]> row = core.getRow(Bytes.toBytes(topicId.getNamespace()),
                                                    Bytes.toByteArrays(topicId.getTopic()), null, null, -1, null);
     if (row.isEmpty()) {
-      return null;
+      throw new TopicNotFoundException(topicId);
     }
-    return GSON.fromJson(Bytes.toString(row.firstEntry().getValue()), MAP_TYPE);
+
+    Map<String, String> properties = GSON.fromJson(Bytes.toString(row.firstEntry().getValue()), MAP_TYPE);
+    return new TopicMetadata(topicId, properties);
   }
 
   @Override
-  public void createTopic(TopicId topicId, @Nullable Map<String, String> properties) throws IOException {
-    if (properties == null) {
-      properties = new HashMap<>();
-    }
-    byte[] value = Bytes.toBytes(GSON.toJson(properties));
+  public void createTopic(TopicMetadata topicMetadata) throws IOException {
+    byte[] value = Bytes.toBytes(GSON.toJson(topicMetadata.getProperties()));
+
+    TopicId topicId = topicMetadata.getTopicId();
     core.put(Bytes.toBytes(topicId.getNamespace()), Bytes.toBytes(topicId.getTopic()), value, -1);
   }
 
@@ -82,8 +77,23 @@ public class LevelDBMetadataTable implements MetadataTable {
     NavigableMap<byte[], byte[]> topics = core.getRow(Bytes.toBytes(namespaceId.getNamespace()), null, null,
                                                       null, -1, null);
     List<TopicId> topicIds = new ArrayList<>();
-    for (Map.Entry<byte[], byte[]> topic : topics.entrySet()) {
-      topicIds.add(new TopicId(namespaceId.getNamespace(), Bytes.toString(topic.getKey())));
+    for (byte[] topic : topics.keySet()) {
+      topicIds.add(new TopicId(namespaceId.getNamespace(), Bytes.toString(topic)));
+    }
+    return topicIds;
+  }
+
+  @Override
+  public List<TopicId> listTopics() throws IOException {
+    List<TopicId> topicIds = new ArrayList<>();
+    try (Scanner scanner = core.scan(null, null, null, null, null)) {
+      Row row = scanner.next();
+      while (row != null) {
+        for (byte[] topic : row.getColumns().keySet()) {
+          topicIds.add(new TopicId(Bytes.toString(row.getRow()), Bytes.toString(topic)));
+        }
+        row = scanner.next();
+      }
     }
     return topicIds;
   }

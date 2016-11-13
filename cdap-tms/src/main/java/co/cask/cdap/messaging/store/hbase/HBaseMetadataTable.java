@@ -19,7 +19,8 @@ package co.cask.cdap.messaging.store.hbase;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
+import co.cask.cdap.messaging.TopicMetadata;
+import co.cask.cdap.messaging.TopicNotFoundException;
 import co.cask.cdap.messaging.store.MetadataTable;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
@@ -28,114 +29,126 @@ import com.google.common.base.Splitter;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * HBase implementation of {@link MetadataTable}.
  */
 public class HBaseMetadataTable implements MetadataTable {
-  private static final byte[] COL_FAMILY = Bytes.toBytes("cf");
-  private static final byte[] COL = Bytes.toBytes("c");
+
+  private static final byte[] COL = Bytes.toBytes("m");
   private static final Gson GSON = new Gson();
   private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
-  private final Configuration conf;
+
+  private final Configuration hConf;
   private final HBaseTableUtil tableUtil;
-  private final String tableName;
-  private HBaseAdmin hBaseAdmin;
-  private HTable hTable;
+  private final TableId tableId;
+  private final byte[] columnFamily;
+  private volatile HTable hTable;
 
-  public HBaseMetadataTable(Configuration conf, HBaseTableUtil tableUtil, String tableName) {
-    this.conf = conf;
+  public HBaseMetadataTable(Configuration hConf, HBaseTableUtil tableUtil, TableId tableId, byte[] columnFamily) {
+    this.hConf = hConf;
     this.tableUtil = tableUtil;
-    this.tableName = tableName;
+    this.tableId = tableId;
+    this.columnFamily = Arrays.copyOf(columnFamily, columnFamily.length);
   }
 
   @Override
-  public void createTableIfNotExists() throws IOException {
-    TableId tableId = tableUtil.createHTableId(NamespaceId.CDAP, tableName);
-    HColumnDescriptor hcd = new HColumnDescriptor(COL_FAMILY);
-    HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(tableId).addFamily(hcd);
-    hBaseAdmin = new HBaseAdmin(conf);
-    hTable = tableUtil.createHTable(conf, tableId);
-    tableUtil.createTableIfNotExists(hBaseAdmin, tableId, htd.build());
-  }
-
-  @Nullable
-  @Override
-  public Map<String, String> getProperties(TopicId topicId) throws IOException {
+  public TopicMetadata getMetadata(TopicId topicId) throws IOException, TopicNotFoundException {
     Get get = tableUtil.buildGet(getKey(topicId))
-      .addFamily(COL_FAMILY)
+      .addFamily(columnFamily)
       .build();
-    Result result = hTable.get(get);
-    byte[] value = result.getValue(COL_FAMILY, COL);
+
+    Result result = getHTable().get(get);
+    byte[] value = result.getValue(columnFamily, COL);
     if (value == null) {
-      return null;
+      throw new TopicNotFoundException(topicId);
     }
-    return GSON.fromJson(Bytes.toString(value), MAP_TYPE);
+
+    Map<String, String> properties = GSON.fromJson(Bytes.toString(value), MAP_TYPE);
+    return new TopicMetadata(topicId, properties);
   }
 
   @Override
-  public void createTopic(TopicId topicId, @Nullable Map<String, String> properties) throws IOException {
-    if (properties == null) {
-      properties = new HashMap<>();
-    }
-
-    Put put = tableUtil.buildPut(getKey(topicId))
-      .add(COL_FAMILY, COL, Bytes.toBytes(GSON.toJson(properties)))
+  public void createTopic(TopicMetadata topicMetadata) throws IOException {
+    Put put = tableUtil.buildPut(getKey(topicMetadata.getTopicId()))
+      .add(columnFamily, COL, Bytes.toBytes(GSON.toJson(topicMetadata.getProperties(), MAP_TYPE)))
       .build();
-    hTable.put(put);
+    getHTable().put(put);
   }
 
   @Override
   public void deleteTopic(TopicId topicId) throws IOException {
-    Delete delete = tableUtil.buildDelete(getKey(topicId))
-      .build();
-    hTable.delete(delete);
+    Delete delete = tableUtil.buildDelete(getKey(topicId)).build();
+    getHTable().delete(delete);
   }
 
   @Override
   public List<TopicId> listTopics(NamespaceId namespaceId) throws IOException {
-    List<TopicId> topicIds = new ArrayList<>();
+    byte[] startRow = startKey(namespaceId);
     Scan scan = tableUtil.buildScan()
-      .setStartRow(startKey(namespaceId))
-      .addFamily(COL_FAMILY).build();
+      .setStartRow(startRow)
+      .setStopRow(Bytes.stopKeyForPrefix(startRow))
+      .build();
+    return scanTopics(scan);
+  }
 
-    try (ResultScanner resultScanner = hTable.getScanner(scan)) {
-      Iterator<Result> resultIterator = resultScanner.iterator();
-      while (resultIterator.hasNext()) {
-        Result result = resultIterator.next();
+  @Override
+  public List<TopicId> listTopics() throws IOException {
+    return scanTopics(tableUtil.buildScan().build());
+  }
+
+  /**
+   * Scans the HBase table to get a list of {@link TopicId}.
+   */
+  private List<TopicId> scanTopics(Scan scan) throws IOException {
+    scan.setFilter(new FirstKeyOnlyFilter())
+        .setCaching(1000);
+
+    List<TopicId> topicIds = new ArrayList<>();
+    try (ResultScanner resultScanner = getHTable().getScanner(scan)) {
+      for (Result result : resultScanner) {
         topicIds.add(getTopicId(result.getRow()));
       }
     }
-
     return topicIds;
   }
 
   @Override
-  public void close() throws IOException {
+  public synchronized void close() throws IOException {
     if (hTable != null) {
       hTable.close();
     }
+  }
 
-    if (hBaseAdmin != null) {
-      hBaseAdmin.close();
+  private HTable getHTable() throws IOException {
+    if (hTable != null) {
+      return hTable;
+    }
+
+    synchronized (this) {
+      if (hTable != null) {
+        return hTable;
+      }
+      hTable = tableUtil.createHTable(hConf, tableId);
+      // Use auto flush since we are not doing any batch type operation on the metadata table.
+      // Auto-flush will make sure every Put call is executed right away.
+      hTable.setAutoFlush(true, false);
+      return hTable;
     }
   }
 
@@ -144,13 +157,10 @@ public class HBaseMetadataTable implements MetadataTable {
   }
 
   private byte[] getKey(TopicId topicId) {
-    Iterable<String> keyParts = topicId.toIdParts();
-    String key = Joiner.on(":").join(keyParts);
-    return Bytes.toBytes(key);
+    return Bytes.toBytes(Joiner.on(":").join(topicId.toIdParts()));
   }
 
   private TopicId getTopicId(byte[] key) {
-    Iterable<String> keyParts = Splitter.on(":").split(Bytes.toString(key));
-    return TopicId.fromIdParts(keyParts);
+    return TopicId.fromIdParts(Splitter.on(":").split(Bytes.toString(key)));
   }
 }
