@@ -16,14 +16,14 @@
 
 package co.cask.cdap.messaging.store;
 
+import co.cask.cdap.messaging.TopicMetadata;
+import co.cask.cdap.messaging.TopicNotFoundException;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Table to store information about the topics and their properties.
@@ -31,31 +31,25 @@ import javax.annotation.Nullable;
 public interface MetadataTable extends Closeable {
 
   /**
-   * Create Metadata Table.
-   *
-   * @throws IOException
-   */
-  void createTableIfNotExists() throws IOException;
-
-  /**
-   * Fetch the properties of the {@link TopicId}.
+   * Fetch the metadata of the {@link TopicId}.
    *
    * @param topicId message topic
-   * @return properties of the {@link TopicId} or null if the topic is not present
+   * @return metadata of the {@link TopicId}
+   * @throws TopicNotFoundException if the topic doesn't exist
+   * @throws IOException if failed to retrieve metadata
    */
-  @Nullable
-  Map<String, String> getProperties(TopicId topicId) throws IOException;
+  TopicMetadata getMetadata(TopicId topicId) throws TopicNotFoundException, IOException;
 
   /**
    * Create a topic with properties.
    *
-   * @param topicId message topic
-   * @param properties properties of the {@link TopicId}
+   * @param topicMetadata metadata of the topic
+   * @throws IOException if failed to create topic
    */
-  void createTopic(TopicId topicId, @Nullable Map<String, String> properties) throws IOException;
+  void createTopic(TopicMetadata topicMetadata) throws IOException;
 
   /**
-   * Delete a topic.
+   * Delete a topic if it exists. If the topic doesn't exist, the deletion is an no-op.
    *
    * @param topicId message topic
    */
@@ -66,6 +60,15 @@ public interface MetadataTable extends Closeable {
    *
    * @param namespaceId namespace
    * @return {@link List} of topics in that namespace
+   * @throws IOException if failed to retrieve topics
    */
   List<TopicId> listTopics(NamespaceId namespaceId) throws IOException;
+
+  /**
+   * List all topics in the messaging system.
+   *
+   * @return {@link List} of all topics.
+   * @throws IOException if failed to retrieve topics
+   */
+  List<TopicId> listTopics() throws IOException;
 }

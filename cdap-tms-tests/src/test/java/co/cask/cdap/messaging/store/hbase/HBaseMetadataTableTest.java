@@ -19,11 +19,14 @@ package co.cask.cdap.messaging.store.hbase;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
+import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.messaging.store.MetadataTable;
 import co.cask.cdap.messaging.store.MetadataTableTest;
 import co.cask.cdap.proto.id.NamespaceId;
+import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -58,6 +61,11 @@ public class HBaseMetadataTableTest extends MetadataTableTest {
 
   @Override
   protected MetadataTable getTable() throws Exception {
-    return new HBaseMetadataTable(hBaseAdmin.getConfiguration(), tableUtil, "metadata");
+    byte[] columnFamily = {'d'};
+    TableId tableId = tableUtil.createHTableId(NamespaceId.CDAP, "metadata");
+    HColumnDescriptor hcd = new HColumnDescriptor(columnFamily);
+    HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(tableId).addFamily(hcd);
+    tableUtil.createTableIfNotExists(hBaseAdmin, tableId, htd.build());
+    return new HBaseMetadataTable(hBaseAdmin.getConfiguration(), tableUtil, tableId, columnFamily);
   }
 }
