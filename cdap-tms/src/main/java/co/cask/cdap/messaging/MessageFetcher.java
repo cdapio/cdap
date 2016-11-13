@@ -21,15 +21,20 @@ import co.cask.cdap.messaging.data.Message;
 import co.cask.cdap.messaging.data.MessageId;
 import org.apache.tephra.Transaction;
 
+import javax.annotation.Nullable;
+
 /**
  * A builder to setup parameters for fetching messages from the messaging system.
  */
 public abstract class MessageFetcher {
 
-  protected MessageId startOffset;
-  protected boolean includeStart;
-  protected Long startTime;
-  protected Transaction transaction;
+  private MessageId startOffset;
+  private boolean includeStart = true;
+  private Long startTime;
+  private Transaction transaction;
+
+  // by default there is virtually no limit
+  private int limit = Integer.MAX_VALUE;
 
   /**
    * Setup the message fetching starting point based on the given {@link MessageId}. Calling this method
@@ -55,6 +60,9 @@ public abstract class MessageFetcher {
    * @return this instance
    */
   public MessageFetcher setStartTime(long startTime) {
+    if (startTime < 0) {
+      throw new IllegalArgumentException("Invalid message fetching start time. Start time must be > 0");
+    }
     this.startTime = startTime;
     this.startOffset = null;
     return this;
@@ -69,6 +77,37 @@ public abstract class MessageFetcher {
   public MessageFetcher setTransaction(Transaction transaction) {
     this.transaction = transaction;
     return this;
+  }
+
+  public MessageFetcher setLimit(int limit) {
+    if (limit <= 0) {
+      throw new IllegalArgumentException("Invalid message fetching limit. Limit must be > 0");
+    }
+    this.limit = limit;
+    return this;
+  }
+
+  @Nullable
+  protected MessageId getStartOffset() {
+    return startOffset;
+  }
+
+  protected boolean isIncludeStart() {
+    return includeStart;
+  }
+
+  @Nullable
+  protected Long getStartTime() {
+    return startTime;
+  }
+
+  @Nullable
+  protected Transaction getTransaction() {
+    return transaction;
+  }
+
+  protected int getLimit() {
+    return limit;
   }
 
   public abstract CloseableIterator<Message> fetch() throws TopicNotFoundException;
