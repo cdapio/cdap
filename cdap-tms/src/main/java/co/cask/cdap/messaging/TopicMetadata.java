@@ -93,6 +93,14 @@ public class TopicMetadata {
     return Objects.hash(topicId, properties);
   }
 
+  @Override
+  public String toString() {
+    return "TopicMetadata{" +
+      "topicId=" + topicId +
+      ", properties=" + properties +
+      '}';
+  }
+
   /**
    * Validates all the required properties of the given topic.
    *

@@ -16,13 +16,15 @@
 
 package co.cask.cdap.messaging.store.leveldb;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.messaging.store.MetadataTable;
 import co.cask.cdap.messaging.store.MetadataTableTest;
-import org.junit.BeforeClass;
+import org.iq80.leveldb.DB;
+import org.iq80.leveldb.Options;
+import org.iq80.leveldb.impl.Iq80DBFactory;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
+
+import java.io.File;
 
 /**
  * Tests for {@link LevelDBMetadataTable}
@@ -32,19 +34,15 @@ public class LevelDBMetadataTableTest extends MetadataTableTest {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  private static LevelDBTableService service;
-
-  @BeforeClass
-  public static void init() throws Exception {
-    CConfiguration conf = CConfiguration.create();
-    conf.set(Constants.CFG_DATA_LEVELDB_DIR, tmpFolder.newFolder().getAbsolutePath());
-    service = new LevelDBTableService();
-    service.setConfiguration(conf);
-  }
+  private static final Iq80DBFactory LEVEL_DB_FACTORY = new Iq80DBFactory();
 
   @Override
   protected MetadataTable createMetadataTable() throws Exception {
-    service.ensureTableExists("metadata");
-    return new LevelDBMetadataTable(service, "metadata");
+    Options options = new Options()
+      .createIfMissing(true)
+      .errorIfExists(true);
+
+    DB db = LEVEL_DB_FACTORY.open(new File(tmpFolder.newFolder(), "metadata"), options);
+    return new LevelDBMetadataTable(db);
   }
 }
