@@ -21,6 +21,8 @@ import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.id.TopicId;
 import org.apache.tephra.Transaction;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Iterator;
 import javax.annotation.Nullable;
 
@@ -29,7 +31,7 @@ import javax.annotation.Nullable;
  *
  * @see <a href="https://wiki.cask.co/display/CE/Messaging">Design documentation</a>
  */
-public interface MessageTable {
+public interface MessageTable extends Closeable {
 
   /**
    * Represents an entry (row) in the message table.
@@ -86,7 +88,8 @@ public interface MessageTable {
    * @param transaction an optional {@link Transaction} to use for fetching
    * @return a {@link CloseableIterator} of {@link Entry}.
    */
-  CloseableIterator<Entry> fetch(TopicId topicId, long startTime, int limit, @Nullable Transaction transaction);
+  CloseableIterator<Entry> fetch(TopicId topicId, long startTime,
+                                 int limit, @Nullable Transaction transaction) throws IOException;
 
   /**
    * Fetches message table entries in the given topic, starting from the given {@link MessageId}.
@@ -100,7 +103,7 @@ public interface MessageTable {
    * @return a {@link CloseableIterator} of {@link Entry}.
    */
   CloseableIterator<Entry> fetch(TopicId topicId, MessageId messageId, boolean inclusive,
-                                 int limit, @Nullable Transaction transaction);
+                                 int limit, @Nullable Transaction transaction) throws IOException;
 
   /**
    * Stores a list of entries to the message table under the given topic.
@@ -108,7 +111,7 @@ public interface MessageTable {
    * @param entries a list of entries to store. This method guarantees each {@link Entry} will be consumed right away,
    *                hence it is safe for the {@link Iterator} to reuse the same {@link Entry} instance.
    */
-  void store(Iterator<Entry> entries);
+  void store(Iterator<Entry> entries) throws IOException;
 
   /**
    * Delete all entries stored with the given transactionWritePointer under the given topic.
@@ -116,5 +119,5 @@ public interface MessageTable {
    * @param topicId the topic to delete from
    * @param transactionWritePointer the transaction write pointer for scanning entries to delete.
    */
-  void delete(TopicId topicId, long transactionWritePointer);
+  void delete(TopicId topicId, long transactionWritePointer) throws IOException;
 }

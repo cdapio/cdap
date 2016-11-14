@@ -20,6 +20,8 @@ import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.id.TopicId;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Iterator;
 
 /**
@@ -27,7 +29,7 @@ import java.util.Iterator;
  *
  * @see <a href="https://wiki.cask.co/display/CE/Messaging">Design documentation</a>
  */
-public interface PayloadTable {
+public interface PayloadTable extends Closeable {
 
   /**
    * Represents an entry (row) in the payload table.
@@ -66,12 +68,14 @@ public interface PayloadTable {
    * Fetches entries from the payload table under the given topic, starting from the given {@link MessageId}.
    *
    * @param topicId topic to fetch from
+   * @param transactionWritePointer transaction write pointer
    * @param messageId message Id to start from
    * @param inclusive {@code true} to include the entry identified by the given {@link MessageId} as the first message
    * @param limit maximum number of entries to fetch
    * @return a {@link CloseableIterator} of entries
    */
-  CloseableIterator<Entry> fetch(TopicId topicId, MessageId messageId, boolean inclusive, int limit);
+  CloseableIterator<Entry> fetch(TopicId topicId, long transactionWritePointer, MessageId messageId,
+                                 boolean inclusive, int limit) throws IOException;
 
   /**
    * Stores a list of entries to the payload table under the given topic.
@@ -79,7 +83,7 @@ public interface PayloadTable {
    * @param entries a list of entries to store. This method guarantees each {@link Entry} will be consumed right away,
    *                hence it is safe for the {@link Iterator} to reuse the same {@link Entry} instance
    */
-  void store(Iterator<Entry> entries);
+  void store(Iterator<Entry> entries) throws IOException;
 
   /**
    * Delete all the messages stored with the given transactionWritePointer under the given topic.
@@ -87,5 +91,5 @@ public interface PayloadTable {
    * @param topicId topic to delete from
    * @param transactionWritePointer the transaction write pointer for scanning entries to delete.
    */
-  void delete(TopicId topicId, long transactionWritePointer);
+  void delete(TopicId topicId, long transactionWritePointer) throws IOException;
 }

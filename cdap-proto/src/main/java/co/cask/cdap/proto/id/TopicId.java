@@ -90,11 +90,4 @@ public class TopicId extends NamespacedEntityId implements ParentedId<NamespaceI
     }
     return hashCode;
   }
-
-  public byte[] toBytes() {
-    if (idBytes == null) {
-      idBytes = Bytes.toBytes(toString());
-    }
-    return idBytes;
-  }
 }

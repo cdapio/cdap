@@ -18,14 +18,13 @@ package co.cask.cdap.messaging.store.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.messaging.MessagingUtils;
 import co.cask.cdap.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.TopicNotFoundException;
 import co.cask.cdap.messaging.store.MetadataTable;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.hbase.client.Delete;
@@ -68,7 +67,7 @@ public class HBaseMetadataTable implements MetadataTable {
 
   @Override
   public TopicMetadata getMetadata(TopicId topicId) throws IOException, TopicNotFoundException {
-    Get get = tableUtil.buildGet(getKey(topicId))
+    Get get = tableUtil.buildGet(MessagingUtils.toRowKeyPrefix(topicId))
       .addFamily(columnFamily)
       .build();
 
@@ -84,7 +83,7 @@ public class HBaseMetadataTable implements MetadataTable {
 
   @Override
   public void createTopic(TopicMetadata topicMetadata) throws TopicAlreadyExistsException, IOException {
-    byte[] rowKey = getKey(topicMetadata.getTopicId());
+    byte[] rowKey = MessagingUtils.toRowKeyPrefix(topicMetadata.getTopicId());
     Put put = tableUtil.buildPut(rowKey)
       .add(columnFamily, COL, Bytes.toBytes(GSON.toJson(new TreeMap<>(topicMetadata.getProperties()), MAP_TYPE)))
       .build();
@@ -99,7 +98,7 @@ public class HBaseMetadataTable implements MetadataTable {
     boolean completed = false;
 
     // Keep trying to update
-    byte[] rowKey = getKey(topicMetadata.getTopicId());
+    byte[] rowKey = MessagingUtils.toRowKeyPrefix(topicMetadata.getTopicId());
     Put put = tableUtil.buildPut(rowKey)
       .add(columnFamily, COL, Bytes.toBytes(GSON.toJson(new TreeMap<>(topicMetadata.getProperties()), MAP_TYPE)))
       .build();
@@ -116,7 +115,7 @@ public class HBaseMetadataTable implements MetadataTable {
     boolean completed = false;
 
     // Keep trying to delete
-    byte[] rowKey = getKey(topicId);
+    byte[] rowKey = MessagingUtils.toRowKeyPrefix(topicId);
     Delete delete = tableUtil.buildDelete(rowKey).build();
     while (!completed) {
       TopicMetadata metadata = getMetadata(topicId);
@@ -127,7 +126,7 @@ public class HBaseMetadataTable implements MetadataTable {
 
   @Override
   public List<TopicId> listTopics(NamespaceId namespaceId) throws IOException {
-    byte[] startRow = startKey(namespaceId);
+    byte[] startRow = MessagingUtils.topicScanKey(namespaceId);
     Scan scan = tableUtil.buildScan()
       .setStartRow(startRow)
       .setStopRow(Bytes.stopKeyForPrefix(startRow))
@@ -150,7 +149,7 @@ public class HBaseMetadataTable implements MetadataTable {
     List<TopicId> topicIds = new ArrayList<>();
     try (ResultScanner resultScanner = hTable.getScanner(scan)) {
       for (Result result : resultScanner) {
-        topicIds.add(getTopicId(result.getRow()));
+        topicIds.add(MessagingUtils.toTopicId(result.getRow()));
       }
     }
     return topicIds;
@@ -159,17 +158,5 @@ public class HBaseMetadataTable implements MetadataTable {
   @Override
   public synchronized void close() throws IOException {
     hTable.close();
-  }
-
-  private byte[] startKey(NamespaceId namespaceId) {
-    return Bytes.toBytes(namespaceId.getNamespace() + ":");
-  }
-
-  private byte[] getKey(TopicId topicId) {
-    return Bytes.toBytes(Joiner.on(":").join(topicId.toIdParts()));
-  }
-
-  private TopicId getTopicId(byte[] key) {
-    return TopicId.fromIdParts(Splitter.on(":").split(Bytes.toString(key)));
   }
 }

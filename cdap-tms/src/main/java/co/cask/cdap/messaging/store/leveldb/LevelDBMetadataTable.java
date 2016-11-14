@@ -17,19 +17,18 @@
 package co.cask.cdap.messaging.store.leveldb;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.messaging.MessagingUtils;
 import co.cask.cdap.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.TopicNotFoundException;
 import co.cask.cdap.messaging.store.MetadataTable;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBException;
-import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.WriteOptions;
 
 import java.io.IOException;
@@ -57,7 +56,7 @@ public class LevelDBMetadataTable implements MetadataTable {
   @Override
   public TopicMetadata getMetadata(TopicId topicId) throws IOException, TopicNotFoundException {
     try {
-      byte[] value = levelDB.get(getKey(topicId));
+      byte[] value = levelDB.get(MessagingUtils.toRowKeyPrefix(topicId));
       if (value == null) {
         throw new TopicNotFoundException(topicId);
       }
@@ -73,7 +72,7 @@ public class LevelDBMetadataTable implements MetadataTable {
   @Override
   public void createTopic(TopicMetadata topicMetadata) throws TopicAlreadyExistsException, IOException {
     try {
-      byte[] key = getKey(topicMetadata.getTopicId());
+      byte[] key = MessagingUtils.toRowKeyPrefix(topicMetadata.getTopicId());
       byte[] value = Bytes.toBytes(GSON.toJson(topicMetadata.getProperties()));
       synchronized (this) {
         if (levelDB.get(key) != null) {
@@ -89,7 +88,7 @@ public class LevelDBMetadataTable implements MetadataTable {
   @Override
   public void updateTopic(TopicMetadata topicMetadata) throws TopicNotFoundException, IOException {
     try {
-      byte[] key = getKey(topicMetadata.getTopicId());
+      byte[] key = MessagingUtils.toRowKeyPrefix(topicMetadata.getTopicId());
       byte[] value = Bytes.toBytes(GSON.toJson(topicMetadata.getProperties()));
       synchronized (this) {
         if (levelDB.get(key) == null) {
@@ -104,7 +103,7 @@ public class LevelDBMetadataTable implements MetadataTable {
 
   @Override
   public void deleteTopic(TopicId topicId) throws TopicNotFoundException, IOException {
-    byte[] rowKey = getKey(topicId);
+    byte[] rowKey = MessagingUtils.toRowKeyPrefix(topicId);
     try {
       synchronized (this) {
         if (levelDB.get(rowKey) == null) {
@@ -119,7 +118,7 @@ public class LevelDBMetadataTable implements MetadataTable {
 
   @Override
   public List<TopicId> listTopics(NamespaceId namespaceId) throws IOException {
-    byte[] startKey = startKey(namespaceId);
+    byte[] startKey = MessagingUtils.topicScanKey(namespaceId);
     byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
     return scanTopics(startKey, stopKey);
   }
@@ -136,43 +135,12 @@ public class LevelDBMetadataTable implements MetadataTable {
 
   private List<TopicId> scanTopics(@Nullable byte[] startKey, @Nullable byte[] stopKey) throws IOException {
     List<TopicId> topicIds = new ArrayList<>();
-    try (DBIterator iterator = levelDB.iterator()) {
-      if (startKey != null) {
-        iterator.seek(startKey);
-      } else {
-        iterator.seekToFirst();
-      }
+    try (CloseableIterator<Map.Entry<byte[], byte[]>> iterator = new DBScanIterator(levelDB, startKey, stopKey)) {
       while (iterator.hasNext()) {
         Map.Entry<byte[], byte[]> entry = iterator.next();
-        // If passed the stopKey, which is the end of the current namespace, break the loop.
-        if (stopKey != null && Bytes.compareTo(entry.getKey(), stopKey) >= 0) {
-          break;
-        }
-        topicIds.add(getTopicId(entry.getKey()));
+        topicIds.add(MessagingUtils.toTopicId(entry.getKey()));
       }
     }
     return topicIds;
-
-  }
-
-  /**
-   * Returns the start key for scanning topics under the given namespace.
-   */
-  private byte[] startKey(NamespaceId namespaceId) {
-    return Bytes.toBytes(namespaceId.getNamespace() + ":");
-  }
-
-  /**
-   * Returns the put key for the given topic.
-   */
-  private byte[] getKey(TopicId topicId) {
-    return Bytes.toBytes(Joiner.on(':').join(topicId.toIdParts()));
-  }
-
-  /**
-   * Decodes the given row key into {@link TopicId}.
-   */
-  private TopicId getTopicId(byte[] key) {
-    return TopicId.fromIdParts(Splitter.on(":").split(Bytes.toString(key)));
   }
 }

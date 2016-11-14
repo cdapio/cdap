@@ -16,8 +16,8 @@
 
 package co.cask.cdap.messaging.store.leveldb;
 
-import co.cask.cdap.messaging.store.MetadataTable;
-import co.cask.cdap.messaging.store.MetadataTableTest;
+import co.cask.cdap.messaging.store.MessageTable;
+import co.cask.cdap.messaging.store.MessageTableTest;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.Options;
 import org.iq80.leveldb.impl.Iq80DBFactory;
@@ -27,9 +27,9 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 
 /**
- * Tests for {@link LevelDBMetadataTable}.
+ * Tests for {@link LevelDBMessageTable}.
  */
-public class LevelDBMetadataTableTest extends MetadataTableTest {
+public class LevelDBMessageTableTest extends MessageTableTest {
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -37,12 +37,12 @@ public class LevelDBMetadataTableTest extends MetadataTableTest {
   private static final Iq80DBFactory LEVEL_DB_FACTORY = new Iq80DBFactory();
 
   @Override
-  protected MetadataTable createMetadataTable() throws Exception {
+  protected MessageTable getTable() throws Exception {
     Options options = new Options()
       .createIfMissing(true)
       .errorIfExists(true);
 
-    DB db = LEVEL_DB_FACTORY.open(new File(tmpFolder.newFolder(), "metadata"), options);
-    return new LevelDBMetadataTable(db);
+    DB db = LEVEL_DB_FACTORY.open(new File(tmpFolder.newFolder(), "message"), options);
+    return new LevelDBMessageTable(db);
   }
 }
