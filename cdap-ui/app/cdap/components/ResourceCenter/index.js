@@ -15,7 +15,7 @@
  */
 import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
-import ResourceCenterEntity from '../ResourceCenterEntity';
+import ResourceCenterEntity from 'components/ResourceCenterEntity';
 import StreamCreateWithUploadWizard from 'components/CaskWizards/StreamCreateWithUpload';
 import HydratorPipeline from 'components/CaskWizards/HydratorPipeline';
 import CreateStreamWithUploadStore from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadStore';
@@ -66,7 +66,7 @@ export default class ResourceCenter extends Component {
         description: T.translate('features.Resource-Center.Plugins.description'),
         actionLabel: T.translate('features.Resource-Center.Plugins.actionbtn0'),
         iconClassName: 'fa fa-plug',
-        disabled: true
+        wizardId: 'createPluginArtifactWizard'
       }]
     };
   }
@@ -113,6 +113,16 @@ export default class ResourceCenter extends Component {
           wizardType="create_artifact_rc"
           backdrop={false}
           onClose={this.toggleWizard.bind(this, 'createArtifactWizard')}
+        />
+      );
+    }
+    if (this.state.createPluginArtifactWizard) {
+      return (
+        <AbstractWizard
+          isOpen={true}
+          wizardType="create_plugin_artifact_rc"
+          backdrop={false}
+          onClose={this.toggleWizard.bind(this, 'createPluginArtifactWizard')}
         />
       );
     }

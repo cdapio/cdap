@@ -106,7 +106,8 @@ module.exports = {
       'moment',
       'react-file-download',
       'mousetrap',
-      'papaparse'
+      'papaparse',
+      'rx-dom'
     ]
   },
   module: {

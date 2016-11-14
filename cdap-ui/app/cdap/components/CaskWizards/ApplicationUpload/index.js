@@ -19,6 +19,7 @@ import WizardModal from 'components/WizardModal';
 import Wizard from 'components/Wizard';
 import ApplicationUploadWizardConfig from 'services/WizardConfigs/ApplicationUploadWizardConfig';
 import ApplicationUploadStore from 'services/WizardStores/ApplicationUpload/ApplicationUploadStore';
+import ApplicationUploadActions from 'services/WizardStores/ApplicationUpload/ApplicationUploadActions';
 import {UploadApplication} from 'services/WizardStores/ApplicationUpload/ActionCreator';
 
 export default class ApplicationUploadWizard extends Component {
@@ -34,6 +35,11 @@ export default class ApplicationUploadWizard extends Component {
     }
     this.setState({
       showWizard: !this.state.showWizard
+    });
+  }
+  componentWillUnmount() {
+    ApplicationUploadStore.dispatch({
+      type: ApplicationUploadActions.onReset
     });
   }
   onSubmit() {
