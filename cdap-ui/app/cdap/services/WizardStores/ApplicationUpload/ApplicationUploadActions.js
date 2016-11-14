@@ -14,28 +14,8 @@
  * the License.
  */
 
-.artifact-upload-wizard {
-  .modal-body {
-    border: 1px solid #262933;
+const ApplicationUploadActions = {
+  'UPLOAD_JAR': 'UPLOAD_JAR'
+};
 
-    .wizard-body .wizard-steps-content .form-horizontal {
-      overflow-y: auto;
-      overflow-x: hidden;
-      width: 100%;
-    }
-
-    .cask-wizard {
-      .wizard-body {
-        .wizard-steps-content {
-          .wizard-navigation {
-            position: static;
-            width: 100%;
-          }
-        }
-      }
-    }
-    select[multiple] {
-      height: 55px;
-    }
-  }
-}
+export default ApplicationUploadActions;

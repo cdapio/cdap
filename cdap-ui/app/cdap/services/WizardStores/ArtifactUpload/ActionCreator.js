@@ -14,40 +14,57 @@
  * the License.
  */
 
-import Rx from 'rx';
+import UploadFile from 'services/upload-file';
+import cookie from 'react-cookie';
+import NamespaceStore from 'services/NamespaceStore';
+import ArtifactUploadStore from 'services/WizardStores/ArtifactUpload/ArtifactUploadStore';
 
 // FIXME: Extract it out???
-const uploadArtifact = ({url, fileContents, headers}) => {
-  let subject = new Rx.Subject();
-  let xhr = new window.XMLHttpRequest();
-  let path;
-  xhr.upload.addEventListener('progress', function (e) {
-    if (e.type === 'progress') {
-      console.info('App Upload in progress');
-    }
-  });
-  path = url;
-  xhr.open('POST', path, true);
-  xhr.setRequestHeader('Content-type', headers.filetype);
-  xhr.setRequestHeader('X-Archive-Name', headers.filename);
-  if (headers.Authorization) {
-    xhr.setRequestHeader('Authorization', 'Bearer ' + headers.token);
-  }
-  xhr.setRequestHeader('Artifact-Version', headers['Artifact-Version']);
-  xhr.setRequestHeader('Artifact-Extends', headers['Artifact-Extends']);
-  xhr.setRequestHeader('Artifact-Plugins', JSON.stringify(headers['Artifact-Plugins']));
+const uploadArtifact = () => {
+  const state = ArtifactUploadStore.getState();
 
-  xhr.send(fileContents);
-  xhr.onreadystatechange = function () {
-    if (xhr.readyState === 4) {
-      if (xhr.status > 399){
-        subject.onError(xhr.response);
-      } else {
-        subject.onNext(true);
-      }
+  let getArtifactNameAndVersion = (nameWithVersion) => {
+    if (!nameWithVersion) {
+      return {
+        version: null,
+        name: null
+      };
     }
+
+    // core-plugins-3.4.0-SNAPSHOT.jar
+    // extracts version from the jar file name. We then get the name of the artifact (that is from the beginning till version beginning)
+    let regExpRule = new RegExp('(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:[.\\-](.*))?$');
+    let version = regExpRule.exec(nameWithVersion)[0];
+    let name = nameWithVersion.substr(0, nameWithVersion.indexOf(version) -1);
+    return { version, name };
   };
-  return subject;
+
+  let filename;
+  if (state.upload.file.name && state.upload.file.name.length !== 0) {
+    filename = state.upload.file.name.split('.jar')[0];
+  }
+  let {name, version} = getArtifactNameAndVersion(filename);
+  let namespace = NamespaceStore.getState().selectedNamespace;
+
+  let url = `/namespaces/${namespace}/artifacts/${name}`;
+
+  let headers = {
+    'Content-Type': 'application/octet-stream',
+    'X-Archive-Name': name,
+    'Artifact-Version': version,
+    'Artifact-Extends': state.configure.parentArtifact.join('/'),
+    'Artifact-Plugins': JSON.stringify([{
+      name: state.configure.name,
+      type: state.configure.type,
+      className: state.configure.classname,
+      description: state.configure.description
+    }])
+  };
+  if (window.CDAP_CONFIG.securityEnabled) {
+    let token = cookie.load('CDAP_Auth_Token');
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return UploadFile({url, fileContents: state.upload.file, headers});
 };
 const ArtifactUploadActionCreator = {
   uploadArtifact

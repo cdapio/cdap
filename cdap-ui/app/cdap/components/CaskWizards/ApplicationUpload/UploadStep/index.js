@@ -14,13 +14,11 @@
  * the License.
  */
 
-import React, { PropTypes } from 'react';
+import React, {PropTypes} from 'react';
 import { connect, Provider } from 'react-redux';
-import ArtifactUploadStore from 'services/WizardStores/ArtifactUpload/ArtifactUploadStore';
-import ArtifactUploadActions from 'services/WizardStores/ArtifactUpload/ArtifactUploadActions';
+import ApplicationUploadStore from 'services/WizardStores/ApplicationUpload/ApplicationUploadStore';
+import ApplicationUploadActions from 'services/WizardStores/ApplicationUpload/ApplicationUploadActions';
 import Dropzone from 'react-dropzone';
-import T from 'i18n-react';
-
 require('./UploadStep.less');
 
 const DragNDropFile = ({file, onDropHandler}) => {
@@ -51,16 +49,16 @@ DragNDropFile.propTypes = {
   onDropHandler: PropTypes.func
 };
 
-const mapStateWithDNDFileProps = (state) => {
+const mapStateToApplicationUploaderProps = (state) => {
   return {
-    file: state.upload.file
+    file: state.uploadFile.file
   };
 };
-const mapDispatchWithDNDFileProps = (dispatch) => {
+const mapDispatchToApplicationUploadProps = (dispatch) => {
   return {
     onDropHandler: (e) => {
       dispatch({
-        type: ArtifactUploadActions.setFilePath,
+        type: ApplicationUploadActions.UPLOAD_JAR,
         payload: {
           file: e[0]
         }
@@ -68,31 +66,18 @@ const mapDispatchWithDNDFileProps = (dispatch) => {
     }
   };
 };
-const ArtifactUploader = connect(
-  mapStateWithDNDFileProps,
-  mapDispatchWithDNDFileProps
+
+const ApplicationUploader = connect(
+  mapStateToApplicationUploaderProps,
+  mapDispatchToApplicationUploadProps
 )(DragNDropFile);
 
-
-export default function UploadStep(undefined, context) {
+export default function ApplicationUploadStep() {
   return (
-    <Provider store={ArtifactUploadStore}>
-      <div className="upload-step-container">
-        {
-          context.isMarket ?
-            (
-              <h4 className="upload-instruction">
-                {T.translate('features.Wizard.ArtifactUpload.Step1.uploadHelperText')}
-              </h4>
-            )
-          :
-            null
-        }
-        <ArtifactUploader />
+    <Provider store={ApplicationUploadStore}>
+      <div className="application-upload-step">
+        <ApplicationUploader />
       </div>
     </Provider>
   );
 }
-UploadStep.contextTypes = {
-  isMarket: PropTypes.bool
-};
