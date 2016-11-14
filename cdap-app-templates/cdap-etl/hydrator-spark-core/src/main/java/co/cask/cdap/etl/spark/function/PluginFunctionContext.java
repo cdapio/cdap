@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
+import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -52,6 +53,7 @@ public class PluginFunctionContext implements Serializable {
   private final PluginContext pluginContext;
   private final Metrics metrics;
   private final SecureStore secureStore;
+  private final DataTracer dataTracer;
 
   public PluginFunctionContext(StageInfo stageInfo, JavaSparkExecutionContext sec) {
     this(stageInfo.getName(), sec, stageInfo.getInputSchemas(), stageInfo.getOutputSchema());
@@ -76,6 +78,7 @@ public class PluginFunctionContext implements Serializable {
     this.pluginContext = sec.getPluginContext();
     this.metrics = sec.getMetrics();
     this.secureStore = sec.getSecureStore();
+    this.dataTracer = sec.getDataTracer(stageName);
   }
 
   public <T> T createPlugin() throws Exception {
@@ -98,5 +101,9 @@ public class PluginFunctionContext implements Serializable {
   public BatchJoinerRuntimeContext createJoinerRuntimeContext() {
     return new SparkJoinerRuntimeContext(pluginContext, metrics, logicalStartTime, arguments,
                                          stageName, inputSchemas, outputSchema);
+  }
+
+  public DataTracer getDataTracer() {
+    return dataTracer;
   }
 }

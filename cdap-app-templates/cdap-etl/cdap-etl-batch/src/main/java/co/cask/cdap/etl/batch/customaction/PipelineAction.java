@@ -81,7 +81,9 @@ public class PipelineAction extends AbstractCustomAction {
                                                           context,
                                                           context.getNamespace()));
     ActionContext actionContext = new BasicActionContext(context, metrics, stageInfo.getName());
-    action.run(actionContext);
+    if (!context.getDataTracer(stageInfo.getName()).isEnabled()) {
+      action.run(actionContext);
+    }
     WorkflowToken token = context.getWorkflowToken();
     if (token == null) {
       throw new IllegalStateException("WorkflowToken cannot be null when action is executed through Workflow.");

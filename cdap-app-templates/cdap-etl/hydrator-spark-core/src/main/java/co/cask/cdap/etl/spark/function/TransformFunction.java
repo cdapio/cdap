@@ -42,7 +42,8 @@ public class TransformFunction<T, U> implements FlatMapFunction<T, U> {
     if (transform == null) {
       Transform<T, U> plugin = pluginFunctionContext.createPlugin();
       plugin.initialize(pluginFunctionContext.createBatchRuntimeContext());
-      transform = new TrackedTransform<>(plugin, pluginFunctionContext.createStageMetrics());
+      transform = new TrackedTransform<>(plugin, pluginFunctionContext.createStageMetrics(),
+                                         pluginFunctionContext.getDataTracer());
       emitter = new DefaultEmitter<>();
     }
     emitter.reset();
