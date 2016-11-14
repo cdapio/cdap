@@ -29,7 +29,7 @@ public abstract class MetadataTableTest {
 
   @Test
   public void testTopicManagement() throws Exception {
-    try (MetadataTable table = getTable()) {
+    try (MetadataTable table = createMetadataTable()) {
       Assert.assertTrue(table.listTopics().isEmpty());
       Assert.assertTrue(table.listTopics(NamespaceId.DEFAULT).isEmpty());
 
@@ -76,5 +76,5 @@ public abstract class MetadataTableTest {
     }
   }
 
-  protected abstract MetadataTable getTable() throws Exception;
+  protected abstract MetadataTable createMetadataTable() throws Exception;
 }

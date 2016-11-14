@@ -43,7 +43,7 @@ public class LevelDBMetadataTableTest extends MetadataTableTest {
   }
 
   @Override
-  protected MetadataTable getTable() throws Exception {
+  protected MetadataTable createMetadataTable() throws Exception {
     service.ensureTableExists("metadata");
     return new LevelDBMetadataTable(service, "metadata");
   }

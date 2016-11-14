@@ -60,12 +60,13 @@ public class HBaseMetadataTableTest extends MetadataTableTest {
   }
 
   @Override
-  protected MetadataTable getTable() throws Exception {
+  protected MetadataTable createMetadataTable() throws Exception {
     byte[] columnFamily = {'d'};
     TableId tableId = tableUtil.createHTableId(NamespaceId.CDAP, "metadata");
     HColumnDescriptor hcd = new HColumnDescriptor(columnFamily);
     HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(tableId).addFamily(hcd);
     tableUtil.createTableIfNotExists(hBaseAdmin, tableId, htd.build());
-    return new HBaseMetadataTable(hBaseAdmin.getConfiguration(), tableUtil, tableId, columnFamily);
+    return new HBaseMetadataTable(tableUtil,
+                                  tableUtil.createHTable(hBaseAdmin.getConfiguration(), tableId), columnFamily);
   }
 }

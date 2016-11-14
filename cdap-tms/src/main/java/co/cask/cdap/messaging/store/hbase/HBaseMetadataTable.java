@@ -17,7 +17,6 @@
 package co.cask.cdap.messaging.store.hbase;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.TopicNotFoundException;
@@ -28,7 +27,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
@@ -54,16 +52,13 @@ public class HBaseMetadataTable implements MetadataTable {
   private static final Gson GSON = new Gson();
   private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
-  private final Configuration hConf;
   private final HBaseTableUtil tableUtil;
-  private final TableId tableId;
   private final byte[] columnFamily;
-  private volatile HTable hTable;
+  private final HTable hTable;
 
-  public HBaseMetadataTable(Configuration hConf, HBaseTableUtil tableUtil, TableId tableId, byte[] columnFamily) {
-    this.hConf = hConf;
+  public HBaseMetadataTable(HBaseTableUtil tableUtil, HTable hTable, byte[] columnFamily) {
     this.tableUtil = tableUtil;
-    this.tableId = tableId;
+    this.hTable = hTable;
     this.columnFamily = Arrays.copyOf(columnFamily, columnFamily.length);
   }
 
@@ -73,7 +68,7 @@ public class HBaseMetadataTable implements MetadataTable {
       .addFamily(columnFamily)
       .build();
 
-    Result result = getHTable().get(get);
+    Result result = hTable.get(get);
     byte[] value = result.getValue(columnFamily, COL);
     if (value == null) {
       throw new TopicNotFoundException(topicId);
@@ -88,13 +83,13 @@ public class HBaseMetadataTable implements MetadataTable {
     Put put = tableUtil.buildPut(getKey(topicMetadata.getTopicId()))
       .add(columnFamily, COL, Bytes.toBytes(GSON.toJson(topicMetadata.getProperties(), MAP_TYPE)))
       .build();
-    getHTable().put(put);
+    hTable.put(put);
   }
 
   @Override
   public void deleteTopic(TopicId topicId) throws IOException {
     Delete delete = tableUtil.buildDelete(getKey(topicId)).build();
-    getHTable().delete(delete);
+    hTable.delete(delete);
   }
 
   @Override
@@ -120,7 +115,7 @@ public class HBaseMetadataTable implements MetadataTable {
         .setCaching(1000);
 
     List<TopicId> topicIds = new ArrayList<>();
-    try (ResultScanner resultScanner = getHTable().getScanner(scan)) {
+    try (ResultScanner resultScanner = hTable.getScanner(scan)) {
       for (Result result : resultScanner) {
         topicIds.add(getTopicId(result.getRow()));
       }
@@ -130,26 +125,7 @@ public class HBaseMetadataTable implements MetadataTable {
 
   @Override
   public synchronized void close() throws IOException {
-    if (hTable != null) {
-      hTable.close();
-    }
-  }
-
-  private HTable getHTable() throws IOException {
-    if (hTable != null) {
-      return hTable;
-    }
-
-    synchronized (this) {
-      if (hTable != null) {
-        return hTable;
-      }
-      hTable = tableUtil.createHTable(hConf, tableId);
-      // Use auto flush since we are not doing any batch type operation on the metadata table.
-      // Auto-flush will make sure every Put call is executed right away.
-      hTable.setAutoFlush(true, false);
-      return hTable;
-    }
+    hTable.close();
   }
 
   private byte[] startKey(NamespaceId namespaceId) {
