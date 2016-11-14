@@ -19,7 +19,6 @@ package co.cask.cdap.messaging.store;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.id.TopicId;
-import kafka.common.Topic;
 
 import java.util.Iterator;
 
@@ -38,7 +37,7 @@ public interface PayloadTable {
     /**
      * Returns the topic id that the entry belongs to.
      */
-    Topic getTopicId();
+    TopicId getTopicId();
 
     /**
      * Returns the message payload.
