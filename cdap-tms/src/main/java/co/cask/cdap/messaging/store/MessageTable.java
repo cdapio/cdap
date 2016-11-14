@@ -19,6 +19,7 @@ package co.cask.cdap.messaging.store;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.id.TopicId;
+import kafka.common.Topic;
 import org.apache.tephra.Transaction;
 
 import java.util.Iterator;
@@ -35,6 +36,11 @@ public interface MessageTable {
    * Represents an entry (row) in the message table.
    */
   interface Entry {
+
+    /**
+     * Returns the topic id that the entry belongs to.
+     */
+    Topic getTopicId();
 
     /**
      * Returns {@code true} if the entry is a reference to messages stored in payload table.
@@ -100,11 +106,10 @@ public interface MessageTable {
   /**
    * Stores a list of entries to the message table under the given topic.
    *
-   * @param topicId the topic to store to
    * @param entries a list of entries to store. This method guarantees each {@link Entry} will be consumed right away,
    *                hence it is safe for the {@link Iterator} to reuse the same {@link Entry} instance.
    */
-  void store(TopicId topicId, Iterator<Entry> entries);
+  void store(Iterator<Entry> entries);
 
   /**
    * Delete all entries stored with the given transactionWritePointer under the given topic.
