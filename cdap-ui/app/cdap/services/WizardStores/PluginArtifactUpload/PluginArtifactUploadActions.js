@@ -13,8 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-.application-upload-step {
-  height: 100%;
-  width: 100%;
-  margin-bottom: 10px;
-}
+
+const PluginArtifactUploadActions = {
+  setFilePath: 'SET-ARTIFACT-JAR',
+  setJson: 'SET-PLUGIN-JSON',
+  onReset: 'RESET-STORE'
+};
+
+export default PluginArtifactUploadActions;

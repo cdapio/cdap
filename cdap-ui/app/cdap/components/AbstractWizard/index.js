@@ -20,6 +20,7 @@ import UploadDataWizard from 'components/CaskWizards/UploadData';
 import PublishPipelineWizard from 'components/CaskWizards/PublishPipeline';
 import InformationalWizard from 'components/CaskWizards/Informational';
 import ArtifactUploadWizard from 'components/CaskWizards/ArtifactUpload';
+import PluginArtifactUploadWizard from 'components/CaskWizards/PluginArtifactUpload';
 import ApplicationUploadWizard from 'components/CaskWizards/ApplicationUpload';
 import MarketArtifactUploadWizard from 'components/CaskWizards/MarketArtifactUpload';
 import CreateStreamStore from 'services/WizardStores/CreateStream/CreateStreamStore';
@@ -41,6 +42,10 @@ const WizardTypesMap = {
   },
   'create_artifact_rc': {
     tag: ArtifactUploadWizard,
+    store: ArtifactUploadStore
+  },
+  'create_plugin_artifact_rc': {
+    tag: PluginArtifactUploadWizard,
     store: ArtifactUploadStore
   },
   'create_app_rc': {

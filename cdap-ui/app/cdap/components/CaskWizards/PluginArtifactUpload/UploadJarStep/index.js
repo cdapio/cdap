@@ -16,22 +16,23 @@
 
 import React, { PropTypes } from 'react';
 import { connect, Provider } from 'react-redux';
-import ArtifactUploadStore from 'services/WizardStores/ArtifactUpload/ArtifactUploadStore';
-import ArtifactUploadActions from 'services/WizardStores/ArtifactUpload/ArtifactUploadActions';
+import PluginArtifactUploadStore from 'services/WizardStores/PluginArtifactUpload/PluginArtifactUploadStore';
+import PluginArtifactUploadActions from 'services/WizardStores/PluginArtifactUpload/PluginArtifactUploadActions';
 import T from 'i18n-react';
 import FileDnD from 'components/FileDnD';
-require('./UploadStep.less');
+require('./UploadJarStep.less');
 
 const mapStateWithDNDFileProps = (state) => {
   return {
-    file: state.upload.file
+    file: state.upload.jar.contents,
+    error: state.upload.jar.__error
   };
 };
 const mapDispatchWithDNDFileProps = (dispatch) => {
   return {
     onDropHandler: (e) => {
       dispatch({
-        type: ArtifactUploadActions.setFilePath,
+        type: PluginArtifactUploadActions.setFilePath,
         payload: {
           file: e[0]
         }
@@ -45,9 +46,9 @@ const ArtifactUploader = connect(
 )(FileDnD);
 
 
-export default function UploadStep(undefined, context) {
+export default function UploadJarStep(undefined, context) {
   return (
-    <Provider store={ArtifactUploadStore}>
+    <Provider store={PluginArtifactUploadStore}>
       <div className="upload-step-container">
         {
           context.isMarket ?
@@ -64,6 +65,6 @@ export default function UploadStep(undefined, context) {
     </Provider>
   );
 }
-UploadStep.contextTypes = {
+UploadJarStep.contextTypes = {
   isMarket: PropTypes.bool
 };

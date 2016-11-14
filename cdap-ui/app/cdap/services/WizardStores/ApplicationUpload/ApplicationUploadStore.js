@@ -38,6 +38,8 @@ const uploadFile = (state = defaultUploadFileState, action = defaultAction) => {
       return Object.assign({}, state, {
         file: action.payload.file
       });
+    case ApplicationUploadActions.onReset:
+      return defaultUploadFileState;
     default:
       return state;
   }

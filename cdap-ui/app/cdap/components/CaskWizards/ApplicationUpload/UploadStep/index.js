@@ -14,40 +14,12 @@
  * the License.
  */
 
-import React, {PropTypes} from 'react';
+import React from 'react';
 import { connect, Provider } from 'react-redux';
 import ApplicationUploadStore from 'services/WizardStores/ApplicationUpload/ApplicationUploadStore';
 import ApplicationUploadActions from 'services/WizardStores/ApplicationUpload/ApplicationUploadActions';
-import Dropzone from 'react-dropzone';
+import FileDnD from 'components/FileDnD';
 require('./UploadStep.less');
-
-const DragNDropFile = ({file, onDropHandler}) => {
-  return (
-    <Dropzone
-      activeClassName="file-drag-container"
-      className="file-drop-container"
-      onDrop={onDropHandler}>
-      <div className="file-metadata-container text-center">
-        {
-          file.name && file.name.length ? (<span>{file.name}</span>)
-            :
-            (<span>
-               Drag and Drop the file to be uploaded
-              <br />
-              or
-              <br />
-              Click to select file from your computer
-            </span>)
-        }
-      </div>
-    </Dropzone>
-  );
-};
-
-DragNDropFile.propTypes = {
-  file: PropTypes.any,
-  onDropHandler: PropTypes.func
-};
 
 const mapStateToApplicationUploaderProps = (state) => {
   return {
@@ -70,7 +42,7 @@ const mapDispatchToApplicationUploadProps = (dispatch) => {
 const ApplicationUploader = connect(
   mapStateToApplicationUploaderProps,
   mapDispatchToApplicationUploadProps
-)(DragNDropFile);
+)(FileDnD);
 
 export default function ApplicationUploadStep() {
   return (

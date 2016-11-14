@@ -13,24 +13,24 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-.wizard-upload-data {
-  .file-drop-container {
-    width: 100%;
-    height: 97%;
-    border: 1px dashed #666;
-    cursor: pointer;
-    &.file-drag-container {
-      background-color: lightblue;
-      opacity: 0.7;
+
+.create-stream-wizard {
+  .step-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .upload-step-container {
+      flex-grow: 1;
+      width: 100%;
+      height: 100%;
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      > div {
+        height: 100%;
+      }
     }
-    .file-metadata-container {
-      position: absolute;
-      top: 50%;
-      left: 60%;
-      transform: translate(-50%, -50%);
-      margin: 0;
-      font-size: 14px;
-      color: #666;
-    }
-  }
+  }  
 }

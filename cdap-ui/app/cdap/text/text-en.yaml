@@ -315,7 +315,19 @@ features:
       message: Choose the pipeline type you would like to create
       batchLinkLabel: Batch Pipeline
       realtimeLinkLabel: Realtime Pipeline
-
+    PluginArtifact:
+      Step1:
+        description: Upload your plugin artifact JAR
+        shorttitle: Upload Plugin Artifact
+        title: Upload Plugin Artifact
+        filePathLabel: Choose file
+        errorMessage: Invalid plugin artifact. Artifact must be a jar file
+      Step2:
+        description: Upload the plugin configuration json
+        shorttitle: Upload Plugin Configuration JSON
+        title: Upload Plugin Configuration JSON
+        errorMessage: Invalid plugin JSON. Plugin Configuration should be in json format
+        errorMessageParentArtifacts: Invalid plugin JSON. Please specify parent artifacts
     Add-Namespace:
        Step1:
          ssd-label: "General Information"

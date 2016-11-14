@@ -13,46 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import React, {Component, PropTypes} from 'react';
+import React, {Component} from 'react';
 import {connect, Provider} from 'react-redux';
-
-import {Form} from 'reactstrap';
-require('./UploadData.less');
-import Dropzone from 'react-dropzone';
+import FileDnD from 'components/FileDnD';
 import CreateStreamWithUploadActions from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadActions';
 import CreateStreamWithUploadStore from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadStore';
+require('./UploadData.less');
 
-const DragNDropFile = ({filename, onDropHandler}) => {
-  return (
-    <Form className="form-horizontal wizard-upload-data">
-      <Dropzone
-        activeClassName="file-drag-container"
-        className="file-drop-container"
-        onDrop={onDropHandler}>
-        <div className="file-metadata-container text-center">
-          {
-            filename.length ? (<span>Will be uploading {filename}. </span>)
-              :
-              (<span>
-                 Drag and Drop the file to be uploaded
-                <br />
-                or
-                <br />
-                Click to select file from your computer
-              </span>)
-          }
-        </div>
-      </Dropzone>
-    </Form>
-  );
-};
-DragNDropFile.propTypes = {
-  filename: PropTypes.string,
-  onDropHandler: PropTypes.func
-};
 const mapStateWithDNDFileProps = (state) => {
   return {
-    filename: state.upload.filename
+    file: state.upload.filename
   };
 };
 const mapDispatchWithDNDFileProps = (dispatch) => {
@@ -76,7 +46,7 @@ const mapDispatchWithDNDFileProps = (dispatch) => {
 const StreamFileUploader = connect(
   mapStateWithDNDFileProps,
   mapDispatchWithDNDFileProps
-)(DragNDropFile);
+)(FileDnD);
 
 
 export default class UploadData extends Component {
@@ -94,7 +64,9 @@ export default class UploadData extends Component {
   render() {
     return (
       <Provider store={CreateStreamWithUploadStore}>
-        <StreamFileUploader />
+        <div className="upload-step-container">
+          <StreamFileUploader />
+        </div>
       </Provider>
     );
   }
