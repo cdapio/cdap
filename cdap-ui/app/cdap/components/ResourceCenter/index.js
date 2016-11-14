@@ -19,6 +19,7 @@ import ResourceCenterEntity from '../ResourceCenterEntity';
 import StreamCreateWithUploadWizard from 'components/CaskWizards/StreamCreateWithUpload';
 import HydratorPipeline from 'components/CaskWizards/HydratorPipeline';
 import CreateStreamWithUploadStore from 'services/WizardStores/CreateStreamWithUpload/CreateStreamWithUploadStore';
+import AbstractWizard from 'components/AbstractWizard';
 import T from 'i18n-react';
 
 require('./ResourceCenter.less');
@@ -40,13 +41,13 @@ export default class ResourceCenter extends Component {
         description: T.translate('features.Resource-Center.Artifact.description'),
         actionLabel: T.translate('features.Resource-Center.Artifact.actionbtn0'),
         iconClassName: 'fa icon-artifacts',
-        disabled: true
+        wizardId: 'createArtifactWizard'
       }, {
         title: T.translate('features.Resource-Center.Application.label'),
         description: T.translate('features.Resource-Center.Application.description'),
         actionLabel: T.translate('features.Resource-Center.Application.actionbtn0'),
         iconClassName: 'fa icon-app',
-        disabled: true
+        wizardId: 'createApplicationWizard'
       }, {
         title: T.translate('features.Resource-Center.Stream-View.label'),
         description: T.translate('features.Resource-Center.Stream-View.description'),
@@ -79,18 +80,39 @@ export default class ResourceCenter extends Component {
   }
   getWizardToBeDisplayed() {
     if (this.state.createStreamWizard) {
-      return (<StreamCreateWithUploadWizard
-        isOpen={this.state.createStreamWizard}
-        store={CreateStreamWithUploadStore}
-        onClose={this.toggleWizard.bind(this, 'createStreamWizard')}
-        withUploadStep
-      />);
+      return (
+        <StreamCreateWithUploadWizard
+          isOpen={this.state.createStreamWizard}
+          store={CreateStreamWithUploadStore}
+          onClose={this.toggleWizard.bind(this, 'createStreamWizard')}
+          withUploadStep
+        />
+      );
     }
     if (this.state.hydratorPipeline) {
       return (
         <HydratorPipeline
           isOpen={this.state.hydratorPipeline}
           onClose={this.toggleWizard.bind(this, 'hydratorPipeline')}
+        />
+      );
+    }
+    if (this.state.createApplicationWizard) {
+      return (
+        <AbstractWizard
+          wizardType="create_app_rc"
+          isOpen={true}
+          onClose={this.toggleWizard.bind(this, 'createApplicationWizard')}
+        />
+      );
+    }
+    if (this.state.createArtifactWizard) {
+      return (
+        <AbstractWizard
+          isOpen={true}
+          wizardType="create_artifact_rc"
+          backdrop={false}
+          onClose={this.toggleWizard.bind(this, 'createArtifactWizard')}
         />
       );
     }

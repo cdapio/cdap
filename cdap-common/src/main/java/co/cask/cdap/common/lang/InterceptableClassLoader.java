@@ -16,15 +16,25 @@
 
 package co.cask.cdap.common.lang;
 
+import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import com.google.common.io.InputSupplier;
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.jar.Manifest;
+import javax.annotation.Nullable;
 
 /**
  * A {@link URLClassLoader} that can optionally rewrite the the bytecode.
  */
 public abstract class InterceptableClassLoader extends URLClassLoader implements ClassRewriter {
+
+  private final Map<String, Manifest> manifests = new HashMap<>();
 
   public InterceptableClassLoader(URL[] urls, ClassLoader parent) {
     super(urls, parent);
@@ -44,6 +54,17 @@ public abstract class InterceptableClassLoader extends URLClassLoader implements
     }
     try (InputStream is = resource.openStream()) {
       byte[] bytecode = rewriteClass(name, is);
+
+      // Define the package based on the class package name
+      String packageName = getPackageName(name);
+      if (packageName != null && getPackage(packageName) == null) {
+        Manifest manifest = getManifest(resource);
+        if (manifest == null) {
+          definePackage(packageName, null, null, null, null, null, null, null);
+        } else {
+          definePackage(packageName, manifest, resource);
+        }
+      }
       return defineClass(name, bytecode, 0, bytecode.length);
     } catch (IOException e) {
       throw new ClassNotFoundException("Failed to read class definition for class " + name, e);
@@ -56,4 +77,48 @@ public abstract class InterceptableClassLoader extends URLClassLoader implements
    * @return {@code true} to have the class loading intercepted; {@code false} otherwise
    */
   protected abstract boolean needIntercept(String className);
+
+  /**
+   * Returns the package name of the given class name or return {@code null} if the given class is in default package.
+   */
+  @Nullable
+  private String getPackageName(String className) {
+    int idx = className.lastIndexOf('.');
+    return idx >= 0 ? className.substring(0, idx) : null;
+  }
+
+  /**
+   * Returns the {@link Manifest} of the given resource if it is representing a local JAR file.
+   */
+  @Nullable
+  private Manifest getManifest(URL resource) {
+    if (!"jar".equals(resource.getProtocol())) {
+      return null;
+    }
+
+    String path = resource.getFile();
+    final String jarURIString = path.substring(0, path.indexOf("!/"));
+
+    // This synchronized block shouldn't be adding overhead unless we enable this classloader to be parallel capable
+    // (which we don't right now). For non-parallel capable classloader, an object lock was already acquired in
+    // the loadClass call (caller of this method).
+    synchronized (this) {
+      if (!manifests.containsKey(jarURIString)) {
+        try {
+          // Tries to load the Manifest from the Jar URI
+          final URI jarURI = URI.create(jarURIString);
+          manifests.put(jarURIString, BundleJarUtil.getManifest(jarURI, new InputSupplier<InputStream>() {
+            @Override
+            public InputStream getInput() throws IOException {
+              return jarURI.toURL().openStream();
+            }
+          }));
+        } catch (IOException e) {
+          // Ignore if cannot get Manifest from the jar file and remember the failure
+          manifests.put(jarURIString, null);
+        }
+      }
+      return manifests.get(jarURIString);
+    }
+  }
 }

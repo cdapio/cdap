@@ -231,6 +231,13 @@ features:
       numResults: "{total} results found"
 
   Wizard:
+    ApplicationUpload:
+      Step1:
+        description: Upload your application JAR
+        shorttitle: Upload Application
+        title: Upload JAR
+        uploadHelperText: Upload the JAR for your application that you wish to deploy
+        filePathLabel: Choose file
     ArtifactUpload:
       Step1:
         description: Upload your artifact JAR
@@ -244,9 +251,13 @@ features:
         title: Configure Artifact
         parentArtifactLabel: Parent Artifact
         nameLabel: Name
-        typeLabel: Type
-        classnameLabel: Class Name
+        namePlaceholder: Artifact Name
         descriptionLabel: Description
+        decriptionPlaceholder: Artifact Description
+        typeLabel: Type
+        typePlaceholder: Artifact Type
+        classnameLabel: Class Name
+        classnamePlaceholder: Artifact Class Name
       headerlabel: Upload Artifact
     Done: Done
     Informational:

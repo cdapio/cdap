@@ -16,38 +16,50 @@
 
 .artifact-upload-wizard {
   .upload-instruction {
-    margin-bottom: 25px;
     margin-top: 0;
+    width: 100%;
   }
+  .wizard-steps-content {
+    .wizard-step-content-container {
+      .step-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
 
-  .form-group {
-    .file-drop-container {
-      width: 100%;
-      height: 100px;
-      border: 1px dashed #666;
-      cursor: pointer;
-      position: relative;
-      border-radius: 5px;
+        .upload-step-container {
+          flex-grow: 1;
+          width: 100%;
+          height: 100%;
+          margin-bottom: 10px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          > div {
+            height: 100%;
+          }
 
-      &.file-drag-container {
-        background-color: lightblue;
-        opacity: 0.7;
-      }
-      .file-metadata-container {
-        position: absolute;
-        top: 15px;
-        left: 0;
-        right: 0;
-        text-align: center;
-        margin: 0;
-        font-size: 14px;
-        color: #666;
+          .file-drop-container {
+            height: 100%;
+            border: 1px dashed;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
 
-        span {
-          line-height: 14px;
-          color: #666;
-          margin: 0;
-          font-size: 14px;
+            &.file-drag-container {
+              background-color: lightblue;
+              opacity: 0.7;
+            }
+            .file-metadata-container {
+              span {
+                line-height: 14px;
+                color: #666;
+                margin: 0;
+                font-size: 14px;
+              }
+            }
+          }
         }
       }
     }

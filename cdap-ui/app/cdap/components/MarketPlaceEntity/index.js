@@ -88,7 +88,7 @@ export default class MarketPlaceEntity extends Component {
       position: 'absolute'
     };
     let positionClassName;
-    let cardWidth = 400;
+    let cardWidth = 420;
 
     if (this.packageCardRef) {
       let parentRects = this.packageCardRef.parentElement.getBoundingClientRect();
