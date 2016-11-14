@@ -21,6 +21,9 @@ Standalone and Distributed CDAP
 - Run all tests, fail at the end::
 
     MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn test -fae
+
+- Run tests skipping repeated compat module tests:: 
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn test -Pskip-hbase-compat-tests -fae
     
 - Build all modules::
 
