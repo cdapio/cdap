@@ -29,6 +29,7 @@ import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
+import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.preview.PreviewDataModules;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -87,7 +88,6 @@ import javax.ws.rs.PathParam;
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class PreviewHttpHandler extends AbstractAppFabricHttpHandler {
-
   private static final Logger LOG = LoggerFactory.getLogger(PreviewHttpHandler.class);
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -106,12 +106,12 @@ public class PreviewHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Inject
   PreviewHttpHandler(CConfiguration cConf, Configuration hConf, DiscoveryService discoveryService,
-                            DatasetFramework datasetFramework, PreferencesStore preferencesStore,
-                            SecureStore secureStore, TransactionManager transactionManager,
-                            ArtifactRepository artifactRepository, ArtifactStore artifactStore,
-                            AuthorizerInstantiator authorizerInstantiator, StreamAdmin streamAdmin,
-                            StreamCoordinatorClient streamCoordinatorClient, PrivilegesManager privilegesManager,
-                            AuthorizationEnforcer authorizationEnforcer) {
+                     @Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
+                     PreferencesStore preferencesStore, SecureStore secureStore,
+                     TransactionManager transactionManager, ArtifactRepository artifactRepository,
+                     ArtifactStore artifactStore, AuthorizerInstantiator authorizerInstantiator,
+                     StreamAdmin streamAdmin, StreamCoordinatorClient streamCoordinatorClient,
+                     PrivilegesManager privilegesManager, AuthorizationEnforcer authorizationEnforcer) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.datasetFramework = datasetFramework;

@@ -16,12 +16,14 @@
 
 package co.cask.cdap;
 
+import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.preview.PreviewServer;
+import co.cask.cdap.app.preview.PreviewServerModule;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.ServiceBindException;
 import co.cask.cdap.common.app.MainClassLoader;
@@ -46,7 +48,13 @@ import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
+import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
+import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -69,6 +77,7 @@ import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
@@ -89,7 +98,9 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
@@ -571,16 +582,7 @@ public class StandaloneMain {
       new AuditModule().getStandaloneModules(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getStandaloneModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
-            binder(), HttpHandler.class, Names.named(Constants.Preview.HANDLERS_BINDING));
-          CommonHandlers.add(handlerBinder);
-          handlerBinder.addBinding().to(PreviewHttpHandler.class);
-          bind(PreviewServer.class).in(Scopes.SINGLETON);
-        }
-      }
+      new PreviewServerModule()
     );
   }
 }

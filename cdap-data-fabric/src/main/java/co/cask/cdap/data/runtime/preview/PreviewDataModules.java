@@ -16,9 +16,6 @@
 package co.cask.cdap.data.runtime.preview;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.DataFabricLocalModule;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
@@ -35,12 +32,13 @@ import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.DefaultUsageRegistry;
 import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
 import co.cask.cdap.data2.registry.UsageRegistry;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
-import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
@@ -49,8 +47,6 @@ import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.tephra.TransactionManager;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.util.Set;
 
 /**
@@ -120,19 +116,26 @@ public class PreviewDataModules {
     private final DatasetFramework inMemoryDatasetFramework;
     private final DatasetFramework remoteDatasetFramework;
     private final Set<String> datasetNames;
+    private final AuthenticationContext authenticationContext;
+    private final AuthorizationEnforcer authorizationEnforcer;
 
     @Inject
     PreviewDatasetFrameworkProvider(@Named("localDatasetFramework")DatasetFramework inMemoryDatasetFramework,
                                     @Named("actualDatasetFramework")DatasetFramework remoteDatasetFramework,
-                                    @Named("realDatasets") Set<String> datasetNames) {
+                                    @Named("realDatasets") Set<String> datasetNames,
+                                    AuthenticationContext authenticationContext,
+                                    AuthorizationEnforcer authorizationEnforcer) {
       this.inMemoryDatasetFramework = inMemoryDatasetFramework;
       this.remoteDatasetFramework = remoteDatasetFramework;
       this.datasetNames = datasetNames;
+      this.authenticationContext = authenticationContext;
+      this.authorizationEnforcer = authorizationEnforcer;
     }
 
     @Override
     public DatasetFramework get() {
-      return new PreviewDatasetFramework(inMemoryDatasetFramework, remoteDatasetFramework, datasetNames);
+      return new PreviewDatasetFramework(inMemoryDatasetFramework, remoteDatasetFramework, datasetNames,
+                                         authenticationContext, authorizationEnforcer);
     }
   }
 }
