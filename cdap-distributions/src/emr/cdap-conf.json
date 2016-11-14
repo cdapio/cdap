@@ -1,0 +1,38 @@
+{
+  "cdap": {
+    "cdap_site": {
+      "dashboard.bind.port": "11011",
+      "dataset.executor.container.memory.mb": "1536",
+      "explore.enabled": "{{EXPLORE_ENABLED}}",
+      "explore.executor.container.memory.mb": "2304",
+      "http.client.read.timeout.ms": "120000",
+      "kafka.log.dir": "/mnt/cdap/kafka-logs",
+      "log.saver.run.memory.megs": "1536",
+      "master.service.memory.mb": "1536",
+      "master.startup.checks.enabled": "false",
+      "metrics.memory.mb": "1536",
+      "metrics.processor.memory.mb": "1536",
+      "router.bind.port": "11015",
+      "stream.container.memory.mb": "1536",
+      "twill.java.reserved.memory.mb": "350",
+      "router.server.address": "{{ROUTER_IP_ADDRESS}}",
+      "zookeeper.quorum": "{{ZK_QUORUM}}"
+    },
+    "cdap_env": {
+      "explore_enabled": "true",
+      "kerberos_enabled": "false",
+      "hadoop_conf_dir": "/etc/hadoop/conf",
+      "hadoop_home_warn_suppress": "$(hadoop dfsadmin -safemode wait >/dev/null 2>&1; sleep 1; [[ ${UID} -eq 0 ]] && su - hdfs -c 'for d in /cdap /user/cdap; do hdfs dfs -mkdir -p ${d} ; hdfs dfs -chown cdap ${d}; done' >/dev/null 2>&1; echo true)",
+      "hive_home": "/usr/lib/hive",
+      "hive_conf_dir": "/etc/hive/conf",
+      "hive_classpath": "{{HIVE_CLASSPATH}}",
+      "hive_exec_engine": "{{HIVE_EXEC_ENGINE}}",
+      "spark_home": "/usr/lib/spark",
+      "tez_home": "/usr/lib/tez",
+      "tez_conf_dir": "/etc/tez/conf"
+    },
+    "skip_prerequisites": "true",
+    "yum_repo_url": "{{CDAP_YUM_REPO_URL}}",
+    "version": "{{CDAP_VERSION}}"
+  }
+}
