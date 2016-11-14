@@ -14,23 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap;
+package co.cask.cdap.app.preview;
 
-import co.cask.cdap.app.preview.PreviewServer;
-import co.cask.cdap.common.conf.CConfiguration;
-import org.apache.hadoop.conf.Configuration;
-import org.junit.Assert;
-import org.junit.Test;
+import co.cask.cdap.app.deploy.Manager;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 
 /**
- * Tests for {@link StandaloneMain}
+ * This class is concrete implementation of {@link Manager} that deploys a Preview Application.
+ *
+ * @param <I> Input type.
+ * @param <O> Output type.
  */
-public class StandaloneMainTest {
-
-  @Test
-  public void testInjector() {
-    StandaloneMain sdk = StandaloneMain.create(CConfiguration.create(), new Configuration());
-    // PreviewServer instance should be non null
-    Assert.assertNotNull(sdk.getInjector().getInstance(PreviewServer.class));
+public class PreviewApplicationManager<I, O> implements Manager<I, O> {
+  @Override
+  public ListenableFuture<O> deploy(I input) throws Exception {
+    return Futures.immediateFailedFuture(new UnsupportedOperationException());
   }
 }
