@@ -109,7 +109,11 @@ public class LevelDBMetadataTable implements MetadataTable {
   private List<TopicId> scanTopics(@Nullable byte[] startKey, @Nullable byte[] stopKey) throws IOException {
     List<TopicId> topicIds = new ArrayList<>();
     try (DBIterator iterator = levelDB.iterator()) {
-      iterator.seek(startKey == null ? Bytes.EMPTY_BYTE_ARRAY : startKey);
+      if (startKey != null) {
+        iterator.seek(startKey);
+      } else {
+        iterator.seekToFirst();
+      }
       while (iterator.hasNext()) {
         Map.Entry<byte[], byte[]> entry = iterator.next();
         // If passed the stopKey, which is the end of the current namespace, break the loop.
