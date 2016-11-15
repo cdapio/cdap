@@ -50,7 +50,7 @@ public class MessageId {
     if (buffer.length - offset < RAW_ID_SIZE) {
       throw new IllegalArgumentException("Not enough size in the buffer to encode Message ID");
     }
-    Bytes.putLong(buffer, offset, publishTimestamp);
+    offset = Bytes.putLong(buffer, offset, publishTimestamp);
     offset = Bytes.putShort(buffer, offset, sequenceId);
     offset = Bytes.putLong(buffer, offset, writeTimestamp);
     return Bytes.putShort(buffer, offset, payloadSequenceId);
