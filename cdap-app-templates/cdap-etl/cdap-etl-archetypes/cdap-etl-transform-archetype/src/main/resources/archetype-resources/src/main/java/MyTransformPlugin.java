@@ -65,6 +65,11 @@ public class MyTransformPlugin extends Transform<StructuredRecord, StructuredRec
     // It's usually a good idea to validate the configuration at this point. It will stop the pipeline from being
     // published if this throws an error.
     config.validate();
+    try {
+      pipelineConfigurer.getStageConfigurer().setOutputSchema(Schema.parseJson(config.schema));
+    } catch (IOException e) {
+      throw new IllegalArgumentException("Output schema cannot be parsed.", e);
+    }
   }
 
   /**
@@ -130,15 +135,26 @@ public class MyTransformPlugin extends Transform<StructuredRecord, StructuredRec
     @Nullable // <- This makes it optional.
     private final Integer myOptionalOption;
 
+    @Name("schema")
+    @Description("Specifies the schema of the records outputted from this plugin.")
+    private final String schema;
+
     public MyConfig(String myOption, Integer myOptionalOption) {
       this.myOption = myOption;
       this.myOptionalOption = myOptionalOption;
     }
 
-    private void validate() {
+    private void validate() throws IllegalArgumentException {
+      // It's usually a good idea to check the schema. Sometimes users edit
+      // the JSON config directly and make mistakes.
+      try {
+        Schema.parseJson(schema);
+      } catch (IOException e) {
+        throw new IllegalArgumentException("Output schema cannot be parsed.", e);
+      }
       // This method should be used to validate that the configuration is valid.
       if (myOption == null || myOption.isEmpty()) {
-        new IllegalArgumentException("myOption is a required field.");
+        throw new IllegalArgumentException("myOption is a required field.");
       }
       // You can use the containsMacro() function to determine if you can validate at deploy time or runtime.
     }

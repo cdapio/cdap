@@ -26,5 +26,11 @@
       ]
     }
   ],
-  "outputs": []
+  "outputs": [
+    {
+      "name": "schema",
+      "label": "schema",
+      "widget-type": "schema"
+    }
+  ]
 }
