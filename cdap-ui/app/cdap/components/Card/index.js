@@ -65,7 +65,11 @@ export default class Card extends Component {
       </div>
     );
 
-    return this.props.header || this.props.title ? headerElem : null;
+    return this.props.header || this.props.title ? headerElem :
+      <div className="card-header">
+        {closeButton}
+      </div>
+    ;
   }
 
   getBody () {

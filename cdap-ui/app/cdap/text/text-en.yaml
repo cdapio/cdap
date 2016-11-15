@@ -215,6 +215,7 @@ features:
       actionbtn0: Upload
 
   SplashScreen:
+    dontShow: Don't show this again
     buttons:
       getStarted: Read the Docs
       introduction: Intro to CDAP
@@ -222,6 +223,12 @@ features:
     intro-message: Unified Integration Platform for Big Data
     title: Welcome to Cask Data Application Platform
     version-label: Version 4.0.0 Preview
+    registration-zero: I
+    registration-one: would like to receive product updates and
+    registration-two: newsletters from Cask at this email address
+    first-placeholder: First Name
+    last-placeholder: Last Name
+    email-placeholder: email@example.com
 
   SpotlightSearch:
     noResult: No results found
