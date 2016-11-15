@@ -35,6 +35,7 @@ import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -83,6 +84,15 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
     this.streamAdmin = streamAdmin;
     this.txExecutorFactory = txExecutorFactory;
     this.impersonator = impersonator;
+  }
+
+  @Override
+  protected void validateOptions(Program program, ProgramOptions options) {
+    super.validateOptions(program, options);
+    FlowSpecification spec = program.getApplicationSpecification().getFlows().get(program.getName());
+    for (String flowlet : spec.getFlowlets().keySet()) {
+      SystemArguments.validateTransactionTimeout(options.getUserArguments().asMap(), cConf, "flowlet", flowlet);
+    }
   }
 
   @Override

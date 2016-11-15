@@ -1199,8 +1199,16 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     ApplicationManager appManager = deployApplication(testSpace, AppWithCustomTx.class);
     try {
-      getStreamManager(testSpace, AppWithCustomTx.INPUT).send("hello");
+      // attempt to start with a tx timeout that exceeds the max tx timeout
+      try {
+        appManager.getServiceManager(AppWithCustomTx.SERVICE)
+          .start(txTimeoutArguments(100000));
+      } catch (IllegalArgumentException e) {
+        //expected
+      }
 
+      // now start all the programs with valid tx timeouts
+      getStreamManager(testSpace, AppWithCustomTx.INPUT).send("hello");
       ServiceManager serviceManager = appManager.getServiceManager(AppWithCustomTx.SERVICE)
         .start(txTimeoutArguments(txDefaulTimeoutService));
       WorkerManager notxWorkerManager = appManager.getWorkerManager(AppWithCustomTx.WORKER_NOTX)

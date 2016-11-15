@@ -109,7 +109,7 @@
 
   <property>
     <name>master.startup.checks.packages</name>
-    <value>co.cask.cdap.master.startup</value>
+    <value>co.cask.cdap.master.startup,co.cask.cdap.data.startup</value>
     <description>
       Comma-separated list of packages containing checks that will be run
       before the CDAP Master starts up. If any of the checks fails, the CDAP

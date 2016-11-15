@@ -17,6 +17,7 @@
  */
 package org.apache.tephra.inmemory;
 
+import co.cask.cdap.data.startup.TransactionServiceCheck;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -43,6 +44,7 @@ import java.net.InetSocketAddress;
 public class InMemoryTransactionService extends AbstractService {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryTransactionService.class);
 
+  private final Configuration conf;
   private final DiscoveryService discoveryService;
   private final String serviceName;
   protected final Provider<TransactionManager> txManagerProvider;
@@ -59,7 +61,7 @@ public class InMemoryTransactionService extends AbstractService {
   @Inject
   public InMemoryTransactionService(Configuration conf, DiscoveryService discoveryService,
                                     Provider<TransactionManager> txManagerProvider) {
-
+    this.conf = conf;
     this.discoveryService = discoveryService;
     this.txManagerProvider = txManagerProvider;
     this.serviceName = conf.get(TxConstants.Service.CFG_DATA_TX_DISCOVERY_SERVICE_NAME,
@@ -102,6 +104,13 @@ public class InMemoryTransactionService extends AbstractService {
   @Override
   protected void doStart() {
     try {
+      new TransactionServiceCheck(conf).run();
+    } catch (Throwable t) {
+      LOG.error("Transaction service validation failed", t);
+      notifyFailed(t);
+      return;
+    }
+    try {
       txManager = txManagerProvider.get();
       txManager.startAndWait();
       doRegister();
@@ -119,5 +128,4 @@ public class InMemoryTransactionService extends AbstractService {
     txManager.stopAndWait();
     notifyStopped();
   }
-
 }
