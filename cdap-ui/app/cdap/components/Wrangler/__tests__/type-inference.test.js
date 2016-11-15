@@ -49,6 +49,14 @@ describe('Wrangler: Type Inference', () => {
     expect(inferType(floatInput)).toBe('float');
     expect(inferType(floatInput2)).toBe('float');
   });
+
+  it('should throw error if input is not a string', () => {
+    try {
+      inferType(1);
+    } catch (e) {
+      expect(e).toContain('Input is not a string');
+    }
+  });
 });
 
 describe('Wrangler: Column Type Inference', () => {

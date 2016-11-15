@@ -32,12 +32,14 @@ export default class Wrangler extends Component {
     this.state = {
       header: false,
       skipEmptyLines: false,
+      delimiter: '',
       wranglerInput: '',
       originalData: []
     };
 
     this.handleSetHeaders = this.handleSetHeaders.bind(this);
     this.handleSetSkipEmptyLines = this.handleSetSkipEmptyLines.bind(this);
+    this.setDelimiter = this.setDelimiter.bind(this);
     this.wrangle = this.wrangle.bind(this);
     this.handleData = this.handleData.bind(this);
     this.handleTextInput = this.handleTextInput.bind(this);
@@ -46,13 +48,15 @@ export default class Wrangler extends Component {
   wrangle() {
     let input = this.state.wranglerInput;
 
-    // let input = 'col1 hehe,col2,col3\nedwin elia,1,true\nelia edwin,2,3\ndoctor strange,10,50\nThor Odinson,1000,2';
-
     let papaConfig = {
       header: this.state.header,
       skipEmptyLines: this.state.skipEmptyLines,
       complete: this.handleData
     };
+
+    if (this.state.delimiter) {
+      papaConfig.delimiter = this.state.delimiter;
+    }
 
     Papa.parse(input, papaConfig);
   }
@@ -77,6 +81,10 @@ export default class Wrangler extends Component {
     this.setState({
       originalData: formattedData,
     });
+  }
+
+  setDelimiter(e) {
+    this.setState({delimiter: e.target.value});
   }
 
   handleSetHeaders() {
@@ -122,7 +130,11 @@ export default class Wrangler extends Component {
             <div className="delimiter">
               {/* delimiter */}
               <label className="control-label">Delimiter</label>
-              <input type="text" className="form-control" />
+              <input
+                type="text"
+                className="form-control"
+                onChange={this.setDelimiter}
+              />
             </div>
 
             <div className="checkbox">
