@@ -161,16 +161,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
    *         default tranaction timeout from the cConf.
    */
   private int determineTransactionTimeout(CConfiguration cConf) {
-    String txTimeoutArg = getRuntimeArguments().get(Constants.Transaction.ARGUMENT_TX_TIMEOUT);
-    if (txTimeoutArg != null) {
-      try {
-        return Integer.parseInt(txTimeoutArg);
-      } catch (NumberFormatException e) {
-        LOG.warn("Ignoring value '{}' for '{}' because it cannot be parsed as an integer",
-                 txTimeoutArg, Constants.Transaction.ARGUMENT_TX_TIMEOUT);
-      }
-    }
-    return cConf.getInt(Constants.Transaction.PROPERTY_TX_TIMEOUT);
+    return SystemArguments.getTransactionTimeout(getRuntimeArguments(), cConf);
   }
 
   private Iterable<? extends EntityId> createOwners(ProgramId programId) {

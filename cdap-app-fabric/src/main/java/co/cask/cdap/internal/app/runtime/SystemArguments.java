@@ -18,7 +18,9 @@ package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
+import org.apache.tephra.TxConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +38,7 @@ public final class SystemArguments {
   private static final String MEMORY_KEY = "system.resources.memory";
   private static final String CORES_KEY = "system.resources.cores";
   private static final String LOG_LEVEL = "system.log.level";
+  public static final String TRANSACTION_TIMEOUT = "system.data.tx.timeout";
 
   /**
    * Set the log level for the {@link LogAppenderInitializer}.
@@ -65,6 +68,24 @@ public final class SystemArguments {
       logPairs.put(Logger.ROOT_LOGGER_NAME, logLevel);
     }
     initializer.setLogLevels(logPairs);
+  }
+
+  /**
+   * Set the transaction timeout in the given arguments.
+   */
+  public static void setTransactionTimeout(Map<String, String> args, int timeout) {
+    args.put(TRANSACTION_TIMEOUT, String.valueOf(timeout));
+  }
+
+  /**
+   * Returns the transction timeout based on the given arguments or, as fallback, the CConfiguration.
+   *
+   * @returns the integer value of the argument system.data.tx.timeout, or if that is not given in the arguments,
+   *          the value for data.tx.timeout from the CConfiguration.
+   */
+  public static int getTransactionTimeout(Map<String, String> args, CConfiguration cConf) {
+    Integer timeout = getPositiveInt(args, TRANSACTION_TIMEOUT, "transaction timeout");
+    return timeout != null ? timeout : cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT);
   }
 
   /**

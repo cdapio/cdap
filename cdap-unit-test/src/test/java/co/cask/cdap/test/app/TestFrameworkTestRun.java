@@ -40,6 +40,7 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.DefaultId;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -1451,11 +1452,11 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   private static Map<String, String> txTimeoutArguments(int timeout) {
-    return ImmutableMap.of(Constants.Transaction.ARGUMENT_TX_TIMEOUT, String.valueOf(timeout));
+    return ImmutableMap.of(SystemArguments.TRANSACTION_TIMEOUT, String.valueOf(timeout));
   }
   private static Map<String, String> txTimeoutArguments(int timeout, int timeoutForScope, String scope, String name) {
-    return ImmutableMap.of(Constants.Transaction.ARGUMENT_TX_TIMEOUT, String.valueOf(timeout),
-                           String.format("%s.%s.%s", scope, name, Constants.Transaction.ARGUMENT_TX_TIMEOUT),
+    return ImmutableMap.of(SystemArguments.TRANSACTION_TIMEOUT, String.valueOf(timeout),
+                           String.format("%s.%s.%s", scope, name, SystemArguments.TRANSACTION_TIMEOUT),
                            String.valueOf(timeoutForScope));
   }
 
