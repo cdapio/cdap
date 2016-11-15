@@ -15,12 +15,10 @@
  */
 package co.cask.cdap.app.store.preview;
 
-import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.proto.id.ApplicationId;
 import com.google.gson.JsonElement;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 

@@ -21,7 +21,7 @@ import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
-import co.cask.cdap.app.preview.PreviewServer;
+import co.cask.cdap.app.preview.PreviewHttpModule;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.ServiceBindException;
 import co.cask.cdap.common.app.MainClassLoader;
@@ -52,10 +52,8 @@ import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
-import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsService;
 import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsServiceModule;
-import co.cask.cdap.gateway.handlers.preview.PreviewHttpHandler;
 import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.gateway.router.RouterModules;
 import co.cask.cdap.internal.app.services.AppFabricServer;
@@ -77,7 +75,6 @@ import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
-import co.cask.http.HttpHandler;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
@@ -85,13 +82,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.UncheckedExecutionException;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.Scopes;
-import com.google.inject.multibindings.Multibinder;
-import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.counters.Limits;
 import org.apache.tephra.inmemory.InMemoryTransactionService;
@@ -146,7 +139,6 @@ public class StandaloneMain {
   private final RemoteSystemOperationsService remoteSystemOperationsService;
   private final AuthorizationEnforcementService authorizationEnforcementService;
   private final AuthorizationBootstrapper authorizationBootstrapper;
-  private final PreviewServer previewServer;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private ExploreExecutorService exploreExecutorService;
@@ -214,12 +206,6 @@ public class StandaloneMain {
     exploreClient = injector.getInstance(ExploreClient.class);
     metadataService = injector.getInstance(MetadataService.class);
     remoteSystemOperationsService = injector.getInstance(RemoteSystemOperationsService.class);
-
-    if (cConf.getBoolean(Constants.Preview.ENABLED, true)) {
-      previewServer = injector.getInstance(PreviewServer.class);
-    } else {
-      previewServer = null;
-    }
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -317,14 +303,6 @@ public class StandaloneMain {
 
     remoteSystemOperationsService.startAndWait();
 
-    if (previewServer != null) {
-      state = previewServer.startAndWait();
-      if (state != Service.State.RUNNING) {
-        throw new Exception("Failed to start Preview.");
-      }
-      LOG.info("CDAP Preview started successfully.");
-    }
-
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled ?
       cConf.getInt(Constants.Dashboard.SSL_BIND_PORT) :
@@ -351,10 +329,6 @@ public class StandaloneMain {
 
       //  shut down router to stop all incoming traffic
       router.stopAndWait();
-
-      if (previewServer != null) {
-        previewServer.stopAndWait();
-      }
 
       remoteSystemOperationsService.stopAndWait();
       // now the stream writer and the explore service (they need tx)
@@ -571,16 +545,7 @@ public class StandaloneMain {
       new AuditModule().getStandaloneModules(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getStandaloneModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
-            binder(), HttpHandler.class, Names.named(Constants.Preview.HANDLERS_BINDING));
-          CommonHandlers.add(handlerBinder);
-          handlerBinder.addBinding().to(PreviewHttpHandler.class);
-          bind(PreviewServer.class).in(Scopes.SINGLETON);
-        }
-      }
+      new PreviewHttpModule()
     );
   }
 }

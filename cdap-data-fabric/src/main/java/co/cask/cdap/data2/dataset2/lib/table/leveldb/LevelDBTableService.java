@@ -61,10 +61,8 @@ public class LevelDBTableService {
 
   private final ConcurrentMap<String, DB> tables = Maps.newConcurrentMap();
 
-  private static final LevelDBTableService SINGLETON = new LevelDBTableService();
-
   public static LevelDBTableService getInstance() {
-    return SINGLETON;
+    return new LevelDBTableService();
   }
 
   /**
