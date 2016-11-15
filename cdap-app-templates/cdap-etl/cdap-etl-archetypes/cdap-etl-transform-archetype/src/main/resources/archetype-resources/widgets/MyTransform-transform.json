@@ -6,6 +6,24 @@
     {
       "label": "Transform Configuration",
       "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "My Option",
+          "name": "myOption",
+          "widget-attributes": {
+            "width": "large",
+            "default": "1"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "My Optional Option",
+          "name": "myOptionalOption",
+          "widget-attributes": {
+            "width": "large",
+            "default": "1"
+          }
+        }
       ]
     }
   ],

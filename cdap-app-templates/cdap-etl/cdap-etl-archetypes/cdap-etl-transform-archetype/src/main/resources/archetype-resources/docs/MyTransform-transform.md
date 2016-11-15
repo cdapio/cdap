@@ -1,4 +1,4 @@
-# MyTransform Transform
+# MyTransformPlugin Transform
 
 Insert documentation about your plugin in this file.
 The UI will display the contents in the reference section of your plugin,
