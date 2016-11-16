@@ -482,7 +482,7 @@
     <name>data.tx.num.cores</name>
     <value>${master.service.num.cores}</value>
     <description>
-      Number of cores for the transaction service
+      Number of virtual cores for the transaction service
     </description>
   </property>
 
@@ -836,8 +836,8 @@
     <name>kafka.server.log.flush.interval.messages</name>
     <value>10000</value>
     <description>
-      The interval length at which will force an fsync of data written to
-      the log
+      The interval length (in number of messages) at which to force an fsync of data
+      written to the log
     </description>
   </property>
 
@@ -870,7 +870,7 @@
     <value>1000000</value>
     <description>
       Maximum time in milliseconds that the client will wait to
-      establish a connection to Zookeeper
+      establish a connection to ZooKeeper
     </description>
   </property>
 
@@ -963,7 +963,7 @@
     <name>log.saver.container.num.cores</name>
     <value>2</value>
     <description>
-      Number of cores for each log saver instance in YARN
+      Number of virtual cores for each log saver instance in YARN
     </description>
   </property>
 
@@ -1049,7 +1049,7 @@
     <name>master.service.num.cores</name>
     <value>2</value>
     <description>
-      Number of cores for master service instance
+      Number of virtual cores for each master service instance
     </description>
   </property>
 
@@ -1071,7 +1071,7 @@
   <property>
     <name>master.services.scheduler.queue</name>
     <value></value>
-    <description>Scheduler queue for CDAP Master Services</description>
+    <description>Scheduler queue for CDAP master services</description>
   </property>
 
 
@@ -1264,7 +1264,7 @@
     <name>metrics.processor.num.cores</name>
     <value>1</value>
     <description>
-      Number of cores for metrics processor service Apache Twill runnable
+      Number of virtual cores for metrics processor service Apache Twill runnable
     </description>
   </property>
 
@@ -1912,7 +1912,7 @@
     <name>stream.container.num.cores</name>
     <value>2</value>
     <description>
-      Number of virtual core for the YARN container that runs the stream
+      Number of virtual cores for the YARN container that runs the stream
       handler
     </description>
   </property>
