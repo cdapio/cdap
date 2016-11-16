@@ -137,11 +137,13 @@
                   <exclude>**/*.editorconfig</exclude>
                   <exclude>**/*.babelrc</exclude>
                   <exclude>**/*.jshintrc</exclude>
+                  <exclude>**/*.jshintignore</exclude>
                   <exclude>**/*.eslintrc.json</exclude>
                   <exclude>**/*.eslintignore</exclude>
                   <exclude>**/*.stylelintignore</exclude>
                   <exclude>**/*.stylelintrc</exclude>
                   <exclude>**/*.svg</exclude>
+                  <exclude>**/*__mocks__/**</exclude>
                   <exclude>**/bower_components/**</exclude>
                   <exclude>**/node_modules/**</exclude>
                   <exclude>**/coverage/**</exclude>

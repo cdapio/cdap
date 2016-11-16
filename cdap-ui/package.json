@@ -69,7 +69,9 @@
     "merge-stream": "1.0.0",
     "style-loader": "0.13.1",
     "url-loader": "0.5.7",
-    "webpack-livereload-plugin": "0.9.0"
+    "webpack-livereload-plugin": "0.9.0",
+    "react-addons-test-utils": "15.3.2",
+    "enzyme": "2.6.0"
   },
   "dependencies": {
     "angular": "1.5.8",
@@ -136,7 +138,9 @@
     "moduleNameMapper": {
       "^components": "<rootDir>/components",
       "^services": "<rootDir>/services",
-      "^api": "<rootDir>/api"
+      "^api": "<rootDir>/api",
+      "^mocks": "<rootDir>/__mocks__",
+      "^.+\\.less$": "<rootDir>/__mocks__/styleMocks.js"
     }
   }
 }
