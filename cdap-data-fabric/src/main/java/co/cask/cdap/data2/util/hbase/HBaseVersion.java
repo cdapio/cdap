@@ -105,7 +105,8 @@ public class HBaseVersion {
             ver.getClassifier().startsWith(CDH59_CLASSIFIER))) {
           currentVersion = Version.HBASE_12_CDH57;
         } else {
-          currentVersion = Version.UNKNOWN;
+          // HBase-11 compat module can be re-used for HBASE-12 as there is no change needed in compat source.
+          currentVersion = Version.HBASE_11;
         }
       } else {
         currentVersion = Version.UNKNOWN;
@@ -154,6 +155,12 @@ public class HBaseVersion {
     private static final Pattern PATTERN =
       Pattern.compile("(\\d+)(\\.(\\d+))?(\\.(\\d+))?(\\.(\\d+))?(\\-(?!SNAPSHOT)([^\\-]+))?(\\-SNAPSHOT)?");
 
+    // IBM has a different format where they add build number at the end,
+    // major[.minor[.patch[.last]][-classifier][-buildNumber],
+    // we ignore build number for now and support only non-snapshot versions.
+    private static final Pattern IBM_PATTERN =
+      Pattern.compile("(\\d+)(\\.(\\d+))?(\\.(\\d+))?(\\.(\\d+))?(\\-(?!SNAPSHOT)([^\\-]+))?(\\-(\\d+))?");
+
     private Integer major;
     private Integer minor;
     private Integer patch;
@@ -197,6 +204,7 @@ public class HBaseVersion {
 
     public static VersionNumber create(String versionString) throws ParseException {
       Matcher matcher = PATTERN.matcher(versionString);
+      Matcher ibmMatcher = IBM_PATTERN.matcher(versionString);
       if (matcher.matches()) {
         String majorString = matcher.group(1);
         String minorString = matcher.group(3);
@@ -210,6 +218,18 @@ public class HBaseVersion {
                                  last != null ? new Integer(last) : null,
                                  classifier,
                                  "-SNAPSHOT".equals(snapshotString));
+      } else if (ibmMatcher.matches()) {
+        String majorString = ibmMatcher.group(1);
+        String minorString = ibmMatcher.group(3);
+        String patchString = ibmMatcher.group(5);
+        String last = ibmMatcher.group(7);
+        String classifier = ibmMatcher.group(9);
+        return new VersionNumber(new Integer(majorString),
+                                 minorString != null ? new Integer(minorString) : null,
+                                 patchString != null ? new Integer(patchString) : null,
+                                 last != null ? new Integer(last) : null,
+                                 classifier,
+                                 false);
       }
       throw new ParseException(
         "Input string did not match expected pattern: major[.minor[.patch]][-classifier][-SNAPSHOT]", 0);
