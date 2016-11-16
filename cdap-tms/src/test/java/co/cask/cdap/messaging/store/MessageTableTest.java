@@ -81,6 +81,7 @@ public abstract class MessageTableTest {
       byte[] messageId = new byte[MessageId.RAW_ID_SIZE];
       MessageId.putRawId(0L, (short) 0, 0L, (short) 0, messageId, 0);
       CloseableIterator<MessageTable.Entry> iterator = table.fetch(id, new MessageId(messageId), true, 50, null);
+      Assert.assertTrue(iterator.hasNext());
       MessageTable.Entry entry = iterator.next();
       Assert.assertArrayEquals(payload, entry.getPayload());
       Assert.assertFalse(iterator.hasNext());

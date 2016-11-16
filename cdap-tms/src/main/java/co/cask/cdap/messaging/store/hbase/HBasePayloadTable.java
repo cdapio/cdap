@@ -20,13 +20,9 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.messaging.MessagingUtils;
-import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.messaging.store.AbstractPayloadTable;
-import co.cask.cdap.messaging.store.DefaultPayloadTableEntry;
 import co.cask.cdap.messaging.store.PayloadTable;
-import co.cask.cdap.proto.id.TopicId;
-import com.google.common.base.Throwables;
+import co.cask.cdap.messaging.store.RawPayloadTableEntry;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -50,9 +46,6 @@ public class HBasePayloadTable extends AbstractPayloadTable {
   private final byte[] columnFamily;
   private final HTable hTable;
 
-  private long writeTimestamp;
-  private short pSeqId;
-
   public HBasePayloadTable(HBaseTableUtil tableUtil, HTable hTable, byte[] columnFamily) {
     this.tableUtil = tableUtil;
     this.hTable = hTable;
@@ -60,26 +53,28 @@ public class HBasePayloadTable extends AbstractPayloadTable {
   }
 
   @Override
-  public CloseableIterator<Entry> fetch(TopicId topicId, long transactionWritePointer, MessageId messageId,
-                                        boolean inclusive, int limit) throws IOException {
-    byte[] topic = MessagingUtils.toRowKeyPrefix(topicId);
-    byte[] startRow = new byte[topic.length + (2 * Bytes.SIZEOF_LONG) + Bytes.SIZEOF_SHORT];
-    Bytes.putBytes(startRow, 0, topic, 0, topic.length);
-    Bytes.putLong(startRow, topic.length, transactionWritePointer);
-    Bytes.putLong(startRow, topic.length + Bytes.SIZEOF_LONG, messageId.getWriteTimestamp());
-    Bytes.putShort(startRow, topic.length + (2 * Bytes.SIZEOF_LONG), messageId.getPayloadSequenceId());
-    if (!inclusive) {
-      startRow = Bytes.incrementBytes(startRow, 1);
-    }
+  public CloseableIterator<RawPayloadTableEntry> read(byte[] startRow, byte[] stopRow, int limit) throws IOException {
     Scan scan = tableUtil.buildScan()
       .setStartRow(startRow)
-      .setStopRow(Bytes.stopKeyForPrefix(topic))
+      .setStopRow(stopRow)
       .setMaxResultSize(limit)
       .build();
     final ResultScanner scanner = hTable.getScanner(scan);
+    final Iterator<Result> results = scanner.iterator();
 
-    return new AbstractCloseableIterator<Entry>() {
+    return new AbstractCloseableIterator<RawPayloadTableEntry>() {
+      private final RawPayloadTableEntry tableEntry = new RawPayloadTableEntry();
       private boolean closed = false;
+
+      @Override
+      protected RawPayloadTableEntry computeNext() {
+        if (closed || (!results.hasNext())) {
+          return endOfData();
+        }
+
+        Result result = results.next();
+        return tableEntry.set(result.getRow(), result.getValue(columnFamily, COL));
+      }
 
       @Override
       public void close() {
@@ -90,59 +85,20 @@ public class HBasePayloadTable extends AbstractPayloadTable {
           closed = true;
         }
       }
-
-      @Override
-      protected Entry computeNext() {
-        if (closed) {
-          return endOfData();
-        }
-
-        Result result;
-        try {
-          result = scanner.next();
-        } catch (IOException e) {
-          throw Throwables.propagate(e);
-        }
-
-        if (result != null) {
-          return new DefaultPayloadTableEntry(result.getRow(), result.getValue(columnFamily, COL));
-        }
-        return endOfData();
-      }
     };
   }
 
   @Override
-  public void store(Iterator<Entry> entries) throws IOException {
-    long writeTs = System.currentTimeMillis();
-    if (writeTs != writeTimestamp) {
-      pSeqId = 0;
-    }
-    writeTimestamp = writeTs;
-    TopicId topicId = null;
-    byte[] topic = null;
-    byte[] rowKey = null;
-
+  public void persist(Iterator<RawPayloadTableEntry> entries) throws IOException {
     List<Put> batchPuts = new ArrayList<>();
     while (entries.hasNext()) {
-      Entry entry = entries.next();
-      // Create new byte arrays only when the topicId is different. Else, reuse the byte arrays.
-      if (topicId == null || (!topicId.equals(entry.getTopicId()))) {
-        topicId = entry.getTopicId();
-        topic = MessagingUtils.toRowKeyPrefix(topicId);
-        rowKey = new byte[topic.length + (2 * Bytes.SIZEOF_LONG) + Bytes.SIZEOF_SHORT];
-      }
-
-      Bytes.putBytes(rowKey, 0, topic, 0, topic.length);
-      Bytes.putLong(rowKey, topic.length, entry.getTransactionWritePointer());
-      Bytes.putLong(rowKey, topic.length + Bytes.SIZEOF_LONG, writeTimestamp);
-      Bytes.putShort(rowKey, topic.length + (2 * Bytes.SIZEOF_LONG), pSeqId++);
-
-      Put put = tableUtil.buildPut(rowKey)
-        .add(columnFamily, COL, entry.getPayload())
+      RawPayloadTableEntry tableEntry = entries.next();
+      Put put = tableUtil.buildPut(tableEntry.getKey())
+        .add(columnFamily, COL, tableEntry.getValue())
         .build();
       batchPuts.add(put);
     }
+
     if (!batchPuts.isEmpty()) {
       hTable.put(batchPuts);
       if (!hTable.isAutoFlush()) {
@@ -152,7 +108,7 @@ public class HBasePayloadTable extends AbstractPayloadTable {
   }
 
   @Override
-  protected void performDelete(byte[] startRow, byte[] stopRow) throws IOException {
+  protected void delete(byte[] startRow, byte[] stopRow) throws IOException {
     Scan scan = tableUtil.buildScan()
       .setStartRow(startRow)
       .setStopRow(stopRow)

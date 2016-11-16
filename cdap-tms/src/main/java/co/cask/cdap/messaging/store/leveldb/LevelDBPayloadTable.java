@@ -16,15 +16,11 @@
 
 package co.cask.cdap.messaging.store.leveldb;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.messaging.MessagingUtils;
-import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.messaging.store.AbstractPayloadTable;
-import co.cask.cdap.messaging.store.DefaultPayloadTableEntry;
 import co.cask.cdap.messaging.store.PayloadTable;
-import co.cask.cdap.proto.id.TopicId;
+import co.cask.cdap.messaging.store.RawPayloadTableEntry;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBException;
 import org.iq80.leveldb.WriteOptions;
@@ -40,50 +36,54 @@ import java.util.Map;
  */
 public class LevelDBPayloadTable extends AbstractPayloadTable {
   private static final WriteOptions WRITE_OPTIONS = new WriteOptions().sync(true);
-
   private final DB levelDB;
-
-  private long writeTimestamp;
-  private short pSeqId;
 
   public LevelDBPayloadTable(DB levelDB) {
     this.levelDB = levelDB;
   }
 
   @Override
-  public CloseableIterator<Entry> fetch(TopicId topicId, long transactionWriterPointer, MessageId messageId,
-                                        boolean inclusive, final int limit)
-    throws IOException {
-    byte[] topic = MessagingUtils.toRowKeyPrefix(topicId);
-    byte[] startKey = new byte[topic.length + (2 * Bytes.SIZEOF_LONG) + Short.SIZE];
-    Bytes.putBytes(startKey, 0, topic, 0, topic.length);
-    Bytes.putLong(startKey, topic.length, transactionWriterPointer);
-    Bytes.putLong(startKey, topic.length + Bytes.SIZEOF_LONG, messageId.getWriteTimestamp());
-    Bytes.putShort(startKey, topic.length + (2 * Bytes.SIZEOF_LONG), messageId.getPayloadSequenceId());
-    if (!inclusive) {
-      startKey = Bytes.incrementBytes(startKey, 1);
-    }
-    byte[] stopKey = Bytes.stopKeyForPrefix(topic);
-    return new LevelDBCloseableIterator(levelDB, startKey, stopKey, limit);
+  protected CloseableIterator<RawPayloadTableEntry> read(byte[] startRow, byte[] stopRow,
+                                                         final int limit) throws IOException {
+    final DBScanIterator iterator = new DBScanIterator(levelDB, startRow, stopRow);
+    return new AbstractCloseableIterator<RawPayloadTableEntry>() {
+      private final RawPayloadTableEntry tableEntry = new RawPayloadTableEntry();
+      private boolean closed = false;
+      private int maxLimit = limit;
+
+      @Override
+      protected RawPayloadTableEntry computeNext() {
+        if (closed) {
+          return endOfData();
+        }
+
+        if (maxLimit <= 0 || (!iterator.hasNext())) {
+          return endOfData();
+        }
+
+        Map.Entry<byte[], byte[]> row = iterator.next();
+        maxLimit--;
+        return tableEntry.set(row.getKey(), row.getValue());
+      }
+
+      @Override
+      public void close() {
+        try {
+          iterator.close();
+        } finally {
+          endOfData();
+          closed = true;
+        }
+      }
+    };
   }
 
   @Override
-  public void store(Iterator<Entry> entries) throws IOException {
-    long writeTs = System.currentTimeMillis();
-    if (writeTs != writeTimestamp) {
-      pSeqId = 0;
-    }
-    writeTimestamp = writeTs;
+  public void persist(Iterator<RawPayloadTableEntry> entries) throws IOException {
     try {
       while (entries.hasNext()) {
-        Entry entry = entries.next();
-        byte[] topic = MessagingUtils.toRowKeyPrefix(entry.getTopicId());
-        byte[] tableKeyBytes = new byte[topic.length + (2 * Bytes.SIZEOF_LONG) + Bytes.SIZEOF_SHORT];
-        Bytes.putBytes(tableKeyBytes, 0, topic, 0, topic.length);
-        Bytes.putLong(tableKeyBytes, topic.length, entry.getTransactionWritePointer());
-        Bytes.putLong(tableKeyBytes, topic.length + Bytes.SIZEOF_LONG, writeTimestamp);
-        Bytes.putShort(tableKeyBytes, topic.length + (2 * Bytes.SIZEOF_LONG), pSeqId++);
-        levelDB.put(tableKeyBytes, entry.getPayload(), WRITE_OPTIONS);
+        RawPayloadTableEntry entry = entries.next();
+        levelDB.put(entry.getKey(), entry.getValue(), WRITE_OPTIONS);
       }
     } catch (DBException ex) {
       throw new IOException(ex);
@@ -91,7 +91,7 @@ public class LevelDBPayloadTable extends AbstractPayloadTable {
   }
 
   @Override
-  protected void performDelete(byte[] startRow, byte[] stopRow) throws IOException {
+  protected void delete(byte[] startRow, byte[] stopRow) throws IOException {
     List<byte[]> rowKeysToDelete = new ArrayList<>();
     try (CloseableIterator<Map.Entry<byte[], byte[]>> rowIterator = new DBScanIterator(levelDB, startRow, stopRow)) {
       while (rowIterator.hasNext()) {
@@ -112,41 +112,5 @@ public class LevelDBPayloadTable extends AbstractPayloadTable {
   @Override
   public void close() throws IOException {
     // no-op
-  }
-
-  private static class LevelDBCloseableIterator extends AbstractCloseableIterator<Entry> {
-    private final DBScanIterator iterator;
-    private int limit;
-    private boolean closed = false;
-
-    LevelDBCloseableIterator(DB levelDB, byte[] startKey, byte[] stopKey, int limit) {
-      this.iterator = new DBScanIterator(levelDB, startKey, stopKey);
-      this.limit = limit;
-    }
-
-    @Override
-    protected Entry computeNext() {
-      if (closed) {
-        return endOfData();
-      }
-
-      if (limit <= 0 || (!iterator.hasNext())) {
-        return endOfData();
-      }
-
-      Map.Entry<byte[], byte[]> row = iterator.next();
-      limit--;
-      return new DefaultPayloadTableEntry(row.getKey(), row.getValue());
-    }
-
-    @Override
-    public void close() {
-      try {
-        iterator.close();
-      } finally {
-        endOfData();
-        closed = true;
-      }
-    }
   }
 }

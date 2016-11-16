@@ -69,6 +69,7 @@ public abstract class PayloadTableTest {
       byte[] messageId = new byte[MessageId.RAW_ID_SIZE];
       MessageId.putRawId(0L, (short) 0, 0L, (short) 0, messageId, 0);
       CloseableIterator<PayloadTable.Entry> iterator = table.fetch(id, writePtr, new MessageId(messageId), true, 50);
+      Assert.assertTrue(iterator.hasNext());
       PayloadTable.Entry entry = iterator.next();
       Assert.assertArrayEquals(payloadBytes, entry.getPayload());
       Assert.assertEquals(writePtr, entry.getTransactionWritePointer());

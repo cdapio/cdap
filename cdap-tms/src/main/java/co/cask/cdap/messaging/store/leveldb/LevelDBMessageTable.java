@@ -19,13 +19,11 @@ package co.cask.cdap.messaging.store.leveldb;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.messaging.MessagingUtils;
-import co.cask.cdap.messaging.data.MessageId;
-import co.cask.cdap.messaging.store.DefaultMessageTableEntry;
+import co.cask.cdap.messaging.store.AbstractMessageTable;
 import co.cask.cdap.messaging.store.MessageTable;
-import co.cask.cdap.proto.id.TopicId;
-import org.apache.tephra.Transaction;
+import co.cask.cdap.messaging.store.RawMessageTableEntry;
 import org.iq80.leveldb.DB;
+import org.iq80.leveldb.DBException;
 import org.iq80.leveldb.WriteOptions;
 
 import java.io.IOException;
@@ -40,77 +38,64 @@ import javax.annotation.Nullable;
 /**
  * LevelDB implementation of {@link MessageTable}.
  */
-public class LevelDBMessageTable implements MessageTable {
+public class LevelDBMessageTable extends AbstractMessageTable {
   private static final WriteOptions WRITE_OPTIONS = new WriteOptions().sync(true);
   private static final String PAYLOAD_COL = "p";
   private static final String TX_COL = "t";
 
   private final DB levelDB;
-  private long writeTimestamp;
-  private short seqId;
 
   public LevelDBMessageTable(DB levelDB) {
     this.levelDB = levelDB;
   }
 
   @Override
-  public CloseableIterator<Entry> fetch(TopicId topicId, long startTime, int limit, @Nullable Transaction transaction)
-    throws IOException {
-    byte[] topic = MessagingUtils.toRowKeyPrefix(topicId);
-    byte[] startRow = new byte[topic.length + Bytes.SIZEOF_LONG];
-    Bytes.putBytes(startRow, 0, topic, 0, topic.length);
-    Bytes.putLong(startRow, topic.length, startTime);
-    byte[] stopKey = Bytes.stopKeyForPrefix(topic);
-    return new LevelDBCloseableIterator(levelDB, startRow, stopKey, limit, transaction);
-  }
+  protected CloseableIterator<RawMessageTableEntry> read(byte[] startRow, byte[] stopRow) throws IOException {
+    final DBScanIterator iterator = new DBScanIterator(levelDB, startRow, stopRow);
+    final RawMessageTableEntry tableEntry = new RawMessageTableEntry();
+    return new AbstractCloseableIterator<RawMessageTableEntry>() {
+      private boolean closed = false;
 
-  @Override
-  public CloseableIterator<Entry> fetch(TopicId topicId, MessageId messageId, boolean inclusive, final int limit,
-                                        @Nullable Transaction transaction) throws IOException {
-    byte[] topic = MessagingUtils.toRowKeyPrefix(topicId);
-    byte[] startRow = new byte[topic.length + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT];
-    Bytes.putBytes(startRow, 0, topic, 0, topic.length);
-    Bytes.putLong(startRow, topic.length, messageId.getPublishTimestamp());
-    Bytes.putShort(startRow, topic.length + Bytes.SIZEOF_LONG, messageId.getSequenceId());
-    if (!inclusive) {
-      startRow = Bytes.incrementBytes(startRow, 1);
-    }
-    byte[] stopKey = Bytes.stopKeyForPrefix(topic);
-    return new LevelDBCloseableIterator(levelDB, startRow, stopKey, limit, transaction);
-  }
+      @Override
+      protected RawMessageTableEntry computeNext() {
+        if (closed || (!iterator.hasNext())) {
+          return endOfData();
+        }
 
-  @Override
-  public void store(Iterator<Entry> entries) throws IOException {
-    long writeTs = System.currentTimeMillis();
-    if (writeTs != writeTimestamp) {
-      seqId = 0;
-    }
-    writeTimestamp = writeTs;
-    while (entries.hasNext()) {
-      Entry entry = entries.next();
-      byte[] topic = MessagingUtils.toRowKeyPrefix(entry.getTopicId());
-      byte[] tableKey = new byte[topic.length + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT];
-      Bytes.putBytes(tableKey, 0, topic, 0, topic.length);
-      Bytes.putLong(tableKey, topic.length, writeTimestamp);
-      Bytes.putShort(tableKey, topic.length + Bytes.SIZEOF_LONG, seqId++);
-
-      long txWritePtr = -1;
-      byte[] payload = entry.getPayload();
-      if (entry.isTransactional()) {
-        txWritePtr = entry.getTransactionWritePointer();
+        Map.Entry<byte[], byte[]> row = iterator.next();
+        Map<String, byte[]> columns = decodeValue(row.getValue());
+        return tableEntry.set(row.getKey(), columns.get(TX_COL), columns.get(PAYLOAD_COL));
       }
-      levelDB.put(tableKey, encodeValue(txWritePtr, payload), WRITE_OPTIONS);
+
+      @Override
+      public void close() {
+        try {
+          iterator.close();
+        } finally {
+          endOfData();
+          closed = true;
+        }
+      }
+    };
+  }
+
+
+  @Override
+  protected void persist(Iterator<RawMessageTableEntry> entries) throws IOException {
+    try {
+      while (entries.hasNext()) {
+        RawMessageTableEntry entry = entries.next();
+        levelDB.put(entry.getKey(), encodeValue(entry.getTxPtr(), entry.getPayload()), WRITE_OPTIONS);
+      }
+    } catch (DBException ex) {
+      throw new IOException(ex);
     }
   }
 
   @Override
-  public void delete(TopicId topicId, long transactionWritePointer) throws IOException {
-    byte[] targetTxBytes = Bytes.toBytes(transactionWritePointer);
-    byte[] rowPrefix = MessagingUtils.toRowKeyPrefix(topicId);
-    byte[] stopRow = Bytes.stopKeyForPrefix(rowPrefix);
-
+  public void delete(byte[] startKey, byte[] stopKey, byte[] targetTxBytes) throws IOException {
     List<byte[]> rowKeysToDelete = new ArrayList<>();
-    try (CloseableIterator<Map.Entry<byte[], byte[]>> rowIterator = new DBScanIterator(levelDB, rowPrefix, stopRow)) {
+    try (CloseableIterator<Map.Entry<byte[], byte[]>> rowIterator = new DBScanIterator(levelDB, startKey, stopKey)) {
       while (rowIterator.hasNext()) {
         Map.Entry<byte[], byte[]> candidateRow = rowIterator.next();
         byte[] rowKey = candidateRow.getKey();
@@ -134,13 +119,12 @@ public class LevelDBMessageTable implements MessageTable {
     // no-op
   }
 
-
   // Encoding:
   // If the returned byte array starts with 0, then it is a non-tx message and all the subsequent bytes are payload
   // If the returned byte array starts with 1, then next 8 bytes correspond to txWritePtr and rest are payload bytes
-  private static byte[] encodeValue(long txWritePtr, @Nullable byte[] payload) {
+  private static byte[] encodeValue(byte[] txWritePtr, @Nullable byte[] payload) {
     // Not transactional
-    if (txWritePtr == -1) {
+    if (txWritePtr == null) {
       payload = payload == null ? Bytes.EMPTY_BYTE_ARRAY : payload;
       return Bytes.add(new byte[] { 0 }, payload);
     }
@@ -149,7 +133,7 @@ public class LevelDBMessageTable implements MessageTable {
     resultSize += (payload == null) ? 0 : payload.length;
     byte[] result = new byte[resultSize];
     result[0] = 1;
-    Bytes.putLong(result, 1, txWritePtr);
+    Bytes.putBytes(result, 1, txWritePtr, 0, txWritePtr.length);
     if (payload != null) {
       Bytes.putBytes(result, 1 + Bytes.SIZEOF_LONG, payload, 0, payload.length);
     }
@@ -166,60 +150,5 @@ public class LevelDBMessageTable implements MessageTable {
       data.put(PAYLOAD_COL, Arrays.copyOfRange(value, 1 + Bytes.SIZEOF_LONG, value.length));
     }
     return data;
-  }
-
-  private static class LevelDBCloseableIterator extends AbstractCloseableIterator<Entry> {
-    private final Transaction transaction;
-    private int limit;
-    private boolean closed = false;
-    private final DBScanIterator iterator;
-
-    LevelDBCloseableIterator(DB levelDB, byte[] startKey, byte[] stopKey, int limit,
-                             @Nullable Transaction transaction) {
-      this.iterator = new DBScanIterator(levelDB, startKey, stopKey);
-      this.limit = limit;
-      this.transaction = transaction;
-    }
-
-    @Override
-    protected MessageTable.Entry computeNext() {
-      if (closed) {
-        return endOfData();
-      }
-
-      if (limit <= 0) {
-        return endOfData();
-      }
-
-      while (iterator.hasNext()) {
-        Map.Entry<byte[], byte[]> row = iterator.next();
-        Map<String, byte[]> columns = decodeValue(row.getValue());
-        MessageTable.Entry entry = new DefaultMessageTableEntry(row.getKey(), columns.get(PAYLOAD_COL),
-                                                                columns.get(TX_COL));
-        if (validEntry(entry, transaction)) {
-          limit--;
-          return entry;
-        }
-      }
-      return endOfData();
-    }
-
-    @Override
-    public void close() {
-      try {
-        iterator.close();
-      } finally {
-        endOfData();
-        closed = true;
-      }
-    }
-
-    private static boolean validEntry(MessageTable.Entry entry, Transaction transaction) {
-      if (transaction == null || (!entry.isTransactional())) {
-        return true;
-      }
-      long txWritePtr = entry.getTransactionWritePointer();
-      return transaction.isVisible(txWritePtr);
-    }
   }
 }
