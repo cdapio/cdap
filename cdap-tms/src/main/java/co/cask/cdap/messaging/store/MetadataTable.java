@@ -60,11 +60,13 @@ public interface MetadataTable extends Closeable {
   void updateTopic(TopicMetadata topicMetadata) throws TopicNotFoundException, IOException;
 
   /**
-   * Delete a topic if it exists. If the topic doesn't exist, the deletion is an no-op.
+   * Delete a topic.
    *
    * @param topicId message topic
+   * @throws TopicNotFoundException if the topic doesn't exist
+   * @throws IOException if failed to delete the topic
    */
-  void deleteTopic(TopicId topicId) throws IOException;
+  void deleteTopic(TopicId topicId) throws TopicNotFoundException, IOException;
 
   /**
    * List all the topics in a namespace.

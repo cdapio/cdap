@@ -99,24 +99,29 @@ public class HBaseMetadataTable implements MetadataTable {
     boolean completed = false;
 
     // Keep trying to update
+    byte[] rowKey = getKey(topicMetadata.getTopicId());
+    Put put = tableUtil.buildPut(rowKey)
+      .add(columnFamily, COL, Bytes.toBytes(GSON.toJson(new TreeMap<>(topicMetadata.getProperties()), MAP_TYPE)))
+      .build();
+
     while (!completed) {
       TopicMetadata oldMetadata = getMetadata(topicMetadata.getTopicId());
-      byte[] rowKey = getKey(topicMetadata.getTopicId());
-      Put put = tableUtil.buildPut(rowKey)
-        .add(columnFamily, COL, Bytes.toBytes(GSON.toJson(new TreeMap<>(topicMetadata.getProperties()), MAP_TYPE)))
-        .build();
-
       byte[] oldValue = Bytes.toBytes(GSON.toJson(new TreeMap<>(oldMetadata.getProperties()), MAP_TYPE));
       completed = hTable.checkAndPut(rowKey, columnFamily, COL, oldValue, put);
     }
   }
 
   @Override
-  public void deleteTopic(TopicId topicId) throws IOException {
-    Delete delete = tableUtil.buildDelete(getKey(topicId)).build();
-    hTable.delete(delete);
-    if (!hTable.isAutoFlush()) {
-      hTable.flushCommits();
+  public void deleteTopic(TopicId topicId) throws TopicNotFoundException, IOException {
+    boolean completed = false;
+
+    // Keep trying to delete
+    byte[] rowKey = getKey(topicId);
+    Delete delete = tableUtil.buildDelete(rowKey).build();
+    while (!completed) {
+      TopicMetadata metadata = getMetadata(topicId);
+      byte[] oldValue = Bytes.toBytes(GSON.toJson(new TreeMap<>(metadata.getProperties()), MAP_TYPE));
+      completed = hTable.checkAndDelete(rowKey, columnFamily, COL, oldValue, delete);
     }
   }
 

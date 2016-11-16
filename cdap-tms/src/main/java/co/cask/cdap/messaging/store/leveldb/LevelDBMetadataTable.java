@@ -103,9 +103,15 @@ public class LevelDBMetadataTable implements MetadataTable {
   }
 
   @Override
-  public synchronized void deleteTopic(TopicId topicId) throws IOException {
+  public void deleteTopic(TopicId topicId) throws TopicNotFoundException, IOException {
+    byte[] rowKey = getKey(topicId);
     try {
-      levelDB.delete(getKey(topicId));
+      synchronized (this) {
+        if (levelDB.get(rowKey) == null) {
+          throw new TopicNotFoundException(topicId);
+        }
+        levelDB.delete(rowKey);
+      }
     } catch (DBException e) {
       throw new IOException(e);
     }

@@ -107,10 +107,10 @@ public abstract class MetadataTableTest {
         // Expected
       }
 
-      // It should affect the topic at all if creation failed
+      // It shouldn't affect the topic at all if creation failed
       Assert.assertEquals(30, table.getMetadata(topicId).getTTL());
 
-      // Delete the topic should always succeed, even if the topic doesn't not exist
+      // Delete the topic
       table.deleteTopic(topicId);
       try {
         table.getMetadata(topicId);
@@ -118,7 +118,14 @@ public abstract class MetadataTableTest {
       } catch (TopicNotFoundException e) {
         // Expected
       }
-      table.deleteTopic(topicId);
+
+      // Delete again should raise a TopicNotFoundException
+      try {
+        table.deleteTopic(topicId);
+        Assert.fail("Expected TopicNotFoundException");
+      } catch (TopicNotFoundException e) {
+        // Expected
+      }
     }
   }
 
