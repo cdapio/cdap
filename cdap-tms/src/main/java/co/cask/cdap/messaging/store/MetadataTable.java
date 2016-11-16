@@ -16,6 +16,7 @@
 
 package co.cask.cdap.messaging.store;
 
+import co.cask.cdap.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.TopicNotFoundException;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -44,9 +45,19 @@ public interface MetadataTable extends Closeable {
    * Create a topic with properties.
    *
    * @param topicMetadata metadata of the topic
+   * @throws TopicAlreadyExistsException if the topic already exist
    * @throws IOException if failed to create topic
    */
-  void createTopic(TopicMetadata topicMetadata) throws IOException;
+  void createTopic(TopicMetadata topicMetadata) throws TopicAlreadyExistsException, IOException;
+
+  /**
+   * Updates the topic properties.
+   *
+   * @param topicMetadata metadata of the topic.
+   * @throws TopicNotFoundException if the topic doesn't exist
+   * @throws IOException if failed to update metadata
+   */
+  void updateTopic(TopicMetadata topicMetadata) throws TopicNotFoundException, IOException;
 
   /**
    * Delete a topic if it exists. If the topic doesn't exist, the deletion is an no-op.

@@ -16,9 +16,11 @@
 
 package co.cask.cdap.messaging.store;
 
+import co.cask.cdap.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.TopicNotFoundException;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.TopicId;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -28,7 +30,7 @@ import org.junit.Test;
 public abstract class MetadataTableTest {
 
   @Test
-  public void testTopicManagement() throws Exception {
+  public void testBasic() throws Exception {
     try (MetadataTable table = createMetadataTable()) {
       Assert.assertTrue(table.listTopics().isEmpty());
       Assert.assertTrue(table.listTopics(NamespaceId.DEFAULT).isEmpty());
@@ -73,6 +75,50 @@ public abstract class MetadataTableTest {
       Assert.assertTrue(table.listTopics(NamespaceId.DEFAULT).isEmpty());
       Assert.assertTrue(table.listTopics(NamespaceId.SYSTEM).isEmpty());
       Assert.assertTrue(table.listTopics().isEmpty());
+    }
+  }
+
+  @Test
+  public void testCRUD() throws Exception {
+    try (MetadataTable table = createMetadataTable()) {
+      TopicId topicId = NamespaceId.DEFAULT.topic("topic");
+
+      // Update a non-existing topic should fail.
+      try {
+        table.updateTopic(new TopicMetadata(topicId, "ttl", 10));
+        Assert.fail("Expected TopicNotFoundException");
+      } catch (TopicNotFoundException e) {
+        // Expected
+      }
+
+      // Create a topic and validate
+      table.createTopic(new TopicMetadata(topicId, "ttl", 10));
+      Assert.assertEquals(10, table.getMetadata(topicId).getTTL());
+
+      // Update the property and validate
+      table.updateTopic(new TopicMetadata(topicId, "ttl", 30));
+      Assert.assertEquals(30, table.getMetadata(topicId).getTTL());
+
+      // Create the same topic again should fail
+      try {
+        table.createTopic(new TopicMetadata(topicId, "ttl", 10));
+        Assert.fail("Expected TopicAlreadyExistsException");
+      } catch (TopicAlreadyExistsException e) {
+        // Expected
+      }
+
+      // It should affect the topic at all if creation failed
+      Assert.assertEquals(30, table.getMetadata(topicId).getTTL());
+
+      // Delete the topic should always succeed, even if the topic doesn't not exist
+      table.deleteTopic(topicId);
+      try {
+        table.getMetadata(topicId);
+        Assert.fail("Expected TopicNotFoundException");
+      } catch (TopicNotFoundException e) {
+        // Expected
+      }
+      table.deleteTopic(topicId);
     }
   }
 

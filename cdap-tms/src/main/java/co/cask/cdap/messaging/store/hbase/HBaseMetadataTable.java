@@ -18,6 +18,7 @@ package co.cask.cdap.messaging.store.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.TopicNotFoundException;
 import co.cask.cdap.messaging.store.MetadataTable;
@@ -42,6 +43,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * HBase implementation of {@link MetadataTable}.
@@ -50,7 +53,8 @@ public class HBaseMetadataTable implements MetadataTable {
 
   private static final byte[] COL = Bytes.toBytes("m");
   private static final Gson GSON = new Gson();
-  private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  // It has to be a sorted map since we depends on the serialized map for compareAndPut operation for topic update.
+  private static final Type MAP_TYPE = new TypeToken<SortedMap<String, String>>() { }.getType();
 
   private final HBaseTableUtil tableUtil;
   private final byte[] columnFamily;
@@ -79,13 +83,31 @@ public class HBaseMetadataTable implements MetadataTable {
   }
 
   @Override
-  public void createTopic(TopicMetadata topicMetadata) throws IOException {
-    Put put = tableUtil.buildPut(getKey(topicMetadata.getTopicId()))
-      .add(columnFamily, COL, Bytes.toBytes(GSON.toJson(topicMetadata.getProperties(), MAP_TYPE)))
+  public void createTopic(TopicMetadata topicMetadata) throws TopicAlreadyExistsException, IOException {
+    byte[] rowKey = getKey(topicMetadata.getTopicId());
+    Put put = tableUtil.buildPut(rowKey)
+      .add(columnFamily, COL, Bytes.toBytes(GSON.toJson(new TreeMap<>(topicMetadata.getProperties()), MAP_TYPE)))
       .build();
-    hTable.put(put);
-    if (!hTable.isAutoFlush()) {
-      hTable.flushCommits();
+
+    if (!hTable.checkAndPut(rowKey, columnFamily, COL, null, put)) {
+      throw new TopicAlreadyExistsException(topicMetadata.getTopicId());
+    }
+  }
+
+  @Override
+  public void updateTopic(TopicMetadata topicMetadata) throws TopicNotFoundException, IOException {
+    boolean completed = false;
+
+    // Keep trying to update
+    while (!completed) {
+      TopicMetadata oldMetadata = getMetadata(topicMetadata.getTopicId());
+      byte[] rowKey = getKey(topicMetadata.getTopicId());
+      Put put = tableUtil.buildPut(rowKey)
+        .add(columnFamily, COL, Bytes.toBytes(GSON.toJson(new TreeMap<>(topicMetadata.getProperties()), MAP_TYPE)))
+        .build();
+
+      byte[] oldValue = Bytes.toBytes(GSON.toJson(new TreeMap<>(oldMetadata.getProperties()), MAP_TYPE));
+      completed = hTable.checkAndPut(rowKey, columnFamily, COL, oldValue, put);
     }
   }
 

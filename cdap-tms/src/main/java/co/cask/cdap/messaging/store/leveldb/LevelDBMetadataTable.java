@@ -17,6 +17,7 @@
 package co.cask.cdap.messaging.store.leveldb;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.TopicNotFoundException;
 import co.cask.cdap.messaging.store.MetadataTable;
@@ -70,18 +71,39 @@ public class LevelDBMetadataTable implements MetadataTable {
   }
 
   @Override
-  public void createTopic(TopicMetadata topicMetadata) throws IOException {
+  public void createTopic(TopicMetadata topicMetadata) throws TopicAlreadyExistsException, IOException {
     try {
-      TopicId topicId = topicMetadata.getTopicId();
+      byte[] key = getKey(topicMetadata.getTopicId());
       byte[] value = Bytes.toBytes(GSON.toJson(topicMetadata.getProperties()));
-      levelDB.put(getKey(topicId), value, WRITE_OPTIONS);
+      synchronized (this) {
+        if (levelDB.get(key) != null) {
+          throw new TopicAlreadyExistsException(topicMetadata.getTopicId());
+        }
+        levelDB.put(key, value, WRITE_OPTIONS);
+      }
     } catch (DBException e) {
       throw new IOException(e);
     }
   }
 
   @Override
-  public void deleteTopic(TopicId topicId) throws IOException {
+  public void updateTopic(TopicMetadata topicMetadata) throws TopicNotFoundException, IOException {
+    try {
+      byte[] key = getKey(topicMetadata.getTopicId());
+      byte[] value = Bytes.toBytes(GSON.toJson(topicMetadata.getProperties()));
+      synchronized (this) {
+        if (levelDB.get(key) == null) {
+          throw new TopicNotFoundException(topicMetadata.getTopicId());
+        }
+        levelDB.put(key, value, WRITE_OPTIONS);
+      }
+    } catch (DBException e) {
+      throw new IOException(e);
+    }
+  }
+
+  @Override
+  public synchronized void deleteTopic(TopicId topicId) throws IOException {
     try {
       levelDB.delete(getKey(topicId));
     } catch (DBException e) {
