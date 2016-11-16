@@ -17,6 +17,10 @@
 import React, { Component } from 'react';
 import Papa from 'papaparse';
 import WrangleData from 'components/Wrangler/WrangleData';
+
+import WranglerActions from 'components/Wrangler/Redux/WranglerActions';
+import WranglerStore from 'components/Wrangler/Redux/WranglerStore';
+
 require('./Wrangler.less');
 
 /**
@@ -30,6 +34,8 @@ export default class Wrangler extends Component {
     super(props);
 
     this.state = {
+      textarea: false,
+      loading: false,
       header: false,
       skipEmptyLines: false,
       delimiter: '',
@@ -43,6 +49,13 @@ export default class Wrangler extends Component {
     this.wrangle = this.wrangle.bind(this);
     this.handleData = this.handleData.bind(this);
     this.handleTextInput = this.handleTextInput.bind(this);
+    this.onPlusButtonClick = this.onPlusButtonClick.bind(this);
+    this.onWrangleClick = this.onWrangleClick.bind(this);
+  }
+
+  onWrangleClick() {
+    this.setState({loading: true});
+    this.wrangle();
   }
 
   wrangle() {
@@ -59,6 +72,10 @@ export default class Wrangler extends Component {
     }
 
     Papa.parse(input, papaConfig);
+  }
+
+  onPlusButtonClick() {
+    this.setState({textarea: true});
   }
 
   handleData(papa) {
@@ -78,8 +95,16 @@ export default class Wrangler extends Component {
       formattedData = papa.data;
     }
 
+    WranglerStore.dispatch({
+      type: WranglerActions.setData,
+      payload: {
+        data: formattedData
+      }
+    });
+
     this.setState({
       originalData: formattedData,
+      loading: false
     });
   }
 
@@ -97,78 +122,108 @@ export default class Wrangler extends Component {
     this.setState({wranglerInput: e.target.value});
   }
 
-  render() {
-    return (
-      <div className="wrangler-container">
-        <h1>Wrangler</h1>
-
-        <div className="wrangler-input row">
-          <div className="col-xs-6">
-            <h3>Instruction to try out</h3>
-
-            <ol>
-              <li>Paste some input data to the input text area</li>
-              <li>Specify delimiter and configure options</li>
-              <li>Click <strong>Wrangle</strong></li>
-              <li>Click on a column header and the list of actions will show up on the left</li>
-              <li>Choose any action and play around!</li>
-            </ol>
+  renderWranglerCopyPaste() {
+    if (!this.state.textarea) {
+      return (
+        <div
+          className="wrangler-plus-button text-center"
+          onClick={this.onPlusButtonClick}
+        >
+          <div className="plus-button">
+            <i className="fa fa-plus-circle"></i>
           </div>
-          <div className="col-xs-6">
-            <h3>Copy Input Text</h3>
-            <textarea
-              className="form-control"
-              onChange={this.handleTextInput}
-            />
+          <div className="plus-button-helper-text">
+            <h4>Copy-paste data here</h4>
           </div>
         </div>
+      );
+    }
 
-        <div className="parse-options">
-          <h3>Options</h3>
+    return (
+      <textarea
+        className="form-control"
+        onChange={this.handleTextInput}
+      />
+    );
+  }
 
-          <form className="form-inline">
-            <div className="delimiter">
-              {/* delimiter */}
-              <label className="control-label">Delimiter</label>
-              <input
-                type="text"
-                className="form-control"
-                onChange={this.setDelimiter}
-              />
-            </div>
+  renderWranglerInputBox() {
+    if (this.state.originalData.length !== 0) {
+      return null;
+    }
 
-            <div className="checkbox">
-              {/* header */}
-              <label>
-                <input type="checkbox"
-                  onChange={this.handleSetHeaders}
-                  checked={this.state.headers}
-                /> First line as column name?
-              </label>
-            </div>
+    if (this.state.loading) {
+      return (
+        <div className="loading text-center">
+          <div>
+            <span className="fa fa-spinner fa-spin"></span>
+          </div>
+          <h3>Parsing...</h3>
+        </div>
+      );
+    }
 
-            <div className="checkbox">
-              {/* skipEmptyLines */}
-              <label>
-                <input type="checkbox"
-                  onChange={this.handleSetSkipEmptyLines}
-                /> Skip empty lines?
-              </label>
-            </div>
-          </form>
+    return (
+      <div>
+        <div className="wrangler-copy-paste">
+
+          {this.renderWranglerCopyPaste()}
+
+          <div className="parse-options">
+            <form className="form-inline">
+              <div className="delimiter">
+                {/* delimiter */}
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Set delimiter"
+                  onChange={this.setDelimiter}
+                />
+              </div>
+
+              <hr/>
+
+              <div className="checkbox">
+                {/* header */}
+                <label>
+                  <input type="checkbox"
+                    onChange={this.handleSetHeaders}
+                    checked={this.state.headers}
+                  /> First line as column name
+                </label>
+              </div>
+
+              <div className="checkbox">
+                {/* skipEmptyLines */}
+                <label>
+                  <input type="checkbox"
+                    onChange={this.handleSetSkipEmptyLines}
+                  /> Skip empty lines
+                </label>
+              </div>
+            </form>
+          </div>
+
         </div>
 
         <br/>
+
         <div className="text-center">
           <button
             className="btn btn-primary"
-            onClick={this.wrangle}
+            onClick={this.onWrangleClick}
           >
             Wrangle
           </button>
         </div>
+      </div>
+    );
+  }
 
-        <br/>
+  render() {
+    return (
+      <div className="wrangler-container">
+        {this.renderWranglerInputBox()}
 
         {
           this.state.originalData.length ?
