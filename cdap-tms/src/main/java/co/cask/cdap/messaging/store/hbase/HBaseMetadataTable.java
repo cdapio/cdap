@@ -84,12 +84,18 @@ public class HBaseMetadataTable implements MetadataTable {
       .add(columnFamily, COL, Bytes.toBytes(GSON.toJson(topicMetadata.getProperties(), MAP_TYPE)))
       .build();
     hTable.put(put);
+    if (!hTable.isAutoFlush()) {
+      hTable.flushCommits();
+    }
   }
 
   @Override
   public void deleteTopic(TopicId topicId) throws IOException {
     Delete delete = tableUtil.buildDelete(getKey(topicId)).build();
     hTable.delete(delete);
+    if (!hTable.isAutoFlush()) {
+      hTable.flushCommits();
+    }
   }
 
   @Override
