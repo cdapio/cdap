@@ -67,6 +67,7 @@
     "lodash-webpack-plugin": "0.10.0",
     "main-bower-files": "2.11.1",
     "merge-stream": "1.0.0",
+    "postcss-loader": "1.1.1",
     "style-loader": "0.13.1",
     "url-loader": "0.5.7",
     "webpack-livereload-plugin": "0.9.0"
