@@ -205,4 +205,12 @@
     </description>
   </property>
 
+  <property>
+    <name>audit.enabled</name>
+    <value>false</value>
+    <description>
+      Determines if Kerberos authentication is enabled
+    </description>
+  </property>
+
 </configuration>
