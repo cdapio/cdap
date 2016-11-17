@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,18 +16,17 @@
 
 package co.cask.cdap.hive.context;
 
-import co.cask.cdap.common.io.Codec;
+import org.apache.commons.io.input.ReaderInputStream;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 
 /**
- * Codec to encode/decode HBase Configuration object.
+ * Codec to encode/decode Hadoop Configuration object.
  */
-public class HConfCodec implements Codec<Configuration> {
+public class HConfCodec extends ConfCodec<Configuration> {
   public static final HConfCodec INSTANCE = new HConfCodec();
 
   private HConfCodec() {
@@ -35,22 +34,14 @@ public class HConfCodec implements Codec<Configuration> {
   }
 
   @Override
-  public byte[] encode(Configuration object) throws IOException {
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    object.writeXml(bos);
-    bos.close();
-    return bos.toByteArray();
+  public void encode(Configuration object, StringWriter stringWriter) throws IOException {
+    object.writeXml(stringWriter);
   }
 
   @Override
-  public Configuration decode(byte[] data) throws IOException {
-    if (data == null) {
-      return HBaseConfiguration.create();
-    }
-
-    ByteArrayInputStream bin = new ByteArrayInputStream(data);
+  public Configuration decode(StringReader stringReader) {
     Configuration hConfiguration = new Configuration();
-    hConfiguration.addResource(bin);
+    hConfiguration.addResource(new ReaderInputStream(stringReader));
     return hConfiguration;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,16 +17,16 @@
 package co.cask.cdap.hive.context;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.io.Codec;
+import org.apache.commons.io.input.ReaderInputStream;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 
 /**
  * Codec to encode/decode CConfiguration object.
  */
-public class CConfCodec implements Codec<CConfiguration> {
+public class CConfCodec extends ConfCodec<CConfiguration> {
   public static final CConfCodec INSTANCE = new CConfCodec();
 
   private CConfCodec() {
@@ -34,20 +34,12 @@ public class CConfCodec implements Codec<CConfiguration> {
   }
 
   @Override
-  public byte[] encode(CConfiguration object) throws IOException {
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    object.writeXml(bos);
-    bos.close();
-    return bos.toByteArray();
+  public void encode(CConfiguration object, StringWriter stringWriter) throws IOException {
+    object.writeXml(stringWriter);
   }
 
   @Override
-  public CConfiguration decode(byte[] data) throws IOException {
-    if (data == null) {
-      return CConfiguration.create();
-    }
-
-    ByteArrayInputStream bin = new ByteArrayInputStream(data);
-    return CConfiguration.create(bin);
+  public CConfiguration decode(StringReader stringReader) {
+    return CConfiguration.create(new ReaderInputStream(stringReader));
   }
 }
