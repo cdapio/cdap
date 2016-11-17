@@ -24,6 +24,7 @@ import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.guice.TwillModule;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.MasterUtils;
+import co.cask.cdap.common.app.MainClassLoader;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -132,6 +133,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -183,8 +185,18 @@ public class MasterServiceMain extends DaemonMain {
   }
 
   public static void main(final String[] args) throws Exception {
-    LOG.info("Starting {}", MasterServiceMain.class.getSimpleName());
-    new MasterServiceMain().doMain(args);
+    ClassLoader classLoader = MainClassLoader.createFromContext();
+    if (classLoader == null) {
+      LOG.warn("Failed to create CDAP system ClassLoader. AuthEnforce annotation will not be rewritten");
+      new MasterServiceMain().doMain(args);
+    } else {
+      Thread.currentThread().setContextClassLoader(classLoader);
+      Class<?> cls = classLoader.loadClass(MasterServiceMain.class.getName());
+      // since doMain is in the DaemonMain super class
+      Method method = cls.getSuperclass().getDeclaredMethod("doMain", String[].class);
+      method.setAccessible(true);
+      method.invoke(cls.newInstance(), new Object[]{args});
+    }
   }
 
   public MasterServiceMain() {

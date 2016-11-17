@@ -29,6 +29,7 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.test.AppJarHelper;
+import co.cask.cdap.common.test.TestRunner;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -68,6 +69,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.IOException;
@@ -79,6 +81,7 @@ import java.util.jar.Manifest;
 /**
  * Tests authorization for default namespace, system artifacts, system datasets, etc
  */
+@RunWith(TestRunner.class)
 public class AuthorizationBootstrapperTest {
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();

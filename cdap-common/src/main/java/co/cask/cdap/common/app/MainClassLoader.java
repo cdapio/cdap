@@ -22,12 +22,15 @@ import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.InterceptableClassLoader;
+import co.cask.cdap.common.security.AuthEnforceRewriter;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.asm.Classes;
 import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
+import com.google.common.io.ByteStreams;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,6 +52,7 @@ public final class MainClassLoader extends InterceptableClassLoader {
 
   private static final String DATASET_CLASS_NAME = Dataset.class.getName();
   private final DatasetClassRewriter datasetRewriter;
+  private final AuthEnforceRewriter authEnforceRewriter;
   private final Function<String, URL> resourceLookup;
   private final Map<String, Boolean> cache;
 
@@ -111,6 +115,7 @@ public final class MainClassLoader extends InterceptableClassLoader {
   public MainClassLoader(URL[] urls, ClassLoader parent) {
     super(urls, parent);
     this.datasetRewriter = new DatasetClassRewriter();
+    this.authEnforceRewriter = new AuthEnforceRewriter();
     this.resourceLookup = ClassLoaders.createClassResourceLookup(this);
     this.cache = new HashMap<>();
   }
@@ -118,7 +123,7 @@ public final class MainClassLoader extends InterceptableClassLoader {
   @Override
   protected boolean needIntercept(String className) {
     try {
-      return Classes.isSubTypeOf(className, DATASET_CLASS_NAME, resourceLookup, cache);
+      return isRewriteNeeded(className);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
@@ -126,7 +131,13 @@ public final class MainClassLoader extends InterceptableClassLoader {
 
   @Override
   public byte[] rewriteClass(String className, InputStream input) throws IOException {
-    return datasetRewriter.rewriteClass(className, input);
+    if (isDatasetRewriteNeeded(className)) {
+      input = new ByteArrayInputStream(datasetRewriter.rewriteClass(className, input));
+    }
+    if (isAuthRewriteNeeded(className)) {
+      input = new ByteArrayInputStream(authEnforceRewriter.rewriteClass(className, input));
+    }
+    return ByteStreams.toByteArray(input);
   }
 
   /**
@@ -151,5 +162,17 @@ public final class MainClassLoader extends InterceptableClassLoader {
     }
 
     return urls.toArray(new URL[urls.size()]);
+  }
+
+  private boolean isRewriteNeeded(String className) throws IOException {
+    return isDatasetRewriteNeeded(className) || isAuthRewriteNeeded(className);
+  }
+
+  private boolean isDatasetRewriteNeeded(String className) throws IOException {
+    return Classes.isSubTypeOf(className, DATASET_CLASS_NAME, resourceLookup, cache);
+  }
+
+  private boolean isAuthRewriteNeeded(String className) {
+    return className.startsWith("co.cask.cdap.");
   }
 }
