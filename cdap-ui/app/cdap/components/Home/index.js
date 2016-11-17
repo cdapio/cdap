@@ -28,7 +28,11 @@ const classNames = require('classnames');
 require('./Home.less');
 
 const defaultFilter = ['app', 'dataset', 'stream'];
-const PAGE_SIZE = 12;
+
+//312 = cardWith (300) + (5 x 2 side margins) + ( 1 x 2 border widths)
+const cardWidthWithMarginAndBorder = 312;
+//140 = cardHeight (128) + (5 x 2 top bottom margins) + (1 x 2 border widths)
+const cardHeightWithMarginAndBorder = 140;
 
 class Home extends Component {
   constructor(props) {
@@ -89,6 +93,8 @@ class Home extends Component {
     };
 
     //By default, expect a single page -- update when search is performed and we can parse it
+    this.pageSize = 1;
+    this.calculatePageSize = this.calculatePageSize.bind(this);
     this.updateQueryString = this.updateQueryString.bind(this);
     this.getQueryObject = this.getQueryObject.bind(this);
     this.handlePageChange = this.handlePageChange.bind(this);
@@ -119,8 +125,30 @@ class Home extends Component {
     });
   }
 
+  calculatePageSize() {
+    //Performs calculations to determine number of entities to render per page
+    let containerWidth = document.getElementsByClassName('home-content')[0].offsetWidth;
+
+    //Subtract 55px to account for home-header's height (30px) and container's top margin (25px)
+    let containerHeight = document.getElementsByClassName('home-content')[0].offsetHeight - 55;
+
+    let numColumns = Math.floor(containerWidth / cardWidthWithMarginAndBorder);
+    let numRows = Math.floor(containerHeight / cardHeightWithMarginAndBorder);
+
+    //We must have one column and one row at the very least
+    if(numColumns === 0) {
+      numColumns = 1;
+    }
+
+    if(numRows === 0){
+      numRows = 1;
+    }
+
+    this.pageSize = numColumns * numRows;
+  }
   //Retrieve entities for rendering
   componentDidMount(){
+    this.calculatePageSize();
     this.search();
   }
 
@@ -209,13 +237,13 @@ class Home extends Component {
       return;
     }
 
-    let offset = (this.state.currentPage - 1) * PAGE_SIZE;
+    let offset = (this.state.currentPage - 1) * this.pageSize;
 
     let params = {
       namespace: namespace,
       query: `${query}*`,
       target: filter,
-      size: PAGE_SIZE,
+      size: this.pageSize,
       offset: offset,
       sort: sortObj.fullSort
     };
@@ -241,7 +269,7 @@ class Home extends Component {
           selectedEntity: null,
           loading: false,
           entityErr: false,
-          numPages: Math.ceil(total / PAGE_SIZE)
+          numPages: Math.ceil(total / this.pageSize)
         });
       }, () => {
         //On Error: render page as if there are no results found
