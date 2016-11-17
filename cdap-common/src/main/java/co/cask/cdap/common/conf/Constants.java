@@ -1062,4 +1062,12 @@ public final class Constants {
     // The name of the HBase table attribute to store the bucket size being used by the RowKeyDistributor
     public static final String KEY_DISTRIBUTOR_BUCKETS_ATTR = "cdap.messaging.key.distributor.buckets";
   }
+
+  /**
+   * Constants for operational stats
+   */
+  public static final class OperationalStats {
+    public static final String EXTENSIONS_DIR = "operational.stats.extensions.dir";
+    public static final String REFRESH_INTERVAL_SECS = "operational.stats.refresh.interval.secs";
+  }
 }

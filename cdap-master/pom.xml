@@ -213,6 +213,7 @@
         <stage.artifacts.dir>${stage.opt.dir}/artifacts</stage.artifacts.dir>
         <stage.runtime.ext.dir>${stage.opt.dir}/ext/runtimes</stage.runtime.ext.dir>
         <stage.security.ext.dir>${stage.opt.dir}/ext/security</stage.security.ext.dir>
+        <stage.operations.ext.dir>${stage.opt.dir}/ext/operations</stage.operations.ext.dir>
         <additional.artifacts.jar.pattern>**/target/*.jar</additional.artifacts.jar.pattern>
         <additional.artifacts.config.pattern>**/target/*.json</additional.artifacts.config.pattern>
         <additional.artifacts.exclude.pattern>**/target/*-tests.jar</additional.artifacts.exclude.pattern>
@@ -234,6 +235,12 @@
         <dependency>
           <groupId>co.cask.cdap</groupId>
           <artifactId>cdap-spark-core</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-operational-stats-core</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
@@ -381,6 +388,28 @@
                       <includes>
                         <include>co.cask.cdap.cdap-api-spark*.jar</include>
                         <include>co.cask.cdap.cdap-spark-core*.jar</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+
+              <!-- Copy operations extensions -->
+              <execution>
+                <id>copy-operations-extensions</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.operations.ext.dir}/core</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-operational-stats-core/target/
+                      </directory>
+                      <includes>
+                        <include>co.cask.cdap.cdap-operational-stats-core-${project.version}.jar</include>
                       </includes>
                     </resource>
                   </resources>
