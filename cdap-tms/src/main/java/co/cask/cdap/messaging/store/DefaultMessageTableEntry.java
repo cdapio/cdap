@@ -35,11 +35,11 @@ public class DefaultMessageTableEntry implements MessageTable.Entry {
 
   public DefaultMessageTableEntry(byte[] row, @Nullable byte[] payload, @Nullable byte[] txPtr) {
     this.payload = payload;
-    this.publishTimestamp = Bytes.toLong(row, row.length - Short.BYTES - Long.BYTES);
-    this.sequenceId = Bytes.toShort(row, row.length - Short.BYTES);
+    this.publishTimestamp = Bytes.toLong(row, row.length - Bytes.SIZEOF_SHORT - Bytes.SIZEOF_LONG);
+    this.sequenceId = Bytes.toShort(row, row.length - Bytes.SIZEOF_SHORT);
     this.transactional = (txPtr != null);
     this.transactionWritePointer = txPtr == null ? -1 : Bytes.toLong(txPtr);
-    this.topicId = MessagingUtils.toTopicId(row, 0, row.length - Short.BYTES - Long.BYTES);
+    this.topicId = MessagingUtils.toTopicId(row, 0, row.length - Bytes.SIZEOF_SHORT - Bytes.SIZEOF_LONG);
   }
 
   @Override

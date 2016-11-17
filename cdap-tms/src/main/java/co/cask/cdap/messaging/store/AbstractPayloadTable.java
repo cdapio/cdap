@@ -33,7 +33,7 @@ public abstract class AbstractPayloadTable implements PayloadTable {
   @Override
   public void delete(TopicId topicId, long transactionWritePointer) throws IOException {
     byte[] topic = MessagingUtils.toRowKeyPrefix(topicId);
-    byte[] startRow = new byte[topic.length + Long.BYTES];
+    byte[] startRow = new byte[topic.length + Bytes.SIZEOF_LONG];
     Bytes.putBytes(startRow, 0, topic, 0, topic.length);
     Bytes.putLong(startRow, topic.length, transactionWritePointer);
     byte[] stopRow = Bytes.stopKeyForPrefix(startRow);

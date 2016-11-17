@@ -31,10 +31,10 @@ public final class DefaultPayloadTableEntry implements PayloadTable.Entry {
   private final byte[] payload;
 
   public DefaultPayloadTableEntry(byte[] row, byte[] payload) {
-    this.topicId = MessagingUtils.toTopicId(row, 0, row.length - Short.BYTES - (2 * Long.BYTES));
-    this.transactionWriterPointer = Bytes.toLong(row, row.length - Short.BYTES - (2 * Long.BYTES));
-    this.publishTimestamp = Bytes.toLong(row, row.length - Short.BYTES - Long.BYTES);
-    this.sequenceId = Bytes.toShort(row, row.length - Short.BYTES);
+    this.topicId = MessagingUtils.toTopicId(row, 0, row.length - Bytes.SIZEOF_SHORT - (2 * Bytes.SIZEOF_LONG));
+    this.transactionWriterPointer = Bytes.toLong(row, row.length - Bytes.SIZEOF_SHORT - (2 * Bytes.SIZEOF_LONG));
+    this.publishTimestamp = Bytes.toLong(row, row.length - Bytes.SIZEOF_SHORT - Bytes.SIZEOF_LONG);
+    this.sequenceId = Bytes.toShort(row, row.length - Bytes.SIZEOF_SHORT);
     this.payload = payload;
   }
 

@@ -66,7 +66,7 @@ public class HBaseMessageTable implements MessageTable {
   public CloseableIterator<Entry> fetch(TopicId topicId, long startTime, int limit,
                                         @Nullable Transaction transaction) throws IOException {
     byte[] topic = MessagingUtils.toRowKeyPrefix(topicId);
-    byte[] startRow = new byte[topic.length + Long.BYTES];
+    byte[] startRow = new byte[topic.length + Bytes.SIZEOF_LONG];
     Bytes.putBytes(startRow, 0, topic, 0, topic.length);
     Bytes.putLong(startRow, topic.length, startTime);
     Scan scan = tableUtil.buildScan()
@@ -81,10 +81,10 @@ public class HBaseMessageTable implements MessageTable {
   public CloseableIterator<Entry> fetch(TopicId topicId, MessageId messageId, boolean inclusive,
                                         int limit, @Nullable Transaction transaction) throws IOException {
     byte[] topic = MessagingUtils.toRowKeyPrefix(topicId);
-    byte[] startRow = new byte[topic.length + Long.BYTES + Short.BYTES];
+    byte[] startRow = new byte[topic.length + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT];
     Bytes.putBytes(startRow, 0, topic, 0, topic.length);
     Bytes.putLong(startRow, topic.length, messageId.getPublishTimestamp());
-    Bytes.putShort(startRow, topic.length + Long.BYTES, messageId.getSequenceId());
+    Bytes.putShort(startRow, topic.length + Bytes.SIZEOF_LONG, messageId.getSequenceId());
     if (!inclusive) {
       startRow = Bytes.incrementBytes(startRow, 1);
     }
@@ -114,12 +114,12 @@ public class HBaseMessageTable implements MessageTable {
       if (topicId == null || (!topicId.equals(entry.getTopicId()))) {
         topicId = entry.getTopicId();
         topic = MessagingUtils.toRowKeyPrefix(topicId);
-        rowKey = new byte[topic.length + Long.BYTES + Short.BYTES];
+        rowKey = new byte[topic.length + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT];
       }
 
       Bytes.putBytes(rowKey, 0, topic, 0, topic.length);
       Bytes.putLong(rowKey, topic.length, writeTimestamp);
-      Bytes.putShort(rowKey, topic.length + Long.BYTES, seqId++);
+      Bytes.putShort(rowKey, topic.length + Bytes.SIZEOF_LONG, seqId++);
 
       PutBuilder putBuilder = tableUtil.buildPut(rowKey);
       if (entry.isTransactional()) {

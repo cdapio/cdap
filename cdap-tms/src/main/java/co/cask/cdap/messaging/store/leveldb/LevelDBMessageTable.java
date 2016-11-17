@@ -57,7 +57,7 @@ public class LevelDBMessageTable implements MessageTable {
   public CloseableIterator<Entry> fetch(TopicId topicId, long startTime, int limit, @Nullable Transaction transaction)
     throws IOException {
     byte[] topic = MessagingUtils.toRowKeyPrefix(topicId);
-    byte[] startRow = new byte[topic.length + Long.BYTES];
+    byte[] startRow = new byte[topic.length + Bytes.SIZEOF_LONG];
     Bytes.putBytes(startRow, 0, topic, 0, topic.length);
     Bytes.putLong(startRow, topic.length, startTime);
     byte[] stopKey = Bytes.stopKeyForPrefix(topic);
@@ -68,10 +68,10 @@ public class LevelDBMessageTable implements MessageTable {
   public CloseableIterator<Entry> fetch(TopicId topicId, MessageId messageId, boolean inclusive, final int limit,
                                         @Nullable Transaction transaction) throws IOException {
     byte[] topic = MessagingUtils.toRowKeyPrefix(topicId);
-    byte[] startRow = new byte[topic.length + Long.BYTES + Short.BYTES];
+    byte[] startRow = new byte[topic.length + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT];
     Bytes.putBytes(startRow, 0, topic, 0, topic.length);
     Bytes.putLong(startRow, topic.length, messageId.getPublishTimestamp());
-    Bytes.putShort(startRow, topic.length + Long.BYTES, messageId.getSequenceId());
+    Bytes.putShort(startRow, topic.length + Bytes.SIZEOF_LONG, messageId.getSequenceId());
     if (!inclusive) {
       startRow = Bytes.incrementBytes(startRow, 1);
     }
@@ -89,10 +89,10 @@ public class LevelDBMessageTable implements MessageTable {
     while (entries.hasNext()) {
       Entry entry = entries.next();
       byte[] topic = MessagingUtils.toRowKeyPrefix(entry.getTopicId());
-      byte[] tableKey = new byte[topic.length + Long.BYTES + Short.BYTES];
+      byte[] tableKey = new byte[topic.length + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT];
       Bytes.putBytes(tableKey, 0, topic, 0, topic.length);
       Bytes.putLong(tableKey, topic.length, writeTimestamp);
-      Bytes.putShort(tableKey, topic.length + Long.BYTES, seqId++);
+      Bytes.putShort(tableKey, topic.length + Bytes.SIZEOF_LONG, seqId++);
 
       long txWritePtr = -1;
       byte[] payload = entry.getPayload();
@@ -145,13 +145,13 @@ public class LevelDBMessageTable implements MessageTable {
       return Bytes.add(new byte[] { 0 }, payload);
     }
 
-    int resultSize = 1 + Long.BYTES;
+    int resultSize = 1 + Bytes.SIZEOF_LONG;
     resultSize += (payload == null) ? 0 : payload.length;
     byte[] result = new byte[resultSize];
     result[0] = 1;
     Bytes.putLong(result, 1, txWritePtr);
     if (payload != null) {
-      Bytes.putBytes(result, 1 + Long.BYTES, payload, 0, payload.length);
+      Bytes.putBytes(result, 1 + Bytes.SIZEOF_LONG, payload, 0, payload.length);
     }
     return result;
   }
@@ -162,8 +162,8 @@ public class LevelDBMessageTable implements MessageTable {
       // just payload
       data.put(PAYLOAD_COL, Arrays.copyOfRange(value, 1, value.length));
     } else {
-      data.put(TX_COL, Arrays.copyOfRange(value, 1, 1 + Long.BYTES));
-      data.put(PAYLOAD_COL, Arrays.copyOfRange(value, 1 + Long.BYTES, value.length));
+      data.put(TX_COL, Arrays.copyOfRange(value, 1, 1 + Bytes.SIZEOF_LONG));
+      data.put(PAYLOAD_COL, Arrays.copyOfRange(value, 1 + Bytes.SIZEOF_LONG, value.length));
     }
     return data;
   }
@@ -194,8 +194,8 @@ public class LevelDBMessageTable implements MessageTable {
       while (iterator.hasNext()) {
         Map.Entry<byte[], byte[]> row = iterator.next();
         Map<String, byte[]> columns = decodeValue(row.getValue());
-        MessageTable.Entry entry = new DefaultMessageTableEntry(row.getKey(), columns.getOrDefault(PAYLOAD_COL, null),
-                                                    columns.getOrDefault(TX_COL, null));
+        MessageTable.Entry entry = new DefaultMessageTableEntry(row.getKey(), columns.get(PAYLOAD_COL),
+                                                                columns.get(TX_COL));
         if (validEntry(entry, transaction)) {
           limit--;
           return entry;

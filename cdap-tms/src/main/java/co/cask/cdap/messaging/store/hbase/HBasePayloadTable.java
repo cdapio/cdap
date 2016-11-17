@@ -63,11 +63,11 @@ public class HBasePayloadTable extends AbstractPayloadTable {
   public CloseableIterator<Entry> fetch(TopicId topicId, long transactionWritePointer, MessageId messageId,
                                         boolean inclusive, int limit) throws IOException {
     byte[] topic = MessagingUtils.toRowKeyPrefix(topicId);
-    byte[] startRow = new byte[topic.length + (2 * Long.BYTES) + Short.BYTES];
+    byte[] startRow = new byte[topic.length + (2 * Bytes.SIZEOF_LONG) + Bytes.SIZEOF_SHORT];
     Bytes.putBytes(startRow, 0, topic, 0, topic.length);
     Bytes.putLong(startRow, topic.length, transactionWritePointer);
-    Bytes.putLong(startRow, topic.length + Long.BYTES, messageId.getWriteTimestamp());
-    Bytes.putShort(startRow, topic.length + (2 * Long.BYTES), messageId.getPayloadSequenceId());
+    Bytes.putLong(startRow, topic.length + Bytes.SIZEOF_LONG, messageId.getWriteTimestamp());
+    Bytes.putShort(startRow, topic.length + (2 * Bytes.SIZEOF_LONG), messageId.getPayloadSequenceId());
     if (!inclusive) {
       startRow = Bytes.incrementBytes(startRow, 1);
     }
@@ -130,13 +130,13 @@ public class HBasePayloadTable extends AbstractPayloadTable {
       if (topicId == null || (!topicId.equals(entry.getTopicId()))) {
         topicId = entry.getTopicId();
         topic = MessagingUtils.toRowKeyPrefix(topicId);
-        rowKey = new byte[topic.length + (2 * Long.BYTES) + Short.BYTES];
+        rowKey = new byte[topic.length + (2 * Bytes.SIZEOF_LONG) + Bytes.SIZEOF_SHORT];
       }
 
       Bytes.putBytes(rowKey, 0, topic, 0, topic.length);
       Bytes.putLong(rowKey, topic.length, entry.getTransactionWritePointer());
-      Bytes.putLong(rowKey, topic.length + Long.BYTES, writeTimestamp);
-      Bytes.putShort(rowKey, topic.length + (2 * Long.BYTES), pSeqId++);
+      Bytes.putLong(rowKey, topic.length + Bytes.SIZEOF_LONG, writeTimestamp);
+      Bytes.putShort(rowKey, topic.length + (2 * Bytes.SIZEOF_LONG), pSeqId++);
 
       Put put = tableUtil.buildPut(rowKey)
         .add(columnFamily, COL, entry.getPayload())

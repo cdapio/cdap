@@ -55,11 +55,11 @@ public class LevelDBPayloadTable extends AbstractPayloadTable {
                                         boolean inclusive, final int limit)
     throws IOException {
     byte[] topic = MessagingUtils.toRowKeyPrefix(topicId);
-    byte[] startKey = new byte[topic.length + (2 * Long.BYTES) + Short.SIZE];
+    byte[] startKey = new byte[topic.length + (2 * Bytes.SIZEOF_LONG) + Short.SIZE];
     Bytes.putBytes(startKey, 0, topic, 0, topic.length);
     Bytes.putLong(startKey, topic.length, transactionWriterPointer);
-    Bytes.putLong(startKey, topic.length + Long.BYTES, messageId.getWriteTimestamp());
-    Bytes.putShort(startKey, topic.length + (2 * Long.BYTES), messageId.getPayloadSequenceId());
+    Bytes.putLong(startKey, topic.length + Bytes.SIZEOF_LONG, messageId.getWriteTimestamp());
+    Bytes.putShort(startKey, topic.length + (2 * Bytes.SIZEOF_LONG), messageId.getPayloadSequenceId());
     if (!inclusive) {
       startKey = Bytes.incrementBytes(startKey, 1);
     }
@@ -78,11 +78,11 @@ public class LevelDBPayloadTable extends AbstractPayloadTable {
       while (entries.hasNext()) {
         Entry entry = entries.next();
         byte[] topic = MessagingUtils.toRowKeyPrefix(entry.getTopicId());
-        byte[] tableKeyBytes = new byte[topic.length + (2 * Long.BYTES) + Short.BYTES];
+        byte[] tableKeyBytes = new byte[topic.length + (2 * Bytes.SIZEOF_LONG) + Bytes.SIZEOF_SHORT];
         Bytes.putBytes(tableKeyBytes, 0, topic, 0, topic.length);
         Bytes.putLong(tableKeyBytes, topic.length, entry.getTransactionWritePointer());
-        Bytes.putLong(tableKeyBytes, topic.length + Long.BYTES, writeTimestamp);
-        Bytes.putShort(tableKeyBytes, topic.length + (2 * Long.BYTES), pSeqId++);
+        Bytes.putLong(tableKeyBytes, topic.length + Bytes.SIZEOF_LONG, writeTimestamp);
+        Bytes.putShort(tableKeyBytes, topic.length + (2 * Bytes.SIZEOF_LONG), pSeqId++);
         levelDB.put(tableKeyBytes, entry.getPayload(), WRITE_OPTIONS);
       }
     } catch (DBException ex) {
