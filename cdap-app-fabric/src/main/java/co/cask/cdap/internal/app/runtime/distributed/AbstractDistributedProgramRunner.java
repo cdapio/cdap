@@ -292,8 +292,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
                 getKMSSecureStore(cConf), extraDependencies);
 
               Iterable<String> yarnAppClassPath = Arrays.asList(
-                hConf.getStrings(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
-                                 YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
+                hConf.getTrimmedStrings(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
+                                        YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
 
               twillPreparer
                 .withDependencies(dependencies)
