@@ -38,6 +38,7 @@ import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
@@ -61,9 +62,10 @@ public final class DistributedSparkProgramRunner extends AbstractDistributedProg
   private static final Logger LOG = LoggerFactory.getLogger(DistributedSparkProgramRunner.class);
 
   @Inject
-  DistributedSparkProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
-                                TokenSecureStoreUpdater tokenSecureStoreUpdater,
-                                Impersonator impersonator) {
+  @VisibleForTesting
+  public DistributedSparkProgramRunner(TwillRunner twillRunner, YarnConfiguration hConf, CConfiguration cConf,
+                                       TokenSecureStoreUpdater tokenSecureStoreUpdater,
+                                       Impersonator impersonator) {
     super(twillRunner, createConfiguration(hConf, cConf, tokenSecureStoreUpdater),
           cConf, tokenSecureStoreUpdater, impersonator);
   }

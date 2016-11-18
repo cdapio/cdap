@@ -38,6 +38,7 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.LocalizationUtils;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -172,8 +173,20 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
     return new AbortOnTimeoutEventHandler(cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE));
   }
 
+  /**
+   * Validates the options for the program.
+   * Subclasses can override this to also validate the options for their sub-programs.
+   */
+  protected void validateOptions(Program program, ProgramOptions options) {
+    // this will throw an exception if the custom tx timeout is invalid
+    SystemArguments.validateTransactionTimeout(options.getUserArguments().asMap(), cConf);
+  }
+
   @Override
   public final ProgramController run(final Program program, final ProgramOptions oldOptions) {
+
+    validateOptions(program, oldOptions);
+
     final File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                                          cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
     try {

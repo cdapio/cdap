@@ -36,6 +36,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.proto.ProgramType;
@@ -76,6 +77,17 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
     this.runtimeProviderLoader = runtimeProviderLoader;
   }
 
+  @Override
+  protected void validateOptions(Program program, ProgramOptions options) {
+    super.validateOptions(program, options);
+    WorkflowSpecification spec = program.getApplicationSpecification().getWorkflows().get(program.getName());
+    for (WorkflowNode node : spec.getNodes()) {
+      if (node.getType().equals(WorkflowNodeType.ACTION)) {
+        SystemArguments.validateTransactionTimeout(options.getUserArguments().asMap(),
+                                                   cConf, "action", node.getNodeId());
+      }
+    }
+  }
 
   @Override
   public ProgramController createProgramController(TwillController twillController,
