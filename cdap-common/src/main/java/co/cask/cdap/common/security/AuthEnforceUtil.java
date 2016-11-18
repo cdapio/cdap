@@ -31,7 +31,11 @@ import java.util.Set;
 // from the package because after class rewrite AuthEnforce annotations are rewritten to make call to the methods
 // in this class and since AuthEnforce annotation can be in any package after class rewrite this class methods
 // might be being called from other packages.
-public class AuthEnforceAnnotationEnforcer {
+public final class AuthEnforceUtil {
+
+  private AuthEnforceUtil() {
+    // no-op
+  }
 
   /**
    * Performs authorization enforcement

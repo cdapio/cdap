@@ -53,6 +53,8 @@ public class AuthEnforceRewriterTest {
     testRewrite(classLoader, cls, "testMultipleAction", ExceptionAuthorizationEnforcer.ExpectedException.class);
     // test that the class rewrite did not affect other non annotated methods
     testRewrite(classLoader, cls, "testNoAuthEnforceAnnotation", DummyAuthEnforce.EnforceNotCalledException.class);
+    // test that the class rewrite works for method whose signature does not specify throws exception
+    testRewrite(classLoader, cls, "testMethodWithoutException", ExceptionAuthorizationEnforcer.ExpectedException.class);
 
     // tests that class rewriting does not happen if an interface has a method with AuthEnforce
     cls = classLoader.loadClass(DummyAuthEnforce.ClassImplementingInterfaceWithAuthAnnotation.class.getName());

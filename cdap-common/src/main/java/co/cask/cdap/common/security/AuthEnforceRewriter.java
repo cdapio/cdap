@@ -23,7 +23,6 @@ import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
@@ -39,7 +38,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -55,7 +53,7 @@ import java.util.Set;
  * {@link AuthEnforce} annotation.
  * </p>
  * <p>
- * This class rewriter does two pass on the class:
+ * This class rewriter does two passes on the class:
  * </p>
  * <p>
  * Pass 1: In first pass it visit all the classes skipping interfaces and looks for non-static methods which has
@@ -67,7 +65,7 @@ import java.util.Set;
  * Pass 2: This pass only happen if a method with {@link AuthEnforce} annotation is found in the class during the
  * first pass. In this pass we rewrite the method which has {@link AuthEnforce} annotation. In the rewrite we
  * generate a call to
- * {@link AuthEnforceAnnotationEnforcer#enforce(AuthorizationEnforcer, EntityId, AuthenticationContext, Set)} with
+ * {@link AuthEnforceUtil#enforce(AuthorizationEnforcer, EntityId, AuthenticationContext, Set)} with
  * all the annotation details collected in the first pass.
  * </p>
  * <p>
@@ -106,7 +104,7 @@ import java.util.Set;
  *      }
  *
  *      public void testSingleAction(@Name("namespaceId") NamespaceId namespaceId) throws Exception {
- *        AuthEnforceAnnotationEnforcer.enforce(this.authorizationEnforcer, namespaceId, authenticationContext,
+ *        AuthEnforceUtil.enforce(this.authorizationEnforcer, namespaceId, authenticationContext,
  *                                              Set<Action.Admin>);
  *        System.out.println("Hello");
  *      }
@@ -121,37 +119,29 @@ public class AuthEnforceRewriter implements ClassRewriter {
   private static final Type AUTHORIZATION_ENFORCER_TYPE = Type.getType(AuthorizationEnforcer.class);
   private static final Type AUTHENTICATION_CONTEXT_TYPE = Type.getType(AuthenticationContext.class);
   private static final Type ACTION_TYPE = Type.getType(Action.class);
-  private static final Type AUTH_ENFORCE_ANNOTATION_ENFORCER_TYPE = Type.getType(AuthEnforceAnnotationEnforcer.class);
-  private Map<Method, AnnotationDetails> methodAnnotations;
+  private static final Type AUTH_ENFORCE_UTIL_TYPE = Type.getType(AuthEnforceUtil.class);
+
 
   @Override
   public byte[] rewriteClass(String className, InputStream input) throws IOException {
     byte[] classBytes = ByteStreams.toByteArray(input);
-    methodAnnotations = new HashMap<>(); // re-initialize for this new class.
-
     // First pass: Check the class to have a method with AuthEnforce annotation if found store the annotation details
     // and parameters for the method for second pass in which class rewrite will be performed.
     ClassReader cr = new ClassReader(classBytes);
 
-    // 0 because we don't want the class writer to compute frames or maxs. Since
-    // in first pass we just pass the classes for annotation. // Note: There is no need to compute frames in this
-    // pass since we are not generating any byte code and for classes which does not have AuthEnforce annotation we
-    // just return original byte[] from the passed input stream. Trying to compute frames require loading all the
-    // dependent classes for a class and this might lead to class loading problems if some dependent classes are not
-    // available. For example HbaseTableUtil use Hbase classes and in in-memory and standalone cdap hbase classes
-    // are not present.
-    ClassWriter cw = new ClassWriter(0);
-
     // SKIP_CODE to make the first pass faster since in the first pass we just want to process annotations to check
     // if the class has any method with AuthEnforce annotation. If such method is found we also store the parameters
     // which has the named annotations as specified in the entities field of the AuthEnforce.
-    cr.accept(new AuthEnforceAnnotationVisitor(className, cw), ClassReader.SKIP_CODE);
+    AuthEnforceAnnotationVisitor classVisitor = new AuthEnforceAnnotationVisitor(className);
+    cr.accept(classVisitor,
+              ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
+    Map<Method, AnnotationDetails> methodAnnotations = classVisitor.getMethodAnnotations();
     if (!methodAnnotations.isEmpty()) {
       // We found some method which has AuthEnforce annotation so we need a second pass in to rewrite the class
-      cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES); // in second pass we COMPUTE_FRAMES and visit classes with
-      // EXPAND_FRAMES
-      cr.accept(new AuthEnforceAnnotationRewriter(className, cw), ClassReader.EXPAND_FRAMES);
+      // in second pass we COMPUTE_FRAMES and visit classes with EXPAND_FRAMES
+      ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+      cr.accept(new AuthEnforceAnnotationRewriter(className, cw, methodAnnotations), ClassReader.EXPAND_FRAMES);
       return cw.toByteArray();
     }
     // if no AuthEnforce annotation was found then return the original class bytes
@@ -168,10 +158,12 @@ public class AuthEnforceRewriter implements ClassRewriter {
 
     private final String className;
     private boolean interfaceClass;
+    private final Map<Method, AnnotationDetails> methodAnnotations;
 
-    AuthEnforceAnnotationVisitor(String className, ClassWriter cw) {
-      super(Opcodes.ASM5, cw);
+    AuthEnforceAnnotationVisitor(String className) {
+      super(Opcodes.ASM5);
       this.className = className;
+      this.methodAnnotations = new HashMap<>();
     }
 
     @Override
@@ -192,66 +184,69 @@ public class AuthEnforceRewriter implements ClassRewriter {
         return mv;
       }
 
-      final boolean[] hasAuthEnforce = new boolean[1];
-      final AuthEnforce[] authEnforceAnnotation = new AuthEnforce[1];
-      final Map<String, Integer> paramAnnotation = new HashMap<>();
 
       // Visit the annotations of the method to determine if it has AuthEnforce annotation. If it does then collect
       // all the AuthEnforce annotation details through AnnotationVisitor and also sets a boolean flag hasEnforce
       // which is used later in visitParameterAnnotation to visit the annotations on parameters of this method only
       // if it had AuthEnforce annotation.
       mv = new MethodVisitor(Opcodes.ASM5, mv) {
+
+        boolean hasAuthEnforce;
+        AuthAnnotation authAnnotation;
+        final Map<String, Integer> paramAnnotation = new HashMap<>();
+
         @Override
         public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
           AnnotationVisitor annotationVisitor = super.visitAnnotation(desc, visible);
-          if (visible) {
-            // if the annotation is present then visit the annotation
-            if (AuthEnforce.class.getName().equals(Type.getType(desc).getClassName())) {
-              // set the flag which will be used to decide whether to visit parameter annotation or not
-              hasAuthEnforce[0] = true;
-              final Class[] enforceOn = new Class[1];
-              final List<String> entities = new ArrayList<>();
-              final Set<Action> actions = new HashSet<>();
 
-              // We found AuthEnforce annotation so visit the annotation to collect all the specified details
-              // See AnnotationVisitor documentation to know the order in which the below overridden methods are
-              // called and their responsibilities.
-              annotationVisitor = new AnnotationVisitor(Opcodes.ASM5, annotationVisitor) {
-                // gets the entity id class on which enforcement has to performed.
+
+          // If the annotation is not visible or its not AuthEnforce just skip
+          if (!(visible && AuthEnforce.class.getName().equals(Type.getType(desc).getClassName()))) {
+            return annotationVisitor;
+          }
+
+          // AuthEnforce annotation is present so visit it
+          // set the flag which will be used to decide whether to visit parameter annotation or not
+          hasAuthEnforce = true;
+          final Type[] enforceOn = new Type[1];
+          final List<String> entities = new ArrayList<>();
+          final Set<Action> actions = new HashSet<>();
+
+          // We found AuthEnforce annotation so visit the annotation to collect all the specified details
+          // See AnnotationVisitor documentation to know the order in which the below overridden methods are
+          // called and their responsibilities.
+          annotationVisitor = new AnnotationVisitor(Opcodes.ASM5, annotationVisitor) {
+            // gets the entity id class on which enforcement has to performed.
+            @Override
+            public void visit(String name, Object value) {
+
+              enforceOn[0] = (Type) value;
+
+              super.visit(name, value);
+            }
+
+            // gets the entity parts and actions for enforcement by visiting the array for values
+            @Override
+            public AnnotationVisitor visitArray(String name) {
+              AnnotationVisitor av = super.visitArray(name);
+              return new AnnotationVisitor(Opcodes.ASM5, av) {
+                // get the entity parts on which enforcement needs to be performed
                 @Override
                 public void visit(String name, Object value) {
-                  try {
-                    enforceOn[0] = Class.forName(((Type) value).getClassName());
-                  } catch (ClassNotFoundException e) {
-                    Throwables.propagate(e);
-                  }
+                  entities.add((String) value);
                   super.visit(name, value);
                 }
 
-                // gets the entity parts and actions for enforcement by visiting the array for values
+                //  get the actions which needs to be checked during enforcement
                 @Override
-                public AnnotationVisitor visitArray(String name) {
-                  AnnotationVisitor av = super.visitArray(name);
-                  return new AnnotationVisitor(Opcodes.ASM5, av) {
-                    // get the entity parts on which enforcement needs to be performed
-                    @Override
-                    public void visit(String name, Object value) {
-                      entities.add((String) value);
-                      super.visit(name, value);
-                    }
-
-                    //  get the actions which needs to be checked during enforcement
-                    @Override
-                    public void visitEnum(String name, String desc, String value) {
-                      actions.add(Action.valueOf(value));
-                      super.visitEnum(name, desc, value);
-                    }
-                  };
+                public void visitEnum(String name, String desc, String value) {
+                  actions.add(Action.valueOf(value));
+                  super.visitEnum(name, desc, value);
                 }
               };
-              authEnforceAnnotation[0] = new AuthEnforceAnnotation().getInstance(entities, enforceOn[0], actions);
             }
-          }
+          };
+          authAnnotation = new AuthAnnotation(entities, enforceOn[0], actions);
           return annotationVisitor;
         }
 
@@ -262,7 +257,7 @@ public class AuthEnforceRewriter implements ClassRewriter {
           // store their position.
           // TODO: Support looking class field too in the ClassVisitor
           // TODO: Should also pick up names from QueryParam and PathParam annotations here as needed later
-          if (hasAuthEnforce[0] && visible && Name.class.getName().equals(Type.getType(desc).getClassName())) {
+          if (hasAuthEnforce && visible && Name.class.getName().equals(Type.getType(desc).getClassName())) {
             annotationVisitor = new AnnotationVisitor(Opcodes.ASM5, annotationVisitor) {
               @Override
               public void visit(String name, Object value) {
@@ -284,9 +279,9 @@ public class AuthEnforceRewriter implements ClassRewriter {
         // rewrite
         @Override
         public void visitEnd() {
-          if (hasAuthEnforce[0]) {
+          if (hasAuthEnforce) {
             // verify that we found all the values specified in entities
-            for (String name : authEnforceAnnotation[0].entities()) {
+            for (String name : authAnnotation.getEntities()) {
               Preconditions.checkArgument(paramAnnotation.containsKey(name),
                                           String.format("No method parameter found wih a name %s for method %s in " +
                                                           "class %s whereas it was specified in AuthEnforce " +
@@ -294,12 +289,16 @@ public class AuthEnforceRewriter implements ClassRewriter {
             }
             // Store all the information for the second pass
             methodAnnotations.put(new Method(methodName, methodDesc),
-                                  new AnnotationDetails(authEnforceAnnotation[0], paramAnnotation));
+                                  new AnnotationDetails(authAnnotation, paramAnnotation));
           }
           super.visitEnd();
         }
       };
       return mv;
+    }
+
+    Map<Method, AnnotationDetails> getMethodAnnotations() {
+      return methodAnnotations;
     }
   }
 
@@ -307,18 +306,20 @@ public class AuthEnforceRewriter implements ClassRewriter {
    * A {@link ClassVisitor} which is used in second pass of {@link AuthEnforceRewriter} to rewrite methods which has
    * {@link AuthEnforce} annotation on it with the annotation details collected from the first pass. This is only
    * called for classes which has at least one such method. This class does byte code rewrite to generate call to
-   * {@link AuthEnforceAnnotationEnforcer#enforce(AuthorizationEnforcer, EntityId, AuthenticationContext, Set)}. To
+   * {@link AuthEnforceUtil#enforce(AuthorizationEnforcer, EntityId, AuthenticationContext, Set)}. To
    * see an example of generated byte code please see the documentation for {@link AuthEnforceRewriter}
    */
   private final class AuthEnforceAnnotationRewriter extends ClassVisitor {
 
     private final String className;
     private final Type classType;
+    private final Map<Method, AnnotationDetails> methodAnnotations;
 
-    AuthEnforceAnnotationRewriter(String className, ClassWriter cw) {
+    AuthEnforceAnnotationRewriter(String className, ClassWriter cw, Map<Method, AnnotationDetails> methodAnnotations) {
       super(Opcodes.ASM5, cw);
       this.className = className;
       this.classType = Type.getObjectType(className.replace(".", "/"));
+      this.methodAnnotations = methodAnnotations;
     }
 
     @Override
@@ -335,16 +336,16 @@ public class AuthEnforceRewriter implements ClassRewriter {
 
             LOG.debug("AuthEnforce annotation found in class {} on method {}. Authorization enforcement command will " +
                         "be generated for Entities: {}, enforceOn: {}, actions: {}.", className, methodName,
-                      annotationDetails.getAnnotation().entities(), annotationDetails.getAnnotation().enforceOn(),
-                      annotationDetails.getAnnotation().actions());
+                      annotationDetails.getAnnotation().getEntities(), annotationDetails.getAnnotation().getEnforceOn(),
+                      annotationDetails.getAnnotation().getActions());
 
             // TODO: Remove this one we support AuthEnforce with multiple string parts
-            Preconditions.checkArgument(annotationDetails.getAnnotation().entities().length == 1,
+            Preconditions.checkArgument(annotationDetails.getAnnotation().getEntities().size() == 1,
                                         "Currently Authorization annotation is only supported for EntityId from " +
                                           "method parameter.");
 
             // do class rewrite to generate the call to
-            // AuthEnforceAnnotationEnforcer#enforce(AuthorizationEnforcer, EntityId, AuthenticationContext, Set)
+            // AuthEnforceUtil#enforce(AuthorizationEnforcer, EntityId, AuthenticationContext, Set)
 
             // TODO AuthorizationEnforcer field should be generated in the class containing annotation through class
             // rewrite itself. Support this here too.
@@ -356,7 +357,7 @@ public class AuthEnforceRewriter implements ClassRewriter {
 
             // pushed the entity id
             visitVarInsn(ALOAD, annotationDetails.getParameterAnnotation()
-              .get(annotationDetails.getAnnotation().entities()[0]) + 1); // + 1 because 0 specify "this"
+              .get(annotationDetails.getAnnotation().getEntities().get(0)) + 1); // + 1 because 0 specify "this"
 
             // TODO Similar to AuthorizationEnforcer AuthenticationContext field should be generated through class
             // rewrite. Support this too.
@@ -367,7 +368,7 @@ public class AuthEnforceRewriter implements ClassRewriter {
 
             // push all the actions on to the stack
             List<Type> actionEnumSetParamTypes = new ArrayList<>();
-            for (Action action : annotationDetails.getAnnotation().actions()) {
+            for (Action action : annotationDetails.getAnnotation().getActions()) {
               getStatic(ACTION_TYPE, action.name().toUpperCase(), ACTION_TYPE);
               // store the Type of Enum for all the action pushed on stack as it will later be used to generate a
               // method call instruction
@@ -380,8 +381,8 @@ public class AuthEnforceRewriter implements ClassRewriter {
                                                                    actionEnumSetParamTypes.toArray(
                                                                      new Type[actionEnumSetParamTypes.size()]))));
 
-            // generate a call to AuthEnforceAnnotationEnforcer#enforce with the above parameters on the stack
-            invokeStatic(AUTH_ENFORCE_ANNOTATION_ENFORCER_TYPE,
+            // generate a call to AuthEnforceUtil#enforce with the above parameters on the stack
+            invokeStatic(AUTH_ENFORCE_UTIL_TYPE,
                          new Method("enforce", Type.getMethodDescriptor(Type.VOID_TYPE,
                                                                         AUTHORIZATION_ENFORCER_TYPE,
                                                                         Type.getType(EntityId.class),
@@ -397,31 +398,27 @@ public class AuthEnforceRewriter implements ClassRewriter {
   /**
    * Class to store all the information specified in {@link AuthEnforce} on a method
    */
-  private class AuthEnforceAnnotation {
+  private class AuthAnnotation {
+    final List<String> entities;
+    final Type enforceOn;
+    final Set<Action> actions;
 
-    AuthEnforce getInstance(final List<String> entities, final Class enforceOn, final Set<Action> actions) {
+    AuthAnnotation(List<String> entities, Type enforceOn, Set<Action> actions) {
+      this.entities = entities;
+      this.enforceOn = enforceOn;
+      this.actions = actions;
+    }
 
-      return new AuthEnforce() {
-        @Override
-        public Class<? extends Annotation> annotationType() {
-          return AuthEnforce.class;
-        }
+    List<String> getEntities() {
+      return entities;
+    }
 
-        @Override
-        public String[] entities() {
-          return entities.toArray(new String[entities.size()]);
-        }
+    Type getEnforceOn() {
+      return enforceOn;
+    }
 
-        @Override
-        public Class enforceOn() {
-          return enforceOn;
-        }
-
-        @Override
-        public Action[] actions() {
-          return actions.toArray(new Action[actions.size()]);
-        }
-      };
+    Set<Action> getActions() {
+      return actions;
     }
   }
 
@@ -430,15 +427,15 @@ public class AuthEnforceRewriter implements ClassRewriter {
    * marked with {@link Name} annotation specifying the entities
    */
   private class AnnotationDetails {
-    final AuthEnforce annotation;
+    final AuthAnnotation annotation;
     final Map<String, Integer> parameterAnnotation;
 
-    AnnotationDetails(AuthEnforce annotation, Map<String, Integer> parameterAnnotation) {
+    AnnotationDetails(AuthAnnotation annotation, Map<String, Integer> parameterAnnotation) {
       this.annotation = annotation;
       this.parameterAnnotation = parameterAnnotation;
     }
 
-    public AuthEnforce getAnnotation() {
+    AuthAnnotation getAnnotation() {
       return annotation;
     }
 

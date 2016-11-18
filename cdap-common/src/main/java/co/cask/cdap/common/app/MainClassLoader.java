@@ -170,9 +170,9 @@ public final class MainClassLoader extends InterceptableClassLoader {
     return urls.toArray(new URL[urls.size()]);
   }
 
-  private final class RewritesNeeded {
-    boolean datasetRewriteNeeded;
-    boolean authRewriteNeeded;
+  private static final class RewritesNeeded {
+    private boolean datasetRewriteNeeded;
+    private boolean authRewriteNeeded;
 
     boolean isDatasetRewriteNeeded() {
       return datasetRewriteNeeded;
@@ -189,6 +189,7 @@ public final class MainClassLoader extends InterceptableClassLoader {
     void setAuthRewriteNeeded(boolean authRewriteNeeded) {
       this.authRewriteNeeded = authRewriteNeeded;
     }
+
     boolean needsRewrite() {
       return datasetRewriteNeeded || authRewriteNeeded;
     }

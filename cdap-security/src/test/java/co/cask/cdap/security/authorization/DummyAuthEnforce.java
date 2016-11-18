@@ -65,6 +65,14 @@ public class DummyAuthEnforce {
       throw new EnforceNotCalledException();
     }
 
+    @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
+    public void testMethodWithoutException(@Name("namespaceId") NamespaceId namespaceId) {
+      // no-op
+      // After class rewrite we make a call to AuthorizationEnforcer.enforce which can throw UnauthorizedException.
+      // This tests that a method which does not specify throws Exception in its signature will be able to throw
+      // exception during enforcement
+    }
+
     // to test that presence of a method with AuthEnforce in classs does not affect other methods which does have
     // AuthEnforce annotation
     public void testNoAuthEnforceAnnotation(@Name("namespaceId") NamespaceId namespaceId) throws Exception {
