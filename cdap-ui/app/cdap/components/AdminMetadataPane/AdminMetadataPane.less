@@ -15,9 +15,10 @@
  */
 @import '../../styles/variables.less';
 
-.metadata-pane-node {
-  height: 85%;
+.metadata-pane {
   margin-top: 2px;
+  flex-grow: 1;
+  max-width: 450px;
 
   .spinner {
     margin: auto;
@@ -33,11 +34,9 @@
     justify-content: center;
   }
 
-  .stat-container {
-    display: inline-block;
-    max-width: 100px;
-    margin-left: 8px;
-    margin-right: 8px;
+  .stat-column {
+    display: flex;
+    flex-direction: column;
   }
 
   .pane-header {
@@ -49,9 +48,8 @@
   }
 
   .pane-body {
-    height: 200px;
     display: flex;
-    justify-content: space-between;
+    justify-content: space-around;
 
     .row {
       margin-left: 15px;

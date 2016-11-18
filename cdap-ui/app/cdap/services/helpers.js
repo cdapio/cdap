@@ -83,9 +83,7 @@ function convertBytesToHumanReadable(bytes) {
   if (!bytes || typeof bytes !== 'number') {
     return bytes;
   }
-  if (bytes < (1024 * 1024)) {
-    return numeral(bytes).format('0.000b');
-  }
+  return numeral(bytes).format('0.000b');
 }
 
 function isDescendant(parent, child) {

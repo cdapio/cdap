@@ -66,18 +66,22 @@
     border-bottom-right-radius: @overview-pane-border-radius;
     border-bottom-left-radius: @overview-pane-border-radius;
 
-    i:hover {
-      color: #656565;
-      cursor: pointer;
-    }
-
     .icon-container {
+      text-decoration: none;
+      color: inherit;
       width: 50%;
       height: 100%;
       font-size: 1.5em;
       display: inline-flex;
       justify-content: center;
       align-items: center;
+
+      &:hover {
+        i {
+          color: #656565;
+        }
+      }
+
     }
 
     .icon-container-right {
