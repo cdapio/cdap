@@ -268,8 +268,12 @@ public abstract class IntegrationTestBase {
   }
 
   protected TestManager getTestManager() {
+    return getTestManager(getClientConfig(), getRestClient());
+  }
+
+  protected TestManager getTestManager(ClientConfig clientConfig, RESTClient restClient) {
     try {
-      return new IntegrationTestManager(getClientConfig(), getRestClient(), TEMP_FOLDER.newFolder());
+      return new IntegrationTestManager(clientConfig, restClient, TEMP_FOLDER.newFolder());
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
