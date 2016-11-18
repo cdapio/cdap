@@ -78,7 +78,8 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
 
     StreamingContext sourceContext = new DefaultStreamingContext(stageInfo.getName(), sec, streamingContext);
     JavaDStream<Object> javaDStream = source.getStream(sourceContext)
-      .transform(new CountingTranformFunction<>(stageInfo.getName(), sec.getMetrics(), "records.out"));
+      .transform(new CountingTranformFunction<>(stageInfo.getName(), sec.getMetrics(), "records.out",
+                                                sec.getDataTracer(stageInfo.getName())));
     return new DStreamCollection<>(sec, javaDStream);
   }
 

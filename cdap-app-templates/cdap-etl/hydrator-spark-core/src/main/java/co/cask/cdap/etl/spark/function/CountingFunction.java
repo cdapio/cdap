@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.spark.function;
 
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
 import org.apache.spark.api.java.function.Function;
@@ -30,18 +31,23 @@ public class CountingFunction<T> implements Function<T, T> {
   private final String stageName;
   private final Metrics metrics;
   private final String metricName;
+  private final DataTracer dataTracer;
   private transient StageMetrics stageMetrics;
 
-  public CountingFunction(String stageName, Metrics metrics, String metricName) {
+  public CountingFunction(String stageName, Metrics metrics, String metricName, DataTracer dataTracer) {
     this.stageName = stageName;
     this.metrics = metrics;
     this.metricName = metricName;
+    this.dataTracer = dataTracer;
   }
 
   @Override
   public T call(T in) throws Exception {
     if (stageMetrics == null) {
       stageMetrics = new DefaultStageMetrics(metrics, stageName);
+    }
+    if (dataTracer.isEnabled()) {
+      dataTracer.info(metricName, in);
     }
     stageMetrics.count(metricName, 1);
     return in;

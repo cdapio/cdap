@@ -182,6 +182,9 @@ public class SmartWorkflow extends AbstractWorkflow {
   @Override
   public void destroy() {
     WorkflowContext workflowContext = getContext();
+    if (workflowContext.getDataTracer(PostAction.PLUGIN_TYPE).isEnabled()) {
+      return;
+    }
     LookupProvider lookupProvider = new DatasetContextLookupProvider(workflowContext);
     Map<String, String> runtimeArgs = workflowContext.getRuntimeArguments();
     long logicalStartTime = workflowContext.getLogicalStartTime();

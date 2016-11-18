@@ -55,7 +55,7 @@ public class JoinMergeFunction<JOIN_KEY, INPUT_RECORD, OUT>
       joinFunction = new TrackedTransform<>(new JoinOnTransform<>(joiner),
                                             pluginFunctionContext.createStageMetrics(),
                                             "joiner.keys",
-                                            TrackedTransform.RECORDS_OUT);
+                                            TrackedTransform.RECORDS_OUT, pluginFunctionContext.getDataTracer(), null);
       emitter = new DefaultEmitter<>();
     }
     emitter.reset();

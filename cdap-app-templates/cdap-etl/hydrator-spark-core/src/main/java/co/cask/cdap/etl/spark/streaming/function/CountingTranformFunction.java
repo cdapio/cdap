@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.spark.streaming.function;
 
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.etl.spark.function.CountingFunction;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
@@ -30,15 +31,17 @@ public class CountingTranformFunction<T> implements Function<JavaRDD<T>, JavaRDD
   private final Metrics metrics;
   private final String stageName;
   private final String metricName;
+  private final DataTracer dataTracer;
 
-  public CountingTranformFunction(String stageName, Metrics metrics, String metricName) {
+  public CountingTranformFunction(String stageName, Metrics metrics, String metricName, DataTracer dataTracer) {
     this.metrics = metrics;
     this.stageName = stageName;
     this.metricName = metricName;
+    this.dataTracer = dataTracer;
   }
 
   @Override
   public JavaRDD<T> call(JavaRDD<T> in) throws Exception {
-    return in.map(new CountingFunction<T>(stageName, metrics, metricName));
+    return in.map(new CountingFunction<T>(stageName, metrics, metricName, dataTracer));
   }
 }

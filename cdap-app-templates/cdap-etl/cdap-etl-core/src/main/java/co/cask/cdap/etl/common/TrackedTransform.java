@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.common;
 
+import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.etl.api.Destroyable;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.StageMetrics;
@@ -37,17 +38,22 @@ public class TrackedTransform<IN, OUT> implements Transformation<IN, OUT>, Destr
   private final StageMetrics metrics;
   private final String metricInName;
   private final String metricOutName;
+  private final String previewInName;
+  private final DataTracer dataTracer;
 
-  public TrackedTransform(Transformation<IN, OUT> transform, StageMetrics metrics) {
-    this(transform, metrics, RECORDS_IN, RECORDS_OUT);
+  public TrackedTransform(Transformation<IN, OUT> transform, StageMetrics metrics, DataTracer dataTracer) {
+    this(transform, metrics, RECORDS_IN, RECORDS_OUT, dataTracer, RECORDS_IN);
   }
 
   public TrackedTransform(Transformation<IN, OUT> transform, StageMetrics metrics,
-                          @Nullable String metricInName, @Nullable String metricOutName) {
+                          @Nullable String metricInName, @Nullable String metricOutName, DataTracer dataTracer,
+                          String previewInName) {
     this.transform = transform;
     this.metrics = metrics;
     this.metricInName = metricInName;
     this.metricOutName = metricOutName;
+    this.dataTracer = dataTracer;
+    this.previewInName = previewInName;
   }
 
   @Override
@@ -55,7 +61,11 @@ public class TrackedTransform<IN, OUT> implements Transformation<IN, OUT>, Destr
     if (metricInName != null) {
       metrics.count(metricInName, 1);
     }
-    transform.transform(input, metricOutName == null ? emitter : new TrackedEmitter<>(emitter, metrics, metricOutName));
+    if (dataTracer.isEnabled() && previewInName != null) {
+      dataTracer.info(previewInName, input);
+    }
+    transform.transform(input, metricOutName == null ? emitter :
+      new TrackedEmitter<>(emitter, metrics, metricOutName, dataTracer));
   }
 
   @Override

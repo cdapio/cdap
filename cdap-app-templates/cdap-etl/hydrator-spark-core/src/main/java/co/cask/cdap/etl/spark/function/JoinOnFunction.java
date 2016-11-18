@@ -54,7 +54,8 @@ public class JoinOnFunction<JOIN_KEY, INPUT_RECORD>
       joinFunction = new TrackedTransform<>(new JoinOnTransform<>(joiner, inputStageName),
                                                pluginFunctionContext.createStageMetrics(),
                                                TrackedTransform.RECORDS_IN,
-                                               null);
+                                               null, pluginFunctionContext.getDataTracer(),
+                                               TrackedTransform.RECORDS_IN);
       emitter = new DefaultEmitter<>();
     }
     emitter.reset();

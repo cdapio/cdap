@@ -19,6 +19,7 @@ package co.cask.cdap.etl.batch.mapreduce;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.etl.api.Aggregator;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.JoinElement;
@@ -101,52 +102,55 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
 
   @SuppressWarnings("unchecked")
   @Override
-  protected TrackedTransform getTransformation(String pluginType, String stageName) throws Exception {
+  protected TrackedTransform getTransformation(String pluginType, String stageName)
+    throws Exception {
     DefaultMacroEvaluator macroEvaluator = new DefaultMacroEvaluator(taskContext.getWorkflowToken(),
                                                                      taskContext.getRuntimeArguments(),
                                                                      taskContext.getLogicalStartTime(), taskContext,
                                                                      taskContext.getNamespace());
+    StageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
     if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
       BatchAggregator<?, ?, ?> batchAggregator = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
       BatchRuntimeContext runtimeContext = createRuntimeContext(stageName);
       batchAggregator.initialize(runtimeContext);
-      StageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
       if (isMapPhase) {
         return getTrackedEmitKeyStep(
           KVTransformations.getKVTransformation(stageName, pluginType, isMapPhase,
                                                 new MapperAggregatorTransformation(batchAggregator,
                                                                                    mapOutputKeyClassName,
                                                                                    mapOutputValClassName)),
-          stageMetrics);
+          stageMetrics, taskContext.getDataTracer(stageName));
       } else {
         return getTrackedAggregateStep(
           KVTransformations.getKVTransformation(stageName, pluginType, isMapPhase,
                                                 new ReducerAggregatorTransformation(batchAggregator,
                                                                                     mapOutputKeyClassName,
                                                                                     mapOutputValClassName)),
-          stageMetrics);
+          stageMetrics, taskContext.getDataTracer(stageName));
       }
     } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
       BatchJoiner<?, ?, ?> batchJoiner = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
       BatchJoinerRuntimeContext runtimeContext = createJoinerRuntimeContext(stageName);
       batchJoiner.initialize(runtimeContext);
-      StageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
       if (isMapPhase) {
         return getTrackedEmitKeyStep(
           KVTransformations.getKVTransformation(stageName, pluginType, isMapPhase,
                                                 new MapperJoinerTransformation(batchJoiner, mapOutputKeyClassName,
-                                                                               mapOutputValClassName)), stageMetrics);
+                                                                               mapOutputValClassName)),
+          stageMetrics, taskContext.getDataTracer(stageName));
       } else {
         return getTrackedMergeStep(
           KVTransformations.getKVTransformation(stageName, pluginType, isMapPhase,
                                                 new ReducerJoinerTransformation(batchJoiner, mapOutputKeyClassName,
                                                                                 mapOutputValClassName,
                                                                                 runtimeContext.getInputSchemas()
-                                                                                  .size()))
-          , stageMetrics);
+                                                                                  .size())),
+          stageMetrics, taskContext.getDataTracer(stageName));
       }
     }
-    return super.getTransformation(pluginType, stageName);
+    return new TrackedTransform(KVTransformations.getKVTransformation(stageName, pluginType, isMapPhase,
+                                                                      getInitializedTransformation(stageName)),
+                                       stageMetrics, taskContext.getDataTracer(stageName));
   }
 
   /**
