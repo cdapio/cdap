@@ -24,6 +24,7 @@ import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
+import com.google.inject.Inject;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -32,6 +33,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.AdviceAdapter;
+import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.slf4j.Logger;
@@ -266,12 +268,16 @@ public class AuthEnforceRewriter implements ClassRewriter {
     private final String className;
     private final Type classType;
     private final Map<Method, AnnotationDetails> methodAnnotations;
+    private final String authenticationContextFieldName;
+    private final String authorizationEnforcerFieldName;
 
     AuthEnforceAnnotationRewriter(String className, ClassWriter cw, Map<Method, AnnotationDetails> methodAnnotations) {
       super(Opcodes.ASM5, cw);
       this.className = className;
       this.classType = Type.getObjectType(className.replace(".", "/"));
       this.methodAnnotations = methodAnnotations;
+      this.authenticationContextFieldName = generateUniqueFieldName("authenticationContext");
+      this.authorizationEnforcerFieldName = generateUniqueFieldName("authorizationEnforcer");
     }
 
     @Override
@@ -283,6 +289,7 @@ public class AuthEnforceRewriter implements ClassRewriter {
       if (!methodAnnotations.containsKey(new Method(methodName, methodDesc))) {
         return mv;
       }
+
       return new AdviceAdapter(Opcodes.ASM5, mv, access, methodName, methodDesc) {
         @Override
         protected void onMethodEnter() {
@@ -306,7 +313,7 @@ public class AuthEnforceRewriter implements ClassRewriter {
           // rewrite itself. Support this here too.
           // this.authorizationEnforcer
           loadThis();
-          getField(classType, "authorizationEnforcer", AUTHORIZATION_ENFORCER_TYPE);
+          getField(classType, authorizationEnforcerFieldName, AUTHORIZATION_ENFORCER_TYPE);
 
           // push the parameters of method call on to the stack
 
@@ -319,7 +326,7 @@ public class AuthEnforceRewriter implements ClassRewriter {
           // push the authentication context
           // this.authenticationContext
           loadThis();
-          getField(classType, "authenticationContext", AUTHENTICATION_CONTEXT_TYPE);
+          getField(classType, authenticationContextFieldName, AUTHENTICATION_CONTEXT_TYPE);
 
           // push all the actions on to the stack
           List<Type> actionEnumSetParamTypes = new ArrayList<>();
@@ -345,6 +352,41 @@ public class AuthEnforceRewriter implements ClassRewriter {
                                                                       Type.getType(Set.class))));
         }
       };
+    }
+
+    private String generateUniqueFieldName(String fieldName) {
+      // pre-pend current system time to make it unique
+      return "_" + System.currentTimeMillis() + fieldName;
+    }
+
+    private void generateFieldAndSetter(String name, Type type) {
+      String setterMethodName = "set" + name;
+      super.visitField(Modifier.PRIVATE, name, type.getDescriptor(), null, null);
+      Method method = new Method(setterMethodName, Type.getMethodDescriptor(Type.getType(Void.class), type));
+      MethodVisitor methodVisitor = super.visitMethod(Modifier.PRIVATE, method.getName(), method.getDescriptor(),
+                                                      null, null);
+      // Put annotation on the method
+      AnnotationVisitor annotationVisitor = methodVisitor.visitAnnotation(Type.getType(Inject.class).getDescriptor(),
+                                                                          true);
+      annotationVisitor.visitEnd();
+
+      GeneratorAdapter generatorAdapter = new GeneratorAdapter(Modifier.PRIVATE, method, methodVisitor);
+
+      generatorAdapter.loadThis();
+      generatorAdapter.loadArg(0);
+      generatorAdapter.putField(classType, name, type);
+      generatorAdapter.returnValue();
+      generatorAdapter.visitMaxs(0, 0);
+      generatorAdapter.endMethod();
+    }
+
+    @Override
+    public void visitEnd() {
+      if (!methodAnnotations.isEmpty()) {
+        generateFieldAndSetter(authorizationEnforcerFieldName, AUTHORIZATION_ENFORCER_TYPE);
+        generateFieldAndSetter(authenticationContextFieldName, AUTHENTICATION_CONTEXT_TYPE);
+      }
+      super.visitEnd();
     }
   }
 
