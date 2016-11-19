@@ -119,9 +119,8 @@ public class BodyProducerAdapter extends BodyProducer {
       }
     } catch (Throwable t) {
       throwable.addSuppressed(t);
-
       // nothing much can be done. Simply emit a debug log.
-      LOG.debug("Exception in calling HttpContentProducer.onError.", t);
+      LOG.warn("Exception in calling HttpContentProducer.onError.", t);
     }
 
     try {
