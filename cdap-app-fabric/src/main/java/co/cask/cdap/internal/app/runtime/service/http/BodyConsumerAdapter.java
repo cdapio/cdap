@@ -32,6 +32,8 @@ import com.google.common.collect.Multimap;
 import org.apache.twill.common.Cancellable;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 
@@ -39,6 +41,8 @@ import javax.annotation.Nullable;
  * An adapter class to delegate calls from {@link BodyConsumer} to {@link HttpContentConsumer}.
  */
 final class BodyConsumerAdapter extends BodyConsumer {
+
+  private static final Logger LOG = LoggerFactory.getLogger(BodyConsumerAdapter.class);
 
   private final DelayedHttpServiceResponder responder;
   private final HttpContentConsumer delegate;
@@ -173,6 +177,7 @@ final class BodyConsumerAdapter extends BodyConsumer {
       }
     } catch (Throwable t) {
       responder.setTransactionFailureResponse(t);
+      LOG.debug("Exception in calling HttpContentConsumer.onError", t);
     } finally {
       try {
         responder.execute(false);
