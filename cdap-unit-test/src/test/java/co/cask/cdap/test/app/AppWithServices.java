@@ -35,6 +35,7 @@ import co.cask.cdap.api.worker.WorkerContext;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import org.apache.tephra.TransactionFailureException;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -258,30 +259,34 @@ public class AppWithServices extends AbstractApplication {
 
     @Override
     public void destroy() {
-      getContext().execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          KeyValueTable table = context.getDataset(DATASET_NAME);
-          table.write(DATASET_TEST_KEY_STOP, valueToWriteOnStop);
+      try {
+        getContext().execute(new TxRunnable() {
+          @Override
+          public void run(DatasetContext context) throws Exception {
+            KeyValueTable table = context.getDataset(DATASET_NAME);
+            table.write(DATASET_TEST_KEY_STOP, valueToWriteOnStop);
 
-          // Test different cases of getting datasets - datasets with the same arguments should be the same instance
-          // while datasets with different arguments should be different instances
-          KeyValueTable table2 = context.getDataset(DATASET_NAME, ImmutableMap.of("arg", "value"));
-          KeyValueTable table3 = context.getDataset(DATASET_NAME, ImmutableMap.of("arg", "value"));
-          KeyValueTable table4 = context.getDataset(DATASET_NAME, ImmutableMap.of("arg", "value2"));
+            // Test different cases of getting datasets - datasets with the same arguments should be the same instance
+            // while datasets with different arguments should be different instances
+            KeyValueTable table2 = context.getDataset(DATASET_NAME, ImmutableMap.of("arg", "value"));
+            KeyValueTable table3 = context.getDataset(DATASET_NAME, ImmutableMap.of("arg", "value"));
+            KeyValueTable table4 = context.getDataset(DATASET_NAME, ImmutableMap.of("arg", "value2"));
 
-          // table and table2 have different arguments and thus should be different instances
-          if (System.identityHashCode(table) != System.identityHashCode(table2)) {
-            // table2 and table3 have the same arguments and thus should be the same instance
-            if (System.identityHashCode(table2) == System.identityHashCode(table3)) {
-              // table2 and table4 have different arguments and thus should be different instances
-              if (System.identityHashCode(table2) != System.identityHashCode(table4)) {
-                table2.write(DATASET_TEST_KEY_STOP_2, DATASET_TEST_VALUE_STOP_2);
+            // table and table2 have different arguments and thus should be different instances
+            if (System.identityHashCode(table) != System.identityHashCode(table2)) {
+              // table2 and table3 have the same arguments and thus should be the same instance
+              if (System.identityHashCode(table2) == System.identityHashCode(table3)) {
+                // table2 and table4 have different arguments and thus should be different instances
+                if (System.identityHashCode(table2) != System.identityHashCode(table4)) {
+                  table2.write(DATASET_TEST_KEY_STOP_2, DATASET_TEST_VALUE_STOP_2);
+                }
               }
             }
           }
-        }
-      });
+        });
+      } catch (TransactionFailureException e) {
+        throw Throwables.propagate(e);
+      }
     }
 
     @Override

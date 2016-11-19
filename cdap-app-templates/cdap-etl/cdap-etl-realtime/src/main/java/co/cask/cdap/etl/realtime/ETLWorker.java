@@ -68,6 +68,7 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -310,17 +311,21 @@ public class ETLWorker extends AbstractWorker {
     Set<String> transformErrorsWithoutDataset = Sets.newHashSet();
     // Fetch SourceState from State Table.
     // Only required at the beginning since we persist the state if there is a change.
-    context.execute(new TxRunnable() {
-      @Override
-      public void run(DatasetContext context) throws Exception {
-        KeyValueTable stateTable = context.getDataset(ETLRealtimeApplication.STATE_TABLE);
-        byte[] stateBytes = stateTable.read(stateStoreKeyBytes);
-        if (stateBytes != null) {
-          SourceState state = GSON.fromJson(Bytes.toString(stateBytes), SourceState.class);
-          currentState.setState(state);
+    try {
+      context.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          KeyValueTable stateTable = context.getDataset(ETLRealtimeApplication.STATE_TABLE);
+          byte[] stateBytes = stateTable.read(stateStoreKeyBytes);
+          if (stateBytes != null) {
+            SourceState state = GSON.fromJson(Bytes.toString(stateBytes), SourceState.class);
+            currentState.setState(state);
+          }
         }
-      }
-    });
+      });
+    } catch (TransactionFailureException e) {
+      throw Throwables.propagate(e);
+    }
 
     DefaultEmitter<Object> sourceEmitter = new DefaultEmitter<>();
     TrackedEmitter<Object> trackedSourceEmitter =
