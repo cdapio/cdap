@@ -43,7 +43,7 @@ public class BatchSinkFunction implements PairFlatMapFunction<Object, Object, Ob
       BatchSink<Object, Object, Object> batchSink = pluginFunctionContext.createPlugin();
       batchSink.initialize(pluginFunctionContext.createBatchRuntimeContext());
       transform = new TrackedTransform<>(batchSink, pluginFunctionContext.createStageMetrics(),
-                                         pluginFunctionContext.getDataTracer());
+                                         pluginFunctionContext.getDataTracer(), TrackedTransform.RECORDS_IN, null);
       emitter = new TransformingEmitter<>(new Function<KeyValue<Object, Object>, Tuple2<Object, Object>>() {
         @Override
         public Tuple2<Object, Object> apply(KeyValue<Object, Object> input) {
