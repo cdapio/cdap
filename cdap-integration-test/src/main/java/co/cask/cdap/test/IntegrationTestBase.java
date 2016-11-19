@@ -284,7 +284,7 @@ public abstract class IntegrationTestBase {
    * "instanceUri" should be specified in the format [host]:[port].
    * Defaults to "localhost:11015".
    */
-  protected String getInstanceURI() {
+  protected static String getInstanceURI() {
     return System.getProperty("instanceUri", "localhost:11015");
   }
 
