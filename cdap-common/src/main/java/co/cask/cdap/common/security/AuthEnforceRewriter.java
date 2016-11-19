@@ -122,7 +122,6 @@ public class AuthEnforceRewriter implements ClassRewriter {
   private static final Type ACTION_TYPE = Type.getType(Action.class);
   private static final Type AUTH_ENFORCE_UTIL_TYPE = Type.getType(AuthEnforceUtil.class);
 
-
   @Override
   public byte[] rewriteClass(String className, InputStream input) throws IOException {
     byte[] classBytes = ByteStreams.toByteArray(input);
@@ -149,7 +148,6 @@ public class AuthEnforceRewriter implements ClassRewriter {
     cr.accept(new AuthEnforceAnnotationRewriter(className, cw, methodAnnotations), ClassReader.EXPAND_FRAMES);
     return cw.toByteArray();
   }
-
 
   /**
    * A {@link ClassVisitor} which is used in the first pass of the {@link AuthEnforceRewriter} to detect and store
@@ -185,7 +183,6 @@ public class AuthEnforceRewriter implements ClassRewriter {
       if (interfaceClass || Modifier.isStatic(access)) {
         return mv;
       }
-
 
       // Visit the annotations of the method to determine if it has AuthEnforce annotation. If it does then collect
       // AuthEnforce annotation details and also sets a boolean flag hasEnforce which is used later in
@@ -351,7 +348,6 @@ public class AuthEnforceRewriter implements ClassRewriter {
     }
   }
 
-
   /**
    * Process {@link AnnotationNode} information collected on a method parameters
    *
@@ -376,7 +372,6 @@ public class AuthEnforceRewriter implements ClassRewriter {
     }
     return parameterAnnotation;
   }
-
 
   /**
    * A class which can process {@link AuthEnforce} {@link AnnotationNode}
