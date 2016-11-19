@@ -177,7 +177,7 @@ final class BodyConsumerAdapter extends BodyConsumer {
       }
     } catch (Throwable t) {
       responder.setTransactionFailureResponse(t);
-      LOG.debug("Exception in calling HttpContentConsumer.onError", t);
+      LOG.warn("Exception in calling HttpContentConsumer.onError", t);
     } finally {
       try {
         responder.execute(false);
