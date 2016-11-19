@@ -55,7 +55,6 @@ public final class MainClassLoader extends InterceptableClassLoader {
   private final AuthEnforceRewriter authEnforceRewriter;
   private final Function<String, URL> resourceLookup;
   private final Map<String, Boolean> cache;
-  private RewritesNeeded rewritesNeeded;
 
   /**
    * @return a new instance from the current context classloader or the system classloader. The returned
@@ -124,12 +123,7 @@ public final class MainClassLoader extends InterceptableClassLoader {
   @Override
   protected boolean needIntercept(String className) {
     try {
-      rewritesNeeded = new RewritesNeeded();
-      rewritesNeeded.setDatasetRewriteNeeded(Classes.isSubTypeOf(className, DATASET_CLASS_NAME, resourceLookup, cache));
-      // Authorization annotation can only exists in cdap classes so we need to overwrite only classes
-      // in co.cask.cdap package
-      rewritesNeeded.setAuthRewriteNeeded(className.startsWith("co.cask.cdap"));
-      return rewritesNeeded.needsRewrite();
+      return isRewriteNeeded(className);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
@@ -137,10 +131,10 @@ public final class MainClassLoader extends InterceptableClassLoader {
 
   @Override
   public byte[] rewriteClass(String className, InputStream input) throws IOException {
-    if (rewritesNeeded.isDatasetRewriteNeeded()) {
+    if (isDatasetRewriteNeeded(className)) {
       input = new ByteArrayInputStream(datasetRewriter.rewriteClass(className, input));
     }
-    if (rewritesNeeded.isAuthRewriteNeeded()) {
+    if (isAuthRewriteNeeded(className)) {
       input = new ByteArrayInputStream(authEnforceRewriter.rewriteClass(className, input));
     }
     return ByteStreams.toByteArray(input);
@@ -170,28 +164,15 @@ public final class MainClassLoader extends InterceptableClassLoader {
     return urls.toArray(new URL[urls.size()]);
   }
 
-  private static final class RewritesNeeded {
-    private boolean datasetRewriteNeeded;
-    private boolean authRewriteNeeded;
+  private boolean isRewriteNeeded(String className) throws IOException {
+    return isDatasetRewriteNeeded(className) || isAuthRewriteNeeded(className);
+  }
 
-    boolean isDatasetRewriteNeeded() {
-      return datasetRewriteNeeded;
-    }
+  private boolean isDatasetRewriteNeeded(String className) throws IOException {
+    return Classes.isSubTypeOf(className, DATASET_CLASS_NAME, resourceLookup, cache);
+  }
 
-    void setDatasetRewriteNeeded(boolean datasetRewriteNeeded) {
-      this.datasetRewriteNeeded = datasetRewriteNeeded;
-    }
-
-    boolean isAuthRewriteNeeded() {
-      return authRewriteNeeded;
-    }
-
-    void setAuthRewriteNeeded(boolean authRewriteNeeded) {
-      this.authRewriteNeeded = authRewriteNeeded;
-    }
-
-    boolean needsRewrite() {
-      return datasetRewriteNeeded || authRewriteNeeded;
-    }
+  private boolean isAuthRewriteNeeded(String className) {
+    return className.startsWith("co.cask.cdap.");
   }
 }

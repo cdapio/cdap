@@ -47,19 +47,26 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface AuthEnforce {
 
-  // Specifies the entity on which authorization will be enforced. Method parameters and class variables which are
-  // needed as entities should be marked with Name annotation with a unique name and those names should be
-  // provided here. It can either be an EntityId or an array of Strings from which the EntityId on which enforcement
-  // is needed (specified through AuthEnforce#enforceOn()) can be constructed. This will first be looked up
-  // in method parameter and if not found it will be looked up in the class member variable. If a class member
-  // variable is marked with the same name as a method parameter then the method parameter will take precedence over
-  // the class member variable. If you you want the class member variable to be used then specify it
+  /**
+   * Specifies the entity on which authorization will be enforced. Method parameters and class variables which are
+   * needed as entities should be marked with {@link Name} annotation with a unique name and those names should be
+   * provided here. It can either be an EntityId or an array of Strings from which the EntityId on which enforcement
+   * is needed (specified through {@link AuthEnforce#enforceOn()}) can be constructed. This will first be looked up
+   * in method parameter and if not found it will be looked up in the class member variable. If a class member
+   * variable is marked with the same name as a method parameter then the method parameter will take precedence over
+   * the class member variable. If you you want the class member variable to be used then specify it with
+   * this.AnnotationName
+   */
   String[] entities();
 
-  // CDAP entities (see EntityId) class on which enforcement will be done. If you want to enforce on the
-  // parent of the entity specify that EntityId class here
+  /**
+   * CDAP entities (see {@link EntityId}) class on which enforcement will be done. If
+   * you want to enforce on the parent of the entity specify that EntityId class here
+   */
   Class<? extends EntityId> enforceOn();
 
-  // An array of Action to be checked during enforcement
+  /**
+   * An array of {@link Action} to be checked during enforcement
+   */
   Action[] actions();
 }

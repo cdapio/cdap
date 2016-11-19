@@ -33,6 +33,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.AdviceAdapter;
 import org.objectweb.asm.commons.Method;
+import org.objectweb.asm.tree.AnnotationNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -129,23 +130,24 @@ public class AuthEnforceRewriter implements ClassRewriter {
     // and parameters for the method for second pass in which class rewrite will be performed.
     ClassReader cr = new ClassReader(classBytes);
 
-    // SKIP_CODE to make the first pass faster since in the first pass we just want to process annotations to check
-    // if the class has any method with AuthEnforce annotation. If such method is found we also store the parameters
-    // which has the named annotations as specified in the entities field of the AuthEnforce.
+    // SKIP_CODE SKIP_DEBUG and SKIP_FRAMESto make the first pass faster since in the first pass we just want to
+    // process annotations to check if the class has any method with AuthEnforce annotation. If such method is found
+    // we also store the parameters which has the named annotations as specified in the entities field of the
+    // AuthEnforce.
     AuthEnforceAnnotationVisitor classVisitor = new AuthEnforceAnnotationVisitor(className);
     cr.accept(classVisitor,
               ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
     Map<Method, AnnotationDetails> methodAnnotations = classVisitor.getMethodAnnotations();
-    if (!methodAnnotations.isEmpty()) {
-      // We found some method which has AuthEnforce annotation so we need a second pass in to rewrite the class
-      // in second pass we COMPUTE_FRAMES and visit classes with EXPAND_FRAMES
-      ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-      cr.accept(new AuthEnforceAnnotationRewriter(className, cw, methodAnnotations), ClassReader.EXPAND_FRAMES);
-      return cw.toByteArray();
+    if (methodAnnotations.isEmpty()) {
+      // if no AuthEnforce annotation was found then return the original class bytes
+      return classBytes;
     }
-    // if no AuthEnforce annotation was found then return the original class bytes
-    return classBytes;
+    // We found some method which has AuthEnforce annotation so we need a second pass in to rewrite the class
+    // in second pass we COMPUTE_FRAMES and visit classes with EXPAND_FRAMES
+    ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+    cr.accept(new AuthEnforceAnnotationRewriter(className, cw, methodAnnotations), ClassReader.EXPAND_FRAMES);
+    return cw.toByteArray();
   }
 
 
@@ -154,11 +156,11 @@ public class AuthEnforceRewriter implements ClassRewriter {
    * method with {@link AuthEnforce} annotations. Note: This is a visitor, to know the order of in which the below
    * overridden methods will be called and their overall responsibility please see {@link ClassVisitor} documentation.
    */
-  private final class AuthEnforceAnnotationVisitor extends ClassVisitor {
+  private static final class AuthEnforceAnnotationVisitor extends ClassVisitor {
 
     private final String className;
-    private boolean interfaceClass;
     private final Map<Method, AnnotationDetails> methodAnnotations;
+    private boolean interfaceClass;
 
     AuthEnforceAnnotationVisitor(String className) {
       super(Opcodes.ASM5);
@@ -186,115 +188,68 @@ public class AuthEnforceRewriter implements ClassRewriter {
 
 
       // Visit the annotations of the method to determine if it has AuthEnforce annotation. If it does then collect
-      // all the AuthEnforce annotation details through AnnotationVisitor and also sets a boolean flag hasEnforce
-      // which is used later in visitParameterAnnotation to visit the annotations on parameters of this method only
-      // if it had AuthEnforce annotation.
-      mv = new MethodVisitor(Opcodes.ASM5, mv) {
+      // AuthEnforce annotation details and also sets a boolean flag hasEnforce which is used later in
+      // visitParameterAnnotation to visit the annotations on parameters of this method only if it had AuthEnforce
+      // annotation.
+      return new MethodVisitor(Opcodes.ASM5, mv) {
 
+        final Map<Integer, AnnotationNode> parameterAnnotationNode = new HashMap<>();
         boolean hasAuthEnforce;
-        AuthAnnotation authAnnotation;
-        final Map<String, Integer> paramAnnotation = new HashMap<>();
+        AnnotationNode authEnforceAnnotationNode;
 
         @Override
         public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
           AnnotationVisitor annotationVisitor = super.visitAnnotation(desc, visible);
 
-
           // If the annotation is not visible or its not AuthEnforce just skip
           if (!(visible && AuthEnforce.class.getName().equals(Type.getType(desc).getClassName()))) {
             return annotationVisitor;
           }
-
-          // AuthEnforce annotation is present so visit it
-          // set the flag which will be used to decide whether to visit parameter annotation or not
           hasAuthEnforce = true;
-          final Type[] enforceOn = new Type[1];
-          final List<String> entities = new ArrayList<>();
-          final Set<Action> actions = new HashSet<>();
-
-          // We found AuthEnforce annotation so visit the annotation to collect all the specified details
-          // See AnnotationVisitor documentation to know the order in which the below overridden methods are
-          // called and their responsibilities.
-          annotationVisitor = new AnnotationVisitor(Opcodes.ASM5, annotationVisitor) {
-            // gets the entity id class on which enforcement has to performed.
-            @Override
-            public void visit(String name, Object value) {
-
-              enforceOn[0] = (Type) value;
-
-              super.visit(name, value);
-            }
-
-            // gets the entity parts and actions for enforcement by visiting the array for values
-            @Override
-            public AnnotationVisitor visitArray(String name) {
-              AnnotationVisitor av = super.visitArray(name);
-              return new AnnotationVisitor(Opcodes.ASM5, av) {
-                // get the entity parts on which enforcement needs to be performed
-                @Override
-                public void visit(String name, Object value) {
-                  entities.add((String) value);
-                  super.visit(name, value);
-                }
-
-                //  get the actions which needs to be checked during enforcement
-                @Override
-                public void visitEnum(String name, String desc, String value) {
-                  actions.add(Action.valueOf(value));
-                  super.visitEnum(name, desc, value);
-                }
-              };
-            }
-          };
-          authAnnotation = new AuthAnnotation(entities, enforceOn[0], actions);
-          return annotationVisitor;
+          authEnforceAnnotationNode = new AnnotationNode(desc);
+          return authEnforceAnnotationNode;
         }
 
         @Override
         public AnnotationVisitor visitParameterAnnotation(final int parameter, String desc, boolean visible) {
           AnnotationVisitor annotationVisitor = super.visitParameterAnnotation(parameter, desc, visible);
-          // If AuthEnforce annotation was used on this method then look for parameters with named annotation and
+          if (!(hasAuthEnforce && visible && Name.class.getName().equals(Type.getType(desc).getClassName()))) {
+            return annotationVisitor;
+          }
+          // Since AuthEnforce annotation was used on this method then look for parameters with named annotation and
           // store their position.
           // TODO: Support looking class field too in the ClassVisitor
           // TODO: Should also pick up names from QueryParam and PathParam annotations here as needed later
-          if (hasAuthEnforce && visible && Name.class.getName().equals(Type.getType(desc).getClassName())) {
-            annotationVisitor = new AnnotationVisitor(Opcodes.ASM5, annotationVisitor) {
-              @Override
-              public void visit(String name, Object value) {
-                // we expect the parameters to have unique name
-                Preconditions.checkArgument(!paramAnnotation.containsKey(value),
-                                            String.format("A parameter with name %s was already found at position %s." +
-                                                            " Please use unique names.", value,
-                                                          paramAnnotation.get(value)));
-                paramAnnotation.put((String) value, parameter);
-                super.visit(name, value);
-              }
-            };
-          }
-          return annotationVisitor;
+          AnnotationNode annotationNode = new AnnotationNode(desc);
+          // store the parameter position and its annotation detail
+          parameterAnnotationNode.put(parameter, annotationNode);
+          return annotationNode;
         }
 
-        // This is called at the end of visiting method. Here if the method has AuthEnforce annotation then we store
-        // all the annotation details in with the method details for second pass in which we will perform class
-        // rewrite
+        // This is called at the end of visiting method. Here if the method has AuthEnforce annotation then we
+        // process all the AnnotationNode information collected by visiting method annotation and parameter annotation.
+        // store for second pass in which we will perform class rewrite
         @Override
         public void visitEnd() {
           if (hasAuthEnforce) {
-            // verify that we found all the values specified in entities
-            for (String name : authAnnotation.getEntities()) {
+            AuthEnforceAnnotationNodeProcessor nodeProcessor =
+              new AuthEnforceAnnotationNodeProcessor(authEnforceAnnotationNode);
+            Map<String, Integer> paramAnnotation = processParameterAnnotationNode(parameterAnnotationNode);
+
+            for (String name : nodeProcessor.getEntities()) {
               Preconditions.checkArgument(paramAnnotation.containsKey(name),
                                           String.format("No method parameter found wih a name %s for method %s in " +
                                                           "class %s whereas it was specified in AuthEnforce " +
                                                           "annotation.", name, methodName, className));
             }
-            // Store all the information for the second pass
+            // Store all the information properly for the second pass
             methodAnnotations.put(new Method(methodName, methodDesc),
-                                  new AnnotationDetails(authAnnotation, paramAnnotation));
+                                  new AnnotationDetails(nodeProcessor.getEntities(), nodeProcessor.getEnforceOn(),
+                                                        nodeProcessor.getActions(), paramAnnotation));
           }
           super.visitEnd();
         }
       };
-      return mv;
     }
 
     Map<Method, AnnotationDetails> getMethodAnnotations() {
@@ -327,86 +282,167 @@ public class AuthEnforceRewriter implements ClassRewriter {
                                      String[] exceptions) {
       MethodVisitor mv = super.visitMethod(access, methodName, methodDesc, signature, exceptions);
       // From the first pass we know the methods which has AuthEnforce annotation and needs to be rewritten
-      if (methodAnnotations.containsKey(new Method(methodName, methodDesc))) {
-        return new AdviceAdapter(Opcodes.ASM5, mv, access, methodName, methodDesc) {
-          @Override
-          protected void onMethodEnter() {
-            // Get the annotation details which was collected by visiting annotations during the first pass
-            AnnotationDetails annotationDetails = methodAnnotations.get(new Method(methodName, methodDesc));
-
-            LOG.debug("AuthEnforce annotation found in class {} on method {}. Authorization enforcement command will " +
-                        "be generated for Entities: {}, enforceOn: {}, actions: {}.", className, methodName,
-                      annotationDetails.getAnnotation().getEntities(), annotationDetails.getAnnotation().getEnforceOn(),
-                      annotationDetails.getAnnotation().getActions());
-
-            // TODO: Remove this one we support AuthEnforce with multiple string parts
-            Preconditions.checkArgument(annotationDetails.getAnnotation().getEntities().size() == 1,
-                                        "Currently Authorization annotation is only supported for EntityId from " +
-                                          "method parameter.");
-
-            // do class rewrite to generate the call to
-            // AuthEnforceUtil#enforce(AuthorizationEnforcer, EntityId, AuthenticationContext, Set)
-
-            // TODO AuthorizationEnforcer field should be generated in the class containing annotation through class
-            // rewrite itself. Support this here too.
-            // this.authorizationEnforcer
-            loadThis();
-            getField(classType, "authorizationEnforcer", AUTHORIZATION_ENFORCER_TYPE);
-
-            // push the parameters of method call on to the stack
-
-            // pushed the entity id
-            visitVarInsn(ALOAD, annotationDetails.getParameterAnnotation()
-              .get(annotationDetails.getAnnotation().getEntities().get(0)) + 1); // + 1 because 0 specify "this"
-
-            // TODO Similar to AuthorizationEnforcer AuthenticationContext field should be generated through class
-            // rewrite. Support this too.
-            // push the authentication context
-            // this.authenticationContext
-            loadThis();
-            getField(classType, "authenticationContext", AUTHENTICATION_CONTEXT_TYPE);
-
-            // push all the actions on to the stack
-            List<Type> actionEnumSetParamTypes = new ArrayList<>();
-            for (Action action : annotationDetails.getAnnotation().getActions()) {
-              getStatic(ACTION_TYPE, action.name().toUpperCase(), ACTION_TYPE);
-              // store the Type of Enum for all the action pushed on stack as it will later be used to generate a
-              // method call instruction
-              actionEnumSetParamTypes.add(Type.getType(Enum.class));
-            }
-
-            // create a EnumSet from the above actions
-            invokeStatic(Type.getType(EnumSet.class),
-                         new Method("of", Type.getMethodDescriptor(Type.getType(EnumSet.class),
-                                                                   actionEnumSetParamTypes.toArray(
-                                                                     new Type[actionEnumSetParamTypes.size()]))));
-
-            // generate a call to AuthEnforceUtil#enforce with the above parameters on the stack
-            invokeStatic(AUTH_ENFORCE_UTIL_TYPE,
-                         new Method("enforce", Type.getMethodDescriptor(Type.VOID_TYPE,
-                                                                        AUTHORIZATION_ENFORCER_TYPE,
-                                                                        Type.getType(EntityId.class),
-                                                                        AUTHENTICATION_CONTEXT_TYPE,
-                                                                        Type.getType(Set.class))));
-          }
-        };
+      // if this method was not identified earlier as marked with AuthEnforce annotation just skip it
+      if (!methodAnnotations.containsKey(new Method(methodName, methodDesc))) {
+        return mv;
       }
-      return mv;
+      return new AdviceAdapter(Opcodes.ASM5, mv, access, methodName, methodDesc) {
+        @Override
+        protected void onMethodEnter() {
+          // Get the annotation details which was collected by visiting annotations during the first pass
+          AnnotationDetails annotationDetails = methodAnnotations.get(new Method(methodName, methodDesc));
+
+          LOG.trace("AuthEnforce annotation found in class {} on method {}. Authorization enforcement command will " +
+                      "be generated for Entities: {}, enforceOn: {}, actions: {}.", className, methodName,
+                    annotationDetails.getEntities(), annotationDetails.getEnforceOn(),
+                    annotationDetails.getActions());
+
+          // TODO: Remove this one we support AuthEnforce with multiple string parts
+          Preconditions.checkArgument(annotationDetails.getEntities().size() == 1,
+                                      "Currently Authorization annotation is only supported for EntityId from " +
+                                        "method parameter.");
+
+          // do class rewrite to generate the call to
+          // AuthEnforceUtil#enforce(AuthorizationEnforcer, EntityId, AuthenticationContext, Set)
+
+          // TODO AuthorizationEnforcer field should be generated in the class containing annotation through class
+          // rewrite itself. Support this here too.
+          // this.authorizationEnforcer
+          loadThis();
+          getField(classType, "authorizationEnforcer", AUTHORIZATION_ENFORCER_TYPE);
+
+          // push the parameters of method call on to the stack
+
+          // pushed the entity id
+          visitVarInsn(ALOAD, annotationDetails.getParameterAnnotation()
+            .get(annotationDetails.getEntities().get(0)) + 1); // + 1 because 0 specify "this"
+
+          // TODO Similar to AuthorizationEnforcer AuthenticationContext field should be generated through class
+          // rewrite. Support this too.
+          // push the authentication context
+          // this.authenticationContext
+          loadThis();
+          getField(classType, "authenticationContext", AUTHENTICATION_CONTEXT_TYPE);
+
+          // push all the actions on to the stack
+          List<Type> actionEnumSetParamTypes = new ArrayList<>();
+          for (Action action : annotationDetails.getActions()) {
+            getStatic(ACTION_TYPE, action.name().toUpperCase(), ACTION_TYPE);
+            // store the Type of Enum for all the action pushed on stack as it will later be used to generate a
+            // method call instruction
+            actionEnumSetParamTypes.add(Type.getType(Enum.class));
+          }
+
+          // create a EnumSet from the above actions
+          invokeStatic(Type.getType(EnumSet.class),
+                       new Method("of", Type.getMethodDescriptor(Type.getType(EnumSet.class),
+                                                                 actionEnumSetParamTypes.toArray(
+                                                                   new Type[actionEnumSetParamTypes.size()]))));
+
+          // generate a call to AuthEnforceUtil#enforce with the above parameters on the stack
+          invokeStatic(AUTH_ENFORCE_UTIL_TYPE,
+                       new Method("enforce", Type.getMethodDescriptor(Type.VOID_TYPE,
+                                                                      AUTHORIZATION_ENFORCER_TYPE,
+                                                                      Type.getType(EntityId.class),
+                                                                      AUTHENTICATION_CONTEXT_TYPE,
+                                                                      Type.getType(Set.class))));
+        }
+      };
+    }
+  }
+
+
+  /**
+   * Process {@link AnnotationNode} information collected on a method parameters
+   *
+   * @param parameterAnnotationNode a {@link Map} of parameter position and annotation details of that parameter
+   * @return a new {@link Map} where the key is the parameter name given in the annotation and value is the
+   * position of the parameter.
+   */
+  private static Map<String, Integer> processParameterAnnotationNode(Map<Integer, AnnotationNode>
+                                                                       parameterAnnotationNode) {
+    Map<String, Integer> parameterAnnotation = new HashMap<>();
+    for (Map.Entry<Integer, AnnotationNode> entry : parameterAnnotationNode.entrySet()) {
+      // the AnnotationNode of parameter will be an array of size 2 where 0 is "value" and 1 is the name provided in
+      // the annotation.
+      String paraName = (String) entry.getValue().values.get(1);
+      // We expect all parameters to have unique names to ensure that here
+      Preconditions.checkArgument(!parameterAnnotation.containsKey(paraName),
+                                  String.format("A parameter with name %s was already found at position %s." +
+                                                  " Please use unique names.", paraName,
+                                                parameterAnnotation.get(paraName)));
+      // store the parameter position with the unique name given to it
+      parameterAnnotation.put(paraName, entry.getKey());
+    }
+    return parameterAnnotation;
+  }
+
+
+  /**
+   * A class which can process {@link AuthEnforce} {@link AnnotationNode}
+   */
+  private static class AuthEnforceAnnotationNodeProcessor {
+
+    final Set<Action> actions = new HashSet<>();
+    Type enforceOn = null;
+    List<String> entities = null;
+
+    AuthEnforceAnnotationNodeProcessor(AnnotationNode annotationNode) {
+      List values = annotationNode.values;
+      // AuthEnforce AnnotationNode will have 6 values: 3 field names and another 3 field containing their values.
+      Preconditions.checkArgument(values.size() == 6, String.format("AuthEnforce annotation has three field and " +
+                                                                      "with their values total elements should be 6 " +
+                                                                      "but found %s", values.size()));
+      for (int i = 0; i < 6; i = i + 2) { // increment by 2 to go to next field
+        Object name = values.get(i);
+        if ("entities".equals(name)) {
+          entities = (List<String>) values.get(i + 1);
+        } else if ("enforceOn".equals(name)) {
+          enforceOn = (Type) values.get(i + 1);
+        } else if ("actions".equals(name)) {
+          // Actions is a ArrayList<String[]> where each String array is of size 2. String[0] is class name Action
+          // class and String[1] is the action which was specified in the annotation
+          List<String[]> actionWithClassName = (List<String[]>) values.get(i + 1);
+          for (String[] action : actionWithClassName) {
+            Preconditions.checkArgument(action.length == 2);
+            actions.add(Action.valueOf(action[1]));
+          }
+        } else {
+          throw new RuntimeException(String.format("Found invalid entry %s while parsing AuthEnforce details " +
+                                                     "%s", name, values));
+        }
+      }
+    }
+
+    Type getEnforceOn() {
+      return enforceOn;
+    }
+
+    List<String> getEntities() {
+      return entities;
+    }
+
+    Set<Action> getActions() {
+      return actions;
     }
   }
 
   /**
-   * Class to store all the information specified in {@link AuthEnforce} on a method
+   * A wrapper to store all the annotation details of method which has {@link AuthEnforce} annotation and parameters
+   * marked with {@link Name} annotation specifying the entities
    */
-  private class AuthAnnotation {
+  private static final class AnnotationDetails {
     final List<String> entities;
     final Type enforceOn;
     final Set<Action> actions;
+    final Map<String, Integer> parameterAnnotation;
 
-    AuthAnnotation(List<String> entities, Type enforceOn, Set<Action> actions) {
+    AnnotationDetails(List<String> entities, Type enforceOn, Set<Action> actions,
+                      Map<String, Integer> parameterAnnotation) {
       this.entities = entities;
       this.enforceOn = enforceOn;
       this.actions = actions;
+      this.parameterAnnotation = parameterAnnotation;
     }
 
     List<String> getEntities() {
@@ -419,24 +455,6 @@ public class AuthEnforceRewriter implements ClassRewriter {
 
     Set<Action> getActions() {
       return actions;
-    }
-  }
-
-  /**
-   * A wrapper to store all the annotation details of method which has {@link AuthEnforce} annotation and parameters
-   * marked with {@link Name} annotation specifying the entities
-   */
-  private class AnnotationDetails {
-    final AuthAnnotation annotation;
-    final Map<String, Integer> parameterAnnotation;
-
-    AnnotationDetails(AuthAnnotation annotation, Map<String, Integer> parameterAnnotation) {
-      this.annotation = annotation;
-      this.parameterAnnotation = parameterAnnotation;
-    }
-
-    AuthAnnotation getAnnotation() {
-      return annotation;
     }
 
     Map<String, Integer> getParameterAnnotation() {

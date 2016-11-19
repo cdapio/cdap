@@ -98,7 +98,7 @@ public class AuthEnforceRewriterTest {
       // was called successfully.
       if (!(e instanceof InvocationTargetException && expectedException.isAssignableFrom(e.getCause().getClass()))) {
 
-        Assert.fail(String.format("Got exception %s while expecting %s%s%s", e,
+        Assert.fail(String.format("Got exception %s while expecting %s%s%s", e.getCause(),
                                   ExceptionAuthorizationEnforcer.ExpectedException.class.getName(),
                                   System.lineSeparator(), getFormattedStackTrace(e.getStackTrace())));
       }
