@@ -16,7 +16,7 @@
 
 package co.cask.cdap.logging.kafka;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
+import co.cask.cdap.api.log.LoggingEvent;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.write.LogWriteEvent;
 import org.apache.avro.generic.GenericRecord;
@@ -28,7 +28,7 @@ public final class KafkaLogEvent extends LogWriteEvent {
   private final int partition;
   private final long nextOffset;
 
-  public KafkaLogEvent(GenericRecord genericRecord, ILoggingEvent logEvent, LoggingContext loggingContext,
+  public KafkaLogEvent(GenericRecord genericRecord, LoggingEvent logEvent, LoggingContext loggingContext,
                        int partition, long nextOffset) {
     super(genericRecord, logEvent, loggingContext);
     this.partition = partition;

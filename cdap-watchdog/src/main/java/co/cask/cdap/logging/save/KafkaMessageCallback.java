@@ -17,12 +17,14 @@
 package co.cask.cdap.logging.save;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import co.cask.cdap.api.log.LoggingEvent;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
+import co.cask.cdap.logging.serialize.LoggingEventImpl;
 import com.google.common.collect.Lists;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.twill.kafka.client.FetchedMessage;
@@ -82,10 +84,11 @@ public class KafkaMessageCallback implements KafkaConsumer.MessageCallback {
       try {
         GenericRecord genericRecord = serializer.toGenericRecord(message.getPayload());
         ILoggingEvent event = serializer.fromGenericRecord(genericRecord);
+        LoggingEvent loggingEvent = LoggingEventImpl.getLoggingEvent(event);
         LOG.trace("Got event {} for partition {}", event, partition);
 
         LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(event.getMDCPropertyMap());
-        KafkaLogEvent logEvent = new KafkaLogEvent(genericRecord, event, loggingContext,
+        KafkaLogEvent logEvent = new KafkaLogEvent(genericRecord, loggingEvent, loggingContext,
                                                    message.getTopicPartition().getPartition(),
                                                    message.getNextOffset());
         events.add(logEvent);
