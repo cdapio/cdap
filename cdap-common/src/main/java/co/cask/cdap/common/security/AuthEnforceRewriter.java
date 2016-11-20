@@ -24,6 +24,7 @@ import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
+import com.google.inject.Inject;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -32,6 +33,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.AdviceAdapter;
+import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.slf4j.Logger;
@@ -114,6 +116,9 @@ import java.util.Set;
  * </p>
  */
 public class AuthEnforceRewriter implements ClassRewriter {
+
+  private static final String GENERATED_FIELD_PREFIX = "_";
+  private static final String GENERATED_SETTER_METHOD_PREFIX = "set";
 
   private static final Logger LOG = LoggerFactory.getLogger(AuthEnforceRewriter.class);
 
@@ -266,12 +271,16 @@ public class AuthEnforceRewriter implements ClassRewriter {
     private final String className;
     private final Type classType;
     private final Map<Method, AnnotationDetails> methodAnnotations;
+    private final String authenticationContextFieldName;
+    private final String authorizationEnforcerFieldName;
 
     AuthEnforceAnnotationRewriter(String className, ClassWriter cw, Map<Method, AnnotationDetails> methodAnnotations) {
       super(Opcodes.ASM5, cw);
       this.className = className;
       this.classType = Type.getObjectType(className.replace(".", "/"));
       this.methodAnnotations = methodAnnotations;
+      this.authenticationContextFieldName = generateUniqueFieldName("authenticationContext");
+      this.authorizationEnforcerFieldName = generateUniqueFieldName("authorizationEnforcer");
     }
 
     @Override
@@ -302,11 +311,9 @@ public class AuthEnforceRewriter implements ClassRewriter {
           // do class rewrite to generate the call to
           // AuthEnforceUtil#enforce(AuthorizationEnforcer, EntityId, AuthenticationContext, Set)
 
-          // TODO AuthorizationEnforcer field should be generated in the class containing annotation through class
-          // rewrite itself. Support this here too.
           // this.authorizationEnforcer
           loadThis();
-          getField(classType, "authorizationEnforcer", AUTHORIZATION_ENFORCER_TYPE);
+          getField(classType, authorizationEnforcerFieldName, AUTHORIZATION_ENFORCER_TYPE);
 
           // push the parameters of method call on to the stack
 
@@ -314,12 +321,10 @@ public class AuthEnforceRewriter implements ClassRewriter {
           visitVarInsn(ALOAD, annotationDetails.getParameterAnnotation()
             .get(annotationDetails.getEntities().get(0)) + 1); // + 1 because 0 specify "this"
 
-          // TODO Similar to AuthorizationEnforcer AuthenticationContext field should be generated through class
-          // rewrite. Support this too.
           // push the authentication context
           // this.authenticationContext
           loadThis();
-          getField(classType, "authenticationContext", AUTHENTICATION_CONTEXT_TYPE);
+          getField(classType, authenticationContextFieldName, AUTHENTICATION_CONTEXT_TYPE);
 
           // push all the actions on to the stack
           List<Type> actionEnumSetParamTypes = new ArrayList<>();
@@ -345,6 +350,46 @@ public class AuthEnforceRewriter implements ClassRewriter {
                                                                       Type.getType(Set.class))));
         }
       };
+    }
+
+    private String generateUniqueFieldName(String fieldName) {
+      // pre-pend current system time to make it unique
+      return GENERATED_FIELD_PREFIX + System.currentTimeMillis() + fieldName;
+    }
+
+    private void generateFieldAndSetter(String name, Type type) {
+      String setterMethodName = GENERATED_SETTER_METHOD_PREFIX + name;
+      // add the field
+      super.visitField(Modifier.PRIVATE, name, type.getDescriptor(), null, null);
+      // get the setter method details
+      Method method = new Method(setterMethodName, Type.getMethodDescriptor(Type.VOID_TYPE, type));
+      // add the setter method
+      MethodVisitor methodVisitor = super.visitMethod(Modifier.PRIVATE, method.getName(), method.getDescriptor(),
+                                                      null, null);
+      // Put annotation on the the setter method
+      AnnotationVisitor annotationVisitor = methodVisitor.visitAnnotation(Type.getType(Inject.class).getDescriptor(),
+                                                                          true);
+      annotationVisitor.visitEnd();
+
+      // Code generation for the setter method
+      GeneratorAdapter generatorAdapter = new GeneratorAdapter(Modifier.PRIVATE, method, methodVisitor);
+      generatorAdapter.loadThis();
+      // the setter method has only one argument which is what we want the field to be set to
+      generatorAdapter.loadArg(0);
+      generatorAdapter.putField(classType, name, type);
+      generatorAdapter.returnValue();
+      generatorAdapter.endMethod();
+    }
+
+    @Override
+    public void visitEnd() {
+      if (!methodAnnotations.isEmpty()) {
+        // If this class had method annotation then we need to generate the authenticaionContext and
+        // authorizationEnforcer field and their setters
+        generateFieldAndSetter(authorizationEnforcerFieldName, AUTHORIZATION_ENFORCER_TYPE);
+        generateFieldAndSetter(authenticationContextFieldName, AUTHENTICATION_CONTEXT_TYPE);
+      }
+      super.visitEnd();
     }
   }
 
