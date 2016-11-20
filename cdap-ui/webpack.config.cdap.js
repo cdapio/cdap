@@ -19,6 +19,8 @@ var CopyWebpackPlugin = require('copy-webpack-plugin');
 var path = require('path');
 var LiveReloadPlugin = require('webpack-livereload-plugin');
 var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
+var autoprefixer = require('autoprefixer');
+
 var plugins = [
   new webpack.optimize.CommonsChunkPlugin("common", "common.js", Infinity),
   new LodashModuleReplacementPlugin,
@@ -64,7 +66,7 @@ if (mode === 'production' || mode === 'build') {
 var loaders = [
   {
     test: /\.less$/,
-    loader: 'style-loader!css-loader!less-loader'
+    loader: 'style-loader!css-loader!postcss-loader!less-loader'
   },
   {
     test: /\.ya?ml$/,
@@ -84,6 +86,7 @@ var loaders = [
     }
   }
 ];
+
 module.exports = {
   context: __dirname + '/app/cdap',
   entry: {
@@ -130,6 +133,9 @@ module.exports = {
     ],
     loaders: loaders
   },
+  postcss: [
+    autoprefixer({ browsers: ['> 1%'], cascade:true })
+  ],
   output: {
     filename: './[name].js',
     path: __dirname + '/cdap_dist/cdap_assets'
