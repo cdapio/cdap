@@ -135,20 +135,20 @@ export default class HomeHeader extends Component {
             <span className="fa fa-search form-control-feedback"></span>
           </div>
         </div>
-        <div className="sort">
-          {sortDropdown}
-        </div>
         <div className="filter">
           {filterDropdown}
         </div>
-        <div className="pagination-dropdown">
-          <PaginationDropdown
-            numberOfPages={this.props.numberOfPages}
-            currentPage={this.props.currentPage}
-            onPageChange={this.props.onPageChange}
-          />
-        </div>
         <div className="view-selector pull-right">
+          <div className="sort">
+            {sortDropdown}
+          </div>
+          <div className="pagination-dropdown">
+            <PaginationDropdown
+              numberOfPages={this.props.numberOfPages}
+              currentPage={this.props.currentPage}
+              onPageChange={this.props.onPageChange}
+            />
+          </div>
           <span className="fa fa-th active"></span>
           <span className="fa fa-list"></span>
         </div>

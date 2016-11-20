@@ -82,9 +82,12 @@ export default class HeaderActions extends Component {
           <div className="navbar-item">
             <SpotlightSearch />
           </div>
-          <div className="navbar-item">
-            <span className="fa fa-bell"></span>
-          </div>
+          {
+            // FIXME: Add this later.
+            // <div className="navbar-item">
+            //   <span className="fa fa-bell"></span>
+            // </div>
+          }
           <PlusButton className="navbar-item" />
           <div
             className="navbar-item settings-dropdown navbar-cog"
