@@ -28,11 +28,9 @@ import org.iq80.leveldb.WriteBatch;
 import org.iq80.leveldb.WriteOptions;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -97,25 +95,14 @@ public class LevelDBMessageTable extends AbstractMessageTable {
   }
 
   @Override
-  public void delete(byte[] startKey, byte[] stopKey, byte[] targetTxBytes) throws IOException {
-    List<byte[]> rowKeysToDelete = new ArrayList<>();
+  protected void delete(byte[] startKey, byte[] stopKey) throws IOException {
+    WriteBatch writeBatch = levelDB.createWriteBatch();
     try (CloseableIterator<Map.Entry<byte[], byte[]>> rowIterator = new DBScanIterator(levelDB, startKey, stopKey)) {
       while (rowIterator.hasNext()) {
-        Map.Entry<byte[], byte[]> candidateRow = rowIterator.next();
-        byte[] rowKey = candidateRow.getKey();
-        Map<String, byte[]> columns = decodeValue(candidateRow.getValue());
-        if (columns != null && columns.containsKey(TX_COL)) {
-          byte[] txPtr = columns.get(TX_COL);
-          if (Bytes.equals(txPtr, targetTxBytes)) {
-            rowKeysToDelete.add(rowKey);
-          }
-        }
+        writeBatch.delete(rowIterator.next().getKey());
       }
     }
-
-    for (byte[] deleteRowKey : rowKeysToDelete) {
-      levelDB.delete(deleteRowKey);
-    }
+    levelDB.write(writeBatch, WRITE_OPTIONS);
   }
 
   @Override

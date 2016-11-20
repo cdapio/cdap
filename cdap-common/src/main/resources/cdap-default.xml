@@ -1074,6 +1074,54 @@
     <description>Scheduler queue for CDAP master services</description>
   </property>
 
+  <!-- Messaging System Configuration -->
+
+  <property>
+    <name>messaging.local.data.dir</name>
+    <value>${local.data.dir}/messaging</value>
+    <description>Local storage directory for the Messaging System. It is only used in local mode.</description>
+  </property>
+
+  <property>
+    <name>messaging.hbase.max.scan.threads</name>
+    <value>48</value>
+  </property>
+
+  <property>
+    <name>messaging.message.table.hbase.splits</name>
+    <value>16</value>
+    <description>Number of splits to use for the Message Table in HBase on table creation</description>
+  </property>
+
+  <property>
+    <name>messaging.message.table.name</name>
+    <value>tms.message</value>
+    <description>Name of the message table of the Messaging System</description>
+  </property>
+
+  <property>
+    <name>messaging.metadata.table.name</name>
+    <value>tms.meta</value>
+    <description>Name of the metadata table of the Messaging System</description>
+  </property>
+
+  <property>
+    <name>messaging.payload.table.hbase.splits</name>
+    <value>16</value>
+    <description>Number of splits to use for the Payload Table in HBase on table creation</description>
+  </property>
+
+  <property>
+    <name>messaging.payload.table.name</name>
+    <value>tms.payload</value>
+    <description>Name of the payload table of the Messaging System</description>
+  </property>
+
+  <property>
+    <name>messaging.table.expiration.seconds</name>
+    <value>300</value>
+    <description>Number of seconds that the messaging table cache will expire</description>
+  </property>
 
   <!-- Metadata Configuration -->
 

@@ -34,8 +34,8 @@ import java.util.Set;
  * Base class for Payload Table tests.
  */
 public abstract class PayloadTableTest {
-  private static final TopicId t1 = NamespaceId.DEFAULT.topic("t1");
-  private static final TopicId t2 = NamespaceId.DEFAULT.topic("t2");
+  private static final TopicId T1 = NamespaceId.DEFAULT.topic("t1");
+  private static final TopicId T2 = NamespaceId.DEFAULT.topic("t2");
 
   protected abstract PayloadTable getPayloadTable() throws Exception;
 
@@ -50,16 +50,32 @@ public abstract class PayloadTableTest {
       table.store(entryList.iterator());
       byte[] messageId = new byte[MessageId.RAW_ID_SIZE];
       MessageId.putRawId(0L, (short) 0, 0L, (short) 0, messageId, 0);
-      CloseableIterator<PayloadTable.Entry> iterator = table.fetch(topicId, txWritePtr, new MessageId(messageId),
-                                                                   true, Integer.MAX_VALUE);
-      Assert.assertTrue(iterator.hasNext());
-      PayloadTable.Entry entry = iterator.next();
-      Assert.assertArrayEquals(Bytes.toBytes(payload), entry.getPayload());
-      Assert.assertEquals(txWritePtr, entry.getTransactionWritePointer());
-      Assert.assertFalse(iterator.hasNext());
+      try (CloseableIterator<PayloadTable.Entry> iterator = table.fetch(topicId, txWritePtr,
+                                                                        new MessageId(messageId),
+                                                                        false, Integer.MAX_VALUE)) {
+        // Fetch not including the first message, expect empty
+        Assert.assertFalse(iterator.hasNext());
+      }
+
+      try (CloseableIterator<PayloadTable.Entry> iterator = table.fetch(topicId, txWritePtr,
+                                                                        new MessageId(messageId),
+                                                                        true, Integer.MAX_VALUE)) {
+        // Fetch including the first message
+        Assert.assertTrue(iterator.hasNext());
+        PayloadTable.Entry entry = iterator.next();
+        Assert.assertArrayEquals(Bytes.toBytes(payload), entry.getPayload());
+        Assert.assertEquals(txWritePtr, entry.getTransactionWritePointer());
+        Assert.assertFalse(iterator.hasNext());
+      }
+
       table.delete(topicId, txWritePtr);
-      iterator = table.fetch(topicId, txWritePtr, new MessageId(messageId), true, Integer.MAX_VALUE);
-      Assert.assertFalse(iterator.hasNext());
+
+      try (CloseableIterator<PayloadTable.Entry> iterator = table.fetch(topicId, txWritePtr,
+                                                                        new MessageId(messageId),
+                                                                        true, Integer.MAX_VALUE)) {
+        // After delete the payload, expect empty fetch
+        Assert.assertFalse(iterator.hasNext());
+      }
     }
   }
 
@@ -67,31 +83,31 @@ public abstract class PayloadTableTest {
   public void testConsumption() throws Exception {
     try (PayloadTable table = getPayloadTable()) {
       List<PayloadTable.Entry> entryList = new ArrayList<>();
-      populuateList(entryList);
+      populateList(entryList);
       table.store(entryList.iterator());
       byte[] messageId = new byte[MessageId.RAW_ID_SIZE];
       MessageId.putRawId(0L, (short) 0, 0L, (short) 0, messageId, 0);
 
       // Fetch data with 100 write pointer
-      CloseableIterator<PayloadTable.Entry> iterator = table.fetch(t1, 100, new MessageId(messageId), true,
+      CloseableIterator<PayloadTable.Entry> iterator = table.fetch(T1, 100, new MessageId(messageId), true,
                                                                    Integer.MAX_VALUE);
       checkData(iterator, 123, ImmutableSet.of(100L), 50);
 
       // Fetch only 10 items with 101 write pointer
-      iterator = table.fetch(t1, 101, new MessageId(messageId), true, 1);
+      iterator = table.fetch(T1, 101, new MessageId(messageId), true, 1);
       checkData(iterator, 123, ImmutableSet.of(101L), 1);
 
       // Fetch items with 102 write pointer
-      iterator = table.fetch(t1, 102, new MessageId(messageId), true, Integer.MAX_VALUE);
+      iterator = table.fetch(T1, 102, new MessageId(messageId), true, Integer.MAX_VALUE);
       checkData(iterator, 123, ImmutableSet.of(102L), 50);
 
       // Delete items with 101 write pointer and then try and read from that
-      table.delete(t1, 101);
-      iterator = table.fetch(t1, 101, new MessageId(messageId), true, Integer.MAX_VALUE);
+      table.delete(T1, 101);
+      iterator = table.fetch(T1, 101, new MessageId(messageId), true, Integer.MAX_VALUE);
       checkData(iterator, 123, null, 0);
 
       // Fetch from t2 with 101 write pointer
-      iterator = table.fetch(t2, 101, new MessageId(messageId), true, Integer.MAX_VALUE);
+      iterator = table.fetch(T2, 101, new MessageId(messageId), true, Integer.MAX_VALUE);
       checkData(iterator, 123, ImmutableSet.of(101L), 50);
     }
   }
@@ -108,7 +124,7 @@ public abstract class PayloadTableTest {
     Assert.assertEquals(expectedCount, count);
   }
 
-  private void populuateList(List<PayloadTable.Entry> payloadTable) {
+  private void populateList(List<PayloadTable.Entry> payloadTable) {
     List<Integer> writePointers = ImmutableList.of(100, 101, 102);
     int data = 123;
 
@@ -116,8 +132,8 @@ public abstract class PayloadTableTest {
     short seqId = 0;
     for (Integer writePtr : writePointers) {
       for (int i = 0; i < 50; i++) {
-        payloadTable.add(new TestPayloadEntry(t1, writePtr, timestamp, seqId++, Bytes.toBytes(data)));
-        payloadTable.add(new TestPayloadEntry(t2, writePtr, timestamp, seqId++, Bytes.toBytes(data)));
+        payloadTable.add(new TestPayloadEntry(T1, writePtr, timestamp, seqId++, Bytes.toBytes(data)));
+        payloadTable.add(new TestPayloadEntry(T2, writePtr, timestamp, seqId++, Bytes.toBytes(data)));
       }
     }
   }
@@ -130,8 +146,7 @@ public abstract class PayloadTableTest {
     private final long writeTimestamp;
     private final short seqId;
 
-    public TestPayloadEntry(TopicId topicId, long transactionWritePointer,
-                            long writeTimestamp, short seqId, byte[] payload) {
+    TestPayloadEntry(TopicId topicId, long transactionWritePointer, long writeTimestamp, short seqId, byte[] payload) {
       this.topicId = topicId;
       this.transactionWritePointer = transactionWritePointer;
       this.writeTimestamp = writeTimestamp;

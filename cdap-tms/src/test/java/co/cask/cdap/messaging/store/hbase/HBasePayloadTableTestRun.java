@@ -18,39 +18,42 @@ package co.cask.cdap.messaging.store.hbase;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.hbase.HBaseTestBase;
-import co.cask.cdap.data.hbase.HBaseTestFactory;
-import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
-import co.cask.cdap.messaging.store.MetadataTable;
-import co.cask.cdap.messaging.store.MetadataTableTest;
+import co.cask.cdap.messaging.store.PayloadTable;
+import co.cask.cdap.messaging.store.PayloadTableTest;
+import co.cask.cdap.messaging.store.TableFactory;
 import co.cask.cdap.proto.id.NamespaceId;
-import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.rules.ExternalResource;
 
 /**
- * Tests for {@link HBaseMetadataTable}
+ * HBase implementation of {@link PayloadTableTest}.
  */
-public class HBaseMetadataTableTest extends MetadataTableTest {
+public class HBasePayloadTableTestRun extends PayloadTableTest {
 
   @ClassRule
-  public static final HBaseTestBase TEST_BASE = new HBaseTestFactory().get();
+  public static final ExternalResource TEST_BASE = HBaseMessageTestSuite.TEST_BASE;
+
+  private static final HBaseTestBase HBASE_TEST_BASE = HBaseMessageTestSuite.HBASE_TEST_BASE;
   private static final CConfiguration cConf = CConfiguration.create();
 
   private static HBaseAdmin hBaseAdmin;
   private static HBaseTableUtil tableUtil;
+  private static TableFactory tableFactory;
 
   @BeforeClass
   public static void setupBeforeClass() throws Exception {
-    hBaseAdmin = TEST_BASE.getHBaseAdmin();
+    hBaseAdmin = HBASE_TEST_BASE.getHBaseAdmin();
     hBaseAdmin.getConfiguration().set(HBaseTableUtil.CFG_HBASE_TABLE_COMPRESSION,
                                       HBaseTableUtil.CompressionType.NONE.name());
     tableUtil = new HBaseTableUtilFactory(cConf).get();
     tableUtil.createNamespaceIfNotExists(hBaseAdmin, tableUtil.getHBaseNamespace(NamespaceId.CDAP));
+
+    tableFactory = new HBaseTableFactory(cConf, hBaseAdmin.getConfiguration(), tableUtil);
   }
 
   @AfterClass
@@ -60,13 +63,7 @@ public class HBaseMetadataTableTest extends MetadataTableTest {
   }
 
   @Override
-  protected MetadataTable createMetadataTable() throws Exception {
-    byte[] columnFamily = {'d'};
-    TableId tableId = tableUtil.createHTableId(NamespaceId.CDAP, "metadata");
-    HColumnDescriptor hcd = new HColumnDescriptor(columnFamily);
-    HTableDescriptorBuilder htd = tableUtil.buildHTableDescriptor(tableId).addFamily(hcd);
-    tableUtil.createTableIfNotExists(hBaseAdmin, tableId, htd.build());
-    return new HBaseMetadataTable(tableUtil,
-                                  tableUtil.createHTable(hBaseAdmin.getConfiguration(), tableId), columnFamily);
+  protected PayloadTable getPayloadTable() throws Exception {
+    return tableFactory.createPayloadTable(NamespaceId.CDAP, "payload");
   }
 }

@@ -22,10 +22,10 @@ import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.messaging.MessagingUtils;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.id.TopicId;
-import com.google.common.collect.AbstractIterator;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * Contains common logic for implementation of {@link PayloadTable}.
@@ -80,9 +80,9 @@ public abstract class AbstractPayloadTable implements PayloadTable {
 
   @Override
   public CloseableIterator<Entry> fetch(TopicId topicId, long transactionWritePointer, MessageId messageId,
-                                        boolean inclusive, int limit) throws IOException {
+                                        final boolean inclusive, int limit) throws IOException {
     byte[] topic = MessagingUtils.toRowKeyPrefix(topicId);
-    byte[] startRow = new byte[topic.length + (2 * Bytes.SIZEOF_LONG) + Bytes.SIZEOF_SHORT];
+    final byte[] startRow = new byte[topic.length + (2 * Bytes.SIZEOF_LONG) + Bytes.SIZEOF_SHORT];
     byte[] stopRow = new byte[topic.length + Bytes.SIZEOF_LONG];
     Bytes.putBytes(startRow, 0, topic, 0, topic.length);
     Bytes.putBytes(stopRow, 0, topic, 0, topic.length);
@@ -90,14 +90,12 @@ public abstract class AbstractPayloadTable implements PayloadTable {
     Bytes.putLong(stopRow, topic.length, transactionWritePointer);
     Bytes.putLong(startRow, topic.length + Bytes.SIZEOF_LONG, messageId.getPayloadWriteTimestamp());
     Bytes.putShort(startRow, topic.length + (2 * Bytes.SIZEOF_LONG), messageId.getPayloadSequenceId());
-    if (!inclusive) {
-      startRow = Bytes.incrementBytes(startRow, 1);
-    }
     stopRow = Bytes.stopKeyForPrefix(stopRow);
 
     final CloseableIterator<RawPayloadTableEntry> scanner = read(startRow, stopRow, limit);
     return new AbstractCloseableIterator<Entry>() {
       private boolean closed = false;
+      private byte[] skipStartRow = inclusive ? null : startRow;
 
       @Override
       protected Entry computeNext() {
@@ -105,6 +103,17 @@ public abstract class AbstractPayloadTable implements PayloadTable {
           return endOfData();
         }
         RawPayloadTableEntry entry = scanner.next();
+
+        // See if we need to skip the first row returned by the scanner
+        if (skipStartRow != null) {
+          byte[] row = skipStartRow;
+          // After first row, we don't need to match anymore
+          skipStartRow = null;
+          if (Bytes.equals(row, entry.getKey()) && !scanner.hasNext()) {
+            return endOfData();
+          }
+          entry = scanner.next();
+        }
         return new ImmutablePayloadTableEntry(entry.getKey(), entry.getValue());
       }
 
@@ -121,9 +130,10 @@ public abstract class AbstractPayloadTable implements PayloadTable {
   }
 
   /**
-   * An {@link Iterator} for storing {@link RawPayloadTableEntry} to the Payload Table.
+   * A resettable {@link Iterator} for iterating over {@link RawPayloadTableEntry} based on a given
+   * iterator of {@link Entry}.
    */
-  private static class StoreIterator extends AbstractIterator<RawPayloadTableEntry> {
+  private static class StoreIterator implements Iterator<RawPayloadTableEntry> {
 
     private final RawPayloadTableEntry tableEntry = new RawPayloadTableEntry();
 
@@ -131,28 +141,49 @@ public abstract class AbstractPayloadTable implements PayloadTable {
     private TopicId topicId;
     private byte[] topic;
     private byte[] rowKey;
+    private Entry nextEntry;
 
     @Override
-    protected RawPayloadTableEntry computeNext() {
-      if (entries.hasNext()) {
-        Entry entry = entries.next();
-        if (topicId == null || (!topicId.equals(entry.getTopicId()))) {
-          topicId = entry.getTopicId();
-          topic = MessagingUtils.toRowKeyPrefix(topicId);
-          rowKey = new byte[topic.length + (2 * Bytes.SIZEOF_LONG) + Bytes.SIZEOF_SHORT];
-        }
-
-        Bytes.putBytes(rowKey, 0, topic, 0, topic.length);
-        Bytes.putLong(rowKey, topic.length, entry.getTransactionWritePointer());
-        Bytes.putLong(rowKey, topic.length + Bytes.SIZEOF_LONG, entry.getPayloadWriteTimestamp());
-        Bytes.putShort(rowKey, topic.length + (2 * Bytes.SIZEOF_LONG), entry.getPayloadSequenceId());
-        return tableEntry.set(rowKey, entry.getPayload());
+    public boolean hasNext() {
+      if (nextEntry != null) {
+        return true;
       }
-      return endOfData();
+      if (!entries.hasNext()) {
+        return false;
+      }
+      nextEntry = entries.next();
+      return true;
+    }
+
+    @Override
+    public RawPayloadTableEntry next() {
+      if (!hasNext()) {
+        throw new NoSuchElementException();
+      }
+      Entry entry = nextEntry;
+      nextEntry = null;
+
+      if (topicId == null || (!topicId.equals(entry.getTopicId()))) {
+        topicId = entry.getTopicId();
+        topic = MessagingUtils.toRowKeyPrefix(topicId);
+        rowKey = new byte[topic.length + (2 * Bytes.SIZEOF_LONG) + Bytes.SIZEOF_SHORT];
+      }
+
+      Bytes.putBytes(rowKey, 0, topic, 0, topic.length);
+      Bytes.putLong(rowKey, topic.length, entry.getTransactionWritePointer());
+      Bytes.putLong(rowKey, topic.length + Bytes.SIZEOF_LONG, entry.getPayloadWriteTimestamp());
+      Bytes.putShort(rowKey, topic.length + (2 * Bytes.SIZEOF_LONG), entry.getPayloadSequenceId());
+      return tableEntry.set(rowKey, entry.getPayload());
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException("Remove not supported");
     }
 
     private StoreIterator reset(Iterator<Entry> entries) {
       this.entries = entries;
+      this.nextEntry = null;
       return this;
     }
   }

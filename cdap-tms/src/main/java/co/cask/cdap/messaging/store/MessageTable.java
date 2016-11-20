@@ -112,10 +112,14 @@ public interface MessageTable extends Closeable {
   void store(Iterator<Entry> entries) throws IOException;
 
   /**
-   * Delete all entries stored with the given transactionWritePointer under the given topic.
+   * Delete entries stored earlier under the given topic based on the given information.
    *
    * @param topicId the topic to delete from
-   * @param transactionWritePointer the transaction write pointer for scanning entries to delete.
+   * @param startTimestamp the publish timestamp of the first entry to delete
+   * @param startSequenceId the sequence id of the first entry to delete
+   * @param endTimestamp the publish timestamp of the last entry to delete (inclusive)
+   * @param endSequenceId the sequence id of the last entry to delete (inclusive)
    */
-  void delete(TopicId topicId, long transactionWritePointer) throws IOException;
+  void delete(TopicId topicId, long startTimestamp, short startSequenceId,
+              long endTimestamp, short endSequenceId) throws IOException;
 }

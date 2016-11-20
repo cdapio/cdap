@@ -20,6 +20,8 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
+import co.cask.cdap.hbase.wd.DistributedScanner;
 import co.cask.cdap.messaging.store.AbstractPayloadTable;
 import co.cask.cdap.messaging.store.PayloadTable;
 import co.cask.cdap.messaging.store.RawPayloadTableEntry;
@@ -35,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 /**
  * HBase implementation of {@link PayloadTable}.
@@ -45,11 +48,16 @@ public class HBasePayloadTable extends AbstractPayloadTable {
   private final HBaseTableUtil tableUtil;
   private final byte[] columnFamily;
   private final HTable hTable;
+  private final AbstractRowKeyDistributor rowKeyDistributor;
+  private final ExecutorService scanExecutor;
 
-  public HBasePayloadTable(HBaseTableUtil tableUtil, HTable hTable, byte[] columnFamily) {
+  public HBasePayloadTable(HBaseTableUtil tableUtil, HTable hTable, byte[] columnFamily,
+                           AbstractRowKeyDistributor rowKeyDistributor, ExecutorService scanExecutor) {
     this.tableUtil = tableUtil;
     this.hTable = hTable;
     this.columnFamily = Arrays.copyOf(columnFamily, columnFamily.length);
+    this.rowKeyDistributor = rowKeyDistributor;
+    this.scanExecutor = scanExecutor;
   }
 
   @Override
@@ -59,7 +67,7 @@ public class HBasePayloadTable extends AbstractPayloadTable {
       .setStartRow(startRow)
       .setStopRow(stopRow)
       .build();
-    final ResultScanner scanner = hTable.getScanner(scan);
+    final ResultScanner scanner = DistributedScanner.create(hTable, scan, rowKeyDistributor, scanExecutor);
     final Iterator<Result> results = scanner.iterator();
 
     return new AbstractCloseableIterator<RawPayloadTableEntry>() {
@@ -75,7 +83,7 @@ public class HBasePayloadTable extends AbstractPayloadTable {
 
         Result result = results.next();
         maxLimit--;
-        return tableEntry.set(result.getRow(), result.getValue(columnFamily, COL));
+        return tableEntry.set(rowKeyDistributor.getOriginalKey(result.getRow()), result.getValue(columnFamily, COL));
       }
 
       @Override
@@ -95,7 +103,7 @@ public class HBasePayloadTable extends AbstractPayloadTable {
     List<Put> batchPuts = new ArrayList<>();
     while (entries.hasNext()) {
       RawPayloadTableEntry tableEntry = entries.next();
-      Put put = tableUtil.buildPut(tableEntry.getKey())
+      Put put = tableUtil.buildPut(rowKeyDistributor.getDistributedKey(tableEntry.getKey()))
         .add(columnFamily, COL, tableEntry.getValue())
         .build();
       batchPuts.add(put);
@@ -117,10 +125,10 @@ public class HBasePayloadTable extends AbstractPayloadTable {
       .build();
 
     List<Delete> batchDeletes = new ArrayList<>();
-    try (ResultScanner scanner = hTable.getScanner(scan)) {
+    try (ResultScanner scanner = DistributedScanner.create(hTable, scan, rowKeyDistributor, scanExecutor)) {
       for (Result result : scanner) {
-        Delete delete = tableUtil.buildDelete(result.getRow())
-          .build();
+        // No need to turn the key back to the original row key because we want to delete with the actual row key
+        Delete delete = tableUtil.buildDelete(result.getRow()).build();
         batchDeletes.add(delete);
         hTable.delete(delete);
       }

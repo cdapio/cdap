@@ -80,6 +80,8 @@ public final class Constants {
     public static final String REMOTE_SYSTEM_OPERATION = "remote.system.operation";
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
     public static final String EXPLORE_HTTP_USER_SERVICE = "explore.service";
+    public static final String MESSAGING_SERVICE = "messaging.service";
+
     public static final String SERVICE_INSTANCE_TABLE_NAME = "cdap.services.instances";
     /** Scheduler queue name to submit the master service app. */
     public static final String SCHEDULER_QUEUE = "master.services.scheduler.queue";
@@ -579,6 +581,8 @@ public final class Constants {
 
       public static final String PRODUCER = "pr";
       public static final String CONSUMER = "co";
+
+      public static final String TABLE = "tbl";
     }
 
     /**
@@ -1036,5 +1040,26 @@ public final class Constants {
   public static final class Audit {
     public static final String ENABLED = "audit.enabled";
     public static final String KAFKA_TOPIC = "audit.kafka.topic";
+  }
+
+  /**
+   * Constants for the messaging system
+   */
+  public static final class MessagingSystem {
+    public static final String LOCAL_DATA_DIR = "messaging.local.data.dir";
+
+    public static final String HBASE_MAX_SCAN_THREADS = "messaging.hbase.max.scan.threads";
+    public static final String METADATA_TABLE_NAME = "messaging.metadata.table.name";
+    public static final String MESSAGE_TABLE_NAME = "messaging.message.table.name";
+    public static final String MESSAGE_TABLE_HBASE_SPLITS = "messaging.message.table.hbase.splits";
+    public static final String PAYLOAD_TABLE_NAME = "messaging.payload.table.name";
+    public static final String PAYLOAD_TABLE_HBASE_SPLITS = "messaging.payload.table.hbase.splits";
+    public static final String TABLE_CACHE_EXPIRATION_SECONDS = "messaging.table.expiration.seconds";
+
+    // Tell the instance id of the YARN container. Set by the messaging service TwillRunnable only, not in default.xml
+    public static final String CONTAINER_INSTANCE_ID = "messaging.container.instance.id";
+
+    // The name of the HBase table attribute to store the bucket size being used by the RowKeyDistributor
+    public static final String KEY_DISTRIBUTOR_BUCKETS_ATTR = "cdap.messaging.key.distributor.buckets";
   }
 }

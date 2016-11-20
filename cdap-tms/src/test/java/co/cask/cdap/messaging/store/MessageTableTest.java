@@ -21,14 +21,16 @@ import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.apache.tephra.Transaction;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -36,8 +38,8 @@ import javax.annotation.Nullable;
  * Base class for Message Table tests.
  */
 public abstract class MessageTableTest {
-  private static final TopicId t1 = NamespaceId.DEFAULT.topic("t1");
-  private static final TopicId t2 = NamespaceId.DEFAULT.topic("t2");
+  private static final TopicId T1 = NamespaceId.DEFAULT.topic("t1");
+  private static final TopicId T2 = NamespaceId.DEFAULT.topic("t2");
 
   protected abstract MessageTable getMessageTable() throws Exception;
 
@@ -52,18 +54,36 @@ public abstract class MessageTableTest {
       table.store(entryList.iterator());
       byte[] messageId = new byte[MessageId.RAW_ID_SIZE];
       MessageId.putRawId(0L, (short) 0, 0L, (short) 0, messageId, 0);
-      CloseableIterator<MessageTable.Entry> iterator = table.fetch(topicId, new MessageId(messageId), true, 50, null);
-      Assert.assertTrue(iterator.hasNext());
-      MessageTable.Entry entry = iterator.next();
-      Assert.assertArrayEquals(Bytes.toBytes(payload), entry.getPayload());
-      Assert.assertFalse(iterator.hasNext());
-      iterator = table.fetch(topicId, 0, 50, null);
-      entry = iterator.next();
-      Assert.assertArrayEquals(Bytes.toBytes(payload), entry.getPayload());
-      Assert.assertFalse(iterator.hasNext());
-      table.delete(topicId, txWritePtr);
-      iterator = table.fetch(topicId, new MessageId(messageId), true, 50, null);
-      Assert.assertFalse(iterator.hasNext());
+
+      try (CloseableIterator<MessageTable.Entry> iterator = table.fetch(topicId,
+                                                                        new MessageId(messageId), false, 50, null)) {
+        // Fetch not including the first message, expect empty
+        Assert.assertFalse(iterator.hasNext());
+      }
+
+      try (CloseableIterator<MessageTable.Entry> iterator = table.fetch(topicId,
+                                                                        new MessageId(messageId), true, 50, null)) {
+        // Fetch including the first message, should get the message
+        Assert.assertTrue(iterator.hasNext());
+        MessageTable.Entry entry = iterator.next();
+        Assert.assertArrayEquals(Bytes.toBytes(payload), entry.getPayload());
+        Assert.assertFalse(iterator.hasNext());
+      }
+
+      try (CloseableIterator<MessageTable.Entry> iterator = table.fetch(topicId, 0, 50, null)) {
+        // Fetch by time, should get the entry
+        MessageTable.Entry entry = iterator.next();
+        Assert.assertArrayEquals(Bytes.toBytes(payload), entry.getPayload());
+        Assert.assertFalse(iterator.hasNext());
+      }
+
+      table.delete(topicId, 0L, (short) 0, 0L, (short) 0);
+
+      try (CloseableIterator<MessageTable.Entry> iterator = table.fetch(topicId,
+                                                                        new MessageId(messageId), true, 50, null)) {
+        // After message deleted, expected empty
+        Assert.assertFalse(iterator.hasNext());
+      }
     }
   }
 
@@ -71,52 +91,54 @@ public abstract class MessageTableTest {
   public void testNonTxAndTxConsumption() throws Exception {
     try (MessageTable table = getMessageTable()) {
       List<MessageTable.Entry> entryList = new ArrayList<>();
-      populateList(entryList);
+      Map<Integer, Short> startSequenceIds = new HashMap<>();
+      Map<Integer, Short> endSequenceIds = new HashMap<>();
+      long publishTimestamp = populateList(entryList, Arrays.asList(100, 101, 102), startSequenceIds, endSequenceIds);
       table.store(entryList.iterator());
 
-      CloseableIterator<MessageTable.Entry> iterator = table.fetch(t1, 0, Integer.MAX_VALUE, null);
+      CloseableIterator<MessageTable.Entry> iterator = table.fetch(T1, 0, Integer.MAX_VALUE, null);
       checkPointerCount(iterator, 123, ImmutableSet.of(100L, 101L, 102L), 150);
 
       // Read with 85 items limit
-      iterator = table.fetch(t1, 0, 85, null);
+      iterator = table.fetch(T1, 0, 85, null);
       checkPointerCount(iterator, 123, ImmutableSet.of(100L, 101L, 102L), 85);
 
       // Read with all messages visible
       Transaction tx = new Transaction(200, 200, new long[] { }, new long[] { }, -1);
-      iterator = table.fetch(t1, 0, Integer.MAX_VALUE, tx);
+      iterator = table.fetch(T1, 0, Integer.MAX_VALUE, tx);
       checkPointerCount(iterator, 123, ImmutableSet.of(100L, 101L, 102L), 150);
 
       // Read with 101 as invalid transaction
       tx = new Transaction(200, 200, new long[] { 101 }, new long[] { }, -1);
-      iterator = table.fetch(t1, 0, Integer.MAX_VALUE, tx);
+      iterator = table.fetch(T1, 0, Integer.MAX_VALUE, tx);
       checkPointerCount(iterator, 123, ImmutableSet.of(100L, 102L), 100);
 
       // Mark 101 as in progress transaction, then we shouldn't read past committed transaction which is 100.
       tx = new Transaction(100, 100, new long[] {}, new long[] { 101 }, -1);
-      iterator = table.fetch(t1, 0, Integer.MAX_VALUE, tx);
+      iterator = table.fetch(T1, 0, Integer.MAX_VALUE, tx);
       checkPointerCount(iterator, 123, ImmutableSet.of(100L), 50);
 
       // Same read as above but with limit of 10 elements
-      iterator = table.fetch(t1, 0, 10, tx);
+      iterator = table.fetch(T1, 0, 10, tx);
       checkPointerCount(iterator, 123, ImmutableSet.of(100L), 10);
 
       // Reading non-tx from t2 should provide 150 items
-      iterator = table.fetch(t2, 0, Integer.MAX_VALUE, null);
+      iterator = table.fetch(T2, 0, Integer.MAX_VALUE, null);
       checkPointerCount(iterator, 321, ImmutableSet.of(100L, 101L, 102L), 150);
 
       // Delete txPtr entries for 101, and then try fetching again for that
-      table.delete(t1, 101);
-      iterator = table.fetch(t1, 0, Integer.MAX_VALUE, null);
+      table.delete(T1, publishTimestamp, startSequenceIds.get(101), publishTimestamp, endSequenceIds.get(101));
+      iterator = table.fetch(T1, 0, Integer.MAX_VALUE, null);
       checkPointerCount(iterator, 123, ImmutableSet.of(100L, 102L), 100);
 
       // Delete txPtr entries for 100, and then try fetching transactionally all data
-      table.delete(t1, 100);
+      table.delete(T1, publishTimestamp, startSequenceIds.get(100), publishTimestamp, endSequenceIds.get(100));
       tx = new Transaction(200, 200, new long[] { }, new long[] { }, -1);
-      iterator = table.fetch(t1, 0, Integer.MAX_VALUE, tx);
+      iterator = table.fetch(T1, 0, Integer.MAX_VALUE, tx);
       checkPointerCount(iterator, 123, ImmutableSet.of(102L), 50);
 
       // Use the above tx and read from t2 and it should give all entries
-      iterator = table.fetch(t2, 0, Integer.MAX_VALUE, tx);
+      iterator = table.fetch(T2, 0, Integer.MAX_VALUE, tx);
       checkPointerCount(iterator, 321, ImmutableSet.of(100L, 101L, 102L), 150);
     }
   }
@@ -136,19 +158,25 @@ public abstract class MessageTableTest {
     Assert.assertEquals(expectedCount, count);
   }
 
-  private void populateList(List<MessageTable.Entry> messageTable) {
-    List<Integer> writePointers = ImmutableList.of(100, 101, 102);
+  private long populateList(List<MessageTable.Entry> messageTable, List<Integer> writePointers,
+                            Map<Integer, Short> startSequences, Map<Integer, Short> endSequences) {
     int data1 = 123;
     int data2 = 321;
 
     long timestamp = System.currentTimeMillis();
     short seqId = 0;
     for (Integer writePtr : writePointers) {
+      startSequences.put(writePtr, seqId);
       for (int i = 0; i < 50; i++) {
-        messageTable.add(new TestMessageEntry(t1, false, true, writePtr, timestamp, seqId++, Bytes.toBytes(data1)));
-        messageTable.add(new TestMessageEntry(t2, false, true, writePtr, timestamp, seqId++, Bytes.toBytes(data2)));
+        messageTable.add(new TestMessageEntry(T1, false, true, writePtr, timestamp, seqId++, Bytes.toBytes(data1)));
+        messageTable.add(new TestMessageEntry(T2, false, true, writePtr, timestamp, seqId++, Bytes.toBytes(data2)));
       }
+      // Need to subtract the seqId with 1 since it is already incremented and we want the seqId being used
+      // for the last written entry of this tx write ptr
+      endSequences.put(writePtr, (short) (seqId - 1));
     }
+
+    return timestamp;
   }
 
   // Private class for publishing messages
@@ -161,8 +189,8 @@ public abstract class MessageTableTest {
     private final long publishTimestamp;
     private final short sequenceId;
 
-    public TestMessageEntry(TopicId topicId, boolean isPayloadReference, boolean isTransactional,
-                            long transactionWritePointer, long publishTimestamp, short sequenceId, byte[] payload) {
+    TestMessageEntry(TopicId topicId, boolean isPayloadReference, boolean isTransactional,
+                     long transactionWritePointer, long publishTimestamp, short sequenceId, byte[] payload) {
       this.topicId = topicId;
       this.isPayloadReference = isPayloadReference;
       this.isTransactional = isTransactional;

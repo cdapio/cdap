@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.hbase.wd;
 
-import com.google.common.util.concurrent.Futures;
+import com.google.common.base.Throwables;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
@@ -98,8 +99,8 @@ public class DistributedScanner implements ResultScanner {
 
   @Override
   public void close() {
-    for (int i = 0; i < scanners.length; i++) {
-      scanners[i].close();
+    for (ResultScanner scanner : scanners) {
+      scanner.close();
     }
   }
 
@@ -148,18 +149,29 @@ public class DistributedScanner implements ResultScanner {
     }
 
     for (int i = 0; i < advanceFutures.length; i++) {
-      if (advanceFutures[i] == null) {
+      @SuppressWarnings("unchecked")
+      Future<Result[]> advanceFuture = advanceFutures[i];
+
+      if (advanceFuture == null) {
         continue;
       }
 
       // advancing result scanner
-      Result[] results = Futures.getUnchecked((Future<Result[]>) advanceFutures[i]);
-      if (results.length == 0) {
-        // marking result scanner as exhausted
-        nextOfScanners[i] = null;
-        continue;
+      try {
+        Result[] results = advanceFuture.get();
+        if (results.length == 0) {
+          // marking result scanner as exhausted
+          nextOfScanners[i] = null;
+        } else {
+          nextOfScanners[i].addAll(Arrays.asList(results));
+        }
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new IOException("Scan thread interrupted", e);
+      } catch (ExecutionException e) {
+        Throwables.propagateIfPossible(e.getCause(), IOException.class);
+        throw Throwables.propagate(e.getCause());
       }
-      nextOfScanners[i].addAll(Arrays.asList(results));
     }
 
 
