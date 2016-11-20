@@ -135,7 +135,13 @@ export default class AppOverview extends Component {
     }
     return (
       <div
-        className={classnames("entity-overview", this.props.position)}
+        className={
+          classnames(
+            "entity-overview",
+            this.props.position,
+            this.props.entity.isHydrator ? 'datapipeline' : this.props.entity.type
+          )
+        }
         ref={ref=> this.overviewRef = ref}
         style={style}
         onClick={(e) => e.stopPropagation()}

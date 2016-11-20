@@ -35,6 +35,24 @@
         border-bottom-color: transparent;
       }
     }
+    &.application {
+      .overview-header {
+        &:before {
+          border-color: @application-entity-header-bg;
+          border-top-color: transparent;
+          border-bottom-color: transparent;
+        }
+      }
+    }
+    &.datapipeline {
+      .overview-header {
+        &:before {
+          border-color: @datapipeline-entity-header-bg;
+          border-top-color: transparent;
+          border-bottom-color: transparent;
+        }
+      }
+    }
   }
   &.bottom {
     margin-top: 12px;
@@ -50,6 +68,26 @@
         border-left-color: transparent;
         border-top-color: transparent;
         border-right-color: transparent;
+      }
+    }
+    &.application {
+      .overview-header {
+        &:before {
+          border-color: @application-entity-header-bg;
+          border-top-color: transparent;
+          border-left-color: transparent;
+          border-right-color: transparent;
+        }
+      }
+    }
+    &.datapipeline {
+      .overview-header {
+        &:before {
+          border-color: @datapipeline-entity-header-bg;
+          border-top-color: transparent;
+          border-left-color: transparent;
+          border-right-color: transparent;
+        }
       }
     }
   }
@@ -72,7 +110,16 @@
       }
     }
   }
-
+  &.application {
+    .overview-header {
+      background-color: @application-entity-header-bg;
+    }
+  }
+  &.datapipeline {
+    .overview-header {
+      background-color: @datapipeline-entity-header-bg;
+    }
+  }
   .overview-header {
     border-bottom: 1px solid #ccc;
     background: @navbar-bg;
