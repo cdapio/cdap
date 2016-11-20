@@ -26,6 +26,7 @@
     width: 200px;
     background-size: 100% 100%;
     margin: 0 auto;
+    margin-bottom: 30px;
   }
   .cask-card {
     padding-top: 10px;
@@ -41,8 +42,26 @@
     position: absolute;
     top: 40%;
     left: 50%;
-    width: 35%;
+    width: 400px;
     transform: translate(-50%, -50%);
     padding: 20px;
+    .form-control {
+      border: 0;
+      box-shadow: none;
+      border-bottom: 2px solid #ccc;
+      border-radius: 0;
+      padding: 2px;
+      font-size: 14px;
+    }
+    .form-group {
+      .checkbox {
+        label {
+          input[type="checkbox"] {
+            margin-top: 2px;
+            margin-left: -18px;
+          }
+        }
+      }
+    }
   }
 }
