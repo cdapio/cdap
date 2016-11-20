@@ -40,7 +40,7 @@ body[class*='state-tracker'] {
     main.container { width: 100%; }
   }
   &:not(.state-tracker-tags) {
-    main.container { padding: 0 0 15px 0; }
+    // main.container { padding: 0 0 15px 0; }
   }
   main.container {
     margin-top: 50px;
@@ -292,7 +292,7 @@ body.state-tracker {
       position: absolute;
       background-color: @filter-sidebar-background-color;
       top: @navbar-size + @search-top-bar-container-size + 1;
-      bottom: 53px;
+      bottom: 36px;
       border-right: 1px solid @border-color;
 
       h4 {
@@ -339,7 +339,7 @@ body.state-tracker {
     .tracker-search-results {
       position: absolute;
       top: @navbar-size + @search-top-bar-container-size + 1;
-      bottom: 53px;
+      bottom: 36px;
       left: 300px;
       right: 0;
       background-color: white;
@@ -621,7 +621,7 @@ body.state-tracker-detail-entity {
   .entity-detail-properties-column {
     position: absolute;
     top: @navbar-size + @search-top-bar-container-size + 1 + @entity-detail-top-bar-size + 1;
-    bottom: 53px;
+    bottom: 32px;
     box-sizing: border-box;
     overflow-y: auto;
 
@@ -1160,15 +1160,15 @@ body.state-tracker-integrations {
           43(footer) + 50(log-viewer header) +
           65 (timeline)
         */
-        height: ~"-moz-calc(100vh - 530px)";
-        height: ~"-webkit-calc(100vh - 530px)";
-        height: ~"calc(100vh - 530px)";
+        height: ~"-moz-calc(100vh - 518px)";
+        height: ~"-webkit-calc(100vh - 518px)";
+        height: ~"calc(100vh - 518px)";
       }
       .log-viewer-container.full-screen {
         .logs-table {
-          height: ~"-moz-calc(100vh - 180px)";
-          height: ~"-webkit-calc(100vh - 180px)";
-          height: ~"calc(100vh - 180px)";
+          height: ~"-moz-calc(100vh - 210px)";
+          height: ~"-webkit-calc(100vh - 210px)";
+          height: ~"calc(100vh - 210px)";
         }
       }
     }

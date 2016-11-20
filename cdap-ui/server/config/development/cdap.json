@@ -6,7 +6,7 @@
   "dashboard.ssl.bind.port": "9443",
   "dashboard.ssl.disable.cert.check": "false",
   "ssl.enabled": "false",
-  "router.server.address": "127.0.0.1",
+  "router.server.address": "securecluster14910-1000.dev.continuuity.net",
   "dashboard.bind.port": "11011",
   "enable.alpha.preview": "false",
   "dashboard.router.check.timeout.secs": "0"
