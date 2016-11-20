@@ -117,8 +117,10 @@ import java.util.Set;
  */
 public class AuthEnforceRewriter implements ClassRewriter {
 
-  private static final String GENERATED_FIELD_PREFIX = "_";
-  private static final String GENERATED_SETTER_METHOD_PREFIX = "set";
+  public static final String GENERATED_FIELD_PREFIX = "_";
+  public static final String GENERATED_SETTER_METHOD_PREFIX = "set";
+  public static final String AUTHORIZATION_ENFORCER_FIELD_NAME = AuthorizationEnforcer.class.getSimpleName();
+  public static final String AUTHENTICATION_CONTEXT_FIELD_NAME = AuthenticationContext.class.getSimpleName();
 
   private static final Logger LOG = LoggerFactory.getLogger(AuthEnforceRewriter.class);
 
@@ -279,8 +281,8 @@ public class AuthEnforceRewriter implements ClassRewriter {
       this.className = className;
       this.classType = Type.getObjectType(className.replace(".", "/"));
       this.methodAnnotations = methodAnnotations;
-      this.authenticationContextFieldName = generateUniqueFieldName("authenticationContext");
-      this.authorizationEnforcerFieldName = generateUniqueFieldName("authorizationEnforcer");
+      this.authenticationContextFieldName = generateUniqueFieldName(AUTHENTICATION_CONTEXT_FIELD_NAME);
+      this.authorizationEnforcerFieldName = generateUniqueFieldName(AUTHORIZATION_ENFORCER_FIELD_NAME);
     }
 
     @Override

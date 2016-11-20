@@ -21,9 +21,6 @@ import co.cask.cdap.common.security.AuthEnforce;
 import co.cask.cdap.common.security.AuthEnforceRewriter;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.security.auth.context.AuthenticationTestContext;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 
 /**
  * A Dummy class which is just an wrapper and have different inner classes with {@link AuthEnforce} annotations.
@@ -39,16 +36,6 @@ public class DummyAuthEnforce {
    * Class which has different possible valid {@link AuthEnforce} annotations
    */
   public class ValidAuthEnforceAnnotations {
-
-    // these fields are not used but here as they will be used during class rewrite
-    // TODO: Remove these fields once we start supporting generating this field in class rewrite
-    private final AuthorizationEnforcer authorizationEnforcer;
-    private final AuthenticationContext authenticationContext;
-
-    public ValidAuthEnforceAnnotations() {
-      authenticationContext = new AuthenticationTestContext();
-      authorizationEnforcer = new ExceptionAuthorizationEnforcer();
-    }
 
     @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
     public void testSingleAction(@Name("namespaceId") NamespaceId namespaceId) throws Exception {
@@ -81,20 +68,23 @@ public class DummyAuthEnforce {
   }
 
   /**
+   * Class which has different possible valid {@link AuthEnforce} annotations just like
+   * {@link ValidAuthEnforceAnnotations} just to test with two valid inner classes
+   */
+  public class AnotherValidAuthEnforceAnnotations {
+
+    @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
+    public void testSomeOtherAction(@Name("namespaceId") NamespaceId namespaceId) throws Exception {
+      // the above annotation will call enforce after class rewrite which should throw an exception.
+      // If the line below is reached it means that enforce was not called as it supposed to be
+      throw new EnforceNotCalledException();
+    }
+  }
+
+  /**
    * Class which has {@link AuthEnforce} annotation without a {@link Name} annotated parameter
    */
   public class AbsentEntityName {
-
-    // these fields are not used but here as they will be used during class rewrite
-    // TODO: Remove these fields once we start supporting generating this field in class rewrite
-    private final AuthorizationEnforcer authorizationEnforcer;
-    private final AuthenticationContext authenticationContext;
-
-    public AbsentEntityName(AuthorizationEnforcer authorizationEnforcer,
-                            AuthenticationContext authenticationContext) {
-      this.authorizationEnforcer = authorizationEnforcer;
-      this.authenticationContext = authenticationContext;
-    }
 
     @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, actions = {Action.ADMIN, Action.READ})
     public void testEntityNameAbsence(NamespaceId namespaceId) throws Exception {
@@ -108,17 +98,6 @@ public class DummyAuthEnforce {
    */
   public class InvalidEntityName {
 
-    // these fields are not used but here as they will be used during class rewrite
-    // TODO: Remove these fields once we start supporting generating this field in class rewrite
-    private final AuthorizationEnforcer authorizationEnforcer;
-    private final AuthenticationContext authenticationContext;
-
-    public InvalidEntityName(AuthorizationEnforcer authorizationEnforcer,
-                             AuthenticationContext authenticationContext) {
-      this.authorizationEnforcer = authorizationEnforcer;
-      this.authenticationContext = authenticationContext;
-    }
-
     @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, actions = {Action.ADMIN, Action.READ})
     public void testWrongEntityName(@Name("wrongId") NamespaceId namespaceId) throws Exception {
       // no-op
@@ -129,17 +108,6 @@ public class DummyAuthEnforce {
    * Class which has {@link AuthEnforce} annotation with multiple parameters with same {@link Name} annotation
    */
   public class DuplicateEntityName {
-
-    // these fields are not used but here as they will be used during class rewrite
-    // TODO: Remove these fields once we start supporting generating this field in class rewrite
-    private final AuthorizationEnforcer authorizationEnforcer;
-    private final AuthenticationContext authenticationContext;
-
-    public DuplicateEntityName(AuthorizationEnforcer authorizationEnforcer,
-                               AuthenticationContext authenticationContext) {
-      this.authorizationEnforcer = authorizationEnforcer;
-      this.authenticationContext = authenticationContext;
-    }
 
     @AuthEnforce(entities = "duplicateName", enforceOn = NamespaceId.class, actions = {Action.ADMIN, Action.READ})
     public void testDuplicatEntityName(@Name("duplicateName") NamespaceId namespaceId,
@@ -153,16 +121,6 @@ public class DummyAuthEnforce {
    */
   public class ClassWithoutAuthEnforce {
 
-    // these fields are not used but here as they will be used during class rewrite
-    // TODO: Remove these fields once we start supporting generating this field in class rewrite
-    private final AuthorizationEnforcer authorizationEnforcer;
-    private final AuthenticationContext authenticationContext;
-
-    public ClassWithoutAuthEnforce() {
-      authenticationContext = new AuthenticationTestContext();
-      authorizationEnforcer = new ExceptionAuthorizationEnforcer();
-    }
-
     public void methodWithoutAuthEnforce(@Name("namespaceId") NamespaceId namespaceId) throws Exception {
       throw new EnforceNotCalledException();
     }
@@ -172,6 +130,7 @@ public class DummyAuthEnforce {
    * An interface which has {@link AuthEnforce} annotation
    */
   public interface InterfaceWithAuthAnnotation {
+
     @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
     void interfaceMethodWithAuthEnforce(@Name("namespaceId") NamespaceId namespaceId) throws Exception;
   }

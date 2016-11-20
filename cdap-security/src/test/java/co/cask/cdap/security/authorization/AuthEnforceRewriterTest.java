@@ -21,6 +21,9 @@ import co.cask.cdap.common.security.AuthEnforceRewriter;
 import co.cask.cdap.internal.asm.ByteCodeClassLoader;
 import co.cask.cdap.internal.asm.ClassDefinition;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.auth.context.AuthenticationTestContext;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import org.junit.Assert;
 import org.junit.Test;
 import org.objectweb.asm.Type;
@@ -40,6 +43,7 @@ public class AuthEnforceRewriterTest {
   public void test() throws Exception {
     ByteCodeClassLoader classLoader = new ByteCodeClassLoader(getClass().getClassLoader());
     classLoader.addClass(rewrite(DummyAuthEnforce.ValidAuthEnforceAnnotations.class));
+    classLoader.addClass(rewrite(DummyAuthEnforce.AnotherValidAuthEnforceAnnotations.class));
     classLoader.addClass(rewrite(DummyAuthEnforce.ClassImplementingInterfaceWithAuthAnnotation.class));
     classLoader.addClass(rewrite(DummyAuthEnforce.ClassWithoutAuthEnforce.class));
 
@@ -47,22 +51,37 @@ public class AuthEnforceRewriterTest {
     // cast it here to DummyAuthEnforce will fail since the object is created from a class which was loaded from a
     // different classloader.
     Class<?> cls = classLoader.loadClass(DummyAuthEnforce.ValidAuthEnforceAnnotations.class.getName());
+    Object rewrittenObject = loadRewritten(classLoader, DummyAuthEnforce.class.getName(), cls.getName());
+    invokeSetters(cls, rewrittenObject);
     // tests a valid AuthEnforce annotation which has single action
-    testRewrite(classLoader, cls, "testSingleAction", ExceptionAuthorizationEnforcer.ExpectedException.class);
+    testRewrite(cls, rewrittenObject, "testSingleAction", ExceptionAuthorizationEnforcer.ExpectedException.class);
     // tests a valid AuthEnforce annotation which has multiple action
-    testRewrite(classLoader, cls, "testMultipleAction", ExceptionAuthorizationEnforcer.ExpectedException.class);
+    testRewrite(cls, rewrittenObject, "testMultipleAction", ExceptionAuthorizationEnforcer.ExpectedException.class);
     // test that the class rewrite did not affect other non annotated methods
-    testRewrite(classLoader, cls, "testNoAuthEnforceAnnotation", DummyAuthEnforce.EnforceNotCalledException.class);
+    testRewrite(cls, rewrittenObject, "testNoAuthEnforceAnnotation", DummyAuthEnforce.EnforceNotCalledException.class);
     // test that the class rewrite works for method whose signature does not specify throws exception
-    testRewrite(classLoader, cls, "testMethodWithoutException", ExceptionAuthorizationEnforcer.ExpectedException.class);
+    testRewrite(cls, rewrittenObject, "testMethodWithoutException",
+                ExceptionAuthorizationEnforcer.ExpectedException.class);
 
     // tests that class rewriting does not happen if an interface has a method with AuthEnforce
     cls = classLoader.loadClass(DummyAuthEnforce.ClassImplementingInterfaceWithAuthAnnotation.class.getName());
-    testRewrite(classLoader, cls, "interfaceMethodWithAuthEnforce", DummyAuthEnforce.EnforceNotCalledException.class);
+    rewrittenObject = loadRewritten(classLoader, DummyAuthEnforce.class.getName(), cls.getName());
+    invokeSetters(cls, rewrittenObject);
+    testRewrite(cls, rewrittenObject, "interfaceMethodWithAuthEnforce",
+                DummyAuthEnforce.EnforceNotCalledException.class);
 
     // test that class rewriting does not happen for classes which does not have AuthEnforce annotation on its method
     cls = classLoader.loadClass(DummyAuthEnforce.ClassWithoutAuthEnforce.class.getName());
-    testRewrite(classLoader, cls, "methodWithoutAuthEnforce", DummyAuthEnforce.EnforceNotCalledException.class);
+    rewrittenObject = loadRewritten(classLoader, DummyAuthEnforce.class.getName(), cls.getName());
+    invokeSetters(cls, rewrittenObject);
+    testRewrite(cls, rewrittenObject, "methodWithoutAuthEnforce", DummyAuthEnforce.EnforceNotCalledException.class);
+
+    // test that class rewriting works for a valid annotated method in another inner class and needs the
+    // invokeSetters to called independently for this
+    cls = classLoader.loadClass(DummyAuthEnforce.AnotherValidAuthEnforceAnnotations.class.getName());
+    rewrittenObject = loadRewritten(classLoader, DummyAuthEnforce.class.getName(), cls.getName());
+    invokeSetters(cls, rewrittenObject);
+    testRewrite(cls, rewrittenObject, "testSomeOtherAction", ExceptionAuthorizationEnforcer.ExpectedException.class);
   }
 
   @Test
@@ -85,13 +104,11 @@ public class AuthEnforceRewriterTest {
     }
   }
 
-  private void testRewrite(ByteCodeClassLoader classLoader, Class<?> cls, String methodName,
-                           Class<? extends Exception> expectedException)
-    throws NoSuchMethodException {
+  private void testRewrite(Class<?> cls, Object rewrittenObject, String methodName,
+                           Class<? extends Exception> expectedException) throws NoSuchMethodException {
     Method method = cls.getDeclaredMethod(methodName, NamespaceId.class);
     try {
-      method.invoke(loadRewritten(classLoader, DummyAuthEnforce.class.getName(),
-                                  cls.getName()), NamespaceId.DEFAULT);
+      method.invoke(rewrittenObject, NamespaceId.DEFAULT);
     } catch (Exception e) {
       // Since the above method is invoked through reflection any exception thrown will be wrapped in
       // InvocationTargetException so verify that the root cause is the expected exception confirming that enforce
@@ -101,6 +118,29 @@ public class AuthEnforceRewriterTest {
         Assert.fail(String.format("Got exception %s while expecting %s%s%s", e.getCause(),
                                   ExceptionAuthorizationEnforcer.ExpectedException.class.getName(),
                                   System.lineSeparator(), getFormattedStackTrace(e.getStackTrace())));
+      }
+    }
+  }
+
+  private void invokeSetters(Class<?> cls, Object rewrittenObject)
+    throws InvocationTargetException, IllegalAccessException {
+    Method[] declaredMethods = cls.getDeclaredMethods();
+    for (Method declaredMethod : declaredMethods) {
+      // if the method name starts with set_ then we know its an generated setter
+      if (declaredMethod.getName().startsWith(AuthEnforceRewriter.GENERATED_SETTER_METHOD_PREFIX +
+                                                AuthEnforceRewriter.GENERATED_FIELD_PREFIX)) {
+        declaredMethod.setAccessible(true); // since its setter it might be private
+        if (declaredMethod.getName().contains(AuthEnforceRewriter.AUTHENTICATION_CONTEXT_FIELD_NAME)) {
+          declaredMethod.invoke(rewrittenObject, new AuthenticationTestContext());
+        } else if (declaredMethod.getName().contains(AuthEnforceRewriter.AUTHORIZATION_ENFORCER_FIELD_NAME)) {
+          declaredMethod.invoke(rewrittenObject, new ExceptionAuthorizationEnforcer());
+        } else {
+          throw new IllegalStateException(String.format("Found an expected setter method with name %s. While trying " +
+                                                          "invoke setter for %s and %s",
+                                                        declaredMethod.getName(),
+                                                        AuthenticationContext.class.getSimpleName(),
+                                                        AuthorizationEnforcer.class.getSimpleName()));
+        }
       }
     }
   }
