@@ -21,8 +21,9 @@ require('./Footer.less');
 export default class Footer extends Component {
   constructor(props) {
     super(props);
-    var {copyrightYear} = props;
+    var {copyrightYear, version} = props;
     this.copyrightYear = copyrightYear || new Date().getFullYear();
+    this.version = version || '--unknown--';
     this.props = props;
   }
   render() {
@@ -30,24 +31,10 @@ export default class Footer extends Component {
       <footer>
         <div className="container">
           <div className="row text-muted">
-            <div className="col-sm-6 text-uppercase">
-              <p>
-                <span className="cask-logo"></span>
+            <div className="text-uppercase">
+              <p className="text-center">
                 <span>Copyright &copy; {this.copyrightYear} Cask Data, Inc.</span>
               </p>
-            </div>
-            <div className="col-sm-6">
-              <ul className="list-inline">
-                <li>
-                  <a href="http://cask.co/terms" target="_blank">Terms</a>
-                </li>
-                <li>
-                  <a href="http://cask.co/privacy" target="_blank">Privacy</a>
-                </li>
-                <li>
-                  <a href="http://cask.co/contact" target="_blank">Contact</a>
-                </li>
-              </ul>
             </div>
           </div>
         </div>
