@@ -35,6 +35,7 @@ import co.cask.cdap.proto.id.SecureKeyId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.id.SystemServiceId;
+import co.cask.cdap.proto.id.TopicId;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -69,6 +70,7 @@ public enum EntityType {
   ARTIFACT(ArtifactId.class, Id.Artifact.class),
   DATASET(DatasetId.class, Id.DatasetInstance.class),
   SECUREKEY(SecureKeyId.class, null),
+  TOPIC(TopicId.class, null),
 
   QUERY(QueryId.class, Id.QueryHandle.class),
   SYSTEM_SERVICE(SystemServiceId.class, Id.SystemService.class);
