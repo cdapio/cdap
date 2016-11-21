@@ -145,38 +145,45 @@ features:
         blocks: Blocks
         storage: Storage
         queues: Queues
-        vcores: VCores
-        memory: Memory
+        resources: Resources
       labels:
-        accepted: Accepted
+        Accepted: Accepted
         available: Available
         corrupt: Corrupt
-        currentCapacity: Current Capacity
         deadRegionServers: Dead Region Servers
-        decommissioned: Decomissioned
-        decommissionInProgress: Decomission In Progress
-        failed: Failed
-        healthy: Healthy
-        killed: Killed
+        Failed: Failed
+        Finished: Finished
+        FreeMemory: Free Memory
+        FreeVCores: Free Virtual Cores
+        HealthyNodes: Healthy Nodes
+        HealthyContainers: Healthy Containers
+        Killed: Killed
         liveRegionServers: Live Region Servers
         lost: Lost
-        maxCapacity: Max Capacity
-        new: New
-        new_saving: New Saving
+        New: New
+        NewNodes: New Nodes
+        NewContainers: New Containers
         masters: Masters
         missing: Missing
         namespaces: Namespaces
         namepsaces: Namespaces
-        running: Running
+        Running: Running
         rebooted: Rebooted
-        stopped: Stopped
-        submitted: Submitted
+        Stopped: Stopped
+        Submitted: Submitted
         tables: Tables
-        total: Total
+        Total: Total
+        TotalNodes: Total Nodes
+        TotalContainers: Total Containers
+        TotalMemory: Total Memory
+        TotalVCores: Total Virtual Cores
         totalRegionServers: Total Region Servers
         underreplicated: Underreplicated
         used: Used
-        unhealthy: Unhealthy
+        UsedMemory: Used Memory
+        UsedVCores: Used Virtual Cores
+        UnusableNodes: Unusable Nodes
+        UnusableContainers: Unusable Containers
 
     Component-Overview:
       label: Component Overview
