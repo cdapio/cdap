@@ -17,6 +17,7 @@
 import {combineReducers, createStore} from 'redux';
 import WranglerActions from 'components/Wrangler/Redux/WranglerActions';
 import shortid from 'shortid';
+import cloneDeep from 'lodash/cloneDeep';
 import {createBucket} from 'components/Wrangler/data-buckets';
 import {inferColumn} from 'components/Wrangler/type-inference';
 import {
@@ -38,9 +39,11 @@ const defaultAction = {
 const defaultInitialState = {
   wrangler: {
     headersList: [],
+    originalData: [],
     data: [],
     errors: {},
     history: [],
+    historyLocation: 0,
     histogram: {},
     columnTypes: {},
     filter: null,
@@ -113,6 +116,12 @@ const wrangler = (state = defaultInitialState, action = defaultAction) => {
       return Object.assign({}, state, {
         filter: action.payload.filter
       });
+    case WranglerActions.deleteHistory:
+      return _deleteHistory(state, action.payload);
+    case WranglerActions.undo:
+      return _deleteHistory(state, { index: state.historyLocation - 1 });
+    case WranglerActions.redo:
+      return _forwardHistory(state);
     case WranglerActions.reset:
       return defaultInitialState;
 
@@ -124,9 +133,9 @@ const wrangler = (state = defaultInitialState, action = defaultAction) => {
 };
 
 function _setData(payload) {
-
   const headersList = Object.keys(payload.data[0]);
   const data = payload.data;
+  const originalData = cloneDeep(data);
   const errors = {};
   let columnTypes = {};
   let histogram = {};
@@ -141,6 +150,7 @@ function _setData(payload) {
 
   return {
     data,
+    originalData,
     headersList,
     errors,
     columnTypes,
@@ -148,16 +158,73 @@ function _setData(payload) {
   };
 }
 
+function _deleteHistory(state, payload) {
+  if (state.historyLocation === 0) { return state; }
+
+  let newHistory = state.history.slice(0, payload.index);
+  let historyLocation = payload.index;
+
+  let history = cloneDeep(state.history);
+
+  let newPayload = {
+    data: cloneDeep(state.originalData)
+  };
+
+  let stateCopy = Object.assign({}, defaultInitialState.wrangler, _setData(newPayload));
+
+  newHistory.forEach((history) => {
+    stateCopy = wrangler(stateCopy, {
+      type: history.action,
+      payload: history.payload
+    });
+  });
+
+  return Object.assign({}, stateCopy, {
+    history,
+    historyLocation
+  });
+}
+
+function _forwardHistory(state) {
+  if (state.history.length === state.historyLocation) {
+    return state;
+  }
+
+  let stateCopy = Object.assign({}, state);
+
+  let historyLocation = state.historyLocation + 1;
+  let history = cloneDeep(state.history);
+  let forwardHistory = history[state.historyLocation];
+
+  stateCopy = wrangler(stateCopy, {
+    type: forwardHistory.action,
+    payload: forwardHistory.payload
+  });
+
+  return Object.assign({}, stateCopy, {
+    history,
+    historyLocation
+  });
+}
+
 function addHistory(state, type, payload) {
-  let history = state.history;
-  history.push({
+  let historyObj = {
     id: shortid.generate(),
     action: type,
     payload
-  });
+  };
+
+  let history = state.history;
+  let limit = state.historyLocation;
+
+  history = history.slice(0, limit);
+  history.push(historyObj);
+
+  let historyLocation = history.length;
 
   return {
-    history
+    history,
+    historyLocation
   };
 }
 

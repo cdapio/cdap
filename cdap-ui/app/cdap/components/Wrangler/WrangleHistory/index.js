@@ -15,6 +15,10 @@
  */
 
 import React, {Component, PropTypes} from 'react';
+import WranglerStore from 'components/Wrangler/Redux/WranglerStore';
+import WranglerActions from 'components/Wrangler/Redux/WranglerActions';
+import classnames from 'classnames';
+import T from 'i18n-react';
 require('./WrangleHistory.less');
 
 export default class WrangleHistory extends Component {
@@ -22,56 +26,72 @@ export default class WrangleHistory extends Component {
     super(props);
 
     this.state = {
-      expanded: {}
+      showHistory: false
     };
 
+    this.toggleShowHistory = this.toggleShowHistory.bind(this);
   }
 
-  historyItemClick(id) {
-    let newObj = {};
-    newObj[id] = !this.state.expanded[id];
-
-    let expanded = Object.assign({}, this.state.expanded, newObj);
-    this.setState({expanded});
+  toggleShowHistory() {
+    this.setState({showHistory: !this.state.showHistory});
   }
 
-  renderHistoryPayload(history) {
-    if (!this.state.expanded[history.id]) {
-      return null;
-    }
+  deleteHistory(index) {
+    WranglerStore.dispatch({
+      type: WranglerActions.deleteHistory,
+      payload: {
+        index
+      }
+    });
+  }
+
+  renderHistory() {
+    if (!this.state.showHistory) { return null; }
 
     return (
-      <pre>{JSON.stringify(history.payload, null, 2)}</pre>
+      <div
+        className="history-list"
+        onClick={e => e.stopPropagation()}
+      >
+        {
+          this.props.historyArray.map((history, index) => {
+            return (
+              <div
+                className="history-row"
+                key={history.id}
+              >
+                <span>
+                  <span>{T.translate(`features.Wrangler.Actions.${history.action}`)}</span>
+                  <span>: {history.payload.activeColumn}</span>
+                  <span
+                    className="fa fa-times-circle pull-right"
+                    onClick={this.deleteHistory.bind(this, index)}
+                  />
+                </span>
+              </div>
+            );
+          })
+        }
+      </div>
     );
   }
 
   render() {
     return (
       <div className="wrangler-history">
-        <div className="transform-item">
+        <div
+          className="transform-item"
+          onClick={this.toggleShowHistory}
+        >
           <span className="fa fa-list-ol" />
           <span className="transform-item-text">History</span>
+          <span className={classnames('fa pull-right', {
+            'fa-chevron-down': !this.state.showHistory,
+            'fa-chevron-up': this.state.showHistory
+          })} />
         </div>
 
-        <div className="history-list">
-          {
-            this.props.historyArray.map((history) => {
-              return (
-                <div
-                  className="history-row"
-                  key={history.id}
-                  onClick={this.historyItemClick.bind(this, history.id)}
-                >
-                  <span>
-                    <span>{history.action}</span>
-                    <span className="fa fa-times-circle pull-right"></span>
-                  </span>
-                  {this.renderHistoryPayload(history)}
-                </div>
-              );
-            })
-          }
-        </div>
+        {this.renderHistory()}
       </div>
     );
   }

@@ -41,6 +41,7 @@ export default class WrangleData extends Component {
 
     this.onSort = this.onSort.bind(this);
     this.onHistogramDisplayClick = this.onHistogramDisplayClick.bind(this);
+    this.undo = this.undo.bind(this);
 
     WranglerStore.subscribe(() => {
       let state = WranglerStore.getState().wrangler;
@@ -96,6 +97,14 @@ export default class WrangleData extends Component {
     );
   }
 
+  undo() {
+    WranglerStore.dispatch({ type: WranglerActions.undo });
+  }
+
+  forward() {
+    WranglerStore.dispatch({ type: WranglerActions.redo });
+  }
+
   filterData(data, column, filterBy, ignoreCase) {
     function _equal(row) {
       let columnData = row[column];
@@ -126,7 +135,7 @@ export default class WrangleData extends Component {
     }
 
     function _greaterThan(row) {
-      return parseFloat(row[column]) < parseFloat(filterBy);
+      return parseFloat(row[column]) > parseFloat(filterBy);
     }
 
     function _lessEqualThan(row) {
@@ -134,7 +143,7 @@ export default class WrangleData extends Component {
     }
 
     function _greaterEqualThan(row) {
-      return parseFloat(row[column]) <= parseFloat(filterBy);
+      return parseFloat(row[column]) >= parseFloat(filterBy);
     }
 
     function _startsWith(row) {
@@ -229,8 +238,14 @@ export default class WrangleData extends Component {
       <div className="wrangler-data row">
         <div className="wrangle-transforms">
           <div className="wrangle-filters text-center">
-            <span className="fa fa-undo"></span>
-            <span className="fa fa-repeat"></span>
+            <span
+              className="fa fa-undo"
+              onClick={this.undo}
+            />
+            <span
+              className="fa fa-repeat"
+              onClick={this.forward}
+            />
             <span className="fa fa-filter"></span>
           </div>
 
@@ -265,7 +280,7 @@ export default class WrangleData extends Component {
           </div>
 
           <WrangleHistory
-            historyArray={this.state.history}
+            historyArray={this.state.history.slice(0, this.state.historyLocation)}
           />
 
         </div>
