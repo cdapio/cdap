@@ -26,6 +26,7 @@ import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.commons.lang.StringUtils;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -168,6 +169,23 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
         sslContextFactory.setKeyStoreType(keyStoreType);
         if (keyPassword != null && keyPassword.length() != 0) {
           sslContextFactory.setKeyManagerPassword(keyPassword);
+        }
+
+        String trustStorePath = configuration.get(Constants.Security.AuthenticationServer.SSL_TRUSTSTORE_PATH);
+        if (StringUtils.isNotEmpty(trustStorePath)) {
+          String trustStorePassword =
+            configuration.get(Constants.Security.AuthenticationServer.SSL_TRUSTSTORE_PASSWORD);
+          String trustStoreType = configuration.get(Constants.Security.AuthenticationServer.SSL_TRUSTSTORE_TYPE,
+                                                    Constants.Security.AuthenticationServer.DEFAULT_SSL_KEYSTORE_TYPE);
+
+          // SSL handshaking will involve requesting for a client certificate, if cert is not provided
+          // server continues with the connection but the client is considered to be unauthenticated
+          sslContextFactory.setWantClientAuth(true);
+
+          sslContextFactory.setTrustStore(trustStorePath);
+          sslContextFactory.setTrustStorePassword(trustStorePassword);
+          sslContextFactory.setTrustStoreType(trustStoreType);
+          sslContextFactory.setValidateCerts(true);
         }
         // TODO Figure out how to pick a certificate from key store
 

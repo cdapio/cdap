@@ -19,6 +19,7 @@ package co.cask.cdap.security.server;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
+import com.google.common.collect.Maps;
 import com.unboundid.ldap.listener.InMemoryListenerConfig;
 import com.unboundid.util.ssl.KeyStoreKeyManager;
 import com.unboundid.util.ssl.SSLUtil;
@@ -30,6 +31,7 @@ import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.BasicClientConnectionManager;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 
@@ -37,6 +39,7 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
+import java.util.Map;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
@@ -44,11 +47,13 @@ import javax.net.ssl.X509TrustManager;
 /**
  * Tests for {@link ExternalAuthenticationServer} with SSL enabled.
  */
-public class ExternalAuthenticationServerSSLTest extends ExternalAuthenticationServerTestBase {
+public class ExternalLDAPAuthenticationServerSSLTest extends ExternalLDAPAuthenticationServerTestBase {
+
+  static ExternalLDAPAuthenticationServerSSLTest testServer;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    URL certUrl = ExternalAuthenticationServerSSLTest.class.getClassLoader().getResource("cert.jks");
+    URL certUrl = ExternalLDAPAuthenticationServerSSLTest.class.getClassLoader().getResource("cert.jks");
     Assert.assertNotNull(certUrl);
 
     String authHandlerConfigBase = Constants.Security.AUTH_HANDLER_CONFIG_BASE;
@@ -71,9 +76,14 @@ public class ExternalAuthenticationServerSSLTest extends ExternalAuthenticationS
                                                                   ldapPort, sslUtil.createSSLServerSocketFactory(),
                                                                   sslUtil.createSSLSocketFactory());
 
-    setup();
+    testServer = new ExternalLDAPAuthenticationServerSSLTest();
+    testServer.setup();
   }
 
+  @AfterClass
+  public static void afterClass() throws Exception {
+    testServer.tearDown();
+  }
   @Override
   protected String getProtocol() {
     return "https";
@@ -84,7 +94,7 @@ public class ExternalAuthenticationServerSSLTest extends ExternalAuthenticationS
     SSLContext sslContext = SSLContext.getInstance("SSL");
 
     // set up a TrustManager that trusts everything
-    sslContext.init(null, new TrustManager[] { new X509TrustManager() {
+    sslContext.init(null, new TrustManager[]{new X509TrustManager() {
       @Override
       public java.security.cert.X509Certificate[] getAcceptedIssuers() {
         return null;
@@ -102,7 +112,7 @@ public class ExternalAuthenticationServerSSLTest extends ExternalAuthenticationS
         //
       }
 
-    } }, new SecureRandom());
+    }}, new SecureRandom());
 
     SSLSocketFactory sf = new SSLSocketFactory(sslContext);
     Scheme httpsScheme = new Scheme("https", getAuthServerPort(), sf);
@@ -112,5 +122,17 @@ public class ExternalAuthenticationServerSSLTest extends ExternalAuthenticationS
     // apache HttpClient version >4.2 should use BasicClientConnectionManager
     ClientConnectionManager cm = new BasicClientConnectionManager(schemeRegistry);
     return new DefaultHttpClient(cm);
+  }
+
+  @Override
+  protected Map<String, String> getAuthRequestHeader() throws Exception {
+    Map headers = Maps.newHashMap();
+    headers.put("Authorization", "Basic YWRtaW46cmVhbHRpbWU=");
+    return headers;
+  }
+
+  @Override
+  protected String getAuthenticatedUserName() throws Exception {
+    return "admin";
   }
 }
