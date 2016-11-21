@@ -582,7 +582,7 @@ cdap_start_java() {
   JAVA_HEAPMAX=${JAVA_HEAPMAX:-${!JAVA_HEAP_VAR}}
   export JAVA_HEAPMAX
   local __defines="-Dcdap.service=${CDAP_SERVICE} ${JAVA_HEAPMAX} -Duser.dir=${LOCAL_DIR} -Djava.io.tmpdir=${TEMP_DIR}"
-  if [ "${CDAP_SERVICE}" == "master" ]; then
+  if [[ ${CDAP_SERVICE} == master ]]; then
     # Determine SPARK_HOME
     cdap_set_spark || logecho "Could not determine SPARK_HOME! Spark support unavailable!"
     # Master requires setting hive classpath
@@ -594,13 +594,16 @@ cdap_start_java() {
     # Master requires this local directory
     cdap_create_local_dir || die "Could not create Master local directory"
     # Check for JAVA_LIBRARY_PATH
-    if [ -n "${JAVA_LIBRARY_PATH}" ]; then
+    if [[ -n ${JAVA_LIBRARY_PATH} ]]; then
       __defines+=" -Djava.library.path=${JAVA_LIBRARY_PATH}"
     fi
-    logecho "$(date) Running CDAP Master startup checks -- this may take a few minutes"
-    "${JAVA}" ${JAVA_HEAPMAX} ${__explore} ${OPTS} -cp ${CLASSPATH} co.cask.cdap.master.startup.MasterStartupTool </dev/null >>${__logfile} 2>&1
-    if [ $? -ne 0 ]; then
-      die "Master startup checks failed. Please check ${__logfile} to address issues."
+    __startup_checks=${CDAP_STARTUP_CHECKS:-$(cdap_get_conf "master.startup.checks.enabled" "${CDAP_CONF}"/cdap-site.xml true)}
+    if [[ {__startup_checks} == true ]]; then
+      logecho "$(date) Running CDAP Master startup checks -- this may take a few minutes"
+      "${JAVA}" ${JAVA_HEAPMAX} ${__explore} ${OPTS} -cp ${CLASSPATH} co.cask.cdap.master.startup.MasterStartupTool </dev/null >>${__logfile} 2>&1
+      if [ $? -ne 0 ]; then
+        die "Master startup checks failed. Please check ${__logfile} to address issues."
+      fi
     fi
   fi
   logecho "$(date) Starting CDAP ${__name} service on ${HOSTNAME}"
@@ -775,7 +778,7 @@ cdap_sdk_start() {
   local readonly __ret __pid
 
   # Default JVM_OPTS for CDAP SDK (use larger heap for /opt/cdap SDK installs)
-  if [[ ${CDAP_HOME} == /opt/cdap ]] || [[ ${CDAP_HOME} == /opt/cdap/sdk ]]; then
+  if [[ ${CDAP_HOME} == /opt/cdap ]] || [[ ${CDAP_HOME} == /opt/cdap/sdk* ]]; then
     CDAP_SDK_DEFAULT_JVM_OPTS="-Xmx3072m"
   else
     CDAP_SDK_DEFAULT_JVM_OPTS="-Xmx2048m"
