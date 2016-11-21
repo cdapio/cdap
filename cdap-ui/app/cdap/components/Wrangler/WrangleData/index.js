@@ -19,11 +19,12 @@ import WrangleHistory from 'components/Wrangler/WrangleHistory';
 import classnames from 'classnames';
 import shortid from 'shortid';
 import Histogram from 'components/Wrangler/Histogram';
-import WranglerStore from 'components/Wrangler/Redux/WranglerStore';
-import WranglerActions from 'components/Wrangler/Redux/WranglerActions';
+import WranglerStore from 'components/Wrangler/Store/WranglerStore';
+import WranglerActions from 'components/Wrangler/Store/WranglerActions';
 import ColumnActionsDropdown from 'components/Wrangler/ColumnActionsDropdown';
 import orderBy from 'lodash/orderBy';
 import Filter from 'components/Wrangler/Filter';
+import WranglerRightPanel from 'components/Wrangler/WranglerRightPanel';
 
 export default class WrangleData extends Component {
   constructor(props) {
@@ -381,6 +382,8 @@ export default class WrangleData extends Component {
             </table>
           </div>
         </div>
+
+        <WranglerRightPanel />
       </div>
     );
   }

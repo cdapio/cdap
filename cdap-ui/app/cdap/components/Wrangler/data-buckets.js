@@ -36,14 +36,15 @@ export function createBucket(array, columnName, columnType) {
       break;
   }
 
-  let extent = d3.extent(data);
+  // let extent = d3.extent(data);
 
-  let x = d3.scaleLinear()
-    .domain(extent);
+  // TODO: FIX THIS after downgrade to d3 v3
 
-  let histogram = d3.histogram()
-    .domain(x.domain())
-    .thresholds(x.ticks(5));
+  // let x = d3.scale.linear()
+  //   .domain(extent);
+
+  let histogram = d3.layout.histogram()
+    .bins(5);
 
   let histogramData = histogram(data);
   let resultData = histogramData.map((bucket) => bucket.length);
@@ -56,4 +57,32 @@ export function createBucket(array, columnName, columnType) {
     labels
   };
 }
+
+// function _createBooleanDistribution(array, columnName) {
+//   let distribution = {
+//     'true': 0,
+//     'false': 0,
+//     'null': 0,
+//     'error': 0
+//   };
+
+//   array.forEach((row) => {
+//     switch (row[columnType]) {
+//       case 'true':
+//         distribution['true']++;
+//         break;
+//       case 'false':
+//         distribution['false']++;
+//         break;
+//       case '':
+//         distribution['null']++;
+//         break;
+//       default:
+//         distribution['error']++;
+//     }
+//   });
+
+
+
+// }
 

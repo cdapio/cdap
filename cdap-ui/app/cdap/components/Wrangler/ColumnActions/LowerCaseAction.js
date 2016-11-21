@@ -15,8 +15,8 @@
  */
 
 import React, {PropTypes} from 'react';
-import WranglerActions from 'components/Wrangler/Redux/WranglerActions';
-import WranglerStore from 'components/Wrangler/Redux/WranglerStore';
+import WranglerActions from 'components/Wrangler/Store/WranglerActions';
+import WranglerStore from 'components/Wrangler/Store/WranglerStore';
 
 export default function LowerCaseAction({column}) {
   function onClick() {

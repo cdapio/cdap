@@ -17,8 +17,8 @@
 import React, { Component, PropTypes } from 'react';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 
-import WranglerActions from 'components/Wrangler/Redux/WranglerActions';
-import WranglerStore from 'components/Wrangler/Redux/WranglerStore';
+import WranglerActions from 'components/Wrangler/Store/WranglerActions';
+import WranglerStore from 'components/Wrangler/Store/WranglerStore';
 
 export default class SplitAction extends Component {
   constructor(props) {

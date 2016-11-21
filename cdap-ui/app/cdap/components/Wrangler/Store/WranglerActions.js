@@ -29,6 +29,9 @@ const WranglerActions = {
   deleteHistory: 'WRANGLER_DELETE_HISTORY',
   undo: 'WRANGLER_UNDO',
   redo: 'WRANGLER_REDO',
+  addChart: 'WRANGLER_VISUALIZATION_ADD',
+  editChart: 'WRANGLER_VISUALIZATION_EDIT',
+  deleteChart: 'WRANGLER_VISUALIZATION_DELETE',
   reset: 'WRANGLER_RESET'
 };
 
