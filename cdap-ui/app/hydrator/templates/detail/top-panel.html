@@ -188,11 +188,10 @@
           <strong>Runtime Arguments</strong>
         </h5>
         <div class="arguments-container">
-          <div
-            data-model="TopPanelCtrl.macrosList"
-            data-myconfig="TopPanelCtrl.runTimeWidgetConfig"
-            widget-container
-          ></div>
+          <key-value-widget
+            ng-model="TopPanelCtrl.macrosMap"
+            data-config="TopPanelCtrl.runTimeWidgetConfig"
+          ></key-value-widget>
         </div>
         <div class="clearfix">
           <span ng-if="TopPanelCtrl.macroError" class="pull-left macro-error-container">

@@ -60,32 +60,35 @@ class HydratorDetailTopPanelController {
       this.setState();
     });
     HydratorPlusPlusDetailNonRunsStore.registerOnChangeListener(this.setScheduleStatus.bind(this));
-    this.macrosList = '';
+
+    this.macrosMap = {};
     this.runTimeWidgetConfig = {
-      'widget-type': 'keyvalue',
+      'widget-type': 'map',
       'widget-attributes': {
-        'showDelimiter': 'false',
         'key-placeholder': 'Argument name',
         'value-placeholder': 'Argument value'
       }
     };
-    this.fetchMacros();
 
+    this.fetchMacros();
     this.$scope.$on('$destroy', () => {
       this.$timeout.cancel(this.scheduleTimeout);
     });
   }
+
   fetchMacros() {
-    const macroReducer = (prev, curr) => {
-      return prev.concat(this.myHelpers.objectQuery(curr, 'spec', 'properties', 'macros', 'lookupProperties') || []);
-    };
+
     const parseMacros = macrosSpec => {
-      return macrosSpec
-        .reduce(macroReducer, [])
-        .map(macro => macro + ':')
-        .sort()
-        .join(',');
+      let macrosObj = {};
+      for(let i = 0; i < macrosSpec.length; i++){
+        if(this.myHelpers.objectQuery(macrosSpec[i], 'spec', 'properties', 'macros', 'lookupProperties') &&
+          this.myHelpers.objectQuery(macrosSpec[i], 'spec', 'properties', 'macros', 'lookupProperties').length > 0){
+            macrosObj[this.myHelpers.objectQuery(macrosSpec[i], 'spec', 'properties', 'macros', 'lookupProperties')] = '';
+        }
+      }
+      return macrosObj;
     };
+
     let {namespace, app} = this.HydratorPlusPlusDetailRunsStore.getParams();
     let preferenceParams = {
       namespace: this.$state.params.namespace,
@@ -93,6 +96,7 @@ class HydratorDetailTopPanelController {
       scope: this.$scope
     };
     const errorHandler = err => console.log('ERROR', err);
+
     return this.myPipelineApi
       .fetchMacros({
         namespace,
@@ -100,7 +104,10 @@ class HydratorDetailTopPanelController {
       })
       .$promise
       .then(
-        res => this.macrosList = parseMacros(res),
+        (res) => {
+          this.macrosMap = parseMacros(res);
+          return this.macrosMap;
+        },
         err => this.macroError = err
       )
       .then(
@@ -112,6 +119,7 @@ class HydratorDetailTopPanelController {
         errorHandler
       );
   }
+
   syncPreferencesStoreWithMacros(appPreferences = {}) {
     try {
       appPreferences = JSON.parse(angular.toJson(appPreferences));
@@ -119,30 +127,24 @@ class HydratorDetailTopPanelController {
       console.log('ERROR: ', e);
       appPreferences = {};
     }
-    var macrosMap = Object.assign({}, this.getMacrosMap(), appPreferences);
-    this.macrosList = Object.keys(macrosMap).map(macro => macro + ':' + (macrosMap[macro] || '')).join(',');
+    this.macrosMap = Object.assign({}, this.macrosMap, appPreferences);
   }
+
   isValidToStartOrSchedule() {
-    // If no macros for the pipeline
-    if (this.macrosList.length === 0) {
+    if (Object.keys(this.macrosMap).length === 0) {
       return true;
     }
-    return this.macrosList.split(',')
-      .reduce((prev, curr) => prev && (curr && curr.split(':')[1]), true);
-  }
-  getMacrosMap() {
-    let macrosMap = {};
-    if (!this.macrosList.length) {
-      return macrosMap;
+
+    let res = true;
+
+    for(let key in this.macrosMap){
+      if(!this.macrosMap[key]){
+        res = false;
+      }
     }
-    this.macrosList
-      .split(',')
-      .forEach(macro => {
-        let [key,value] = macro.split(':');
-        macrosMap[key] = value;
-      });
-    return macrosMap;
+    return res;
   }
+
   setState() {
     var runs = this.HydratorPlusPlusDetailRunsStore.getRuns();
     var status, i;
@@ -193,7 +195,7 @@ class HydratorDetailTopPanelController {
           .then(() => {
             this.runPlayer.view = true;
             this.runPlayer.action = 'STARTING';
-          });
+          }, (err) => {console.log('Error: ', err); });
         break;
       case 'Schedule':
         this.fetchMacros()
@@ -243,7 +245,7 @@ class HydratorDetailTopPanelController {
     this.HydratorPlusPlusDetailActions.startPipeline(
       this.HydratorPlusPlusDetailRunsStore.getApi(),
       this.HydratorPlusPlusDetailRunsStore.getParams(),
-      this.getMacrosMap()
+      this.macrosMap
     )
     .then(
       () => {},
@@ -274,6 +276,7 @@ class HydratorDetailTopPanelController {
       }
     );
   }
+
   schedulePipeline() {
     this.scheduleStatus = 'SCHEDULING';
     this.scheduleLoading = true;
@@ -282,8 +285,9 @@ class HydratorDetailTopPanelController {
       appId: this.$state.params.pipelineId,
       scope: this.$scope
     };
+
     this.myPreferenceApi
-      .setAppPreference(preferenceParams, this.getMacrosMap())
+      .setAppPreference(preferenceParams, this.macrosMap)
       .$promise
       .then(
         () => {

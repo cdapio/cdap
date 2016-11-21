@@ -1,0 +1,39 @@
+<!--
+  Copyright © 2016 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="key-val-directive-container">
+  <div ng-repeat="property in KeyValue.properties" class="row" ng-keypress="KeyValue.enter($event, $last)">
+    <div class="col-xs-10 col-lg-8">
+      <input type="text" class="form-control" ng-model="property.key" placeholder="{{ KeyValue.keyPlaceholder }}" my-focus-watch="KeyValue.property.newField" />
+      <input type="text" class="form-control" ng-model="property.value" placeholder="{{ KeyValue.valuePlaceholder }}" ng-if="!isDropdown" />
+    </div>
+    <div class="col-xs-2 col-lg-4">
+      <a href="" class="btn btn-danger" ng-click="KeyValue.removeProperty(property)">
+        <span class="fa fa-fw fa-trash"> </span>
+      </a>
+      <a class="btn btn-info btn-transparent" ng-click="KeyValue.addProperty()" ng-if="$last">
+        <span class="fa fa-fw fa-plus"></span>
+      </a>
+    </div>
+  </div>
+
+  <div ng-if="KeyValue.properties.length === 0" class="empty-container">
+    <a class="btn btn-blue" ng-click="KeyValue.addProperty()">
+      <span class="fa fa-fw fa-plus"></span>
+      <span>Add Property</span>
+    </a>
+  </div>
+</div>
