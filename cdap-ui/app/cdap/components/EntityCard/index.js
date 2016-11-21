@@ -96,7 +96,7 @@ export default class EntityCard extends Component {
     }
     const header = (
       <EntityCardHeader
-        className={this.props.entity.type}
+        className={this.props.entity.isHydrator ? 'datapipeline' : this.props.entity.type}
         entity={this.props.entity}
         systemTags={this.props.entity.metadata.metadata.SYSTEM.tags}
       />
@@ -133,11 +133,25 @@ export default class EntityCard extends Component {
     }
     return (
       <div
-        className={classnames('home-cards', this.props.entity.type, this.props.className)}
+        className={
+          classnames(
+            'home-cards',
+            this.props.entity.isHydrator ? 'datapipeline' : this.props.entity.type,
+            this.props.className)
+        }
         onClick={this.toggleOverviewMode.bind(this)}
         ref={(ref) => this.cardRef = ref}
       >
-        <Card header={header} id={`home-cards-${this.props.entity.type}`}>
+        <Card
+          header={header}
+          id={
+            classnames(
+              this.props.entity.isHydrator ?
+              `home-cards-datapipeline` :
+              `home-cards-${this.props.entity.type}`
+            )
+          }
+        >
           <div className="entity-information clearfix">
             <div className="entity-id-container">
               <h4

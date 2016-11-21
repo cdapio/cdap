@@ -135,24 +135,23 @@ export default class AppOverview extends Component {
     }
     return (
       <div
-        className={classnames("entity-overview", this.props.position)}
+        className={
+          classnames(
+            "entity-overview",
+            this.props.position,
+            this.props.entity.isHydrator ? 'datapipeline' : this.props.entity.type
+          )
+        }
         ref={ref=> this.overviewRef = ref}
         style={style}
         onClick={(e) => e.stopPropagation()}
       >
         <div>
           <div className="overview-header clearfix">
+            <i className={`fa ${this.props.entity.icon}`}></i>
             <span>
               {this.state.entityDetail.name}
-              <small>
-                {this.state.entityDetail.description}
-              </small>
-            </span>
-            <span>
-              {this.state.entityDetail.artifact.name}
-              <small>
-                Version: {this.state.entityDetail.artifact.version}
-              </small>
+              <small>1.0.0</small>
             </span>
             <span className="text-right">
               <i className="fa fa-info fa-lg"></i>
@@ -163,6 +162,14 @@ export default class AppOverview extends Component {
               ></i>
             </span>
           </div>
+          {
+            this.state.entityDetail.description ?
+              <div className="overview-description">
+                {this.state.entityDetail.description}
+              </div>
+            :
+              null
+          }
           <div className="overview-content">
             <ApplicationMetrics entity={this.props.entity}/>
             <ConfigurableTab
