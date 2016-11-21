@@ -28,6 +28,8 @@ import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.logging.ApplicationLoggingContext;
 import co.cask.cdap.common.logging.ComponentLoggingContext;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -35,6 +37,8 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.NamespaceLoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.security.Impersonator;
+import co.cask.cdap.common.test.PluginJarHelper;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.logging.KafkaTestBase;
@@ -46,6 +50,7 @@ import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.filter.Filter;
+import co.cask.cdap.logging.processor.CountingLogProcessor;
 import co.cask.cdap.logging.read.AvroFileReader;
 import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogEvent;
@@ -61,6 +66,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -72,22 +79,31 @@ import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
 import org.apache.tephra.TransactionManager;
+import org.apache.twill.api.ClassAcceptor;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.ApplicationBundler;
 import org.apache.twill.kafka.client.FetchedMessage;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -95,6 +111,11 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.jar.Attributes;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 
 import static co.cask.cdap.logging.appender.LoggingTester.LogCallback;
 
@@ -106,6 +127,9 @@ import static co.cask.cdap.logging.appender.LoggingTester.LogCallback;
 public class LogSaverPluginTest extends KafkaTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(LogSaverTest.class);
 
+  @ClassRule
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
+
   private static Injector injector;
   private static TransactionManager txManager;
   private static LogSaver logSaver;
@@ -116,11 +140,13 @@ public class LogSaverPluginTest extends KafkaTestBase {
   private static MetricsCollectionService metricsCollectionService;
   private static CConfiguration cConf;
   private static Impersonator impersonator;
+  private static File tmpDir;
 
   @BeforeClass
   public static void initialize() throws IOException {
     cConf = KAFKA_TESTER.getCConf();
     namespaceDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
+    tmpDir = TMP_FOLDER.newFolder();
 
     injector = KAFKA_TESTER.getInjector();
     appender = injector.getInstance(KafkaLogAppender.class);
@@ -130,10 +156,76 @@ public class LogSaverPluginTest extends KafkaTestBase {
     metricStore = injector.getInstance(MetricStore.class);
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
 
+    File extensionJarFile = TMP_FOLDER.newFile("counting-log-processor.jar");
+    createProcessorExtensionJar(CountingLogProcessor.class, extensionJarFile);
+    cConf.set(Constants.LogSaver.LOG_PROCESSOR_EXTENSION_JAR_PATH, extensionJarFile.getAbsolutePath());
+
+    File processorOutputFile = TMP_FOLDER.newFile("output-log-processor.jar");
+    cConf.set(Constants.LogSaver.EXTENSION_CONFIG_PREFIX + "output.file", processorOutputFile.getAbsolutePath());
     txManager = injector.getInstance(TransactionManager.class);
     impersonator = injector.getInstance(Impersonator.class);
     txManager.startAndWait();
     metricsCollectionService.startAndWait();
+  }
+
+  private static File createProcessorExtensionJar(Class<?> cls, File destFile) throws IOException {
+    Location deploymentJar = createExtensionJar(new LocalLocationFactory(TMP_FOLDER.newFolder()), cls);
+    DirUtils.mkdirs(destFile.getParentFile());
+    Files.copy(Locations.newInputSupplier(deploymentJar), destFile);
+    return destFile;
+  }
+
+  public static Location createExtensionJar(LocationFactory locationFactory, Class<?> clz) throws IOException {
+
+    Location jarLocation = locationFactory.create(clz.getName()).getTempFile(".jar");
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(clz.getClassLoader());
+    ApplicationBundler bundler  = new ApplicationBundler(new ClassAcceptor());
+    try {
+      bundler.createBundle(jarLocation, clz);
+    } finally {
+      ClassLoaders.setContextClassLoader(oldClassLoader);
+    }
+
+    Location deployJar = locationFactory.create(clz.getName()).getTempFile(".jar");
+    Manifest jarManifest = new Manifest();
+    jarManifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+    jarManifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, clz.getName());
+
+    // Create the program jar for deployment. It removes the "classes/" prefix as that's the convention taken
+    // by the ApplicationBundler inside Twill.
+    try (
+      JarOutputStream jarOutput = new JarOutputStream(deployJar.getOutputStream(), jarManifest);
+      JarInputStream jarInput = new JarInputStream(jarLocation.getInputStream())
+    ) {
+      JarEntry jarEntry = jarInput.getNextJarEntry();
+      while (jarEntry != null) {
+        boolean isDir = jarEntry.isDirectory();
+        String entryName = jarEntry.getName();
+        if (!entryName.equals("classes/")) {
+          if (entryName.startsWith("classes/")) {
+            jarEntry = new JarEntry(entryName.substring("classes/".length()));
+          } else {
+            jarEntry = new JarEntry(entryName);
+          }
+
+          // TODO: this is due to manifest possibly already existing in the jar, but we also
+          // create a manifest programatically so it's possible to have a duplicate entry here
+          if ("META-INF/MANIFEST.MF".equalsIgnoreCase(jarEntry.getName())) {
+            jarEntry = jarInput.getNextJarEntry();
+            continue;
+          }
+
+          jarOutput.putNextEntry(jarEntry);
+          if (!isDir) {
+            ByteStreams.copy(jarInput, jarOutput);
+          }
+        }
+
+        jarEntry = jarInput.getNextJarEntry();
+      }
+    }
+
+    return deployJar;
   }
 
   @AfterClass
@@ -191,6 +283,12 @@ public class LogSaverPluginTest extends KafkaTestBase {
 
       stopLogSaver();
 
+      assertCountingLogProcessorExtension(60);
+
+      // setting new file for next run of log saver.
+      File processorOutputFile = TMP_FOLDER.newFile("output-log-processor-2.jar");
+      cConf.set(Constants.LogSaver.EXTENSION_CONFIG_PREFIX + "output.file", processorOutputFile.getAbsolutePath());
+
       // Checkpoint should read 60 for both processor
       verifyCheckpoint();
       verifyMetricsPlugin(60L);
@@ -229,6 +327,8 @@ public class LogSaverPluginTest extends KafkaTestBase {
       verifyCheckpoint();
       // Metrics should be 60 for first run + 50 for second run
       verifyMetricsPlugin(110L);
+      // todo : check if this expectation is accurate
+      assertCountingLogProcessorExtension(50);
     } catch (Throwable t) {
       try {
         final Multimap<String, String> contextMessages = getPublishedKafkaMessages();
@@ -237,6 +337,14 @@ public class LogSaverPluginTest extends KafkaTestBase {
         LOG.error("Error while getting published kafka messages {}", e);
       }
       throw t;
+    }
+  }
+
+  private void assertCountingLogProcessorExtension(int expectedCount) throws IOException {
+    File extensionOutput = new File(cConf.get(Constants.LogSaver.EXTENSION_CONFIG_PREFIX + "output.file"));
+    try (FileInputStream fileInputStream = new FileInputStream(extensionOutput)) {
+      int count = fileInputStream.read();
+      Assert.assertEquals(expectedCount, count);
     }
   }
 

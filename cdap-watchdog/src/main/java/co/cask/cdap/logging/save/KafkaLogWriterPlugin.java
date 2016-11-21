@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.save;
 
+import co.cask.cdap.api.log.LogProcessor;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.RootLocationFactory;
@@ -45,9 +46,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.SortedSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -73,6 +76,8 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
   private final LoggingEventSerializer serializer;
   private final LogCleanup logCleanup;
   private final CheckpointManager checkpointManager;
+  private final List<LogProcessor> logProcessorExtensions;
+  private final Properties logProcessorExtensionProperties;
 
   private ListeningScheduledExecutorService scheduledExecutor;
   private CountDownLatch countDownLatch;
@@ -147,10 +152,15 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
                                                        serializer.getAvroSchema(), maxLogFileSizeBytes,
                                                        syncIntervalBytes, maxFileLifetimeMs, impersonator);
 
+    CustomLogProcessors customLogProcessors = new CustomLogProcessors(cConf);
+    this.logProcessorExtensions = customLogProcessors.getLogProcessors();
+    this.logProcessorExtensionProperties = customLogProcessors.getLogProcessorExtensionProperties();
+
     checkpointManager = checkpointManagerFactory.create(cConf.get(Constants.Logging.KAFKA_TOPIC),
                                                         CHECKPOINT_ROW_KEY_PREFIX);
 
-    this.logFileWriter = new CheckpointingLogFileWriter(avroFileWriter, checkpointManager, checkpointIntervalMs);
+    this.logFileWriter = new CheckpointingLogFileWriter(avroFileWriter, checkpointManager, checkpointIntervalMs,
+                                                        logProcessorExtensions);
     long retentionDurationMs = TimeUnit.MILLISECONDS.convert(retentionDurationDays, TimeUnit.DAYS);
     this.logCleanup = new LogCleanup(fileMetaDataManager, rootLocationFactory, namespaceQueryAdmin,
                                      namespacedLocationFactory, logBaseDir, retentionDurationMs, impersonator);
@@ -161,6 +171,10 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
     this.partition = partition;
     Checkpoint checkpoint = checkpointManager.getCheckpoint(partition);
     super.init(checkpoint);
+
+    for (LogProcessor logProcessorExtension : logProcessorExtensions) {
+      logProcessorExtension.initialize(logProcessorExtensionProperties);
+    }
 
     // We schedule clean up task if partition is zero, so that only one cleanup task gets scheduled
     if (partition == 0) {
@@ -265,6 +279,11 @@ public class KafkaLogWriterPlugin extends AbstractKafkaLogProcessor {
 
       logFileWriter.flush();
       logFileWriter.close();
+
+      // stop log processor extensions
+      for (LogProcessor logProcessorExtension : logProcessorExtensions) {
+        logProcessorExtension.stop();
+      }
 
     } catch (Exception e) {
       LOG.error("Caught exception while closing logWriter {}", e.getMessage(), e);

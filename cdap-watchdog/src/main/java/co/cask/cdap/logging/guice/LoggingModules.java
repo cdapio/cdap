@@ -16,6 +16,8 @@
 
 package co.cask.cdap.logging.guice;
 
+import co.cask.cdap.api.log.LogProcessor;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.logging.appender.AsyncLogAppender;
@@ -23,6 +25,7 @@ import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.file.FileLogAppender;
 import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
 import co.cask.cdap.logging.appender.standalone.StandaloneLogAppender;
+import co.cask.cdap.logging.save.CustomLogProcessors;
 import co.cask.cdap.logging.save.KafkaLogProcessor;
 import co.cask.cdap.logging.save.KafkaLogProcessorFactory;
 import co.cask.cdap.logging.save.LogMetricsPluginFactory;
@@ -35,7 +38,10 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 
 /**
@@ -86,9 +92,11 @@ public class LoggingModules extends RuntimeModule {
   public static class LogAppenderProvider implements Provider<LogAppender> {
     private final LogAppender fileLogAppender;
     private final Set<KafkaLogProcessor> messageProcessors;
+    private final List<LogProcessor> logProcessorExtensions;
+    private final Properties logProcessorExtensionsProperties;
 
     @Inject
-    public LogAppenderProvider(FileLogAppender fileLogAppender,
+    public LogAppenderProvider(CConfiguration cConf, FileLogAppender fileLogAppender,
                                @Named(Constants.LogSaver.MESSAGE_PROCESSOR_FACTORIES)
                                Set<KafkaLogProcessorFactory> messageProcessorFactories) throws Exception {
       this.fileLogAppender = fileLogAppender;
@@ -96,12 +104,16 @@ public class LoggingModules extends RuntimeModule {
       for (KafkaLogProcessorFactory messageProcessorFactory : messageProcessorFactories) {
         messageProcessors.add(messageProcessorFactory.create());
       }
+      CustomLogProcessors customLogProcessors = new CustomLogProcessors(cConf);
+      this.logProcessorExtensions = customLogProcessors.getLogProcessors();
+      this.logProcessorExtensionsProperties = customLogProcessors.getLogProcessorExtensionProperties();
     }
 
     @Override
     public LogAppender get() {
       AsyncLogAppender asyncLogAppender = new AsyncLogAppender(fileLogAppender);
-      return new StandaloneLogAppender(asyncLogAppender, messageProcessors);
+      return new StandaloneLogAppender(asyncLogAppender, messageProcessors,
+                                       logProcessorExtensions, logProcessorExtensionsProperties);
     }
   }
 }
