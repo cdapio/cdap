@@ -43,6 +43,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
+import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
@@ -57,6 +58,7 @@ public class ExploreServiceUtils {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreServiceUtils.class);
 
   private static final String HIVE_AUTHFACTORY_CLASS_NAME = "org.apache.hive.service.auth.HiveAuthFactory";
+  private static final String HIVE_EXECUTION_ENGINE = "hive.execution.engine";
 
   /**
    * Hive support enum.
@@ -234,16 +236,21 @@ public class ExploreServiceUtils {
     }
   }
 
-  public static boolean isSparkEngine(HiveConf hiveConf) {
-    // We don't support setting engine through session configuration now
-    String engine = hiveConf.get("hive.execution.engine");
-    return "spark".equals(engine);
+  // Determines whether the execution engine is spark, by checking the SessionConf (if provided) and then the HiveConf.
+  public static boolean isSparkEngine(HiveConf hiveConf, @Nullable Map<String, String> sessionConf) {
+    return "spark".equals(getEngine(hiveConf, sessionConf));
   }
 
-  public static boolean isTezEngine(HiveConf hiveConf) {
-    // We don't support setting engine through session configuration now
-    String engine = hiveConf.get("hive.execution.engine");
-    return "tez".equals(engine);
+  // Determines whether the execution engine is tez, by checking the SessionConf (if provided) and then the HiveConf.
+  public static boolean isTezEngine(HiveConf hiveConf, @Nullable Map<String, String> sessionConf) {
+    return "tez".equals(getEngine(hiveConf, sessionConf));
   }
 
+  private static String getEngine(HiveConf hiveConf, @Nullable Map<String, String> sessionConf) {
+    // sessionConf overrides hiveConf
+    if (sessionConf != null && sessionConf.containsKey(HIVE_EXECUTION_ENGINE)) {
+      return sessionConf.get(HIVE_EXECUTION_ENGINE);
+    }
+    return hiveConf.get(HIVE_EXECUTION_ENGINE);
+  }
 }
