@@ -29,7 +29,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 /**
- * Tests for {@link OperationalStatsUtils}.
+ * Tests for {@link OperationalStatsHttpHandler}.
  */
 public class OperationalStatsHttpHanderTest {
 
@@ -49,24 +49,24 @@ public class OperationalStatsHttpHanderTest {
   public void testReadByName() throws Exception {
     Map<String, Map<String, Object>> expected = new HashMap<>();
     Map<String, Object> inner = new HashMap<>();
-    inner.put("onestring", "one");
+    inner.put("OneString", "one");
     expected.put("string", inner);
     inner = new HashMap<>();
-    inner.put("oneint", 1);
+    inner.put("OneInt", 1);
     expected.put("int", inner);
     inner = new HashMap<>();
-    inner.put("onefloat", 1.0F);
+    inner.put("OneFloat", 1.0F);
     expected.put("float", inner);
     Assert.assertEquals(expected, handler.getStats("name", "one", "type"));
     expected = new HashMap<>();
     inner = new HashMap<>();
-    inner.put("twostring", "two");
+    inner.put("TwoString", "two");
     expected.put("string", inner);
     inner = new HashMap<>();
-    inner.put("twoint", 2);
+    inner.put("TwoInt", 2);
     expected.put("int", inner);
     inner = new HashMap<>();
-    inner.put("twofloat", 2.0F);
+    inner.put("TwoFloat", 2.0F);
     expected.put("float", inner);
     Assert.assertEquals(expected, handler.getStats("name", "two", "type"));
   }
@@ -75,26 +75,26 @@ public class OperationalStatsHttpHanderTest {
   public void testReadByType() throws Exception {
     Map<String, Map<String, Object>> expected = new HashMap<>();
     Map<String, Object> inner = new HashMap<>();
-    inner.put("onestring", "one");
+    inner.put("OneString", "one");
     expected.put("one", inner);
     inner = new HashMap<>();
-    inner.put("twostring", "two");
+    inner.put("TwoString", "two");
     expected.put("two", inner);
     Assert.assertEquals(expected, handler.getStats("type", "string", "name"));
     expected = new HashMap<>();
     inner = new HashMap<>();
-    inner.put("oneint", 1);
+    inner.put("OneInt", 1);
     expected.put("one", inner);
     inner = new HashMap<>();
-    inner.put("twoint", 2);
+    inner.put("TwoInt", 2);
     expected.put("two", inner);
     Assert.assertEquals(expected, handler.getStats("type", "int", "name"));
     expected = new HashMap<>();
     inner = new HashMap<>();
-    inner.put("onefloat", 1.0F);
+    inner.put("OneFloat", 1.0F);
     expected.put("one", inner);
     inner = new HashMap<>();
-    inner.put("twofloat", 2.0F);
+    inner.put("TwoFloat", 2.0F);
     expected.put("two", inner);
     Assert.assertEquals(expected, handler.getStats("type", "float", "name"));
   }
