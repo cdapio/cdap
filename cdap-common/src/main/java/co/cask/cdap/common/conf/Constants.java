@@ -874,6 +874,7 @@ public final class Constants {
     public static final String TX_QUERY_CLOSED = "explore.hive.query.tx.commited";
     public static final String QUERY_ID = "explore.query.id";
     public static final String FORMAT_SPEC = "explore.format.specification";
+    public static final String CONTAINER_YARN_APP_CLASSPATH_FIRST = "explore.container.yarn.app.classpath.first";
 
     public static final String START_ON_DEMAND = "explore.start.on.demand";
     public static final String DATASET_NAME = "explore.dataset.name";

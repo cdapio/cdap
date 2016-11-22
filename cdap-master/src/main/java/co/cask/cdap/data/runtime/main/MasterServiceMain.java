@@ -79,9 +79,7 @@ import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
-import com.google.common.base.Splitter;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
@@ -142,6 +140,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -828,15 +827,16 @@ public class MasterServiceMain extends DaemonMain {
           }
 
           // add hadoop classpath to application classpath and exclude hadoop classes from bundle jar.
-          String yarnAppClassPath = Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH);
-          yarnAppClassPath = hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, yarnAppClassPath);
+          List<String> yarnAppClassPath = Arrays.asList(
+            hConf.getTrimmedStrings(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
+                                    YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
 
-          preparer.withApplicationClassPaths(Splitter.on(",").trimResults().split(yarnAppClassPath))
+          preparer.withApplicationClassPaths(yarnAppClassPath)
             .withBundlerClassAcceptor(new HadoopClassExcluder());
 
           // Add explore dependencies
           if (exploreEnabled) {
-            prepareExploreContainer(preparer, exploreExtraClassPaths);
+            prepareExploreContainer(preparer, exploreExtraClassPaths, yarnAppClassPath);
           }
 
           // Add a listener to delete temp files when application started/terminated.
@@ -878,12 +878,21 @@ public class MasterServiceMain extends DaemonMain {
      * runnable.
      */
     private TwillPreparer prepareExploreContainer(TwillPreparer preparer,
-                                                  Iterable<String> exploreExtraClassPaths) throws IOException {
+                                                  Iterable<String> exploreExtraClassPaths,
+                                                  Iterable<String> yarnAppClassPath) throws IOException {
       // Adding all hive jar files to the container classpath.
       // Ideally we only want it for the explore runnable container, but Twill doesn't support it per runnable.
       // However, setting these extra classpath for non-explore container is fine because those hive will be
       // missing from the container (localization is done by the MasterTwillApplication for the explore runnable only).
-      preparer = preparer.withClassPaths(exploreExtraClassPaths);
+
+      boolean yarnFirst = cConf.getBoolean(Constants.Explore.CONTAINER_YARN_APP_CLASSPATH_FIRST);
+      if (yarnFirst) {
+        // It's ok to have yarn application classpath set here even it can affect non-explore container,
+        // since we anyway have yarn application classpath in the "withApplicationClassPaths".
+        preparer = preparer.withClassPaths(Iterables.concat(yarnAppClassPath, exploreExtraClassPaths));
+      } else {
+        preparer = preparer.withClassPaths(exploreExtraClassPaths);
+      }
 
       // Add all the conf files needed by hive as resources. They will be available in the explore container classpath
       Set<String> addedFiles = Sets.newHashSet();
