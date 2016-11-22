@@ -64,9 +64,13 @@ public class SSLHandlerFactory {
     }
   }
 
-  public SslHandler create() {
+  public SslHandler create(boolean isServer) {
     SSLEngine engine = serverContext.createSSLEngine();
-    engine.setUseClientMode(false);
+    if (isServer) {
+      engine.setUseClientMode(false);
+    } else {
+      engine.setUseClientMode(true);
+    }
     SslHandler handler =  new SslHandler(engine);
     handler.setEnableRenegotiation(false);
     return handler;
