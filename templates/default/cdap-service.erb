@@ -17,11 +17,11 @@
 
 #
 # chkconfig: 2345 96 15
-# description: Starts and stops the <%= @init_name %> service
+# description: Starts and stops the <%= @init_name.downcase.gsub(' ', '-') %> service
 # 
 ### BEGIN INIT INFO
 # Provides:          cdap-<%= @init_name.downcase.gsub(' ', '-') %>
-# Short-Description: Cask CDAP <%= @init_name %>
+# Short-Description: Cask CDAP <%= @init_name.downcase.gsub(' ', '-') %>
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Required-Start:    $syslog $remote_fs
@@ -38,21 +38,21 @@ if [[ -r /etc/default/cdap-<%= @init_name.downcase.gsub(' ', '-') %> ]]; then
 fi
 
 # source cdap-env.sh, if it exists
-CDAP_CONF=${CDAP_CONF:-/etc/cdap/conf}
-if [[ -r ${CDAP_CONF}/cdap-env.sh ]]; then
-  . "${CDAP_CONF}"/cdap-env.sh
+CDAP_CONF_DIR=${CDAP_CONF_DIR:-/etc/cdap/conf}
+if [[ -r ${CDAP_CONF_DIR}/cdap-env.sh ]]; then
+  . "${CDAP_CONF_DIR}"/cdap-env.sh
 fi
 
 <% if @init_krb5.to_s == 'true' %>
-KRB_COMMAND="kinit -kt $CDAP_KEYTAB $CDAP_PRINCIPAL"
+KRB_COMMAND="kinit -kt ${CDAP_KEYTAB} ${CDAP_PRINCIPAL}"
 
 # check for kerberos
-if [[ -r $CDAP_KEYTAB ]] && [[ -n $CDAP_PRINCIPAL ]]; then
-  if [[ $1 =~ "start" ]]; then
+if [[ -r ${CDAP_KEYTAB} ]] && [[ -n ${CDAP_PRINCIPAL} ]]; then
+  if [[ ${1} =~ "start" ]]; then
     if [[ $UID -eq 0 ]]; then
-      su <%= @user %> -c "$KRB_COMMAND"
+      su <%= @user %> -c "${KRB_COMMAND}"
     else
-      $KRB_COMMAND
+      ${KRB_COMMAND}
     fi
   fi
 fi
@@ -61,7 +61,7 @@ fi
 CDAP_USER=${CDAP_USER:-<%= @user %>}
 
 # drop permissions to CDAP_USER and run service script
-if [[ $UID -eq 0 ]]; then
+if [[ ${UID} -eq 0 ]]; then
   su - ${CDAP_USER} -c "${SVC_COMMAND}"
   ret=$?
 elif [[ ${USER} == ${CDAP_USER} ]]; then
