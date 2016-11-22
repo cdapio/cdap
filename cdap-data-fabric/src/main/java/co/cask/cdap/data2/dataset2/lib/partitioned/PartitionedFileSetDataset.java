@@ -34,7 +34,6 @@ import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
-import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionConsumerResult;
 import co.cask.cdap.api.dataset.lib.PartitionConsumerState;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
@@ -116,7 +115,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
   // Keep track of all partitions' being added/dropped in this transaction, so we can rollback their paths,
   // if necessary.
-  private final List<PathOperation> operationsInThisTx = new ArrayList<>();
+  private final List<PartitionOperation> operationsInThisTx = new ArrayList<>();
 
   private Transaction tx;
 
@@ -171,34 +170,34 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   public boolean rollbackTx() throws Exception {
     // rollback all the partition add and drop operations, in reverse order
     // if any throw exception, suppress it temporarily while attempting to roll back the remainder operations
-    IOException ioe = null;
+    Exception caughtExn = null;
     for (int i = operationsInThisTx.size() - 1; i >= 0; i--) {
-      PathOperation operation = operationsInThisTx.get(i);
+      PartitionOperation operation = operationsInThisTx.get(i);
       try {
         rollbackOperation(operation);
-      } catch (IOException e) {
-        if (ioe == null) {
-          ioe = e;
+      } catch (Exception e) {
+        if (caughtExn == null) {
+          caughtExn = e;
         } else {
-          ioe.addSuppressed(e);
+          caughtExn.addSuppressed(e);
         }
       }
     }
-    if (ioe != null) {
-      throw ioe;
+    if (caughtExn != null) {
+      throw caughtExn;
     }
 
     this.tx = null;
     return super.rollbackTx();
   }
 
-  private void rollbackOperation(PathOperation operation) throws IOException {
+  private void rollbackOperation(PartitionOperation operation) throws Exception {
     switch (operation.getOperationType()) {
       case CREATE:
-        undoPartitionCreate(operation.getRelativePath());
+        undoPartitionCreate(operation.getPartitionKey(), operation.getRelativePath());
         break;
       case DROP:
-        undoPartitionDelete(operation.getRelativePath());
+        undoPartitionDelete(operation.getPartitionKey(), operation.getRelativePath());
         break;
       default:
         // this shouldn't happen, since we only have the above types defined in the Enum.
@@ -206,18 +205,37 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     }
   }
 
-  private void undoPartitionDelete(String relativePath) throws IOException {
+  private void undoPartitionDelete(PartitionKey partitionKey, String relativePath) throws Exception {
     // move from quarantine, back to original location
     Location srcLocation = getQuarantineLocation().append(relativePath);
     if (srcLocation.exists()) {
       srcLocation.renameTo(files.getLocation(relativePath));
     }
+    // recreating the partition in Hive only makes sense if the rename succeeds
+    addPartitionToExplore(partitionKey, relativePath);
   }
 
-  private void undoPartitionCreate(String relativePath) throws IOException {
-    Location location = files.getLocation(relativePath);
-    if (location.exists() && !location.delete(true)) {
-      throw new IOException(String.format("Failed to delete location %s.", location));
+  private void undoPartitionCreate(PartitionKey partitionKey, String relativePath) throws Exception {
+    Exception caughtExn = null;
+    try {
+      dropPartitionFromExplore(partitionKey);
+    } catch (Exception e) {
+      caughtExn = e;
+    }
+    try {
+      Location location = files.getLocation(relativePath);
+      if (location.exists() && !location.delete(true)) {
+        throw new IOException(String.format("Failed to delete location %s.", location));
+      }
+    } catch (Exception e) {
+      if (caughtExn != null) {
+        caughtExn.addSuppressed(e);
+      } else {
+        caughtExn = e;
+      }
+    }
+    if (caughtExn != null) {
+      throw caughtExn;
     }
   }
 
@@ -240,28 +258,9 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   @WriteOnly
   @Override
   public void addPartition(PartitionKey key, String path, Map<String, String> metadata) {
-    addPartition(key, path, true, metadata);
-  }
-
-  /**
-   * Add a partition for a given partition key, stored at a given path (relative to the file set's base path),
-   * with the given metadata.
-   *
-   * @param key the partitionKey for the partition.
-   * @param path the path for the partition.
-   * @param explorable whether to add the partition to explore
-   * @param metadata the metadata associated with the partition.
-   */
-  protected void addPartition(PartitionKey key, String path, boolean explorable, Map<String, String> metadata) {
     byte[] rowKey = generateRowKey(key, partitioning);
     Row row = partitionsTable.get(rowKey);
     if (!row.isEmpty()) {
-      if (key.equals(partitionsAddedInSameTx.get(path))) {
-        LOG.warn("Dataset {} already added a partition with key {} in this transaction. " +
-                   "Partitions no longer need to be added in the onFinish() of MapReduce. Please check your app. ",
-                 getName(), key.toString());
-        return;
-      }
       throw new DataSetException(String.format("Dataset '%s' already has a partition with the same key: %s",
                                                getName(), key.toString()));
     }
@@ -281,12 +280,9 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
     partitionsTable.put(put);
     partitionsAddedInSameTx.put(path, key);
-    operationsInThisTx.add(new PathOperation(path, PathOperation.OperationType.CREATE));
+    operationsInThisTx.add(new PartitionOperation(key, path, PartitionOperation.OperationType.CREATE));
 
-    if (explorable) {
-      addPartitionToExplore(key, path);
-      // TODO: make DDL operations transactional [CDAP-1393]
-    }
+    addPartitionToExplore(key, path);
   }
 
   @ReadWrite
@@ -472,7 +468,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   @Override
   public void dropPartition(PartitionKey key) {
     byte[] rowKey = generateRowKey(key, partitioning);
-    Partition partition = getPartition(key);
+    PartitionDetail partition = getPartition(key);
     if (partition == null) {
       // silently ignore non-existing partitions
       return;
@@ -499,8 +495,8 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       } catch (IOException ioe) {
         throw new DataSetException(String.format("Failed to move location %s into quarantine", partitionLocation));
       }
-      operationsInThisTx.add(new PathOperation(partition.getRelativePath(),
-                                               PathOperation.OperationType.DROP));
+      operationsInThisTx.add(new PartitionOperation(key, partition.getRelativePath(),
+                                                    PartitionOperation.OperationType.DROP));
     }
   }
 

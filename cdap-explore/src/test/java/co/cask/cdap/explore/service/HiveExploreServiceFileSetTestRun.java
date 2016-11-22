@@ -17,6 +17,7 @@
 package co.cask.cdap.explore.service;
 
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.lib.FileSet;
@@ -38,8 +39,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import org.apache.tephra.Transaction;
+import org.apache.tephra.DefaultTransactionExecutor;
 import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionExecutor;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.filesystem.Location;
 import org.junit.After;
 import org.junit.Assert;
@@ -50,6 +53,7 @@ import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -213,8 +217,8 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(tableName))));
 
     // Accessing dataset instance to perform data operations
-    PartitionedFileSet partitioned = datasetFramework.getDataset(datasetInstanceId, DatasetDefinition.NO_ARGUMENTS,
-                                                                 null);
+    final PartitionedFileSet partitioned = datasetFramework
+      .getDataset(datasetInstanceId, DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(partitioned);
     FileSet fileSet = partitioned.getEmbeddedFileSet();
 
@@ -229,9 +233,9 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
     FileWriterHelper.generateAvroFile(locationX2.getOutputStream(), "x", 2, 3);
     FileWriterHelper.generateAvroFile(locationY2.getOutputStream(), "y", 2, 3);
 
-    PartitionKey keyX1 = PartitionKey.builder().addStringField("str", "x").addIntField("num", 1).build();
+    final PartitionKey keyX1 = PartitionKey.builder().addStringField("str", "x").addIntField("num", 1).build();
     PartitionKey keyY1 = PartitionKey.builder().addStringField("str", "y").addIntField("num", 1).build();
-    PartitionKey keyX2 = PartitionKey.builder().addStringField("str", "x").addIntField("num", 2).build();
+    final PartitionKey keyX2 = PartitionKey.builder().addStringField("str", "x").addIntField("num", 2).build();
     PartitionKey keyY2 = PartitionKey.builder().addStringField("str", "y").addIntField("num", 2).build();
 
     addPartition(partitioned, keyX1, "fileX1");
@@ -240,33 +244,12 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
     addPartition(partitioned, keyY2, "fileY2");
 
     // verify that the partitions were added to Hive
-    runCommand(NAMESPACE_ID, "show partitions " + tableName, true,
-               Lists.newArrayList(new ColumnDesc("partition", "STRING", 1, "from deserializer")),
-               Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList("str=x/num=1")),
-                 new QueryResult(Lists.<Object>newArrayList("str=x/num=2")),
-                 new QueryResult(Lists.<Object>newArrayList("str=y/num=1")),
-                 new QueryResult(Lists.<Object>newArrayList("str=y/num=2"))));
+    validatePartitions(tableName, partitioned, ImmutableList.of(keyX1, keyX2, keyY1, keyY2));
 
-    // verify that we can query the key-values in the file with Hive
+    // verify that count() and where... work in Hive
     runCommand(NAMESPACE_ID, "SELECT count(*) AS count FROM " + tableName, true,
                Lists.newArrayList(new ColumnDesc("count", "BIGINT", 1, null)),
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(4L))));
-
-    // verify that we can query the key-values in the file with Hive
-    runCommand(NAMESPACE_ID, "SELECT * FROM " + tableName + " ORDER BY key, value", true,
-               Lists.newArrayList(
-                 new ColumnDesc(tableName + ".key", "STRING", 1, null),
-                 new ColumnDesc(tableName + ".value", "STRING", 2, null),
-                 new ColumnDesc(tableName + ".str", "STRING", 3, null),
-                 new ColumnDesc(tableName + ".num", "INT", 4, null)),
-               Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList("x1", "#1", "x", 1)),
-                 new QueryResult(Lists.<Object>newArrayList("x2", "#2", "x", 2)),
-                 new QueryResult(Lists.<Object>newArrayList("y1", "#1", "y", 1)),
-                 new QueryResult(Lists.<Object>newArrayList("y2", "#2", "y", 2))));
-
-    // verify that we can query the key-values in the file with Hive
     runCommand(NAMESPACE_ID, "SELECT * FROM " + tableName + " WHERE num = 2 ORDER BY key, value", true,
                Lists.newArrayList(
                  new ColumnDesc(tableName + ".key", "STRING", 1, null),
@@ -279,32 +262,49 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
 
     // drop a partition and query again
     dropPartition(partitioned, keyX2);
-    validatePartitions(partitioned, ImmutableSet.of(keyX1, keyY1, keyY2));
+    validatePartitions(tableName, partitioned, ImmutableSet.of(keyX1, keyY1, keyY2));
 
-    // verify that one value is gone now, namely x2
-    runCommand(NAMESPACE_ID, "SELECT key, value FROM " + tableName + " ORDER BY key, value", true,
-               Lists.newArrayList(
-                 new ColumnDesc("key", "STRING", 1, null),
-                 new ColumnDesc("value", "STRING", 2, null)),
-               Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList("x1", "#1")),
-                 new QueryResult(Lists.<Object>newArrayList("y1", "#1")),
-                 new QueryResult(Lists.<Object>newArrayList("y2", "#2"))));
+    // attempt a transaction that drops one partition, adds another, and then fails
+    try {
+      doTransaction(partitioned, new Runnable() {
+        @Override
+        public void run() {
+          partitioned.dropPartition(keyX1);
+          partitioned.addPartition(keyX2, "fileX2");
+          Assert.fail("fail tx");
+        }
+      });
+    } catch (TransactionFailureException e) {
+      // expected
+    }
+    // validate that both the drop and addPartition were undone
+    validatePartitions(tableName, partitioned, ImmutableSet.of(keyX1, keyY1, keyY2));
+
+    // attempt a transaction that attempts to add an existing partition, hence fails
+    try {
+      doTransaction(partitioned, new Runnable() {
+        @Override
+        public void run() {
+          partitioned.addPartition(keyX1, "fileX1");
+          throw new RuntimeException("on purpose");
+        }
+      });
+    } catch (TransactionFailureException e) {
+      // expected if the cause is not "on purpose"
+      Assert.assertTrue(e.getCause() instanceof DataSetException);
+    }
+    // validate that both the drop and addPartition were undone
+    validatePartitions(tableName, partitioned, ImmutableSet.of(keyX1, keyY1, keyY2));
 
     // drop a partition directly from hive
     runCommand(NAMESPACE_ID, "ALTER TABLE " + tableName + " DROP PARTITION (str='y', num=2)", false, null, null);
-    // verify that one more value is gone now, namely y2
-    runCommand(NAMESPACE_ID, "SELECT key, value FROM " + tableName + " ORDER BY key, value", true,
-               Lists.newArrayList(
-                 new ColumnDesc("key", "STRING", 1, null),
-                 new ColumnDesc("value", "STRING", 2, null)),
-               Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList("x1", "#1")),
-                 new QueryResult(Lists.<Object>newArrayList("y1", "#1"))));
+    // verify that one more value is gone now, namely y2, in Hive, but the PFS still has it
+    validatePartitionsInHive(tableName, ImmutableSet.of(keyX1, keyY1));
+    validatePartitionsInPFS(partitioned, ImmutableSet.of(keyX1, keyY1, keyY2));
+
     // make sure the partition can still be dropped from the PFS dataset
-    validatePartitions(partitioned, ImmutableSet.of(keyX1, keyY1, keyY2));
     dropPartition(partitioned, keyY2);
-    validatePartitions(partitioned, ImmutableSet.of(keyX1, keyY1));
+    validatePartitions(tableName, partitioned, ImmutableSet.of(keyX1, keyY1));
 
     // drop the dataset
     datasetFramework.deleteInstance(datasetInstanceId);
@@ -421,7 +421,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
                  // avro file has key=x4, value=#4
                  new QueryResult(Lists.<Object>newArrayList("x4", "#4", 4))));
 
-    // create a time partitioned file set
+    // update the partitioned file set
     datasetFramework.updateInstance(datasetId, PartitionedFileSetProperties.builder()
       .setPartitioning(Partitioning.builder().addIntField("number").build())
       .setEnableExploreOnCreate(true)
@@ -739,8 +739,8 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
     });
   }
 
-  private void validatePartitions(final PartitionedFileSet partitioned,
-                                  final Collection<PartitionKey> expected)
+  private void validatePartitionsInPFS(final PartitionedFileSet partitioned,
+                                       final Collection<PartitionKey> expected)
     throws Exception {
     doTransaction(partitioned, new Runnable() {
       @Override
@@ -759,6 +759,50 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
                               })));
       }
     });
+  }
+
+  private void validatePartitionsInHive(String tableName,
+                                        final Collection<PartitionKey> expected)
+    throws Exception {
+
+    // validate the partitions
+    runCommand(NAMESPACE_ID, "show partitions " + tableName, true,
+               Lists.newArrayList(new ColumnDesc("partition", "STRING", 1, "from deserializer")),
+               partitionKeys2PartitionResults(expected));
+
+    // and validate the contents of the partitions
+    runCommand(NAMESPACE_ID, "SELECT key, value FROM " + tableName + " ORDER BY key, value", true,
+               Lists.newArrayList(
+                 new ColumnDesc("key", "STRING", 1, null),
+                 new ColumnDesc("value", "STRING", 2, null)),
+               partitionKeys2QueryResults(expected));
+  }
+
+  private void validatePartitions(String tableName,
+                                  final PartitionedFileSet partitioned,
+                                  final Collection<PartitionKey> expected) throws Exception {
+    // first validate partitions in the pfs
+    validatePartitionsInPFS(partitioned, expected);
+    // now validate the partitions in Hive
+    validatePartitionsInHive(tableName, expected);
+  }
+
+  private List<QueryResult> partitionKeys2PartitionResults(Collection<PartitionKey> keys) {
+    List<QueryResult> res = new ArrayList<>(keys.size());
+    for (PartitionKey key : keys) {
+      res.add(new QueryResult(Lists.<Object>newArrayList(
+        String.format("str=%s/num=%s", key.getField("str"), key.getField("num")))));
+    }
+    return res;
+  }
+
+  private List<QueryResult> partitionKeys2QueryResults(Collection<PartitionKey> keys) {
+    List<QueryResult> res = new ArrayList<>(keys.size());
+    for (PartitionKey key : keys) {
+      res.add(new QueryResult(Lists.<Object>newArrayList(
+        String.format("%s%s", key.getField("str"), key.getField("num")), "#" + key.getField("num"))));
+    }
+    return res;
   }
 
   private void addTimePartition(final TimePartitionedFileSet tpfs, final long time, final String path)
@@ -780,15 +824,14 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
     });
   }
 
-  private void doTransaction(Dataset tpfs, Runnable runnable) throws Exception {
-    TransactionAware txAware = (TransactionAware) tpfs;
-    Transaction tx = transactionManager.startShort(100);
-    txAware.startTx(tx);
-    runnable.run();
-    Assert.assertTrue(txAware.commitTx());
-    Assert.assertTrue(transactionManager.canCommit(tx, txAware.getTxChanges()));
-    Assert.assertTrue(transactionManager.commit(tx));
-    txAware.postTxCommit();
+  private void doTransaction(Dataset tpfs, final Runnable runnable) throws Exception {
+    TransactionExecutor executor = new DefaultTransactionExecutor(transactionSystemClient, (TransactionAware) tpfs);
+    executor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        runnable.run();
+      }
+    });
   }
 
 }

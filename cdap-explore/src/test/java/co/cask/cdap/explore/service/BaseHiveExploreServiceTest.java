@@ -92,6 +92,7 @@ import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.TxConstants;
 import org.apache.tephra.persist.LocalFileTransactionStateStorage;
 import org.apache.tephra.persist.TransactionStateStorage;
@@ -143,6 +144,7 @@ public class BaseHiveExploreServiceTest {
   public static boolean runAfter = true;
 
   protected static TransactionManager transactionManager;
+  protected static TransactionSystemClient transactionSystemClient;
   protected static DatasetFramework datasetFramework;
   protected static DatasetOpExecutor dsOpService;
   protected static DatasetService datasetService;
@@ -196,6 +198,7 @@ public class BaseHiveExploreServiceTest {
     }
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
+    transactionSystemClient = injector.getInstance(TransactionSystemClient.class);
 
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
     dsOpService.startAndWait();

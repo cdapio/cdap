@@ -616,7 +616,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private void destroy(final boolean succeeded, final String failureInfo) throws Exception {
 
     // if any exception happens during output committing, we want the MapReduce to fail.
-    // for that to happen it is not suficient to set the status to failed, we have to throw an exception,
+    // for that to happen it is not sufficient to set the status to failed, we have to throw an exception,
     // otherwise the shutdown completes successfully and the completed() callback is called.
     // thus: remember the exception and throw it at the end.
     final AtomicReference<Exception> failureCause = new AtomicReference<>();
@@ -630,6 +630,13 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           try {
             for (ProvidedOutput output : context.getOutputs().values()) {
               commitOutput(succeeded, output.getAlias(), output.getOutputFormatProvider(), failureCause);
+              if (succeeded && failureCause.get() != null) {
+                // mapreduce was successful but this output committer failed: call onFailure() for all committers
+                for (ProvidedOutput toFail : context.getOutputs().values()) {
+                  commitOutput(false, toFail.getAlias(), toFail.getOutputFormatProvider(), failureCause);
+                }
+                break;
+              }
             }
           } finally {
             ClassLoaders.setContextClassLoader(oldClassLoader);

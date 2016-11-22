@@ -16,19 +16,23 @@
 
 package co.cask.cdap.data2.dataset2.lib.partitioned;
 
+import co.cask.cdap.api.dataset.lib.PartitionKey;
+
 /**
  * Represents an operation on a particular path. Must be used in context of a base location, because the path is a
  * relative path.
  */
-final class PathOperation {
+final class PartitionOperation {
   private final String relativePath;
   private final OperationType operationType;
+  private final PartitionKey partitionKey;
 
   enum OperationType {
     CREATE, DROP
   }
 
-  PathOperation(String relativePath, OperationType operationType) {
+  PartitionOperation(PartitionKey partitionKey, String relativePath, OperationType operationType) {
+    this.partitionKey = partitionKey;
     this.relativePath = relativePath;
     this.operationType = operationType;
   }
@@ -39,5 +43,9 @@ final class PathOperation {
 
   public OperationType getOperationType() {
     return operationType;
+  }
+
+  public PartitionKey getPartitionKey() {
+    return partitionKey;
   }
 }
