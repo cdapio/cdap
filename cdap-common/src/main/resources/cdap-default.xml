@@ -208,6 +208,7 @@
     </description>
   </property>
 
+
   <!-- Global Configuration -->
 
   <property>
@@ -1074,12 +1075,13 @@
     <description>Scheduler queue for CDAP master services</description>
   </property>
 
+
   <!-- Messaging System Configuration -->
 
   <property>
     <name>messaging.local.data.dir</name>
     <value>${local.data.dir}/messaging</value>
-    <description>Local storage directory for the Messaging System. It is only used in local mode.</description>
+    <description>Local storage directory for the Messaging System (only used in Standalone CDAP)</description>
   </property>
 
   <property>
@@ -1090,7 +1092,7 @@
   <property>
     <name>messaging.message.table.hbase.splits</name>
     <value>16</value>
-    <description>Number of splits to use for the Message Table in HBase on table creation</description>
+    <description>Number of splits to use for the message table in HBase upon table creation</description>
   </property>
 
   <property>
@@ -1108,7 +1110,7 @@
   <property>
     <name>messaging.payload.table.hbase.splits</name>
     <value>16</value>
-    <description>Number of splits to use for the Payload Table in HBase on table creation</description>
+    <description>Number of splits to use for the payload table in HBase on table creation</description>
   </property>
 
   <property>
@@ -1120,8 +1122,9 @@
   <property>
     <name>messaging.table.expiration.seconds</name>
     <value>300</value>
-    <description>Number of seconds that the messaging table cache will expire</description>
+    <description>Number of seconds after which the messaging table cache will expire</description>
   </property>
+
 
   <!-- Metadata Configuration -->
 
@@ -1164,6 +1167,7 @@
       Number of Netty service IO worker threads for metadata HTTP service
     </description>
   </property>
+
 
   <!-- Metrics Configuration -->
 
