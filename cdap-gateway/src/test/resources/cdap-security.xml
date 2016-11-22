@@ -31,4 +31,9 @@
       <value>JKS</value>
       <description>Specifies the ssl keystore type</description>
     </property>
+    <property>
+      <name>app.ssl.keystore.password</name>
+      <value>secret</value>
+      <description>Specifies the ssl keystore password for app fabric</description>
+    </property>
 </configuration>

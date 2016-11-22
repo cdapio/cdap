@@ -21,8 +21,12 @@ import org.jboss.netty.handler.ssl.SslHandler;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.security.KeyManagementException;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.Security;
+import java.security.UnrecoverableKeyException;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -31,7 +35,8 @@ import javax.net.ssl.SSLEngine;
  * A class that encapsulates SSL Certificate Information
  */
 public class SSLHandlerFactory {
-  private static final String protocol = "TLS";
+  private static final String PROTOCOL = "TLS";
+  private static final String ALGORITHM = "SunX509";
   private final SSLContext serverContext;
 
   public SSLHandlerFactory(File keyStore, String keyStoreType, String keyStorePassword, String certificatePassword) {
@@ -44,7 +49,7 @@ public class SSLHandlerFactory {
 
     String algorithm = Security.getProperty("ssl.KeyManagerFactory.algorithm");
     if (algorithm == null) {
-      algorithm = "SunX509";
+      algorithm = ALGORITHM;
     }
 
     try {
@@ -57,9 +62,20 @@ public class SSLHandlerFactory {
       kmf.init(ks, (certificatePassword != null) ? certificatePassword.toCharArray() : keyStorePassword.toCharArray());
 
       // Initialize the SSLContext to work with our key managers.
-      serverContext = SSLContext.getInstance(protocol);
+      serverContext = SSLContext.getInstance(PROTOCOL);
       serverContext.init(kmf.getKeyManagers(), null, null);
     } catch (Exception e) {
+      throw new IllegalArgumentException("Failed to initialize the server-side SSLContext", e);
+    }
+  }
+
+  public SSLHandlerFactory(KeyStore keyStore, String password) {
+    try {
+      KeyManagerFactory kmf = KeyManagerFactory.getInstance(ALGORITHM);
+      serverContext = SSLContext.getInstance(PROTOCOL);
+      kmf.init(keyStore, password.toCharArray());
+      serverContext.init(kmf.getKeyManagers(), null, null);
+    } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException | UnrecoverableKeyException e) {
       throw new IllegalArgumentException("Failed to initialize the server-side SSLContext", e);
     }
   }

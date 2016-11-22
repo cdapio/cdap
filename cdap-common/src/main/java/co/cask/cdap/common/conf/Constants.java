@@ -25,6 +25,7 @@ public final class Constants {
 
   public static final String[] FEATURE_TOGGLE_PROPS = {
     Security.SSL_ENABLED,
+    Security.SSL.INTERNAL_ENABLED,
     Security.ENABLED,
     Explore.EXPLORE_ENABLED,
   };
@@ -32,6 +33,7 @@ public final class Constants {
   public static final String[] PORT_PROPS = {
     Router.ROUTER_PORT,
     Router.ROUTER_SSL_PORT,
+    AppFabric.SERVER_SSL_PORT,
     Dashboard.BIND_PORT,
     Dashboard.SSL_BIND_PORT,
     Security.AUTH_SERVER_BIND_PORT,
@@ -128,6 +130,7 @@ public final class Constants {
     public static final String SERVER_ADDRESS_DEPRECATED = "app.bind.address";
     public static final String SERVER_PORT = "app.bind.port";
     public static final String SERVER_ANNOUNCE_PORT = "app.announce.port";
+    public static final String SERVER_SSL_PORT = "app.ssl.bind.port";
     public static final String OUTPUT_DIR = "app.output.dir";
     public static final String TEMP_DIR = "app.temp.dir";
     public static final String REST_PORT = "app.rest.port";
@@ -743,8 +746,28 @@ public final class Constants {
     public static final String LOGIN_MODULE_CLASS_NAME = "security.authentication.loginmodule.className";
     /** Realm file for Basic Authentication */
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
-    /** Enables SSL */
+    /** Enables external SSL */
+    @Deprecated
     public static final String SSL_ENABLED = "ssl.enabled";
+    /** Key to mark a discoverable which supports ssl */
+    public static final String SSL_DISCOVERABLE_KEY = "ssl";
+
+    /**
+     * App Fabric
+     */
+    public static final class SSL {
+      /** Enables SSL for external services. */
+      @SuppressWarnings("unused")
+      public static final String EXTERNAL_ENABLED = "ssl.external.enabled";
+      /** Enables SSL for internal services. */
+      public static final String INTERNAL_ENABLED = "ssl.internal.enabled";
+      /** Password for the java keystore. */
+      public static final String KEYSTORE_PASSWORD = "ssl.internal.keystore.password";
+      /** Type for the java keystore. e.g. JCEKS. */
+      public static final String KEYSTORE_TYPE = "ssl.internal.keystore.type";
+      /** Validity of the self generated certificate in days */
+      public static final String CERT_VALIDITY = "ssl.internal.cert.validity";
+    }
 
     /**
      * Authorization.
