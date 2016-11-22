@@ -175,27 +175,38 @@ class YarnCheck extends AbstractMasterCheck {
     }
 
     LOG.debug("{} MB of memory and {} virtual cores are required.", requiredMemoryMB, requiredVCores);
+
+    checkResources(requiredMemoryMB, requiredVCores, memoryCapacity, vcoresCapacity, "in capacity");
+
     int availableMemoryMB = memoryCapacity - memoryUsed;
     int availableVCores = vcoresCapacity - vcoresUsed;
-    boolean memoryOK = requiredMemoryMB <= availableMemoryMB;
-    // if this is negative or zero just assume its not using vcores
-    boolean vcoresOK = vcoresCapacity <= 0 || requiredVCores <= availableVCores;
+    try {
+      checkResources(requiredMemoryMB, requiredVCores, availableMemoryMB, availableVCores, "available");
+    } catch (Exception e) {
+      LOG.warn(e.getMessage());
+    }
 
-    if (!memoryOK && !vcoresOK) {
-      LOG.warn(
-        "Services require {} MB of memory and {} vcores, " +
-          "but the cluster only has {} MB of memory and {} vcores available.",
-        requiredMemoryMB, requiredVCores, availableMemoryMB, availableVCores);
-    } else if (!memoryOK) {
-      LOG.warn(
-        "Services require {} MB of memory but the cluster only has {} MB of memory available.",
-        requiredMemoryMB, availableMemoryMB);
-    } else if (!vcoresOK) {
-      LOG.warn(
-        "Services require {} vcores but the cluster only has {} vcores available.",
-        requiredVCores, availableVCores);
-    } else {
-      LOG.info("  YARN resources successfully verified.");
+    LOG.info("  YARN resources successfully verified.");
+  }
+
+  private void checkResources(int requiredMemoryMB, int requiredVCores,
+                              int actualMemoryMB, int actualVCores,
+                              String errorSuffix) {
+    boolean memoryBad = requiredMemoryMB > actualMemoryMB;
+    boolean vcoresBad = requiredVCores > actualVCores;
+
+    if (memoryBad && vcoresBad) {
+      throw new RuntimeException(String.format(
+        "Services require %d MB of memory and %d vcores, but the cluster only has %d memory and %d vcores %s.",
+        requiredMemoryMB, requiredVCores, actualMemoryMB, actualVCores, errorSuffix));
+    } else if (memoryBad) {
+      throw new RuntimeException(String.format(
+        "Services require %d MB of memory but the cluster only has %d MB of memory %s.",
+        requiredMemoryMB, actualMemoryMB, errorSuffix));
+    } else if (vcoresBad) {
+      throw new RuntimeException(String.format(
+        "Services require %d vcores but the cluster only has %d vcores %s.",
+        requiredVCores, actualVCores, errorSuffix));
     }
   }
 }
