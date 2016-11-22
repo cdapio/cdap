@@ -61,7 +61,7 @@ public class RemoteSystemOperationsService extends AbstractIdleService {
     int workerThreads = cConf.getInt(Constants.RemoteSystemOpService.WORKER_THREADS);
     int execThreads = cConf.getInt(Constants.RemoteSystemOpService.EXEC_THREADS);
 
-    this.httpService = new CommonNettyHttpServiceBuilder(cConf)
+    this.httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.REMOTE_SYSTEM_OPERATION)
       .addHttpHandlers(handlers)
       .setHost(cConf.get(Constants.RemoteSystemOpService.SERVICE_BIND_ADDRESS))
       .setHandlerHooks(ImmutableList.of(

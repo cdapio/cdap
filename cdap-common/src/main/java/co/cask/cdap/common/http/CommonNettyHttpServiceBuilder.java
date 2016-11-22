@@ -26,9 +26,10 @@ import org.jboss.netty.channel.ChannelPipeline;
  * Provides a {@link co.cask.http.NettyHttpService.Builder} that has common settings built-in.
  */
 public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
-  public CommonNettyHttpServiceBuilder(CConfiguration configuration) {
-    super();
-    if (configuration.getBoolean(Constants.Security.ENABLED)) {
+
+  public CommonNettyHttpServiceBuilder(CConfiguration cConf, String serviceName) {
+    super(serviceName);
+    if (cConf.getBoolean(Constants.Security.ENABLED)) {
       this.modifyChannelPipeline(new Function<ChannelPipeline, ChannelPipeline>() {
         @Override
         public ChannelPipeline apply(ChannelPipeline input) {

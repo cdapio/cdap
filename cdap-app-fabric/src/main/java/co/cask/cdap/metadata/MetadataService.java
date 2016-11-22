@@ -65,7 +65,7 @@ public class MetadataService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting Metadata Service");
-    httpService = new CommonNettyHttpServiceBuilder(cConf)
+    httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.METADATA_SERVICE)
       .addHttpHandlers(handlers)
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                 Constants.Service.METADATA_SERVICE)))
