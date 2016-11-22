@@ -290,10 +290,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     LOG.info("Starting {}...", BaseHiveExploreService.class.getSimpleName());
 
     HiveConf hiveConf = getHiveConf();
-    if (ExploreServiceUtils.isSparkEngine(hiveConf)) {
-      LOG.info("Engine is spark");
-      setupSparkConf();
-    }
+    setupSparkConf();
 
     authorizationEnforcementService.startAndWait();
     cliService.init(hiveConf);
@@ -1285,7 +1282,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
 
     HiveConf hiveConf = getHiveConf();
-    if (ExploreServiceUtils.isSparkEngine(hiveConf)) {
+    if (ExploreServiceUtils.isSparkEngine(hiveConf, additionalSessionConf)) {
       sessionConf.putAll(sparkConf);
     }
 
@@ -1305,7 +1302,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
       sessionConf.put(HiveConf.ConfVars.SUBMITLOCALTASKVIACHILD.toString(), Boolean.FALSE.toString());
       sessionConf.put(HiveConf.ConfVars.SUBMITVIACHILD.toString(), Boolean.FALSE.toString());
-      if (ExploreServiceUtils.isTezEngine(hiveConf)) {
+      if (ExploreServiceUtils.isTezEngine(hiveConf, additionalSessionConf)) {
         // Add token file location property for tez if engine is tez
         sessionConf.put("tez.credentials.path", credentialsFilePath);
       }
