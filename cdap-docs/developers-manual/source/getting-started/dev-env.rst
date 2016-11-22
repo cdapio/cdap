@@ -79,10 +79,12 @@ To do so, follow these steps:
    1. Select ``Run > Edit`` Configurations...
    #. Add a new "Application" run configuration.
    #. Set "Main class" to be ``co.cask.cdap.StandaloneMain``.
-   #. Set "VM options" to ``-Xmx1024m`` (for in-memory MapReduce jobs).
+   #. Set "VM options" to ``-Xmx1024m -XX:MaxPermSize=128m`` (for in-memory MapReduce jobs).
    #. Click "OK".
    #. You can now use this run configuration to start an instance of CDAP Standalone.
    
 This will allow you to start CDAP and access it from either the command line (:ref:`CLI <cli>`)
-or through the :ref:`HTTP RESTful API <http-restful-api>`. If you want to run and develop
-the UI, you will need to follow additional instructions in the |ui-read-me|.
+or through the :ref:`HTTP RESTful API <http-restful-api>`. To start the CLI, you can either start
+it from a shell using the ``cdap`` script or run the ``CLIMain`` class from the IDE.
+
+If you want to run and develop the UI, you will need to follow additional instructions in the |ui-read-me|.
