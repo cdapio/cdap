@@ -522,7 +522,7 @@ cdap_service() {
           cdap_stop_pidfile ${__pidfile} "CDAP ${__name}" && \
           cdap_${__svc} ${__action} ${__args}
       elif [[ ${__action} == restart ]]; then
-          cdap_stop_pidfile ${__pidfile} "CDAP ${__name}" && \
+          cdap_stop_pidfile ${__pidfile} "CDAP ${__name}" ; \
           cdap_${__svc} ${__action} ${__args}
       else
           cdap_${__svc} ${__action} ${__args}
