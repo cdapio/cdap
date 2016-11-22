@@ -103,7 +103,7 @@ public class OperationalStatsHttpHandler extends AbstractHttpHandler {
       MBeanInfo mBeanInfo = mbs.getMBeanInfo(name);
       Map<String, Object> stats = new HashMap<>();
       for (MBeanAttributeInfo attributeInfo : mBeanInfo.getAttributes()) {
-        stats.put(attributeInfo.getName().toLowerCase(), mbs.getAttribute(name, attributeInfo.getName()));
+        stats.put(attributeInfo.getName(), mbs.getAttribute(name, attributeInfo.getName()));
       }
       result.put(group, stats);
       LOG.trace("Found stats of group {} as {}", group, stats);
