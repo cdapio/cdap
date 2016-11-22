@@ -61,7 +61,7 @@ public class MetricsQueryService extends AbstractIdleService {
     int bossthreads = cConf.getInt(Constants.Metrics.BOSS_THREADS, 1);
     int workerthreads = cConf.getInt(Constants.Metrics.WORKER_THREADS, 10);
 
-    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf);
+    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.METRICS);
     builder.addHttpHandlers(handlers);
     builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                      Constants.Service.METRICS)));

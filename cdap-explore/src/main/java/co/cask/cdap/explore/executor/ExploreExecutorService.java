@@ -67,7 +67,7 @@ public class ExploreExecutorService extends AbstractIdleService {
     int workerThreads = cConf.getInt(Constants.Explore.WORKER_THREADS, 10);
     int execThreads = cConf.getInt(Constants.Explore.EXEC_THREADS, 10);
 
-    this.httpService = new CommonNettyHttpServiceBuilder(cConf)
+    this.httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.EXPLORE_HTTP_USER_SERVICE)
         .addHttpHandlers(handlers)
         .setHost(cConf.get(Constants.Explore.SERVER_ADDRESS))
         .setPort(cConf.getInt(Constants.Explore.SERVER_PORT))

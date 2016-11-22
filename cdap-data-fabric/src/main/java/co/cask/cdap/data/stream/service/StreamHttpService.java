@@ -58,7 +58,7 @@ public final class StreamHttpService extends AbstractIdleService implements Supp
     this.discoveryService = discoveryService;
 
     int workerThreads = cConf.getInt(Constants.Stream.WORKER_THREADS, 10);
-    this.httpService = new CommonNettyHttpServiceBuilder(cConf)
+    this.httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.STREAMS)
       .addHttpHandlers(handlers)
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                 Constants.Stream.STREAM_HANDLER)))

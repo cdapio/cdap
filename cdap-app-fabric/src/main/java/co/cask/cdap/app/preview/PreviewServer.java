@@ -58,7 +58,7 @@ public class PreviewServer extends AbstractIdleService {
     String address = cConf.get(Constants.Preview.ADDRESS);
 
     // Create handler hooks
-    this.httpService = new CommonNettyHttpServiceBuilder(cConf)
+    this.httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.PREVIEW_HTTP)
       .setHost(address)
       .setHandlerHooks(Collections.singleton(new MetricsReporterHook(metricsCollectionService,
                                                                      Constants.Service.PREVIEW_HTTP)))
