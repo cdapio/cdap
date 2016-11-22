@@ -54,42 +54,33 @@ public class HDFSOperationalStatsTest {
   @Test
   public void test() throws IOException {
     final DistributedFileSystem dfs = dfsCluster.getFileSystem();
-    HDFSInfo hdfsInfo = new HDFSInfo() {
-      @Override
-      protected DistributedFileSystem createDFS() throws IOException {
-        return dfs;
-      }
-    };
+    HDFSInfo hdfsInfo = new HDFSInfo(dfs.getConf());
     Assert.assertEquals(AbstractHDFSStats.SERVICE_NAME, hdfsInfo.getServiceName());
     Assert.assertEquals(HDFSInfo.STAT_TYPE, hdfsInfo.getStatType());
     Assert.assertNotNull(hdfsInfo.getVersion());
-    URL webURL = new URL(hdfsInfo.getWebURL());
-    URL logsURL = new URL(hdfsInfo.getLogsURL());
+    String webAddress = hdfsInfo.getWebURL();
+    Assert.assertNotNull(webAddress);
+    String logsAddress = hdfsInfo.getLogsURL();
+    Assert.assertNotNull(logsAddress);
+    URL webURL = new URL(webAddress);
+    URL logsURL = new URL(logsAddress);
     Assert.assertNotNull(logsURL);
     Assert.assertEquals(webURL.getProtocol(), logsURL.getProtocol());
     Assert.assertEquals(webURL.getHost(), logsURL.getHost());
     Assert.assertEquals(webURL.getPort(), logsURL.getPort());
     Assert.assertEquals("/logs", logsURL.getPath());
-    HDFSNodes hdfsNodes = new HDFSNodes() {
-      @Override
-      protected DistributedFileSystem createDFS() throws IOException {
-        return dfs;
-      }
-    };
+    HDFSNodes hdfsNodes = new HDFSNodes(dfs.getConf());
     Assert.assertEquals(AbstractHDFSStats.SERVICE_NAME, hdfsNodes.getServiceName());
     Assert.assertEquals(HDFSNodes.STAT_TYPE, hdfsNodes.getStatType());
+    Assert.assertEquals(0, hdfsNodes.getNamenodes());
+    hdfsNodes.collect();
     Assert.assertEquals(1, hdfsNodes.getNamenodes());
-    HDFSStorage hdfsStorage = new HDFSStorage() {
-      @Override
-      protected DistributedFileSystem createDFS() throws IOException {
-        return dfs;
-      }
-    };
+    HDFSStorage hdfsStorage = new HDFSStorage(dfs.getConf());
     Assert.assertEquals(AbstractHDFSStats.SERVICE_NAME, hdfsStorage.getServiceName());
     Assert.assertEquals(HDFSStorage.STAT_TYPE, hdfsStorage.getStatType());
-    Assert.assertEquals(0, hdfsStorage.getCorruptBlocks());
-    Assert.assertEquals(0, hdfsStorage.getMissingBlocks());
-    Assert.assertEquals(0, hdfsStorage.getUnderReplicatedBlocks());
+    Assert.assertEquals(0, hdfsStorage.getTotalBytes());
+    Assert.assertEquals(0, hdfsStorage.getUsedBytes());
+    Assert.assertEquals(0, hdfsStorage.getRemainingBytes());
     hdfsStorage.collect();
     Assert.assertEquals(0, hdfsStorage.getMissingBlocks());
     Assert.assertEquals(0, hdfsStorage.getUnderReplicatedBlocks());

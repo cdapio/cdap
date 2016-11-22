@@ -18,12 +18,7 @@ package co.cask.cdap.operations.hdfs;
 
 import co.cask.cdap.operations.OperationalStats;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.hdfs.DistributedFileSystem;
-
-import java.io.IOException;
 
 /**
  * Base class for {@link OperationalStats} for HDFS
@@ -34,15 +29,9 @@ public abstract class AbstractHDFSStats implements OperationalStats {
 
   protected final Configuration conf;
 
-  protected AbstractHDFSStats() {
-    this.conf = new Configuration();
-  }
-
-  protected DistributedFileSystem createDFS() throws IOException {
-    FileSystem fs = FileSystem.get(conf);
-    Preconditions.checkArgument(fs instanceof DistributedFileSystem, "Expected Distributed Filesystem to be the " +
-      "configured file system, but found %s", fs.getClass().getName());
-    return (DistributedFileSystem) fs;
+  @VisibleForTesting
+  AbstractHDFSStats(Configuration conf) {
+    this.conf = conf;
   }
 
   @Override

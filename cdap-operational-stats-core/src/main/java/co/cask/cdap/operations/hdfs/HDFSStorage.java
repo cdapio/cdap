@@ -18,16 +18,23 @@ package co.cask.cdap.operations.hdfs;
 
 import co.cask.cdap.operations.OperationalStats;
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FsStatus;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import javax.annotation.Nullable;
 
 /**
  * {@link OperationalStats} for HDFS.
  */
 @SuppressWarnings("unused")
 public class HDFSStorage extends AbstractHDFSStats implements HDFSStorageMXBean {
+  private static final Logger LOG = LoggerFactory.getLogger(HDFSStorage.class);
+
   @VisibleForTesting
   static final String STAT_TYPE = "storage";
 
@@ -37,6 +44,15 @@ public class HDFSStorage extends AbstractHDFSStats implements HDFSStorageMXBean 
   private long missingBlocks;
   private long underReplicatedBlocks;
   private long corruptBlocks;
+
+  public HDFSStorage() {
+    this(new Configuration());
+  }
+
+  @VisibleForTesting
+  HDFSStorage(Configuration conf) {
+    super(conf);
+  }
 
   @Override
   public String getStatType() {
@@ -76,6 +92,9 @@ public class HDFSStorage extends AbstractHDFSStats implements HDFSStorageMXBean 
   @Override
   public synchronized void collect() throws IOException {
     try (DistributedFileSystem dfs = createDFS()) {
+      if (dfs == null) {
+        return;
+      }
       FsStatus status = dfs.getStatus();
       this.totalBytes = status.getCapacity();
       this.availableBytes = status.getRemaining();
@@ -84,5 +103,16 @@ public class HDFSStorage extends AbstractHDFSStats implements HDFSStorageMXBean 
       this.underReplicatedBlocks = dfs.getUnderReplicatedBlocksCount();
       this.corruptBlocks = dfs.getCorruptBlocksCount();
     }
+  }
+
+  @Nullable
+  private DistributedFileSystem createDFS() throws IOException {
+    FileSystem fs = FileSystem.get(conf);
+    if (!(fs instanceof DistributedFileSystem)) {
+      LOG.debug("The filesystem configured on this cluster is {}, which is not {}. HDFS storage stats will not be " +
+                  "reported.", fs.getClass().getName(), DistributedFileSystem.class.getName());
+      return null;
+    }
+    return (DistributedFileSystem) fs;
   }
 }

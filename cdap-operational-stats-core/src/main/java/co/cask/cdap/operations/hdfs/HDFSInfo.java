@@ -19,16 +19,19 @@ package co.cask.cdap.operations.hdfs;
 import co.cask.cdap.operations.OperationalStats;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.ha.HAServiceProtocol;
 import org.apache.hadoop.ha.HAServiceStatus;
 import org.apache.hadoop.ha.HAServiceTarget;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.hdfs.DFSUtil;
-import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.HAUtil;
 import org.apache.hadoop.hdfs.tools.NNHAServiceTarget;
 import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.util.VersionInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -43,8 +46,19 @@ import javax.annotation.Nullable;
  */
 @SuppressWarnings("unused")
 public class HDFSInfo extends AbstractHDFSStats implements HDFSInfoMXBean {
+  private static final Logger LOG = LoggerFactory.getLogger(HDFSInfo.class);
+
   @VisibleForTesting
   static final String STAT_TYPE = "info";
+
+  public HDFSInfo() {
+    this(new Configuration());
+  }
+
+  @VisibleForTesting
+  HDFSInfo(Configuration conf) {
+    super(conf);
+  }
 
   @Override
   public String getStatType() {
@@ -57,23 +71,39 @@ public class HDFSInfo extends AbstractHDFSStats implements HDFSInfoMXBean {
   }
 
   @Override
-  public String getWebURL() throws IOException {
-    if (HAUtil.isHAEnabled(conf, getNameService())) {
-      return getHAWebURL().toString();
+  public String getWebURL() {
+    try {
+      if (HAUtil.isHAEnabled(conf, getNameService())) {
+        URL haWebURL = getHAWebURL();
+        if (haWebURL != null) {
+          return haWebURL.toString();
+        }
+      } else {
+        try (FileSystem fs = FileSystem.get(conf)) {
+          URL webUrl = rpcToHttpAddress(fs.getUri());
+          if (webUrl != null) {
+            return webUrl.toString();
+          }
+        }
+      }
+    } catch (IOException e) {
+      LOG.warn("Error in determining HDFS URL. Web URL of HDFS will not be available in HDFS operational stats.", e);
     }
-    try (DistributedFileSystem dfs = createDFS()) {
-      return rpcToHttpAddress(dfs.getUri()).toString();
-    }
+    return null;
   }
 
   @Override
-  public String getLogsURL() throws IOException {
-    return getWebURL() + "/logs";
+  public String getLogsURL() {
+    String webURL = getWebURL();
+    if (webURL == null) {
+      return null;
+    }
+    return webURL + "/logs";
   }
 
   @Override
   public void collect() throws IOException {
-    // TODO: no need to refresh, but need to figure out a way to not spawn a new thread for such stats
+    // No need to refresh static information
   }
 
   @Nullable
@@ -91,6 +121,7 @@ public class HDFSInfo extends AbstractHDFSStats implements HDFSInfoMXBean {
                                       "HDFS Federation.");
   }
 
+  @Nullable
   private URL getHAWebURL() throws IOException {
     String activeNamenode = null;
     String nameService = getNameService();
@@ -109,8 +140,12 @@ public class HDFSInfo extends AbstractHDFSStats implements HDFSInfoMXBean {
     return rpcToHttpAddress(URI.create(activeNamenode));
   }
 
+  @Nullable
   private URL rpcToHttpAddress(URI rpcURI) throws MalformedURLException {
     String host = rpcURI.getHost();
+    if (host == null) {
+      return null;
+    }
     boolean httpsEnabled = conf.getBoolean(DFSConfigKeys.DFS_HTTPS_ENABLE_KEY, DFSConfigKeys.DFS_HTTPS_ENABLE_DEFAULT);
     String namenodeWebAddress = httpsEnabled ?
       conf.get(DFSConfigKeys.DFS_NAMENODE_HTTPS_ADDRESS_KEY, DFSConfigKeys.DFS_NAMENODE_HTTPS_ADDRESS_DEFAULT) :
