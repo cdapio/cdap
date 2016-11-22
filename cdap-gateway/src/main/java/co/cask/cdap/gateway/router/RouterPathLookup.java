@@ -130,6 +130,8 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       return APP_FABRIC_HTTP;
     } else if (matches(uriParts, "v3", "namespaces", null, "previews")) {
       return PREVIEW_HTTP;
+    } else if (matches(uriParts, "v3", "system", "serviceproviders")) {
+      return APP_FABRIC_HTTP;
     } else if ((uriParts.length >= 4) && uriParts[1].equals("namespaces") && uriParts[3].equals("streams")) {
       return STREAMS_SERVICE;
     } else if ((uriParts.length >= 8 && uriParts[7].equals("logs")) ||

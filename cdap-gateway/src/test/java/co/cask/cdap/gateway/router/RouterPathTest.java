@@ -433,6 +433,13 @@ public class RouterPathTest {
     assertRouting("/v3/namespaces/default/previews/preview123/metrics", RouterPathLookup.PREVIEW_HTTP);
   }
 
+  @Test
+  public void testServiceProviderStatsPaths() {
+    assertRouting("/v3/system/////serviceproviders", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("/v3/system/////serviceproviders/serviceprovider/stats", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("/v3/system/////serviceproviders///////", RouterPathLookup.APP_FABRIC_HTTP);
+  }
+
   private void assertRouting(String path, RouteDestination destination) {
     for (HttpMethod method : ImmutableList.of(HttpMethod.GET, HttpMethod.POST, HttpMethod.DELETE)) {
       HttpRequest httpRequest = new DefaultHttpRequest(VERSION, method, path);
