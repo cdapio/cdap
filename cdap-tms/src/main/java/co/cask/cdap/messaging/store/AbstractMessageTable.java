@@ -22,12 +22,12 @@ import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.messaging.MessagingUtils;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.id.TopicId;
-import com.google.common.collect.AbstractIterator;
 import org.apache.tephra.Transaction;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import javax.annotation.Nullable;
 
 /**
@@ -52,15 +52,13 @@ public abstract class AbstractMessageTable implements MessageTable {
   protected abstract void persist(Iterator<RawMessageTableEntry> entries) throws IOException;
 
   /**
-   * Delete the transactionally published messages in the Table, given a key range and
-   * the transaction write pointer byte array.
+   * Delete the transactionally published messages in the Table in the given key range.
    *
-   * @param startKey start row prefix
-   * @param stopKey stop row prefix
-   * @param targetTxBytes byte array representation of Transaction Write pointer
+   * @param startKey start row to delete (inclusive)
+   * @param stopKey stop row to delete (exclusive)
    * @throws IOException thrown if there was an error while trying to delete the entries
    */
-  protected abstract void delete(byte[] startKey, byte[] stopKey, byte[] targetTxBytes) throws IOException;
+  protected abstract void delete(byte[] startKey, byte[] stopKey) throws IOException;
 
   /**
    * Read the {@link RawMessageTableEntry}s given a key range.
@@ -81,7 +79,7 @@ public abstract class AbstractMessageTable implements MessageTable {
     Bytes.putLong(startRow, topic.length, startTime);
     byte[] stopRow = Bytes.stopKeyForPrefix(topic);
     final CloseableIterator<RawMessageTableEntry> scanner = read(startRow, stopRow);
-    return new FetchIterator(scanner, limit, transaction);
+    return new FetchIterator(scanner, limit, null, transaction);
   }
 
   @Override
@@ -92,12 +90,9 @@ public abstract class AbstractMessageTable implements MessageTable {
     Bytes.putBytes(startRow, 0, topic, 0, topic.length);
     Bytes.putLong(startRow, topic.length, messageId.getPublishTimestamp());
     Bytes.putShort(startRow, topic.length + Bytes.SIZEOF_LONG, messageId.getSequenceId());
-    if (!inclusive) {
-      startRow = Bytes.incrementBytes(startRow, 1);
-    }
     byte[] stopRow = Bytes.stopKeyForPrefix(topic);
     final CloseableIterator<RawMessageTableEntry> scanner = read(startRow, stopRow);
-    return new FetchIterator(scanner, limit, transaction);
+    return new FetchIterator(scanner, limit, inclusive ? null : startRow, transaction);
   }
 
   @Override
@@ -106,11 +101,20 @@ public abstract class AbstractMessageTable implements MessageTable {
   }
 
   @Override
-  public void delete(TopicId topicId, long transactionWritePointer) throws IOException {
-    byte[] targetTxBytes = Bytes.toBytes(transactionWritePointer);
-    byte[] startRow = MessagingUtils.toRowKeyPrefix(topicId);
-    byte[] stopRow = Bytes.stopKeyForPrefix(startRow);
-    delete(startRow, stopRow, targetTxBytes);
+  public void delete(TopicId topicId, long startTimestamp, short startSequenceId,
+                     long endTimestamp, short endSequenceId) throws IOException {
+    byte[] topic = MessagingUtils.toRowKeyPrefix(topicId);
+    byte[] startRow = new byte[topic.length + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT];
+    Bytes.putBytes(startRow, 0, topic, 0, topic.length);
+    Bytes.putLong(startRow, topic.length, startTimestamp);
+    Bytes.putShort(startRow, topic.length + Bytes.SIZEOF_LONG, startSequenceId);
+
+    byte[] stopRow = new byte[topic.length + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT];
+    Bytes.putBytes(stopRow, 0, topic, 0, topic.length);
+    Bytes.putLong(stopRow, topic.length, endTimestamp);
+    Bytes.putShort(stopRow, topic.length + Bytes.SIZEOF_LONG, endSequenceId);
+
+    delete(startRow, Bytes.stopKeyForPrefix(stopRow));
   }
 
   private static Result isVisible(@Nullable byte[] txPtr, @Nullable Transaction transaction) {
@@ -140,13 +144,15 @@ public abstract class AbstractMessageTable implements MessageTable {
   private static class FetchIterator extends AbstractCloseableIterator<Entry> {
     private final CloseableIterator<RawMessageTableEntry> scanner;
     private final Transaction transaction;
+    private byte[] skipStartRow;
     private boolean closed = false;
     private int maxLimit;
 
-    FetchIterator(CloseableIterator<RawMessageTableEntry> scanner, int limit,
+    FetchIterator(CloseableIterator<RawMessageTableEntry> scanner, int limit, @Nullable byte[] skipStartRow,
                   @Nullable Transaction transaction) {
       this.scanner = scanner;
       this.transaction = transaction;
+      this.skipStartRow = skipStartRow;
       this.maxLimit = limit;
     }
 
@@ -158,6 +164,16 @@ public abstract class AbstractMessageTable implements MessageTable {
 
       while (scanner.hasNext()) {
         RawMessageTableEntry tableEntry = scanner.next();
+
+        // See if we need to skip the first row returned by the scanner
+        if (skipStartRow != null) {
+          byte[] row = skipStartRow;
+          // After first row, we don't need to match anymore
+          skipStartRow = null;
+           if (Bytes.equals(row, tableEntry.getKey())) {
+             continue;
+           }
+        }
         Result status = isVisible(tableEntry.getTxPtr(), transaction);
         if (status == Result.ACCEPT) {
           maxLimit--;
@@ -183,9 +199,10 @@ public abstract class AbstractMessageTable implements MessageTable {
   }
 
   /**
-   * An {@link Iterator} for storing {@link RawMessageTableEntry}.
+   * A resettable {@link Iterator} for iterating over {@link RawMessageTableEntry} based on a given
+   * iterator of {@link Entry}.
    */
-  private static class StoreIterator extends AbstractIterator<RawMessageTableEntry> {
+  private static class StoreIterator implements Iterator<RawMessageTableEntry> {
 
     private final RawMessageTableEntry tableEntry = new RawMessageTableEntry();
 
@@ -193,33 +210,54 @@ public abstract class AbstractMessageTable implements MessageTable {
     private TopicId topicId;
     private byte[] topic;
     private byte[] rowKey;
+    private Entry nextEntry;
 
     @Override
-    protected RawMessageTableEntry computeNext() {
-      if (entries.hasNext()) {
-        Entry entry = entries.next();
-        // Create new byte arrays only when the topicId is different. Else, reuse the byte arrays.
-        if (topicId == null || (!topicId.equals(entry.getTopicId()))) {
-          topicId = entry.getTopicId();
-          topic = MessagingUtils.toRowKeyPrefix(topicId);
-          rowKey = new byte[topic.length + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT];
-        }
-
-        Bytes.putBytes(rowKey, 0, topic, 0, topic.length);
-        Bytes.putLong(rowKey, topic.length, entry.getPublishTimestamp());
-        Bytes.putShort(rowKey, topic.length + Bytes.SIZEOF_LONG, entry.getSequenceId());
-
-        byte[] txPtr = null;
-        if (entry.isTransactional()) {
-          txPtr = Bytes.toBytes(entry.getTransactionWritePointer());
-        }
-        return tableEntry.set(rowKey, txPtr, entry.getPayload());
+    public boolean hasNext() {
+      if (nextEntry != null) {
+        return true;
       }
-      return endOfData();
+      if (!entries.hasNext()) {
+        return false;
+      }
+      nextEntry = entries.next();
+      return true;
+    }
+
+    @Override
+    public RawMessageTableEntry next() {
+      if (!hasNext()) {
+        throw new NoSuchElementException();
+      }
+
+      Entry entry = nextEntry;
+      nextEntry = null;
+      // Create new byte arrays only when the topicId is different. Else, reuse the byte arrays.
+      if (topicId == null || (!topicId.equals(entry.getTopicId()))) {
+        topicId = entry.getTopicId();
+        topic = MessagingUtils.toRowKeyPrefix(topicId);
+        rowKey = new byte[topic.length + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT];
+      }
+
+      Bytes.putBytes(rowKey, 0, topic, 0, topic.length);
+      Bytes.putLong(rowKey, topic.length, entry.getPublishTimestamp());
+      Bytes.putShort(rowKey, topic.length + Bytes.SIZEOF_LONG, entry.getSequenceId());
+
+      byte[] txPtr = null;
+      if (entry.isTransactional()) {
+        txPtr = Bytes.toBytes(entry.getTransactionWritePointer());
+      }
+      return tableEntry.set(rowKey, txPtr, entry.getPayload());
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException("Remove not supported");
     }
 
     private StoreIterator reset(Iterator<Entry> entries) {
       this.entries = entries;
+      this.nextEntry = null;
       return this;
     }
   }

@@ -16,15 +16,17 @@
 
 package co.cask.cdap.messaging.store.leveldb;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.messaging.store.MessageTable;
 import co.cask.cdap.messaging.store.MessageTableTest;
-import org.iq80.leveldb.DB;
-import org.iq80.leveldb.Options;
-import org.iq80.leveldb.impl.Iq80DBFactory;
+import co.cask.cdap.messaging.store.TableFactory;
+import co.cask.cdap.proto.id.NamespaceId;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.File;
+import java.io.IOException;
 
 /**
  * Tests for {@link LevelDBMessageTable}.
@@ -34,15 +36,17 @@ public class LevelDBMessageTableTest extends MessageTableTest {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  private static final Iq80DBFactory LEVEL_DB_FACTORY = new Iq80DBFactory();
+  private static TableFactory tableFactory;
+
+  @BeforeClass
+  public static void init() throws IOException {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
+    tableFactory = new LevelDBTableFactory(cConf);
+  }
 
   @Override
   protected MessageTable getMessageTable() throws Exception {
-    Options options = new Options()
-      .createIfMissing(true)
-      .errorIfExists(true);
-
-    DB db = LEVEL_DB_FACTORY.open(new File(tmpFolder.newFolder(), "message"), options);
-    return new LevelDBMessageTable(db);
+    return tableFactory.createMessageTable(NamespaceId.CDAP, "message");
   }
 }
