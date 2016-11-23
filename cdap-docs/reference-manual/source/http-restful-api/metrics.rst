@@ -275,72 +275,76 @@ These metrics are available in a stream context:
    * - ``system.collect.bytes``
      - Number of bytes collected by the stream
 
-These metrics on Request/Response are available for system and user services.
+These metrics on request and response are available for system and user services:
+
 .. list-table::
    :header-rows: 1
    :widths: 60 40
 
-   * - REST Metrics
+   * - Request and Response Metric
      - Description
    * - ``system.request.received``
      - Number of requests received for the service
    * - ``system.response.successful``
      - Number of successful responses sent
    * - ``system.response.{server-error, client-error}``
-     - Number of {server-error, client-error} responses sent
+     - Number of ``server-error`` or ``client-error`` responses sent
 
-These metrics on logging are available on the app context
+These metrics on logging are available on the application context:
+
 .. list-table::
    :header-rows: 1
    :widths: 60 40
 
-   * - App Logging Metrics
+   * - Application Logging Metric
      - Description
    * - ``system.app.log.{error, info, warn}``
-     - Number of {error, info, warn} log messages logged by the app
+     - Number of ``error``, ``info``, or ``warn`` log messages logged by the application
 
+These metrics on logging are available for the system services, in the system component context:
 
-These metrics on logging are available for the system services, in system component context
 .. list-table::
    :header-rows: 1
    :widths: 60 40
 
-   * - App Logging Metrics
+   * - System Services Logging Metric
      - Description
    * - ``system.services.log.{error, info, warn}``
-     - Number of {error, info, warn} log messages logged by the system service
+     - Number of ``error``, ``info``, or ``warn`` log messages logged by the system services
 
-These metrics are available for the CDAP transaction service
+These metrics are available for the CDAP transaction service:
+
 .. list-table::
    :header-rows: 1
    :widths: 60 40
 
-   * - Transaction Metrics
+   * - Transaction Metric
      - Description
    * - ``system.start.{short, long}``
-     - Number of short, long transactions started
+     - Number of ``short`` or ``long`` transactions started
    * - ``system.start.{short, long}.latency``
-     - Time taken to start short, long transactions.
+     - Time taken (in milliseconds) to start ``short`` or ``long`` transactions
    * - ``system.wal.append.count``
-     - Number of transaction edits added to Write Ahead log
+     - Number of transaction edits added to the write-ahead log
    * - ``system.{canCommit, commit, committed, inprogress, invalidate, abort}``
-     - Number of transactions in a transaction state.
+     - Number of transactions in a specified transaction state
    * - ``system.{canCommit, commit, committed, inprogress, invalidate, abort}.latency``
-     - Time take to perform the transaction state update
+     - Time taken (in milliseconds) to perform a specified transaction state update
    * - ``system.{invalid, committing, committed, inprogress}.size``
-     - size of transaction data structures
+     - Number of transaction data structures
 
-These metrics are available for the yarn cluster resources
+These metrics are available for the YARN cluster resources:
+
 .. list-table::
    :header-rows: 1
    :widths: 60 40
 
-   * - Yarn cluster metrics
+   * - YARN Cluster Metric
      - Description
-   * - system.resources.{total, available, used}.memory
-     - Size of total, available and used cluster memory
-   * - system.resources.{total, available, used}.vcores
-     - Size of total, available and used cluster vcores
+   * - ``system.resources.{total, available, used}.memory``
+     - Size (in megabytes) of total, available, or used cluster memory
+   * - ``system.resources.{total, available, used}.vcores``
+     - Number of total, available, or used cluster virtual cores
 
 Searches and Queries
 ====================
