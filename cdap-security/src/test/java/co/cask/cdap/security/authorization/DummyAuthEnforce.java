@@ -19,6 +19,7 @@ package co.cask.cdap.security.authorization;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.common.security.AuthEnforce;
 import co.cask.cdap.common.security.AuthEnforceRewriter;
+import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 
@@ -75,6 +76,48 @@ public class DummyAuthEnforce {
 
     @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
     public void testSomeOtherAction(@Name("namespaceId") NamespaceId namespaceId) throws Exception {
+      // the above annotation will call enforce after class rewrite which should throw an exception.
+      // If the line below is reached it means that enforce was not called as it supposed to be
+      throw new EnforceNotCalledException();
+    }
+  }
+
+  /**
+   * Class which has {@link AuthEnforce} annotation and fields
+   */
+  public class ValidAuthEnforceWithFields {
+
+    public NamespaceId someEntity = new NamespaceId("ns");
+
+    // test when method has no parameters and enforcement is one field
+    @AuthEnforce(entities = "someEntity", enforceOn = NamespaceId.class, actions = Action.ADMIN)
+    public void testNoParameters() throws Exception {
+      // the above annotation will call enforce after class rewrite which should throw an exception.
+      // If the line below is reached it means that enforce was not called as it supposed to be
+      throw new EnforceNotCalledException();
+    }
+
+    // test that having a para name same as field name
+    @AuthEnforce(entities = "someEntity", enforceOn = NamespaceId.class, actions = Action.ADMIN)
+    public void testParaNameSameAsField(NamespaceId someEntity) throws Exception {
+      // the above annotation will call enforce after class rewrite which should throw an exception.
+      // If the line below is reached it means that enforce was not called as it supposed to be
+      throw new EnforceNotCalledException();
+    }
+
+    // tests that when a method parameter has Named annotation same as class field name and when specified in
+    // AuthEnforce entities method parameter gets prefernce
+    @AuthEnforce(entities = "someEntity", enforceOn = InstanceId.class, actions = Action.ADMIN)
+    public void testParaPreference(@Name("someEntity") InstanceId instanceId) throws Exception {
+      // the above annotation will call enforce after class rewrite which should throw an exception.
+      // If the line below is reached it means that enforce was not called as it supposed to be
+      throw new EnforceNotCalledException();
+    }
+
+    // tests that when parameter has same Name annotation as the one specified in AuthEnforce annotation saying
+    // this.name give preference to class field than the default method parameters
+    @AuthEnforce(entities = "this.someEntity", enforceOn = NamespaceId.class, actions = Action.ADMIN)
+    public void testThisClassPreference(@Name("someEntity") NamespaceId namespaceId) throws Exception {
       // the above annotation will call enforce after class rewrite which should throw an exception.
       // If the line below is reached it means that enforce was not called as it supposed to be
       throw new EnforceNotCalledException();
@@ -150,6 +193,6 @@ public class DummyAuthEnforce {
    * Just a dummy exception which is thrown is authorization enforcement was not done
    */
   public class EnforceNotCalledException extends Exception {
-    // dummy
+
   }
 }

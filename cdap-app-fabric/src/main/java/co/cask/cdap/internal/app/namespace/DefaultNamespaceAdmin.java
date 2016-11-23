@@ -146,6 +146,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @throws NamespaceAlreadyExistsException if the specified namespace already exists
    */
   @Override
+  @AuthEnforce(entities = "instanceId", enforceOn = InstanceId.class, actions = Action.ADMIN)
   public synchronized void create(final NamespaceMeta metadata) throws Exception {
     // TODO: CDAP-1427 - This should be transactional, but we don't support transactions on files yet
     Preconditions.checkArgument(metadata != null, "Namespace metadata should not be null.");
@@ -161,7 +162,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
 
     // Namespace can be created. Check if the user is authorized now.
     Principal principal = authenticationContext.getPrincipal();
-    authorizationEnforcer.enforce(instanceId, principal, Action.ADMIN);
     privilegesManager.grant(namespace, principal, EnumSet.allOf(Action.class));
     // Also grant the user who will execute programs in this namespace all privileges on the namespace
     String executionUserName;

@@ -33,12 +33,12 @@ public class ExceptionAuthorizationEnforcer implements AuthorizationEnforcer {
 
   @Override
   public void enforce(EntityId entity, Principal principal, Action action) throws Exception {
-    throw new ExpectedException();
+    throw new ExpectedException(entity);
   }
 
   @Override
   public void enforce(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
-    throw new ExpectedException();
+    throw new ExpectedException(entity);
   }
 
   @Override
@@ -48,5 +48,14 @@ public class ExceptionAuthorizationEnforcer implements AuthorizationEnforcer {
 
   class ExpectedException extends Exception {
     // just a dummy exception for test which is thrown if authorization enforcement call was successful
+    private final EntityId entityId; // entity on which authorization enforcement is being performed
+
+    ExpectedException(EntityId entityId) {
+      this.entityId = entityId;
+    }
+
+    public EntityId getEntityId() {
+      return entityId;
+    }
   }
 }
