@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.util.hbase;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.io.output.NullOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -209,40 +210,7 @@ public class HBaseVersion {
       Class versionInfoClass = Class.forName("org.apache.hadoop.hbase.util.VersionInfo");
       Method versionMethod = versionInfoClass.getMethod("getVersion");
       versionString = (String) versionMethod.invoke(null);
-      if (versionString.startsWith(HBASE_94_VERSION)) {
-        currentVersion = Version.HBASE_94;
-      } else if (versionString.startsWith(HBASE_96_VERSION)) {
-        currentVersion = Version.HBASE_96;
-      } else if (versionString.startsWith(HBASE_98_VERSION)) {
-        currentVersion = Version.HBASE_98;
-      } else if (versionString.startsWith(HBASE_10_VERSION)) {
-        VersionNumber ver = VersionNumber.create(versionString);
-        if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH55_CLASSIFIER)) {
-          currentVersion = Version.HBASE_10_CDH55;
-        } else if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH56_CLASSIFIER)) {
-          currentVersion = Version.HBASE_10_CDH56;
-        } else if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH_CLASSIFIER)) {
-          currentVersion = Version.HBASE_10_CDH;
-        } else {
-          currentVersion = Version.HBASE_10;
-        }
-      } else if (versionString.startsWith(HBASE_11_VERSION)) {
-        currentVersion = Version.HBASE_11;
-      } else if (versionString.startsWith(HBASE_12_VERSION)) {
-        VersionNumber ver = VersionNumber.create(versionString);
-        if (ver.getClassifier() != null &&
-          (ver.getClassifier().startsWith(CDH57_CLASSIFIER) ||
-            // CDH 5.7 compat module can be re-used with CDH 5.8 and CDH 5.9
-            ver.getClassifier().startsWith(CDH58_CLASSIFIER) ||
-            ver.getClassifier().startsWith(CDH59_CLASSIFIER))) {
-          currentVersion = Version.HBASE_12_CDH57;
-        } else {
-          // HBase-11 compat module can be re-used for HBASE-12 as there is no change needed in compat source.
-          currentVersion = Version.HBASE_11;
-        }
-      } else {
-        currentVersion = Version.UNKNOWN;
-      }
+      currentVersion = determineVersionFromVersionString(versionString);
     } catch (Throwable e) {
       // Get the Logger instance inside determineVersion() to prevent LoggerFactory.getLogger printing extra output to
       // stdout. No need for a static Logger instance because determineVersion() will only be called once.
@@ -254,6 +222,44 @@ public class HBaseVersion {
       if (versionString == null) {
         versionString = "unknown";
       }
+    }
+  }
+
+  @VisibleForTesting
+  static Version determineVersionFromVersionString(String versionString) throws ParseException {
+    if (versionString.startsWith(HBASE_94_VERSION)) {
+      return Version.HBASE_94;
+    } else if (versionString.startsWith(HBASE_96_VERSION)) {
+      return Version.HBASE_96;
+    } else if (versionString.startsWith(HBASE_98_VERSION)) {
+      return Version.HBASE_98;
+    } else if (versionString.startsWith(HBASE_10_VERSION)) {
+      VersionNumber ver = VersionNumber.create(versionString);
+      if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH55_CLASSIFIER)) {
+        return Version.HBASE_10_CDH55;
+      } else if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH56_CLASSIFIER)) {
+        return Version.HBASE_10_CDH56;
+      } else if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH_CLASSIFIER)) {
+        return Version.HBASE_10_CDH;
+      } else {
+        return Version.HBASE_10;
+      }
+    } else if (versionString.startsWith(HBASE_11_VERSION)) {
+      return Version.HBASE_11;
+    } else if (versionString.startsWith(HBASE_12_VERSION)) {
+      VersionNumber ver = VersionNumber.create(versionString);
+      if (ver.getClassifier() != null &&
+        (ver.getClassifier().startsWith(CDH57_CLASSIFIER) ||
+          // CDH 5.7 compat module can be re-used with CDH 5.8 and CDH 5.9
+          ver.getClassifier().startsWith(CDH58_CLASSIFIER) ||
+          ver.getClassifier().startsWith(CDH59_CLASSIFIER))) {
+        return Version.HBASE_12_CDH57;
+      } else {
+        // HBase-11 compat module can be re-used for HBASE-12 as there is no change needed in compat source.
+        return Version.HBASE_11;
+      }
+    } else {
+      return Version.UNKNOWN;
     }
   }
 }
