@@ -16,13 +16,13 @@
 
 package co.cask.cdap.messaging.store.hbase;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.PutBuilder;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.DistributedScanner;
+import co.cask.cdap.messaging.MessagingUtils;
 import co.cask.cdap.messaging.store.AbstractMessageTable;
 import co.cask.cdap.messaging.store.MessageTable;
 import co.cask.cdap.messaging.store.RawMessageTableEntry;
@@ -43,8 +43,8 @@ import java.util.concurrent.ExecutorService;
  * HBase implementation of {@link MessageTable}.
  */
 final class HBaseMessageTable extends AbstractMessageTable {
-  private static final byte[] PAYLOAD_COL = Bytes.toBytes('p');
-  private static final byte[] TX_COL = Bytes.toBytes('t');
+  private static final byte[] PAYLOAD_COL = MessagingUtils.Constants.PAYLOAD_COL;
+  private static final byte[] TX_COL = MessagingUtils.Constants.TX_COL;
 
   private final HBaseTableUtil tableUtil;
   private final byte[] columnFamily;

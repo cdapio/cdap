@@ -29,8 +29,8 @@ import java.util.Objects;
  */
 public class TopicMetadata {
 
-  public static final String TTL_KEY = "ttl";
-  public static final String GENERATION_KEY = "generation";
+  public static final String GENERATION_KEY = MessagingUtils.Constants.GENERATION_KEY;
+  public static final String TTL_KEY = MessagingUtils.Constants.TTL_KEY;
 
   private final TopicId topicId;
   private final Map<String, String> properties;

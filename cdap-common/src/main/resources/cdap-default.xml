@@ -1178,6 +1178,14 @@
   </property>
 
   <property>
+    <name>messaging.local.data.cleanup.frequency.secs</name>
+    <value>3600</value>
+    <description>
+      Scheduling frequency of TTL cleanup thread in seconds (only used in Standalone CDAP)
+    </description>
+  </property>
+
+  <property>
     <name>messaging.hbase.max.scan.threads</name>
     <value>48</value>
     <description>
@@ -1291,6 +1299,19 @@
     </description>
   </property>
 
+  <property>
+    <name>messaging.coprocessor.metadata.cache.expiration.seconds</name>
+    <value>120</value>
+    <description>
+      The default value of expiration time in seconds for metadata cache in hbase data tables coprocessors
+    </description>
+  </property>
+
+  <property>
+    <name>messaging.coprocessor.dir</name>
+    <value>${hdfs.namespace}/tms</value>
+    <description>Directory to store Messaging Service Table coprocessors</description>
+  </property>
 
   <!-- Metadata Configuration -->
 
