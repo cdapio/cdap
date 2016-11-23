@@ -39,6 +39,7 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
@@ -197,13 +198,9 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
           continue;
         }
         // Try to find a provider that can support the given program type.
-        try {
-          EXTENSION extension = getAllExtensions(serviceLoaderCache.getUnchecked(moduleDir)).get(type);
-          if (extension != null) {
-            return extension;
-          }
-        } catch (Exception e) {
-          LOG.warn("Exception raised when loading an extension from {}. Extension ignored.", moduleDir, e);
+        EXTENSION extension = getAllExtensions(serviceLoaderCache.getUnchecked(moduleDir)).get(type);
+        if (extension != null) {
+          return extension;
         }
       }
     }
@@ -217,13 +214,23 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
    */
   private Map<EXTENSION_TYPE, EXTENSION> getAllExtensions(ServiceLoader<EXTENSION> serviceLoader) {
     Map<EXTENSION_TYPE, EXTENSION> extensions = new HashMap<>();
-    for (EXTENSION extension : serviceLoader) {
-      for (EXTENSION_TYPE type : getSupportedTypesForProvider(extension)) {
-        if (extensions.containsKey(type)) {
-          LOG.info("Ignoring extension {} for type {}", extension, type);
-        } else {
-          extensions.put(type, extension);
+    Iterator<EXTENSION> iterator = serviceLoader.iterator();
+    // Cannot use for each loop here, because we want to catch exceptions during iterator.next().
+    //noinspection WhileLoopReplaceableByForEach
+    while (iterator.hasNext()) {
+      try {
+        EXTENSION extension = iterator.next();
+        for (EXTENSION_TYPE type : getSupportedTypesForProvider(extension)) {
+          if (extensions.containsKey(type)) {
+            LOG.info("Ignoring extension {} for type {}", extension, type);
+          } else {
+            extensions.put(type, extension);
+          }
         }
+      } catch (Throwable t) {
+        // Need to catch Throwable because ServiceLoader throws ServiceConfigurationError (which is an Error) if the
+        // extension can not be loaded successfully.
+        LOG.warn("Error while loading extension. Extension will be ignored.", t);
       }
     }
     return extensions;

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.operations.hdfs;
 
-import java.io.IOException;
 import javax.management.MXBean;
 
 /**

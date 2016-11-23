@@ -19,9 +19,10 @@ package co.cask.cdap.operations.hdfs;
 import co.cask.cdap.operations.OperationalStats;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.hdfs.DFSUtil;
-import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.HAUtil;
 
 import java.io.IOException;
@@ -39,11 +40,15 @@ public class HDFSNodes extends AbstractHDFSStats implements HDFSNodesMXBean {
   @VisibleForTesting
   static final String STAT_TYPE = "nodes";
 
-  private final int namenodes;
+  private int namenodes;
 
-  public HDFSNodes() throws IOException {
-    super();
-    this.namenodes = getNameNodes().size();
+  public HDFSNodes() {
+    this(new Configuration());
+  }
+
+  @VisibleForTesting
+  HDFSNodes(Configuration conf) {
+    super(conf);
   }
 
   @Override
@@ -58,14 +63,14 @@ public class HDFSNodes extends AbstractHDFSStats implements HDFSNodesMXBean {
 
   @Override
   public void collect() throws IOException {
-    // no need to refresh right now, but need to figure out a way to not spawn a new thread for such stats
+    namenodes = getNameNodes().size();
   }
 
   private List<String> getNameNodes() throws IOException {
     List<String> namenodes = new ArrayList<>();
     if (!HAUtil.isHAEnabled(conf, getNameService())) {
-      try (DistributedFileSystem dfs = createDFS()) {
-        return Collections.singletonList(dfs.getUri().toString());
+      try (FileSystem fs = FileSystem.get(conf)) {
+        return Collections.singletonList(fs.getUri().toString());
       }
     }
     String nameService = getNameService();

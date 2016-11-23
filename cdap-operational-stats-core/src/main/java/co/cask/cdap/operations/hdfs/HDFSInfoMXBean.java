@@ -16,8 +16,7 @@
 
 package co.cask.cdap.operations.hdfs;
 
-import java.io.IOException;
-import java.net.URL;
+import javax.annotation.Nullable;
 import javax.management.MXBean;
 
 /**
@@ -30,12 +29,14 @@ public interface HDFSInfoMXBean {
   String getVersion();
 
   /**
-   * Returns the web URL of the HDFS Namenode
+   * Returns the web URL of the HDFS Namenode, or {@code null} if the web URL cannot be determined.
    */
-  String getWebURL() throws IOException;
+  @Nullable
+  String getWebURL();
 
   /**
-   * Returns the URL for the logs of the HDFS Namenode
+   * Returns the URL for the logs of the HDFS Namenode, or {@code null} if the logs URL cannot be determined.
    */
-  String getLogsURL() throws IOException;
+  @Nullable
+  String getLogsURL();
 }
