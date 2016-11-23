@@ -478,7 +478,7 @@ cdap_set_spark() {
   elif cdap_check_mapr; then
     # MapR installs spark to a known location
     SPARK_HOME=$(ls -d /opt/mapr/spark/spark-* 2>/dev/null)
-    if [ -n "${SPARK_HOME}" -a -d "${SPARK_HOME}" ]; then
+    if [[ -n ${SPARK_HOME} ]] && [[ -d ${SPARK_HOME} ]]; then
       export SPARK_HOME
       return 0
     fi
