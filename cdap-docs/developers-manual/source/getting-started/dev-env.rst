@@ -64,8 +64,13 @@ then modify, build, and run CDAP.
 To do so, follow these steps:
 
 1. Install all the :ref:`prerequisite system requirements <system-requirements>` for CDAP development.
-#. Download the source as a ZIP from |source-link|.
-#. Unpack the ZIP in a suitable location.
+
+#. Either clone the CDAP repo or download a ZIP of the source:
+
+   - Clone the CDAP repository using |git-clone-command|
+   
+   - Download the source as a ZIP from |source-link| and unpack the ZIP in a suitable location
+
 #. In your IDE, install the Scala plugin (for 
    `IntelliJ <https://confluence.jetbrains.com/display/SCA/Scala+Plugin+for+IntelliJ+IDEA>`__
    or `Eclipse <http://scala-ide.org>`__) as there is Scala code in the project.

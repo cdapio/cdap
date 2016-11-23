@@ -344,6 +344,7 @@ if release:
     else:
         source_link = "v%s" % release
     rst_epilog += """
+.. |git-clone-command| replace:: ``$ git clone -b %(source_link)s https://github.com/caskdata/cdap.git``
 .. |source-link| replace:: `GitHub <https://github.com/caskdata/cdap/archive/%(source_link)s.zip>`__
 .. |ui-read-me| replace:: `CDAP UI README <https://github.com/caskdata/cdap/blob/%(source_link)s/cdap-ui/README.rst>`__
 """ % {'source_link': source_link}
