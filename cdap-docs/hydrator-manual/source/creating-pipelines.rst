@@ -400,11 +400,20 @@ This order is used so that the most volatile source (the workflow token) takes p
 For instance, you might not know the name of a source stream until runtime. You could use
 in the source stream's *Stream Name* configuration::
 
-  ${source-stream-name}
+  ${stream-name}
   
 and in the runtime arguments set a key-value pair such as::
 
-  source-stream-name: myDemoStream
+  stream-name: myDemoStream
+
+In the Cask Hydrator UI, macro property look-ups are determined from the configuration and are set as runtime arguments.
+After providing values for these arguments, the Hydrator pipeline can be started:
+
+  .. figure:: /_images/stream-table-macro-runtime.png
+     :figwidth: 100%
+     :width: 6in
+     :align: center
+     :class: bordered-image
 
 *Notes:*
 
