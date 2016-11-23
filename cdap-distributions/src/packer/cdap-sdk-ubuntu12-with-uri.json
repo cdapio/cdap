@@ -40,11 +40,27 @@
       ],
       "vm_name": "cdap-standalone-vm-{{user `sdk_version`}}",
       "name": "cdap-sdk-vm"
+    },
+    {
+      "type": "amazon-ebs",
+      "ami_name": "CDAP SDK {{user `sdk_version`}} ({{timestamp}})",
+      "instance_type": "m1.medium",
+      "region": "us-east-1",
+      "source_ami": "ami-a488dbb3",
+      "ami_groups": ["all"],
+      "ami_regions": [
+        "us-east-1",
+        "us-west-1",
+        "us-west-2"
+      ],
+      "ssh_username": "ubuntu",
+      "name": "cdap-sdk-ami"
     }
   ],
   "provisioners": [
     {
       "type": "shell",
+      "execute_command": "sudo bash -c '{{ .Vars }} {{ .Path }}'",
       "scripts": [
         "scripts/apt-setup.sh",
         "scripts/cookbook-dir.sh"
@@ -66,6 +82,7 @@
     },
     {
       "type": "shell",
+      "execute_command": "sudo bash -c '{{ .Vars }} {{ .Path }}'",
       "scripts": "scripts/cookbook-setup.sh"
     },
     {
@@ -123,8 +140,7 @@
     {
       "type": "file",
       "source": "files/cdap-sdk.zip",
-      "destination": "/tmp/cdap-sdk.zip",
-      "only": ["cdap-sdk-vm"]
+      "destination": "/tmp/cdap-sdk.zip"
     },
     {
       "type": "file",
@@ -136,7 +152,6 @@
       "type": "chef-solo",
       "remote_cookbook_paths": "/var/chef/cookbooks",
       "run_list": "recipe[cdap::sdk]",
-      "prevent_sudo": true,
       "skip_install": true,
       "json": {
         "cdap": {
@@ -163,20 +178,24 @@
     },
     {
       "type": "shell",
+      "execute_command": "sudo bash -c '{{ .Vars }} {{ .Path }}'",
       "scripts": [
         "scripts/remove-chef.sh",
         "scripts/sdk-cleanup.sh",
         "scripts/network-cleanup.sh",
-        "scripts/apt-cleanup.sh"
+        "scripts/apt-cleanup.sh",
+        "scripts/random-root-password.sh"
       ]
     },
     {
       "type": "shell",
-      "scripts": [
-        "scripts/random-root-password.sh",
-        "scripts/zero-disk.sh"
-      ],
+      "scripts": "scripts/zero-disk.sh",
       "only": ["cdap-sdk-vm"]
+    },
+    {
+      "type": "shell",
+      "execute_command": "sudo bash -c '{{ .Vars }} {{ .Path }}'",
+      "scripts": "scripts/ssh-cleanup.sh"
     }
   ]
 }
