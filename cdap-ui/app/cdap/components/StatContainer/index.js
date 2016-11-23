@@ -20,7 +20,10 @@ require('./StatContainer.less');
 var classNames = require('classnames');
 
 const propTypes = {
-  number: PropTypes.string,
+  number: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number
+  ]),
   label: PropTypes.string,
   isLoading: PropTypes.bool
 };

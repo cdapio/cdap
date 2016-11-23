@@ -33,7 +33,7 @@ var shortid = require('shortid');
 var classNames = require('classnames');
 
 var dummyData = {
-  version: '4.0-SNAPSHOT',
+  version: '4.0.0',
   uptime: {
     duration: '0.2',
     unit: 'hr'
@@ -102,9 +102,9 @@ class Management extends Component {
               apps.push(key);
               services.push({
                 name: T.translate(`features.Management.Component-Overview.headers.${key}`),
-                version: res[key].version,
-                url: res[key].url,
-                logs: res[key].logsUrl
+                version: res[key].Version,
+                url: res[key].WebURL,
+                logs: res[key].LogsURL
               });
             }
           }
@@ -114,7 +114,7 @@ class Management extends Component {
             application : current,
             applications : apps,
             services : services,
-            lastUpdated : 'now'
+            lastUpdated : 'a few'
           });
         }
       );
