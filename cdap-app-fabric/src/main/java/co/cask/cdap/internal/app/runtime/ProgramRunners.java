@@ -16,20 +16,33 @@
 
 package co.cask.cdap.internal.app.runtime;
 
+import ch.qos.logback.core.Context;
+import ch.qos.logback.core.joran.util.ConfigurationWatchListUtil;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.io.Locations;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.RunId;
+import org.apache.twill.filesystem.Location;
+import org.slf4j.ILoggerFactory;
+import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.security.PrivilegedExceptionAction;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
+import javax.annotation.Nullable;
 
 /**
  * Utility class to provide common functionality that shares among different {@link ProgramRunner}.
@@ -96,6 +109,44 @@ public final class ProgramRunners {
     String id = programOptions.getArguments().getOption(ProgramOptionConstants.RUN_ID);
     Preconditions.checkArgument(id != null, "Missing " + ProgramOptionConstants.RUN_ID + " in program options");
     return RunIds.fromString(id);
+  }
+
+  /**
+   * Same as {@link #createLogbackJar(Location)} except this method uses local {@link File} instead.
+   */
+  public static File createLogbackJar(File targetDir) throws IOException {
+    Location logbackJar = createLogbackJar(Locations.toLocation(targetDir));
+    return logbackJar == null ? null : new File(logbackJar.toURI());
+  }
+
+  /**
+   * Creates a jar in the given directory that contains a logback.xml configured for the current process
+   *
+   * @param targetDir directory where the jar should be created in
+   * @return the {@link Location} where the logback.xml jar copied to or {@code null} if "logback.xml" is not found
+   *         in the current ClassLoader.
+   * @throws IOException if failed in reading the logback xml or writing out the jar
+   */
+  @Nullable
+  public static Location createLogbackJar(Location targetDir) throws IOException {
+    ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
+    if (!(loggerFactory instanceof Context)) {
+      return null;
+    }
+
+    URL logbackURL = ConfigurationWatchListUtil.getMainWatchURL((Context) loggerFactory);
+    if (logbackURL == null) {
+      return null;
+    }
+
+    try (InputStream input = logbackURL.openStream()) {
+      Location logbackJar = targetDir.append("logback").getTempFile(".jar");
+      try (JarOutputStream output = new JarOutputStream(logbackJar.getOutputStream())) {
+        output.putNextEntry(new JarEntry("logback.xml"));
+        ByteStreams.copy(input, output);
+      }
+      return logbackJar;
+    }
   }
 
   private ProgramRunners() {

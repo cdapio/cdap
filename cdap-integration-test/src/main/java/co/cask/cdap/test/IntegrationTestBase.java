@@ -17,8 +17,10 @@
 package co.cask.cdap.test;
 
 import co.cask.cdap.api.app.Application;
+import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.client.ApplicationClient;
+import co.cask.cdap.client.ArtifactClient;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.client.MetaClient;
 import co.cask.cdap.client.MetricsClient;
@@ -26,6 +28,7 @@ import co.cask.cdap.client.MonitorClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.StreamClient;
+import co.cask.cdap.client.StreamViewClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.client.util.RESTClient;
@@ -39,7 +42,9 @@ import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.StreamDetail;
+import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.security.authentication.client.AuthenticationClient;
 import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
@@ -63,11 +68,14 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 
 /**
  * Abstract class for writing Integration tests for CDAP. Provides utility methods to use in Integration tests.
@@ -80,13 +88,71 @@ public abstract class IntegrationTestBase {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
+  private static NamespaceId configuredNamespace = configureTestNamespace();
+  // boolean value of true indicates that we are responsible for deleting it upon test teardown
+  private static Map<NamespaceId, Boolean> registeredNamespaces = new HashMap<>();
+
   private AccessToken accessToken;
 
   @Before
   public void setUp() throws Exception {
+    LOG.info("Beginning setUp.");
     checkSystemServices();
     assertUnrecoverableResetEnabled();
-    assertIsClear();
+
+    boolean deleteUponTeardown = false;
+    if (!getNamespaceClient().exists(configuredNamespace.toId())) {
+      getNamespaceClient().create(new NamespaceMeta.Builder().setName(configuredNamespace.toId()).build());
+      // if we created the configured namespace, delete it upon teardown
+      deleteUponTeardown = true;
+    } else {
+      // only need to clear the namespace if it already existed
+      doClear(configuredNamespace, false);
+    }
+    registeredNamespaces.put(configuredNamespace, deleteUponTeardown);
+    LOG.info("Completed setUp.");
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    LOG.info("Beginning tearDown.");
+    for (Map.Entry<NamespaceId, Boolean> namespaceEntry : registeredNamespaces.entrySet()) {
+      // there could be a race condition that test case registers the namespace, but fails before
+      // creating the actual namespace, so check existence before clearing/deleting the namespace
+      if (!getNamespaceClient().exists(namespaceEntry.getKey().toId())) {
+        continue;
+      }
+      Boolean deleteUponTeardown = namespaceEntry.getValue();
+      // if we didn't create the namespace, don't delete it; only clear the data/programs within it
+      doClear(namespaceEntry.getKey(), deleteUponTeardown);
+    }
+    LOG.info("Completed tearDown.");
+  }
+
+  /**
+   * Call this method to register namespaces for deletion at the end of the test case.
+   */
+  @SuppressWarnings("unused")
+  protected void registerForDeletion(NamespaceId firstNamespace, NamespaceId... additionalNamespaces) {
+    registeredNamespaces.put(firstNamespace, true);
+    for (NamespaceId additionalNamespace : additionalNamespaces) {
+      registeredNamespaces.put(additionalNamespace, true);
+    }
+  }
+
+  /**
+   * @return the namespace to be used by default for test cases.
+   */
+  private static NamespaceId configureTestNamespace() {
+    String testNamespace = System.getProperty("test.namespace");
+    return testNamespace != null ? new NamespaceId(testNamespace) : NamespaceId.DEFAULT;
+  }
+
+  /**
+   * @return the namespace that has been configured as default, for test cases.
+   */
+  protected static NamespaceId getConfiguredNamespace() {
+    return configuredNamespace;
   }
 
   protected void checkSystemServices() throws TimeoutException, InterruptedException {
@@ -97,20 +163,26 @@ public abstract class IntegrationTestBase {
         if (!getMonitorClient().allSystemServicesOk()) {
           return false;
         }
-        // Check that the dataset service is up, and also that the default namespace exists
-        // Using list and checking if default namespace exists, as opposed to using get()
-        // so we don't have to unnecessarily add a try-catch for NamespaceNotFoundException, since that exception is
-        // not handled in checkServicesWithRetry.
-        List<NamespaceMeta> namespaces = getNamespaceClient().list();
 
-        if (namespaces.size() == 0) {
-          return false;
-        }
-        if (namespaces.contains(NamespaceMeta.DEFAULT)) {
+        // For non-default namespaces, simply check that the dataset service is up with list().
+        // If list() does not throw exception, which means the http request receives response
+        // status HTTP_OK and dataset service is up, then check if default namespace exists, if so return true.
+        List<NamespaceMeta> list = getNamespaceClient().list();
+
+        if (!configuredNamespace.equals(NamespaceId.DEFAULT)) {
           return true;
         }
-        throw new IllegalStateException("Default namespace not found. Instead found unexpected namespaces: "
-                                          + namespaces);
+
+        // If configured namespace is default namespace, check if it has been created. There can be a race condition
+        // where default namespace is not created yet, but integration test starts executing. This check makes sure
+        // default namespace exists before integration test starts
+        for (NamespaceMeta namespaceMeta : list) {
+          if (namespaceMeta.getNamespaceId().equals(NamespaceId.DEFAULT)) {
+            return true;
+          }
+        }
+
+        return false;
       }
     };
 
@@ -194,12 +266,6 @@ public abstract class IntegrationTestBase {
     Preconditions.checkState(Boolean.parseBoolean(configEntry.getValue()), "UnrecoverableReset not enabled.");
   }
 
-  @After
-  public void tearDown() throws Exception {
-    getTestManager().clear();
-    assertIsClear();
-  }
-
   protected TestManager getTestManager() {
     try {
       return new IntegrationTestManager(getClientConfig(), getRestClient(), TEMP_FOLDER.newFolder());
@@ -220,23 +286,9 @@ public abstract class IntegrationTestBase {
   /**
    * CDAP access token for making requests to secure CDAP instances.
    */
-  public AccessToken getAccessToken() {
+  @Nullable
+  protected AccessToken getAccessToken() {
     return accessToken;
-  }
-
-  private void assertIsClear() throws Exception {
-    Id.Namespace namespace = Id.Namespace.DEFAULT;
-
-    // only namespace existing should be 'default'
-    NamespaceClient namespaceClient = getNamespaceClient();
-    List<NamespaceMeta> list = namespaceClient.list();
-    Assert.assertEquals(1, list.size());
-    Assert.assertEquals(NamespaceMeta.DEFAULT, list.get(0));
-
-    assertNoApps(namespace);
-    assertNoUserDatasets(namespace);
-    assertNoStreams(namespace);
-    // TODO: check metrics, etc.
   }
 
   protected ClientConfig getClientConfig() {
@@ -244,8 +296,8 @@ public abstract class IntegrationTestBase {
     builder.setConnectionConfig(InstanceURIParser.DEFAULT.parse(
       URI.create(getInstanceURI()).toString()));
 
-    if (accessToken != null) {
-      builder.setAccessToken(accessToken);
+    if (getAccessToken() != null) {
+      builder.setAccessToken(getAccessToken());
     }
 
     String verifySSL = System.getProperty("verifySSL");
@@ -313,11 +365,46 @@ public abstract class IntegrationTestBase {
   }
 
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz) throws IOException {
-    return deployApplication(Id.Namespace.DEFAULT, applicationClz);
+    return deployApplication(getConfiguredNamespace().toId(), applicationClz);
   }
 
   protected ApplicationManager getApplicationManager(ApplicationId applicationId) throws Exception {
     return getTestManager().getApplicationManager(applicationId);
+  }
+
+  private void doClear(NamespaceId namespace, boolean deleteNamespace) throws Exception {
+    // stop all programs in the namespace
+    getProgramClient().stopAll(namespace.toId());
+
+    if (deleteNamespace) {
+      getNamespaceClient().delete(namespace.toId());
+      return;
+    }
+
+    // delete all apps in the namespace
+    for (ApplicationRecord app : getApplicationClient().list(namespace.toId())) {
+      getApplicationClient().delete(namespace.app(app.getName()).toId());
+    }
+    // delete all streams
+    for (StreamDetail streamDetail : getStreamClient().list(namespace.toId())) {
+      getStreamClient().delete(namespace.stream(streamDetail.getName()).toId());
+    }
+    // delete all dataset instances
+    for (DatasetSpecificationSummary datasetSpecSummary : getDatasetClient().list(namespace.toId())) {
+      getDatasetClient().delete(namespace.dataset(datasetSpecSummary.getName()).toId());
+    }
+    ArtifactClient artifactClient = new ArtifactClient(getClientConfig(), getRestClient());
+    for (ArtifactSummary artifactSummary : artifactClient.list(namespace.toId(), ArtifactScope.USER)) {
+      artifactClient.delete(namespace.artifact(artifactSummary.getName(), artifactSummary.getVersion()).toId());
+    }
+
+    assertIsClear(namespace);
+  }
+
+  private void assertIsClear(NamespaceId namespaceId) throws Exception {
+    assertNoApps(namespaceId.toId());
+    assertNoUserDatasets(namespaceId.toId());
+    assertNoStreams(namespaceId.toId());
   }
 
   private boolean isUserDataset(DatasetSpecificationSummary specification) {

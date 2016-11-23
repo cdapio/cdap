@@ -24,17 +24,18 @@ import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
+import co.cask.cdap.app.guice.TwillModule;
 import co.cask.cdap.app.queue.QueueSpecification;
 import co.cask.cdap.app.queue.QueueSpecificationGenerator;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
@@ -478,6 +479,10 @@ public class HBaseQueueDebugger extends AbstractIdleService {
 
   public static HBaseQueueDebugger createDebugger() throws Exception {
     CConfiguration cConf = CConfiguration.create();
+    if (cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
+      System.out.println(String.format("Disabling authorization for %s.", HBaseQueueDebugger.class.getSimpleName()));
+      cConf.setBoolean(Constants.Security.Authorization.ENABLED, false);
+    }
     // Note: login has to happen before any objects that need Kerberos credentials are instantiated.
     SecurityUtil.loginForMasterService(cConf);
 

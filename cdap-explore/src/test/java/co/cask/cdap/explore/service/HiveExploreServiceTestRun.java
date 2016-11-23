@@ -148,13 +148,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
   public void getUserTables() throws Exception {
     exploreClient.submit(NAMESPACE_ID, "create table test (first INT, second STRING) " +
                            "ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t'").get();
-    List<TableNameInfo> tables = exploreService.getTables(null);
-    Assert.assertEquals(ImmutableList.of(new TableNameInfo(NAMESPACE_DATABASE, MY_TABLE_NAME),
-                                         new TableNameInfo(NAMESPACE_DATABASE, "test"),
-                                         new TableNameInfo(OTHER_NAMESPACE_DATABASE, OTHER_MY_TABLE_NAME)),
-                        tables);
-
-    tables = exploreService.getTables(NAMESPACE_ID.getId());
+    List<TableNameInfo> tables = exploreService.getTables(NAMESPACE_ID.getId());
     Assert.assertEquals(ImmutableList.of(new TableNameInfo(NAMESPACE_DATABASE, MY_TABLE_NAME),
                                          new TableNameInfo(NAMESPACE_DATABASE, "test")),
                         tables);
@@ -497,7 +491,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     Assert.assertEquals(DatasetStorageHandler.class.getName(), tableInfo.getParameters().get("storage_handler"));
 
     try {
-      exploreService.getTableInfo(null, "foobar");
+      exploreService.getTableInfo("foo", "foobar");
       Assert.fail("Should throw TableNotFoundException on table foobar");
     } catch (TableNotFoundException e) {
       // Expected

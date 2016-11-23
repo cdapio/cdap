@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,12 +22,15 @@ import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.common.ServiceUnavailableException;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.ServiceManager;
 import com.google.common.base.Throwables;
 
 import java.net.URL;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -74,17 +77,28 @@ public class RemoteServiceManager extends AbstractProgramManager<ServiceManager>
 
   @Override
   public URL getServiceURL() {
-    try {
-      return serviceClient.getServiceURL(serviceId);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+    return getServiceURL(30, TimeUnit.SECONDS);
   }
 
   @Override
   public URL getServiceURL(long timeout, TimeUnit timeoutUnit) {
-    // TODO: handle timeout
-    return getServiceURL();
+    try {
+      Tasks.waitFor(true, new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          try {
+            serviceClient.checkAvailability(serviceId);
+            return true;
+          } catch (ServiceUnavailableException e) {
+            // simply retry in case its not yet available
+            return false;
+          }
+        }
+      }, timeout, timeoutUnit);
+      return serviceClient.getServiceURL(serviceId);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override

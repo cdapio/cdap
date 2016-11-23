@@ -21,7 +21,9 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.distributed.DistributedProgramControllerFactory;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
@@ -33,6 +35,7 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.LocalizationUtils;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
@@ -42,9 +45,8 @@ import co.cask.cdap.security.TokenSecureStoreUpdater;
 import co.cask.cdap.security.store.SecureStoreUtils;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
@@ -55,6 +57,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.TwillApplication;
@@ -76,6 +79,7 @@ import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -89,7 +93,7 @@ import javax.annotation.Nullable;
 /**
  * Defines the base framework for starting {@link Program} in the cluster.
  */
-public abstract class AbstractDistributedProgramRunner implements ProgramRunner {
+public abstract class AbstractDistributedProgramRunner implements ProgramRunner, DistributedProgramControllerFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractDistributedProgramRunner.class);
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
@@ -99,6 +103,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
   private static final String HADOOP_CONF_FILE_NAME = "hConf.xml";
   private static final String CDAP_CONF_FILE_NAME = "cConf.xml";
   private static final String APP_SPEC_FILE_NAME = "appSpec.json";
+  private static final String LOGBACK_FILE_NAME = "logback.xml";
   private static final JarCacheTracker jarCacheTracker = JarCacheTracker.INSTANCE;
 
   protected final YarnConfiguration hConf;
@@ -182,13 +187,27 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       final ProgramOptions options = addArtifactPluginFiles(oldOptions, localizeResources,
                                                             DirUtils.createTempDir(tempDir));
 
+      final List<String> additionalClassPaths = new ArrayList<>();
+      List<String> newCConfExtraJars = new ArrayList<>();
+      // Add extra jars set in cConf to additionalClassPaths and localizeResources
+      for (URI jarURI : CConfigurationUtil.getExtraJars(cConf)) {
+        String scheme = jarURI.getScheme();
+        LocalizeResource localizeResource = new LocalizeResource(jarURI, false);
+        String localizedName = LocalizationUtils.getLocalizedName(jarURI);
+        localizeResources.put(localizedName, localizeResource);
+        additionalClassPaths.add(localizedName);
+        String jarPath = "file".equals(scheme) ? localizedName : jarURI.toString();
+        newCConfExtraJars.add(jarPath);
+      }
+
       // Copy config files to local temp, and ask Twill to localize it to container.
       // What Twill does is to save those files in HDFS and keep using them during the lifetime of application.
       // Twill will manage the cleanup of those files in HDFS.
       localizeResources.put(HADOOP_CONF_FILE_NAME,
                             new LocalizeResource(saveHConf(hConf, File.createTempFile("hConf", ".xml", tempDir))));
       localizeResources.put(CDAP_CONF_FILE_NAME,
-                            new LocalizeResource(saveCConf(cConf, File.createTempFile("cConf", ".xml", tempDir))));
+                            new LocalizeResource(saveCConf(cConf, File.createTempFile("cConf", ".xml", tempDir),
+                                                           newCConfExtraJars)));
 
       // Localize the program jar
       Location programJarLocation = program.getJarLocation();
@@ -201,6 +220,11 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
                                                              File.createTempFile("appSpec", ".json", tempDir))));
 
       final URI logbackURI = getLogBackURI(program, tempDir);
+      if (logbackURI != null) {
+        // Localize the logback xml
+        localizeResources.put(LOGBACK_FILE_NAME, new LocalizeResource(logbackURI, false));
+      }
+
       final String programOptions = GSON.toJson(options, ProgramOptions.class);
 
       // Obtains and add the HBase delegation token as well (if in non-secure mode, it's a no-op)
@@ -221,7 +245,9 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
               // because inside Spark code, it will set and unset the SPARK_YARN_MODE system properties, causing
               // fork in distributed mode not working. Setting it in the environment, which Spark uses for defaults,
               // so it can't be unset by Spark
-              twillPreparer.withEnv(Collections.singletonMap("SPARK_YARN_MODE", "true"));
+              Iterables.addAll(additionalClassPaths, extraClassPaths);
+              twillPreparer.withEnv(ImmutableMap.of("SPARK_YARN_MODE", "true",
+                                                    "CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR));
               if (options.isDebug()) {
                 twillPreparer.enableDebugging();
               }
@@ -232,8 +258,9 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
                 LOG.info("Setting scheduler queue for app {} as {}", program.getId(), schedulerQueueName);
                 twillPreparer.setSchedulerQueue(schedulerQueueName);
               }
+
               if (logbackURI != null) {
-                twillPreparer.withResources(logbackURI);
+                twillPreparer.addJVMOptions("-Dlogback.configurationFile=" + LOGBACK_FILE_NAME);
               }
 
               String logLevelConf = cConf.get(Constants.COLLECT_APP_CONTAINER_LOG_LEVEL).toUpperCase();
@@ -254,9 +281,6 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
                   new ApplicationLogHandler(new PrinterLogHandler(new PrintWriter(System.out)), logLevel));
               }
 
-              String yarnAppClassPath =
-                hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
-                          Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
               // Add secure tokens
               if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
                 // TokenSecureStoreUpdater.update() ignores parameters
@@ -266,11 +290,15 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
               Iterable<Class<?>> dependencies = Iterables.concat(
                 Collections.singletonList(HBaseTableUtilFactory.getHBaseTableUtilClass()),
                 getKMSSecureStore(cConf), extraDependencies);
+
+              Iterable<String> yarnAppClassPath = Arrays.asList(
+                hConf.getStrings(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
+                                 YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
+
               twillPreparer
                 .withDependencies(dependencies)
-                .withClassPaths(Iterables.concat(extraClassPaths, Splitter.on(',').trimResults()
-                  .split(hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, ""))))
-                .withApplicationClassPaths(Splitter.on(",").trimResults().split(yarnAppClassPath))
+                .withClassPaths(Iterables.concat(additionalClassPaths, yarnAppClassPath))
+                .withApplicationClassPaths(yarnAppClassPath)
                 .withBundlerClassAcceptor(new HadoopClassExcluder() {
                   @Override
                   public boolean accept(String className, URL classUrl, URL classPathUrl) {
@@ -318,9 +346,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
               } finally {
                 ClassLoaders.setContextClassLoader(oldClassLoader);
               }
-              return addCleanupListener(
-                new ImpersonatedTwillController(impersonator, program.getId().toEntityId(), twillController),
-                program, tempDir);
+              return addCleanupListener(twillController, program, tempDir);
             }
           });
         }
@@ -338,7 +364,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     if (SecureStoreUtils.isKMSBacked(cConf) && SecureStoreUtils.isKMSCapable()) {
       return Collections.singletonList(SecureStoreUtils.getKMSSecureStore());
     } else {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
   }
 
@@ -407,7 +433,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     return file;
   }
 
-  private File saveCConf(CConfiguration conf, File file) throws IOException {
+  private File saveCConf(CConfiguration conf, File file, List<String> newExtraJars) throws IOException {
     // Unsetting the runtime extension directory as the necessary extension jars should be shipped to the container
     // by the distributed ProgramRunner.
     CConfiguration copied = CConfiguration.copy(conf);
@@ -416,6 +442,9 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     // Set the CFG_LOCAL_DATA_DIR to a relative path as the data directory for the container should be relative to the
     // container directory
     copied.set(Constants.CFG_LOCAL_DATA_DIR, "data");
+
+    copied.setStrings(Constants.AppFabric.PROGRAM_CONTAINER_DIST_JARS,
+                      newExtraJars.toArray(new String[newExtraJars.size()]));
     try (Writer writer = Files.newWriter(file, Charsets.UTF_8)) {
       copied.writeXml(writer);
     }

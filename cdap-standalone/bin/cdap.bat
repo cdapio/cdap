@@ -1,35 +1,52 @@
+:: ##############################################################################
+:: ##
+:: ## Copyright (c) 2014-2016 Cask Data, Inc.
+:: ##
+:: ## Licensed under the Apache License, Version 2.0 (the "License"); you may not
+:: ## use this file except in compliance with the License. You may obtain a copy
+:: ## of the License at
+:: ##
+:: ## http://www.apache.org/licenses/LICENSE-2.0
+:: ##
+:: ## Unless required by applicable law or agreed to in writing, software
+:: ## distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+:: ## WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+:: ## License for the specific language governing permissions and limitations
+:: ## under the License.
+:: ##
+:: ##############################################################################
+
 @echo OFF
+SET "ORIG_DIR=%cd%"
+REM Double-quotes surround string to include a space character but are not included in string
+REM As CDAP_HOME can include a space, any use of it needs to be surrounded in double-quotes
+SET "CDAP_HOME=%~dp0"
+SET "CDAP_HOME=%CDAP_HOME:~0,-5%"
+IF /i NOT "%CDAP_HOME: =%"=="%CDAP_HOME%" (
+  echo CDAP_HOME "%CDAP_HOME%"
+  echo Contains one or more space characters, will not work correctly, and is not supported.
+  echo Exiting. 
+  GOTO :FINALLY
+)
 
-REM #################################################################################
-REM ##
-REM ## Copyright (c) 2014-2016 Cask Data, Inc.
-REM ##
-REM ## Licensed under the Apache License, Version 2.0 (the "License"); you may not
-REM ## use this file except in compliance with the License. You may obtain a copy of
-REM ## the License at
-REM ##
-REM ## http://www.apache.org/licenses/LICENSE-2.0
-REM ##
-REM ## Unless required by applicable law or agreed to in writing, software
-REM ## distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-REM ## WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-REM ## License for the specific language governing permissions and limitations under
-REM ## the License.
-REM ##
-REM #################################################################################
+SET CDAP_VERSION=@@project.version@@
 
-SET ORIG_DIR=%cd%
-SET CDAP_HOME=%~dp0
-SET CDAP_HOME=%CDAP_HOME:~0,-5%
-SET JAVACMD=%JAVA_HOME%\bin\java.exe
-SET DEFAULT_JVM_OPTS=-Xmx2048m -XX:MaxPermSize=256m
+REM Double-quotes surround string to include a space character but are not included in string
+REM As JAVACMD can include a space, any use of it needs to be surrounded in double-quotes
+SET "JAVACMD=%JAVA_HOME%\bin\java.exe"
+SET "DEFAULT_JVM_OPTS=-Xmx3096m -XX:MaxPermSize=256m"
 
-REM %CDAP_HOME%
-SET CLASSPATH=%CDAP_HOME%\lib\*;%CDAP_HOME%\conf\
-SET ORIG_PATH=%PATH%
-SET PATH=%PATH%;%CDAP_HOME%\libexec\bin;%CDAP_HOME%\lib\native;
+REM As CLASSPATH can include a space, any use of it needs to be surrounded in double-quotes
+REM Double-quotes surround string to include a space character but are not included in string
+REM Note the trailing semi-colon so that the last directory entry is interpreted correctly
+SET "CLASSPATH=%CDAP_HOME%\lib\*;%CDAP_HOME%\conf\;"
+SET "ORIG_PATH=%PATH%"
+SET "PATH=%PATH%;%CDAP_HOME%\libexec\bin;%CDAP_HOME%\lib\native"
+REM These double-quotes are included in string
+SET HADOOP_HOME_OPTS=-Dhadoop.home.dir="%CDAP_HOME%\libexec"
+SET SECURITY_OPTS=-Dhadoop.security.group.mapping=org.apache.hadoop.security.JniBasedUnixGroupsMappingWithFallback
 
-cd %CDAP_HOME%
+cd "%CDAP_HOME%"
 
 REM Process command line
 IF "%1" == "start" GOTO START
@@ -72,7 +89,7 @@ if NOT "%answer%" == "y" (
 
 REM delete logs and data directories
 echo Resetting Standalone CDAP...
-rmdir /S /Q %CDAP_HOME%\logs %CDAP_HOME%\data > NUL 2>&1
+rmdir /S /Q "%CDAP_HOME%\logs" "%CDAP_HOME%\data" > NUL 2>&1
 echo CDAP reset successfully.
 GOTO :FINALLY
 
@@ -85,7 +102,7 @@ IF NOT EXIST "%PROGRAMFILES(X86)%" (
 )
 
 REM Check for correct setting for JAVA_HOME path
-if [%JAVA_HOME%] == [] (
+if ["%JAVA_HOME%"] == [] (
   echo ERROR: JAVA_HOME is set to an invalid directory: %JAVA_HOME%
   echo Please set the JAVA_HOME variable in your environment to match the location of your Java installation.
   GOTO :FINALLY
@@ -94,7 +111,7 @@ if [%JAVA_HOME%] == [] (
 REM Check for Java version
 setlocal ENABLEDELAYEDEXPANSION
 set /a counter=0
-for /f "tokens=* delims= " %%f in ('%JAVACMD% -version 2^>^&1') do @(
+for /f "tokens=* delims= " %%f in ('"%JAVACMD%" -version 2^>^&1') do @(
   if "!counter!"=="0" set line=%%f
   set /a counter+=1
 )
@@ -153,7 +170,7 @@ if exist %~dsp0MyProg.pid (
 )
 attrib +h %~dsp0MyProg.pid >NUL
 
-mkdir %CDAP_HOME%\logs > NUL 2>&1
+mkdir "%CDAP_HOME%\logs" > NUL 2>&1
 
 REM Log rotation
 call:LOG_ROTATE cdap
@@ -190,7 +207,10 @@ IF "%2" == "--enable-debug" (
   set DEBUG_OPTIONS="-agentlib:jdwp=transport=dt_socket,address=localhost:!port!,server=y,suspend=n"
 )
 
-start /B %JAVACMD% %DEFAULT_JVM_OPTS% !DEBUG_OPTIONS! -Dhadoop.security.group.mapping=org.apache.hadoop.security.JniBasedUnixGroupsMappingWithFallback -Dhadoop.home.dir=%CDAP_HOME%\libexec -classpath %CLASSPATH% co.cask.cdap.StandaloneMain >> %CDAP_HOME%\logs\cdap-process.log 2>&1 < NUL
+set class=co.cask.cdap.StandaloneMain
+REM Note use of an empty title "" in the start command; without it, Windows will
+REM mis-interpret the JAVACMD incorrectly if it has spaces in it
+start "" /B "%JAVACMD%" %DEFAULT_JVM_OPTS% %HADOOP_HOME_OPTS% !DEBUG_OPTIONS! %SECURITY_OPTS% -classpath "%CLASSPATH%" %class% >> "%CDAP_HOME%\logs\cdap-process.log" 2>&1 < NUL
 echo Starting Standalone CDAP...
 
 for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq java.exe"') DO SET MyPID=%%b
@@ -199,10 +219,10 @@ SET lastPid=%MyPID%
 attrib +h %~dsp0MyProg.pid >NUL
 
 :SearchLogs
-findstr /R /C:".*Failed to start server.*" %CDAP_HOME%\logs\cdap-process.log >NUL 2>&1
+findstr /R /C:".*Failed to start server.*" "%CDAP_HOME%\logs\cdap-process.log" >NUL 2>&1
 if %errorlevel% == 0 GOTO :ServerError
 
-findstr /R /C:"..* started successfully.*" %CDAP_HOME%\logs\cdap-process.log >NUL 2>&1
+findstr /R /C:"..* started successfully.*" "%CDAP_HOME%\logs\cdap-process.log" >NUL 2>&1
 if not %errorlevel% == 0 GOTO :SearchLogs
 if %errorlevel% == 0 GOTO :ServerSuccess
 :EndSearchLogs
@@ -278,20 +298,20 @@ GOTO :START
 
 :FINALLY
 cd %ORIG_DIR%
-SET PATH=%ORIG_PATH%
+SET "PATH=%ORIG_PATH%"
 GOTO:EOF
 
 
 :LOG_ROTATE
 setlocal ENABLEDELAYEDEXPANSION
 set extension=%1.log
-for /F "TOKENS=*" %%b in ('dir  /a-d %CDAP_HOME%\logs 2^>NUL ^| find /c "%extension%" 2^>NUL') DO (
+for /F "TOKENS=*" %%b in ('dir  /a-d "%CDAP_HOME%\logs" 2^>NUL ^| find /c "%extension%" 2^>NUL') DO (
   set /a num=%%b
   FOR /L %%i IN (!num!,-1,1) DO (
     set /a prev_num=%%i+1
-    rename %CDAP_HOME%\logs\%extension%.%%i %extension%.!prev_num! >NUL 2>NUL
+    rename "%CDAP_HOME%\logs\%extension%.%%i" %extension%.!prev_num! >NUL 2>NUL
   )
-  rename %CDAP_HOME%\logs\%extension% %extension%.1 >NUL 2>NUL
+  rename "%CDAP_HOME%\logs\%extension%" %extension%.1 >NUL 2>NUL
 )
 endlocal
 

@@ -17,6 +17,7 @@
 package co.cask.cdap.explore.executor;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.TableNotFoundException;
@@ -25,7 +26,9 @@ import co.cask.cdap.explore.utils.FunctionsArgs;
 import co.cask.cdap.explore.utils.SchemasArgs;
 import co.cask.cdap.explore.utils.TablesArgs;
 import co.cask.cdap.proto.QueryHandle;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -34,6 +37,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.concurrent.Callable;
+import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -47,18 +52,27 @@ public class NamespacedExploreMetadataHttpHandler extends AbstractExploreMetadat
   private static final Logger LOG = LoggerFactory.getLogger(NamespacedExploreMetadataHttpHandler.class);
 
   private final ExploreService exploreService;
+  private final Impersonator impersonator;
 
   @Inject
-  public NamespacedExploreMetadataHttpHandler(ExploreService exploreService) {
+  public NamespacedExploreMetadataHttpHandler(ExploreService exploreService, Impersonator impersonator) {
     this.exploreService = exploreService;
+    this.impersonator = impersonator;
   }
 
   @GET
   @Path("tables")
-  public void getTables(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
+  public void getTables(HttpRequest request, final HttpResponder responder,
+                        @PathParam("namespace-id") final String namespaceId) {
     LOG.trace("Received get tables for current user");
     try {
-      responder.sendJson(HttpResponseStatus.OK, exploreService.getTables(namespaceId));
+      impersonator.doAs(new NamespaceId(namespaceId), new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          responder.sendJson(HttpResponseStatus.OK, exploreService.getTables(namespaceId));
+          return null;
+        }
+      });
     } catch (Throwable t) {
       LOG.error("Got exception:", t);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getMessage());
@@ -67,11 +81,18 @@ public class NamespacedExploreMetadataHttpHandler extends AbstractExploreMetadat
 
   @GET
   @Path("tables/{table}/info")
-  public void getTableSchema(HttpRequest request, HttpResponder responder,
-                             @PathParam("namespace-id") String namespaceId, @PathParam("table") String table) {
+  public void getTableSchema(HttpRequest request, final HttpResponder responder,
+                             @PathParam("namespace-id") final String namespaceId,
+                             @PathParam("table") final String table) {
     LOG.trace("Received get table info for table {}", table);
     try {
-      responder.sendJson(HttpResponseStatus.OK, exploreService.getTableInfo(namespaceId, table));
+      impersonator.doAs(new NamespaceId(namespaceId), new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          responder.sendJson(HttpResponseStatus.OK, exploreService.getTableInfo(namespaceId, table));
+          return null;
+        }
+      });
     } catch (TableNotFoundException e) {
       LOG.error("Could not find table {}", table, e);
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -80,6 +101,11 @@ public class NamespacedExploreMetadataHttpHandler extends AbstractExploreMetadat
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getMessage());
     }
   }
+
+  // We don't have direct access to the namespace from the four jdbc methods. The namespaceId parameter is actually
+  // overloaded with the schemaPattern.
+  // See ExploreHttpClient. There, it passes schemaPattern as the path param for namespace.
+  // See CDAP-7625.
 
   @POST
   @Path("jdbc/tables")

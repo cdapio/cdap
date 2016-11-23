@@ -87,6 +87,7 @@
     <etl.batch.plugin.name>ETLBatch</etl.batch.plugin.name>
     <etl.realtime.plugin.name>ETLRealtime</etl.realtime.plugin.name>
 
+    <apache.jdbm1.version>2.0.0-M2</apache.jdbm1.version>
     <asm.version>5.0.3</asm.version>
     <async.http.version>1.7.18</async.http.version>
     <avro.version>1.6.2</avro.version>
@@ -1269,6 +1270,28 @@
         </exclusions>
       </dependency>
       <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-minikdc</artifactId>
+        <version>${hadoop.version}</version>
+        <scope>test</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.directory.jdbm</groupId>
+            <artifactId>apacheds-jdbm1</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.directory.jdbm</groupId>
+        <artifactId>apacheds-jdbm1</artifactId>
+        <version>${apache.jdbm1.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-testing-util</artifactId>
         <version>${hbase98.version}</version>
@@ -1439,6 +1462,7 @@
         <groupId>org.apache.tez</groupId>
         <artifactId>tez-api</artifactId>
         <version>${tez.version}</version>
+        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mockftpserver</groupId>

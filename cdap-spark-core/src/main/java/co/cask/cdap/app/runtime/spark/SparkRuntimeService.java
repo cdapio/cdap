@@ -25,6 +25,7 @@ import co.cask.cdap.api.spark.SparkExecutionContext;
 import co.cask.cdap.app.runtime.spark.distributed.SparkContainerLauncher;
 import co.cask.cdap.app.runtime.spark.submit.SparkSubmitter;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
@@ -37,19 +38,19 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.LocalizationUtils;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGenerator;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.lang.Fields;
 import co.cask.cdap.internal.lang.Reflections;
+import co.cask.cdap.security.store.SecureStoreUtils;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -73,7 +74,6 @@ import scala.Tuple2;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Writer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -93,7 +93,6 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import javax.annotation.Nullable;
 
@@ -182,6 +181,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         }
       };
 
+      List<String> extraJars = new ArrayList<>();
       if (contextConfig.isLocal()) {
         File metricsConf = SparkMetricsSink.writeConfig(File.createTempFile("metrics", ".properties", tempDir));
         metricsConfPath = metricsConf.getAbsolutePath();
@@ -207,7 +207,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
           localizeResources.add(new LocalizeResource(pluginArchive, true));
         }
 
-        File logbackJar = createLogbackJar(tempDir);
+        File logbackJar = ProgramRunners.createLogbackJar(tempDir);
         if (logbackJar != null) {
           localizeResources.add(new LocalizeResource(logbackJar));
           logbackJarName = logbackJar.getName();
@@ -227,9 +227,14 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
         // Localize the hConf file to executor nodes
         localizeResources.add(new LocalizeResource(saveHConf(hConf, tempDir)));
+
+        for (URI jarURI : CConfigurationUtil.getExtraJars(cConf)) {
+          extraJars.add(LocalizationUtils.getLocalizedName(jarURI));
+          localizeResources.add(new LocalizeResource(jarURI, false));
+        }
       }
 
-      final Map<String, String> configs = createSubmitConfigs(tempDir, metricsConfPath, logbackJarName,
+      final Map<String, String> configs = createSubmitConfigs(tempDir, metricsConfPath, logbackJarName, extraJars,
                                                               contextConfig.isLocal());
       submitSpark = new Callable<ListenableFuture<RunId>>() {
         @Override
@@ -446,7 +451,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    */
   private Map<String, String> createSubmitConfigs(File localDir,
                                                   String metricsConfPath, @Nullable String logbackJarName,
-                                                  boolean localMode) {
+                                                  List<String> extraJarPaths, boolean localMode) {
     Map<String, String> configs = new HashMap<>();
 
     // Make Spark UI runs on random port. By default, Spark UI runs on port 4040 and it will do a sequential search
@@ -484,9 +489,11 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         LOG.warn("Failed to locate cdap-common.jar. It will not be added to the spark extra classpath in the" +
                    " beginning.");
       }
+
       Joiner joiner = Joiner.on(File.pathSeparator).skipNulls();
+      String extraJarsPath = extraJarPaths.size() == 0 ? null : joiner.join(extraJarPaths);
       String extraClassPath = joiner.join(Paths.get("$PWD", CDAP_LAUNCHER_JAR), cdapCommonJarPath,
-                                          Paths.get("$PWD", CDAP_SPARK_JAR, "lib", "*"));
+                                          Paths.get("$PWD", CDAP_SPARK_JAR, "lib", "*"), extraJarsPath);
       if (logbackJarName != null) {
         extraClassPath = logbackJarName + File.pathSeparator + extraClassPath;
       }
@@ -528,7 +535,16 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         return hadoopClassExcluder.accept(className, classUrl, classPathUrl);
       }
     });
-    appBundler.createBundle(tempLocation, SparkMainWrapper.class, HBaseTableUtilFactory.getHBaseTableUtilClass());
+
+    List<Class<?>> classes = new ArrayList<>();
+    classes.add(SparkMainWrapper.class);
+    classes.add(HBaseTableUtilFactory.getHBaseTableUtilClass());
+
+    // Add KMS class
+    if (SecureStoreUtils.isKMSBacked(cConf) && SecureStoreUtils.isKMSCapable()) {
+      classes.add(SecureStoreUtils.getKMSSecureStore());
+    }
+    appBundler.createBundle(tempLocation, classes);
     return new File(tempLocation.toURI());
   }
 
@@ -555,32 +571,6 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       cConf.writeXml(writer);
     }
     return file;
-  }
-
-  /**
-   * Creates a jar in the given directory that contains a logback.xml loaded from the current ClassLoader.
-   *
-   * @param targetDir directory where the logback.xml should be copied to
-   * @return the {@link File} where the logback.xml jar copied to or {@code null} if "logback.xml" is not found
-   *         in the current ClassLoader.
-   */
-  @Nullable
-  private File createLogbackJar(File targetDir) throws IOException {
-    // Localize logback.xml
-    ClassLoader cl = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), getClass().getClassLoader());
-    try (InputStream input = cl.getResourceAsStream("logback.xml")) {
-      if (input != null) {
-        File logbackJar = File.createTempFile("logback.xml", ".jar", targetDir);
-        try (JarOutputStream output = new JarOutputStream(new FileOutputStream(logbackJar))) {
-          output.putNextEntry(new JarEntry("logback.xml"));
-          ByteStreams.copy(input, output);
-        }
-        return logbackJar;
-      } else {
-        LOG.warn("Could not find logback.xml for Spark!");
-      }
-    }
-    return null;
   }
 
   /**

@@ -24,12 +24,13 @@ import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
+import co.cask.cdap.app.guice.TwillModule;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
@@ -147,6 +148,10 @@ public class UpgradeTool {
 
   public UpgradeTool() throws Exception {
     this.cConf = CConfiguration.create();
+    if (this.cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
+      LOG.info("Disabling authorization for {}.", getClass().getSimpleName());
+      this.cConf.setBoolean(Constants.Security.Authorization.ENABLED, false);
+    }
     // Note: login has to happen before any objects that need Kerberos credentials are instantiated.
     SecurityUtil.loginForMasterService(cConf);
 
@@ -413,7 +418,6 @@ public class UpgradeTool {
   }
 
   private void performCoprocessorUpgrade() throws Exception {
-
     LOG.info("Upgrading User and System HBase Tables ...");
     dsUpgrade.upgrade();
 
@@ -425,7 +429,6 @@ public class UpgradeTool {
     try {
       UpgradeTool upgradeTool = new UpgradeTool();
       upgradeTool.doMain(args);
-      LOG.info("Upgrade completed successfully");
     } catch (Throwable t) {
       LOG.error("Failed to upgrade ...", t);
       System.exit(1);

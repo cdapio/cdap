@@ -20,7 +20,7 @@ source ../vars
 source ../_common/common-build.sh
 
 DEFAULT_XML="../../cdap-common/src/main/resources/cdap-default.xml"
-DEFAULT_XML_MD5_HASH="8ae0cf53fd007c99e9bf82fd3f2c01b0"
+DEFAULT_XML_MD5_HASH="0f635f1d61a011113a67b22b8935fc8e"
 
 DEFAULT_TOOL="../tools/cdap-default/doc-cdap-default.py"
 DEFAULT_DEPRECATED_XML="../tools/cdap-default/cdap-default-deprecated.xml"

@@ -32,7 +32,7 @@ Known Issues
   properties such as ``kafka.log.dir``, as described in the :ref:`Administration Manual: 
   Appendices: cdap-site.xml <appendix-cdap-default-deprecated-properties>`. 
   
-  **If you are upgrading from CDAP 3.4.x to 3.5.x,** and you have set a value for
+  **If you are upgrading from CDAP 3.4.x to 3.5.x** and you have set a value for
   ``kafka.log.dir`` by using Cloudera Manager's :ref:`safety-valve mechanism
   <cloudera-installation-add-service-wizard-configuration>`, you need to change to the new
   property ``kafka.server.log.dirs``, as the deprecated ``kafka.log.dir`` is being ignored
@@ -125,7 +125,7 @@ Known Issues
   properties such as ``kafka.log.dir``, as described in the :ref:`Administration Manual: 
   Appendices: cdap-site.xml <appendix-cdap-default-deprecated-properties>`. 
   
-  **If you are upgrading from CDAP 3.4.x to 3.5.x,** and you have set a value for
+  **If you are upgrading from CDAP 3.4.x to 3.5.x** and you have set a value for
   ``kafka.log.dir`` by using Cloudera Manager's :ref:`safety-valve mechanism
   <cloudera-installation-add-service-wizard-configuration>`, you need to change to the new
   property ``kafka.server.log.dirs``, as the deprecated ``kafka.log.dir`` is being ignored

@@ -600,7 +600,7 @@ public class ExploreServiceUtils {
     return newHiveConfFile;
   }
 
-  public static boolean isSparkAvailable() {
+  private static boolean isSparkAvailable() {
     try {
       // SparkUtils.locateSparkAssemblyJar() throws IllegalStateException if it is not able to locate spark jar
       SparkUtils.locateSparkAssemblyJar();
@@ -614,7 +614,13 @@ public class ExploreServiceUtils {
   public static boolean isSparkEngine(HiveConf hiveConf) {
     // We don't support setting engine through session configuration now
     String engine = hiveConf.get("hive.execution.engine");
-    return "spark".equalsIgnoreCase(engine);
+    return "spark".equals(engine);
+  }
+
+  public static boolean isTezEngine(HiveConf hiveConf) {
+    // We don't support setting engine through session configuration now
+    String engine = hiveConf.get("hive.execution.engine");
+    return "tez".equals(engine);
   }
 
   // This method is used to determine if Tez is enabled based on TEZ_HOME environment variable.

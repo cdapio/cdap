@@ -158,6 +158,11 @@ function makeApp (authAddress, cdapConfig) {
       requestObject.headers = customHeaders;
     }
 
+    var type = req.query.type;
+    var responseHeaders = {
+      'Cache-Control': 'no-cache, no-store'
+    };
+
     try {
       request(requestObject)
         .on('error', function (e) {
@@ -167,23 +172,16 @@ function makeApp (authAddress, cdapConfig) {
           function (response) {
             // This happens when use tries to access the link directly when
             // no autorization token present
-            if (response.statusCode !== 200) {
-              res.send('Not Authorized to view logs.');
+            if (response.statusCode === 200) {
+              if (type === 'download') {
+                var filename = req.query.filename;
+                responseHeaders['Content-Disposition'] = 'attachment; filename='+filename;
+              } else {
+                responseHeaders['Content-Type'] = 'text/plain';
+              }
+
+              res.set(responseHeaders);
             }
-
-            var type = req.query.type;
-            var responseHeaders = {
-              'Cache-Control': 'no-cache, no-store'
-            };
-
-            if (type === 'download') {
-              var filename = req.query.filename;
-              responseHeaders['Content-Disposition'] = 'attachment; filename='+filename;
-            } else {
-              responseHeaders['Content-Type'] = 'text/plain';
-            }
-
-            res.set(responseHeaders);
           }
         )
         .pipe(res)

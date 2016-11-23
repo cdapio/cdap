@@ -29,6 +29,7 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
@@ -43,6 +44,7 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.LocalizationUtils;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.batch.dataset.UnsupportedOutputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.input.MapperInput;
 import co.cask.cdap.internal.app.runtime.batch.dataset.input.MultipleInputs;
@@ -59,6 +61,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import co.cask.cdap.security.store.SecureStoreUtils;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -80,6 +83,7 @@ import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionConflictException;
@@ -96,7 +100,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -265,10 +268,14 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         List<String> classpath = new ArrayList<>();
 
         // Localize logback.xml
-        Location logbackLocation = createLogbackJar(tempLocation);
+        Location logbackLocation = ProgramRunners.createLogbackJar(tempLocation);
         if (logbackLocation != null) {
           job.addCacheFile(logbackLocation.toURI());
           classpath.add(logbackLocation.getName());
+
+          mapredConf.set("yarn.app.mapreduce.am.env", "CDAP_LOG_DIR=" + ApplicationConstants.LOG_DIR_EXPANSION_VAR);
+          mapredConf.set("mapreduce.map.env", "CDAP_LOG_DIR=" + ApplicationConstants.LOG_DIR_EXPANSION_VAR);
+          mapredConf.set("mapreduce.reduce.env", "CDAP_LOG_DIR=" + ApplicationConstants.LOG_DIR_EXPANSION_VAR);
         }
 
         // Get all the jars in jobJar and sort them lexically before adding to the classpath
@@ -286,6 +293,16 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         Collections.sort(jarFiles);
         classpath.addAll(jarFiles);
         classpath.add("job.jar/classes");
+        // Add extra jars set in cConf
+        for (URI jarURI : CConfigurationUtil.getExtraJars(cConf)) {
+          if ("file".equals(jarURI.getScheme())) {
+            Location extraJarLocation = copyFileToLocation(new File(jarURI.getPath()), tempLocation);
+            job.addCacheFile(extraJarLocation.toURI());
+          } else {
+            job.addCacheFile(jarURI);
+          }
+          classpath.add(LocalizationUtils.getLocalizedName(jarURI));
+        }
         String applicationClasspath
           = Joiner.on(",").join(MapReduceContainerHelper.getMapReduceClassPath(mapredConf, classpath));
 
@@ -867,6 +884,11 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     }
     // End of MAPREDUCE-5957.
 
+    // Add KMS class
+    if (SecureStoreUtils.isKMSBacked(cConf) && SecureStoreUtils.isKMSCapable()) {
+      classes.add(SecureStoreUtils.getKMSSecureStore());
+    }
+
     try {
       Class<?> hbaseTableUtilClass = HBaseTableUtilFactory.getHBaseTableUtilClass();
       classes.add(hbaseTableUtilClass);
@@ -1017,33 +1039,19 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     if (pluginArchive == null) {
       return null;
     }
-    Location pluginLocation = targetDir.append(pluginArchive.getName()).getTempFile(".jar");
-    Files.copy(pluginArchive, Locations.newOutputSupplier(pluginLocation));
-    return pluginLocation;
+    return copyFileToLocation(pluginArchive, targetDir);
   }
 
   /**
-   * Creates a jar in the given directory that contains a logback.xml loaded from the current ClassLoader.
+   * Copies a file to the target location.
    *
-   * @param targetDir directory where the logback.xml should be copied to
-   * @return the {@link Location} where the logback.xml jar copied to or {@code null} if "logback.xml" is not found
-   *         in the current ClassLoader.
+   * @param targetDir directory where the file should be copied to.
+   * @return {@link Location} to the file or {@code null} if given file is {@code null}.
    */
-  @Nullable
-  private Location createLogbackJar(Location targetDir) throws IOException {
-    try (InputStream input = Thread.currentThread().getContextClassLoader().getResourceAsStream("logback.xml")) {
-      if (input != null) {
-        Location logbackJar = targetDir.append("logback").getTempFile(".jar");
-        try (JarOutputStream output = new JarOutputStream(logbackJar.getOutputStream())) {
-          output.putNextEntry(new JarEntry("logback.xml"));
-          ByteStreams.copy(input, output);
-        }
-        return logbackJar;
-      } else {
-        LOG.warn("Could not find logback.xml for MapReduce!");
-      }
-    }
-    return null;
+  private Location copyFileToLocation(File file, Location targetDir) throws IOException {
+    Location targetLocation = targetDir.append(file.getName()).getTempFile(".jar");
+    Files.copy(file, Locations.newOutputSupplier(targetLocation));
+    return targetLocation;
   }
 
   /**
@@ -1187,6 +1195,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         }
         localizedFilePath = name;
       }
+      LOG.debug("MapReduce Localizing file {} {}", entry.getKey(), entry.getValue());
       localizedResources.put(name, localizedFilePath);
     }
     return localizedResources;

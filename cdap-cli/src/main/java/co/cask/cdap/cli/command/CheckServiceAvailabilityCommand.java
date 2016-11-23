@@ -55,7 +55,8 @@ public class CheckServiceAvailabilityCommand extends AbstractAuthCommand impleme
     String appId = appAndServiceId[0];
     String serviceName = appAndServiceId[1];
     Id.Service serviceId = Id.Service.from(cliConfig.getCurrentNamespace(), appId, serviceName);
-    output.println(serviceClient.getAvailability(serviceId));
+    serviceClient.checkAvailability(serviceId);
+    output.println("Service is available to accept requests.");
   }
 
   @Override

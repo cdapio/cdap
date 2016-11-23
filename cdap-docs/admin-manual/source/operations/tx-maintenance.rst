@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2016 Cask Data, Inc.
 
 .. _tx-maintenance:
 
@@ -34,10 +34,13 @@ To prune the invalid list manually, follow these steps:
 
   Pick the minimum time across all region servers. In this case, ``1440202895873``.
 
-- Find the minimum prune time across all queues by running the tool ``SimpleHBaseQueueDebugger``. 
-  This should print lines such as::
+- Find the minimum prune time across all queues by running the tool ``SimpleHBaseQueueDebugger``
+  (note that authorization is disabled when running the tool so that CDAP can read all users' tables)::
 
     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.SimpleHBaseQueueDebugger
+    
+  This should print lines such as::
+    
     Results for queue queue:///ns1/WordCount/WordCounter/counter/queue: min tx timestamp: 1440198510309
     Results for queue queue:///ns1/WordCount/WordCounter/splitter/wordArrayOut: min tx timestamp: 1440198510280
     Results for queue queue:///ns2/WordCount/WordCounter/counter/queue: min tx timestamp: n/a
@@ -47,7 +50,7 @@ To prune the invalid list manually, follow these steps:
     Results for queue queue:///default/WordCount/WordCounter/splitter/wordOut: min tx timestamp: 1440194184476
     Total results for all queues: min tx timestamp: 1440194184476
 
-  Pick the timestamp from the line ``Total results for all queues``. In this case, ``1440194184476``.
+  Pick the timestamp from the line beginning ``Total results for all queues``. In this case, ``1440194184476``.
 
 - Get the minimum time from the above two steps, let this be time ``t``. In this case, ``1440194184476``.
 

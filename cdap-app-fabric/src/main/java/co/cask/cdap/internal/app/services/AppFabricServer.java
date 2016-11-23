@@ -25,6 +25,7 @@ import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsReporterHook;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceEnsurer;
 import co.cask.cdap.internal.app.runtime.artifact.SystemArtifactLoader;
@@ -73,11 +74,11 @@ public class AppFabricServer extends AbstractIdleService {
   private final Set<String> handlerHookNames;
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final ProgramLifecycleService programLifecycleService;
-  private final DefaultNamespaceEnsurer defaultNamespaceEnsurer;
   private final SystemArtifactLoader systemArtifactLoader;
   private final PluginService pluginService;
   private final PrivilegesFetcherProxyService privilegesFetcherProxyService;
 
+  private DefaultNamespaceEnsurer defaultNamespaceEnsurer;
   private NettyHttpService httpService;
   private Set<HttpHandler> handlers;
   private MetricsCollectionService metricsCollectionService;
@@ -98,7 +99,7 @@ public class AppFabricServer extends AbstractIdleService {
                          StreamCoordinatorClient streamCoordinatorClient,
                          @Named("appfabric.services.names") Set<String> servicesNames,
                          @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
-                         DefaultNamespaceEnsurer defaultNamespaceEnsurer,
+                         NamespaceAdmin namespaceAdmin,
                          SystemArtifactLoader systemArtifactLoader,
                          PluginService pluginService,
                          PrivilegesFetcherProxyService privilegesFetcherProxyService) {
@@ -115,10 +116,10 @@ public class AppFabricServer extends AbstractIdleService {
     this.applicationLifecycleService = applicationLifecycleService;
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.programLifecycleService = programLifecycleService;
-    this.defaultNamespaceEnsurer = defaultNamespaceEnsurer;
     this.systemArtifactLoader = systemArtifactLoader;
     this.pluginService = pluginService;
     this.privilegesFetcherProxyService = privilegesFetcherProxyService;
+    this.defaultNamespaceEnsurer = new DefaultNamespaceEnsurer(namespaceAdmin);
   }
 
   /**
