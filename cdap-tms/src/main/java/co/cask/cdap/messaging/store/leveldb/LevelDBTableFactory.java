@@ -19,12 +19,16 @@ package co.cask.cdap.messaging.store.leveldb;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.messaging.TopicMetadata;
+import co.cask.cdap.messaging.TopicNotFoundException;
 import co.cask.cdap.messaging.store.MessageTable;
 import co.cask.cdap.messaging.store.MetadataTable;
 import co.cask.cdap.messaging.store.PayloadTable;
 import co.cask.cdap.messaging.store.TableFactory;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.TopicId;
 import com.google.inject.Inject;
+import org.apache.twill.common.Threads;
 import org.iq80.leveldb.Options;
 import org.iq80.leveldb.impl.Iq80DBFactory;
 import org.slf4j.Logger;
@@ -32,6 +36,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A {@link TableFactory} for creating tables used by the messaging system using the LevelDB implementation.
@@ -43,9 +51,11 @@ public final class LevelDBTableFactory implements TableFactory {
 
   private final File baseDir;
   private final Options dbOptions;
-  private MetadataTable metadataTable;
-  private MessageTable messageTable;
-  private PayloadTable payloadTable;
+  private final ScheduledExecutorService executor;
+
+  private LevelDBMetadataTable metadataTable;
+  private LevelDBMessageTable messageTable;
+  private LevelDBPayloadTable payloadTable;
 
   @Inject
   LevelDBTableFactory(CConfiguration cConf) {
@@ -55,6 +65,11 @@ public final class LevelDBTableFactory implements TableFactory {
       .cacheSize(cConf.getLong(Constants.CFG_DATA_LEVELDB_CACHESIZE, Constants.DEFAULT_DATA_LEVELDB_CACHESIZE))
       .errorIfExists(false)
       .createIfMissing(true);
+    this.executor = Executors.newSingleThreadScheduledExecutor(
+      Threads.createDaemonThreadFactory("leveldb-tms-ttl-pruner"));
+    this.executor.scheduleAtFixedRate(new TTLCleanup(), 0L,
+                                      Long.parseLong(cConf.get(Constants.MessagingSystem.LOCAL_TTL_CLEANUP_FREQUENCY)),
+                                      TimeUnit.SECONDS);
   }
 
   @Override
@@ -98,5 +113,27 @@ public final class LevelDBTableFactory implements TableFactory {
       throw new IOException("Failed to create local directory " + dir + " for the messaging system.");
     }
     return dir;
+  }
+
+  private class TTLCleanup implements Runnable {
+
+    @Override
+    public void run() {
+      if (metadataTable == null || payloadTable == null || messageTable == null) {
+        return;
+      }
+
+      long timeStamp = System.currentTimeMillis();
+      try {
+        List<TopicId> topicIdList = metadataTable.listTopics();
+        for (TopicId topicId : topicIdList) {
+          TopicMetadata metadata = metadataTable.getMetadata(topicId);
+          messageTable.pruneMessages(metadata, timeStamp);
+          payloadTable.pruneMessages(metadata, timeStamp);
+        }
+      } catch (IOException | TopicNotFoundException ex) {
+        LOG.debug("Unable to perform TTL cleanup in TMS LevelDB tables", ex);
+      }
+    }
   }
 }

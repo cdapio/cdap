@@ -1101,6 +1101,12 @@
   </property>
 
   <property>
+    <name>messaging.local.data.ttl.cleanup.frequency</name>
+    <value>3600</value>
+    <description>Scheduling frequency of TTL cleanup thread in seconds (only used in Standalone CDAP)</description>
+  </property>
+
+  <property>
     <name>messaging.hbase.max.scan.threads</name>
     <value>48</value>
   </property>

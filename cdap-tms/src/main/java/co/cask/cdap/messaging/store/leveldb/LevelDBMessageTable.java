@@ -19,9 +19,13 @@ package co.cask.cdap.messaging.store.leveldb;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.messaging.MessagingUtils;
+import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.store.AbstractMessageTable;
+import co.cask.cdap.messaging.store.ImmutableMessageTableEntry;
 import co.cask.cdap.messaging.store.MessageTable;
 import co.cask.cdap.messaging.store.RawMessageTableEntry;
+import co.cask.cdap.proto.id.TopicId;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBException;
 import org.iq80.leveldb.WriteBatch;
@@ -32,6 +36,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -101,12 +106,47 @@ public class LevelDBMessageTable extends AbstractMessageTable {
         writeBatch.delete(rowIterator.next().getKey());
       }
     }
-    levelDB.write(writeBatch, WRITE_OPTIONS);
+
+    try {
+      levelDB.write(writeBatch, WRITE_OPTIONS);
+    } catch (DBException ex) {
+      throw new IOException(ex);
+    }
   }
 
   @Override
   public void close() throws IOException {
     // no-op
+  }
+
+  /**
+   * Delete messages of a {@link TopicId} that has exceeded the TTL
+   *
+   * @param topicMetadata {@link TopicMetadata}
+   * @param currentTime current timestamp
+   * @throws IOException error occurred while trying to delete a row in LevelDB
+   */
+  public void pruneMessages(TopicMetadata topicMetadata, long currentTime) throws IOException {
+    WriteBatch writeBatch = levelDB.createWriteBatch();
+    long ttlInMs = TimeUnit.SECONDS.toMillis(topicMetadata.getTTL());
+    byte[] startRow = MessagingUtils.toRowKeyPrefix(topicMetadata.getTopicId());
+    byte[] stopRow = Bytes.stopKeyForPrefix(startRow);
+
+    try (CloseableIterator<Map.Entry<byte[], byte[]>> rowIterator = new DBScanIterator(levelDB, startRow, stopRow)) {
+      while (rowIterator.hasNext()) {
+        Map.Entry<byte[], byte[]> entry = rowIterator.next();
+        MessageTable.Entry messageTableEntry = new ImmutableMessageTableEntry(entry.getKey(), null, null);
+        if ((currentTime - messageTableEntry.getPublishTimestamp()) > ttlInMs) {
+          writeBatch.delete(entry.getKey());
+        }
+      }
+    }
+
+    try {
+      levelDB.write(writeBatch, WRITE_OPTIONS);
+    } catch (DBException ex) {
+      throw new IOException(ex);
+    }
   }
 
   // Encoding:

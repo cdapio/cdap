@@ -1070,6 +1070,7 @@ public final class Constants {
    */
   public static final class MessagingSystem {
     public static final String LOCAL_DATA_DIR = "messaging.local.data.dir";
+    public static final String LOCAL_TTL_CLEANUP_FREQUENCY = "messaging.local.data.ttl.cleanup.frequency";
 
     public static final String HBASE_MAX_SCAN_THREADS = "messaging.hbase.max.scan.threads";
     public static final String METADATA_TABLE_NAME = "messaging.metadata.table.name";
