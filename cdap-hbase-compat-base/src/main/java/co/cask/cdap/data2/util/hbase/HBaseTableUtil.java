@@ -750,6 +750,8 @@ public abstract class HBaseTableUtil {
   public abstract Class<? extends Coprocessor> getQueueRegionObserverClassForVersion();
   public abstract Class<? extends Coprocessor> getDequeueScanObserverClassForVersion();
   public abstract Class<? extends Coprocessor> getIncrementHandlerClassForVersion();
+  public abstract Class<? extends Coprocessor> getMessageTableRegionObserverClassForVersion();
+  public abstract Class<? extends Coprocessor> getPayloadTableRegionObserverClassForVersion();
 
   protected abstract HTableNameConverter getHTableNameConverter();
 

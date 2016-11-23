@@ -1084,6 +1084,11 @@ public final class Constants {
 
     // The name of the HBase table attribute to store the bucket size being used by the RowKeyDistributor
     public static final String KEY_DISTRIBUTOR_BUCKETS_ATTR = "cdap.messaging.key.distributor.buckets";
+    public static final String TABLE_PREFIX_BYTES = "cdap.messaging.table.prefix.bytes";
+    public static final String HBASE_METADATA_TABLE_NAME = "cdap.messaging.metadata.table.name";
+    public static final String HBASE_METADATA_TABLE_NAMESPACE = "cdap.messaging.metadata.hbase.namespace";
+
+    public static final String COPROCESSOR_DIR = "messaging.coprocessor.dir";
   }
 
   /**

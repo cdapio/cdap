@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix.OneByteSimpleHash;
@@ -28,17 +29,23 @@ import co.cask.cdap.messaging.store.MetadataTable;
 import co.cask.cdap.messaging.store.PayloadTable;
 import co.cask.cdap.messaging.store.TableFactory;
 import co.cask.cdap.proto.id.NamespaceId;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.twill.common.Threads;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.SynchronousQueue;
@@ -50,19 +57,22 @@ import java.util.concurrent.TimeUnit;
  */
 public final class HBaseTableFactory implements TableFactory {
 
+  public static final byte[] COLUMN_FAMILY = {'d'};
   private static final Logger LOG = LoggerFactory.getLogger(HBaseTableFactory.class);
-  private static final byte[] COLUMN_FAMILY = {'d'};
 
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final HBaseTableUtil tableUtil;
   private final ExecutorService scanExecutor;
+  private final LocationFactory locationFactory;
 
   @Inject
-  HBaseTableFactory(CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil) {
+  HBaseTableFactory(CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil,
+                    LocationFactory locationFactory) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.tableUtil = tableUtil;
+    this.locationFactory = locationFactory;
 
     RejectedExecutionHandler callerRunsPolicy = new RejectedExecutionHandler() {
       @Override
@@ -101,7 +111,9 @@ public final class HBaseTableFactory implements TableFactory {
   @Override
   public MessageTable createMessageTable(NamespaceId namespace, String tableName) throws IOException {
     TableId tableId = tableUtil.createHTableId(namespace, tableName);
-    HTable hTable = createTableIfNotExists(tableId, cConf.getInt(Constants.MessagingSystem.MESSAGE_TABLE_HBASE_SPLITS));
+    Class<? extends Coprocessor> tableCoprocessor = tableUtil.getMessageTableRegionObserverClassForVersion();
+    HTable hTable = createTableIfNotExists(tableId, cConf.getInt(Constants.MessagingSystem.MESSAGE_TABLE_HBASE_SPLITS),
+                                           tableCoprocessor);
     return new HBaseMessageTable(
       tableUtil, hTable, COLUMN_FAMILY,
       new RowKeyDistributorByHashPrefix(new OneByteSimpleHash(getKeyDistributorBuckets(hTable, tableId))),
@@ -112,7 +124,9 @@ public final class HBaseTableFactory implements TableFactory {
   @Override
   public PayloadTable createPayloadTable(NamespaceId namespace, String tableName) throws IOException {
     TableId tableId = tableUtil.createHTableId(namespace, tableName);
-    HTable hTable = createTableIfNotExists(tableId, cConf.getInt(Constants.MessagingSystem.PAYLOAD_TABLE_HBASE_SPLITS));
+    Class<? extends Coprocessor> tableCoprocessor = tableUtil.getPayloadTableRegionObserverClassForVersion();
+    HTable hTable = createTableIfNotExists(tableId, cConf.getInt(Constants.MessagingSystem.PAYLOAD_TABLE_HBASE_SPLITS),
+                                           tableCoprocessor);
     return new HBasePayloadTable(
       tableUtil, hTable, COLUMN_FAMILY,
       new RowKeyDistributorByHashPrefix(new OneByteSimpleHash(getKeyDistributorBuckets(hTable, tableId))),
@@ -121,22 +135,30 @@ public final class HBaseTableFactory implements TableFactory {
   }
 
   /**
-   * Creates a new instance of {@link HTable} for the given {@link TableId}. If the hbase table doesn't exist,
-   * a new one will be created with the given number of splits.
+   * Creates a new instance of {@link HTable} for the given {@link TableId}. If the hbase table doesn't
+   * exist, a new one will be created with the given number of splits.
    */
-  private HTable createTableIfNotExists(TableId tableId, int splits) throws IOException {
+  private HTable createTableIfNotExists(TableId tableId, int splits,
+                                        Class<? extends Coprocessor> coprocessor) throws IOException {
     // Create the table if the table doesn't exist
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
       // Set the key distributor size the same as the initial number of splits, essentially one bucket per split.
       AbstractRowKeyDistributor keyDistributor = new RowKeyDistributorByHashPrefix(new OneByteSimpleHash(splits));
 
-      HTableDescriptor htd = tableUtil
+      TableId metadataTableId = tableUtil.createHTableId(NamespaceId.SYSTEM, cConf.get(
+        Constants.MessagingSystem.METADATA_TABLE_NAME));
+
+      HTableDescriptorBuilder htdBuilder = tableUtil
         .buildHTableDescriptor(tableId)
         // Only stores the latest version
         .addFamily(new HColumnDescriptor(COLUMN_FAMILY).setMaxVersions(1))
         .setValue(Constants.MessagingSystem.KEY_DISTRIBUTOR_BUCKETS_ATTR, Integer.toString(splits))
-        .build();
+        .setValue(Constants.MessagingSystem.TABLE_PREFIX_BYTES, Integer.toString(1))
+        .setValue(Constants.MessagingSystem.HBASE_METADATA_TABLE_NAMESPACE, metadataTableId.getNamespace())
+        .setValue(Constants.MessagingSystem.HBASE_METADATA_TABLE_NAME, metadataTableId.getTableName());
 
+      addCoprocessor(coprocessor, htdBuilder);
+      HTableDescriptor htd = htdBuilder.build();
       byte[][] splitKeys = HBaseTableUtil.getSplitKeys(splits, splits, keyDistributor);
       tableUtil.createTableIfNotExists(admin, tableId, htd, splitKeys);
     }
@@ -163,5 +185,14 @@ public final class HBaseTableFactory implements TableFactory {
     } catch (NumberFormatException e) {
       throw new IOException("Invalid value for table attribute " + bucketAttr + " on HBase table " + tableId, e);
     }
+  }
+
+  private void addCoprocessor(Class<? extends Coprocessor> coprocessor,
+                              HTableDescriptorBuilder tableDescriptor) throws IOException {
+    List<? extends Class<? extends Coprocessor>> coprocessors = ImmutableList.of(coprocessor);
+    Location jarDir = locationFactory.create(cConf.get(Constants.MessagingSystem.COPROCESSOR_DIR));
+    Location jarFile = HBaseTableUtil.createCoProcessorJar(coprocessor.getSimpleName(), jarDir, coprocessors);
+    tableDescriptor.addCoprocessor(coprocessor.getName(), new Path(jarFile.toURI().getPath()),
+                                   Coprocessor.PRIORITY_USER, null);
   }
 }

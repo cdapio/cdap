@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
 /**
  * An immutable implementation of {@link MessageTable.Entry}.
  */
-final class ImmutableMessageTableEntry implements MessageTable.Entry {
+public final class ImmutableMessageTableEntry implements MessageTable.Entry {
   private final TopicId topicId;
   private final boolean transactional;
   private final long transactionWritePointer;
@@ -33,7 +33,7 @@ final class ImmutableMessageTableEntry implements MessageTable.Entry {
   private final long publishTimestamp;
   private final short sequenceId;
 
-  ImmutableMessageTableEntry(byte[] row, @Nullable byte[] payload, @Nullable byte[] txPtr) {
+  public ImmutableMessageTableEntry(byte[] row, @Nullable byte[] payload, @Nullable byte[] txPtr) {
     this.payload = payload;
     this.publishTimestamp = Bytes.toLong(row, row.length - Bytes.SIZEOF_SHORT - Bytes.SIZEOF_LONG);
     this.sequenceId = Bytes.toShort(row, row.length - Bytes.SIZEOF_SHORT);

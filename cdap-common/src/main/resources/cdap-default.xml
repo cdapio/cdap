@@ -1141,6 +1141,11 @@
     <description>Number of seconds after which the messaging table cache will expire</description>
   </property>
 
+  <property>
+    <name>messaging.coprocessor.dir</name>
+    <value>/tms</value>
+    <description>Directory to store Messaging Service Table coprocessors</description>
+  </property>
 
   <!-- Metadata Configuration -->
 

@@ -50,7 +50,7 @@ import java.util.TreeMap;
  */
 public class HBaseMetadataTable implements MetadataTable {
 
-  private static final byte[] COL = Bytes.toBytes("m");
+  public static final byte[] COL = Bytes.toBytes("m");
   private static final Gson GSON = new Gson();
   // It has to be a sorted map since we depends on the serialized map for compareAndPut operation for topic update.
   private static final Type MAP_TYPE = new TypeToken<SortedMap<String, String>>() { }.getType();

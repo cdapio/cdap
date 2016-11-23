@@ -78,7 +78,6 @@ public class LevelDBMessageTable extends AbstractMessageTable {
     };
   }
 
-
   @Override
   protected void persist(Iterator<RawMessageTableEntry> entries) throws IOException {
     try (WriteBatch writeBatch = levelDB.createWriteBatch()) {
