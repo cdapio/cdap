@@ -276,7 +276,8 @@ These metrics are available in a stream context:
      - Number of bytes collected by the stream
 
 
-These metrics are available for services, for system services component context and user services context:
+These metrics are available for services, for the system services component context or the user services context:
+
 .. list-table::
    :header-rows: 1
    :widths: 60 40
@@ -292,6 +293,7 @@ These metrics are available for services, for system services component context 
 
 
 These metrics are available for every application context:
+
 .. list-table::
    :header-rows: 1
    :widths: 60 40
@@ -303,6 +305,7 @@ These metrics are available for every application context:
 
 
 These metrics are available for the system services, in the system component context:
+
 .. list-table::
    :header-rows: 1
    :widths: 60 40
@@ -331,7 +334,7 @@ These metrics are available for the CDAP transaction service:
    * - ``system.{canCommit, commit, committed, inprogress, invalidate, abort}.latency``
      - Time taken (in milliseconds) to perform a specified transaction state update
    * - ``system.{invalid, committing, committed, inprogress}.size``
-     - Number of transactions of various types that are active
+     - Number of transactions of a specified type that are active
 
 These metrics are available for the YARN cluster resources:
 
