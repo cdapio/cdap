@@ -276,6 +276,79 @@ These metrics are available in a stream context:
      - Number of bytes collected by the stream
 
 
+These metrics are available for services, for the system services component context or the user services context:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 60 40
+
+   * - Request and Response Metric
+     - Description
+   * - ``system.request.received``
+     - Number of requests received for the service
+   * - ``system.response.successful``
+     - Number of successful responses sent
+   * - ``system.response.{server-error, client-error}``
+     - Number of ``server-error`` or ``client-error`` responses sent
+
+
+These metrics are available for every application context:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 60 40
+
+   * - Application Logging Metric
+     - Description
+   * - ``system.app.log.{error, info, warn}``
+     - Number of ``error``, ``info``, or ``warn`` log messages logged by the application
+
+
+These metrics are available for the system services, in the system component context:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 60 40
+
+   * - System Services Logging Metric
+     - Description
+   * - ``system.services.log.{error, info, warn}``
+     - Number of ``error``, ``info``, or ``warn`` log messages logged by the system services
+
+These metrics are available for the CDAP transaction service:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 60 40
+
+   * - Transaction Metric
+     - Description
+   * - ``system.start.{short, long}``
+     - Number of ``short`` or ``long`` transactions started
+   * - ``system.start.{short, long}.latency``
+     - Time taken (in milliseconds) to start ``short`` or ``long`` transactions
+   * - ``system.wal.append.count``
+     - Number of transaction edits added to the write-ahead log
+   * - ``system.{canCommit, commit, committed, inprogress, invalidate, abort}``
+     - Number of transactions in a specified transaction state
+   * - ``system.{canCommit, commit, committed, inprogress, invalidate, abort}.latency``
+     - Time taken (in milliseconds) to perform a specified transaction state update
+   * - ``system.{invalid, committing, committed, inprogress}.size``
+     - Number of transactions of a specified type that are active
+
+These metrics are available for the YARN cluster resources:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 60 40
+
+   * - YARN Cluster Metric
+     - Description
+   * - ``system.resources.{total, available, used}.memory``
+     - Size (in megabytes) of total, available, or used cluster memory
+   * - ``system.resources.{total, available, used}.vcores``
+     - Number of total, available, or used cluster virtual cores
+
 Searches and Queries
 ====================
 
