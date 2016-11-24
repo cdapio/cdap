@@ -275,8 +275,8 @@ These metrics are available in a stream context:
    * - ``system.collect.bytes``
      - Number of bytes collected by the stream
 
-These metrics on request and response are available for system and user services:
 
+These metrics are available for services, for system services component context and user services context:
 .. list-table::
    :header-rows: 1
    :widths: 60 40
@@ -290,8 +290,8 @@ These metrics on request and response are available for system and user services
    * - ``system.response.{server-error, client-error}``
      - Number of ``server-error`` or ``client-error`` responses sent
 
-These metrics on logging are available on the application context:
 
+These metrics are available for every application context:
 .. list-table::
    :header-rows: 1
    :widths: 60 40
@@ -301,8 +301,8 @@ These metrics on logging are available on the application context:
    * - ``system.app.log.{error, info, warn}``
      - Number of ``error``, ``info``, or ``warn`` log messages logged by the application
 
-These metrics on logging are available for the system services, in the system component context:
 
+These metrics are available for the system services, in the system component context:
 .. list-table::
    :header-rows: 1
    :widths: 60 40
@@ -331,7 +331,7 @@ These metrics are available for the CDAP transaction service:
    * - ``system.{canCommit, commit, committed, inprogress, invalidate, abort}.latency``
      - Time taken (in milliseconds) to perform a specified transaction state update
    * - ``system.{invalid, committing, committed, inprogress}.size``
-     - Number of transaction data structures
+     - Number of transactions of various types that are active
 
 These metrics are available for the YARN cluster resources:
 
