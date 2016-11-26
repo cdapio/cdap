@@ -42,6 +42,7 @@ import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import RouteToNamespace from 'components/RouteToNamespace';
 import Helmet from 'react-helmet';
 import Wrangler from 'components/Wrangler';
+import SchemaEditor from 'components/SchemaEditor';
 
 class CDAP extends Component {
   constructor(props) {
@@ -99,6 +100,7 @@ class CDAP extends Component {
             <Match pattern="/Experimental" component={Experimental} />
             <Match pattern="/socket-example" component={ConnectionExample} />
             <Match pattern="/wrangler" component={Wrangler} />
+            <Match pattern="/schemaeditor" component={SchemaEditor} />
             <Miss component={Missed} />
           </div>
           <Footer version={this.version} />

@@ -32,6 +32,10 @@ var plugins = [
       to: './cdap.html'
     },
     {
+      from: path.resolve(__dirname, 'app', 'lib', 'avsc-bundle.js'),
+      to: './'
+    },
+    {
       from: './styles/fonts',
       to: './fonts/'
     },
