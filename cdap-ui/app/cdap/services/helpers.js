@@ -106,10 +106,28 @@ function getArtifactNameAndVersion (nameWithVersion) {
   return { version, name };
 }
 
+
+function insertAt(arr, index, element) {
+  return [
+    ...arr.slice(0, index + 1),
+    element,
+    ...arr.slice(index + 1, arr.length)
+  ];
+}
+
+function removeAt(arr, index) {
+  return [
+    ...arr.slice(0, index),
+    ...arr.slice(index + 1, arr.length)
+  ];
+}
+
 export {
   objectQuery,
   convertBytesToHumanReadable,
   humanReadableNumber,
   isDescendant,
-  getArtifactNameAndVersion
+  getArtifactNameAndVersion,
+  insertAt,
+  removeAt
 };

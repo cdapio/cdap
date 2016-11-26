@@ -38,7 +38,8 @@
     "expect": true,
     "jest": true,
     "beforeEach": true,
-    "afterEach": true
+    "afterEach": true,
+    "avsc": true
   },
   "plugins": ["react", "babel"],
   "extends": ["eslint:recommended", "plugin:react/recommended"]

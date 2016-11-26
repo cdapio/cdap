@@ -1,0 +1,107 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+.map-schema-row {
+  .schema-row {
+    > .key-row,
+    > .value-row {
+      > .field-name {
+        width: ~"calc(100% - 80px - 75px)";
+        width: ~"-webkit-calc(100% - 80px - 75px)";
+        width: ~"-moz-calc(100% - 80px - 75px)";
+        display: inline-block;
+        position: relative;
+
+        .fa-caret-down,
+        .fa-caret-right {
+          position: absolute;
+          bottom: -2px;
+          left: 10px;
+          cursor: pointer;
+        }
+        div {
+          &:first-child {
+            margin: 0 10px;
+            width: 30px;
+            display: inline-block;
+          }
+        }
+      }
+      > .field-type {
+        width: 80px;
+      }
+      > .field-isnull {
+        width: 75px;
+        .btn.btn-link {
+          display: inline-block;
+          padding: 0 5px;
+          width: 24px;
+        }
+      }
+      &.nested {
+        border: 0;
+        box-shadow: 0px 0px 3px 1px rgba(1, 0, 0, 0.2);
+        border-radius: 4px;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+
+        >.abstract-schema-row {
+          box-shadow: 1px -2px 1px rgba(0,0,0,0.25);
+        }
+        >.field-name {
+          box-shadow: rgba(1, 0, 0, 0.25) 1px -1px 7px;
+          border-radius: 4px;
+          position: relative;
+          width: 155px;
+          &:before {
+            position: absolute;
+            content: ' ';
+            top: 29px;
+            bottom: 0;
+            width: 100%;
+            background: white;
+            box-shadow: none;
+            height: 10px;
+          }
+        }
+        >.field-type {
+          width: ~"calc(100% - 155px - 75px)";
+          width: ~"-moz-calc(100% - 155px - 75px)";
+          width: ~"-webkit-calc(100% - 155px - 75px)";
+        }
+      }
+    }
+    > .key-row,
+    > .value-row {
+      > .field-name {
+        .form-control {
+          width: 90px;
+          vertical-align: inherit;
+          display: inline-block;
+        }
+        &:after {
+          color: #3c4355;
+          content: "\f0d7";
+          font-family: 'FontAwesome';
+          position: absolute;
+          top: 7px;
+          left: 130px;
+          z-index: 5;
+        }
+      }
+    }
+  }
+}

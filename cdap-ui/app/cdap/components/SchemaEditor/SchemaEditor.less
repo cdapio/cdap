@@ -1,0 +1,152 @@
+/*
+ * Copyright © 2016 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+@import '../../styles/mixins.less';
+.schema-editor {
+  max-width: 400px;
+  min-height: 1500px;
+  .schema-header{
+    padding: 5px 0;
+    .field-name {
+      width: ~"calc(100% - 80px - 75px)";
+      width: ~"-moz-calc(100% - 80px - 75px)";
+      width: ~"-webkit-calc(100% - 80px - 75px)";
+    }
+    .field-isnull {
+      width: 70px;
+      margin-left: 5px;
+    }
+    .field-type {
+      width: 75px;
+      margin-left: 5px;
+    }
+    .field-name,
+    .field-type,
+    .field-isnull {
+      font-weight: bolder;
+      display: inline-block;
+    }
+  }
+  .schema-body {
+    .schema-row {
+      &:first-child {
+        border-top: 1px solid #ccc;
+        border-top: 0;
+      }
+      border-top: 1px solid #ccc;
+      &:not(.nested) {
+        box-shadow: none;
+        &.borderless {
+          border-top: 0;
+        }
+      }
+      >.abstract-schema-row {
+        box-shadow: 1px -2px 1px rgba(0,0,0,0.25);
+      }
+      > .field-name {
+        width: ~"calc(100% - 80px - 75px)";
+        width: ~"-moz-calc(100% - 80px - 75px)";
+        width: ~"-webkit-calc(100% - 80px - 75px)";
+      }
+      > .field-type {
+        width: 80px;
+        padding: 0 5px;
+        vertical-align: top;
+        position: relative;
+
+        &:after {
+          color: #3c4355;
+          content: "\f0d7";
+          font-family: 'FontAwesome';
+          position: absolute;
+          top: 25%;
+          right: 10px;
+          z-index: 5;
+        }
+      }
+      > .field-isnull {
+        width: 75px;
+        .btn.btn-link {
+          display: inline-block;
+          padding: 0;
+          width: 24px;
+          [class*="fa-"] {
+            padding: 0;
+            margin: 0;
+            border: 0;
+            background: transparent;
+          }
+        }
+      }
+      .field-name,
+      .field-type,
+      .field-isnull {
+        display: inline-block;
+      }
+      .form-control {
+        padding: 0 5px;
+        height: 25px;
+        margin: 5px 0 6px 0;
+        appearance: none;
+        border: 0;
+        box-shadow: none;
+        .appearance();
+        .placeholder-color(@color: #666666, @font-weight: 500);
+        &:focus {
+          border-color: #dddddd;
+          outline: 1px solid #098cf9;
+          box-shadow: none;
+        }
+      }
+      &.nested {
+        &:first-child {
+          border: 0;
+        }
+        border: 0;
+        box-shadow: -1px 0px 5px 1px rgba(1, 0, 0, 0.2);
+        border-radius: 4px;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        border-top-right-radius: 0;
+
+        >.field-name {
+          box-shadow: rgba(1, 0, 0, 0.25) 1px -1px 7px;
+          border-radius: 4px;
+          position: relative;
+          .fa-caret-down,
+          .fa-caret-right {
+            position: absolute;
+            bottom: -2px;
+            left: 5px;
+            cursor: pointer;
+          }
+          &:before {
+            position: absolute;
+            content: ' ';
+            top: 29px;
+            bottom: 0;
+            width: 100%;
+            background: white;
+            box-shadow: none;
+            height: 10px;
+          }
+        }
+      }
+      .text-danger {
+        word-break: break-word;
+      }
+    }
+  }
+}
