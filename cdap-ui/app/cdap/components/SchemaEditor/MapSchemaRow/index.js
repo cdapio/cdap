@@ -137,6 +137,42 @@ export default class MapSchemaRow extends Component {
     this.setState({showValuesAbstractSchemaRow: !this.state.showValuesAbstractSchemaRow});
   }
   render() {
+    const showKeysArrow = () => {
+      if (this.state.showKeysAbstractSchemaRow) {
+        return (
+          <span
+            className="fa fa-caret-down"
+            onClick={this.toggleKeysAbstractSchemaRow.bind(this)}
+          >
+          </span>
+        );
+      }
+      return (
+        <span
+          className="fa fa-caret-right"
+          onClick={this.toggleKeysAbstractSchemaRow.bind(this)}
+        >
+        </span>
+      );
+    };
+    const showValuesArrow = () => {
+      if (this.state.showValuesAbstractSchemaRow) {
+        return (
+          <span
+            className="fa fa-caret-down"
+            onClick={this.toggleValuesAbstractSchemaRow.bind(this)}
+          >
+          </span>
+        );
+      }
+      return (
+        <span
+          className="fa fa-caret-right"
+          onClick={this.toggleValuesAbstractSchemaRow.bind(this)}
+        >
+        </span>
+      );
+    };
     return (
       <div className="map-schema-row">
         <div className="text-danger">
@@ -157,13 +193,7 @@ export default class MapSchemaRow extends Component {
               />
               {
                 checkComplexType(this.state.keysType) ?
-                  (
-                    <span
-                      className="fa fa-caret-down"
-                      onClick={this.toggleKeysAbstractSchemaRow.bind(this)}
-                    >
-                    </span>
-                  )
+                  showKeysArrow()
                 :
                 null
               }
@@ -205,13 +235,7 @@ export default class MapSchemaRow extends Component {
               />
               {
                 checkComplexType(this.state.valuesType)?
-                  (
-                    <span
-                      className="fa fa-caret-down"
-                      onClick={this.toggleValuesAbstractSchemaRow.bind(this)}
-                    >
-                    </span>
-                  )
+                  showValuesArrow()
                 :
                 null
               }

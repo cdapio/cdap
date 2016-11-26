@@ -204,6 +204,24 @@ export default class RecordSchemaRow extends Component{
   }
   render() {
     console.log('Inside Render of Record Schema');
+    const showArrow = (row, index) => {
+      if(row.showAbstractSchemaRow) {
+        return (
+          <span
+            className="fa fa-caret-down"
+            onClick={this.toggleAbstractSchemaRow.bind(this, index)}
+          >
+          </span>
+        );
+      }
+      return (
+        <span
+          className="fa fa-caret-right"
+          onClick={this.toggleAbstractSchemaRow.bind(this, index)}
+        >
+        </span>
+      );
+    };
     return (
       <div className="record-schema-row">
         <div className="text-danger">
@@ -244,13 +262,7 @@ export default class RecordSchemaRow extends Component{
                       }
                       {
                         checkComplexType(row.displayType) ?
-                          (
-                            <span
-                              className="fa fa-caret-down"
-                              onClick={this.toggleAbstractSchemaRow.bind(this, index)}
-                            >
-                            </span>
-                          )
+                          showArrow(row, index)
                         :
                         null
                       }

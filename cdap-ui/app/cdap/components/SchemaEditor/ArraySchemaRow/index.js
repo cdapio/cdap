@@ -112,6 +112,24 @@ export default class ArraySchemaRow extends Component{
     this.setState({ showAbstractSchemaRow: !this.state.showAbstractSchemaRow });
   }
   render() {
+    const showArrows = () => {
+      if (this.state.showAbstractSchemaRow) {
+        return (
+          <span
+            className="fa fa-caret-down"
+            onClick={this.toggleAbstractSchemaRow.bind(this)}
+          >
+          </span>
+        );
+      }
+      return (
+        <span
+          className="fa fa-caret-right"
+          onClick={this.toggleAbstractSchemaRow.bind(this)}
+        >
+        </span>
+      );
+    };
     return (
       <div className="array-schema-row">
         <div className="text-danger">
@@ -130,13 +148,7 @@ export default class ArraySchemaRow extends Component{
             />
           {
             checkComplexType(this.state.displayType.type) ?
-              (
-                <span
-                  className="fa fa-caret-down"
-                  onClick={this.toggleAbstractSchemaRow.bind(this)}
-                >
-                </span>
-              )
+              showArrows()
             :
               null
           }
