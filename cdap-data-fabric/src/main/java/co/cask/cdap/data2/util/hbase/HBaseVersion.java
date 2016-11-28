@@ -100,11 +100,12 @@ public class HBaseVersion {
    */
   public static void main(String[] args) {
     // Suppress any output to stdout
+    PrintStream stdout = System.out;
     System.setOut(new PrintStream(new NullOutputStream()));
     Version version = HBaseVersion.get();
 
     // Restore stdout
-    System.setOut(System.out);
+    System.setOut(stdout);
     System.out.println(version.getMajorVersion());
 
     if (args.length == 1 && "-v".equals(args[0])) {
