@@ -15,5 +15,10 @@
 #
 
 co.cask.cdap.operations.hdfs.HDFSInfo
-co.cask.cdap.operations.hdfs.HDFSStorage
 co.cask.cdap.operations.hdfs.HDFSNodes
+co.cask.cdap.operations.hdfs.HDFSStorage
+co.cask.cdap.operations.yarn.YarnInfo
+co.cask.cdap.operations.yarn.YarnApps
+co.cask.cdap.operations.yarn.YarnNodes
+co.cask.cdap.operations.yarn.YarnQueues
+co.cask.cdap.operations.yarn.YarnResources
