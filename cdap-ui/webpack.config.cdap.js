@@ -32,10 +32,6 @@ var plugins = [
       to: './cdap.html'
     },
     {
-      from: path.resolve(__dirname, 'app', 'lib', 'avsc-bundle.js'),
-      to: './'
-    },
-    {
       from: './styles/fonts',
       to: './fonts/'
     },
@@ -79,6 +75,13 @@ var loaders = [
   {
     test: /\.css$/,
     loader: 'style-loader!css-loader!less-loader'
+  },
+  {
+    test: /app\/lib\/avsc-bundle.js/,
+    loaders: [
+      'imports?this=>window',
+      'script'
+    ]
   },
   {
     test: /\.js$/,
@@ -149,7 +152,8 @@ module.exports = {
     alias: {
       components: __dirname + '/app/cdap/components',
       services: __dirname + '/app/cdap/services',
-      api: __dirname + '/app/cdap/api'
+      api: __dirname + '/app/cdap/api',
+      lib: __dirname + '/app/lib'
     }
   }
 };

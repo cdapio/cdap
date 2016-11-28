@@ -20,6 +20,8 @@ require('./SchemaEditor.less');
 import {getParsedSchema} from 'components/SchemaEditor/SchemaHelpers';
 import RecordSchemaRow from 'components/SchemaEditor/RecordSchemaRow';
 import SchemaStore from 'components/SchemaEditor/SchemaStore';
+import avro from 'lib/avsc-bundle.js';
+console.log(avro);
 
 export default class SchemaEditor extends Component {
   constructor(props) {

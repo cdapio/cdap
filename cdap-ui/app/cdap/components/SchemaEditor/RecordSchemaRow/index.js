@@ -203,7 +203,6 @@ export default class RecordSchemaRow extends Component{
     });
   }
   render() {
-    console.log('Inside Render of Record Schema');
     const showArrow = (row, index) => {
       if(row.showAbstractSchemaRow) {
         return (

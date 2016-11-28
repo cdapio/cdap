@@ -15,7 +15,7 @@
  */
 
 import uuid from 'node-uuid';
-
+var avsc = require('lib/avsc-bundle.js');
 const SCHEMA_TYPES = {
   'types': [
     'boolean',
