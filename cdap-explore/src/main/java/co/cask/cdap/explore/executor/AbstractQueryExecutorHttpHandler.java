@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *  
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,11 +16,7 @@
 
 package co.cask.cdap.explore.executor;
 
-import co.cask.cdap.explore.service.ExploreException;
-import co.cask.cdap.explore.service.HandleNotFoundException;
-import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryInfo;
-import co.cask.cdap.proto.QueryResult;
 import co.cask.http.AbstractHttpHandler;
 import com.google.common.base.Charsets;
 import com.google.common.base.Predicate;
@@ -41,21 +37,19 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
-import java.sql.SQLException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * An abstract class that provides common functionality for namespaced and non-namespaced ExploreQuery handlers.
  */
 public class AbstractQueryExecutorHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractQueryExecutorHttpHandler.class);
-  protected static final Gson GSON = new Gson();
-  protected static final int DOWNLOAD_FETCH_CHUNK_SIZE = 1000;
+  private static final Gson GSON = new Gson();
+  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
-  protected static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  protected static final int DOWNLOAD_FETCH_CHUNK_SIZE = 1000;
 
 
   protected List<QueryInfo> filterQueries(List<QueryInfo> queries, final long offset,
@@ -68,7 +62,7 @@ public class AbstractQueryExecutorHttpHandler extends AbstractHttpHandler {
     return FluentIterable.from(queries)
       .filter(new Predicate<QueryInfo>() {
         @Override
-        public boolean apply(@Nullable QueryInfo queryInfo) {
+        public boolean apply(QueryInfo queryInfo) {
           if (isForward) {
             return queryInfo.getTimestamp() < offset;
           } else {
@@ -99,36 +93,6 @@ public class AbstractQueryExecutorHttpHandler extends AbstractHttpHandler {
       LOG.info("Failed to parse runtime arguments on {}", request.getUri(), e);
       throw e;
     }
-  }
-
-  protected String getCSVHeaders(List<ColumnDesc> schema)
-    throws HandleNotFoundException, SQLException, ExploreException {
-    StringBuffer sb = new StringBuffer();
-    boolean first = true;
-    for (ColumnDesc columnDesc : schema) {
-      if (first) {
-        first = false;
-      } else {
-        sb.append(',');
-      }
-      sb.append(columnDesc.getName());
-    }
-    return sb.toString();
-  }
-
-  protected String appendCSVRow(StringBuffer sb, QueryResult result)
-    throws HandleNotFoundException, SQLException, ExploreException {
-    boolean first = true;
-    for (Object o : result.getColumns()) {
-      if (first) {
-        first = false;
-      } else {
-        sb.append(',');
-      }
-      // Using GSON toJson will serialize objects - in particular, strings will be quoted
-      sb.append(GSON.toJson(o));
-    }
-    return sb.toString();
   }
 
 }
