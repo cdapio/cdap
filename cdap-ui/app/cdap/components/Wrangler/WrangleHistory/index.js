@@ -14,22 +14,67 @@
  * the License.
  */
 
-import React, {PropTypes} from 'react';
+import React, {Component, PropTypes} from 'react';
+require('./WrangleHistory.less');
 
-export default function WrangleHistory({historyArray}) {
-  if (historyArray.length === 0) { return null; }
+export default class WrangleHistory extends Component {
+  constructor(props) {
+    super(props);
 
-  return (
-    <ul>
-      {
-        historyArray.map((history) => {
-          return (
-            <li key={history.id}>{history.action}: {history.payload.join(', ')}</li>
-          );
-        })
-      }
-    </ul>
-  );
+    this.state = {
+      expanded: {}
+    };
+
+  }
+
+  historyItemClick(id) {
+    let newObj = {};
+    newObj[id] = !this.state.expanded[id];
+
+    let expanded = Object.assign({}, this.state.expanded, newObj);
+    this.setState({expanded});
+  }
+
+  renderHistoryPayload(history) {
+    if (!this.state.expanded[history.id]) {
+      return null;
+    }
+
+    return (
+      <pre>{JSON.stringify(history.payload, null, 2)}</pre>
+    );
+  }
+
+  render() {
+    return (
+      <div className="wrangler-history">
+        <div className="transform-item">
+          <span className="fa fa-list-ol" />
+          <span className="transform-item-text">History</span>
+        </div>
+
+        <div className="history-list">
+          {
+            this.props.historyArray.map((history) => {
+              return (
+                <div
+                  className="history-row"
+                  key={history.id}
+                  onClick={this.historyItemClick.bind(this, history.id)}
+                >
+                  <span>
+                    <span>{history.action}</span>
+                    <span className="fa fa-times-circle pull-right"></span>
+                  </span>
+                  {this.renderHistoryPayload(history)}
+                </div>
+              );
+            })
+          }
+        </div>
+      </div>
+    );
+  }
 }
 
 WrangleHistory.defaultProps = {
@@ -40,6 +85,5 @@ WrangleHistory.propTypes = {
   historyArray: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.string,
     action: PropTypes.string,
-    payload: PropTypes.arrayOf(PropTypes.string)
   }))
 };
