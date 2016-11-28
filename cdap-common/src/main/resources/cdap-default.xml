@@ -882,6 +882,22 @@
     </description>
   </property>
 
+  <property>
+    <name>kafka.zookeeper.quorum</name>
+    <value></value>
+    <description>
+      CDAP Kafka service ZooKeeper quorum and namespace. This will override
+      the ZooKeeper quorum set by ${zookeeper.quorum} and ZooKeeper nameSpace
+      set by ${kafka.zookeeper.namespace} when setting up connection to
+      the Kafka service used by CDAP. If the same Kafka service ZooKeeper quorum
+      and namespace is shared by multiple CDAP instances, each CDAP instance
+      has to distinguish its Kafka topics from thos of other CDAP instances
+      with unique ${log.kafka.topic}, ${notification.kafka.topic},
+      ${metadata.updates.kafka.topic}, ${audit.kafka.topic},
+      and ${metrics.kafka.topic.prefix}.
+    </description>
+  </property>
+
 
   <!-- Logging Configuration -->
 
