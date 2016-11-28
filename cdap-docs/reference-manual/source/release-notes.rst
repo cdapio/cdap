@@ -49,13 +49,19 @@ Known Issues
 Improvements
 ------------
 
-- :cask-issue:`CDAP-3262` - Fixed an issue with the CDAP scripts under Windows not handling a JAVA_HOME path with spaces in it correctly. CDAP SDK home directories with spaces in the path are not supported (due to issues with the product) and the scripts now exit if such a path is detected.
+- :cask-issue:`CDAP-3262` - Fixed an issue with the CDAP scripts under Windows not
+  handling a JAVA_HOME path with spaces in it correctly. CDAP SDK home directories with
+  spaces in the path are not supported (due to issues with the product) and the scripts now
+  exit if such a path is detected.
 
-- :cask-issue:`CDAP-4322` - For MapReduce using PartitionedFileSet as input, expose the partition key corresponding to the input split to the Mapper.
+- :cask-issue:`CDAP-4322` - For MapReduce programs using a PartitionedFileSet as input,
+  expose the partition key corresponding to the input split to the mapper.
 
-- :cask-issue:`CDAP-6572` - The namespace that integration test cases run against by default has been made configurable.
+- :cask-issue:`CDAP-6572` - The namespace that integration test cases run against by
+  default has been made configurable.
 
-- :cask-issue:`CDAP-6577` - Improve UpgradeTool to upgrade tables in namespaces with impersonation configured.
+- :cask-issue:`CDAP-6577` - Improve UpgradeTool to upgrade tables in namespaces with
+  impersonation configured.
 
 - :cask-issue:`CDAP-6587` - Added support for impersonation with CDAP Explore (Hive)
   operations, such as enabling exploring of a dataset or running queries against it.
@@ -69,7 +75,8 @@ Improvements
 
 - :cask-issue:`CDAP-7529` - Improved error handling upon failures in namespace creation.
 
-- :cask-issue:`CDAP-7557` - DynamicPartitioner can now limit the number of open RecordWriters to one, if the output partition keys are grouped.
+- :cask-issue:`CDAP-7557` - DynamicPartitioner can now limit the number of open
+  RecordWriters to one, if the output partition keys are grouped.
 
 - :cask-issue:`HYDRATOR-979` - Added the Windows Share Copy plugin to the Hydrator plugins.
 
