@@ -28,6 +28,7 @@ Cask Data Application Platform Release Notes
 
 Known Issues
 ------------
+
 - :cask-issue:`CDAP-7179` - In CDAP 3.5.0, new ``kafka.server.*`` properties replace older
   properties such as ``kafka.log.dir``, as described in the :ref:`Administration Manual: 
   Appendices: cdap-site.xml <appendix-cdap-default-deprecated-properties>`. 
@@ -48,10 +49,29 @@ Known Issues
 Improvements
 ------------
 
+- :cask-issue:`CDAP-3262` - Fixed an issue with the CDAP scripts under Windows not handling a JAVA_HOME path with spaces in it correctly. CDAP SDK home directories with spaces in the path are not supported (due to issues with the product) and the scripts now exit if such a path is detected.
+
+- :cask-issue:`CDAP-4322` - For MapReduce using PartitionedFileSet as input, expose the partition key corresponding to the input split to the Mapper.
+
+- :cask-issue:`CDAP-6572` - The namespace that integration test cases run against by default has been made configurable.
+
+- :cask-issue:`CDAP-6577` - Improve UpgradeTool to upgrade tables in namespaces with impersonation configured.
+
+- :cask-issue:`CDAP-6587` - Added support for impersonation with CDAP Explore (Hive)
+  operations, such as enabling exploring of a dataset or running queries against it.
+
+- :cask-issue:`CDAP-7291` - Added support for CDH 5.9.
+
 - :cask-issue:`CDAP-7385` - The Log HTTP Handler and Router have been fixed to allow the
   streaming of larger logs files.
 
 - :cask-issue:`CDAP-7404` - Added authorization for schedules in CDAP.
+
+- :cask-issue:`CDAP-7529` - Improved error handling upon failures in namespace creation.
+
+- :cask-issue:`CDAP-7557` - DynamicPartitioner can now limit the number of open RecordWriters to one, if the output partition keys are grouped.
+
+- :cask-issue:`HYDRATOR-979` - Added the Windows Share Copy plugin to the Hydrator plugins.
 
 - :cask-issue:`HYDRATOR-997` - The SSH hostname and the command to be executed are now
   macro-enabled for the SSH action plugin.
@@ -59,9 +79,6 @@ Improvements
 Bug Fixes
 ---------
 
-- :cask-issue:`CDAP-7175` - Fixed an issue in the upgrade tool to allow it to run on a
-  CDAP instance with authorization enabled.
-  
 - :cask-issue:`CDAP-7250` - Fixed an issue where dataset usage was not being recorded
   after an application was deleted.
 
@@ -99,10 +116,24 @@ Bug Fixes
   MapReduce application master kept running even if the application was moved to the
   FINISHED state.
 
+- :cask-issue:`CDAP-7404` - Added authorization for schedules in CDAP.
+  
+- :cask-issue:`CDAP-7420` - Avoid the caching of ``YarnClient`` in order to fix a problem that
+  occurred in namespaces with impersonation configured.
+  
 - :cask-issue:`CDAP-7438`, :cask-issue:`CDAP-7439` - Removed the requirement of running
   "kinit" prior to running either the Upgrade or Transaction Debugger tools of CDAP on a
   secure Hadoop cluster.
 
+- :cask-issue:`CDAP-7473` - Fix logback-container.xml to work on clusters with multiple
+  log directories configured for YARN.
+
+- :cask-issue:`CDAP-7482` - Fixed a problem in CDAP logging that caused system logs from Kafka to
+  not be saved after an upgrade and for previously-saved logs to become inaccessible.
+
+- :cask-issue:`CDAP-7548` - Fixed a problem in integration tests to allow JDBC connections
+  against authorization-enabled and SSL-enabled CDAP instances.
+  
 - :cask-issue:`HYDRATOR-791` - Fixed a problem with Hydrator pipelines using a DBSource
   not working in an HDP cluster.
 
