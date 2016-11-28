@@ -50,7 +50,6 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
@@ -250,8 +249,6 @@ public class MasterServiceMain extends DaemonMain {
   public void start() throws Exception {
     logAppenderInitializer.initialize();
     createDirectory("twill");
-    createDirectory(cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_COPROCESSOR_DIR,
-                              QueueConstants.DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR));
     createDirectory(cConf.get(Constants.MessagingSystem.COPROCESSOR_DIR));
     createSystemHBaseNamespace();
     updateConfigurationTable();

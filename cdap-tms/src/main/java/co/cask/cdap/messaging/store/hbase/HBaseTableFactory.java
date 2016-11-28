@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.CoprocessorManager;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
@@ -31,7 +32,6 @@ import co.cask.cdap.messaging.store.MetadataTable;
 import co.cask.cdap.messaging.store.PayloadTable;
 import co.cask.cdap.messaging.store.TableFactory;
 import co.cask.cdap.proto.id.NamespaceId;
-import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -50,7 +50,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -78,8 +77,8 @@ public final class HBaseTableFactory implements TableFactory {
   private final Configuration hConf;
   private final HBaseTableUtil tableUtil;
   private final ExecutorService scanExecutor;
-  private final LocationFactory locationFactory;
   private final Map<TableId, HTableDescriptor> tableDescriptors;
+  private final CoprocessorManager coprocessorManager;
 
   @Inject
   HBaseTableFactory(CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil,
@@ -87,8 +86,8 @@ public final class HBaseTableFactory implements TableFactory {
     this.cConf = cConf;
     this.hConf = hConf;
     this.tableUtil = tableUtil;
-    this.locationFactory = locationFactory;
     this.tableDescriptors = new ConcurrentHashMap<>();
+    this.coprocessorManager = new CoprocessorManager(cConf, locationFactory, tableUtil);
 
     RejectedExecutionHandler callerRunsPolicy = new RejectedExecutionHandler() {
       @Override
@@ -371,12 +370,7 @@ public final class HBaseTableFactory implements TableFactory {
 
   private void addCoprocessor(Class<? extends Coprocessor> coprocessor,
                               HTableDescriptorBuilder tableDescriptor) throws IOException {
-    List<? extends Class<? extends Coprocessor>> coprocessors = ImmutableList.of(coprocessor);
-    Location jarDir = locationFactory.create(cConf.get(Constants.MessagingSystem.COPROCESSOR_DIR));
-    Location jarFile = HBaseTableUtil.createCoProcessorJar(coprocessor.getSimpleName(), jarDir, coprocessors);
-    if (jarFile == null) {
-      throw new IOException("Failed to create coprocessor jar for " + coprocessor);
-    }
+    Location jarFile = coprocessorManager.ensureCoprocessorExists(CoprocessorManager.Type.MESSAGING);
     tableDescriptor.addCoprocessor(coprocessor.getName(), new Path(jarFile.toURI().getPath()),
                                    Coprocessor.PRIORITY_USER, null);
   }

@@ -60,6 +60,8 @@ import co.cask.cdap.data2.registry.DefaultUsageRegistry;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
+import co.cask.cdap.data2.util.hbase.CoprocessorManager;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedStreamSizeScheduleStore;
@@ -100,6 +102,7 @@ import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.distributed.TransactionService;
+import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,6 +135,7 @@ public class UpgradeTool {
   private final DefaultStore store;
   private final DatasetInstanceManager datasetInstanceManager;
   private final HBaseTableFactory tmsTableFactory;
+  private final CoprocessorManager coprocessorManager;
 
   /**
    * Set of Action available in this tool.
@@ -187,6 +191,9 @@ public class UpgradeTool {
     this.datasetInstanceManager =
       injector.getInstance(Key.get(DatasetInstanceManager.class, Names.named("datasetInstanceManager")));
     this.tmsTableFactory = injector.getInstance(HBaseTableFactory.class);
+    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
+    HBaseTableUtil tableUtil = injector.getInstance(HBaseTableUtil.class);
+    this.coprocessorManager = new CoprocessorManager(cConf, locationFactory, tableUtil);
 
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -296,6 +303,10 @@ public class UpgradeTool {
     authorizationService.startAndWait();
     LOG.info("Initializing Dataset Framework...");
     initializeDSFramework(cConf, dsFramework);
+    LOG.info("Building and uploading new HBase coprocessors...");
+    for (CoprocessorManager.Type type : CoprocessorManager.Type.values()) {
+      coprocessorManager.ensureCoprocessorExists(type);
+    }
   }
 
   /**

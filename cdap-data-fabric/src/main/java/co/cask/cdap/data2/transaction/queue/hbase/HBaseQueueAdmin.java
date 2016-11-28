@@ -38,6 +38,7 @@ import co.cask.cdap.data2.transaction.queue.QueueConfigurer;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.CoprocessorManager;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
@@ -94,12 +95,12 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
   protected final HBaseTableUtil tableUtil;
   private final CConfiguration cConf;
   private final Configuration hConf;
-  private final LocationFactory locationFactory;
   private final QueueConstants.QueueType type;
   private final TransactionExecutorFactory txExecutorFactory;
   private final DatasetFramework datasetFramework;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final Impersonator impersonator;
+  private final CoprocessorManager coprocessorManager;
 
   @Inject
   HBaseQueueAdmin(Configuration hConf,
@@ -127,13 +128,13 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
     super(type);
     this.hConf = hConf;
     this.cConf = cConf;
-    this.locationFactory = locationFactory;
     this.tableUtil = tableUtil;
     this.txExecutorFactory = txExecutorFactory;
     this.datasetFramework = datasetFramework;
     this.type = type;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.impersonator = impersonator;
+    this.coprocessorManager = new CoprocessorManager(cConf, locationFactory, tableUtil);
   }
 
   @Override
@@ -492,9 +493,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
         return CoprocessorJar.EMPTY;
       }
 
-      Location jarDir = locationFactory.create(cConf.get(QueueConstants.ConfigKeys.QUEUE_TABLE_COPROCESSOR_DIR,
-                                                         QueueConstants.DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR));
-      Location jarFile = HBaseTableUtil.createCoProcessorJar(type.toString(), jarDir, coprocessors);
+      Location jarFile = coprocessorManager.ensureCoprocessorExists(CoprocessorManager.Type.QUEUE);
       return new CoprocessorJar(coprocessors, jarFile);
     }
 

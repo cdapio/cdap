@@ -74,6 +74,7 @@ case ${1} in
   upgrade) shift; cdap_upgrade_tool ${@}; __ret=${?} ;;
   run) shift; cdap_run_class ${@}; __ret=${?} ;;
   sdk) shift; cdap_sdk ${@}; __ret=${?} ;;
+  setup) shift; cdap_setup_tool ${@}; __ret=${?} ;;
   debug) shift; cdap_debug ${@}; __ret=${?} ;;
   *)
     echo
@@ -92,6 +93,7 @@ case ${1} in
     echo "    classpath    - Returns the Java CLASSPATH of the CDAP Master service"
     echo "    run          - Runs a given class with arguments using the CDAP Master CLASSPATH and environment"
     echo "    upgrade      - Runs the CDAP Upgrade with optional arguments"
+    echo "    setup        - Ensures CDAP coprocessors are present on HDFS"
     echo
     else
     echo "    sdk          - Sends the arguments (start/stop/etc.) to the Standalone CDAP service on this host"

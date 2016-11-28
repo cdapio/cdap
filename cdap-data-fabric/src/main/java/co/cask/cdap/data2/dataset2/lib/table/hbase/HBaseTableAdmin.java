@@ -25,6 +25,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
+import co.cask.cdap.data2.util.hbase.CoprocessorManager;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -54,7 +55,7 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
   // todo: datasets should not depend on cdap configuration!
   private final CConfiguration conf;
 
-  private final LocationFactory locationFactory;
+  private final CoprocessorManager coprocessorManager;
 
   public HBaseTableAdmin(DatasetContext datasetContext,
                          DatasetSpecification spec,
@@ -66,7 +67,7 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
           hConf, conf, tableUtil);
     this.spec = spec;
     this.conf = conf;
-    this.locationFactory = locationFactory;
+    this.coprocessorManager = new CoprocessorManager(conf, locationFactory, tableUtil);
   }
 
   @Override
@@ -182,16 +183,14 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
   protected CoprocessorJar createCoprocessorJar() throws IOException {
     boolean supportsIncrement = TableProperties.getReadlessIncrementSupport(spec.getProperties());
     boolean transactional = DatasetsUtil.isTransactional(spec.getProperties());
-    return createCoprocessorJarInternal(conf, locationFactory, tableUtil, transactional, supportsIncrement);
+    return createCoprocessorJarInternal(conf, coprocessorManager, tableUtil, transactional, supportsIncrement);
   }
 
   public static CoprocessorJar createCoprocessorJarInternal(CConfiguration conf,
-                                                            LocationFactory locationFactory,
+                                                            CoprocessorManager coprocessorManager,
                                                             HBaseTableUtil tableUtil,
                                                             boolean transactional,
                                                             boolean supportsReadlessIncrement) throws IOException {
-    // create the jar for the data janitor coprocessor.
-    Location jarDir = locationFactory.create(conf.get(Constants.CFG_HDFS_LIB_DIR));
     Class<? extends Coprocessor> dataJanitorClass = tableUtil.getTransactionDataJanitorClassForVersion();
     Class<? extends Coprocessor> incrementClass = tableUtil.getIncrementHandlerClassForVersion();
     ImmutableList.Builder<Class<? extends Coprocessor>> coprocessors = ImmutableList.builder();
@@ -211,7 +210,7 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
     if (coprocessorList.isEmpty()) {
       return CoprocessorJar.EMPTY;
     }
-    Location jarFile = HBaseTableUtil.createCoProcessorJar("table", jarDir, coprocessorList);
+    Location jarFile = coprocessorManager.ensureCoprocessorExists(CoprocessorManager.Type.TABLE);
     return new CoprocessorJar(coprocessorList, jarFile);
   }
 

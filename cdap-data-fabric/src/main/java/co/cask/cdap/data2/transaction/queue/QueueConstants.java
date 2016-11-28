@@ -26,15 +26,12 @@ public final class QueueConstants {
    * Configuration keys for queues in HBase.
    */
   public static final class ConfigKeys {
-    public static final String QUEUE_TABLE_COPROCESSOR_DIR = "data.queue.table.coprocessor.dir";
     public static final String QUEUE_TABLE_PRESPLITS = "data.queue.table.presplits";
     public static final String DEQUEUE_TX_PERCENT = "data.queue.dequeue.tx.percent";
   }
 
   // This is a hardcoded value for the row key distributor bucket size before CDAP-1946
   public static final int DEFAULT_ROW_KEY_BUCKETS = 16;
-
-  public static final String DEFAULT_QUEUE_TABLE_COPROCESSOR_DIR = "/queue";
 
   public static final long MAX_CREATE_TABLE_WAIT = 5000L;    // Maximum wait of 5 seconds for table creation.
 
