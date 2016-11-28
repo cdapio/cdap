@@ -16,6 +16,7 @@
 
 package co.cask.cdap.operations.hdfs;
 
+import co.cask.cdap.operations.AbstractOperationalStats;
 import co.cask.cdap.operations.OperationalStats;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.conf.Configuration;
@@ -23,7 +24,7 @@ import org.apache.hadoop.conf.Configuration;
 /**
  * Base class for {@link OperationalStats} for HDFS
  */
-public abstract class AbstractHDFSStats implements OperationalStats {
+public abstract class AbstractHDFSStats extends AbstractOperationalStats {
   @VisibleForTesting
   static final String SERVICE_NAME = "HDFS";
 

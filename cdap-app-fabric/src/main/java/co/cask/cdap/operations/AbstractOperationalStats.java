@@ -14,28 +14,28 @@
  * the License.
  */
 
-package co.cask.cdap.operations.hbase;
+package co.cask.cdap.operations;
 
-import co.cask.cdap.operations.AbstractOperationalStats;
-import com.google.common.annotations.VisibleForTesting;
-import org.apache.hadoop.conf.Configuration;
+import com.google.inject.Injector;
+
+import java.io.IOException;
 
 /**
- * Base class for HBase operational stats.
+ * A base class to provide default implementations for {@link OperationalStats} extensions
  */
-public abstract class AbstractHBaseStats extends AbstractOperationalStats {
-  @VisibleForTesting
-  static final String SERVICE_NAME = "HBase";
-
-  protected final Configuration conf;
-
-  @VisibleForTesting
-  AbstractHBaseStats(Configuration conf) {
-    this.conf = conf;
+public abstract class AbstractOperationalStats implements OperationalStats {
+  @Override
+  public void initialize(Injector injector) {
+    // no-op
   }
 
   @Override
-  public String getServiceName() {
-    return SERVICE_NAME;
+  public void collect() throws Exception {
+    // no-op
+  }
+
+  @Override
+  public void destroy() {
+    // no-op
   }
 }

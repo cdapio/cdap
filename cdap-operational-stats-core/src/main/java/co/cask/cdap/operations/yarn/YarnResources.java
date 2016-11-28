@@ -23,11 +23,9 @@ import org.apache.hadoop.yarn.api.records.NodeId;
 import org.apache.hadoop.yarn.api.records.NodeReport;
 import org.apache.hadoop.yarn.api.records.Resource;
 import org.apache.hadoop.yarn.client.api.YarnClient;
-import org.apache.hadoop.yarn.exceptions.YarnException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -87,14 +85,12 @@ public class YarnResources extends AbstractYarnStats implements YarnResourcesMXB
   }
 
   @Override
-  public synchronized void collect() throws IOException {
+  public synchronized void collect() throws Exception {
     reset();
     List<NodeReport> nodeReports;
     YarnClient yarnClient = createYARNClient();
     try {
       nodeReports = yarnClient.getNodeReports();
-    } catch (YarnException e) {
-      throw new IOException(e);
     } finally {
       yarnClient.stop();
     }

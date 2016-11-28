@@ -14,28 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.operations.hbase;
+package co.cask.cdap.operations.cdap;
 
-import co.cask.cdap.operations.AbstractOperationalStats;
-import com.google.common.annotations.VisibleForTesting;
-import org.apache.hadoop.conf.Configuration;
+import javax.management.MXBean;
 
 /**
- * Base class for HBase operational stats.
+ * {@link MXBean} representing CDAP information.
  */
-public abstract class AbstractHBaseStats extends AbstractOperationalStats {
-  @VisibleForTesting
-  static final String SERVICE_NAME = "HBase";
+public interface CDAPInfoMXBean {
 
-  protected final Configuration conf;
-
-  @VisibleForTesting
-  AbstractHBaseStats(Configuration conf) {
-    this.conf = conf;
-  }
-
-  @Override
-  public String getServiceName() {
-    return SERVICE_NAME;
-  }
+  /**
+   * Returns the CDAP Master's uptime
+   */
+  long getUptime();
 }
