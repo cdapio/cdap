@@ -32,10 +32,6 @@ var plugins = [
       to: './cdap.html'
     },
     {
-      from: path.resolve(__dirname, 'app', 'lib', 'avsc-bundle.js'),
-      to: './'
-    },
-    {
       from: './styles/fonts',
       to: './fonts/'
     },
@@ -87,7 +83,10 @@ var loaders = [
   {
     test: /\.js$/,
     loader: 'babel',
-    exclude: /node_modules/,
+    exclude: [
+      /node_modules/,
+      /lib/
+    ],
     query: {
       plugins: ['lodash'],
       presets: ['react', 'es2015']
@@ -122,7 +121,8 @@ module.exports = {
       'papaparse',
       'rx-dom',
       'd3',
-      'chart.js'
+      'chart.js',
+      'cdap-avsc'
     ]
   },
   module: {
@@ -135,7 +135,8 @@ module.exports = {
           /bower_components/,
           /dist/,
           /cdap_dist/,
-          /common_dist/
+          /common_dist/,
+          /lib/
         ]
       }
     ],
@@ -153,7 +154,8 @@ module.exports = {
     alias: {
       components: __dirname + '/app/cdap/components',
       services: __dirname + '/app/cdap/services',
-      api: __dirname + '/app/cdap/api'
+      api: __dirname + '/app/cdap/api',
+      lib: __dirname + '/app/lib'
     }
   }
 };
