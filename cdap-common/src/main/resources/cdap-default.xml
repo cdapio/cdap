@@ -890,7 +890,7 @@
       the ZooKeeper quorum set by ${zookeeper.quorum} and ZooKeeper nameSpace
       set by ${kafka.zookeeper.namespace} when setting up connection to
       the Kafka service used by CDAP. If the same Kafka service ZooKeeper quorum
-      and namespace is shared by multiple CDAP instances, each CDAP instance
+      and namespace are shared by multiple CDAP instances, each CDAP instance
       has to distinguish its Kafka topics from thos of other CDAP instances
       with unique ${log.kafka.topic}, ${notification.kafka.topic},
       ${metadata.updates.kafka.topic}, ${audit.kafka.topic},
