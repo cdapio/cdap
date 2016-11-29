@@ -81,40 +81,7 @@ public class HBaseVersion {
       Class versionInfoClass = Class.forName("org.apache.hadoop.hbase.util.VersionInfo");
       Method versionMethod = versionInfoClass.getMethod("getVersion");
       versionString = (String) versionMethod.invoke(null);
-      if (versionString.startsWith(HBASE_94_VERSION)) {
-        currentVersion = Version.HBASE_94;
-      } else if (versionString.startsWith(HBASE_96_VERSION)) {
-        currentVersion = Version.HBASE_96;
-      } else if (versionString.startsWith(HBASE_98_VERSION)) {
-        currentVersion = Version.HBASE_98;
-      } else if (versionString.startsWith(HBASE_10_VERSION)) {
-        VersionNumber ver = VersionNumber.create(versionString);
-        if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH55_CLASSIFIER)) {
-          currentVersion = Version.HBASE_10_CDH55;
-        } else if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH56_CLASSIFIER)) {
-          currentVersion = Version.HBASE_10_CDH56;
-        } else if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH_CLASSIFIER)) {
-          currentVersion = Version.HBASE_10_CDH;
-        } else {
-          currentVersion = Version.HBASE_10;
-        }
-      } else if (versionString.startsWith(HBASE_11_VERSION)) {
-        currentVersion = Version.HBASE_11;
-      } else if (versionString.startsWith(HBASE_12_VERSION)) {
-        VersionNumber ver = VersionNumber.create(versionString);
-        if (ver.getClassifier() != null &&
-          (ver.getClassifier().startsWith(CDH57_CLASSIFIER) ||
-            // CDH 5.7 compat module can be re-used with CDH 5.8 and CDH 5.9
-            ver.getClassifier().startsWith(CDH58_CLASSIFIER) ||
-            ver.getClassifier().startsWith(CDH59_CLASSIFIER))) {
-          currentVersion = Version.HBASE_12_CDH57;
-        } else {
-          // HBase-11 compat module can be re-used for HBASE-12 as there is no change needed in compat source.
-          currentVersion = Version.HBASE_11;
-        }
-      } else {
-        currentVersion = Version.UNKNOWN;
-      }
+      currentVersion = determineVersionFromVersionString(versionString);
     } catch (Throwable e) {
       // must be a class loading exception, HBase is not there
       LOG.error("Unable to determine HBase version from string '{}', are HBase classes available?", versionString);
