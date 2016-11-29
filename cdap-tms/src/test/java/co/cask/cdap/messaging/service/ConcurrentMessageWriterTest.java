@@ -19,6 +19,7 @@ package co.cask.cdap.messaging.service;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.common.utils.TimeProvider;
+import co.cask.cdap.messaging.StoreRequest;
 import co.cask.cdap.messaging.data.Message;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -267,14 +268,14 @@ public class ConcurrentMessageWriterTest {
     private long writeDelayMillis;
 
     TestStoreRequestWriter(TimeProvider timeProvider) {
-      super(timeProvider);
+      super(timeProvider, false);
     }
 
     /**
      * Constructs a writer that has a write delay to simulate latency in persist to real storage.
      */
     TestStoreRequestWriter(TimeProvider timeProvider, long writeDelayMillis) {
-      super(timeProvider);
+      super(timeProvider, false);
       this.writeDelayMillis = writeDelayMillis;
     }
 

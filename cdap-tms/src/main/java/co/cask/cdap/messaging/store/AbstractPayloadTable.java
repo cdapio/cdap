@@ -74,7 +74,7 @@ public abstract class AbstractPayloadTable implements PayloadTable {
   }
 
   @Override
-  public void store(Iterator<Entry> entries) throws IOException {
+  public void store(Iterator<? extends Entry> entries) throws IOException {
     persist(storeIterator.reset(entries));
   }
 
@@ -137,7 +137,7 @@ public abstract class AbstractPayloadTable implements PayloadTable {
 
     private final RawPayloadTableEntry tableEntry = new RawPayloadTableEntry();
 
-    private Iterator<Entry> entries;
+    private Iterator<? extends Entry> entries;
     private TopicId topicId;
     private byte[] topic;
     private byte[] rowKey;
@@ -181,7 +181,7 @@ public abstract class AbstractPayloadTable implements PayloadTable {
       throw new UnsupportedOperationException("Remove not supported");
     }
 
-    private StoreIterator reset(Iterator<Entry> entries) {
+    private StoreIterator reset(Iterator<? extends Entry> entries) {
       this.entries = entries;
       this.nextEntry = null;
       return this;

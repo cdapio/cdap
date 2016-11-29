@@ -1,0 +1,8 @@
+{
+  "type" : "record",
+  "name" : "PublishRequest",
+  "fields" : [
+    { "name" : "transactionWritePointer", "type" : [ "long", "null" ] },
+    { "name" : "messages", "type" : { "type" : "array", "items" : "bytes" } }
+  ]
+}

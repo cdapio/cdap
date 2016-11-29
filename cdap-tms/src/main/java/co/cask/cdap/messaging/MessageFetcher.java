@@ -26,6 +26,8 @@ import javax.annotation.Nullable;
 
 /**
  * A builder to setup parameters for fetching messages from the messaging system.
+ * Sub-class needs to override the {@link #fetch()} method to return a {@link CloseableIterator}
+ * for fetching messages.
  */
 public abstract class MessageFetcher {
 
@@ -120,7 +122,8 @@ public abstract class MessageFetcher {
   /**
    * Returns a {@link CloseableIterator} that iterates over messages fetched from the messaging system.
    *
+   * @throws TopicNotFoundException if the topic does not exist
    * @throws IOException if it fails to create the iterator
    */
-  public abstract CloseableIterator<Message> fetch() throws IOException;
+  public abstract CloseableIterator<Message> fetch() throws TopicNotFoundException, IOException;
 }

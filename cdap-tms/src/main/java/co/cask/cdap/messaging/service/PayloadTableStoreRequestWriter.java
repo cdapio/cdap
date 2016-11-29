@@ -17,6 +17,7 @@
 package co.cask.cdap.messaging.service;
 
 import co.cask.cdap.common.utils.TimeProvider;
+import co.cask.cdap.messaging.StoreRequest;
 import co.cask.cdap.messaging.store.PayloadTable;
 import co.cask.cdap.proto.id.TopicId;
 
@@ -35,7 +36,7 @@ final class PayloadTableStoreRequestWriter extends StoreRequestWriter<PayloadTab
   private final MutablePayloadTableEntry entry;
 
   PayloadTableStoreRequestWriter(PayloadTable payloadTable, TimeProvider timeProvider) {
-    super(timeProvider);
+    super(timeProvider, false);
     this.payloadTable = payloadTable;
     this.entry = new MutablePayloadTableEntry();
   }

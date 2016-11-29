@@ -32,6 +32,21 @@
 
   <dependencies>
     <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-hbase-compat-base</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>co.cask.common</groupId>
+      <artifactId>common-http</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>jsr305</artifactId>
     </dependency>
@@ -52,8 +67,43 @@
       <artifactId>tephra-api</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.tephra</groupId>
+      <artifactId>tephra-core</artifactId>
+      <!-- Only TransactionCodec class from tephra-core is used, we don't need any other transitive dependencies -->
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.twill</groupId>
+          <artifactId>twill-common</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.twill</groupId>
+          <artifactId>twill-core</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>ch.qos.logback</groupId>
+          <artifactId>logback-classic</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>ch.qos.logback</groupId>
+          <artifactId>logback-core</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>it.unimi.dsi</groupId>
+          <artifactId>fastutil</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.dropwizard.metrics</groupId>
+          <artifactId>metrics-core</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
       <groupId>org.iq80.leveldb</groupId>
       <artifactId>leveldb</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.avro</groupId>
+      <artifactId>avro</artifactId>
     </dependency>
 
     <dependency>
@@ -77,11 +127,6 @@
       <scope>provided</scope>
     </dependency>
 
-    <dependency>
-      <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-hbase-compat-base</artifactId>
-      <version>${project.version}</version>
-    </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-hbase-compat-base</artifactId>

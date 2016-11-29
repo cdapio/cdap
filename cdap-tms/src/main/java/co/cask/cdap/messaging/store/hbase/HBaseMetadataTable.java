@@ -48,7 +48,7 @@ import java.util.TreeMap;
 /**
  * HBase implementation of {@link MetadataTable}.
  */
-public class HBaseMetadataTable implements MetadataTable {
+final class HBaseMetadataTable implements MetadataTable {
 
   private static final byte[] COL = Bytes.toBytes("m");
   private static final Gson GSON = new Gson();
@@ -59,7 +59,7 @@ public class HBaseMetadataTable implements MetadataTable {
   private final byte[] columnFamily;
   private final HTable hTable;
 
-  public HBaseMetadataTable(HBaseTableUtil tableUtil, HTable hTable, byte[] columnFamily) {
+  HBaseMetadataTable(HBaseTableUtil tableUtil, HTable hTable, byte[] columnFamily) {
     this.tableUtil = tableUtil;
     this.hTable = hTable;
     this.columnFamily = Arrays.copyOf(columnFamily, columnFamily.length);

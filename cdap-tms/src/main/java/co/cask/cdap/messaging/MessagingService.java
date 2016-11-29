@@ -16,13 +16,15 @@
 
 package co.cask.cdap.messaging;
 
-import co.cask.cdap.messaging.service.StoreRequest;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 
 import java.io.IOException;
+import java.util.List;
+import javax.annotation.Nullable;
 
 /**
- * Defines the interactions with the core messaging system.
+ * Main interface to interact with the transactional messaging system.
  *
  * @see <a href="https://wiki.cask.co/display/CE/Messaging">Design documentation</a>
  */
@@ -66,6 +68,15 @@ public interface MessagingService {
   TopicMetadata getTopic(TopicId topicId) throws TopicNotFoundException, IOException;
 
   /**
+   * Returns the list of topics available under the given namespace.
+   *
+   * @param namespaceId the namespace to list topics under it
+   * @return a {@link List} of {@link TopicId}.
+   * @throws IOException if failed to retrieve topics.
+   */
+  List<TopicId> listTopics(NamespaceId namespaceId) throws IOException;
+
+  /**
    * Prepares to fetch messages from the given topic.
    *
    * @param topicId the topic to fetch message from
@@ -78,32 +89,33 @@ public interface MessagingService {
   /**
    * Publishes a list of messages to the messaging system.
    *
-   * @param topicId topic to publish to
-   * @param messages the {@link StoreRequest} containing messages to be published
+   * @param request the {@link StoreRequest} containing messages to be published
+   * @return if the store request is transactional, then returns a {@link RollbackDetail} containing
+   *         information for rollback; otherwise {@code null} will be returned.
    * @throws TopicNotFoundException if the topic doesn't exist
    * @throws IOException if failed to publish messages
    */
-  MessageRollback publish(TopicId topicId, StoreRequest messages) throws TopicNotFoundException, IOException;
+  @Nullable
+  RollbackDetail publish(StoreRequest request) throws TopicNotFoundException, IOException;
 
   /**
    * Stores a list of messages to the messaging system. It is for long / distributed transactional publishing use case.
    *
-   * @param topicId topic to store under
-   * @param messages the {@link StoreRequest} containing messages to be stored
+   * @param request the {@link StoreRequest} containing messages to be stored
    * @throws TopicNotFoundException if the topic doesn't exist
    * @throws IOException if failed to store messages
    */
-  void storePayload(TopicId topicId, StoreRequest messages) throws TopicNotFoundException, IOException;
+  void storePayload(StoreRequest request) throws TopicNotFoundException, IOException;
 
   /**
    * Rollbacks messages published to the given topic with the given transaction.
    *
    * @param topicId the topic where the messages were published under
-   * @param rollbackInfo the {@link MessageRollback} as returned by the
-   *                     {@link #publish(TopicId, StoreRequest)} call,
+   * @param rollbackDetail the {@link RollbackDetail} as returned by the
+   *                     {@link #publish(StoreRequest)} call,
    *                     which contains information needed for the rollback
    * @throws TopicNotFoundException if the topic doesn't exist
    * @throws IOException if failed to rollback changes
    */
-  void rollback(TopicId topicId, MessageRollback rollbackInfo) throws TopicNotFoundException, IOException;
+  void rollback(TopicId topicId, RollbackDetail rollbackDetail) throws TopicNotFoundException, IOException;
 }

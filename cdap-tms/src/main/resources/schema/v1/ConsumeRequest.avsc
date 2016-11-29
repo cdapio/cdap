@@ -1,0 +1,10 @@
+{
+  "type" : "record",
+  "name" : "ConsumeRequest",
+  "fields" : [
+    { "name" : "startFrom", "type" : [ "bytes", "long", "null" ] },
+    { "name" : "inclusive", "type" : "boolean", "default" : true },
+    { "name" : "limit", "type" : [ "int", "null" ] },
+    { "name" : "transaction", "type" : [ "bytes", "null" ] }
+  ]
+}

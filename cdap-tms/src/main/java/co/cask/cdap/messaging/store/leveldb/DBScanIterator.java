@@ -29,7 +29,7 @@ import javax.annotation.Nullable;
 /**
  * LevelDB Table Scan Iterator that takes in optional startKey and stopKey.
  */
-class DBScanIterator extends AbstractCloseableIterator<Map.Entry<byte[], byte[]>> {
+final class DBScanIterator extends AbstractCloseableIterator<Map.Entry<byte[], byte[]>> {
   private final DBIterator iterator;
   private final byte[] stopKey;
 

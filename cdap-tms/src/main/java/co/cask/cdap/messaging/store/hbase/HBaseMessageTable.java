@@ -44,7 +44,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * HBase implementation of {@link MessageTable}.
  */
-public class HBaseMessageTable extends AbstractMessageTable {
+final class HBaseMessageTable extends AbstractMessageTable {
   private static final byte[] PAYLOAD_COL = Bytes.toBytes('p');
   private static final byte[] TX_COL = Bytes.toBytes('t');
   private static final int SCAN_CACHE_ROWS = 1000;
@@ -55,8 +55,8 @@ public class HBaseMessageTable extends AbstractMessageTable {
   private final AbstractRowKeyDistributor rowKeyDistributor;
   private final ExecutorService scanExecutor;
 
-  public HBaseMessageTable(HBaseTableUtil tableUtil, HTable hTable, byte[] columnFamily,
-                           AbstractRowKeyDistributor rowKeyDistributor, ExecutorService scanExecutor) {
+  HBaseMessageTable(HBaseTableUtil tableUtil, HTable hTable, byte[] columnFamily,
+                    AbstractRowKeyDistributor rowKeyDistributor, ExecutorService scanExecutor) {
     this.tableUtil = tableUtil;
     this.hTable = hTable;
     this.columnFamily = Arrays.copyOf(columnFamily, columnFamily.length);

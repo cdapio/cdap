@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.service;
+package co.cask.cdap.messaging;
 
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.collect.AbstractIterator;
@@ -69,7 +69,7 @@ public abstract class StoreRequest extends AbstractIterator<byte[]> {
   }
 
   /**
-   * Returns the next message payloads and return {@code null} to signal the end of payload messages. If this
+   * Returns the next message payloads or return {@code null} to signal the end of payload messages. If this
    * method returns {@code null} on the first time being called, it means this {@link StoreRequest} represents
    * a message table entry that reference to payload table. It requires {@link #isTransactional()} returns
    * {@code true} and {@link #getTransactionWritePointer()} should return the transaction write pointer for

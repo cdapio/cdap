@@ -41,7 +41,7 @@ import javax.annotation.Nullable;
 /**
  * LevelDB implementation of {@link MetadataTable}.
  */
-public class LevelDBMetadataTable implements MetadataTable {
+final class LevelDBMetadataTable implements MetadataTable {
 
   private static final Gson GSON = new Gson();
   private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
@@ -49,7 +49,7 @@ public class LevelDBMetadataTable implements MetadataTable {
 
   private final DB levelDB;
 
-  public LevelDBMetadataTable(DB levelDB) throws IOException {
+  LevelDBMetadataTable(DB levelDB) throws IOException {
     this.levelDB = levelDB;
   }
 

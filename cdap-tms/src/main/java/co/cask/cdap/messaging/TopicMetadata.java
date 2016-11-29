@@ -29,19 +29,33 @@ import java.util.Objects;
  */
 public class TopicMetadata {
 
-  private static final String TTL_KEY = "ttl";
+  public static final String TTL_KEY = "ttl";
 
   private final TopicId topicId;
   private final Map<String, String> properties;
+  private final boolean validated;
 
   /**
    * Creates a new instance for the given topic with the associated properties.
    */
   public TopicMetadata(TopicId topicId, Map<String, String> properties) {
-    validateProperties(topicId, properties);
+    this(topicId, properties, false);
+  }
 
+  /**
+   * Creates a new instance for the given topic with the associated properties.
+   * The properties provided can optionally be validated to see if it contains valid
+   * values for all required properties.
+   *
+   * @throws IllegalArgumentException if {@code validate} is {@code true} and the provided properties is not valid.
+   */
+  public TopicMetadata(TopicId topicId, Map<String, String> properties, boolean validate) {
     this.topicId = topicId;
     this.properties = ImmutableMap.copyOf(properties);
+    if (validate) {
+      validateProperties();
+    }
+    this.validated = validate;
   }
 
   /**
@@ -73,6 +87,9 @@ public class TopicMetadata {
    * Returns the time-to-live in seconds property of the topic.
    */
   public long getTTL() {
+    if (!validated) {
+      validateTTL();
+    }
     return Integer.parseInt(properties.get(TTL_KEY));
   }
 
@@ -106,8 +123,8 @@ public class TopicMetadata {
    *
    * @throws IllegalArgumentException if any required properties is missing or having invalid values
    */
-  private void validateProperties(TopicId topicId, Map<String, String> properties) {
-    validateTTL(topicId, properties);
+  private void validateProperties() {
+    validateTTL();
   }
 
   /**
@@ -115,7 +132,7 @@ public class TopicMetadata {
    *
    * @throws IllegalArgumentException if the ttl value is missing, not a number or <= 0.
    */
-  private void validateTTL(TopicId topicId, Map<String, String> properties) {
+  private void validateTTL() {
     String ttl = properties.get(TTL_KEY);
     if (ttl == null) {
       throw new IllegalArgumentException("Missing ttl property from the metadata of topic " + topicId);

@@ -25,6 +25,8 @@ import co.cask.cdap.messaging.store.MessageTable;
 import co.cask.cdap.messaging.store.PayloadTable;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.base.Throwables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;
@@ -37,120 +39,29 @@ import javax.annotation.Nullable;
  */
 final class CoreMessageFetcher extends MessageFetcher {
 
-  private final TopicMetadata topicMetadata;
-  private final MessageTable messageTable;
-  private final PayloadTable payloadTable;
+  private static final Logger LOG = LoggerFactory.getLogger(CoreMessageFetcher.class);
 
-  CoreMessageFetcher(TopicMetadata topicMetadata, MessageTable messageTable, PayloadTable payloadTable) {
+  private final TopicMetadata topicMetadata;
+  private final TableProvider<MessageTable> messageTableProvider;
+  private final TableProvider<PayloadTable> payloadTableProvider;
+
+  CoreMessageFetcher(TopicMetadata topicMetadata,
+                     TableProvider<MessageTable> messageTableProvider,
+                     TableProvider<PayloadTable> payloadTableProvider) {
     this.topicMetadata = topicMetadata;
-    this.messageTable = messageTable;
-    this.payloadTable = payloadTable;
+    this.messageTableProvider = messageTableProvider;
+    this.payloadTableProvider = payloadTableProvider;
   }
 
   @Override
   public CloseableIterator<Message> fetch() throws IOException {
-    final TopicId topicId = topicMetadata.getTopicId();
-    long ttl = topicMetadata.getTTL();
-
-    MessageId startOffset = getStartOffset();
-    Long startTime = getStartTime();
-
-    // Lower bound of messages that are still valid
-    long smallestPublishTime = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(ttl);
-
-    final CloseableIterator<MessageTable.Entry> messageIterator;
-    // If there is no startOffset or if the publish time in the startOffset is smaller then TTL,
-    // do the scanning based on time. The smallest start time should be the currentTime - TTL.
-    if (startOffset == null || startOffset.getPublishTimestamp() < smallestPublishTime) {
-      long fetchStartTime = Math.max(smallestPublishTime, startTime == null ? smallestPublishTime : startTime);
-      messageIterator = messageTable.fetch(topicId, fetchStartTime, getLimit(), getTransaction());
-    } else {
-      // Start scanning based on the start message id
-      if (startOffset.getPayloadWriteTimestamp() != 0L) {
-        // This message ID refer to payload table. We scan the message table with the reference message ID inclusively.
-        messageIterator = messageTable.fetch(topicId, createMessageTableMessageId(startOffset),
-                                             true, getLimit(), getTransaction());
-      } else {
-        messageIterator = messageTable.fetch(topicId, startOffset, isIncludeStart(), getLimit(), getTransaction());
-      }
+    MessageTable messageTable = messageTableProvider.get();
+    try {
+      return new MessageCloseableIterator(messageTable);
+    } catch (Throwable t) {
+      closeQuietly(messageTable);
+      throw t;
     }
-
-    return new CloseableIterator<Message>() {
-
-      private Message nextMessage;
-      private MessageTable.Entry messageEntry;
-      private CloseableIterator<PayloadTable.Entry> payloadIterator;
-      private boolean inclusive = isIncludeStart();
-      private int messageLimit = getLimit();
-
-      @Override
-      public boolean hasNext() {
-        if (messageLimit <= 0) {
-          return false;
-        }
-
-        // Find the next message
-        while (nextMessage == null) {
-          // If there is a payload iterator and is not empty, read the next message from the it
-          if (payloadIterator != null && payloadIterator.hasNext()) {
-            PayloadTable.Entry payloadEntry = payloadIterator.next();
-            // messageEntry is guaranteed to be non-null if payloadIterator is non-null
-            nextMessage = new Message(createMessageId(messageEntry, payloadEntry), payloadEntry.getPayload());
-            break;
-          }
-
-          // If there is no payload iterator or it has been exhausted, read the next message from the message iterator
-          if (messageIterator.hasNext()) {
-            messageEntry = messageIterator.next();
-            if (messageEntry.isPayloadReference()) {
-              // If the message entry is a reference to payload table, create the payload iterator
-              try {
-                payloadIterator = payloadTable.fetch(topicId, messageEntry.getTransactionWritePointer(),
-                                                     createMessageId(messageEntry, null),
-                                                     inclusive, messageLimit);
-              } catch (IOException e) {
-                throw Throwables.propagate(e);
-              }
-            } else {
-              // Otherwise, the message entry is the next message
-              nextMessage = new Message(createMessageId(messageEntry, null), messageEntry.getPayload());
-            }
-          } else {
-            // If there is no more message from the message iterator as well, then no more message to fetch
-            break;
-          }
-        }
-        inclusive = true;
-        return nextMessage != null;
-      }
-
-      @Override
-      public Message next() {
-        if (!hasNext()) {
-          throw new NoSuchElementException("No more message from " + topicId);
-        }
-        Message message = nextMessage;
-        nextMessage = null;
-        messageLimit--;
-        return message;
-      }
-
-      @Override
-      public void remove() {
-        throw new UnsupportedOperationException("Remove is not supported");
-      }
-
-      @Override
-      public void close() {
-        try {
-          if (payloadIterator != null) {
-            payloadIterator.close();
-          }
-        } finally {
-          messageIterator.close();
-        }
-      }
-    };
   }
 
   /**
@@ -179,5 +90,137 @@ final class CoreMessageFetcher extends MessageFetcher {
     MessageId.putRawId(messageEntry.getPublishTimestamp(), messageEntry.getSequenceId(),
                        writeTimestamp, payloadSeqId, rawId, 0);
     return new MessageId(rawId);
+  }
+
+  /**
+   * Calls the {@link AutoCloseable#close()} on the given {@link AutoCloseable} without throwing exception.
+   * If there is exception raised, it will be logged but never thrown out.
+   */
+  private void closeQuietly(@Nullable AutoCloseable closeable) {
+    if (closeable == null) {
+      return;
+    }
+    try {
+      closeable.close();
+    } catch (Throwable t) {
+      LOG.warn("Exception raised when closing Closeable {}", closeable, t);
+    }
+  }
+
+  /**
+   * A {@link CloseableIterator} of {@link Message} implementation that contains the core message fetching logic
+   * by combine scanning on both {@link MessageTable} and {@link PayloadTable}.
+   */
+  private final class MessageCloseableIterator implements CloseableIterator<Message> {
+
+    private final CloseableIterator<MessageTable.Entry> messageIterator;
+    private final TopicId topicId;
+    private final MessageTable messageTable;
+    private Message nextMessage;
+    private MessageTable.Entry messageEntry;
+    private CloseableIterator<PayloadTable.Entry> payloadIterator;
+    private boolean inclusive;
+    private int messageLimit;
+    private PayloadTable payloadTable;
+
+    MessageCloseableIterator(MessageTable messageTable) throws IOException {
+      this.topicId = topicMetadata.getTopicId();
+      this.messageTable = messageTable;
+      this.inclusive = isIncludeStart();
+      this.messageLimit = getLimit();
+
+      long ttl = topicMetadata.getTTL();
+      MessageId startOffset = getStartOffset();
+      Long startTime = getStartTime();
+
+      // Lower bound of messages that are still valid
+      long smallestPublishTime = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(ttl);
+
+      CloseableIterator<MessageTable.Entry> messageIterator;
+      // If there is no startOffset or if the publish time in the startOffset is smaller then TTL,
+      // do the scanning based on time. The smallest start time should be the currentTime - TTL.
+      if (startOffset == null || startOffset.getPublishTimestamp() < smallestPublishTime) {
+        long fetchStartTime = Math.max(smallestPublishTime, startTime == null ? smallestPublishTime : startTime);
+        messageIterator = messageTable.fetch(topicId, fetchStartTime, messageLimit, getTransaction());
+      } else {
+        // Start scanning based on the start message id
+        if (startOffset.getPayloadWriteTimestamp() != 0L) {
+          // This message ID refer to payload table. Scan the message table with the reference message ID inclusively.
+          messageIterator = messageTable.fetch(topicId, createMessageTableMessageId(startOffset),
+                                               true, messageLimit, getTransaction());
+        } else {
+          messageIterator = messageTable.fetch(topicId, startOffset, isIncludeStart(), messageLimit, getTransaction());
+        }
+      }
+      this.messageIterator = messageIterator;
+    }
+
+    @Override
+    public boolean hasNext() {
+      if (messageLimit <= 0) {
+        return false;
+      }
+
+      // Find the next message
+      while (nextMessage == null) {
+        // If there is a payload iterator and is not empty, read the next message from the it
+        if (payloadIterator != null && payloadIterator.hasNext()) {
+          PayloadTable.Entry payloadEntry = payloadIterator.next();
+          // messageEntry is guaranteed to be non-null if payloadIterator is non-null
+          nextMessage = new Message(createMessageId(messageEntry, payloadEntry), payloadEntry.getPayload());
+          break;
+        }
+
+        // If there is no payload iterator or it has been exhausted, read the next message from the message iterator
+        if (messageIterator.hasNext()) {
+          messageEntry = messageIterator.next();
+          if (messageEntry.isPayloadReference()) {
+            // If the message entry is a reference to payload table, create the payload iterator
+            try {
+              if (payloadTable == null) {
+                payloadTable = payloadTableProvider.get();
+              }
+              payloadIterator = payloadTable.fetch(topicId, messageEntry.getTransactionWritePointer(),
+                                                   createMessageId(messageEntry, null),
+                                                   inclusive, messageLimit);
+            } catch (IOException e) {
+              throw Throwables.propagate(e);
+            }
+          } else {
+            // Otherwise, the message entry is the next message
+            nextMessage = new Message(createMessageId(messageEntry, null), messageEntry.getPayload());
+          }
+        } else {
+          // If there is no more message from the message iterator as well, then no more message to fetch
+          break;
+        }
+      }
+      inclusive = true;
+      return nextMessage != null;
+    }
+
+    @Override
+    public Message next() {
+      if (!hasNext()) {
+        throw new NoSuchElementException("No more message from " + topicId);
+      }
+      Message message = nextMessage;
+      nextMessage = null;
+      messageLimit--;
+      return message;
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException("Remove is not supported");
+    }
+
+    @Override
+    public void close() {
+      closeQuietly(payloadIterator);
+      closeQuietly(messageIterator);
+      closeQuietly(payloadTable);
+      closeQuietly(messageTable);
+    }
   }
 }
