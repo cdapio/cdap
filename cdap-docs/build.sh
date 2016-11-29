@@ -201,7 +201,7 @@ function build_javadocs() {
       echo_set_message "Error building Javadocs: ${warnings}"
     fi
   else
-    echo_set_message "Error building Javadocs: Maven clean install: ${warnings}"
+    echo_set_message "Error building Javadocs: Maven clean package: ${warnings}"
   fi
   display_end_title ${title}
   return ${warnings}
