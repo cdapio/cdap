@@ -120,9 +120,9 @@ function _build_docs() {
   local title=${2}
   display_start_title "${title}"
 
-  clean_targets
   clear_messages_file
   if [[ ${type} == "docs_set" ]] || [[ ${type} == "docs_web_only" ]]; then
+    clean_targets
     build_docs_first_pass
     clear_messages_file
     if [[ ${type} == "docs_set" ]]; then
