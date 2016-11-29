@@ -122,6 +122,7 @@ function build_docs() {
   cd ${SCRIPT_PATH}
   check_includes
   ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} ${google_tag} ${SOURCE} ${TARGET}/${HTML}
+  build_extras
   consolidate_messages
 }
 
@@ -134,7 +135,6 @@ function build_docs_local() {
 
 function build_web() {
   build_docs ${GOOGLE_TAG_MANAGER_CODE}
-  build_extras
 }
 
 function build_extras() {
@@ -276,7 +276,7 @@ function copy_license_pdfs() {
 }
 
 function set_environment() {
-  source ${PROJECT_PATH}/cdap-common/bin/functions.sh
+  source ${PROJECT_PATH}/cdap-common/bin/common.sh
   if [[ ${OSTYPE} == "darwin"* ]]; then
     # NOTE: hard-coded Java version 1.7
     export JAVA_HOME=$(/usr/libexec/java_home -v 1.7)
