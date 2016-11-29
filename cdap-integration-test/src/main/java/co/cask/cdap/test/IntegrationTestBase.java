@@ -216,24 +216,29 @@ public abstract class IntegrationTestBase {
    * @throws TimeoutException if a timeout occurs while getting an access token
    */
   protected AccessToken fetchAccessToken() throws IOException, TimeoutException, InterruptedException {
+    String name = System.getProperty("cdap.username");
+    String password = System.getProperty("cdap.password");
+    return fetchAccessToken(name, password);
+  }
+
+  protected AccessToken fetchAccessToken(String username, String password) throws IOException,
+    TimeoutException, InterruptedException {
     Properties properties = new Properties();
-    properties.setProperty("security.auth.client.username", System.getProperty("cdap.username"));
-    properties.setProperty("security.auth.client.password", System.getProperty("cdap.password"));
+    properties.setProperty("security.auth.client.username", username);
+    properties.setProperty("security.auth.client.password", password);
     final AuthenticationClient authClient = new BasicAuthenticationClient();
     authClient.configure(properties);
     ConnectionConfig connectionConfig = getClientConfig().getConnectionConfig();
     authClient.setConnectionInfo(connectionConfig.getHostname(), connectionConfig.getPort(), false);
-
     checkServicesWithRetry(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
         return authClient.getAccessToken() != null;
       }
-    }, "Unable to connect to Authentication service to obtain access token, Connection info : " + connectionConfig);
-
+    }, "Unable to connect to Authentication service to obtain access token, Connection info : "
+      + connectionConfig);
     return authClient.getAccessToken();
   }
-
 
   private void checkServicesWithRetry(Callable<Boolean> callable,
                                       String exceptionMessage) throws TimeoutException, InterruptedException {
@@ -297,12 +302,17 @@ public abstract class IntegrationTestBase {
   }
 
   protected ClientConfig getClientConfig() {
+    AccessToken accessToken = getAccessToken();
+    return getClientConfig(accessToken);
+  }
+
+  protected ClientConfig getClientConfig(@Nullable AccessToken accessToken) {
     ClientConfig.Builder builder = new ClientConfig.Builder();
     builder.setConnectionConfig(InstanceURIParser.DEFAULT.parse(
       URI.create(getInstanceURI()).toString()));
 
-    if (getAccessToken() != null) {
-      builder.setAccessToken(getAccessToken());
+    if (accessToken != null) {
+      builder.setAccessToken(accessToken);
     }
 
     String verifySSL = System.getProperty("verifySSL");
