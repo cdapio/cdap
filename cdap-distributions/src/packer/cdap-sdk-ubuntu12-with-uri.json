@@ -145,7 +145,7 @@
     {
       "type": "chef-solo",
       "remote_cookbook_paths": "/var/chef/cookbooks",
-      "run_list": "recipe[cdap::sdk]",
+      "run_list": "recipe[openssh],recipe[cdap::sdk]",
       "skip_install": true,
       "json": {
         "cdap": {
@@ -154,6 +154,13 @@
           "sdk": {
             "comment": "COPY SDK ZIP TO files/cdap-sdk.zip BEFORE RUNNING ME",
             "url": "file:///tmp/cdap-sdk.zip"
+          }
+        },
+        "openssh": {
+          "server": {
+            "permit_root_login": "without-password",
+            "password_authentication": "no",
+            "use_dns": "no"
           }
         }
       }
@@ -177,13 +184,15 @@
         "scripts/remove-chef.sh",
         "scripts/sdk-cleanup.sh",
         "scripts/network-cleanup.sh",
-        "scripts/apt-cleanup.sh",
-        "scripts/random-root-password.sh"
+        "scripts/apt-cleanup.sh"
       ]
     },
     {
       "type": "shell",
-      "scripts": "scripts/zero-disk.sh",
+      "scripts": [
+        "scripts/random-root-password.sh",
+        "scripts/zero-disk.sh"
+      ],
       "only": ["cdap-sdk-vm"]
     },
     {
