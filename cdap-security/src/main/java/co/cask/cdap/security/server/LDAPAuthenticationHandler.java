@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,13 +16,11 @@
 
 package co.cask.cdap.security.server;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import com.google.common.base.Throwables;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
-import com.google.inject.Inject;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.security.auth.login.AppConfigurationEntry;
@@ -32,6 +30,7 @@ import javax.security.auth.login.Configuration;
  * An Authentication handler that authenticates against a LDAP server instance for External Authentication.
  */
 public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
+
   private static final List<String> mandatoryConfigurables = ImmutableList.of("debug", "hostname", "port", "userBaseDn",
                                                                               "userRdnAttribute", "userObjectClass");
 
@@ -39,15 +38,8 @@ public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
                                                                              "userIdAttribute", "userPasswordAttribute",
                                                                              "roleBaseDn", "roleNameAttribute",
                                                                              "roleMemberAttribute", "roleObjectClass");
-  private static boolean ldapSSLVerifyCertificate = true;
 
-  /**
-   * Create a new Authentication handler to use LDAP for external authentication.
-   */
-  @Inject
-  public LDAPAuthenticationHandler(CConfiguration configuration) throws Exception {
-    super(configuration);
-  }
+  private static boolean ldapSSLVerifyCertificate = true;
 
   /**
    * Create a configuration from properties. Allows optional configurables.
@@ -57,37 +49,35 @@ public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
     return new Configuration() {
       @Override
       public AppConfigurationEntry[] getAppConfigurationEntry(String s) {
-        Map<String, String> map = Maps.newHashMap();
+        Map<String, String> map = new HashMap<>();
         map.put("contextFactory", "com.sun.jndi.ldap.LdapCtxFactory");
         map.put("authenticationMethod", "simple");
         map.put("forceBindingLogin", "true");
 
-        String authConfigBase = Constants.Security.AUTH_HANDLER_CONFIG_BASE;
-        for (String configurable : mandatoryConfigurables) {
-          String key = authConfigBase.concat(configurable);
-          String value = configuration.get(key);
-          if (value == null) {
-            String errorMessage = String.format("Mandatory configuration %s is not set.", key);
-            throw Throwables.propagate(new RuntimeException(errorMessage));
-          }
-          map.put(configurable, value);
-        }
+        copyProperties(handlerProps, map, mandatoryConfigurables, true);
+        copyProperties(handlerProps, map, optionalConfigurables, false);
 
-        for (String configurable: optionalConfigurables) {
-          String value = configuration.get(authConfigBase.concat(configurable));
-          if (value != null) {
-            map.put(configurable, value);
-          }
-        }
-
-        ldapSSLVerifyCertificate = configuration.getBoolean(authConfigBase.concat("ldapsVerifyCertificate"), true);
+        String ldapsVerifyCertificate = handlerProps.get("ldapsVerifyCertificate");
+        ldapSSLVerifyCertificate = Boolean.parseBoolean(Objects.firstNonNull(ldapsVerifyCertificate, "true"));
 
         return new AppConfigurationEntry[] {
-          new AppConfigurationEntry(configuration.get(Constants.Security.LOGIN_MODULE_CLASS_NAME),
+          new AppConfigurationEntry(handlerProps.get(Constants.Security.LOGIN_MODULE_CLASS_NAME),
                                     AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, map)
         };
       }
     };
+  }
+
+  private void copyProperties(Map<String, String> fromMap, Map<String, String> toMap,
+                              List<String> keys, boolean mandatory) {
+    for (String key : keys) {
+      String value = fromMap.get(key);
+      if (value != null) {
+        toMap.put(key, value);
+      } else if (mandatory) {
+        throw new RuntimeException(String.format("Mandatory configuration %s is not set.", key));
+      }
+    }
   }
 
   static boolean getLdapSSLVerifyCertificate() {
