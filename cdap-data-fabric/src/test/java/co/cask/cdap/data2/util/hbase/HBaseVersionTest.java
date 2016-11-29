@@ -58,4 +58,29 @@ public class HBaseVersionTest {
     Assert.assertNull(versionNumber.getClassifier());
     Assert.assertFalse(versionNumber.isSnapshot());
   }
+
+  @Test
+  public void testHBaseVersionToCompatMapping() throws ParseException {
+    // test the mapping from hbase version to the compat module we use for that version
+    assertCompatModuleMapping(HBaseVersion.Version.HBASE_96, "0.96.1.1");
+    assertCompatModuleMapping(HBaseVersion.Version.HBASE_98, "0.98.1");
+    assertCompatModuleMapping(HBaseVersion.Version.HBASE_98, "0.98.6");
+    assertCompatModuleMapping(HBaseVersion.Version.HBASE_10, "1.0.0");
+
+    assertCompatModuleMapping(HBaseVersion.Version.HBASE_10_CDH, "1.0.0-cdh5.4.4");
+    assertCompatModuleMapping(HBaseVersion.Version.HBASE_10_CDH55, "1.0.0-cdh5.5.2");
+    assertCompatModuleMapping(HBaseVersion.Version.HBASE_10_CDH56, "1.0.0-cdh5.6.1");
+    assertCompatModuleMapping(HBaseVersion.Version.HBASE_11, "1.1.1");
+    assertCompatModuleMapping(HBaseVersion.Version.HBASE_11, "1.2.0-IBM-7");
+
+    assertCompatModuleMapping(HBaseVersion.Version.HBASE_12_CDH57, "1.2.0-cdh5.7.1");
+    assertCompatModuleMapping(HBaseVersion.Version.HBASE_12_CDH57, "1.2.0-cdh5.7.1-SNAPSHOT");
+    assertCompatModuleMapping(HBaseVersion.Version.HBASE_12_CDH57, "1.2.0-cdh5.8.2");
+    assertCompatModuleMapping(HBaseVersion.Version.HBASE_12_CDH57, "1.2.0-cdh5.9.0");
+  }
+
+  private void assertCompatModuleMapping(HBaseVersion.Version expectedCompatModule,
+                                         String hbaseVersion) throws ParseException {
+    Assert.assertEquals(expectedCompatModule, HBaseVersion.determineVersionFromVersionString(hbaseVersion));
+  }
 }

@@ -44,9 +44,21 @@
     {
       "type": "amazon-ebs",
       "ami_name": "CDAP SDK {{user `sdk_version`}} ({{timestamp}})",
+<<<<<<< HEAD
       "instance_type": "m4.large",
       "region": "us-east-1",
       "source_ami": "ami-42d6fb55",
+=======
+      "instance_type": "m1.medium",
+      "region": "us-east-1",
+      "source_ami": "ami-a488dbb3",
+      "ami_groups": ["all"],
+      "ami_regions": [
+        "us-east-1",
+        "us-west-1",
+        "us-west-2"
+      ],
+>>>>>>> release/3.6
       "ssh_username": "ubuntu",
       "name": "cdap-sdk-ami"
     }
