@@ -53,11 +53,6 @@ function build_extras() {
   if [[ -n ${USING_JAVADOCS} ]]; then
     echo "Copying Javadocs."
     rm -rf ${TARGET_PATH}/html/javadocs
-    warnings=$?
-    if [[ ${warnings} -ne 0 ]]; then
-      set_message "Unable to remove existing Javadocs"
-      return ${warnings}
-    fi
     cp -r ${API_JAVADOCS} ${TARGET_PATH}/html/.
     warnings=$?
     if [[ ${warnings} -ne 0 ]]; then
