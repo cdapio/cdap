@@ -703,6 +703,14 @@
   </property>
 
   <property>
+    <name>explore.container.yarn.app.classpath.first</name>
+    <value>false</value>
+    <description>
+      Controls whether the yarn app classpath comes before the query engine classpath or not.
+    </description>
+  </property>
+
+  <property>
     <name>explore.enabled</name>
     <value>true</value>
     <description>

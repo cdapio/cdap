@@ -3,6 +3,7 @@
     "cdap_site": {
       "dashboard.bind.port": "11011",
       "explore.enabled": "{{EXPLORE_ENABLED}}",
+      "explore.container.yarn.app.classpath.first": "true",
       "http.client.read.timeout.ms": "120000",
       "kafka.log.dir": "/mnt/cdap/kafka-logs",
       "master.startup.checks.enabled": "false",
