@@ -18,4 +18,7 @@
 rm -f /etc/ssh/*_key /etc/ssh/*_key.pub
 rm -f /root/.ssh/authorized_keys* /home/*/.ssh/authorized_keys*
 
+# Lock root
+passwd -l root
+
 exit 0
