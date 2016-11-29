@@ -52,15 +52,34 @@ function build_extras() {
 
   if [[ -n ${USING_JAVADOCS} ]]; then
     echo "Copying Javadocs."
-    rm -rf ${TARGET_PATH}/${HTML}/javadocs
-    cp -r ${API_JAVADOCS} ${TARGET_PATH}/${HTML}/.
-    mv -f ${TARGET_PATH}/${HTML}/${API_DOCS} ${TARGET_PATH}/${HTML}/javadocs
+    rm -rf ${TARGET_PATH}/html/javadocs
+    cp -r ${API_JAVADOCS} ${TARGET_PATH}/html/.
+    warnings=$?
+    if [[ ${warnings} -ne 0 ]]; then
+      set_message "Unable to copy new Javadocs"
+      return ${warnings}
+    fi
+    mv -f ${TARGET_PATH}/html/${API_DOCS} ${TARGET_PATH}/html/javadocs
+    warnings=$?
+    if [[ ${warnings} -ne 0 ]]; then
+      set_message "Unable to move new Javadocs into place"
+      return ${warnings}
+    fi
+    echo "Copied Javadocs."
   else
     echo "Not using Javadocs."
   fi
 
-  echo "Copying license PDFs."
-  cp ${SCRIPT_PATH}/${LICENSES_PDF}/*.pdf ${TARGET_PATH}/${HTML}/licenses
+  cp ${SCRIPT_PATH}/licenses-pdf/*.pdf ${TARGET_PATH}/html/licenses
+  warnings=$?
+  if [[ ${warnings} -eq 0 ]]; then
+    echo "Copied license PDFs."
+  else
+    local m="Error ${warnings} copying license PDFs."
+    echo_red_bold "${m}"
+    set_message "${m}"
+    return ${warnings}
+  fi
 }
 
 run_command ${1}
