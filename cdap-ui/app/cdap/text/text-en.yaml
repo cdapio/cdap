@@ -118,6 +118,7 @@ features:
       metrics_processor: Metrics Processor
       dataset_executor: Dataset Executor
       metadata_service: Metadata Service
+      remote_system_operation: Remote System Operation
       streams: Streams
       explore_service: Explore Service
       metrics: Metrics
@@ -148,8 +149,8 @@ features:
         resources: Resources
       labels:
         Accepted: Accepted
-        available: Available
-        corrupt: Corrupt
+        RemainingBytes: Available
+        CorruptBlocks: Corrupt Blocks
         deadRegionServers: Dead Region Servers
         Failed: Failed
         Finished: Finished
@@ -164,22 +165,23 @@ features:
         NewNodes: New Nodes
         NewContainers: New Containers
         masters: Masters
-        missing: Missing
+        MissingBlocks: Missing Blocks
+        Namenodes: Namenodes
         namespaces: Namespaces
-        namepsaces: Namespaces
         Running: Running
         rebooted: Rebooted
         Stopped: Stopped
         Submitted: Submitted
         tables: Tables
         Total: Total
+        TotalBytes: Total
         TotalNodes: Total Nodes
         TotalContainers: Total Containers
         TotalMemory: Total Memory
         TotalVCores: Total Virtual Cores
         totalRegionServers: Total Region Servers
-        underreplicated: Underreplicated
-        used: Used
+        UnderReplicatedBlocks: Under Replicated Blocks
+        UsedBytes: Used
         UsedMemory: Used Memory
         UsedVCores: Used Virtual Cores
         UnusableNodes: Unusable Nodes

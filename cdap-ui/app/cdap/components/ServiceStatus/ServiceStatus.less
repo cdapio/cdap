@@ -14,14 +14,14 @@
  * the License.
  */
 @import '../../styles/variables.less';
-@circle-dimension: 20px;
+@circle-dimension: 15px;
 @circle-margin: 4px;
 @circle-top-offset: 2px;
 
 .service-status {
-  padding-top: 8px;
-  margin-left: 14px;
-  width: 190px;
+  padding-top: 5px;
+  margin-left: 15px;
+  width: 209px;
   display: inline-block;
   cursor: pointer;
   position: relative;
@@ -76,8 +76,8 @@
       outline: none;
       color: #333;
       position: absolute;
-      left: -183.5px;
-      top: -9px;
+      left: -202.5px;
+      top: -8px;
       border: none;
       margin: 0;
       width: 200px;
@@ -141,6 +141,7 @@
       .status-label {
         color: #000;
         font-weight: bold;
+        margin-left: 19px;
       }
 
       .fa-file-text {
@@ -151,6 +152,10 @@
         background-color: #ccc;
       }
     }
+  }
+
+  .circle-dropdown-active {
+    z-index: 1500;
   }
 
   .status-circle-green {
@@ -170,7 +175,6 @@
     .fa-spinner {
       color: white;
     }
-
   }
 
   .status-circle-yellow {
@@ -208,7 +212,7 @@
 
   .status-label {
     display: inline-block;
-    margin-left: 10px;
+    margin-left: 4px;
     font-size: 14px;
     font-weight: bold;
     color: #ffffff;

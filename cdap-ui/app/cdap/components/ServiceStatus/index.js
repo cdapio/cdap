@@ -139,7 +139,7 @@ export default class ServiceStatus extends Component {
     let red = this.props.status !== 'OK' && !this.props.isLoading;
     let grey = this.props.isLoading;
 
-    let circleClass = classNames({'status-circle-green' : green, 'status-circle-red' : red, "status-circle-grey" : grey});
+    let circleClass = classNames({'status-circle-green' : green, 'status-circle-red' : red, "status-circle-grey" : grey, 'circle-dropdown-active' : this.state.isDropdownOpen});
 
     if(this.state.provisionsLoading){
       circleContent = <span className="fa fa-spinner fa-spin fa-fw" />;
@@ -198,7 +198,6 @@ export default class ServiceStatus extends Component {
             </span>
             <DropdownMenu>
               <div className="dropdown-service-name service-dropdown-item">
-                {statusCircle}
                 <div className="status-label">
                   {T.translate(`features.Management.Services.${this.props.name.split('.').join('_')}`)}
                 </div>

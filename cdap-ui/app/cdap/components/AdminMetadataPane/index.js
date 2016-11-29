@@ -77,7 +77,10 @@ AdminMetadataPane.propTypes = {
     stats: PropTypes.arrayOf(
       PropTypes.shape({
         statName: PropTypes.string,
-        statNum: PropTypes.string
+        statNum: PropTypes.oneOfType([
+          PropTypes.string,
+          PropTypes.number
+        ])
       })
     )
   })

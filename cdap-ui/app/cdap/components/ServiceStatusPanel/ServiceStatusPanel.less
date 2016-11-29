@@ -15,10 +15,14 @@
  */
 @import '../../styles/variables.less';
 
-.service-status-panel {
-  height: 110px;
-  flex-grow: 3;
-  margin-top: 5px;
-  background-color: #1c1e27;
-  overflow: visible;
+.top-panel {
+  .admin-row {
+    div.service-status-panel {
+      overflow-y: auto;
+      height: 110px;
+      flex-grow: 3;
+      margin-top: 5px;
+      background-color: #1c1e27;
+    }
+  }
 }
