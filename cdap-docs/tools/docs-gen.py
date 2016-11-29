@@ -2,7 +2,19 @@
 # -*- coding: utf-8 -*-
 
 #
-# Copyright © 2014 Cask Data, Inc.
+# Copyright © 2014-2016 Cask Data, Inc.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 #
 # Used to generate documentation media files from .rst sources.
 #
@@ -52,11 +64,10 @@ RST2PDF_PAGE_BREAK_TEXT = """.. raw:: pdf
 
 DIRECTIVE_HIGHLIGHT      = ".. highlight::" # Highlight directive, not supported by rst2pdf
 
-from optparse import OptionParser
 import os
 import subprocess
 import sys
-import tempfile
+from optparse import OptionParser
 
 
 def parse_options():
@@ -239,7 +250,7 @@ def get_absolute_path(file_path, name, input_file, func):
 
 def startup_checks():
     if sys.version_info < (2, 7):
-        raise "Must use python 2.7 or greater"
+        raise Exception("Must use python 2.7 or greater")
 
 #
 # Main function
@@ -248,10 +259,10 @@ def startup_checks():
 def main():
     """ Main program entry point.
     """
-    startup_checks()
-    options, input_file = parse_options()
 
     try:
+        startup_checks()
+        options, input_file = parse_options()
         options.logger = log
         if options.generate == "pdf":
             print "PDF generation..."

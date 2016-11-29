@@ -114,7 +114,7 @@ set_remote_dir
 #
 USER=bamboo
 PROJECT_DOCS=${PROJECT}-docs
-ZIP_FILE=${PROJECT}-docs-${VERSION}-web.zip
+ZIP_FILE=${PROJECT}-docs-${VERSION}.zip
 FILE_PATH=${BUILD_WORKING_DIR}/${PROJECT}/${PROJECT_DOCS}/target
 DOCS_SERVERS="${DOCS_SERVER1} ${DOCS_SERVER2}"
 REMOTE_STG_DIR="${REMOTE_STG_BASE}/${PROJECT}"		# e.g. /var/www/html/staging/cdap
