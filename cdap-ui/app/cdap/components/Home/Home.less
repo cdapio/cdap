@@ -15,63 +15,81 @@
  */
 
  /* Animation - Slide in direction of Next */
- .entity-animation--next-enter {
-   transform: translate(110%,0);
-   transition: transform 400ms;
+.entity-animation--next-enter {
+  &:not(h3) {
+    transform: translate(500%,0);
+    opacity: 0.1;
+    &.entity-animation--next-enter-active {
+      transform: translate(0,0);
+      opacity: 1;
+      transition: transform 1000ms, opacity 1000ms;
+    }
+  }
+}
 
-   &.entity-animation--next-enter-active {
-     transform: translate(0,0);
-   }
- }
+.entity-animation--next-appear {
+  &:not(h3) {
+    &.animation--next-appear-active {
+      opacity: 1;
+      transition: opacity 1000ms ease-in;
+    }
+  }
+}
 
- .entity-animation--next-appear {
-   opacity: 0.01;
- }
-
- .entity-animation--next-appear.animation--next-appear-active {
-   opacity: 1;
-   transition: opacity 500ms ease-in;
- }
-
- .entity-animation--next-leave {
-   opacity: 1;
-
-   &.entity-animation--next-leave-active {
-     opacity: 0.01;
-     transition: opacity 500ms ease-in;
-   }
- }
+.entity-animation--next-leave {
+  opacity: 0;
+  &.entity-animation--next-leave-active {
+    transition: opacity 1000ms ease-in;
+  }
+}
 
  /* Animation - Slide in direction of Prev */
- .entity-animation--prev-enter {
-   transform: translate(-110%,0);
-   transition: transform 400ms;
+.entity-animation--prev-enter {
+  &:not(h3) {
+    transform: translate(-500%,0);
+    opacity: 0.1;
+    &.entity-animation--prev-enter-active {
+      transform: translate(0,0);
+      transition: transform 1000ms, opacity 1000ms;
+      opacity: 1;
+    }
+  }
+}
 
-   &.entity-animation--prev-enter-active {
-     transform: translate(0,0);
-   }
- }
+.entity-animation--prev-appear {
+  &:not(h3) {
+    opacity: 0;
+    &.animation--prev-appear-active {
+      opacity: 1;
+      transition: opacity 1000ms ease-in;
+    }
+  }
+}
 
- .entity-animation--prev-leave {
-   opacity: 1;
-
-   &.entity-animation--prev-leave-active {
-     transform: translate(100%, 0);
-   }
- }
+.entity-animation--prev-leave {
+  opacity: 0;
+  &.entity-animation--prev-leave-active {
+    transition: opacity 1000ms ease-in;
+  }
+}
 
 
 .home-content {
-  height: ~"calc(100vh - 100px)";
-  height: ~"-moz-calc(100vh - 100px)";
-  height: ~"-webkit-calc(100vh - 100px)";
+  height: ~"calc(100vh - 132px)";
+  height: ~"-moz-calc(100vh - 132px)";
+  height: ~"-webkit-calc(100vh - 132px)";
   align-items: flex-start;
 
   .entities-container {
     display: flex;
     flex-wrap: wrap;
-    margin-top: 55px;
+    padding: 10px 30px;
 
+    > div {
+      display: flex;
+      flex-wrap: wrap;
+      width: 100%;
+    }
     .entity-card-container {
       margin: 5px;
       -webkit-box-shadow: 0px 1px 10px 0 rgba(0,0,0,0.3);
@@ -93,7 +111,6 @@
     left: 50%;
     transform: translate(-50%, -50%);  color: gray;
   }
-
   .empty-message {
      position: absolute;
      top: 40%;
