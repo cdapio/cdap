@@ -27,7 +27,6 @@
 
 """
 
-from docutils import nodes
 from docutils.writers.html4css1 import HTMLTranslator as BaseTranslator
 
 from sphinx.locale import _

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright © 2014-2015 Cask Data, Inc.
+# Copyright © 2014-2016 Cask Data, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -25,8 +25,8 @@ import os
 import sys
 
 from sphinx.search import js_index
-from sphinx.util.osutil import movefile
 from sphinx.util.console import bold
+from sphinx.util.osutil import movefile
 
 sys.path.append(os.path.abspath('../../_common'))
 from common_conf import setup as _setup

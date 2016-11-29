@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright © 2015 Cask Data, Inc.
+# Copyright © 2015-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -114,7 +114,7 @@ set_remote_dir
 #
 USER=bamboo
 PROJECT_DOCS=${PROJECT}-docs
-ZIP_FILE=${PROJECT}-docs-${VERSION}.zip
+ZIP_FILE=${PROJECT}-docs-${VERSION}-web.zip
 FILE_PATH=${BUILD_WORKING_DIR}/${PROJECT}/${PROJECT_DOCS}/target
 DOCS_SERVERS="${DOCS_SERVER1} ${DOCS_SERVER2}"
 REMOTE_STG_DIR="${REMOTE_STG_BASE}/${PROJECT}"		# e.g. /var/www/html/staging/cdap
