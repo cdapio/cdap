@@ -1,0 +1,20 @@
+{
+  "type" : "record",
+  "name" : "PublishResponse",
+  "fields" : [
+    { "name" : "transactionWritePointer", "type" : [ "long", "null" ] },
+    {
+      "name" : "rollbackRange",
+      "type" : {
+        "type" : "record",
+        "name" : "RollbackRange",
+        "fields" : [
+          { "name" : "startTimestamp", "type" : "long" },
+          { "name" : "startSequenceId", "type" : "int" },
+          { "name" : "endTimestamp", "type" : "long" },
+          { "name" : "endSequenceId", "type" : "int" }
+        ]
+      }
+    }
+  ]
+}

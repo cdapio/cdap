@@ -1103,14 +1103,46 @@
   <!-- Messaging System Configuration -->
 
   <property>
-    <name>messaging.local.data.dir</name>
-    <value>${local.data.dir}/messaging</value>
-    <description>Local storage directory for the Messaging System (only used in Standalone CDAP)</description>
+    <name>messaging.hbase.max.scan.threads</name>
+    <value>48</value>
+    <description>Maximum number of threads used for scanning HBase tables</description>
   </property>
 
   <property>
-    <name>messaging.hbase.max.scan.threads</name>
-    <value>48</value>
+    <name>messaging.http.server.executor.threads</name>
+    <value>0</value>
+    <description>
+      Number of executor threads for the http server in the Messaging System.
+      If set to 0, no executor threads will be used and request is handled directly in the IO thread.
+    </description>
+  </property>
+
+  <property>
+    <name>messaging.http.server.consume.chunk.size</name>
+    <value>60000</value>
+    <description>
+      The rough size in bytes of each chunk streaming back to consumer.
+    </description>
+  </property>
+
+  <property>
+    <name>messaging.http.server.max.request.size.mb</name>
+    <value>10</value>
+    <description>
+      The maximum request content size in MB for each request to the http server in the Messaging System
+    </description>
+  </property>
+
+  <property>
+    <name>messaging.http.server.worker.threads</name>
+    <value>30</value>
+    <description>Number of IO threads used by the http server in the Messaging System.</description>
+  </property>
+
+  <property>
+    <name>messaging.local.data.dir</name>
+    <value>${local.data.dir}/messaging</value>
+    <description>Local storage directory for the Messaging System (only used in Standalone CDAP)</description>
   </property>
 
   <property>
@@ -1147,6 +1179,14 @@
     <name>messaging.table.expiration.seconds</name>
     <value>300</value>
     <description>Number of seconds after which the messaging table cache will expire</description>
+  </property>
+
+  <property>
+    <name>messaging.topic.default.ttl.seconds</name>
+    <value>604800</value>
+    <description>
+      The default time-to-live in seconds for messages in a topic.
+    </description>
   </property>
 
 

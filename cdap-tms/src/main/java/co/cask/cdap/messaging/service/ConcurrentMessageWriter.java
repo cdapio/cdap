@@ -18,7 +18,8 @@ package co.cask.cdap.messaging.service;
 
 import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.api.metrics.NoopMetricsContext;
-import co.cask.cdap.messaging.MessageRollback;
+import co.cask.cdap.messaging.RollbackDetail;
+import co.cask.cdap.messaging.StoreRequest;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 
@@ -93,9 +94,12 @@ final class ConcurrentMessageWriter implements Closeable {
    * is safe to be called concurrently from multiple threads.
    *
    * @param storeRequest contains information about payload to be store
+   * @return if the store request is transactional, then returns a {@link RollbackDetail} containing
+   *         information for rollback; otherwise {@code null} will be returned.
    * @throws IOException if failed to persist the data
    */
-  MessageRollback persist(StoreRequest storeRequest) throws IOException {
+  @Nullable
+  RollbackDetail persist(StoreRequest storeRequest) throws IOException {
     if (closed.get()) {
       throw new IOException("Message writer is already closed");
     }
@@ -113,9 +117,12 @@ final class ConcurrentMessageWriter implements Closeable {
 
     if (pendingStoreRequest.isSuccess()) {
       metricsCollector.increment("persist.success", 1L);
-      return new MessageRollback(pendingStoreRequest.getTransactionWritePointer(),
-                                 pendingStoreRequest.getStartTimestamp(), pendingStoreRequest.getStartSequenceId(),
-                                 pendingStoreRequest.getEndTimestamp(), pendingStoreRequest.getEndSequenceId());
+      if (!pendingStoreRequest.isTransactional()) {
+        return null;
+      }
+      return new SimpleRollbackDetail(pendingStoreRequest.getTransactionWritePointer(),
+                                      pendingStoreRequest.getStartTimestamp(), pendingStoreRequest.getStartSequenceId(),
+                                      pendingStoreRequest.getEndTimestamp(), pendingStoreRequest.getEndSequenceId());
     } else {
       metricsCollector.increment("persist.failure", 1L);
       Throwables.propagateIfInstanceOf(pendingStoreRequest.getFailureCause(), IOException.class);
@@ -217,6 +224,52 @@ final class ConcurrentMessageWriter implements Closeable {
         iterator.next().completed(failureCause);
         iterator.remove();
       }
+    }
+  }
+
+  /**
+   * Straightforward implementation of {@link RollbackDetail}
+   */
+  private static final class SimpleRollbackDetail implements RollbackDetail {
+
+    private final long transactionWritePointer;
+    private final long startTimestamp;
+    private final int startSequenceId;
+    private final long endTimestamp;
+    private final int endSequenceId;
+
+    SimpleRollbackDetail(long transactionWritePointer, long startTimestamp,
+                         int startSequenceId, long endTimestamp, int endSequenceId) {
+      this.transactionWritePointer = transactionWritePointer;
+      this.startTimestamp = startTimestamp;
+      this.startSequenceId = startSequenceId;
+      this.endTimestamp = endTimestamp;
+      this.endSequenceId = endSequenceId;
+    }
+
+    @Override
+    public long getTransactionWritePointer() {
+      return transactionWritePointer;
+    }
+
+    @Override
+    public long getStartTimestamp() {
+      return startTimestamp;
+    }
+
+    @Override
+    public int getStartSequenceId() {
+      return startSequenceId;
+    }
+
+    @Override
+    public long getEndTimestamp() {
+      return endTimestamp;
+    }
+
+    @Override
+    public int getEndSequenceId() {
+      return endSequenceId;
     }
   }
 }

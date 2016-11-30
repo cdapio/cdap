@@ -17,6 +17,7 @@
 package co.cask.cdap.messaging.service;
 
 import co.cask.cdap.common.utils.TimeProvider;
+import co.cask.cdap.messaging.StoreRequest;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.AbstractIterator;
@@ -55,10 +56,12 @@ abstract class StoreRequestWriter<T> implements Closeable {
    * Constructor.
    *
    * @param timeProvider the {@link TimeProvider} for generating timestamp to be used for write timestamp
+   * @param generateNullPayloadEntry {@code true} to generate table entry with {@code null} payload if
+   *                                 a {@link PendingStoreRequest} has an empty iterator of payload.
    */
-  StoreRequestWriter(TimeProvider timeProvider) {
+  StoreRequestWriter(TimeProvider timeProvider, boolean generateNullPayloadEntry) {
     this.timeProvider = timeProvider;
-    this.payloadTransformIterator = new PayloadTransformIterator();
+    this.payloadTransformIterator = new PayloadTransformIterator(generateNullPayloadEntry);
   }
 
   /**
@@ -146,9 +149,15 @@ abstract class StoreRequestWriter<T> implements Closeable {
    */
   private final class PayloadTransformIterator implements Iterator<T> {
 
+    private final boolean generateNullPayloadEntry;
     private PendingStoreRequest storeRequest;
+    private boolean computedFirst;
     private T nextEntry;
     private boolean completed = true;   // Initially, it is an empty iterator
+
+    private PayloadTransformIterator(boolean generateNullPayloadEntry) {
+      this.generateNullPayloadEntry = generateNullPayloadEntry;
+    }
 
     @Override
     public boolean hasNext() {
@@ -158,11 +167,16 @@ abstract class StoreRequestWriter<T> implements Closeable {
       if (nextEntry != null) {
         return true;
       }
-      if (storeRequest.hasNext()) {
+
+      // If the request has next payload
+      // or if the iterator is empty but we wanted to generate an entry with null payload
+      if (storeRequest.hasNext() || (generateNullPayloadEntry && !computedFirst)) {
+        byte[] payload = storeRequest.hasNext() ? storeRequest.next() : null;
         nextEntry = getEntry(storeRequest.getTopicId(), storeRequest.isTransactional(),
                              storeRequest.getTransactionWritePointer(),
-                             writeTimestamp, (short) seqId, storeRequest.next());
+                             writeTimestamp, (short) seqId, payload);
       }
+      computedFirst = true;
       completed = nextEntry == null;
       return !completed;
     }
@@ -190,6 +204,7 @@ abstract class StoreRequestWriter<T> implements Closeable {
       this.storeRequest.setStartTimestamp(writeTimestamp);
       this.storeRequest.setStartSequenceId(seqId);
       this.nextEntry = null;
+      this.computedFirst = false;
       this.completed = false;
       return this;
     }

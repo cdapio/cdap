@@ -16,6 +16,8 @@
 
 package co.cask.cdap.common.io;
 
+import co.cask.cdap.api.common.Bytes;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -66,6 +68,19 @@ public final class ByteBuffers {
     buffer.reset();
 
     return ByteBuffer.wrap(bytes);
+  }
+
+  /**
+   * Returns a byte array containing the remaining bytes in the given {@link ByteBuffer}. If the
+   * {@link ByteBuffer} is backed by array ({@link ByteBuffer#hasArray()} is {@code true}) and the
+   * array is the same as remaining bytes, the underlying array will be returned without copying.
+   * Otherwise, the remaining bytes will be copied into a new array.
+   */
+  public static byte[] getByteArray(ByteBuffer buffer) {
+    if (buffer.hasArray() && buffer.array().length == buffer.remaining()) {
+      return buffer.array();
+    }
+    return Bytes.toBytes(buffer);
   }
 
   private ByteBuffers() {

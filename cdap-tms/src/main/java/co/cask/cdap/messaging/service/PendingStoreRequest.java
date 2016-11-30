@@ -16,6 +16,8 @@
 
 package co.cask.cdap.messaging.service;
 
+import co.cask.cdap.messaging.StoreRequest;
+
 import javax.annotation.Nullable;
 
 /**
@@ -23,7 +25,7 @@ import javax.annotation.Nullable;
  */
 final class PendingStoreRequest extends StoreRequest {
 
-  private final StoreRequest messages;
+  private final StoreRequest originalRequest;
   private boolean completed;
   private long startTimestamp;
   private long endTimestamp;
@@ -31,9 +33,10 @@ final class PendingStoreRequest extends StoreRequest {
   private int endSequenceId;
   private Throwable failureCause;
 
-  PendingStoreRequest(StoreRequest messages) {
-    super(messages.getTopicId(), messages.isTransactional(), messages.getTransactionWritePointer());
-    this.messages = messages;
+  PendingStoreRequest(StoreRequest originalRequest) {
+    super(originalRequest.getTopicId(), originalRequest.isTransactional(),
+          originalRequest.getTransactionWritePointer());
+    this.originalRequest = originalRequest;
   }
 
   boolean isCompleted() {
@@ -92,7 +95,7 @@ final class PendingStoreRequest extends StoreRequest {
   @Nullable
   @Override
   protected byte[] doComputeNext() {
-    return messages.hasNext() ? messages.next() : null;
+    return originalRequest.hasNext() ? originalRequest.next() : null;
   }
 
   @Override

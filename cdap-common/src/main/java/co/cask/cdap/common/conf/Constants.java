@@ -1079,12 +1079,24 @@ public final class Constants {
     public static final String PAYLOAD_TABLE_NAME = "messaging.payload.table.name";
     public static final String PAYLOAD_TABLE_HBASE_SPLITS = "messaging.payload.table.hbase.splits";
     public static final String TABLE_CACHE_EXPIRATION_SECONDS = "messaging.table.expiration.seconds";
+    public static final String TOPIC_DEFAULT_TTL_SECONDS = "messaging.topic.default.ttl.seconds";
 
-    // Tell the instance id of the YARN container. Set by the messaging service TwillRunnable only, not in default.xml
-    public static final String CONTAINER_INSTANCE_ID = "messaging.container.instance.id";
+    public static final String HTTP_SERVER_WORKER_THREADS = "messaging.http.server.worker.threads";
+    public static final String HTTP_SERVER_EXECUTOR_THREADS = "messaging.http.server.executor.threads";
+    public static final String HTTP_SERVER_MAX_REQUEST_SIZE_MB = "messaging.http.server.max.request.size.mb";
+    public static final String HTTP_SERVER_CONSUME_CHUNK_SIZE = "messaging.http.server.consume.chunk.size";
 
     // The name of the HBase table attribute to store the bucket size being used by the RowKeyDistributor
     public static final String KEY_DISTRIBUTOR_BUCKETS_ATTR = "cdap.messaging.key.distributor.buckets";
+
+    // The following configuration keys are set by messaging service TwillRunnable only,
+    // not available in cdap-default.xml
+
+    // Tell the instance id of the YARN container.
+    public static final String CONTAINER_INSTANCE_ID = "messaging.container.instance.id";
+
+    // The network address for the http server to bind to.
+    public static final String HTTP_SERVER_BIND_ADDRESS = "messaging.http.server.bind.address";
   }
 
   /**

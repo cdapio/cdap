@@ -42,7 +42,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * HBase implementation of {@link PayloadTable}.
  */
-public class HBasePayloadTable extends AbstractPayloadTable {
+final class HBasePayloadTable extends AbstractPayloadTable {
   private static final byte[] COL = Bytes.toBytes('c');
 
   private final HBaseTableUtil tableUtil;
@@ -51,8 +51,8 @@ public class HBasePayloadTable extends AbstractPayloadTable {
   private final AbstractRowKeyDistributor rowKeyDistributor;
   private final ExecutorService scanExecutor;
 
-  public HBasePayloadTable(HBaseTableUtil tableUtil, HTable hTable, byte[] columnFamily,
-                           AbstractRowKeyDistributor rowKeyDistributor, ExecutorService scanExecutor) {
+  HBasePayloadTable(HBaseTableUtil tableUtil, HTable hTable, byte[] columnFamily,
+                    AbstractRowKeyDistributor rowKeyDistributor, ExecutorService scanExecutor) {
     this.tableUtil = tableUtil;
     this.hTable = hTable;
     this.columnFamily = Arrays.copyOf(columnFamily, columnFamily.length);

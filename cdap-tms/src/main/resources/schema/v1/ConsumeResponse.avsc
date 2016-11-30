@@ -1,0 +1,11 @@
+{
+  "type" : "array",
+  "items" : {
+    "type" : "record",
+    "name" : "Messages",
+    "fields" : [
+      { "name" : "id", "type" : "bytes" },
+      { "name" : "payload", "type" : "bytes" }
+    ]
+  }
+}

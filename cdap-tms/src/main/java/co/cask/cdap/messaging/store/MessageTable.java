@@ -109,7 +109,7 @@ public interface MessageTable extends Closeable {
    * @param entries a list of entries to store. This method guarantees each {@link Entry} will be consumed right away,
    *                hence it is safe for the {@link Iterator} to reuse the same {@link Entry} instance.
    */
-  void store(Iterator<Entry> entries) throws IOException;
+  void store(Iterator<? extends Entry> entries) throws IOException;
 
   /**
    * Delete entries stored earlier under the given topic based on the given information.

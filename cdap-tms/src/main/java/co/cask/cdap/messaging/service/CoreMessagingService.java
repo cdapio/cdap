@@ -22,8 +22,9 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.TimeProvider;
 import co.cask.cdap.messaging.MessageFetcher;
-import co.cask.cdap.messaging.MessageRollback;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.messaging.RollbackDetail;
+import co.cask.cdap.messaging.StoreRequest;
 import co.cask.cdap.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.TopicNotFoundException;
@@ -48,8 +49,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
@@ -93,14 +98,18 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   @Override
   public void createTopic(TopicMetadata topicMetadata) throws TopicAlreadyExistsException, IOException {
     try (MetadataTable metadataTable = createMetadataTable()) {
-      metadataTable.createTopic(topicMetadata);
+      Map<String, String> properties = createDefaultProperties();
+      properties.putAll(topicMetadata.getProperties());
+      metadataTable.createTopic(new TopicMetadata(topicMetadata.getTopicId(), properties, true));
     }
   }
 
   @Override
   public void updateTopic(TopicMetadata topicMetadata) throws TopicNotFoundException, IOException {
     try (MetadataTable metadataTable = createMetadataTable()) {
-      metadataTable.updateTopic(topicMetadata);
+      Map<String, String> properties = createDefaultProperties();
+      properties.putAll(topicMetadata.getProperties());
+      metadataTable.updateTopic(new TopicMetadata(topicMetadata.getTopicId(), properties, true));
       topicCache.invalidate(topicMetadata.getTopicId());
     }
   }
@@ -125,15 +134,33 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   }
 
   @Override
+  public List<TopicId> listTopics(NamespaceId namespaceId) throws IOException {
+    try (MetadataTable metadataTable = createMetadataTable()) {
+      return metadataTable.listTopics(namespaceId);
+    }
+  }
+
+  @Override
   public MessageFetcher prepareFetch(final TopicId topicId) throws TopicNotFoundException, IOException {
-    TopicMetadata metadata = getTopic(topicId);
-    return new CoreMessageFetcher(metadata, createMessageTable(metadata), createPayloadTable(metadata));
+    final TopicMetadata metadata = getTopic(topicId);
+    return new CoreMessageFetcher(metadata, new TableProvider<MessageTable>() {
+      @Override
+      public MessageTable get() throws IOException {
+        return createMessageTable(metadata);
+      }
+    }, new TableProvider<PayloadTable>() {
+      @Override
+      public PayloadTable get() throws IOException {
+        return createPayloadTable(metadata);
+      }
+    });
   }
 
+  @Nullable
   @Override
-  public MessageRollback publish(TopicId topicId, StoreRequest messages) throws TopicNotFoundException, IOException {
+  public RollbackDetail publish(StoreRequest request) throws TopicNotFoundException, IOException {
     try {
-      return messageTableWriterCache.get(topicId).persist(messages);
+      return messageTableWriterCache.get(request.getTopicId()).persist(request);
     } catch (ExecutionException e) {
       Throwable cause = Objects.firstNonNull(e.getCause(), e);
       Throwables.propagateIfPossible(cause, TopicNotFoundException.class, IOException.class);
@@ -142,9 +169,9 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   }
 
   @Override
-  public void storePayload(TopicId topicId, StoreRequest messages) throws TopicNotFoundException, IOException {
+  public void storePayload(StoreRequest request) throws TopicNotFoundException, IOException {
     try {
-      payloadTableWriterCache.get(topicId).persist(messages);
+      payloadTableWriterCache.get(request.getTopicId()).persist(request);
     } catch (ExecutionException e) {
       Throwable cause = Objects.firstNonNull(e.getCause(), e);
       Throwables.propagateIfPossible(cause, TopicNotFoundException.class, IOException.class);
@@ -153,19 +180,19 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   }
 
   @Override
-  public void rollback(TopicId topicId, MessageRollback rollbackInfo) throws TopicNotFoundException, IOException {
+  public void rollback(TopicId topicId, RollbackDetail rollbackDetail) throws TopicNotFoundException, IOException {
     TopicMetadata metadata = getTopic(topicId);
 
     Exception failure = null;
     try (MessageTable messageTable = createMessageTable(metadata)) {
       // Safe to cast to short because message table only use the sequence id as unsigned bytes.
-      messageTable.delete(topicId, rollbackInfo.getStartTimestamp(), (short) rollbackInfo.getStartSequenceId(),
-                          rollbackInfo.getEndTimestamp(), (short) rollbackInfo.getEndSequenceId());
+      messageTable.delete(topicId, rollbackDetail.getStartTimestamp(), (short) rollbackDetail.getStartSequenceId(),
+                          rollbackDetail.getEndTimestamp(), (short) rollbackDetail.getEndSequenceId());
     } catch (Exception e) {
       failure = e;
     }
     try (PayloadTable payloadTable = createPayloadTable(metadata)) {
-      payloadTable.delete(topicId, rollbackInfo.getTransactionWritePointer());
+      payloadTable.delete(topicId, rollbackDetail.getTransactionWritePointer());
     } catch (Exception e) {
       if (failure != null) {
         failure.addSuppressed(e);
@@ -271,5 +298,16 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     // Currently we don't support customizable table name yet, hence always get it from cConf.
     // Later on it can be done by topic properties, with impersonation setting as well.
     return tableFactory.createPayloadTable(NamespaceId.SYSTEM, cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME));
+  }
+
+  /**
+   * Creates default topic properties based on {@link CConfiguration}.
+   */
+  private Map<String, String> createDefaultProperties() {
+    Map<String, String> properties = new HashMap<>();
+
+    // Default the TTL
+    properties.put(TopicMetadata.TTL_KEY, cConf.get(Constants.MessagingSystem.TOPIC_DEFAULT_TTL_SECONDS));
+    return properties;
   }
 }

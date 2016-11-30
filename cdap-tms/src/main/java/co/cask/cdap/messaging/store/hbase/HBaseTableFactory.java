@@ -46,7 +46,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * A {@link TableFactory} for creating messaging tables backed by HBase.
  */
 public final class HBaseTableFactory implements TableFactory {
 

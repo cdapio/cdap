@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.messaging.store.AbstractMessageTable;
 import co.cask.cdap.messaging.store.MessageTable;
 import co.cask.cdap.messaging.store.RawMessageTableEntry;
+import com.google.common.base.Preconditions;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBException;
 import org.iq80.leveldb.WriteBatch;
@@ -37,14 +38,30 @@ import javax.annotation.Nullable;
 /**
  * LevelDB implementation of {@link MessageTable}.
  */
-public class LevelDBMessageTable extends AbstractMessageTable {
+final class LevelDBMessageTable extends AbstractMessageTable {
   private static final WriteOptions WRITE_OPTIONS = new WriteOptions().sync(true);
   private static final String PAYLOAD_COL = "p";
   private static final String TX_COL = "t";
 
+  private enum EncodeType {
+    NON_TRANSACTIONAL(0),
+    TRANSACTIONAL(1),
+    PAYLOAD_REFERENCE(2);
+
+    private final byte type;
+
+    EncodeType(int type) {
+      this.type = (byte) type;
+    }
+
+    byte getType() {
+      return type;
+    }
+  }
+
   private final DB levelDB;
 
-  public LevelDBMessageTable(DB levelDB) {
+  LevelDBMessageTable(DB levelDB) {
     this.levelDB = levelDB;
   }
 
@@ -113,32 +130,45 @@ public class LevelDBMessageTable extends AbstractMessageTable {
   // Encoding:
   // If the returned byte array starts with 0, then it is a non-tx message and all the subsequent bytes are payload
   // If the returned byte array starts with 1, then next 8 bytes correspond to txWritePtr and rest are payload bytes
-  private static byte[] encodeValue(byte[] txWritePtr, @Nullable byte[] payload) {
-    // Not transactional
+  private byte[] encodeValue(@Nullable byte[] txWritePtr, @Nullable byte[] payload) {
+    // Non-transactional
     if (txWritePtr == null) {
-      payload = payload == null ? Bytes.EMPTY_BYTE_ARRAY : payload;
-      return Bytes.add(new byte[] { 0 }, payload);
+      // For non-tx message, payload cannot be null
+      Preconditions.checkArgument(payload != null, "Payload cannot be null for non-transactional message");
+      byte[] result = new byte[1 + payload.length];
+      result[0] = EncodeType.NON_TRANSACTIONAL.getType();
+      Bytes.putBytes(result, 1, payload, 0, payload.length);
+      return result;
     }
 
-    int resultSize = 1 + Bytes.SIZEOF_LONG;
-    resultSize += (payload == null) ? 0 : payload.length;
-    byte[] result = new byte[resultSize];
-    result[0] = 1;
-    Bytes.putBytes(result, 1, txWritePtr, 0, txWritePtr.length);
+    // Transactional
     if (payload != null) {
+      byte[] result = new byte[1 + Bytes.SIZEOF_LONG + payload.length];
+      result[0] = EncodeType.TRANSACTIONAL.getType();
+      Bytes.putBytes(result, 1, txWritePtr, 0, txWritePtr.length);
       Bytes.putBytes(result, 1 + Bytes.SIZEOF_LONG, payload, 0, payload.length);
+      return result;
     }
+
+    // Transactional but without payload, hence it's a payload table reference
+    byte[] result = new byte[1 + Bytes.SIZEOF_LONG];
+    result[0] = EncodeType.PAYLOAD_REFERENCE.getType();
+    Bytes.putBytes(result, 1, txWritePtr, 0, txWritePtr.length);
     return result;
   }
 
-  private static Map<String, byte[]> decodeValue(byte[] value) {
+  private Map<String, byte[]> decodeValue(byte[] value) {
     Map<String, byte[]> data = new HashMap<>();
-    if (value[0] == 0) {
-      // just payload
+
+    if (value[0] == EncodeType.NON_TRANSACTIONAL.getType()) {
       data.put(PAYLOAD_COL, Arrays.copyOfRange(value, 1, value.length));
     } else {
       data.put(TX_COL, Arrays.copyOfRange(value, 1, 1 + Bytes.SIZEOF_LONG));
-      data.put(PAYLOAD_COL, Arrays.copyOfRange(value, 1 + Bytes.SIZEOF_LONG, value.length));
+
+      // Only transactional type has payload, otherwise payload should be null.
+      if (value[0] == EncodeType.TRANSACTIONAL.getType()) {
+        data.put(PAYLOAD_COL, Arrays.copyOfRange(value, 1 + Bytes.SIZEOF_LONG, value.length));
+      }
     }
     return data;
   }

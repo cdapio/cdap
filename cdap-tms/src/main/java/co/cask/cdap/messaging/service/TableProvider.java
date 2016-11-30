@@ -14,26 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.messaging.store;
+package co.cask.cdap.messaging.service;
+
+import java.io.IOException;
 
 /**
-* Container class for raw bytes corresponding to key, value of the Payload Table.
-*/
-public final class RawPayloadTableEntry {
-  private byte[] key;
-  private byte[] value;
+ * An internal interface used by {@link CoreMessagingService} and {@link CoreMessageFetcher} for providing
+ * messaging tables.
+ *
+ * @param <T> Type of the message table.
+ */
+interface TableProvider<T> {
 
-  public RawPayloadTableEntry set(byte[] key, byte[] value) {
-    this.key = key;
-    this.value = value;
-    return this;
-  }
-
-  public byte[] getKey() {
-    return key;
-  }
-
-  public byte[] getValue() {
-    return value;
-  }
+  /**
+   * Provides an instance of messaging table of type {@code <T>}.
+   */
+  T get() throws IOException;
 }

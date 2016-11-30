@@ -17,6 +17,7 @@
 package co.cask.cdap.messaging.service;
 
 import co.cask.cdap.common.utils.TimeProvider;
+import co.cask.cdap.messaging.StoreRequest;
 import co.cask.cdap.messaging.store.MessageTable;
 import co.cask.cdap.proto.id.TopicId;
 
@@ -35,7 +36,7 @@ final class MessageTableStoreRequestWriter extends StoreRequestWriter<MessageTab
   private final MutableMessageTableEntry entry;
 
   MessageTableStoreRequestWriter(MessageTable messageTable, TimeProvider timeProvider) {
-    super(timeProvider);
+    super(timeProvider, true);
     this.messageTable = messageTable;
     this.entry = new MutableMessageTableEntry();
   }
