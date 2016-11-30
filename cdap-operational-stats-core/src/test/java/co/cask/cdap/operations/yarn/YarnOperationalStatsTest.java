@@ -28,7 +28,7 @@ import java.io.IOException;
 public class YarnOperationalStatsTest extends AbstractYarnOperationalStatsTest {
   @Override
   protected MiniYARNCluster createYarnCluster() throws IOException, InterruptedException, YarnException {
-    MiniYARNCluster yarnCluster = new MiniYARNCluster(getClass().getName(), 2, 2, 2);
+    MiniYARNCluster yarnCluster = new MiniYARNCluster(getClass().getName(), 1, 1, 1);
     yarnCluster.init(new Configuration());
     yarnCluster.start();
     return yarnCluster;
