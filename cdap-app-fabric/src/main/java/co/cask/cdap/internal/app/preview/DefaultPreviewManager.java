@@ -152,6 +152,7 @@ public class DefaultPreviewManager implements PreviewManager {
                                                         "preview", application.getApplication()).toAbsolutePath();
 
           try {
+            DataTracerFactoryProvider.removeDataTracerFactory(application);
             DirUtils.deleteDirectoryContents(previewDirPath.toFile());
           } catch (IOException e) {
             LOG.warn("Error deleting the preview directory {}", previewDirPath, e);

@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.preview;
 
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
+import co.cask.cdap.app.preview.DataTracerFactory;
 import co.cask.cdap.app.preview.PreviewRequest;
 import co.cask.cdap.app.preview.PreviewRunner;
 import co.cask.cdap.app.preview.PreviewStatus;
@@ -78,6 +79,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private final ProgramLifecycleService programLifecycleService;
   private final DefaultNamespaceEnsurer namespaceEnsurer;
   private final PreviewStore previewStore;
+  private final DataTracerFactory dataTracerFactory;
 
   private volatile PreviewStatus status;
   private ProgramId programId;
@@ -87,7 +89,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                        ApplicationLifecycleService applicationLifecycleService,
                        SystemArtifactLoader systemArtifactLoader, ProgramRuntimeService programRuntimeService,
                        ProgramLifecycleService programLifecycleService, DefaultNamespaceEnsurer namespaceEnsurer,
-                       PreviewStore previewStore) {
+                       PreviewStore previewStore, DataTracerFactory dataTracerFactory) {
     this.datasetService = datasetService;
     this.logAppenderInitializer = logAppenderInitializer;
     this.applicationLifecycleService = applicationLifecycleService;
@@ -97,6 +99,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     this.namespaceEnsurer = namespaceEnsurer;
     this.previewStore = previewStore;
     this.status = null;
+    this.dataTracerFactory = dataTracerFactory;
   }
 
   @Override
@@ -105,6 +108,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     AppRequest<?> request = previewRequest.getAppRequest();
     ArtifactSummary artifactSummary = request.getArtifact();
     ApplicationId preview = programId.getParent();
+    DataTracerFactoryProvider.setDataTracerFactory(preview, dataTracerFactory);
     NamespaceId artifactNamespace = ArtifactScope.SYSTEM.equals((artifactSummary.getScope())) ? NamespaceId.SYSTEM
       : preview.getParent();
 
