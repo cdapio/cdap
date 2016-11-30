@@ -90,8 +90,11 @@ public class PreviewRunnerModule extends PrivateModule {
   @Override
   protected void configure() {
     bind(ArtifactRepository.class).toInstance(artifactRepository);
+    expose(ArtifactRepository.class);
     bind(ArtifactStore.class).toInstance(artifactStore);
+    expose(ArtifactStore.class);
     bind(AuthorizerInstantiator.class).toInstance(authorizerInstantiator);
+    expose(AuthorizerInstantiator.class);
     bind(AuthorizationEnforcer.class).toInstance(authorizationEnforcer);
     expose(AuthorizationEnforcer.class);
     bind(PrivilegesManager.class).toInstance(privilegesManager);
