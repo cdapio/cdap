@@ -373,13 +373,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     let mapInputs = {};
 
     angular.forEach(records, (record) => {
-      let json = {};
-      try {
-        json = JSON.parse(record);
-      } catch (e) {
-        console.log('ERROR', e);
-        return;
-      }
+      let json = record;
 
       if (!json.value.schema) { return; }
 
@@ -410,16 +404,7 @@ class HydratorPlusPlusNodeConfigCtrl {
       };
     }
 
-    let jsonRecords = records.map( (record) => {
-      let json = {};
-      try {
-        json = JSON.parse(record);
-      } catch (e) {
-        console.log('ERROR', e);
-        return json;
-      }
-      return json;
-    });
+    let jsonRecords = records;
 
     let schema = jsonRecords[0].value.schema.fields.map( (field) => {
       return field.name;
