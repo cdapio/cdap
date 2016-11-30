@@ -446,18 +446,20 @@ class Home extends Component {
           <Pagination
             className="home-content"
             setCurrentPage={this.handlePageChange}
+            totalPages={this.state.numPages}
             currentPage={this.state.currentPage}
             setDirection={this.setAnimationDirection}
           >
-            <ReactCSSTransitionGroup
-              component="div"
-              className="entities-container"
-              transitionName={"entity-animation--" + this.state.animationDirection}
-              transitionEnterTimeout={400}
-              transitionLeaveTimeout={400}
-            >
-              {bodyContent}
-            </ReactCSSTransitionGroup>
+            <div className="entities-container">
+              <ReactCSSTransitionGroup
+                component="div"
+                transitionName={"entity-animation--" + this.state.animationDirection}
+                transitionEnterTimeout={1000}
+                transitionLeaveTimeout={1000}
+              >
+                {bodyContent}
+              </ReactCSSTransitionGroup>
+            </div>
           </Pagination>
       </div>
     );

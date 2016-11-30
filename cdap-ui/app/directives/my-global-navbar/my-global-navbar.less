@@ -27,6 +27,7 @@ my-global-navbar {
     color: white;
     border: 0;
     font-weight: 500;
+    margin-bottom: 0;
 
     &.cdap { .product-navbar-mixins(@cdap-orange, @cdap-orange); }
     &.hydrator { .product-navbar-mixins(@hydrator-blue, @hydrator-blue); }
@@ -57,9 +58,13 @@ my-global-navbar {
     .navbar-list {
       margin-left: 15px;
       float: left;
-      line-height: 50px;
+      margin-bottom: 0;
+      height: 50px;
 
-      li { display: inline-block; }
+      li {
+        display: inline-block;
+        line-height: 50px;
+      }
       a {
         padding-left: 0;
         padding-right: 40px;

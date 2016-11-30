@@ -19,17 +19,15 @@
 .card-action-feedback {
   @feedback-height: 35px;
   .generate-color(@color) {
-    background-color: @color;
+    color: @color;
+    background-color: transparent;
 
     .expand-icon {
       background-color: darken(@color, 15%);
     }
   }
 
-  .main-message {
-    height: @feedback-height;
-    line-height: @feedback-height;
-  }
+
   .feedback-icon {
     margin: auto 10px;
   }

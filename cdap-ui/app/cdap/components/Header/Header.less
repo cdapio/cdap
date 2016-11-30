@@ -27,6 +27,7 @@
     border: 0;
     font-weight: 500;
     z-index: 10000;
+    margin-bottom: 0;
 
     &.cdap { .product-navbar-mixins(@cdap-orange, @cdap-orange); }
     &.hydrator { .product-navbar-mixins(@hydrator-blue, #43AAFF); }
@@ -56,10 +57,12 @@
     .navbar-list {
       margin-left: 15px;
       float: left;
-      line-height: 50px;
+      margin-bottom: 0;
+      height: 50px;
 
       li {
         display: inline-block;
+        line-height: 50px;
         &.disabled {
           cursor: not-allowed;
           padding-left: 0;
