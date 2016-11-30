@@ -248,6 +248,16 @@ cdap_check_node_version() {
 }
 
 #
+# cdap_check_mapr
+# returns: 0 if MapR is detected, 1 otherwise
+#
+cdap_check_mapr() {
+  if [[ -f /opt/mapr/MapRBuildVersion ]]; then
+    return 0
+  fi
+}
+
+#
 # cdap_get_conf <property> <conf-file> [default]
 # returns: property value if found, default if not found and default set, otherwise returns 1
 #
@@ -465,6 +475,14 @@ cdap_set_spark() {
   if [[ -n ${SPARK_HOME} ]] && [[ -d ${SPARK_HOME} ]]; then
     export SPARK_HOME
     return 0 # SPARK_HOME is set, already
+  elif cdap_check_mapr; then
+    # MapR installs spark to a known location
+    SPARK_HOME=$(ls -d /opt/mapr/spark/spark-* 2>/dev/null)
+    if [[ -n ${SPARK_HOME} ]] && [[ -d ${SPARK_HOME} ]]; then
+      export SPARK_HOME
+      return 0
+    fi
+    return 1
   else
     if [[ $(which spark-shell 2>/dev/null) ]]; then
       ERR_FILE=$(mktemp)
