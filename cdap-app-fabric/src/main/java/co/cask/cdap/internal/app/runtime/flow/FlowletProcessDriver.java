@@ -227,7 +227,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     // Begin transaction and dequeue
     try {
       TransactionContext txContext = dataFabricFacade.createTransactionContext();
-      txContext.start();
+      startTx(txContext);
 
       try {
         InputDatum<T> input = entry.getProcessSpec().getQueueReader().dequeue(0, TimeUnit.MILLISECONDS);
@@ -265,8 +265,11 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
         Throwables.propagate(t);
       }
     }
-
     return false;
+  }
+
+  private void startTx(TransactionContext txContext) throws TransactionFailureException {
+    txContext.start(flowletContext.getDefaultTxTimeout());
   }
 
   /**
@@ -322,7 +325,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       @Override
       public void ack() throws TransactionFailureException {
         TransactionContext txContext = dataFabricFacade.createTransactionContext();
-        txContext.start();
+        startTx(txContext);
         input.reclaim();
         txContext.finish();
       }

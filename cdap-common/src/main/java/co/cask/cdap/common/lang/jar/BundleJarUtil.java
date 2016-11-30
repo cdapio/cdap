@@ -46,6 +46,7 @@ import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+import javax.annotation.Nullable;
 
 /**
  * Utility functions that operate on bundle jars.
@@ -60,9 +61,22 @@ public class BundleJarUtil {
    * @return The manifest inside the jar file or {@code null} if no manifest inside the jar file.
    * @throws IOException if failed to load the manifest.
    */
+  @Nullable
   public static Manifest getManifest(Location jarLocation) throws IOException {
-    URI uri = jarLocation.toURI();
+    return getManifest(jarLocation.toURI(), Locations.newInputSupplier(jarLocation));
+  }
 
+  /**
+   * Gets the manifest inside the jar located by the given URI.
+   *
+   * @param uri Location of the jar file.
+   * @param inputSupplier a {@link InputSupplier} to provide an {@link InputStream} for the given URI to read the
+   *                      jar file content.
+   * @return The manifest inside the jar file or {@code null} if no manifest inside the jar file.
+   * @throws IOException if failed to load the manifest.
+   */
+  @Nullable
+  public static Manifest getManifest(URI uri, InputSupplier<? extends InputStream> inputSupplier) throws IOException {
     // Small optimization if the location is local
     if ("file".equals(uri.getScheme())) {
       try (JarFile jarFile = new JarFile(new File(uri))) {
@@ -71,7 +85,7 @@ public class BundleJarUtil {
     }
 
     // Otherwise, need to search it with JarInputStream
-    try (JarInputStream is = new JarInputStream(new BufferedInputStream(jarLocation.getInputStream()))) {
+    try (JarInputStream is = new JarInputStream(new BufferedInputStream(inputSupplier.getInput()))) {
       // This only looks at the first entry, which if is created with jar util, then it'll be there.
       Manifest manifest = is.getManifest();
       if (manifest != null) {
@@ -86,9 +100,7 @@ public class BundleJarUtil {
         }
         jarEntry = is.getNextJarEntry();
       }
-
     }
-
     return null;
   }
 

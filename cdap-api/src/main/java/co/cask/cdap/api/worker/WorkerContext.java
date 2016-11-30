@@ -19,10 +19,8 @@ package co.cask.cdap.api.worker;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.stream.StreamWriter;
-import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.security.store.SecureStore;
 
@@ -46,15 +44,4 @@ public interface WorkerContext extends RuntimeContext, ServiceDiscoverer, Stream
    * @return the instance id of this worker
    */
   int getInstanceId();
-
-  /**
-   * Executes a set of operations via a {@link TxRunnable} that are committed as a single transaction.
-   * The {@link TxRunnable} can gain access to {@link Dataset} through the {@link DatasetContext} provided
-   * to it.
-   *
-   * @param runnable the runnable to be executed in the transaction
-   * @throws RuntimeException if failed to execute the given {@link TxRunnable} in a transaction
-   */
-  @Override
-  void execute(TxRunnable runnable);
 }

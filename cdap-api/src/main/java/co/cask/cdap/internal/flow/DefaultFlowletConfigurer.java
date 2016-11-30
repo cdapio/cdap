@@ -86,13 +86,6 @@ public class DefaultFlowletConfigurer extends DefaultDatasetConfigurer implement
     this.properties = new HashMap<>(properties);
   }
 
-  @Override
-  public void useDatasets(Iterable<String> datasets) {
-    for (String dataset : datasets) {
-      this.datasets.add(dataset);
-    }
-  }
-
   public FlowletSpecification createSpecification() {
 
     // Grab all @Property, @UseDataset fields

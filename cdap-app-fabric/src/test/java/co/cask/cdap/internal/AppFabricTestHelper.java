@@ -57,6 +57,7 @@ import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementService;
@@ -148,27 +149,27 @@ public class AppFabricTestHelper {
     });
   }
 
-  public static void ensureNamespaceExists(Id.Namespace namespace) throws Exception {
-    ensureNamespaceExists(namespace, CConfiguration.create());
+  public static void ensureNamespaceExists(NamespaceId namespaceId) throws Exception {
+    ensureNamespaceExists(namespaceId, CConfiguration.create());
   }
 
-  private static void ensureNamespaceExists(Id.Namespace namespace, CConfiguration cConf) throws Exception {
+  private static void ensureNamespaceExists(NamespaceId namespaceId, CConfiguration cConf) throws Exception {
     NamespaceAdmin namespaceAdmin = getInjector(cConf).getInstance(NamespaceAdmin.class);
     try {
-      if (!namespaceAdmin.exists(namespace)) {
-        namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
+      if (!namespaceAdmin.exists(namespaceId)) {
+        namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespaceId).build());
       }
     } catch (NamespaceAlreadyExistsException e) {
       // There can be race between exists() and create() call.
-      if (!namespaceAdmin.exists(namespace)) {
-        throw new IllegalStateException("Failed to create namespace " + namespace, e);
+      if (!namespaceAdmin.exists(namespaceId)) {
+        throw new IllegalStateException("Failed to create namespace " + namespaceId.getNamespace(), e);
       }
     }
   }
 
   public static void deployApplication(Id.Namespace namespace, Class<?> applicationClz,
                                        @Nullable String config, CConfiguration cConf) throws Exception {
-    ensureNamespaceExists(namespace, cConf);
+    ensureNamespaceExists(namespace.toEntityId(), cConf);
     AppFabricClient appFabricClient = getInjector(cConf).getInstance(AppFabricClient.class);
     Location deployedJar = appFabricClient.deployApplication(namespace, applicationClz, config);
     deployedJar.delete(true);
@@ -182,7 +183,7 @@ public class AppFabricTestHelper {
 
   public static ApplicationWithPrograms deployApplicationWithManager(Id.Namespace namespace, Class<?> appClass,
                                                                      Supplier<File> folderSupplier) throws Exception {
-    ensureNamespaceExists(namespace);
+    ensureNamespaceExists(namespace.toEntityId());
     Location deployedJar = createAppJar(appClass, folderSupplier);
     ArtifactVersion artifactVersion = new ArtifactVersion(String.format("1.0.%d", System.currentTimeMillis()));
     ArtifactId artifactId = new ArtifactId(appClass.getSimpleName(), artifactVersion, ArtifactScope.USER);

@@ -91,7 +91,7 @@ public class AuthorizationHandlerTest {
     properties.setProperty("superusers", admin.getName());
     final InMemoryAuthorizer auth = new InMemoryAuthorizer();
     auth.initialize(FACTORY.create(properties));
-    service = new CommonNettyHttpServiceBuilder(conf)
+    service = new CommonNettyHttpServiceBuilder(conf, getClass().getSimpleName())
       .addHttpHandlers(ImmutableList.of(new AuthorizationHandler(
         auth, new AuthorizerInstantiator(conf, FACTORY) {
           @Override
@@ -146,7 +146,7 @@ public class AuthorizationHandlerTest {
   private void testDisabled(CConfiguration cConf, FeatureDisabledException.Feature feature,
                             String configSetting) throws Exception {
     final InMemoryAuthorizer authorizer = new InMemoryAuthorizer();
-    NettyHttpService service = new CommonNettyHttpServiceBuilder(cConf)
+    NettyHttpService service = new CommonNettyHttpServiceBuilder(cConf, getClass().getSimpleName())
       .addHttpHandlers(ImmutableList.of(new AuthorizationHandler(
         authorizer, new AuthorizerInstantiator(cConf, FACTORY) {
           @Override

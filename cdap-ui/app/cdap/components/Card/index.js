@@ -65,7 +65,11 @@ export default class Card extends Component {
       </div>
     );
 
-    return this.props.header || this.props.title ? headerElem : null;
+    return this.props.header || this.props.title ? headerElem :
+      <div className="card-header">
+        {closeButton}
+      </div>
+    ;
   }
 
   getBody () {
@@ -90,6 +94,12 @@ export default class Card extends Component {
     return this.props.footer ? footerElem : null;
   }
 
+  onClickHandler() {
+    if (this.props.onClick) {
+      this.props.onClick();
+    }
+  }
+
   render() {
     const cardClass = classNames('cask-card', this.props.cardClass,
       { [`card-${this.props.size}`]: this.props.size }
@@ -97,7 +107,9 @@ export default class Card extends Component {
 
     return (
       <div
+        id={this.props.id}
         className={cardClass}
+        onClick={this.onClickHandler.bind(this)}
         style={this.props.cardStyle}
       >
         {this.getHeader()}
@@ -121,5 +133,7 @@ Card.propTypes = {
   onClose: PropTypes.func,
   cardClass: PropTypes.string,
   size: PropTypes.oneOf(['SM', 'MD', 'LG']),
-  cardStyle: PropTypes.object
+  cardStyle: PropTypes.object,
+  onClick: PropTypes.func,
+  id: PropTypes.string
 };

@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -25,6 +26,7 @@ import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.TokenSecureStoreUpdater;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -56,6 +58,16 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
   }
 
   @Override
+  public ProgramController createProgramController(TwillController twillController,
+                                                   ProgramDescriptor programDescriptor, RunId runId) {
+    return createProgramController(twillController, programDescriptor.getProgramId(), runId);
+  }
+
+  private ProgramController createProgramController(TwillController twillController, ProgramId programId, RunId runId) {
+    return new MapReduceTwillProgramController(programId, twillController, runId).startListen();
+  }
+
+  @Override
   protected ProgramController launch(Program program, ProgramOptions options,
                                      Map<String, LocalizeResource> localizeResources,
                                      File tempDir, final ApplicationLauncher launcher) {
@@ -77,7 +89,6 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
       new MapReduceTwillApplication(program, options.getUserArguments(), spec, localizeResources, eventHandler),
       extraClassPaths, Collections.singletonList(YarnClientProtocolProvider.class));
 
-    RunId runId = ProgramRunners.getRunId(options);
-    return new MapReduceTwillProgramController(program.getId(), controller, runId).startListen();
+    return createProgramController(controller, program.getId(), ProgramRunners.getRunId(options));
   }
 }

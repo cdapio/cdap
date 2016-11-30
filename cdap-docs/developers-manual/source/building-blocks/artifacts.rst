@@ -172,11 +172,6 @@ Our development team writes code such as::
     }  
 
     @Override
-    public void configure(FlowletConfigurer configurer) {
-      useDatasets(tableName);
-    }
- 
-    @Override
     public void initialize(FlowletContext context) throws Exception {
       table = context.getDataset(tableName);
     }

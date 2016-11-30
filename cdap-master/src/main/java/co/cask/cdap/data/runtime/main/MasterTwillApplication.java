@@ -19,8 +19,7 @@ package co.cask.cdap.data.runtime.main;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
-import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.explore.service.ExploreServiceUtils;
+import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.logging.run.LogSaverTwillRunnable;
 import co.cask.cdap.metrics.runtime.MetricsProcessorTwillRunnable;
 import co.cask.cdap.metrics.runtime.MetricsTwillRunnable;
@@ -33,7 +32,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * TwillApplication wrapper for Master Services running in YARN.
@@ -46,16 +44,17 @@ public class MasterTwillApplication implements TwillApplication {
   private final File cConfFile;
   private final File hConfFile;
 
-  private final boolean runHiveService;
   private final Map<String, Integer> instanceCountMap;
+  private final Map<String, LocalizeResource> exploreDependencies;
 
   public MasterTwillApplication(CConfiguration cConf, File cConfFile, File hConfFile,
-                                Map<String, Integer> instanceCountMap) {
+                                Map<String, Integer> instanceCountMap,
+                                Map<String, LocalizeResource> exploreDependencies) {
     this.cConf = cConf;
     this.cConfFile = cConfFile;
     this.hConfFile = hConfFile;
-    this.runHiveService = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     this.instanceCountMap = instanceCountMap;
+    this.exploreDependencies = exploreDependencies;
   }
 
   @Override
@@ -72,7 +71,7 @@ public class MasterTwillApplication implements TwillApplication {
                             addMetricsService(
                                 TwillSpecification.Builder.with().setName(NAME).withRunnable()))))));
 
-    if (runHiveService) {
+    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       LOG.info("Adding explore runnable.");
       runnableSetter = addExploreService(runnableSetter);
     } else {
@@ -230,17 +229,10 @@ public class MasterTwillApplication implements TwillApplication {
         .add("cConf.xml", cConfFile.toURI())
         .add("hConf.xml", hConfFile.toURI());
 
-    try {
-      // Ship jars needed by Hive to the container
-      File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                                                     cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
-      Set<File> jars = ExploreServiceUtils.traceExploreDependencies(tempDir);
-      for (File jarFile : jars) {
-        LOG.debug("Adding jar {} for explore.service", jarFile.getAbsolutePath());
-        twillSpecs = twillSpecs.add(jarFile.getName(), jarFile);
-      }
-    } catch (Exception e) {
-      throw new RuntimeException("Unable to trace Explore dependencies", e);
+    for (Map.Entry<String, LocalizeResource> entry : exploreDependencies.entrySet()) {
+      LocalizeResource resource = entry.getValue();
+      LOG.debug("Adding {} for explore.service", resource.getURI());
+      twillSpecs = twillSpecs.add(entry.getKey(), resource.getURI(), resource.isArchive());
     }
 
     return twillSpecs.apply();

@@ -286,7 +286,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * TODO: Delete an application specified by appId and versionId.
+   * Delete an application specified by appId and versionId.
    */
   @DELETE
   @Path("/apps/{app-id}/versions/{version-id}")
@@ -509,7 +509,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     try {
-      namespaceQueryAdmin.get(namespace.toId());
+      namespaceQueryAdmin.get(namespace);
     } catch (NamespaceNotFoundException e) {
       throw e;
     } catch (Exception e) {

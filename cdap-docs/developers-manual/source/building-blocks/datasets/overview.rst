@@ -82,34 +82,11 @@ an instance of the dataset class into the application. This dataset will partici
 executed by the program. If the program is multi-threaded (for example, an HTTP service handler), CDAP will make
 sure that every thread has its own instance of the dataset.
 
-The ``@UseDataSet`` annotation is evaluated when your program is compiled. If you don't know the name of the
-dataset at compile time |---| perhaps because it is given by the application configuration |---| you can still use the
-``useDatasets`` method in the ``configure`` method of your program. Note that this will then require knowledge of
-the dataset at the time that the application is deployed, as that is when the ``configure`` method is executed::
-
-  class MyFlowlet extends AbstractFlowlet {
-
-    @Override
-    public void configure(FlowletConfigurer configurer) {
-      super.configure(configurer);
-      useDatasets("myCounters");
-    }
-
-    void process(String key) {
-      KeyValueTable counters = getContext().getDataset("myCounters");
-      counters.increment(key.getBytes(), 1L);
-    }
-
-The ``useDatasets()`` call has the effect that the dataset is instantiated when the program
-starts up, and it remains in the cache for the lifetime of the program and hence never needs
-to be instantiated again. Note that you still need to call ``getDataset()`` every time you
-access it.
-
 .. _dynamic-dataset-instantiation:
 
 Dynamic Instantiation
 ---------------------
-If you don't know the name of the dataset at deploy time (and hence you cannot use
+If you don't know the name of the dataset at compile time (and hence you cannot use
 static instantiation), or if you want to use a dataset only for a short time, you can dynamically
 request an instance of the dataset through the program context::
 

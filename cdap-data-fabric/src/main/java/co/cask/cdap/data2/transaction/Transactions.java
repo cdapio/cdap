@@ -181,36 +181,72 @@ public final class Transactions {
    * given {@link DynamicDatasetCache}.
    *
    * @param datasetCache The {@link DynamicDatasetCache} to use fo transaction creation as well as provided to the
-   *                     {@link TxRunnable} for access to dataset.
-   * @return a new instance of {@link Transactional}.
+   *                     {@link TxRunnable} for access to dataset
+   * @return a new instance of {@link Transactional}
    */
   public static Transactional createTransactional(final DynamicDatasetCache datasetCache) {
-    return new Transactional() {
+    return new CacheBasedTransactional(datasetCache);
+  }
+
+  /**
+   * Creates a new instance of {@link Transactional} for {@link TxRunnable} execution using the
+   * given {@link DynamicDatasetCache}.
+   *
+   * @param datasetCache The {@link DynamicDatasetCache} to use fo transaction creation as well as provided to the
+   *                     {@link TxRunnable} for access to dataset
+   * @param defaultTimeout The default transaction timeout, used for starting the transaction for
+   *                       {@link Transactional#execute(TxRunnable)}
+   * @return a new instance of {@link Transactional}
+   */
+  public static Transactional createTransactional(final DynamicDatasetCache datasetCache,
+                                                  final int defaultTimeout) {
+    return new CacheBasedTransactional(datasetCache) {
       @Override
-      public void execute(TxRunnable runnable) throws TransactionFailureException {
-        TransactionContext txContext = datasetCache.newTransactionContext();
-        txContext.start();
-        finishExecute(txContext, runnable);
-      }
-
-      public void execute(int timeout, TxRunnable runnable) throws TransactionFailureException {
-        TransactionContext txContext = datasetCache.newTransactionContext();
-        txContext.start(timeout);
-        finishExecute(txContext, runnable);
-      }
-
-      private void finishExecute(TransactionContext txContext, TxRunnable runnable)
-        throws TransactionFailureException {
-        try {
-          runnable.run(datasetCache);
-        } catch (Exception e) {
-          txContext.abort(new TransactionFailureException("Exception raised from TxRunnable.run() " + runnable, e));
-        }
-        // The call the txContext.abort above will always have exception thrown
-        // Hence we'll only reach here if and only if the runnable.run() returns normally.
-        txContext.finish();
+      protected void startTransaction(TransactionContext txContext) throws TransactionFailureException {
+        txContext.start(defaultTimeout);
       }
     };
+  }
+
+  private static class CacheBasedTransactional implements Transactional {
+
+    private final DynamicDatasetCache datasetCache;
+
+    CacheBasedTransactional(DynamicDatasetCache cache) {
+      this.datasetCache = cache;
+    }
+
+    /**
+     * Starts a short transaction with default timeout. Subclasses can override this to change the default.
+     */
+    protected void startTransaction(TransactionContext txContext) throws TransactionFailureException {
+      txContext.start();
+    }
+
+    @Override
+    public void execute(TxRunnable runnable) throws TransactionFailureException {
+      TransactionContext txContext = datasetCache.newTransactionContext();
+      startTransaction(txContext);
+      finishExecute(txContext, runnable);
+    }
+
+    public void execute(int timeout, TxRunnable runnable) throws TransactionFailureException {
+      TransactionContext txContext = datasetCache.newTransactionContext();
+      txContext.start(timeout);
+      finishExecute(txContext, runnable);
+    }
+
+    private void finishExecute(TransactionContext txContext, TxRunnable runnable)
+      throws TransactionFailureException {
+      try {
+        runnable.run(datasetCache);
+      } catch (Exception e) {
+        txContext.abort(new TransactionFailureException("Exception raised from TxRunnable.run() " + runnable, e));
+      }
+      // The call the txContext.abort above will always have exception thrown
+      // Hence we'll only reach here if and only if the runnable.run() returns normally.
+      txContext.finish();
+    }
   }
 
   /**

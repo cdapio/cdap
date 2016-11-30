@@ -22,6 +22,7 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.worker.AbstractWorker;
+import org.apache.tephra.TransactionFailureException;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -69,12 +70,16 @@ public class PartitionExploreCorrector extends AbstractApplication {
       boolean doDisable = disableArg == null || Boolean.valueOf(disableArg);
 
       final AtomicReference<Class<?>> pfsClass = new AtomicReference<>();
-      getContext().execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          pfsClass.set(context.getDataset(datasetName).getClass());
-        }
-      });
+      try {
+        getContext().execute(new TxRunnable() {
+          @Override
+          public void run(DatasetContext context) throws Exception {
+            pfsClass.set(context.getDataset(datasetName).getClass());
+          }
+        });
+      } catch (TransactionFailureException e) {
+        throw new RuntimeException("Failed to determine the PartitionedFileSet class name through reflection", e);
+      }
       try {
         pfsClass.get()
           .getMethod("fixPartitions", Transactional.class, String.class, boolean.class, int.class, boolean.class)

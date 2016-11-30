@@ -25,8 +25,8 @@ export default class CaskVideo extends Component {
 
   render(){
     const opts = {
-      height: '390',
-      width: '640',
+      height: '240',
+      width: '560',
       playerVars: {
         autoplay: 1
       }

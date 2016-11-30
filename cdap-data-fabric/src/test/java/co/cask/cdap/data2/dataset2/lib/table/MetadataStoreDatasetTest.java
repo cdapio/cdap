@@ -32,6 +32,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -49,6 +50,9 @@ public class MetadataStoreDatasetTest {
     final MetadataStoreDataset metadataStoreDataset = new MetadataStoreDataset(table);
     TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) table);
 
+    final Map<MDSKey, Integer> expectedMap = new HashMap<>();
+    final Map<MDSKey, Integer> expectedMapHalf = new HashMap<>();
+
     // Write some values
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
@@ -56,6 +60,10 @@ public class MetadataStoreDatasetTest {
         for (int i = 0; i < 5; ++i) {
           MDSKey mdsKey = new MDSKey.Builder().add(i).build();
           metadataStoreDataset.write(mdsKey, i);
+          expectedMap.put(mdsKey, i);
+          if ((i % 2) == 0) {
+            expectedMapHalf.put(mdsKey, i);
+          }
         }
       }
     });
@@ -102,6 +110,23 @@ public class MetadataStoreDatasetTest {
         }
       });
     }
+
+    // Fetch all keys using keySet
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        Map<MDSKey, Integer> val = metadataStoreDataset.listKV(expectedMap.keySet(), Integer.class, 5);
+        Assert.assertEquals(expectedMap, val);
+      }
+    });
+
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        Map<MDSKey, Integer> valHalf = metadataStoreDataset.listKV(expectedMapHalf.keySet(), Integer.class, 5);
+        Assert.assertEquals(expectedMapHalf, valHalf);
+      }
+    });
   }
 
   @Test

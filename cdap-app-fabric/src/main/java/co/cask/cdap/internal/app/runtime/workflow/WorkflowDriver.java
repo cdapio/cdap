@@ -59,6 +59,8 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.customaction.BasicCustomActionContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowActionConfigurer;
@@ -114,11 +116,13 @@ import javax.annotation.Nullable;
 final class WorkflowDriver extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowDriver.class);
+  private static final String ACTION_SCOPE = "action";
 
   private final Program program;
   private final ProgramOptions programOptions;
   private final InetAddress hostname;
   private final WorkflowSpecification workflowSpec;
+  private final CConfiguration cConf;
   private final ProgramWorkflowRunnerFactory workflowProgramRunnerFactory;
   private final Map<String, WorkflowActionNode> status = new ConcurrentHashMap<>();
   private final LoggingContext loggingContext;
@@ -154,6 +158,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.programOptions = options;
     this.hostname = hostname;
     this.workflowSpec = workflowSpec;
+    this.cConf = cConf;
     this.lock = new ReentrantLock();
     this.condition = lock.newCondition();
     this.metricsCollectionService = metricsCollectionService;
@@ -165,7 +170,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     this.basicWorkflowToken = new BasicWorkflowToken(cConf.getInt(Constants.AppFabric.WORKFLOW_TOKEN_MAX_SIZE_MB));
     this.basicWorkflowContext = new BasicWorkflowContext(workflowSpec, null, null,
-                                                         basicWorkflowToken, program, programOptions,
+                                                         basicWorkflowToken, program, programOptions, cConf,
                                                          metricsCollectionService, datasetFramework, txClient,
                                                          discoveryServiceClient, nodeStates, pluginInstantiator,
                                                          secureStore, secureStoreManager);
@@ -448,7 +453,13 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       WorkflowProgramInfo info = new WorkflowProgramInfo(workflowSpec.getName(), node.getNodeId(),
                                                          workflowRunId.getRun(), node.getNodeId(),
                                                          (BasicWorkflowToken) token);
-      BasicCustomActionContext context = new BasicCustomActionContext(program, programOptions,
+      ProgramOptions actionOptions =
+         new SimpleProgramOptions(programOptions.getName(),
+                                  programOptions.getArguments(),
+                                  new BasicArguments(RuntimeArguments.extractScope(
+                                    ACTION_SCOPE, node.getNodeId(), programOptions.getUserArguments().asMap())));
+
+      BasicCustomActionContext context = new BasicCustomActionContext(program, actionOptions, cConf,
                                                                       node.getCustomActionSpecification(), info,
                                                                       metricsCollectionService, datasetFramework,
                                                                       txClient, discoveryServiceClient,
@@ -508,7 +519,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     Predicate<WorkflowContext> predicate = instantiator.get(
       TypeToken.of((Class<? extends Predicate<WorkflowContext>>) clz)).create();
 
-    WorkflowContext context = new BasicWorkflowContext(workflowSpec, null, null, token, program, programOptions,
+    WorkflowContext context = new BasicWorkflowContext(workflowSpec, null, null, token, program, programOptions, cConf,
                                                        metricsCollectionService, datasetFramework, txClient,
                                                        discoveryServiceClient, nodeStates, pluginInstantiator,
                                                        secureStore, secureStoreManager);
@@ -621,7 +632,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     ProgramWorkflowRunner runner = workflowProgramRunnerFactory.getProgramWorkflowRunner(actionSpec, token,
                                                                                          nodeId, nodeStates);
     return new BasicWorkflowContext(workflowSpec, actionSpec, runner, token,
-                                    program, programOptions, metricsCollectionService,
+                                    program, programOptions, cConf, metricsCollectionService,
                                     datasetFramework, txClient, discoveryServiceClient, nodeStates,
                                     pluginInstantiator, secureStore, secureStoreManager);
   }

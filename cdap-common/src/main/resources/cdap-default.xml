@@ -109,7 +109,7 @@
 
   <property>
     <name>master.startup.checks.packages</name>
-    <value>co.cask.cdap.master.startup</value>
+    <value>co.cask.cdap.master.startup,co.cask.cdap.data.startup</value>
     <description>
       Comma-separated list of packages containing checks that will be run
       before the CDAP Master starts up. If any of the checks fails, the CDAP
@@ -208,6 +208,7 @@
     </description>
   </property>
 
+
   <!-- Global Configuration -->
 
   <property>
@@ -253,6 +254,22 @@
   <property>
     <name>app.bind.port</name>
     <value>0</value>
+    <description>
+      App Fabric service bind port
+    </description>
+  </property>
+
+  <property>
+    <name>ssl.internal.enabled</name>
+    <value>false</value>
+    <description>
+      Enable SSL between Router and App Fabric
+    </description>
+  </property>
+
+  <property>
+    <name>app.ssl.bind.port</name>
+    <value>30443</value>
     <description>
       App Fabric service bind port
     </description>
@@ -482,7 +499,7 @@
     <name>data.tx.num.cores</name>
     <value>${master.service.num.cores}</value>
     <description>
-      Number of cores for the transaction service
+      Number of virtual cores for the transaction service
     </description>
   </property>
 
@@ -573,6 +590,15 @@
     <description>
       Timeout value in seconds for a transaction; if the transaction is not
       finished in that time, it is marked invalid
+    </description>
+  </property>
+
+  <property>
+    <name>data.tx.max.timeout</name>
+    <value>600</value>
+    <description>
+      The limit for the allowed transaction timeout, in seconds. Attempts to
+      start a transaction with a longer timeout will fail.
     </description>
   </property>
 
@@ -673,6 +699,14 @@
     <value>60</value>
     <description>
       Interval in seconds to schedule the clean-up of timed-out operations
+    </description>
+  </property>
+
+  <property>
+    <name>explore.container.yarn.app.classpath.first</name>
+    <value>false</value>
+    <description>
+      Controls whether the yarn app classpath comes before the query engine classpath or not.
     </description>
   </property>
 
@@ -827,8 +861,8 @@
     <name>kafka.server.log.flush.interval.messages</name>
     <value>10000</value>
     <description>
-      The interval length at which will force an fsync of data written to
-      the log
+      The interval length (in number of messages) at which to force an fsync of data
+      written to the log
     </description>
   </property>
 
@@ -861,7 +895,7 @@
     <value>1000000</value>
     <description>
       Maximum time in milliseconds that the client will wait to
-      establish a connection to Zookeeper
+      establish a connection to ZooKeeper
     </description>
   </property>
 
@@ -954,7 +988,7 @@
     <name>log.saver.container.num.cores</name>
     <value>2</value>
     <description>
-      Number of cores for each log saver instance in YARN
+      Number of virtual cores for each log saver instance in YARN
     </description>
   </property>
 
@@ -1040,7 +1074,7 @@
     <name>master.service.num.cores</name>
     <value>2</value>
     <description>
-      Number of cores for master service instance
+      Number of virtual cores for each master service instance
     </description>
   </property>
 
@@ -1062,7 +1096,57 @@
   <property>
     <name>master.services.scheduler.queue</name>
     <value></value>
-    <description>Scheduler queue for CDAP Master Services</description>
+    <description>Scheduler queue for CDAP master services</description>
+  </property>
+
+
+  <!-- Messaging System Configuration -->
+
+  <property>
+    <name>messaging.local.data.dir</name>
+    <value>${local.data.dir}/messaging</value>
+    <description>Local storage directory for the Messaging System (only used in Standalone CDAP)</description>
+  </property>
+
+  <property>
+    <name>messaging.hbase.max.scan.threads</name>
+    <value>48</value>
+  </property>
+
+  <property>
+    <name>messaging.message.table.hbase.splits</name>
+    <value>16</value>
+    <description>Number of splits to use for the message table in HBase upon table creation</description>
+  </property>
+
+  <property>
+    <name>messaging.message.table.name</name>
+    <value>tms.message</value>
+    <description>Name of the message table of the Messaging System</description>
+  </property>
+
+  <property>
+    <name>messaging.metadata.table.name</name>
+    <value>tms.meta</value>
+    <description>Name of the metadata table of the Messaging System</description>
+  </property>
+
+  <property>
+    <name>messaging.payload.table.hbase.splits</name>
+    <value>16</value>
+    <description>Number of splits to use for the payload table in HBase on table creation</description>
+  </property>
+
+  <property>
+    <name>messaging.payload.table.name</name>
+    <value>tms.payload</value>
+    <description>Name of the payload table of the Messaging System</description>
+  </property>
+
+  <property>
+    <name>messaging.table.expiration.seconds</name>
+    <value>300</value>
+    <description>Number of seconds after which the messaging table cache will expire</description>
   </property>
 
 
@@ -1107,6 +1191,7 @@
       Number of Netty service IO worker threads for metadata HTTP service
     </description>
   </property>
+
 
   <!-- Metrics Configuration -->
 
@@ -1255,7 +1340,7 @@
     <name>metrics.processor.num.cores</name>
     <value>1</value>
     <description>
-      Number of cores for metrics processor service Apache Twill runnable
+      Number of virtual cores for metrics processor service Apache Twill runnable
     </description>
   </property>
 
@@ -1329,6 +1414,26 @@
     <description>
       Transport system used by the notification system; can be either
       'kafka' or 'stream'
+    </description>
+  </property>
+
+  
+  <!-- Operational Statistics Configuration -->
+  
+  <property>
+    <name>operational.stats.extensions.dir</name>
+    <value>/opt/cdap/master/ext/operations</value>
+    <description>
+      Semicolon-separated list of local directories on the CDAP Master
+      that are scanned for operational statistics extensions
+    </description>
+  </property>
+
+  <property>
+    <name>operational.stats.refresh.interval.secs</name>
+    <value>60</value>
+    <description>
+      Number of seconds after which operational statistics should be refreshed
     </description>
   </property>
 
@@ -1574,6 +1679,16 @@
   </property>
 
   <property>
+    <name>security.auth.server.announce.address</name>
+    <value></value>
+    <description>
+      CDAP Authentication service announce address, in the format of host:port. This is
+      the address that clients should use to communicate with the Authentication Server.
+      Leave empty to use the default value generated by the Authentication Server.
+    </description>
+  </property>
+
+  <property>
     <name>security.auth.server.bind.address</name>
     <value>0.0.0.0</value>
     <description>
@@ -1805,8 +1920,16 @@
   </property>
 
   <property>
-    <name>ssl.enabled</name>
+    <name>ssl.external.enabled</name>
     <value>false</value>
+    <description>
+      Determines if SSL for external services is enabled
+    </description>
+  </property>
+
+  <property>
+    <name>ssl.enabled</name>
+    <value>${ssl.external.enabled}</value>
     <description>
       Determines if SSL is enabled
     </description>
@@ -1903,7 +2026,7 @@
     <name>stream.container.num.cores</name>
     <value>2</value>
     <description>
-      Number of virtual core for the YARN container that runs the stream
+      Number of virtual cores for the YARN container that runs the stream
       handler
     </description>
   </property>

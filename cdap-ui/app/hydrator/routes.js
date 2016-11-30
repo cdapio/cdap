@@ -32,6 +32,17 @@ angular.module(PKG.name + '.feature.hydrator')
         abstract: true,
         template: '<ui-view/>',
         title: 'Hydrator',
+        resolve: {
+          // This is f%&$*d up. We need to cause this manual delay for react to finish its click handlers
+          // before angular takes up the state change routing -_-.
+          rDelay: function($q) {
+            var defer = $q.defer();
+            setTimeout(() => {
+              defer.resolve();
+            });
+            return defer.promise;
+          }
+        },
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
           highlightTab: 'development'

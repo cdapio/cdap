@@ -29,7 +29,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
-import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
@@ -58,7 +57,6 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
   private final ServiceAnnouncer serviceAnnouncer;
-  private final DataFabricFacadeFactory dataFabricFacadeFactory;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
 
@@ -66,7 +64,6 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   public ServiceProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                               DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                               TransactionSystemClient txClient, ServiceAnnouncer serviceAnnouncer,
-                              DataFabricFacadeFactory dataFabricFacadeFactory,
                               SecureStore secureStore, SecureStoreManager secureStoreManager) {
     super(cConf);
     this.metricsCollectionService = metricsCollectionService;
@@ -74,7 +71,6 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
     this.serviceAnnouncer = serviceAnnouncer;
-    this.dataFabricFacadeFactory = dataFabricFacadeFactory;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
   }
@@ -109,10 +105,10 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
     final PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
     try {
-      ServiceHttpServer component = new ServiceHttpServer(host, program, options, spec,
+      ServiceHttpServer component = new ServiceHttpServer(host, program, options, cConf, spec,
                                                           instanceId, instanceCount, serviceAnnouncer,
                                                           metricsCollectionService, datasetFramework,
-                                                          dataFabricFacadeFactory, txClient, discoveryServiceClient,
+                                                          txClient, discoveryServiceClient,
                                                           pluginInstantiator, secureStore, secureStoreManager);
 
       // Add a service listener to make sure the plugin instantiator is closed when the worker driver finished.

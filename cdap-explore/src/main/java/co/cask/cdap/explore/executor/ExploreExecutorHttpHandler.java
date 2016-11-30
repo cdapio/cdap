@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,6 +28,7 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -39,6 +40,7 @@ import co.cask.cdap.explore.service.ExploreTableManager;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.http.AbstractHttpHandler;
@@ -61,6 +63,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -80,16 +83,19 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   private final DatasetFramework datasetFramework;
   private final StreamAdmin streamAdmin;
   private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
+  private final Impersonator impersonator;
 
   @Inject
   public ExploreExecutorHttpHandler(ExploreTableManager exploreTableManager,
                                     DatasetFramework datasetFramework,
                                     StreamAdmin streamAdmin,
-                                    SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
+                                    SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
+                                    Impersonator impersonator) {
     this.exploreTableManager = exploreTableManager;
     this.datasetFramework = datasetFramework;
     this.streamAdmin = streamAdmin;
     this.datasetInstantiatorFactory = datasetInstantiatorFactory;
+    this.impersonator = impersonator;
   }
 
   @POST
@@ -97,14 +103,19 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   public void enableStream(HttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespace,
                            @PathParam("stream") String streamName,
-                           @PathParam("table") String tableName) throws Exception {
-    StreamId streamId = new StreamId(namespace, streamName);
+                           @PathParam("table") final String tableName) throws Exception {
+    final StreamId streamId = new StreamId(namespace, streamName);
     try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()))) {
-      FormatSpecification format = GSON.fromJson(reader, FormatSpecification.class);
+      final FormatSpecification format = GSON.fromJson(reader, FormatSpecification.class);
       if (format == null) {
         throw new BadRequestException("Expected format in the body");
       }
-      QueryHandle handle = exploreTableManager.enableStream(tableName, streamId, format);
+      QueryHandle handle = impersonator.doAs(new NamespaceId(namespace), new Callable<QueryHandle>() {
+        @Override
+        public QueryHandle call() throws Exception {
+          return exploreTableManager.enableStream(tableName, streamId, format);
+        }
+      });
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
@@ -119,9 +130,9 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   public void disableStream(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespace,
                             @PathParam("stream") String streamName,
-                            @PathParam("table") String tableName) {
+                            @PathParam("table") final String tableName) {
 
-    StreamId streamId = new StreamId(namespace, streamName);
+    final StreamId streamId = new StreamId(namespace, streamName);
     try {
       // throws io exception if there is no stream
       streamAdmin.getConfig(streamId);
@@ -132,7 +143,12 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     }
 
     try {
-      QueryHandle handle = exploreTableManager.disableStream(tableName, streamId);
+      QueryHandle handle = impersonator.doAs(new NamespaceId(namespace), new Callable<QueryHandle>() {
+        @Override
+        public QueryHandle call() throws Exception {
+          return exploreTableManager.disableStream(tableName, streamId);
+        }
+      });
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
@@ -174,9 +190,15 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     enableDataset(responder, datasetId, datasetSpec);
   }
 
-  private void enableDataset(HttpResponder responder, DatasetId datasetId, DatasetSpecification datasetSpec) {
+  private void enableDataset(HttpResponder responder, final DatasetId datasetId,
+                             final DatasetSpecification datasetSpec) {
     try {
-      QueryHandle handle = exploreTableManager.enableDataset(datasetId, datasetSpec);
+      QueryHandle handle = impersonator.doAs(datasetId.getParent(), new Callable<QueryHandle>() {
+        @Override
+        public QueryHandle call() throws Exception {
+          return exploreTableManager.enableDataset(datasetId, datasetSpec);
+        }
+      });
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
@@ -205,17 +227,22 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
                             @PathParam("namespace-id") String namespace, @PathParam("dataset") String datasetName)
     throws BadRequestException {
 
-    DatasetId datasetId = new DatasetId(namespace, datasetName);
+    final DatasetId datasetId = new DatasetId(namespace, datasetName);
     try {
       UpdateExploreParameters params = readUpdateParameters(request);
-      DatasetSpecification oldSpec = params.getOldSpec();
-      DatasetSpecification datasetSpec = params.getNewSpec();
+      final DatasetSpecification oldSpec = params.getOldSpec();
+      final DatasetSpecification datasetSpec = params.getNewSpec();
 
       QueryHandle handle;
       if (oldSpec.equals(datasetSpec)) {
         handle = QueryHandle.NO_OP;
       } else {
-        handle = exploreTableManager.updateDataset(datasetId, datasetSpec, oldSpec);
+        handle = impersonator.doAs(datasetId.getParent(), new Callable<QueryHandle>() {
+          @Override
+          public QueryHandle call() throws Exception {
+            return exploreTableManager.updateDataset(datasetId, datasetSpec, oldSpec);
+          }
+        });
       }
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
@@ -263,9 +290,14 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
                              @PathParam("namespace-id") String namespace, @PathParam("dataset") String datasetName) {
 
     LOG.debug("Disabling explore for dataset instance {}", datasetName);
-    DatasetId datasetId = new DatasetId(namespace, datasetName);
+    final DatasetId datasetId = new DatasetId(namespace, datasetName);
     try {
-      QueryHandle handle = exploreTableManager.disableDataset(datasetId);
+      QueryHandle handle = impersonator.doAs(datasetId.getParent(), new Callable<QueryHandle>() {
+        @Override
+        public QueryHandle call() throws Exception {
+          return exploreTableManager.disableDataset(datasetId);
+        }
+      });
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
@@ -277,10 +309,22 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   @POST
   @Path("datasets/{dataset}/partitions")
-  public void addPartition(HttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespace, @PathParam("dataset") String datasetName) {
-    DatasetId datasetId = new DatasetId(namespace, datasetName);
+  public void addPartition(final HttpRequest request, final HttpResponder responder,
+                           @PathParam("namespace-id") String namespace,
+                           @PathParam("dataset") String datasetName) throws Exception {
+    final DatasetId datasetId = new DatasetId(namespace, datasetName);
     propagateUserId(request);
+    impersonator.doAs(datasetId.getParent(), new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        doAddPartition(request, responder, datasetId);
+        return null;
+      }
+    });
+  }
+
+  private void doAddPartition(HttpRequest request, HttpResponder responder,
+                              DatasetId datasetId) {
     Dataset dataset;
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
       dataset = datasetInstantiator.getDataset(datasetId);
@@ -298,7 +342,8 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return;
       }
       LOG.error("Exception instantiating dataset {}.", datasetId, e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Exception instantiating dataset " + datasetName);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                           "Exception instantiating dataset " + datasetId.getDataset());
       return;
     }
 
@@ -339,15 +384,26 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     }
   }
 
+
   // this should really be a DELETE request. However, the partition key must be passed in the body
   // of the request, and that does not work with many HTTP clients, including Java's URLConnection.
   @POST
   @Path("datasets/{dataset}/deletePartition")
-  public void dropPartition(HttpRequest request, HttpResponder responder,
+  public void dropPartition(final HttpRequest request, final HttpResponder responder,
                             @PathParam("namespace-id") String namespace,
-                            @PathParam("dataset") String datasetName) {
-    DatasetId datasetId = new DatasetId(namespace, datasetName);
+                            @PathParam("dataset") String datasetName) throws Exception {
+    final DatasetId datasetId = new DatasetId(namespace, datasetName);
     propagateUserId(request);
+    impersonator.doAs(datasetId.getParent(), new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        doDropPartition(request, responder, datasetId);
+        return null;
+      }
+    });
+  }
+
+  private void doDropPartition(HttpRequest request, HttpResponder responder, DatasetId datasetId) {
     Dataset dataset;
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
       dataset = datasetInstantiator.getDataset(datasetId);

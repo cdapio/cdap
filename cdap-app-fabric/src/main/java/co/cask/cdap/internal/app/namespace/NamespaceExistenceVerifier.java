@@ -42,7 +42,7 @@ public class NamespaceExistenceVerifier implements EntityExistenceVerifier<Names
     if (!NamespaceId.SYSTEM.equals(namespaceId)) {
       boolean exists = false;
       try {
-        exists = namespaceQueryAdmin.exists(namespaceId.toId());
+        exists = namespaceQueryAdmin.exists(namespaceId);
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }

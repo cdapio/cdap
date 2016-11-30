@@ -21,8 +21,8 @@ import co.cask.cdap.common.NamespaceCannotBeCreatedException;
 import co.cask.cdap.common.NamespaceCannotBeDeletedException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 
 /**
  * Admin class for managing a namespace's lifecycle
@@ -41,27 +41,27 @@ public interface NamespaceAdmin extends NamespaceQueryAdmin {
   /**
    * Deletes the specified namespace.
    *
-   * @param namespaceId the {@link Id.Namespace} of the specified namespace
+   * @param namespaceId the {@link NamespaceId} of the specified namespace
    * @throws NamespaceNotFoundException if the specified namespace does not exist
    * @throws NamespaceCannotBeDeletedException if the deletion operation was unsuccessful
    */
-  void delete(Id.Namespace namespaceId) throws Exception;
+  void delete(NamespaceId namespaceId) throws Exception;
 
   /**
    * Deletes all datasets in the specified namespace.
    *
-   * @param namespaceId the {@link Id.Namespace} of the specified namespace
+   * @param namespaceId the {@link NamespaceId} of the specified namespace
    * @throws NotFoundException if the specified namespace does not exist
    * @throws NamespaceCannotBeDeletedException if the deletion operation was unsuccessful
    */
-  void deleteDatasets(Id.Namespace namespaceId) throws Exception;
+  void deleteDatasets(NamespaceId namespaceId) throws Exception;
 
   /**
    * Update namespace properties for a given namespace.
    *
-   * @param namespaceId  the {@link Id.Namespace} of the namespace to be updated
-   * @param namespaceMeta namespacemeta to update
+   * @param namespaceId  the {@link NamespaceId} of the namespace to be updated
+   * @param namespaceMeta namespace meta to update
    * @throws NotFoundException if the specified namespace is not found
    */
-  void updateProperties(Id.Namespace namespaceId, NamespaceMeta namespaceMeta) throws Exception;
+  void updateProperties(NamespaceId namespaceId, NamespaceMeta namespaceMeta) throws Exception;
 }

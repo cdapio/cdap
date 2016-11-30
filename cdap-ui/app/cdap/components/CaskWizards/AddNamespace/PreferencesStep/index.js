@@ -30,7 +30,7 @@ export default function PreferencesStep() {
 
   const mapDispatchToKeyValProps = (dispatch) => {
     return {
-      OnKeyValueChange: (keyValues) => {
+      onKeyValueChange: (keyValues) => {
         dispatch({
           type: AddNamespaceActions.setPreferences,
           payload: { keyValues }

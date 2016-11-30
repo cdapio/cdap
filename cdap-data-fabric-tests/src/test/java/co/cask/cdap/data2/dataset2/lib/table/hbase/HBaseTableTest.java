@@ -81,6 +81,7 @@ import static org.junit.Assert.fail;
 @Category(SlowTests.class)
 public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
   private static final Logger LOG = LoggerFactory.getLogger(HBaseTableTest.class);
+  private static final HBaseTableDefinition TABLE_DEFINITION = new HBaseTableDefinition("foo");
 
   @ClassRule
   public static final HBaseTestBase TEST_HBASE = new HBaseTestFactory().get();
@@ -109,23 +110,20 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
 
   @Override
   protected BufferingTable getTable(DatasetContext datasetContext, String name,
-                                    ConflictDetection conflictLevel) throws Exception {
+                                    DatasetProperties props) throws Exception {
     // ttl=-1 means "keep data forever"
-    DatasetSpecification spec = DatasetSpecification.builder(name, "foo")
-      .property(Table.PROPERTY_READLESS_INCREMENT, "true")
-      .property(Table.PROPERTY_CONFLICT_LEVEL, conflictLevel.name())
-      .build();
+    DatasetSpecification spec = TABLE_DEFINITION.configure(name, props);
     return new HBaseTable(datasetContext, spec, cConf, TEST_HBASE.getConfiguration(), hBaseTableUtil);
   }
 
   @Override
   protected HBaseTableAdmin getTableAdmin(DatasetContext datasetContext, String name,
                                           DatasetProperties props) throws IOException {
-    DatasetSpecification spec = new HBaseTableDefinition("foo").configure(name, props);
+    DatasetSpecification spec = TABLE_DEFINITION.configure(name, props);
     return getTableAdmin(datasetContext, spec);
   }
 
-  protected HBaseTableAdmin getTableAdmin(DatasetContext datasetContext, DatasetSpecification spec)
+  private HBaseTableAdmin getTableAdmin(DatasetContext datasetContext, DatasetSpecification spec)
     throws IOException {
     return new HBaseTableAdmin(datasetContext, spec, TEST_HBASE.getConfiguration(), hBaseTableUtil,
                                cConf, new FileContextLocationFactory(TEST_HBASE.getConfiguration()));
@@ -226,13 +224,20 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     String enabledTableName = "incr-enable";
     TableId disabledTableId = hBaseTableUtil.createHTableId(NAMESPACE1, disableTableName);
     TableId enabledTableId = hBaseTableUtil.createHTableId(NAMESPACE1, enabledTableName);
-    HBaseTableAdmin disabledAdmin = getTableAdmin(CONTEXT1, disableTableName, DatasetProperties.EMPTY);
+
+    DatasetProperties propsDisabled = DatasetProperties.builder()
+      .add(Table.PROPERTY_READLESS_INCREMENT, "false")
+      .add(Table.PROPERTY_CONFLICT_LEVEL, ConflictDetection.COLUMN.name())
+      .build();
+    HBaseTableAdmin disabledAdmin = getTableAdmin(CONTEXT1, disableTableName, propsDisabled);
     disabledAdmin.create();
     HBaseAdmin admin = TEST_HBASE.getHBaseAdmin();
 
-    DatasetProperties props =
-      DatasetProperties.builder().add(Table.PROPERTY_READLESS_INCREMENT, "true").build();
-    HBaseTableAdmin enabledAdmin = getTableAdmin(CONTEXT1, enabledTableName, props);
+    DatasetProperties propsEnabled = DatasetProperties.builder()
+      .add(Table.PROPERTY_READLESS_INCREMENT, "true")
+      .add(Table.PROPERTY_CONFLICT_LEVEL, ConflictDetection.COLUMN.name())
+      .build();
+    HBaseTableAdmin enabledAdmin = getTableAdmin(CONTEXT1, enabledTableName, propsEnabled);
     enabledAdmin.create();
 
     try {
@@ -249,7 +254,7 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
         admin.close();
       }
 
-      BufferingTable table = getTable(CONTEXT1, enabledTableName, ConflictDetection.COLUMN);
+      BufferingTable table = getTable(CONTEXT1, enabledTableName, propsEnabled);
       byte[] row = Bytes.toBytes("row1");
       byte[] col = Bytes.toBytes("col1");
       DetachedTxSystemClient txSystemClient = new DetachedTxSystemClient();
@@ -294,12 +299,10 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
   @Test
   public void testColumnFamily() throws Exception {
     DatasetProperties props = DatasetProperties.builder().add(Table.PROPERTY_COLUMN_FAMILY, "t").build();
-    HBaseTableDefinition tableDefinition = new HBaseTableDefinition("foo");
     String tableName = "testcf";
-    DatasetSpecification spec = tableDefinition.configure(tableName, props);
-    DatasetAdmin admin = getTableAdmin(CONTEXT1, spec);
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, tableName, props);
     admin.create();
-    final HBaseTable table = new HBaseTable(CONTEXT1, spec, cConf, TEST_HBASE.getConfiguration(), hBaseTableUtil);
+    final BufferingTable table = getTable(CONTEXT1, tableName, props);
 
     TransactionSystemClient txClient = new DetachedTxSystemClient();
     TransactionExecutor executor = new DefaultTransactionExecutor(txClient, table);
@@ -310,7 +313,7 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
       }
     });
 
-    final HBaseTable table2 = new HBaseTable(CONTEXT1, spec, cConf, TEST_HBASE.getConfiguration(), hBaseTableUtil);
+    final BufferingTable table2 = getTable(CONTEXT1, tableName, props);
     executor = new DefaultTransactionExecutor(txClient, table2);
     executor.execute(new TransactionExecutor.Subroutine() {
       @Override

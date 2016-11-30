@@ -18,19 +18,19 @@ import React, {Component, PropTypes} from 'react';
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import T from 'i18n-react';
 import debounce from 'lodash/debounce';
+import PaginationDropdown from 'components/Pagination/PaginationDropdown';
 
 require('./HomeHeader.less');
 
 export default class HomeHeader extends Component {
   constructor(props) {
     super(props);
-
-    this.debouncedHandleSearch = debounce(this.handleSearch.bind(this), 500);
-
     this.state = {
       isFilterExpanded: false,
       isSortExpanded: false
     };
+
+    this.debouncedHandleSearch = debounce(this.handleSearch.bind(this), 500);
   }
 
   handleFilterToggle() {
@@ -135,13 +135,20 @@ export default class HomeHeader extends Component {
             <span className="fa fa-search form-control-feedback"></span>
           </div>
         </div>
-        <div className="sort">
-          {sortDropdown}
-        </div>
         <div className="filter">
           {filterDropdown}
         </div>
         <div className="view-selector pull-right">
+          <div className="sort">
+            {sortDropdown}
+          </div>
+          <div className="pagination-dropdown">
+            <PaginationDropdown
+              numberOfPages={this.props.numberOfPages}
+              currentPage={this.props.currentPage}
+              onPageChange={this.props.onPageChange}
+            />
+          </div>
           <span className="fa fa-th active"></span>
           <span className="fa fa-list"></span>
         </div>
@@ -175,5 +182,8 @@ HomeHeader.propTypes = {
   }),
   onSortClick: PropTypes.func,
   onSearch: PropTypes.func,
-  searchText: PropTypes.string
+  searchText: PropTypes.string,
+  numberOfPages: PropTypes.number,
+  currentPage: PropTypes.number,
+  onPageChange: PropTypes.func
 };

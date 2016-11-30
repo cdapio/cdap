@@ -23,6 +23,8 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.worker.WorkerContext;
+import com.google.common.base.Throwables;
+import org.apache.tephra.TransactionFailureException;
 
 import java.util.concurrent.TimeUnit;
 
@@ -61,19 +63,26 @@ public class AppWithWorker extends AbstractApplication {
 
     @Override
     public void run() {
-      writeToTable(RUN, RUN);
-      while (!stopped) {
-        try {
-          TimeUnit.MILLISECONDS.sleep(100);
-        } catch (InterruptedException e) {
-
+      try {
+        writeToTable(RUN, RUN);
+        while (!stopped) {
+          try {
+            TimeUnit.MILLISECONDS.sleep(100);
+          } catch (InterruptedException e) {
+          }
         }
+      } catch (TransactionFailureException e) {
+        throw Throwables.propagate(e);
       }
     }
 
     @Override
     public void destroy() {
-      writeToTable(STOP, STOP);
+      try {
+        writeToTable(STOP, STOP);
+      } catch (TransactionFailureException e) {
+        throw Throwables.propagate(e);
+      }
     }
 
     @Override
@@ -81,7 +90,7 @@ public class AppWithWorker extends AbstractApplication {
       stopped = true;
     }
 
-    private void writeToTable(final String key, final String value) {
+    private void writeToTable(final String key, final String value) throws TransactionFailureException {
       getContext().execute(new TxRunnable() {
         @Override
         public void run(DatasetContext context) throws Exception {

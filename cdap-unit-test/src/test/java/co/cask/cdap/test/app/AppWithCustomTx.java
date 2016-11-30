@@ -22,6 +22,7 @@ import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DataSetException;
@@ -36,6 +37,7 @@ import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpContentConsumer;
 import co.cask.cdap.api.service.http.HttpContentProducer;
+import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.worker.AbstractWorker;
@@ -89,16 +91,22 @@ public class AppWithCustomTx extends AbstractApplication {
   static final String INPUT = "input";
   static final String DEFAULT = "default";
   static final String FAILED = "failed";
+  static final String FAIL_CONSUMER = "fail-consumer";
+  static final String FAIL_PRODUCER = "fail-producer";
 
   static final String ACTION_TX = "TxAction";
   static final String ACTION_NOTX = "NoTxAction";
-  static final String CONSUMER = "HttpContentConsumer";
+  static final String CONSUMER_TX = "TxContentConsumer";
+  static final String CONSUMER_NOTX = "NoTxContentConsumer";
+  static final String HANDLER_TX = "TxHandler";
+  static final String HANDLER_NOTX = "NoTxHandler";
   static final String FLOW = "TimedTxFlow";
   static final String FLOWLET_TX = "TxFlowlet";
   static final String FLOWLET_NOTX = "NoTxFlowlet";
   static final String MAPREDUCE_NOTX = "NoTxMR";
   static final String MAPREDUCE_TX = "TxMR";
-  static final String PRODUCER = "HttpContentProducer";
+  static final String PRODUCER_TX = "TxContentProducer";
+  static final String PRODUCER_NOTX = "NoTxContentProducer";
   static final String SERVICE = "TimedTxService";
   static final String SPARK_NOTX = "NoTxSpark";
   static final String SPARK_TX = "TxSpark";
@@ -109,22 +117,40 @@ public class AppWithCustomTx extends AbstractApplication {
 
   static final String INITIALIZE = "initialize";
   static final String INITIALIZE_TX = "initialize-tx";
+  static final String INITIALIZE_TX_D = "initialize-tx-default";
   static final String INITIALIZE_NEST = "initialize-nest";
   static final String DESTROY = "destroy";
   static final String DESTROY_TX = "destroy-tx";
+  static final String DESTROY_TX_D = "destroy-tx-default";
   static final String DESTROY_NEST = "destroy-nest";
+  static final String ONERROR = "error";
+  static final String ONERROR_TX = "error-tx";
+  static final String ONERROR_TX_D = "error-tx-default";
+  static final String ONERROR_NEST = "error-nest";
   static final String RUNTIME = "runtime";
   static final String RUNTIME_TX = "runtime-tx";
+  static final String RUNTIME_TX_D = "runtime-tx-default";
+  static final String RUNTIME_TX_T = "runtime-tx-tx";
   static final String RUNTIME_NEST = "runtime-nest";
+  static final String RUNTIME_NEST_T = "runtime-nest-tx";
+  static final String RUNTIME_NEST_CT = "runtime-nest-cxt-tx";
+  static final String RUNTIME_NEST_TC = "runtime-nest-tx-cxt";
 
   static final int TIMEOUT_ACTION_RUNTIME = 13;
   static final int TIMEOUT_ACTION_DESTROY = 14;
   static final int TIMEOUT_ACTION_INITIALIZE = 15;
-  static final int TIMEOUT_CONSUMER_RUNTIME = 16;
+  static final int TIMEOUT_CONSUMER_DESTROY = 16;
+  static final int TIMEOUT_CONSUMER_ERROR = 33;
+  static final int TIMEOUT_CONSUMER_RUNTIME = 34;
   static final int TIMEOUT_FLOWLET_DESTROY = 17;
   static final int TIMEOUT_FLOWLET_INITIALIZE = 18;
+  static final int TIMEOUT_HANDLER_DESTROY = 31;
+  static final int TIMEOUT_HANDLER_INITIALIZE = 32;
+  static final int TIMEOUT_HANDLER_RUNTIME = 29;
   static final int TIMEOUT_MAPREDUCE_DESTROY = 19;
   static final int TIMEOUT_MAPREDUCE_INITIALIZE = 20;
+  static final int TIMEOUT_PRODUCER_DESTROY = 35;
+  static final int TIMEOUT_PRODUCER_ERROR = 36;
   static final int TIMEOUT_PRODUCER_RUNTIME = 21;
   static final int TIMEOUT_SPARK_DESTROY = 22;
   static final int TIMEOUT_SPARK_INITIALIZE = 23;
@@ -151,7 +177,8 @@ public class AppWithCustomTx extends AbstractApplication {
       @Override
       protected void configure() {
         setName(SERVICE);
-        addHandler(new TimeoutHandler());
+        addHandler(new TxHandler());
+        addHandler(new NoTxHandler());
       }
     });
     addFlow(new AbstractFlow() {
@@ -172,6 +199,16 @@ public class AppWithCustomTx extends AbstractApplication {
    */
   static void executeRecordTransaction(Transactional transactional,
                                        final String row, final String column, int timeout) {
+    try {
+      transactional.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          recordTransaction(context, row, column + "-default"); // append _D for default timeout
+        }
+      });
+    } catch (TransactionFailureException e) {
+      throw Throwables.propagate(e);
+    }
     try {
       transactional.execute(timeout, new TxRunnable() {
         @Override
@@ -247,6 +284,32 @@ public class AppWithCustomTx extends AbstractApplication {
     capture.getTable().put(new Put(row, key, FAILED));
   }
 
+  /**
+   * Execute a new transaction and attempt a nested transaction form there.
+   * The nested transaction is executed with the same transactional.
+   */
+  static void executeAttemptNestedTransaction(final Transactional txnl, final String row, final String key) {
+    executeAttemptNestedTransaction(txnl, txnl, row, key);
+  }
+
+  /**
+   * Execute a new transaction and attempt a nested transaction form there.
+   * The nested transaction can be executed through a different transactional.
+   */
+  static void executeAttemptNestedTransaction(Transactional txnl, final Transactional nestingTxnl,
+                                              final String row, final String key) {
+    try {
+      txnl.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext ctext) throws Exception {
+          attemptNestedTransaction(nestingTxnl, row, key);
+        }
+      });
+    } catch (TransactionFailureException e) {
+      throw Throwables.propagate(e.getCause() == null ? e : e.getCause());
+    }
+  }
+
   public static class NoTxWorker extends AbstractWorker {
 
     @Override
@@ -259,36 +322,21 @@ public class AppWithCustomTx extends AbstractApplication {
       super.initialize(context);
       recordTransaction(getContext(), WORKER_NOTX, INITIALIZE);
       executeRecordTransaction(context, WORKER_NOTX, INITIALIZE_TX, TIMEOUT_WORKER_INITIALIZE);
-      context.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext ctext) throws Exception {
-          attemptNestedTransaction(getContext(), WORKER_NOTX, INITIALIZE_NEST);
-        }
-      });
+      executeAttemptNestedTransaction(getContext(), WORKER_NOTX, INITIALIZE_NEST);
     }
 
     @Override
     public void run() {
       recordTransaction(getContext(), WORKER_NOTX, RUNTIME);
       executeRecordTransaction(getContext(), WORKER_NOTX, RUNTIME_TX, TIMEOUT_WORKER_RUNTIME);
-      getContext().execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext ctext) throws Exception {
-          attemptNestedTransaction(getContext(), WORKER_NOTX, RUNTIME_NEST);
-        }
-      });
+      executeAttemptNestedTransaction(getContext(), WORKER_NOTX, RUNTIME_NEST);
     }
 
     @Override
     public void destroy() {
       recordTransaction(getContext(), WORKER_NOTX, DESTROY);
       executeRecordTransaction(getContext(), WORKER_NOTX, DESTROY_TX, TIMEOUT_WORKER_DESTROY);
-      getContext().execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext ctext) throws Exception {
-          attemptNestedTransaction(getContext(), WORKER_NOTX, DESTROY_NEST);
-        }
-      });
+      executeAttemptNestedTransaction(getContext(), WORKER_NOTX, DESTROY_NEST);
       super.destroy();
     }
   }
@@ -312,12 +360,7 @@ public class AppWithCustomTx extends AbstractApplication {
     public void run() {
       recordTransaction(getContext(), WORKER_TX, RUNTIME);
       executeRecordTransaction(getContext(), WORKER_TX, RUNTIME_TX, TIMEOUT_WORKER_RUNTIME);
-      getContext().execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext ctext) throws Exception {
-          attemptNestedTransaction(getContext(), WORKER_TX, RUNTIME_NEST);
-        }
-      });
+      executeAttemptNestedTransaction(getContext(), WORKER_TX, RUNTIME_NEST);
     }
 
     @Override
@@ -329,42 +372,193 @@ public class AppWithCustomTx extends AbstractApplication {
     }
   }
 
-  public static class TimeoutHandler extends AbstractHttpServiceHandler {
+  public static class TxHandler extends AbstractHttpServiceHandler {
 
-    // service context does not have Transactional, no need to test lifecycle methods
+    @Override
+    public void initialize(HttpServiceContext context) throws Exception {
+      super.initialize(context);
+      recordTransaction(getContext(), HANDLER_TX, INITIALIZE);
+      attemptNestedTransaction(getContext(), HANDLER_TX, INITIALIZE_NEST);
+    }
+
+    @Override
+    public void destroy() {
+      recordTransaction(getContext(), HANDLER_TX, DESTROY);
+      attemptNestedTransaction(getContext(), HANDLER_TX, DESTROY_NEST);
+      super.destroy();
+    }
 
     @PUT
-    @Path("test")
-    public HttpContentConsumer handle(HttpServiceRequest request, HttpServiceResponder responder) {
+    @Path("tx")
+    public HttpContentConsumer tx(HttpServiceRequest request, HttpServiceResponder responder) {
+      recordTransaction(getContext(), HANDLER_TX, RUNTIME);
+      attemptNestedTransaction(getContext(), HANDLER_TX, RUNTIME_NEST);
+
       return new HttpContentConsumer() {
+
+        String body = null;
 
         @Override
         public void onReceived(ByteBuffer chunk, Transactional transactional) throws Exception {
-          executeRecordTransaction(transactional, CONSUMER, RUNTIME_TX, TIMEOUT_CONSUMER_RUNTIME);
+          body = Bytes.toString(chunk);
+          if (FAIL_CONSUMER.equals(body)) {
+            LOG.warn("Failing consumer because the request was '" + body + "'");
+            throw new RuntimeException(body);
+          }
+          recordTransaction(getContext(), CONSUMER_TX, RUNTIME);
+          executeRecordTransaction(getContext(), CONSUMER_TX, RUNTIME_TX, TIMEOUT_CONSUMER_RUNTIME);
+          executeRecordTransaction(transactional, CONSUMER_TX, RUNTIME_TX_T, TIMEOUT_CONSUMER_RUNTIME);
+          executeAttemptNestedTransaction(getContext(), CONSUMER_TX, RUNTIME_NEST);
+          executeAttemptNestedTransaction(transactional, CONSUMER_TX, RUNTIME_NEST_T);
+          executeAttemptNestedTransaction(getContext(), transactional, CONSUMER_TX, RUNTIME_NEST_CT);
+          executeAttemptNestedTransaction(transactional, getContext(), CONSUMER_TX, RUNTIME_NEST_TC);
+        }
+
+        @Override
+        public void onError(HttpServiceResponder responder, Throwable failureCause) {
+          recordTransaction(getContext(), CONSUMER_TX, ONERROR);
+          attemptNestedTransaction(getContext(), CONSUMER_TX, ONERROR_NEST);
         }
 
         @Override
         public void onFinish(HttpServiceResponder responder) throws Exception {
+
+          recordTransaction(getContext(), CONSUMER_TX, DESTROY);
+          attemptNestedTransaction(getContext(), CONSUMER_TX, DESTROY_NEST);
+
           responder.send(200, new HttpContentProducer() {
 
             @Override
             public ByteBuffer nextChunk(Transactional transactional) throws Exception {
-              executeRecordTransaction(transactional, PRODUCER, RUNTIME_TX, TIMEOUT_PRODUCER_RUNTIME);
+              if (FAIL_PRODUCER.equals(body)) {
+                LOG.warn("Failing producer because the request was '" + body + "'");
+                throw new RuntimeException(body);
+              }
+              recordTransaction(getContext(), PRODUCER_TX, RUNTIME);
+              executeRecordTransaction(getContext(), PRODUCER_TX, RUNTIME_TX, TIMEOUT_PRODUCER_RUNTIME);
+              executeRecordTransaction(transactional, PRODUCER_TX, RUNTIME_TX_T, TIMEOUT_PRODUCER_RUNTIME);
+              executeAttemptNestedTransaction(getContext(), PRODUCER_TX, RUNTIME_NEST);
+              executeAttemptNestedTransaction(transactional, PRODUCER_TX, RUNTIME_NEST_T);
+              executeAttemptNestedTransaction(getContext(), transactional, PRODUCER_TX, RUNTIME_NEST_CT);
+              executeAttemptNestedTransaction(transactional, getContext(), PRODUCER_TX, RUNTIME_NEST_TC);
               return ByteBuffer.allocate(0);
             }
 
             @Override
             public void onFinish() throws Exception {
+              recordTransaction(getContext(), PRODUCER_TX, DESTROY);
+              attemptNestedTransaction(getContext(), PRODUCER_TX, DESTROY_NEST);
             }
 
             @Override
             public void onError(Throwable failureCause) {
+              recordTransaction(getContext(), PRODUCER_TX, ONERROR);
+              attemptNestedTransaction(getContext(), PRODUCER_TX, ONERROR_NEST);
             }
           }, ContentType.TEXT_PLAIN.getMimeType());
         }
+      };
+    }
+  }
+
+  public static class NoTxHandler extends AbstractHttpServiceHandler {
+
+    @Override
+    @TransactionPolicy(TransactionControl.EXPLICIT)
+    public void initialize(HttpServiceContext context) throws Exception {
+      super.initialize(context);
+      recordTransaction(getContext(), HANDLER_NOTX, INITIALIZE);
+      executeRecordTransaction(getContext(), HANDLER_NOTX, INITIALIZE_TX, TIMEOUT_HANDLER_INITIALIZE);
+      executeAttemptNestedTransaction(getContext(), HANDLER_NOTX, INITIALIZE_NEST);
+    }
+
+    @Override
+    @TransactionPolicy(TransactionControl.EXPLICIT)
+    public void destroy() {
+      recordTransaction(getContext(), HANDLER_NOTX, DESTROY);
+      executeRecordTransaction(getContext(), HANDLER_NOTX, DESTROY_TX, TIMEOUT_HANDLER_DESTROY);
+      executeAttemptNestedTransaction(getContext(), HANDLER_NOTX, DESTROY_NEST);
+      super.destroy();
+    }
+
+    @PUT
+    @Path("notx")
+    @TransactionPolicy(TransactionControl.EXPLICIT)
+    public HttpContentConsumer notx(HttpServiceRequest request, HttpServiceResponder responder)
+      throws TransactionFailureException {
+
+      recordTransaction(getContext(), HANDLER_NOTX, RUNTIME);
+      executeRecordTransaction(getContext(), HANDLER_NOTX, RUNTIME_TX, TIMEOUT_HANDLER_RUNTIME);
+      executeAttemptNestedTransaction(getContext(), HANDLER_NOTX, RUNTIME_NEST);
+      return new HttpContentConsumer() {
+
+        String body = null;
 
         @Override
+        public void onReceived(ByteBuffer chunk, Transactional transactional) throws Exception {
+          body = Bytes.toString(chunk);
+          if (FAIL_CONSUMER.equals(body)) {
+            LOG.warn("Failing consumer because the request was '" + body + "'");
+            throw new RuntimeException(body);
+          }
+          recordTransaction(getContext(), CONSUMER_NOTX, RUNTIME);
+          executeRecordTransaction(getContext(), CONSUMER_NOTX, RUNTIME_TX, TIMEOUT_CONSUMER_RUNTIME);
+          executeRecordTransaction(transactional, CONSUMER_NOTX, RUNTIME_TX_T, TIMEOUT_CONSUMER_RUNTIME);
+          executeAttemptNestedTransaction(getContext(), CONSUMER_NOTX, RUNTIME_NEST);
+          executeAttemptNestedTransaction(transactional, CONSUMER_NOTX, RUNTIME_NEST_T);
+          executeAttemptNestedTransaction(getContext(), transactional, CONSUMER_NOTX, RUNTIME_NEST_CT);
+          executeAttemptNestedTransaction(transactional, getContext(), CONSUMER_NOTX, RUNTIME_NEST_TC);
+        }
+
+        @Override
+        @TransactionPolicy(TransactionControl.EXPLICIT)
         public void onError(HttpServiceResponder responder, Throwable failureCause) {
+          recordTransaction(getContext(), CONSUMER_NOTX, ONERROR);
+          executeRecordTransaction(getContext(), CONSUMER_NOTX, ONERROR_TX, TIMEOUT_CONSUMER_ERROR);
+          executeAttemptNestedTransaction(getContext(), CONSUMER_NOTX, ONERROR_NEST);
+        }
+
+        @Override
+        @TransactionPolicy(TransactionControl.EXPLICIT)
+        public void onFinish(HttpServiceResponder responder) throws Exception {
+
+          recordTransaction(getContext(), CONSUMER_NOTX, DESTROY);
+          executeRecordTransaction(getContext(), CONSUMER_NOTX, DESTROY_TX, TIMEOUT_CONSUMER_DESTROY);
+          executeAttemptNestedTransaction(getContext(), CONSUMER_NOTX, DESTROY_NEST);
+          responder.send(200, new HttpContentProducer() {
+
+            @Override
+            public ByteBuffer nextChunk(Transactional transactional) throws Exception {
+              if (FAIL_PRODUCER.equals(body)) {
+                LOG.warn("Failing producer because the request was '" + body + "'");
+                throw new RuntimeException(body);
+              }
+              recordTransaction(getContext(), PRODUCER_NOTX, RUNTIME);
+              executeRecordTransaction(getContext(), PRODUCER_NOTX, RUNTIME_TX, TIMEOUT_PRODUCER_RUNTIME);
+              executeRecordTransaction(transactional, PRODUCER_NOTX, RUNTIME_TX_T, TIMEOUT_PRODUCER_RUNTIME);
+              executeAttemptNestedTransaction(getContext(), PRODUCER_NOTX, RUNTIME_NEST);
+              executeAttemptNestedTransaction(transactional, PRODUCER_NOTX, RUNTIME_NEST_T);
+              executeAttemptNestedTransaction(getContext(), transactional, PRODUCER_NOTX, RUNTIME_NEST_CT);
+              executeAttemptNestedTransaction(transactional, getContext(), PRODUCER_NOTX, RUNTIME_NEST_TC);
+              return ByteBuffer.allocate(0);
+            }
+
+            @Override
+            @TransactionPolicy(TransactionControl.EXPLICIT)
+            public void onFinish() throws Exception {
+              recordTransaction(getContext(), PRODUCER_NOTX, DESTROY);
+              executeRecordTransaction(getContext(), PRODUCER_NOTX, DESTROY_TX, TIMEOUT_PRODUCER_DESTROY);
+              executeAttemptNestedTransaction(getContext(), PRODUCER_NOTX, DESTROY_NEST);
+            }
+
+            @Override
+            @TransactionPolicy(TransactionControl.EXPLICIT)
+            public void onError(Throwable failureCause) {
+              recordTransaction(getContext(), PRODUCER_NOTX, ONERROR);
+              executeRecordTransaction(getContext(), PRODUCER_NOTX, ONERROR_TX, TIMEOUT_PRODUCER_ERROR);
+              executeAttemptNestedTransaction(getContext(), PRODUCER_NOTX, ONERROR_NEST);
+            }
+          }, ContentType.TEXT_PLAIN.getMimeType());
         }
       };
     }
@@ -405,12 +599,7 @@ public class AppWithCustomTx extends AbstractApplication {
       super.initialize(context);
       recordTransaction(context, WORKFLOW_NOTX, INITIALIZE);
       executeRecordTransaction(getContext(), WORKFLOW_NOTX, INITIALIZE_TX, TIMEOUT_WORKFLOW_INITIALIZE);
-      getContext().execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext ctext) throws Exception {
-          attemptNestedTransaction(getContext(), WORKFLOW_NOTX, INITIALIZE_NEST);
-        }
-      });
+      executeAttemptNestedTransaction(getContext(), WORKFLOW_NOTX, INITIALIZE_NEST);
     }
 
     @Override
@@ -419,16 +608,7 @@ public class AppWithCustomTx extends AbstractApplication {
       super.destroy();
       recordTransaction(getContext(), WORKFLOW_NOTX, DESTROY);
       executeRecordTransaction(getContext(), WORKFLOW_NOTX, DESTROY_TX, TIMEOUT_WORKFLOW_DESTROY);
-      try {
-        getContext().execute(new TxRunnable() {
-          @Override
-          public void run(DatasetContext ctext) throws Exception {
-            attemptNestedTransaction(getContext(), WORKFLOW_NOTX, DESTROY_NEST);
-          }
-        });
-      } catch (TransactionFailureException e) {
-        throw Throwables.propagate(e.getCause() == null ? e : e.getCause());
-      }
+      executeAttemptNestedTransaction(getContext(), WORKFLOW_NOTX, DESTROY_NEST);
     }
   }
 
@@ -444,12 +624,7 @@ public class AppWithCustomTx extends AbstractApplication {
     protected void initialize() throws Exception {
       recordTransaction(getContext(), ACTION_NOTX, INITIALIZE);
       executeRecordTransaction(getContext(), ACTION_NOTX, INITIALIZE_TX, TIMEOUT_ACTION_INITIALIZE);
-      getContext().execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext ctext) throws Exception {
-          attemptNestedTransaction(getContext(), ACTION_NOTX, INITIALIZE_NEST);
-        }
-      });
+      executeAttemptNestedTransaction(getContext(), ACTION_NOTX, INITIALIZE_NEST);
     }
 
     @Override
@@ -457,28 +632,14 @@ public class AppWithCustomTx extends AbstractApplication {
     public void destroy() {
       recordTransaction(getContext(), ACTION_NOTX, DESTROY);
       executeRecordTransaction(getContext(), ACTION_NOTX, DESTROY_TX, TIMEOUT_ACTION_DESTROY);
-      try {
-        getContext().execute(new TxRunnable() {
-          @Override
-          public void run(DatasetContext ctext) throws Exception {
-            attemptNestedTransaction(getContext(), ACTION_NOTX, DESTROY_NEST);
-          }
-        });
-      } catch (TransactionFailureException e) {
-        throw Throwables.propagate(e.getCause() == null ? e : e.getCause());
-      }
+      executeAttemptNestedTransaction(getContext(), ACTION_NOTX, DESTROY_NEST);
     }
 
     @Override
     public void run() throws Exception {
       recordTransaction(getContext(), ACTION_NOTX, RUNTIME_TX);
       executeRecordTransaction(getContext(), ACTION_NOTX, RUNTIME_TX, TIMEOUT_ACTION_RUNTIME);
-      getContext().execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext ctext) throws Exception {
-          attemptNestedTransaction(getContext(), ACTION_NOTX, RUNTIME_NEST);
-        }
-      });
+      executeAttemptNestedTransaction(getContext(), ACTION_NOTX, RUNTIME_NEST);
     }
   }
 
@@ -505,12 +666,7 @@ public class AppWithCustomTx extends AbstractApplication {
     public void run() throws Exception {
       recordTransaction(getContext(), ACTION_TX, RUNTIME_TX);
       executeRecordTransaction(getContext(), ACTION_TX, RUNTIME_TX, TIMEOUT_ACTION_RUNTIME);
-      getContext().execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext ctext) throws Exception {
-          attemptNestedTransaction(getContext(), ACTION_TX, RUNTIME_NEST);
-        }
-      });
+      executeAttemptNestedTransaction(getContext(), ACTION_TX, RUNTIME_NEST);
     }
   }
 
@@ -558,12 +714,7 @@ public class AppWithCustomTx extends AbstractApplication {
       super.initialize(context);
       recordTransaction(context, context.getName(), INITIALIZE);
       executeRecordTransaction(context, context.getName(), INITIALIZE_TX, TIMEOUT_FLOWLET_INITIALIZE);
-      getContext().execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext ctext) throws Exception {
-          attemptNestedTransaction(context, context.getName(), INITIALIZE_NEST);
-        }
-      });
+      executeAttemptNestedTransaction(context, context.getName(), INITIALIZE_NEST);
     }
 
     @Override
@@ -571,21 +722,13 @@ public class AppWithCustomTx extends AbstractApplication {
     public void destroy() {
       recordTransaction(getContext(), getContext().getName(), DESTROY);
       executeRecordTransaction(getContext(), getContext().getName(), DESTROY_TX, TIMEOUT_FLOWLET_DESTROY);
-      try {
-        getContext().execute(new TxRunnable() {
-          @Override
-          public void run(DatasetContext ctext) throws Exception {
-            attemptNestedTransaction(getContext(), getContext().getName(), DESTROY_NEST);
-          }
-        });
-      } catch (TransactionFailureException e) {
-        throw Throwables.propagate(e.getCause() == null ? e : e.getCause());
-      }
+      executeAttemptNestedTransaction(getContext(), getContext().getName(), DESTROY_NEST);
     }
 
     @ProcessInput
     public void process(@SuppressWarnings("UnusedParameters") StreamEvent event) {
-      // no-op
+      recordTransaction(getContext(), getContext().getName(), RUNTIME);
+      attemptNestedTransaction(getContext(), getContext().getName(), RUNTIME_NEST);
     }
   }
 
@@ -601,12 +744,7 @@ public class AppWithCustomTx extends AbstractApplication {
       // this job will fail because we don't configure the mapper etc. That is fine because destroy() still gets called
       recordTransaction(getContext(), MAPREDUCE_NOTX, INITIALIZE);
       executeRecordTransaction(getContext(), MAPREDUCE_NOTX, INITIALIZE_TX, TIMEOUT_MAPREDUCE_INITIALIZE);
-      getContext().execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext ctext) throws Exception {
-          attemptNestedTransaction(getContext(), MAPREDUCE_NOTX, INITIALIZE_NEST);
-        }
-      });
+      executeAttemptNestedTransaction(getContext(), MAPREDUCE_NOTX, INITIALIZE_NEST);
 
       // TODO (CDAP-7444): if destroy is called if the MR fails to start, we can remove all this to speed up the test
       Job job = getContext().getHadoopJob();
@@ -621,16 +759,7 @@ public class AppWithCustomTx extends AbstractApplication {
     public void destroy() {
       recordTransaction(getContext(), MAPREDUCE_NOTX, DESTROY);
       executeRecordTransaction(getContext(), MAPREDUCE_NOTX, DESTROY_TX, TIMEOUT_MAPREDUCE_DESTROY);
-      try {
-        getContext().execute(new TxRunnable() {
-          @Override
-          public void run(DatasetContext ctext) throws Exception {
-            attemptNestedTransaction(getContext(), MAPREDUCE_NOTX, DESTROY_NEST);
-          }
-        });
-      } catch (TransactionFailureException e) {
-        throw Throwables.propagate(e);
-      }
+      executeAttemptNestedTransaction(getContext(), MAPREDUCE_NOTX, DESTROY_NEST);
     }
   }
 

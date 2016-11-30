@@ -18,6 +18,8 @@ package co.cask.cdap.api.service.http;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.api.dataset.Dataset;
 
 import java.nio.ByteBuffer;
@@ -57,10 +59,11 @@ public abstract class HttpContentProducer {
 
   /**
    * This method will get invoked after the last chunk of data is sent. It is always
-   * executed inside a single transaction.
+   * executed inside a single transaction unless annotated with {@link TransactionPolicy(TransactionControl}.
    *
    * @throws Exception if there is any error
    */
+  @TransactionPolicy(TransactionControl.IMPLICIT)
   public abstract void onFinish() throws Exception;
 
   /**
@@ -70,9 +73,11 @@ public abstract class HttpContentProducer {
    * from either {@link #nextChunk(Transactional)}
    * or {@link #onFinish()} methods will have this method invoked.
    *
-   * This method is always executed inside a single transaction.
+   * This method is always executed inside a single transaction unless annotated
+   * with {@link TransactionPolicy(TransactionControl}.
    *
    * @param failureCause the reason of the failure
    */
+  @TransactionPolicy(TransactionControl.IMPLICIT)
   public abstract void onError(Throwable failureCause);
 }

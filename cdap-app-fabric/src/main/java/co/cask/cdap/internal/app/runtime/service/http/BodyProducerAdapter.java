@@ -16,11 +16,12 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
-import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.service.http.HttpContentProducer;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.http.BodyProducer;
 import org.apache.twill.common.Cancellable;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -38,17 +39,14 @@ public class BodyProducerAdapter extends BodyProducer {
   private static final Logger LOG = LoggerFactory.getLogger(BodyProducerAdapter.class);
 
   private final HttpContentProducer delegate;
-  private final Transactional transactional;
   private final ClassLoader programContextClassloader;
   private final TransactionalHttpServiceContext serviceContext;
   private final Cancellable contextReleaser;
   private boolean completed;
 
-  public BodyProducerAdapter(HttpContentProducer delegate, Transactional transactional,
-                             ClassLoader programContextClassLoader,
-                             TransactionalHttpServiceContext serviceContext, Cancellable contextReleaser) {
+  public BodyProducerAdapter(HttpContentProducer delegate, TransactionalHttpServiceContext serviceContext,
+                             ClassLoader programContextClassLoader, Cancellable contextReleaser) {
     this.delegate = delegate;
-    this.transactional = transactional;
     this.programContextClassloader = programContextClassLoader;
     this.serviceContext = serviceContext;
     this.contextReleaser = contextReleaser;
@@ -69,7 +67,7 @@ public class BodyProducerAdapter extends BodyProducer {
     ByteBuffer buffer;
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(programContextClassloader);
     try {
-      buffer = delegate.nextChunk(transactional);
+      buffer = delegate.nextChunk(serviceContext);
     } finally {
       ClassLoaders.setContextClassLoader(oldClassLoader);
     }
@@ -78,13 +76,18 @@ public class BodyProducerAdapter extends BodyProducer {
 
   @Override
   public void finished() throws Exception {
-    transactional.execute(new TxRunnable() {
-      @Override
-      public void run(DatasetContext context) throws Exception {
-        delegate.onFinish();
-      }
-    });
-
+    TransactionControl txCtrl = Transactions.getTransactionControl(
+      TransactionControl.IMPLICIT, HttpContentProducer.class, delegate, "onFinish");
+    if (TransactionControl.IMPLICIT == txCtrl) {
+      serviceContext.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          delegate.onFinish();
+        }
+      });
+    } else {
+      delegate.onFinish();
+    }
     try {
       serviceContext.dismissTransactionContext();
     } finally {
@@ -101,18 +104,23 @@ public class BodyProducerAdapter extends BodyProducer {
 
     // To the HttpContentProducer, if there is error, no other methods will be triggered
     completed = true;
+    TransactionControl txCtrl = Transactions.getTransactionControl(
+      TransactionControl.IMPLICIT, HttpContentProducer.class, delegate, "onError", Throwable.class);
     try {
-      transactional.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          delegate.onError(throwable);
-        }
-      });
+      if (TransactionControl.IMPLICIT == txCtrl) {
+        serviceContext.execute(new TxRunnable() {
+          @Override
+          public void run(DatasetContext context) throws Exception {
+            delegate.onError(throwable);
+          }
+        });
+      } else {
+        delegate.onError(throwable);
+      }
     } catch (Throwable t) {
       throwable.addSuppressed(t);
-
       // nothing much can be done. Simply emit a debug log.
-      LOG.debug("Exception in calling HttpContentProducer.onError.", t);
+      LOG.warn("Exception in calling HttpContentProducer.onError.", t);
     }
 
     try {

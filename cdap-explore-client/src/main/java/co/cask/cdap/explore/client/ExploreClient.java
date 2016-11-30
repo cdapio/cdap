@@ -19,6 +19,9 @@ package co.cask.cdap.explore.client;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.common.ServiceUnavailableException;
+import co.cask.cdap.common.UnauthenticatedException;
+import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.MetaDataInfo;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -34,9 +37,13 @@ import javax.annotation.Nullable;
 public interface ExploreClient extends Closeable {
 
   /**
-   * Returns true if the explore service is up and running.
+   * Pings the explore service. Returns successfully if explore service is up and running.
+   *
+   * @throws UnauthenticatedException if the client is not authenticated.
+   * @throws ServiceUnavailableException if the explore service is not available.
+   * @throws ExploreException if there is some other error when attempting to ping the explore service.
    */
-  boolean isServiceAvailable();
+  void ping() throws UnauthenticatedException, ServiceUnavailableException, ExploreException;
 
   /**
    * Enables ad-hoc exploration of the given {@link co.cask.cdap.api.data.batch.RecordScannable}.

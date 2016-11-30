@@ -19,10 +19,12 @@ require('./OverviewPaneCard.less');
 
 const propTypes = {
   name: PropTypes.string,
-  version: PropTypes.number
+  version: PropTypes.string,
+  url: PropTypes.string,
+  logs: PropTypes.string
 };
 
-function OverviewPaneCard({name, version}) {
+function OverviewPaneCard({name, version, url, logs}) {
   return (
     <div className="overview-pane-card">
       <div className="overview-pane-card-header">
@@ -34,13 +36,12 @@ function OverviewPaneCard({name, version}) {
         </span>
       </div>
       <div className="overview-pane-card-body">
-        <div className="icon-container">
-          <i className="fa fa-list-alt" aria-hidden="true">
-          </i>
-        </div>
-        <div className="icon-container icon-container-right">
+        <a href={logs} className="icon-container" target="_blank">
+          <i className="fa fa-list-alt" aria-hidden="true" />
+        </a>
+        <a href={url} className="icon-container icon-container-right" target="_blank">
           <i className="fa fa-arrows-alt" aria-hidden="true" />
-        </div>
+        </a>
       </div>
     </div>
   );

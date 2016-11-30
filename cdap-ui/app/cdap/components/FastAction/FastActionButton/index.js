@@ -16,12 +16,13 @@
 
 import React, {PropTypes} from 'react';
 
-export default function FastActionButton({icon, action}) {
+export default function FastActionButton({icon, action, disabled}) {
 
   return (
     <button
       className="btn btn-link"
       onClick={action}
+      disabled={disabled}
     >
       <span className={icon}></span>
     </button>
@@ -31,5 +32,6 @@ export default function FastActionButton({icon, action}) {
 
 FastActionButton.propTypes = {
   icon: PropTypes.string,
-  action: PropTypes.func
+  action: PropTypes.func,
+  disabled: PropTypes.bool
 };

@@ -146,33 +146,31 @@ public class ServiceClient {
   }
 
   /**
-   * Checks whether the {@link Service} is active.
+   * Checks whether the {@link Service} is active. Returns without throwing any exception if it is active.
    *
    * @param service ID of the service
-   * @return 'Active' message when service is active
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the app or service could not be found
-   * @throws ServiceUnavailableException if the service has started but is not available right now
-   * @deprecated since 4.0.0. Please use {@link #getAvailability(ServiceId)} instead
+   * @throws ServiceUnavailableException if the service is not available
+   * @deprecated since 4.0.0. Please use {@link #checkAvailability(ServiceId)} instead
    */
   @Deprecated
-  public String getAvailability(Id.Service service) throws IOException, UnauthenticatedException, NotFoundException,
+  public void checkAvailability(Id.Service service) throws IOException, UnauthenticatedException, NotFoundException,
     ServiceUnavailableException, UnauthorizedException {
-    return getAvailability(service.toEntityId());
+    checkAvailability(service.toEntityId());
   }
 
   /**
    * Checks whether the {@link Service} is active.
    *
    * @param service ID of the service
-   * @return 'Active' message when service is active
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the app or service could not be found
-   * @throws ServiceUnavailableException if the service has started but is not available right now
+   * @throws ServiceUnavailableException if the service is not available
    */
-  public String getAvailability(ServiceId service) throws IOException, UnauthenticatedException, NotFoundException,
+  public void checkAvailability(ServiceId service) throws IOException, UnauthenticatedException, NotFoundException,
     ServiceUnavailableException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(service.getNamespaceId(),
                                             String.format("apps/%s/versions/%s/services/%s/available",
@@ -188,7 +186,6 @@ public class ServiceClient {
     if (response.getResponseCode() == HttpURLConnection.HTTP_UNAVAILABLE) {
       throw new ServiceUnavailableException(service.getProgram());
     }
-    return response.getResponseBodyAsString();
   }
 
   /**
@@ -199,7 +196,7 @@ public class ServiceClient {
    * @throws NotFoundException @throws NotFoundException if the app or service could not be found
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @deprecated since 4.0.0. Please use {@link #getServiceURL(ProgramId)}  instead
+   * @deprecated since 4.0.0. Please use {@link #getServiceURL(ServiceId)} instead
    */
   @Deprecated
   public URL getServiceURL(Id.Service service)
@@ -207,7 +204,7 @@ public class ServiceClient {
     return getServiceURL(service.toEntityId());
   }
 
-  public URL getServiceURL(ProgramId service)
+  public URL getServiceURL(ServiceId service)
     throws NotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
     // Make sure the service actually exists
     get(service);

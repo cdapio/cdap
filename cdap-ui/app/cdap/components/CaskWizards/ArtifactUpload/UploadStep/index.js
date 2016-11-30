@@ -18,39 +18,9 @@ import React, { PropTypes } from 'react';
 import { connect, Provider } from 'react-redux';
 import ArtifactUploadStore from 'services/WizardStores/ArtifactUpload/ArtifactUploadStore';
 import ArtifactUploadActions from 'services/WizardStores/ArtifactUpload/ArtifactUploadActions';
-import { Form, FormGroup, Col, Label } from 'reactstrap';
-import Dropzone from 'react-dropzone';
 import T from 'i18n-react';
-
+import FileDnD from 'components/FileDnD';
 require('./UploadStep.less');
-
-const DragNDropFile = ({file, onDropHandler}) => {
-  return (
-    <Dropzone
-      activeClassName="file-drag-container"
-      className="file-drop-container"
-      onDrop={onDropHandler}>
-      <div className="file-metadata-container text-center">
-        {
-          file.name && file.name.length ? (<span>{file.name}</span>)
-            :
-            (<span>
-               Drag and Drop the file to be uploaded
-              <br />
-              or
-              <br />
-              Click to select file from your computer
-            </span>)
-        }
-      </div>
-    </Dropzone>
-  );
-};
-
-DragNDropFile.propTypes = {
-  file: PropTypes.any,
-  onDropHandler: PropTypes.func
-};
 
 const mapStateWithDNDFileProps = (state) => {
   return {
@@ -72,33 +42,28 @@ const mapDispatchWithDNDFileProps = (dispatch) => {
 const ArtifactUploader = connect(
   mapStateWithDNDFileProps,
   mapDispatchWithDNDFileProps
-)(DragNDropFile);
+)(FileDnD);
 
 
-export default function UploadStep() {
+export default function UploadStep(undefined, context) {
   return (
     <Provider store={ArtifactUploadStore}>
-      <Form
-        className="form-horizontal general-info-step"
-        onSubmit={(e) => {
-          e.preventDefault();
-          return false;
-        }}
-      >
-        <h4 className="upload-instruction">
-          {T.translate('features.Wizard.ArtifactUpload.Step1.uploadHelperText')}
-        </h4>
-
-        <FormGroup>
-          <Col xs="3">
-            <Label className="control-label">{T.translate('features.Wizard.ArtifactUpload.Step1.filePathLabel')}</Label>
-          </Col>
-          <Col xs="7">
-            <ArtifactUploader />
-          </Col>
-          <i className="fa fa-asterisk text-danger pull-left"/>
-        </FormGroup>
-      </Form>
+      <div className="upload-step-container">
+        {
+          context.isMarket ?
+            (
+              <h4 className="upload-instruction">
+                {T.translate('features.Wizard.ArtifactUpload.Step1.uploadHelperText')}
+              </h4>
+            )
+          :
+            null
+        }
+        <ArtifactUploader />
+      </div>
     </Provider>
   );
 }
+UploadStep.contextTypes = {
+  isMarket: PropTypes.bool
+};

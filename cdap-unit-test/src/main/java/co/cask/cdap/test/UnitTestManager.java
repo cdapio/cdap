@@ -473,7 +473,7 @@ public class UnitTestManager implements TestManager {
 
   @Override
   public void deleteNamespace(Id.Namespace namespace) throws Exception {
-    namespaceAdmin.delete(namespace);
+    namespaceAdmin.delete(namespace.toEntityId());
   }
 
   @Override

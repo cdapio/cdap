@@ -39,32 +39,17 @@ import Match from 'react-router/Match';
 import Miss from 'react-router/Miss';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
-import CaskVideoModal from 'components/CaskVideoModal';
 import RouteToNamespace from 'components/RouteToNamespace';
 import Helmet from 'react-helmet';
+import Wrangler from 'components/Wrangler';
 
 class CDAP extends Component {
   constructor(props) {
     super(props);
     this.version = '4.0.0';
-    this.closeCaskVideo = this.closeCaskVideo.bind(this);
-    this.openCaskVideo = this.openCaskVideo.bind(this);
     this.state = {
-      selectedNamespace : NamespaceStore.getState().selectedNamespace,
-      videoOpen : false
+      selectedNamespace : NamespaceStore.getState().selectedNamespace
     };
-  }
-
-  openCaskVideo(){
-    this.setState({
-      videoOpen : true
-    });
-  }
-
-  closeCaskVideo(){
-    this.setState({
-      videoOpen : false
-    });
   }
 
   componentWillMount(){
@@ -104,15 +89,16 @@ class CDAP extends Component {
           />
           <CdapHeader />
           <SplashScreen openVideo={this.openCaskVideo}/>
-          <CaskVideoModal isOpen={this.state.videoOpen} onCloseHandler={this.closeCaskVideo}/>
           <div className="container-fluid">
             <Match exactly pattern="/" component={RouteToNamespace} />
             <Match exactly pattern="/notfound" component={Missed} />
             <Match exactly pattern="/management" component={Management} />
+            <Match exactly pattern="/ns" component={RouteToNamespace} />
             <Match exactly pattern="/ns/:namespace" history={history} component={Home} />
             <Match exactly pattern="/ns/:namespace/dashboard" component={Dashboard} />
             <Match pattern="/Experimental" component={Experimental} />
             <Match pattern="/socket-example" component={ConnectionExample} />
+            <Match pattern="/wrangler" component={Wrangler} />
             <Miss component={Missed} />
           </div>
           <Footer version={this.version} />

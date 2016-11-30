@@ -27,6 +27,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.ViewSpecification;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
@@ -263,7 +264,7 @@ public class StreamClientTestRun extends ClientTestBase {
     streamClient.getConfig(testStream);
     Assert.assertTrue(streamViewClient.createOrUpdate(testView, testViewSpec));
     // test that namespace deletion succeeds
-    namespaceClient.delete(Id.Namespace.DEFAULT);
+    namespaceClient.delete(NamespaceId.DEFAULT);
   }
 
 
@@ -296,6 +297,6 @@ public class StreamClientTestRun extends ClientTestBase {
 
   @After
   public void tearDown() throws Exception {
-    namespaceClient.delete(namespaceId);
+    namespaceClient.delete(namespaceId.toEntityId());
   }
 }

@@ -19,8 +19,6 @@ package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.table.ConflictDetection;
-import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -47,6 +45,8 @@ import java.io.IOException;
  * test for LevelDB tables.
  */
 public class LevelDBTableTest extends BufferingTableTest<LevelDBTable> {
+
+  private static final LevelDBTableDefinition TABLE_DEFINITION = new LevelDBTableDefinition("foo");
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -75,18 +75,15 @@ public class LevelDBTableTest extends BufferingTableTest<LevelDBTable> {
 
   @Override
   protected LevelDBTable getTable(DatasetContext datasetContext, String name,
-                                  ConflictDetection level) throws IOException {
-    DatasetSpecification spec = DatasetSpecification
-      .builder(name, "table")
-      .property(Table.PROPERTY_CONFLICT_LEVEL, level.name())
-      .build();
+                                  DatasetProperties props) throws Exception {
+    DatasetSpecification spec = DatasetSpecification.builder(name, "table").properties(props.getProperties()).build();
     return new LevelDBTable(datasetContext, name, service, cConf, spec);
   }
 
   @Override
   protected LevelDBTableAdmin getTableAdmin(DatasetContext datasetContext, String name,
-                                            DatasetProperties ignored) throws IOException {
-    DatasetSpecification spec = new LevelDBTableDefinition("foo").configure(name, DatasetProperties.EMPTY);
+                                            DatasetProperties props) throws IOException {
+    DatasetSpecification spec = TABLE_DEFINITION.configure(name, props);
     return new LevelDBTableAdmin(datasetContext, spec, service, cConf);
   }
 

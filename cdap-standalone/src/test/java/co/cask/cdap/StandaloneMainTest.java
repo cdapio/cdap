@@ -16,8 +16,10 @@
 
 package co.cask.cdap;
 
+import co.cask.cdap.app.preview.PreviewServer;
 import co.cask.cdap.common.conf.CConfiguration;
 import org.apache.hadoop.conf.Configuration;
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -27,6 +29,8 @@ public class StandaloneMainTest {
 
   @Test
   public void testInjector() {
-    StandaloneMain.create(CConfiguration.create(), new Configuration());
+    StandaloneMain sdk = StandaloneMain.create(CConfiguration.create(), new Configuration());
+    // PreviewServer instance should be non null
+    Assert.assertNotNull(sdk.getInjector().getInstance(PreviewServer.class));
   }
 }

@@ -61,7 +61,7 @@ public class DatasetOpExecutorService extends AbstractIdleService {
     int workerThreads = cConf.getInt(Constants.Dataset.Executor.WORKER_THREADS, 10);
     int execThreads = cConf.getInt(Constants.Dataset.Executor.EXEC_THREADS, 10);
 
-    this.httpService = new CommonNettyHttpServiceBuilder(cConf)
+    this.httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.DATASET_EXECUTOR)
       .addHttpHandlers(handlers)
       .setHost(cConf.get(Constants.Dataset.Executor.ADDRESS))
       .setPort(cConf.getInt(Constants.Dataset.Executor.PORT))

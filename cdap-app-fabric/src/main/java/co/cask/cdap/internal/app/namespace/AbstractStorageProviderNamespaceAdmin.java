@@ -73,8 +73,12 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
       try {
         exploreFacade.createNamespace(namespaceMeta);
       } catch (ExploreException | SQLException e) {
-        // if we failed to create a namespace in explore then delete the earlier created location for the namespace
-        deleteLocation(namespaceMeta.getNamespaceId());
+        try {
+          // if we failed to create a namespace in explore then delete the earlier created location for the namespace
+          deleteLocation(namespaceMeta.getNamespaceId());
+        } catch (Exception e2) {
+          e.addSuppressed(e2);
+        }
         throw e;
       }
     }
@@ -102,7 +106,7 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
     // TODO: CDAP-1581: Implement soft delete
     Location namespaceHome = namespacedLocationFactory.get(namespaceId.toId());
     try {
-      if (hasCustomLocation(namespaceQueryAdmin.get(namespaceId.toId()))) {
+      if (hasCustomLocation(namespaceQueryAdmin.get(namespaceId))) {
         LOG.debug("Custom location mapping {} was found while deleting namespace {}. Deleting all data inside it but" +
                     "skipping namespace home directory delete.", namespaceHome, namespaceId);
         // delete everything inside the namespace home but not the namespace home as its user owned directory

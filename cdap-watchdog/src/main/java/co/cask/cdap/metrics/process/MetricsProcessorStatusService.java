@@ -55,7 +55,7 @@ public class MetricsProcessorStatusService extends AbstractIdleService {
                                         Set<HttpHandler> handlers,
                                         MetricsCollectionService metricsCollectionService) {
     this.discoveryService = discoveryService;
-    this.httpService = new CommonNettyHttpServiceBuilder(cConf)
+    this.httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.METRICS_PROCESSOR)
       .addHttpHandlers(handlers)
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                         Constants.MetricsProcessor.METRICS_PROCESSOR_STATUS_HANDLER)))

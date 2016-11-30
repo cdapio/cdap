@@ -243,7 +243,7 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
 
   private void checkNamespaceExists(String namespace) throws Exception {
     NamespaceId namespaceId = new NamespaceId(namespace);
-    if (!namespaceQueryAdmin.exists(namespaceId.toId())) {
+    if (!namespaceQueryAdmin.exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
   }

@@ -42,26 +42,26 @@ implementation of three methods:
     public void configure() {
       setName("Purchase History Builder MapReduce");
       setDescription("Builds a purchase history for each customer");
-      useDatasets("frequentCustomers");
-      setInputDataset("purchases");
-      setOutputDataset("history");
     }
 
 The configure method is similar to the one found in flows and
 applications. It defines the name and description of the MapReduce.
-You can also :ref:`specify datasets <mapreduce-datasets>` to be used as input or output
-and :ref:`specify resources <mapreduce-resources>` (memory and virtual cores) used by the
+You can also :ref:`specify resources <mapreduce-resources>` (memory and virtual cores) used by the
 mappers and reducers.
 
 The ``initialize()`` method is invoked at runtime, before the MapReduce is executed.
-Through the ``getContext()`` method, an instance of the ``MapReduceContext`` provides you
-with access to the actual Hadoop job configuration, as though you were running the
-MapReduce directly on Hadoop. For example, you can specify the mapper and reducer classes
-as well as the intermediate data format::
+Through the ``getContext()`` method you can obtain an instance of the ``MapReduceContext``.
+It allows you to :ref:`specify datasets <mapreduce-datasets>` to be used as input or output;
+it also provides you access to the actual Hadoop job configuration, as though you were running the
+MapReduce directly on Hadoop. For example, you can specify the input and output datasets,
+the mapper and reducer classes as well as the intermediate data format::
 
   @Override
   public void initialize() throws Exception {
     MapReduceContext context = getContext();
+    context.addInput(Input.ofDataset("purchases"));
+    context.addOutput(Output.ofDataset("history"));
+
     Job job = context.getHadoopJob();
     job.setMapperClass(PurchaseMapper.class);
     job.setMapOutputKeyClass(Text.class);
@@ -267,7 +267,7 @@ To read a range of keys and give a hint that you want 16 splits, write::
   public void initialize() throws Exception {
     MapReduceContext context = getContext();
     ...
-    context.setInput("myTable", kvTable.getSplits(16, startKey, stopKey));
+    context.addInput(Input.ofDataset("myTable", kvTable.getSplits(16, startKey, stopKey)));
   }
 
 .. _mapreduce-datasets-output:
@@ -293,8 +293,8 @@ To write to multiple output datasets from a MapReduce program, begin by adding t
 
   public void beforeSubmit(MapReduceContext context) throws Exception {
     ...
-    context.addOutput("productCounts");
-    context.addOutput("catalog");
+    context.addOutput(Input.ofDataset("productCounts"));
+    context.addOutput(Input.ofDataset("catalog"));
   }
 
 Then, have the ``Mapper`` and/or ``Reducer`` implement ``ProgramLifeCycle<MapReduceTaskContext>``.

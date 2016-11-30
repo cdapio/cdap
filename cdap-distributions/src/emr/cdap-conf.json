@@ -1,0 +1,38 @@
+{
+  "cdap": {
+    "cdap_site": {
+      "dashboard.bind.port": "11011",
+      "explore.enabled": "{{EXPLORE_ENABLED}}",
+      "explore.container.yarn.app.classpath.first": "true",
+      "http.client.read.timeout.ms": "120000",
+      "kafka.log.dir": "/mnt/cdap/kafka-logs",
+      "master.startup.checks.enabled": "false",
+      "enable.unrecoverable.reset": "true",
+      "router.bind.port": "11015",
+      "router.server.address": "{{ROUTER_IP_ADDRESS}}"
+    },
+    "cdap_env": {
+      "explore_enabled": "true",
+      "kerberos_enabled": "false",
+      "hadoop_conf_dir": "/etc/hadoop/conf",
+      "hadoop_home_warn_suppress": "$(hadoop dfsadmin -safemode wait >/dev/null 2>&1; sleep 1; [[ ${UID} -eq 0 ]] && su - hdfs -c 'for d in /cdap /user/cdap; do hdfs dfs -mkdir -p ${d} ; hdfs dfs -chown cdap ${d}; done' >/dev/null 2>&1; echo true)",
+      "hbase_home": "$(until $(which hbase &>/dev/null); do sleep 5; done; echo /usr/lib/hbase)",
+      "hive_home": "$(until $(which hive &>/dev/null); do sleep 5; done; echo /usr/lib/hive)",
+      "hive_conf_dir": "/etc/hive/conf",
+      "hive_classpath": "$(until $(which hive &>/dev/null); do sleep 5; done)${HIVE_CLASSPATH:-/etc/hive/conf:$(ls -1 /usr/lib/hive/lib/*.jar | tr '\\n' ':')$(if [[ -r /etc/hive/conf/hive-env.sh ]]; then source /etc/hive/conf/hive-env.sh ; fi ; if [[ -d ${HIVE_AUX_JARS_PATH} ]]; then ls -1 ${HIVE_AUX_JARS_PATH}/*.jar | tr '\\n' ':'; else echo ${HIVE_AUX_JARS_PATH} | tr ',' ':'; fi)$(ls -1 /usr/lib/hive/auxlib/*.jar 2>/dev/null | tr '\\n' ':')}",
+      "hive_exec_engine": "mr",
+      "spark_home": "/usr/lib/spark",
+      "tez_home": "/usr/lib/tez",
+      "tez_conf_dir": "/etc/tez/conf",
+      "zookeeper_home": "$(until $(which zookeeper-client &>/dev/null); do sleep 5; done; echo /usr/lib/zookeeper)"
+    },
+    "repo": {
+      "yum_repo_url": "{{CDAP_YUM_REPO_URL}}"
+    },
+    "skip_prerequisites": "true",
+    "version": "{{CDAP_VERSION}}"
+  },
+  "hadoop": {
+    "distribution": "bigtop"
+  }
+}

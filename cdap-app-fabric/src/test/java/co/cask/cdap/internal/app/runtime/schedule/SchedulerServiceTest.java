@@ -30,10 +30,9 @@ import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.Ids;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -121,8 +120,8 @@ public class SchedulerServiceTest {
 
   @AfterClass
   public static void finish() throws Exception {
-    namespaceAdmin.delete(namespace);
-    namespaceAdmin.deleteDatasets(Id.Namespace.DEFAULT);
+    namespaceAdmin.delete(namespace.toEntityId());
+    namespaceAdmin.deleteDatasets(NamespaceId.DEFAULT);
     schedulerService.stopAndWait();
   }
 

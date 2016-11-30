@@ -43,6 +43,7 @@ import java.net.URL;
 @ProgramRuntimeProvider.SupportedProgramType(ProgramType.SPARK)
 public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
 
+  private ClassLoader distributedRunnerClassLoader;
   private URL[] classLoaderUrls;
 
   @Override
@@ -57,38 +58,60 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
         // in the hConf
         boolean rewriteYarnClient = injector.getInstance(CConfiguration.class)
                                             .getBoolean(Constants.AppFabric.SPARK_YARN_CLIENT_REWRITE);
-        return createSparkProgramRunner(injector, SparkProgramRunner.class.getName(), rewriteYarnClient, true);
+        try {
+          SparkRunnerClassLoader classLoader = createClassLoader(rewriteYarnClient);
+          try {
+            // Closing of the SparkRunnerClassLoader is done by the SparkProgramRunner when the program execution
+            // finished.
+            // The current CDAP call run right after it get a ProgramRunner and never reuse a ProgramRunner.
+            // TODO: CDAP-5506 to refactor the program runtime architecture to remove the need of this assumption
+            return createSparkProgramRunner(injector, SparkProgramRunner.class.getName(), classLoader);
+          } catch (Throwable t) {
+            // If there is any exception, close the classloader
+            Closeables.closeQuietly(classLoader);
+            throw t;
+          }
+        } catch (IOException e) {
+          throw Throwables.propagate(e);
+        }
       case DISTRIBUTED:
         // The distributed program runner is only used by the CDAP master to launch the twill container
         // hence it doesn't need to do any class rewrite.
+        // We only create the SparkRunnerClassLoader once and keep reusing it since in the CDAP master, there is
+        // no SparkContext being created, hence no need to provide runtime isolation.
+        // This also limits the amount of permgen usage to be constant in the CDAP master regardless of how
+        // many Spark programs are running. We never need to close the SparkRunnerClassLoader until process shutdown.
         return createSparkProgramRunner(injector, DistributedSparkProgramRunner.class.getName(),
-                                        false, false);
+                                        getDistributedRunnerClassLoader());
       default:
         throw new IllegalArgumentException("Unsupported Spark execution mode " + mode);
+    }
+  }
+
+  private synchronized ClassLoader getDistributedRunnerClassLoader() {
+    try {
+      if (distributedRunnerClassLoader == null) {
+        // Never needs to rewrite yarn client in Spark
+        distributedRunnerClassLoader = createClassLoader(false);
+      }
+      return distributedRunnerClassLoader;
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
     }
   }
 
   /**
    * Creates a {@link ProgramRunner} that execute Spark program from the given {@link Injector}.
    */
-  private ProgramRunner createSparkProgramRunner(Injector injector, String programRunnerClassName,
-                                                 boolean rewriteYarnClient, boolean rewriteDStreamGraph) {
+  private ProgramRunner createSparkProgramRunner(Injector injector,
+                                                 String programRunnerClassName,
+                                                 ClassLoader classLoader) {
     try {
-      SparkRunnerClassLoader classLoader = createClassLoader(rewriteYarnClient, rewriteDStreamGraph);
+      ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
       try {
-        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
-        try {
-          // Closing of the SparkRunnerClassLoader is done by the SparkProgramRunner when the program execution finished
-          // The current CDAP call run right after it get a ProgramRunner and never reuse a ProgramRunner.
-          // TODO: CDAP-5506 to refactor the program runtime architecture to remove the need of this assumption
-          return createInstance(injector, classLoader.loadClass(programRunnerClassName), classLoader);
-        } finally {
-          ClassLoaders.setContextClassLoader(oldClassLoader);
-        }
-      } catch (Throwable t) {
-        // If there is any exception, close the SparkRunnerClassLoader
-        Closeables.closeQuietly(classLoader);
-        throw t;
+        return createInstance(injector, classLoader.loadClass(programRunnerClassName), classLoader);
+      } finally {
+        ClassLoaders.setContextClassLoader(oldClassLoader);
       }
     } catch (Throwable t) {
       throw Throwables.propagate(t);
@@ -158,15 +181,13 @@ public class SparkProgramRuntimeProvider implements ProgramRuntimeProvider {
   /**
    * Returns an array of {@link URL} being used by the {@link ClassLoader} of this {@link Class}.
    */
-  private synchronized SparkRunnerClassLoader createClassLoader(boolean rewriteYarnClient,
-                                                                boolean rewriteDStreamGraph) throws IOException {
+  private synchronized SparkRunnerClassLoader createClassLoader(boolean rewriteYarnClient) throws IOException {
     SparkRunnerClassLoader classLoader;
     if (classLoaderUrls == null) {
-      classLoader = new SparkRunnerClassLoader(getClass().getClassLoader(), rewriteYarnClient, rewriteDStreamGraph);
+      classLoader = new SparkRunnerClassLoader(getClass().getClassLoader(), rewriteYarnClient);
       classLoaderUrls = classLoader.getURLs();
     } else {
-      classLoader = new SparkRunnerClassLoader(classLoaderUrls, getClass().getClassLoader(),
-                                               rewriteYarnClient, rewriteDStreamGraph);
+      classLoader = new SparkRunnerClassLoader(classLoaderUrls, getClass().getClassLoader(), rewriteYarnClient);
     }
     return classLoader;
   }

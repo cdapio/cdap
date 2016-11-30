@@ -48,7 +48,8 @@ public class CheckServiceAvailabilityCommand extends AbstractAuthCommand impleme
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     ServiceId serviceId = parseServiceId(arguments);
-    output.println(serviceClient.getAvailability(serviceId));
+    serviceClient.checkAvailability(serviceId);
+    output.println("Service is available to accept requests.");
   }
 
   @Override

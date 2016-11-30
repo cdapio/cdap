@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.lib.table.BufferingTableTest;
+import co.cask.cdap.data2.dataset2.lib.table.TableProperties;
 
 /**
  *
@@ -32,8 +33,10 @@ public class InMemoryTableTest extends BufferingTableTest<InMemoryTable> {
 
   @Override
   protected InMemoryTable getTable(DatasetContext datasetContext, String name,
-                                   ConflictDetection conflictLevel) throws Exception {
-    return new InMemoryTable(datasetContext, name, ConflictDetection.valueOf(conflictLevel.name()), cConf);
+                                   DatasetProperties props) throws Exception {
+    ConflictDetection conflictLevel =
+      TableProperties.getConflictDetectionLevel(props.getProperties(), ConflictDetection.ROW);
+    return new InMemoryTable(datasetContext, name, conflictLevel, cConf);
   }
 
   @Override

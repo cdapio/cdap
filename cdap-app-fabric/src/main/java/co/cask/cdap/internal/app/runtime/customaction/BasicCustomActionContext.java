@@ -24,6 +24,7 @@ import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -43,7 +44,7 @@ public class BasicCustomActionContext extends AbstractContext implements CustomA
   private final WorkflowProgramInfo workflowProgramInfo;
   private ProgramState state;
 
-  public BasicCustomActionContext(Program workflow, ProgramOptions programOptions,
+  public BasicCustomActionContext(Program workflow, ProgramOptions programOptions, CConfiguration cConf,
                                   CustomActionSpecification customActionSpecification,
                                   WorkflowProgramInfo workflowProgramInfo,
                                   MetricsCollectionService metricsCollectionService,
@@ -52,7 +53,7 @@ public class BasicCustomActionContext extends AbstractContext implements CustomA
                                   @Nullable PluginInstantiator pluginInstantiator,
                                   SecureStore secureStore, SecureStoreManager secureStoreManager) {
 
-    super(workflow, programOptions, customActionSpecification.getDatasets(),
+    super(workflow, programOptions, cConf, customActionSpecification.getDatasets(),
           datasetFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, workflowProgramInfo.updateMetricsTags(new HashMap<String, String>()), secureStore,
           secureStoreManager, pluginInstantiator);

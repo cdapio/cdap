@@ -23,15 +23,16 @@ export default function CdapHeader() {
 
   var navbarItemList = [
     {
-      linkTo: '',
+      linkTo: '/ns',
       title: T.translate('features.Navbar.CDAP.home')
     },
-    {
-      linkTo: '/dashboard',
-      disabled: true,
-      className: 'disabled',
-      title: T.translate('features.Navbar.CDAP.dashboard')
-    },
+    // FIXME: Add later.
+    // {
+    //   linkTo: '/dashboard',
+    //   disabled: true,
+    //   className: 'disabled',
+    //   title: T.translate('features.Navbar.CDAP.dashboard')
+    // },
     {
       linkTo: '/management',
       title: T.translate('features.Navbar.CDAP.management')

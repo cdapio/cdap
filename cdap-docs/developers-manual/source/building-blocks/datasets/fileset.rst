@@ -96,11 +96,12 @@ Using a FileSet as input or output of a MapReduce program is the same as for any
   public class WordCount extends AbstractMapReduce {
 
     @Override
-    public void configure() {
-      setInputDataset("lines");
-      setOutputDataset("counts");
+    public void initialize() {
+      MapReduceContext context = getContext();
+      context.addInput(Input.ofDataset("lines"));
+      context.addOutput(Output.ofDataset("counts"));
+      ...
     }
-    ...
 
 The MapReduce program only needs to specify the names of the input and output datasets.
 Whether they are FileSets or another type of dataset is handled by the CDAP runtime system.

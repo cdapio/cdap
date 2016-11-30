@@ -26,9 +26,11 @@ import java.util.List;
 
 /**
  * Flattens the Tuple2 of optional list and optional object returned by a full outer join into a single list.
+ *
+ * @param <T> type of object to flatten
  */
-public class OuterJoinFlattenFunction implements
-  Function<Tuple2<Optional<List<JoinElement<Object>>>, Optional<Object>>, List<JoinElement<Object>>> {
+public class OuterJoinFlattenFunction<T> implements
+  Function<Tuple2<Optional<List<JoinElement<T>>>, Optional<T>>, List<JoinElement<T>>> {
   private final String inputStageName;
 
   public OuterJoinFlattenFunction(String inputStageName) {
@@ -36,12 +38,11 @@ public class OuterJoinFlattenFunction implements
   }
 
   @Override
-  public List<JoinElement<Object>> call(Tuple2<Optional<List<JoinElement<Object>>>, Optional<Object>> in)
-    throws Exception {
+  public List<JoinElement<T>> call(Tuple2<Optional<List<JoinElement<T>>>, Optional<T>> in) throws Exception {
 
-    List<JoinElement<Object>> output = in._1().isPresent() ? in._1().get() : new ArrayList<JoinElement<Object>>();
+    List<JoinElement<T>> output = in._1().isPresent() ? in._1().get() : new ArrayList<JoinElement<T>>();
     if (in._2().isPresent()) {
-      JoinElement<Object> additionalElement = new JoinElement<>(inputStageName, in._2().get());
+      JoinElement<T> additionalElement = new JoinElement<>(inputStageName, in._2().get());
       output.add(additionalElement);
     }
     return output;

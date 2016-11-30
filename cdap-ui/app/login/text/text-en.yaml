@@ -1,0 +1,7 @@
+login:
+  placeholders:
+    username: Enter username
+    password: Enter password
+  labels:
+    rememberme: Remember me
+    loginbtn: Login

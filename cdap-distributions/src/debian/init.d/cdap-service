@@ -45,8 +45,7 @@ fi
 
 CDAP_USER=${CDAP_USER:-cdap}
 
-# drop permissions to cdap user and run service script
-
+# drop permissions to CDAP_USER and run service script
 if [[ ${UID} -eq 0 ]]; then
   su - ${CDAP_USER} -c "${SVC_COMMAND}"
   ret=$?
@@ -55,6 +54,6 @@ elif [[ ${USER} == ${CDAP_USER} ]]; then
   ret=$?
 else
   echo "ERROR: Must run this script as root or ${CDAP_USER}!"
-  exit 1
+  ret=1
 fi
 exit $ret

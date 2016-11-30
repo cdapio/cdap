@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.worker;
 
-import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.stream.StreamBatchWriter;
 import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
@@ -28,6 +27,7 @@ import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.stream.StreamWriterFactory;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -35,9 +35,7 @@ import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.logging.context.WorkerLoggingContext;
 import co.cask.cdap.proto.Id;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -60,7 +58,7 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
   private volatile int instanceCount;
 
   BasicWorkerContext(WorkerSpecification spec, Program program, ProgramOptions programOptions,
-                     int instanceId, int instanceCount,
+                     CConfiguration cConf, int instanceId, int instanceCount,
                      MetricsCollectionService metricsCollectionService,
                      DatasetFramework datasetFramework,
                      TransactionSystemClient transactionSystemClient,
@@ -69,7 +67,7 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
                      @Nullable PluginInstantiator pluginInstantiator,
                      SecureStore secureStore,
                      SecureStoreManager secureStoreManager) {
-    super(program, programOptions, spec.getDatasets(),
+    super(program, programOptions, cConf, spec.getDatasets(),
           datasetFramework, transactionSystemClient, discoveryServiceClient, true,
           metricsCollectionService, ImmutableMap.of(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId)),
           secureStore, secureStoreManager, pluginInstantiator);
@@ -93,16 +91,6 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
   @Override
   public WorkerSpecification getSpecification() {
     return specification;
-  }
-
-  // TODO (CDAP-6837): this is inconsistent with Transactional.execute(runnable). Streamline this as part of CDAP-6837
-  @Override
-  public void execute(TxRunnable runnable) {
-    try {
-      super.execute(runnable);
-    } catch (TransactionFailureException e) {
-      throw Throwables.propagate(e);
-    }
   }
 
   @Override

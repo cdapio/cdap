@@ -33,6 +33,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -90,6 +92,24 @@ public final class ClassPathResources {
   public static Set<ClassPath.ResourceInfo> getClassPathResources(ClassLoader classLoader,
                                                                   Class<?> cls) throws IOException {
     return getClassPath(classLoader, cls).getResources();
+  }
+
+  /**
+   * Returns a Set containing all bootstrap classpaths as defined in the {@code sun.boot.class.path} property.
+   */
+  public static Set<String> getBootstrapClassPaths() {
+    // Get the bootstrap classpath. This is for exclusion while tracing class dependencies.
+    Set<String> bootstrapPaths = new HashSet<>();
+    for (String classpath : Splitter.on(File.pathSeparatorChar).split(System.getProperty("sun.boot.class.path"))) {
+      File file = new File(classpath);
+      bootstrapPaths.add(file.getAbsolutePath());
+      try {
+        bootstrapPaths.add(file.getCanonicalPath());
+      } catch (IOException e) {
+        // Ignore the exception and proceed.
+      }
+    }
+    return Collections.unmodifiableSet(bootstrapPaths);
   }
 
   /**
@@ -158,24 +178,6 @@ public final class ClassPathResources {
     }, classes);
 
     return result;
-  }
-
-  /**
-   * Returns a Set containing all bootstrap classpaths as defined in the {@code sun.boot.class.path} property.
-   */
-  private static Set<String> getBootstrapClassPaths() {
-    // Get the bootstrap classpath. This is for exclusion while tracing class dependencies.
-    Set<String> bootstrapPaths = Sets.newHashSet();
-    for (String classpath : Splitter.on(File.pathSeparatorChar).split(System.getProperty("sun.boot.class.path"))) {
-      File file = new File(classpath);
-      bootstrapPaths.add(file.getAbsolutePath());
-      try {
-        bootstrapPaths.add(file.getCanonicalPath());
-      } catch (IOException e) {
-        // Ignore the exception and proceed.
-      }
-    }
-    return bootstrapPaths;
   }
 
   /**

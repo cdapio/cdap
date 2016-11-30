@@ -19,12 +19,8 @@ package co.cask.cdap.api.flow.flowlet;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.annotation.TransactionPolicy;
-import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.internal.api.AbstractProgramDatasetConfigurable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -101,34 +97,6 @@ public abstract class AbstractFlowlet extends AbstractProgramDatasetConfigurable
    */
   protected void setProperties(Map<String, String> properties) {
     configurer.setProperties(properties);
-  }
-
-  /**
-   * Adds the names of {@link Dataset}s used by the Flowlet.
-   *
-   * @param dataset dataset name
-   * @param datasets more dataset names
-   * @deprecated Deprecated as of 3.4.0. Dataset can be requested directly through the method
-   *             {@link FlowletContext#getDataset(String)} at runtime.
-   */
-  @Deprecated
-  protected void useDatasets(String dataset, String...datasets) {
-    List<String> datasetList = new ArrayList<>();
-    datasetList.add(dataset);
-    datasetList.addAll(Arrays.asList(datasets));
-    useDatasets(datasetList);
-  }
-
-  /**
-   * Adds the names of {@link Dataset}s used by the Flowlet.
-   *
-   * @param datasets dataset names
-   * @deprecated Deprecated as of 3.4.0. Dataset can be requested directly through the method
-   *             {@link FlowletContext#getDataset(String)} at runtime.
-   */
-  @Deprecated
-  protected void useDatasets(Iterable<String> datasets) {
-    configurer.useDatasets(datasets);
   }
 
   @Override

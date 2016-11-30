@@ -16,16 +16,21 @@
 
 package co.cask.cdap.internal.app.services;
 
+import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
@@ -34,8 +39,7 @@ import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.service.ServiceDiscoverable;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.runtime.DataFabricFacade;
-import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -58,7 +62,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
-import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
@@ -98,26 +101,26 @@ public class ServiceHttpServer extends AbstractIdleService {
 
   private final Program program;
   private final BasicHttpServiceContext context;
+  private final CConfiguration cConf;
   private final AtomicInteger instanceCount;
   private final ServiceAnnouncer serviceAnnouncer;
-  private final DataFabricFacadeFactory dataFabricFacadeFactory;
   private final List<HandlerDelegatorContext> handlerContexts;
   private final NettyHttpService service;
 
   private Cancellable cancelDiscovery;
   private Timer timer;
 
-  public ServiceHttpServer(String host, Program program, ProgramOptions programOptions, ServiceSpecification spec,
+  public ServiceHttpServer(String host, Program program, ProgramOptions programOptions,
+                           CConfiguration cConf, ServiceSpecification spec,
                            int instanceId, int instanceCount, ServiceAnnouncer serviceAnnouncer,
                            MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
-                           DataFabricFacadeFactory dataFabricFacadeFactory, TransactionSystemClient txClient,
-                           DiscoveryServiceClient discoveryServiceClient,
+                           TransactionSystemClient txClient, DiscoveryServiceClient discoveryServiceClient,
                            @Nullable PluginInstantiator pluginInstantiator,
                            SecureStore secureStore, SecureStoreManager secureStoreManager) {
     this.program = program;
+    this.cConf = cConf;
     this.instanceCount = new AtomicInteger(instanceCount);
     this.serviceAnnouncer = serviceAnnouncer;
-    this.dataFabricFacadeFactory = dataFabricFacadeFactory;
     BasicHttpServiceContextFactory contextFactory = createContextFactory(program, programOptions,
                                                                          instanceId, this.instanceCount,
                                                                          metricsCollectionService,
@@ -218,7 +221,7 @@ public class ServiceHttpServer extends AbstractIdleService {
     return new BasicHttpServiceContextFactory() {
       @Override
       public BasicHttpServiceContext create(@Nullable HttpServiceHandlerSpecification spec) {
-        return new BasicHttpServiceContext(program, programOptions, spec, instanceId, instanceCount,
+        return new BasicHttpServiceContext(program, programOptions, cConf, spec, instanceId, instanceCount,
                                            metricsCollectionService, datasetFramework, discoveryServiceClient,
                                            txClient, pluginInstantiator, secureStore, secureStoreManager);
       }
@@ -294,16 +297,22 @@ public class ServiceHttpServer extends AbstractIdleService {
   }
 
   private void initHandler(final HttpServiceHandler handler, final BasicHttpServiceContext serviceContext) {
+    TransactionControl txCtrl = Transactions.getTransactionControl(TransactionControl.IMPLICIT, Object.class,
+                                                                   handler, "initialize", HttpServiceContext.class);
     ClassLoader classLoader = setContextCombinedClassLoader(handler);
-    DataFabricFacade dataFabricFacade = dataFabricFacadeFactory.create(program,
-                                                                       serviceContext.getDatasetCache());
     try {
-      dataFabricFacade.createTransactionExecutor().execute(new TransactionExecutor.Subroutine() {
-        @Override
-        public void apply() throws Exception {
-          handler.initialize(serviceContext);
-        }
-      });
+      if (TransactionControl.IMPLICIT == txCtrl) {
+        Transactions.createTransactionalWithRetry(
+          serviceContext, org.apache.tephra.RetryStrategies.retryOnConflict(20, 100))
+          .execute(new TxRunnable() {
+            @Override
+            public void run(DatasetContext context) throws Exception {
+              handler.initialize(serviceContext);
+            }
+          });
+      } else {
+        handler.initialize(serviceContext);
+      }
     } catch (Throwable t) {
       LOG.error("Exception raised in HttpServiceHandler.initialize of class {}", handler.getClass(), t);
       throw Throwables.propagate(t);
@@ -313,15 +322,22 @@ public class ServiceHttpServer extends AbstractIdleService {
   }
 
   private void destroyHandler(final HttpServiceHandler handler, final BasicHttpServiceContext serviceContext) {
+    TransactionControl txCtrl = Transactions.getTransactionControl(TransactionControl.IMPLICIT,
+                                                                   Object.class, handler, "destroy");
     ClassLoader classLoader = setContextCombinedClassLoader(handler);
-    DataFabricFacade dataFabricFacade = dataFabricFacadeFactory.create(program, serviceContext.getDatasetCache());
     try {
-      dataFabricFacade.createTransactionExecutor().execute(new TransactionExecutor.Subroutine() {
-        @Override
-        public void apply() throws Exception {
-          handler.destroy();
-        }
-      });
+      if (TransactionControl.IMPLICIT == txCtrl) {
+        Transactions.createTransactionalWithRetry(
+          serviceContext, org.apache.tephra.RetryStrategies.retryOnConflict(20, 100))
+          .execute(new TxRunnable() {
+            @Override
+            public void run(DatasetContext context) throws Exception {
+              handler.destroy();
+            }
+          });
+      } else {
+        handler.destroy();
+      }
     } catch (Throwable t) {
       LOG.error("Exception raised in HttpServiceHandler.destroy of class {}", handler.getClass(), t);
       // Don't propagate

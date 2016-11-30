@@ -53,6 +53,7 @@ import co.cask.cdap.gateway.handlers.ImpersonationHandler;
 import co.cask.cdap.gateway.handlers.MonitorHandler;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.gateway.handlers.NotificationFeedHttpHandler;
+import co.cask.cdap.gateway.handlers.OperationalStatsHttpHandler;
 import co.cask.cdap.gateway.handlers.PreferencesHttpHandler;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.RouteConfigHttpHandler;
@@ -355,6 +356,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(SecureStoreHandler.class);
       handlerBinder.addBinding().to(RemotePrivilegesHandler.class);
       handlerBinder.addBinding().to(RouteConfigHttpHandler.class);
+      handlerBinder.addBinding().to(OperationalStatsHttpHandler.class);
 
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);

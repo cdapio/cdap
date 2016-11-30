@@ -16,15 +16,10 @@
 
 package co.cask.cdap.explore.service;
 
-import com.google.common.base.Joiner;
+import com.google.common.base.Function;
 import com.google.common.io.ByteStreams;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.MRJobConfig;
-import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hive.service.auth.HiveAuthFactory;
-import org.apache.tez.dag.api.TezConfiguration;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -32,14 +27,11 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URL;
-import java.util.LinkedHashSet;
-import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -58,102 +50,10 @@ public class ExploreServiceUtilsTest {
   }
 
   @Test
-  public void hijackConfFileTest() throws Exception {
-    Configuration conf = new Configuration(false);
-    conf.set("foo", "bar");
-    Assert.assertEquals(1, conf.size());
-
-    File tempDir = tmpFolder.newFolder();
-
-    File confFile = tmpFolder.newFile("hive-site.xml");
-
-    try (FileOutputStream os = new FileOutputStream(confFile)) {
-      conf.writeXml(os);
-    }
-
-    Set<File> cdapJars = new LinkedHashSet<>();
-    cdapJars.add(new File(tmpFolder.newFolder(), "cdap-common-3.5.1-SNAPSHOT.jar"));
-    cdapJars.add(new File(tmpFolder.newFolder(), "cdap-app-fabric-3.5.1-SNAPSHOT.jar"));
-
-    File newConfFile = ExploreServiceUtils.updateConfFileForExplore(confFile, tempDir, cdapJars);
-
-    conf = new Configuration(false);
-    conf.addResource(newConfFile.toURI().toURL());
-
-    Assert.assertEquals(3, conf.size());
-    Assert.assertEquals("false", conf.get(Job.MAPREDUCE_JOB_USER_CLASSPATH_FIRST));
-    Assert.assertEquals("false", conf.get(Job.MAPREDUCE_JOB_CLASSLOADER));
-    Assert.assertEquals("bar", conf.get("foo"));
-
-    // check yarn-site changes
-    confFile = tmpFolder.newFile("yarn-site.xml");
-    conf = new YarnConfiguration();
-
-    try (FileOutputStream os = new FileOutputStream(confFile)) {
-      conf.writeXml(os);
-    }
-
-    String yarnApplicationClassPath = "$PWD/cdap-common-3.5.1-SNAPSHOT.jar,$PWD/cdap-app-fabric-3.5.1-SNAPSHOT.jar," +
-      "$PWD/*," + conf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
-                           Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
-
-    newConfFile = ExploreServiceUtils.updateConfFileForExplore(confFile, tempDir, cdapJars);
-
-    conf = new Configuration(false);
-    conf.addResource(newConfFile.toURI().toURL());
-
-    Assert.assertEquals(yarnApplicationClassPath, conf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH));
-
-    // check mapred-site changes
-    confFile = tmpFolder.newFile("mapred-site.xml");
-    conf = new YarnConfiguration();
-
-    try (FileOutputStream os = new FileOutputStream(confFile)) {
-      conf.writeXml(os);
-    }
-
-    String mapredApplicationClassPath = "$PWD/cdap-common-3.5.1-SNAPSHOT.jar,$PWD/cdap-app-fabric-3.5.1-SNAPSHOT.jar,"
-      + "$PWD/*," + conf.get(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH,
-                             MRJobConfig.DEFAULT_MAPREDUCE_APPLICATION_CLASSPATH);
-
-
-    newConfFile = ExploreServiceUtils.updateConfFileForExplore(confFile, tempDir, cdapJars);
-
-    conf = new Configuration(false);
-    conf.addResource(newConfFile.toURI().toURL());
-
-    Assert.assertEquals(mapredApplicationClassPath, conf.get(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH));
-
-    // check tez-site changes
-    confFile = tmpFolder.newFile("tez-site.xml");
-    conf = new TezConfiguration();
-    conf.set(TezConfiguration.TEZ_CLUSTER_ADDITIONAL_CLASSPATH_PREFIX, "somepath:anotherpath");
-
-    try (FileOutputStream os = new FileOutputStream(confFile)) {
-      conf.writeXml(os);
-    }
-
-    String tezClassPath = "$PWD/cdap-common-3.5.1-SNAPSHOT.jar:$PWD/cdap-app-fabric-3.5.1-SNAPSHOT.jar:"
-      + conf.get(TezConfiguration.TEZ_CLUSTER_ADDITIONAL_CLASSPATH_PREFIX);
-
-
-    newConfFile = ExploreServiceUtils.updateConfFileForExplore(confFile, tempDir, cdapJars);
-
-    conf = new Configuration(false);
-    conf.addResource(newConfFile.toURI().toURL());
-
-    Assert.assertEquals(tezClassPath, conf.get(TezConfiguration.TEZ_CLUSTER_ADDITIONAL_CLASSPATH_PREFIX));
-
-    // Ensure conf files that are not hive-site.xml/mapred-site.xml/yarn-site.xml are unchanged
-    confFile = tmpFolder.newFile("core-site.xml");
-    Assert.assertEquals(confFile, ExploreServiceUtils.updateConfFileForExplore(confFile, tempDir, cdapJars));
-  }
-
-  @Test
   public void testRewriteHiveAuthFactory() throws Exception {
-    URL hiveAuthURL = getClass().getClassLoader().getResource(
-      HiveAuthFactory.class.getName().replace('.', '/') + ".class");
+    ClassLoader classLoader = getClass().getClassLoader();
 
+    URL hiveAuthURL = classLoader.getResource(HiveAuthFactory.class.getName().replace('.', '/') + ".class");
     String hiveJarFilePath = hiveAuthURL.getPath();
     File hiveJarFile = new File(URI.create(hiveJarFilePath.substring(0, hiveJarFilePath.indexOf("!/"))));
 
@@ -161,7 +61,7 @@ public class ExploreServiceUtilsTest {
                                                                 new File(tmpFolder.newFolder(), "hive.jar"));
 
     try (
-      TestHiveAuthFactoryClassLoader cl = new TestHiveAuthFactoryClassLoader(targetJar, getClass().getClassLoader())
+      TestHiveAuthFactoryClassLoader cl = new TestHiveAuthFactoryClassLoader(targetJar, classLoader)
     ) {
       Class<?> hiveAuthFactoryClass = cl.loadClass(HiveAuthFactory.class.getName());
       Method loginFromKeytab = hiveAuthFactoryClass.getMethod("loginFromKeytab", HiveConf.class);
@@ -169,6 +69,13 @@ public class ExploreServiceUtilsTest {
       // If the write is not successful, this will throw exception
       loginFromKeytab.invoke(null, new Object[] { null });
     }
+
+    // Try to rewrite a jar file without the hive auth factory class, it should just return the original jar
+    String functionClassPath = classLoader.getResource(Function.class.getName().replace('.', '/') + ".class").getPath();
+    File guavaJarFile = new File(URI.create(functionClassPath.substring(0, functionClassPath.indexOf("!/"))));
+    targetJar = ExploreServiceUtils.rewriteHiveAuthFactory(guavaJarFile, new File(tmpFolder.newFolder(), "guava.jar"));
+
+    Assert.assertSame(guavaJarFile, targetJar);
   }
 
   /**

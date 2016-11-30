@@ -85,7 +85,7 @@ public class DefaultNamespacedLocationFactory implements NamespacedLocationFacto
       // since this is not a cdap reserved namespace we look up meta if there is a custom mapping
       NamespaceMeta namespaceMeta;
       try {
-        namespaceMeta = namespaceQueryAdmin.get(namespaceId);
+        namespaceMeta = namespaceQueryAdmin.get(namespaceId.toEntityId());
       } catch (Exception e) {
         throw new IOException(String.format("Failed to get namespace meta for namespace %s", namespaceId), e);
       }

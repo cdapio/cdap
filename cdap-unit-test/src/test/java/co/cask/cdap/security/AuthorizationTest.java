@@ -193,11 +193,11 @@ public class AuthorizationTest extends TestBase {
     createAuthNamespace();
     // No authorization currently for listing and retrieving namespace
     namespaceAdmin.list();
-    namespaceAdmin.get(AUTH_NAMESPACE.toId());
+    namespaceAdmin.get(AUTH_NAMESPACE);
     // revoke privileges
     revokeAndAssertSuccess(AUTH_NAMESPACE);
     try {
-      namespaceAdmin.deleteDatasets(AUTH_NAMESPACE.toId());
+      namespaceAdmin.deleteDatasets(AUTH_NAMESPACE);
       Assert.fail("Namespace delete datasets should have failed because alice's privileges on the namespace have " +
                     "been revoked");
     } catch (UnauthorizedException expected) {
@@ -205,14 +205,14 @@ public class AuthorizationTest extends TestBase {
     }
     // grant privileges again
     grantAndAssertSuccess(AUTH_NAMESPACE, ALICE, ImmutableSet.of(Action.ADMIN));
-    namespaceAdmin.deleteDatasets(AUTH_NAMESPACE.toId());
+    namespaceAdmin.deleteDatasets(AUTH_NAMESPACE);
     // deleting datasets does not revoke privileges.
     Assert.assertEquals(
       ImmutableSet.of(new Privilege(instance, Action.ADMIN), new Privilege(AUTH_NAMESPACE, Action.ADMIN)),
       authorizer.listPrivileges(ALICE)
     );
     NamespaceMeta updated = new NamespaceMeta.Builder(AUTH_NAMESPACE_META).setDescription("new desc").build();
-    namespaceAdmin.updateProperties(AUTH_NAMESPACE.toId(), updated);
+    namespaceAdmin.updateProperties(AUTH_NAMESPACE, updated);
   }
 
   @Test
@@ -896,7 +896,7 @@ public class AuthorizationTest extends TestBase {
       Assert.assertArrayEquals(key, results.read(key));
     }
     flowManager.stop();
-    getNamespaceAdmin().delete(outputDatasetNS.getNamespaceId().toId());
+    getNamespaceAdmin().delete(outputDatasetNS.getNamespaceId());
   }
 
   @Test
@@ -960,7 +960,7 @@ public class AuthorizationTest extends TestBase {
     // cleanup
     deleteDatasetInstance(NamespaceId.SYSTEM, "table1");
     deleteDatasetInstance(NamespaceId.SYSTEM, "table2");
-    getNamespaceAdmin().delete(otherNS.getNamespaceId().toId());
+    getNamespaceAdmin().delete(otherNS.getNamespaceId());
   }
 
   private void testCrossNSDatasetAccessWithAuthMapReduce(MapReduceManager mrManager) throws Exception {
@@ -1013,8 +1013,8 @@ public class AuthorizationTest extends TestBase {
     // Verify results as alice
     SecurityRequestContext.setUserId(ALICE.getName());
     verifyDummyData(outputDatasetNS.getNamespaceId(), "table2");
-    getNamespaceAdmin().delete(inputDatasetNS.getNamespaceId().toId());
-    getNamespaceAdmin().delete(outputDatasetNS.getNamespaceId().toId());
+    getNamespaceAdmin().delete(inputDatasetNS.getNamespaceId());
+    getNamespaceAdmin().delete(outputDatasetNS.getNamespaceId());
   }
 
   @Test
@@ -1161,7 +1161,7 @@ public class AuthorizationTest extends TestBase {
     // cleanup
     deleteDatasetInstance(NamespaceId.SYSTEM, "table1");
     deleteDatasetInstance(NamespaceId.SYSTEM, "table2");
-    getNamespaceAdmin().delete(otherNS.getNamespaceId().toId());
+    getNamespaceAdmin().delete(otherNS.getNamespaceId());
   }
 
   private void testCrossNSDatasetAccessWithAuthSpark(SparkManager sparkManager) throws Exception {
@@ -1217,8 +1217,8 @@ public class AuthorizationTest extends TestBase {
     // Verify the results as alice
     SecurityRequestContext.setUserId(ALICE.getName());
     verifyDummyData(outputDatasetNSMeta.getNamespaceId(), "output");
-    getNamespaceAdmin().delete(inputDatasetNSMeta.getNamespaceId().toId());
-    getNamespaceAdmin().delete(outputDatasetNSMeta.getNamespaceId().toId());
+    getNamespaceAdmin().delete(inputDatasetNSMeta.getNamespaceId());
+    getNamespaceAdmin().delete(outputDatasetNSMeta.getNamespaceId());
   }
 
   @Test
@@ -1280,7 +1280,7 @@ public class AuthorizationTest extends TestBase {
 
     grantAndAssertSuccess(AUTH_NAMESPACE, SecurityRequestContext.toPrincipal(), EnumSet.allOf(Action.class));
     // clean up. remove the namespace. all privileges on the namespace should be revoked
-    getNamespaceAdmin().delete(AUTH_NAMESPACE.toId());
+    getNamespaceAdmin().delete(AUTH_NAMESPACE);
     Assert.assertEquals(ImmutableSet.of(new Privilege(instance, Action.ADMIN)), authorizer.listPrivileges(ALICE));
     // revoke privileges on the instance
     revokeAndAssertSuccess(instance);

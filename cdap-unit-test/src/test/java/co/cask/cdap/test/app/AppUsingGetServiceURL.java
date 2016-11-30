@@ -31,7 +31,9 @@ import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.common.utils.Tasks;
 import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
+import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -118,8 +120,8 @@ public class AppUsingGetServiceURL extends AbstractApplication {
     }
   }
 
-  private static void writeToDataSet(final WorkerContext context,
-                                     final String tableName, final String key, final byte[] value) {
+  private static void writeToDataSet(final WorkerContext context, final String tableName,
+                                     final String key, final byte[] value) throws TransactionFailureException {
     context.execute(new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
@@ -166,7 +168,11 @@ public class AppUsingGetServiceURL extends AbstractApplication {
     public void destroy() {
       String key = String.format("stop.%d", getContext().getInstanceId());
       byte[] value = Bytes.toBytes(getContext().getInstanceCount());
-      writeToDataSet(getContext(), WORKER_INSTANCES_DATASET, key, value);
+      try {
+        writeToDataSet(getContext(), WORKER_INSTANCES_DATASET, key, value);
+      } catch (TransactionFailureException e) {
+        throw Throwables.propagate(e);
+      }
     }
 
     @Override
@@ -234,7 +240,7 @@ public class AppUsingGetServiceURL extends AbstractApplication {
         } finally {
           conn.disconnect();
         }
-      } catch (IOException e) {
+      } catch (Exception e) {
         LOG.error("Got exception {}", e);
       }
     }

@@ -32,13 +32,16 @@ import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
+import co.cask.cdap.app.preview.DataTracerFactory;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.services.AbstractServiceDiscoverer;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -47,8 +50,10 @@ import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.internal.app.preview.DataTracerFactoryProvider;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -57,6 +62,8 @@ import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -69,6 +76,8 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractContext extends AbstractServiceDiscoverer
   implements SecureStore, DatasetContext, Transactional, RuntimeContext, PluginContext {
+
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractContext.class);
 
   private final Program program;
   private final ProgramOptions programOptions;
@@ -84,24 +93,32 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final long logicalStartTime;
   private final SecureStore secureStore;
   private final Transactional transactional;
+  private final int defaultTxTimeout;
   protected final DynamicDatasetCache datasetCache;
+
+  private final DataTracerFactory dataTracerFactory = new DataTracerFactory() {
+    @Override
+    public DataTracer getDataTracer(ApplicationId applicationId, String tracerName) {
+      return DataTracerFactoryProvider.get(applicationId).getDataTracer(applicationId, tracerName);
+    }
+  };
 
   /**
    * Constructs a context without plugin support.
    */
-  protected AbstractContext(Program program, ProgramOptions programOptions,
+  protected AbstractContext(Program program, ProgramOptions programOptions, CConfiguration cConf,
                             Set<String> datasets, DatasetFramework dsFramework, TransactionSystemClient txClient,
                             DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded,
                             @Nullable MetricsCollectionService metricsService, Map<String, String> metricsTags,
                             SecureStore secureStore, SecureStoreManager secureStoreManager) {
-    this(program, programOptions, datasets, dsFramework, txClient,
+    this(program, programOptions, cConf, datasets, dsFramework, txClient,
          discoveryServiceClient, multiThreaded, metricsService, metricsTags, secureStore, secureStoreManager, null);
   }
 
   /**
    * Constructs a context. To have plugin support, the {@code pluginInstantiator} must not be null.
    */
-  protected AbstractContext(Program program, ProgramOptions programOptions,
+  protected AbstractContext(Program program, ProgramOptions programOptions, CConfiguration cConf,
                             Set<String> datasets, DatasetFramework dsFramework, TransactionSystemClient txClient,
                             DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded,
                             @Nullable MetricsCollectionService metricsService, Map<String, String> metricsTags,
@@ -137,9 +154,19 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                                                   program.getApplicationSpecification().getPlugins());
     this.admin = new DefaultAdmin(dsFramework, new NamespaceId(program.getId().getNamespace()), secureStoreManager);
     this.secureStore = secureStore;
+    this.defaultTxTimeout = determineTransactionTimeout(cConf);
+    this.transactional = Transactions.createTransactional(getDatasetCache(), defaultTxTimeout);
+  }
 
-    this.transactional = Transactions.createTransactional(getDatasetCache());
-
+  /**
+   * Be default, this parses runtime argument "system.tx.timeout". Some program types may override this,
+   * for example, in a flowlet, the more specific "flowlet.[name].system.tx.timeout" would prevail.
+   *
+   * @return the default transaction timeout, if specified in the runtime arguments. Otherwise returns the
+   *         default tranaction timeout from the cConf.
+   */
+  private int determineTransactionTimeout(CConfiguration cConf) {
+    return SystemArguments.getTransactionTimeout(getRuntimeArguments(), cConf);
   }
 
   private Iterable<? extends EntityId> createOwners(ProgramId programId) {
@@ -166,6 +193,13 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     tags.put(Constants.Metrics.Tag.RUN_ID, runId.getId());
 
     return metricsService == null ? new NoopMetricsContext(tags) : metricsService.getContext(tags);
+  }
+
+  /**
+   * @return the default transaction timeout.
+   */
+  public int getDefaultTxTimeout() {
+    return defaultTxTimeout;
   }
 
   /**
@@ -354,5 +388,10 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   @Override
   public void execute(int timeoutInSeconds, TxRunnable runnable) throws TransactionFailureException {
     transactional.execute(timeoutInSeconds, runnable);
+  }
+
+  @Override
+  public DataTracer getDataTracer(String dataTracerName) {
+    return dataTracerFactory.getDataTracer(program.getId().getParent(), dataTracerName);
   }
 }

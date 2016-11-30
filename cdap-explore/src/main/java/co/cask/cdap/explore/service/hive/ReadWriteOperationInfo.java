@@ -26,7 +26,7 @@ import java.util.Map;
  */
 final class ReadWriteOperationInfo extends OperationInfo {
   ReadWriteOperationInfo(SessionHandle sessionHandle, OperationHandle operationHandle,
-                         Map<String, String> sessionConf, String statement, String namespace) {
-    super(sessionHandle, operationHandle, sessionConf, statement, System.currentTimeMillis(), namespace, false);
+                         Map<String, String> sessionConf, String statement, String hiveDatabase) {
+    super(sessionHandle, operationHandle, sessionConf, statement, System.currentTimeMillis(), hiveDatabase, false);
   }
 }

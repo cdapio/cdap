@@ -17,6 +17,7 @@
 package co.cask.cdap.datastreams;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.streaming.StreamingSource;
 import co.cask.cdap.etl.proto.v2.DataStreamsConfig;
@@ -27,6 +28,7 @@ import com.google.common.collect.ImmutableSet;
  * Data Streams Application.
  */
 public class DataStreamsApp extends AbstractApplication<DataStreamsConfig> {
+  public static final String CHECKPOINT_FILESET = "dataStreamsCheckpoints";
 
   @Override
   public void configure() {
@@ -40,6 +42,10 @@ public class DataStreamsApp extends AbstractApplication<DataStreamsConfig> {
         ImmutableSet.of(BatchSink.PLUGIN_TYPE)
       );
     DataStreamsPipelineSpec spec = specGenerator.generateSpec(config);
-    addSpark(new DataStreamsSparkLauncher(spec, config.isUnitTest()));
+    addSpark(new DataStreamsSparkLauncher(spec, config));
+
+    if (!config.checkpointsDisabled()) {
+      createDataset(CHECKPOINT_FILESET, FileSet.class);
+    }
   }
 }

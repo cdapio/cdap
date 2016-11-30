@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.batch.distributed;
 
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
-import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -36,6 +35,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -67,9 +67,10 @@ public final class MapReduceContainerHelper {
     // If MR framework is non specified, use yarn.application.classpath and mapreduce.application.classpath
     // Otherwise, only use the mapreduce.application.classpath
     if (framework == null) {
-      String yarnClassPath = hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
-                                       Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
-      Iterables.addAll(result, splitter.split(yarnClassPath));
+      Iterable<String> yarnAppClassPath = Arrays.asList(
+        hConf.getTrimmedStrings(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
+                                YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
+      Iterables.addAll(result, yarnAppClassPath);
     }
 
     // Add MR application classpath

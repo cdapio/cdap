@@ -23,6 +23,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.etl.mock.batch.MockSink;
 import co.cask.cdap.etl.mock.batch.aggregator.FieldCountAggregator;
+import co.cask.cdap.etl.mock.batch.joiner.DupeFlagger;
 import co.cask.cdap.etl.mock.batch.joiner.MockJoiner;
 import co.cask.cdap.etl.mock.spark.Window;
 import co.cask.cdap.etl.mock.spark.compute.StringValueFilterCompute;
@@ -51,6 +52,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -64,8 +66,8 @@ import java.util.concurrent.TimeoutException;
  */
 public class DataStreamsTest extends HydratorTestBase {
 
-  protected static final ArtifactId APP_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("app", "1.0.0");
-  protected static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("app", "1.0.0");
+  private static final ArtifactId APP_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("app", "1.0.0");
+  private static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("app", "1.0.0");
   private static int startCount = 0;
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
@@ -80,7 +82,7 @@ public class DataStreamsTest extends HydratorTestBase {
   }
 
   @Test
-  public void testTransformCompute() throws Exception {
+  public void testTransformComputeWithMacros() throws Exception {
     Schema schema = Schema.recordOf(
       "test",
       Schema.Field.of("id", Schema.of(Schema.Type.STRING)),
@@ -98,12 +100,12 @@ public class DataStreamsTest extends HydratorTestBase {
 
     DataStreamsConfig etlConfig = DataStreamsConfig.builder()
       .addStage(new ETLStage("source", MockSource.getPlugin(schema, input)))
-      .addStage(new ETLStage("sink", MockSink.getPlugin("output")))
-      .addStage(new ETLStage("jacksonFilter", StringValueFilterTransform.getPlugin("${field}", "jackson")))
-      .addStage(new ETLStage("dwayneFilter", StringValueFilterCompute.getPlugin("${field}", "dwayne")))
-      .addConnection("source", "jacksonFilter")
-      .addConnection("jacksonFilter", "dwayneFilter")
-      .addConnection("dwayneFilter", "sink")
+      .addStage(new ETLStage("sink", MockSink.getPlugin("${output}")))
+      .addStage(new ETLStage("filter1", StringValueFilterTransform.getPlugin("${field}", "${val1}")))
+      .addStage(new ETLStage("filter2", StringValueFilterCompute.getPlugin("${field}", "${val2}")))
+      .addConnection("source", "filter1")
+      .addConnection("filter1", "filter2")
+      .addConnection("filter2", "sink")
       .setBatchInterval("1s")
       .build();
 
@@ -111,14 +113,39 @@ public class DataStreamsTest extends HydratorTestBase {
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
-    SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
-    sparkManager.start(ImmutableMap.of("field", "name"));
-    sparkManager.waitForStatus(true, 10, 1);
-
-    final DataSetManager<Table> outputManager = getDataset("output");
     final Set<StructuredRecord> expected = new HashSet<>();
     expected.add(samuelRecord);
+    expected.add(jacksonRecord);
+
+    testTransformComputeRun(appManager, expected, "dwayne", "johnson", "macroOutput1");
+    validateMetric(appId, "source.records.out", 4);
+    validateMetric(appId, "filter1.records.in", 4);
+    validateMetric(appId, "filter1.records.out", 3);
+    validateMetric(appId, "filter2.records.in", 3);
+    validateMetric(appId, "filter2.records.out", 2);
+    validateMetric(appId, "sink.records.in", 2);
+
+    expected.clear();
+    expected.add(dwayneRecord);
     expected.add(johnsonRecord);
+    testTransformComputeRun(appManager, expected, "samuel", "jackson", "macroOutput2");
+  }
+
+  private void testTransformComputeRun(ApplicationManager appManager, final Set<StructuredRecord> expected,
+                                       String val1, String val2, final String outputName) throws Exception {
+    SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
+    sparkManager.start(ImmutableMap.of("field", "name", "val1", val1, "val2", val2, "output", outputName));
+    sparkManager.waitForStatus(true, 10, 1);
+
+    // since dataset name is a macro, the dataset isn't created until it is needed. Wait for it to exist
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return getDataset(outputName).get() != null;
+      }
+    }, 1, TimeUnit.MINUTES);
+
+    final DataSetManager<Table> outputManager = getDataset(outputName);
     Tasks.waitFor(
       true,
       new Callable<Boolean>() {
@@ -135,13 +162,156 @@ public class DataStreamsTest extends HydratorTestBase {
 
     sparkManager.stop();
     sparkManager.waitForStatus(false, 10, 1);
+  }
 
-    validateMetric(appId, "source.records.out", 4);
-    validateMetric(appId, "jacksonFilter.records.in", 4);
-    validateMetric(appId, "jacksonFilter.records.out", 3);
-    validateMetric(appId, "dwayneFilter.records.in", 3);
-    validateMetric(appId, "dwayneFilter.records.out", 2);
-    validateMetric(appId, "sink.records.in", 2);
+  @Test
+  public void testAggregatorJoinerMacrosWithCheckpoints() throws Exception {
+    /*
+                 |--> aggregator --> sink1
+        users1 --|
+                 |----|
+                      |--> dupeFlagger --> sink2
+        users2 -------|
+     */
+    Schema userSchema = Schema.recordOf(
+      "user",
+      Schema.Field.of("id", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
+
+
+    List<StructuredRecord> users1 = ImmutableList.of(
+      StructuredRecord.builder(userSchema).set("id", 1L).set("name", "Samuel").build(),
+      StructuredRecord.builder(userSchema).set("id", 2L).set("name", "Dwayne").build(),
+      StructuredRecord.builder(userSchema).set("id", 3L).set("name", "Terry").build());
+
+    List<StructuredRecord> users2 = ImmutableList.of(
+      StructuredRecord.builder(userSchema).set("id", 1L).set("name", "Samuel").build(),
+      StructuredRecord.builder(userSchema).set("id", 2L).set("name", "Dwayne").build(),
+      StructuredRecord.builder(userSchema).set("id", 4L).set("name", "Terry").build(),
+      StructuredRecord.builder(userSchema).set("id", 5L).set("name", "Christopher").build());
+
+    DataStreamsConfig pipelineConfig = DataStreamsConfig.builder()
+      .setBatchInterval("5s")
+      .addStage(new ETLStage("users1", MockSource.getPlugin(userSchema, users1)))
+      .addStage(new ETLStage("users2", MockSource.getPlugin(userSchema, users2)))
+      .addStage(new ETLStage("sink1", MockSink.getPlugin("sink1")))
+      .addStage(new ETLStage("sink2", MockSink.getPlugin("sink2")))
+      .addStage(new ETLStage("aggregator", FieldCountAggregator.getPlugin("${aggfield}", "${aggType}")))
+      .addStage(new ETLStage("dupeFlagger", DupeFlagger.getPlugin("users1", "${flagField}")))
+      .addConnection("users1", "aggregator")
+      .addConnection("aggregator", "sink1")
+      .addConnection("users1", "dupeFlagger")
+      .addConnection("users2", "dupeFlagger")
+      .addConnection("dupeFlagger", "sink2")
+      .build();
+
+    AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, pipelineConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app("ParallelAggApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+
+    // run it once with this set of macros
+    Map<String, String> arguments = new HashMap<>();
+    arguments.put("aggfield", "id");
+    arguments.put("aggType", "long");
+    arguments.put("flagField", "isDupe");
+
+    SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
+    sparkManager.start(arguments);
+    sparkManager.waitForStatus(true, 10, 1);
+
+    final DataSetManager<Table> sink1 = getDataset("sink1");
+    final DataSetManager<Table> sink2 = getDataset("sink2");
+
+    Schema aggSchema = Schema.recordOf(
+      "user.count",
+      Schema.Field.of("id", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("ct", Schema.of(Schema.Type.LONG)));
+    final Set<StructuredRecord> expectedAggregates = ImmutableSet.of(
+      StructuredRecord.builder(aggSchema).set("id", 0L).set("ct", 3L).build(),
+      StructuredRecord.builder(aggSchema).set("id", 1L).set("ct", 1L).build(),
+      StructuredRecord.builder(aggSchema).set("id", 2L).set("ct", 1L).build(),
+      StructuredRecord.builder(aggSchema).set("id", 3L).set("ct", 1L).build());
+
+    Schema outputSchema = Schema.recordOf(
+      "user.flagged",
+      Schema.Field.of("id", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("isDupe", Schema.of(Schema.Type.BOOLEAN)));
+    final Set<StructuredRecord> expectedJoined = ImmutableSet.of(
+      StructuredRecord.builder(outputSchema).set("id", 1L).set("name", "Samuel").set("isDupe", true).build(),
+      StructuredRecord.builder(outputSchema).set("id", 2L).set("name", "Dwayne").set("isDupe", true).build(),
+      StructuredRecord.builder(outputSchema).set("id", 3L).set("name", "Terry").set("isDupe", false).build());
+
+    Tasks.waitFor(
+      true,
+      new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          sink1.flush();
+          sink2.flush();
+          Set<StructuredRecord> actualAggs = new HashSet<>();
+          Set<StructuredRecord> actualJoined = new HashSet<>();
+          actualAggs.addAll(MockSink.readOutput(sink1));
+          actualJoined.addAll(MockSink.readOutput(sink2));
+          return expectedAggregates.equals(actualAggs) && expectedJoined.equals(actualJoined);
+        }
+      },
+      1,
+      TimeUnit.MINUTES);
+
+    sparkManager.stop();
+    sparkManager.waitForStatus(false, 30, 1);
+
+    MockSink.clear(sink1);
+    MockSink.clear(sink2);
+
+    // run it again with different macros to make sure they are re-evaluated and not stored in the checkpoint
+    arguments = new HashMap<>();
+    arguments.put("aggfield", "name");
+    arguments.put("aggType", "string");
+    arguments.put("flagField", "dupe");
+
+    sparkManager.start(arguments);
+    sparkManager.waitForStatus(true, 10, 1);
+
+    aggSchema = Schema.recordOf(
+      "user.count",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("ct", Schema.of(Schema.Type.LONG)));
+    final Set<StructuredRecord> expectedAggregates2 = ImmutableSet.of(
+      StructuredRecord.builder(aggSchema).set("name", "all").set("ct", 3L).build(),
+      StructuredRecord.builder(aggSchema).set("name", "Samuel").set("ct", 1L).build(),
+      StructuredRecord.builder(aggSchema).set("name", "Dwayne").set("ct", 1L).build(),
+      StructuredRecord.builder(aggSchema).set("name", "Terry").set("ct", 1L).build());
+
+    outputSchema = Schema.recordOf(
+      "user.flagged",
+      Schema.Field.of("id", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("dupe", Schema.of(Schema.Type.BOOLEAN)));
+    final Set<StructuredRecord> expectedJoined2 = ImmutableSet.of(
+      StructuredRecord.builder(outputSchema).set("id", 1L).set("name", "Samuel").set("dupe", true).build(),
+      StructuredRecord.builder(outputSchema).set("id", 2L).set("name", "Dwayne").set("dupe", true).build(),
+      StructuredRecord.builder(outputSchema).set("id", 3L).set("name", "Terry").set("dupe", false).build());
+
+    Tasks.waitFor(
+      true,
+      new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          sink1.flush();
+          sink2.flush();
+          Set<StructuredRecord> actualAggs = new HashSet<>();
+          Set<StructuredRecord> actualJoined = new HashSet<>();
+          actualAggs.addAll(MockSink.readOutput(sink1));
+          actualJoined.addAll(MockSink.readOutput(sink2));
+          return expectedAggregates2.equals(actualAggs) && expectedJoined2.equals(actualJoined);
+        }
+      },
+      1,
+      TimeUnit.MINUTES);
+
+    sparkManager.stop();
   }
 
   @Test
@@ -319,7 +489,6 @@ public class DataStreamsTest extends HydratorTestBase {
       TimeUnit.MINUTES);
 
     sparkManager.stop();
-    sparkManager.waitForStatus(false, 10, 1);
   }
 
   @Test

@@ -39,6 +39,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
   public static final RouteDestination EXPLORE_HTTP_USER_SERVICE = new RouteDestination(
     Constants.Service.EXPLORE_HTTP_USER_SERVICE);
   public static final RouteDestination STREAMS_SERVICE = new RouteDestination(Constants.Service.STREAMS);
+  public static final RouteDestination PREVIEW_HTTP = new RouteDestination(Constants.Service.PREVIEW_HTTP);
 
   /**
    * Returns the CDAP service which will handle the HttpRequest
@@ -126,6 +127,10 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     } else if ((matches(uriParts, "v3", "namespaces", null, "streams", null, "programs")
       || matches(uriParts, "v3", "namespaces", null, "data", "datasets", null, "programs")) &&
       requestMethod.equals(AllowedMethod.GET)) {
+      return APP_FABRIC_HTTP;
+    } else if (matches(uriParts, "v3", "namespaces", null, "previews")) {
+      return PREVIEW_HTTP;
+    } else if (matches(uriParts, "v3", "system", "serviceproviders")) {
       return APP_FABRIC_HTTP;
     } else if ((uriParts.length >= 4) && uriParts[1].equals("namespaces") && uriParts[3].equals("streams")) {
       return STREAMS_SERVICE;

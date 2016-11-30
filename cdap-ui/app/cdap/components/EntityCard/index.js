@@ -24,12 +24,26 @@ import ProgramMetrics from './ProgramMetrics';
 import StreamMetrics from './StreamMetrics';
 import classnames from 'classnames';
 import FastActions from 'components/EntityCard/FastActions';
+import JumpButton from 'components/JumpButton';
+import AppOverview from 'components/AppOverview';
 
 require('./EntityCard.less');
 
 export default class EntityCard extends Component {
   constructor(props) {
     super(props);
+    this.state = {
+      overviewMode: false
+    };
+    this.cardRef = null;
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.activeEntity !== this.props.entity.uniqueId) {
+      this.setState({
+        overviewMode: false
+      });
+    }
   }
 
   renderEntityStatus() {
@@ -49,42 +63,145 @@ export default class EntityCard extends Component {
     }
   }
 
+  renderJumpButton() {
+    const entity = this.props.entity;
+    if (['datasetinstance', 'stream'].indexOf(entity.type) === -1 && !entity.isHydrator) {
+      return null;
+    }
+
+    return (
+      <div className="jump-button-container text-center pull-right">
+        <JumpButton
+          entity={this.props.entity}
+        />
+      </div>
+    );
+  }
+
+  toggleOverviewMode() {
+    if (this.props.entity.type !== 'application') {
+      return;
+    }
+    this.setState({
+      overviewMode: !this.state.overviewMode
+    });
+    if (this.props.onClick) {
+      this.props.onClick();
+    }
+  }
+
   render() {
+    if (!this.props.entity) {
+      return null;
+    }
     const header = (
       <EntityCardHeader
+        className={this.props.entity.isHydrator ? 'datapipeline' : this.props.entity.type}
         entity={this.props.entity}
         systemTags={this.props.entity.metadata.metadata.SYSTEM.tags}
       />
     );
-
+    let position = 'left';
+    let parentdimension = {};
+    if (this.cardRef && this.state.overviewMode) {
+      let cardDimension = this.cardRef.getBoundingClientRect();
+      let parentDimension = this.cardRef.parentElement.getBoundingClientRect();
+      let spaceOnLeft = cardDimension.left - parentDimension.left;
+      let spaceOnRight = parentDimension.right - cardDimension.right;
+      let spaceOnTop = cardDimension.top - parentDimension.top;
+      let spaceOnBottom = parentDimension.bottom - cardDimension.bottom;
+      let maxSpace = Math.max(spaceOnLeft, spaceOnRight, spaceOnBottom, spaceOnTop);
+      parentdimension = parentDimension;
+      // FIXME: ALERT! Magic number. This is the minimum width needed for the overview popover to look nice.
+      // Definitely needs to be more adaptive & come from css.
+      if (maxSpace < 400) {
+        position = 'bottom';
+      } else {
+        if (spaceOnLeft === maxSpace) {
+          position = 'left';
+        }
+        if (spaceOnRight === maxSpace) {
+          position = 'right';
+        }
+        if (spaceOnBottom === maxSpace) {
+          position = 'bottom';
+        }
+        if (spaceOnTop === maxSpace) {
+          position = 'top';
+        }
+      }
+    }
     return (
-      <Card
-        header={header}
-        cardClass={`home-cards ${this.props.entity.type}`}
+      <div
+        className={
+          classnames(
+            'home-cards',
+            this.props.entity.isHydrator ? 'datapipeline' : this.props.entity.type,
+            this.props.className)
+        }
+        onClick={this.toggleOverviewMode.bind(this)}
+        ref={(ref) => this.cardRef = ref}
       >
-        <div className="entity-id-container">
-          <h4
-            className={classnames({'with-version': this.props.entity.version})}
-          >
-            {this.props.entity.id}
-          </h4>
-          <small>{this.props.entity.version}</small>
-        </div>
+        <Card
+          header={header}
+          id={
+            classnames(
+              this.props.entity.isHydrator ?
+              `home-cards-datapipeline` :
+              `home-cards-${this.props.entity.type}`
+            )
+          }
+        >
+          <div className="entity-information clearfix">
+            <div className="entity-id-container">
+              <h4
+                className={classnames({'with-version': this.props.entity.version})}
+              >
+                {this.props.entity.id}
+              </h4>
+              <small>{
+                  this.props.entity.version ?
+                    this.props.entity.version
+                  :
+                    '1.0.0'
+                }</small>
+            </div>
+            {this.renderJumpButton()}
+          </div>
 
-        {this.renderEntityStatus()}
+          {this.renderEntityStatus()}
 
-        <div className="fast-actions-container">
-          <FastActions
-            entity={this.props.entity}
-            onUpdate={this.props.onUpdate}
-          />
-        </div>
-      </Card>
+          <div className="fast-actions-container">
+            <FastActions
+              entity={this.props.entity}
+              onUpdate={this.props.onUpdate}
+            />
+          </div>
+        </Card>
+        {
+          this.state.overviewMode ?
+            <AppOverview
+              onClose={this.toggleOverviewMode.bind(this)}
+              position={position}
+              parentdimension={parentdimension}
+              entity={this.props.entity}
+            />
+          :
+            null
+        }
+      </div>
     );
   }
 }
 
+EntityCard.defaultProps = {
+  onClick: () => {}
+};
+
 EntityCard.propTypes = {
   entity: PropTypes.object,
-  onUpdate: PropTypes.func
+  onUpdate: PropTypes.func,
+  className: PropTypes.string,
+  onClick: PropTypes.func,
+  activeEntity: PropTypes.string
 };

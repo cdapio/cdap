@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.flow;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.app.program.Program;
@@ -115,11 +116,12 @@ public final class FlowProgramRunner implements ProgramRunner {
 
     try {
       for (Map.Entry<String, FlowletDefinition> entry : flowSpec.getFlowlets().entrySet()) {
+        ProgramOptions flowletOptions = resolveFlowletOptions(options, entry.getKey());
         int instanceCount = entry.getValue().getInstances();
         for (int instanceId = 0; instanceId < instanceCount; instanceId++) {
           flowlets.put(entry.getKey(), instanceId,
                        startFlowlet(program,
-                                    createFlowletOptions(entry.getKey(), instanceId, instanceCount, options)));
+                                    createFlowletOptions(entry.getKey(), instanceId, instanceCount, flowletOptions)));
         }
       }
     } catch (Throwable t) {
@@ -138,6 +140,13 @@ public final class FlowProgramRunner implements ProgramRunner {
       throw Throwables.propagate(t);
     }
     return flowlets;
+  }
+
+  ProgramOptions resolveFlowletOptions(ProgramOptions options, String flowlet) {
+    return new SimpleProgramOptions(options.getName(),
+                                    options.getArguments(),
+                                    new BasicArguments(RuntimeArguments.extractScope(
+                                      FlowUtils.FLOWLET_SCOPE, flowlet, options.getUserArguments().asMap())));
   }
 
   private ProgramController startFlowlet(Program program, ProgramOptions options) {
@@ -311,11 +320,13 @@ public final class FlowProgramRunner implements ProgramRunner {
           }
         })).get();
 
+      ProgramOptions flowletOptions = resolveFlowletOptions(options, flowletName);
+
       // Last create more instances
       for (int instanceId = liveCount; instanceId < newInstanceCount; instanceId++) {
         flowlets.put(flowletName, instanceId,
                      startFlowlet(program,
-                                  createFlowletOptions(flowletName, instanceId, newInstanceCount, options)));
+                                  createFlowletOptions(flowletName, instanceId, newInstanceCount, flowletOptions)));
       }
     }
 

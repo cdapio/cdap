@@ -97,7 +97,7 @@ public class WebappProgramRunner implements ProgramRunner {
       // Start netty server
       // TODO: add metrics reporting
       JarHttpHandler jarHttpHandler = webappHttpHandlerFactory.createHandler(program.getJarLocation());
-      NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf);
+      NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, program.getId().toString());
       builder.addHttpHandlers(ImmutableSet.of(jarHttpHandler));
       builder.setUrlRewriter(new WebappURLRewriter(jarHttpHandler));
       builder.setHost(hostname.getCanonicalHostName());

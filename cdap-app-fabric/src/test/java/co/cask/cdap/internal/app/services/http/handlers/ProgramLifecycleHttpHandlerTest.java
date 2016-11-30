@@ -24,6 +24,7 @@ import co.cask.cdap.DummyAppWithTrackingTable;
 import co.cask.cdap.SleepingWorkflowApp;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.api.Config;
+import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
@@ -1301,42 +1302,58 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   private void testHistory(Class<?> app, Id.Program program) throws Exception {
+    String namespace = program.getNamespaceId();
     try {
-      String namespace = program.getNamespaceId();
       deploy(app, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
-      // first run
-      startProgram(program);
-      waitState(program, ProgramRunStatus.RUNNING.toString());
-      stopProgram(program);
-      waitState(program, STOPPED);
-
-      // second run
-      startProgram(program);
-      waitState(program, ProgramRunStatus.RUNNING.toString());
-      String url = String.format("apps/%s/%s/%s/runs?status=running", program.getApplicationId(),
-                                 program.getType().getCategoryName(), program.getId());
-
-      //active size should be 1
-      historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 1);
-      // completed runs size should be 1
-      url = String.format("apps/%s/%s/%s/runs?status=killed", program.getApplicationId(),
-                          program.getType().getCategoryName(), program.getId());
-      historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 1);
-
-      stopProgram(program);
-      waitState(program, STOPPED);
-
-      historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 2);
-
+      verifyProgramHistory(program.toEntityId());
     } catch (Exception e) {
       LOG.error("Got exception: ", e);
     } finally {
-      HttpResponse httpResponse = doDelete(getVersionedAPIPath("apps/" + program.getApplicationId(),
-                                                               Constants.Gateway.API_VERSION_3_TOKEN,
-                                                               program.getNamespaceId()));
-      Assert.assertEquals(EntityUtils.toString(httpResponse.getEntity()),
-                          200, httpResponse.getStatusLine().getStatusCode());
+      deleteApp(program.getApplication(), 200);
     }
+    ApplicationId appId = new ApplicationId(namespace, program.getApplicationId(), VERSION1);
+    ProgramId programId = appId.program(program.getType(), program.getId());
+    try {
+      Id.Artifact artifactId = Id.Artifact.from(program.getNamespace(), app.getSimpleName(), "1.0.0");
+      addAppArtifact(artifactId, app);
+      AppRequest<Config> request = new AppRequest<>(
+        new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), null);
+      Assert.assertEquals(200, deploy(appId, request).getStatusLine().getStatusCode());
+      verifyProgramHistory(programId);
+    } catch (Exception e) {
+      LOG.error("Got exception: ", e);
+    } finally {
+      deleteApp(appId, 200);
+    }
+  }
+
+  private void verifyProgramHistory(ProgramId program) throws Exception {
+    String namespace = program.getNamespace();
+    // first run
+    startProgram(program, 200);
+    waitState(program, ProgramRunStatus.RUNNING.toString());
+    stopProgram(program, null, 200, null);
+    waitState(program, STOPPED);
+
+    // second run
+    startProgram(program, 200);
+    waitState(program, ProgramRunStatus.RUNNING.toString());
+    String urlAppVersionPart = ApplicationId.DEFAULT_VERSION.equals(program.getVersion()) ?
+      "" : "/versions/" + program.getVersion();
+    String url = String.format("apps/%s%s/%s/%s/runs?status=running", program.getApplication(), urlAppVersionPart,
+                               program.getType().getCategoryName(), program.getProgram());
+
+    //active size should be 1
+    historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 1);
+    // completed runs size should be 1
+    url = String.format("apps/%s%s/%s/%s/runs?status=killed", program.getApplication(), urlAppVersionPart,
+                        program.getType().getCategoryName(), program.getProgram());
+    historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 1);
+
+    stopProgram(program, null, 200, null);
+    waitState(program, STOPPED);
+
+    historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 2);
   }
 
   private void historyStatusWithRetry(String url, int size) throws Exception {

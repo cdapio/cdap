@@ -148,6 +148,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     // Fewer splits make the forceEvict runs faster, which makes all queue tests run faster
     cConf.setInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS, 4);
     cConf.setLong(TxConstants.Manager.CFG_TX_TIMEOUT, 100000000L);
+    cConf.setLong(TxConstants.Manager.CFG_TX_MAX_TIMEOUT, 100000000L);
 
     injector = Guice.createInjector(
       new DataFabricDistributedModule(),

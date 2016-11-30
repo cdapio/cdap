@@ -24,13 +24,18 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
+import co.cask.cdap.etl.api.JoinElement;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.SetMultimapCodec;
+import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.SparkCollection;
-import co.cask.cdap.etl.spark.SparkPipelineDriver;
+import co.cask.cdap.etl.spark.SparkPairCollection;
+import co.cask.cdap.etl.spark.SparkPipelineRunner;
 import co.cask.cdap.etl.spark.function.BatchSourceFunction;
+import co.cask.cdap.etl.spark.function.JoinMergeFunction;
+import co.cask.cdap.etl.spark.function.JoinOnFunction;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.collect.SetMultimap;
@@ -42,12 +47,13 @@ import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
 /**
  * Batch Spark pipeline driver.
  */
-public class BatchSparkPipelineDriver extends SparkPipelineDriver
+public class BatchSparkPipelineDriver extends SparkPipelineRunner
   implements JavaSparkMain, TxRunnable {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
@@ -66,10 +72,27 @@ public class BatchSparkPipelineDriver extends SparkPipelineDriver
   private transient Map<String, Integer> stagePartitions;
 
   @Override
-  protected SparkCollection<Object> getSource(String stageName, PluginFunctionContext pluginFunctionContext) {
+  protected SparkCollection<Object> getSource(StageInfo stageInfo) {
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageInfo, sec);
     return new RDDCollection<>(sec, jsc, datasetContext, sinkFactory,
-                               sourceFactory.createRDD(sec, jsc, stageName, Object.class, Object.class)
+                               sourceFactory.createRDD(sec, jsc, stageInfo.getName(), Object.class, Object.class)
                                  .flatMap(new BatchSourceFunction(pluginFunctionContext)));
+  }
+
+  @Override
+  protected SparkPairCollection<Object, Object> addJoinKey(StageInfo stageInfo, String inputStageName,
+                                                           SparkCollection<Object> inputCollection) throws Exception {
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageInfo, sec);
+    return inputCollection.flatMapToPair(new JoinOnFunction<>(pluginFunctionContext, inputStageName));
+  }
+
+  @Override
+  protected SparkCollection<Object> mergeJoinResults(
+    StageInfo stageInfo,
+    SparkPairCollection<Object, List<JoinElement<Object>>> joinedInputs) throws Exception {
+
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageInfo, sec);
+    return joinedInputs.flatMap(new JoinMergeFunction<>(pluginFunctionContext));
   }
 
   @Override

@@ -186,6 +186,7 @@ public final class SparkRuntimeContextProvider {
       sparkRuntimeContext = new SparkRuntimeContext(
         contextConfig.getConfiguration(),
         program, contextConfig.getProgramOptions(),
+        cConf,
         getHostname(),
         injector.getInstance(TransactionSystemClient.class),
         programDatasetFramework,

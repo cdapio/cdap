@@ -97,31 +97,37 @@ public abstract class IntegrationTestBase {
 
   @Before
   public void setUp() throws Exception {
+    LOG.info("Beginning setUp.");
     checkSystemServices();
     assertUnrecoverableResetEnabled();
 
     boolean deleteUponTeardown = false;
-    if (!getNamespaceClient().exists(configuredNamespace.toId())) {
+    if (!getNamespaceClient().exists(configuredNamespace)) {
       getNamespaceClient().create(new NamespaceMeta.Builder().setName(configuredNamespace.toId()).build());
       // if we created the configured namespace, delete it upon teardown
       deleteUponTeardown = true;
+    } else {
+      // only need to clear the namespace if it already existed
+      doClear(configuredNamespace, false);
     }
     registeredNamespaces.put(configuredNamespace, deleteUponTeardown);
-    assertIsClear(configuredNamespace);
+    LOG.info("Completed setUp.");
   }
 
   @After
   public void tearDown() throws Exception {
+    LOG.info("Beginning tearDown.");
     for (Map.Entry<NamespaceId, Boolean> namespaceEntry : registeredNamespaces.entrySet()) {
       // there could be a race condition that test case registers the namespace, but fails before
       // creating the actual namespace, so check existence before clearing/deleting the namespace
-      if (!getNamespaceClient().exists(namespaceEntry.getKey().toId())) {
+      if (!getNamespaceClient().exists(namespaceEntry.getKey())) {
         continue;
       }
       Boolean deleteUponTeardown = namespaceEntry.getValue();
       // if we didn't create the namespace, don't delete it; only clear the data/programs within it
       doClear(namespaceEntry.getKey(), deleteUponTeardown);
     }
+    LOG.info("Completed tearDown.");
   }
 
   /**
@@ -210,24 +216,29 @@ public abstract class IntegrationTestBase {
    * @throws TimeoutException if a timeout occurs while getting an access token
    */
   protected AccessToken fetchAccessToken() throws IOException, TimeoutException, InterruptedException {
+    String name = System.getProperty("cdap.username");
+    String password = System.getProperty("cdap.password");
+    return fetchAccessToken(name, password);
+  }
+
+  protected AccessToken fetchAccessToken(String username, String password) throws IOException,
+    TimeoutException, InterruptedException {
     Properties properties = new Properties();
-    properties.setProperty("security.auth.client.username", System.getProperty("cdap.username"));
-    properties.setProperty("security.auth.client.password", System.getProperty("cdap.password"));
+    properties.setProperty("security.auth.client.username", username);
+    properties.setProperty("security.auth.client.password", password);
     final AuthenticationClient authClient = new BasicAuthenticationClient();
     authClient.configure(properties);
     ConnectionConfig connectionConfig = getClientConfig().getConnectionConfig();
     authClient.setConnectionInfo(connectionConfig.getHostname(), connectionConfig.getPort(), false);
-
     checkServicesWithRetry(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
         return authClient.getAccessToken() != null;
       }
-    }, "Unable to connect to Authentication service to obtain access token, Connection info : " + connectionConfig);
-
+    }, "Unable to connect to Authentication service to obtain access token, Connection info : "
+      + connectionConfig);
     return authClient.getAccessToken();
   }
-
 
   private void checkServicesWithRetry(Callable<Boolean> callable,
                                       String exceptionMessage) throws TimeoutException, InterruptedException {
@@ -262,8 +273,12 @@ public abstract class IntegrationTestBase {
   }
 
   protected TestManager getTestManager() {
+    return getTestManager(getClientConfig(), getRestClient());
+  }
+
+  protected TestManager getTestManager(ClientConfig clientConfig, RESTClient restClient) {
     try {
-      return new IntegrationTestManager(getClientConfig(), getRestClient(), TEMP_FOLDER.newFolder());
+      return new IntegrationTestManager(clientConfig, restClient, TEMP_FOLDER.newFolder());
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
@@ -287,12 +302,17 @@ public abstract class IntegrationTestBase {
   }
 
   protected ClientConfig getClientConfig() {
+    AccessToken accessToken = getAccessToken();
+    return getClientConfig(accessToken);
+  }
+
+  protected ClientConfig getClientConfig(@Nullable AccessToken accessToken) {
     ClientConfig.Builder builder = new ClientConfig.Builder();
     builder.setConnectionConfig(InstanceURIParser.DEFAULT.parse(
       URI.create(getInstanceURI()).toString()));
 
-    if (getAccessToken() != null) {
-      builder.setAccessToken(getAccessToken());
+    if (accessToken != null) {
+      builder.setAccessToken(accessToken);
     }
 
     String verifySSL = System.getProperty("verifySSL");
@@ -381,7 +401,7 @@ public abstract class IntegrationTestBase {
     getProgramClient().stopAll(namespace.toId());
 
     if (deleteNamespace) {
-      getNamespaceClient().delete(namespace.toId());
+      getNamespaceClient().delete(namespace);
       return;
     }
 

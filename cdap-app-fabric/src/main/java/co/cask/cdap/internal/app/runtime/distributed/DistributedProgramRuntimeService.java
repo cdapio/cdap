@@ -16,28 +16,22 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.app.program.ProgramDescriptor;
-import co.cask.cdap.app.queue.QueueSpecification;
-import co.cask.cdap.app.queue.QueueSpecificationGenerator;
 import co.cask.cdap.app.runtime.AbstractProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramResourceReporter;
+import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.app.runtime.distributed.DistributedProgramControllerFactory;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.security.Impersonator;
-import co.cask.cdap.data2.transaction.queue.QueueAdmin;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
-import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
 import co.cask.cdap.internal.app.runtime.AbstractResourceReporter;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -45,22 +39,17 @@ import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.DistributedProgramLiveInfo;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -68,7 +57,6 @@ import org.apache.hadoop.yarn.api.records.NodeReport;
 import org.apache.hadoop.yarn.api.records.NodeState;
 import org.apache.hadoop.yarn.api.records.Resource;
 import org.apache.hadoop.yarn.client.api.YarnClient;
-import org.apache.tephra.TransactionExecutorFactory;
 import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
@@ -82,7 +70,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -102,26 +89,20 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
   // TODO (terence): Injection of Store and QueueAdmin is a hack for queue reconfiguration.
   // Need to remove it when FlowProgramRunner can runs inside Twill AM.
+  private final ProgramRunnerFactory programRunnerFactory;
   private final Store store;
-  private final QueueAdmin queueAdmin;
-  private final StreamAdmin streamAdmin;
-  private final TransactionExecutorFactory txExecutorFactory;
   private final ProgramResourceReporter resourceReporter;
   private final Impersonator impersonator;
 
   @Inject
-  DistributedProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, TwillRunner twillRunner,
-                                   Store store, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
+  DistributedProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, TwillRunner twillRunner, Store store,
                                    MetricsCollectionService metricsCollectionService,
                                    Configuration hConf, CConfiguration cConf,
-                                   TransactionExecutorFactory txExecutorFactory,
                                    ArtifactRepository artifactRepository, Impersonator impersonator) {
     super(cConf, programRunnerFactory, artifactRepository);
+    this.programRunnerFactory = programRunnerFactory;
     this.twillRunner = twillRunner;
     this.store = store;
-    this.queueAdmin = queueAdmin;
-    this.streamAdmin = streamAdmin;
-    this.txExecutorFactory = txExecutorFactory;
     this.resourceReporter = new ClusterResourceReporter(metricsCollectionService, hConf);
     this.impersonator = impersonator;
   }
@@ -245,16 +226,24 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     }
 
     final Set<RunId> twillRunIds = twillProgramInfo.columnKeySet();
-    List<RunRecordMeta> activeRunRecords = store.getRuns(ProgramRunStatus.RUNNING, new Predicate<RunRecordMeta>() {
+    Collection<RunRecordMeta> activeRunRecords = store.getRuns(ProgramRunStatus.RUNNING,
+                                                               new Predicate<RunRecordMeta>() {
       @Override
       public boolean apply(RunRecordMeta record) {
         return record.getTwillRunId() != null
           && twillRunIds.contains(org.apache.twill.internal.RunIds.fromString(record.getTwillRunId()));
       }
-    });
+    }).values();
 
     for (RunRecordMeta record : activeRunRecords) {
-      RunId twillRunIdFromRecord = org.apache.twill.internal.RunIds.fromString(record.getTwillRunId());
+      String twillRunId = record.getTwillRunId();
+      if (twillRunId == null) {
+        // This is unexpected. Just log and ignore the run record
+        LOG.warn("No twill runId for in run record {}.", record);
+        continue;
+      }
+
+      RunId twillRunIdFromRecord = org.apache.twill.internal.RunIds.fromString(twillRunId);
       // Get the CDAP RunId from RunRecord
       RunId runId = RunIds.fromString(record.getPid());
       // Get the Program and TwillController for the current twillRunId
@@ -290,58 +279,31 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   @Nullable
   private ProgramController createController(ProgramDescriptor programDescriptor,
                                              TwillController controller, RunId runId) {
-    AbstractTwillProgramController programController = null;
     ProgramId programId = programDescriptor.getProgramId();
-
-    switch (programId.getType()) {
-      case FLOW: {
-        FlowSpecification flowSpec = programDescriptor.getSpecification();
-        DistributedFlowletInstanceUpdater instanceUpdater = new DistributedFlowletInstanceUpdater(
-          programDescriptor.getProgramId(), controller, queueAdmin, streamAdmin,
-          getFlowletQueues(programDescriptor.getProgramId().getParent(), flowSpec),
-          txExecutorFactory, impersonator
-        );
-        programController = new FlowTwillProgramController(programId, controller, instanceUpdater, runId);
-        break;
-      }
-      case MAPREDUCE:
-        programController = new MapReduceTwillProgramController(programId, controller, runId);
-        break;
-      case WORKFLOW:
-        programController = new WorkflowTwillProgramController(programId, controller, runId);
-        break;
-      case WEBAPP:
-        programController = new WebappTwillProgramController(programId, controller, runId);
-        break;
-      case SERVICE:
-        programController = new ServiceTwillProgramController(programId, controller, runId);
-        break;
-      case WORKER:
-        programController = new WorkerTwillProgramController(programId, controller, runId);
-        break;
+    ProgramRunner programRunner;
+    try {
+      programRunner = programRunnerFactory.create(programId.getType());
+    } catch (IllegalArgumentException e) {
+      // This shouldn't happen. If it happen, it means CDAP was incorrectly install such that some of the program
+      // type is not support (maybe due to version mismatch in upgrade).
+      LOG.error("Unsupported program type {} for program {}. " +
+                  "It is likely caused by incorrect CDAP installation or upgrade to incompatible CDAP version",
+                programId.getType(), programId);
+      return null;
     }
-    return programController == null ? null : programController.startListen();
-  }
 
-  // TODO (terence) : This method is part of the hack mentioned above. It should be removed when
-  // FlowProgramRunner moved to run in AM.
-  private Multimap<String, QueueName> getFlowletQueues(ApplicationId appId, FlowSpecification flowSpec) {
-    // Generate all queues specifications
-    Table<QueueSpecificationGenerator.Node, String, Set<QueueSpecification>> queueSpecs
-      = new SimpleQueueSpecificationGenerator(appId).create(flowSpec);
-
-    // For storing result from flowletId to queue.
-    ImmutableSetMultimap.Builder<String, QueueName> resultBuilder = ImmutableSetMultimap.builder();
-
-    // Loop through each flowlet
-    for (Map.Entry<String, FlowletDefinition> entry : flowSpec.getFlowlets().entrySet()) {
-      String flowletId = entry.getKey();
-      // For each queue that the flowlet is a consumer, store the number of instances for this flowlet
-      for (QueueSpecification queueSpec : Iterables.concat(queueSpecs.column(flowletId).values())) {
-        resultBuilder.put(flowletId, queueSpec.getQueueName());
-      }
+    if (!(programRunner instanceof DistributedProgramControllerFactory)) {
+      // This is also unexpected. If it happen, it means the CDAP core or the runtime provider extension was wrongly
+      // implemented
+      ResourceReport resourceReport = controller.getResourceReport();
+      LOG.error("Unable to create ProgramController for program {} for twill application {}. It is likely caused by " +
+                  "invalid CDAP program runtime extension.",
+                programId, resourceReport == null ? "'unknown twill application'" : resourceReport.getApplicationId());
+      return null;
     }
-    return resultBuilder.build();
+
+    return ((DistributedProgramControllerFactory) programRunner).createProgramController(controller,
+                                                                                         programDescriptor, runId);
   }
 
   @Override
@@ -478,14 +440,14 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         return null;
       }
 
-      return getMetricsContext(programId.getType(), programId.toId());
+      return getMetricsContext(programId.getType(), programId);
     }
   }
 
-  private static Map<String, String> getMetricsContext(ProgramType type, Id.Program programId) {
-    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, programId.getNamespaceId(),
-                           Constants.Metrics.Tag.APP, programId.getApplicationId(),
-                           ProgramTypeMetricTag.getTagName(type), programId.getId());
+  private static Map<String, String> getMetricsContext(ProgramType type, ProgramId programId) {
+    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, programId.getNamespace(),
+                           Constants.Metrics.Tag.APP, programId.getApplication(),
+                           ProgramTypeMetricTag.getTagName(type), programId.getProgram());
   }
 
   @Override

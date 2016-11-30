@@ -96,6 +96,21 @@ logecho() {
   echo ${@} | tee -a ${__logfile}
 }
 
+#
+# __readlink <file|directory>
+#
+__readlink() {
+  local __target_file=${1}
+  cd $(dirname ${__target_file})
+  __target_file=$(basename ${__target_file})
+  while test -L ${__target_file}; do
+    __target_file=$(readlink ${__target_file})
+    cd $(dirname ${__target_file})
+    __target_file=$(basename ${__target_file})
+  done
+  echo "$(pwd -P)/${__target_file}"
+}
+
 ###
 #
 # Directory functions
@@ -387,7 +402,7 @@ cdap_set_hbase() {
 cdap_set_hive_classpath() {
   local __explore=${EXPLORE_ENABLED:-$(cdap_get_conf "explore.enabled" "${CDAP_CONF}"/cdap-site.xml true)}
   if [[ ${__explore} == true ]]; then
-    if [[ -z ${HIVE_HOME} ]] || [[ -z ${HIVE_CONF_DIR} ]] || [[ -z ${HADOOP_CONF_DIR} ]]; then
+    if [[ -z ${HIVE_HOME} ]] || [[ -z ${HIVE_CONF_DIR} ]] || [[ -z ${HADOOP_CONF_DIR} ]] || [[ -z ${HIVE_EXEC_ENGINE} ]] || [[ -z ${HIVE_CLASSPATH} ]]; then
       __secure=${KERBEROS_ENABLED:-$(cdap_get_conf "kerberos.auth.enabled" "${CDAP_CONF}"/cdap-site.xml false)}
       if [[ ${__secure} == true ]]; then
         cdap_kinit || return 1
@@ -418,24 +433,25 @@ cdap_set_hive_classpath() {
         HIVE_HOME=${HIVE_HOME:-$(echo -e "${HIVE_VARS}" | grep '^env:HIVE_HOME=' | cut -d= -f2)}
         HIVE_CONF_DIR=${HIVE_CONF_DIR:-$(echo -e "${HIVE_VARS}" | grep '^env:HIVE_CONF_DIR=' | cut -d= -f2)}
         HADOOP_CONF_DIR=${HADOOP_CONF_DIR:-$(echo -e "${HIVE_VARS}" | grep '^env:HADOOP_CONF_DIR=' | cut -d= -f2)}
+        HIVE_CLASSPATH=${HIVE_CLASSPATH:-$(echo -e "${HIVE_VARS}" | grep '^env:CLASSPATH=' | cut -d= -f2)}
         HIVE_EXEC_ENGINE=${HIVE_EXEC_ENGINE:-$(echo -e "${HIVE_VARS}" | grep '^hive.execution.engine=' | cut -d= -f2)}
       fi
     fi
 
     # If Hive classpath is successfully determined, derive explore
     # classpath from it and export it to use it in the launch command
-    if [[ -n ${HIVE_HOME} ]] && [[ -n ${HIVE_CONF_DIR} ]] && [[ -n ${HADOOP_CONF_DIR} ]]; then
-      EXPLORE_CONF_FILES=$(ls -1dF ${HIVE_CONF_DIR}/* ${HADOOP_CONF_DIR}/* | sed -e '/\/$/d' | tr '\n' ':')
-      EXPLORE_CLASSPATH=$(ls -1 ${HIVE_HOME}/lib/hive-exec-* ${HIVE_HOME}/lib/*.jar | tr '\n' ':')
+    if [[ -n ${HIVE_HOME} ]] && [[ -n ${HIVE_CONF_DIR} ]] && [[ -n ${HADOOP_CONF_DIR} ]] && [[ -n ${HIVE_CLASSPATH} ]]; then
+      EXPLORE_CONF_DIRS="${HIVE_CONF_DIR}:${HADOOP_CONF_DIR}"
+      EXPLORE_CLASSPATH=${HIVE_CLASSPATH}
       if [[ -n ${TEZ_HOME} ]] && [[ -n ${TEZ_CONF_DIR} ]]; then
         # tez-site.xml also need to be passed to explore service
-        EXPLORE_CONF_FILES=${EXPLORE_CONF_FILES}:${TEZ_CONF_DIR}/tez-site.xml:
+        EXPLORE_CONF_DIRS="${EXPLORE_CONF_DIRS}:${TEZ_CONF_DIR}"
       fi
       if [[ ${HIVE_EXEC_ENGINE} == spark ]]; then
         # We require SPARK_HOME to be set for CDAP to include the Spark assembly JAR for Explore
         cdap_set_spark || die "Unable to get SPARK_HOME, but default Hive engine is Spark"
       fi
-      export EXPLORE_CONF_FILES EXPLORE_CLASSPATH
+      export EXPLORE_CONF_DIRS EXPLORE_CLASSPATH
     fi
   fi
 }
@@ -506,7 +522,7 @@ cdap_service() {
           cdap_stop_pidfile ${__pidfile} "CDAP ${__name}" && \
           cdap_${__svc} ${__action} ${__args}
       elif [[ ${__action} == restart ]]; then
-          cdap_stop_pidfile ${__pidfile} "CDAP ${__name}" && \
+          cdap_stop_pidfile ${__pidfile} "CDAP ${__name}" ; \
           cdap_${__svc} ${__action} ${__args}
       else
           cdap_${__svc} ${__action} ${__args}
@@ -566,25 +582,28 @@ cdap_start_java() {
   JAVA_HEAPMAX=${JAVA_HEAPMAX:-${!JAVA_HEAP_VAR}}
   export JAVA_HEAPMAX
   local __defines="-Dcdap.service=${CDAP_SERVICE} ${JAVA_HEAPMAX} -Duser.dir=${LOCAL_DIR} -Djava.io.tmpdir=${TEMP_DIR}"
-  if [ "${CDAP_SERVICE}" == "master" ]; then
+  if [[ ${CDAP_SERVICE} == master ]]; then
     # Determine SPARK_HOME
     cdap_set_spark || logecho "Could not determine SPARK_HOME! Spark support unavailable!"
     # Master requires setting hive classpath
     cdap_set_hive_classpath || return 1
-    local readonly __explore="-Dexplore.conf.files=${EXPLORE_CONF_FILES} -Dexplore.classpath=${EXPLORE_CLASSPATH}"
+    local readonly __explore="-Dexplore.conf.dirs=${EXPLORE_CONF_DIRS} -Dexplore.classpath=${EXPLORE_CLASSPATH}"
     __defines+=" ${__explore}"
     # Add proper HBase compatibility to CLASSPATH
     cdap_set_hbase || return 1
     # Master requires this local directory
     cdap_create_local_dir || die "Could not create Master local directory"
     # Check for JAVA_LIBRARY_PATH
-    if [ -n "${JAVA_LIBRARY_PATH}" ]; then
+    if [[ -n ${JAVA_LIBRARY_PATH} ]]; then
       __defines+=" -Djava.library.path=${JAVA_LIBRARY_PATH}"
     fi
-    logecho "$(date) Running CDAP Master startup checks -- this may take a few minutes"
-    "${JAVA}" ${JAVA_HEAPMAX} ${__explore} ${OPTS} -cp ${CLASSPATH} co.cask.cdap.master.startup.MasterStartupTool </dev/null >>${__logfile} 2>&1
-    if [ $? -ne 0 ]; then
-      die "Master startup checks failed. Please check ${__logfile} to address issues."
+    __startup_checks=${CDAP_STARTUP_CHECKS:-$(cdap_get_conf "master.startup.checks.enabled" "${CDAP_CONF}"/cdap-site.xml true)}
+    if [[ {__startup_checks} == true ]]; then
+      logecho "$(date) Running CDAP Master startup checks -- this may take a few minutes"
+      "${JAVA}" ${JAVA_HEAPMAX} ${__explore} ${OPTS} -cp ${CLASSPATH} co.cask.cdap.master.startup.MasterStartupTool </dev/null >>${__logfile} 2>&1
+      if [ $? -ne 0 ]; then
+        die "Master startup checks failed. Please check ${__logfile} to address issues."
+      fi
     fi
   fi
   logecho "$(date) Starting CDAP ${__name} service on ${HOSTNAME}"
@@ -726,7 +745,7 @@ cdap_sdk_cleanup() { echo "Removing ${LOCAL_DIR} and ${LOG_DIR}"; rm -rf ${LOCAL
 # Restarts the CDAP SDK
 # returns: exit code of stop/start, or zero if successful
 #
-cdap_sdk_restart() { cdap_sdk_stop && cdap_sdk_start ${@}; };
+cdap_sdk_restart() { cdap_sdk_stop ; cdap_sdk_start ${@}; };
 
 #
 # cdap_sdk_stop
@@ -759,7 +778,7 @@ cdap_sdk_start() {
   local readonly __ret __pid
 
   # Default JVM_OPTS for CDAP SDK (use larger heap for /opt/cdap SDK installs)
-  if [[ ${CDAP_HOME} == /opt/cdap ]] || [[ ${CDAP_HOME} == /opt/cdap/sdk ]]; then
+  if [[ ${CDAP_HOME} == /opt/cdap ]] || [[ ${CDAP_HOME} == /opt/cdap/sdk* ]]; then
     CDAP_SDK_DEFAULT_JVM_OPTS="-Xmx3072m"
   else
     CDAP_SDK_DEFAULT_JVM_OPTS="-Xmx2048m"

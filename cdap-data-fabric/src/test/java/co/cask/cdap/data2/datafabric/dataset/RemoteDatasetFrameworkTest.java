@@ -239,7 +239,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
   private void deleteNamespace (NamespaceId namespaceId) throws Exception {
     // since the namespace admin here is an in memory one we need to delete the location explicitly
     namespacedLocationFactory.get(namespaceId.toId()).delete(true);
-    namespaceAdmin.delete(namespaceId.toId());
+    namespaceAdmin.delete(namespaceId);
   }
 
   @After

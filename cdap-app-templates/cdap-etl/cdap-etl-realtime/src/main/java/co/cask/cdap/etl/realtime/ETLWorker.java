@@ -68,6 +68,7 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -262,7 +263,8 @@ public class ETLWorker extends AbstractWorker {
       TrackedTransform trackedTransform = new TrackedTransform(identityTransformation,
                                                                new DefaultStageMetrics(metrics, sinkName),
                                                                TrackedTransform.RECORDS_IN,
-                                                               null);
+                                                               null, context.getDataTracer(sinkName),
+                                                               TrackedTransform.RECORDS_IN);
       transformationMap.put(sinkInfo.getName(), new TransformDetail(trackedTransform, new HashSet<String>()));
       sinks.put(sinkInfo.getName(), sink);
     }
@@ -286,7 +288,7 @@ public class ETLWorker extends AbstractWorker {
         transform.initialize(transformContext);
         StageMetrics stageMetrics = new DefaultStageMetrics(metrics, transformName);
         transformDetailMap.put(transformName, new TransformDetail(
-          new TrackedTransform<>(transform, stageMetrics),
+          new TrackedTransform<>(transform, stageMetrics, context.getDataTracer(transformName)),
           pipeline.getStageOutputs(transformName)));
         if (transformInfo.getErrorDatasetName() != null) {
           tranformIdToDatasetName.put(transformName, transformInfo.getErrorDatasetName());
@@ -305,26 +307,31 @@ public class ETLWorker extends AbstractWorker {
     final Map<String, List<Object>> dataToSink = new HashMap<>();
     boolean hasData = false;
     final Map<String, List<InvalidEntry>> transformIdToErrorRecords = intializeTransformIdToErrorsList();
+    final WorkerContext context = getContext();
     Set<String> transformErrorsWithoutDataset = Sets.newHashSet();
     // Fetch SourceState from State Table.
     // Only required at the beginning since we persist the state if there is a change.
-    getContext().execute(new TxRunnable() {
-      @Override
-      public void run(DatasetContext context) throws Exception {
-        KeyValueTable stateTable = context.getDataset(ETLRealtimeApplication.STATE_TABLE);
-        byte[] stateBytes = stateTable.read(stateStoreKeyBytes);
-        if (stateBytes != null) {
-          SourceState state = GSON.fromJson(Bytes.toString(stateBytes), SourceState.class);
-          currentState.setState(state);
+    try {
+      context.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          KeyValueTable stateTable = context.getDataset(ETLRealtimeApplication.STATE_TABLE);
+          byte[] stateBytes = stateTable.read(stateStoreKeyBytes);
+          if (stateBytes != null) {
+            SourceState state = GSON.fromJson(Bytes.toString(stateBytes), SourceState.class);
+            currentState.setState(state);
+          }
         }
-      }
-    });
+      });
+    } catch (TransactionFailureException e) {
+      throw Throwables.propagate(e);
+    }
 
     DefaultEmitter<Object> sourceEmitter = new DefaultEmitter<>();
     TrackedEmitter<Object> trackedSourceEmitter =
       new TrackedEmitter<>(sourceEmitter,
                            new DefaultStageMetrics(metrics, sourceStageName),
-                           TrackedTransform.RECORDS_OUT);
+                           TrackedTransform.RECORDS_OUT, context.getDataTracer(sourceStageName));
     while (!stopped) {
       // Invoke poll method of the source to fetch data
       try {

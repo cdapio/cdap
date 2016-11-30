@@ -26,23 +26,14 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
-import com.google.common.base.Function;
-import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
 import com.google.inject.Inject;
-import org.apache.commons.collections.MultiMap;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.AbstractMap;
-import java.util.HashMap;
-import java.util.Map;
 import javax.annotation.Nullable;
 
 /**

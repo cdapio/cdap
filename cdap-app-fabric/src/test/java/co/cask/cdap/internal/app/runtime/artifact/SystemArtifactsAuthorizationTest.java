@@ -156,7 +156,7 @@ public class SystemArtifactsAuthorizationTest {
     Assert.assertEquals(SYSTEM_ARTIFACT.getVersion(), artifactId.getVersion().getVersion());
     Assert.assertEquals(SYSTEM_ARTIFACT.getNamespace(), artifactId.getScope().name().toLowerCase());
 
-    namespaceAdmin.delete(namespaceId.toId());
+    namespaceAdmin.delete(namespaceId);
     authorizer.enforce(SYSTEM_ARTIFACT, ALICE, EnumSet.allOf(Action.class));
     authorizer.enforce(NamespaceId.SYSTEM, ALICE, Action.WRITE);
 

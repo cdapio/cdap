@@ -70,15 +70,7 @@ public class DefaultWorkflowActionConfigurer implements WorkflowActionConfigurer
     Preconditions.checkNotNull(properties, "Properties of the WorkflowAction cannot be null");
     this.properties = new HashMap<>(properties);
   }
-
-  @Override
-  public void useDatasets(Iterable<String> datasets) {
-    Preconditions.checkNotNull(datasets, "Datasets of the WorkflowAction cannot be null");
-    for (String dataset : datasets) {
-      this.datasets.add(dataset);
-    }
-  }
-
+  
   private DefaultWorkflowActionSpecification createSpecification() {
     Reflections.visit(workflowAction, workflowAction.getClass(),
                       new PropertyFieldExtractor(properties),

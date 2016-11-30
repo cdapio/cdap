@@ -13,18 +13,26 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+@import '../../../styles/variables.less';
 
 .entity-card-header {
-  margin-left: 10px;
-
+  padding-left: 10px;
+  width: 100%;
   h4 {
-    line-height: 15px;
+    line-height: 16px;
     margin-top: 5px;
     margin-bottom: 5px;
     font-size: 13px;
-
+    font-weight: 500;
     span { vertical-align: middle; }
   }
 
   .entity-type { margin-left: 5px; }
+  &.artifact { background-color: @artifact-entity-header-bg; }
+  &.application { background-color: @application-entity-header-bg; }
+  &.datapipeline { background-color: @datapipeline-entity-header-bg; }
+  &.datasetinstance { background-color: @datasetinstance-entity-header-bg; }
+  &.stream { background-color: @stream-entity-header-bg; }
+  &.view { background-color: #1abc9c; }
+  &.program { background-color: #2c3e50; }
 }

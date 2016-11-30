@@ -344,91 +344,107 @@ public class RouterPathTest {
   @Test
   public void testMetadataPath() {
     // all app metadata
-    assertMetadataRouting("/v3/namespaces/default//apps/WordCount//////metadata");
+    assertRouting("/v3/namespaces/default//apps/WordCount//////metadata", RouterPathLookup.METADATA_SERVICE);
     // all artifact metadata
-    assertMetadataRouting("/v3/namespaces/default//artifacts/WordCount///versions/v1//metadata");
+    assertRouting("/v3/namespaces/default//artifacts/WordCount///versions/v1//metadata",
+                  RouterPathLookup.METADATA_SERVICE);
     // all program metadata
-    assertMetadataRouting("/v3/namespaces/default//apps/WordCount//flows//WordCountFlow//metadata");
+    assertRouting("/v3/namespaces/default//apps/WordCount//flows//WordCountFlow//metadata",
+                  RouterPathLookup.METADATA_SERVICE);
     // all dataset metadata
-    assertMetadataRouting("/v3/namespaces/default//datasets/ds1//////metadata");
+    assertRouting("/v3/namespaces/default//datasets/ds1//////metadata", RouterPathLookup.METADATA_SERVICE);
     // all stream metadata
-    assertMetadataRouting("/v3/namespaces/default//streams/s1//////metadata");
+    assertRouting("/v3/namespaces/default//streams/s1//////metadata", RouterPathLookup.METADATA_SERVICE);
     // all stream view metadata
-    assertMetadataRouting("/v3/namespaces/default//streams/s1//views/v1///metadata");
+    assertRouting("/v3/namespaces/default//streams/s1//views/v1///metadata", RouterPathLookup.METADATA_SERVICE);
     // app metadata properties
-    assertMetadataRouting("/v3/namespaces/default//apps/WordCount//////metadata///////properties");
+    assertRouting("/v3/namespaces/default//apps/WordCount//////metadata///////properties",
+                  RouterPathLookup.METADATA_SERVICE);
     // artifact metadata properties
-    assertMetadataRouting("/v3/namespaces/default//artifacts/WordCount///versions/v1//metadata/properties");
+    assertRouting("/v3/namespaces/default//artifacts/WordCount///versions/v1//metadata/properties",
+                  RouterPathLookup.METADATA_SERVICE);
     // program metadata properties
-    assertMetadataRouting("/v3/namespaces/default//apps/WordCount/flows/WordCountFlow/metadata/properties");
+    assertRouting("/v3/namespaces/default//apps/WordCount/flows/WordCountFlow/metadata/properties"
+      , RouterPathLookup.METADATA_SERVICE);
     // dataset metadata properties
-    assertMetadataRouting("/v3/namespaces/default/////datasets/ds1/metadata/properties");
+    assertRouting("/v3/namespaces/default/////datasets/ds1/metadata/properties", RouterPathLookup.METADATA_SERVICE);
     // stream metadata properties
-    assertMetadataRouting("/v3/namespaces////default////streams//s1/metadata/properties");
+    assertRouting("/v3/namespaces////default////streams//s1/metadata/properties", RouterPathLookup.METADATA_SERVICE);
     // stream view metadata properties
-    assertMetadataRouting("/v3/namespaces////default////streams//s1/views/v1/metadata/properties");
+    assertRouting("/v3/namespaces////default////streams//s1/views/v1/metadata/properties",
+                  RouterPathLookup.METADATA_SERVICE);
     // app metadata tags
-    assertMetadataRouting("/v3/namespaces/default//apps/WordCount/////metadata/tags");
+    assertRouting("/v3/namespaces/default//apps/WordCount/////metadata/tags", RouterPathLookup.METADATA_SERVICE);
     // artifact metadata tags
-    assertMetadataRouting("/v3/namespaces/default//artifacts/WordCount//versions//1.0/metadata/tags");
+    assertRouting("/v3/namespaces/default//artifacts/WordCount//versions//1.0/metadata/tags",
+                  RouterPathLookup.METADATA_SERVICE);
     // program metadata tags
-    assertMetadataRouting("/v3/namespaces/default//apps/WordCount/flows/WordCountFlow/metadata/tags");
+    assertRouting("/v3/namespaces/default//apps/WordCount/flows/WordCountFlow/metadata/tags",
+                  RouterPathLookup.METADATA_SERVICE);
     // dataset metadata tags
-    assertMetadataRouting("/v3/namespaces/default/////datasets/ds1/metadata/tags");
+    assertRouting("/v3/namespaces/default/////datasets/ds1/metadata/tags", RouterPathLookup.METADATA_SERVICE);
     // stream metadata tags
-    assertMetadataRouting("/v3/namespaces////default////streams//s1/metadata/tags");
+    assertRouting("/v3/namespaces////default////streams//s1/metadata/tags", RouterPathLookup.METADATA_SERVICE);
     // stream views metadata tags
-    assertMetadataRouting("/v3/namespaces////default////streams//s1//////views/////v1//metadata/tags");
+    assertRouting("/v3/namespaces////default////streams//s1//////views/////v1//metadata/tags",
+                  RouterPathLookup.METADATA_SERVICE);
     // search metadata
-    assertMetadataRouting("/v3/namespaces/default/metadata/search");
+    assertRouting("/v3/namespaces/default/metadata/search", RouterPathLookup.METADATA_SERVICE);
     // lineage
-    assertMetadataRouting("/v3/namespaces/default/////datasets/ds1/lineage");
-    assertMetadataRouting("/v3/namespaces/default/streams/st1/lineage");
+    assertRouting("/v3/namespaces/default/////datasets/ds1/lineage", RouterPathLookup.METADATA_SERVICE);
+    assertRouting("/v3/namespaces/default/streams/st1/lineage", RouterPathLookup.METADATA_SERVICE);
     // get metadata for accesses
-    assertMetadataRouting("/v3/namespaces/default//apps/WordCount/flows/WordCountFlow/runs/runid/metadata");
+    assertRouting("/v3/namespaces/default//apps/WordCount/flows/WordCountFlow/runs/runid/metadata",
+                  RouterPathLookup.METADATA_SERVICE);
   }
 
   @Test
   public void testAuthorizationPaths() {
-    assertAuthorizationRouting("/v3/////security/authorization/privileges///grant", HttpMethod.POST);
-    assertAuthorizationRouting("/v3/security/authorization/////privileges/revoke", HttpMethod.POST);
-    assertAuthorizationRouting("/v3/security/authorization/user/alice/privileges", HttpMethod.GET);
-    assertAuthorizationRouting("/v3/security/authorization/roles/admins////", HttpMethod.GET);
-    assertAuthorizationRouting("/v3/security/authorization/roles/admins", HttpMethod.DELETE);
-    assertAuthorizationRouting("/v3/security/authorization/roles", HttpMethod.GET);
-    assertAuthorizationRouting("/v3/security/authorization/group/devs/roles", HttpMethod.GET);
-    assertAuthorizationRouting("/v3/security/authorization/group/devs/roles/admins", HttpMethod.PUT);
-    assertAuthorizationRouting("//v3/security/authorization/group/devs/roles/admins", HttpMethod.DELETE);
+    assertRouting("/v3/////security/authorization/privileges///grant", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("/v3/security/authorization/////privileges/revoke", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("/v3/security/authorization/user/alice/privileges", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("/v3/security/authorization/roles/admins////", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("/v3/security/authorization/roles/admins", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("/v3/security/authorization/roles", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("/v3/security/authorization/group/devs/roles", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("/v3/security/authorization/group/devs/roles/admins", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("//v3/security/authorization/group/devs/roles/admins", RouterPathLookup.APP_FABRIC_HTTP);
   }
 
   @Test
   public void testSecureStorePaths() {
-    assertSecureStoreRouting("/v3/////namespaces/default/securekeys/key", HttpMethod.PUT);
-    assertSecureStoreRouting("/v3/namespaces////default/securekeys/key", HttpMethod.PUT);
-    assertSecureStoreRouting("/v3/namespaces/default/securekeys/key1", HttpMethod.GET);
-    assertSecureStoreRouting("/v3/namespaces/default/securekeys/key1", HttpMethod.DELETE);
-    assertSecureStoreRouting("/v3/namespaces/default/securekeys///////key1", HttpMethod.DELETE);
-    assertSecureStoreRouting("/v3/namespaces/default/securekeys/", HttpMethod.GET);
-    assertSecureStoreRouting("/v3/////namespaces/default/securekeys/", HttpMethod.GET);
+    assertRouting("/v3/////namespaces/default/securekeys/key", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("/v3/namespaces////default/securekeys/key", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("/v3/namespaces/default/securekeys/key1", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("/v3/namespaces/default/securekeys/key1", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("/v3/namespaces/default/securekeys///////key1", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("/v3/namespaces/default/securekeys/", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("/v3/////namespaces/default/securekeys/", RouterPathLookup.APP_FABRIC_HTTP);
   }
 
-  private void assertMetadataRouting(String path) {
+  @Test
+  public void testPreviewPaths() {
+    assertRouting("/v3/namespaces/default/previews/preview123", RouterPathLookup.PREVIEW_HTTP);
+    assertRouting("/v3/namespaces/default/previews/preview123/status", RouterPathLookup.PREVIEW_HTTP);
+    assertRouting("/v3/namespaces/default/previews/preview123/stop", RouterPathLookup.PREVIEW_HTTP);
+    assertRouting("/v3/namespaces/default/previews/preview123/loggers", RouterPathLookup.PREVIEW_HTTP);
+    assertRouting("/v3/namespaces/default/previews/preview123/loggers/mylogger", RouterPathLookup.PREVIEW_HTTP);
+    assertRouting("/v3/namespaces/default/previews/preview123/logs", RouterPathLookup.PREVIEW_HTTP);
+    assertRouting("/v3/namespaces/default/previews/preview123/metrics", RouterPathLookup.PREVIEW_HTTP);
+  }
+
+  @Test
+  public void testServiceProviderStatsPaths() {
+    assertRouting("/v3/system/////serviceproviders", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("/v3/system/////serviceproviders/serviceprovider/stats", RouterPathLookup.APP_FABRIC_HTTP);
+    assertRouting("/v3/system/////serviceproviders///////", RouterPathLookup.APP_FABRIC_HTTP);
+  }
+
+  private void assertRouting(String path, RouteDestination destination) {
     for (HttpMethod method : ImmutableList.of(HttpMethod.GET, HttpMethod.POST, HttpMethod.DELETE)) {
       HttpRequest httpRequest = new DefaultHttpRequest(VERSION, method, path);
       RouteDestination result = pathLookup.getRoutingService(FALLBACKSERVICE, path, httpRequest);
-      Assert.assertEquals(RouterPathLookup.METADATA_SERVICE,  result);
+      Assert.assertEquals(destination,  result);
     }
-  }
-
-  private void assertAuthorizationRouting(String path, HttpMethod method) {
-    HttpRequest request = new DefaultHttpRequest(VERSION, method, path);
-    RouteDestination result = pathLookup.getRoutingService(FALLBACKSERVICE, path, request);
-    Assert.assertEquals(RouterPathLookup.APP_FABRIC_HTTP, result);
-  }
-
-  private void assertSecureStoreRouting(String path, HttpMethod method) {
-    HttpRequest request = new DefaultHttpRequest(VERSION, method, path);
-    RouteDestination result = pathLookup.getRoutingService(FALLBACKSERVICE, path, request);
-    Assert.assertEquals(RouterPathLookup.APP_FABRIC_HTTP, result);
   }
 }

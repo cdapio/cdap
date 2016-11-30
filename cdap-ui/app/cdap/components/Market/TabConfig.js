@@ -15,7 +15,8 @@
  */
 
 import React from 'react';
-import AllTabContents from './AllTabContents';
+import AllTabContents from './AllTab';
+import UsecaseTab from './UsecaseTab';
 import T from 'i18n-react';
 
 
@@ -42,7 +43,7 @@ const TabConfig = {
       filter: 'usecase',
       icon: 'icon-usecases',
       name: T.translate('features.Market.tabs.useCases'),
-      content: <AllTabContents />
+      content: <UsecaseTab />
     },
     {
       id: 4,

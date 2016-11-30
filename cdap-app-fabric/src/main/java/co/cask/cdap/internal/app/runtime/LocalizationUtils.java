@@ -91,6 +91,24 @@ public final class LocalizationUtils {
     return tempFile;
   }
 
+  /**
+   * Get the filename part from a {@link URI} to be localized.
+   * For a URI "file:///tmp/foo.jar", "foo.jar" will be returned.
+   * For a URI "file:///tmp/foo.jar#bar.jar", "bar.jar" will be returned.
+   *
+   * @param uri The {@link URI} to get filename from.
+   * @return filename to be localized.
+   */
+  public static String getLocalizedName(URI uri) {
+    String localizedName = uri.getFragment();
+    if (localizedName == null) {
+      String path = uri.getPath();
+      int idx = path.lastIndexOf("/");
+      localizedName = idx >= 0 ? path.substring(idx + 1) : path;
+    }
+    return localizedName;
+  }
+
   private static void unpack(File archive, File targetDir) throws IOException {
     if (!targetDir.exists()) {
       //noinspection ResultOfMethodCallIgnored

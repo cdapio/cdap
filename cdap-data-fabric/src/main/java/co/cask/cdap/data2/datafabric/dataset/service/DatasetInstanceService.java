@@ -510,10 +510,10 @@ public class DatasetInstanceService {
   /**
    * Throws an exception if the specified namespace is not the system namespace and does not exist
    */
-  private void ensureNamespaceExists(NamespaceId namespace) throws Exception {
-    if (!NamespaceId.SYSTEM.equals(namespace)) {
-      if (!namespaceQueryAdmin.exists(namespace.toId())) {
-        throw new NamespaceNotFoundException(namespace);
+  private void ensureNamespaceExists(NamespaceId namespaceId) throws Exception {
+    if (!NamespaceId.SYSTEM.equals(namespaceId)) {
+      if (!namespaceQueryAdmin.exists(namespaceId)) {
+        throw new NamespaceNotFoundException(namespaceId);
       }
     }
   }

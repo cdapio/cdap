@@ -19,11 +19,11 @@ package co.cask.cdap.etl.batch;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.etl.api.StageLifecycle;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.Transformation;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
-import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.TrackedTransform;
 import co.cask.cdap.etl.common.TransformDetail;
@@ -65,12 +65,8 @@ public abstract class TransformExecutorFactory<T> {
 
   protected abstract BatchRuntimeContext createRuntimeContext(String stageName);
 
-  protected TrackedTransform getTransformation(String pluginType, String stageName) throws Exception {
-    return new TrackedTransform(KVTransformations.getKVTransformation(stageName, pluginType,
-                                                                     isMapPhase,
-                                                                     getInitializedTransformation(stageName)),
-                                new DefaultStageMetrics(metrics, stageName));
-  }
+  protected abstract TrackedTransform getTransformation(String pluginType, String stageName)
+    throws Exception;
 
   /**
    * Create a transform executor for the specified pipeline. Will instantiate and initialize all sources,
@@ -117,18 +113,23 @@ public abstract class TransformExecutorFactory<T> {
   }
 
   protected static <IN, OUT> TrackedTransform<IN, OUT> getTrackedEmitKeyStep(Transformation<IN, OUT> transform,
-                                                                             StageMetrics stageMetrics) {
-    return new TrackedTransform<>(transform, stageMetrics, TrackedTransform.RECORDS_IN, null);
+                                                                             StageMetrics stageMetrics,
+                                                                             DataTracer dataTracer) {
+    return new TrackedTransform<>(transform, stageMetrics, TrackedTransform.RECORDS_IN, null, dataTracer,
+                                  TrackedTransform.RECORDS_IN);
   }
 
   protected static <IN, OUT> TrackedTransform<IN, OUT> getTrackedAggregateStep(Transformation<IN, OUT> transform,
-                                                                               StageMetrics stageMetrics) {
+                                                                               StageMetrics stageMetrics,
+                                                                               DataTracer dataTracer) {
     // 'aggregator.groups' is the number of groups output by the aggregator
-    return new TrackedTransform<>(transform, stageMetrics, "aggregator.groups", TrackedTransform.RECORDS_OUT);
+    return new TrackedTransform<>(transform, stageMetrics, "aggregator.groups", TrackedTransform.RECORDS_OUT,
+                                  dataTracer, null);
   }
 
   protected static <IN, OUT> TrackedTransform<IN, OUT> getTrackedMergeStep(Transformation<IN, OUT> transform,
-                                                                           StageMetrics stageMetrics) {
-    return new TrackedTransform<>(transform, stageMetrics, null, TrackedTransform.RECORDS_OUT);
+                                                                           StageMetrics stageMetrics,
+                                                                           DataTracer dataTracer) {
+    return new TrackedTransform<>(transform, stageMetrics, null, TrackedTransform.RECORDS_OUT, dataTracer, null);
   }
 }

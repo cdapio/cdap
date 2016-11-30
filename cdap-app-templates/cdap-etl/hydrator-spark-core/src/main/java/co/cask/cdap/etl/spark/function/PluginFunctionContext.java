@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
+import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -28,15 +29,9 @@ import co.cask.cdap.etl.api.batch.BatchJoinerRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
-import co.cask.cdap.etl.common.PipelinePhase;
-import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.batch.SparkBatchRuntimeContext;
 import co.cask.cdap.etl.spark.batch.SparkJoinerRuntimeContext;
-import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import com.google.common.collect.SetMultimap;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -47,25 +42,27 @@ import java.util.Map;
  */
 public class PluginFunctionContext implements Serializable {
 
-  private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
-    .create();
   private static final long serialVersionUID = -8131461628444037900L;
 
+  private final String namespace;
   private final String stageName;
-  private final PluginContext pluginContext;
-  private final Metrics metrics;
   private final long logicalStartTime;
   private final Map<String, String> arguments;
-  private final String pipelineStr;
+  private final Map<String, Schema> inputSchemas;
+  private final Schema outputSchema;
+  private final PluginContext pluginContext;
+  private final Metrics metrics;
   private final SecureStore secureStore;
-  private final String namespace;
+  private final DataTracer dataTracer;
 
-  public PluginFunctionContext(String stageName, JavaSparkExecutionContext sec, PipelinePhase pipelinePhase) {
+  public PluginFunctionContext(StageInfo stageInfo, JavaSparkExecutionContext sec) {
+    this(stageInfo.getName(), sec, stageInfo.getInputSchemas(), stageInfo.getOutputSchema());
+  }
+
+  public PluginFunctionContext(String stageName, JavaSparkExecutionContext sec,
+                               Map<String, Schema> inputSchemas, Schema outputSchema) {
+    this.namespace = sec.getNamespace();
     this.stageName = stageName;
-    this.pluginContext = sec.getPluginContext();
-    this.metrics = sec.getMetrics();
     this.logicalStartTime = sec.getLogicalStartTime();
     Map<String, String> arguments = new HashMap<>();
     arguments.putAll(sec.getRuntimeArguments());
@@ -76,9 +73,12 @@ public class PluginFunctionContext implements Serializable {
       }
     }
     this.arguments = arguments;
-    this.pipelineStr = GSON.toJson(pipelinePhase);
+    this.inputSchemas = inputSchemas;
+    this.outputSchema = outputSchema;
+    this.pluginContext = sec.getPluginContext();
+    this.metrics = sec.getMetrics();
     this.secureStore = sec.getSecureStore();
-    this.namespace = sec.getNamespace();
+    this.dataTracer = sec.getDataTracer(stageName);
   }
 
   public <T> T createPlugin() throws Exception {
@@ -99,9 +99,11 @@ public class PluginFunctionContext implements Serializable {
   }
 
   public BatchJoinerRuntimeContext createJoinerRuntimeContext() {
-    PipelinePhase pipelinePhase = GSON.fromJson(pipelineStr, PipelinePhase.class);
-    StageInfo stageInfo = pipelinePhase.getStage(stageName);
     return new SparkJoinerRuntimeContext(pluginContext, metrics, logicalStartTime, arguments,
-      stageName, stageInfo.getInputSchemas(), stageInfo.getOutputSchema());
+                                         stageName, inputSchemas, outputSchema);
+  }
+
+  public DataTracer getDataTracer() {
+    return dataTracer;
   }
 }

@@ -25,6 +25,7 @@ public final class Constants {
 
   public static final String[] FEATURE_TOGGLE_PROPS = {
     Security.SSL_ENABLED,
+    Security.SSL.INTERNAL_ENABLED,
     Security.ENABLED,
     Explore.EXPLORE_ENABLED,
   };
@@ -32,6 +33,7 @@ public final class Constants {
   public static final String[] PORT_PROPS = {
     Router.ROUTER_PORT,
     Router.ROUTER_SSL_PORT,
+    AppFabric.SERVER_SSL_PORT,
     Dashboard.BIND_PORT,
     Dashboard.SSL_BIND_PORT,
     Security.AUTH_SERVER_BIND_PORT,
@@ -80,12 +82,15 @@ public final class Constants {
     public static final String REMOTE_SYSTEM_OPERATION = "remote.system.operation";
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
     public static final String EXPLORE_HTTP_USER_SERVICE = "explore.service";
+    public static final String MESSAGING_SERVICE = "messaging.service";
+
     public static final String SERVICE_INSTANCE_TABLE_NAME = "cdap.services.instances";
     /** Scheduler queue name to submit the master service app. */
     public static final String SCHEDULER_QUEUE = "master.services.scheduler.queue";
     public static final String METADATA_SERVICE = "metadata.service";
     public static final String MASTER_SERVICES_BIND_ADDRESS = "master.services.bind.address";
     public static final String MASTER_SERVICES_ANNOUNCE_ADDRESS = "master.services.announce.address";
+    public static final String PREVIEW_HTTP = "preview";
   }
 
   /**
@@ -125,6 +130,7 @@ public final class Constants {
     public static final String SERVER_ADDRESS_DEPRECATED = "app.bind.address";
     public static final String SERVER_PORT = "app.bind.port";
     public static final String SERVER_ANNOUNCE_PORT = "app.announce.port";
+    public static final String SERVER_SSL_PORT = "app.ssl.bind.port";
     public static final String OUTPUT_DIR = "app.output.dir";
     public static final String TEMP_DIR = "app.temp.dir";
     public static final String REST_PORT = "app.rest.port";
@@ -188,6 +194,25 @@ public final class Constants {
      * Name of the property used to identify whether the dataset is local or not.
      */
     public static final String WORKFLOW_LOCAL_DATASET_PROPERTY = "workflow.local.dataset";
+
+    /**
+     * Configuration setting to provide extra jars for programs.
+     */
+    public static final String PROGRAM_CONTAINER_DIST_JARS = "program.container.dist.jars";
+  }
+
+  /**
+   * Preview Configurations
+   */
+  public class Preview {
+    public static final String ENABLED = "enable.preview";
+
+    /**
+     * Guice named bindings.
+     */
+    public static final String HANDLERS_BINDING = "preview.http.handler";
+
+    public static final String ADDRESS = "preview.bind.address";
   }
 
   /**
@@ -559,6 +584,8 @@ public final class Constants {
 
       public static final String PRODUCER = "pr";
       public static final String CONSUMER = "co";
+
+      public static final String TABLE = "tbl";
     }
 
     /**
@@ -719,8 +746,28 @@ public final class Constants {
     public static final String LOGIN_MODULE_CLASS_NAME = "security.authentication.loginmodule.className";
     /** Realm file for Basic Authentication */
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
-    /** Enables SSL */
+    /** Enables external SSL */
+    @Deprecated
     public static final String SSL_ENABLED = "ssl.enabled";
+    /** Key to mark a discoverable which supports ssl */
+    public static final String SSL_DISCOVERABLE_KEY = "ssl";
+
+    /**
+     * App Fabric
+     */
+    public static final class SSL {
+      /** Enables SSL for external services. */
+      @SuppressWarnings("unused")
+      public static final String EXTERNAL_ENABLED = "ssl.external.enabled";
+      /** Enables SSL for internal services. */
+      public static final String INTERNAL_ENABLED = "ssl.internal.enabled";
+      /** Password for the java keystore. */
+      public static final String KEYSTORE_PASSWORD = "ssl.internal.keystore.password";
+      /** Type for the java keystore. e.g. JCEKS. */
+      public static final String KEYSTORE_TYPE = "ssl.internal.keystore.type";
+      /** Validity of the self generated certificate in days */
+      public static final String CERT_VALIDITY = "ssl.internal.cert.validity";
+    }
 
     /**
      * Authorization.
@@ -800,6 +847,13 @@ public final class Constants {
 
       /** Default SSL keystore type */
       public static final String DEFAULT_SSL_KEYSTORE_TYPE = "JKS";
+
+      /** SSL truststore location */
+      public static final String SSL_TRUSTSTORE_PATH = "security.auth.server.ssl.truststore.path";
+      /** SSL truststore type */
+      public static final String SSL_TRUSTSTORE_TYPE = "security.auth.server.ssl.truststore.type";
+      /** SSL truststore password */
+      public static final String SSL_TRUSTSTORE_PASSWORD = "security.auth.server.ssl.truststore.password";
     }
 
     /** Path to the Kerberos keytab file used by CDAP master */
@@ -820,16 +874,15 @@ public final class Constants {
     public static final String TX_QUERY_CLOSED = "explore.hive.query.tx.commited";
     public static final String QUERY_ID = "explore.query.id";
     public static final String FORMAT_SPEC = "explore.format.specification";
+    public static final String CONTAINER_YARN_APP_CLASSPATH_FIRST = "explore.container.yarn.app.classpath.first";
 
     public static final String START_ON_DEMAND = "explore.start.on.demand";
     public static final String DATASET_NAME = "explore.dataset.name";
     public static final String DATASET_NAMESPACE = "explore.dataset.namespace";
-    public static final String VIEW_NAME = "explore.view.name";
     public static final String STREAM_NAME = "explore.stream.name";
     public static final String STREAM_NAMESPACE = "explore.stream.namespace";
-    public static final String EXPLORE_CLASSPATH = "explore.classpath";
-    public static final String EXPLORE_CONF_FILES = "explore.conf.files";
     public static final String PREVIEWS_DIR_NAME = "explore.previews.dir";
+    public static final String CREDENTIALS_DIR_NAME = "explore.credentials.dir";
     // a marker so that we know which tables are created by CDAP
     public static final String CDAP_NAME = "cdap.name";
     public static final String CDAP_VERSION = "cdap.version";
@@ -1011,5 +1064,34 @@ public final class Constants {
   public static final class Audit {
     public static final String ENABLED = "audit.enabled";
     public static final String KAFKA_TOPIC = "audit.kafka.topic";
+  }
+
+  /**
+   * Constants for the messaging system
+   */
+  public static final class MessagingSystem {
+    public static final String LOCAL_DATA_DIR = "messaging.local.data.dir";
+
+    public static final String HBASE_MAX_SCAN_THREADS = "messaging.hbase.max.scan.threads";
+    public static final String METADATA_TABLE_NAME = "messaging.metadata.table.name";
+    public static final String MESSAGE_TABLE_NAME = "messaging.message.table.name";
+    public static final String MESSAGE_TABLE_HBASE_SPLITS = "messaging.message.table.hbase.splits";
+    public static final String PAYLOAD_TABLE_NAME = "messaging.payload.table.name";
+    public static final String PAYLOAD_TABLE_HBASE_SPLITS = "messaging.payload.table.hbase.splits";
+    public static final String TABLE_CACHE_EXPIRATION_SECONDS = "messaging.table.expiration.seconds";
+
+    // Tell the instance id of the YARN container. Set by the messaging service TwillRunnable only, not in default.xml
+    public static final String CONTAINER_INSTANCE_ID = "messaging.container.instance.id";
+
+    // The name of the HBase table attribute to store the bucket size being used by the RowKeyDistributor
+    public static final String KEY_DISTRIBUTOR_BUCKETS_ATTR = "cdap.messaging.key.distributor.buckets";
+  }
+
+  /**
+   * Constants for operational stats
+   */
+  public static final class OperationalStats {
+    public static final String EXTENSIONS_DIR = "operational.stats.extensions.dir";
+    public static final String REFRESH_INTERVAL_SECS = "operational.stats.refresh.interval.secs";
   }
 }

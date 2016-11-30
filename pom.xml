@@ -2492,6 +2492,7 @@
         <module>cdap-api</module>
         <module>cdap-api-spark</module>
         <module>cdap-formats</module>
+        <module>cdap-hbase-compat-base</module>
         <module>cdap-hbase-compat-0.96</module>
         <module>cdap-hbase-compat-0.98</module>
         <module>cdap-hbase-compat-1.0-cdh5.5.0</module>
@@ -2509,6 +2510,7 @@
         <module>cdap-spark-core</module>
         <module>cdap-security-spi</module>
         <module>cdap-security</module>
+        <module>cdap-tms</module>
         <module>cdap-gateway</module>
         <module>cdap-explore-client</module>
         <module>cdap-explore-jdbc</module>
@@ -2519,6 +2521,7 @@
         <module>cdap-proto</module>
         <module>cdap-notifications</module>
         <module>cdap-notifications-api</module>
+        <module>cdap-operational-stats-core</module>
         <module>cdap-client</module>
         <module>cdap-cli</module>
         <module>cdap-standalone</module>

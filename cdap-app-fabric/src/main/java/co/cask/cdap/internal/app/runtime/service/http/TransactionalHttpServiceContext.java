@@ -36,4 +36,8 @@ public interface TransactionalHttpServiceContext extends HttpServiceContext {
    */
   void dismissTransactionContext();
 
+  /**
+   * @return the default transaction timeout.
+   */
+  int getDefaultTxTimeout();
 }

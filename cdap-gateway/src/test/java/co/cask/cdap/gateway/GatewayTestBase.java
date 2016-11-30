@@ -41,8 +41,8 @@ import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.notifications.service.NotificationService;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.guice.InMemorySecurityModule;
 import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
@@ -214,9 +214,9 @@ public abstract class GatewayTestBase {
   }
 
   public static void stopGateway(CConfiguration conf) throws Exception {
-    namespaceAdmin.delete(Id.Namespace.from(TEST_NAMESPACE1));
-    namespaceAdmin.delete(Id.Namespace.from(TEST_NAMESPACE2));
-    namespaceAdmin.delete(Id.Namespace.DEFAULT);
+    namespaceAdmin.delete(new NamespaceId(TEST_NAMESPACE1));
+    namespaceAdmin.delete(new NamespaceId(TEST_NAMESPACE2));
+    namespaceAdmin.delete(NamespaceId.DEFAULT);
     streamService.stopAndWait();
     notificationService.stopAndWait();
     appFabricServer.stopAndWait();

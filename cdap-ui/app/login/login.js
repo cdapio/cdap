@@ -26,6 +26,9 @@ import Footer from './components/Footer';
 
 require('./styles/lib-styles.less');
 require('./login.less');
+import T from 'i18n-react';
+T.setTexts(require('./text/text-en.yaml'));
+
 
 class Login extends Component {
   constructor(props) {
@@ -108,22 +111,18 @@ class Login extends Component {
             onSubmit={this.login.bind(this)}
           >
             <div className="form-group">
-              <label htmlFor="username">
-                Username
-              </label>
               <input
                 className="form-control"
                 name="username"
                 value={this.state.username}
+                placeholder={T.translate('login.placeholders.username')}
                 onChange={this.onUsernameUpdate.bind(this)}
               />
             </div>
             <div className="form-group">
-              <label>
-                Password
-              </label>
               <input
                 className="form-control"
+                placeholder={T.translate('login.placeholders.password')}
                 onChange={this.onPasswordUpdate.bind(this)}
                 type="password"
               />
@@ -138,19 +137,21 @@ class Login extends Component {
                         value={this.state.rememberUser}
                         onClick={this.rememberUser.bind(this)}
                       />
-                      Remember me
+                    {T.translate('login.labels.rememberme')}
                     </label>
                   </div>
                 </div>
-                <button
-                  type="submit"
-                  className="btn btn-primary pull-right"
-                  disabled={!this.state.formState}
-                  onClick={this.login.bind(this)}
-                >
-                  Login
-                </button>
               </div>
+            </div>
+            <div className="form-group">
+              <button
+                type="submit"
+                className="btn btn-primary btn-block"
+                disabled={!this.state.formState}
+                onClick={this.login.bind(this)}
+              >
+                {T.translate('login.labels.loginbtn')}
+              </button>
             </div>
           </form>
         </Card>

@@ -32,7 +32,6 @@ import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import com.google.common.collect.Maps;
@@ -127,7 +126,7 @@ public final class ScheduleTaskRunner {
     try {
       // if the program has a namespace user configured then set that user in the security request context.
       // See: CDAP-7396
-      String nsPrincipal = namespaceQueryAdmin.get(id.getNamespaceId().toId()).getConfig().getPrincipal();
+      String nsPrincipal = namespaceQueryAdmin.get(id.getNamespaceId()).getConfig().getPrincipal();
       if (nsPrincipal != null && SecurityUtil.isKerberosEnabled(cConf)) {
         SecurityRequestContext.setUserId(new KerberosName(nsPrincipal).getServiceName());
       }

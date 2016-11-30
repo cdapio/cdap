@@ -58,13 +58,6 @@ public class DatasetInputFormatProvider implements InputFormatProvider {
     this.batchReadableInputFormat = batchReadableInputFormat;
   }
 
-  public DatasetInputFormatProvider(String datasetName, Map<String, String> datasetArgs,
-                                    Dataset dataset, @Nullable List<Split> splits,
-                                    Class<? extends AbstractBatchReadableInputFormat> batchReadableInputFormat) {
-
-    this(null, datasetName, datasetArgs, dataset, splits, batchReadableInputFormat);
-  }
-
   @Override
   public String getInputFormatClassName() {
     return dataset instanceof InputFormatProvider

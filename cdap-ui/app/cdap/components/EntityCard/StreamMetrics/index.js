@@ -18,6 +18,7 @@ import React, {Component, PropTypes} from 'react';
 import {MyMetricApi} from '../../../api/metric';
 import {MyStreamApi} from '../../../api/stream';
 import NamespaceStore from 'services/NamespaceStore';
+import {humanReadableNumber, HUMANREADABLESTORAGE} from 'services/helpers';
 
 export default class StreamMetrics extends Component {
   constructor(props) {
@@ -50,9 +51,9 @@ export default class StreamMetrics extends Component {
         if (res[0].series.length > 0) {
           res[0].series.forEach((metric) => {
             if (metric.metricName === 'system.collect.events') {
-              events = metric.data[0].value;
+              events = humanReadableNumber(metric.data[0].value);
             } else if (metric.metricName === 'system.collect.bytes') {
-              bytes = metric.data[0].value;
+              bytes = humanReadableNumber(metric.data[0].value, HUMANREADABLESTORAGE);
             }
           });
         }

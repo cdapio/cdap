@@ -567,7 +567,7 @@ public class DatasetTypeService extends AbstractIdleService {
    */
   private void ensureNamespaceExists(NamespaceId namespaceId) throws Exception {
     if (!NamespaceId.SYSTEM.equals(namespaceId)) {
-      if (!namespaceQueryAdmin.exists(namespaceId.toId())) {
+      if (!namespaceQueryAdmin.exists(namespaceId)) {
         throw new NamespaceNotFoundException(namespaceId);
       }
     }

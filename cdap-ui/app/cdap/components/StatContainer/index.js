@@ -20,14 +20,17 @@ require('./StatContainer.less');
 var classNames = require('classnames');
 
 const propTypes = {
-  number: PropTypes.number,
+  number: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number
+  ]),
   label: PropTypes.string,
   isLoading: PropTypes.bool
 };
 
-function StatContainer({number, label, isLoading}) {
+function StatContainer({number, label}) {
   return (
-    <div className={classNames("stat-container", {"hidden" : isLoading})}>
+    <div className={classNames("stat-container")}>
       <div className="stat">
         {number}
       </div>

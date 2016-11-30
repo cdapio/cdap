@@ -59,6 +59,7 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.net.SocketAddress;
 import java.net.URL;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.security.auth.login.Configuration;
@@ -78,20 +79,28 @@ public abstract class ExternalAuthenticationServerTestBase {
   private static int port;
   private static Codec<AccessToken> tokenCodec;
   private static DiscoveryServiceClient discoveryServiceClient;
-  private static InMemoryDirectoryServer ldapServer;
-  protected static int ldapPort = Networks.getRandomPort();
 
   private static final Logger TEST_AUDIT_LOGGER = mock(Logger.class);
 
   // Needs to be set by derived classes.
   protected static CConfiguration configuration;
   protected static SConfiguration sConfiguration;
-  protected static InMemoryListenerConfig ldapListenerConfig;
 
   protected abstract String getProtocol();
+
   protected abstract HttpClient getHTTPClient() throws Exception;
 
-  protected static void setup() throws Exception {
+  protected abstract Map<String, String> getAuthRequestHeader() throws Exception;
+
+  protected abstract String getAuthenticatedUserName() throws Exception;
+
+  protected abstract void startExternalAuthenticationServer() throws Exception;
+
+  protected abstract void stopExternalAuthenticationServer() throws Exception;
+
+  protected abstract CConfiguration getConfiguration(CConfiguration cConf);
+
+  protected void setup() throws Exception {
     Assert.assertNotNull("CConfiguration needs to be set by derived classes", configuration);
 
     Module securityModule = Modules.override(new InMemorySecurityModule()).with(
@@ -119,80 +128,40 @@ public abstract class ExternalAuthenticationServerTestBase {
       port = configuration.getInt(Constants.Security.AUTH_SERVER_BIND_PORT);
     }
 
-    try {
-      startLDAPServer();
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+    startExternalAuthenticationServer();
 
     server.startAndWait();
     LOG.info("Auth server running on port {}", port);
-    ldapServer.startListening();
     TimeUnit.SECONDS.sleep(3);
   }
 
-  public int getAuthServerPort() {
-    return port;
-  }
-
-  /**
-   * LDAP server and related handler configurations.
-   */
-  private static CConfiguration getConfiguration(CConfiguration cConf) {
-    String configBase = Constants.Security.AUTH_HANDLER_CONFIG_BASE;
-
-    // Use random port for testing
-    cConf.setInt(Constants.Security.AUTH_SERVER_BIND_PORT, Networks.getRandomPort());
-    cConf.setInt(Constants.Security.AuthenticationServer.SSL_PORT, Networks.getRandomPort());
-
-    cConf.set(Constants.Security.AUTH_HANDLER_CLASS, LDAPAuthenticationHandler.class.getName());
-    cConf.set(Constants.Security.LOGIN_MODULE_CLASS_NAME, LDAPLoginModule.class.getName());
-    cConf.set(configBase.concat("debug"), "true");
-    cConf.set(configBase.concat("hostname"), "localhost");
-    cConf.set(configBase.concat("port"), Integer.toString(ldapPort));
-    cConf.set(configBase.concat("userBaseDn"), "dc=example,dc=com");
-    cConf.set(configBase.concat("userRdnAttribute"), "cn");
-    cConf.set(configBase.concat("userObjectClass"), "inetorgperson");
-
-    URL keytabUrl = ExternalAuthenticationServerTestBase.class.getClassLoader().getResource("test.keytab");
-    Assert.assertNotNull(keytabUrl);
-    cConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH, keytabUrl.getPath());
-    cConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, "test_principal");
-    return cConf;
-  }
-
-  private static void startLDAPServer() throws Exception {
-    InMemoryDirectoryServerConfig config = new InMemoryDirectoryServerConfig("dc=example,dc=com");
-    config.setListenerConfigs(ldapListenerConfig);
-
-    Entry defaultEntry = new Entry(
-                              "dn: dc=example,dc=com",
-                              "objectClass: top",
-                              "objectClass: domain",
-                              "dc: example");
-    Entry userEntry = new Entry(
-                              "dn: uid=user,dc=example,dc=com",
-                              "objectClass: inetorgperson",
-                              "cn: admin",
-                              "sn: User",
-                              "uid: user",
-                              "userPassword: realtime");
-
-    ldapServer = new InMemoryDirectoryServer(config);
-    ldapServer.addEntries(defaultEntry, userEntry);
-  }
-
-  @AfterClass
-  public static void afterClass() throws Exception {
-    ldapServer.shutDown(true);
+  protected void tearDown() throws Exception {
+    stopExternalAuthenticationServer();
     server.stopAndWait();
     // Clear any security properties for zookeeper.
     System.clearProperty(Constants.External.Zookeeper.ENV_AUTH_PROVIDER_1);
     Configuration.setConfiguration(null);
   }
 
+  public int getAuthServerPort() {
+    return port;
+  }
+
+  public ExternalAuthenticationServer getServer() {
+    return server;
+  }
+
+  public Codec<AccessToken> getTokenCodec() {
+    return tokenCodec;
+  }
+
+  public DiscoveryServiceClient getDiscoveryServiceClient() {
+    return discoveryServiceClient;
+  }
+
   /**
    * Test an authorized request to server.
+   *
    * @throws Exception
    */
   @Test
@@ -202,11 +171,18 @@ public abstract class ExternalAuthenticationServerTestBase {
                                server.getSocketAddress().getPort(), GrantAccessToken.Paths.GET_TOKEN);
 
     HttpGet request = new HttpGet(uri);
-    request.addHeader("Authorization", "Basic YWRtaW46cmVhbHRpbWU=");
+
+    if (getAuthRequestHeader() != null && !getAuthRequestHeader().isEmpty()) {
+      for (String key : getAuthRequestHeader().keySet()) {
+        request.addHeader(key, getAuthRequestHeader().get(key));
+      }
+    }
+
+
     HttpResponse response = client.execute(request);
 
     assertEquals(response.getStatusLine().getStatusCode(), 200);
-    verify(TEST_AUDIT_LOGGER, timeout(10000).atLeastOnce()).trace(contains("admin"));
+    verify(TEST_AUDIT_LOGGER, timeout(10000).atLeastOnce()).trace(contains(getAuthenticatedUserName()));
 
     // Test correct headers being returned
     String cacheControlHeader = response.getFirstHeader(HttpHeaders.Names.CACHE_CONTROL).getValue();
@@ -230,19 +206,20 @@ public abstract class ExternalAuthenticationServerTestBase {
 
     assertEquals(String.format("\"%s\"", ExternalAuthenticationServer.ResponseFields.TOKEN_TYPE_BODY), tokenType);
 
-    long expectedExpiration =  configuration.getInt(Constants.Security.TOKEN_EXPIRATION);
+    long expectedExpiration = configuration.getInt(Constants.Security.TOKEN_EXPIRATION);
     // Test expiration time in seconds
     assertEquals(expectedExpiration / 1000, expiration);
 
     // Test that the server passes back an AccessToken object which can be decoded correctly.
     String encodedToken = responseJson.get(ExternalAuthenticationServer.ResponseFields.ACCESS_TOKEN).getAsString();
     AccessToken token = tokenCodec.decode(Base64.decodeBase64(encodedToken));
-    assertEquals("admin", token.getIdentifier().getUsername());
+    assertEquals(getAuthenticatedUserName(), token.getIdentifier().getUsername());
     LOG.info("AccessToken got from ExternalAuthenticationServer is: " + encodedToken);
   }
 
   /**
    * Test an unauthorized request to server.
+   *
    * @throws Exception
    */
   @Test
@@ -251,7 +228,11 @@ public abstract class ExternalAuthenticationServerTestBase {
     String uri = String.format("%s://%s:%d/%s", getProtocol(), server.getSocketAddress().getAddress().getHostAddress(),
                                server.getSocketAddress().getPort(), GrantAccessToken.Paths.GET_TOKEN);
     HttpGet request = new HttpGet(uri);
-    request.addHeader("Authorization", "xxxxx");
+    if (getAuthRequestHeader() != null && !getAuthRequestHeader().isEmpty()) {
+      for (String key : getAuthRequestHeader().keySet()) {
+        request.addHeader(key, "xxxxx");
+      }
+    }
 
     HttpResponse response = client.execute(request);
 
@@ -262,6 +243,7 @@ public abstract class ExternalAuthenticationServerTestBase {
 
   /**
    * Test an unauthorized status request to server.
+   *
    * @throws Exception
    */
   @Test
@@ -280,6 +262,7 @@ public abstract class ExternalAuthenticationServerTestBase {
 
   /**
    * Test getting a long lasting Access Token.
+   *
    * @throws Exception
    */
   @Test
@@ -288,7 +271,12 @@ public abstract class ExternalAuthenticationServerTestBase {
     String uri = String.format("%s://%s:%d/%s", getProtocol(), server.getSocketAddress().getAddress().getHostAddress(),
                                server.getSocketAddress().getPort(), GrantAccessToken.Paths.GET_EXTENDED_TOKEN);
     HttpGet request = new HttpGet(uri);
-    request.addHeader("Authorization", "Basic YWRtaW46cmVhbHRpbWU=");
+    if (getAuthRequestHeader() != null && !getAuthRequestHeader().isEmpty()) {
+      for (String key : getAuthRequestHeader().keySet()) {
+        request.addHeader(key, getAuthRequestHeader().get(key));
+      }
+    }
+
     HttpResponse response = client.execute(request);
 
     assertEquals(200, response.getStatusLine().getStatusCode());
@@ -303,19 +291,20 @@ public abstract class ExternalAuthenticationServerTestBase {
     JsonObject responseJson = (JsonObject) parser.parse(responseBody);
     long expiration = responseJson.get(ExternalAuthenticationServer.ResponseFields.EXPIRES_IN).getAsLong();
 
-    long expectedExpiration =  configuration.getInt(Constants.Security.EXTENDED_TOKEN_EXPIRATION);
+    long expectedExpiration = configuration.getInt(Constants.Security.EXTENDED_TOKEN_EXPIRATION);
     // Test expiration time in seconds
     assertEquals(expectedExpiration / 1000, expiration);
 
     // Test that the server passes back an AccessToken object which can be decoded correctly.
     String encodedToken = responseJson.get(ExternalAuthenticationServer.ResponseFields.ACCESS_TOKEN).getAsString();
     AccessToken token = tokenCodec.decode(Base64.decodeBase64(encodedToken));
-    assertEquals("admin", token.getIdentifier().getUsername());
+    assertEquals(getAuthenticatedUserName(), token.getIdentifier().getUsername());
     LOG.info("AccessToken got from ExternalAuthenticationServer is: " + encodedToken);
   }
 
   /**
    * Test that invalid paths return a 404 Not Found.
+   *
    * @throws Exception
    */
   @Test
@@ -324,7 +313,12 @@ public abstract class ExternalAuthenticationServerTestBase {
     String uri = String.format("%s://%s:%d/%s", getProtocol(), server.getSocketAddress().getAddress().getHostAddress(),
                                server.getSocketAddress().getPort(), "invalid");
     HttpGet request = new HttpGet(uri);
-    request.addHeader("Authorization", "Basic YWRtaW46cmVhbHRpbWU=");
+    if (getAuthRequestHeader() != null && !getAuthRequestHeader().isEmpty()) {
+      for (String key : getAuthRequestHeader().keySet()) {
+        request.addHeader(key, getAuthRequestHeader().get(key));
+      }
+    }
+
     HttpResponse response = client.execute(request);
 
     assertEquals(404, response.getStatusLine().getStatusCode());
@@ -333,6 +327,7 @@ public abstract class ExternalAuthenticationServerTestBase {
 
   /**
    * Test that the service is discoverable.
+   *
    * @throws Exception
    */
   @Test

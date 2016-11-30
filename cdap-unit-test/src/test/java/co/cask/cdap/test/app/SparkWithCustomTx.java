@@ -16,15 +16,11 @@
 
 package co.cask.cdap.test.app;
 
-import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.annotation.TransactionPolicy;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
-import com.google.common.base.Throwables;
-import org.apache.tephra.TransactionFailureException;
 
 /**
  * Spark Programs that are used to test explicit transactions in Spark lifecycle.
@@ -72,13 +68,8 @@ public class SparkWithCustomTx {
       AppWithCustomTx.recordTransaction(getContext(), AppWithCustomTx.SPARK_NOTX, AppWithCustomTx.INITIALIZE);
       AppWithCustomTx.executeRecordTransaction(getContext(), AppWithCustomTx.SPARK_NOTX,
                                                AppWithCustomTx.INITIALIZE_TX, AppWithCustomTx.TIMEOUT_SPARK_INITIALIZE);
-      getContext().execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext ctext) throws Exception {
-          AppWithCustomTx.attemptNestedTransaction(getContext(),
-                                                   AppWithCustomTx.SPARK_NOTX, AppWithCustomTx.INITIALIZE_NEST);
-        }
-      });
+      AppWithCustomTx.executeAttemptNestedTransaction(getContext(),
+                                                      AppWithCustomTx.SPARK_NOTX, AppWithCustomTx.INITIALIZE_NEST);
     }
 
     @Override
@@ -87,17 +78,8 @@ public class SparkWithCustomTx {
       AppWithCustomTx.recordTransaction(getContext(), AppWithCustomTx.SPARK_NOTX, AppWithCustomTx.DESTROY);
       AppWithCustomTx.executeRecordTransaction(getContext(), AppWithCustomTx.SPARK_NOTX,
                                                AppWithCustomTx.DESTROY_TX, AppWithCustomTx.TIMEOUT_SPARK_DESTROY);
-      try {
-        getContext().execute(new TxRunnable() {
-          @Override
-          public void run(DatasetContext ctext) throws Exception {
-            AppWithCustomTx.attemptNestedTransaction(getContext(),
-                                                     AppWithCustomTx.SPARK_NOTX, AppWithCustomTx.DESTROY_NEST);
-          }
-        });
-      } catch (TransactionFailureException e) {
-        throw Throwables.propagate(e);
-      }
+      AppWithCustomTx.executeAttemptNestedTransaction(getContext(),
+                                                      AppWithCustomTx.SPARK_NOTX, AppWithCustomTx.DESTROY_NEST);
     }
   }
 }

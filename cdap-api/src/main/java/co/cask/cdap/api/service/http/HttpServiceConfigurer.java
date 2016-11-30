@@ -33,14 +33,4 @@ public interface HttpServiceConfigurer extends DatasetConfigurer, PluginConfigur
    * @param properties the properties to set
    */
   void setProperties(Map<String, String> properties);
-
-  /**
-   * Adds the names of {@link co.cask.cdap.api.dataset.Dataset DataSets} used by the handler.
-   *
-   * @param datasets Dataset names.
-   * @deprecated Deprecated as of 3.4.0. Dataset can be requested directly through the method
-   *             {@link HttpServiceContext#getDataset(String)} at runtime.
-   */
-  @Deprecated
-  void useDatasets(Iterable<String> datasets);
 }

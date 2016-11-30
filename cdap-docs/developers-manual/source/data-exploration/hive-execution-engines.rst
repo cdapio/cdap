@@ -47,7 +47,7 @@ This feature is currently experimental in CDAP due to these limitations:
 - It requires Spark to be installed on all cluster nodes.
 - Currently, CDAP Explore launches a new Spark job for every query. Starting a new Spark job for every query may bring
   a significant overhead.
-- Users cannot dynamically select the execution engine, or adjust memory for containers created for the query.
+- Users cannot dynamically adjust memory for containers created for the query.
 
 .. _hive-execution-engines-hive-on-tez:
 

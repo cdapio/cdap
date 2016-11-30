@@ -82,9 +82,12 @@ export default class HeaderActions extends Component {
           <div className="navbar-item">
             <SpotlightSearch />
           </div>
-          <div className="navbar-item">
-            <span className="fa fa-bell"></span>
-          </div>
+          {
+            // FIXME: Add this later.
+            // <div className="navbar-item">
+            //   <span className="fa fa-bell"></span>
+            // </div>
+          }
           <PlusButton className="navbar-item" />
           <div
             className="navbar-item settings-dropdown navbar-cog"
@@ -127,7 +130,7 @@ export default class HeaderActions extends Component {
               </DropdownMenu>
             </Dropdown>
           </div>
-          <div className="namespace-dropdown">
+          <div id="header-namespace-dropdown" className="namespace-dropdown">
             <NamespaceDropdown tag={this.props.tag}/>
           </div>
           <div className="products-dropdown">

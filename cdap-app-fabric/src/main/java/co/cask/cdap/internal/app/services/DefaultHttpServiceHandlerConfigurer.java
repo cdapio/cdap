@@ -27,7 +27,6 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import co.cask.cdap.proto.Id;
-import com.google.common.collect.Iterables;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -72,11 +71,6 @@ public class DefaultHttpServiceHandlerConfigurer extends DefaultPluginConfigurer
   @Override
   public void setProperties(Map<String, String> properties) {
     this.properties = new HashMap<>(properties);
-  }
-
-  @Override
-  public void useDatasets(Iterable<String> datasets) {
-    Iterables.addAll(this.datasets, datasets);
   }
 
   /**

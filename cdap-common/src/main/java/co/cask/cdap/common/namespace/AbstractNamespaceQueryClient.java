@@ -18,8 +18,8 @@ package co.cask.cdap.common.namespace;
 
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -58,11 +58,11 @@ public abstract class AbstractNamespaceQueryClient implements NamespaceQueryAdmi
   }
 
   @Override
-  public NamespaceMeta get(Id.Namespace namespaceId) throws Exception {
+  public NamespaceMeta get(NamespaceId namespaceId) throws Exception {
     HttpResponse response =
-      execute(HttpRequest.get(resolve(String.format("namespaces/%s", namespaceId.getId()))).build());
+      execute(HttpRequest.get(resolve(String.format("namespaces/%s", namespaceId.getNamespace()))).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NamespaceNotFoundException(namespaceId.toEntityId());
+      throw new NamespaceNotFoundException(namespaceId);
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return ObjectResponse.fromJsonBody(response, NamespaceMeta.class).getResponseObject();
     }
@@ -71,7 +71,7 @@ public abstract class AbstractNamespaceQueryClient implements NamespaceQueryAdmi
   }
 
   @Override
-  public boolean exists(Id.Namespace namespaceId) throws Exception {
+  public boolean exists(NamespaceId namespaceId) throws Exception {
     try {
       get(namespaceId);
     } catch (NamespaceNotFoundException e) {

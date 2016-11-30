@@ -15,6 +15,7 @@
  */
 
 import EntityIconMap from 'services/entity-icon-map';
+import intersection from 'lodash/intersection';
 
 export function parseMetadata(entity) {
   let type = entity.entityId.type;
@@ -47,12 +48,20 @@ function createArtifactObj(entity) {
 }
 
 function createApplicationObj(entity) {
+  const hydratorAritfacts = [
+    'cdap-data-pipeline',
+    'cdap-data-streams',
+    'cdap-etl-batch',
+    'cdap-etl-realtime'
+  ];
+
   return {
     id: entity.entityId.id.applicationId,
     type: entity.entityId.type,
     metadata: entity,
     version: `1.0.0${entity.metadata.SYSTEM.properties.version}`,
-    icon: EntityIconMap[entity.entityId.type]
+    icon: EntityIconMap[entity.entityId.type],
+    isHydrator: intersection(entity.metadata.SYSTEM.tags, hydratorAritfacts).length > 0
   };
 }
 

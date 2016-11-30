@@ -333,21 +333,22 @@ public class MultipleOutputs implements Closeable {
    * This should be called from cleanup method of map/reduce task.
    */
   public void close() {
-    closeRecordWriters(recordWriters.values(), context);
+    closeRecordWriters(recordWriters, taskContexts);
   }
 
   /**
    * Closes a collection of RecordWriters, suppressing any exceptions until close is called on each of them.
-   *
-   * @param recordWriters The Collection of RecordWriters to close
-   * @param context The context to pass during close of each RecordWriter
+   * @param recordWriters The map of RecordWriters to close
+   * @param taskContexts The map of context to pass during close of each RecordWriter
+   * @param <K> type of the key for recordWriter map
    */
-  public static void closeRecordWriters(Iterable<RecordWriter<?, ?>> recordWriters,
-                                        TaskAttemptContext context) {
+  public static <K> void closeRecordWriters(Map<K, RecordWriter<?, ?>> recordWriters,
+                                            Map<K, TaskAttemptContext> taskContexts) {
     RuntimeException ex = null;
-    for (RecordWriter writer : recordWriters) {
+    for (Map.Entry<K, RecordWriter<?, ?>> entry : recordWriters.entrySet()) {
       try {
-        writer.close(context);
+        RecordWriter<?, ?> recordWriter = entry.getValue();
+        recordWriter.close(taskContexts.get(entry.getKey()));
       } catch (IOException | InterruptedException e) {
         if (ex == null) {
           ex = new RuntimeException(e);

@@ -88,7 +88,6 @@ public abstract class AbstractChunkedLogProducer extends BodyProducer {
   public void handleError(@Nullable Throwable throwable) {
     // previous behavior was to propagate the exception if its during sendChunk,
     // but suppress (and simply LOG.debug) if it was during close()
-    // propagate it?
     LOG.error("Received error while chunking logs.", throwable);
     close();
   }

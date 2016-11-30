@@ -23,15 +23,17 @@ import AdminDetailPanel from '../AdminDetailPanel';
 import AdminConfigurePane from '../AdminConfigurePane';
 import AdminOverviewPane from '../AdminOverviewPane';
 import AbstractWizard from 'components/AbstractWizard';
-import Redirect from 'react-router/Redirect';
 import Helmet from 'react-helmet';
+import NamespaceStore from 'services/NamespaceStore';
+import {MyServiceProviderApi} from 'api/serviceproviders';
+import Mousetrap from 'mousetrap';
 
 import T from 'i18n-react';
 var shortid = require('shortid');
 var classNames = require('classnames');
 
 var dummyData = {
-  version: '4.0-SNAPSHOT',
+  version: '4.0.0',
   uptime: {
     duration: '0.2',
     unit: 'hr'
@@ -77,41 +79,94 @@ class Management extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      application: 'CDAP',
-      lastUpdated: 15,
+      application: '',
+      applications: [],
+      services: [],
+      lastUpdated: '15',
       loading: false,
-      redirectTo: false,
       wizard : {
         actionIndex : null,
         actionType : null
-      }
+      },
+      serviceProviders: [],
+      serviceData: {}
     };
+
+    MyServiceProviderApi.pollList()
+      .subscribe(
+        (res) => {
+          let apps = [];
+          let services = [];
+          for(let key in res){
+            if(res.hasOwnProperty(key)){
+              apps.push(key);
+              services.push({
+                name: T.translate(`features.Management.Component-Overview.headers.${key}`),
+                version: res[key].Version,
+                url: res[key].WebURL,
+                logs: res[key].LogsURL
+              });
+            }
+          }
+          this.getServices(apps);
+          let current = apps[0];
+          this.setState({
+            application : current,
+            applications : apps,
+            services : services,
+            lastUpdated : 'a few'
+          });
+        }
+      );
+
+    this.lastAccessedNamespace;
     this.interval = undefined;
+    this.getServices = this.getServices.bind(this);
     this.clickLeft = this.clickLeft.bind(this);
     this.clickRight = this.clickRight.bind(this);
     this.setToContext = this.setToContext.bind(this);
     this.openNamespaceWizard = this.openNamespaceWizard.bind(this, 0, 'add_namespace');
-    this.applications = ['CDAP', 'YARN', 'HBASE'];
+  }
+
+  //Retrieve the data for each service
+  getServices(names) {
+    let serviceData = {};
+    names.forEach((name) => {
+      MyServiceProviderApi.get({
+        serviceprovider : name
+      })
+      .subscribe( (res) => {
+        serviceData[name] = res;
+        this.setState({
+          serviceData : serviceData
+        });
+      });
+    });
   }
 
   componentDidMount(){
-    this.openNamespaceWizard();
+    document.querySelector('#header-namespace-dropdown').style.display = 'none';
+    this.lastAccessedNamespace = NamespaceStore.getState().selectedNamespace;
+    Mousetrap.bind('left', this.clickLeft);
+    Mousetrap.bind('right', this.clickRight);
   }
-
+  componentWillUnmount(){
+    document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
+  }
   clickLeft() {
-    var index = this.applications.indexOf(this.state.application);
+    var index = this.state.applications.indexOf(this.state.application);
     if(index === -1 || index === 0){
       return;
     }
-    this.setToContext(this.applications[index-1]);
+    this.setToContext(this.state.applications[index-1]);
   }
 
   clickRight() {
-    var index = this.applications.indexOf(this.state.application);
-    if(index === -1 || index === this.applications.length-1){
+    var index = this.state.applications.indexOf(this.state.application);
+    if(index === -1 || index === this.state.applications.length-1){
       return;
     }
-    this.setToContext(this.applications[index+1]);
+    this.setToContext(this.state.applications[index+1]);
   }
 
   setToContext(contextName) {
@@ -130,8 +185,7 @@ class Management extends Component {
         wizard: {
           actionIndex: null,
           actionType: null
-        },
-        redirectTo: true
+        }
       });
   }
 
@@ -145,26 +199,21 @@ class Management extends Component {
   }
 
   render () {
-
-    var navItems = this.applications.map( (item) => {
+    //Constructs the Services Navigation
+    var navItems = this.state.applications.map( (item) => {
       return (
         <li
           className={classNames({'active' : this.state.application === item})}
           key={shortid.generate()}
           onClick={this.setToContext.bind(this, item)}
         >
-          {item}
+          {T.translate(`features.Management.Component-Overview.headers.${item}`)}
         </li>
       );
     });
-    let lastAccessedNamespace = localStorage.getItem('NS');
-    let redirectUrl = lastAccessedNamespace ? `/ns/${lastAccessedNamespace}` : '/';
 
     return (
        <div className="management">
-        {
-          this.state.redirectTo && <Redirect to={redirectUrl} />
-        }
         <Helmet
           title={T.translate('features.Management.Title')}
         />
@@ -194,6 +243,7 @@ class Management extends Component {
               timeFromUpdate={this.state.lastUpdated}
               clickLeftButton={this.clickLeft}
               clickRightButton={this.clickRight}
+              serviceData={this.state.serviceData[this.state.application]}
             />
           </div>
           <div className="container">
@@ -204,7 +254,10 @@ class Management extends Component {
         </div>
         <div className="admin-bottom-panel">
           <AdminConfigurePane openNamespaceWizard={this.openNamespaceWizard}/>
-          <AdminOverviewPane isLoading={this.state.loading} />
+          <AdminOverviewPane
+            isLoading={this.state.loading}
+            services={this.state.services}
+          />
         </div>
         <AbstractWizard
           isOpen={this.state.wizard.actionIndex !== null && this.state.wizard.actionType !== null}

@@ -63,6 +63,9 @@ commons:
   formatLabel: Format
   schemaLabel: Schema
 features:
+  ConfirmationModal:
+    confirmDefaultText: OK
+    cancelDefaultText: Cancel
   Home:
     Title: CDAP - Home
     emptyMessage: No entities found in the system.
@@ -72,6 +75,7 @@ features:
       filters: Filters
       search-placeholder: Search entities ...
       sort: Sort
+      pagination: Page
       sortOptions:
         nameAsc:
           displayName: A - Z
@@ -81,8 +85,17 @@ features:
     Title: Dashboard
 
   FastAction:
-    deleteConfirmation: Are you sure you want to delete {entityId}?
-    truncateConfirmation: Are you sure you want to truncate {entityId}?
+    deleteConfirmation: Are you sure you want to delete *_{entityId}_*?
+    deleteLabel: Delete
+    deleteFailed: Failed to delete {entityId}
+    truncateConfirmation: Are you sure you want to truncate *_{entityId}_*?
+    truncateLabel: Truncate
+    truncateFailed: Failed to truncate {entityId}
+
+  JumpButton:
+    buttonLabel: Jump
+    viewHydrator: View in Hydrator
+    viewTracker: View in Tracker
 
   Management:
     Title: Management
@@ -99,6 +112,19 @@ features:
       virtual-cores: Virtual Cores
       memory: Memory
       application: Application
+    Services:
+      appfabric: App Fabric
+      log_saver: Log Saver
+      metrics_processor: Metrics Processor
+      dataset_executor: Dataset Executor
+      metadata_service: Metadata Service
+      remote_system_operation: Remote System Operation
+      streams: Streams
+      explore_service: Explore Service
+      metrics: Metrics
+      transaction: Transaction
+      setBtn: Set
+      requested: Requested
     Configure:
       title: Configure
       buttons:
@@ -112,11 +138,61 @@ features:
         instance-preference: Instance Preference
         delete-datasets: Delete All Datasets
         view-invalid: View Invalid Transactions
+    DetailPanel:
+      headers:
+        nodes: Nodes
+        entities: Entities
+        apps: Apps
+        blocks: Blocks
+        storage: Storage
+        queues: Queues
+        resources: Resources
+      labels:
+        Accepted: Accepted
+        RemainingBytes: Available
+        CorruptBlocks: Corrupt Blocks
+        deadRegionServers: Dead Region Servers
+        Failed: Failed
+        Finished: Finished
+        FreeMemory: Free Memory
+        FreeVCores: Free Virtual Cores
+        HealthyNodes: Healthy Nodes
+        HealthyContainers: Healthy Containers
+        Killed: Killed
+        liveRegionServers: Live Region Servers
+        lost: Lost
+        New: New
+        NewNodes: New Nodes
+        NewContainers: New Containers
+        masters: Masters
+        MissingBlocks: Missing Blocks
+        Namenodes: Namenodes
+        namespaces: Namespaces
+        Running: Running
+        rebooted: Rebooted
+        Stopped: Stopped
+        Submitted: Submitted
+        tables: Tables
+        Total: Total
+        TotalBytes: Total
+        TotalNodes: Total Nodes
+        TotalContainers: Total Containers
+        TotalMemory: Total Memory
+        TotalVCores: Total Virtual Cores
+        totalRegionServers: Total Region Servers
+        UnderReplicatedBlocks: Under Replicated Blocks
+        UsedBytes: Used
+        UsedMemory: Used Memory
+        UsedVCores: Used Virtual Cores
+        UnusableNodes: Unusable Nodes
+        UnusableContainers: Unusable Containers
+
     Component-Overview:
       label: Component Overview
-      cards:
+      headers:
         cdh: CDH
         yarn: YARN
+        hbase: HBASE
         hdfs: HDFS
         zookeeper: Zookeeper
         kafka: Kafka
@@ -151,6 +227,13 @@ features:
         name: Download
       load_datapack:
         name: Load
+  MarketPlaceEntity:
+    Metadata:
+      version: Version
+      author: Author
+      company: Company
+      created: Created
+      cdapversion: CDAP Version
   MarketEntityModal:
     version: "Version :"
   Navbar:
@@ -195,6 +278,7 @@ features:
       actionbtn0: Upload
 
   SplashScreen:
+    dontShow: Don't show this again
     buttons:
       getStarted: Read the Docs
       introduction: Intro to CDAP
@@ -202,6 +286,12 @@ features:
     intro-message: Unified Integration Platform for Big Data
     title: Welcome to Cask Data Application Platform
     version-label: Version 4.0.0 Preview
+    registration-zero: I
+    registration-one: would like to receive product updates and
+    registration-two: newsletters from Cask at this email address
+    first-placeholder: First Name
+    last-placeholder: Last Name
+    email-placeholder: email@example.com
 
   SpotlightSearch:
     noResult: No results found
@@ -211,6 +301,13 @@ features:
       numResults: "{total} results found"
 
   Wizard:
+    ApplicationUpload:
+      Step1:
+        description: Upload your application JAR
+        shorttitle: Upload Application
+        title: Upload JAR
+        uploadHelperText: Upload the JAR for your application that you wish to deploy
+        filePathLabel: Choose file
     ArtifactUpload:
       Step1:
         description: Upload your artifact JAR
@@ -224,9 +321,13 @@ features:
         title: Configure Artifact
         parentArtifactLabel: Parent Artifact
         nameLabel: Name
-        typeLabel: Type
-        classnameLabel: Class Name
+        namePlaceholder: Artifact Name
         descriptionLabel: Description
+        decriptionPlaceholder: Artifact Description
+        typeLabel: Type
+        typePlaceholder: Artifact Type
+        classnameLabel: Class Name
+        classnamePlaceholder: Artifact Class Name
       headerlabel: Upload Artifact
     Done: Done
     Informational:
@@ -284,7 +385,19 @@ features:
       message: Choose the pipeline type you would like to create
       batchLinkLabel: Batch Pipeline
       realtimeLinkLabel: Realtime Pipeline
-
+    PluginArtifact:
+      Step1:
+        description: Upload your plugin artifact JAR
+        shorttitle: Upload Plugin Artifact
+        title: Upload Plugin Artifact
+        filePathLabel: Choose file
+        errorMessage: Invalid plugin artifact. Artifact must be a jar file
+      Step2:
+        description: Upload the plugin configuration json
+        shorttitle: Upload Plugin Configuration JSON
+        title: Upload Plugin Configuration JSON
+        errorMessage: Invalid plugin JSON. Plugin Configuration should be in json format
+        errorMessageParentArtifacts: Invalid plugin JSON. Please specify parent artifacts
     Add-Namespace:
        Step1:
          ssd-label: "General Information"

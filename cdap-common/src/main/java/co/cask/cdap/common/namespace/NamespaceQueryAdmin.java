@@ -19,6 +19,7 @@ package co.cask.cdap.common.namespace;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 
 import java.util.List;
 
@@ -40,7 +41,7 @@ public interface NamespaceQueryAdmin {
    * @return the {@link NamespaceMeta} of the requested namespace
    * @throws NamespaceNotFoundException if the requested namespace is not found
    */
-  NamespaceMeta get(Id.Namespace namespaceId) throws Exception;
+  NamespaceMeta get(NamespaceId namespaceId) throws Exception;
 
   /**
    * Checks if the specified namespace exists.
@@ -48,5 +49,5 @@ public interface NamespaceQueryAdmin {
    * @param namespaceId the {@link Id.Namespace} to check for existence
    * @return true, if the specifed namespace exists, false otherwise
    */
-  boolean exists(Id.Namespace namespaceId) throws Exception;
+  boolean exists(NamespaceId namespaceId) throws Exception;
 }

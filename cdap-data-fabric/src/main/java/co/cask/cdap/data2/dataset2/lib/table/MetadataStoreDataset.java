@@ -21,20 +21,36 @@ import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.table.Delete;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.utils.ImmutablePair;
+import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
+import it.unimi.dsi.fastutil.Hash;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -148,9 +164,15 @@ public class MetadataStoreDataset extends AbstractDataset {
     byte[] startKey = startId.getKey();
     byte[] stopKey = stopId == null ? Bytes.stopKeyForPrefix(startKey) : stopId.getKey();
 
+    Scan scan = new Scan(startKey, stopKey);
+    return listKV(scan, typeOfT, limit, filter);
+  }
+
+  // returns mapping of all that has first id parts in range of startId and stopId
+  private <T> Map<MDSKey, T> listKV(Scan runScan, Type typeOfT, int limit, Predicate<T> filter) {
     try {
       Map<MDSKey, T> map = Maps.newLinkedHashMap();
-      Scanner scan = table.scan(startKey, stopKey);
+      Scanner scan = table.scan(runScan);
       try {
         Row next;
         while ((limit > 0) && (next = scan.next()) != null) {
@@ -173,6 +195,39 @@ public class MetadataStoreDataset extends AbstractDataset {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  // TODO: We should avoid this duplicate code. CDAP-7569.
+  private ImmutablePair<byte[], byte[]> getFuzzyKeyFor(MDSKey key) {
+    byte[] keyBytes = key.getKey();
+    // byte array is automatically initialized to 0, which implies fixed match in fuzzy info
+    // the row key after targetId doesn't need to be a match.
+    // Workaround for HBASE-15676, need to have at least one 1 in the fuzzy filter
+    byte[] infoBytes = new byte[keyBytes.length + 1];
+    infoBytes[infoBytes.length - 1] = 1;
+
+    // the key array size and mask array size has to be equal so increase the size by 1
+    return new ImmutablePair<>(Bytes.concat(keyBytes, new byte[1]), infoBytes);
+  }
+
+  // returns mapping of all that match the given keySet
+  public <T> Map<MDSKey, T> listKV(Set<MDSKey> keySet, Type typeOfT, int limit) {
+
+    // Sort fuzzy keys
+    List<MDSKey> sortedKeys = Lists.newArrayList(keySet);
+    Collections.sort(sortedKeys);
+
+    // Scan using fuzzy filter
+    byte[] startKey = sortedKeys.get(0).getKey();
+    byte[] stopKey = Bytes.stopKeyForPrefix(sortedKeys.get(sortedKeys.size() - 1).getKey());
+
+    List<ImmutablePair<byte [], byte []>> fuzzyKeys = new ArrayList<>();
+    for (MDSKey key : sortedKeys) {
+      fuzzyKeys.add(getFuzzyKeyFor(key));
+    }
+
+    Scan scan = new Scan(startKey, stopKey, new FuzzyRowFilter(fuzzyKeys));
+    return listKV(scan, typeOfT, limit, Predicates.<T>alwaysTrue());
   }
 
   /**
@@ -276,4 +331,34 @@ public class MetadataStoreDataset extends AbstractDataset {
     }
     return builder;
   }
+
+  protected MDSKey.Builder getProgramKeyBuilder(String recordType, @Nullable ProgramRunId programRunId) {
+    MDSKey.Builder builder = new MDSKey.Builder().add(recordType);
+    if (programRunId != null) {
+      builder.add(programRunId.getNamespace());
+      builder.add(programRunId.getApplication());
+      builder.add(programRunId.getVersion());
+      builder.add(programRunId.getType().name());
+      builder.add(programRunId.getProgram());
+    }
+    return builder;
+  }
+
+  /**
+   * Returns a ProgramId given the MDS key
+   *
+   * @param key the MDS key to be used
+   * @return ProgramId created from the MDS key
+   */
+  protected ProgramId getProgramID(MDSKey key) {
+    MDSKey.Splitter splitter = key.split();
+    splitter.getString(); // skip recordType
+    String namespace = splitter.getString(); // namespaceId
+    String application = splitter.getString(); // appId
+    splitter.getString(); // skip VersionId
+    String type = splitter.getString(); // type
+    String program = splitter.getString(); // program
+    return (new ProgramId(namespace, application, ProgramType.valueOf(type), program));
+  }
+
 }

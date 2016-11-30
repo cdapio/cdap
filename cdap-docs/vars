@@ -15,13 +15,6 @@ ALL="all"
 DOCS="docs"
 DOCS_LOCAL="docs-local"
 DOCS_OUTER="docs-outer"
-GITHUB="github"
-GITHUB_ONLY="Github-only"
-WEB="web"
-WEB_ONLY="Web-only"
-WITH="with"
-WITHOUT="without"
-WITH_JAVADOCS="$WITHOUT"
 
 CDAP_MANUALS="introduction developers-manual admin-manual integrations examples-manual reference-manual faqs"
 EXTENSION_MANUALS="hydrator-manual tracker-manual"
@@ -30,7 +23,7 @@ MANUALS="${CDAP_MANUALS} ${EXTENSION_MANUALS}"
 # Used to monitor any changes in scripts or commands for the building of Javadocs
 BUILD_RST="BUILD.rst"
 BUILD_RST_HASH_LOCATION="cdap-docs/vars"
-BUILD_RST_HASH="039fc5b9a1decc5c67f17c332413f5d9"
+BUILD_RST_HASH="4c1ca5e0c734664c010c5b574f1669a0"
 
 #
 # These GIT_ variables are loaded by Sphinx build and need to be static as they are not sourced
@@ -55,10 +48,11 @@ GIT_BRANCH_CDAP_GUIDES="develop"
 # Used by integrations-manual
 GIT_BRANCH_CDAP_PACKS="develop"
 
-# Used for building Hydrator documentation
+# Used for Hydrator documentation
 GIT_BRANCH_CASK_HYDRATOR="develop"
-# GIT_BRANCH_CASK_HYDRATOR="release/1.5"
 
 # Used for Tracker documentation
 GIT_BRANCH_CASK_TRACKER="develop"
 
+# Google Analytics Code
+GOOGLE_TAG_MANAGER_CODE="GTM-KWLFGH"

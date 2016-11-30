@@ -50,6 +50,7 @@ import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.worker.AbstractWorker;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
+import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -59,6 +60,7 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
@@ -158,43 +160,47 @@ public class AppWithPartitionConsumers extends AbstractApplication {
       //   - read the partitions' files
       //   - increment the words' counts in the 'counts' dataset accordingly
       //   - write the counts to the 'outputLines' partitioned fileset
-      getContext().execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
+      try {
+        getContext().execute(new TxRunnable() {
+          @Override
+          public void run(DatasetContext context) throws Exception {
 
-          Map<String, Long> wordCounts = new HashMap<>();
-          for (PartitionDetail partition : partitions) {
-            ByteBuffer content;
-            Location location = partition.getLocation();
-            content = ByteBuffer.wrap(ByteStreams.toByteArray(location.getInputStream()));
-            String string = Bytes.toString(Bytes.toBytes(content));
+            Map<String, Long> wordCounts = new HashMap<>();
+            for (PartitionDetail partition : partitions) {
+              ByteBuffer content;
+              Location location = partition.getLocation();
+              content = ByteBuffer.wrap(ByteStreams.toByteArray(location.getInputStream()));
+              String string = Bytes.toString(Bytes.toBytes(content));
 
-            for (String token : string.split(" ")) {
-              Long count = Objects.firstNonNull(wordCounts.get(token), 0L);
-              wordCounts.put(token, count + 1);
+              for (String token : string.split(" ")) {
+                Long count = Objects.firstNonNull(wordCounts.get(token), 0L);
+                wordCounts.put(token, count + 1);
+              }
             }
+
+            IncrementingKeyValueTable counts = context.getDataset("counts");
+            for (Map.Entry<String, Long> entry : wordCounts.entrySet()) {
+              counts.write(Bytes.toBytes(entry.getKey()), entry.getValue());
+            }
+
+            PartitionedFileSet outputLines = context.getDataset("outputLines");
+            PartitionKey partitionKey = PartitionKey.builder().addLongField("time", System.currentTimeMillis()).build();
+            PartitionOutput outputPartition = outputLines.getPartitionOutput(partitionKey);
+
+            Location partitionDir = outputPartition.getLocation();
+            partitionDir.mkdirs();
+            Location outputLocation = partitionDir.append("file");
+            outputLocation.createNew();
+            try (OutputStream outputStream = outputLocation.getOutputStream()) {
+              outputStream.write(Bytes.toBytes(Joiner.on("\n").join(wordCounts.values())));
+            }
+            outputPartition.addPartition();
+
           }
-
-          IncrementingKeyValueTable counts = context.getDataset("counts");
-          for (Map.Entry<String, Long> entry : wordCounts.entrySet()) {
-            counts.write(Bytes.toBytes(entry.getKey()), entry.getValue());
-          }
-
-          PartitionedFileSet outputLines = context.getDataset("outputLines");
-          PartitionKey partitionKey = PartitionKey.builder().addLongField("time", System.currentTimeMillis()).build();
-          PartitionOutput outputPartition = outputLines.getPartitionOutput(partitionKey);
-
-          Location partitionDir = outputPartition.getLocation();
-          partitionDir.mkdirs();
-          Location outputLocation = partitionDir.append("file");
-          outputLocation.createNew();
-          try (OutputStream outputStream = outputLocation.getOutputStream()) {
-            outputStream.write(Bytes.toBytes(Joiner.on("\n").join(wordCounts.values())));
-          }
-          outputPartition.addPartition();
-
-        }
-      });
+        });
+      } catch (TransactionFailureException e) {
+        throw Throwables.propagate(e);
+      }
 
       partitionConsumer.onFinish(partitions, true);
     }

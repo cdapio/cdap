@@ -17,8 +17,8 @@
 package co.cask.cdap.common.namespace;
 
 import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 import com.google.inject.Inject;
@@ -45,12 +45,12 @@ public class LocalNamespaceClient extends AbstractNamespaceClient {
   }
 
   @Override
-  public NamespaceMeta get(Id.Namespace namespaceId) throws Exception {
+  public NamespaceMeta get(NamespaceId namespaceId) throws Exception {
     return namespaceAdmin.get(namespaceId);
   }
 
   @Override
-  public void delete(Id.Namespace namespaceId) throws Exception {
+  public void delete(NamespaceId namespaceId) throws Exception {
     namespaceAdmin.delete(namespaceId);
   }
 

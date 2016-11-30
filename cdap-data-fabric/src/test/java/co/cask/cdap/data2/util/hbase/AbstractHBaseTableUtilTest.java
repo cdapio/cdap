@@ -26,7 +26,6 @@ import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Predicate;

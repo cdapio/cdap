@@ -20,8 +20,10 @@ import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
@@ -71,12 +73,17 @@ public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     super.configurePipeline(pipelineConfigurer);
-    pipelineConfigurer.createDataset(config.tableName, Table.class);
+    if (!config.containsMacro("tableName")) {
+      pipelineConfigurer.createDataset(config.tableName, Table.class);
+    }
   }
 
   @Override
   public void prepareRun(BatchSinkContext context) throws Exception {
-    context.addOutput(config.tableName);
+    if (!context.datasetExists(config.tableName)) {
+      context.createDataset(config.tableName, "table", DatasetProperties.EMPTY);
+    }
+    context.addOutput(Output.ofDataset(config.tableName));
   }
 
   @Override
@@ -106,6 +113,7 @@ public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
    * @param tableManager dataset manager used to get the sink dataset to read from
    */
   public static List<StructuredRecord> readOutput(DataSetManager<Table> tableManager) throws Exception {
+    tableManager.flush();
     Table table = tableManager.get();
 
     try (Scanner scanner = table.scan(null, null)) {
@@ -118,6 +126,24 @@ public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
       }
       return records;
     }
+  }
+
+  /**
+   * Clear any records written to this sink.
+   *
+   * @param tableManager dataset manager used to get the sink dataset
+   */
+  public static void clear(DataSetManager<Table> tableManager) {
+    tableManager.flush();
+    Table table = tableManager.get();
+
+    try (Scanner scanner = table.scan(null, null)) {
+      Row row;
+      while ((row = scanner.next()) != null) {
+        table.delete(row.getRow());
+      }
+    }
+    tableManager.flush();
   }
 
   private static PluginClass getPluginClass() {

@@ -43,7 +43,8 @@ const mapDispatchToFieldNameProps = (dispatch, ownProps) => {
     },
     addRow: () => {
       dispatch({
-        type: KeyValueStoreActions.addPair
+        type: KeyValueStoreActions.addPair,
+        payload: {index: ownProps.index}
       });
     },
     onChange: (fieldProp, e) => {
@@ -66,16 +67,17 @@ let KeyValuePairCopy = connect(
 export default class KeyValuePairs extends Component {
   constructor(props){
     super(props);
-    var { keyValues, OnKeyValueChange } = props;
+    var { keyValues, onKeyValueChange } = props;
     this.state = {
         pairs: [...keyValues.pairs]
     };
     this.keyValueStore = createKeyValueStore({keyValues});
     this.subscription = this.keyValueStore.subscribe(() => {
-      OnKeyValueChange(this.keyValueStore.getState().keyValues);
       this.setState(this.keyValueStore.getState().keyValues);
+      onKeyValueChange(this.keyValueStore.getState().keyValues);
     });
   }
+
   shouldComponentUpdate(nextProps) {
     return this.state.pairs.length !== nextProps.keyValues.pairs.length;
   }
@@ -119,5 +121,5 @@ KeyValuePairs.propTypes = {
       uniqueId : PropTypes.string
     }))
   }),
-  OnKeyValueChange: PropTypes.func
+  onKeyValueChange: PropTypes.func
 };

@@ -138,6 +138,7 @@ public final class RuntimeArguments {
 
   /**
    * Add a scope prefix to all arguments.
+   *
    * @param scope The type of the scope
    * @param name The name of the scope, e.g. "myTable"
    * @param arguments the runtime arguments to be scoped
@@ -147,12 +148,33 @@ public final class RuntimeArguments {
     if (arguments == null || arguments.isEmpty()) {
       return arguments;
     }
-    final String prefix = scope + "." + name + ".";
     Map<String, String> result = new HashMap<>();
     for (Map.Entry<String, String> entry : arguments.entrySet()) {
-        result.put(prefix + entry.getKey(), entry.getValue());
+        result.put(addScope(scope, name, entry.getKey()), entry.getValue());
     }
     return result;
+  }
+
+  /**
+   * Add a scope prefix to an argument name.
+   *
+   * @param scope The type of the scope
+   * @param name The name of the scope, e.g. "myTable"
+   * @param argument the runtime argument to be scoped
+   */
+  public static String addScope(Scope scope, String name, String argument) {
+    return addScope(scope.toString(), name, argument);
+  }
+
+  /**
+   * Add a scope prefix to an argument name.
+   *
+   * @param scope The type of the scope
+   * @param name The name of the scope, e.g. "myTable"
+   * @param argument the runtime argument to be scoped
+   */
+  public static String addScope(String scope, String name, String argument) {
+    return scope + "." + name + "." + argument;
   }
 
 }

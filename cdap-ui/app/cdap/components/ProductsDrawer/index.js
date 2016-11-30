@@ -21,25 +21,27 @@ import classnames from 'classnames';
 require('./ProductsDropdown.less');
 import head from 'lodash/head';
 import shortid from 'shortid';
+import NamespaceStore from 'services/NamespaceStore';
 
 export default class ProductsDrawer extends Component {
   constructor(props) {
     super(props);
+    this.namespace;
     let products = [
       {
-        link: '/cask-cdap',
+        link: '/cask-cdap/',
         label: T.translate('commons.cdap'),
         name: 'cdap',
         icon: 'icon-fist'
       },
       {
-        link: '/cask-hydrator',
+        link: '/cask-hydrator/',
         label: T.translate('commons.hydrator'),
         name: 'hydrator',
         icon: 'icon-hydrator'
       },
       {
-        link: '/cask-tracker',
+        link: '/cask-tracker/',
         label: T.translate('commons.tracker'),
         name: 'tracker',
         icon: 'icon-tracker'
@@ -51,6 +53,35 @@ export default class ProductsDrawer extends Component {
       currentChoice,
       products
     };
+  }
+  componentWillMount(){
+    this.updateNSLinks();
+    NamespaceStore.subscribe(() => {
+      this.updateNSLinks();
+    });
+  }
+  updateNSLinks(){
+    this.namespace = NamespaceStore.getState().selectedNamespace;
+    let products = this.state.products.map((product) => {
+
+      switch(product.name) {
+        case 'cdap' :
+          product.link = `/cask-cdap/ns/${this.namespace}`;
+          break;
+        case 'hydrator' :
+          product.link = `/cask-hydrator/ns/${this.namespace}`;
+          break;
+        case 'tracker' :
+          product.link = `/cask-tracker/ns/${this.namespace}`;
+          break;
+        default:
+          break;
+      }
+      return product;
+    });
+    this.setState({
+      products
+    });
   }
   toggle() {
     this.setState({

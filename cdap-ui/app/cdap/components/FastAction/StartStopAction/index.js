@@ -47,7 +47,7 @@ export default class StartStopAction extends Component {
     this.statusPoll$.dispose();
   }
 
-  onClick() {
+  onClick(event) {
     let params = Object.assign({}, this.params);
     if (this.state.status === 'RUNNING' || this.state.status === 'STARTING') {
       params.action = 'stop';
@@ -61,6 +61,8 @@ export default class StartStopAction extends Component {
       .subscribe(this.props.onSuccess, (err) => {
         alert(err);
       });
+    event.stopPropagation();
+    event.nativeEvent.stopImmediatePropagation();
   }
 
   render() {

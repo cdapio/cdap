@@ -416,8 +416,8 @@ The ``configure()`` method is defined as:
 
 .. literalinclude:: /../target/_includes/tutorial-wise/BounceCountsMapReduce.java
    :language: java
-   :lines: 41-48   
-   :append: . . . 
+   :lines: 42-49
+   :append: . . .
 
 It sets the ID (name) of the MapReduce program as *BounceCountsMapReduce*, and specifies any datasets
 that will be used in the program. 
@@ -429,7 +429,7 @@ done in the ``initialize()`` method of the ``BounceCountsMapReduce`` class:
 
 .. literalinclude:: /../target/_includes/tutorial-wise/BounceCountsMapReduce.java
    :language: java
-   :lines: 49-82   
+   :lines: 50-83
    :dedent: 2
 
 As mentioned earlier, the input of the MapReduce is the *logEventStream*. This
@@ -441,7 +441,7 @@ logical start time of the job (the same as the scheduled time of the containing 
 
 Writing to the *bounceCountStore* dataset from the MapReduce 
 ------------------------------------------------------------
-In the ``BounceCountsMapReduce.configure()`` method seen earlier, the ``setOutputDataset``
+In the ``BounceCountsMapReduce.initialize()`` method seen earlier, the ``context.addOutput()``
 method sets the ``bounceCountsStore`` dataset as the output of the job.
 It means that the key/value pairs output by the reducer of the MapReduce will be directly
 written to that dataset.
@@ -452,12 +452,12 @@ interface:
 .. literalinclude:: /../target/_includes/tutorial-wise/BounceCountStore.java
    :language: java
    :lines: 39-41
-   :append:   . . . 
+   :append:   . . .
 
 .. literalinclude:: /../target/_includes/tutorial-wise/BounceCountStore.java
    :language: java
-   :lines: 96-99   
-   :prepend:   . . . 
+   :lines: 96-99
+   :prepend:   . . .
 
 This ``BatchWritable`` interface, defining a ``write()`` method, is intended to allow datasets to
 be the output of MapReduce programs. The two generic types that it takes as parameters must
@@ -479,16 +479,16 @@ Our Mapper and Reducer are standard Hadoop classes with these signatures:
 
 .. literalinclude:: /../target/_includes/tutorial-wise/BounceCountsMapReduce.java
    :language: java
-   :lines: 87   
-   :prepend: . . . 
-   :append: . . . 
+   :lines: 88
+   :prepend: . . .
+   :append: . . .
    :dedent: 2
 
 .. literalinclude:: /../target/_includes/tutorial-wise/BounceCountsMapReduce.java
    :language: java
-   :lines: 108   
-   :prepend: . . . 
-   :append: . . . 
+   :lines: 109
+   :prepend: . . .
+   :append: . . .
    :dedent: 2
 
 Each generic parameter of the Mapper and the Reducer contains:
