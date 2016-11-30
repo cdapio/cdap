@@ -42,7 +42,7 @@ public class SearchMetricNamesCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    Map<String, String> tags = ArgumentParser.parseMap(arguments.get("tags", ""));
+    Map<String, String> tags = ArgumentParser.parseMap(arguments.getOptional("tags", ""));
     List<String> results = client.searchMetrics(tags);
     for (String result : results) {
       output.println(result);

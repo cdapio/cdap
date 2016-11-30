@@ -48,9 +48,9 @@ public class GetProgramLogsCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
     String appId = programIdParts[0];
-    String startString = arguments.get(ArgumentName.START_TIME.toString(), "0");
+    String startString = arguments.getOptional(ArgumentName.START_TIME.toString(), "0");
     long start = TimeMathParser.parseTimeInSeconds(startString);
-    String stopString = arguments.get(ArgumentName.END_TIME.toString(), Long.toString(Integer.MAX_VALUE));
+    String stopString = arguments.getOptional(ArgumentName.END_TIME.toString(), Long.toString(Integer.MAX_VALUE));
     long stop = TimeMathParser.parseTimeInSeconds(stopString);
 
     String logs;

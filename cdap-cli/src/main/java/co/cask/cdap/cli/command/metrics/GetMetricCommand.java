@@ -49,9 +49,9 @@ public class GetMetricCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String metric = arguments.get("metric-name");
-    Map<String, String> tags = ArgumentParser.parseMap(arguments.get("tags", ""));
-    String start = arguments.get("start", "");
-    String end = arguments.get("end", "");
+    Map<String, String> tags = ArgumentParser.parseMap(arguments.getOptional("tags", ""));
+    String start = arguments.getOptional("start", "");
+    String end = arguments.getOptional("end", "");
 
     MetricQueryResult result = client.query(
       tags, ImmutableList.of(metric), ImmutableList.<String>of(),

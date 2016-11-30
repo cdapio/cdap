@@ -59,7 +59,7 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
   @Override
   public void perform(Arguments arguments, PrintStream printStream) throws Exception {
     String[] programIdParts = new String[0];
-    String contentType = arguments.get(ArgumentName.CONTENT_TYPE.toString(), "");
+    String contentType = arguments.getOptional(ArgumentName.CONTENT_TYPE.toString(), "");
     File file = new File(arguments.get(ArgumentName.LOCAL_FILE_PATH.toString()));
 
     if (!file.isFile()) {

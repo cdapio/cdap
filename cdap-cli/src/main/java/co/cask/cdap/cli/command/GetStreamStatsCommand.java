@@ -75,9 +75,9 @@ public class GetStreamStatsCommand extends AbstractCommand {
 
     StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
     // limit limit to [1, MAX_LIMIT]
-    int limit = Math.max(1, Math.min(MAX_LIMIT, arguments.getInt(ArgumentName.LIMIT.toString(), DEFAULT_LIMIT)));
-    long startTime = getTimestamp(arguments.get(ArgumentName.START_TIME.toString(), "min"), currentTime);
-    long endTime = getTimestamp(arguments.get(ArgumentName.END_TIME.toString(), "max"), currentTime);
+    int limit = Math.max(1, Math.min(MAX_LIMIT, arguments.getIntOptional(ArgumentName.LIMIT.toString(), DEFAULT_LIMIT)));
+    long startTime = getTimestamp(arguments.getOptional(ArgumentName.START_TIME.toString(), "min"), currentTime);
+    long endTime = getTimestamp(arguments.getOptional(ArgumentName.END_TIME.toString(), "max"), currentTime);
 
     // hack to validate streamId
     StreamProperties config = streamClient.getConfig(streamId.toId());

@@ -52,9 +52,9 @@ public class GetStreamEventsCommand extends AbstractCommand {
     long currentTime = System.currentTimeMillis();
 
     StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
-    long startTime = getTimestamp(arguments.get(ArgumentName.START_TIME.toString(), "min"), currentTime);
-    long endTime = getTimestamp(arguments.get(ArgumentName.END_TIME.toString(), "max"), currentTime);
-    int limit = arguments.getInt(ArgumentName.LIMIT.toString(), Integer.MAX_VALUE);
+    long startTime = getTimestamp(arguments.getOptional(ArgumentName.START_TIME.toString(), "min"), currentTime);
+    long endTime = getTimestamp(arguments.getOptional(ArgumentName.END_TIME.toString(), "max"), currentTime);
+    int limit = arguments.getIntOptional(ArgumentName.LIMIT.toString(), Integer.MAX_VALUE);
 
     // Get a list of stream events and prints it.
     List<StreamEvent> events = streamClient.getEvents(streamId.toId(), startTime, endTime,
