@@ -21,7 +21,6 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
 import co.cask.cdap.etl.api.JoinElement;
@@ -61,7 +60,6 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner
     .registerTypeAdapter(DatasetInfo.class, new DatasetInfoTypeAdapter())
     .registerTypeAdapter(OutputFormatProvider.class, new OutputFormatProviderTypeAdapter())
     .registerTypeAdapter(InputFormatProvider.class, new InputFormatProviderTypeAdapter())
-    .registerTypeAdapter(StreamBatchReadable.class, new StreamBatchReadableTypeAdapter())
     .create();
 
   private transient JavaSparkContext jsc;

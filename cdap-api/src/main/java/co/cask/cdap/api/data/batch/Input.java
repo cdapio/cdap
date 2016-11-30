@@ -16,10 +16,8 @@
 
 package co.cask.cdap.api.data.batch;
 
-import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.data.format.FormatSpecification;
-import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 
@@ -144,52 +142,46 @@ public abstract class Input {
    * @param streamName Name of the stream.
    */
   public static Input ofStream(String streamName) {
-    return ofStream(new StreamBatchReadable(streamName, 0, Long.MAX_VALUE));
+    return ofStream(streamName, 0, Long.MAX_VALUE);
   }
 
   /**
    * Returns an Input defined by a stream with the given properties.
-   *  @param streamName Name of the stream.
+   *
+   * @param streamName Name of the stream.
    * @param startTime Start timestamp in milliseconds.
    * @param endTime End timestamp in milliseconds.
    */
   public static Input ofStream(String streamName, long startTime, long endTime) {
-    return ofStream(new StreamBatchReadable(streamName, startTime, endTime));
+    return new StreamInput(streamName, startTime, endTime, null, null);
   }
 
   /**
    * Returns an Input defined by a stream with the given properties.
-   *  @param streamName Name of the stream
+   *
+   * @param streamName Name of the stream
    * @param startTime Start timestamp in milliseconds (inclusive) of stream events provided to the job
    * @param endTime End timestamp in milliseconds (exclusive) of stream events provided to the job
    * @param decoderType The {@link StreamEventDecoder} class for decoding {@link StreamEvent}
    */
   public static Input ofStream(String streamName, long startTime,
                                long endTime, Class<? extends StreamEventDecoder> decoderType) {
-    return ofStream(new StreamBatchReadable(streamName, startTime, endTime, decoderType));
+    return new StreamInput(streamName, startTime, endTime, decoderType.toString(), null);
   }
 
   /**
    * Returns an Input defined by a stream with the given properties.
-   *  @param streamName Name of the stream
+   *
+   * @param streamName Name of the stream
    * @param startTime Start timestamp in milliseconds (inclusive) of stream events provided to the job
    * @param endTime End timestamp in milliseconds (exclusive) of stream events provided to the job
    * @param bodyFormatSpec The {@link FormatSpecification} class for decoding {@link StreamEvent}
    */
-  @Beta
   public static Input ofStream(String streamName, long startTime,
                                long endTime, FormatSpecification bodyFormatSpec) {
-    return ofStream(new StreamBatchReadable(streamName, startTime, endTime, bodyFormatSpec));
+    return new StreamInput(streamName, startTime, endTime, null, bodyFormatSpec);
   }
 
-  /**
-   * Returns an Input defined by a stream.
-   *
-   * @param streamBatchReadable specifies the stream to be used as input
-   */
-  private static Input ofStream(StreamBatchReadable streamBatchReadable) {
-    return new StreamInput(streamBatchReadable);
-  }
 
   /**
    * An implementation of {@link Input}, which defines a {@link co.cask.cdap.api.dataset.Dataset} as an input.
@@ -240,27 +232,47 @@ public abstract class Input {
    * An implementation of {@link Input}, which defines a {@link co.cask.cdap.api.data.stream.Stream} as an input.
    */
   public static class StreamInput extends Input {
+    private final long startTime;
+    private final long endTime;
+    private final String decoderType;
+    private final FormatSpecification bodyFormatSpec;
 
-    private final StreamBatchReadable streamBatchReadable;
-
-    private StreamInput(StreamBatchReadable streamBatchReadable) {
-      super(streamBatchReadable.getStreamName());
-      this.streamBatchReadable = streamBatchReadable;
+    private StreamInput(String name, long startTime, long endTime, @Nullable String decoderType,
+                       @Nullable FormatSpecification bodyFormatSpec) {
+      super(name);
+      this.startTime = startTime;
+      this.endTime = endTime;
+      this.decoderType = decoderType;
+      this.bodyFormatSpec = bodyFormatSpec;
     }
 
-    private StreamInput(StreamBatchReadable streamBatchReadable, String namespace) {
-      this(streamBatchReadable);
+    private StreamInput(String name, long startTime, long endTime, @Nullable String decoderType,
+                        @Nullable FormatSpecification bodyFormatSpec, String namespace) {
+      this(name, startTime, endTime, decoderType, bodyFormatSpec);
       super.fromNamespace(namespace);
     }
 
     @Override
     public StreamInput fromNamespace(String namespace) {
-      return new StreamInput(streamBatchReadable, namespace);
+      return new StreamInput(super.name, startTime, endTime, decoderType, bodyFormatSpec, namespace);
     }
 
-    @Deprecated
-    public StreamBatchReadable getStreamBatchReadable() {
-      return streamBatchReadable;
+    public long getStartTime() {
+      return startTime;
+    }
+
+    public long getEndTime() {
+      return endTime;
+    }
+
+    @Nullable
+    public String getDecoderType() {
+      return decoderType;
+    }
+
+    @Nullable
+    public FormatSpecification getBodyFormatSpec() {
+      return bodyFormatSpec;
     }
   }
 

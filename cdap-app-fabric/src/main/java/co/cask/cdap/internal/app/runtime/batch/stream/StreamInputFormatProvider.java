@@ -16,9 +16,9 @@
 
 package co.cask.cdap.internal.app.runtime.batch.stream;
 
+import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.format.FormatSpecification;
-import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.common.conf.ConfigurationUtil;
@@ -26,7 +26,8 @@ import co.cask.cdap.data.stream.AbstractStreamInputFormat;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
@@ -41,27 +42,24 @@ import java.util.Map;
  */
 public class StreamInputFormatProvider implements InputFormatProvider {
 
-  private final Id.Namespace namespaceId;
-  private final StreamBatchReadable streamBatchReadable;
+  private final Input.StreamInput streamInput;
+  private final StreamId streamId;
   private final StreamAdmin streamAdmin;
 
-  public StreamInputFormatProvider(Id.Namespace namespaceId,
-                                   StreamBatchReadable streamBatchReadable, StreamAdmin streamAdmin) {
-    this.namespaceId = namespaceId;
-    this.streamBatchReadable = streamBatchReadable;
+  public StreamInputFormatProvider(NamespaceId namespaceId,
+                                   Input.StreamInput streamInput, StreamAdmin streamAdmin) {
+    this.streamId = namespaceId.stream(streamInput.getName());
+    this.streamInput = streamInput;
     this.streamAdmin = streamAdmin;
   }
 
-  /**
-   * Returns the stream Id of the stream that will be consumed by InputFormat.
-   */
-  public Id.Stream getStreamId() {
-    return Id.Stream.from(namespaceId, streamBatchReadable.getStreamName());
+  public StreamId getStreamId() {
+    return streamId;
   }
 
   /**
    * Sets the {@link StreamEventDecoder} to be used by the InputFormat for the given type. If the
-   * {@link StreamBatchReadable} already defined a {@link StreamEventDecoder} or {@link FormatSpecification},
+   * {@link Input.StreamInput} already defined a {@link StreamEventDecoder} or {@link FormatSpecification},
    * this method is a no-op.
    *
    * @param configuration configuration to update
@@ -69,7 +67,7 @@ public class StreamInputFormatProvider implements InputFormatProvider {
    * @return the same configuration map as in the argument.
    */
   public Map<String, String> setDecoderType(Map<String, String> configuration, Type type) {
-    if (streamBatchReadable.getFormatSpecification() == null && streamBatchReadable.getDecoderType() == null) {
+    if (streamInput.getBodyFormatSpec() == null && streamInput.getDecoderType() == null) {
       Configuration hConf = new Configuration();
       hConf.clear();
       AbstractStreamInputFormat.inferDecoderClass(hConf, type);
@@ -85,24 +83,23 @@ public class StreamInputFormatProvider implements InputFormatProvider {
 
   @Override
   public Map<String, String> getInputFormatConfiguration() {
-    Id.Stream streamId = Id.Stream.from(namespaceId, streamBatchReadable.getStreamName());
     try {
-      StreamConfig streamConfig = streamAdmin.getConfig(streamId.toEntityId());
+      StreamConfig streamConfig = streamAdmin.getConfig(streamId);
       Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
                                                                  StreamUtils.getGeneration(streamConfig));
       Configuration hConf = new Configuration();
       hConf.clear();
 
-      AbstractStreamInputFormat.setStreamId(hConf, streamId.toEntityId());
+      AbstractStreamInputFormat.setStreamId(hConf, streamId);
       AbstractStreamInputFormat.setTTL(hConf, streamConfig.getTTL());
       AbstractStreamInputFormat.setStreamPath(hConf, streamPath.toURI());
-      AbstractStreamInputFormat.setTimeRange(hConf, streamBatchReadable.getStartTime(),
-                                             streamBatchReadable.getEndTime());
-      FormatSpecification formatSpec = streamBatchReadable.getFormatSpecification();
+      AbstractStreamInputFormat.setTimeRange(hConf, streamInput.getStartTime(),
+                                             streamInput.getEndTime());
+      FormatSpecification formatSpec = streamInput.getBodyFormatSpec();
       if (formatSpec != null) {
         AbstractStreamInputFormat.setBodyFormatSpecification(hConf, formatSpec);
       } else {
-        String decoderType = streamBatchReadable.getDecoderType();
+        String decoderType = streamInput.getDecoderType();
         if (decoderType != null) {
           AbstractStreamInputFormat.setDecoderClassName(hConf, decoderType);
         }

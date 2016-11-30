@@ -20,7 +20,6 @@ import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.SparkClientContext;
@@ -70,7 +69,6 @@ public class ETLSpark extends AbstractSpark {
     .registerTypeAdapter(DatasetInfo.class, new DatasetInfoTypeAdapter())
     .registerTypeAdapter(OutputFormatProvider.class, new OutputFormatProviderTypeAdapter())
     .registerTypeAdapter(InputFormatProvider.class, new InputFormatProviderTypeAdapter())
-    .registerTypeAdapter(StreamBatchReadable.class, new StreamBatchReadableTypeAdapter())
     .create();
 
   private final BatchPhaseSpec phaseSpec;

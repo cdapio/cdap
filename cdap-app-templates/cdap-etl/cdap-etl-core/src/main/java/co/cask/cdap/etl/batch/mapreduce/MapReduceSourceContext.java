@@ -17,10 +17,6 @@
 package co.cask.cdap.etl.batch.mapreduce;
 
 import co.cask.cdap.api.data.batch.Input;
-import co.cask.cdap.api.data.batch.InputFormatProvider;
-import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.data.format.FormatSpecification;
-import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.LookupProvider;
@@ -28,9 +24,7 @@ import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.common.ExternalDatasets;
 import co.cask.cdap.etl.log.LogContext;
 
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -46,68 +40,6 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
                                 Map<String, String> runtimeArgs) {
     super(context, metrics, lookup, stageName, runtimeArgs);
     this.inputNames = new HashSet<>();
-  }
-
-  @Override
-  public void setInput(final StreamBatchReadable stream) {
-    String alias = LogContext.runWithoutLoggingUnchecked(new Callable<String>() {
-      @Override
-      public String call() throws Exception {
-        FormatSpecification formatSpec = stream.getFormatSpecification();
-        Input input;
-        if (formatSpec == null) {
-          input = suffixInput(Input.ofStream(stream.getStreamName(), stream.getStartTime(), stream.getEndTime()));
-          mrContext.addInput(input);
-        } else {
-          input = suffixInput(Input.ofStream(stream.getStreamName(), stream.getStartTime(),
-                                             stream.getEndTime(), formatSpec));
-          mrContext.addInput(input);
-        }
-        return input.getAlias();
-      }
-    });
-    inputNames.add(alias);
-  }
-
-  @Override
-  public void setInput(final String datasetName) {
-    setInput(datasetName, Collections.<String, String>emptyMap());
-  }
-
-  @Override
-  public void setInput(final String datasetName, final Map<String, String> arguments) {
-    setInput(datasetName, arguments, null);
-  }
-
-  @Override
-  public void setInput(final String datasetName, final List<Split> splits) {
-    setInput(datasetName, Collections.<String, String>emptyMap(), splits);
-  }
-
-  @Override
-  public void setInput(final String datasetName, final Map<String, String> arguments, final List<Split> splits) {
-    String alias = LogContext.runWithoutLoggingUnchecked(new Callable<String>() {
-      @Override
-      public String call() throws Exception {
-        Input input = suffixInput(Input.ofDataset(datasetName, arguments, splits));
-        mrContext.addInput(input);
-        return input.getAlias();
-      }
-    });
-    inputNames.add(alias);
-  }
-
-  @Override
-  public void setInput(final InputFormatProvider inputFormatProvider) {
-    String alias = LogContext.runWithoutLoggingUnchecked(new Callable<String>() {
-      @Override
-      public String call() throws Exception {
-        Input input = suffixInput(Input.of(inputFormatProvider.getInputFormatClassName(), inputFormatProvider));
-        mrContext.addInput(input);
-        return input.getAlias();
-      }
-    });
-    inputNames.add(alias);
   }
 
   @Override

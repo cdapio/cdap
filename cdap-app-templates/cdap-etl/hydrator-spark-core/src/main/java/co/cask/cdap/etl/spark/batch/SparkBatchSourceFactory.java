@@ -21,7 +21,6 @@ import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import com.google.common.base.Objects;
@@ -47,13 +46,13 @@ import static java.lang.Thread.currentThread;
  */
 final class SparkBatchSourceFactory {
 
-  private final Map<String, StreamBatchReadable> streamBatchReadables;
+  private final Map<String, Input.StreamInput> streams;
   private final Map<String, InputFormatProvider> inputFormatProviders;
   private final Map<String, DatasetInfo> datasetInfos;
   private final Map<String, Set<String>> sourceInputs;
 
   SparkBatchSourceFactory() {
-    this.streamBatchReadables = new HashMap<>();
+    this.streams = new HashMap<>();
     this.inputFormatProviders = new HashMap<>();
     this.datasetInfos = new HashMap<>();
     this.sourceInputs = new HashMap<>();
@@ -72,13 +71,13 @@ final class SparkBatchSourceFactory {
                                             ifpInput.getInputFormatProvider().getInputFormatConfiguration()));
     } else if (input instanceof Input.StreamInput) {
       Input.StreamInput streamInput = (Input.StreamInput) input;
-      addInput(stageName, streamInput.getAlias(), streamInput.getStreamBatchReadable());
+      addInput(stageName, streamInput.getAlias(), streamInput);
     }
   }
 
-  private void addInput(String stageName, String alias, StreamBatchReadable streamBatchReadable) {
+  private void addInput(String stageName, String alias, Input.StreamInput streamInput) {
     duplicateAliasCheck(alias);
-    streamBatchReadables.put(alias, streamBatchReadable);
+    streams.put(alias, streamInput);
     addStageInput(stageName, alias);
   }
 
@@ -97,7 +96,7 @@ final class SparkBatchSourceFactory {
 
   private void duplicateAliasCheck(String alias) {
     if (inputFormatProviders.containsKey(alias) || datasetInfos.containsKey(alias)
-      || streamBatchReadables.containsKey(alias)) {
+      || streams.containsKey(alias)) {
       // this will never happen since alias will be unique since we append it with UUID
       throw new IllegalStateException(alias + " has already been added. Can't add an input with the same alias.");
     }
@@ -122,30 +121,30 @@ final class SparkBatchSourceFactory {
   @SuppressWarnings("unchecked")
   private <K, V> JavaPairRDD<K, V> createInputRDD(JavaSparkExecutionContext sec, JavaSparkContext jsc, String inputName,
                                                   Class<K> keyClass, Class<V> valueClass) {
-    if (streamBatchReadables.containsKey(inputName)) {
-      StreamBatchReadable streamBatchReadable = streamBatchReadables.get(inputName);
-      FormatSpecification formatSpec = streamBatchReadable.getFormatSpecification();
+    if (streams.containsKey(inputName)) {
+      Input.StreamInput streamInput = streams.get(inputName);
+      FormatSpecification formatSpec = streamInput.getBodyFormatSpec();
       if (formatSpec != null) {
-        return (JavaPairRDD<K, V>) sec.fromStream(streamBatchReadable.getStreamName(),
+        return (JavaPairRDD<K, V>) sec.fromStream(streamInput.getName(),
                                                   formatSpec,
-                                                  streamBatchReadable.getStartTime(),
-                                                  streamBatchReadable.getEndTime(),
+                                                  streamInput.getStartTime(),
+                                                  streamInput.getEndTime(),
                                                   StructuredRecord.class);
       }
 
-      String decoderType = streamBatchReadable.getDecoderType();
+      String decoderType = streamInput.getDecoderType();
       if (decoderType == null) {
-        return (JavaPairRDD<K, V>) sec.fromStream(streamBatchReadable.getStreamName(),
-                                                  streamBatchReadable.getStartTime(),
-                                                  streamBatchReadable.getEndTime(),
+        return (JavaPairRDD<K, V>) sec.fromStream(streamInput.getName(),
+                                                  streamInput.getStartTime(),
+                                                  streamInput.getEndTime(),
                                                   valueClass);
       } else {
         try {
           Class<StreamEventDecoder<K, V>> decoderClass =
             (Class<StreamEventDecoder<K, V>>) Thread.currentThread().getContextClassLoader().loadClass(decoderType);
-          return sec.fromStream(streamBatchReadable.getStreamName(),
-                                streamBatchReadable.getStartTime(),
-                                streamBatchReadable.getEndTime(),
+          return sec.fromStream(streamInput.getName(),
+                                streamInput.getStartTime(),
+                                streamInput.getEndTime(),
                                 decoderClass, keyClass, valueClass);
         } catch (Exception e) {
           throw Throwables.propagate(e);
