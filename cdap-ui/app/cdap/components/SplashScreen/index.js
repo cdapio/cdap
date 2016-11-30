@@ -49,17 +49,20 @@ import T from 'i18n-react';
 
   componentWillMount() {
     MyUserStoreApi.get().subscribe((res) => {
-      this.setState({
-        showSplashScreen : !res.property["standalone-welcome-message"]
-      });
+      setTimeout(() => {
+        this.setState({
+          showSplashScreen : window.CDAP_CONFIG.cdap.standaloneWebsiteSDKDownload && !window.CDAP_CONFIG.isEnterprise && !res.property["user-choice-hide-welcome-message"]
+        });
+      }, 1000);
     });
   }
+
   //Handles the logic of whether or not to continue showing the splash screen to this user
   resetWelcomeMessage() {
     MyUserStoreApi
       .get()
       .flatMap(res => {
-        res.property['standalone-welcome-message'] = this.doNotShowCheck;
+        res.property['user-choice-hide-welcome-message'] = this.doNotShowCheck;
         return MyUserStoreApi.set({}, res.property);
       })
       .subscribe(
