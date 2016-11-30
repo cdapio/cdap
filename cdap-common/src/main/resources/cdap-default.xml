@@ -1072,7 +1072,7 @@
 
   <property>
     <name>master.service.num.cores</name>
-    <value>2</value>
+    <value>1</value>
     <description>
       Number of virtual cores for each master service instance
     </description>
