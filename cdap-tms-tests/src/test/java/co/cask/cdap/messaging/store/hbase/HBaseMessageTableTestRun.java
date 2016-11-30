@@ -17,43 +17,62 @@
 package co.cask.cdap.messaging.store.hbase;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.NamespaceClientUnitTestModule;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.messaging.store.PayloadTable;
-import co.cask.cdap.messaging.store.PayloadTableTest;
+import co.cask.cdap.messaging.store.MessageTable;
+import co.cask.cdap.messaging.store.MessageTableTest;
 import co.cask.cdap.messaging.store.TableFactory;
 import co.cask.cdap.proto.id.NamespaceId;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
+import org.junit.rules.TemporaryFolder;
 
 /**
- * HBase implementation of {@link PayloadTableTest}.
+ * HBase implementation of {@link MessageTableTest}.
  */
-public class HBasePayloadTableTestRun extends PayloadTableTest {
+public class HBaseMessageTableTestRun extends MessageTableTest {
 
   @ClassRule
   public static final ExternalResource TEST_BASE = HBaseMessageTestSuite.TEST_BASE;
 
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
   private static final HBaseTestBase HBASE_TEST_BASE = HBaseMessageTestSuite.HBASE_TEST_BASE;
   private static final CConfiguration cConf = CConfiguration.create();
 
+  private static Configuration hConf;
   private static HBaseAdmin hBaseAdmin;
   private static HBaseTableUtil tableUtil;
   private static TableFactory tableFactory;
 
   @BeforeClass
   public static void setupBeforeClass() throws Exception {
+    hConf = HBASE_TEST_BASE.getConfiguration();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
+    cConf.set(Constants.CFG_HDFS_NAMESPACE, cConf.get(Constants.CFG_LOCAL_DATA_DIR));
+    cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
+
     hBaseAdmin = HBASE_TEST_BASE.getHBaseAdmin();
     hBaseAdmin.getConfiguration().set(HBaseTableUtil.CFG_HBASE_TABLE_COMPRESSION,
                                       HBaseTableUtil.CompressionType.NONE.name());
     tableUtil = new HBaseTableUtilFactory(cConf).get();
     tableUtil.createNamespaceIfNotExists(hBaseAdmin, tableUtil.getHBaseNamespace(NamespaceId.CDAP));
 
-    tableFactory = new HBaseTableFactory(cConf, hBaseAdmin.getConfiguration(), tableUtil);
+    LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
+    tableFactory = new HBaseTableFactory(cConf, hBaseAdmin.getConfiguration(), tableUtil, locationFactory);
   }
 
   @AfterClass
@@ -63,7 +82,14 @@ public class HBasePayloadTableTestRun extends PayloadTableTest {
   }
 
   @Override
-  protected PayloadTable getPayloadTable() throws Exception {
-    return tableFactory.createPayloadTable(NamespaceId.CDAP, "payload");
+  protected MessageTable getMessageTable() throws Exception {
+    return tableFactory.createMessageTable(NamespaceId.CDAP, "message");
+  }
+
+  public static Injector getInjector() {
+    return Guice.createInjector(
+      new ConfigModule(cConf, hConf),
+      new NamespaceClientUnitTestModule().getModule(),
+      new LocationRuntimeModule().getDistributedModules());
   }
 }
