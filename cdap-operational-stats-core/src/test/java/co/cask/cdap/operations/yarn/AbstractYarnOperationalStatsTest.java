@@ -44,6 +44,8 @@ public abstract class AbstractYarnOperationalStatsTest {
 
   protected abstract MiniYARNCluster createYarnCluster() throws IOException, InterruptedException, YarnException;
 
+  protected abstract int getNumNodes();
+
   @Before
   public void setup() throws Exception {
     yarnCluster = createYarnCluster();
@@ -120,8 +122,8 @@ public abstract class AbstractYarnOperationalStatsTest {
     Assert.assertEquals(0, nodes.getNewContainers());
     Assert.assertEquals(0, nodes.getUnusableContainers());
     nodes.collect();
-    Assert.assertEquals(2, nodes.getTotalNodes());
-    Assert.assertEquals(2, nodes.getHealthyNodes());
+    Assert.assertEquals(getNumNodes(), nodes.getTotalNodes());
+    Assert.assertEquals(getNumNodes(), nodes.getHealthyNodes());
     Assert.assertEquals(0, nodes.getNewNodes());
     Assert.assertEquals(0, nodes.getUnusableNodes());
     Assert.assertEquals(0, nodes.getTotalContainers());
