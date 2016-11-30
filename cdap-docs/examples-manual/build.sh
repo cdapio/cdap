@@ -24,7 +24,6 @@ source ../vars
 source ../_common/common-build.sh
 
 CHECK_INCLUDES=${TRUE}
-TUTORIAL_WISE="tutorial-wise"
 
 function guide_rewrite_sed() {
   # Re-writes the links in the RST file to point to a local copy of any image links.
@@ -81,7 +80,8 @@ function download_includes() {
   echo_red_bold "Downloading source files includes from GitHub..."
   set_version
   
-  local includes=${1}/${TUTORIAL_WISE}
+  local includes=${1}
+  local includes_wise="${includes}/tutorial-wise"
   local project_version=${PROJECT_SHORT_VERSION}
 
   local source1="https://raw.githubusercontent.com/caskdata/cdap-apps"
@@ -99,18 +99,18 @@ function download_includes() {
   local project_img=$project_source/docs/img
 
   # 1:Includes directory  2:GitHub directory 3:Java filename       4:MD5 hash of file
-  download_file $includes $project_main BounceCountsMapReduce.java 8e8dd188e7850e75140110243485a51a
-  download_file $includes $project_main BounceCountStore.java      d476c15655c6a6c6cd7fe682dea4a8b7
-  download_file $includes $project_main PageViewStore.java         7dc8d2fec04ce89fae4f0356db17e19d
-  download_file $includes $project_main WiseApp.java               23371436b588c3262fec14ec5d7aa6df
-  download_file $includes $project_test WiseAppTest.java           5145832dc315f4253fa6b2aac3ee9164
-  download_file $includes $project_main WiseFlow.java              94cb2ef13e10386d4c40c4252777d15e
-  download_file $includes $project_main WiseWorkflow.java          d24a138d3a96bfb41e6d166866b72291
-  download_file $includes $project_main WiseService.java           dccfeb2d5726a031b5aff9897ccf8257
+  download_file $includes_wise $project_main BounceCountsMapReduce.java 8e8dd188e7850e75140110243485a51a
+  download_file $includes_wise $project_main BounceCountStore.java      d476c15655c6a6c6cd7fe682dea4a8b7
+  download_file $includes_wise $project_main PageViewStore.java         7dc8d2fec04ce89fae4f0356db17e19d
+  download_file $includes_wise $project_main WiseApp.java               23371436b588c3262fec14ec5d7aa6df
+  download_file $includes_wise $project_test WiseAppTest.java           5145832dc315f4253fa6b2aac3ee9164
+  download_file $includes_wise $project_main WiseFlow.java              94cb2ef13e10386d4c40c4252777d15e
+  download_file $includes_wise $project_main WiseWorkflow.java          d24a138d3a96bfb41e6d166866b72291
+  download_file $includes_wise $project_main WiseService.java           dccfeb2d5726a031b5aff9897ccf8257
 
   echo_red_bold "Downloading image files from GitHub..."
-  download_file $includes $project_img wise_architecture_diagram.png f01e52df149f10702d933d73935d9f29
-  download_file $includes $project_img wise_flow.png                 894828f13019dfbda5de43f514a8a49f
+  download_file $includes_wise $project_img wise_architecture_diagram.png f01e52df149f10702d933d73935d9f29
+  download_file $includes_wise $project_img wise_flow.png                 894828f13019dfbda5de43f514a8a49f
 
   echo_red_bold "Downloading files and any images and re-writing all the image links..."
   guide_rewrite_sed $1 cdap-bi-guide 
@@ -176,6 +176,11 @@ function download_includes() {
   test_an_include 38789a70a89c188443f7cfd05b2ea0db ../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/WikipediaPipelineApp.java
   
   test_an_include 5154138de03f9fab4311858225f18dca ../../cdap-examples/WordCount/src/main/java/co/cask/cdap/examples/wordcount/WordCount.java
+
+  echo_red_bold "Rewriting the Apps-Packs file"
+  rewrite ${includes}/../../source/_includes/apps-packs.txt      ${includes}/apps-packs.txt      "<placeholder-version>" ${source2}
+  echo_red_bold "Rewriting the Tutorial Index file"
+  rewrite ${includes}/../../source/_includes/tutorials-index.txt ${includes}/tutorials-index.txt "<placeholder-version>" ${source2}
 }
 
 run_command ${1}
