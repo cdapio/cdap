@@ -234,7 +234,7 @@ class HydratorPlusPlusTopPanelCtrl{
     this.myPipelineApi.runPreview(params, pipelineConfig).$promise
       .then((res) => {
         this.previewStore.dispatch(
-          this.previewActions.setPreviewId(res.preview)
+          this.previewActions.setPreviewId(res.application)
         );
         let startTime = new Date();
         this.previewStartTime = startTime;
@@ -243,7 +243,7 @@ class HydratorPlusPlusTopPanelCtrl{
           this.previewActions.setPreviewStartTime(startTime)
         );
 
-        this.startPollPreviewStatus(res.preview);
+        this.startPollPreviewStatus(res.application);
       }, (err) => {
         this.previewLoading = false;
         this.myAlertOnValium.show({

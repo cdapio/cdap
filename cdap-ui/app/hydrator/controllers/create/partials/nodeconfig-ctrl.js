@@ -357,11 +357,11 @@ class HydratorPlusPlusNodeConfigCtrl {
         };
 
         if (!this.state.isSource) {
-          this.previewData.input = this.formatMultipleRecords(res['input.records']);
+          this.previewData.input = this.formatMultipleRecords(res['records.in']);
           this.previewData.numInputStages = Object.keys(this.previewData.input).length;
         }
         if (!this.state.isSink) {
-          this.previewData.output = this.formatRecords(res['output.records']);
+          this.previewData.output = this.formatRecords(res['records.out']);
         }
         this.previewLoading = false;
       }, () => {
