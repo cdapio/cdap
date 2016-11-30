@@ -255,6 +255,7 @@ cdap_check_mapr() {
   if [[ -f /opt/mapr/MapRBuildVersion ]]; then
     return 0
   fi
+  return 1
 }
 
 #
