@@ -33,4 +33,9 @@ public class YarnOperationalStatsTest extends AbstractYarnOperationalStatsTest {
     yarnCluster.start();
     return yarnCluster;
   }
+
+  @Override
+  protected int getNumNodes() {
+    return 1;
+  }
 }

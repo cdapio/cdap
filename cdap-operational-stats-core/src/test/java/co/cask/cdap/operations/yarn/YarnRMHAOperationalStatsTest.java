@@ -47,4 +47,9 @@ public class YarnRMHAOperationalStatsTest extends AbstractYarnOperationalStatsTe
       new HAServiceProtocol.StateChangeRequestInfo(HAServiceProtocol.RequestSource.REQUEST_BY_USER));
     return yarnCluster;
   }
+
+  @Override
+  protected int getNumNodes() {
+    return 2;
+  }
 }
