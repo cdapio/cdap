@@ -16,55 +16,242 @@
 
 package co.cask.cdap.internal.app.preview;
 
-import co.cask.cdap.api.metrics.MetricTimeSeries;
+import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.preview.PreviewManager;
-import co.cask.cdap.app.preview.PreviewStatus;
+import co.cask.cdap.app.preview.PreviewRequest;
+import co.cask.cdap.app.preview.PreviewRunner;
+import co.cask.cdap.app.preview.PreviewRunnerModule;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.IOModule;
+import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.preview.PreviewDiscoveryRuntimeModule;
+import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.common.utils.Networks;
+import co.cask.cdap.config.PreferencesStore;
+import co.cask.cdap.config.guice.ConfigStoreModule;
+import co.cask.cdap.data.runtime.DataSetServiceModules;
+import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.preview.PreviewDataModules;
+import co.cask.cdap.data.stream.StreamCoordinatorClient;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
+import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
-import org.apache.twill.api.logging.LogEntry;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizerInstantiator;
+import co.cask.cdap.security.guice.SecurityModules;
+import co.cask.cdap.security.guice.preview.PreviewSecureStoreModule;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import co.cask.cdap.security.spi.authorization.PrivilegesManager;
+import co.cask.cdap.store.guice.NamespaceStoreModule;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
+import com.google.common.util.concurrent.Service;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.Provides;
+import com.google.inject.name.Named;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.TransactionManager;
+import org.apache.twill.discovery.DiscoveryService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
- * Default implementation of the {@link PreviewManager}.
+ * Class responsible for creating the injector for preview and starting it.
  */
 public class DefaultPreviewManager implements PreviewManager {
-  @Override
-  public ApplicationId start(NamespaceId namespaceId, AppRequest<?> request) throws Exception {
-    return null;
+
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultPreviewManager.class);
+  private final CConfiguration cConf;
+  private final Configuration hConf;
+  private final DiscoveryService discoveryService;
+  private final DatasetFramework datasetFramework;
+  private final PreferencesStore preferencesStore;
+  private final SecureStore secureStore;
+  private final TransactionManager transactionManager;
+  private final ArtifactRepository artifactRepository;
+  private final ArtifactStore artifactStore;
+  private final AuthorizerInstantiator authorizerInstantiator;
+  private final StreamAdmin streamAdmin;
+  private final StreamCoordinatorClient streamCoordinatorClient;
+  private final PrivilegesManager privilegesManager;
+  private final AuthorizationEnforcer authorizationEnforcer;
+  private final Cache<ApplicationId, Injector> appInjectors;
+
+  @Inject
+  DefaultPreviewManager(final CConfiguration cConf, Configuration hConf, DiscoveryService discoveryService,
+                        @Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
+                        PreferencesStore preferencesStore, SecureStore secureStore,
+                        TransactionManager transactionManager, ArtifactRepository artifactRepository,
+                        ArtifactStore artifactStore, AuthorizerInstantiator authorizerInstantiator,
+                        StreamAdmin streamAdmin, StreamCoordinatorClient streamCoordinatorClient,
+                        PrivilegesManager privilegesManager, AuthorizationEnforcer authorizationEnforcer) {
+    this.cConf = cConf;
+    this.hConf = hConf;
+    this.datasetFramework = datasetFramework;
+    this.discoveryService = discoveryService;
+    this.preferencesStore = preferencesStore;
+    this.secureStore = secureStore;
+    this.transactionManager = transactionManager;
+    this.artifactRepository = artifactRepository;
+    this.artifactStore = artifactStore;
+    this.authorizerInstantiator = authorizerInstantiator;
+    this.streamAdmin = streamAdmin;
+    this.streamCoordinatorClient = streamCoordinatorClient;
+    this.privilegesManager = privilegesManager;
+    this.authorizationEnforcer = authorizationEnforcer;
+
+    // TODO make maximum size and expire after write configurable?
+    this.appInjectors = CacheBuilder.newBuilder()
+      .maximumSize(10)
+      .expireAfterWrite(15, TimeUnit.MINUTES)
+      .removalListener(new RemovalListener<ApplicationId, Injector>() {
+        @Override
+        @ParametersAreNonnullByDefault
+        public void onRemoval(RemovalNotification<ApplicationId, Injector> notification) {
+          Injector injector = notification.getValue();
+          if (injector != null) {
+            PreviewRunner runner = injector.getInstance(PreviewRunner.class);
+            if (runner instanceof Service) {
+              ((Service) runner).stopAndWait();
+            }
+          }
+          ApplicationId application = notification.getKey();
+          if (application == null) {
+            return;
+          }
+          java.nio.file.Path previewDirPath = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                                                        "preview", application.getApplication()).toAbsolutePath();
+
+          try {
+            DirUtils.deleteDirectoryContents(previewDirPath.toFile());
+          } catch (IOException e) {
+            LOG.warn("Error deleting the preview directory {}", previewDirPath, e);
+          }
+        }
+      })
+      .build();
   }
 
   @Override
-  public PreviewStatus getStatus(ApplicationId preview) throws NotFoundException {
-    return null;
+  public ApplicationId start(NamespaceId namespace, AppRequest<?> appRequest) throws Exception {
+    Set<String> realDatasets = appRequest.getPreview() == null ? new HashSet<String>()
+      : appRequest.getPreview().getRealDatasets();
+
+    ApplicationId previewApp = namespace.app(RunIds.generate().getId());
+    Injector injector = createPreviewInjector(previewApp, realDatasets);
+    appInjectors.put(previewApp, injector);
+    PreviewRunner runner = injector.getInstance(PreviewRunner.class);
+    if (runner instanceof Service) {
+      ((Service) runner).startAndWait();
+    }
+    runner.startPreview(new PreviewRequest<>(getProgramIdFromRequest(previewApp, appRequest), appRequest));
+    return previewApp;
   }
 
   @Override
-  public void stop(ApplicationId preview) throws Exception {
+  public PreviewRunner getRunner(ApplicationId preview) throws NotFoundException {
+    Injector injector = appInjectors.getIfPresent(preview);
+    if (injector == null) {
+      throw new NotFoundException(preview);
+    }
 
+    return injector.getInstance(PreviewRunner.class);
   }
 
-  @Override
-  public List<String> getTracers(ApplicationId preview) throws NotFoundException {
-    return null;
+  /**
+   * Create injector for the given application id.
+   */
+  @VisibleForTesting
+  Injector createPreviewInjector(ApplicationId applicationId, Set<String> datasetNames) throws IOException {
+    CConfiguration previewcConf = CConfiguration.copy(cConf);
+    java.nio.file.Path previewDirPath = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "preview").toAbsolutePath();
+
+    Files.createDirectories(previewDirPath);
+    java.nio.file.Path previewDir = Files.createDirectories(Paths.get(previewDirPath.toAbsolutePath().toString(),
+                                                                      applicationId.getApplication()));
+    previewcConf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.toString());
+    previewcConf.set(Constants.Dataset.DATA_DIR, previewDir.toString());
+    Configuration previewhConf = new Configuration(hConf);
+    previewhConf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.toString());
+    previewcConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, previewDir.toString());
+    previewcConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, false);
+
+    return Guice.createInjector(
+      new ConfigModule(previewcConf, previewhConf),
+      new IOModule(),
+      new AuthenticationContextModules().getMasterModule(),
+      new SecurityModules().getStandaloneModules(),
+      new PreviewSecureStoreModule(secureStore),
+      new PreviewDiscoveryRuntimeModule(discoveryService),
+      new LocationRuntimeModule().getStandaloneModules(),
+      new ConfigStoreModule().getStandaloneModule(),
+      new PreviewRunnerModule(artifactRepository, artifactStore, authorizerInstantiator, authorizationEnforcer,
+                              privilegesManager, streamAdmin, streamCoordinatorClient, preferencesStore),
+      new ProgramRunnerRuntimeModule().getStandaloneModules(),
+      new PreviewDataModules().getDataFabricModule(transactionManager),
+      new PreviewDataModules().getDataSetsModule(datasetFramework, datasetNames),
+      new DataSetServiceModules().getStandaloneModules(),
+      new MetricsClientRuntimeModule().getStandaloneModules(),
+      new LoggingModules().getStandaloneModules(),
+      new NamespaceStoreModule().getStandaloneModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+        }
+
+        @Provides
+        @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS)
+        @SuppressWarnings("unused")
+        public InetAddress providesHostname(CConfiguration cConf) {
+          String address = cConf.get(Constants.Preview.ADDRESS);
+          return Networks.resolve(address, new InetSocketAddress("localhost", 0).getAddress());
+        }
+      }
+    );
   }
 
-  @Override
-  public Map<String, Map<String, List<Object>>> getData(ApplicationId preview) throws NotFoundException {
-    return null;
-  }
+  private ProgramId getProgramIdFromRequest(ApplicationId preview, AppRequest request) {
+    // TODO remove this when UI passes the program name and type in the AppRequest.
+    if (request.getPreview() == null) {
+      return preview.workflow("DataPipelineWorkflow");
+    }
 
-  @Override
-  public Collection<MetricTimeSeries> getMetrics(ApplicationId preview) throws NotFoundException {
-    return null;
-  }
+    String programName = request.getPreview().getProgramName();
+    ProgramType programType = request.getPreview().getProgramType();
 
-  @Override
-  public List<LogEntry> getLogs(ApplicationId preview) throws NotFoundException {
-    return null;
+    if (programName == null || programType == null) {
+      throw new IllegalArgumentException("ProgramName or ProgramType cannot be null.");
+    }
+
+    return preview.program(programType, programName);
   }
 }

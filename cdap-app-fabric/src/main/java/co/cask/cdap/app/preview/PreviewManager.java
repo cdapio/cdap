@@ -15,75 +15,30 @@
  */
 package co.cask.cdap.app.preview;
 
-import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
-import org.apache.twill.api.logging.LogEntry;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 /**
- * Interface used for managing the preview lifecycle and retrieval of the preview data.
+ * Interface used for managing the preview runs.
  */
 public interface PreviewManager {
 
   /**
-   * Start the preview of an application config provided as an input.
-   * @param namespaceId the id of the namespace
-   * @param request the application request containing app configs
-   * @return the id of the preview application
+   * Start the preview of an application config provided as an input in a given namespace.
+   * @param namespace the id of the namespace in which preview to be run
+   * @param request the {@link AppRequest} with which preview need to be started
+   * @return the {@link ApplicationId} assigned to the preview run
    * @throws Exception if there were any error during starting preview
    */
-  ApplicationId start(NamespaceId namespaceId, AppRequest<?> request) throws Exception;
+  ApplicationId start(NamespaceId namespace, AppRequest<?> request) throws Exception;
 
   /**
-   * Get the status for the specified preview represented by {@link ApplicationId}.
-   * @param preview the application id of the preview for which status is to be returned
-   * @return the status associated with the preview
+   * Get the {@link PreviewRunner} responsible for managing the given preview.
+   * @param preview the application id of the preview for which {@link PreviewRunner} is to be returned
+   * @return the {@link PreviewRunner} associted with the preview
    * @throws NotFoundException if the preview application is not found
    */
-  PreviewStatus getStatus(ApplicationId preview) throws NotFoundException;
-
-  /**
-   * Stop the preview as represented by the {@link ApplicationId}.
-   * @param preview the application id of the preview
-   * @throws Exception if the preview is not found or if there were any error during stop
-   */
-  void stop(ApplicationId preview) throws Exception;
-
-  /**
-   * Get list of tracers used in the specified preview.
-   * @param preview the application id of the preview
-   * @return {@link List} of tracers used in the preview
-   * @throws NotFoundException if preview application is not found
-   */
-  List<String> getTracers(ApplicationId preview) throws NotFoundException;
-
-  /**
-   * Get the data associated with the preview.
-   * @param preview the id associated with the preview
-   * @return the {@link Map} of tracer name to properties associated with the tracer for a given preview
-   * @throws NotFoundException if the previewId is not found
-   */
-  Map<String, Map<String, List<Object>>> getData(ApplicationId preview) throws NotFoundException;
-
-  /**
-   * Get metric associated with the preview.
-   * @param preview the id of the preview
-   * @return the {@link Collection} of metrics emitted during the preview run
-   * @throws NotFoundException if the previewId is not found
-   */
-  Collection<MetricTimeSeries> getMetrics(ApplicationId preview) throws NotFoundException;
-
-  /**
-   * Get the logs for the preview.
-   * @param preview the id of the preview for which logs to be fetched
-   * @return the logs
-   * @throws NotFoundException if the previewId is not found
-   */
-  List<LogEntry> getLogs(ApplicationId preview) throws NotFoundException;
+  PreviewRunner getRunner(ApplicationId preview) throws NotFoundException;
 }

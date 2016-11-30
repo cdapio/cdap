@@ -13,23 +13,30 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.internal.app.services;
 
-import co.cask.cdap.gateway.handlers.preview.PreviewHttpHandler;
-import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.id.ApplicationId;
-import org.junit.Test;
+package co.cask.cdap.app.preview;
 
-import java.util.HashSet;
+import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.proto.id.ProgramId;
 
 /**
- * Test for {@link PreviewHttpHandler}.
+ * Represents the preview application request.
+ * @param <T> the type of application config
  */
-public class PreviewHttpHandlerTest extends AppFabricTestBase {
+public class PreviewRequest<T> {
+  private final ProgramId program;
+  private final AppRequest<T> appRequest;
 
-  @Test
-  public void testInjector() throws Exception {
-    PreviewHttpHandler handler = getInjector().getInstance(PreviewHttpHandler.class);
-    handler.createPreviewInjector(new ApplicationId("ns", "app"), new HashSet<String>());
+  public PreviewRequest(ProgramId program, AppRequest<T> appRequest) {
+    this.program = program;
+    this.appRequest = appRequest;
+  }
+
+  public ProgramId getProgram() {
+    return program;
+  }
+
+  public AppRequest<T> getAppRequest() {
+    return appRequest;
   }
 }
