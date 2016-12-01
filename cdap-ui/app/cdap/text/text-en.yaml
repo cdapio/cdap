@@ -440,4 +440,14 @@ features:
          creation-error-desc: "Failed to create namespace '%s'"
          creation-success-desc: "Successfully created namespace '%s'"
 
+  Wrangler:
+    Actions:
+      WRANGLER_DROP_COLUMN: drop
+      WRANGLER_SPLIT_COLUMN: split
+      WRANGLER_MERGE_COLUMN: merge
+      WRANGLER_RENAME_COLUMN: rename
+      WRANGLER_UPPER_CASE_COLUMN: uppercase
+      WRANGLER_LOWER_CASE_COLUMN: lowercase
+      WRANGLER_TITLE_CASE_COLUMN: titlecase
+      WRANGLER_SUBSTRING_COLUMN: substring
 ...

@@ -26,6 +26,9 @@ const WranglerActions = {
   subStringColumn: 'WRANGLER_SUBSTRING_COLUMN',
   sortColumn: 'WRANGLER_SORT_COLUMN',
   setFilter: 'WRANGLER_SET_FILTER',
+  deleteHistory: 'WRANGLER_DELETE_HISTORY',
+  undo: 'WRANGLER_UNDO',
+  redo: 'WRANGLER_REDO',
   reset: 'WRANGLER_RESET'
 };
 
