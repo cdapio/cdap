@@ -58,7 +58,7 @@ public class ViewSystemMetadataWriterTest {
     FormatSpecification formatSpec = new FormatSpecification(format, schema);
     ViewSpecification viewSpec = new ViewSpecification(formatSpec);
     NoOpMetadataStore metadataStore = new NoOpMetadataStore();
-    ViewSystemMetadataWriter writer = new ViewSystemMetadataWriter(metadataStore, viewId, viewSpec);
+    ViewSystemMetadataWriter writer = new ViewSystemMetadataWriter(metadataStore, viewId, viewSpec, false);
     return writer.getSchemaToAdd();
   }
 }
