@@ -18,7 +18,6 @@ package co.cask.cdap.data2.metadata.system;
 
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
-import co.cask.cdap.data2.metadata.indexer.SchemaIndexer;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataScope;
@@ -114,10 +113,11 @@ public abstract class AbstractSystemMetadataWriter implements SystemMetadataWrit
     if (tags.length > 0) {
       metadataStore.addTags(MetadataScope.SYSTEM, entityId, tags);
     }
+    // store additional properties that we want to index separately
     // if there is schema property then set that while providing schema indexer
-    if (!Strings.isNullOrEmpty(getSchemaToAdd())) {
-      metadataStore.setProperties(MetadataScope.SYSTEM, entityId,
-                                  ImmutableMap.of(SCHEMA_KEY, getSchemaToAdd()), new SchemaIndexer());
+    String schema = getSchemaToAdd();
+    if (!Strings.isNullOrEmpty(schema)) {
+      metadataStore.setProperty(MetadataScope.SYSTEM, entityId, SCHEMA_KEY, schema);
     }
   }
 
