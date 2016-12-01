@@ -55,8 +55,8 @@ public class KafkaNotificationTest extends NotificationTest {
     startServices(KAFKA_TESTER.getInjector());
 
     // TODO remove once Twill addLatest bug is fixed
-    feedManager.createFeed(FEED1);
-    feedManager.createFeed(FEED2);
+    feedManager.createFeed(FEED1_INFO);
+    feedManager.createFeed(FEED2_INFO);
 
     // Try to publish to the feeds. Needs to retry multiple times due to race between Kafka server registers itself
     // to ZK and the publisher be able to see the changes in the ZK to get the broker list

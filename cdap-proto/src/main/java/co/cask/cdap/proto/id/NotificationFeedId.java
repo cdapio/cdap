@@ -26,7 +26,6 @@ import java.util.Objects;
 /**
  * Uniquely identifies a notification feed.
  */
-// TODO: toString() must be namespace.category.feed for backwards compatibility with Id.NotificationFeed
 public class NotificationFeedId extends NamespacedEntityId implements ParentedId<NamespaceId> {
   private final String category;
   private final String feed;

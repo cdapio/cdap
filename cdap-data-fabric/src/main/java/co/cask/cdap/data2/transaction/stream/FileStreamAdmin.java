@@ -47,16 +47,17 @@ import co.cask.cdap.explore.utils.ExploreTableNaming;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NotificationFeedId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.StreamViewId;
+import co.cask.cdap.proto.notification.NotificationFeedInfo;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
@@ -479,19 +480,18 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   /**
-   * Create the public {@link Id.NotificationFeed}s that concerns the stream with configuration {@code config}.
+   * Create the public {@link NotificationFeedId}s that concerns the stream with configuration {@code config}.
    *
    * @param config config of the stream to create feeds for
    */
   private void createStreamFeeds(StreamConfig config) {
     try {
-      Id.NotificationFeed streamFeed = new Id.NotificationFeed.Builder()
-        .setNamespaceId(config.getStreamId().getNamespace())
-        .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-        .setName(String.format("%sSize", config.getStreamId().getEntityName()))
-        .setDescription(String.format("Size updates feed for Stream %s every %dMB",
-                                      config.getStreamId(), config.getNotificationThresholdMB()))
-        .build();
+      NotificationFeedInfo streamFeed = new NotificationFeedInfo(
+        config.getStreamId().getNamespace(),
+        Constants.Notification.Stream.STREAM_FEED_CATEGORY,
+        String.format("%sSize", config.getStreamId().getEntityName()),
+        String.format("Size updates feed for Stream %s every %dMB",
+                      config.getStreamId(), config.getNotificationThresholdMB()));
       notificationFeedManager.createFeed(streamFeed);
     } catch (NotificationFeedException e) {
       LOG.error("Cannot create feed for Stream {}", config.getStreamId(), e);

@@ -25,29 +25,20 @@ import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
-import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
-import it.unimi.dsi.fastutil.Hash;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,25 +48,30 @@ import javax.annotation.Nullable;
  * Handy dataset to be used for managing metadata
  */
 public class MetadataStoreDataset extends AbstractDataset {
-  private static final Gson GSON = new Gson();
   /**
    * All rows we store use single column of this name.
    */
   private static final byte[] COLUMN = Bytes.toBytes("c");
 
   private final Table table;
+  private final Gson gson;
 
   public MetadataStoreDataset(Table table) {
+    this(table, new Gson());
+  }
+
+  public MetadataStoreDataset(Table table, Gson gson) {
     super("ignored", table);
     this.table = table;
+    this.gson = gson;
   }
 
   protected <T> byte[] serialize(T value) {
-    return Bytes.toBytes(GSON.toJson(value));
+    return Bytes.toBytes(gson.toJson(value));
   }
 
   protected <T> T deserialize(byte[] serialized, Type typeOfT) {
-    return GSON.fromJson(Bytes.toString(serialized), typeOfT);
+    return gson.fromJson(Bytes.toString(serialized), typeOfT);
   }
 
   public boolean exists(MDSKey id) {

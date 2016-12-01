@@ -40,9 +40,10 @@ import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
 import co.cask.cdap.notifications.service.NotificationContext;
 import co.cask.cdap.notifications.service.NotificationHandler;
 import co.cask.cdap.notifications.service.NotificationService;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NotificationFeedId;
 import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.notification.NotificationFeedInfo;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -307,11 +308,10 @@ public class DistributedStreamService extends AbstractStreamService {
    */
   private Cancellable subscribeToHeartbeatsFeed() throws NotificationFeedNotFoundException {
     LOG.debug("Subscribing to stream heartbeats notification feed");
-    final Id.NotificationFeed heartbeatsFeed = new Id.NotificationFeed.Builder()
-      .setNamespaceId(NamespaceId.SYSTEM.getNamespace())
-      .setCategory(Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY)
-      .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
-      .build();
+    NotificationFeedId heartbeatsFeed = new NotificationFeedId(
+      NamespaceId.SYSTEM.getNamespace(),
+      Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY,
+      Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME);
 
     boolean isRetry = false;
     while (true) {
@@ -375,12 +375,11 @@ public class DistributedStreamService extends AbstractStreamService {
    * Create Notification feed for stream's heartbeats, if it does not already exist.
    */
   private void createHeartbeatsFeed() throws NotificationFeedException {
-    Id.NotificationFeed streamHeartbeatsFeed = new Id.NotificationFeed.Builder()
-      .setNamespaceId(NamespaceId.SYSTEM.getEntityName())
-      .setCategory(Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY)
-      .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
-      .setDescription("Stream heartbeats feed.")
-      .build();
+    NotificationFeedInfo streamHeartbeatsFeed = new NotificationFeedInfo(
+      NamespaceId.SYSTEM.getEntityName(),
+      Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY,
+      Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME,
+      "Stream heartbeats feed.");
 
     LOG.debug("Ensuring Stream HeartbeatsFeed exists.");
     boolean isRetry = false;
@@ -569,7 +568,7 @@ public class DistributedStreamService extends AbstractStreamService {
   private final class StreamSizeAggregator implements Cancellable {
 
     private final Map<Integer, Long> streamWriterSizes;
-    private final Id.NotificationFeed streamFeed;
+    private final NotificationFeedId streamFeed;
     private final AtomicLong streamBaseCount;
     private final long streamInitSize;
     private final AtomicInteger streamThresholdMB;
@@ -583,11 +582,9 @@ public class DistributedStreamService extends AbstractStreamService {
       this.streamThresholdMB = new AtomicInteger(streamThresholdMB);
       this.cancellable = cancellable;
       this.streamId = streamId;
-      this.streamFeed = new Id.NotificationFeed.Builder()
-        .setNamespaceId(streamId.getNamespace())
-        .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-        .setName(String.format("%sSize", streamId.getEntityName()))
-        .build();
+      this.streamFeed = new NotificationFeedId(streamId.getNamespace(),
+                                               Constants.Notification.Stream.STREAM_FEED_CATEGORY,
+                                               String.format("%sSize", streamId.getEntityName()));
     }
 
     /**
@@ -656,7 +653,7 @@ public class DistributedStreamService extends AbstractStreamService {
       } catch (NotificationFeedException e) {
         LOG.warn("Error with notification feed {}", streamFeed, e);
       } catch (Throwable t) {
-        LOG.warn("Could not publish notification on feed {}", streamFeed.getFeedId(), t);
+        LOG.warn("Could not publish notification on feed {}", streamFeed, t);
       }
     }
   }

@@ -26,8 +26,8 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.service.NotificationService;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NotificationFeedId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -163,7 +163,7 @@ public class LocalStreamService extends AbstractStreamService {
    */
   private final class StreamSizeAggregator implements Cancellable {
     private final long streamInitSize;
-    private final Id.NotificationFeed streamFeed;
+    private final NotificationFeedId streamFeed;
     private final StreamId streamId;
     private final AtomicLong streamBaseCount;
     private final AtomicInteger streamThresholdMB;
@@ -175,11 +175,10 @@ public class LocalStreamService extends AbstractStreamService {
       this.streamInitSize = baseCount;
       this.streamBaseCount = new AtomicLong(baseCount);
       this.cancellable = cancellable;
-      this.streamFeed = new Id.NotificationFeed.Builder()
-        .setNamespaceId(streamId.getNamespace())
-        .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-        .setName(String.format("%sSize", streamId.getEntityName()))
-        .build();
+      this.streamFeed = new NotificationFeedId(
+        streamId.getNamespace(),
+        Constants.Notification.Stream.STREAM_FEED_CATEGORY,
+        String.format("%sSize", streamId.getEntityName()));
       this.streamThresholdMB = new AtomicInteger(streamThresholdMB);
     }
 
@@ -224,7 +223,7 @@ public class LocalStreamService extends AbstractStreamService {
       } catch (NotificationFeedException e) {
         LOG.warn("Error with notification feed {}", streamFeed, e);
       } catch (Throwable t) {
-        LOG.debug("Could not publish notification on feed {}", streamFeed.getFeedId(), t);
+        LOG.debug("Could not publish notification on feed {}", streamFeed, t);
       }
     }
   }

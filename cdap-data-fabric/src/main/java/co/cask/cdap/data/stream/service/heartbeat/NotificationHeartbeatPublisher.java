@@ -19,7 +19,8 @@ package co.cask.cdap.data.stream.service.heartbeat;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.notifications.service.NotificationException;
 import co.cask.cdap.notifications.service.NotificationService;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NotificationFeedId;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
@@ -31,16 +32,15 @@ import com.google.inject.Inject;
 public class NotificationHeartbeatPublisher extends AbstractIdleService implements HeartbeatPublisher {
 
   private final NotificationService notificationService;
-  private final Id.NotificationFeed heartbeatFeed;
+  private final NotificationFeedId heartbeatFeed;
 
   @Inject
   public NotificationHeartbeatPublisher(NotificationService notificationService) {
     this.notificationService = notificationService;
-    this.heartbeatFeed = new Id.NotificationFeed.Builder()
-      .setNamespaceId(Id.Namespace.SYSTEM.getId())
-      .setCategory(Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY)
-      .setName(Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME)
-      .build();
+    this.heartbeatFeed = new NotificationFeedId(
+      NamespaceId.SYSTEM.getNamespace(),
+      Constants.Notification.Stream.STREAM_INTERNAL_FEED_CATEGORY,
+      Constants.Notification.Stream.STREAM_HEARTBEAT_FEED_NAME);
   }
 
   @Override

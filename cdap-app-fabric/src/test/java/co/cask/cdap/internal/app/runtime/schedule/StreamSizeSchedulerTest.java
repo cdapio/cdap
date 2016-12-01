@@ -22,6 +22,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.stream.notification.StreamSizeNotification;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NotificationFeedId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;
 import org.junit.BeforeClass;
@@ -44,11 +45,10 @@ public class StreamSizeSchedulerTest extends SchedulerTestBase {
 
   @Override
   protected StreamMetricsPublisher createMetricsPublisher(final Id.Stream streamId) {
-    final Id.NotificationFeed feed = new Id.NotificationFeed.Builder()
-      .setNamespaceId(streamId.getNamespaceId())
-      .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-      .setName(streamId.getId() + "Size")
-      .build();
+    final NotificationFeedId feed = new NotificationFeedId(
+      streamId.getNamespaceId(),
+      Constants.Notification.Stream.STREAM_FEED_CATEGORY,
+      streamId.getId() + "Size");
 
     return new StreamMetricsPublisher() {
 

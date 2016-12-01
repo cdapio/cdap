@@ -21,7 +21,7 @@ import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.service.AbstractNotificationService;
 import co.cask.cdap.notifications.service.NotificationException;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NotificationFeedId;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -57,7 +57,7 @@ public class InMemoryNotificationService extends AbstractNotificationService {
   }
 
   @Override
-  public <N> ListenableFuture<N> publish(final Id.NotificationFeed feed, final N notification,
+  public <N> ListenableFuture<N> publish(final NotificationFeedId feed, final N notification,
                                          final Type notificationType)
     throws NotificationException {
     if (executorService == null) {
@@ -66,7 +66,7 @@ public class InMemoryNotificationService extends AbstractNotificationService {
     return executorService.submit(new Callable<N>() {
       @Override
       public N call() throws Exception {
-        notificationReceived(feed, createGson().toJsonTree(notification, notificationType));
+        notificationReceived(feed, GSON.toJsonTree(notification, notificationType));
         return notification;
       }
     });

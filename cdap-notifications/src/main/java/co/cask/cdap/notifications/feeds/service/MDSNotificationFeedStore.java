@@ -30,18 +30,20 @@ import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.TxCallable;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.notifications.NotificationFeedInfoDeserializer;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NotificationFeedId;
+import co.cask.cdap.proto.notification.NotificationFeedInfo;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterators;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -53,6 +55,10 @@ public final class MDSNotificationFeedStore implements NotificationFeedStore {
   // dependent
   private static final DatasetId APP_META_INSTANCE_ID = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
   private static final String TYPE_NOTIFICATION_FEED = "feed";
+  private static final Gson GSON = new GsonBuilder()
+    .enableComplexMapKeySerialization()
+    .registerTypeAdapter(NotificationFeedInfo.class, new NotificationFeedInfoDeserializer())
+    .create();
 
   private final DatasetFramework datasetFramework;
   private final Transactional transactional;
@@ -72,18 +78,18 @@ public final class MDSNotificationFeedStore implements NotificationFeedStore {
   private MetadataStoreDataset getMetadataStore(DatasetContext context) throws IOException, DatasetManagementException {
     Table table = DatasetsUtil.getOrCreateDataset(context, datasetFramework, APP_META_INSTANCE_ID,
                                                   Table.class.getName(), DatasetProperties.EMPTY);
-    return new MetadataStoreDataset(table);
+    return new MetadataStoreDataset(table, GSON);
   }
 
   @Override
-  public Id.NotificationFeed createNotificationFeed(final Id.NotificationFeed feed) {
+  public NotificationFeedInfo createNotificationFeed(final NotificationFeedInfo feed) {
     try {
-      return Transactions.execute(transactional, new TxCallable<Id.NotificationFeed>() {
+      return Transactions.execute(transactional, new TxCallable<NotificationFeedInfo>() {
         @Override
-        public Id.NotificationFeed call(DatasetContext context) throws Exception {
+        public NotificationFeedInfo call(DatasetContext context) throws Exception {
           MetadataStoreDataset metaStore = getMetadataStore(context);
-          MDSKey feedKey = getKey(TYPE_NOTIFICATION_FEED, feed.getNamespaceId(), feed.getCategory(), feed.getName());
-          Id.NotificationFeed existing = metaStore.getFirst(feedKey, Id.NotificationFeed.class);
+          MDSKey feedKey = getKey(TYPE_NOTIFICATION_FEED, feed.getNamespace(), feed.getCategory(), feed.getFeed());
+          NotificationFeedInfo existing = metaStore.getFirst(feedKey, NotificationFeedInfo.class);
           if (existing != null) {
             return existing;
           }
@@ -97,13 +103,13 @@ public final class MDSNotificationFeedStore implements NotificationFeedStore {
   }
 
   @Override
-  public Id.NotificationFeed getNotificationFeed(final Id.NotificationFeed feed) {
+  public NotificationFeedInfo getNotificationFeed(final NotificationFeedId feed) {
     try {
-      return Transactions.execute(transactional, new TxCallable<Id.NotificationFeed>() {
+      return Transactions.execute(transactional, new TxCallable<NotificationFeedInfo>() {
         @Override
-        public Id.NotificationFeed call(DatasetContext context) throws Exception {
-          MDSKey feedKey = getKey(TYPE_NOTIFICATION_FEED, feed.getNamespaceId(), feed.getCategory(), feed.getName());
-          return getMetadataStore(context).getFirst(feedKey, Id.NotificationFeed.class);
+        public NotificationFeedInfo call(DatasetContext context) throws Exception {
+          MDSKey feedKey = getKey(TYPE_NOTIFICATION_FEED, feed.getNamespace(), feed.getCategory(), feed.getFeed());
+          return  getMetadataStore(context).getFirst(feedKey, NotificationFeedInfo.class);
         }
       });
     } catch (TransactionFailureException e) {
@@ -112,14 +118,14 @@ public final class MDSNotificationFeedStore implements NotificationFeedStore {
   }
 
   @Override
-  public Id.NotificationFeed deleteNotificationFeed(final Id.NotificationFeed feed) {
+  public NotificationFeedInfo deleteNotificationFeed(final NotificationFeedId feed) {
     try {
-      return Transactions.execute(transactional, new TxCallable<Id.NotificationFeed>() {
+      return Transactions.execute(transactional, new TxCallable<NotificationFeedInfo>() {
         @Override
-        public Id.NotificationFeed call(DatasetContext context) throws Exception {
-          MDSKey feedKey = getKey(TYPE_NOTIFICATION_FEED, feed.getNamespaceId(), feed.getCategory(), feed.getName());
+        public NotificationFeedInfo call(DatasetContext context) throws Exception {
+          MDSKey feedKey = getKey(TYPE_NOTIFICATION_FEED, feed.getNamespace(), feed.getCategory(), feed.getFeed());
           MetadataStoreDataset metaStore = getMetadataStore(context);
-          Id.NotificationFeed existing = metaStore.getFirst(feedKey, Id.NotificationFeed.class);
+          NotificationFeedInfo existing = metaStore.getFirst(feedKey, NotificationFeedInfo.class);
           if (existing != null) {
             metaStore.deleteAll(feedKey);
           }
@@ -132,13 +138,13 @@ public final class MDSNotificationFeedStore implements NotificationFeedStore {
   }
 
   @Override
-  public List<Id.NotificationFeed> listNotificationFeeds(final Id.Namespace namespace) {
+  public List<NotificationFeedInfo> listNotificationFeeds(final NamespaceId namespace) {
     try {
-      return Transactions.execute(transactional, new TxCallable<List<Id.NotificationFeed>>() {
+      return Transactions.execute(transactional, new TxCallable<List<NotificationFeedInfo>>() {
         @Override
-        public List<Id.NotificationFeed> call(DatasetContext context) throws Exception {
-          MDSKey mdsKey = getKey(TYPE_NOTIFICATION_FEED, namespace.getId());
-          return getMetadataStore(context).list(mdsKey, Id.NotificationFeed.class);
+        public List<NotificationFeedInfo> call(DatasetContext context) throws Exception {
+          MDSKey mdsKey = getKey(TYPE_NOTIFICATION_FEED, namespace.getNamespace());
+          return getMetadataStore(context).list(mdsKey, NotificationFeedInfo.class);
         }
       });
     } catch (TransactionFailureException e) {
@@ -150,16 +156,4 @@ public final class MDSNotificationFeedStore implements NotificationFeedStore {
     return new MDSKey.Builder().add(parts).build();
   }
 
-  private static final class NotificationFeedMds implements Iterable<MetadataStoreDataset> {
-    private final MetadataStoreDataset feeds;
-
-    private NotificationFeedMds(MetadataStoreDataset metaTable) {
-      this.feeds = metaTable;
-    }
-
-    @Override
-    public Iterator<MetadataStoreDataset> iterator() {
-      return Iterators.singletonIterator(feeds);
-    }
-  }
 }

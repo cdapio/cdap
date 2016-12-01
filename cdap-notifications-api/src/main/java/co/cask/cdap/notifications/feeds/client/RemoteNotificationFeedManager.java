@@ -23,7 +23,9 @@ import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NotificationFeedId;
+import co.cask.cdap.proto.notification.NotificationFeedInfo;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -76,10 +78,10 @@ public class RemoteNotificationFeedManager implements NotificationFeedManager {
   }
 
   @Override
-  public boolean createFeed(Id.NotificationFeed feed) throws NotificationFeedException {
+  public boolean createFeed(NotificationFeedInfo feed) throws NotificationFeedException {
     HttpRequest request = HttpRequest.put(resolve(
       String.format("namespaces/%s/feeds/categories/%s/names/%s",
-                    feed.getNamespaceId(), feed.getCategory(), feed.getName())))
+                    feed.getNamespace(), feed.getCategory(), feed.getFeed())))
       .withBody(GSON.toJson(feed)).build();
     HttpResponse response = execute(request);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
@@ -91,40 +93,40 @@ public class RemoteNotificationFeedManager implements NotificationFeedManager {
   }
 
   @Override
-  public void deleteFeed(Id.NotificationFeed feed) throws NotificationFeedNotFoundException, NotificationFeedException {
-    HttpResponse response = execute(HttpRequest.delete(resolve(
-      String.format("namespaces/%s/feeds/categories/%s/names/%s",
-                    feed.getNamespaceId(), feed.getCategory(), feed.getName()))
+  public void deleteFeed(NotificationFeedId feed) throws NotificationFeedNotFoundException, NotificationFeedException {
+    HttpResponse response = execute(HttpRequest.delete(
+      resolve(String.format("namespaces/%s/feeds/categories/%s/names/%s",
+                            feed.getNamespace(), feed.getCategory(), feed.getFeed()))
     ).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotificationFeedNotFoundException(feed.toEntityId());
+      throw new NotificationFeedNotFoundException(feed);
     } else if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
       throw new NotificationFeedException("Cannot delete notification feed. Reason: " + response);
     }
   }
 
   @Override
-  public Id.NotificationFeed getFeed(Id.NotificationFeed feed)
+  public NotificationFeedInfo getFeed(NotificationFeedId feed)
     throws NotificationFeedNotFoundException, NotificationFeedException {
-    HttpResponse response = execute(HttpRequest.get(resolve(
-      String.format("namespaces/%s/feeds/categories/%s/names/%s",
-                    feed.getNamespaceId(), feed.getCategory(), feed.getName()))
+    HttpResponse response = execute(HttpRequest.get(
+      resolve(String.format("namespaces/%s/feeds/categories/%s/names/%s",
+                            feed.getNamespace(), feed.getCategory(), feed.getFeed()))
     ).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotificationFeedNotFoundException(feed.toEntityId());
+      throw new NotificationFeedNotFoundException(feed);
     } else if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
       throw new NotificationFeedException("Cannot get notification feed. Reason: " + response);
     }
-    return ObjectResponse.fromJsonBody(response, Id.NotificationFeed.class).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, NotificationFeedInfo.class).getResponseObject();
   }
 
   @Override
-  public List<Id.NotificationFeed> listFeeds(Id.Namespace namespace) throws NotificationFeedException {
+  public List<NotificationFeedInfo> listFeeds(NamespaceId namespace) throws NotificationFeedException {
     HttpResponse response = execute(HttpRequest.get(resolve(
-      String.format("namespaces/%s/feeds", namespace.getId()))).build());
+      String.format("namespaces/%s/feeds", namespace.getNamespace()))).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
-      ObjectResponse<List<Id.NotificationFeed>> r =
-        ObjectResponse.fromJsonBody(response, new TypeToken<List<Id.NotificationFeed>>() { }.getType());
+      ObjectResponse<List<NotificationFeedInfo>> r =
+        ObjectResponse.fromJsonBody(response, new TypeToken<List<NotificationFeedInfo>>() { }.getType());
       return r.getResponseObject();
     }
     throw new NotificationFeedException("Cannot list notification feeds. Reason: " + response);
