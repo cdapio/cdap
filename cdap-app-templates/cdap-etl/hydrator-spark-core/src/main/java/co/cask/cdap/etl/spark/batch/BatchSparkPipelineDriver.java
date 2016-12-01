@@ -73,7 +73,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner
   private transient int numOfRecordsPreview;
 
   @Override
-  protected SparkCollection<Object> getSource(StageInfo stageInfo, int numOfRecordsPreview) {
+  protected SparkCollection<Object> getSource(StageInfo stageInfo) {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageInfo, sec);
     return new RDDCollection<>(sec, jsc, datasetContext, sinkFactory,
                                sourceFactory.createRDD(sec, jsc, stageInfo.getName(), Object.class, Object.class)
