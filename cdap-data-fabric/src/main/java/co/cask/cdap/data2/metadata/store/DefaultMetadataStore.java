@@ -26,8 +26,8 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.dataset.Metadata;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
+import co.cask.cdap.data2.metadata.dataset.MetadataDatasetDefinition;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
-import co.cask.cdap.data2.metadata.indexer.Indexer;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.id.DatasetId;
@@ -58,7 +58,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link MetadataStore} used in distributed mode.
@@ -97,18 +96,12 @@ public class DefaultMetadataStore implements MetadataStore {
     this.auditPublisher = auditPublisher;
   }
 
-  @Override
-  public void setProperties(MetadataScope scope, NamespacedEntityId namespacedEntityId,
-                            Map<String, String> properties) {
-    setProperties(scope, namespacedEntityId, properties, null);
-  }
-
   /**
    * Adds/updates metadata for the specified {@link NamespacedEntityId}.
    */
   @Override
   public void setProperties(final MetadataScope scope, final NamespacedEntityId namespacedEntityId,
-                            final Map<String, String> properties, @Nullable final Indexer indexer) {
+                            final Map<String, String> properties) {
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
@@ -117,7 +110,7 @@ public class DefaultMetadataStore implements MetadataStore {
         Set<String> existingTags = input.getTags(namespacedEntityId);
         previousRef.set(new MetadataRecord(namespacedEntityId, scope, existingProperties, existingTags));
         for (Map.Entry<String, String> entry : properties.entrySet()) {
-          input.setProperty(namespacedEntityId, entry.getKey(), entry.getValue(), indexer);
+          input.setProperty(namespacedEntityId, entry.getKey(), entry.getValue());
         }
       }
     }, scope);
@@ -143,6 +136,24 @@ public class DefaultMetadataStore implements MetadataStore {
                  new MetadataRecord(namespacedEntityId, scope, propDeletions.build(), EMPTY_TAGS));
   }
 
+  @Override
+  public void setProperty(final MetadataScope scope, final NamespacedEntityId namespacedEntityId, final String key,
+                          final String value) {
+    final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
+    execute(new TransactionExecutor.Procedure<MetadataDataset>() {
+      @Override
+      public void apply(MetadataDataset input) throws Exception {
+        Map<String, String> existingProperties = input.getProperties(namespacedEntityId);
+        Set<String> existingTags = input.getTags(namespacedEntityId);
+        previousRef.set(new MetadataRecord(namespacedEntityId, scope, existingProperties, existingTags));
+        input.setProperty(namespacedEntityId, key, value);
+      }
+    }, scope);
+    publishAudit(previousRef.get(),
+                 new MetadataRecord(namespacedEntityId, scope, ImmutableMap.of(key, value), EMPTY_TAGS),
+                 new MetadataRecord(namespacedEntityId, scope));
+  }
+
   /**
    * Adds tags for the specified {@link NamespacedEntityId}.
    */
@@ -159,8 +170,8 @@ public class DefaultMetadataStore implements MetadataStore {
         input.addTags(namespacedEntityId, tagsToAdd);
       }
     }, scope);
-    publishAudit(previousRef.get(), new MetadataRecord(namespacedEntityId, scope, EMPTY_PROPERTIES,
-                                                       Sets.newHashSet(tagsToAdd)),
+    publishAudit(previousRef.get(),
+                 new MetadataRecord(namespacedEntityId, scope, EMPTY_PROPERTIES, Sets.newHashSet(tagsToAdd)),
                  new MetadataRecord(namespacedEntityId, scope));
   }
 
@@ -545,7 +556,8 @@ public class DefaultMetadataStore implements MetadataStore {
     try {
       return DatasetsUtil.getOrCreateDataset(
         dsFramework, getMetadataDatasetInstance(scope), MetadataDataset.class.getName(),
-        DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS, null);
+        DatasetProperties.builder().add(MetadataDatasetDefinition.SCOPE_KEY, scope.name()).build(),
+        DatasetDefinition.NO_ARGUMENTS, null);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
