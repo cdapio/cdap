@@ -91,7 +91,6 @@ public class DatasetAdminService {
    * @param props dataset instance properties
    * @param existing if dataset already exists (in case of update), the existing properties
    * @return dataset specification
-   * @throws Exception
    */
   public DatasetSpecification createOrUpdate(final DatasetId datasetInstanceId, final DatasetTypeMeta typeMeta,
                                              final DatasetProperties props,
