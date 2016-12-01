@@ -76,20 +76,6 @@ public class HBaseVersion {
   private static Version currentVersion;
   private static String versionString;
 
-  static {
-    try {
-      Class versionInfoClass = Class.forName("org.apache.hadoop.hbase.util.VersionInfo");
-      Method versionMethod = versionInfoClass.getMethod("getVersion");
-      versionString = (String) versionMethod.invoke(null);
-      currentVersion = determineVersionFromVersionString(versionString);
-    } catch (Throwable e) {
-      // must be a class loading exception, HBase is not there
-      LOG.error("Unable to determine HBase version from string '{}', are HBase classes available?", versionString);
-      LOG.error("Exception was: ", e);
-      currentVersion = Version.UNKNOWN;
-    }
-  }
-
   /**
    * Returns the major version of the currently loaded HBase library.
    */
