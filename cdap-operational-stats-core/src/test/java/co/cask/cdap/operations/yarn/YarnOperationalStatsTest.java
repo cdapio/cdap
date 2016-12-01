@@ -19,6 +19,7 @@ package co.cask.cdap.operations.yarn;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.exceptions.YarnException;
 import org.apache.hadoop.yarn.server.MiniYARNCluster;
+import org.junit.Ignore;
 
 import java.io.IOException;
 
@@ -37,5 +38,11 @@ public class YarnOperationalStatsTest extends AbstractYarnOperationalStatsTest {
   @Override
   protected int getNumNodes() {
     return 1;
+  }
+
+  @Ignore
+  @Override
+  public void test() throws Exception {
+    // TODO: CDAP-7726 Fix flaky test
   }
 }
