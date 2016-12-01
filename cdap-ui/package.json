@@ -111,7 +111,7 @@
     "react-redux": "4.4.5",
     "react-router": "4.0.0-alpha.4",
     "react-youtube": "7.1.1",
-    "reactstrap": "3.2.0",
+    "reactstrap": "3.9.1",
     "redux": "https://registry.npmjs.org/redux/-/redux-3.5.2.tgz",
     "redux-thunk": "2.0.1",
     "request": "2.69.0",
