@@ -17,6 +17,7 @@ package co.cask.cdap;
 
 import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.spark.AbstractSpark;
@@ -24,9 +25,7 @@ import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.NodeValue;
-import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.internal.app.runtime.batch.WordCount;
 import co.cask.cdap.runtime.WorkflowTest;
@@ -149,7 +148,7 @@ public class WorkflowApp extends AbstractApplication {
   /**
    * Action to test configurer-style action configuration, extending AbstractWorkflowAction.
    */
-  public static final class CustomAction extends AbstractWorkflowAction {
+  public static final class CustomAction extends AbstractCustomAction {
 
     private static final Logger LOG = LoggerFactory.getLogger(CustomAction.class);
 
@@ -169,10 +168,9 @@ public class WorkflowApp extends AbstractApplication {
     }
 
     @Override
-    public void initialize(WorkflowContext context) throws Exception {
-      super.initialize(context);
-      LOG.info("Custom action initialized: " + context.getSpecification().getName());
-      WorkflowToken workflowToken = context.getToken();
+    public void initialize() throws Exception {
+      LOG.info("Custom action initialized: " + getContext().getSpecification().getName());
+      WorkflowToken workflowToken = getContext().getWorkflowToken();
       // Token shouldn't be null
       workflowToken.put("tokenKey", "value");
     }
@@ -190,7 +188,7 @@ public class WorkflowApp extends AbstractApplication {
       Preconditions.checkState(condition && new File(outputDir, "_SUCCESS").exists());
 
       // There should be two values for the "completed" key, one from MR, one from Spark
-      List<NodeValue> values = getContext().getToken().getAll("completed");
+      List<NodeValue> values = getContext().getWorkflowToken().getAll("completed");
       Preconditions.checkState(values.size() == 2);
       LOG.info("Custom run completed.");
     }

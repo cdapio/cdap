@@ -30,7 +30,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.Sets;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;

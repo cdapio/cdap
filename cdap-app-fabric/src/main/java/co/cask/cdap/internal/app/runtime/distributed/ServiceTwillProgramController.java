@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ProgramId;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;

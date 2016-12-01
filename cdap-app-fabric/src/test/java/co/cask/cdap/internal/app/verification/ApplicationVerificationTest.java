@@ -22,7 +22,6 @@ import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ApplicationId;
 import org.junit.Assert;
 import org.junit.Test;

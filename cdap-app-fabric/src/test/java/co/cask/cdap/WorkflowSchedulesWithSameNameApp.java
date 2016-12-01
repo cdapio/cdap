@@ -17,9 +17,10 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+
 /**
  *
  */
@@ -52,7 +53,7 @@ public class WorkflowSchedulesWithSameNameApp extends AbstractApplication {
   /**
    * DummyAction
    */
-  public static class DummyAction extends AbstractWorkflowAction {
+  public static class DummyAction extends AbstractCustomAction {
     @Override
     public void run() {
       // no-op

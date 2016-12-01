@@ -120,20 +120,6 @@ public class PartitionedFileSetArguments {
    * Get the partition filter for the input to be read.
    *
    * @param arguments the runtime arguments for a partitioned dataset
-   * @param partitioning the declared partitioning for the dataset, needed for proper interpretation of values
-   * @return the PartitionFilter specified in the arguments or null if no filter is specified.
-   * @deprecated as of 3.4.0. Use {@link #getInputPartitionFilter(Map)} instead.
-   */
-  @Nullable
-  @Deprecated
-  public static PartitionFilter getInputPartitionFilter(Map<String, String> arguments, Partitioning partitioning) {
-    return getInputPartitionFilter(arguments);
-  }
-
-  /**
-   * Get the partition filter for the input to be read.
-   *
-   * @param arguments the runtime arguments for a partitioned dataset
    * @return the PartitionFilter specified in the arguments or null if no filter is specified.
    */
   @Nullable
@@ -152,8 +138,8 @@ public class PartitionedFileSetArguments {
   }
 
   // helper to convert a string value into a field value in a partition key or filter
-  public static Comparable convertFieldValue(String where, String kind, String fieldName,
-                                             FieldType fieldType, String stringValue, boolean acceptNull) {
+  private static Comparable convertFieldValue(String where, String kind, String fieldName,
+                                              FieldType fieldType, String stringValue, boolean acceptNull) {
     if (null == stringValue) {
       if (acceptNull) {
         return null;

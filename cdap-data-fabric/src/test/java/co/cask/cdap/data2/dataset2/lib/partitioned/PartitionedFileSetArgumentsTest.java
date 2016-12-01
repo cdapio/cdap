@@ -76,16 +76,6 @@ public class PartitionedFileSetArgumentsTest {
   public void testSetGetInputPartitionFilter() throws Exception {
     Map<String, String> arguments = new HashMap<>();
     PartitionFilter filter = PartitionFilter.builder()
-      .addValueCondition("i", 42)
-      .addValueCondition("l", 17L)
-      .addValueCondition("s", "x")
-      .build();
-    PartitionedFileSetArguments.setInputPartitionFilter(arguments, filter);
-    // test the deprecated method (passing in PARTITIONING), at least until it is removed
-    Assert.assertEquals(filter, PartitionedFileSetArguments.getInputPartitionFilter(arguments, PARTITIONING));
-
-    arguments = new HashMap<>();
-    filter = PartitionFilter.builder()
       .addRangeCondition("i", 30, 40)
       .addValueCondition("l", 17L)
       .addValueCondition("s", "x")

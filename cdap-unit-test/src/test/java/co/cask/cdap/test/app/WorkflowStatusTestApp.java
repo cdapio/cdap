@@ -18,8 +18,8 @@ package co.cask.cdap.test.app;
 
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.Workflow;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
@@ -83,7 +83,7 @@ public class WorkflowStatusTestApp extends AbstractApplication {
   /**
    * Custom action to test the status.
    */
-  public static class MyAction extends AbstractWorkflowAction {
+  public static class MyAction extends AbstractCustomAction {
     private static final Logger LOG = LoggerFactory.getLogger(MyAction.class);
 
     @Override

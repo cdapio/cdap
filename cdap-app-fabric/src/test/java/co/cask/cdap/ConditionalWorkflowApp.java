@@ -18,10 +18,10 @@ package co.cask.cdap;
 
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.NodeValue;
 import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowContext;
@@ -176,7 +176,7 @@ public class ConditionalWorkflowApp extends AbstractApplication {
     }
   }
 
-  static final class SimpleAction extends AbstractWorkflowAction {
+  static final class SimpleAction extends AbstractCustomAction {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleAction.class);
 
     public SimpleAction(String name) {
@@ -188,7 +188,7 @@ public class ConditionalWorkflowApp extends AbstractApplication {
       String actionName = getContext().getSpecification().getName();
       LOG.info("Running SimpleAction: {}", actionName);
 
-      WorkflowToken token = getContext().getToken();
+      WorkflowToken token = getContext().getWorkflowToken();
 
       // Put something in the token
       token.put("action.type", "CustomAction");
@@ -206,7 +206,7 @@ public class ConditionalWorkflowApp extends AbstractApplication {
     }
   }
 
-  static final class StatusReporter extends AbstractWorkflowAction {
+  static final class StatusReporter extends AbstractCustomAction {
     private final String taskCounterGroupName = "org.apache.hadoop.mapreduce.TaskCounter";
     private final String mapInputRecordsCounterName = "MAP_INPUT_RECORDS";
     private final String mapOutputRecordsCounterName = "MAP_OUTPUT_RECORDS";
@@ -224,7 +224,7 @@ public class ConditionalWorkflowApp extends AbstractApplication {
     @SuppressWarnings("ConstantConditions")
     @Override
     public void run() {
-      WorkflowToken workflowToken = getContext().getToken();
+      WorkflowToken workflowToken = getContext().getWorkflowToken();
       boolean trueBranchExecuted = Boolean.parseBoolean(workflowToken.get("conditionResult").toString());
       if (trueBranchExecuted) {
         // Previous condition returned true

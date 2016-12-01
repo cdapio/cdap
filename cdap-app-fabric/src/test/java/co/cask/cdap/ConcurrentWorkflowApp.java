@@ -17,8 +17,8 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
@@ -59,7 +59,7 @@ public class ConcurrentWorkflowApp extends AbstractApplication {
    * Custom action that creates a file passed as a runtime argument and then waits for a done file to be created
    * externally.
    */
-  public static final class SimpleAction extends AbstractWorkflowAction {
+  public static final class SimpleAction extends AbstractCustomAction {
     @Override
     public void run() {
       Map<String, String> runtimeArguments = getContext().getRuntimeArguments();

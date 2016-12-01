@@ -17,6 +17,7 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -26,7 +27,6 @@ import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -111,7 +111,7 @@ public class AppWithWorkflow extends AbstractApplication {
   /**
    * DummyAction
    */
-  public static class DummyAction extends AbstractWorkflowAction {
+  public static class DummyAction extends AbstractCustomAction {
     private static final Logger LOG = LoggerFactory.getLogger(DummyAction.class);
     public static final String TOKEN_KEY = "tokenKey";
     public static final String TOKEN_VALUE = "tokenValue";
@@ -127,9 +127,8 @@ public class AppWithWorkflow extends AbstractApplication {
     }
 
     @Override
-    public void initialize(WorkflowContext context) throws Exception {
-      super.initialize(context);
-      WorkflowToken workflowToken = context.getToken();
+    public void initialize() throws Exception {
+      WorkflowToken workflowToken = getContext().getWorkflowToken();
       workflowToken.put(TOKEN_KEY, TOKEN_VALUE);
     }
 
@@ -137,8 +136,8 @@ public class AppWithWorkflow extends AbstractApplication {
     public void run() {
       LOG.info("Ran dummy action");
       @SuppressWarnings("ConstantConditions")
-      String initializeValue = getContext().getToken().get(SampleWorkflow.INITIALIZE_TOKEN_KEY,
-                                                           SampleWorkflow.NAME).toString();
+      String initializeValue = getContext().getWorkflowToken().get(SampleWorkflow.INITIALIZE_TOKEN_KEY,
+                                                                   SampleWorkflow.NAME).toString();
       if (!initializeValue.equals(SampleWorkflow.INITIALIZE_TOKEN_VALUE)) {
         String msg = String.format("Expected value of token %s but got %s.", SampleWorkflow.INITIALIZE_TOKEN_VALUE,
                                    initializeValue);

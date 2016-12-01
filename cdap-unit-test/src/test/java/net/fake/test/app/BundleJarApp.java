@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.stream.Stream;
@@ -251,7 +252,7 @@ public class BundleJarApp extends AbstractApplication {
         addAction(new SimpleWorkflowAction());
     }
 
-    private class SimpleWorkflowAction extends co.cask.cdap.api.workflow.AbstractWorkflowAction {
+    private class SimpleWorkflowAction extends AbstractCustomAction {
       @Override
       public void configure() {
         setName("SimpleWorkflowAction");

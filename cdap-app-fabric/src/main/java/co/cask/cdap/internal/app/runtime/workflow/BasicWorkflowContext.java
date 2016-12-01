@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.ProgramState;
-import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
@@ -49,13 +49,11 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
 
   private final WorkflowSpecification workflowSpec;
   private final WorkflowActionSpecification specification;
-  private final ProgramWorkflowRunner programWorkflowRunner;
   private final WorkflowToken token;
   private final Map<String, WorkflowNodeState> nodeStates;
   private ProgramState state;
 
   BasicWorkflowContext(WorkflowSpecification workflowSpec, @Nullable WorkflowActionSpecification spec,
-                       @Nullable ProgramWorkflowRunner programWorkflowRunner,
                        WorkflowToken token, Program program, ProgramOptions programOptions, CConfiguration cConf,
                        MetricsCollectionService metricsCollectionService,
                        DatasetFramework datasetFramework, TransactionSystemClient txClient,
@@ -69,7 +67,6 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
           secureStore, secureStoreManager, pluginInstantiator);
     this.workflowSpec = workflowSpec;
     this.specification = spec;
-    this.programWorkflowRunner = programWorkflowRunner;
     this.token = token;
     this.nodeStates = nodeStates;
   }
@@ -88,14 +85,6 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
   }
 
   @Override
-  public Runnable getProgramRunner(String name) {
-    if (programWorkflowRunner == null) {
-      throw new UnsupportedOperationException("Operation not allowed.");
-    }
-    return programWorkflowRunner.create(name);
-  }
-
-  @Override
   public WorkflowToken getToken() {
     return token;
   }
@@ -103,12 +92,6 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
   @Override
   public Map<String, WorkflowNodeState> getNodeStates() {
     return ImmutableMap.copyOf(nodeStates);
-  }
-
-  @Override
-  @Deprecated
-  public boolean isSuccessful() {
-    return state.getStatus() == ProgramStatus.COMPLETED;
   }
 
   /**

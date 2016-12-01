@@ -16,10 +16,9 @@
 
 package co.cask.cdap.client.app;
 
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
-import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
@@ -48,7 +47,7 @@ public class FakeWorkflow implements Workflow {
   /**
    * DummyAction
    */
-  public static class FakeAction extends AbstractWorkflowAction {
+  public static class FakeAction extends AbstractCustomAction {
     public static final String TOKEN_KEY = "tokenKey";
     public static final String TOKEN_VALUE = "tokenValue";
     public static final String ANOTHER_FAKE_NAME = "NotQuiteFakeActionName";
@@ -63,9 +62,8 @@ public class FakeWorkflow implements Workflow {
 
     @Override
     @SuppressWarnings("ConstantConditions")
-    public void initialize(WorkflowContext context) throws Exception {
-      super.initialize(context);
-      WorkflowToken token = context.getToken();
+    public void initialize() throws Exception {
+      WorkflowToken token = getContext().getWorkflowToken();
       Preconditions.checkArgument(token != null, "Workflow actions should always have a workflow token available");
       token.put(TOKEN_KEY, TOKEN_VALUE);
     }

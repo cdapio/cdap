@@ -16,9 +16,12 @@
 
 package co.cask.cdap.test.app;
 
+import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.customaction.AbstractCustomAction;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
@@ -31,7 +34,6 @@ import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
@@ -120,17 +122,17 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
   /**
    * Custom action writing to the local file set dataset.
    */
-  public static class LocalDatasetWriter extends AbstractWorkflowAction {
+  public static class LocalDatasetWriter extends AbstractCustomAction {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalDatasetWriter.class);
     private Metrics metrics;
 
     @Override
     public void run() {
-      String inputPath = getContext().getRuntimeArguments().get("input.path");
-      FileSet fileSetDataset = getContext().getDataset(CSV_FILESET_DATASET);
-      Location inputLocation = fileSetDataset.getLocation(inputPath);
       try {
+        String inputPath = getContext().getRuntimeArguments().get("input.path");
+        FileSet fileSetDataset = getContext().getDataset(CSV_FILESET_DATASET);
+        Location inputLocation = fileSetDataset.getLocation(inputPath);
         try (PrintWriter writer = new PrintWriter(inputLocation.getOutputStream())) {
           writer.write("this,text,has");
           writer.println();
@@ -202,7 +204,7 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
   /**
    * Custom action that reads the local dataset and writes to the non-local dataset.
    */
-  public static class LocalDatasetReader extends AbstractWorkflowAction {
+  public static class LocalDatasetReader extends AbstractCustomAction {
     private static final Logger LOG = LoggerFactory.getLogger(LocalDatasetReader.class);
     private Metrics metrics;
 
@@ -231,24 +233,27 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
         File waitFile = new File(getContext().getRuntimeArguments().get("wait.file"));
         waitFile.createNewFile();
 
-        int uniqueWordCount = 0;
-        CloseableIterator<KeyValue<byte[], byte[]>> scanner = wordCount.scan(null, null);
-        try {
-          while (scanner.hasNext()) {
-            scanner.next();
-            uniqueWordCount++;
+        getContext().execute(new TxRunnable() {
+          @Override
+          public void run(DatasetContext context) throws Exception {
+            int uniqueWordCount = 0;
+            try (CloseableIterator<KeyValue<byte[], byte[]>> scanner = wordCount.scan(null, null)) {
+              while (scanner.hasNext()) {
+                scanner.next();
+                uniqueWordCount++;
+              }
+            }
+            result.write("UniqueWordCount", String.valueOf(uniqueWordCount));
+            metrics.gauge("unique.words", uniqueWordCount);
           }
-        } finally {
-          scanner.close();
-        }
-        result.write("UniqueWordCount", String.valueOf(uniqueWordCount));
-        metrics.gauge("unique.words", uniqueWordCount);
+        });
+
         File doneFile = new File(getContext().getRuntimeArguments().get("done.file"));
         while (!doneFile.exists()) {
           TimeUnit.MILLISECONDS.sleep(50);
         }
       } catch (Exception e) {
-        // no-op
+        LOG.error("Exception occurred while running custom action ", e);
       }
     }
   }

@@ -17,9 +17,9 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +57,7 @@ public class AppWithMultipleScheduledWorkflows extends AbstractApplication {
   /**
    * Some Dummy Action
    */
-  public static class SomeDummyAction extends AbstractWorkflowAction {
+  public static class SomeDummyAction extends AbstractCustomAction {
     private static final Logger LOG = LoggerFactory.getLogger(SomeDummyAction.class);
 
     @Override
@@ -82,7 +82,7 @@ public class AppWithMultipleScheduledWorkflows extends AbstractApplication {
   /**
    * Another Dummy Action
    */
-  public static class AnotherDummyAction extends AbstractWorkflowAction {
+  public static class AnotherDummyAction extends AbstractCustomAction {
     private static final Logger LOG = LoggerFactory.getLogger(AnotherDummyAction.class);
 
     @Override

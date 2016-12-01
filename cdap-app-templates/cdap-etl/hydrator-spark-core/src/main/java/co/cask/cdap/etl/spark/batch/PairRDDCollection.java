@@ -18,11 +18,8 @@ package co.cask.cdap.etl.spark.batch;
 
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPairCollection;
-import co.cask.cdap.etl.spark.function.JoinMergeFunction;
-import co.cask.cdap.etl.spark.function.PluginFunctionContext;
 import com.google.common.base.Optional;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;

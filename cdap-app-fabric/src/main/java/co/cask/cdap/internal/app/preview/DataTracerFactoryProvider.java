@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.preview;
 import co.cask.cdap.app.preview.DataTracerFactory;
 import co.cask.cdap.proto.id.ApplicationId;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 

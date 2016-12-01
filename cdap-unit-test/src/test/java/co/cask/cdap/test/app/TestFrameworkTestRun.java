@@ -722,7 +722,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     runtimeArgs.putAll(additionalParams);
     wfManager.start(runtimeArgs);
 
-    // Wait till custom action in the Workflow is triggerred.
+    // Wait till custom action in the Workflow is triggered.
     while (!waitFile.exists()) {
       TimeUnit.MILLISECONDS.sleep(50);
     }
@@ -747,6 +747,10 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     fileSetDataset = getDataset(testSpace, WorkflowAppWithLocalDatasets.CSV_FILESET_DATASET);
     Assert.assertNull(fileSetDataset.get());
+
+    // Verify that the workflow hasn't completed on its own before we signal it to
+    history = wfManager.getHistory(ProgramRunStatus.RUNNING);
+    Assert.assertEquals(1, history.size());
 
     // Signal the Workflow to continue
     doneFile.createNewFile();

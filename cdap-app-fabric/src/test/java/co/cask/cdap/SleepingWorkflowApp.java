@@ -18,9 +18,8 @@ package co.cask.cdap;
 
 import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
-import co.cask.cdap.api.workflow.WorkflowContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +51,7 @@ public class SleepingWorkflowApp extends AbstractApplication {
   /**
    *
    */
-  public static final class CustomAction extends AbstractWorkflowAction {
+  public static final class CustomAction extends AbstractCustomAction {
 
     private static final Logger LOG = LoggerFactory.getLogger(CustomAction.class);
 
@@ -72,9 +71,8 @@ public class SleepingWorkflowApp extends AbstractApplication {
     }
 
     @Override
-    public void initialize(WorkflowContext context) throws Exception {
-      super.initialize(context);
-      LOG.info("Custom action initialized: " + context.getSpecification().getName());
+    public void initialize() throws Exception {
+      LOG.info("Custom action initialized: " + getContext().getSpecification().getName());
     }
 
     @Override

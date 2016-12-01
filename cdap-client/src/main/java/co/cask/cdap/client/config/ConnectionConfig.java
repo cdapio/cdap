@@ -17,7 +17,6 @@ package co.cask.cdap.client.config;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.common;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NamespaceId;
 
 /**

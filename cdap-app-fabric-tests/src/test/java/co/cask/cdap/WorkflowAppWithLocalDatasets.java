@@ -17,11 +17,11 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +64,7 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
   /**
    * Workflow action for co-ordination.
    */
-  public static class MyWorkflowAction extends AbstractWorkflowAction {
+  public static class MyWorkflowAction extends AbstractCustomAction {
     private static final Logger LOG = LoggerFactory.getLogger(MyWorkflowAction.class);
     @Override
     public void run() {

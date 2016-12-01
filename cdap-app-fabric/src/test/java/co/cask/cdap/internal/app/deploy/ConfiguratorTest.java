@@ -131,7 +131,7 @@ public class ConfiguratorTest {
                                                              authEnforcer, authenticationContext);
 
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myStream", "myTable");
-    // Create a configurator that is testable. Provide it a application.
+    // Create a configurator that is testable. Provide it an application.
     try (CloseableClassLoader artifactClassLoader =
            artifactRepo.createArtifactClassLoader(
              appJar, new NamespacedImpersonator(artifactId.getNamespace().toEntityId(),

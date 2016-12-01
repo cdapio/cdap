@@ -16,8 +16,6 @@
 
 package co.cask.cdap.gateway.discovery;
 
-import com.google.common.base.Strings;
-
 /**
  * Fall back routing strategy for User Services.
  */

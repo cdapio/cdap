@@ -16,7 +16,6 @@
 
 package co.cask.cdap.test.internal;
 
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.test.ApplicationManager;
 import com.google.inject.assistedinject.Assisted;

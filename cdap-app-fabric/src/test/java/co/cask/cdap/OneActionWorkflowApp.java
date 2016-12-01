@@ -17,8 +17,8 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 
 /**
  *
@@ -48,7 +48,7 @@ public class OneActionWorkflowApp extends AbstractApplication {
   /**
    *
    */
-  private static class EmptyAction extends AbstractWorkflowAction {
+  private static class EmptyAction extends AbstractCustomAction {
     @Override
     public void run() {
     }

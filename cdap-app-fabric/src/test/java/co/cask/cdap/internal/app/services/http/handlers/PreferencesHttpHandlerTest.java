@@ -24,7 +24,6 @@ import co.cask.cdap.gateway.handlers.PreferencesHttpHandler;
 import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.http.HttpResponse;

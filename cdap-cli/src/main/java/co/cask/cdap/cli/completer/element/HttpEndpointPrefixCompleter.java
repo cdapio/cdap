@@ -23,7 +23,6 @@ import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.cli.completers.PrefixCompleter;

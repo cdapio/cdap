@@ -29,7 +29,6 @@ import co.cask.cdap.proto.BatchProgramStart;
 import co.cask.cdap.proto.BatchProgramStatus;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
-import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.XSlowTests;

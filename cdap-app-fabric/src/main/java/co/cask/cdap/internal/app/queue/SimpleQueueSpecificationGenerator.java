@@ -25,7 +25,6 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.app.queue.QueueSpecification;
 import co.cask.cdap.app.queue.QueueSpecificationGenerator;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ApplicationId;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;

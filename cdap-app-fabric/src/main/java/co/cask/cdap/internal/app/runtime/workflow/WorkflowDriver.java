@@ -65,7 +65,6 @@ import co.cask.cdap.internal.app.runtime.customaction.BasicCustomActionContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowActionConfigurer;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
-import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
@@ -169,7 +168,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                                          program, options);
 
     this.basicWorkflowToken = new BasicWorkflowToken(cConf.getInt(Constants.AppFabric.WORKFLOW_TOKEN_MAX_SIZE_MB));
-    this.basicWorkflowContext = new BasicWorkflowContext(workflowSpec, null, null,
+    this.basicWorkflowContext = new BasicWorkflowContext(workflowSpec, null,
                                                          basicWorkflowToken, program, programOptions, cConf,
                                                          metricsCollectionService, datasetFramework, txClient,
                                                          discoveryServiceClient, nodeStates, pluginInstantiator,
@@ -335,9 +334,14 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     WorkflowActionSpecification actionSpec = getActionSpecification(node, node.getProgram().getProgramType());
     status.put(node.getNodeId(), node);
 
-    BasicWorkflowContext workflowContext = createWorkflowContext(actionSpec, token, node.getNodeId());
+    BasicWorkflowContext workflowContext = createWorkflowContext(actionSpec, token);
+
+    ProgramWorkflowRunner programWorkflowRunner =
+      workflowProgramRunnerFactory.getProgramWorkflowRunner(actionSpec, token, node.getNodeId(), nodeStates);
+
     final WorkflowAction action = new ProgramWorkflowAction(node.getProgram().getProgramName(),
-                                                            node.getProgram().getProgramType());
+                                                            node.getProgram().getProgramType(),
+                                                            programWorkflowRunner);
     action.initialize(workflowContext);
 
     CountDownLatch executorTerminateLatch = new CountDownLatch(1);
@@ -366,22 +370,18 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
   private WorkflowActionSpecification getActionSpecification(WorkflowActionNode node,
                                                              SchedulableProgramType programType) {
-    WorkflowActionSpecification actionSpec;
     ScheduleProgramInfo actionInfo = node.getProgram();
     switch (programType) {
       case MAPREDUCE:
       case SPARK:
-        actionSpec = DefaultWorkflowActionConfigurer.configureAction(
-          new ProgramWorkflowAction(actionInfo.getProgramName(), programType));
-        break;
+        return DefaultWorkflowActionConfigurer.configureAction(
+          new ProgramWorkflowAction(actionInfo.getProgramName(), programType, null));
       case CUSTOM_ACTION:
-        actionSpec = node.getActionSpecification();
-        break;
+        return node.getActionSpecification();
       default:
         throw new IllegalStateException(String.format("Unknown Program Type '%s', Program '%s' in the Workflow",
                                                       actionInfo.getProgramType(), actionInfo.getProgramName()));
     }
-    return actionSpec;
   }
 
   private void executeFork(final ApplicationSpecification appSpec, WorkflowForkNode fork,
@@ -444,7 +444,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     if (node.getActionSpecification() != null) {
       // Node has WorkflowActionSpecification, so it must represent the deprecated WorkflowAction
       // Create instance of the CustomActionExecutor using BasicWorkflowContext
-      BasicWorkflowContext context = createWorkflowContext(node.getActionSpecification(), token, node.getNodeId());
+      BasicWorkflowContext context = createWorkflowContext(node.getActionSpecification(), token);
       customActionExecutor = new CustomActionExecutor(workflowRunId, context, instantiator, classLoader);
     } else {
       // Node has CustomActionSpecification, so it must represent the CustomAction added in 3.5.0
@@ -519,7 +519,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     Predicate<WorkflowContext> predicate = instantiator.get(
       TypeToken.of((Class<? extends Predicate<WorkflowContext>>) clz)).create();
 
-    WorkflowContext context = new BasicWorkflowContext(workflowSpec, null, null, token, program, programOptions, cConf,
+    WorkflowContext context = new BasicWorkflowContext(workflowSpec, null, token, program, programOptions, cConf,
                                                        metricsCollectionService, datasetFramework, txClient,
                                                        discoveryServiceClient, nodeStates, pluginInstantiator,
                                                        secureStore, secureStoreManager);
@@ -628,10 +628,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   }
 
   private BasicWorkflowContext createWorkflowContext(WorkflowActionSpecification actionSpec,
-                                                     WorkflowToken token, String nodeId) {
-    ProgramWorkflowRunner runner = workflowProgramRunnerFactory.getProgramWorkflowRunner(actionSpec, token,
-                                                                                         nodeId, nodeStates);
-    return new BasicWorkflowContext(workflowSpec, actionSpec, runner, token,
+                                                     WorkflowToken token) {
+    return new BasicWorkflowContext(workflowSpec, actionSpec, token,
                                     program, programOptions, cConf, metricsCollectionService,
                                     datasetFramework, txClient, discoveryServiceClient, nodeStates,
                                     pluginInstantiator, secureStore, secureStoreManager);

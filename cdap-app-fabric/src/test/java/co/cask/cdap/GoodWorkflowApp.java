@@ -18,12 +18,12 @@ package co.cask.cdap;
 
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowContext;
 
 import javax.annotation.Nullable;
@@ -98,7 +98,7 @@ public class GoodWorkflowApp extends AbstractApplication {
   /**
    * DummyAction
    */
-  public class DummyAction extends AbstractWorkflowAction {
+  public class DummyAction extends AbstractCustomAction {
 
     @Override
     public void run() {
