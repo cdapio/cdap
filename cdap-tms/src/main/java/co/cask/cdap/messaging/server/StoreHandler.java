@@ -26,6 +26,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.inject.Inject;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
@@ -62,6 +63,7 @@ public final class StoreHandler extends AbstractHttpHandler {
 
   private final MessagingService messagingService;
 
+  @Inject
   StoreHandler(MessagingService messagingService) {
     this.messagingService = messagingService;
   }

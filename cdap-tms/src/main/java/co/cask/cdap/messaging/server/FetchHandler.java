@@ -34,6 +34,7 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.BodyProducer;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.inject.Inject;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericDatumWriter;
@@ -77,6 +78,7 @@ public final class FetchHandler extends AbstractHttpHandler {
   private final MessagingService messagingService;
   private int messageChunkSize;
 
+  @Inject
   FetchHandler(CConfiguration cConf, MessagingService messagingService) {
     this.messagingService = messagingService;
     this.messageChunkSize = cConf.getInt(Constants.MessagingSystem.HTTP_SERVER_CONSUME_CHUNK_SIZE);

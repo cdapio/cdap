@@ -210,7 +210,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
 
   @Override
   protected void startUp() throws Exception {
-    // no-op
+    LOG.info("Core Messaging Service started");
   }
 
   @Override
@@ -218,6 +218,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     messageTableWriterCache.invalidateAll();
     messageTableWriterCache.invalidateAll();
     payloadTableWriterCache.invalidateAll();
+    LOG.info("Core Messaging Service stopped");
   }
 
   /**

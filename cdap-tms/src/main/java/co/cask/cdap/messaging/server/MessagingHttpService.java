@@ -24,12 +24,14 @@ import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.metrics.MetricsReporterHook;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -38,7 +40,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
+import java.util.Set;
 
 /**
  * The http server for supporting messaging system REST API.
@@ -50,18 +52,19 @@ public class MessagingHttpService extends AbstractIdleService {
   private final CConfiguration cConf;
   private final DiscoveryService discoveryService;
   private final MetricsCollectionService metricsCollectionService;
-  private final MessagingService messagingService;
+  private final Set<HttpHandler> handlers;
   private NettyHttpService httpService;
   private Cancellable cancelDiscovery;
 
   @Inject
   public MessagingHttpService(CConfiguration cConf, DiscoveryService discoveryService,
                               MetricsCollectionService metricsCollectionService,
-                              MessagingService messagingService) {
+                              MessagingService messagingService,
+                              @Named(Constants.MessagingSystem.HANDLER_BINDING_NAME) Set<HttpHandler> handlers) {
     this.cConf = cConf;
     this.discoveryService = discoveryService;
     this.metricsCollectionService = metricsCollectionService;
-    this.messagingService = messagingService;
+    this.handlers = handlers;
   }
 
   @Override
@@ -90,16 +93,13 @@ public class MessagingHttpService extends AbstractIdleService {
                     Objects.firstNonNull(SecurityRequestContext.getUserId(), "<null>"), t);
         }
       })
-      .addHttpHandlers(Arrays.asList(
-        new MetadataHandler(messagingService),
-        new StoreHandler(messagingService),
-        new FetchHandler(cConf, messagingService)
-      ))
+      .addHttpHandlers(handlers)
       .build();
     httpService.startAndWait();
 
     cancelDiscovery = discoveryService.register(new Discoverable(Constants.Service.MESSAGING_SERVICE,
                                                                  httpService.getBindAddress()));
+    LOG.info("Messaging HTTP server started on {}", httpService.getBindAddress());
   }
 
   @Override
@@ -109,5 +109,6 @@ public class MessagingHttpService extends AbstractIdleService {
     } finally {
       httpService.stopAndWait();
     }
+    LOG.info("Messaging HTTP server stopped");
   }
 }

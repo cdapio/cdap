@@ -76,6 +76,8 @@ import co.cask.cdap.gateway.handlers.AuthorizationHandler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
@@ -114,6 +116,7 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -191,6 +194,7 @@ public class TestBase {
   private static SecureStoreManager secureStoreManager;
   private static AuthorizationEnforcementService authorizationEnforcementService;
   private static AuthorizationBootstrapper authorizationBootstrapper;
+  private static MessagingService messagingService;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = new ArrayList<>();
@@ -260,6 +264,7 @@ public class TestBase {
       new NamespaceStoreModule().getStandaloneModules(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
+      new MessagingServerRuntimeModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
         @SuppressWarnings("deprecation")
@@ -276,6 +281,10 @@ public class TestBase {
       }
     );
 
+    messagingService = injector.getInstance(MessagingService.class);
+    if (messagingService instanceof Service) {
+      ((Service) messagingService).startAndWait();
+    }
     authorizationBootstrapper = injector.getInstance(AuthorizationBootstrapper.class);
     authorizationBootstrapper.run();
     authorizationEnforcementService = injector.getInstance(AuthorizationEnforcementService.class);
@@ -464,6 +473,10 @@ public class TestBase {
     dsOpService.stopAndWait();
     txService.stopAndWait();
     authorizationEnforcementService.stopAndWait();
+
+    if (messagingService instanceof Service) {
+      ((Service) messagingService).startAndWait();
+    }
   }
 
   protected MetricsManager getMetricsManager() {

@@ -27,6 +27,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -62,6 +63,7 @@ public final class MetadataHandler extends AbstractHttpHandler {
 
   private final MessagingService messagingService;
 
+  @Inject
   MetadataHandler(MessagingService messagingService) {
     this.messagingService = messagingService;
   }

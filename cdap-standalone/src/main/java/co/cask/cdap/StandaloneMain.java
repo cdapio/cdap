@@ -60,6 +60,8 @@ import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.metadata.MetadataService;
 import co.cask.cdap.metadata.MetadataServiceModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -139,6 +141,7 @@ public class StandaloneMain {
   private final RemoteSystemOperationsService remoteSystemOperationsService;
   private final AuthorizationEnforcementService authorizationEnforcementService;
   private final AuthorizationBootstrapper authorizationBootstrapper;
+  private final MessagingService messagingService;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private ExploreExecutorService exploreExecutorService;
@@ -172,6 +175,7 @@ public class StandaloneMain {
       trackerAppCreationService = null;
     }
 
+    messagingService = injector.getInstance(MessagingService.class);
     authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
     authorizationBootstrapper = injector.getInstance(AuthorizationBootstrapper.class);
     txService = injector.getInstance(InMemoryTransactionService.class);
@@ -260,6 +264,10 @@ public class StandaloneMain {
 
     if (kafkaClient != null) {
       kafkaClient.startAndWait();
+    }
+
+    if (messagingService instanceof Service) {
+      ((Service) messagingService).startAndWait();
     }
 
     // Authorization bootstrapping is a blocking call, because CDAP will not start successfully if it does not
@@ -351,6 +359,11 @@ public class StandaloneMain {
         // auth service is on the side anyway
         externalAuthenticationServer.stopAndWait();
       }
+
+      if (messagingService instanceof Service) {
+        ((Service) messagingService).stopAndWait();
+      }
+
       logAppenderInitializer.close();
 
       if (kafkaClient != null) {
@@ -545,7 +558,8 @@ public class StandaloneMain {
       new AuditModule().getStandaloneModules(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getStandaloneModules(),
-      new PreviewHttpModule()
+      new PreviewHttpModule(),
+      new MessagingServerRuntimeModule().getStandaloneModules()
     );
   }
 }

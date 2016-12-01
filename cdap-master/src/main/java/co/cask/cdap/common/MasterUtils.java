@@ -76,7 +76,13 @@ public final class MasterUtils {
                                    Constants.Dataset.Executor.CONTAINER_MEMORY_MB,
                                    Constants.Dataset.Executor.CONTAINER_VIRTUAL_CORES,
                                    Constants.Dataset.Executor.CONTAINER_INSTANCES,
-                                   Constants.Dataset.Executor.MAX_INSTANCES));
+                                   Constants.Dataset.Executor.MAX_INSTANCES))
+      .add(new ServiceResourceKeys(cConf,
+                                   Constants.Service.MESSAGING_SERVICE,
+                                   Constants.MessagingSystem.CONTAINER_MEMORY_MB,
+                                   Constants.MessagingSystem.CONTAINER_VIRTUAL_CORES,
+                                   Constants.MessagingSystem.CONTAINER_INSTANCES,
+                                   Constants.MessagingSystem.MAX_INSTANCES));
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       builder.add(new ExploreServiceResourceKeys(cConf,
                                                  Constants.Service.EXPLORE_HTTP_USER_SERVICE,
