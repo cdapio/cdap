@@ -19,7 +19,9 @@ package co.cask.cdap.notifications.feeds.service;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NotificationFeedId;
+import co.cask.cdap.proto.notification.NotificationFeedInfo;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
@@ -30,22 +32,22 @@ import java.util.List;
 public class NoOpNotificationFeedManager implements NotificationFeedManager {
 
   @Override
-  public boolean createFeed(Id.NotificationFeed feed) throws NotificationFeedException {
+  public boolean createFeed(NotificationFeedInfo feed) throws NotificationFeedException {
     return true;
   }
 
   @Override
-  public void deleteFeed(Id.NotificationFeed feed) throws NotificationFeedNotFoundException {
+  public void deleteFeed(NotificationFeedId feed) throws NotificationFeedNotFoundException, NotificationFeedException {
     // No-op
   }
 
   @Override
-  public Id.NotificationFeed getFeed(Id.NotificationFeed feed) throws NotificationFeedNotFoundException {
-    return feed;
+  public NotificationFeedInfo getFeed(NotificationFeedId feed) throws NotificationFeedNotFoundException {
+    return new NotificationFeedInfo(feed.getNamespace(), feed.getCategory(), feed.getFeed(), "");
   }
 
   @Override
-  public List<Id.NotificationFeed> listFeeds(Id.Namespace namespace) throws NotificationFeedException {
+  public List<NotificationFeedInfo> listFeeds(NamespaceId namespace) throws NotificationFeedException {
     return ImmutableList.of();
   }
 }

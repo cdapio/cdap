@@ -19,7 +19,9 @@ package co.cask.cdap.notifications.feeds.service;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NotificationFeedId;
+import co.cask.cdap.proto.notification.NotificationFeedInfo;
 import com.google.inject.Inject;
 
 import java.util.List;
@@ -41,28 +43,28 @@ public class NotificationFeedService implements NotificationFeedManager {
   }
 
   @Override
-  public boolean createFeed(Id.NotificationFeed feed) throws NotificationFeedException {
+  public boolean createFeed(NotificationFeedInfo feed) throws NotificationFeedException {
     return store.createNotificationFeed(feed) == null;
   }
 
   @Override
-  public void deleteFeed(Id.NotificationFeed feed) throws NotificationFeedNotFoundException {
+  public void deleteFeed(NotificationFeedId feed) throws NotificationFeedNotFoundException {
     if (store.deleteNotificationFeed(feed) == null) {
-      throw new NotificationFeedNotFoundException(feed.toEntityId());
+      throw new NotificationFeedNotFoundException(feed);
     }
   }
 
   @Override
-  public Id.NotificationFeed getFeed(Id.NotificationFeed feed) throws NotificationFeedNotFoundException {
-    Id.NotificationFeed f = store.getNotificationFeed(feed);
+  public NotificationFeedInfo getFeed(NotificationFeedId feed) throws NotificationFeedNotFoundException {
+    NotificationFeedInfo f = store.getNotificationFeed(feed);
     if (f == null) {
-      throw new NotificationFeedNotFoundException(feed.toEntityId());
+      throw new NotificationFeedNotFoundException(feed);
     }
     return f;
   }
 
   @Override
-  public List<Id.NotificationFeed> listFeeds(Id.Namespace namespace) throws NotificationFeedException {
+  public List<NotificationFeedInfo> listFeeds(NamespaceId namespace) throws NotificationFeedException {
     return store.listNotificationFeeds(namespace);
   }
 }

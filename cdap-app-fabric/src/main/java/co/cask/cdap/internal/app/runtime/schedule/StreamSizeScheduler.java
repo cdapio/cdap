@@ -44,6 +44,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NotificationFeedId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Preconditions;
@@ -493,7 +494,10 @@ public class StreamSizeScheduler implements Scheduler {
 
     @Override
     protected void startUp() throws Exception {
-      notificationSubscription = notificationService.subscribe(getFeed(), this, sendPollingInfoExecutor);
+      NotificationFeedId feedId = new NotificationFeedId(streamId.getNamespaceId(),
+                                                         Constants.Notification.Stream.STREAM_FEED_CATEGORY,
+                                                         String.format("%sSize", streamId.getId()));
+      notificationSubscription = notificationService.subscribe(feedId, this, sendPollingInfoExecutor);
     }
 
     @Override
@@ -842,14 +846,6 @@ public class StreamSizeScheduler implements Scheduler {
           }
         });
       }
-    }
-
-    private Id.NotificationFeed getFeed() {
-      return new Id.NotificationFeed.Builder()
-        .setNamespaceId(streamId.getNamespaceId())
-        .setCategory(Constants.Notification.Stream.STREAM_FEED_CATEGORY)
-        .setName(String.format("%sSize", streamId.getId()))
-        .build();
     }
 
     /**

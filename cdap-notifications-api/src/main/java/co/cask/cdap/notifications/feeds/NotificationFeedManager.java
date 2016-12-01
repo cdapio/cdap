@@ -16,12 +16,14 @@
 
 package co.cask.cdap.notifications.feeds;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NotificationFeedId;
+import co.cask.cdap.proto.notification.NotificationFeedInfo;
 
 import java.util.List;
 
 /**
- * Manager for {@link Id.NotificationFeed} objects.
+ * Manager for {@link NotificationFeedId} objects.
  */
 public interface NotificationFeedManager {
 
@@ -33,35 +35,34 @@ public interface NotificationFeedManager {
    * @throws NotificationFeedException if the feed has an incorrect structure;
    * for example, if it is missing a name, a namespace or a category
    */
-  boolean createFeed(Id.NotificationFeed feed) throws NotificationFeedException;
+  boolean createFeed(NotificationFeedInfo feed) throws NotificationFeedException;
 
   /**
-   * Deletes the {@code feed} from the manager store. To determine if the feed exists,
-   * the {@link Id.NotificationFeed#getFeedId} method is used.
+   * Deletes the {@code feed} from the manager store.
    *
-   * @param feed the {@link Id.NotificationFeed} to delete
+   * @param feed the {@link NotificationFeedId} to delete
    * @throws NotificationFeedNotFoundException if the feed does not exist
    * @throws NotificationFeedException in case of unforeseen error
    */
-  void deleteFeed(Id.NotificationFeed feed) throws NotificationFeedNotFoundException, NotificationFeedException;
+  void deleteFeed(NotificationFeedId feed) throws NotificationFeedNotFoundException, NotificationFeedException;
 
   /**
-   * Get a {@link Id.NotificationFeed} based on the {@code feed.getId()} method of the {@code feed} argument.
+   * Get a {@link NotificationFeedId} based on the {@code feed.getId()} method of the {@code feed} argument.
    *
    * @param feed feed containing the feed Id of the feed to retrieve
-   * @return {@link Id.NotificationFeed} of the feed which ID is the same as {@code feed}
+   * @return {@link NotificationFeedId} of the feed which ID is the same as {@code feed}
    * @throws NotificationFeedNotFoundException if the feed does not exist
    * @throws NotificationFeedException in case of unforeseen error
    */
-  Id.NotificationFeed getFeed(Id.NotificationFeed feed)
+  NotificationFeedInfo getFeed(NotificationFeedId feed)
     throws NotificationFeedNotFoundException, NotificationFeedException;
 
   /**
-   * List all the {@link Id.NotificationFeed}s present in the manager store for a {@code namespace}.
+   * List all the {@link NotificationFeedInfo}s present in the manager store for a {@code namespace}.
    *
    * @param namespace Id of the namespace to list feeds for
-   * @return all the {@link Id.NotificationFeed}s present in the manager store
+   * @return all the {@link NotificationFeedInfo}s present in the manager store
    * @throws NotificationFeedException in case of unforeseen error
    */
-  List<Id.NotificationFeed> listFeeds(Id.Namespace namespace) throws NotificationFeedException;
+  List<NotificationFeedInfo> listFeeds(NamespaceId namespace) throws NotificationFeedException;
 }

@@ -16,7 +16,9 @@
 
 package co.cask.cdap.notifications.feeds.service;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NotificationFeedId;
+import co.cask.cdap.proto.notification.NotificationFeedInfo;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
@@ -32,42 +34,43 @@ import javax.annotation.Nullable;
  */
 public class InMemoryNotificationFeedStore implements NotificationFeedStore {
 
-  private final Map<String, Id.NotificationFeed> feeds = Maps.newHashMap();
+  private final Map<NotificationFeedId, NotificationFeedInfo> feeds = Maps.newHashMap();
 
   @Nullable
   @Override
-  public synchronized Id.NotificationFeed createNotificationFeed(Id.NotificationFeed feed) {
-    Id.NotificationFeed existingFeed = feeds.get(feed.getFeedId());
+  public synchronized NotificationFeedInfo createNotificationFeed(NotificationFeedInfo feed) {
+    NotificationFeedInfo existingFeed = feeds.get(feed);
     if (existingFeed != null) {
       return existingFeed;
     }
-    feeds.put(feed.getFeedId(), feed);
+    NotificationFeedId id = new NotificationFeedId(feed.getNamespace(), feed.getCategory(), feed.getFeed());
+    feeds.put(id, feed);
     return null;
   }
 
   @Nullable
   @Override
-  public synchronized Id.NotificationFeed getNotificationFeed(Id.NotificationFeed feed) {
-    return feeds.get(feed.getFeedId());
+  public synchronized NotificationFeedInfo getNotificationFeed(NotificationFeedId feed) {
+    NotificationFeedId id = new NotificationFeedId(feed.getNamespace(), feed.getCategory(), feed.getFeed());
+    return feeds.get(id);
   }
 
   @Nullable
   @Override
-  public synchronized Id.NotificationFeed deleteNotificationFeed(Id.NotificationFeed feed) {
-    return feeds.remove(feed.getFeedId());
+  public synchronized NotificationFeedInfo deleteNotificationFeed(NotificationFeedId feed) {
+    NotificationFeedId id = new NotificationFeedId(feed.getNamespace(), feed.getCategory(), feed.getFeed());
+    return feeds.remove(id);
   }
 
   @Override
-  public synchronized List<Id.NotificationFeed> listNotificationFeeds(final Id.Namespace namespace) {
-    Collection<Id.NotificationFeed> filter = Collections2.filter(feeds.values(), new Predicate<Id.NotificationFeed>() {
-      @Override
-      public boolean apply(@Nullable Id.NotificationFeed input) {
-        if (input != null && input.getNamespaceId().equals(namespace.getId())) {
-          return true;
+  public synchronized List<NotificationFeedInfo> listNotificationFeeds(final NamespaceId namespace) {
+    Collection<NotificationFeedInfo> filter = Collections2.filter(
+      feeds.values(), new Predicate<NotificationFeedInfo>() {
+        @Override
+        public boolean apply(@Nullable NotificationFeedInfo input) {
+          return input != null && input.getNamespace().equals(namespace.getNamespace());
         }
-        return false;
-      }
-    });
+      });
     return ImmutableList.copyOf(filter);
   }
 }

@@ -43,10 +43,11 @@ import co.cask.cdap.notifications.service.NotificationContext;
 import co.cask.cdap.notifications.service.NotificationHandler;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.notifications.service.TxRetryPolicy;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NotificationFeedId;
+import co.cask.cdap.proto.notification.NotificationFeedInfo;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
@@ -99,10 +100,12 @@ public abstract class NotificationTest {
   private static NotificationService notificationService;
 
   private static final NamespaceId namespace = new NamespaceId("namespace");
-  protected static final Id.NotificationFeed FEED1 = new Id.NotificationFeed.Builder()
-    .setNamespaceId(namespace.getNamespace()).setCategory("stream").setName("foo").setDescription("").build();
-  protected static final Id.NotificationFeed FEED2 = new Id.NotificationFeed.Builder()
-    .setNamespaceId(namespace.getNamespace()).setCategory("stream").setName("bar").setDescription("").build();
+  protected static final NotificationFeedId FEED1 = new NotificationFeedId(namespace.getNamespace(), "stream", "foo");
+  protected static final NotificationFeedInfo FEED1_INFO =
+    new NotificationFeedInfo(FEED1.getNamespace(), FEED1.getCategory(), FEED1.getFeed(), "");
+  protected static final NotificationFeedId FEED2 = new NotificationFeedId(namespace.getNamespace(), "stream", "bar");
+  protected static final NotificationFeedInfo FEED2_INFO =
+    new NotificationFeedInfo(FEED2.getNamespace(), FEED2.getCategory(), FEED2.getFeed(), "");
 
   protected static NotificationService getNotificationService() {
     return notificationService;
@@ -173,34 +176,24 @@ public abstract class NotificationTest {
   @Test
   public void testCreateGetAndListFeeds() throws Exception {
     // no feeds at the beginning
-    Assert.assertEquals(0, feedManager.listFeeds(namespace.toId()).size());
+    Assert.assertEquals(0, feedManager.listFeeds(namespace).size());
     // create feed 1
-    feedManager.createFeed(FEED1);
+    feedManager.createFeed(FEED1_INFO);
     // check get and list feed
     Assert.assertEquals(FEED1, feedManager.getFeed(FEED1));
-    Assert.assertEquals(ImmutableList.of(FEED1), feedManager.listFeeds(namespace.toId()));
+    Assert.assertEquals(ImmutableList.of(FEED1), feedManager.listFeeds(namespace));
 
     // create feed 2
-    feedManager.createFeed(FEED2);
+    feedManager.createFeed(FEED2_INFO);
     // check get and list feed
     Assert.assertEquals(FEED2, feedManager.getFeed(FEED2));
-    Assert.assertTrue(checkFeedList(ImmutableSet.of(FEED1, FEED2), feedManager.listFeeds(namespace.toId())));
+    Assert.assertEquals(ImmutableSet.of(FEED1_INFO, FEED2_INFO), ImmutableSet.copyOf(feedManager.listFeeds(namespace)));
 
     // clear the feeds
     feedManager.deleteFeed(FEED1);
     feedManager.deleteFeed(FEED2);
     namespaceAdmin.delete(namespace);
-    Assert.assertEquals(0, feedManager.listFeeds(namespace.toId()).size());
-  }
-
-  private boolean checkFeedList(ImmutableSet<Id.NotificationFeed> expected, List<Id.NotificationFeed> actual) {
-    Assert.assertEquals(expected.size(), actual.size());
-    for (Id.NotificationFeed feed : actual) {
-      if (!expected.contains(feed)) {
-        return false;
-      }
-    }
-    return true;
+    Assert.assertTrue(feedManager.listFeeds(namespace).isEmpty());
   }
 
   @Test
@@ -212,7 +205,7 @@ public abstract class NotificationTest {
     dsFramework.addInstance("keyValueTable", myTableInstance, DatasetProperties.EMPTY);
 
     final CountDownLatch receivedLatch = new CountDownLatch(1);
-    Assert.assertTrue(feedManager.createFeed(FEED1));
+    Assert.assertTrue(feedManager.createFeed(FEED1_INFO));
     try {
       Cancellable cancellable = notificationService.subscribe(FEED1, new NotificationHandler<String>() {
         private int received = 0;
@@ -272,7 +265,7 @@ public abstract class NotificationTest {
 
   @Test
   public void onePublisherOneSubscriberTest() throws Exception {
-    Set<Id.NotificationFeed> feeds = ImmutableSet.of(FEED1);
+    Set<NotificationFeedId> feeds = ImmutableSet.of(FEED1);
     testPubSub(feeds, 1, 20, feeds, 1, String.class, new Function<SimpleNotification, String>() {
       @Override
       public String apply(SimpleNotification input) {
@@ -283,7 +276,7 @@ public abstract class NotificationTest {
 
   @Test
   public void onePublisherMultipleSubscribersTest() throws Exception {
-    Set<Id.NotificationFeed> feeds = ImmutableSet.of(FEED1);
+    Set<NotificationFeedId> feeds = ImmutableSet.of(FEED1);
     testPubSub(feeds, 1, 20, feeds, 10, String.class, new Function<SimpleNotification, String>() {
       @Override
       public String apply(SimpleNotification input) {
@@ -298,7 +291,7 @@ public abstract class NotificationTest {
       This configuration should not happen, as, by design, we want only one publisher to publisher the changes attached
       to a resource. But since the low level APIs allow it, this should still be tested.
      */
-    Set<Id.NotificationFeed> feeds = ImmutableSet.of(FEED1);
+    Set<NotificationFeedId> feeds = ImmutableSet.of(FEED1);
     testPubSub(feeds, 5, 15, feeds, 1, String.class, new Function<SimpleNotification, String>() {
       @Override
       public String apply(SimpleNotification input) {
@@ -309,7 +302,7 @@ public abstract class NotificationTest {
 
   @Test
   public void multipleFeedsOneSubscriber() throws Exception {
-    Set<Id.NotificationFeed> feeds = ImmutableSet.of(FEED1, FEED2);
+    Set<NotificationFeedId> feeds = ImmutableSet.of(FEED1, FEED2);
     testPubSub(feeds, 1, 15, feeds, 1, SimpleNotification.class, Functions.<SimpleNotification>identity());
   }
 
@@ -332,13 +325,15 @@ public abstract class NotificationTest {
    * @param payloadFunction a function that transform {@link SimpleNotification} type to the payload type
    * @param <T> type of the payload
    */
-  private <T> void testPubSub(Set<Id.NotificationFeed> pubFeeds, int publishersPerFeed, final int messagesPerPublisher,
-                              Set<Id.NotificationFeed> subFeeds, int subscribersPerFeed,
+  private <T> void testPubSub(Set<NotificationFeedId> pubFeeds, int publishersPerFeed, final int messagesPerPublisher,
+                              Set<NotificationFeedId> subFeeds, int subscribersPerFeed,
                               final Class<T> payloadType,
                               final Function<SimpleNotification, T> payloadFunction) throws Exception {
 
-    for (Id.NotificationFeed feedId : Sets.union(pubFeeds, subFeeds)) {
-      Assert.assertTrue(feedManager.createFeed(feedId));
+    for (NotificationFeedId feedId : Sets.union(pubFeeds, subFeeds)) {
+      NotificationFeedInfo feedInfo =
+        new NotificationFeedInfo(feedId.getNamespace(), feedId.getCategory(), feedId.getFeed(), "");
+      Assert.assertTrue(feedManager.createFeed(feedInfo));
     }
     try {
       int totalMessages = subFeeds.size() * publishersPerFeed * messagesPerPublisher * subscribersPerFeed;
@@ -347,7 +342,7 @@ public abstract class NotificationTest {
       List<Cancellable> cancellables = Lists.newArrayList();
 
       try {
-        for (Id.NotificationFeed feedId : subFeeds) {
+        for (NotificationFeedId feedId : subFeeds) {
           for (int i = 0; i < subscribersPerFeed; i++) {
             Cancellable cancellable = notificationService.subscribe(feedId, new NotificationHandler<T>() {
 
@@ -371,10 +366,10 @@ public abstract class NotificationTest {
         TimeUnit.MILLISECONDS.sleep(500);
 
         // Starts publishers
-        final Map<Id.NotificationFeed, Queue<T>> publishedMessages = new ConcurrentHashMap<>();
+        final Map<NotificationFeedId, Queue<T>> publishedMessages = new ConcurrentHashMap<>();
         ExecutorService executor = Executors.newFixedThreadPool(pubFeeds.size() * publishersPerFeed);
         try {
-          for (final Id.NotificationFeed feedId : pubFeeds) {
+          for (final NotificationFeedId feedId : pubFeeds) {
             final Queue<T> publishedQueue = new ConcurrentLinkedQueue<>();
             publishedMessages.put(feedId, publishedQueue);
 
@@ -411,7 +406,7 @@ public abstract class NotificationTest {
 
         // For each unique message published that has subscription,
         // there should be (publisher per feed * subscriber per feed) of them
-        for (Id.NotificationFeed feedId : subFeeds) {
+        for (NotificationFeedId feedId : subFeeds) {
           for (T notification : ImmutableMultiset.copyOf(publishedMessages.get(feedId)).elementSet()) {
             Assert.assertEquals(publishersPerFeed * subscribersPerFeed, received.count(notification));
           }
@@ -422,7 +417,7 @@ public abstract class NotificationTest {
         }
       }
     } finally {
-      for (Id.NotificationFeed feedId : Sets.union(pubFeeds, subFeeds)) {
+      for (NotificationFeedId feedId : Sets.union(pubFeeds, subFeeds)) {
         feedManager.deleteFeed(feedId);
       }
     }

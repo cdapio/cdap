@@ -27,7 +27,8 @@ import co.cask.cdap.notifications.service.AbstractNotificationService;
 import co.cask.cdap.notifications.service.NotificationException;
 import co.cask.cdap.notifications.service.NotificationHandler;
 import co.cask.cdap.notifications.service.NotificationService;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NotificationFeedId;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -101,7 +102,7 @@ public class KafkaNotificationService extends AbstractNotificationService {
   }
 
   @Override
-  public <N> ListenableFuture<N> publish(final Id.NotificationFeed feed, final N notification,
+  public <N> ListenableFuture<N> publish(final NotificationFeedId feed, final N notification,
                                          final Type notificationType)
     throws NotificationException {
     LOG.trace("Publishing on notification feed [{}]: {}", feed, notification);
@@ -109,11 +110,11 @@ public class KafkaNotificationService extends AbstractNotificationService {
       @Override
       public N call() throws Exception {
         try {
-          KafkaMessage message = new KafkaMessage(KafkaNotificationUtils.getMessageKey(feed),
-                                                  createGson().toJsonTree(notification, notificationType));
+          String key = String.format("%s.%s.%s", feed.getNamespace(), feed.getCategory(), feed.getFeed());
+          KafkaMessage message = new KafkaMessage(key, GSON.toJsonTree(notification, notificationType));
           ByteBuffer bb = KafkaMessageCodec.encode(message);
 
-          TopicPartition topicPartition = KafkaNotificationUtils.getKafkaTopicPartition(notificationTopic, feed);
+          TopicPartition topicPartition = getKafkaTopicPartition(notificationTopic, feed);
           KafkaPublisher.Preparer preparer = kafkaPublisher.prepare(topicPartition.getTopic());
           preparer.add(bb, message.getMessageKey());
 
@@ -131,13 +132,13 @@ public class KafkaNotificationService extends AbstractNotificationService {
   }
 
   @Override
-  public <N> Cancellable subscribe(Id.NotificationFeed feed, NotificationHandler<N> handler,
+  public <N> Cancellable subscribe(NotificationFeedId feed, NotificationHandler<N> handler,
                                    Executor executor)
     throws NotificationFeedNotFoundException, NotificationFeedException {
     // This call will make sure that the feed exists
     feedManager.getFeed(feed);
 
-    final TopicPartition topicPartition = KafkaNotificationUtils.getKafkaTopicPartition(notificationTopic, feed);
+    final TopicPartition topicPartition = getKafkaTopicPartition(notificationTopic, feed);
 
     synchronized (this) {
       KafkaNotificationsCallback kafkaCallback = kafkaCallbacks.get(topicPartition);
@@ -169,7 +170,7 @@ public class KafkaNotificationService extends AbstractNotificationService {
       this.topicPartition = topicPartition;
     }
 
-    public <N> Cancellable subscribe(Id.NotificationFeed feed, NotificationHandler<N> handler,
+    public <N> Cancellable subscribe(NotificationFeedId feed, NotificationHandler<N> handler,
                                      Executor executor)
       throws NotificationFeedNotFoundException, NotificationFeedException {
       final Cancellable cancellable = KafkaNotificationService.super.subscribe(feed, handler, executor);
@@ -218,8 +219,9 @@ public class KafkaNotificationService extends AbstractNotificationService {
           KafkaMessage decodedMessage = KafkaMessageCodec.decode(payload);
           try {
             LOG.trace("Decoded notification from Kafka: {}", decodedMessage);
-            notificationReceived(KafkaNotificationUtils.getMessageFeed(decodedMessage.getMessageKey()),
-                                 decodedMessage.getNotificationJson());
+            NotificationFeedId feedId =
+              NotificationFeedId.fromIdParts(Splitter.on('.').split(decodedMessage.getMessageKey()));
+            notificationReceived(feedId, decodedMessage.getNotificationJson());
           } catch (Throwable t) {
             LOG.warn("Error while processing notification {} with handler {}",
                      decodedMessage.getNotificationJson(), t);
@@ -236,4 +238,20 @@ public class KafkaNotificationService extends AbstractNotificationService {
       LOG.info("Subscription to topic partition {} finished.", topicPartition);
     }
   }
+
+
+  /**
+   * Map a {@link NotificationFeedId} to a Kafka topic partition.
+   *
+   * @param topic kafka topic
+   * @param feed {@link NotificationFeedId} object
+   * @return Kafka topic that should contain the Notifications published on the {@code feed}
+   */
+  private TopicPartition getKafkaTopicPartition(String topic, NotificationFeedId feed) {
+    // we now can have have multiple topics per categories, defined in cdap-site.
+    // For example, we may have 10 topics for the category streams, which names would be
+    // notifications-streams-1 .. notifications-streams-10.
+    return new TopicPartition(String.format("%s-%s", topic, feed.getCategory()), 0);
+  }
+
 }

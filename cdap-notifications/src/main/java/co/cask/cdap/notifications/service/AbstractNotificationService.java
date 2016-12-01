@@ -19,11 +19,13 @@ package co.cask.cdap.notifications.service;
 import co.cask.cdap.common.service.UncaughtExceptionIdleService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
+import co.cask.cdap.notifications.NotificationFeedInfoDeserializer;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
 import co.cask.cdap.notifications.service.inmemory.InMemoryNotificationService;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NotificationFeedId;
+import co.cask.cdap.proto.notification.NotificationFeedInfo;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
@@ -47,8 +49,12 @@ import java.util.concurrent.Executor;
  */
 public abstract class AbstractNotificationService extends UncaughtExceptionIdleService implements NotificationService {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryNotificationService.class);
+  protected static final Gson GSON = new GsonBuilder()
+    .enableComplexMapKeySerialization()
+    .registerTypeAdapter(NotificationFeedInfo.class, new NotificationFeedInfoDeserializer())
+    .create();
 
-  private final Multimap<Id.NotificationFeed, NotificationCaller<?>> subscribers;
+  private final Multimap<NotificationFeedId, NotificationCaller<?>> subscribers;
 
   private final DatasetFramework dsFramework;
   private final TransactionSystemClientService transactionSystemClient;
@@ -61,7 +67,7 @@ public abstract class AbstractNotificationService extends UncaughtExceptionIdleS
     this.transactionSystemClient = transactionSystemClient;
     this.feedManager = feedManager;
     this.subscribers = Multimaps.synchronizedMultimap(
-      HashMultimap.<Id.NotificationFeed, NotificationCaller<?>>create());
+      HashMultimap.<NotificationFeedId, NotificationCaller<?>>create());
   }
 
   @Override
@@ -74,45 +80,39 @@ public abstract class AbstractNotificationService extends UncaughtExceptionIdleS
     transactionSystemClient.stopAndWait();
   }
 
-  protected Gson createGson() {
-    return new GsonBuilder()
-      .enableComplexMapKeySerialization()
-      .create();
-  }
-
   /**
    * Called when a notification is received on a feed, to push it to all the handlers that subscribed to the feed.
    *
-   * @param feed {@link Id.NotificationFeed} of the notification
+   * @param feed {@link NotificationFeedId} of the notification
    * @param notificationJson notification as a json object
    */
-  protected void notificationReceived(Id.NotificationFeed feed, JsonElement notificationJson) {
+  protected void notificationReceived(NotificationFeedId feed, JsonElement notificationJson) {
     LOG.trace("Notification received on feed {}: {}", feed, notificationJson);
     Collection<NotificationCaller<?>> callers = subscribers.get(feed);
     synchronized (subscribers) {
       callers = ImmutableList.copyOf(callers);
     }
     for (NotificationCaller caller : callers) {
-      Object notification = createGson().fromJson(notificationJson, caller.getNotificationType());
-      Id.Namespace namespaceId = Id.Namespace.from(feed.getNamespaceId());
-      caller.received(notification, new BasicNotificationContext(namespaceId, dsFramework, transactionSystemClient));
+      Object notification = GSON.fromJson(notificationJson, caller.getNotificationType());
+      caller.received(notification, new BasicNotificationContext(feed.getParent(),
+                                                                 dsFramework, transactionSystemClient));
     }
   }
 
   @Override
-  public <N> ListenableFuture<N> publish(Id.NotificationFeed feed, N notification)
+  public <N> ListenableFuture<N> publish(NotificationFeedId feed, N notification)
     throws NotificationException {
     return publish(feed, notification, notification.getClass());
   }
 
   @Override
-  public <N> Cancellable subscribe(Id.NotificationFeed feed, NotificationHandler<N> handler)
+  public <N> Cancellable subscribe(NotificationFeedId feed, NotificationHandler<N> handler)
     throws NotificationFeedNotFoundException, NotificationFeedException {
     return subscribe(feed, handler, Threads.SAME_THREAD_EXECUTOR);
   }
 
   @Override
-  public <N> Cancellable subscribe(Id.NotificationFeed feed, NotificationHandler<N> handler, Executor executor)
+  public <N> Cancellable subscribe(NotificationFeedId feed, NotificationHandler<N> handler, Executor executor)
     throws NotificationFeedNotFoundException, NotificationFeedException {
     // This call will make sure that the feed exists
     feedManager.getFeed(feed);
@@ -129,17 +129,17 @@ public abstract class AbstractNotificationService extends UncaughtExceptionIdleS
 
   /**
    * Wrapper around a {@link NotificationHandler}, containing a reference to a {@link NotificationHandler}
-   * and a {@link Id.NotificationFeed}.
+   * and a {@link NotificationFeedId}.
    *
    * @param <N> Type of the Notification to handle
    */
   private class NotificationCaller<N> implements NotificationHandler<N>, Cancellable {
-    private final Id.NotificationFeed feed;
+    private final NotificationFeedId feed;
     private final NotificationHandler<N> handler;
     private final Executor executor;
     private volatile boolean completed;
 
-    NotificationCaller(Id.NotificationFeed feed, NotificationHandler<N> handler, Executor executor) {
+    NotificationCaller(NotificationFeedId feed, NotificationHandler<N> handler, Executor executor) {
       this.feed = feed;
       this.handler = handler;
       this.executor = executor;

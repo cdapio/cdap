@@ -16,44 +16,46 @@
 
 package co.cask.cdap.notifications.feeds.service;
 
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NotificationFeedId;
+import co.cask.cdap.proto.notification.NotificationFeedInfo;
 
 import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * Store for {@link Id.NotificationFeed} objects.
+ * Store for {@link NotificationFeedId} objects.
  */
 public interface NotificationFeedStore {
 
   /**
    * Creates a new Notification feed.
    *
-   * @param feed {@link Id.NotificationFeed} representing the feed
-   * @return existing {@link Id.NotificationFeed} if a feed with the same id already exists,
+   * @param feed {@link NotificationFeedId} representing the feed
+   * @return existing {@link NotificationFeedId} if a feed with the same id already exists,
    * or null if no feed with the same id exists and the feed was created successfully
    */
   @Nullable
-  Id.NotificationFeed createNotificationFeed(Id.NotificationFeed feed);
+  NotificationFeedInfo createNotificationFeed(NotificationFeedInfo feed);
 
   /**
    * Retrieves a Notification feed from the metadata store.
    *
-   * @param feed {@link Id.NotificationFeed} representing the feed
-   * @return {@link Id.NotificationFeed} of the requested feed, or null if it was not found in the store
+   * @param feed {@link NotificationFeedId} representing the feed
+   * @return {@link NotificationFeedId} of the requested feed, or null if it was not found in the store
    */
   @Nullable
-  Id.NotificationFeed getNotificationFeed(Id.NotificationFeed feed);
+  NotificationFeedInfo getNotificationFeed(NotificationFeedId feed);
 
   /**
    * Deletes a Notification feed from the metadata store.
    *
-   * @param feed {@link Id.NotificationFeed} representing the feed
-   * @return {@link Id.NotificationFeed} of the feed if it was found and deleted,
+   * @param feed {@link NotificationFeedId} representing the feed
+   * @return {@link NotificationFeedInfo} of the feed if it was found and deleted,
    * null if the specified feed did not exist
    */
   @Nullable
-  Id.NotificationFeed deleteNotificationFeed(Id.NotificationFeed feed);
+  NotificationFeedInfo deleteNotificationFeed(NotificationFeedId feed);
 
   /**
    * Lists all registered Notification feeds for the {@code namespace}.
@@ -61,5 +63,5 @@ public interface NotificationFeedStore {
    * @param namespace Id of the namespace to list the feeds for
    * @return a list of all registered feeds
    */
-  List<Id.NotificationFeed> listNotificationFeeds(Id.Namespace namespace);
+  List<NotificationFeedInfo> listNotificationFeeds(NamespaceId namespace);
 }

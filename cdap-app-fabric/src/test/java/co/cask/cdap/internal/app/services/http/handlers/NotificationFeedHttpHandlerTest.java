@@ -18,9 +18,8 @@ package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.notification.NotificationFeedInfo;
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
@@ -36,10 +35,6 @@ import java.util.List;
  */
 public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
   private static final Gson GSON = new Gson();
-
-  private static final String NAMESPACE_FIELD = "namespace";
-  private static final String CATEGORY_FIELD = "category";
-  private static final String NAME_FIELD = "name";
   private static final String DESCRIPTION_FIELD = "description";
 
   // TODO when [CDAP-903] is done, those tests will fail because the following namespace will not have been created
@@ -49,27 +44,16 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
   private static final String NAME = "test";
   private static final String DESCRIPTION = "test description";
 
-  private static final Id.NotificationFeed FEED_VALID = new Id.NotificationFeed.Builder()
-    .setNamespaceId(NAMESPACE)
-    .setCategory(CATEGORY)
-    .setName(NAME)
-    .setDescription(DESCRIPTION)
-    .build();
-  private static final Id.NotificationFeed FEED_MISSING_DESCRIPTION = new Id.NotificationFeed.Builder()
-    .setNamespaceId(NAMESPACE)
-    .setCategory(CATEGORY)
-    .setName(NAME)
-    .build();
-  private static final Id.NotificationFeed FEED_EMPTY_DESCRIPTION = new Id.NotificationFeed.Builder()
-    .setNamespaceId(NAMESPACE)
-    .setCategory(CATEGORY)
-    .setName(NAME)
-    .setDescription("")
-    .build();
+  private static final NotificationFeedInfo FEED_VALID =
+    new NotificationFeedInfo(NAMESPACE, CATEGORY, NAME, DESCRIPTION);
+  private static final NotificationFeedInfo FEED_MISSING_DESCRIPTION =
+    new NotificationFeedInfo(NAMESPACE, CATEGORY, NAME, null);
+  private static final NotificationFeedInfo FEED_EMPTY_DESCRIPTION =
+    new NotificationFeedInfo(NAMESPACE, CATEGORY, NAME, "");
   private static final String METADATA_INVALID_JSON = "invalid";
 
-  private HttpResponse createFeed(Id.NotificationFeed feed) throws Exception {
-    return createFeed(feed.getNamespaceId(), feed.getCategory(), feed.getName(), GSON.toJson(feed));
+  private HttpResponse createFeed(NotificationFeedInfo feed) throws Exception {
+    return createFeed(feed.getNamespace(), feed.getCategory(), feed.getFeed(), GSON.toJson(feed));
   }
 
   private HttpResponse createFeed(String namespace, String category, String name, String metadata) throws Exception {
@@ -95,14 +79,13 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(expected, response.getStatusLine().getStatusCode());
   }
 
-  private List<JsonObject> readListResponse(HttpResponse response) throws IOException {
-    Type typeToken = new TypeToken<List<JsonObject>>() { }.getType();
+  private List<NotificationFeedInfo> readListResponse(HttpResponse response) throws IOException {
+    Type typeToken = new TypeToken<List<NotificationFeedInfo>>() { }.getType();
     return readResponse(response, typeToken);
   }
 
-  private JsonObject readGetResponse(HttpResponse response) throws IOException {
-    Type typeToken = new TypeToken<JsonObject>() { }.getType();
-    return readResponse(response, typeToken);
+  private NotificationFeedInfo readGetResponse(HttpResponse response) throws IOException {
+    return readResponse(response, NotificationFeedInfo.class);
   }
 
   @Test
@@ -110,7 +93,7 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
     // no feeds initially
     HttpResponse response = listFeeds(NAMESPACE);
     assertResponseCode(200, response);
-    List<JsonObject> feeds = readListResponse(response);
+    List<NotificationFeedInfo> feeds = readListResponse(response);
     Assert.assertEquals(0, feeds.size());
     try {
       // create and verify
@@ -119,12 +102,7 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
       response = listFeeds(NAMESPACE);
       feeds = readListResponse(response);
       Assert.assertEquals(1, feeds.size());
-      Assert.assertEquals(NAME, feeds.get(0).get(NAME_FIELD).getAsString());
-      JsonElement namespace = feeds.get(0).get(NAMESPACE_FIELD);
-      Assert.assertTrue(namespace instanceof JsonObject);
-      Assert.assertEquals(NAMESPACE, ((JsonObject) namespace).get("id").getAsString());
-      Assert.assertEquals(CATEGORY, feeds.get(0).get(CATEGORY_FIELD).getAsString());
-      Assert.assertEquals(DESCRIPTION, feeds.get(0).get(DESCRIPTION_FIELD).getAsString());
+      Assert.assertEquals(FEED_VALID, feeds.get(0));
     } finally {
       // cleanup
       response = deleteFeed(NAMESPACE, CATEGORY, NAME);
@@ -142,14 +120,8 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
       HttpResponse response = createFeed(FEED_VALID);
       assertResponseCode(200, response);
       response = getFeed(NAMESPACE, CATEGORY, NAME);
-      JsonObject feed = readGetResponse(response);
-      Assert.assertNotNull(feed);
-      Assert.assertEquals(NAME, feed.get(NAME_FIELD).getAsString());
-      JsonElement namespace = feed.get(NAMESPACE_FIELD);
-      Assert.assertTrue(namespace instanceof JsonObject);
-      Assert.assertEquals(NAMESPACE, ((JsonObject) namespace).get("id").getAsString());
-      Assert.assertEquals(CATEGORY, feed.get(CATEGORY_FIELD).getAsString());
-      Assert.assertEquals(DESCRIPTION, feed.get(DESCRIPTION_FIELD).getAsString());
+      NotificationFeedInfo feed = readGetResponse(response);
+      Assert.assertEquals(FEED_VALID, feed);
 
       // create again with the same name
       response = createFeed(FEED_EMPTY_DESCRIPTION);
@@ -157,13 +129,7 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
       // check that no updates happened
       response = getFeed(NAMESPACE, CATEGORY, NAME);
       feed = readGetResponse(response);
-      Assert.assertNotNull(feed);
-      Assert.assertEquals(NAME, feed.get(NAME_FIELD).getAsString());
-      namespace = feed.get(NAMESPACE_FIELD);
-      Assert.assertTrue(namespace instanceof JsonObject);
-      Assert.assertEquals(NAMESPACE, ((JsonObject) namespace).get("id").getAsString());
-      Assert.assertEquals(CATEGORY, feed.get(CATEGORY_FIELD).getAsString());
-      Assert.assertEquals(DESCRIPTION, feed.get(DESCRIPTION_FIELD).getAsString());
+      Assert.assertEquals(FEED_EMPTY_DESCRIPTION, feed);
     } finally {
       // cleanup
       HttpResponse response = deleteFeed(NAMESPACE, CATEGORY, NAME);
@@ -231,14 +197,8 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
     try {
       // verify
       response = getFeed(NAMESPACE, CATEGORY, NAME);
-      JsonObject feed = readGetResponse(response);
-      Assert.assertNotNull(feed);
-      Assert.assertEquals(NAME, feed.get(NAME_FIELD).getAsString());
-      JsonElement namespace = feed.get(NAMESPACE_FIELD);
-      Assert.assertTrue(namespace instanceof JsonObject);
-      Assert.assertEquals(NAMESPACE, ((JsonObject) namespace).get("id").getAsString());
-      Assert.assertEquals(CATEGORY, feed.get(CATEGORY_FIELD).getAsString());
-      Assert.assertNull(feed.get(DESCRIPTION_FIELD));
+      NotificationFeedInfo feed = readGetResponse(response);
+      Assert.assertEquals(FEED_MISSING_DESCRIPTION, feed);
       // cleanup
       response = deleteFeed(NAMESPACE, CATEGORY, NAME);
       assertResponseCode(200, response);
@@ -249,13 +209,7 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
       // verify
       response = getFeed(NAMESPACE, CATEGORY, NAME);
       feed = readGetResponse(response);
-      Assert.assertNotNull(feed);
-      Assert.assertEquals(NAME, feed.get(NAME_FIELD).getAsString());
-      namespace = feed.get(NAMESPACE_FIELD);
-      Assert.assertTrue(namespace instanceof JsonObject);
-      Assert.assertEquals(NAMESPACE, ((JsonObject) namespace).get("id").getAsString());
-      Assert.assertEquals(CATEGORY, feed.get(CATEGORY_FIELD).getAsString());
-      Assert.assertEquals("", feed.get(DESCRIPTION_FIELD).getAsString());
+      Assert.assertEquals(FEED_EMPTY_DESCRIPTION, feed);
     } finally {
       // cleanup
       response = deleteFeed(NAMESPACE, CATEGORY, NAME);
