@@ -753,7 +753,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         // Check if the MR job has read access to the stream, if not fail right away. Note that this is being done
         // after lineage/usage registry since we want to track the intent of reading from there.
         try {
-          authorizationEnforcer.enforce(inputFormatProvider.getStreamId().toEntityId(),
+          authorizationEnforcer.enforce(inputFormatProvider.getStreamId(),
                                         authenticationContext.getPrincipal(), Action.READ);
         } catch (Exception e) {
           Throwables.propagateIfPossible(e, IOException.class);
@@ -783,7 +783,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Type inputValueType = getInputValueType(job.getConfiguration(), StreamEvent.class, mapperTypeToken);
     streamProvider.setDecoderType(inputFormatConfiguration, inputValueType);
 
-    StreamId streamId = streamProvider.getStreamId().toEntityId();
+    StreamId streamId = streamProvider.getStreamId();
     try {
       streamAdmin.register(ImmutableList.of(context.getProgram().getId()), streamId);
       streamAdmin.addAccess(context.getProgram().getId().run(context.getRunId().getId()),

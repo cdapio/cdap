@@ -23,7 +23,6 @@ import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
-import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
@@ -33,7 +32,6 @@ import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
@@ -51,7 +49,6 @@ import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -199,19 +196,16 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
   public void addInput(Input input, @Nullable Class<?> mapperCls) {
     if (input instanceof Input.DatasetInput) {
       Input.DatasetInput datasetInput = (Input.DatasetInput) input;
-      // the createInput method call will translate the input name from stream uri to the stream's name
-      // see the implementation of createInput for more information on the hack
       Input.InputFormatProviderInput createdInput = createInput(datasetInput);
       addInput(createdInput.getAlias(), createdInput.getInputFormatProvider(), mapperCls);
     } else if (input instanceof Input.StreamInput) {
       Input.StreamInput streamInput = (Input.StreamInput) input;
-      StreamBatchReadable streamBatchReadable = streamInput.getStreamBatchReadable();
       String namespace = streamInput.getNamespace();
       if (namespace == null) {
         namespace = getProgram().getNamespaceId();
       }
       addInput(input.getAlias(),
-               new StreamInputFormatProvider(new NamespaceId(namespace).toId(), streamBatchReadable, streamAdmin),
+               new StreamInputFormatProvider(new NamespaceId(namespace), streamInput, streamAdmin),
                mapperCls);
     } else if (input instanceof Input.InputFormatProviderInput) {
       addInput(input.getAlias(), ((Input.InputFormatProviderInput) input).getInputFormatProvider(), mapperCls);
@@ -330,16 +324,6 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
     // keep track of the original alias to set it on the created Input before returning it
     String originalAlias = datasetInput.getAlias();
 
-    // TODO: It's a hack for stream. It was introduced in Reactor 2.2.0. Fix it when addressing CDAP-4158.
-    // This check is needed due to the implementation of AbstractMapReduce#useStreamInput(StreamBatchReadable).
-    // It can probably be removed once that method is removed (deprecated currently).
-    if (datasetName.startsWith(Constants.Stream.URL_PREFIX)) {
-      StreamBatchReadable streamBatchReadable = new StreamBatchReadable(URI.create(datasetName));
-      Input input = Input.of(streamBatchReadable.getStreamName(),
-                             new StreamInputFormatProvider(Id.Namespace.from(getProgram().getNamespaceId()),
-                                                           streamBatchReadable, streamAdmin));
-      return (Input.InputFormatProviderInput) input.alias(originalAlias);
-    }
     Dataset dataset;
     if (datasetInput.getNamespace() == null) {
       dataset = getDataset(datasetName, datasetArgs, AccessType.READ);

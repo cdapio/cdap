@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
@@ -26,15 +25,12 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.reflect.TypeToken;
-
-import java.net.URI;
 
 /**
  *
@@ -84,14 +80,7 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
     for (MapReduceSpecification program : appSpec.getMapReduce().values()) {
       ProgramId programId = appId.mr(program.getName());
       for (String dataset : program.getDataSets()) {
-        if (!dataset.startsWith(Constants.Stream.URL_PREFIX)) {
-          usageRegistry.register(programId, namespaceId.dataset(dataset));
-        }
-      }
-      String inputDatasetName = program.getInputDataSet();
-      if (inputDatasetName != null && inputDatasetName.startsWith(Constants.Stream.URL_PREFIX)) {
-        StreamBatchReadable stream = new StreamBatchReadable(URI.create(inputDatasetName));
-        usageRegistry.register(programId, namespaceId.stream(stream.getStreamName()));
+        usageRegistry.register(programId, namespaceId.dataset(dataset));
       }
     }
 
