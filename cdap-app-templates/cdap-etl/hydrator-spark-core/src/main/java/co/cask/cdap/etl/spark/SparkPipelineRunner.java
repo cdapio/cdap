@@ -50,7 +50,7 @@ import java.util.Set;
  */
 public abstract class SparkPipelineRunner {
 
-  protected abstract SparkCollection<Object> getSource(StageInfo stageInfo) throws Exception;
+  protected abstract SparkCollection<Object> getSource(StageInfo stageInfo, int numOfRecordsPreview) throws Exception;
 
 
   protected abstract SparkPairCollection<Object, Object> addJoinKey(
@@ -103,7 +103,7 @@ public abstract class SparkPipelineRunner {
         // this if-else is nested inside the stageRDD null check to avoid warnings about stageRDD possibly being
         // null in the other else-if conditions
         if (sourcePluginType.equals(pluginType)) {
-          stageData = getSource(stageInfo);
+          stageData = getSource(stageInfo, 0);
         } else {
           throw new IllegalStateException(String.format("Stage '%s' has no input and is not a source.", stageName));
         }

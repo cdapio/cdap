@@ -70,13 +70,14 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner
   private transient SparkBatchSinkFactory sinkFactory;
   private transient DatasetContext datasetContext;
   private transient Map<String, Integer> stagePartitions;
+  private transient int numOfRecordsPreview;
 
   @Override
-  protected SparkCollection<Object> getSource(StageInfo stageInfo) {
+  protected SparkCollection<Object> getSource(StageInfo stageInfo, int numOfRecordsPreview) {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageInfo, sec);
     return new RDDCollection<>(sec, jsc, datasetContext, sinkFactory,
                                sourceFactory.createRDD(sec, jsc, stageInfo.getName(), Object.class, Object.class)
-                                 .flatMap(new BatchSourceFunction(pluginFunctionContext)));
+                                 .flatMap(new BatchSourceFunction(pluginFunctionContext, numOfRecordsPreview)));
   }
 
   @Override
@@ -120,6 +121,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner
       stagePartitions = sourceSinkInfo.getStagePartitions();
     }
     datasetContext = context;
+    numOfRecordsPreview = phaseSpec.getNumOfRecordsPreview();
     runPipeline(phaseSpec.getPhase(), BatchSource.PLUGIN_TYPE, sec, stagePartitions);
   }
 }

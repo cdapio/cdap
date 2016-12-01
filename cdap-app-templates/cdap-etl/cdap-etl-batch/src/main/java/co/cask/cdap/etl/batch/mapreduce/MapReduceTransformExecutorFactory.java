@@ -19,7 +19,6 @@ package co.cask.cdap.etl.batch.mapreduce;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.etl.api.Aggregator;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.JoinElement;
@@ -30,6 +29,7 @@ import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchJoinerRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
+import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.batch.KVTransformations;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.TransformExecutorFactory;
@@ -41,6 +41,7 @@ import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.TrackedTransform;
+import co.cask.cdap.etl.common.preview.LimitingTransform;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import org.apache.hadoop.conf.Configuration;
@@ -63,12 +64,14 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
   private final MapReduceTaskContext taskContext;
   private final String mapOutputKeyClassName;
   private final String mapOutputValClassName;
+  private final int numberOfRecordsPreview;
 
   public MapReduceTransformExecutorFactory(MapReduceTaskContext taskContext,
                                            PipelinePluginInstantiator pluginInstantiator,
                                            Metrics metrics,
                                            Map<String, Map<String, String>> pluginRuntimeArgs,
-                                           String sourceStageName) {
+                                           String sourceStageName,
+                                           int numberOfRecordsPreview) {
     super((JobContext) taskContext.getHadoopContext(), pluginInstantiator, metrics, sourceStageName,
           new DefaultMacroEvaluator(taskContext.getWorkflowToken(), taskContext.getRuntimeArguments(),
                                     taskContext.getLogicalStartTime(), taskContext, taskContext.getNamespace()));
@@ -78,6 +81,7 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
     Configuration hConf = hadoopContext.getConfiguration();
     this.mapOutputKeyClassName = hConf.get(ETLMapReduce.MAP_KEY_CLASS);
     this.mapOutputValClassName = hConf.get(ETLMapReduce.MAP_VAL_CLASS);
+    this.numberOfRecordsPreview = numberOfRecordsPreview;
   }
 
   @Override
@@ -102,7 +106,7 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
 
   @SuppressWarnings("unchecked")
   @Override
-  protected TrackedTransform getTransformation(String pluginType, String stageName)
+  protected Transformation getTransformation(String pluginType, String stageName)
     throws Exception {
     DefaultMacroEvaluator macroEvaluator = new DefaultMacroEvaluator(taskContext.getWorkflowToken(),
                                                                      taskContext.getRuntimeArguments(),
@@ -148,9 +152,14 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
           stageMetrics, taskContext.getDataTracer(stageName));
       }
     }
-    return new TrackedTransform(KVTransformations.getKVTransformation(stageName, pluginType, isMapPhase,
-                                                                      getInitializedTransformation(stageName)),
-                                       stageMetrics, taskContext.getDataTracer(stageName));
+    Transformation transformation =
+      new TrackedTransform(KVTransformations.getKVTransformation(stageName, pluginType, isMapPhase,
+                                                                 getInitializedTransformation(stageName)),
+                           stageMetrics, taskContext.getDataTracer(stageName));
+    if (taskContext.getDataTracer(stageName).isEnabled() && BatchSource.PLUGIN_TYPE.equals(pluginType) && isMapPhase) {
+      return new LimitingTransform<>(transformation, numberOfRecordsPreview == 0 ? 100 : numberOfRecordsPreview);
+    }
+    return transformation;
   }
 
   /**

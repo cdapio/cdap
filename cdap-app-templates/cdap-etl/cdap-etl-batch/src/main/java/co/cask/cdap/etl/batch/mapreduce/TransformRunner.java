@@ -108,7 +108,8 @@ public class TransformRunner<KEY, VALUE> {
     }
 
     TransformExecutorFactory<KeyValue<KEY, VALUE>> transformExecutorFactory =
-      new MapReduceTransformExecutorFactory<>(context, pluginInstantiator, metrics, runtimeArgs, sourceStage);
+      new MapReduceTransformExecutorFactory<>(context, pluginInstantiator, metrics, runtimeArgs, sourceStage,
+                                              phaseSpec.getNumOfRecordsPreview());
     this.transformExecutor = transformExecutorFactory.create(phase);
 
     // setup error dataset information

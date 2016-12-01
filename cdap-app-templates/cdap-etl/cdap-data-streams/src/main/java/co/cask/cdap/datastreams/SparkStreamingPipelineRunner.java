@@ -56,7 +56,7 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
   }
 
   @Override
-  protected SparkCollection<Object> getSource(StageInfo stageInfo) throws Exception {
+  protected SparkCollection<Object> getSource(StageInfo stageInfo, int numOfRecordsPreview) throws Exception {
     StreamingSource<Object> source;
     if (checkpointsDisabled) {
       PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageInfo, sec);

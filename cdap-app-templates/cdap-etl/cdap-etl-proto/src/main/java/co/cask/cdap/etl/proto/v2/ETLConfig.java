@@ -47,9 +47,10 @@ public class ETLConfig extends Config implements UpgradeableConfig {
   private final co.cask.cdap.etl.proto.v1.ETLStage source;
   private final List<co.cask.cdap.etl.proto.v1.ETLStage> sinks;
   private final List<co.cask.cdap.etl.proto.v1.ETLStage> transforms;
+  private final int numOfRecordsPreview;
 
   protected ETLConfig(Set<ETLStage> stages, Set<Connection> connections,
-                      Resources resources, boolean stageLoggingEnabled) {
+                      Resources resources, boolean stageLoggingEnabled, int numOfRecordsPreview) {
     this.stages = Collections.unmodifiableSet(stages);
     this.connections = Collections.unmodifiableSet(connections);
     this.resources = resources;
@@ -58,6 +59,7 @@ public class ETLConfig extends Config implements UpgradeableConfig {
     this.source = null;
     this.sinks = new ArrayList<>();
     this.transforms = new ArrayList<>();
+    this.numOfRecordsPreview = numOfRecordsPreview;
   }
 
   public Set<ETLStage> getStages() {
@@ -70,6 +72,10 @@ public class ETLConfig extends Config implements UpgradeableConfig {
 
   public Resources getResources() {
     return resources == null ? new Resources() : resources;
+  }
+
+  public int getNumOfRecordsPreview() {
+    return numOfRecordsPreview;
   }
 
   public boolean isStageLoggingEnabled() {
@@ -176,6 +182,7 @@ public class ETLConfig extends Config implements UpgradeableConfig {
     protected Set<Connection> connections;
     protected Resources resources;
     protected Boolean stageLoggingEnabled;
+    protected int numOfRecordsPreview;
 
     protected Builder() {
       this.stages = new HashSet<>();
@@ -206,6 +213,11 @@ public class ETLConfig extends Config implements UpgradeableConfig {
 
     public T setResources(Resources resources) {
       this.resources = resources;
+      return (T) this;
+    }
+
+    public T setNumOfRecordsPreview(int numOfRecordsPreview) {
+      this.numOfRecordsPreview = numOfRecordsPreview;
       return (T) this;
     }
 

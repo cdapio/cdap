@@ -17,9 +17,11 @@
 package co.cask.cdap.etl.spark.function;
 
 import co.cask.cdap.api.dataset.lib.KeyValue;
+import co.cask.cdap.etl.api.Transformation;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.TrackedTransform;
+import co.cask.cdap.etl.common.preview.LimitingTransform;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import scala.Tuple2;
 
@@ -29,11 +31,13 @@ import scala.Tuple2;
  */
 public class BatchSourceFunction implements FlatMapFunction<Tuple2<Object, Object>, Object> {
   private final PluginFunctionContext pluginFunctionContext;
-  private transient TrackedTransform<KeyValue<Object, Object>, Object> transform;
+  private final int numOfRecordsPreview;
+  private transient Transformation<KeyValue<Object, Object>, Object> transform;
   private transient DefaultEmitter<Object> emitter;
 
-  public BatchSourceFunction(PluginFunctionContext pluginFunctionContext) {
+  public BatchSourceFunction(PluginFunctionContext pluginFunctionContext, int numOfRecordsPreview) {
     this.pluginFunctionContext = pluginFunctionContext;
+    this.numOfRecordsPreview = numOfRecordsPreview;
   }
 
   @Override
@@ -43,6 +47,9 @@ public class BatchSourceFunction implements FlatMapFunction<Tuple2<Object, Objec
       batchSource.initialize(pluginFunctionContext.createBatchRuntimeContext());
       transform = new TrackedTransform<>(batchSource, pluginFunctionContext.createStageMetrics(),
                                          pluginFunctionContext.getDataTracer());
+      if (pluginFunctionContext.getDataTracer().isEnabled()) {
+        transform = new LimitingTransform<>(transform, numOfRecordsPreview == 0 ? 100 : numOfRecordsPreview);
+      }
       emitter = new DefaultEmitter<>();
     }
     emitter.reset();

@@ -65,7 +65,7 @@ public abstract class TransformExecutorFactory<T> {
 
   protected abstract BatchRuntimeContext createRuntimeContext(String stageName);
 
-  protected abstract TrackedTransform getTransformation(String pluginType, String stageName)
+  protected abstract Transformation getTransformation(String pluginType, String stageName)
     throws Exception;
 
   /**

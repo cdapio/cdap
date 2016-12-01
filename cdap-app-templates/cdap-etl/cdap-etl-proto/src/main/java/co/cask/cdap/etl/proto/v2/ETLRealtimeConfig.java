@@ -34,8 +34,9 @@ public final class ETLRealtimeConfig extends ETLConfig {
                             Set<Connection> connections,
                             Resources resources,
                             boolean stageLoggingEnabled,
-                            int instances) {
-    super(stages, connections, resources, stageLoggingEnabled);
+                            int instances,
+                            int numOfRecordsPreview) {
+    super(stages, connections, resources, stageLoggingEnabled, numOfRecordsPreview);
     this.instances = instances;
   }
 
@@ -109,7 +110,7 @@ public final class ETLRealtimeConfig extends ETLConfig {
     }
 
     public ETLRealtimeConfig build() {
-      return new ETLRealtimeConfig(stages, connections, resources, stageLoggingEnabled, instances);
+      return new ETLRealtimeConfig(stages, connections, resources, stageLoggingEnabled, instances, numOfRecordsPreview);
     }
   }
 }
