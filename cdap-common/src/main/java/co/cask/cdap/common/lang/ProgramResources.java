@@ -44,7 +44,8 @@ public final class ProgramResources {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramResources.class);
 
   private static final List<String> HADOOP_PACKAGES = ImmutableList.of("org.apache.hadoop.");
-  private static final List<String> HBASE_PACKAGES = ImmutableList.of("org.apache.hadoop.hbase.");
+  private static final List<String> EXCLUDE_PACKAGES = ImmutableList.of("org.apache.hadoop.hbase.",
+                                                                        "org.apache.hadoop.hive.");
 
   private static final Predicate<URI> JAR_ONLY_URI = new Predicate<URI>() {
     @Override
@@ -75,7 +76,7 @@ public final class ProgramResources {
   /**
    * Returns a Set of resources name that are visible through the cdap-api module as well as Hadoop classes.
    * This includes all classes+resources in cdap-api plus all classes+resources that cdap-api
-   * depends on (for example, sl4j, guava, gson, etc).
+   * depends on (for example, sl4j, gson, etc).
    */
   private static Set<String> createBaseResources() throws IOException {
     // Everything should be traceable in the same ClassLoader of this class, which is the CDAP system ClassLoader
@@ -92,7 +93,7 @@ public final class ProgramResources {
 
     // Gather Hadoop classes and resources
     getResources(ClassPath.from(classLoader, JAR_ONLY_URI),
-                 HADOOP_PACKAGES, HBASE_PACKAGES, ClassPathResources.RESOURCE_INFO_TO_RESOURCE_NAME, result);
+                 HADOOP_PACKAGES, EXCLUDE_PACKAGES, ClassPathResources.RESOURCE_INFO_TO_RESOURCE_NAME, result);
 
     return Collections.unmodifiableSet(result);
   }
