@@ -35,6 +35,7 @@ public final class KafkaConstants {
     @Deprecated
     public static final String HOSTNAME_CONFIG_DEPRECATED = "kafka.bind.address";
     public static final String ZOOKEEPER_NAMESPACE_CONFIG = "kafka.zookeeper.namespace";
+    public static final String ZOOKEEPER_QUORUM = "kafka.zookeeper.quorum";
     public static final String REPLICATION_FACTOR = "kafka.server.default.replication.factor";
     @Deprecated
     public static final String REPLICATION_FACTOR_DEPRECATED = "kafka.default.replication.factor";
