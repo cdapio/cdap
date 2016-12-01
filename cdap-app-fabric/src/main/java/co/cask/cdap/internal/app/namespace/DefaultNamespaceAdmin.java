@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.namespace;
 
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.common.BadRequestException;
@@ -28,6 +29,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.security.AuthEnforce;
 import co.cask.cdap.common.security.ImpersonationInfo;
 import co.cask.cdap.common.security.Impersonator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -144,6 +146,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @throws NamespaceAlreadyExistsException if the specified namespace already exists
    */
   @Override
+  @AuthEnforce(entities = "instanceId", enforceOn = InstanceId.class, actions = Action.ADMIN)
   public synchronized void create(final NamespaceMeta metadata) throws Exception {
     // TODO: CDAP-1427 - This should be transactional, but we don't support transactions on files yet
     Preconditions.checkArgument(metadata != null, "Namespace metadata should not be null.");
@@ -159,7 +162,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
 
     // Namespace can be created. Check if the user is authorized now.
     Principal principal = authenticationContext.getPrincipal();
-    authorizationEnforcer.enforce(instanceId, principal, Action.ADMIN);
     privilegesManager.grant(namespace, principal, EnumSet.allOf(Action.class));
     // Also grant the user who will execute programs in this namespace all privileges on the namespace
     String executionUserName;
@@ -262,7 +264,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @throws NamespaceNotFoundException if the specified namespace does not exist
    */
   @Override
-  public synchronized void delete(final NamespaceId namespaceId) throws Exception {
+  @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
+  public synchronized void delete(@Name("namespaceId") final NamespaceId namespaceId) throws Exception {
     // TODO: CDAP-870, CDAP-1427: Delete should be in a single transaction.
     NamespaceMeta namespaceMeta = get(namespaceId);
 
@@ -272,8 +275,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
                                                                   "'%s', please stop them before deleting namespace",
                                                                 namespaceId));
     }
-
-    authorizationEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), Action.ADMIN);
 
     LOG.info("Deleting namespace '{}'.", namespaceId);
     try {
@@ -303,7 +304,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   }
 
   @Override
-  public synchronized void deleteDatasets(NamespaceId namespaceId) throws Exception {
+  @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
+  public synchronized void deleteDatasets(@Name("namespaceId") NamespaceId namespaceId) throws Exception {
     // TODO: CDAP-870, CDAP-1427: Delete should be in a single transaction.
     if (!exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
@@ -316,9 +318,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
                                                                   "in the namespace.",
                                                                 namespaceId));
     }
-
-    // Namespace data can be deleted. Revoke all privileges first
-    authorizationEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), Action.ADMIN);
     try {
       dsFramework.deleteAllInstances(namespaceId);
     } catch (DatasetManagementException | IOException e) {
