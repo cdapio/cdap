@@ -95,7 +95,7 @@ public final class DatasetSpecification {
     this.description = description;
     this.properties = Collections.unmodifiableSortedMap(new TreeMap<>(properties));
     this.originalProperties = originalProperties == null ? null :
-      Collections.unmodifiableMap(new TreeMap<String, String>(originalProperties));
+      Collections.unmodifiableMap(new TreeMap<>(originalProperties));
     this.datasetSpecs = Collections.unmodifiableSortedMap(new TreeMap<>(datasetSpecs));
   }
 
@@ -127,8 +127,9 @@ public final class DatasetSpecification {
   /**
    * Lookup a custom property of the dataset.
    * @param key the name of the property
-   * @return the value of the property or null if the property does not exist
+   * @return the value of the property or {@code null} if the property does not exist
    */
+  @Nullable
   public String getProperty(String key) {
     return properties.get(key);
   }
@@ -150,7 +151,7 @@ public final class DatasetSpecification {
    * @return the value of the property or defaultValue if the property does not exist
    */
   public long getLongProperty(String key, long defaultValue) {
-    return properties.containsKey(key) ? Long.parseLong(getProperty(key)) : defaultValue;
+    return properties.containsKey(key) ? Long.parseLong(properties.get(key)) : defaultValue;
   }
 
   /**
@@ -160,7 +161,7 @@ public final class DatasetSpecification {
    * @return the value of the property or defaultValue if the property does not exist
    */
   public int getIntProperty(String key, int defaultValue) {
-    return properties.containsKey(key) ? Integer.parseInt(getProperty(key)) : defaultValue;
+    return properties.containsKey(key) ? Integer.parseInt(properties.get(key)) : defaultValue;
   }
 
   /**

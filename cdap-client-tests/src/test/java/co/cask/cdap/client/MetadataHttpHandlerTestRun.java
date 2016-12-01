@@ -648,19 +648,17 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Schema viewSchema = Schema.recordOf("record",
                                         Schema.Field.of("viewBody", Schema.nullableOf(Schema.of(Schema.Type.BYTES))));
     streamViewClient.createOrUpdate(view.toId(), new ViewSpecification(new FormatSpecification("format", viewSchema)));
-    Set<String> viewSystemTags = getTags(view, MetadataScope.SYSTEM);
-    Assert.assertEquals(ImmutableSet.of(AllProgramsApp.STREAM_NAME), viewSystemTags);
-    Map<String, String> viewSystemProperties = getProperties(view, MetadataScope.SYSTEM);
-    Assert.assertEquals(viewSchema.toString(),
-                        viewSystemProperties.get(AbstractSystemMetadataWriter.SCHEMA_KEY));
     ImmutableSet<String> viewUserTags = ImmutableSet.of("viewTag");
     addTags(view, viewUserTags);
     Assert.assertEquals(
-      ImmutableSet.of(new MetadataRecord(view, MetadataScope.USER, ImmutableMap.<String, String>of(),
-                                         viewUserTags),
-                      new MetadataRecord(view, MetadataScope.SYSTEM, viewSystemProperties,
-                                         viewSystemTags)),
-      getMetadata(view)
+      ImmutableSet.of(
+        new MetadataRecord(view, MetadataScope.USER, ImmutableMap.<String, String>of(), viewUserTags),
+        new MetadataRecord(view, MetadataScope.SYSTEM,
+                           ImmutableMap.of(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, view.getEntityName(),
+                                           AbstractSystemMetadataWriter.SCHEMA_KEY, viewSchema.toString()),
+                           ImmutableSet.of(AllProgramsApp.STREAM_NAME))
+      ),
+      removeCreationTime(getMetadata(view))
     );
 
     // verify dataset system metadata

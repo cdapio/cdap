@@ -17,7 +17,6 @@
 package co.cask.cdap.data2.metadata.store;
 
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
-import co.cask.cdap.data2.metadata.indexer.Indexer;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
@@ -26,7 +25,6 @@ import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Defines operations on {@link MetadataDataset} for both system and user metadata.
@@ -50,16 +48,14 @@ public interface MetadataStore {
   void setProperties(MetadataScope scope, NamespacedEntityId namespacedEntityId, Map<String, String> properties);
 
   /**
-   * Adds/updates properties for the specified {@link NamespacedEntityId} in the specified {@link MetadataScope}.
+   * Sets the specified property for the specified {@link NamespacedEntityId} in the specified {@link MetadataScope}.
    *
-   * @param scope the {@link MetadataScope} to add/update the properties in
-   * @param namespacedEntityId the {@link NamespacedEntityId} to add the properties to
-   * @param properties the properties to add/update
-   * @param indexer {@link Indexer} to use for creating indexes
+   * @param scope the {@link MetadataScope} to set/update the property in
+   * @param namespacedEntityId the {@link NamespacedEntityId} to set the property for
+   * @param key the property key
+   * @param value the property value
    */
-  void setProperties(MetadataScope scope, NamespacedEntityId namespacedEntityId, Map<String, String> properties,
-                     @Nullable Indexer indexer);
-
+  void setProperty(MetadataScope scope, NamespacedEntityId namespacedEntityId, String key, String value);
 
   /**
    * Adds tags for the specified {@link NamespacedEntityId} in the specified {@link MetadataScope}.

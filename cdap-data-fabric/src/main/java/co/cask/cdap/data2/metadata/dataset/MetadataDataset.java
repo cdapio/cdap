@@ -29,21 +29,26 @@ import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.metadata.indexer.DefaultValueIndexer;
 import co.cask.cdap.data2.metadata.indexer.Indexer;
+import co.cask.cdap.data2.metadata.indexer.InvertedTimeIndexer;
+import co.cask.cdap.data2.metadata.indexer.InvertedValueIndexer;
 import co.cask.cdap.data2.metadata.indexer.SchemaIndexer;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.data2.metadata.indexer.ValueOnlyIndexer;
+import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
-import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
@@ -73,12 +78,10 @@ import javax.annotation.Nullable;
 public class MetadataDataset extends AbstractDataset {
   private static final Logger LOG = LoggerFactory.getLogger(MetadataDataset.class);
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Id.NamespacedId.class, new NamespacedIdCodec())
     .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
     .create();
 
   private static final Pattern SPACE_SEPARATOR_PATTERN = Pattern.compile("\\s+");
-
   private static final String HISTORY_COLUMN = "h"; // column for metadata history
   private static final String VALUE_COLUMN = "v";  // column for metadata value
   private static final String TAGS_SEPARATOR = ",";
@@ -92,29 +95,60 @@ public class MetadataDataset extends AbstractDataset {
       }
     };
 
-  static final String INDEX_COLUMN = "i";          // column for metadata indexes
+  private static final Set<Indexer> DEFAULT_INDEXERS = Collections.<Indexer>singleton(new DefaultValueIndexer());
+  private static final Map<String, Set<Indexer>> SYSTEM_METADATA_KEY_TO_INDEXERS = ImmutableMap.of(
+    AbstractSystemMetadataWriter.SCHEMA_KEY, Collections.<Indexer>singleton(
+      new SchemaIndexer()
+    ),
+    AbstractSystemMetadataWriter.ENTITY_NAME_KEY, ImmutableSet.of(
+      // used for listing entities sorted in ascending order of name
+      new ValueOnlyIndexer(),
+      // used for listing entities sorted in descending order of name
+      new InvertedValueIndexer(),
+      // used for searching entities with a search query
+      new DefaultValueIndexer()
+    ),
+    AbstractSystemMetadataWriter.CREATION_TIME_KEY, ImmutableSet.of(
+      // used for listing entities sorted in ascending order of creation time
+      new ValueOnlyIndexer(),
+      // used for listing entities sorted in descending order of creation time
+      new InvertedTimeIndexer(),
+      // used for searching entities with a search query
+      new DefaultValueIndexer()
+    )
+  );
+
+  static final String DEFAULT_INDEX_COLUMN = "i";           // default column for metadata indexes
+  static final String ENTITY_NAME_INDEX_COLUMN = "n";       // column for entity name indexes
+  static final String INVERTED_ENTITY_NAME_INDEX_COLUMN = "in";    // column for entity name indexes in reverse order
+  static final String CREATION_TIME_INDEX_COLUMN = "c";     // column for creation-time indexes
+  static final String INVERTED_CREATION_TIME_INDEX_COLUMN = "ic"; // column for inverted creation-time based index
 
   public static final String TAGS_KEY = "tags";
   public static final String KEYVALUE_SEPARATOR = ":";
 
   private final IndexedTable indexedTable;
+  private final MetadataScope scope;
 
-  public MetadataDataset(IndexedTable indexedTable) {
+  MetadataDataset(IndexedTable indexedTable, MetadataScope scope) {
     super("metadataDataset", indexedTable);
     this.indexedTable = indexedTable;
+    this.scope = scope;
   }
 
   /**
    * Add new metadata.
    *
-   * @param metadataEntry The value of the metadata to be saved.
-   * @param indexer the indexer to use to create indexes for this {@link MetadataEntry}
+   * @param metadataEntry The value of the metadata to be saved
    */
-  private void setMetadata(MetadataEntry metadataEntry, @Nullable Indexer indexer) {
-    NamespacedEntityId targetId = metadataEntry.getTargetId();
+  private void setMetadata(MetadataEntry metadataEntry) {
+    setMetadata(metadataEntry, getIndexersForKey(metadataEntry.getKey()));
+  }
 
-    // Put to the default column.
-    write(targetId, metadataEntry, indexer == null ? new DefaultValueIndexer() : indexer);
+  @VisibleForTesting
+  void setMetadata(MetadataEntry metadataEntry, Set<Indexer> indexers) {
+    NamespacedEntityId targetId = metadataEntry.getTargetId();
+    write(targetId, metadataEntry, indexers);
   }
 
   /**
@@ -125,20 +159,7 @@ public class MetadataDataset extends AbstractDataset {
    * @param value The metadata value to be added
    */
   public void setProperty(NamespacedEntityId targetId, String key, String value) {
-    setProperty(targetId, key, value, null);
-  }
-
-  /**
-   * Sets a metadata property for the specified {@link NamespacedEntityId}.
-   *
-   * @param targetId The target Id: {@link ApplicationId} / {@link ProgramId} /
-   *                 {@link DatasetId}/{@link StreamId}
-   * @param key The metadata key to be added
-   * @param value The metadata value to be added
-   * @param indexer the indexer to use to create indexes for this key-value property
-   */
-  public void setProperty(NamespacedEntityId targetId, String key, String value, @Nullable Indexer indexer) {
-    setMetadata(new MetadataEntry(targetId, key, value), indexer);
+    setMetadata(new MetadataEntry(targetId, key, value));
   }
 
   /**
@@ -149,8 +170,7 @@ public class MetadataDataset extends AbstractDataset {
    * @param tags the tags to set
    */
   private void setTags(NamespacedEntityId targetId, String ... tags) {
-    MetadataEntry tagsEntry = new MetadataEntry(targetId, TAGS_KEY, Joiner.on(TAGS_SEPARATOR).join(tags));
-    setMetadata(tagsEntry, null);
+    setMetadata(new MetadataEntry(targetId, TAGS_KEY, Joiner.on(TAGS_SEPARATOR).join(tags)));
   }
 
   /**
@@ -164,7 +184,7 @@ public class MetadataDataset extends AbstractDataset {
     Set<String> existingTags = getTags(targetId);
     Iterable<String> newTags = Iterables.concat(existingTags, Arrays.asList(tagsToAdd));
     MetadataEntry newTagsEntry = new MetadataEntry(targetId, TAGS_KEY, Joiner.on(TAGS_SEPARATOR).join(newTags));
-    setMetadata(newTagsEntry, null);
+    setMetadata(newTagsEntry);
   }
 
   /**
@@ -521,15 +541,15 @@ public class MetadataDataset extends AbstractDataset {
         // if prefixed search get start and stop key
         byte[] startKey = Bytes.toBytes(searchTerm.substring(0, searchTerm.lastIndexOf("*")));
         byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
-        scanner = indexedTable.scanByIndex(Bytes.toBytes(INDEX_COLUMN), startKey, stopKey);
+        scanner = indexedTable.scanByIndex(Bytes.toBytes(DEFAULT_INDEX_COLUMN), startKey, stopKey);
       } else {
         byte[] value = Bytes.toBytes(searchTerm);
-        scanner = indexedTable.readByIndex(Bytes.toBytes(INDEX_COLUMN), value);
+        scanner = indexedTable.readByIndex(Bytes.toBytes(DEFAULT_INDEX_COLUMN), value);
       }
       try {
         Row next;
         while ((next = scanner.next()) != null) {
-          String rowValue = next.getString(INDEX_COLUMN);
+          String rowValue = next.getString(DEFAULT_INDEX_COLUMN);
           if (rowValue == null) {
             continue;
           }
@@ -588,7 +608,7 @@ public class MetadataDataset extends AbstractDataset {
     return searchTerms;
   }
 
-  private void write(NamespacedEntityId targetId, MetadataEntry entry, Indexer indexer) {
+  private void write(NamespacedEntityId targetId, MetadataEntry entry, Set<Indexer> indexers) {
     String key = entry.getKey();
     MDSKey mdsValueKey = MdsKey.getMDSValueKey(targetId, key);
     Put put = new Put(mdsValueKey.getKey());
@@ -596,7 +616,7 @@ public class MetadataDataset extends AbstractDataset {
     // add the metadata value
     put.add(Bytes.toBytes(VALUE_COLUMN), Bytes.toBytes(entry.getValue()));
     indexedTable.put(put);
-    storeIndexes(targetId, entry.getKey(), indexer.getIndexes(entry));
+    storeIndexes(targetId, key, indexers, entry);
     writeHistory(targetId);
   }
 
@@ -605,18 +625,43 @@ public class MetadataDataset extends AbstractDataset {
    *
    * @param targetId the {@link NamespacedEntityId} from which the metadata indexes has to be stored
    * @param metadataKey the metadata key for which the indexes are to be stored
-   * @param indexes {@link Set<String>} of indexes to store for this {@link MetadataEntry}
+   * @param indexers {@link Set<String>} of {@link Indexer indexers} for this {@link MetadataEntry}
+   * @param metadataEntry {@link MetadataEntry} for which indexes are to be stored
    */
-  private void storeIndexes(NamespacedEntityId targetId, String metadataKey, Set<String> indexes) {
+  private void storeIndexes(NamespacedEntityId targetId, String metadataKey, Set<Indexer> indexers,
+                            MetadataEntry metadataEntry) {
     // Delete existing indexes for targetId-key
     deleteIndexes(targetId, metadataKey);
 
-    for (String index : indexes) {
-      // store the index with key of the metadata, so that we allow searches of the form [key]:[value]
-      indexedTable.put(getIndexPut(targetId, metadataKey, metadataKey + KEYVALUE_SEPARATOR + index));
-      // store just the index value
-      indexedTable.put(getIndexPut(targetId, metadataKey, index));
+    for (Indexer indexer : indexers) {
+      Set<String> indexes = indexer.getIndexes(metadataEntry);
+      for (String index : indexes) {
+        String indexColumn = getIndexColumn(metadataKey, indexer);
+        // store the index with key of the metadata, so that we allow searches of the form [key]:[value]
+        indexedTable.put(getIndexPut(targetId, metadataKey, metadataKey + KEYVALUE_SEPARATOR + index, indexColumn));
+        // store just the index value
+        indexedTable.put(getIndexPut(targetId, metadataKey, index, indexColumn));
+      }
     }
+  }
+
+  private String getIndexColumn(String key, Indexer indexer) {
+    String indexColumn = DEFAULT_INDEX_COLUMN;
+    if (indexer instanceof ValueOnlyIndexer) {
+      switch (key) {
+        case AbstractSystemMetadataWriter.ENTITY_NAME_KEY:
+          indexColumn = ENTITY_NAME_INDEX_COLUMN;
+          break;
+        case AbstractSystemMetadataWriter.CREATION_TIME_KEY:
+          indexColumn = CREATION_TIME_INDEX_COLUMN;
+          break;
+      }
+    } else if (indexer instanceof InvertedValueIndexer) {
+      indexColumn = INVERTED_ENTITY_NAME_INDEX_COLUMN;
+    } else if (indexer instanceof InvertedTimeIndexer) {
+      indexColumn = INVERTED_CREATION_TIME_INDEX_COLUMN;
+    }
+    return indexColumn;
   }
 
   /**
@@ -625,13 +670,15 @@ public class MetadataDataset extends AbstractDataset {
    * @param targetId the {@link NamespacedEntityId} from which the metadata index has to be created
    * @param metadataKey the key of the metadata entry
    * @param index the index for this metadata
-   * @return {@link Put} which is a index row with the value to be indexed in the {@link #INDEX_COLUMN}
+   * @param indexColumn the column to store the index in. This column should exist in the
+   * {@link IndexedTable#INDEX_COLUMNS_CONF_KEY} property in the dataset's definition
+   * @return {@link Put} which is a index row with the value to be indexed in the {@link #DEFAULT_INDEX_COLUMN}
    */
-  private Put getIndexPut(NamespacedEntityId targetId, String metadataKey, String index) {
+  private Put getIndexPut(NamespacedEntityId targetId, String metadataKey, String index, String indexColumn) {
     MDSKey mdsIndexKey = MdsKey.getMDSIndexKey(targetId, metadataKey, index.toLowerCase());
     String namespacedIndex = targetId.getNamespace() + KEYVALUE_SEPARATOR + index.toLowerCase();
     Put put = new Put(mdsIndexKey.getKey());
-    put.add(Bytes.toBytes(INDEX_COLUMN), Bytes.toBytes(namespacedIndex));
+    put.add(Bytes.toBytes(indexColumn), Bytes.toBytes(namespacedIndex));
     return put;
   }
 
@@ -669,16 +716,15 @@ public class MetadataDataset extends AbstractDataset {
         String targetType = MdsKey.getTargetType(rowKey);
         NamespacedEntityId namespacedEntityId = MdsKey.getNamespacedIdFromKey(targetType, rowKey);
         String metadataKey = MdsKey.getMetadataKey(targetType, rowKey);
-        Indexer indexer = getIndexerForKey(metadataKey);
+        Set<Indexer> indexers = getIndexersForKey(metadataKey);
         MetadataEntry metadataEntry = getMetadata(namespacedEntityId, metadataKey);
         if (metadataEntry == null) {
           LOG.warn("Found null metadata entry for a known metadata key {} for entity {} which has an index stored. " +
                      "Ignoring.", metadataKey, namespacedEntityId);
           continue;
         }
-        Set<String> indexes = indexer.getIndexes(metadataEntry);
         // storeIndexes deletes old indexes
-        storeIndexes(namespacedEntityId, metadataKey, indexes);
+        storeIndexes(namespacedEntityId, metadataKey, indexers, metadataEntry);
         limit--;
       }
       Row startRowForNextBatch = scanner.next();
@@ -710,12 +756,17 @@ public class MetadataDataset extends AbstractDataset {
     return count;
   }
 
-  // TODO: CDAP-5663 The entire logic of mapping between Indexers and keys should be made internal to MetadataDataset
-  private Indexer getIndexerForKey(String key) {
-    if ("schema".equals(key)) {
-      return new SchemaIndexer();
+  /**
+   * Returns all the {@link Indexer indexers} that apply to a specified metadata key.
+   *
+   * @param key the key for which {@link Indexer indexers} are required
+   */
+  private Set<Indexer> getIndexersForKey(String key) {
+    // for known keys in system scope, return appropriate indexers
+    if (MetadataScope.SYSTEM == scope && SYSTEM_METADATA_KEY_TO_INDEXERS.containsKey(key)) {
+      return SYSTEM_METADATA_KEY_TO_INDEXERS.get(key);
     }
-    return new DefaultValueIndexer();
+    return DEFAULT_INDEXERS;
   }
 
   /**
@@ -727,10 +778,15 @@ public class MetadataDataset extends AbstractDataset {
    * @return {@code true} if the row was deleted, {@code false} otherwise
    */
   private boolean deleteIndexRow(Row row) {
-    if (row.get(INDEX_COLUMN) == null) {
+    if (row.get(DEFAULT_INDEX_COLUMN) == null) {
       return false;
     }
     indexedTable.delete(new Delete(row.getRow()));
     return true;
+  }
+
+  @VisibleForTesting
+  Scanner searchByIndex(String indexColumn, String value) {
+    return indexedTable.readByIndex(Bytes.toBytes(indexColumn), Bytes.toBytes(value));
   }
 }
