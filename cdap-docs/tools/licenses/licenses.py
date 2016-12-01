@@ -330,7 +330,7 @@ def process_cdap_ui(options):
     cdap_ui_dict = {}
     missing_libs_dict = {}
     new_versions_dict = {}
-    
+
     print_quiet()
 
     for type in CDAP_UI_SOURCES.keys():

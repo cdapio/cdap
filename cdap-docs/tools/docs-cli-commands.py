@@ -10,9 +10,9 @@
 # in the table that is generated.
 #
 
-from optparse import OptionParser
 import os
 import sys
+from optparse import OptionParser
 
 VERSION = "0.0.2"
 
