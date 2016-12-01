@@ -143,8 +143,8 @@ Formatting and Filtering
 Formatting
 ----------
 
-The output is formatted as HTML-embeddable text; that is, characters that have a special meaning in HTML will be
-escaped. A line of a log may look like this::
+The output is, by default, formatted as HTML-embeddable text; that is, characters that
+have a special meaning in HTML will be escaped. A line of a log may look like this::
 
   2013-10-23 18:03:09,793 - INFO [FlowletProcessDriver-source-0-
         executor:c.c.e.c.StreamSource@-1] – source: Emitting line: this is an &amp; character
@@ -152,6 +152,9 @@ escaped. A line of a log may look like this::
 **Note:** The context of the log line shows the name of the flowlet (*source*), its instance number (0) as
 well as the original line in the application code. The character *&* is escaped as ``&amp;``; if you don’t desire
 this escaping, you can turn it off by adding the parameter ``&escape=false`` to the request URL.
+
+The text can also be formatted as JSON. To do so, suffix your URL with the parameter
+``&format=json``.
 
 Filtering
 ---------
