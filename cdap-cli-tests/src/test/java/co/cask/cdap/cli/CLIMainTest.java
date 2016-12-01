@@ -34,10 +34,10 @@ import co.cask.cdap.client.app.FakeWorkflow;
 import co.cask.cdap.client.app.PingService;
 import co.cask.cdap.client.app.PrefixedEchoHandler;
 import co.cask.cdap.common.DatasetTypeNotFoundException;
-import co.cask.cdap.common.ProgramNotFoundException;
-import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.test.AppJarHelper;
+import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -52,7 +52,6 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.proto.id.StreamId;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.cli.CLI;
 import com.google.common.base.Charsets;
@@ -88,6 +87,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -649,7 +649,7 @@ public class CLIMainTest extends CLITestBase {
     testCommandOutputContains(cli, String.format("get metadata-tags %s scope system", fakeDsId),
                               "explore");
     testCommandOutputContains(cli, String.format("get metadata-tags %s scope system", fakeStreamId),
-                              FakeApp.STREAM_NAME);
+                              AbstractSystemMetadataWriter.EXPLORE_TAG);
     testCommandOutputContains(cli, String.format("add metadata-properties %s appKey=appValue", fakeAppId),
                               "Successfully added metadata properties");
     testCommandOutputContains(cli, String.format("get metadata-properties %s", fakeAppId), "appKey,appValue");
@@ -718,27 +718,14 @@ public class CLIMainTest extends CLITestBase {
     return appJarFile;
   }
 
-  protected void assertProgramStatus(ProgramClient programClient, ProgramId programId, String programStatus, int tries)
-    throws IOException, ProgramNotFoundException, UnauthenticatedException, UnauthorizedException {
-
-    String status;
-    int numTries = 0;
-    do {
-      status = programClient.getStatus(programId);
-      numTries++;
-      try {
-        TimeUnit.SECONDS.sleep(1);
-      } catch (InterruptedException e) {
-        // NO-OP
+  private void assertProgramStatus(final ProgramClient programClient, final ProgramId programId, String programStatus)
+    throws Exception {
+    Tasks.waitFor(programStatus, new Callable<String>() {
+      @Override
+      public String call() throws Exception {
+        return programClient.getStatus(programId);
       }
-    } while (!status.equals(programStatus) && numTries <= tries);
-    Assert.assertEquals(programStatus, status);
-  }
-
-  protected void assertProgramStatus(ProgramClient programClient, ProgramId programId, String programStatus)
-    throws IOException, ProgramNotFoundException, UnauthenticatedException, UnauthorizedException {
-
-    assertProgramStatus(programClient, programId, programStatus, 180);
+    }, 180, TimeUnit.SECONDS);
   }
 
   private static void testNamespacesOutput(CLI cli, String command, final List<NamespaceMeta> expected)
