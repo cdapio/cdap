@@ -312,7 +312,7 @@ public class BaseHiveExploreServiceTest {
                                    List<ColumnDesc> expectedColumnDescs, List<QueryResult> expectedResults)
     throws Exception {
 
-    ListenableFuture<ExploreExecutionResult> future = exploreClient.submit(namespace.toId(), command);
+    ListenableFuture<ExploreExecutionResult> future = exploreClient.submit(namespace, command);
     assertStatementResult(future, expectedHasResult, expectedColumnDescs, expectedResults);
   }
 

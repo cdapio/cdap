@@ -121,7 +121,7 @@ public class ExploreDisabledTest {
 
   @AfterClass
   public static void stop() throws Exception {
-    exploreClient.removeNamespace(namespaceId.toId());
+    exploreClient.removeNamespace(namespaceId);
     namespaceAdmin.delete(namespaceId);
     exploreClient.close();
     datasetService.stopAndWait();

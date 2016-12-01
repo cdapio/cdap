@@ -147,7 +147,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
   @Test
   public void getUserTables() throws Exception {
-    exploreClient.submit(NAMESPACE_ID.toId(), "create table test (first INT, second STRING) " +
+    exploreClient.submit(NAMESPACE_ID, "create table test (first INT, second STRING) " +
                            "ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t'").get();
     List<TableNameInfo> tables = exploreService.getTables(NAMESPACE_ID.getNamespace());
     Assert.assertEquals(ImmutableList.of(new TableNameInfo(NAMESPACE_DATABASE, MY_TABLE_NAME),
@@ -161,12 +161,12 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     tables = exploreService.getTables("foobar");
     Assert.assertEquals(ImmutableList.<TableNameInfo>of(), tables);
 
-    exploreClient.submit(NAMESPACE_ID.toId(), "drop table if exists test").get();
+    exploreClient.submit(NAMESPACE_ID, "drop table if exists test").get();
   }
 
   @Test
   public void testHiveIntegration() throws Exception {
-    exploreClient.submit(OTHER_NAMESPACE_ID.toId(), "create table test (first INT, second STRING) " +
+    exploreClient.submit(OTHER_NAMESPACE_ID, "create table test (first INT, second STRING) " +
       "ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t'").get();
 
     runCommand(NAMESPACE_ID, "show tables",
@@ -261,7 +261,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                )
     );
 
-    exploreClient.submit(OTHER_NAMESPACE_ID.toId(), "drop table if exists test").get();
+    exploreClient.submit(OTHER_NAMESPACE_ID, "drop table if exists test").get();
   }
 
   @Test
@@ -274,7 +274,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     try {
       Assert.assertEquals(0, exploreService.getActiveQueryCount(testNamespace1));
 
-      ListenableFuture<ExploreExecutionResult> future = exploreClient.submit(testNamespace1.toId(), "show tables");
+      ListenableFuture<ExploreExecutionResult> future = exploreClient.submit(testNamespace1, "show tables");
       ExploreExecutionResult result = null;
       try {
         result = future.get();
@@ -286,7 +286,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
         Assert.assertEquals(0, exploreService.getActiveQueryCount(testNamespace1));
       }
     } finally {
-      exploreClient.removeNamespace(testNamespace1.toId()).get();
+      exploreClient.removeNamespace(testNamespace1).get();
     }
   }
 
@@ -308,15 +308,15 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     exploreClient.addNamespace(testNamespace1Meta).get();
     exploreClient.addNamespace(testNamespace2Meta).get();
 
-    exploreClient.submit(testNamespace1.toId(), "create table my_table (first INT, second STRING)").get();
+    exploreClient.submit(testNamespace1, "create table my_table (first INT, second STRING)").get();
 
-    future = exploreClient.submit(testNamespace1.toId(), "show tables");
+    future = exploreClient.submit(testNamespace1, "show tables");
     future.get();
 
-    future = exploreClient.submit(testNamespace2.toId(), "show tables");
+    future = exploreClient.submit(testNamespace2, "show tables");
     future.get();
 
-    future = exploreClient.submit(testNamespace1.toId(), "select * from my_table");
+    future = exploreClient.submit(testNamespace1, "select * from my_table");
     results = future.get();
 
     queries = exploreService.getQueries(testNamespace1);
@@ -360,10 +360,10 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     Assert.assertTrue(queries.get(0).isActive());
 
     // Make sure queries are reverse ordered by timestamp
-    exploreClient.submit(testNamespace1.toId(), "show tables").get();
-    exploreClient.submit(testNamespace1.toId(), "show tables").get();
-    exploreClient.submit(testNamespace1.toId(), "show tables").get();
-    exploreClient.submit(testNamespace1.toId(), "show tables").get();
+    exploreClient.submit(testNamespace1, "show tables").get();
+    exploreClient.submit(testNamespace1, "show tables").get();
+    exploreClient.submit(testNamespace1, "show tables").get();
+    exploreClient.submit(testNamespace1, "show tables").get();
 
     queries = exploreService.getQueries(testNamespace1);
     List<Long> timestamps = Lists.newArrayList();
@@ -380,9 +380,9 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     // verify the ordering
     Assert.assertTrue(Ordering.natural().reverse().isOrdered(timestamps));
 
-    exploreClient.submit(testNamespace1.toId(), "drop table if exists my_table").get();
-    exploreClient.removeNamespace(testNamespace1.toId()).get();
-    exploreClient.removeNamespace(testNamespace2.toId()).get();
+    exploreClient.submit(testNamespace1, "drop table if exists my_table").get();
+    exploreClient.removeNamespace(testNamespace1).get();
+    exploreClient.removeNamespace(testNamespace2).get();
   }
 
   @Test
@@ -506,7 +506,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     }
 
     // Get info of a Hive table
-    exploreClient.submit(NAMESPACE_ID.toId(), "create table test (first INT, second STRING) " +
+    exploreClient.submit(NAMESPACE_ID, "create table test (first INT, second STRING) " +
                            "ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t'").get();
     tableInfo = exploreService.getTableInfo(NAMESPACE_ID.getNamespace(), "test");
     Assert.assertEquals(new TableInfo(
@@ -524,10 +524,10 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                           false
                         ),
                         tableInfo);
-    exploreClient.submit(NAMESPACE_ID.toId(), "drop table if exists test").get();
+    exploreClient.submit(NAMESPACE_ID, "drop table if exists test").get();
 
     // Get info of a partitioned table
-    exploreClient.submit(NAMESPACE_ID.toId(),
+    exploreClient.submit(NAMESPACE_ID,
                          "CREATE TABLE page_view(viewTime INT, userid BIGINT, page_url STRING, referrer_url STRING, " +
                            "ip STRING COMMENT \"IP Address of the User\") COMMENT \"This is the page view table\" " +
                            "PARTITIONED BY(dt STRING, country STRING) STORED AS SEQUENCEFILE").get();
@@ -559,7 +559,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                         ),
                         tableInfo);
     Assert.assertEquals("This is the page view table", tableInfo.getParameters().get("comment"));
-    exploreClient.submit(NAMESPACE_ID.toId(), "drop table if exists page_view").get();
+    exploreClient.submit(NAMESPACE_ID, "drop table if exists page_view").get();
   }
 
   @Test
@@ -706,7 +706,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
   @Test
   public void testCancel() throws Exception {
-    ListenableFuture<ExploreExecutionResult> future = exploreClient.submit(NAMESPACE_ID.toId(),
+    ListenableFuture<ExploreExecutionResult> future = exploreClient.submit(NAMESPACE_ID,
                                                                            "select key, value from " + MY_TABLE_NAME);
     future.cancel(true);
     try {
@@ -743,7 +743,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
                             new QueryResult(Lists.<Object>newArrayList("cdap_test", "")),
                             new QueryResult(Lists.<Object>newArrayList("default", ""))));
 
-    future = exploreClient.removeNamespace(new NamespaceId("test").toId());
+    future = exploreClient.removeNamespace(new NamespaceId("test"));
     future.get();
 
     future = exploreClient.schemas(null, null);

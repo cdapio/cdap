@@ -26,11 +26,13 @@ import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.explore.service.MetaDataInfo;
 import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -85,11 +87,11 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
-  public ListenableFuture<Void> disableExploreDataset(final Id.DatasetInstance datasetInstance) {
+  public ListenableFuture<Void> disableExploreDataset(final DatasetId datasetInstance) {
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doDisableExploreDataset(datasetInstance.toEntityId());
+        return doDisableExploreDataset(datasetInstance);
       }
     });
 
@@ -98,13 +100,13 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
-  public ListenableFuture<Void> updateExploreDataset(final Id.DatasetInstance datasetInstance,
+  public ListenableFuture<Void> updateExploreDataset(final DatasetId datasetInstance,
                                                      final DatasetSpecification oldSpec,
                                                      final DatasetSpecification newSpec) {
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doUpdateExploreDataset(datasetInstance.toEntityId(), oldSpec, newSpec);
+        return doUpdateExploreDataset(datasetInstance, oldSpec, newSpec);
       }
     });
 
@@ -113,11 +115,11 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
-  public ListenableFuture<Void> enableExploreDataset(final Id.DatasetInstance datasetInstance) {
+  public ListenableFuture<Void> enableExploreDataset(final DatasetId datasetInstance) {
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doEnableExploreDataset(datasetInstance.toEntityId(), null);
+        return doEnableExploreDataset(datasetInstance, null);
       }
     });
 
@@ -126,12 +128,12 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
-  public ListenableFuture<Void> enableExploreDataset(final Id.DatasetInstance datasetInstance,
+  public ListenableFuture<Void> enableExploreDataset(final DatasetId datasetInstance,
                                                      final DatasetSpecification spec) {
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doEnableExploreDataset(datasetInstance.toEntityId(), spec);
+        return doEnableExploreDataset(datasetInstance, spec);
       }
     });
 
@@ -140,12 +142,12 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
-  public ListenableFuture<Void> enableExploreStream(final Id.Stream stream, final String tableName,
+  public ListenableFuture<Void> enableExploreStream(final StreamId stream, final String tableName,
                                                     final FormatSpecification format) {
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doEnableExploreStream(stream.toEntityId(), tableName, format);
+        return doEnableExploreStream(stream, tableName, format);
       }
     });
 
@@ -154,11 +156,11 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
-  public ListenableFuture<Void> disableExploreStream(final Id.Stream stream, final String tableName) {
+  public ListenableFuture<Void> disableExploreStream(final StreamId stream, final String tableName) {
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doDisableExploreStream(stream.toEntityId(), tableName);
+        return doDisableExploreStream(stream, tableName);
       }
     });
 
@@ -167,12 +169,12 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
-  public ListenableFuture<Void> addPartition(final Id.DatasetInstance datasetInstance,
+  public ListenableFuture<Void> addPartition(final DatasetId datasetInstance,
                                              final PartitionKey key, final String path) {
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doAddPartition(datasetInstance.toEntityId(), key, path);
+        return doAddPartition(datasetInstance, key, path);
       }
     });
 
@@ -181,11 +183,11 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
-  public ListenableFuture<Void> dropPartition(final Id.DatasetInstance datasetInstance, final PartitionKey key) {
+  public ListenableFuture<Void> dropPartition(final DatasetId datasetInstance, final PartitionKey key) {
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doDropPartition(datasetInstance.toEntityId(), key);
+        return doDropPartition(datasetInstance, key);
       }
     });
 
@@ -194,11 +196,11 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
-  public ListenableFuture<ExploreExecutionResult> submit(final Id.Namespace namespace, final String statement) {
+  public ListenableFuture<ExploreExecutionResult> submit(final NamespaceId namespace, final String statement) {
     return getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return execute(namespace.toEntityId(), statement);
+        return execute(namespace, statement);
       }
     });
   }
@@ -303,11 +305,11 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
-  public ListenableFuture<ExploreExecutionResult> removeNamespace(final Id.Namespace namespace) {
+  public ListenableFuture<ExploreExecutionResult> removeNamespace(final NamespaceId namespace) {
     return getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return deleteNamespace(namespace.toEntityId());
+        return deleteNamespace(namespace);
       }
     });
   }

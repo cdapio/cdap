@@ -103,7 +103,7 @@ public class ExploreStatement implements Statement {
       resultSet = null;
     }
 
-    futureResults = exploreClient.submit(namespace.toId(), sql);
+    futureResults = exploreClient.submit(namespace, sql);
     try {
       resultSet = new ExploreResultSet(futureResults.get(), this, maxRows);
       // NOTE: Javadoc states: "returns false if the first result is an update count or there is no result"

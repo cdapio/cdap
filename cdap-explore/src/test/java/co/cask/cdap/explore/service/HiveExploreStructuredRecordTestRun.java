@@ -151,7 +151,7 @@ public class HiveExploreStructuredRecordTestRun extends BaseHiveExploreServiceTe
       new ColumnDesc(MY_TABLE_NAME + ".body", "STRING", 3, null),
       new ColumnDesc(MY_TABLE_NAME + ".sender", "STRING", 4, null)
     );
-    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID.toId(), "select * from " + MY_TABLE_NAME).get();
+    ExploreExecutionResult results = exploreClient.submit(NAMESPACE_ID, "select * from " + MY_TABLE_NAME).get();
     // check schema
     Assert.assertEquals(expectedSchema, results.getResultSchema());
     List<Object> columns = results.next().getColumns();
@@ -184,7 +184,7 @@ public class HiveExploreStructuredRecordTestRun extends BaseHiveExploreServiceTe
     try {
       String command = String.format("insert into %s select * from %s",
         getDatasetHiveName(copyTable), MY_TABLE_NAME);
-      ExploreExecutionResult result = exploreClient.submit(NAMESPACE_ID.toId(), command).get();
+      ExploreExecutionResult result = exploreClient.submit(NAMESPACE_ID, command).get();
       Assert.assertEquals(QueryStatus.OpStatus.FINISHED, result.getStatus().getStatus());
 
       command = String.format("select id, subject, body, sender from %s", getDatasetHiveName(copyTable));

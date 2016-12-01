@@ -474,7 +474,7 @@ public class DatasetInstanceService {
     // Disable ad-hoc exploration of dataset
     // Note: today explore enable is not transactional with dataset create - CDAP-8
     try {
-      exploreFacade.disableExploreDataset(datasetInstance.toId());
+      exploreFacade.disableExploreDataset(datasetInstance);
     } catch (Exception e) {
       LOG.error("Cannot disable explore for dataset instance {}", datasetInstance, e);
       // TODO: at this time we want to still allow using dataset even if it cannot be used for exploration
@@ -486,7 +486,7 @@ public class DatasetInstanceService {
     // Enable ad-hoc exploration of dataset
     // Note: today explore enable is not transactional with dataset create - CDAP-8
     try {
-      exploreFacade.enableExploreDataset(datasetInstance.toId(), spec);
+      exploreFacade.enableExploreDataset(datasetInstance, spec);
     } catch (Exception e) {
       LOG.error("Cannot enable explore for dataset instance {} of type {} with properties {}",
                 datasetInstance, creationProperties.getTypeName(), creationProperties.getProperties(), e);
@@ -499,7 +499,7 @@ public class DatasetInstanceService {
     // Enable ad-hoc exploration of dataset
     // Note: today explore enable is not transactional with dataset create - CDAP-8
     try {
-      exploreFacade.updateExploreDataset(datasetInstance.toId(), oldSpec, newSpec);
+      exploreFacade.updateExploreDataset(datasetInstance, oldSpec, newSpec);
     } catch (Exception e) {
       LOG.error("Cannot update explore for dataset instance {} with old properties {} and new properties {}",
                 datasetInstance, oldSpec.getOriginalProperties(), creationProperties.getProperties(), e);

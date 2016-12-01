@@ -52,7 +52,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetDataset;
 import co.cask.cdap.explore.client.ExploreFacade;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -104,7 +104,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   protected final Partitioning partitioning;
   protected boolean ignoreInvalidRowsSilently = false;
 
-  private final Id.DatasetInstance datasetInstanceId;
+  private final DatasetId datasetInstanceId;
 
   // In this map we keep track of the partitions that were added in the same transaction.
   // If the exact same partition is added again, we will not throw an error but only log a message that
@@ -135,7 +135,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     this.runtimeArguments = arguments;
     this.partitioning = partitioning;
     this.exploreFacadeProvider = exploreFacadeProvider;
-    this.datasetInstanceId = Id.DatasetInstance.from(datasetContext.getNamespaceId(), name);
+    this.datasetInstanceId = new DatasetId(datasetContext.getNamespaceId(), name);
   }
 
   @Override
