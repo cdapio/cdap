@@ -69,7 +69,7 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    ServiceId service = parseServiceId(arguments);
+
 
     String method = arguments.get(ArgumentName.HTTP_METHOD.toString());
     String path = arguments.get(ArgumentName.ENDPOINT.toString());
@@ -87,7 +87,10 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
     }
 
     Map<String, String> headerMap = GSON.fromJson(headers, new TypeToken<Map<String, String>>() { }.getType());
-    URL url = new URL(serviceClient.getServiceURL(service), path);
+    ServiceId service = new ServiceId(parseProgramId(arguments, ElementType.SERVICE));
+    URL url = arguments.hasArgument(ArgumentName.APP_VERSION.getName()) ?
+      new URL(serviceClient.getVersionedServiceURL(service), path) :
+      new URL(serviceClient.getServiceURL(service), path);
 
     HttpMethod httpMethod = HttpMethod.valueOf(method);
     HttpRequest.Builder builder = HttpRequest.builder(httpMethod, url).addHeaders(headerMap);
@@ -111,8 +114,8 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
 
   @Override
   public String getPattern() {
-    return String.format("call service <%s> <%s> <%s> [headers <%s>] [body <%s>] [body:file <%s>]",
-                         ArgumentName.SERVICE, ArgumentName.HTTP_METHOD,
+    return String.format("call service <%s> [version <%s>] <%s> <%s> [headers <%s>] [body <%s>] [body:file <%s>]",
+                         ArgumentName.SERVICE, ArgumentName.APP_VERSION, ArgumentName.HTTP_METHOD,
                          ArgumentName.ENDPOINT, ArgumentName.HEADERS, ArgumentName.HTTP_BODY,
                          ArgumentName.LOCAL_FILE_PATH);
   }

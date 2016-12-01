@@ -20,7 +20,7 @@ package co.cask.cdap.cli;
  * Argument names.
  */
 public enum ArgumentName {
-  PROGRAM("app-id.[app-version.]program-id"),
+  PROGRAM("app-id.program-id"),
   STREAM("stream-id"),
   WORKER("app-id.worker-id"),
   METHOD("app-id.method-id"),
@@ -34,6 +34,7 @@ public enum ArgumentName {
   APP_CONFIG("app-config"),
   APP_CONFIG_FILE("app-config-file"),
   RUNTIME_ARGS("runtime-args"),
+  ROUTE_CONFIG("route-config"),
   HOSTNAME("hostname"),
   DATASET_TYPE("dataset-type"),
   DATASET_MODULE("dataset-module"),

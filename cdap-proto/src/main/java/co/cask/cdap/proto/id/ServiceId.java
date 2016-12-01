@@ -31,6 +31,10 @@ public class ServiceId extends ProgramId implements ParentedId<ApplicationId> {
     super(appId, ProgramType.SERVICE, program);
   }
 
+  public ServiceId(ProgramId programId) {
+    super(programId.getParent(), ProgramType.SERVICE, programId.getEntityName());
+  }
+
   @Override
   public Id.Service toId() {
     return Id.Service.from(super.getParent().toId(), super.getProgram());

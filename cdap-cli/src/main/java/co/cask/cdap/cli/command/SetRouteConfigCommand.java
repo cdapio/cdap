@@ -11,35 +11,34 @@
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
- * the License
+ * the License.
  */
 
 package co.cask.cdap.cli.command;
 
-import co.cask.cdap.api.service.Service;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.Categorized;
-import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
+import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.proto.id.ServiceId;
 import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
+import java.util.Map;
 
 /**
- * Check whether a {@link Service} has reached active status.
+ * Sets RouteConfig for a service.
  */
-public class CheckServiceAvailabilityCommand extends AbstractAuthCommand implements Categorized {
+public class SetRouteConfigCommand extends AbstractAuthCommand {
   private final ServiceClient serviceClient;
 
   @Inject
-  public CheckServiceAvailabilityCommand(ServiceClient serviceClient, CLIConfig cliConfig) {
+  public SetRouteConfigCommand(ServiceClient serviceClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.serviceClient = serviceClient;
   }
@@ -47,24 +46,22 @@ public class CheckServiceAvailabilityCommand extends AbstractAuthCommand impleme
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     ServiceId serviceId = new ServiceId(parseProgramId(arguments, ElementType.SERVICE));
-    serviceClient.checkAvailability(serviceId);
-    output.println("Service is available to accept requests.");
+    String routeConfig = arguments.get(ArgumentName.ROUTE_CONFIG.getName());
+    serviceClient.storeRouteConfig(serviceId, ArgumentParser.parseStringIntegerMap(routeConfig));
+    output.printf("Successfully set route configuration of %s '%s' of application '%s' to '%s'\n",
+                  ElementType.SERVICE.getName(), serviceId.getProgram(), serviceId.getApplication(), routeConfig);
   }
 
   @Override
   public String getPattern() {
-    return String.format("check service availability <%s> [version <%s>]", ArgumentName.SERVICE,
-                         ArgumentName.APP_VERSION);
+    return String.format("set route-config for service <%s> <%s>", ArgumentName.SERVICE,
+                         ArgumentName.ROUTE_CONFIG);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Check if %s is available to accept requests",
-                         Fragment.of(Article.A, ElementType.SERVICE.getName()));
-  }
-
-  @Override
-  public String getCategory() {
-    return CommandCategory.APPLICATION_LIFECYCLE.getName();
+    return String.format("Set the route configuration for %s. '<%s>' is specified in the format " +
+                           "'version1=number1 version2=number2'.",
+                         Fragment.of(Article.A, ElementType.SERVICE.getName()), ArgumentName.ROUTE_CONFIG);
   }
 }

@@ -24,7 +24,6 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.ServiceManager;
@@ -96,7 +95,7 @@ public class RemoteServiceManager extends AbstractProgramManager<ServiceManager>
           }
         }
       }, timeout, timeoutUnit);
-      return serviceClient.getServiceURL(serviceId);
+      return serviceClient.getVersionedServiceURL(serviceId);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

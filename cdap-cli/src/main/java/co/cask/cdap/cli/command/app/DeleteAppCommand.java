@@ -46,7 +46,7 @@ public class DeleteAppCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     ApplicationId appId = parseApplicationId(arguments);
     appClient.delete(appId);
-    output.printf("Successfully deleted application '%s'\n", appId.getEntityName());
+    output.printf("Successfully deleted application '%s.%s'\n", appId.getEntityName(), appId.getVersion());
   }
 
   @Override

@@ -53,7 +53,7 @@ public class GetServiceEndpointsCommand extends AbstractAuthCommand implements C
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    ServiceId serviceId = parseServiceId(arguments);
+    ServiceId serviceId = new ServiceId(parseProgramId(arguments, ElementType.SERVICE));
     List<ServiceHttpEndpoint> endpoints = serviceClient.getEndpoints(serviceId);
 
     Table table = Table.builder()
@@ -69,7 +69,7 @@ public class GetServiceEndpointsCommand extends AbstractAuthCommand implements C
 
   @Override
   public String getPattern() {
-    return String.format("get endpoints service <%s>", ArgumentName.SERVICE);
+    return String.format("get endpoints service <%s> [version <%s>]", ArgumentName.SERVICE, ArgumentName.APP_VERSION);
   }
 
   @Override
