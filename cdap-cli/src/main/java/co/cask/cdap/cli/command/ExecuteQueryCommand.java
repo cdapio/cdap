@@ -63,7 +63,7 @@ public class ExecuteQueryCommand extends AbstractAuthCommand implements Categori
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String query = arguments.get(ArgumentName.QUERY.toString());
-    long timeOutMins = arguments.getLong(ArgumentName.TIMEOUT.toString(), DEFAULT_TIMEOUT_MIN);
+    long timeOutMins = arguments.getLongOptional(ArgumentName.TIMEOUT.toString(), DEFAULT_TIMEOUT_MIN);
 
     ListenableFuture<ExploreExecutionResult> future = queryClient.execute(cliConfig.getCurrentNamespace().toId(),
                                                                           query);

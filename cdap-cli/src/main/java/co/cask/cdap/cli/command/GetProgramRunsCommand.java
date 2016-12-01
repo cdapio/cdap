@@ -54,9 +54,9 @@ public class GetProgramRunsCommand extends AbstractCommand {
     String appId = programIdParts[0];
     long currentTime = System.currentTimeMillis();
 
-    long startTime = getTimestamp(arguments.get(ArgumentName.START_TIME.toString(), "min"), currentTime);
-    long endTime = getTimestamp(arguments.get(ArgumentName.END_TIME.toString(), "max"), currentTime);
-    int limit = arguments.getInt(ArgumentName.LIMIT.toString(), Integer.MAX_VALUE);
+    long startTime = getTimestamp(arguments.getOptional(ArgumentName.START_TIME.toString(), "min"), currentTime);
+    long endTime = getTimestamp(arguments.getOptional(ArgumentName.END_TIME.toString(), "max"), currentTime);
+    int limit = arguments.getIntOptional(ArgumentName.LIMIT.toString(), Integer.MAX_VALUE);
 
     List<RunRecord> records;
     if (elementType.getProgramType() != null) {

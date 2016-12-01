@@ -50,8 +50,8 @@ public class CreateDatasetInstanceCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     String datasetType = arguments.get(ArgumentName.DATASET_TYPE.toString());
     String datasetName = arguments.get(ArgumentName.NEW_DATASET.toString());
-    String datasetPropertiesString = arguments.get(ArgumentName.DATASET_PROPERTIES.toString(), "");
-    String datasetDescription = arguments.get(ArgumentName.DATASET_DESCRIPTON.toString(), null);
+    String datasetPropertiesString = arguments.getOptional(ArgumentName.DATASET_PROPERTIES.toString(), "");
+    String datasetDescription = arguments.getOptional(ArgumentName.DATASET_DESCRIPTON.toString(), null);
     Map<String, String> datasetProperties = ArgumentParser.parseMap(datasetPropertiesString);
     DatasetInstanceConfiguration datasetConfig =
       new DatasetInstanceConfiguration(datasetType, datasetProperties, datasetDescription);

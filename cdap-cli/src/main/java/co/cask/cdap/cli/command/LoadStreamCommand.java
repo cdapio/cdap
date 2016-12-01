@@ -70,7 +70,7 @@ public class LoadStreamCommand extends AbstractAuthCommand implements Categorize
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     StreamId streamId = cliConfig.getCurrentNamespace().stream(arguments.get(ArgumentName.STREAM.toString()));
     File file = resolver.resolvePathToFile(arguments.get(ArgumentName.LOCAL_FILE_PATH.toString()));
-    String contentType = arguments.get(ArgumentName.CONTENT_TYPE.toString(), "");
+    String contentType = arguments.getOptional(ArgumentName.CONTENT_TYPE.toString(), "");
 
     if (!file.isFile()) {
       throw new IllegalArgumentException("Not a file: " + file);
