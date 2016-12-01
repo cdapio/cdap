@@ -63,13 +63,21 @@ public class MasterTwillApplication implements TwillApplication {
     final long noContainerTimeout = cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE);
 
     TwillSpecification.Builder.RunnableSetter runnableSetter =
+      addMessaging(
         addDatasetOpExecutor(
-            addLogSaverService(
-                addStreamService(
-                    addTransactionService(
-                        addMetricsProcessor (
-                            addMetricsService(
-                                TwillSpecification.Builder.with().setName(NAME).withRunnable()))))));
+          addLogSaverService(
+            addStreamService(
+              addTransactionService(
+                addMetricsProcessor (
+                  addMetricsService(
+                    TwillSpecification.Builder.with().setName(NAME).withRunnable()
+                  )
+                )
+              )
+            )
+          )
+        )
+      );
 
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       LOG.info("Adding explore runnable.");
@@ -236,5 +244,23 @@ public class MasterTwillApplication implements TwillApplication {
     }
 
     return twillSpecs.apply();
+  }
+
+  private TwillSpecification.Builder.RunnableSetter addMessaging(TwillSpecification.Builder.MoreRunnable builder) {
+    int instances = instanceCountMap.get(Constants.Service.MESSAGING_SERVICE);
+
+    ResourceSpecification resourceSpec = ResourceSpecification.Builder.with()
+      .setVirtualCores(cConf.getInt(Constants.MessagingSystem.CONTAINER_VIRTUAL_CORES))
+      .setMemory(cConf.getInt(Constants.MessagingSystem.CONTAINER_MEMORY_MB), ResourceSpecification.SizeUnit.MEGA)
+      .setInstances(instances)
+      .build();
+
+    return builder.add(new MessagingServiceTwillRunnable(Constants.Service.MESSAGING_SERVICE, "cConf.xml", "hConf.xml"),
+                       resourceSpec)
+      .withLocalFiles()
+      .add("cConf.xml", cConfFile.toURI())
+      .add("hConf.xml", hConfFile.toURI())
+      .apply();
+
   }
 }

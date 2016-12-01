@@ -1103,6 +1103,40 @@
   <!-- Messaging System Configuration -->
 
   <property>
+    <name>messaging.container.instances</name>
+    <value>1</value>
+    <description>
+      Number of instances for the messaging service
+    </description>
+    <final>true</final>
+  </property>
+
+  <property>
+    <name>messaging.max.instances</name>
+    <value>1</value>
+    <description>
+      Maximum number of instances for the messaging service
+    </description>
+    <final>true</final>
+  </property>
+
+  <property>
+    <name>messaging.container.memory.mb</name>
+    <value>${master.service.memory.mb}</value>
+    <description>
+      Memory in megabytes for each messaging service instance
+    </description>
+  </property>
+
+  <property>
+    <name>messaging.container.num.cores</name>
+    <value>${master.service.num.cores}</value>
+    <description>
+      Number of virtual cores for each messaging service instance
+    </description>
+  </property>
+
+  <property>
     <name>messaging.hbase.max.scan.threads</name>
     <value>48</value>
     <description>Maximum number of threads used for scanning HBase tables</description>

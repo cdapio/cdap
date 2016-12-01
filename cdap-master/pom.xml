@@ -92,6 +92,11 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-tms</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.tephra</groupId>
       <artifactId>tephra-api</artifactId>
     </dependency>

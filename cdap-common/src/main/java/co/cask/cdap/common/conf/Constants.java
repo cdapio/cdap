@@ -1086,6 +1086,12 @@ public final class Constants {
     public static final String HTTP_SERVER_MAX_REQUEST_SIZE_MB = "messaging.http.server.max.request.size.mb";
     public static final String HTTP_SERVER_CONSUME_CHUNK_SIZE = "messaging.http.server.consume.chunk.size";
 
+
+    public static final String CONTAINER_VIRTUAL_CORES = "messaging.container.num.cores";
+    public static final String CONTAINER_MEMORY_MB = "messaging.container.memory.mb";
+    public static final String CONTAINER_INSTANCES = "messaging.container.instances";
+    public static final String MAX_INSTANCES = "messaging.max.instances";
+
     // The name of the HBase table attribute to store the bucket size being used by the RowKeyDistributor
     public static final String KEY_DISTRIBUTOR_BUCKETS_ATTR = "cdap.messaging.key.distributor.buckets";
 
@@ -1097,6 +1103,9 @@ public final class Constants {
 
     // The network address for the http server to bind to.
     public static final String HTTP_SERVER_BIND_ADDRESS = "messaging.http.server.bind.address";
+
+    // The guice binding name for http handler used by the messaging system
+    public static final String HANDLER_BINDING_NAME = "messaging.http.handler";
   }
 
   /**

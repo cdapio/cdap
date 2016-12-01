@@ -33,17 +33,17 @@ import co.cask.cdap.messaging.client.ClientMessagingService;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.messaging.data.Message;
 import co.cask.cdap.messaging.data.MessageId;
-import co.cask.cdap.messaging.service.CoreMessagingService;
-import co.cask.cdap.messaging.store.TableFactory;
-import co.cask.cdap.messaging.store.leveldb.LevelDBTableFactory;
+import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
+import co.cask.http.HttpHandler;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterators;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.PrivateModule;
-import com.google.inject.Scopes;
+import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Names;
 import org.apache.tephra.Transaction;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.AfterClass;
@@ -79,15 +79,21 @@ public class MessagingHttpServiceTest {
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new DiscoveryRuntimeModule().getInMemoryModules(),
-      new PrivateModule() {
+      new MessagingServerRuntimeModule().getInMemoryModules(),
+      new AbstractModule() {
         @Override
         protected void configure() {
           bind(MetricsCollectionService.class).toInstance(new NoOpMetricsCollectionService());
-          bind(TableFactory.class).to(LevelDBTableFactory.class).in(Scopes.SINGLETON);
-          bind(MessagingService.class).to(CoreMessagingService.class).in(Scopes.SINGLETON);
+
+          Multibinder<HttpHandler> handlerBinder =
+            Multibinder.newSetBinder(binder(), HttpHandler.class,
+                                     Names.named(Constants.MessagingSystem.HANDLER_BINDING_NAME));
+
+          handlerBinder.addBinding().to(MetadataHandler.class);
+          handlerBinder.addBinding().to(StoreHandler.class);
+          handlerBinder.addBinding().to(FetchHandler.class);
 
           bind(MessagingHttpService.class);
-          expose(MessagingHttpService.class);
         }
       }
     );
