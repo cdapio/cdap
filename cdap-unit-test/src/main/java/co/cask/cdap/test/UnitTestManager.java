@@ -17,7 +17,6 @@
 package co.cask.cdap.test;
 
 import co.cask.cdap.api.Config;
-import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.dataset.DatasetAdmin;
@@ -51,6 +50,7 @@ import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.ArtifactManagerFactory;
 import co.cask.cdap.test.internal.StreamManagerFactory;
@@ -91,7 +91,7 @@ import javax.annotation.Nullable;
 /**
  * {@link TestManager} for use in unit tests.
  */
-public class UnitTestManager implements TestManager {
+public class UnitTestManager extends AbstractTestManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(TestBase.class);
 
@@ -165,30 +165,14 @@ public class UnitTestManager implements TestManager {
       cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
   }
 
-  /**
-   * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
-   * other programs defined in the application
-   * must be in the same or children package as the application.
-   *
-   * @param applicationClz The application class
-   * @return An {@link co.cask.cdap.test.ApplicationManager} to manage the deployed application.
-   */
   @Override
-  public ApplicationManager deployApplication(Id.Namespace namespace,
-                                              Class<? extends Application> applicationClz,
-                                              File... bundleEmbeddedJars) {
-    return deployApplication(namespace, applicationClz, null, bundleEmbeddedJars);
-  }
-
-  @Override
-  @SuppressWarnings("unchecked")
-  public ApplicationManager deployApplication(Id.Namespace namespace, Class<? extends Application> applicationClz,
+  public ApplicationManager deployApplication(NamespaceId namespace, Class<? extends Application> applicationClz,
                                               @Nullable Config configObject, File... bundleEmbeddedJars) {
     Preconditions.checkNotNull(applicationClz, "Application class cannot be null.");
     Type configType = Artifacts.getConfigType(applicationClz);
 
     try {
-      ArtifactId artifactId = new ArtifactId(namespace.getId(), applicationClz.getSimpleName(), "1.0-SNAPSHOT");
+      ArtifactId artifactId = new ArtifactId(namespace.getNamespace(), applicationClz.getSimpleName(), "1.0-SNAPSHOT");
       addAppArtifact(artifactId, applicationClz);
 
       if (configObject == null) {
@@ -198,7 +182,7 @@ public class UnitTestManager implements TestManager {
       Application app = applicationClz.newInstance();
       MockAppConfigurer configurer = new MockAppConfigurer(app);
       app.configure(configurer, new DefaultApplicationContext<>(configObject));
-      ApplicationId applicationId = new ApplicationId(namespace.getId(), configurer.getName());
+      ApplicationId applicationId = new ApplicationId(namespace.getNamespace(), configurer.getName());
 
       ArtifactSummary artifactSummary = new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion());
       appFabricClient.deployApplication(applicationId.toId(),
@@ -207,13 +191,6 @@ public class UnitTestManager implements TestManager {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
-  }
-
-  @Override
-  public ApplicationManager deployApplication(Id.Application appId,
-                                              AppRequest appRequest) throws Exception {
-    appFabricClient.deployApplication(appId, appRequest);
-    return appManagerFactory.create(appId.toEntityId());
   }
 
   @Override
@@ -226,12 +203,6 @@ public class UnitTestManager implements TestManager {
   public ApplicationManager getApplicationManager(ApplicationId applicationId) {
     return appManagerFactory.create(applicationId);
   }
-
-  @Override
-  public void addArtifact(Id.Artifact artifactId, File artifactFile) throws Exception {
-    artifactRepository.addArtifact(artifactId, artifactFile);
-  }
-
   @Override
   public ArtifactManager addArtifact(ArtifactId artifactId, File artifactFile) throws Exception {
     artifactRepository.addArtifact(artifactId.toId(), artifactFile);
@@ -239,18 +210,8 @@ public class UnitTestManager implements TestManager {
   }
 
   @Override
-  public void addAppArtifact(Id.Artifact artifactId, Class<?> appClass) throws Exception {
-    addAppArtifact(artifactId.toEntityId(), appClass);
-  }
-
-  @Override
   public ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass) throws Exception {
     return addAppArtifact(artifactId, appClass, new String[0]);
-  }
-
-  @Override
-  public void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, String... exportPackages) throws Exception {
-    addAppArtifact(artifactId.toEntityId(), appClass, exportPackages);
   }
 
   @Override
@@ -264,22 +225,11 @@ public class UnitTestManager implements TestManager {
   }
 
   @Override
-  public void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, Manifest manifest) throws Exception {
-    addAppArtifact(artifactId.toEntityId(), appClass, manifest);
-  }
-
-  @Override
   public ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass,
                                         Manifest manifest) throws Exception {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass, manifest, CLASS_ACCEPTOR);
     addArtifact(artifactId, appJar);
     return artifactManagerFactory.create(artifactId);
-  }
-
-  @Override
-  public void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
-                                Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
-    addPluginArtifact(artifactId.toEntityId(), parent.toEntityId(), pluginClass, pluginClasses);
   }
 
   @Override
@@ -294,25 +244,12 @@ public class UnitTestManager implements TestManager {
   }
 
   @Override
-  public void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parents,
-                                Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
-    addPluginArtifact(artifactId.toEntityId(), parents, pluginClass, pluginClasses);
-  }
-
-  @Override
   public ArtifactManager addPluginArtifact(ArtifactId artifactId, Set<ArtifactRange> parents,
                                            Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     File pluginJar = createPluginJar(artifactId, pluginClass, pluginClasses);
     artifactRepository.addArtifact(artifactId.toId(), pluginJar, parents);
     Preconditions.checkState(pluginJar.delete());
     return artifactManagerFactory.create(artifactId);
-  }
-
-  @Override
-  public void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
-                                @Nullable Set<PluginClass> additionalPlugins,
-                                Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
-    addPluginArtifact(artifactId.toEntityId(), parent.toEntityId(), additionalPlugins, pluginClass, pluginClasses);
   }
 
   @Override
@@ -325,13 +262,6 @@ public class UnitTestManager implements TestManager {
       true, new ArtifactVersion(parent.getVersion()), true));
     addPluginArtifact(artifactId, parents, additionalPlugins, pluginClass, pluginClasses);
     return artifactManagerFactory.create(artifactId);
-  }
-
-  @Override
-  public void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parents,
-                                @Nullable Set<PluginClass> additionalPlugins,
-                                Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
-
   }
 
   @Override
@@ -361,49 +291,26 @@ public class UnitTestManager implements TestManager {
     }
   }
 
-  @Beta
   @Override
-  public final void deployDatasetModule(Id.Namespace namespace,
-                                        String moduleName, Class<? extends DatasetModule> datasetModule)
-    throws Exception {
-    datasetFramework.addModule(new DatasetModuleId(namespace.getId(), moduleName), datasetModule.newInstance());
+  public void deployDatasetModule(DatasetModuleId datasetModuleId,
+                                  Class<? extends DatasetModule> datasetModule) throws Exception {
+    datasetFramework.addModule(datasetModuleId, datasetModule.newInstance());
   }
 
-  @Beta
   @Override
-  public final <T extends DatasetAdmin> T addDatasetInstance(Id.Namespace namespace,
-                                                             String datasetTypeName, String datasetInstanceName,
-                                                             DatasetProperties props) throws Exception {
-    DatasetId datasetInstanceId = new DatasetId(namespace.getId(), datasetInstanceName);
-    datasetFramework.addInstance(datasetTypeName, datasetInstanceId, props);
-    return datasetFramework.getAdmin(datasetInstanceId, null);
+  public <T extends DatasetAdmin> T addDatasetInstance(String datasetType, DatasetId datasetId,
+                                                       DatasetProperties props) throws Exception {
+    datasetFramework.addInstance(datasetType, datasetId, props);
+    return datasetFramework.getAdmin(datasetId, null);
   }
 
-  @Beta
   @Override
-  public final <T extends DatasetAdmin> T addDatasetInstance(Id.Namespace namespace,
-                                                             String datasetTypeName,
-                                                             String datasetInstanceName) throws Exception {
-    return addDatasetInstance(namespace, datasetTypeName, datasetInstanceName, DatasetProperties.EMPTY);
+  public void deleteDatasetInstance(DatasetId datasetId) throws Exception {
+    datasetFramework.deleteInstance(datasetId);
   }
 
-  @Beta
   @Override
-  public final void deleteDatasetInstance(NamespaceId namespaceId, String datasetInstanceName) throws Exception {
-    DatasetId datasetInstanceId = namespaceId.dataset(datasetInstanceName);
-    datasetFramework.deleteInstance(datasetInstanceId);
-  }
-
-  /**
-   * Gets Dataset manager of Dataset instance of type <T>
-   * @param datasetInstanceName - instance name of dataset
-   * @return Dataset Manager of Dataset instance of type <T>
-   * @throws Exception
-   */
-  @Beta
-  @Override
-  public final <T> DataSetManager<T> getDataset(Id.Namespace namespace, String datasetInstanceName) throws Exception {
-    DatasetId datasetInstanceId = new DatasetId(namespace.getId(), datasetInstanceName);
+  public <T> DataSetManager<T> getDataset(DatasetId datasetInstanceId) throws Exception {
     @SuppressWarnings("unchecked")
     final T dataSet = datasetFramework.getDataset(datasetInstanceId, new HashMap<String, String>(), null);
     try {
@@ -439,12 +346,8 @@ public class UnitTestManager implements TestManager {
     }
   }
 
-  /**
-   * Returns a JDBC connection that allows to run SQL queries over data sets.
-   */
-  @Beta
   @Override
-  public final Connection getQueryClient(Id.Namespace namespace) throws Exception {
+  public Connection getQueryClient(NamespaceId namespace) throws Exception {
     // this makes sure the Explore JDBC driver is loaded
     Class.forName(ExploreDriver.class.getName());
 
@@ -460,7 +363,7 @@ public class UnitTestManager implements TestManager {
     int port = address.getPort();
 
     String connectString = String.format("%s%s:%d?namespace=%s", Constants.Explore.Jdbc.URL_PREFIX, host, port,
-      namespace.getId());
+                                         namespace.getNamespace());
 
     return DriverManager.getConnection(connectString);
   }
@@ -476,8 +379,8 @@ public class UnitTestManager implements TestManager {
   }
 
   @Override
-  public StreamManager getStreamManager(Id.Stream streamId) {
-    return streamManagerFactory.create(streamId);
+  public StreamManager getStreamManager(StreamId streamId) {
+    return streamManagerFactory.create(streamId.toId());
   }
 
   @Override

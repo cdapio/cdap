@@ -89,8 +89,11 @@ import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
@@ -491,7 +494,7 @@ public class TestBase {
    */
   @Deprecated
   protected static void createNamespace(Id.Namespace namespace) throws Exception {
-    getTestManager().createNamespace(new NamespaceMeta.Builder().setName(namespace).build());
+    getNamespaceAdmin().create(new NamespaceMeta.Builder().setName(namespace).build());
   }
 
   /**
@@ -502,23 +505,70 @@ public class TestBase {
    */
   @Deprecated
   protected static void deleteNamespace(Id.Namespace namespace) throws Exception {
-    getTestManager().deleteNamespace(namespace);
+    getNamespaceAdmin().delete(namespace.toEntityId());
   }
 
   /**
    * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
    * other programs defined in the application must be in the same or children package as the application.
    *
-   * @param applicationClz The application class
+   * @param namespace the namespace to deploy the application to
+   * @param applicationClz the application class
+   * @param bundleEmbeddedJars any extra jars to bundle in the application jar
+   * @return An {@link ApplicationManager} to manage the deployed application.
+   * @deprecated since 4.0.0. Use {@link #deployApplication(NamespaceId, Class, File...)} instead.
+   */
+  @Deprecated
+  protected static ApplicationManager deployApplication(Id.Namespace namespace,
+                                                        Class<? extends Application> applicationClz,
+                                                        File... bundleEmbeddedJars) {
+    return deployApplication(namespace.toEntityId(), applicationClz, null, bundleEmbeddedJars);
+  }
+
+  /**
+   * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
+   * other programs defined in the application must be in the same or children package as the application.
+   *
+   * @param namespace the namespace to deploy the application to
+   * @param applicationClz the application class
+   * @param bundleEmbeddedJars any extra jars to bundle in the application jar
    * @return An {@link ApplicationManager} to manage the deployed application.
    */
-  protected static ApplicationManager deployApplication(Id.Namespace namespace,
+  protected static ApplicationManager deployApplication(NamespaceId namespace,
                                                         Class<? extends Application> applicationClz,
                                                         File... bundleEmbeddedJars) {
     return deployApplication(namespace, applicationClz, null, bundleEmbeddedJars);
   }
 
+  /**
+   * Deploys an {@link Application} with a config. The {@link co.cask.cdap.api.flow.Flow Flows} and
+   * other programs defined in the application must be in the same or children package as the application.
+   *
+   * @param namespace the namespace to deploy the application to
+   * @param applicationClz the application class
+   * @param appConfig the application config
+   * @param bundleEmbeddedJars any extra jars to bundle in the application jar
+   * @return An {@link ApplicationManager} to manage the deployed application.
+   * @deprecated since 4.0.0. Use {@link #deployApplication(NamespaceId, Class, Config, File...)} instead.
+   */
+  @Deprecated
   protected static ApplicationManager deployApplication(Id.Namespace namespace,
+                                                        Class<? extends Application> applicationClz, Config appConfig,
+                                                        File... bundleEmbeddedJars) {
+    return deployApplication(namespace.toEntityId(), applicationClz, appConfig, bundleEmbeddedJars);
+  }
+
+  /**
+   * Deploys an {@link Application} with a config. The {@link co.cask.cdap.api.flow.Flow Flows} and
+   * other programs defined in the application must be in the same or children package as the application.
+   *
+   * @param namespace the namespace to deploy the application to
+   * @param applicationClz the application class
+   * @param appConfig the application config
+   * @param bundleEmbeddedJars any extra jars to bundle in the application jar
+   * @return An {@link ApplicationManager} to manage the deployed application.
+   */
+  protected static ApplicationManager deployApplication(NamespaceId namespace,
                                                         Class<? extends Application> applicationClz, Config appConfig,
                                                         File... bundleEmbeddedJars) {
     ApplicationManager applicationManager = getTestManager().deployApplication(namespace, applicationClz, appConfig,
@@ -531,17 +581,27 @@ public class TestBase {
    * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
    * other programs defined in the application must be in the same or children package as the application.
    *
-   * @param applicationClz The application class
+   * @param applicationClz the application class
+   * @param bundleEmbeddedJars any extra jars to bundle in the application jar
    * @return An {@link ApplicationManager} to manage the deployed application.
    */
   protected static ApplicationManager deployApplication(Class<? extends Application> applicationClz,
                                                         File... bundleEmbeddedJars) {
-    return deployApplication(Id.Namespace.DEFAULT, applicationClz, bundleEmbeddedJars);
+    return deployApplication(NamespaceId.DEFAULT, applicationClz, bundleEmbeddedJars);
   }
 
+  /**
+   * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
+   * other programs defined in the application must be in the same or children package as the application.
+   *
+   * @param applicationClz the application class
+   * @param appConfig the application config
+   * @param bundleEmbeddedJars any extra jars to bundle in the application jar
+   * @return An {@link ApplicationManager} to manage the deployed application.
+   */
   protected static ApplicationManager deployApplication(Class<? extends Application> applicationClz, Config appConfig,
                                                         File... bundleEmbeddedJars) {
-    return deployApplication(Id.Namespace.DEFAULT, applicationClz, appConfig, bundleEmbeddedJars);
+    return deployApplication(NamespaceId.DEFAULT, applicationClz, appConfig, bundleEmbeddedJars);
   }
 
   /**
@@ -553,7 +613,7 @@ public class TestBase {
    */
   protected static ApplicationManager deployApplication(Id.Application appId,
                                                         AppRequest appRequest) throws Exception {
-    ApplicationManager appManager = getTestManager().deployApplication(appId, appRequest);
+    ApplicationManager appManager = getTestManager().deployApplication(appId.toEntityId(), appRequest);
     applicationManagers.add(appManager);
     return appManager;
   }
@@ -604,7 +664,7 @@ public class TestBase {
    */
   @Deprecated
   protected static void addAppArtifact(Id.Artifact artifactId, Class<?> appClass) throws Exception {
-    getTestManager().addAppArtifact(artifactId, appClass);
+    getTestManager().addAppArtifact(artifactId.toEntityId(), appClass);
   }
 
   /**
@@ -630,7 +690,7 @@ public class TestBase {
   @Deprecated
   protected static void addAppArtifact(Id.Artifact artifactId, Class<?> appClass,
                                        String... exportPackages) throws Exception {
-    getTestManager().addAppArtifact(artifactId, appClass, exportPackages);
+    addAppArtifact(artifactId.toEntityId(), appClass, exportPackages);
   }
 
   /**
@@ -657,7 +717,7 @@ public class TestBase {
    */
   @Deprecated
   protected static void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, Manifest manifest) throws Exception {
-    getTestManager().addAppArtifact(artifactId, appClass, manifest);
+    addAppArtifact(artifactId.toEntityId(), appClass, manifest);
   }
 
   /**
@@ -693,7 +753,7 @@ public class TestBase {
   @Deprecated
   protected static void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
                                           Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
-    getTestManager().addPluginArtifact(artifactId, parent, pluginClass, pluginClasses);
+    addPluginArtifact(artifactId.toEntityId(), parent.toEntityId(), pluginClass, pluginClasses);
   }
 
   /**
@@ -743,7 +803,7 @@ public class TestBase {
   protected static void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
                                           Set<PluginClass> additionalPlugins,
                                           Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
-    getTestManager().addPluginArtifact(artifactId, parent, additionalPlugins, pluginClass, pluginClasses);
+    addPluginArtifact(artifactId.toEntityId(), parent.toEntityId(), additionalPlugins, pluginClass, pluginClasses);
   }
 
   /**
@@ -791,7 +851,7 @@ public class TestBase {
   @Deprecated
   protected static void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parentArtifacts,
                                           Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
-    getTestManager().addPluginArtifact(artifactId, parentArtifacts, pluginClass, pluginClasses);
+    addPluginArtifact(artifactId.toEntityId(), parentArtifacts, pluginClass, pluginClasses);
   }
 
   /**
@@ -833,13 +893,28 @@ public class TestBase {
   /**
    * Deploys {@link DatasetModule}.
    *
+   * @param namespace namespace to deploy to
    * @param moduleName name of the module
    * @param datasetModule module class
    * @throws Exception
+   * @deprecated since 4.0.0. Use {@link #deployDatasetModule(DatasetModuleId, Class)} instead.
    */
+  @Deprecated
   protected static void deployDatasetModule(Id.Namespace namespace, String moduleName,
                                             Class<? extends DatasetModule> datasetModule) throws Exception {
-    getTestManager().deployDatasetModule(namespace, moduleName, datasetModule);
+    getTestManager().deployDatasetModule(namespace.toEntityId().datasetModule(moduleName), datasetModule);
+  }
+
+  /**
+   * Deploys {@link DatasetModule}.
+   *
+   * @param datasetModuleId the module id
+   * @param datasetModule module class
+   * @throws Exception
+   */
+  protected static void deployDatasetModule(DatasetModuleId datasetModuleId,
+                                            Class<? extends DatasetModule> datasetModule) throws Exception {
+    getTestManager().deployDatasetModule(datasetModuleId, datasetModule);
   }
 
   /**
@@ -851,9 +926,8 @@ public class TestBase {
    */
   protected static void deployDatasetModule(String moduleName,
                                             Class<? extends DatasetModule> datasetModule) throws Exception {
-    deployDatasetModule(Id.Namespace.DEFAULT, moduleName, datasetModule);
+    deployDatasetModule(NamespaceId.DEFAULT.datasetModule(moduleName), datasetModule);
   }
-
 
   /**
    * Adds an instance of a dataset.
@@ -863,11 +937,28 @@ public class TestBase {
    * @param datasetInstanceName instance name
    * @param props properties
    * @param <T> type of the dataset admin
+   * @return a DatasetAdmin to manage the dataset instance
+   * @deprecated since 4.0.0. Use {@link #addDatasetInstance(String, DatasetId, DatasetProperties)} instead.
    */
+  @Deprecated
   protected static <T extends DatasetAdmin> T addDatasetInstance(Id.Namespace namespace, String datasetTypeName,
                                                                  String datasetInstanceName,
                                                                  DatasetProperties props) throws Exception {
-    return getTestManager().addDatasetInstance(namespace, datasetTypeName, datasetInstanceName, props);
+    return addDatasetInstance(datasetTypeName, namespace.toEntityId().dataset(datasetInstanceName), props);
+  }
+
+  /**
+   * Adds an instance of a dataset.
+   *
+   * @param datasetId the dataset id
+   * @param datasetTypeName dataset type name, like "table" or "fileset"
+   * @param props properties
+   * @param <T> type of the dataset admin
+   * @return a DatasetAdmin to manage the dataset instance
+   */
+  protected static <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName, DatasetId datasetId,
+                                                                 DatasetProperties props) throws Exception {
+    return getTestManager().addDatasetInstance(datasetTypeName, datasetId, props);
   }
 
   /**
@@ -877,11 +968,12 @@ public class TestBase {
    * @param datasetInstanceName instance name
    * @param props properties
    * @param <T> type of the dataset admin
+   * @return a DatasetAdmin to manage the dataset instance
    */
   protected static <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
                                                                  String datasetInstanceName,
                                                                  DatasetProperties props) throws Exception {
-    return addDatasetInstance(Id.Namespace.DEFAULT, datasetTypeName, datasetInstanceName, props);
+    return addDatasetInstance(datasetTypeName, NamespaceId.DEFAULT.dataset(datasetInstanceName), props);
   }
 
 
@@ -892,10 +984,26 @@ public class TestBase {
    * @param datasetTypeName dataset type name
    * @param datasetInstanceName instance name
    * @param <T> type of the dataset admin
+   * @return a DatasetAdmin to manage the dataset instance
+   * @deprecated since 4.0.0. Use {@link #addDatasetInstance(DatasetId, String)} instead.
    */
+  @Deprecated
   protected final <T extends DatasetAdmin> T addDatasetInstance(Id.Namespace namespace, String datasetTypeName,
                                                                 String datasetInstanceName) throws Exception {
-    return addDatasetInstance(namespace, datasetTypeName, datasetInstanceName, DatasetProperties.EMPTY);
+    return addDatasetInstance(namespace.toEntityId().dataset(datasetInstanceName), datasetTypeName);
+  }
+
+  /**
+   * Adds an instance of dataset.
+   *
+   * @param datasetId the dataset id
+   * @param datasetTypeName dataset type name
+   * @param <T> type of the dataset admin
+   * @return a DatasetAdmin to manage the dataset instance
+   */
+  protected final <T extends DatasetAdmin> T addDatasetInstance(DatasetId datasetId,
+                                                                String datasetTypeName) throws Exception {
+    return addDatasetInstance(datasetTypeName, datasetId, DatasetProperties.EMPTY);
   }
 
   /**
@@ -904,10 +1012,11 @@ public class TestBase {
    * @param datasetTypeName dataset type name
    * @param datasetInstanceName instance name
    * @param <T> type of the dataset admin
+   * @return a DatasetAdmin to manage the dataset instance
    */
   protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
                                                                 String datasetInstanceName) throws Exception {
-    return addDatasetInstance(Id.Namespace.DEFAULT, datasetTypeName, datasetInstanceName,
+    return addDatasetInstance(datasetTypeName, NamespaceId.DEFAULT.dataset(datasetInstanceName),
                               DatasetProperties.EMPTY);
   }
 
@@ -916,9 +1025,20 @@ public class TestBase {
    *
    * @param namespaceId namespace for the dataset
    * @param datasetInstanceName instance name
+   * @deprecated since 4.0.0. Use {@link #deleteDatasetInstance(DatasetId)} instead.
    */
+  @Deprecated
   protected void deleteDatasetInstance(NamespaceId namespaceId, String datasetInstanceName) throws Exception {
-    getTestManager().deleteDatasetInstance(namespaceId, datasetInstanceName);
+    deleteDatasetInstance(namespaceId.dataset(datasetInstanceName));
+  }
+
+  /**
+   * Deletes an instance of dataset.
+   *
+   * @param datasetId the dataset to delete
+   */
+  protected void deleteDatasetInstance(DatasetId datasetId) throws Exception {
+    getTestManager().deleteDatasetInstance(datasetId);
   }
 
   /**
@@ -928,10 +1048,23 @@ public class TestBase {
    * @param datasetInstanceName instance name of dataset
    * @return Dataset Manager of Dataset instance of type <T>
    * @throws Exception
+   * @deprecated since 4.0.0. Use {@link #getDataset(DatasetId)} instead.
    */
+  @Deprecated
   protected final <T> DataSetManager<T> getDataset(Id.Namespace namespace,
                                                    String datasetInstanceName) throws Exception {
-    return getTestManager().getDataset(namespace, datasetInstanceName);
+    return getDataset(namespace.toEntityId().dataset(datasetInstanceName));
+  }
+
+  /**
+   * Gets Dataset manager of Dataset instance of type {@literal <}T>.
+   *
+   * @param datasetId the id of the dataset to get
+   * @return Dataset Manager of Dataset instance of type <T>
+   * @throws Exception
+   */
+  protected final <T> DataSetManager<T> getDataset(DatasetId datasetId) throws Exception {
+    return getTestManager().getDataset(datasetId);
   }
 
   /**
@@ -942,15 +1075,28 @@ public class TestBase {
    * @throws Exception
    */
   protected final <T> DataSetManager<T> getDataset(String datasetInstanceName) throws Exception {
-    return getDataset(Id.Namespace.DEFAULT, datasetInstanceName);
+    return getDataset(NamespaceId.DEFAULT.dataset(datasetInstanceName));
   }
 
   /**
    * Returns a JDBC connection that allows the running of SQL queries over data sets.
    * 
    * @param namespace namespace for the connection
+   * @return Connection to use to run queries
+   * @deprecated since 4.0.0. Use {@link #getQueryClient(NamespaceId)} instead.
    */
+  @Deprecated
   protected final Connection getQueryClient(Id.Namespace namespace) throws Exception {
+    return getQueryClient(namespace.toEntityId());
+  }
+
+  /**
+   * Returns a JDBC connection that allows the running of SQL queries over data sets.
+   *
+   * @param namespace namespace for the connection
+   * @return Connection to use to run queries
+   */
+  protected final Connection getQueryClient(NamespaceId namespace) throws Exception {
     if (!cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       throw new UnsupportedOperationException("Explore service is disabled. QueryClient not supported.");
     }
@@ -961,7 +1107,7 @@ public class TestBase {
    * Returns a JDBC connection that allows the running of SQL queries over data sets.
    */
   protected final Connection getQueryClient() throws Exception {
-    return getQueryClient(Id.Namespace.DEFAULT);
+    return getQueryClient(NamespaceId.DEFAULT);
   }
 
   /**
@@ -971,7 +1117,7 @@ public class TestBase {
    * @return {@link StreamManager} for the specified stream in the default namespace
    */
   protected final StreamManager getStreamManager(String streamName) {
-    return getStreamManager(Id.Namespace.DEFAULT, streamName);
+    return getStreamManager(NamespaceId.DEFAULT.stream(streamName));
   }
 
   /**
@@ -980,9 +1126,21 @@ public class TestBase {
    * @param namespace namespace for the stream
    * @param streamName the specified stream
    * @return {@link StreamManager} for the specified stream in the specified namespace
+   * @deprecated since 4.0.0. Use {@link #getStreamManager(StreamId)} instead.
    */
+  @Deprecated
   protected final StreamManager getStreamManager(Id.Namespace namespace, String streamName) {
-    return getTestManager().getStreamManager(Id.Stream.from(namespace, streamName));
+    return getStreamManager(namespace.toEntityId().stream(streamName));
+  }
+
+  /**
+   * Returns a {@link StreamManager} for the specified stream in the specified namespace
+   *
+   * @param streamId the stream to get
+   * @return {@link StreamManager} for the specified stream in the specified namespace
+   */
+  protected final StreamManager getStreamManager(StreamId streamId) {
+    return getTestManager().getStreamManager(streamId);
   }
 
   protected TransactionManager getTxService() {

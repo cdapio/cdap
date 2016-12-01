@@ -79,7 +79,7 @@ public class ETLSparkTestRun extends ETLBatchTestBase {
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
     StructuredRecord recordJane = StructuredRecord.builder(schema).set("name", "jane").build();
 
-    DataSetManager<Table> sourceManager = getDataset(NamespaceId.DEFAULT.toId(), "sparkinput");
+    DataSetManager<Table> sourceManager = getDataset(NamespaceId.DEFAULT.dataset("sparkinput"));
     MockSource.writeInput(sourceManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
 
     // run the pipeline
