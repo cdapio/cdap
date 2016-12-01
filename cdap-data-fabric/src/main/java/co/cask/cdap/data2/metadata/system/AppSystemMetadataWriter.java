@@ -27,6 +27,7 @@ import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.HashSet;
@@ -40,36 +41,49 @@ public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
 
   private final ApplicationSpecification appSpec;
   private final ApplicationId appId;
+  private final boolean existing;
+
+  public AppSystemMetadataWriter(MetadataStore metadataStore, ApplicationId appId, ApplicationSpecification appSpec) {
+    this(metadataStore, appId, appSpec, true);
+  }
 
   public AppSystemMetadataWriter(MetadataStore metadataStore, ApplicationId entityId,
-                                 ApplicationSpecification appSpec) {
+                                 ApplicationSpecification appSpec, boolean existing) {
     super(metadataStore, entityId);
     this.appSpec = appSpec;
     this.appId = entityId;
+    this.existing = existing;
   }
 
   @Override
   protected Map<String, String> getSystemPropertiesToAdd() {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
+    properties.put(ENTITY_NAME_KEY, appSpec.getName());
+    properties.put(VERSION_KEY, appId.getVersion());
+    String description = appSpec.getDescription();
+    if (!Strings.isNullOrEmpty(description)) {
+      properties.put(DESCRIPTION_KEY, description);
+    }
+    if (!existing) {
+      properties.put(CREATION_TIME_KEY, String.valueOf(System.currentTimeMillis()));
+    }
     addPrograms(properties);
     addSchedules(properties);
     // appSpec.getPlugins() returns all instances of all plugins, so there may be duplicates.
     // we only store unique plugins right now
-    Set<PluginClass> existing = new HashSet<>();
+    Set<PluginClass> existingPluginClasses = new HashSet<>();
     for (Plugin plugin : appSpec.getPlugins().values()) {
-      if (!existing.contains(plugin.getPluginClass())) {
+      if (!existingPluginClasses.contains(plugin.getPluginClass())) {
         addPlugin(plugin.getPluginClass(), null, properties);
-        existing.add(plugin.getPluginClass());
+        existingPluginClasses.add(plugin.getPluginClass());
       }
     }
-    properties.put(VERSION, appId.getVersion());
     return properties.build();
   }
 
   @Override
   protected String[] getSystemTagsToAdd() {
     return new String[] {
-      appSpec.getName(),
       appSpec.getArtifactId().getName()
     };
   }
